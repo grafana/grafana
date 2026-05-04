@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Redigera YAML",
         "save": "Spara"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "namn",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Radera alla regler"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Radera",
       "delete-modal-delete-button": "Radera",
@@ -1573,8 +1575,14 @@
         "update-error": "Misslyckades med att uppdatera regelgrupp",
         "update-success": "Regelgruppen har uppdaterats"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Vald grupp kan inte redigeras",
       "group-not-editable-description": "Den här gruppen tillhör en datakälla som inte stöder redigering.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Redigera regelgrupp",
       "rule-group-error": "Fel vid laddning av regelgrupp"
     },
@@ -8136,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Lägg till i favoriter",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Utforska data",
       "open-in-explore": "Öppna i Utforska vy",
       "remove-favorite": "Ta bort från favoriter"
@@ -13826,7 +13840,8 @@
       "make-sure": "Skapa en token med dessa behörigheter"
     },
     "validation": {
-      "hidden-characters": "Detta fält innehåller dolda tecken som kan ha införts genom att kopiera och klistra in. Skriv in värdet på nytt eller rensa det och försök igen."
+      "hidden-characters": "Detta fält innehåller dolda tecken som kan ha införts genom att kopiera och klistra in. Skriv in värdet på nytt eller rensa det och försök igen.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Varning",
     "watch-stream": {
@@ -14234,6 +14249,8 @@
       "alerts-loading": "Larm",
       "card-click": "Välj kort {{id}}",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Ny {{type}}",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
@@ -14950,10 +14967,13 @@
       "title": "Kom igång med instrumentpaneler snabbt med hjälp av förslag och mallar"
     },
     "nav": {
+      "counter": "",
       "go-to": "Gå till bilden {{number}}",
-      "next": "Nästa",
-      "prev": "Föregående"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Förklara fråga",

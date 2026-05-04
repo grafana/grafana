@@ -55,6 +55,8 @@ export const FlagKeys = {
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
   QueryEditorNext: "queryEditorNext",
+  /** Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor */
+  QueryEditorNextMultiSelect: "queryEditorNextMultiSelect",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
@@ -300,6 +302,17 @@ export const useFlagProvisioningFolderMetadata = (options?: ReactFlagEvaluationO
  */
 export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryEditorNext", false, options).value;
+};
+
+/**
+ * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
+ *
+ * **Details:**
+ * - flag key: `queryEditorNextMultiSelect`
+ * - default value: `false`
+ */
+export const useFlagQueryEditorNextMultiSelect = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryEditorNextMultiSelect", false, options).value;
 };
 
 /**

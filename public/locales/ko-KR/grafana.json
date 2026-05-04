@@ -511,7 +511,8 @@
       "action-buttons": {
         "edit-yaml": "YAML 편집",
         "save": "저장"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "이름",
@@ -1285,7 +1286,8 @@
       "delete": {
         "button": {
           "label": "모든 규칙 삭제"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "삭제",
       "delete-modal-delete-button": "삭제",
@@ -1568,8 +1570,14 @@
         "update-error": "규칙 그룹 업데이트 실패",
         "update-success": "규칙 그룹 업데이트 완료"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "선택한 그룹은 편집할 수 없습니다.",
       "group-not-editable-description": "이 그룹은 편집을 지원하지 않는 데이터 소스에 속해 있습니다.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "규칙 그룹 편집",
       "rule-group-error": "규칙 그룹 로딩 중 오류 발생"
     },
@@ -8090,6 +8098,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "즐겨찾기에 추가",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "데이터 탐색",
       "open-in-explore": "탐색 보기에서 열기",
       "remove-favorite": "즐겨찾기에서 제거 "
@@ -13743,7 +13757,8 @@
       "make-sure": "이러한 권한으로 토큰 생성"
     },
     "validation": {
-      "hidden-characters": "이 필드에는 복사하여 붙여 넣는 과정에서 발생했을 수 있는 숨겨진 문자가 포함되어 있습니다. 값을 다시 입력하거나 정리한 후 다시 시도해 주세요."
+      "hidden-characters": "이 필드에는 복사하여 붙여 넣는 과정에서 발생했을 수 있는 숨겨진 문자가 포함되어 있습니다. 값을 다시 입력하거나 정리한 후 다시 시도해 주세요.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "경고",
     "watch-stream": {
@@ -14148,6 +14163,8 @@
       "alerts-loading": "경고",
       "card-click": "{{id}} 카드 선택",
       "data": "데이터",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "새 {{type}}",
       "queries-expressions": "쿼리 및 표현식",
       "toggle-size": "사이드바 크기 토글",
@@ -14858,10 +14875,13 @@
       "title": "추천 대시보드와 템플릿으로 대시보드 만들기 시작하기"
     },
     "nav": {
+      "counter": "",
       "go-to": "{{number}}번 슬라이드로 이동",
-      "next": "다음",
-      "prev": "이전"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "쿼리 설명",

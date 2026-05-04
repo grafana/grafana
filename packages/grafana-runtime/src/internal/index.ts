@@ -50,7 +50,14 @@ export {
   usePanelPluginMetasMap,
 } from '../services/pluginMeta/hooks';
 export type { AppPluginMetas, DatasourcePluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
-export { getCachedPromise, getCachedPromiseWithArgs, invalidateCache } from '../utils/getCachedPromise';
+export {
+  getCachedPromise,
+  getCachedPromiseWithArgs,
+  invalidateCachedPromisesCache,
+  invalidateCachedPromise,
+  replaceCachedPromise,
+  getCacheKeyFromPromise,
+} from '../utils/getCachedPromise';
 export { defineFeatureEvents } from './analyticsFramework/main';
 export type { EventProperty, Event } from './analyticsFramework/types';
 export {

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/query_history/ # /docs/grafana/next/http_api/query_history/
-  - ../../../developers/http_api/query_history/ # /docs/grafana/next/developers/http_api/query_history/
+  - ../../../../http_api/query_history/ # /docs/grafana/next/http_api/query_history/
+  - ../../../../developers/http_api/query_history/ # /docs/grafana/next/developers/http_api/query_history/
   - ../../../../developer-resources/api-reference/http-api/query_history/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/query_history/
 description: Grafana Query History HTTP API

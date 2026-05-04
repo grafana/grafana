@@ -1,6 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { invalidateCache } from '../../utils/getCachedPromise';
+import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { getLogger, setLogger } from '../logging/registry';
 
 import {
@@ -17,7 +17,7 @@ const originalFetch = global.fetch;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  invalidateCache();
+  invalidateCachedPromisesCache();
   // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
   setLogger('grafana/runtime.utils.getCachedPromise', {
     logDebug: jest.fn(),
@@ -118,7 +118,7 @@ describe('when useMTPlugins flag is enabled', () => {
         {
           message: 'Failed to load plugin metas 500:Internal Server Error',
           stack: expect.any(String),
-          key: 'loadPluginMetas',
+          key: expect.stringMatching(/^loadPluginMetas:-?\d+$/),
         }
       );
     });
@@ -146,7 +146,7 @@ describe('when useMTPlugins flag is enabled', () => {
         {
           message: 'Network Error',
           stack: expect.any(String),
-          key: 'loadPluginMetas',
+          key: expect.stringMatching(/^loadPluginMetas:-?\d+$/),
         }
       );
     });
