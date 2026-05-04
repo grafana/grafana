@@ -36,7 +36,7 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
           customization settings:
         </Trans>
       </Text>
-      <Stack gap={1} direction="column" alignItems="flex-start">
+      <Stack gap={2} direction="column" alignItems="flex-start">
         <ShareInternallyConfiguration
           useLockedTime={useLockedTime}
           onToggleLockedTime={model.onToggleLockedTime}
