@@ -405,7 +405,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 
 	if insertDuration > 500*time.Millisecond {
 		b.log.Warn("slow bulk insert", "processed", rsp.Processed, "batch_size", len(batch), "inserted", len(rows), "payload_bytes", payloadBytes, "insert", insertDuration)
-	} else if rsp.Processed%10 == 0 {
+	} else {
 		b.log.Debug("bulk insert timing", "processed", rsp.Processed, "batch_size", len(batch), "inserted", len(rows), "payload_bytes", payloadBytes, "insert", insertDuration)
 	}
 
