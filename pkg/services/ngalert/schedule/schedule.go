@@ -433,7 +433,12 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 func (sch *schedule) runJobFn(next readyToRunItem, prev ...readyToRunItem) func() {
 	return func() {
 		if len(prev) > 0 {
-			sch.log.Debug("Rule evaluation triggered by previous rule", append(next.rule.GetKey().LogContext(), "previousRule", prev[0].rule.UID)...)
+			sch.log.Info("Rule evaluation triggered by previous rule",
+				"source", "eval",
+				"rule_uid", next.rule.UID,
+				"org_id", next.rule.OrgID,
+				"previous_rule", prev[0].rule.UID,
+			)
 		}
 		key := next.rule.GetKey()
 		success, dropped := next.ruleRoutine.Eval(&next.Evaluation)

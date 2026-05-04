@@ -97,7 +97,7 @@ func (sch *schedule) buildSequence(groupKey groupKey, groupItems []readyToRunIte
 	for _, item := range groupItems {
 		uids = append(uids, item.rule.UID)
 	}
-	sch.log.Debug("Sequence created", "folder", groupKey.folderTitle, "group", groupKey.groupName, "sequence", strings.Join(uids, "->"))
+	sch.log.Debug("Sequence created", "folder", groupKey.folderTitle, "group", groupKey.groupName, "rules", len(groupItems), "sequence", strings.Join(uids, "->"))
 
 	return sequence(groupItems[0])
 }

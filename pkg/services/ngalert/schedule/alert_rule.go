@@ -304,7 +304,6 @@ func (a *alertRule) Run() error {
 
 					var needReset bool
 					if a.currentFingerprint != f {
-						logger.Debug("Got a new version of alert rule. Clear up the state", "current_fingerprint", a.currentFingerprint, "fingerprint", f)
 						needReset = true
 					}
 					// We need to reset state if the loop has started and the alert is already paused. It can happen,
@@ -352,7 +351,6 @@ func (a *alertRule) Run() error {
 					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
 					span.End()
 					if err == nil {
-						logger.Debug("Tick processed", "attempt", attempt, "duration", a.clock.Now().Sub(evalStart))
 						return
 					}
 
@@ -369,7 +367,6 @@ func (a *alertRule) Run() error {
 				}
 			}()
 			if ctx.afterEval != nil {
-				logger.Debug("Calling afterEval")
 				ctx.afterEval()
 			}
 		case <-grafanaCtx.Done():
@@ -463,17 +460,16 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 			err = results.Error()
 		}
 
-		logger.Debug("Alert rule evaluated", "error", err, "duration", dur)
 		span.SetStatus(codes.Error, "rule evaluation failed")
 		span.RecordError(err)
 	} else {
-		logger.Debug("Alert rule evaluated", "results", len(results), "duration", dur)
 		span.AddEvent("rule evaluated", trace.WithAttributes(
 			attribute.Int64("results", int64(len(results))),
 		))
 	}
 	start = a.clock.Now()
-	_ = a.stateManager.ProcessEvalResults(
+	var alertsSent int
+	allChanges := a.stateManager.ProcessEvalResults(
 		ctx,
 		e.scheduledAt,
 		e.rule,
@@ -482,13 +478,33 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 		func(ctx context.Context, statesToSend state.StateTransitions) {
 			start := a.clock.Now()
 			alerts := a.send(ctx, logger, statesToSend)
+			alertsSent = len(alerts.PostableAlerts)
 			span.AddEvent("results sent", trace.WithAttributes(
-				attribute.Int64("alerts_sent", int64(len(alerts.PostableAlerts))),
+				attribute.Int64("alerts_sent", int64(alertsSent)),
 			))
 			sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
 		},
 	)
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
+
+	stateTransitionCount := 0
+	for _, t := range allChanges {
+		if t.Changed() {
+			stateTransitionCount++
+		}
+	}
+
+	logCtx := []any{
+		"source", "eval",
+		"results", len(results),
+		"duration", dur,
+		"state_transitions", stateTransitionCount,
+		"alerts_sent", alertsSent,
+	}
+	if err != nil {
+		logCtx = append(logCtx, "error", err)
+	}
+	logger.Info("Alert rule evaluation completed", logCtx...)
 
 	return nil
 }
@@ -498,19 +514,34 @@ func (a *alertRule) send(ctx context.Context, logger log.Logger, states state.St
 	alerts := definitions.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(states))}
 	for _, alertState := range states {
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *state.StateToPostableAlert(alertState, a.appURL, a.featureToggles))
+
+		if alertState.Changed() {
+			status := "firing"
+			if alertState.State.State == eval.Normal {
+				status = "resolved"
+			}
+			logger.Info("Dispatching alert to notifier",
+				"source", "eval",
+				"status", status,
+				"state", state.FormatStateAndReason(alertState.State.State, alertState.StateReason),
+				"labels", alertState.Labels,
+				"starts_at", alertState.StartsAt,
+				"ends_at", alertState.EndsAt,
+			)
+		}
 	}
 
 	if len(alerts.PostableAlerts) > 0 {
-		logger.Debug("Sending transitions to notifier", "transitions", len(alerts.PostableAlerts))
 		a.sender.Send(ctx, a.key.AlertRuleKey, alerts)
 	}
 	return alerts
 }
 
-// sendExpire sends alerts to expire all previously firing alerts in the provided state transitions.
+// expireAndSend sends alerts to expire all previously firing alerts in the provided state transitions.
 func (a *alertRule) expireAndSend(ctx context.Context, states []state.StateTransition) {
 	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock, a.featureToggles)
 	if len(expiredAlerts.PostableAlerts) > 0 {
+		a.logger.Info("Dispatching expired alerts to notifier", "source", "eval", "count", len(expiredAlerts.PostableAlerts))
 		a.sender.Send(ctx, a.key.AlertRuleKey, expiredAlerts)
 	}
 }
