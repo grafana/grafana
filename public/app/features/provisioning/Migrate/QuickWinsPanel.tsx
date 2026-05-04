@@ -18,6 +18,7 @@ interface Props {
   selected: Set<string>;
   onToggle: (uid: string) => void;
   onSelectAll: () => void;
+  onSelectTop: (uids: string[]) => void;
   onMigrateClick: () => void;
 }
 
@@ -27,7 +28,15 @@ interface Props {
  * first repository" prompt instead. Hidden entirely when there's a repo and
  * no unmanaged folders to surface.
  */
-export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll, onMigrateClick }: Props) {
+export function QuickWinsPanel({
+  folders,
+  repos,
+  selected,
+  onToggle,
+  onSelectAll,
+  onSelectTop,
+  onMigrateClick,
+}: Props) {
   const styles = useStyles2(getStyles);
   const hasRepo = repos.length > 0;
 
@@ -74,6 +83,16 @@ export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll
       ? t('provisioning.stats.quick-wins-cta-selected', 'Migrate selected ({{count}})', { count: selectedInTop })
       : t('provisioning.stats.quick-wins-cta-default', 'Migrate top {{count}}', { count: topFolders.length });
 
+  const handleMigrateClick = () => {
+    // "Migrate top N" without anything ticked should still pre-select the
+    // top folders so the drawer shows what's about to migrate. With one or
+    // more cards already ticked, respect that selection and don't add to it.
+    if (selectedInTop === 0) {
+      onSelectTop(topFolders.map((f) => f.uid));
+    }
+    onMigrateClick();
+  };
+
   return (
     <div className={styles.panel}>
       <Stack direction="row" gap={1} alignItems="center" wrap>
@@ -92,7 +111,7 @@ export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll
         </Stack>
         <div className={styles.spacer} />
         <Stack direction="column" gap={0.5} alignItems="flex-end">
-          <Button variant="primary" icon="upload" onClick={onMigrateClick}>
+          <Button variant="primary" icon="upload" onClick={handleMigrateClick}>
             {ctaLabel}
           </Button>
           {totalUnmanagedFolders > topFolders.length && (
@@ -113,7 +132,15 @@ export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll
               type="button"
               className={styles.card}
               aria-pressed={isSelected}
-              onClick={() => onToggle(folder.uid)}
+              onClick={(e) => {
+                // The Checkbox's own onChange handles its click. Without this
+                // bail-out, the click bubbles to the button and onToggle fires
+                // a second time, cancelling the toggle.
+                if (e.target instanceof HTMLElement && e.target.closest('input[type="checkbox"]')) {
+                  return;
+                }
+                onToggle(folder.uid);
+              }}
             >
               <Stack direction="row" gap={1} alignItems="center">
                 <Checkbox value={isSelected} onChange={() => onToggle(folder.uid)} aria-label={folder.title} />

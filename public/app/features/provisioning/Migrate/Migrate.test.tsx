@@ -440,7 +440,7 @@ describe('Migrate', () => {
     expect(screen.queryByText('EU subteam')).not.toBeInTheDocument();
   });
 
-  it('cascades a folder selection to every dashboard inside its subtree', async () => {
+  it('counts a selected folder as one unit and ticks its dashboards in the expansion', async () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 6 }],
@@ -470,8 +470,16 @@ describe('Migrate', () => {
     });
     render(<Migrate />);
     await userEvent.click(screen.getByRole('checkbox', { name: /select folder payments/i }));
-    // 1 folder + 3 cascaded dashboards (incl. one that lives in a subfolder).
-    expect(screen.getByRole('button', { name: /migrate selected \(4\)/i })).toBeInTheDocument();
+    // The footer button counts the folder as one unit — the cascade into the
+    // job's resource list is derived at submit time, not stored in the per-
+    // dashboard selection set.
+    expect(screen.getByRole('button', { name: /migrate selected \(1\)/i })).toBeInTheDocument();
+    // Visual cascade: expanding the folder shows direct dashboards already
+    // ticked and disabled (the user has to deselect the folder to untick).
+    await userEvent.click(screen.getByRole('button', { name: /^expand payments$/i }));
+    const dailyRevenueRow = screen.getByLabelText('Daily revenue');
+    expect(dailyRevenueRow).toBeChecked();
+    expect(dailyRevenueRow).toBeDisabled();
   });
 
   it('opens the migrate drawer when the bulk action is clicked', async () => {

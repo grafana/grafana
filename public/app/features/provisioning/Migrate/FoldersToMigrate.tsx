@@ -89,7 +89,26 @@ export function FoldersToMigrate({
     return matched;
   }, [unmanagedFolders, search, sortKey]);
 
-  const totalSelected = selectedFolderUids.size + selectedDashboardUids.size;
+  // Derived effective coverage. selectedFolderUids "covers" every dashboard
+  // in a folder's subtree; selectedDashboardUids is independent. We never
+  // store the union in state (deselecting one folder would strip dashboards
+  // covered by another) — it's recomputed where it's needed.
+  const folderCoveredDashboardUids = useMemo(() => {
+    const covered = new Set<string>();
+    for (const folder of folders) {
+      if (selectedFolderUids.has(folder.uid)) {
+        folder.allDashboards.forEach((d) => covered.add(d.uid));
+      }
+    }
+    return covered;
+  }, [folders, selectedFolderUids]);
+  // The button counts user ticks (folders + dashboards picked individually
+  // outside any selected folder). Dashboards already inside a selected folder
+  // are not double-counted.
+  const independentDashboardCount = Array.from(selectedDashboardUids).filter(
+    (uid) => !folderCoveredDashboardUids.has(uid)
+  ).length;
+  const totalSelected = selectedFolderUids.size + independentDashboardCount;
 
   const toggleExpanded = (uid: string) => {
     setExpanded((prev) => {
@@ -173,6 +192,7 @@ export function FoldersToMigrate({
               isExpanded={expanded.has(folder.uid)}
               isSelected={selectedFolderUids.has(folder.uid)}
               selectedDashboardUids={selectedDashboardUids}
+              folderCoveredDashboardUids={folderCoveredDashboardUids}
               onToggleExpanded={() => toggleExpanded(folder.uid)}
               onToggleFolder={() => onToggleFolder(folder.uid)}
               onToggleDashboard={onToggleDashboard}
@@ -218,6 +238,7 @@ interface FolderEntryProps {
   isExpanded: boolean;
   isSelected: boolean;
   selectedDashboardUids: Set<string>;
+  folderCoveredDashboardUids: Set<string>;
   onToggleExpanded: () => void;
   onToggleFolder: () => void;
   onToggleDashboard: (uid: string) => void;
@@ -228,6 +249,7 @@ function FolderEntry({
   isExpanded,
   isSelected,
   selectedDashboardUids,
+  folderCoveredDashboardUids,
   onToggleExpanded,
   onToggleFolder,
   onToggleDashboard,
@@ -272,10 +294,20 @@ function FolderEntry({
             </Text>
           ) : (
             folder.directDashboards.map((dash) => {
-              const checked = selectedDashboardUids.has(dash.uid);
+              // Dashboards inside a selected folder appear ticked but can't be
+              // toggled individually — the user has to deselect the folder
+              // first. This avoids storing inconsistent state ("folder X
+              // selected but its dashboard Y isn't").
+              const coveredByFolder = folderCoveredDashboardUids.has(dash.uid);
+              const checked = coveredByFolder || selectedDashboardUids.has(dash.uid);
               return (
                 <div key={`dash-${dash.uid}`} className={styles.childRow}>
-                  <Checkbox value={checked} onChange={() => onToggleDashboard(dash.uid)} aria-label={dash.title} />
+                  <Checkbox
+                    value={checked}
+                    disabled={coveredByFolder}
+                    onChange={() => onToggleDashboard(dash.uid)}
+                    aria-label={dash.title}
+                  />
                   <Icon name="apps" size="sm" />
                   <Text variant="bodySmall">{dash.title}</Text>
                 </div>

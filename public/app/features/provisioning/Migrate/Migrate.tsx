@@ -565,7 +565,7 @@ function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
 }
 
 export function Migrate() {
-  const { data, isLoading, isError, error } = useGetResourceStatsQuery();
+  const { data, isLoading: isStatsLoading, isError: isStatsError, error } = useGetResourceStatsQuery();
   const [repos] = useRepositoryList({ watch: false });
   const repoList = repos ?? [];
 
@@ -573,40 +573,27 @@ export function Migrate() {
   const totals = useMemo(() => aggregateTotals(breakdowns), [breakdowns]);
   const styles = useStyles2(getStyles);
 
-  const { data: folders } = useFolderLeaderboard();
+  const { data: folders, isLoading: isLeaderboardLoading, isError: isLeaderboardError } = useFolderLeaderboard();
   const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());
   const [selectedDashboardUids, setSelectedDashboardUids] = useState<Set<string>>(new Set());
   const [migrateDrawerOpen, setMigrateDrawerOpen] = useState(false);
 
-  const toggleFolder = useCallback(
-    (uid: string) => {
-      const folder = folders.find((f) => f.uid === uid);
-      const cascadeUids = folder?.allDashboards.map((d) => d.uid) ?? [];
-      setSelectedFolderUids((prevFolders) => {
-        const willSelect = !prevFolders.has(uid);
-        const nextFolders = new Set(prevFolders);
-        if (willSelect) {
-          nextFolders.add(uid);
-        } else {
-          nextFolders.delete(uid);
-        }
-        // Cascade: selecting a folder selects every dashboard in its subtree;
-        // deselecting it removes them. Other selected folders sharing
-        // descendants will be re-cascaded if the user re-toggles them.
-        setSelectedDashboardUids((prevDashes) => {
-          const nextDashes = new Set(prevDashes);
-          if (willSelect) {
-            cascadeUids.forEach((d) => nextDashes.add(d));
-          } else {
-            cascadeUids.forEach((d) => nextDashes.delete(d));
-          }
-          return nextDashes;
-        });
-        return nextFolders;
-      });
-    },
-    [folders]
-  );
+  // Independent selection sets. selectedFolderUids drives cascading coverage
+  // (every descendant dashboard is treated as selected); selectedDashboardUids
+  // tracks individual ticks. Effective coverage is the union — derived where
+  // it's needed instead of duplicated in state, which avoids the overlap bug
+  // where deselecting one folder strips dashboards covered by another.
+  const toggleFolder = useCallback((uid: string) => {
+    setSelectedFolderUids((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) {
+        next.delete(uid);
+      } else {
+        next.add(uid);
+      }
+      return next;
+    });
+  }, []);
 
   const toggleDashboard = useCallback((uid: string) => {
     setSelectedDashboardUids((prev) => {
@@ -620,11 +607,22 @@ export function Migrate() {
     });
   }, []);
 
+  // Selecting "all" only picks folders the user can actually see in the
+  // panel (unmanaged + non-empty). selectedFolderUids covers descendants
+  // implicitly via the derived effective-coverage logic.
   const selectAllFolders = useCallback(() => {
-    setSelectedFolderUids(new Set(folders.filter((f) => !f.managedBy).map((f) => f.uid)));
+    setSelectedFolderUids(new Set(folders.filter((f) => !f.managedBy && f.dashboardCount > 0).map((f) => f.uid)));
   }, [folders]);
 
-  if (isLoading) {
+  const selectTopFolders = useCallback((uids: string[]) => {
+    setSelectedFolderUids((prev) => {
+      const next = new Set(prev);
+      uids.forEach((u) => next.add(u));
+      return next;
+    });
+  }, []);
+
+  if (isStatsLoading || isLeaderboardLoading) {
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <Spinner />
@@ -633,10 +631,20 @@ export function Migrate() {
     );
   }
 
-  if (isError) {
+  if (isStatsError) {
     return (
       <Alert severity="error" title={t('provisioning.stats.error-title', 'Failed to load provisioning stats')}>
         {getErrorMessage(error)}
+      </Alert>
+    );
+  }
+
+  if (isLeaderboardError) {
+    return (
+      <Alert severity="error" title={t('provisioning.stats.leaderboard-error-title', 'Failed to load folder list')}>
+        <Trans i18nKey="provisioning.stats.leaderboard-error-body">
+          The Migrate page needs the folder leaderboard to figure out what to migrate. Refresh the page to try again.
+        </Trans>
       </Alert>
     );
   }
@@ -662,6 +670,7 @@ export function Migrate() {
             selected={selectedFolderUids}
             onToggle={toggleFolder}
             onSelectAll={selectAllFolders}
+            onSelectTop={selectTopFolders}
             onMigrateClick={() => setMigrateDrawerOpen(true)}
           />
           <FoldersToMigrate

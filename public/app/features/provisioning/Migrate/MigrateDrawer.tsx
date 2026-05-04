@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -102,9 +102,13 @@ export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDash
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const { handleSubmit, reset } = methods;
 
-  if (initialValues.workflow !== methods.getValues('workflow')) {
+  // The default workflow depends on what the resolved repository allows. When
+  // the user switches repos the form needs a new default — but we can't call
+  // reset() during render. Reset only when the workflow that the form was
+  // initialised with no longer matches what the new repo permits.
+  useEffect(() => {
     reset(initialValues);
-  }
+  }, [reset, initialValues]);
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
@@ -156,16 +160,13 @@ export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDash
       onClose={onClose}
       size="md"
     >
-      {isLoadingRepo ? null : !repository || isReadOnlyRepo ? (
+      {isLoadingRepo ? null : !repository ? (
         <Alert
           severity="warning"
-          title={t(
-            'provisioning.stats.migrate-drawer-readonly-title',
-            'This repository cannot accept changes from Grafana'
-          )}
+          title={t('provisioning.stats.migrate-drawer-no-repo-title', 'No repository connected')}
         >
-          <Trans i18nKey="provisioning.stats.migrate-drawer-readonly-body">
-            Connect a writable repository or update this one&apos;s permissions and try again.
+          <Trans i18nKey="provisioning.stats.migrate-drawer-no-repo-body">
+            Connect a writable repository before migrating.
           </Trans>
         </Alert>
       ) : (
@@ -248,11 +249,19 @@ export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDash
 
               <div className={styles.summary}>
                 <Text variant="bodySmall" color="secondary">
-                  <Trans
-                    i18nKey="provisioning.stats.migrate-drawer-summary"
-                    values={{ folders: folderCount, dashboards: dashboardCount }}
-                    defaults="You picked {{folders}} folders and {{dashboards}} dashboards. Folder selections include every dashboard inside them."
-                  />
+                  {deleteOriginals ? (
+                    <Trans
+                      i18nKey="provisioning.stats.migrate-drawer-summary-migrate"
+                      values={{ folders: folderCount, dashboards: dashboardCount }}
+                      defaults="With “Delete original dashboards” enabled, the job migrates every unmanaged folder and dashboard on this instance — your {{folders}} folder / {{dashboards}} dashboard selection isn't used to scope it. Disable the option below to push only what you picked."
+                    />
+                  ) : (
+                    <Trans
+                      i18nKey="provisioning.stats.migrate-drawer-summary-push"
+                      values={{ folders: folderCount, dashboards: dashboardCount }}
+                      defaults="You picked {{folders}} folders and {{dashboards}} dashboards. Folder selections include every dashboard inside them."
+                    />
+                  )}
                 </Text>
               </div>
 
@@ -272,13 +281,34 @@ export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDash
                   />
                 </Field>
               )}
-              <ResourceEditFormSharedFields
-                resourceType="dashboard"
-                isNew={false}
-                canPushToConfiguredBranch={canPushToConfiguredBranch}
-                repository={repository}
-                hiddenFields={['path']}
-              />
+              {isReadOnlyRepo && (
+                <Alert
+                  severity="warning"
+                  title={t(
+                    'provisioning.stats.migrate-drawer-readonly-title',
+                    'This repository cannot accept changes from Grafana'
+                  )}
+                >
+                  {repoOptions.length > 1 ? (
+                    <Trans i18nKey="provisioning.stats.migrate-drawer-readonly-body-multi">
+                      Pick a writable repository above, or update this one&apos;s permissions and try again.
+                    </Trans>
+                  ) : (
+                    <Trans i18nKey="provisioning.stats.migrate-drawer-readonly-body-single">
+                      Connect a writable repository or update this one&apos;s permissions and try again.
+                    </Trans>
+                  )}
+                </Alert>
+              )}
+              {!isReadOnlyRepo && (
+                <ResourceEditFormSharedFields
+                  resourceType="dashboard"
+                  isNew={false}
+                  canPushToConfiguredBranch={canPushToConfiguredBranch}
+                  repository={repository}
+                  hiddenFields={['path']}
+                />
+              )}
 
               <Field
                 noMargin
@@ -307,7 +337,7 @@ export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDash
                   type="submit"
                   variant="primary"
                   icon="upload"
-                  disabled={isSubmitting || (!deleteOriginals && dashboardCount === 0)}
+                  disabled={isSubmitting || isReadOnlyRepo || (!deleteOriginals && dashboardCount === 0)}
                 >
                   {isSubmitting ? (
                     <Trans i18nKey="provisioning.stats.migrate-drawer-submitting">Starting…</Trans>

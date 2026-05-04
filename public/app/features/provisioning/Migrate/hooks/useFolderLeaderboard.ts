@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { listFolders } from 'app/features/browse-dashboards/api/services';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { queryResultToViewItem } from 'app/features/search/service/utils';
+import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 
 const PAGE_SIZE = 200;
 const MAX_PAGES = 25;
@@ -55,13 +54,35 @@ interface State {
 async function fetchAllFolders(): Promise<
   Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>
 > {
+  const searcher = getGrafanaSearcher();
   const all: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }> = [];
+  // Use the searcher with `kind: ['folder']` and no location filter so we get
+  // every folder on the instance — root-level *and* nested. listFolders only
+  // returns immediate children of a single parent, which would silently drop
+  // subfolders from the leaderboard.
   for (let page = 1; page <= MAX_PAGES; page++) {
-    const batch = await listFolders(undefined, undefined, page, PAGE_SIZE);
-    for (const f of batch) {
-      all.push({ uid: f.uid, title: f.title, parentUid: f.parentUID, managedBy: f.managedBy });
+    const result = await searcher.search({
+      kind: ['folder'],
+      query: '*',
+      from: (page - 1) * PAGE_SIZE,
+      offset: (page - 1) * PAGE_SIZE,
+      limit: PAGE_SIZE,
+    });
+    const rows: DashboardQueryResult[] = result.view.toArray();
+    for (const item of rows) {
+      // `item.location` is the full ancestor path; the immediate parent is the
+      // last segment, with the literal `general` UID stripped.
+      const path = typeof item.location === 'string' ? item.location : '';
+      const segments = path.split('/').filter((s) => s && s !== GENERAL_FOLDER_UID);
+      const parentUid = segments.length > 0 ? segments[segments.length - 1] : undefined;
+      all.push({
+        uid: item.uid,
+        title: item.name,
+        parentUid,
+        managedBy: extractManagerKind(item.managedBy),
+      });
     }
-    if (batch.length < PAGE_SIZE) {
+    if (rows.length < PAGE_SIZE) {
       break;
     }
   }
@@ -122,6 +143,8 @@ function aggregate(
   const allDashboardsByFolder = new Map<string, FolderPeekDashboard[]>();
   const rootDirectDashboards: FolderPeekDashboard[] = [];
   let rootDashboardCount = 0;
+  let rootManagedCount = 0;
+  let rootSampleManager: string | undefined;
 
   const pushTo = (map: Map<string, FolderPeekDashboard[]>, folderUid: string, dash: FolderPeekDashboard) => {
     const existing = map.get(folderUid);
@@ -137,6 +160,10 @@ function aggregate(
     if (dash.ancestors.length === 0) {
       rootDashboardCount += 1;
       rootDirectDashboards.push(dashItem);
+      if (dash.managedBy) {
+        rootManagedCount += 1;
+        rootSampleManager = rootSampleManager ?? dash.managedBy;
+      }
       continue;
     }
     for (const ancestorUid of dash.ancestors) {
@@ -174,9 +201,17 @@ function aggregate(
   }));
 
   if (rootDashboardCount > 0 || (subfoldersByParent.get(GENERAL_FOLDER_UID)?.length ?? 0) > 0) {
+    // The General "folder" doesn't have its own managedBy on the backend.
+    // Mirror the single-managed assumption from real folders: if every root
+    // dashboard reports the same manager, treat the General row as managed.
+    // Mixed states fall through to undefined so the row still appears as a
+    // migration target.
+    const generalManagedBy =
+      rootDashboardCount > 0 && rootManagedCount === rootDashboardCount ? rootSampleManager : undefined;
     rows.push({
       uid: GENERAL_FOLDER_UID,
       title: t('provisioning.stats.general-folder-title', 'General (root dashboards)'),
+      managedBy: generalManagedBy,
       dashboardCount: rootDashboardCount,
       directDashboards: rootDirectDashboards,
       subfolders: subfoldersByParent.get(GENERAL_FOLDER_UID) ?? [],
