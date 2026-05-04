@@ -17,7 +17,6 @@ import {
 import { type RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
-import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -35,6 +34,7 @@ import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
+import { getSlugForRowOrTab } from '../layouts-shared/utils';
 import { type BulkActionElement } from '../types/BulkActionElement';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -135,7 +135,25 @@ export class RowItem
   }
 
   public getSlug(): string {
-    return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Row'));
+    const getSlugString = (row: RowItem) => getSlugForRowOrTab(row);
+    const baseSlug = getSlugString(this);
+
+    // parent is only defined when RowItem is attached and part of the scene graph
+    if (this.parent) {
+      const parentLayout = this.getParentLayout();
+      const rowsWithSameSlug = parentLayout
+        .getOutlineChildren()
+        .filter((item): item is RowItem => item instanceof RowItem)
+        .filter((row) => getSlugString(row) === baseSlug);
+      if (rowsWithSameSlug.length > 1) {
+        const slugIndex = rowsWithSameSlug.findIndex((row) => row === this);
+        if (slugIndex > 0) {
+          return `${baseSlug}__${slugIndex + 1}`;
+        }
+      }
+    }
+
+    return baseSlug;
   }
 
   public switchLayout(layout: DashboardLayoutManager) {

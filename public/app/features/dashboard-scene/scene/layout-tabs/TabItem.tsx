@@ -17,7 +17,6 @@ import {
 import { type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
-import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -37,6 +36,7 @@ import { type RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
+import { getSlugForRowOrTab } from '../layouts-shared/utils';
 import { type BulkActionElement } from '../types/BulkActionElement';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -135,7 +135,22 @@ export class TabItem
   }
 
   public getSlug(): string {
-    return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Tab'));
+    const getSlugString = (tab: TabItem) => getSlugForRowOrTab(tab);
+    const baseSlug = getSlugString(this);
+
+    // check that the tab doesn't end up with the same slug, e.g. My tab and My-tab, if they do add a suffix to make it unique,
+    // parent is only defined when TabItem is attached and part of the scene graph
+    if (this.parent) {
+      const parentLayout = this.getParentLayout();
+      const tabsWithSameSlug = parentLayout.getTabsIncludingRepeats().filter((tab) => getSlugString(tab) === baseSlug);
+      if (tabsWithSameSlug.length > 1) {
+        const slugIndex = tabsWithSameSlug.findIndex((tab) => tab === this);
+        if (slugIndex > 0) {
+          return `${baseSlug}__${slugIndex + 1}`;
+        }
+      }
+    }
+    return baseSlug;
   }
 
   public isCurrentTab() {
