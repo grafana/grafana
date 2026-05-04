@@ -1,24 +1,19 @@
-import { compare, type Operation } from 'fast-json-patch';
-
-import { PluginType, type PluginMeta } from '@grafana/data';
+import { PluginType } from '@grafana/data';
 
 import { config } from '../../config';
-import { getFeatureFlagClient } from '../../internal/openFeature';
-import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
-import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
-import { getBackendSrv } from '../backendSrv';
-import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
 
+import { getPluginSettings } from './getPluginSettings';
 import { logPluginSettingsError, logPluginSettingsWarning } from './logging';
-import { getSettingsMapper } from './mappers/mappers';
-import { inlineSecureValuesMapper, settingsSpecMapper } from './mappers/v0alpha1SettingsMapper';
-import { type Settings as v0alpha1Settings } from './types';
 
-function getApiVersion(): string {
+export function getApiVersion(): string {
   return 'v0alpha1';
 }
 
-function isAuthError(err: unknown): boolean {
+export function getNamespace(): string {
+  return config.namespace;
+}
+
+export function isAuthError(err: unknown): boolean {
   if (typeof err === 'object' && err !== null && 'status' in err && (err.status === 403 || err.status === 401)) {
     return true;
   }
@@ -26,134 +21,12 @@ function isAuthError(err: unknown): boolean {
   return false;
 }
 
-function getLegacySettings(pluginId: string, showErrorAlert?: boolean): Promise<PluginMeta | null> {
-  const options = showErrorAlert ? { showErrorAlert, validatePath: true } : { validatePath: true };
-
-  return getBackendSrv()
-    .get(`/api/plugins/${pluginId}/settings`, undefined, undefined, options)
-    .catch((err) => {
-      // User does not have access to plugin
-      if (isAuthError(err)) {
-        err.isHandled = true;
-        return Promise.reject(err);
-      }
-
-      return Promise.reject(new Error('Unknown Plugin', { cause: err }));
-    });
+export function getLegacyCacheKey(pluginId: string, _showErrorAlert = false) {
+  return `getLegacySettings-${pluginId}`;
 }
 
-function updateLegacySettings(id: string, data: Partial<PluginMeta>): Promise<void> {
-  return getBackendSrv().post<void>(`/api/plugins/${id}/settings`, data, { validatePath: true });
-}
-
-function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean): Promise<v0alpha1Settings> {
-  const options = showErrorAlert ? { showErrorAlert, validatePath: true } : { validatePath: true };
-
-  return getBackendSrv()
-    .get<v0alpha1Settings>(
-      `/apis/${pluginId}.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/settings/${pluginId}`,
-      undefined,
-      undefined,
-      options
-    )
-    .catch((err) => {
-      // User does not have access to plugin
-      if (isAuthError(err)) {
-        err.isHandled = true;
-        return Promise.reject(err);
-      }
-
-      return Promise.reject(new Error('Unknown Plugin', { cause: err }));
-    });
-}
-
-async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
-  const spec = settingsSpecMapper(data);
-  const secure = inlineSecureValuesMapper(data);
-  const update = {
-    apiVersion: `${pluginId}.grafana.app/${getApiVersion()}`,
-    kind: 'Settings',
-    spec,
-    secure,
-  };
-
-  const { metadata, ...stored } = await refetchCachedAppSettings(pluginId, false);
-  const test: Operation = { op: 'test', path: '/metadata/resourceVersion', value: metadata.resourceVersion };
-  const patch = [test, ...compare(stored, update)];
-
-  const updated = await getBackendSrv().patch<v0alpha1Settings>(
-    `/apis/${pluginId}.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/settings/${pluginId}`,
-    patch,
-    {
-      validatePath: true,
-      headers: {
-        'Content-Type': 'application/json-patch+json',
-      },
-    }
-  );
-
-  return updated;
-}
-
-export async function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta | null> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
-    return getCachedLegacySettings(pluginId, showErrorAlert);
-  }
-
-  const meta = await getPluginMetaFromCache(pluginId);
-  if (!meta) {
-    throw new Error(`Plugin not found, no installed plugin with id ${pluginId}`);
-  }
-
-  if (meta.spec.pluginJson.type !== 'app') {
-    const mapper = getSettingsMapper();
-    return mapper(meta.spec);
-  }
-
-  const settings = await getCachedAppSettings(pluginId, showErrorAlert);
-  const mapper = getSettingsMapper();
-  return mapper(meta.spec, settings);
-}
-
-export async function refetchPluginSettings(pluginId: string): Promise<PluginMeta | null> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
-    return refetchCachedLegacySettings(pluginId, false);
-  }
-
-  const meta = await refetchPluginMeta(pluginId);
-  if (!meta) {
-    throw new Error(`Plugin not found, no installed plugin with id ${pluginId}`);
-  }
-
-  if (meta.spec.pluginJson.type !== 'app') {
-    const mapper = getSettingsMapper();
-    return mapper(meta.spec);
-  }
-
-  const settings = await refetchCachedAppSettings(pluginId, false);
-  const mapper = getSettingsMapper();
-  return mapper(meta.spec, settings);
-}
-
-export async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta | null> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
-    await updateLegacySettings(pluginId, data);
-    return refetchCachedLegacySettings(pluginId, false);
-  }
-
-  const meta = await refetchPluginMeta(pluginId);
-  if (!meta) {
-    throw new Error(`Plugin not found, no installed plugin with id ${pluginId}`);
-  }
-
-  if (meta.spec.pluginJson.type !== 'app') {
-    const mapper = getSettingsMapper();
-    return mapper(meta.spec);
-  }
-
-  const updatedSettings = await internalUpdateAppPluginSettings(pluginId, data);
-  const mapper = getSettingsMapper();
-  return mapper(meta.spec, updatedSettings);
+export function getCacheKey(pluginId: string, _showErrorAlert = false) {
+  return `getAppPluginSettings-${pluginId}`;
 }
 
 export async function getAppPluginEnabled(pluginId: string): Promise<boolean> {
@@ -183,21 +56,3 @@ export async function isAppPluginEnabled(pluginId: string): Promise<boolean> {
   }
   return false;
 }
-
-const getCachedLegacySettings = getCachedPromiseWithArgs(getLegacySettings, {
-  cacheKeyFn: (pluginId, _showErrorAlert) => `getLegacySettings-${pluginId}`,
-});
-
-const refetchCachedLegacySettings = getCachedPromiseWithArgs(getLegacySettings, {
-  invalidate: true,
-  cacheKeyFn: (pluginId, _showErrorAlert) => `getLegacySettings-${pluginId}`,
-});
-
-const getCachedAppSettings = getCachedPromiseWithArgs(getAppPluginSettings, {
-  cacheKeyFn: (pluginId, _showErrorAlert) => `getAppPluginSettings-${pluginId}`,
-});
-
-const refetchCachedAppSettings = getCachedPromiseWithArgs(getAppPluginSettings, {
-  invalidate: true,
-  cacheKeyFn: (pluginId, _showErrorAlert) => `getAppPluginSettings-${pluginId}`,
-});
