@@ -33446,7 +33446,7 @@ __metadata:
 
 "storybook@patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch":
   version: 10.3.6
-  resolution: "storybook@patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch::version=10.3.6&hash=1cb44d"
+  resolution: "storybook@patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch::version=10.3.6&hash=ea5518"
   dependencies:
     "@storybook/global": "npm:^5.0.0"
     "@storybook/icons": "npm:^2.0.1"
@@ -33471,7 +33471,7 @@ __metadata:
       optional: true
   bin:
     storybook: ./dist/bin/dispatcher.js
-  checksum: 10/2c43b5d88c276b57c595ef01eaa0005bccfdd9d740f2f2595483e3e5e593a21e49558069cf7003f32b42a76b60b544277f93e87cab3c609383ab7803a2c28c47
+  checksum: 10/46fb4bdcbaa212da1621445eae5eb04d11075cef137233545be903453358419301450f011123e7a172f23d8fef865a248a7487819444155c20dba863dfaee4d7
   languageName: node
   linkType: hard
 

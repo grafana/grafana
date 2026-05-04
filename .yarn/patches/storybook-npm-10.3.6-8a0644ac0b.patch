@@ -1,16 +1,7 @@
 diff --git a/dist/_node-chunks/builder-manager-UBFFXMB4.js b/dist/_node-chunks/builder-manager-UBFFXMB4.js
-index 9284eef7282459f033478d34c63f791a001a4e81..135701a991d45c4f6afa2e9642c43448e1039c28 100644
+index 9284eef7282459f033478d34c63f791a001a4e81..7da25855f92b3047056744529dba55b38c677a78 100644
 --- a/dist/_node-chunks/builder-manager-UBFFXMB4.js
 +++ b/dist/_node-chunks/builder-manager-UBFFXMB4.js
-@@ -1445,7 +1445,7 @@ var CORE_DIR_ORIGIN = join(resolvePackageDir("storybook"), "dist/manager"), isRo
-       // legacy font formats
-       ".woff": "dataurl",
-       ".eot": "dataurl",
--      ".ttf": "dataurl"
-+      ".ttf": "dataurl",
-     },
-     target: BROWSER_TARGETS,
-     supported: SUPPORTED_FEATURES,
 @@ -1459,7 +1459,7 @@ var CORE_DIR_ORIGIN = join(resolvePackageDir("storybook"), "dist/manager"), isRo
      // turn this on to assist with debugging the bundling of managerEntries
      // treeShaking: true,
@@ -20,25 +11,3 @@ index 9284eef7282459f033478d34c63f791a001a4e81..135701a991d45c4f6afa2e9642c43448
      jsxFactory: "React.createElement",
      jsxFragment: "React.Fragment",
      jsx: "transform",
-@@ -1468,17 +1468,17 @@ var CORE_DIR_ORIGIN = join(resolvePackageDir("storybook"), "dist/manager"), isRo
-     legalComments: "external",
-     plugins: [globalExternals(globalsModuleInfoMap)],
-     banner: {
--      js: "try{"
-+      js: "try{",
-     },
-     footer: {
--      js: '}catch(e){ console.error("[Storybook] One of your manager-entries failed: " + import.meta.url, e); }'
-+      js: '}catch(e){ console.error("[Storybook] One of your manager-entries failed: " + import.meta.url, e); }',
-     },
-     define: {
-       "process.env": JSON.stringify(envs),
-       ...stringifyProcessEnvs(envs),
-       global: "window",
--      module: "{}"
--    }
-+      module: "{}",
-+    },
-   };
- }, executor = {
-   get: async () => {
