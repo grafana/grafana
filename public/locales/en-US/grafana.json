@@ -14252,6 +14252,7 @@
       "alerts_other": "Alerts ({{count}})",
       "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
+      "card-select-multi": "Toggle selection of card {{id}}",
       "data": "Data",
       "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",

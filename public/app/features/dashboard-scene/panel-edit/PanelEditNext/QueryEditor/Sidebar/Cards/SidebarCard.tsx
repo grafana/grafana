@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Checkbox, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { type ActionItem, Actions } from '../../../Actions';
 import { QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
@@ -124,8 +124,13 @@ export const SidebarCard = ({
       >
         <div className={styles.cardContent}>
           {isMultiSelectEnabled && (
-            // TODO(queryEditorNextMultiSelect): checkbox goes here
-            <></>
+            // TODO: wire onChange and stop click from bubbling to the card.
+            <Checkbox
+              className={styles.roundedCheckbox}
+              value={isSelected || isPartOfSelection}
+              onChange={() => {}}
+              aria-label={t('query-editor-next.sidebar.card-select-multi', 'Toggle selection of card {{id}}', { id })}
+            />
           )}
           {children}
         </div>
@@ -360,6 +365,21 @@ function getStyles(
         transition: theme.transitions.create(['opacity'], {
           duration: theme.transitions.duration.standard,
         }),
+      },
+    }),
+
+    // local Checkbox styles override
+    roundedCheckbox: css({
+      '& span': {
+        borderRadius: theme.shape.radius.circle,
+      },
+      '& input:checked + span:after': {
+        left: '50%',
+        top: '45%',
+        width: theme.spacing(0.5),
+        height: theme.spacing(1),
+        transform: 'translate(-50%, -50%) rotate(45deg)',
+        borderWidth: '0 1.5px 1.5px 0',
       },
     }),
 
