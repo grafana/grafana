@@ -545,4 +545,66 @@ func TestRenameResourceFile(t *testing.T) {
 		require.NotEqual(t, newFolderID, folderName)
 		require.Equal(t, dashboardGVK, gvk)
 	})
+
+	// In-place renames must not be blocked by strict server-side validation:
+	// the resource already exists in the cluster (potentially saved before the
+	// current schema was enforced), and the rename does not change the spec.
+	// A synthetic GVR is used so the SupportsFolderAnnotation path and the
+	// existing v1-dashboard exemption do not interfere with the assertion.
+	t.Run("same identity rename sends FieldValidation Ignore", func(t *testing.T) {
+		fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
+		fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
+
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old/x.json"}
+		repo.On("Read", mock.Anything, "old/x.json", "old-ref").Return(oldFileInfo, nil)
+
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "fake.grafana.app/v1",
+				"kind":       "Fake",
+				"metadata":   map[string]any{"name": "same-name"},
+			}},
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "fake.grafana.app/v1",
+			"kind":       "Fake",
+			"metadata":   map[string]any{"name": "same-name"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new/x.json"}
+		repo.On("Read", mock.Anything, "new/x.json", "new-ref").Return(newFileInfo, nil)
+
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		grafanaObj := managedGrafanaObj("same-name", "default", nil)
+		mockClient.On("Get", mock.Anything, "same-name", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).Return(grafanaObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "same-name", name)
+
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything)
+		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
 }
