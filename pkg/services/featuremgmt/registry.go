@@ -209,6 +209,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryHistoryRecentQueriesUI",
+			Description: "Replace the Query History drawer with a new Recent Queries modal UI",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
+		},
+		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,

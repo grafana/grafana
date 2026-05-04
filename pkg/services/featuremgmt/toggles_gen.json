@@ -5357,6 +5357,20 @@
     },
     {
       "metadata": {
+        "name": "queryHistoryRecentQueriesUI",
+        "resourceVersion": "1777931263870",
+        "creationTimestamp": "2026-05-04T21:47:43Z"
+      },
+      "spec": {
+        "description": "Replace the Query History drawer with a new Recent Queries modal UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryLibrary",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2022-10-07T18:31:45Z",

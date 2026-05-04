@@ -124,6 +124,11 @@ export interface FeatureToggles {
   */
   queryHistoryLocalOnly?: boolean;
   /**
+  * Replace the Query History drawer with a new Recent Queries modal UI
+  * @default false
+  */
+  queryHistoryRecentQueriesUI?: boolean;
+  /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
   * @default true
   */
