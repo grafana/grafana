@@ -44,7 +44,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 	s := &UserAuthTokenService{
 		sqlStore:          sqlStore,
 		serverLockService: serverLockService,
-		cfg:               cfg,
+		cfgResolver:       &auth.StaticSessionConfigResolver{Cfg: cfg},
 		log:               log.New("auth"),
 		singleflight:      new(singleflight.Group),
 		features:          features,
@@ -71,7 +71,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 type UserAuthTokenService struct {
 	sqlStore             db.DB
 	serverLockService    *serverlock.ServerLockService
-	cfg                  *setting.Cfg
+	cfgResolver          auth.SessionConfigResolver
 	log                  log.Logger
 	externalSessionStore auth.ExternalSessionStore
 	singleflight         *singleflight.Group
@@ -82,8 +82,9 @@ type UserAuthTokenService struct {
 func (s *UserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
 	ctx, span := s.tracer.Start(ctx, "authtoken.CreateToken")
 	defer span.End()
+	cfg := s.cfgResolver.Resolve(ctx)
 
-	token, hashedToken, err := generateAndHashToken(s.cfg.SecretKey)
+	token, hashedToken, err := generateAndHashToken(cfg.SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -141,8 +142,9 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.Create
 func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 	ctx, span := s.tracer.Start(ctx, "authtoken.LookupToken")
 	defer span.End()
+	cfg := s.cfgResolver.Resolve(ctx)
 
-	hashedToken := hashToken(s.cfg.SecretKey, unhashedToken)
+	hashedToken := hashToken(cfg.SecretKey, unhashedToken)
 	var model userAuthToken
 	var exists bool
 	var err error
@@ -172,7 +174,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		}
 	}
 
-	if model.CreatedAt <= s.createdAfterParam() || model.RotatedAt <= s.rotatedAfterParam() {
+	if model.CreatedAt <= createdAfterParam(cfg) || model.RotatedAt <= rotatedAfterParam(cfg) {
 		ctxLogger.Debug("User token has expired", "userID", model.UserId, "tokenID", model.Id, "createdAt", model.CreatedAt, "rotatedAt", model.RotatedAt)
 		return nil, &auth.TokenExpiredError{
 			UserID:  model.UserId,
@@ -346,13 +348,14 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
 	ctx, span := s.tracer.Start(ctx, "authtoken.rotateToken")
 	defer span.End()
+	cfg := s.cfgResolver.Resolve(ctx)
 
 	var clientIPStr string
 	if clientIP != nil {
 		clientIPStr = clientIP.String()
 	}
 
-	newToken, hashedToken, err := generateAndHashToken(s.cfg.SecretKey)
+	newToken, hashedToken, err := generateAndHashToken(cfg.SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -554,14 +557,15 @@ func (s *UserAuthTokenService) GetUserToken(ctx context.Context, userId, userTok
 func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) ([]*auth.UserToken, error) {
 	ctx, span := s.tracer.Start(ctx, "authtoken.GetUserTokens")
 	defer span.End()
+	cfg := s.cfgResolver.Resolve(ctx)
 
 	result := []*auth.UserToken{}
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var tokens []*userAuthToken
 		err := dbSession.Where("user_id = ? AND created_at > ? AND rotated_at > ? AND revoked_at = 0",
 			userId,
-			s.createdAfterParam(),
-			s.rotatedAfterParam()).
+			createdAfterParam(cfg),
+			rotatedAfterParam(cfg)).
 			Find(&tokens)
 		if err != nil {
 			return err
@@ -585,6 +589,7 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int64) (int64, error) {
 	ctx, span := s.tracer.Start(ctx, "authtoken.ActiveTokenCount")
 	defer span.End()
+	cfg := s.cfgResolver.Resolve(ctx)
 
 	if userID != nil && *userID < 1 {
 		return 0, errUserIDInvalid
@@ -593,7 +598,7 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int
 	var count int64
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		query := `SELECT COUNT(*) FROM user_auth_token WHERE created_at > ? AND rotated_at > ? AND revoked_at = 0`
-		args := []interface{}{s.createdAfterParam(), s.rotatedAfterParam()}
+		args := []interface{}{createdAfterParam(cfg), rotatedAfterParam(cfg)}
 		if userID != nil {
 			query += " AND user_id = ?"
 			args = append(args, *userID)
@@ -669,12 +674,12 @@ func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *qu
 	return u, err
 }
 
-func (s *UserAuthTokenService) createdAfterParam() int64 {
-	return getTime().Add(-s.cfg.LoginMaxLifetime).Unix()
+func createdAfterParam(cfg auth.SessionConfig) int64 {
+	return getTime().Add(-cfg.LoginMaxLifetime).Unix()
 }
 
-func (s *UserAuthTokenService) rotatedAfterParam() int64 {
-	return getTime().Add(-s.cfg.LoginMaxInactiveLifetime).Unix()
+func rotatedAfterParam(cfg auth.SessionConfig) int64 {
+	return getTime().Add(-cfg.LoginMaxInactiveLifetime).Unix()
 }
 
 func createToken() (string, error) {
