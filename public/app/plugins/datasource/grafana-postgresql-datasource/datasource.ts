@@ -1,8 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { type DataSourceInstanceSettings, type ScopedVars, type VariableWithMultiSupport } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { type LanguageDefinition } from '@grafana/plugin-ui';
-import { type TemplateSrv } from '@grafana/runtime';
+import { HealthCheckError, HealthStatus, type TemplateSrv } from '@grafana/runtime';
 import {
   COMMON_FNS,
   type DB,
@@ -55,6 +56,30 @@ export class PostgresDatasource extends SqlDatasource {
 
     return value;
   };
+
+  async testDatasource() {
+    const res = await this.callHealthCheck();
+    if (res.status === HealthStatus.OK) {
+      if (res.details?.superuser) {
+        return {
+          status: 'warning',
+          message: res.message,
+          details: {
+            message: t(
+              'datasources.postgres.superuser-warning',
+              'The database user is a PostgreSQL superuser. We strongly recommend using a user with restricted permissions.'
+            ),
+          },
+        };
+      }
+      return { status: 'success', message: res.message };
+    }
+    return Promise.reject({
+      status: 'error',
+      message: res.message,
+      error: new HealthCheckError(res.message, res.details),
+    });
+  }
 
   async getVersion(): Promise<string> {
     const value = await this.runSql<{ version: number }>(getVersion());
