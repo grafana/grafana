@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { type DataSourcePickerProps, type DataSourcePickerState, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourcePickerProps, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
 
@@ -23,7 +23,7 @@ export interface MultipleDataSourcePickerProps extends Omit<DataSourcePickerProp
 export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) => {
   const dataSourceSrv = getDataSourceSrv();
 
-  const [state, setState] = useState<DataSourcePickerState>();
+  const [state, setState] = useState<{ error?: string }>();
 
   const onChange = (items: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
     if (actionMeta.action === 'clear' && props.onClear) {
