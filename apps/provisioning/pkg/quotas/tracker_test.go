@@ -134,6 +134,38 @@ func TestQuotaTracker_ConcurrentAccess(t *testing.T) {
 	assert.Equal(t, int(limit), successCount)
 }
 
+func TestQuotaTracker_AllowOverLimit(t *testing.T) {
+	tracker := NewInMemoryQuotaTracker(10, 10)
+
+	// At limit, acquire should fail
+	require.False(t, tracker.TryAcquire())
+
+	// Raise the limit by 2
+	tracker.AllowOverLimit(2)
+
+	// Now two acquires should succeed
+	require.True(t, tracker.TryAcquire())  // 10 -> 11 (limit is now 12)
+	require.True(t, tracker.TryAcquire())  // 11 -> 12
+	require.False(t, tracker.TryAcquire()) // 12 >= 12, rejected
+}
+
+func TestQuotaTracker_AllowOverLimitUnlimited(t *testing.T) {
+	tracker := NewInMemoryQuotaTracker(0, 0)
+
+	// AllowOverLimit on unlimited tracker should not panic or change behavior
+	tracker.AllowOverLimit(5)
+	require.True(t, tracker.TryAcquire())
+}
+
+func TestQuotaTracker_AllowOverLimitZeroOrNegative(t *testing.T) {
+	tracker := NewInMemoryQuotaTracker(10, 10)
+
+	// Zero and negative values should be no-ops
+	tracker.AllowOverLimit(0)
+	tracker.AllowOverLimit(-1)
+	require.False(t, tracker.TryAcquire())
+}
+
 func TestQuotaTracker_ConcurrentAcquireAndRelease(t *testing.T) {
 	tracker := NewInMemoryQuotaTracker(50, 50)
 
