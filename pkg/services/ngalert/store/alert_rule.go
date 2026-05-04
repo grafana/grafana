@@ -777,7 +777,10 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 
 		// Build group cursor condition
 		if cursor.NamespaceUID != "" {
-			q = buildGroupCursorCondition(q, cursor)
+			q, err = buildGroupCursorCondition(q, cursor, query.OrgID)
+			if err != nil {
+				return err
+			}
 		}
 
 		// No arbitrary fetch limit - let the loop control pagination
@@ -867,27 +870,60 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 	return result, nextToken, err
 }
 
-func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
+func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor, orgID int64) (*xorm.Session, error) {
 	// We need to handle this here otherwise we end up checking rule_group > "no_group_for_rule..."
 	// and skipping everything
+	isNoGroupRule := ngmodels.IsNoGroupRuleGroup(c.RuleGroup)
 	ruleGroup := c.RuleGroup
-	if ngmodels.IsNoGroupRuleGroup(ruleGroup) {
+	var uid string
+	var uidSubquery string
+	if isNoGroupRule {
+		parsedRuleGroup, err := ngmodels.ParseNoRuleGroup(c.RuleGroup)
+		if err != nil {
+			return nil, err
+		}
+
+		uid = parsedRuleGroup.GetRuleUID()
+		uidSubquery = "(SELECT id FROM alert_rule WHERE org_id = ? AND uid = ?)"
 		ruleGroup = ""
 	}
 
 	if c.FolderFullpath != "" {
-		return sess.And(
-			"((folder_fullpath > ?) OR (folder_fullpath = ? AND namespace_uid > ?) OR (folder_fullpath = ? AND namespace_uid = ? AND rule_group > ?))",
+		sql := `(folder_fullpath > ?)
+			OR (folder_fullpath = ? AND namespace_uid > ?)
+			OR (folder_fullpath = ? AND namespace_uid = ? AND rule_group > ?)
+		`
+
+		args := []any{
 			c.FolderFullpath,
 			c.FolderFullpath, c.NamespaceUID,
 			c.FolderFullpath, c.NamespaceUID, ruleGroup,
-		)
+		}
+
+		// If the cursor is an ungrouped rule we need to look up the rule id from the uid to use as a row level tiebreaker
+		if isNoGroupRule {
+			sql += " OR (folder_fullpath = ? AND namespace_uid = ? AND rule_group = '' AND id > " + uidSubquery + ")"
+			args = append(args, c.FolderFullpath, c.NamespaceUID, orgID, uid)
+		}
+
+		return sess.And("("+sql+")", args...), nil
 	}
+
 	// fallback to previous cursor condition if folder fullpath is not available, this means that pagination will be less efficient as it cannot take advantage of folder fullpath ordering, but at least it will work and not return duplicate or missing groups.
-	return sess.And(
-		"((namespace_uid > ?) OR (namespace_uid = ? AND rule_group > ?))",
-		c.NamespaceUID, c.NamespaceUID, ruleGroup,
-	)
+	sql := `(namespace_uid > ?)
+		OR (namespace_uid = ? AND rule_group > ?)`
+	args := []any{
+		c.NamespaceUID,
+		c.NamespaceUID, ruleGroup,
+	}
+
+	if isNoGroupRule {
+		// Same note on the row level tiebreaker as above here
+		sql += " OR (namespace_uid = ? AND rule_group = '' AND id > " + uidSubquery + ")"
+		args = append(args, c.NamespaceUID, orgID, uid)
+	}
+
+	return sess.And("("+sql+")", args...), nil
 }
 
 func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsMap map[string]struct{}) bool {
@@ -1097,9 +1133,15 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 
 	if query.DashboardUID != "" {
 		q = q.Where("dashboard_uid = ?", query.DashboardUID)
-		if query.PanelID != 0 {
-			q = q.Where("panel_id = ?", query.PanelID)
-		}
+	}
+	if query.PanelID != 0 {
+		q = q.Where("panel_id = ?", query.PanelID)
+	}
+	if query.IsPaused != nil {
+		q = q.Where("is_paused = ?", *query.IsPaused)
+	}
+	if query.TitleExact != "" {
+		q = q.Where("title = ?", query.TitleExact)
 	}
 
 	if len(query.NamespaceUIDs) > 0 {

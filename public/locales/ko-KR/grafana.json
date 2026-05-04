@@ -8098,6 +8098,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "즐겨찾기에 추가",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "데이터 탐색",
       "open-in-explore": "탐색 보기에서 열기",
       "remove-favorite": "즐겨찾기에서 제거 "
@@ -14157,6 +14163,8 @@
       "alerts-loading": "경고",
       "card-click": "{{id}} 카드 선택",
       "data": "데이터",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "새 {{type}}",
       "queries-expressions": "쿼리 및 표현식",
       "toggle-size": "사이드바 크기 토글",
@@ -14867,10 +14875,13 @@
       "title": "추천 대시보드와 템플릿으로 대시보드 만들기 시작하기"
     },
     "nav": {
+      "counter": "",
       "go-to": "{{number}}번 슬라이드로 이동",
-      "next": "다음",
-      "prev": "이전"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "쿼리 설명",

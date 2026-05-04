@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "The repository for the selected folder could not be found. Please ensure that the folder is provisioned correctly.",
         "repository-not-found-title": "Repository not found"
       },
+      "error-already-in-target-folder": "Selected resources are already in the target folder.",
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
       "move-total": "In total, this will affect:",
@@ -7313,6 +7314,7 @@
       "terraform": "Managed by: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
       "current-file-not-found": "Current dashboard file could not be found",
@@ -8144,6 +8146,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
+      "default-active": "This data source is currently set as the default.",
+      "default-error": "Failed to update default data source",
+      "default-label": "Default",
+      "default-make-button": "Make default",
+      "default-remove-button": "Remove default",
+      "default-tooltip": "The default data source is preselected in new panels.",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
@@ -15447,7 +15455,6 @@
       "forwards-time-aria-label": "Move time range forwards",
       "to": "to",
       "zoom-out-button": "Zoom out time range",
-      "zoom-out-tooltip": "Time range zoom out <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
     },
     "time-range": {
