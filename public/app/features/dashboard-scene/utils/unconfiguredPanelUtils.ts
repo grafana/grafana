@@ -14,6 +14,7 @@ export const EXIT_DURATION_MS = 400;
 export const EXIT_EASING = 'cubic-bezier(0.2, 0, 0, 1)';
 export const TEXT_EXIT_DELAY_MS = 30;
 export const BUTTON_ANIM_DURATION_MS = 200;
+export const ENTER_DELAY_MS = 30;
 export const BUTTON_STAGGER_INTERVAL_MS = 60;
 // Longest path: text exit finishes at 400 + 30 = 430ms
 export const TRANSITION_MS = EXIT_DURATION_MS + TEXT_EXIT_DELAY_MS;

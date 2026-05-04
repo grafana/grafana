@@ -33,6 +33,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import {
   BUTTON_ANIM_DURATION_MS,
   BUTTON_STAGGER_INTERVAL_MS,
+  ENTER_DELAY_MS,
   EXIT_DURATION_MS,
   EXIT_EASING,
   TEXT_EXIT_DELAY_MS,
@@ -267,9 +268,11 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
                   phase === ViewPhase.TransitioningToQuiet && styles.buttonExiting
                 )}
                 style={
-                  phase === ViewPhase.TransitioningToActive || phase === ViewPhase.TransitioningToQuiet
-                    ? { animationDelay: `${i * BUTTON_STAGGER_INTERVAL_MS}ms` }
-                    : undefined
+                  phase === ViewPhase.TransitioningToActive
+                    ? { animationDelay: `${ENTER_DELAY_MS + i * BUTTON_STAGGER_INTERVAL_MS}ms` }
+                    : phase === ViewPhase.TransitioningToQuiet
+                      ? { animationDelay: `${i * BUTTON_STAGGER_INTERVAL_MS}ms` }
+                      : undefined
                 }
               >
                 {isCompact ? (
@@ -447,6 +450,7 @@ function getStyles(theme: GrafanaTheme2) {
     gearEntering: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         animation: `${gearFrames.enter} ${EXIT_DURATION_MS}ms ${EXIT_EASING} both`,
+        animationDelay: `${ENTER_DELAY_MS}ms`,
       },
     }),
     gearExiting: css({
@@ -457,6 +461,7 @@ function getStyles(theme: GrafanaTheme2) {
     textEntering: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         animation: `${textFrames.enter} ${EXIT_DURATION_MS}ms ${EXIT_EASING} both`,
+        animationDelay: `${ENTER_DELAY_MS}ms`,
       },
     }),
     textExiting: css({
