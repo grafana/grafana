@@ -413,3 +413,96 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 	require.NoError(t, err)
 	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
+
+// TestIntegrationProvisioning_IncrementalGitSync_PureRename_PreservesContent
+// is the positive companion to the unit tests for the rename validation skip:
+// when a file is moved without any byte-level edit, the dashboard ends up at
+// the new sourcePath with the original spec untouched. Together with the unit
+// tests in resources_remove_test.go (which assert FieldValidation=Ignore is
+// what crosses the wire on hash-equal renames), this confirms the end-to-end
+// path completes without re-validating the unchanged spec.
+func TestIntegrationProvisioning_IncrementalGitSync_PureRename_PreservesContent(t *testing.T) {
+	helper := sharedGitHelper(t)
+	ctx := context.Background()
+
+	const repoName = "git-incremental-pure-rename"
+	const uid = "pure-rename-001"
+
+	dashJSON := common.DashboardJSON(uid, "Pure Rename Dash", 1)
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"old/dashboard.json": dashJSON,
+	}, "write", "branch")
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		uid: {Title: "Pure Rename Dash", SourcePath: "old/dashboard.json"},
+	})
+
+	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, uid, metav1.GetOptions{})
+	require.NoError(t, err)
+	dashSnap := common.SnapshotObject(t, dashBefore)
+
+	require.NoError(t, local.CreateDirPath("new"))
+	_, err = local.Git("mv", "old/dashboard.json", "new/dashboard.json")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "pure path-only rename")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		uid: {Title: "Pure Rename Dash", SourcePath: "new/dashboard.json"},
+	})
+
+	// The spec must be untouched: an in-place UPDATE was issued, but the body
+	// it carried was the same bytes the cluster already had, so RV bumps and
+	// folder annotation are the only mutations.
+	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, uid, metav1.GetOptions{})
+	require.NoError(t, err)
+	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
+}
+
+// TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewContent
+// covers the other side of the hash-based discriminator: when a rename is
+// committed alongside a content edit, the new bytes must reach the cluster.
+// The fix must not silently short-circuit content updates that happen to ride
+// along with a path change.
+func TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewContent(t *testing.T) {
+	helper := sharedGitHelper(t)
+	ctx := context.Background()
+
+	const repoName = "git-incremental-rename-with-edit"
+	const uid = "rename-edit-001"
+
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"old/dashboard.json": common.DashboardJSON(uid, "Original Title", 1),
+	}, "write", "branch")
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		uid: {Title: "Original Title", SourcePath: "old/dashboard.json"},
+	})
+
+	// `git mv` first (preserving content), then rewrite the file at the new
+	// path so the same commit carries both the path change and a body change.
+	// Git's similarity-based rename detection should still flag this as a
+	// FileActionRenamed, but with a new blob hash — the rename-with-edit
+	// branch.
+	require.NoError(t, local.CreateDirPath("new"))
+	_, err := local.Git("mv", "old/dashboard.json", "new/dashboard.json")
+	require.NoError(t, err)
+	require.NoError(t, local.UpdateFile("new/dashboard.json", string(common.DashboardJSON(uid, "Edited Title", 2))))
+	_, err = local.Git("add", ".")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "rename and edit dashboard")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		uid: {Title: "Edited Title", SourcePath: "new/dashboard.json"},
+	})
+	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, uid, "Edited Title")
+}
