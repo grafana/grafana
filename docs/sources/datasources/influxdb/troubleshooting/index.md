@@ -29,6 +29,22 @@ This document provides solutions to common issues you may encounter when configu
 
 The following errors occur when Grafana cannot establish or maintain a connection to InfluxDB.
 
+### "Plugin health check failed" or "An error occurred within the plugin"
+
+**Symptoms:**
+
+- All panels using InfluxDB return "An error occurred within the plugin"
+- Adding a new InfluxDB data source fails with "Plugin health check failed"
+- Connection settings appear blank in the UI
+
+**Possible causes and solutions:**
+
+| Cause | Solution |
+| ----- | -------- |
+| Platform outage | If all InfluxDB panels fail at the same time, check the [Grafana Cloud status page](https://status.grafana.com/) for active incidents before investigating your own configuration. The issue may be a transient platform problem that resolves without customer-side action. |
+| Authentication failure | Check the Grafana server logs for auth-related errors. Verify your credentials haven't expired or been rotated. |
+| Transient network issue | The error may self-resolve. Wait a few minutes and retry **Save & test**. If the issue persists, check network connectivity between Grafana and InfluxDB. |
+
 ### Failed to connect to InfluxDB
 
 **Error message:** "error performing influxQL query" or "error performing flux query" or "error performing sql query"
@@ -44,14 +60,29 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 1. Ensure there are no firewall rules blocking the connection.
 1. For Grafana Cloud, ensure you have configured [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) if your InfluxDB instance is not publicly accessible.
 
-### Request timed out
+### PDC connection fails with "no such host"
 
-**Error message:** "context deadline exceeded" or "request timeout"
+**Error message:** "socks connect tcp ... -> influxdb.host:8086: dial tcp: lookup ... no such host"
 
-**Cause:** The connection to InfluxDB timed out before receiving a response.
+**Cause:** When using [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/), the InfluxDB URL can't be resolved through the SOCKS proxy tunnel.
 
 **Solution:**
 
+1. Don't use `127.0.0.1` or `localhost` as the InfluxDB URL. PDC tunnels traffic over a SOCKS proxy, which can't resolve loopback addresses.
+1. Use the machine's LAN IP address or a resolvable hostname instead.
+1. Verify the hostname is resolvable from the network where the PDC agent is running.
+1. If the error appeared suddenly without configuration changes, check the [Grafana Cloud status page](https://status.grafana.com/) for active incidents.
+
+### Request timed out
+
+**Error message:** "context deadline exceeded" or "request timeout" or "dial tcp \<IP\>:\<port\>: i/o timeout"
+
+**Cause:** The connection to InfluxDB timed out before receiving a response. This is common after Grafana upgrades when infrastructure changes (such as database host migrations) happen at the same time.
+
+**Solution:**
+
+1. Verify network connectivity from the Grafana server to your InfluxDB endpoint. Check DNS resolution, firewall rules, and port access.
+1. Confirm the InfluxDB host IP address or hostname hasn't changed. This is especially important after infrastructure migrations or Grafana upgrades.
 1. Check the network latency between Grafana and InfluxDB.
 1. Verify that InfluxDB is not overloaded or experiencing performance issues.
 1. Increase the timeout setting in the data source configuration under **Advanced HTTP Settings**.
@@ -88,9 +119,60 @@ The following errors occur when there are issues with authentication credentials
 1. Ensure the organization ID is correct for Flux queries.
 1. For InfluxQL with InfluxDB 2.x, verify the DBRP mapping is configured correctly.
 
+### 404 Not Found when sending Telegraf metrics to Grafana Cloud
+
+**Error message:** "404 Not Found" when Telegraf writes to the Grafana Cloud InfluxDB-compatible endpoint.
+
+**Cause:** The Telegraf `influxdb_v2` output plugin isn't compatible with the Grafana Cloud metrics endpoint. This commonly occurs when using PrivateLink or the standard InfluxDB-compatible write endpoint.
+
+**Solution:**
+
+1. Switch the Telegraf output plugin from `influxdb_v2` to `influxdb` (v1) in your Telegraf configuration.
+1. Ensure the endpoint URL and credentials match those shown in your Grafana Cloud InfluxDB configuration page.
+1. Restart Telegraf after making the change.
+
+### Browser access mode disabled
+
+**Error message:** "Direct browser access in the InfluxDB datasource is no longer available. Switch to server access mode."
+
+**Cause:** The data source is configured for direct browser access, which is no longer supported.
+
+**Solution:**
+
+1. Open the data source configuration in Grafana.
+1. Change the access mode to **Server (default)**.
+1. Click **Save & test** to verify the connection.
+
+### Content Security Policy (CSP) violation
+
+**Symptoms:**
+
+- CSP violation errors in the browser console referencing the InfluxDB plugin
+- `net::ERR_ABORTED` on proxy requests
+- The InfluxDB plugin attempts direct browser-to-InfluxDB connections
+
+**Cause:** You're running an outdated version of Grafana. Browser access mode was removed in Grafana 9.2.0, and older versions may attempt direct browser connections that violate CSP policies.
+
+**Solution:**
+
+1. Upgrade to the latest stable Grafana release. The InfluxDB data source requires Grafana 12.3.0 or later.
+1. After upgrading, verify the data source access mode is set to **Server (default)**.
+
 ## Configuration errors
 
 The following errors occur when the data source is not configured correctly.
+
+### Missing URL
+
+**Error message:** "missing URL from datasource configuration"
+
+**Cause:** The data source URL field is empty.
+
+**Solution:**
+
+1. Open the data source configuration in Grafana.
+1. Enter the full URL of your InfluxDB instance in the **URL** field, including the protocol and port (for example, `http://localhost:8086`).
+1. Click **Save & test** to verify the connection.
 
 ### Unknown influx version
 
@@ -102,10 +184,15 @@ The following errors occur when the data source is not configured correctly.
 
 1. Open the data source configuration in Grafana.
 1. Verify that a valid query language is selected: **Flux**, **InfluxQL**, or **SQL**.
-1. Ensure the selected query language matches your InfluxDB version:
-   - Flux: InfluxDB 1.8+ and 2.x
-   - InfluxQL: InfluxDB 1.x and 2.x (with DBRP mapping)
-   - SQL: InfluxDB 3.x only
+1. Match the query language to your InfluxDB version:
+
+| InfluxDB version | Recommended query language | Notes |
+| ---------------- | ------------------------- | ----- |
+| 1.x              | InfluxQL                  | Flux is available from 1.8+ but InfluxQL is the primary language. |
+| 2.x (OSS/Cloud)  | Flux                      | InfluxQL is also available via the v1 compatibility API, but requires [DBRP mapping](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/). |
+| 3.x / Cloud Dedicated / Cloud Serverless | SQL or InfluxQL | Flux is not supported on InfluxDB 3.x. |
+
+Each query language uses a different API endpoint. If you select the wrong language for your InfluxDB version, health checks and queries will fail.
 
 ### Invalid data source info received
 
@@ -182,6 +269,22 @@ The following errors occur when there are issues with query syntax or execution.
 1. Use aggregation functions to reduce the number of data points.
 1. For Flux, use `aggregateWindow()` to downsample data.
 
+### FlightSQL errors (SQL query language)
+
+**Error message:** Messages prefixed with `"flightsql: "` followed by a gRPC error description.
+
+**Cause:** The SQL (FlightSQL) backend encountered an error communicating with InfluxDB 3.x.
+
+**Possible causes and solutions:**
+
+| Error code | Cause | Solution |
+| ---------- | ----- | -------- |
+| `InvalidArgument` | The SQL query syntax is invalid. | Check your SQL query for syntax errors. |
+| `PermissionDenied` | The token doesn't have access to the requested resource. | Verify the token has read access to the database. |
+| `NotFound` | The requested table or database doesn't exist. | Check the database name and table name in your query. |
+| `Unavailable` | The InfluxDB server is unreachable. | Verify InfluxDB is running and the URL is correct. |
+| `Unauthenticated` | The token is missing, invalid, or expired. | Update the token in the data source configuration. |
+
 ### No time column found
 
 **Error message:** "no time column found"
@@ -197,13 +300,32 @@ The following errors occur when there are issues with query syntax or execution.
 
 ## Health check errors
 
-The following errors occur when testing the data source connection.
+The following errors occur when clicking **Save & test** to validate the data source connection. Each query language uses a different health check query.
 
-### Error getting flux query buckets
+### Flux health check errors
 
-**Error message:** "error getting flux query buckets"
+**"error performing flux query"**
 
-**Cause:** The health check query `buckets()` failed to return results.
+**Cause:** The health check query `buckets()` failed to execute.
+
+**Solution:**
+
+1. Verify the InfluxDB URL is correct and reachable.
+1. Check that the token is valid and has not expired.
+1. Ensure the organization ID is correct.
+
+**"error reading buckets"**
+
+**Cause:** The `buckets()` query executed but returned an error.
+
+**Solution:**
+
+1. Verify the token has permission to list buckets.
+1. Check that the organization ID matches the token's organization.
+
+**"error getting flux query buckets"**
+
+**Cause:** The `buckets()` query executed without error but returned no data.
 
 **Solution:**
 
@@ -211,11 +333,31 @@ The following errors occur when testing the data source connection.
 1. Check that the organization ID is correct.
 1. Ensure InfluxDB is running and accessible.
 
-### Error connecting InfluxDB influxQL
+### InfluxQL health check errors
 
-**Error message:** "error connecting InfluxDB influxQL"
+**"error performing influxQL query"**
 
-**Cause:** The health check query `SHOW MEASUREMENTS` failed.
+**Cause:** The health check query `SHOW MEASUREMENTS` failed to execute.
+
+**Solution:**
+
+1. Verify the InfluxDB URL is correct and reachable.
+1. Check the username and password (or token for InfluxDB 2.x).
+1. Verify the database name exists.
+
+**"error reading influxDB"**
+
+**Cause:** The `SHOW MEASUREMENTS` query executed but returned an error.
+
+**Solution:**
+
+1. Verify the database name is correct.
+1. Check that the user has permission to run `SHOW MEASUREMENTS`.
+1. For InfluxDB 2.x, verify DBRP mapping is configured.
+
+**"error connecting InfluxDB influxQL"**
+
+**Cause:** The health check completed but the response couldn't be processed.
 
 **Solution:**
 
@@ -224,9 +366,22 @@ The following errors occur when testing the data source connection.
 1. Ensure the database exists and contains measurements.
 1. For InfluxDB 2.x, verify DBRP mapping is configured.
 
+### SQL health check errors
+
+**"error performing sql query"**
+
+**Cause:** The health check query `select 1` failed to execute against the FlightSQL endpoint.
+
+**Solution:**
+
+1. Verify the InfluxDB URL is correct. The SQL health check connects via gRPC (FlightSQL).
+1. Check the token is valid and has the required permissions.
+1. If using TLS, verify the certificate configuration. Toggle **Insecure Connection** if connecting without TLS.
+1. Ensure the InfluxDB 3.x instance is running and the FlightSQL endpoint is accessible.
+
 ### 0 measurements found
 
-**Error message:** "data source is working. 0 measurements found"
+**Error message:** "datasource is working. 0 measurements found"
 
 **Cause:** The connection is successful, but the database contains no measurements.
 
@@ -239,6 +394,21 @@ The following errors occur when testing the data source connection.
 ## Other common issues
 
 The following issues don't produce specific error messages but are commonly encountered.
+
+### "Data source was not found"
+
+**Symptoms:**
+
+- Dashboard panels display "data source \<UID\> was not found"
+- Manually re-running queries in the panel editor works after reselecting the data source
+
+**Cause:** Dashboard panels reference an old or deleted data source UID. This happens when a data source is deleted and recreated, since the new data source gets a different UID.
+
+**Solution:**
+
+1. Edit each affected panel and reselect the correct InfluxDB data source from the data source drop-down.
+1. Click **Apply** to save each panel.
+1. To avoid this issue, update existing data sources instead of deleting and recreating them.
 
 ### Empty query results
 
