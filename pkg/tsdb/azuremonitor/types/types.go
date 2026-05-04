@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
@@ -55,6 +56,32 @@ type DatasourceInfo struct {
 
 	DatasourceName string
 	DatasourceUID  string
+
+	// Cache is scoped to this datasource instance. It is rebuilt automatically
+	// when the SDK instance manager replaces the instance after settings
+	// change, so cached entries never outlive a credentials/route update.
+	// Pointer-typed so the value-receiver copies of DatasourceInfo continue to
+	// share the same underlying maps (sync.Map must not be copied).
+	Cache *DatasourceCache
+}
+
+// DatasourceCache holds per-instance lookup caches for Azure metadata.
+// All fields are *sync.Map so that copies of the enclosing DatasourceInfo
+// share the same backing storage.
+type DatasourceCache struct {
+	// Workspaces maps cache key -> *cacheEntry[[]LogAnalyticsWorkspaceResponse]
+	// (the entry type is defined in the azuremonitor package).
+	Workspaces *sync.Map
+	// MetricNamespaces maps cache key -> *cacheEntry[[]schemas.Table].
+	MetricNamespaces *sync.Map
+}
+
+// NewDatasourceCache constructs an empty DatasourceCache for a fresh instance.
+func NewDatasourceCache() *DatasourceCache {
+	return &DatasourceCache{
+		Workspaces:       &sync.Map{},
+		MetricNamespaces: &sync.Map{},
+	}
 }
 
 // AzureMonitorQuery is the query for all the services as they have similar queries

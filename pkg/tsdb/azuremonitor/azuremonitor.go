@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
@@ -53,7 +55,9 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 
 	s.queryMux = s.newQueryMux()
 	muxHandler := httpadapter.New(s.newResourceMux())
-	schemaProvider := newMetricsSchema(s, logger)
+	metricsProvider := newMetricsSchema(s, logger)
+	logsProvider := newLogAnalyticsSchema(s, logger)
+	schemaProvider := newCompositeSchema(metricsProvider, logsProvider)
 	s.resourceHandler = schemas.NewSchemaDatasource(
 		schemaProvider,
 		schemaProvider,
@@ -114,6 +118,13 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	return s.resourceHandler.CallResource(azusercontext.WithUserFromResourceReq(ctx, req), req, sender)
 }
 
+type cacheEntry[T any] struct {
+	data    T
+	fetched time.Time
+}
+
+const azureCacheTTL = 5 * time.Minute
+
 type Service struct {
 	im        instancemgmt.InstanceManager
 	executors map[string]azDatasourceExecutor
@@ -121,6 +132,53 @@ type Service struct {
 	queryMux        *datasource.QueryTypeMux
 	resourceHandler backend.CallResourceHandler
 	logger          log.Logger
+}
+
+// cachedFetch returns the entry stored under key when it is still within ttl,
+// otherwise it invokes fetch and stores the result. cache is owned by the
+// caller's datasource instance, so its lifecycle is bounded by the SDK
+// instance manager (see types.DatasourceCache).
+func cachedFetch[T any](cache *sync.Map, key string, ttl time.Duration, fetch func() (T, error)) (T, error) {
+	if entry, ok := cache.Load(key); ok {
+		if e := entry.(*cacheEntry[T]); time.Since(e.fetched) < ttl {
+			return e.data, nil
+		}
+	}
+	data, err := fetch()
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+	cache.Store(key, &cacheEntry[T]{data: data, fetched: time.Now()})
+	return data, nil
+}
+
+func (s *Service) getWorkspacesForSubscription(ctx context.Context, dsInfo types.DatasourceInfo, sub string) ([]types.LogAnalyticsWorkspaceResponse, error) {
+	fetch := func() ([]types.LogAnalyticsWorkspaceResponse, error) {
+		return listWorkspacesForSubscription(ctx, dsInfo, sub)
+	}
+	if dsInfo.Cache == nil || dsInfo.Cache.Workspaces == nil {
+		return fetch()
+	}
+	key, ok := utils.AzureCacheKey(ctx, dsInfo.Credentials.AzureAuthType(), sub)
+	if !ok {
+		return fetch()
+	}
+	return cachedFetch(dsInfo.Cache.Workspaces, key, azureCacheTTL, fetch)
+}
+
+func (s *Service) getMetricNamespacesForSubscription(ctx context.Context, dsInfo types.DatasourceInfo, sub string) ([]schemas.Table, error) {
+	fetch := func() ([]schemas.Table, error) {
+		return fetchSubscriptionMetricNamespaces(ctx, dsInfo, sub)
+	}
+	if dsInfo.Cache == nil || dsInfo.Cache.MetricNamespaces == nil {
+		return fetch()
+	}
+	key, ok := utils.AzureCacheKey(ctx, dsInfo.Credentials.AzureAuthType(), sub)
+	if !ok {
+		return fetch()
+	}
+	return cachedFetch(dsInfo.Cache.MetricNamespaces, key, azureCacheTTL, fetch)
 }
 
 func getDatasourceService(ctx context.Context, settings *backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string, logger log.Logger) (types.DatasourceService, error) {
@@ -178,8 +236,11 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
+			DatasourceUID:           settings.UID,
+			DatasourceName:          settings.Name,
 			Routes:                  routesForModel,
 			Services:                map[string]types.DatasourceService{},
+			Cache:                   types.NewDatasourceCache(),
 		}
 
 		for routeName := range executors {

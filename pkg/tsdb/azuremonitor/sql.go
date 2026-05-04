@@ -41,6 +41,22 @@ func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.Q
 		}
 
 		baseTable := stripTableParameterValues(sq.Table)
+
+		if isLogsTable(baseTable) {
+			dsInfo, err := s.getDataSourceFromPluginReq(ctx, req)
+			if err != nil {
+				sqlErrors[q.RefID] = fmt.Errorf("azure logs sql: %w", err)
+				continue
+			}
+			converted, err := normalizeLogsSQLQuery(ctx, sq, q, dsInfo, s)
+			if err != nil {
+				sqlErrors[q.RefID] = err
+				continue
+			}
+			out = append(out, converted)
+			continue
+		}
+
 		ns := convertNamespace(baseTable)
 
 		tp := mergeTableParams(sq.Table, sq.TableParameterValues)

@@ -1,12 +1,18 @@
 package utils
 
 import (
+	"compress/flate"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
+	"github.com/andybalholm/brotli"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
@@ -89,4 +95,77 @@ func CreateResponseErrorFromStatusCode(statusCode int, status string, body []byt
 		return backend.DownstreamError(statusErr)
 	}
 	return backend.PluginError(statusErr)
+}
+
+// This function handles various compression mechanisms that may have been used on a response body
+func Decode(encoding string, original io.ReadCloser) ([]byte, error) {
+	var reader io.Reader
+	var err error
+	switch encoding {
+	case "gzip":
+		reader, err = gzip.NewReader(original)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			if err := reader.(io.ReadCloser).Close(); err != nil {
+				backend.Logger.Warn("Failed to close reader body", "err", err)
+			}
+		}()
+	case "deflate":
+		reader = flate.NewReader(original)
+		defer func() {
+			if err := reader.(io.ReadCloser).Close(); err != nil {
+				backend.Logger.Warn("Failed to close reader body", "err", err)
+			}
+		}()
+	case "br":
+		reader = brotli.NewReader(original)
+	case "":
+		reader = original
+	default:
+		return nil, fmt.Errorf("unexpected encoding type %v", err)
+	}
+
+	body, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+// IsUserAuthType reports whether the given Azure auth type binds API results
+// to the requesting Grafana user (current-user identity).
+// For these auth types, cache entries must not be shared across users.
+func IsUserAuthType(authType string) bool {
+	switch authType {
+	case azcredentials.AzureAuthCurrentUserIdentity:
+		return true
+	default:
+		return false
+	}
+}
+
+// AzureCacheKey builds a cache key for entries stored on a per-instance
+// DatasourceCache. The instance manager already isolates the cache per
+// (org, datasource UID), so the key only needs to disambiguate within a
+// single instance.
+//
+// For service-identity auth types (managed identity, client secret, etc.)
+// every Grafana user resolves the same Azure identity, so the key is just
+// the subscription.
+//
+// For user-identity auth types (current-user) results vary by user, so
+// the user's login is included. If the auth type is user-identity but no
+// user is present in the context, the second return value is false and the
+// caller must skip the cache rather than fall back to a shared bucket.
+func AzureCacheKey(ctx context.Context, authType, sub string) (string, bool) {
+	if !IsUserAuthType(authType) {
+		return sub, true
+	}
+	u, ok := azusercontext.GetCurrentUser(ctx)
+	if !ok || u.User == nil || u.User.Login == "" {
+		return "", false
+	}
+	return fmt.Sprintf("%s:%s", u.User.Login, sub), true
 }

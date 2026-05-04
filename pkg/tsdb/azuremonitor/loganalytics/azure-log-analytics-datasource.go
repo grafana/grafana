@@ -144,7 +144,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		}()
 
 		encoding := resp.Header.Get("Content-Encoding")
-		body, err := decode(encoding, resp.Body)
+		body, err := utils.Decode(encoding, resp.Body)
 		if err != nil {
 			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to read metadata response: %s", err))
 		}
