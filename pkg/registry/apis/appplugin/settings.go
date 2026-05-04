@@ -72,16 +72,18 @@ func toSecureJSONData(secure common.InlineSecureValues) map[string]string {
 
 type settingsStorage struct {
 	pluginID       string
+	autoEnabled    bool
 	pluginSettings pluginsettings.Service // Do we need an explicitly caching version?
 	resourceInfo   *utils.ResourceInfo
 }
 
-func NewLegacySettingsStore(pluginID string, pluginSettings pluginsettings.Service) grafanarest.Storage {
+func NewLegacySettingsStore(pluginID string, autoEnabled bool, pluginSettings pluginsettings.Service) grafanarest.Storage {
 	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
 		pluginID, pluginID,
 	)
 	return &settingsStorage{
 		pluginID:       pluginID,
+		autoEnabled:    autoEnabled,
 		pluginSettings: pluginSettings,
 		resourceInfo:   &settingsRI,
 	}
@@ -147,8 +149,12 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		PluginID: s.pluginID,
 		OrgID:    nsInfo.OrgID,
 	})
-	if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
-		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
+	if err != nil {
+		if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
+			return nil, fmt.Errorf("failed to get plugin settings: %w", err)
+		}
+		obj.Spec.Enabled = s.autoEnabled // show enabled
+		obj.Spec.Pinned = s.autoEnabled
 	}
 	if ps != nil {
 		shim := shimFromContext(ctx)
