@@ -82,7 +82,7 @@ func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Con
 					continue // or error?
 				}
 				if v.Error() != nil {
-					return ctx, backend.PluginContext{}, fmt.Errorf("error decrypting secure value: %s / %w", k, err)
+					return ctx, backend.PluginContext{}, fmt.Errorf("error decrypting secure value: %s / %w", k, v.Error())
 				}
 				val := v.Value()
 				if val != nil {

@@ -117,7 +117,7 @@ func RegisterAPIService(
 			if jsonData.Type == plugins.TypeApp {
 				// Enforce that the plugin ID ends with -app so it is OK to live as a root api group
 				// Alternatively, we could fail or append -app to the name
-				if strings.HasSuffix(jsonData.ID, "-app") {
+				if !strings.HasSuffix(jsonData.ID, "-app") {
 					backend.Logger.Warn("app plugin with invalid suffix: %s", jsonData.ID)
 				}
 				return true
