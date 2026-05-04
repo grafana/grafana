@@ -144,7 +144,6 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 	if version != "" && extractedArchive.Version != version {
 		m.log.Error("Installed plugin version mismatch", "expected", version, "got", extractedArchive.Version)
 	}
-
 	return extractedArchive, nil
 }
 
