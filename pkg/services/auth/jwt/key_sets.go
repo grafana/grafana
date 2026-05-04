@@ -12,7 +12,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -48,15 +47,15 @@ type keySetHTTP struct {
 	cacheExpiration time.Duration
 }
 
-func (s *AuthService) checkKeySetConfiguration() error {
+func checkKeySetConfiguration(settings setting.AuthJWTSettings) error {
 	var count int
-	if s.Cfg.JWTAuth.KeyFile != "" {
+	if settings.KeyFile != "" {
 		count++
 	}
-	if s.Cfg.JWTAuth.JWKSetFile != "" {
+	if settings.JWKSetFile != "" {
 		count++
 	}
-	if s.Cfg.JWTAuth.JWKSetURL != "" {
+	if settings.JWKSetURL != "" {
 		count++
 	}
 
@@ -74,11 +73,11 @@ func (s *AuthService) checkKeySetConfiguration() error {
 // initKeySet creates a provider for JWKSet, either file, or https
 // nolint:gocyclo
 func (s *AuthService) initKeySet() error {
-	if err := s.checkKeySetConfiguration(); err != nil {
+	if err := checkKeySetConfiguration(s.settings); err != nil {
 		return err
 	}
 
-	if keyFilePath := s.Cfg.JWTAuth.KeyFile; keyFilePath != "" {
+	if keyFilePath := s.settings.KeyFile; keyFilePath != "" {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning on this one because `fileName` comes from grafana configuration file
 		file, err := os.Open(keyFilePath)
@@ -128,10 +127,10 @@ func (s *AuthService) initKeySet() error {
 
 		s.keySet = &keySetJWKS{
 			jose.JSONWebKeySet{
-				Keys: []jose.JSONWebKey{{Key: key, KeyID: s.Cfg.JWTAuth.KeyID}},
+				Keys: []jose.JSONWebKey{{Key: key, KeyID: s.settings.KeyID}},
 			},
 		}
-	} else if keyFilePath := s.Cfg.JWTAuth.JWKSetFile; keyFilePath != "" {
+	} else if keyFilePath := s.settings.JWKSetFile; keyFilePath != "" {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning on this one because `fileName` comes from grafana configuration file
 		file, err := os.Open(keyFilePath)
@@ -150,36 +149,31 @@ func (s *AuthService) initKeySet() error {
 		}
 
 		s.keySet = &keySetJWKS{jwks}
-	} else if urlStr := s.Cfg.JWTAuth.JWKSetURL; urlStr != "" {
-		urlParsed, err := url.Parse(urlStr)
-		if err != nil {
+	} else if urlStr := s.settings.JWKSetURL; urlStr != "" {
+		if err := validateJWKSetURL(urlStr, s.Cfg.Env); err != nil {
 			return err
-		}
-		if urlParsed.Scheme != "https" && s.Cfg.Env != setting.Dev {
-			return ErrJWTSetURLMustHaveHTTPSScheme
 		}
 
 		var caCertPool *x509.CertPool
-		if s.Cfg.JWTAuth.TlsClientCa != "" {
+		if s.settings.TlsClientCa != "" {
 			s.log.Debug("reading ca from TlsClientCa path")
 			// nolint:gosec
 			// We can ignore the gosec G304 warning on this one because `tlsClientCa` comes from grafana configuration file
-			caCert, err := os.ReadFile(s.Cfg.JWTAuth.TlsClientCa)
+			caCert, err := os.ReadFile(s.settings.TlsClientCa)
 			if err != nil {
-				s.log.Error("Failed to read TlsClientCa", "path", s.Cfg.JWTAuth.TlsClientCa, "error", err)
+				s.log.Error("Failed to read TlsClientCa", "path", s.settings.TlsClientCa, "error", err)
 				return fmt.Errorf("failed to read TlsClientCa: %w", err)
 			}
 
 			caCertPool = x509.NewCertPool()
 			if !caCertPool.AppendCertsFromPEM(caCert) {
-				s.log.Error("failed to decode provided PEM certs", "path", s.Cfg.JWTAuth.TlsClientCa)
+				s.log.Error("failed to decode provided PEM certs", "path", s.settings.TlsClientCa)
 				return fmt.Errorf("failed to decode provided PEM certs file from TlsClientCa")
 			}
 		}
 
-		// Read Bearer token from file during init
-		if s.Cfg.JWTAuth.JWKSetBearerTokenFile != "" {
-			if _, err := getBearerToken(s.Cfg.JWTAuth.JWKSetBearerTokenFile); err != nil {
+		if s.settings.JWKSetBearerTokenFile != "" {
+			if _, err := getBearerToken(s.settings.JWKSetBearerTokenFile); err != nil {
 				return err
 			}
 		}
@@ -187,12 +181,12 @@ func (s *AuthService) initKeySet() error {
 		s.keySet = &keySetHTTP{
 			url:             urlStr,
 			log:             s.log,
-			bearerTokenPath: s.Cfg.JWTAuth.JWKSetBearerTokenFile,
+			bearerTokenPath: s.settings.JWKSetBearerTokenFile,
 			client: &http.Client{
 				Transport: &http.Transport{
 					TLSClientConfig: &tls.Config{
 						Renegotiation:      tls.RenegotiateFreelyAsClient,
-						InsecureSkipVerify: s.Cfg.JWTAuth.TlsSkipVerify,
+						InsecureSkipVerify: s.settings.TlsSkipVerify,
 						RootCAs:            caCertPool,
 					},
 					Proxy: http.ProxyFromEnvironment,
@@ -208,7 +202,7 @@ func (s *AuthService) initKeySet() error {
 				Timeout: time.Second * 30,
 			},
 			cacheKey:        fmt.Sprintf("auth-jwt:jwk-%s", urlStr),
-			cacheExpiration: s.Cfg.JWTAuth.CacheTTL,
+			cacheExpiration: s.settings.CacheTTL,
 			cache:           s.RemoteCache,
 		}
 	}
