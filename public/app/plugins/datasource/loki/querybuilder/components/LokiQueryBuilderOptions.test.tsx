@@ -120,7 +120,14 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.getByText('Line limit: 20')).toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Direction: Backward')).toBeInTheDocument();
-    expect(screen.queryByText(/step/i)).not.toBeInTheDocument();
+  });
+
+  it('shows step option for log query with step set', async () => {
+    setup({ expr: '{foo="bar"}', direction: LokiQueryDirection.Backward, step: '30s' });
+    expect(screen.getByText('Line limit: 20')).toBeInTheDocument();
+    expect(screen.getByText('Type: Range')).toBeInTheDocument();
+    expect(screen.getByText('Direction: Backward')).toBeInTheDocument();
+    expect(screen.getByText('Step: 30s')).toBeInTheDocument();
   });
 
   it('shows correct options for metric query', async () => {
@@ -172,6 +179,7 @@ describe('LokiQueryBuilderOptions', () => {
     setup({ expr: '{foo="bar"}', step: '1m' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Instant/)).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue('1m')).toBeInTheDocument();
   });
 
   it('allows to clear step input', async () => {
