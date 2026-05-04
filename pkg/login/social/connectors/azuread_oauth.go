@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -32,8 +33,10 @@ import (
 )
 
 const (
-	forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
-	domainHintKey       = "domain_hint"
+	forceUseGraphAPIKey      = "force_use_graph_api" // #nosec G101 not a hardcoded credential
+	domainHintKey            = "domain_hint"
+	tokenExchangeTimeoutKey  = "token_exchange_timeout"
+	defaultTokenExchangeTimeout = 15 // seconds
 )
 
 var (
@@ -41,6 +44,7 @@ var (
 		forceUseGraphAPIKey:     {Type: Bool, DefaultValue: false},
 		allowedOrganizationsKey: {Type: String},
 		domainHintKey:           {Type: String},
+		tokenExchangeTimeoutKey: {Type: String, DefaultValue: "15"},
 	}
 	errAzureADMissingGroups = &SocialError{"either the user does not have any group membership or the groups claim is missing from the token."}
 )
@@ -58,9 +62,10 @@ var _ ssosettings.Reloadable = (*SocialAzureAD)(nil)
 
 type SocialAzureAD struct {
 	*SocialBase
-	cache                remotecache.CacheStorage
-	allowedOrganizations []string
-	forceUseGraphAPI     bool
+	cache                   remotecache.CacheStorage
+	allowedOrganizations    []string
+	forceUseGraphAPI        bool
+	tokenExchangeTimeout    time.Duration
 }
 
 type azureClaims struct {
@@ -106,6 +111,7 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 		cache:                cache,
 		allowedOrganizations: allowedOrganizations,
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
+		tokenExchangeTimeout: parseTokenExchangeTimeout(info.Extra[tokenExchangeTimeoutKey]),
 	}
 
 	if info.UseRefreshToken {
@@ -211,6 +217,13 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 		// Default behavior for ClientSecretPost, no additional setup needed
 	default:
 		s.log.Debug("ClientAuthentication is not set. Using default client authentication method: none")
+	}
+
+	// Apply configurable timeout to the token exchange request
+	if s.tokenExchangeTimeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, s.tokenExchangeTimeout)
+		defer cancel()
 	}
 
 	// Default token exchange
@@ -438,6 +451,7 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 
 	s.allowedOrganizations = allowedOrganizations
 	s.forceUseGraphAPI = MustBool(newInfo.Extra[forceUseGraphAPIKey], false)
+	s.tokenExchangeTimeout = parseTokenExchangeTimeout(newInfo.Extra[tokenExchangeTimeoutKey])
 
 	return nil
 }
@@ -723,6 +737,7 @@ func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString("```ini\n")
 	fmt.Fprintf(bf, "allowed_groups = %v\n", s.info.AllowedGroups)
 	fmt.Fprintf(bf, "forceUseGraphAPI = %v\n", s.forceUseGraphAPI)
+	fmt.Fprintf(bf, "token_exchange_timeout = %v\n", s.tokenExchangeTimeout)
 	bf.WriteString("```\n\n")
 
 	return s.getBaseSupportBundleContent(bf)
@@ -740,4 +755,24 @@ func (s *SocialAzureAD) isAllowedTenant(tenantID string) bool {
 		}
 	}
 	return false
+}
+
+// parseTokenExchangeTimeout parses the token_exchange_timeout setting value (in seconds)
+// and returns a time.Duration. Falls back to the default (15s) on invalid or empty input.
+func parseTokenExchangeTimeout(value any) time.Duration {
+	if value == nil || value == "" {
+		return time.Duration(defaultTokenExchangeTimeout) * time.Second
+	}
+
+	str, ok := value.(string)
+	if !ok {
+		return time.Duration(defaultTokenExchangeTimeout) * time.Second
+	}
+
+	seconds, err := strconv.Atoi(str)
+	if err != nil || seconds <= 0 {
+		return time.Duration(defaultTokenExchangeTimeout) * time.Second
+	}
+
+	return time.Duration(seconds) * time.Second
 }
