@@ -95,6 +95,11 @@ func (ss *SQLStore) retryOnLocks(ctx context.Context, callback DBTransactionFunc
 		}
 
 		if err != nil {
+			if ss.dbCfg.PwdFilePath != "" && IsAuthError(err) && retry <= 1 {
+				ctxLogger.Info("Database auth error in session callback, attempting credential refresh", "error", err, "retry", retry)
+				ss.attemptCredentialRefresh()
+				return retryer.FuncFailure, nil
+			}
 			return retryer.FuncError, err
 		}
 

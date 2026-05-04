@@ -95,6 +95,11 @@ type Cfg struct {
 	Raw    *ini.File
 	Logger log.Logger
 
+	// FileExpansions tracks which INI keys used $__file{} expansion.
+	// Mapping: section name -> key name -> file path.
+	// Populated before config expansion so callers can re-read files on rotation.
+	FileExpansions map[string]map[string]string
+
 	// for logging purposes
 	configFiles                  []string
 	appliedCommandLineProperties []string
@@ -1254,6 +1259,9 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 
 	// apply command line overrides
 	cfg.applyCommandLineProperties(parsedFile)
+
+	// record $__file{} paths before expansion so they can be re-read on credential rotation
+	cfg.FileExpansions = scanFileExpansions(parsedFile)
 
 	// evaluate config values containing environment variables
 	err = expandConfig(parsedFile)

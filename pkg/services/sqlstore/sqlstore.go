@@ -53,6 +53,10 @@ type SQLStore struct {
 	tracer                       tracing.Tracer
 	recursiveQueriesAreSupported *bool
 	recursiveQueriesMu           sync.Mutex
+
+	// credential refresh state — only active when dbCfg.PwdFilePath != ""
+	refreshMu       sync.Mutex
+	lastRefreshTime time.Time
 }
 
 func ProvideService(cfg *setting.Cfg,
@@ -371,6 +375,62 @@ func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine,
 
 func (ss *SQLStore) GetMigrationLockAttemptTimeout() int {
 	return ss.dbCfg.MigrationLockAttemptTimeout
+}
+
+const credentialRefreshDebounce = 30 * time.Second
+
+// attemptCredentialRefresh re-reads the password file, rebuilds the connection
+// string, and swaps the xorm engine. It is debounced to once per 30 seconds to
+// prevent thundering-herd on repeated auth errors.
+//
+// Guard: only active when dbCfg.PwdFilePath != "".
+func (ss *SQLStore) attemptCredentialRefresh() {
+	if ss.dbCfg.PwdFilePath == "" {
+		return
+	}
+
+	ss.refreshMu.Lock()
+	defer ss.refreshMu.Unlock()
+
+	if time.Since(ss.lastRefreshTime) < credentialRefreshDebounce {
+		return
+	}
+
+	changed, err := ss.dbCfg.RefreshPassword()
+	if err != nil {
+		ss.log.Error("Failed to re-read database password file", "path", ss.dbCfg.PwdFilePath, "error", err)
+		return
+	}
+	if !changed {
+		ss.log.Debug("Database password file unchanged, skipping engine rebuild")
+		ss.lastRefreshTime = time.Now()
+		return
+	}
+
+	if err := ss.dbCfg.RebuildConnectionString(ss.cfg, ss.features); err != nil {
+		ss.log.Error("Failed to rebuild database connection string after password rotation", "error", err)
+		return
+	}
+
+	newEngine, err := xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString)
+	if err != nil {
+		ss.log.Error("Failed to create new database engine after password rotation", "error", err)
+		return
+	}
+	newEngine.SetMaxOpenConns(ss.dbCfg.MaxOpenConn)
+	newEngine.SetMaxIdleConns(ss.dbCfg.MaxIdleConn)
+	newEngine.SetConnMaxLifetime(time.Second * time.Duration(ss.dbCfg.ConnMaxLifetime))
+
+	oldEngine := ss.engine
+	ss.engine = newEngine
+	ss.lastRefreshTime = time.Now()
+
+	ss.log.Info("Database credentials refreshed after password rotation")
+
+	// Close old engine — in-flight queries finish gracefully.
+	if err := oldEngine.Close(); err != nil {
+		ss.log.Warn("Error closing old database engine after credential refresh", "error", err)
+	}
 }
 
 func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {

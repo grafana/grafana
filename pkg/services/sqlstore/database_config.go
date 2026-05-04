@@ -23,6 +23,9 @@ type DatabaseConfig struct {
 	Name                        string
 	User                        string
 	Pwd                         string
+	// PwdFilePath is the file path from which Pwd was read via $__file{}.
+	// Empty when password was not sourced from a file.
+	PwdFilePath                 string
 	Path                        string
 	SslMode                     string
 	SSLSNI                      string
@@ -50,6 +53,35 @@ type DatabaseConfig struct {
 	TransactionRetries int
 }
 
+// RefreshPassword re-reads Pwd from PwdFilePath. Returns true if the password
+// changed. No-op (returns false, nil) when PwdFilePath is empty.
+func (dbCfg *DatabaseConfig) RefreshPassword() (bool, error) {
+	if dbCfg.PwdFilePath == "" {
+		return false, nil
+	}
+
+	// nolint:gosec
+	data, err := os.ReadFile(dbCfg.PwdFilePath)
+	if err != nil {
+		return false, fmt.Errorf("re-reading password file %q: %w", dbCfg.PwdFilePath, err)
+	}
+
+	newPwd := strings.TrimSpace(string(data))
+	if newPwd == dbCfg.Pwd {
+		return false, nil
+	}
+
+	dbCfg.Pwd = newPwd
+	return true, nil
+}
+
+// RebuildConnectionString clears the cached ConnectionString and rebuilds it
+// from the current field values. Must be called after RefreshPassword updates Pwd.
+func (dbCfg *DatabaseConfig) RebuildConnectionString(cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
+	dbCfg.ConnectionString = ""
+	return dbCfg.buildConnectionString(cfg, features)
+}
+
 func NewDatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*DatabaseConfig, error) {
 	if cfg == nil {
 		return nil, errors.New("cfg cannot be nil")
@@ -58,6 +90,13 @@ func NewDatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*
 	dbCfg := &DatabaseConfig{}
 	if err := dbCfg.readConfig(cfg); err != nil {
 		return nil, err
+	}
+
+	// Propagate $__file{} path for the password so we can re-read it on rotation.
+	if cfg.FileExpansions != nil {
+		if dbSection, ok := cfg.FileExpansions["database"]; ok {
+			dbCfg.PwdFilePath = dbSection["password"]
+		}
 	}
 
 	if err := dbCfg.buildConnectionString(cfg, features); err != nil {

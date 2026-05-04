@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"errors"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -213,4 +214,58 @@ func TestBuildConnectionStringPostgres(t *testing.T) {
 			assert.Equal(t, tc.expectedConnStr, tc.dbCfg.ConnectionString)
 		})
 	}
+}
+
+func TestRefreshPassword_DetectsChange(t *testing.T) {
+	f, err := os.CreateTemp(t.TempDir(), "pwd_*")
+	require.NoError(t, err)
+	_, err = f.WriteString("initial_password")
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	dbCfg := &DatabaseConfig{
+		Pwd:         "initial_password",
+		PwdFilePath: f.Name(),
+	}
+
+	changed, err := dbCfg.RefreshPassword()
+	require.NoError(t, err)
+	assert.False(t, changed, "password has not changed, so changed should be false")
+
+	// Now rotate the secret
+	require.NoError(t, os.WriteFile(f.Name(), []byte("new_password"), 0o600))
+
+	changed, err = dbCfg.RefreshPassword()
+	require.NoError(t, err)
+	assert.True(t, changed, "password changed, so changed should be true")
+	assert.Equal(t, "new_password", dbCfg.Pwd)
+}
+
+func TestRefreshPassword_NoPwdFilePath(t *testing.T) {
+	dbCfg := &DatabaseConfig{
+		Pwd:         "static_password",
+		PwdFilePath: "",
+	}
+
+	changed, err := dbCfg.RefreshPassword()
+	require.NoError(t, err)
+	assert.False(t, changed)
+	assert.Equal(t, "static_password", dbCfg.Pwd)
+}
+
+func TestRebuildConnectionString_ClearsAndRebuildsPostgres(t *testing.T) {
+	dbCfg := &DatabaseConfig{
+		Type:             migrator.Postgres,
+		User:             "grafana",
+		Pwd:              "newpassword",
+		Host:             "127.0.0.1:5432",
+		Name:             "grafana_test",
+		SslMode:          "disable",
+		ConnectionString: "old_stale_connection_string",
+	}
+
+	err := dbCfg.RebuildConnectionString(&setting.Cfg{}, nil)
+	require.NoError(t, err)
+	assert.NotEqual(t, "old_stale_connection_string", dbCfg.ConnectionString)
+	assert.Contains(t, dbCfg.ConnectionString, "newpassword")
 }
