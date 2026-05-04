@@ -24,16 +24,6 @@ import { useSQLSchemas } from './hooks/useSQLSchemas';
 // Account for the editor border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
 const SCHEMA_INSPECTOR_OPEN_KEY = 'grafana.sql-expression.schema-inspector-open';
-const CLAUSE_COMPLETIONS = [
-  'WHERE',
-  'GROUP BY',
-  'ORDER BY',
-  'HAVING',
-  'LIMIT',
-  'JOIN',
-  'LEFT JOIN',
-  'INNER JOIN',
-] as const;
 
 export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
@@ -68,11 +58,6 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
           return [];
         }
       },
-      clauses: () =>
-        CLAUSE_COMPLETIONS.map((clause) => ({
-          label: clause,
-          kind: 'clause',
-        })),
       functions: () =>
         ALLOWED_FUNCTIONS.map((func) => ({
           label: func,
@@ -232,7 +217,6 @@ LIMIT
                 value={query.expression ?? initialQuery}
                 onChange={onEditorChange}
                 completionProvider={completionProvider}
-                completionMode="merge"
                 formatter={formatSQL}
                 height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
                 ariaLabel={t('expressions.sql-expression.editor.aria-label', 'SQL expression editor')}

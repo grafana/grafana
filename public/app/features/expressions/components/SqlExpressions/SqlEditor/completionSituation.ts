@@ -12,7 +12,6 @@ const SQL_PUNCTUATION_NODE_NAME = 'Punctuation';
 const SQL_FROM_KEYWORD = 'FROM';
 const SQL_JOIN_KEYWORD = 'JOIN';
 const SQL_AS_KEYWORD = 'AS';
-const SQL_ON_KEYWORD = 'ON';
 const SQL_STATEMENT_TERMINATOR = ';';
 
 const SQL_FROM_SECTION_END_KEYWORDS = new Set([
@@ -26,7 +25,6 @@ const SQL_FROM_SECTION_END_KEYWORDS = new Set([
   'INTERSECT',
 ]);
 const SQL_JOIN_MODIFIER_KEYWORDS = new Set(['CROSS', 'FULL', 'INNER', 'LEFT', 'NATURAL', 'OUTER', 'RIGHT']);
-const SQL_CLAUSE_BLOCKING_KEYWORDS = new Set([SQL_FROM_KEYWORD, SQL_JOIN_KEYWORD, SQL_AS_KEYWORD, SQL_ON_KEYWORD]);
 
 interface QualifiedColumnContext {
   from: number;
@@ -46,7 +44,6 @@ export interface CompletionWord {
 export type SqlCompletionSituation =
   | { type: 'qualified-column'; from: number; table: string }
   | { type: 'table'; from: number }
-  | { type: 'clause'; from: number }
   | { type: 'general'; from: number; tables: string[] }
   | { type: 'none' };
 
@@ -77,10 +74,6 @@ export function getSqlCompletionSituation(
 
   if (statement && isTableCompletionPosition(context, statement, completionFrom)) {
     return { type: 'table', from: completionFrom };
-  }
-
-  if (statement && isClauseCompletionPosition(context, statement, completionFrom, tableRefs)) {
-    return { type: 'clause', from: completionFrom };
   }
 
   if (!word || (word.from === word.to && !context.explicit)) {
@@ -304,30 +297,6 @@ function isTableCompletionPosition(
     previousKeyword === SQL_JOIN_KEYWORD ||
     (isComma(context, previousNode) && isInFromSection(context, statement, completionFrom))
   );
-}
-
-function isClauseCompletionPosition(
-  context: CodeMirrorCompletionContext,
-  statement: SyntaxNode,
-  completionFrom: number,
-  tableRefs: TableRef[]
-): boolean {
-  if (tableRefs.length === 0 || !isInFromSection(context, statement, completionFrom)) {
-    return false;
-  }
-
-  const previousNode = getPreviousStatementChild(statement, completionFrom);
-  const previousKeyword = getKeywordText(context, previousNode);
-
-  if (
-    SQL_CLAUSE_BLOCKING_KEYWORDS.has(previousKeyword) ||
-    isComma(context, previousNode) ||
-    isStatementTerminator(context, previousNode)
-  ) {
-    return false;
-  }
-
-  return true;
 }
 
 function isAfterStatementTerminator(context: CodeMirrorCompletionContext, statement: SyntaxNode, pos: number): boolean {

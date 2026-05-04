@@ -3,7 +3,7 @@ import { useCallback, useMemo, type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor, type CodeMirrorCompletionMode } from '@grafana/ui/unstable';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
 
@@ -11,7 +11,6 @@ export interface SqlEditorProps {
   value: string;
   onChange: (value: string) => void;
   completionProvider?: SqlCompletionProvider;
-  completionMode?: CodeMirrorCompletionMode;
   formatter?: (value: string) => string;
   height?: number | string;
   ariaLabel?: string;
@@ -22,7 +21,6 @@ export const SqlEditor = ({
   value,
   onChange,
   completionProvider,
-  completionMode,
   formatter,
   height = '200px',
   ariaLabel,
@@ -52,7 +50,6 @@ export const SqlEditor = ({
           onChange={onChange}
           height={typeof height === 'number' ? `${height}px` : height}
           aria-label={ariaLabel}
-          completionMode={completionMode}
           completionSources={completionSource ? [completionSource] : undefined}
         />
       </div>

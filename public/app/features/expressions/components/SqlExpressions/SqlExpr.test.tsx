@@ -107,7 +107,7 @@ describe('SqlExpr', () => {
     });
   });
 
-  it('merges SQL completions with language-default completions', () => {
+  it('passes SQL completions to the editor', () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
     const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
@@ -117,7 +117,7 @@ describe('SqlExpr', () => {
     expect(SqlEditorMock.mock.calls[0][0]).toEqual(
       expect.objectContaining({
         ariaLabel: 'SQL expression editor',
-        completionMode: 'merge',
+        completionProvider: expect.any(Object),
       })
     );
   });

@@ -47,30 +47,6 @@ describe('SQL editor completion utils', () => {
     expect(result?.options).not.toEqual(expect.arrayContaining([expect.objectContaining({ label: 'A' })]));
   });
 
-  it('suggests clauses after a table ref', async () => {
-    const completionProvider = {
-      clauses: () => [{ label: 'NEXT_CLAUSE' }],
-    };
-
-    await expect(getCompletionResult(completionProvider, 'SELECT * FROM A ')).resolves.toEqual(
-      expect.objectContaining({
-        options: expect.arrayContaining([expect.objectContaining({ label: 'NEXT_CLAUSE' })]),
-      })
-    );
-
-    await expect(getCompletionResult(completionProvider, 'SELECT * FROM ')).resolves.toEqual(
-      expect.not.objectContaining({
-        options: expect.arrayContaining([expect.objectContaining({ label: 'NEXT_CLAUSE' })]),
-      })
-    );
-
-    await expect(getCompletionResult(completionProvider, 'SELECT * FROM A WHERE ')).resolves.toEqual(
-      expect.not.objectContaining({
-        options: expect.arrayContaining([expect.objectContaining({ label: 'NEXT_CLAUSE' })]),
-      })
-    );
-  });
-
   it('returns empty table completions when the table provider throws', async () => {
     await expect(
       getCompletionResult(
@@ -80,19 +56,6 @@ describe('SQL editor completion utils', () => {
           },
         },
         'SELECT * FROM '
-      )
-    ).resolves.toEqual(expect.objectContaining({ options: [] }));
-  });
-
-  it('returns empty clause completions when the clause provider throws', async () => {
-    await expect(
-      getCompletionResult(
-        {
-          clauses: () => {
-            throw new Error('clauses failed');
-          },
-        },
-        'SELECT * FROM A '
       )
     ).resolves.toEqual(expect.objectContaining({ options: [] }));
   });
@@ -112,7 +75,7 @@ describe('SQL editor completion utils', () => {
 
   it('does not suggest clauses after a terminated statement', async () => {
     const completionProvider = {
-      clauses: () => [{ label: 'NEXT_CLAUSE' }],
+      functions: () => [{ label: 'custom_function' }],
     };
 
     await expect(getCompletionResult(completionProvider, 'SELECT * FROM A;')).resolves.toEqual(null);

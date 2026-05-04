@@ -7,7 +7,7 @@ import {
 
 import { getSqlCompletionSituation } from './completionSituation';
 
-export type SqlCompletionKind = 'clause' | 'column' | 'function' | 'keyword' | 'table';
+export type SqlCompletionKind = 'column' | 'function' | 'keyword' | 'table';
 
 const SQL_WORD_PATTERN = /[\w$]*/;
 const SQL_COMPLETION_VALID_FOR_PATTERN = /^[\w$]*$/;
@@ -28,7 +28,6 @@ export interface SqlCompletionContext {
 export interface SqlCompletionProvider {
   tables?: () => Promise<SqlCompletionItem[]> | SqlCompletionItem[];
   columns?: (context: SqlCompletionContext) => Promise<SqlCompletionItem[]> | SqlCompletionItem[];
-  clauses?: () => SqlCompletionItem[];
   functions?: () => Promise<SqlCompletionItem[]> | SqlCompletionItem[];
 }
 
@@ -61,12 +60,6 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
       return context.aborted
         ? null
         : toPinnedCodeMirrorCompletionResult(context, situation.from, [{ items: tables, fallbackKind: 'table' }]);
-    }
-
-    if (situation.type === 'clause') {
-      const clauses = resolveClauses(completionProvider);
-
-      return toPinnedCodeMirrorCompletionResult(context, situation.from, [{ items: clauses, fallbackKind: 'clause' }]);
     }
 
     if (situation.type === 'none') {
@@ -159,8 +152,6 @@ function getCompletionMatch(label: string, filterText: string): number[] {
 
 function getCompletionType(kind: SqlCompletionKind): string {
   switch (kind) {
-    case 'clause':
-      return 'keyword';
     case 'column':
       return 'property';
     case 'function':
@@ -186,14 +177,6 @@ async function resolveColumns(
 ): Promise<SqlCompletionItem[]> {
   try {
     return (await completionProvider.columns?.(completionContext)) ?? [];
-  } catch {
-    return [];
-  }
-}
-
-function resolveClauses(completionProvider: SqlCompletionProvider): SqlCompletionItem[] {
-  try {
-    return completionProvider.clauses?.() ?? [];
   } catch {
     return [];
   }
