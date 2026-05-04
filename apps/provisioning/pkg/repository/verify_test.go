@@ -128,15 +128,16 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
-			name: "allows duplicate git path when sync is disabled",
+			name: "forbids duplicate git path when sync is disabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
 					Sync: provisioning.SyncOptions{Enabled: false},
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:  "https://github.com/org/repo",
-						Path: "grafana/",
+						URL:    "https://github.com/org/repo",
+						Branch: "main",
+						Path:   "grafana/",
 					},
 				},
 			},
@@ -146,13 +147,75 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:  "https://github.com/org/repo",
-							Path: "grafana/",
+							URL:    "https://github.com/org/repo",
+							Branch: "main",
+							Path:   "grafana/",
+						},
+					},
+				},
+			},
+			wantErr:         true,
+			wantErrContains: ErrRepositoryDuplicatePath.Error(),
+			maxRepositories: 10,
+		},
+		{
+			name: "allows duplicate URL before branch is configured when sync is disabled",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: false},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:  "https://github.com/org/repo",
+						Path: "",
+					},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							URL:    "https://github.com/org/repo",
+							Branch: "main",
+							Path:   "",
 						},
 					},
 				},
 			},
 			wantErr:         false,
+			maxRepositories: 10,
+		},
+		{
+			name: "forbids duplicate normalized path when sync is disabled",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: false},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/org/repo",
+						Branch: "main",
+						Path:   "grafana/",
+					},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							URL:    "https://github.com/org/repo",
+							Branch: "main",
+							Path:   "grafana",
+						},
+					},
+				},
+			},
+			wantErr:         true,
+			wantErrContains: ErrRepositoryDuplicatePath.Error(),
 			maxRepositories: 10,
 		},
 		{
@@ -185,15 +248,16 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
-			name: "allows duplicate empty paths when sync is disabled",
+			name: "forbids duplicate empty paths when sync is disabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
 					Sync: provisioning.SyncOptions{Enabled: false},
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:  "https://github.com/org/repo",
-						Path: "",
+						URL:    "https://github.com/org/repo",
+						Branch: "main",
+						Path:   "",
 					},
 				},
 			},
@@ -203,13 +267,15 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:  "https://github.com/org/repo",
-							Path: "",
+							URL:    "https://github.com/org/repo",
+							Branch: "main",
+							Path:   "",
 						},
 					},
 				},
 			},
-			wantErr:         false,
+			wantErr:         true,
+			wantErrContains: ErrRepositoryDuplicatePath.Error(),
 			maxRepositories: 10,
 		},
 		{
@@ -384,6 +450,37 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 							URL:    "https://github.com/org/repo",
 							Branch: "main",
 							Path:   "grafana/",
+						},
+					},
+				},
+			},
+			wantErr:         true,
+			wantErrContains: ErrRepositoryParentFolderConflict.Error(),
+			maxRepositories: 10,
+		},
+		{
+			name: "forbids overlapping base path on same branch when sync is enabled",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: true},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/org/repo",
+						Branch: "main",
+						Path:   "grafana/",
+					},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							URL:    "https://github.com/org/repo",
+							Branch: "main",
+							Path:   "",
 						},
 					},
 				},
