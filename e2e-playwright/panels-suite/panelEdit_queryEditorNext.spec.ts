@@ -26,7 +26,7 @@ function addQueryOrExpressionButton(page: Page) {
 }
 
 function addTransformationButton(page: Page) {
-  return page.getByLabel('Add transformation');
+  return page.getByRole('button', { name: 'Add transformation', exact: true });
 }
 
 async function switchDatasource(
@@ -283,6 +283,56 @@ test.describe('Query Editor Next: Transformations', { tag: ['@panels', '@queryEd
     await reduceCard.click();
     await expect(reduceCard).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByTestId(selectors.components.TransformTab.transformationEditor('Reduce'))).toBeVisible();
+  });
+
+  test("switching between same-type transformations preserves each editor's values", async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
+    await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
+
+    const transformationName = 'Rename fields by regex';
+    const editor = page.getByTestId(selectors.components.TransformTab.transformationEditor(transformationName));
+    const matchInput = editor.getByPlaceholder('Regular expression pattern');
+    const replaceInput = editor.getByPlaceholder('Replacement pattern');
+
+    async function addRenameByRegexTransformation() {
+      const searchInput = await openTransformationPicker(page, selectors);
+      await searchInput.fill(transformationName);
+      await page.getByTestId(selectors.components.TransformTab.newTransform(transformationName)).click();
+      await expect(editor).toBeVisible();
+    }
+
+    await addRenameByRegexTransformation();
+    await matchInput.fill('^Time$');
+    await replaceInput.fill('first_time');
+
+    await addRenameByRegexTransformation();
+    await expect(matchInput).toHaveValue('(.*)');
+    await expect(replaceInput).toHaveValue('$1');
+
+    await matchInput.fill('^Value$');
+    await replaceInput.fill('second_value');
+
+    const transformCards = page.locator('[data-query-sidebar-card]').filter({ hasText: transformationName });
+    const firstTransformCard = transformCards.nth(0);
+    const secondTransformCard = transformCards.nth(1);
+
+    await firstTransformCard.click();
+    await expect(firstTransformCard).toHaveAttribute('aria-pressed', 'true');
+    await expect(matchInput).toHaveValue('^Time$');
+    await expect(replaceInput).toHaveValue('first_time');
+
+    await secondTransformCard.click();
+    await expect(secondTransformCard).toHaveAttribute('aria-pressed', 'true');
+    await expect(matchInput).toHaveValue('^Value$');
+    await expect(replaceInput).toHaveValue('second_value');
+
+    await firstTransformCard.click();
+    await expect(firstTransformCard).toHaveAttribute('aria-pressed', 'true');
+    await expect(matchInput).toHaveValue('^Time$');
+    await expect(replaceInput).toHaveValue('first_time');
   });
 
   test('can delete a transformation from the sidebar', async ({ gotoDashboardPage, selectors, page }) => {
