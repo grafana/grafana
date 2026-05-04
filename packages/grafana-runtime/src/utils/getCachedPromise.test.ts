@@ -1,10 +1,12 @@
 import { getLogger, setLogger } from '../services/logging/registry';
 
 import {
+  getCacheKeyFromPromise,
   getCachedPromise,
   getCachedPromiseWithArgs,
-  invalidateCache,
-  MAX_CACHE_SIZE,
+  invalidateCachedPromise,
+  invalidateCachedPromisesCache,
+  replaceCachedPromise,
   serializeArg,
 } from './getCachedPromise';
 
@@ -25,7 +27,7 @@ function simulateErrorRequest(): Promise<{ ok: boolean; status: number; statusTe
 describe('cached promises', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    invalidateCache();
+    invalidateCachedPromisesCache();
     // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
     setLogger('grafana/runtime.utils.getCachedPromise', {
       logDebug: jest.fn(),
@@ -36,43 +38,65 @@ describe('cached promises', () => {
     });
   });
 
+  describe('getCacheKeyFromPromise', () => {
+    test('should return undefined when called without arguments', () => {
+      expect(getCacheKeyFromPromise()).toBeUndefined();
+    });
+
+    test('should return undefined when called with undefined', () => {
+      expect(getCacheKeyFromPromise(undefined)).toBeUndefined();
+    });
+
+    test('should return undefined for an anonymous function', () => {
+      expect(getCacheKeyFromPromise(() => Promise.resolve(1))).toBeUndefined();
+    });
+
+    test('should return a key in name:hash format for a named function', () => {
+      expect(getCacheKeyFromPromise(simulateOkRequest)).toMatch(/^simulateOkRequest:-?\d+$/);
+    });
+
+    test('should return the same key when called multiple times with the same function', () => {
+      expect(getCacheKeyFromPromise(simulateOkRequest)).toBe(getCacheKeyFromPromise(simulateOkRequest));
+    });
+
+    test('should return different keys for functions with different names', () => {
+      async function fetchA() {
+        return 1;
+      }
+      async function fetchB() {
+        return 1;
+      }
+
+      expect(getCacheKeyFromPromise(fetchA)).not.toBe(getCacheKeyFromPromise(fetchB));
+    });
+
+    test('should return different keys for functions with the same name but different bodies', () => {
+      function makeOne() {
+        async function fetchSomething() {
+          return 1;
+        }
+        return fetchSomething;
+      }
+      function makeTwo() {
+        async function fetchSomething() {
+          return 2;
+        }
+        return fetchSomething;
+      }
+
+      expect(getCacheKeyFromPromise(makeOne())).not.toBe(getCacheKeyFromPromise(makeTwo()));
+    });
+
+    test('should infer the function name from variable assignment', () => {
+      const myFn = async () => 1;
+
+      expect(getCacheKeyFromPromise(myFn)).toMatch(/^myFn:-?\d+$/);
+    });
+  });
+
   // heads up that all jest.fn(any function) will get the name 'mockConstructor'
   // so when getCachedPromise adds/looks up the cache key it will add/look up 'mockConstructor'
   describe('getCachedPromise', () => {
-    describe('when cache limit is reached', () => {
-      test('should clear cache', async () => {
-        const entries = Array.from({ length: MAX_CACHE_SIZE + 1 }, (_, i) => i);
-        const promises = entries.map((value) => {
-          const func = async () => value;
-          const cacheKey = `cache-key-${value}`;
-          return getCachedPromise(func, { cacheKey });
-        });
-
-        await Promise.all(promises);
-
-        // Verify all entries are cached correctly
-        const expectPromises = entries.map((value) => {
-          const func = async () => 999;
-          const cacheKey = `cache-key-${value}`;
-          return getCachedPromise(func, { cacheKey }).then((v) => expect(v).toBe(value));
-        });
-
-        await Promise.all(expectPromises);
-
-        // Add one more to exceed limit
-        await getCachedPromise(simulateOkRequest);
-
-        // Verify that all previous cached are cleared
-        const expectClearedPromises = entries.map((value) => {
-          const func = async () => 999;
-          const cacheKey = `cache-key-${value}`;
-          return getCachedPromise(func, { cacheKey }).then((v) => expect(v).toBe(999));
-        });
-
-        await Promise.all(expectClearedPromises);
-      });
-    });
-
     describe('when called with invalidate option', () => {
       test('should invalidate cache for function name', async () => {
         const actual1 = await getCachedPromise(simulateOkRequest);
@@ -122,7 +146,7 @@ describe('cached promises', () => {
       test('should use cacheKey as key when supplied', async () => {
         const otherFunction = async () => 2;
         const actual1 = await getCachedPromise(simulateOkRequest);
-        const actual2 = await getCachedPromise(otherFunction, { cacheKey: 'simulateOkRequest' });
+        const actual2 = await getCachedPromise(otherFunction, { cacheKey: getCacheKeyFromPromise(simulateOkRequest) });
 
         expect(actual1).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
         expect(actual2).toBe(actual1);
@@ -177,15 +201,49 @@ describe('cached promises', () => {
         expect(promise).toHaveBeenCalledTimes(1);
       });
 
-      test('should not invalidate cache on errors', async () => {
+      test('should invalidate cache on errors', async () => {
         const promise = jest.fn(simulateErrorRequest);
         const promise2 = jest.fn(simulateOkRequest);
 
         await expect(getCachedPromise(promise)).rejects.toThrow('Network Error');
-        await expect(getCachedPromise(promise2)).rejects.toThrow('Network Error');
 
+        const actual = await getCachedPromise(promise2);
+
+        expect(actual).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
         expect(promise).toHaveBeenCalledTimes(1);
-        expect(promise2).toHaveBeenCalledTimes(0);
+        expect(promise2).toHaveBeenCalledTimes(1);
+      });
+
+      test('should log errors', async () => {
+        const promise = jest.fn(simulateErrorRequest);
+
+        await expect(getCachedPromise(promise)).rejects.toThrow('Network Error');
+
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        expect(logErrorMock).toHaveBeenCalledTimes(1);
+        expect(logErrorMock).toHaveBeenCalledWith(
+          new Error(`getCachedPromise: Something failed while resolving a cached promise`),
+          {
+            stack: expect.any(String),
+            message: 'Network Error',
+            key: expect.stringMatching(/^mockConstructor:-?\d+$/),
+          }
+        );
+        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
+      });
+
+      test('should log non-Error thrown values', async () => {
+        const promise = jest.fn(() => Promise.reject('string error'));
+
+        await expect(getCachedPromise(promise)).rejects.toBe('string error');
+
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        expect(logErrorMock).toHaveBeenCalledTimes(1);
+        expect(logErrorMock).toHaveBeenCalledWith(
+          expect.any(Error),
+          expect.objectContaining({ message: 'string error', key: expect.stringMatching(/^mockConstructor:-?\d+$/) })
+        );
+        expect(logErrorMock.mock.calls[0][0].cause).toBe('string error');
       });
     });
 
@@ -229,15 +287,17 @@ describe('cached promises', () => {
 
         expect(actual).toStrictEqual({ ok: false, status: 500, statusText: 'Internal Server Error' });
         expect(promise).toHaveBeenCalledTimes(1);
-        expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
-        expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        expect(logErrorMock).toHaveBeenCalledTimes(1);
+        expect(logErrorMock).toHaveBeenCalledWith(
           new Error(`getCachedPromise: Something failed while resolving a cached promise`),
           {
             stack: expect.any(String),
             message: 'Network Error',
-            key: 'mockConstructor',
+            key: expect.stringMatching(/^mockConstructor:-?\d+$/),
           }
         );
+        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
       });
 
       test('should invalidate cache when something errors', async () => {
@@ -297,30 +357,10 @@ describe('cached promises', () => {
         expect(actual).toStrictEqual({ ok: false, status: 500, statusText: 'Internal Server Error' });
         expect(promise).toHaveBeenCalledTimes(1);
         expect(onError).toHaveBeenCalledTimes(1);
-        expect(onError).toHaveBeenCalledWith({ error: new Error('Network Error'), invalidate: expect.any(Function) });
+        expect(onError).toHaveBeenCalledWith({ error: new Error('Network Error') });
       });
 
-      test('should invalidate cache when calling invalidate function', async () => {
-        const promise = jest.fn(simulateErrorRequest);
-        const promise2 = jest.fn(simulateOkRequest);
-
-        const actual1 = await getCachedPromise(promise, {
-          onError: async ({ error, invalidate }) => {
-            expect(error).toStrictEqual(new Error('Network Error'));
-            invalidate();
-            return { ok: false, status: 500, statusText: 'Network Error' };
-          },
-        });
-
-        const actual2 = await getCachedPromise(promise2);
-
-        expect(actual1).toStrictEqual({ ok: false, status: 500, statusText: 'Network Error' });
-        expect(actual2).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
-        expect(promise).toHaveBeenCalledTimes(1);
-        expect(promise2).toHaveBeenCalledTimes(1); // because the cache is invalidated on error then promise2 is called
-      });
-
-      test('should not invalidate cache if invalidate function is not called', async () => {
+      test('should always invalidate cache on error', async () => {
         const promise = jest.fn(simulateErrorRequest);
         const promise2 = jest.fn(simulateOkRequest);
 
@@ -334,9 +374,51 @@ describe('cached promises', () => {
         const actual2 = await getCachedPromise(promise2);
 
         expect(actual1).toStrictEqual({ ok: false, status: 500, statusText: 'Network Error' });
-        expect(actual2).toBe(actual1);
+        expect(actual2).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
         expect(promise).toHaveBeenCalledTimes(1);
-        expect(promise2).toHaveBeenCalledTimes(0); // because the cache is not invalidated on error
+        expect(promise2).toHaveBeenCalledTimes(1); // cache is always invalidated on error
+      });
+
+      test('should log errors', async () => {
+        const promise = jest.fn(simulateErrorRequest);
+
+        await getCachedPromise(promise, {
+          onError: async () => ({ ok: false, status: 500, statusText: 'Internal Server Error' }),
+        });
+
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        expect(logErrorMock).toHaveBeenCalledTimes(1);
+        expect(logErrorMock).toHaveBeenCalledWith(
+          new Error(`getCachedPromise: Something failed while resolving a cached promise`),
+          {
+            stack: expect.any(String),
+            message: 'Network Error',
+            key: expect.stringMatching(/^mockConstructor:-?\d+$/),
+          }
+        );
+        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
+      });
+
+      test('should propagate error when onError callback throws', async () => {
+        const promise = jest.fn(simulateErrorRequest);
+
+        await expect(
+          getCachedPromise(promise, {
+            onError: async () => {
+              throw new Error('onError failed');
+            },
+          })
+        ).rejects.toThrow('onError failed');
+
+        // Error should still be logged
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        expect(logErrorMock).toHaveBeenCalledTimes(1);
+
+        // Cache should still be invalidated
+        const promise2 = jest.fn(simulateOkRequest);
+        const actual = await getCachedPromise(promise2);
+        expect(actual).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+        expect(promise2).toHaveBeenCalledTimes(1);
       });
     });
   });
@@ -436,7 +518,7 @@ describe('cached promises', () => {
 
       expect(actual).toBe('recovered');
       expect(onError).toHaveBeenCalledTimes(1);
-      expect(onError).toHaveBeenCalledWith({ error: new Error('fail'), invalidate: expect.any(Function) });
+      expect(onError).toHaveBeenCalledWith({ error: new Error('fail') });
     });
 
     test('should support invalidate option', async () => {
@@ -475,7 +557,7 @@ describe('cached promises', () => {
 
     test('should not throw when called with an anonymous function and a cacheKeyFn', async () => {
       const fn = async (id: string) => `result-${id}`;
-      const cached = getCachedPromiseWithArgs(fn, undefined, (id) => `custom:${id}`);
+      const cached = getCachedPromiseWithArgs(fn, { cacheKeyFn: (id) => `custom:${id}` });
 
       const actual = await cached('a');
       expect(actual).toBe('result-a');
@@ -549,7 +631,7 @@ describe('cached promises', () => {
     describe('when called with cacheKeyFn', () => {
       test('should use cacheKeyFn to generate cache keys', async () => {
         const fn = jest.fn(async (id: string) => `result-${id}`);
-        const cached = getCachedPromiseWithArgs(fn, undefined, (id) => `custom:${id}`);
+        const cached = getCachedPromiseWithArgs(fn, { cacheKeyFn: (id) => `custom:${id}` });
 
         const actual1 = await cached('a');
         const actual2 = await cached('a');
@@ -561,7 +643,7 @@ describe('cached promises', () => {
 
       test('should cache separately when cacheKeyFn returns different keys', async () => {
         const fn = jest.fn(async (id: string) => `result-${id}`);
-        const cached = getCachedPromiseWithArgs(fn, undefined, (id) => `custom:${id}`);
+        const cached = getCachedPromiseWithArgs(fn, { cacheKeyFn: (id) => `custom:${id}` });
 
         const actual1 = await cached('a');
         const actual2 = await cached('b');
@@ -573,7 +655,9 @@ describe('cached promises', () => {
 
       test('should allow unsupported types when cacheKeyFn is provided', async () => {
         const fn = jest.fn(async (filter: RegExp) => `matched-${filter.source}`);
-        const cached = getCachedPromiseWithArgs(fn, undefined, (filter) => `regex:${filter.source}:${filter.flags}`);
+        const cached = getCachedPromiseWithArgs(fn, {
+          cacheKeyFn: (filter) => `regex:${filter.source}:${filter.flags}`,
+        });
 
         const actual1 = await cached(/foo/i);
         const actual2 = await cached(/foo/i);
@@ -594,8 +678,11 @@ describe('cached promises', () => {
           return `data-${id}-${callCount}`;
         }
 
-        const cached = getCachedPromiseWithArgs(fetchData, undefined, (id) => `custom:${id}`);
-        const cachedInvalidate = getCachedPromiseWithArgs(fetchData, { invalidate: true }, (id) => `custom:${id}`);
+        const cached = getCachedPromiseWithArgs(fetchData, { cacheKeyFn: (id) => `custom:${id}` });
+        const cachedInvalidate = getCachedPromiseWithArgs(fetchData, {
+          invalidate: true,
+          cacheKeyFn: (id) => `custom:${id}`,
+        });
 
         const a1 = await cached('a');
         const b1 = await cached('b');
@@ -616,19 +703,16 @@ describe('cached promises', () => {
         const fn = jest.fn(async (_id: string): Promise<string> => {
           throw new Error('fail');
         });
-        const onError = jest.fn(async ({ invalidate }: { invalidate: () => void }) => {
-          invalidate();
-          return 'recovered';
-        });
-        const cached = getCachedPromiseWithArgs(fn, { onError }, (id) => `custom:${id}`);
+        const onError = jest.fn(async () => 'recovered');
+        const cached = getCachedPromiseWithArgs(fn, { onError, cacheKeyFn: (id) => `custom:${id}` });
 
         const actual = await cached('a');
 
         expect(actual).toBe('recovered');
         expect(onError).toHaveBeenCalledTimes(1);
-        expect(onError).toHaveBeenCalledWith({ error: new Error('fail'), invalidate: expect.any(Function) });
+        expect(onError).toHaveBeenCalledWith({ error: new Error('fail') });
 
-        // After invalidation via onError, a new call should re-fetch
+        // Cache is always invalidated on error, so a new call should re-fetch
         fn.mockResolvedValueOnce('fresh');
         const actual2 = await cached('a');
         expect(actual2).toBe('fresh');
@@ -642,8 +726,8 @@ describe('cached promises', () => {
           return `data-${id}-${callCount}`;
         }
 
-        const cachedA = getCachedPromiseWithArgs(fetchData, undefined, (id) => `ns-a:${id}`);
-        const cachedB = getCachedPromiseWithArgs(fetchData, undefined, (id) => `ns-b:${id}`);
+        const cachedA = getCachedPromiseWithArgs(fetchData, { cacheKeyFn: (id) => `ns-a:${id}` });
+        const cachedB = getCachedPromiseWithArgs(fetchData, { cacheKeyFn: (id) => `ns-b:${id}` });
 
         const resultA = await cachedA('1');
         const resultB = await cachedB('1');
@@ -720,7 +804,7 @@ describe('cached promises', () => {
       { name: 'RegExp', value: /test/ },
       { name: 'RegExp', value: new RegExp('test') },
       { name: 'Promise', value: Promise.resolve() },
-    ])('should return object:{} for unsupported type: $name', ({ name, value }) => {
+    ])('should return object:{} for unsupported type: $name', ({ value }) => {
       const key = serializeArg(value, 'test');
 
       expect(key).toBe('object:{}');
@@ -741,6 +825,170 @@ describe('cached promises', () => {
         expect.objectContaining({ message: 'getCachedPromiseWithArgs: serializeArg failed' }),
         expect.objectContaining({ baseKey: 'test' })
       );
+    });
+  });
+
+  describe('invalidateCachedPromise', () => {
+    test('should invalidate cache for function name', async () => {
+      const actual1 = await getCachedPromise(simulateOkRequest);
+      invalidateCachedPromise(simulateOkRequest);
+      const actual2 = await getCachedPromise(simulateOkRequest);
+
+      expect(actual1).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual2).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual1).not.toBe(actual2);
+    });
+
+    test('should invalidate cache for cacheKey', async () => {
+      const actual1 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
+      invalidateCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
+      const actual2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
+
+      expect(actual1).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual2).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual1).not.toBe(actual2);
+    });
+
+    test('should not affect other cache entries', async () => {
+      const otherFunction = async () => 2;
+      const a1 = await getCachedPromise(simulateOkRequest);
+      const b1 = await getCachedPromise(otherFunction);
+
+      invalidateCachedPromise(simulateOkRequest);
+
+      const a2 = await getCachedPromise(simulateOkRequest);
+      const b2 = await getCachedPromise(otherFunction);
+
+      expect(a1).not.toBe(a2);
+      expect(b1).toBe(b2);
+    });
+
+    test('should be a no-op when there is no cached entry', () => {
+      expect(() => invalidateCachedPromise(simulateOkRequest)).not.toThrow();
+    });
+
+    test('should throw when called with an anonymous function and no cacheKey', () => {
+      expect(() => invalidateCachedPromise(async () => 2)).toThrow(
+        'invalidateCachedPromise function must be invoked with a named function or cacheKey'
+      );
+    });
+
+    test('should not throw when called with an anonymous function and a cacheKey', () => {
+      expect(() => invalidateCachedPromise(async () => 2, { cacheKey: 'a-cache-key' })).not.toThrow();
+    });
+
+    test('should prefer cacheKey over the key derived from the function', async () => {
+      const actual1 = await getCachedPromise(simulateOkRequest);
+      const actual2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+
+      invalidateCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+
+      const actual3 = await getCachedPromise(simulateOkRequest);
+      const actual4 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+
+      expect(actual1).toBe(actual3);
+      expect(actual1).not.toBe(actual2);
+      expect(actual2).not.toBe(actual4);
+    });
+  });
+
+  describe('replaceCachedPromise', () => {
+    test('should replace an existing cache entry for a function name', async () => {
+      const replacement = { ok: true, status: 201, statusText: 'replaced' };
+
+      await getCachedPromise(simulateOkRequest);
+      replaceCachedPromise(simulateOkRequest, replacement);
+      const actual = await getCachedPromise(simulateOkRequest);
+
+      expect(actual).toBe(replacement);
+    });
+
+    test('should replace an existing cache entry for a cacheKey', async () => {
+      const replacement = { ok: true, status: 201, statusText: 'replaced' };
+
+      await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
+      replaceCachedPromise(simulateOkRequest, replacement, { cacheKey: 'the-key' });
+      const actual = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
+
+      expect(actual).toBe(replacement);
+    });
+
+    test('should add a new entry when no prior cache exists', async () => {
+      const promise = jest.fn(simulateOkRequest);
+      const replacement = { ok: true, status: 201, statusText: 'replaced' };
+
+      replaceCachedPromise(promise, replacement);
+      const actual = await getCachedPromise(promise);
+
+      expect(actual).toBe(replacement);
+      expect(promise).not.toHaveBeenCalled();
+    });
+
+    test('should not affect other cache entries', async () => {
+      const otherFunction = async () => 2;
+      const replacement = { ok: false, status: 500, statusText: 'replaced' };
+
+      const a1 = await getCachedPromise(simulateOkRequest);
+      const b1 = await getCachedPromise(otherFunction);
+
+      replaceCachedPromise(simulateOkRequest, replacement);
+
+      const a2 = await getCachedPromise(simulateOkRequest);
+      const b2 = await getCachedPromise(otherFunction);
+
+      expect(a2).toBe(replacement);
+      expect(a1).not.toBe(a2);
+      expect(b1).toBe(b2);
+    });
+
+    test('should throw when called with an anonymous function and no cacheKey', () => {
+      expect(() => replaceCachedPromise(async () => 2, 99)).toThrow(
+        'replaceCachedPromise function must be invoked with a named function or cacheKey'
+      );
+    });
+
+    test('should not throw when called with an anonymous function and a cacheKey', () => {
+      expect(() => replaceCachedPromise(async () => 2, 99, { cacheKey: 'a-cache-key' })).not.toThrow();
+    });
+
+    test('should prefer cacheKey over the key derived from the function', async () => {
+      const replacement = { ok: false, status: 500, statusText: 'replaced' };
+
+      const a1 = await getCachedPromise(simulateOkRequest);
+      const b1 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+
+      replaceCachedPromise(simulateOkRequest, replacement, { cacheKey: 'explicit-key' });
+
+      const a2 = await getCachedPromise(simulateOkRequest);
+      const b2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+
+      expect(a2).toBe(a1);
+      expect(b2).toBe(replacement);
+      expect(b1).not.toBe(b2);
+    });
+
+    test('replacement survives a subsequent rejection of the inflight original', async () => {
+      let rejectFn: (error: Error) => void = () => {};
+      let callCount = 0;
+      async function slowFailingRequest() {
+        callCount++;
+        if (callCount === 1) {
+          return new Promise<{ ok: boolean; status: number; statusText: string }>((_, reject) => {
+            rejectFn = reject;
+          });
+        }
+        return { ok: true, status: 200, statusText: 'unexpected refetch' };
+      }
+      const replacement = { ok: true, status: 201, statusText: 'replaced' };
+
+      const inflight = getCachedPromise(slowFailingRequest);
+      replaceCachedPromise(slowFailingRequest, replacement);
+      rejectFn(new Error('Network Error'));
+      await expect(inflight).rejects.toThrow('Network Error');
+
+      const actual = await getCachedPromise(slowFailingRequest);
+      expect(actual).toBe(replacement);
+      expect(callCount).toBe(1);
     });
   });
 });

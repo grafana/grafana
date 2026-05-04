@@ -150,6 +150,174 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		assert.Equal(t, "https://external.example.com/dashboard/snapshot/external-key", response["url"])
 	})
 
+	t.Run("should send Authorization header for external snapshot when token is configured", func(t *testing.T) {
+		externalServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "Bearer my-sa-token", r.Header.Get("Authorization"))
+
+			response := map[string]any{
+				"key":       "external-key",
+				"deleteKey": "external-delete-key",
+				"url":       "https://external.example.com/dashboard/snapshot/external-key",
+				"deleteUrl": "https://external.example.com/api/snapshots-delete/external-delete-key",
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(response)
+		}))
+		defer externalServer.Close()
+
+		mockService := NewMockService(t)
+		cfg := snapshot.SnapshotSharingOptions{
+			SnapshotsEnabled:      true,
+			ExternalEnabled:       true,
+			ExternalSnapshotURL:   externalServer.URL,
+			ExternalSnapshotToken: "my-sa-token",
+		}
+		testUser := createTestUser()
+		dashboard := createTestDashboard(t)
+
+		cmd := CreateDashboardSnapshotCommand{
+			DashboardCreateCommand: snapshot.DashboardCreateCommand{
+				Dashboard: dashboard,
+				Name:      "Test External Snapshot with Token",
+				External:  true,
+			},
+		}
+
+		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
+			Return(nil)
+		mockService.On("CreateDashboardSnapshot", mock.Anything, mock.Anything).
+			Return(&DashboardSnapshot{
+				Key:       "external-key",
+				DeleteKey: "external-delete-key",
+			}, nil)
+
+		req, _ := http.NewRequest("POST", "/api/snapshots", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		ctx, recorder := createReqContext(t, req, testUser)
+
+		CreateDashboardSnapshot(ctx, cfg, cmd, mockService)
+
+		mockService.AssertExpectations(t)
+		assert.Equal(t, http.StatusOK, recorder.Code)
+	})
+
+	t.Run("should return 502 with auth message when external server returns 401", func(t *testing.T) {
+		externalServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+		}))
+		defer externalServer.Close()
+
+		mockService := NewMockService(t)
+		cfg := snapshot.SnapshotSharingOptions{
+			SnapshotsEnabled:    true,
+			ExternalEnabled:     true,
+			ExternalSnapshotURL: externalServer.URL,
+		}
+		testUser := createTestUser()
+		dashboard := createTestDashboard(t)
+
+		cmd := CreateDashboardSnapshotCommand{
+			DashboardCreateCommand: snapshot.DashboardCreateCommand{
+				Dashboard: dashboard,
+				Name:      "Test External Snapshot",
+				External:  true,
+			},
+		}
+
+		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
+			Return(nil)
+
+		req, _ := http.NewRequest("POST", "/api/snapshots", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		ctx, recorder := createReqContext(t, req, testUser)
+
+		CreateDashboardSnapshot(ctx, cfg, cmd, mockService)
+
+		assert.Equal(t, http.StatusBadGateway, recorder.Code)
+		var response map[string]any
+		err := json.Unmarshal(recorder.Body.Bytes(), &response)
+		require.NoError(t, err)
+		assert.Contains(t, response["message"], "external_snapshot_token")
+	})
+
+	t.Run("should return 502 with auth message when external server returns 403", func(t *testing.T) {
+		externalServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+		}))
+		defer externalServer.Close()
+
+		mockService := NewMockService(t)
+		cfg := snapshot.SnapshotSharingOptions{
+			SnapshotsEnabled:    true,
+			ExternalEnabled:     true,
+			ExternalSnapshotURL: externalServer.URL,
+		}
+		testUser := createTestUser()
+		dashboard := createTestDashboard(t)
+
+		cmd := CreateDashboardSnapshotCommand{
+			DashboardCreateCommand: snapshot.DashboardCreateCommand{
+				Dashboard: dashboard,
+				Name:      "Test External Snapshot",
+				External:  true,
+			},
+		}
+
+		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
+			Return(nil)
+
+		req, _ := http.NewRequest("POST", "/api/snapshots", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		ctx, recorder := createReqContext(t, req, testUser)
+
+		CreateDashboardSnapshot(ctx, cfg, cmd, mockService)
+
+		assert.Equal(t, http.StatusBadGateway, recorder.Code)
+		var response map[string]any
+		err := json.Unmarshal(recorder.Body.Bytes(), &response)
+		require.NoError(t, err)
+		assert.Contains(t, response["message"], "external_snapshot_token")
+	})
+
+	t.Run("should return 502 when external server returns unexpected error", func(t *testing.T) {
+		externalServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}))
+		defer externalServer.Close()
+
+		mockService := NewMockService(t)
+		cfg := snapshot.SnapshotSharingOptions{
+			SnapshotsEnabled:    true,
+			ExternalEnabled:     true,
+			ExternalSnapshotURL: externalServer.URL,
+		}
+		testUser := createTestUser()
+		dashboard := createTestDashboard(t)
+
+		cmd := CreateDashboardSnapshotCommand{
+			DashboardCreateCommand: snapshot.DashboardCreateCommand{
+				Dashboard: dashboard,
+				Name:      "Test External Snapshot",
+				External:  true,
+			},
+		}
+
+		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
+			Return(nil)
+
+		req, _ := http.NewRequest("POST", "/api/snapshots", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		ctx, recorder := createReqContext(t, req, testUser)
+
+		CreateDashboardSnapshot(ctx, cfg, cmd, mockService)
+
+		assert.Equal(t, http.StatusBadGateway, recorder.Code)
+		var response map[string]any
+		err := json.Unmarshal(recorder.Body.Bytes(), &response)
+		require.NoError(t, err)
+		assert.Contains(t, response["message"], "unexpected error")
+	})
+
 	t.Run("should return forbidden when external is disabled", func(t *testing.T) {
 		mockService := NewMockService(t)
 		cfg := snapshot.SnapshotSharingOptions{
@@ -320,7 +488,7 @@ func TestDeleteExternalDashboardSnapshot(t *testing.T) {
 		}))
 		defer server.Close()
 
-		err := DeleteExternalDashboardSnapshot(server.URL)
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
 		assert.NoError(t, err)
 	})
 
@@ -334,7 +502,7 @@ func TestDeleteExternalDashboardSnapshot(t *testing.T) {
 		}))
 		defer server.Close()
 
-		err := DeleteExternalDashboardSnapshot(server.URL)
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
 		assert.NoError(t, err)
 	})
 
@@ -344,7 +512,7 @@ func TestDeleteExternalDashboardSnapshot(t *testing.T) {
 		}))
 		defer server.Close()
 
-		err := DeleteExternalDashboardSnapshot(server.URL)
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "unexpected response when deleting external snapshot")
 		assert.Contains(t, err.Error(), "404")
@@ -360,8 +528,70 @@ func TestDeleteExternalDashboardSnapshot(t *testing.T) {
 		}))
 		defer server.Close()
 
-		err := DeleteExternalDashboardSnapshot(server.URL)
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "500")
+	})
+
+	t.Run("should return auth error when server returns 401", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+		}))
+		defer server.Close()
+
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrExternalSnapshotAuthFailed)
+	})
+
+	t.Run("should return auth error when server returns 403", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+		}))
+		defer server.Close()
+
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrExternalSnapshotAuthFailed)
+	})
+
+	t.Run("does not send an Authorization header (legacy endpoint is public)", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Empty(t, r.Header.Get("Authorization"))
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
+		assert.NoError(t, err)
+	})
+
+	t.Run("rebuilds K8s-format URL to legacy path", func(t *testing.T) {
+		var receivedPath string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedPath = r.URL.EscapedPath()
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		// New K8s-format stored URL — function should extract domain + deleteKey and
+		// rebuild as the legacy GET path.
+		err := DeleteExternalDashboardSnapshot(server.URL + "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/abc123")
+		assert.NoError(t, err)
+		assert.Equal(t, "/api/snapshots-delete/abc123", receivedPath)
+	})
+
+	t.Run("passes legacy-format URL through untouched", func(t *testing.T) {
+		var receivedPath string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedPath = r.URL.EscapedPath()
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		// Legacy URL with extra path segments — should be passed through as-is.
+		err := DeleteExternalDashboardSnapshot(server.URL + "/some/prefix/api/snapshots-delete/abc123")
+		assert.NoError(t, err)
+		assert.Equal(t, "/some/prefix/api/snapshots-delete/abc123", receivedPath)
 	})
 }

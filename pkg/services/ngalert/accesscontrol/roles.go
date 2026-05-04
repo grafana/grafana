@@ -3,7 +3,6 @@ package accesscontrol
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -493,8 +492,9 @@ var (
 	}
 )
 
-func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.FeatureToggles) error {
-	fixedRoles := []accesscontrol.RoleRegistration{
+// FixedRoleRegistrations returns all alerting role registrations declared by this package.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
+	return []accesscontrol.RoleRegistration{
 		rulesReaderRole, rulesWriterRole,
 		instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
@@ -507,6 +507,8 @@ func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.Featu
 		routesCreatorRole, routesReaderRole, routesWriterRole,
 		inhibitionRulesReaderRole, inhibitionRulesWriterRole,
 	}
+}
 
-	return service.DeclareFixedRoles(fixedRoles...)
+func DeclareFixedRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }

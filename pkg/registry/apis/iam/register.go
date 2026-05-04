@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccounttoken"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
@@ -377,7 +378,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		MaximumNameLength: 80,
 	})
 	opts.StorageOptsRegister(iamv0.UserResourceInfo.GroupResource(), apistore.StorageOptions{
-		MaximumNameLength: 80,
+		MaximumNameLength:           80,
+		RequireDeprecatedInternalID: true,
 	})
 
 	if enableTeamsApi {
@@ -399,7 +401,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableServiceAccountsApi {
-		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableServiceAccountTokensApi, enableZanzanaSync); err != nil {
+		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableZanzanaSync, enableServiceAccountTokensApi); err != nil {
 			return err
 		}
 	}
@@ -474,18 +476,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 	}
 
-	if b.dual != nil && b.unified != nil {
-		legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
-
-		teamBindingSearchClient := resource.NewSearchClient(
-			dualwrite.NewSearchAdapter(b.dual),
-			iamv0.TeamBindingResourceInfo.GroupResource(),
-			b.unified,
-			legacyTeamBindingSearchClient,
-		)
-
-		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing, b.features)
-	}
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing, b.features)
 
 	if enableExternalGroupMappingsApi && b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
@@ -574,13 +565,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	storage[userResource.StoragePath()] = storewrapper.New(userStore, user.NewStoreWrapper(b.cfgProvider, b.settingService), storewrapper.WithPreserveIdentity())
 
 	if b.dual != nil && b.unified != nil {
-		legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
-
-		teamBindingSearchClient := resource.NewSearchClient(
+		teamSearchClient := resource.NewSearchClient(
 			dualwrite.NewSearchAdapter(b.dual),
-			iamv0.TeamBindingResourceInfo.GroupResource(),
+			iamv0.TeamResourceInfo.GroupResource(),
 			b.unified,
-			legacyTeamBindingSearchClient,
+			team.NewLegacyUserTeamsSearchClient(b.store, b.tracing),
 		)
 
 		statusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, userUniStore)
@@ -595,7 +584,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 				b.store,
 			)
 		}
-		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamBindingSearchClient, b.tracing, b.features)
+		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing, b.features)
 	}
 
 	return nil
@@ -622,7 +611,7 @@ func (b *IdentityAccessManagementAPIBuilder) useStatusDualWriter(resourceInfo ut
 	return true
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableServiceAccountTokensApi bool, enableZanzanaSync bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool, enableServiceAccountTokensApi bool) error {
 	saResource := iamv0.ServiceAccountResourceInfo
 	saUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, saResource, opts.OptsGetter)
 	if err != nil {
@@ -638,16 +627,19 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts 
 
 	storage[saResource.StoragePath()] = saUniStore
 
+	var saStore storewrapper.K8sStorage = saUniStore
+
 	if b.saLegacyStore != nil {
 		dw, err := opts.DualWriteBuilder(saResource.GroupResource(), b.saLegacyStore, saUniStore)
 		if err != nil {
 			return err
 		}
 		storage[saResource.StoragePath()] = dw
+		saStore = dw
 	}
 
 	if enableServiceAccountTokensApi {
-		storage[saResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
+		storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.store, b.tracing)
 	}
 
 	return nil
@@ -758,48 +750,93 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 			}},
 	}
 
+	// Patch /tokens endpoints: wire request/response schemas, rename {path} to {tokenName}.
+	serviceaccounttoken.PostProcessOpenAPI(oas)
+
 	if oas.Paths != nil && oas.Paths.Paths != nil {
-		pathsToUpdate := []string{
+		// Team subresources still expose offset/page pagination.
+		offsetPagedPaths := []string{
 			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teams/{name}/groups",
 			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teams/{name}/members",
-			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/{name}/teams",
+		}
+		for _, path := range offsetPagedPaths {
+			p, ok := oas.Paths.Paths[path]
+			if !ok || p.Get == nil {
+				continue
+			}
+			p.Get.Parameters = append(p.Get.Parameters,
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "limit",
+						In:          "query",
+						Description: "number of results to return",
+						Example:     30,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "page",
+						In:          "query",
+						Description: "page number (starting from 1)",
+						Example:     1,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "offset",
+						In:          "query",
+						Description: "number of results to skip",
+						Example:     0,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+			)
 		}
 
-		for _, path := range pathsToUpdate {
-			if p, ok := oas.Paths.Paths[path]; ok {
-				if p.Get != nil {
-					p.Get.Parameters = append(p.Get.Parameters,
-						&spec3.Parameter{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "limit",
-								In:          "query",
-								Description: "number of results to return",
-								Example:     30,
-								Required:    false,
-								Schema:      spec.Int64Property(),
-							},
-						},
-						&spec3.Parameter{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "page",
-								In:          "query",
-								Description: "page number (starting from 1)",
-								Example:     1,
-								Required:    false,
-								Schema:      spec.Int64Property(),
-							},
-						},
-						&spec3.Parameter{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "offset",
-								In:          "query",
-								Description: "number of results to skip",
-								Example:     0,
-								Required:    false,
-								Schema:      spec.Int64Property(),
-							},
-						},
-					)
+		// /users/{name}/teams uses keyset pagination: limit + opaque continue
+		// token returned in metadata.continue. offset/page are not honored.
+		userTeamsPath := "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/{name}/teams"
+		if p, ok := oas.Paths.Paths[userTeamsPath]; ok && p.Get != nil {
+			p.Get.Parameters = append(p.Get.Parameters,
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "limit",
+						In:          "query",
+						Description: "maximum number of results to return per page",
+						Example:     30,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name: "continue",
+						In:   "query",
+						Description: "Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. " +
+							"The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, " +
+							"otherwise '+' will silently decode to a space on the server and pagination will fail.",
+						Required: false,
+						Schema:   spec.StringProperty(),
+					},
+				},
+			)
+
+			// Wire the 200 response to the generated GetUserTeamsResponse
+			// schema (embeds metav1.ListMeta, so metadata.continue is part
+			// of the documented contract).
+			if p.Get.Responses != nil && p.Get.Responses.StatusCodeResponses != nil {
+				if r200, ok := p.Get.Responses.StatusCodeResponses[200]; ok && r200.Content != nil {
+					ref := spec.MustCreateRef("#/components/schemas/" + iamv0.GetUserTeamsResponse{}.OpenAPIModelName())
+					for ct, mt := range r200.Content {
+						mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
+						r200.Content[ct] = mt
+					}
+					p.Get.Responses.StatusCodeResponses[200] = r200
 				}
 			}
 		}

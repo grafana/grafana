@@ -1097,9 +1097,15 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 
 	if query.DashboardUID != "" {
 		q = q.Where("dashboard_uid = ?", query.DashboardUID)
-		if query.PanelID != 0 {
-			q = q.Where("panel_id = ?", query.PanelID)
-		}
+	}
+	if query.PanelID != 0 {
+		q = q.Where("panel_id = ?", query.PanelID)
+	}
+	if query.IsPaused != nil {
+		q = q.Where("is_paused = ?", *query.IsPaused)
+	}
+	if query.TitleExact != "" {
+		q = q.Where("title = ?", query.TitleExact)
 	}
 
 	if len(query.NamespaceUIDs) > 0 {

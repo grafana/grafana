@@ -34,8 +34,14 @@ func StarsMigrationDefinition(migrator StarsMigrator) migrations.MigrationDefini
 		Validators: []migrations.ValidatorFactory{
 			migrations.CountValidation(starsGR, migrations.CountValidationOptions{
 				Table:    "star",
-				Where:    "org_id = ?",
-				Distinct: "user_id",
+				Where:    "star.org_id = ?",
+				Distinct: "star.user_id",
+				// Join filters out orphaned stars whose user has been deleted,
+				// matching exactly what MigrateStars processes via sql_list_users.sql.
+				Join: &migrations.CountValidationJoin{
+					Table: []string{"user", "u"},
+					On:    "star.user_id = u.id",
+				},
 			}),
 		},
 		RenameTables: []string{},

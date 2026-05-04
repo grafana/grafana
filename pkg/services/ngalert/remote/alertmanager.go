@@ -681,30 +681,21 @@ func (am *Alertmanager) Ready() bool {
 	return am.ready
 }
 
-// SilenceState returns the Alertmanager's silence state as a SilenceState. Currently, does not retrieve the state
-// remotely and instead uses the value from the state store.
+// SilenceState returns an empty SilenceState and no error.
+// The source of truth for state should be the remote Alertmanager.
 func (am *Alertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
-	silences, err := am.state.GetSilences(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error getting silences: %w", err)
-	}
-
-	return alertingNotify.DecodeState(strings.NewReader(silences))
+	return alertingNotify.SilenceState{}, nil
 }
 
 // getFullState returns a base64-encoded protobuf message representing the Alertmanager's internal state.
 func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 	var parts []alertingClusterPB.Part
 
-	state, err := am.SilenceState(ctx)
+	silences, err := am.state.GetSilences(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error getting silences: %w", err)
 	}
-	b, err := state.MarshalBinary()
-	if err != nil {
-		return "", fmt.Errorf("error marshalling silences: %w", err)
-	}
-	parts = append(parts, alertingClusterPB.Part{Key: notifier.SilencesFilename, Data: b})
+	parts = append(parts, alertingClusterPB.Part{Key: notifier.SilencesFilename, Data: []byte(silences)})
 
 	notificationLog, err := am.state.GetNotificationLog(ctx)
 	if err != nil {
@@ -721,7 +712,7 @@ func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 	fs := alertingClusterPB.FullState{
 		Parts: parts,
 	}
-	b, err = fs.Marshal()
+	b, err := fs.Marshal()
 	if err != nil {
 		return "", fmt.Errorf("error marshaling full state: %w", err)
 	}

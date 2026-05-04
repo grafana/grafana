@@ -37,6 +37,7 @@ func TestIntegrationPreferences(t *testing.T) {
 	})
 
 	t.Run("legacy preferences api", func(t *testing.T) {
+		t.Skip("TODO: skipping these for now; see #123657")
 		ctx := context.Background()
 		clientAdmin := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,

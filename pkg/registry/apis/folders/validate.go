@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -21,6 +22,19 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+// ErrAPIInvalidUID and ErrAPIUIDTooLong are instantiated errutil.Error values
+// created from errutil.BadRequest bases, so the apiserver renders them via
+// APIStatus as 400 (not "Unhandled Error" 500). They wrap the legacy
+// dashboards sentinels via %w so errors.Is/As keeps matching for /api/folders
+// consumers (ToFolderErrorResponse). Defined here rather than in
+// pkg/services/folder/model.go to avoid the dashboards->folder import cycle.
+var (
+	ErrAPIInvalidUID = errutil.BadRequest("folder.invalid-uid-chars", errutil.WithPublicMessage("uid contains illegal characters")).
+				Errorf("%w", dashboards.ErrDashboardInvalidUid)
+	ErrAPIUIDTooLong = errutil.BadRequest("folder.uid-too-long", errutil.WithPublicMessage("uid too long, max 40 characters")).
+				Errorf("%w", dashboards.ErrDashboardUidTooLong)
 )
 
 var errOwnerRefsOnManagedFolder = fmt.Errorf("cannot set owner references on folders managed by a repository")
@@ -65,7 +79,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		folder.GeneralFolderUID,
 		folder.SharedWithMeFolderUID,
 	}, id) {
-		return folder.ErrInvalidUID
+		return folder.ErrAPIInvalidUID
 	}
 
 	meta, err := utils.MetaAccessor(f)
@@ -77,21 +91,21 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	// that the object name (which maps to the UID) is immutable, so re-validating here
 	// would be redundant.
 	if !util.IsValidShortUID(id) {
-		return dashboards.ErrDashboardInvalidUid
+		return ErrAPIInvalidUID
 	}
 
 	if util.IsShortUIDTooLong(id) {
-		return dashboards.ErrDashboardUidTooLong
+		return ErrAPIUIDTooLong
 	}
 
 	f.Spec.Title = strings.TrimSpace(f.Spec.Title)
 
 	if f.Spec.Title == "" {
-		return folder.ErrTitleEmpty
+		return folder.ErrAPITitleEmpty
 	}
 
 	if strings.EqualFold(f.Spec.Title, dashboards.RootFolderName) {
-		return folder.ErrNameExists
+		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
 
 	parentName := meta.GetFolder()
@@ -100,7 +114,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	}
 
 	if parentName == f.Name {
-		return folder.ErrFolderCannotBeParentOfItself
+		return folder.ErrAPIFolderCannotBeParentOfItself
 	}
 
 	// note: `parents` will include itself as the last item
@@ -112,7 +126,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	// Can not create a folder that will be too deep.
 	// We need to add +1 as we also have the root folder as part of the parents.
 	if len(parents.Items) > maxDepth+1 {
-		return fmt.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
+		return folder.ErrMaximumDepthReached.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
 	}
 
 	return nil
@@ -138,11 +152,11 @@ func validateOnUpdate(ctx context.Context,
 	obj.Spec.Title = strings.TrimSpace(obj.Spec.Title)
 
 	if obj.Spec.Title == "" {
-		return folder.ErrTitleEmpty
+		return folder.ErrAPITitleEmpty
 	}
 
 	if strings.EqualFold(obj.Spec.Title, dashboards.RootFolderName) {
-		return folder.ErrNameExists
+		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
 
 	if folderObj.GetFolder() == oldFolder.GetFolder() {
@@ -162,7 +176,7 @@ func validateOnUpdate(ctx context.Context,
 
 	// folder cannot be moved to a k6 folder
 	if newParent == accesscontrol.K6FolderUID {
-		return fmt.Errorf("k6 project may not be moved")
+		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}
 
 	parentObj, err := getter.Get(ctx, newParent, &metav1.GetOptions{})
@@ -182,7 +196,7 @@ func validateOnUpdate(ctx context.Context,
 	// This prevents circular references (e.g., moving A under B when B is already under A).
 	for _, ancestor := range info.Items {
 		if ancestor.Name == obj.Name {
-			return fmt.Errorf("cannot move folder under its own descendant, this would create a circular reference")
+			return folder.ErrCircularReference.Errorf("cannot move folder under its own descendant, this would create a circular reference")
 		}
 	}
 

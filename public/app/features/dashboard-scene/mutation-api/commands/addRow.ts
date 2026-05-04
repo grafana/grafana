@@ -8,6 +8,7 @@
 
 import { type z } from 'zod';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -54,6 +55,9 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
           hideHeader: row.spec.hideHeader,
           fillScreen: row.spec.fillScreen,
           repeatByVariable: row.spec.repeat?.value,
+          conditionalRendering: row.spec.conditionalRendering
+            ? ConditionalRenderingGroup.deserialize(row.spec.conditionalRendering)
+            : undefined,
         });
 
         const currentRows = [...rowsManager.state.rows];
@@ -77,6 +81,9 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
           hideHeader: row.spec.hideHeader,
           fillScreen: row.spec.fillScreen,
           repeatByVariable: row.spec.repeat?.value,
+          conditionalRendering: row.spec.conditionalRendering
+            ? ConditionalRenderingGroup.deserialize(row.spec.conditionalRendering)
+            : undefined,
         });
 
         rowsManager = new RowsLayoutManager({ rows: [newRow] });

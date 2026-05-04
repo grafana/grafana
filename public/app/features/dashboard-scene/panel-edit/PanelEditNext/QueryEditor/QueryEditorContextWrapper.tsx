@@ -74,6 +74,7 @@ export function QueryEditorContextWrapper({
 
   const clearSideEffectsRef = useRef<() => void>(() => {});
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
 
   const {
     selectedQueryRefIds,
@@ -238,6 +239,7 @@ export function QueryEditorContextWrapper({
       selectedAlert,
       selectedQueryRefIds,
       selectedTransformationIds,
+      multiSelectMode,
       toggleQuerySelection,
       toggleTransformationSelection,
       clearSelection,
@@ -252,6 +254,7 @@ export function QueryEditorContextWrapper({
       setSelectedAlert: (alert: AlertRule | null) => {
         selectAlert(alert?.alertId ?? null);
       },
+      setMultiSelectMode,
       queryOptions: {
         options: queryOptions,
         isQueryOptionsOpen,
@@ -307,6 +310,7 @@ export function QueryEditorContextWrapper({
       selectedAlert,
       selectedQueryRefIds,
       selectedTransformationIds,
+      multiSelectMode,
       toggleQuerySelection,
       toggleTransformationSelection,
       clearSelection,
@@ -375,15 +379,28 @@ export function QueryEditorContextWrapper({
       },
       updateTransformation: dataPane.updateTransformation,
       reorderTransformations: dataPane.reorderTransformations,
+      // Bulk actions
+      bulkDeleteQueries: dataPane.bulkDeleteQueries,
+      bulkToggleQueriesHide: dataPane.bulkToggleQueriesHide,
+      bulkDeleteTransformations: (transformIds: readonly string[]) => {
+        const indices = transformIds.map((id) => findTransformationIndex(id)).filter((i) => i !== -1);
+        dataPane.bulkDeleteTransformations(indices);
+      },
+      bulkToggleTransformationsDisabled: (transformIds: readonly string[], disabled: boolean) => {
+        const indices = transformIds.map((id) => findTransformationIndex(id)).filter((i) => i !== -1);
+        dataPane.bulkToggleTransformationsDisabled(indices, disabled);
+      },
+      bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) =>
+        dataPane.bulkChangeDataSource(refIds, getDataSourceRef(settings)),
     }),
     [
-      onSwitchToClassic,
+      addTransformationAction,
       dataPane,
       findTransformationIndex,
-      addTransformationAction,
-      trackQueryRename,
+      onSwitchToClassic,
       removeQueryFromSelection,
       removeTransformationFromSelection,
+      trackQueryRename,
     ]
   );
 

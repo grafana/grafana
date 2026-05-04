@@ -158,6 +158,15 @@
             }
           },
           {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
             "name": "timeoutSeconds",
             "in": "query",
             "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
@@ -421,6 +430,15 @@
             "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
             "schema": {
               "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
               "uniqueItems": true
             }
           },
@@ -1278,6 +1296,15 @@
             }
           },
           {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
             "name": "timeoutSeconds",
             "in": "query",
             "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
@@ -1541,6 +1568,15 @@
             "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
             "schema": {
               "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
               "uniqueItems": true
             }
           },
@@ -1959,13 +1995,32 @@
         ],
         "description": "connect GET requests to tokens of ServiceAccount",
         "operationId": "getServiceAccountTokens",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "maximum number of tokens to return in a single page",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "continue token returned by a previous list response to fetch the next page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.ServiceAccountTokenList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListServiceAccountTokensBody"
                 }
               }
             }
@@ -1975,14 +2030,48 @@
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "ServiceAccountTokenList"
+          "kind": "ListServiceAccountTokensResponse"
+        }
+      },
+      "post": {
+        "tags": [
+          "ServiceAccount"
+        ],
+        "description": "connect POST requests to tokens of ServiceAccount",
+        "operationId": "createServiceAccountTokens",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateServiceAccountTokenRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Token created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateServiceAccountTokenBody"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ListServiceAccountTokensResponse"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ServiceAccountTokenList",
+          "description": "name of the ServiceAccount",
           "required": true,
           "schema": {
             "type": "string",
@@ -1993,6 +2082,90 @@
           "name": "namespace",
           "in": "path",
           "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/serviceaccounts/{name}/tokens/{tokenName}": {
+      "get": {
+        "tags": [
+          "ServiceAccount"
+        ],
+        "description": "connect GET requests to tokens of ServiceAccount",
+        "operationId": "getServiceAccountTokensWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetServiceAccountTokenBody"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ListServiceAccountTokensResponse"
+        }
+      },
+      "delete": {
+        "tags": [
+          "ServiceAccount"
+        ],
+        "description": "connect DELETE requests to tokens of ServiceAccount",
+        "operationId": "deleteServiceAccountTokensWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.DeleteServiceAccountTokenBody"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ListServiceAccountTokensResponse"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ServiceAccount",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "tokenName",
+          "in": "path",
+          "description": "name of the token to operate on",
           "required": true,
           "schema": {
             "type": "string",
@@ -2078,6 +2251,15 @@
             "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
             "schema": {
               "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
               "uniqueItems": true
             }
           },
@@ -2345,6 +2527,15 @@
             "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
             "schema": {
               "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
               "uniqueItems": true
             }
           },
@@ -2837,6 +3028,15 @@
             }
           },
           {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
             "name": "timeoutSeconds",
             "in": "query",
             "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
@@ -3100,6 +3300,15 @@
             "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
             "schema": {
               "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
               "uniqueItems": true
             }
           },
@@ -3754,6 +3963,15 @@
             }
           },
           {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
             "name": "timeoutSeconds",
             "in": "query",
             "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
@@ -4017,6 +4235,15 @@
             "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
             "schema": {
               "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
               "uniqueItems": true
             }
           },
@@ -4699,7 +4926,7 @@
           {
             "name": "limit",
             "in": "query",
-            "description": "number of results to return",
+            "description": "maximum number of results to return per page",
             "schema": {
               "type": "integer",
               "format": "int64"
@@ -4707,24 +4934,12 @@
             "example": 30
           },
           {
-            "name": "page",
+            "name": "continue",
             "in": "query",
-            "description": "page number (starting from 1)",
+            "description": "Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, otherwise '+' will silently decode to a space on the server and pagination will fail.",
             "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 1
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "number of results to skip",
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 0
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4733,7 +4948,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.UserTeamList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetUserTeamsResponse"
                 }
               }
             }
@@ -4772,6 +4987,121 @@
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateServiceAccountTokenBody": {
+        "type": "object",
+        "required": [
+          "token",
+          "serviceAccountTokenName",
+          "expires"
+        ],
+        "properties": {
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "serviceAccountTokenName": {
+            "type": "string",
+            "default": ""
+          },
+          "token": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateServiceAccountTokenRequestBody": {
+        "type": "object",
+        "required": [
+          "tokenName"
+        ],
+        "properties": {
+          "expiresInSeconds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tokenName": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateServiceAccountTokenResponse": {
+        "type": "object",
+        "required": [
+          "token",
+          "serviceAccountTokenName",
+          "expires"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "serviceAccountTokenName": {
+            "type": "string",
+            "default": ""
+          },
+          "token": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "CreateServiceAccountTokenResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.DeleteServiceAccountTokenBody": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.DeleteServiceAccountTokenResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "DeleteServiceAccountTokenResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping": {
         "type": "object",
         "required": [
@@ -5116,6 +5446,77 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetServiceAccountTokenBody": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetServiceAccountTokenResponse": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "body": {
+            "default": {}
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetServiceAccountTokenToken": {
+        "type": "object",
+        "required": [
+          "title",
+          "revoked",
+          "expires",
+          "created",
+          "updated",
+          "lastUsed"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "lastUsed": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "revoked": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "updated": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamGroupsBody": {
         "type": "object",
         "required": [
@@ -5261,6 +5662,7 @@
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetUserTeamsResponse": {
         "type": "object",
         "required": [
+          "metadata",
           "items"
         ],
         "properties": {
@@ -5277,6 +5679,9 @@
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
+          },
+          "metadata": {
+            "default": {}
           }
         }
       },
@@ -5509,6 +5914,105 @@
             "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListServiceAccountTokensBody": {
+        "type": "object",
+        "required": [
+          "items",
+          "continue"
+        ],
+        "properties": {
+          "continue": {
+            "type": "string",
+            "default": ""
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListServiceAccountTokensResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "continue"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "continue": {
+            "type": "string",
+            "default": ""
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListServiceAccountTokensToken"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "ListServiceAccountTokensResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListServiceAccountTokensToken": {
+        "type": "object",
+        "required": [
+          "title",
+          "revoked",
+          "expires",
+          "created",
+          "updated",
+          "lastUsed"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "lastUsed": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "revoked": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "updated": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -6302,7 +6806,8 @@
           "title",
           "email",
           "provisioned",
-          "externalUID"
+          "externalUID",
+          "members"
         ],
         "properties": {
           "email": {
@@ -6313,11 +6818,53 @@
             "type": "string",
             "default": ""
           },
+          "members": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamTeamMember"
+                }
+              ]
+            }
+          },
           "provisioned": {
             "type": "boolean",
             "default": false
           },
           "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamTeamMember": {
+        "type": "object",
+        "required": [
+          "kind",
+          "name",
+          "permission",
+          "external"
+        ],
+        "properties": {
+          "external": {
+            "description": "whether the member was added externally (e.g. team sync)",
+            "type": "boolean",
+            "default": false
+          },
+          "kind": {
+            "description": "kind of the identity",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "uid of the identity",
+            "type": "string",
+            "default": ""
+          },
+          "permission": {
+            "description": "permission of the identity in the team",
             "type": "string",
             "default": ""
           }
@@ -6665,48 +7212,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.ServiceAccountToken": {
-        "type": "object",
-        "required": [
-          "created"
-        ],
-        "properties": {
-          "created": {},
-          "expires": {},
-          "lastUsed": {},
-          "name": {
-            "type": "string"
-          },
-          "revoked": {
-            "type": "boolean"
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.ServiceAccountTokenList": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.TeamMember": {
         "type": "object",
         "required": [
@@ -6900,64 +7405,6 @@
             "description": "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15",
             "type": "string",
             "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountToken": {
-        "type": "object",
-        "required": [
-          "created"
-        ],
-        "properties": {
-          "created": {
-            "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
-          },
-          "expires": {
-            "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
-          },
-          "lastUsed": {
-            "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
-          },
-          "name": {
-            "type": "string"
-          },
-          "revoked": {
-            "type": "boolean"
-          }
-        }
-      },
-      "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountTokenList": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.ServiceAccountToken"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
           }
         }
       },
