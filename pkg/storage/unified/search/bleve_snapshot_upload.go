@@ -68,7 +68,7 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		if releaseErr := lock.Release(); releaseErr != nil {
 			span.AddEvent("snapshot.lock.release.failed", oteltrace.WithAttributes(lockAttrs...))
 			// A release failure after UploadIndex succeeds does not make the uploaded snapshot invalid.
-			logger.Warn("releasing snapshot upload lock", "err", releaseErr)
+			logger.Warn("releasing index snapshot upload lock", "err", releaseErr)
 			return
 		}
 		span.AddEvent("snapshot.lock.release.completed", oteltrace.WithAttributes(lockAttrs...))
@@ -111,10 +111,18 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		return fmt.Errorf("reading snapshot build info: %w", biErr)
 	}
 
-	uploadKey, err = b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, IndexMeta{
+	meta := IndexMeta{
 		GrafanaBuildVersion:   bi.BuildVersion,
 		LatestResourceVersion: rv,
-	})
+	}
+	// bi.BuildTime is the original index creation time; it survives reopens and
+	// downloads, so periodic re-uploads keep the original build-start time.
+	// Guard zero so legacy indexes without BuildTime stay zero in the manifest.
+	if bi.BuildTime > 0 {
+		meta.BuildStartTimestamp = time.Unix(bi.BuildTime, 0).UTC()
+	}
+
+	uploadKey, err = b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, meta)
 	if err != nil {
 		return fmt.Errorf("uploading snapshot: %w", err)
 	}

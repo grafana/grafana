@@ -3257,6 +3257,159 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		require.Len(t, result, 1)
 		require.Equal(t, noGroupRule.UID, result[0].UID)
 	})
+
+	t.Run("TitleExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchTitle := "exact-title-match"
+		matchGen := ruleGen.With(ruleGen.WithTitle(matchTitle))
+		otherGen := ruleGen.With(ruleGen.WithUniqueTitle())
+
+		match1 := createRule(t, store, matchGen)
+		match2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:      orgID,
+				TitleExact: matchTitle,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{match1.UID, match2.UID}, gotUIDs)
+	})
+
+	t.Run("IsPaused=true", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		pausedGen := ruleGen.With(ruleGen.WithIsPaused(true))
+		activeGen := ruleGen.With(ruleGen.WithIsPaused(false))
+
+		paused1 := createRule(t, store, pausedGen)
+		paused2 := createRule(t, store, pausedGen)
+		createRule(t, store, activeGen)
+		createRule(t, store, activeGen)
+
+		trueVal := true
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:    orgID,
+				IsPaused: &trueVal,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{paused1.UID, paused2.UID}, gotUIDs)
+	})
+
+	t.Run("IsPaused=false", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		pausedGen := ruleGen.With(ruleGen.WithIsPaused(true))
+		activeGen := ruleGen.With(ruleGen.WithIsPaused(false))
+
+		createRule(t, store, pausedGen)
+		createRule(t, store, pausedGen)
+		active1 := createRule(t, store, activeGen)
+		active2 := createRule(t, store, activeGen)
+
+		falseVal := false
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:    orgID,
+				IsPaused: &falseVal,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{active1.UID, active2.UID}, gotUIDs)
+	})
+
+	t.Run("DashboardUID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		dashUID := "my-dashboard"
+		otherDashUID := "other-dashboard"
+		dashGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, nil))
+		otherGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&otherDashUID, nil))
+
+		dash1 := createRule(t, store, dashGen)
+		dash2 := createRule(t, store, dashGen)
+		createRule(t, store, otherGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:        orgID,
+				DashboardUID: dashUID,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{dash1.UID, dash2.UID}, gotUIDs)
+	})
+
+	t.Run("PanelID independent of DashboardUID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		dashUID := "dash-for-panel"
+		panelID := int64(42)
+		otherPanelID := int64(99)
+		panelGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, &panelID))
+		otherGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, &otherPanelID))
+
+		panel1 := createRule(t, store, panelGen)
+		panel2 := createRule(t, store, panelGen)
+		createRule(t, store, otherGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:   orgID,
+				PanelID: panelID,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{panel1.UID, panel2.UID}, gotUIDs)
+	})
 }
 
 func TestIntegration_ListDeletedRules(t *testing.T) {

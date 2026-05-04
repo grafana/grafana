@@ -8144,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Añadir a favoritos",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Explorar datos",
       "open-in-explore": "Abrir en Explorar vista",
       "remove-favorite": "Eliminar de favoritos"
@@ -14243,6 +14249,8 @@
       "alerts-loading": "Alertas",
       "card-click": "Seleccionar tarjeta {{id}}",
       "data": "Datos",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nueva {{type}}",
       "queries-expressions": "Consultas y expresiones",
       "toggle-size": "Alternar tamaño de la barra lateral",
@@ -14959,10 +14967,13 @@
       "title": "Pon en marcha dashboards con sugerencias y plantillas."
     },
     "nav": {
+      "counter": "",
       "go-to": "Ir a la diapositiva {{number}}",
-      "next": "Siguiente",
-      "prev": "Anterior"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Explicar consulta",

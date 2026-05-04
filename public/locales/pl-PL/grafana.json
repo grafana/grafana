@@ -8236,6 +8236,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Dodaj do ulubionych",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Przeglądaj dane",
       "open-in-explore": "Otwórz w widoku Eksploruj",
       "remove-favorite": "Usuń z ulubionych"
@@ -14415,6 +14421,8 @@
       "alerts-loading": "Alerty",
       "card-click": "Wybierz kartę {{id}}",
       "data": "Dane",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nowy: {{type}}",
       "queries-expressions": "Zapytania i wyrażenia",
       "toggle-size": "Przełącz rozmiar paska bocznego",
@@ -15143,10 +15151,13 @@
       "title": "Szybko rozpoczynaj tworzenie pulpitów dzięki sugestiom i szablonom"
     },
     "nav": {
+      "counter": "",
       "go-to": "Przejdź do slajdu {{number}}",
-      "next": "Dalej",
-      "prev": "Wstecz"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Wyjaśnij zapytanie",

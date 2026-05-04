@@ -8144,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Favorilere ekle",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Verileri keşfedin",
       "open-in-explore": "Keşfet Görünümünde aç",
       "remove-favorite": "Favorilerden çıkar"
@@ -14243,6 +14249,8 @@
       "alerts-loading": "Uyarılar",
       "card-click": "{{id}} kartını seçin",
       "data": "Veri",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Yeni {{type}}",
       "queries-expressions": "Sorgular ve İfadeler",
       "toggle-size": "Kenar çubuğu boyutunu değiştir",
@@ -14959,10 +14967,13 @@
       "title": "Öneriler ve şablonlarla pano kullanımına kolay bir başlangıç yapın"
     },
     "nav": {
+      "counter": "",
       "go-to": "{{number}}. slayda git",
-      "next": "İleri",
-      "prev": "Önceki"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Sorguyu açıkla",

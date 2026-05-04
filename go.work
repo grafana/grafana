@@ -38,6 +38,8 @@ use (
 	./pkg/plugins/codegen
 	./pkg/semconv
 	./pkg/storage/unified/resource/kv
+	./pkg/storage/unified/resourcepb
+	./pkg/util/sqlite
 )
 
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c

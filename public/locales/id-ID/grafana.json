@@ -8098,6 +8098,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Tambahkan ke favorit",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Jelajahi data",
       "open-in-explore": "Buka di Tampilan Jelajahi",
       "remove-favorite": "Hapus dari favorit"
@@ -14157,6 +14163,8 @@
       "alerts-loading": "Peringatan",
       "card-click": "Pilih kartu {{id}}",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "{{type}} baru",
       "queries-expressions": "Kueri & Ekspresi",
       "toggle-size": "Alihkan ukuran bilah sisi",
@@ -14867,10 +14875,13 @@
       "title": "Mulai membuat dasbor dengan saran dan templat"
     },
     "nav": {
+      "counter": "",
       "go-to": "Buka slide {{number}}",
-      "next": "Berikutnya",
-      "prev": "Sebelumnya"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Jelaskan kueri",

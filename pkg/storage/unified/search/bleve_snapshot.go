@@ -208,7 +208,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 			tier:    snapshotTier(v, minVersion, running),
 		}
 		candidates = append(candidates, c)
-		b.log.Debug("snapshot candidate",
+		b.log.Debug("index snapshot candidate",
 			"key", c.key.String(),
 			"tier", c.tier,
 			"version", c.version.String(),
@@ -218,7 +218,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 	}
 
 	if len(candidates) == 0 {
-		b.log.Debug("no snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable)
+		b.log.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable)
 		return snapshotCandidate{}, false
 	}
 
@@ -235,7 +235,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 		return candidates[i].meta.UploadTimestamp.After(candidates[j].meta.UploadTimestamp)
 	})
 
-	b.log.Debug("selected snapshot",
+	b.log.Debug("selected index snapshot",
 		"key", candidates[0].key.String(),
 		"tier", candidates[0].tier,
 		"candidates", len(candidates),

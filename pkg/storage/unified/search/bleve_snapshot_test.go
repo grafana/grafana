@@ -72,6 +72,25 @@ func (f *fakeRemoteIndexStore) ListIndexes(context.Context, resource.NamespacedR
 	return out, nil
 }
 
+func (f *fakeRemoteIndexStore) ListIndexKeys(context.Context, resource.NamespacedResource) ([]ulid.ULID, error) {
+	if f.listErr != nil {
+		return nil, f.listErr
+	}
+	keys := make([]ulid.ULID, 0, len(f.data))
+	for k := range f.data {
+		keys = append(keys, k)
+	}
+	return keys, nil
+}
+
+func (f *fakeRemoteIndexStore) GetIndexMeta(_ context.Context, _ resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	meta, ok := f.data[k]
+	if !ok {
+		return nil, ErrSnapshotNotFound
+	}
+	return meta, nil
+}
+
 func (f *fakeRemoteIndexStore) DownloadIndex(_ context.Context, _ resource.NamespacedResource, k ulid.ULID, destDir string) (*IndexMeta, error) {
 	f.downloadCalls.Add(1)
 	if f.downloadErr != nil {
@@ -654,7 +673,14 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	bucket := memblob.OpenBucket(nil)
 	t.Cleanup(func() { _ = bucket.Close() })
 
-	store := NewBucketRemoteIndexStore(bucket, newFakeBackend(newConditionalBucket()), "test-owner", 5*time.Second, 500*time.Millisecond)
+	lockOpts := LockOptions{TTL: 5 * time.Second, HeartbeatInterval: 500 * time.Millisecond}
+	store := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket:      bucket,
+		LockBackend: newFakeBackend(newConditionalBucket()),
+		LockOwner:   "test-owner",
+		BuildLock:   lockOpts,
+		CleanupLock: lockOpts,
+	})
 	key := newTestNsResource()
 	meta := IndexMeta{
 		GrafanaBuildVersion:   "11.5.0",

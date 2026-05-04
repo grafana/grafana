@@ -1905,6 +1905,19 @@
     },
     {
       "metadata": {
+        "name": "datasources.useNewStackInfoToSettingsCache",
+        "resourceVersion": "1777558060067",
+        "creationTimestamp": "2026-04-30T14:07:40Z"
+      },
+      "spec": {
+        "description": "Use the new cache for datasource.StackInfoToSettings, backend flag",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableHealthEndpoint",
         "resourceVersion": "1772118749630",
         "creationTimestamp": "2026-02-26T15:12:29Z"

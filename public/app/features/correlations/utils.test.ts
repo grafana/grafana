@@ -12,7 +12,7 @@ import { type DataQuery } from '@grafana/schema/dist/esm/index';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type ExploreItemState } from 'app/types/explore';
 
-import { type EditFormDTO } from './Forms/types';
+import { type EditFormDTO, type FormDTO } from './Forms/types';
 import { type Correlation } from './types';
 import { attachCorrelationsToDataFrames, generateDefaultLabel, generatePartialEditSpec } from './utils';
 import * as utils from './utils';
@@ -226,6 +226,20 @@ describe('correlations utils', () => {
     } as unknown as ExploreItemState;
     const label = await generateDefaultLabel(sourcePane, targetPane);
     expect(label).toBe('getTest to testB');
+  });
+
+  it('does not add target data when the correlation is external', async () => {
+    const addForm = {
+      config: { field: 'test', target: { url: 'test' } },
+      sourceUID: 'test',
+      label: 'test',
+      description: 'test',
+      targetUID: undefined,
+      type: 'external',
+    };
+    // this mimics the real scenario this form gets in, even though it is technically invalid (external types shouldn't have the targetUID property)
+    const addSpec = await utils.generateAddSpec(addForm as FormDTO);
+    expect(addSpec.target).not.toBeDefined();
   });
   describe('getCorrelationsFromStorage', () => {
     const originalFeatureToggles = config.featureToggles;

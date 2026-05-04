@@ -8098,6 +8098,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "新增至收藏夾",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "探索資料",
       "open-in-explore": "在「探索」檢視畫面中開啟",
       "remove-favorite": "從收藏夾中移除"
@@ -14157,6 +14163,8 @@
       "alerts-loading": "警示",
       "card-click": "選取卡片 {{id}}",
       "data": "資料",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新 {{type}}",
       "queries-expressions": "查詢和運算式",
       "toggle-size": "切換側邊欄大小",
@@ -14867,10 +14875,13 @@
       "title": "利用建議和範本快速建立儀表板"
     },
     "nav": {
+      "counter": "",
       "go-to": "前往投影片 {{number}}",
-      "next": "下一個",
-      "prev": "上一個"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "解釋查詢",

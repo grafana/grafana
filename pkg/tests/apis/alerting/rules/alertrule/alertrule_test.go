@@ -1022,3 +1022,179 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 		}
 	})
 }
+
+func TestIntegrationListWithFieldSelectors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	common.CreateTestFolder(t, helper, "fs-folder")
+
+	baseRule := func(folder string) *v0alpha1.AlertRule {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUniqueUID(),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID(folder),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).Generate()
+		return &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": folder,
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     util.Pointer("query"),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        util.Pointer(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+			},
+		}
+	}
+
+	t.Run("filter by spec.title", func(t *testing.T) {
+		r1 := baseRule("fs-folder")
+		r1.Spec.Title = "field-sel-title-unique-abc"
+		r2 := baseRule("fs-folder")
+
+		created1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		created2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, created1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, created2.Name, v1.DeleteOptions{})
+		})
+
+		list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.title=field-sel-title-unique-abc"})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, "field-sel-title-unique-abc", list.Items[0].Spec.Title)
+	})
+
+	t.Run("filter by spec.paused", func(t *testing.T) {
+		paused1 := baseRule("fs-folder")
+		paused1.Spec.Paused = util.Pointer(true)
+		paused2 := baseRule("fs-folder")
+		paused2.Spec.Paused = util.Pointer(true)
+		active1 := baseRule("fs-folder")
+		active2 := baseRule("fs-folder")
+
+		cp1, err := client.Create(ctx, paused1, v1.CreateOptions{})
+		require.NoError(t, err)
+		cp2, err := client.Create(ctx, paused2, v1.CreateOptions{})
+		require.NoError(t, err)
+		ca1, err := client.Create(ctx, active1, v1.CreateOptions{})
+		require.NoError(t, err)
+		ca2, err := client.Create(ctx, active2, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, cp1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, cp2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, ca1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, ca2.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("true returns only paused rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.paused=true",
+			})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.Paused)
+				require.True(t, *item.Spec.Paused)
+			}
+		})
+
+		t.Run("false returns only non-paused rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.paused=false",
+			})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.True(t, item.Spec.Paused == nil || !*item.Spec.Paused)
+			}
+		})
+	})
+
+	t.Run("filter by spec.panelRef.dashboardUID", func(t *testing.T) {
+		dashUID := "fs-dash-abc"
+		r1 := baseRule("fs-folder")
+		r1.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: dashUID, PanelID: 1}
+		r2 := baseRule("fs-folder")
+		r2.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: dashUID, PanelID: 2}
+		r3 := baseRule("fs-folder")
+		r3.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: "other-dash", PanelID: 1}
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.panelRef.dashboardUID=" + dashUID})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		for _, item := range list.Items {
+			require.NotNil(t, item.Spec.PanelRef)
+			require.Equal(t, dashUID, item.Spec.PanelRef.DashboardUID)
+		}
+	})
+
+	t.Run("filter by spec.panelRef.panelID", func(t *testing.T) {
+		dashUID := "fs-dash-panel"
+		r1 := baseRule("fs-folder")
+		r1.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: dashUID, PanelID: 7}
+		r2 := baseRule("fs-folder")
+		r2.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: dashUID, PanelID: 7}
+		r3 := baseRule("fs-folder")
+		r3.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: dashUID, PanelID: 99}
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.panelRef.panelID=7"})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		for _, item := range list.Items {
+			require.NotNil(t, item.Spec.PanelRef)
+			require.Equal(t, int64(7), item.Spec.PanelRef.PanelID)
+		}
+	})
+}

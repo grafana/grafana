@@ -8098,6 +8098,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "添加到收藏夹",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "浏览数据",
       "open-in-explore": "在浏览视图中打开",
       "remove-favorite": "从收藏夹中移除"
@@ -14157,6 +14163,8 @@
       "alerts-loading": "警报",
       "card-click": "选择卡片 {{id}}",
       "data": "数据",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新{{type}}",
       "queries-expressions": "查询和表达式",
       "toggle-size": "切换侧边栏大小",
@@ -14867,10 +14875,13 @@
       "title": "借助建议和模板快速创建数据面板"
     },
     "nav": {
+      "counter": "",
       "go-to": "前往幻灯片 {{number}}",
-      "next": "下一个",
-      "prev": "上一个"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "解释查询",

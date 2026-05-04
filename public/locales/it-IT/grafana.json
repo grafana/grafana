@@ -8144,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aggiungi a Preferiti",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Esplora i dati",
       "open-in-explore": "Apri nella visualizzazione Esplora",
       "remove-favorite": "Rimuovi da Preferiti"
@@ -14243,6 +14249,8 @@
       "alerts-loading": "Avvisi",
       "card-click": "Seleziona scheda {{id}}",
       "data": "Dati",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nuovo {{type}}",
       "queries-expressions": "Query ed espressioni",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
@@ -14959,10 +14967,13 @@
       "title": "Crea rapidamente dashboard grazie a suggerimenti e modelli"
     },
     "nav": {
+      "counter": "",
       "go-to": "Vai alla diapositiva {{number}}",
-      "next": "Avanti",
-      "prev": "Precedente"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Spiega query",
