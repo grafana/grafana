@@ -315,8 +315,18 @@ gen-themes:
 pkg/services/preference/themes_generated.go:
 	$(MAKE) gen-themes
 
+.PHONY: generate-enterprise-imports
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
+generate-enterprise-imports:
+	@echo "skipping generating enterprise imports file"
+else
+generate-enterprise-imports: ## Generate Enterprise imports file
+	@echo "re-generating enterprise imports file"
+	$(GO) run ./scripts/ci/generate-enterprise-imports/main.go
+endif
+
 .PHONY: update-workspace
-update-workspace: gen-go
+update-workspace: gen-go generate-enterprise-imports
 	@echo "updating workspace"
 	bash scripts/go-workspace/update-workspace.sh
 
