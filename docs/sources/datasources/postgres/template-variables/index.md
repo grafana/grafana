@@ -31,6 +31,17 @@ For an introduction to templating and template variables, refer to [Templating](
 
 A query variable in Grafana dynamically retrieves values from your data source using a query. With a query variable, you can write a PostgreSQL query that returns values such as measurement names, key names, or key values that are shown in a drop-down select box.
 
+The PostgreSQL data source includes a dedicated variable query editor with the full SQL editor (Code mode with auto-completion and syntax highlighting) and **Value Field** / **Text Field** drop-downs. After you write and run a query, the editor automatically detects the returned columns and populates the field drop-downs so you can map which column provides the variable value and which provides the display label.
+
+To create a query variable:
+
+1. Navigate to **Dashboard settings** > **Variables**.
+1. Click **Add variable**.
+1. Select **Query** as the variable type.
+1. Select your PostgreSQL data source.
+1. Write a SQL query in the editor. Macros like `$__timeFilter` are supported.
+1. Optionally set **Value Field** and **Text Field** to control which columns map to the variable value and display label.
+
 For example, the following query returns all values from the `hostname` column:
 
 ```sql

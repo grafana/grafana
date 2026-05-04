@@ -42,10 +42,23 @@ The PostgreSQL data source supports:
 
 - **Time series queries:** Visualize metrics over time using built-in time grouping macros.
 - **Table queries:** Display query results in table format for any valid SQL query.
-- **Template variables:** Create dynamic dashboards with variable-driven queries.
+- **EXPLAIN queries:** Inspect query execution plans directly in the query editor.
+- **Template variables:** Create dynamic dashboards with variable-driven queries using the built-in variable query editor.
 - **Annotations:** Overlay events from PostgreSQL on your dashboard panels.
 - **Alerting:** Create alerts based on PostgreSQL query results (time series format only).
 - **Macros:** Simplify queries with built-in macros for time filtering and grouping.
+
+## Supported PostgreSQL data types
+
+The PostgreSQL plugin uses the [PGX driver](https://github.com/jackc/pgx) for database connectivity. The following PostgreSQL data types are supported:
+
+- **Numeric types:** `int2`, `int4`, `int8`, `float4`, `float8`, `numeric`
+- **String types:** `text`, `varchar`, `char`, `bpchar`
+- **Date/time types:** `timestamp`, `timestamptz`, `date`, `time`, `timetz`, `interval`
+- **Boolean:** `bool`
+- **JSON types:** `json`, `jsonb`
+- **Enum types:** Custom enum types are returned as string values.
+- **Other types:** Types not explicitly mapped (such as arrays, composites, or custom domains) are returned as string values.
 
 ## Get started with the PostgreSQL data source
 
@@ -69,3 +82,13 @@ After you configure the data source, you can:
 View a PostgreSQL overview on Grafana Play:
 
 {{< docs/play title="PostgreSQL Overview" url="https://play.grafana.org/d/ddvpgdhiwjvuod/postgresql-overview" >}}
+
+## Related data sources
+
+The following databases use the PostgreSQL wire protocol and may work with this data source:
+
+- [TimescaleDB](https://www.timescale.com/) — Enable the **TimescaleDB** toggle in the data source settings for `time_bucket` support.
+- [CockroachDB](https://www.cockroachlabs.com/)
+- [Amazon Redshift](https://aws.amazon.com/redshift/) — Grafana also offers a dedicated [Amazon Redshift data source](https://grafana.com/grafana/plugins/grafana-redshift-datasource/) with additional features.
+- [CrateDB](https://cratedb.com/)
+- [YugabyteDB](https://www.yugabyte.com/)
