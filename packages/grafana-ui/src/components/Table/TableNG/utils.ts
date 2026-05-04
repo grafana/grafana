@@ -1,7 +1,7 @@
 import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
-import { type SortColumn } from 'react-data-grid';
+import { type ColumnWidth, type ColumnWidths, type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { type Count, varPreLine } from 'uwrap';
 
@@ -1019,6 +1019,12 @@ export function computeColWidths(fields: Field[], availWidth: number) {
           width ||
           Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
       )
+  );
+}
+
+export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {
+  return new Map<string, ColumnWidth>(
+    fields.map((field, idx) => [getDisplayName(field), { type: 'resized', width: widths[idx] }])
   );
 }
 

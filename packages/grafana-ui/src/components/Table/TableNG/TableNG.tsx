@@ -64,6 +64,7 @@ import {
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
+  useNestedColWidths,
   useNestedRows,
   usePaginatedRows,
   useRowHeight,
@@ -174,6 +175,7 @@ export function TableNG(props: TableNGProps) {
   );
 
   const resizeHandler = useColumnResize(onColumnResize);
+  const nestedResizeHandler = useColumnResize(onColumnResize, 'nested');
 
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
@@ -298,7 +300,11 @@ export function TableNG(props: TableNGProps) {
     [nestedRows, expandedRows]
   );
 
-  const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
+  const { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange } = useNestedColWidths({
+    nestedVisibleFields,
+    availableWidth,
+    structureRev,
+  });
 
   const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
   const nestedHeaderHeight = useHeaderHeight({
@@ -425,7 +431,6 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           // draggable: true,
         },
-        onColumnResize: resizeHandler,
         onSortColumnsChange: (newSortColumns: SortColumn[]) => {
           setSortColumns(newSortColumns);
           onSortByChange?.(
@@ -445,7 +450,6 @@ export function TableNG(props: TableNGProps) {
     [
       enableVirtualization,
       hasFooter,
-      resizeHandler,
       sortColumns,
       rowHeight,
       styles.headerRow,
@@ -525,10 +529,13 @@ export function TableNG(props: TableNGProps) {
               className={clsx(styles.grid, styles.gridNested)}
               headerRowClass={clsx(styles.headerRow, hasNestedHeaders ? '' : styles.displayNone)}
               headerRowHeight={hasNestedHeaders ? nestedHeaderHeightPx : 0}
+              onColumnResize={nestedResizeHandler}
               columns={nestedColumns}
               rows={expandedRecords}
               renderers={{ ...renderers, noRowsFallback: <EmptyTablePlaceholder noValue={noValue} /> }}
               onCellClick={onCellClick}
+              columnWidths={nestedColWidths}
+              onColumnWidthsChange={handleNestedColumnWidthsChange}
             />
           </div>
         );
@@ -553,6 +560,9 @@ export function TableNG(props: TableNGProps) {
       noValue,
       onCellClick,
       uniqueId,
+      nestedColWidths,
+      nestedResizeHandler,
+      handleNestedColumnWidthsChange,
     ]
   );
 
@@ -986,6 +996,7 @@ export function TableNG(props: TableNGProps) {
         onSelectedRowsChange={setSelectedRows}
         headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
         headerRowHeight={headerHeight}
+        onColumnResize={resizeHandler}
         onCellClick={onCellClick}
         onCellKeyDown={({ column, row }, event) => {
           // if top-left cell, use default browser tabbing

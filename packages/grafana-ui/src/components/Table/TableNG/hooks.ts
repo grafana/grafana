@@ -9,9 +9,10 @@ import {
   type CSSProperties,
   useEffect,
 } from 'react';
-import { type Column, type DataGridHandle, type DataGridProps, type SortColumn } from 'react-data-grid';
+import { type Column, type ColumnWidths, type DataGridHandle, type DataGridProps, type SortColumn } from 'react-data-grid';
 
 import { type DataFrame, type Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
+import { type MatcherScope } from '@grafana/schema';
 
 import { type TableColumnResizeActionCallback } from '../types';
 
@@ -32,6 +33,7 @@ import {
   getColumnTypes,
   getRowHeight,
   computeColWidths,
+  buildNestedColumnWidthsMap,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
   IS_SAFARI_26,
@@ -551,12 +553,14 @@ export function useRowHeight({
 interface UseColumnResizeState {
   columnKey: string | undefined;
   width: number;
+  fieldScope?: MatcherScope;
 }
 
 const INITIAL_COL_RESIZE_STATE = Object.freeze({ columnKey: undefined, width: 0 }) satisfies UseColumnResizeState;
 
 export function useColumnResize(
-  onColumnResize: TableColumnResizeActionCallback = () => {}
+  onColumnResize: TableColumnResizeActionCallback = () => {},
+  fieldScope?: MatcherScope
 ): DataGridProps<TableRow, TableSummaryRow>['onColumnResize'] {
   // these must be refs. if we used setState, we would run into race conditions with these event listeners
   const colResizeState = useRef<UseColumnResizeState>({ ...INITIAL_COL_RESIZE_STATE });
@@ -583,7 +587,7 @@ export function useColumnResize(
 
   const dispatchEvent = useCallback(() => {
     if (colResizeState.current.columnKey) {
-      onColumnResize(colResizeState.current.columnKey, Math.floor(colResizeState.current.width));
+      onColumnResize(colResizeState.current.columnKey, Math.floor(colResizeState.current.width), colResizeState.current.fieldScope);
       colResizeState.current = { ...INITIAL_COL_RESIZE_STATE };
     }
     window.removeEventListener('click', dispatchEvent, { capture: true });
@@ -599,13 +603,17 @@ export function useColumnResize(
       colResizeState.current.columnKey = column.key;
       colResizeState.current.width = width;
 
+      if (fieldScope) {
+        colResizeState.current.fieldScope = fieldScope;
+      }
+
       // when double clicking to resize, this handler will fire, but the pointer will not be down,
       // meaning that we should immediately flush the new width
       if (!pointerIsDown.current) {
         dispatchEvent();
       }
     },
-    [dispatchEvent]
+    [fieldScope, dispatchEvent]
   );
 
   return dataGridResizeHandler;
@@ -637,6 +645,77 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
   }, [ref, height, updateScrollbarDimensions]);
 
   return scrollbarWidth;
+}
+
+interface UseNestedColWidthsOptions {
+  nestedVisibleFields: Field[];
+  availableWidth: number;
+  structureRev?: number;
+}
+
+interface UseNestedColWidthsResult {
+  nestedFieldWidths: number[];
+  nestedColWidths: ColumnWidths;
+  handleNestedColumnWidthsChange: (newColWidths: ColumnWidths) => void;
+}
+
+/**
+ * Manages per-column widths for nested tables.
+ */
+export function useNestedColWidths({
+  nestedVisibleFields,
+  availableWidth,
+  structureRev,
+}: UseNestedColWidthsOptions): UseNestedColWidthsResult {
+  // before we do anything, figure out what the widths are based on the panel configuration.
+  const configuredWidths = useMemo(
+    () => computeColWidths(nestedVisibleFields, availableWidth),
+    [nestedVisibleFields, availableWidth]
+  );
+
+  const [nestedFieldWidths, setNestedFieldWidths] = useState(() => configuredWidths);
+
+  // on structureRev change, sync the widths from config and check whether we ought to dispatch an update.
+  useEffect(() => {
+    const newWidths = computeColWidths(nestedVisibleFields, availableWidth);
+    let hasChanges = false;
+    if (nestedFieldWidths.length !== newWidths.length) {
+      // if we have fewer columns than the new widths, we have changes
+      hasChanges = true;
+    }
+    for (let i = 0; i < newWidths.length; i++) {
+      if (nestedFieldWidths[i] !== newWidths[i]) {
+        hasChanges = true;
+        break;
+      }
+    }
+
+    if (hasChanges) {
+      setNestedFieldWidths(newWidths);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [structureRev]);
+
+  // this is the representation that react-data-grid wants, which we derive from the source of truth (nestedFieldWidths) on every render
+  const nestedColWidths = useMemo(
+    () => buildNestedColumnWidthsMap(nestedVisibleFields, nestedFieldWidths),
+    [nestedVisibleFields, nestedFieldWidths]
+  );
+
+  const handleNestedColumnWidthsChange = useCallback(
+    (newColWidths: ColumnWidths) => {
+      setNestedFieldWidths(
+        nestedVisibleFields.map((f, idx) => {
+          const entry = newColWidths.get(getDisplayName(f));
+          // ColumnWidth always has a width property (both 'resized' and 'measured' variants)
+          return entry != null ? entry.width : nestedFieldWidths[idx];
+        })
+      );
+    },
+    [nestedVisibleFields, nestedFieldWidths]
+  );
+
+  return { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange };
 }
 
 export function useColWidths(
