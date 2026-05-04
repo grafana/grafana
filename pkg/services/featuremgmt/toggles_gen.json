@@ -1623,15 +1623,18 @@
     {
       "metadata": {
         "name": "dashboardSectionVariables",
-        "resourceVersion": "1772489275727",
-        "creationTimestamp": "2026-03-02T22:07:55Z"
+        "resourceVersion": "1777918122605",
+        "creationTimestamp": "2026-03-02T22:07:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-04 18:08:42.605463 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables support for section level variables (rows and tabs)",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
