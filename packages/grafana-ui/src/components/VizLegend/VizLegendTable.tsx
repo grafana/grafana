@@ -77,6 +77,11 @@ export const VizLegendTable = <T extends unknown>({
 
   const limitedItems = useMemo(() => (curLimit > 0 ? items.slice(0, curLimit) : items), [items, curLimit]);
 
+  const hasMixedAxes = useMemo(() => {
+    const firstYAxis = items[0]?.yAxis ?? 1;
+    return items.some((item) => item.yAxis !== firstYAxis);
+  }, [items]);
+
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
     itemRenderer = (item, index) => (
@@ -87,6 +92,7 @@ export const VizLegendTable = <T extends unknown>({
         onLabelMouseOver={onLabelMouseOver}
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
+        hasMixedAxes={hasMixedAxes}
       />
     );
   }
