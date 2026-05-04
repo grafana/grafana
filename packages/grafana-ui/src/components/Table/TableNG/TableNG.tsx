@@ -950,7 +950,13 @@ export function TableNG(props: TableNGProps) {
     }
 
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
-    const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair, getRowStableKey);
+    const renderRow = renderRowFactory(
+      firstRowNestedData.fields,
+      panelContext,
+      expandedRows,
+      enableSharedCrosshair,
+      getRowStableKey
+    );
 
     const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
     result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;

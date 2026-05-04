@@ -621,8 +621,8 @@
         }
       ],
       "type": "table"
-    }
-  ,{
+    },
+    {
       "datasource": {
         "type": "grafana-testdata-datasource"
       },

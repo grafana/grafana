@@ -887,7 +887,9 @@ describe('GroupToSubframe transformer - V2 native config', () => {
       expect(nestedFramesField).toBeDefined();
 
       // Three distinct (host, region) groups: (web,us), (db,eu), (web,eu)
-      const subframeKeys = nestedFramesField!.values.map((v: unknown[]) => (v[0] as { meta: { custom: { stableRowKey: string } } }).meta.custom.stableRowKey);
+      const subframeKeys = nestedFramesField!.values.map(
+        (v: unknown[]) => (v[0] as { meta: { custom: { stableRowKey: string } } }).meta.custom.stableRowKey
+      );
       expect(subframeKeys).toEqual(['web,us', 'db,eu', 'web,eu']);
     });
   });
