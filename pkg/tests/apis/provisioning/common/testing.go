@@ -250,7 +250,21 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobs(t, repo)
+
+	// Wait for the specific job we just queued via its UID rather than a
+	// list-based scan. AwaitJobs lists active jobs and, if it observes none
+	// for this repo, queues a failsafe pull and only checks that
+	// successCount >= len(waitUntilComplete); when our job has already moved
+	// to the historic subresource that check trivially passes (0 >= 0) and
+	// SyncAndWait returns without having waited for the sync to complete,
+	// causing flakes in callers that immediately list provisioned resources.
+	job := h.AwaitJob(t, t.Context(), unstruct)
+	state := MustNestedString(job.Object, "status", "state")
+	if state == string(provisioning.JobStateError) {
+		h.DebugState(t, repo, fmt.Sprintf("SYNC FAILED: %s", name))
+		errs := MustNestedStringSlice(job.Object, "status", "errors")
+		t.Fatalf("sync job %q for repo %q ended in error state; errors: %v", name, repo, errs)
+	}
 }
 
 func (h *ProvisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo string, spec provisioning.JobSpec) {
