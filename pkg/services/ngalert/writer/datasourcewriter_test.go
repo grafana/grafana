@@ -56,7 +56,7 @@ func (m *mockHTTPClientProvider) New(options ...sdkhttpclient.Options) (*http.Cl
 type testDataSources struct {
 	dsfakes.FakeDataSourceService
 
-	prom1, prom2, prom3, prom4 *TestRemoteWriteTarget
+	prom1, prom2, prom3, prom4, prom5 *TestRemoteWriteTarget
 }
 
 func (t *testDataSources) Reset() {
@@ -64,6 +64,7 @@ func (t *testDataSources) Reset() {
 	t.prom2.Reset()
 	t.prom3.Reset()
 	t.prom4.Reset()
+	t.prom5.Reset()
 }
 
 func setupDataSources(t *testing.T) *testDataSources {
@@ -72,6 +73,7 @@ func setupDataSources(t *testing.T) *testDataSources {
 		prom2: NewTestRemoteWriteTarget(t),
 		prom3: NewTestRemoteWriteTarget(t),
 		prom4: NewTestRemoteWriteTarget(t),
+		prom5: NewTestRemoteWriteTarget(t),
 	}
 	res.DataSourceHeaders = make(map[string]http.Header)
 
@@ -86,6 +88,9 @@ func setupDataSources(t *testing.T) *testDataSources {
 	})
 	t.Cleanup(func() {
 		res.prom4.Close()
+	})
+	t.Cleanup(func() {
+		res.prom5.Close()
 	})
 
 	p1, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -144,6 +149,16 @@ func setupDataSources(t *testing.T) *testDataSources {
 		"X-Double-Header": []string{"one", "two"},
 	}
 
+	// Add a fifth Prometheus datasource using Alloy as the backend.
+	p5, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		Name:     "prom-5",
+		UID:      "prom-5",
+		Type:     datasources.DS_PROMETHEUS,
+		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Alloy"}`)),
+	})
+	p5.URL = res.prom5.srv.URL
+	res.prom5.ExpectedPath = "/api/v1/metrics/write"
+
 	return res
 }
 
@@ -176,6 +191,16 @@ func TestDatasourceWriter(t *testing.T) {
 
 		assert.Equal(t, 1, testDS.prom1.RequestsCount)
 		assert.Equal(t, 1, testDS.prom2.RequestsCount)
+	})
+
+	t.Run("when writing an alloy datasource then the request is made to the alloy metrics endpoint", func(t *testing.T) {
+		testDS.Reset()
+
+		err := writer.WriteDatasource(context.Background(), "prom-5", "metric", time.Now(), frames, 1, map[string]string{})
+		require.NoError(t, err)
+
+		assert.Equal(t, 0, testDS.prom1.RequestsCount)
+		assert.Equal(t, 1, testDS.prom5.RequestsCount)
 	})
 
 	t.Run("when writing an unknown datasource then an error is returned", func(t *testing.T) {
@@ -392,6 +417,14 @@ func TestDatasourceWriterGetRemoteWriteURL(t *testing.T) {
 				URL:      "http://example.com/myprom",
 			},
 			"http://example.com/myprom/api/v1/write",
+		},
+		{
+			"alloy",
+			datasources.DataSource{
+				JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Alloy"}`)),
+				URL:      "http://example.com",
+			},
+			"http://example.com/api/v1/metrics/write",
 		},
 		{
 			"mimir/cortex legacy routes",

@@ -124,6 +124,9 @@ func getRemoteWriteURL(ds *datasources.DataSource) (*url.URL, error) {
 	if getPrometheusType(ds) == "Prometheus" {
 		return u.JoinPath("/api/v1/write"), nil
 	}
+	if getPrometheusType(ds) == "Alloy" {
+		return u.JoinPath("/api/v1/metrics/write"), nil
+	}
 
 	// All other cases assume Mimir/Cortex, as these systems are much more likely to be
 	// used as a remote write target, where as Prometheus does not recommend it.
