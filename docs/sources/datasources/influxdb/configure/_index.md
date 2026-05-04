@@ -23,11 +23,25 @@ labels:
 menuTitle: Configure
 title: Configure the InfluxDB data source
 weight: 300
+review_date: 2026-05-01
 ---
 
 # Configure the InfluxDB data source
 
-Learn how to configure the InfluxDB data source and explore the available configuration options.
+This document explains how to configure the InfluxDB data source and describes the available configuration options.
+
+## Key concepts
+
+If you're new to InfluxDB, these terms are used throughout the configuration:
+
+| Term | Description |
+| ---- | ----------- |
+| **Bucket** | A named location in InfluxDB 2.x and 3.x where time-series data is stored, equivalent to a database in 1.x. |
+| **Organization** | An InfluxDB 2.x workspace that groups users, buckets, and dashboards. |
+| **DBRP mapping** | Database and Retention Policy mapping that lets InfluxQL queries work against InfluxDB 2.x buckets. |
+| **Measurement** | A logical grouping of fields, tags, and timestamps in InfluxDB, similar to a table in a relational database. |
+| **Retention policy** | An InfluxDB 1.x setting that defines how long data is kept before automatic deletion. |
+| **Token** | An authentication credential used to access the InfluxDB API in 2.x and 3.x. |
 
 ## Before you begin
 
@@ -35,13 +49,13 @@ To configure the InfluxDB data source, you must have the `Administrator` role.
 
 InfluxData provides three query languages:
 
-- **Flux** - A functional data scripting language for InfluxDB 2.x. Refer to [Query InfluxDB with Flux](https://docs.influxdata.com/influxdb/cloud/query-data/get-started/query-influxdb/) for a basic guide on working with Flux.
-- **InfluxQL** - A SQL-like query language developed by InfluxData. It doesn't support advanced functions such as JOINs.
-- **SQL** - Native SQL language available for InfluxDB v3.x.
+- **SQL** - Standard SQL query language for InfluxDB 3.x and newer cloud products (Cloud Serverless, Cloud Dedicated, Clustered). InfluxData recommends SQL for new deployments. It supports JOINs, subqueries, and standard SQL functions. Refer to [InfluxDB SQL reference](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/) for the full list of supported statements, operators, and functions.
+- **InfluxQL** - An SQL-like query language developed by InfluxData, available across all InfluxDB versions. InfluxQL doesn't support advanced functions such as JOINs. Refer to the [InfluxQL reference](https://docs.influxdata.com/influxdb/cloud-serverless/reference/influxql/) for details.
+- **Flux** - A functional data scripting language for InfluxDB 2.x. Flux is not supported on InfluxDB 3.x. Refer to [Query InfluxDB with Flux](https://docs.influxdata.com/influxdb/cloud/query-data/get-started/query-influxdb/) for a basic guide.
 
-To help choose the best language for your needs, refer to
-a [comparison of Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/)
-and [Why InfluxData created Flux](https://www.influxdata.com/blog/why-were-building-flux-a-new-data-scripting-and-query-language/).
+{{< admonition type="note" >}}
+If you're migrating from InfluxDB 1.x or 2.x to InfluxDB 3.x, InfluxData recommends adopting SQL as your query language. Refer to InfluxData's [migration guide](https://docs.influxdata.com/influxdb3/cloud-serverless/guides/migrate-data/) for help transitioning your data and queries.
+{{< /admonition >}}
 
 If you're unsure which InfluxDB product you're using, refer to InfluxData's [InfluxDB product detection tool](https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/) for guidance.
 
@@ -50,10 +64,10 @@ If you're unsure which InfluxDB product you're using, refer to InfluxData's [Inf
 Complete the following steps to set up a new InfluxDB data source:
 
 1. Click **Connections** in the left-side menu.
-2. Click **Add new connection**.
-3. Type `InfluxDB` in the search bar.
-4. Select the **InfluxDB** data source.
-5. Click **Add new data source** in the upper right.
+1. Click **Add new connection**.
+1. Type `InfluxDB` in the search bar.
+1. Select the **InfluxDB** data source.
+1. Click **Add new data source** in the upper right.
 
 Grafana opens the **Settings** tab where you configure the data source. A sidebar on the left displays navigation links to each configuration section:
 
@@ -130,7 +144,7 @@ Toggle **Auth and TLS/SSL Settings** to expand authentication and security optio
 
 TLS/SSL Certificates are encrypted and stored in the Grafana database.
 
-- **TLS client auth** - When enabled, add the `Server name`, `Client cert` and `Client key`. The client provides a certificate that the server validates to establish the client’s trusted identity. The client key encrypts the data between client and server.
+- **TLS client auth** - When enabled, add the `Server name`, `Client cert` and `Client key`. The client provides a certificate that the server validates to establish the client's trusted identity. The client key encrypts the data between client and server.
   - **Server name** - Name of the server. Example: `server1.domain.com`
   - **Client cert** - Add the client certificate.
   - **Client key** - Add the client key.
@@ -165,6 +179,12 @@ The following table shows which fields are required for each query language:
 - **Password** - The password for the specified user. Used with InfluxQL queries.
 - **Token** - The authentication token used to query InfluxDB. Retrieve this from the [Tokens page](https://docs.influxdata.com/influxdb/v2/admin/tokens/view-tokens/) in the InfluxDB UI.
 
+**For SQL**
+
+- The **Database** field maps to the InfluxDB 3.x database (equivalent to a bucket).
+- Use a [database token](https://docs.influxdata.com/influxdb3/cloud-serverless/admin/tokens/database/) with read access to the target database. For InfluxDB Cloud Serverless and Cloud Dedicated, generate a token from the InfluxDB management console or CLI.
+- SQL queries use the FlightSQL (gRPC) protocol. If your InfluxDB instance doesn't use TLS, enable **Insecure Connection** in **Advanced Database Settings**.
+
 **For Flux**
 
 - With InfluxDB 2.x products, use the [InfluxDB authentication token](https://docs.influxdata.com/influxdb/v2/admin/tokens/create-token/).
@@ -183,7 +203,7 @@ Toggle **Advanced Database Settings** to expand optional settings that give you 
 **For InfluxQL**
 
 - **HTTP method** - Sets the HTTP method used to query your data source. The POST method allows for larger queries that would return an error using the GET method. The default method is `POST`.
-- **Autocomplete range** - Sets a time range limit for the query editor's autocomplete to reduce the execution time of tag filter queries. As a result, any tags not present within the defined time range will be filtered out. For example, setting the value to 12h will include only tag keys/values from the past 12 hours. This feature is recommended for use with very large databases, where significant performance improvements can be observed.
+- **Autocomplete range** - Sets a time range limit for the query editor autocomplete to reduce the execution time of tag filter queries. Tags not present within the defined time range are filtered out. For example, setting the value to `12h` includes only tag keys and values from the past 12 hours. This feature is recommended for very large databases, where significant performance improvements can be observed.
 
 **For SQL**
 
@@ -207,7 +227,7 @@ A successful test returns one of the following messages depending on your query 
 | InfluxQL       | `datasource is working. X measurements found` |
 | SQL            | `OK`                                          |
 
-If the test fails, refer to [Troubleshoot InfluxDB data source issues](../troubleshooting/) for help resolving common connection and authentication errors.
+If the test fails, refer to [Troubleshoot InfluxDB data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/troubleshooting/) for help resolving common connection and authentication errors.
 
 ### Min time interval
 
