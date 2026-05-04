@@ -14,7 +14,7 @@ labels:
     - oss
 menuTitle: Troubleshooting
 title: Troubleshoot Microsoft SQL Server data source issues
-weight: 400
+weight: 600
 ---
 
 # Troubleshoot Microsoft SQL Server data source issues

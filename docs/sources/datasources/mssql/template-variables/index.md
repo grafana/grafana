@@ -18,7 +18,7 @@ labels:
     - oss
 menuTitle: Template variables
 title: Microsoft SQL Server template variables
-weight: 400
+weight: 350
 ---
 
 # Microsoft SQL Server template variables

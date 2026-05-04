@@ -30,7 +30,7 @@ Before configuring the Microsoft SQL Server data source, ensure you have the fol
 
 - **Grafana permissions:** You must have the `Organization administrator` role to configure data sources. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
-- **A running SQL Server instance:** Microsoft SQL Server 2005 or newer, Azure SQL Database, or Azure SQL Managed Instance.
+- **A running SQL Server instance:** Microsoft SQL Server 2012 or newer, Azure SQL Database, or Azure SQL Managed Instance.
 
 - **Network access:** Grafana must be able to reach your SQL Server. The default port is `1433`.
 
@@ -92,7 +92,7 @@ Encrypt - Determines whether or to which extent a secure SSL TCP/IP connection w
 | **True**        | **All data** sent between the client and server is **encrypted**.                                |
 
 {{< admonition type="note" >}}
-If you're using an older version of Microsoft SQL Server like 2008 and 2008R2, you may need to disable encryption to be able to connect.
+If you're using an older version of Microsoft SQL Server (earlier than 2012), you may need to disable encryption to be able to connect.
 {{< /admonition >}}
 
 **Authentication:**
@@ -297,7 +297,7 @@ Also, ensure that the user doesn't have any unwanted privileges from the public 
 
 ### Diagnose connection issues
 
-If you use older versions of Microsoft SQL Server, such as 2008 and 2008R2, you might need to disable encryption before you can connect the data source.
+If you use older versions of Microsoft SQL Server (earlier than 2012), you might need to disable encryption before you can connect the data source.
 
 Grafana recommends that you use the latest available service pack for optimal compatibility.
 
