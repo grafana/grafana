@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen, waitFor } from 'test/test-utils';
+import { screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { locationService, setPluginLinksHook } from '@grafana/runtime';
@@ -144,6 +144,8 @@ const recordingRuleGroup: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
 };
 
 describe('AlertRuleForm submit failure handling', () => {
+  testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
+
   beforeEach(() => {
     grantAlertingPermissions();
     mockPreviewApiResponse(server, []);
@@ -191,6 +193,8 @@ describe('AlertRuleForm submit failure handling', () => {
 // GrafanaEvaluationBehavior when editing an ungrouped rule, so the user has no
 // way to re-group from this form. We don't test that transition here.
 describe('AlertRuleForm — submit routing by group presence', () => {
+  testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
+
   const folder = mockFolder({
     title: 'Folder A',
     uid: grafanaRulerRule.grafana_alert.namespace_uid,
@@ -365,5 +369,83 @@ describe('AlertRuleForm — submit routing by group presence', () => {
       });
       expect(replaceSpy).not.toHaveBeenCalled();
     });
+  });
+});
+
+// Verifies the alerting.rulesAPIV2 gate: with the flag off the form must match
+// `main` — no evaluation-mode radio, group is required, legacy ruler endpoint only.
+describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
+  beforeEach(() => {
+    grantAlertingPermissions();
+    setFolderResponse(
+      mockFolder({
+        title: 'Folder A',
+        uid: grafanaRulerRule.grafana_alert.namespace_uid,
+        accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+      })
+    );
+    mockPreviewApiResponse(server, []);
+  });
+
+  afterEach(() => {
+    server.events.removeAllListeners('request:start');
+  });
+
+  it('does not render the evaluation-mode radio toggle', async () => {
+    renderRuleEditor();
+
+    expect(await ui.inputs.name.find()).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /set interval/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /use groups \(legacy\)/i })).not.toBeInTheDocument();
+  });
+
+  it('requires a group and POSTs to the legacy ruler API only', async () => {
+    const legacyRequests = captureRequests((req) => req.method === 'POST' && req.url.includes(LEGACY_RULER_BASE));
+    const appPlatformRequests = captureRequests(
+      (req) => req.method === 'POST' && req.url.includes(APP_PLATFORM_ALERTRULES_BASE)
+    );
+
+    const { user } = renderRuleEditor();
+
+    await fillRuleBasics(user);
+    // Save without picking a group surfaces the required-group validation message.
+    await user.click(ui.buttons.save.get());
+    expect(await screen.findByText(/Must enter a group name/i)).toBeInTheDocument();
+
+    // With the flag off the radio is not rendered, so go straight to the group select.
+    const groupInput = await ui.inputs.group.find();
+    await user.click(await byRole('combobox').find(groupInput));
+    await clickSelectOption(groupInput, grafanaRulerGroup.name);
+
+    await user.click(ui.buttons.save.get());
+
+    await waitFor(async () => {
+      expect(await legacyRequests).toHaveLength(1);
+    });
+    expect(await appPlatformRequests).toHaveLength(0);
+  });
+
+  it('surfaces a form-level error notification when the legacy ruler call fails and does not redirect', async () => {
+    setUpdateGrafanaRulerRuleNamespaceResolver(async () =>
+      HttpResponse.json({ message: 'boom from the api' }, { status: 500 })
+    );
+    const replaceSpy = jest.spyOn(locationService, 'replace');
+
+    const { user } = renderRuleEditor();
+
+    await fillRuleBasics(user);
+    const groupInput = await ui.inputs.group.find();
+    await user.click(await byRole('combobox').find(groupInput));
+    await clickSelectOption(groupInput, grafanaRulerGroup.name);
+
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByText(/Failed to save alert rule/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Rule added successfully/i)).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(ui.buttons.save.get()).toBeEnabled();
+    });
+    expect(replaceSpy).not.toHaveBeenCalled();
   });
 });

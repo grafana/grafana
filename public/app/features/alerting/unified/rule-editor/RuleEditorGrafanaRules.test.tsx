@@ -79,9 +79,6 @@ describe('RuleEditor grafana managed rules', () => {
     await user.type(await ui.inputs.name.find(), 'my great new rule');
     await user.click(await screen.findByRole('button', { name: /select folder/i }));
     await user.click(await screen.findByLabelText('Folder A'));
-
-    await user.click(await screen.findByRole('radio', { name: /use groups \(legacy\)/i }));
-
     const groupInput = await ui.inputs.group.find();
     await user.click(await byRole('combobox').find(groupInput));
     await clickSelectOption(groupInput, grafanaRulerGroup.name);
@@ -163,8 +160,6 @@ describe('RuleEditor grafana managed rules', () => {
     await user.type(await ui.inputs.name.find(), 'my great new rule');
     await user.click(await screen.findByRole('button', { name: /select folder/i }));
     await user.click(await screen.findByLabelText('Folder A'));
-
-    await user.click(await screen.findByRole('radio', { name: /use groups \(legacy\)/i }));
 
     // Select the existing group with 5m interval
     const groupInput = await ui.inputs.group.find();

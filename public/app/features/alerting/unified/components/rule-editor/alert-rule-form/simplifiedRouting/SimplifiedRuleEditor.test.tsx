@@ -52,8 +52,6 @@ const selectFolderAndGroup = async (user: UserEvent) => {
   const folderOption = await within(folderPicker).findByLabelText(FOLDER_TITLE_HAPPY_PATH);
   await user.click(folderOption);
 
-  await user.click(await screen.findByRole('radio', { name: /use groups \(legacy\)/i }));
-
   const groupInput = await ui.inputs.group.find();
   const groupCombobox = await byRole('combobox').find(groupInput);
   await user.click(groupCombobox);

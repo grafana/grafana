@@ -29,9 +29,6 @@ setupMswServer();
 const selectFolderAndGroup = async (user: UserEvent) => {
   await user.click(await screen.findByRole('button', { name: /select folder/i }));
   await user.click(await screen.findByLabelText(FOLDER_TITLE_HAPPY_PATH));
-
-  await user.click(await screen.findByRole('radio', { name: /use groups \(legacy\)/i }));
-
   const groupInput = await ui.inputs.group.find();
   await user.click(await byRole('combobox').find(groupInput));
   await clickSelectOption(groupInput, grafanaRulerGroup.name);

@@ -25,6 +25,7 @@ import {
 } from '@grafana/ui';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { shouldUseRulesAPIV2 } from '../../featureToggles';
 import { evaluateEveryValidationOptions } from '../../group-details/validation';
 import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
@@ -195,11 +196,12 @@ export function GrafanaEvaluationBehaviorStep({
   }, [existingGroup, setValue]);
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
+  const v2Enabled = shouldUseRulesAPIV2();
   const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
   const [lastSelectedGroup, setLastSelectedGroup] = useState(group);
-  const [evaluationMode, setEvaluationMode] = useState<EvaluationMode>(
-    Boolean(group) && !isEditingUngroupedRule ? 'legacy' : 'new'
-  );
+  // When the v2 flag is off the radio is hidden; force 'legacy' so only the group selector renders.
+  const startInLegacyMode = !v2Enabled || (Boolean(group) && !isEditingUngroupedRule);
+  const [evaluationMode, setEvaluationMode] = useState<EvaluationMode>(startInLegacyMode ? 'legacy' : 'new');
   const showGroupSelection = evaluationMode === 'legacy';
 
   const evaluationModeOptions: Array<SelectableValue<EvaluationMode>> = [
@@ -276,7 +278,7 @@ export function GrafanaEvaluationBehaviorStep({
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-        {!isEditingUngroupedRule && (
+        {v2Enabled && !isEditingUngroupedRule && (
           <Field noMargin>
             <RadioButtonGroup
               value={evaluationMode}
