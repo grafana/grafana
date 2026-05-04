@@ -9,16 +9,77 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	test "github.com/grafana/grafana/pkg/storage/unified/testing"
 )
 
 func TestLease(t *testing.T) {
-	t.Skip("not implemented yet")
 	test.RunLeaseTest(t, func(ctx context.Context) kv.KV {
 		return newMapKV()
 	})
+}
+
+func TestAcquireNameValidation(t *testing.T) {
+	m := lease.NewManager(newMapKV(), "holder-validation")
+
+	t.Run("invalid keys are rejected", func(t *testing.T) {
+		for _, name := range []string{"", "invalid key", "invalid\nkey"} {
+			l, err := m.Acquire(t.Context(), name)
+			require.Error(t, err)
+			require.ErrorContains(t, err, "invalid lease name")
+			require.Nil(t, l)
+		}
+	})
+
+	t.Run("tilde is rejected", func(t *testing.T) {
+		l, err := m.Acquire(t.Context(), "validation/with~tilde")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "is reserved")
+		require.Nil(t, l)
+	})
+
+	t.Run("valid slash-separated name is accepted", func(t *testing.T) {
+		l, err := m.Acquire(t.Context(), "validation/slash-separated")
+		require.NoError(t, err)
+		require.NotNil(t, l)
+		require.NoError(t, m.Release(t.Context(), l))
+	})
+}
+
+func TestAcquireTTLValidation(t *testing.T) {
+	const minTTL = 100 * time.Millisecond
+	m := lease.NewManager(newMapKV(), "holder-validation", lease.WithInternalMinTTL(minTTL))
+
+	testCases := []struct {
+		d       time.Duration
+		isValid bool
+	}{
+		{d: 0, isValid: false},
+		{d: -10, isValid: false},
+		{d: time.Millisecond, isValid: false},
+		{d: 100 * time.Millisecond, isValid: true},
+		{d: time.Minute, isValid: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.d.String(), func(t *testing.T) {
+			l, err := m.Acquire(t.Context(), "ttl-validation", lease.WithTTL(tc.d))
+
+			if tc.isValid {
+				require.NoError(t, err)
+				require.NoError(t, m.Release(t.Context(), l))
+			} else {
+				require.Error(t, err)
+				require.ErrorContains(t, err, "invalid TTL")
+				require.Nil(t, l)
+			}
+		})
+	}
 }
 
 // mapKV is a thread-safe, in-memory kv.KV implementation scoped to a single
