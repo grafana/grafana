@@ -1453,8 +1453,10 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	})).Return()
 
 	err := applyChanges(
-		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
-		quotas.NewInMemoryQuotaTracker(0, 0), true,
+		context.Background(), changes,
+		applyDeps{clients: clients, currentRef: "test-ref", repositoryResources: repoResources, progress: progress, tracer: tracer, quotaTracker: quotas.NewInMemoryQuotaTracker(0, 0), folderMetadataEnabled: true},
+		1,
+		fullSyncPhaseRecorder(metrics),
 	)
 	require.NoError(t, err)
 
@@ -1508,8 +1510,10 @@ func TestApplyChanges_SortsFolderUpdatesShallowestFirst(t *testing.T) {
 	}).Return("child-uid", nil)
 
 	err := applyChanges(
-		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
-		quotas.NewInMemoryQuotaTracker(0, 0), true,
+		context.Background(), changes,
+		applyDeps{clients: clients, currentRef: "test-ref", repositoryResources: repoResources, progress: progress, tracer: tracer, quotaTracker: quotas.NewInMemoryQuotaTracker(0, 0), folderMetadataEnabled: true},
+		1,
+		fullSyncPhaseRecorder(metrics),
 	)
 	require.NoError(t, err)
 	require.Equal(t, []string{
@@ -1568,8 +1572,10 @@ func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 	})).Return()
 
 	err := applyChanges(
-		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
-		quotas.NewInMemoryQuotaTracker(0, 0), true,
+		context.Background(), changes,
+		applyDeps{clients: clients, currentRef: "test-ref", repositoryResources: repoResources, progress: progress, tracer: tracer, quotaTracker: quotas.NewInMemoryQuotaTracker(0, 0), folderMetadataEnabled: true},
+		1,
+		fullSyncPhaseRecorder(metrics),
 	)
 	require.NoError(t, err)
 
@@ -1618,8 +1624,10 @@ func TestApplyChanges_OldFolderDeletion_ErrorContinues(t *testing.T) {
 	})).Return()
 
 	err := applyChanges(
-		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
-		quotas.NewInMemoryQuotaTracker(0, 0), true,
+		context.Background(), changes,
+		applyDeps{clients: clients, currentRef: "test-ref", repositoryResources: repoResources, progress: progress, tracer: tracer, quotaTracker: quotas.NewInMemoryQuotaTracker(0, 0), folderMetadataEnabled: true},
+		1,
+		fullSyncPhaseRecorder(metrics),
 	)
 
 	// applyChanges must NOT return an error even though RemoveFolder failed

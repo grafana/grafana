@@ -873,52 +873,11 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 	})
 }
 
-func TestSortChangesByActionPriority(t *testing.T) {
-	diff := []repository.VersionedFileChange{
-		{Action: repository.FileActionCreated, Path: "dashboards/new1.json"},
-		{Action: repository.FileActionIgnored, Path: "dashboards/ignored.json"},
-		{Action: repository.FileActionDeleted, Path: "dashboards/old1.json"},
-		{Action: repository.FileActionUpdated, Path: "dashboards/updated.json"},
-		{Action: repository.FileActionCreated, Path: "dashboards/new2.json"},
-		{Action: repository.FileActionRenamed, Path: "dashboards/renamed.json"},
-		{Action: repository.FileActionDeleted, Path: "dashboards/old2.json"},
-	}
-
-	sortChangesByActionPriority(diff)
-
-	expectedOrder := []repository.FileAction{
-		repository.FileActionDeleted,
-		repository.FileActionDeleted,
-		repository.FileActionRenamed,
-		repository.FileActionUpdated,
-		repository.FileActionCreated,
-		repository.FileActionCreated,
-		repository.FileActionIgnored,
-	}
-	for i, change := range diff {
-		require.Equal(t, expectedOrder[i], change.Action, "index %d: expected %s, got %s", i, expectedOrder[i], change.Action)
-	}
-}
-
-func TestSortChangesByActionPriority_StableOrder(t *testing.T) {
-	diff := []repository.VersionedFileChange{
-		{Action: repository.FileActionCreated, Path: "dashboards/b.json"},
-		{Action: repository.FileActionCreated, Path: "dashboards/a.json"},
-		{Action: repository.FileActionDeleted, Path: "dashboards/d.json"},
-		{Action: repository.FileActionDeleted, Path: "dashboards/c.json"},
-	}
-
-	sortChangesByActionPriority(diff)
-
-	require.Equal(t, repository.FileActionDeleted, diff[0].Action)
-	require.Equal(t, "dashboards/d.json", diff[0].Path)
-	require.Equal(t, repository.FileActionDeleted, diff[1].Action)
-	require.Equal(t, "dashboards/c.json", diff[1].Path)
-	require.Equal(t, repository.FileActionCreated, diff[2].Action)
-	require.Equal(t, "dashboards/b.json", diff[2].Path)
-	require.Equal(t, repository.FileActionCreated, diff[3].Action)
-	require.Equal(t, "dashboards/a.json", diff[3].Path)
-}
+// TestSortChangesByActionPriority was removed when sortChangesByActionPriority
+// was deleted. Ordering is now handled by the shared apply pipeline's phased
+// orchestrator (file deletions -> folder creations -> file renames ->
+// folder deletions -> file creations -> old folder cleanup), which makes the
+// per-action priority sort redundant.
 
 type compositeRepo struct {
 	*repository.MockVersioned
