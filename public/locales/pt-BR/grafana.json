@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Editar YAML",
         "save": "Salvar"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Excluir todas as regras"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Excluir",
       "delete-modal-delete-button": "Excluir",
@@ -1573,8 +1575,14 @@
         "update-error": "Erro ao atualizar o grupo de regras",
         "update-success": "Grupo de regras atualizado"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "O grupo selecionado não pode ser editado",
       "group-not-editable-description": "Este grupo pertence a uma fonte de dados que não é compatível com edição.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Editar grupo de regras",
       "rule-group-error": "Erro ao carregar o grupo de regras"
     },
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "Em ordem alfabética (A–Z)",
         "alphabetically-za": "Em ordem alfabética (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Excluídos (mais recente primeiro)",
         "deleted-oldest": "Excluídos (mais antigos primeiro)"
       }
@@ -8134,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Adicionar aos favoritos",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Explorar dados",
       "open-in-explore": "Abrir na visualização do Explore",
       "remove-favorite": "Remover dos favoritos"
@@ -13577,6 +13593,7 @@
       "contact-admin": "Entre em contato com o administrador da Grafana para converter este recurso em local ou excluir todos os recursos do repositório que está faltando.",
       "convert-to-local-button": "Converter para local",
       "delete-button": "Excluir",
+      "go-to-dashboards": "",
       "job-error": "Ocorreu um erro ao processar recursos órfãos",
       "job-success": "Recursos órfãos processados com sucesso",
       "job-warning": "Alguns recursos foram processados com avisos. Analise os resultados.",
@@ -13823,7 +13840,8 @@
       "make-sure": "Criar um token com essas permissões"
     },
     "validation": {
-      "hidden-characters": "Este campo contém caracteres ocultos que podem ter sido inseridos ao copiar e colar. Digite novamente ou limpe o valor e tente novamente."
+      "hidden-characters": "Este campo contém caracteres ocultos que podem ter sido inseridos ao copiar e colar. Digite novamente ou limpe o valor e tente novamente.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Aviso",
     "watch-stream": {
@@ -14231,6 +14249,8 @@
       "alerts-loading": "Alertas",
       "card-click": "Selecionar cartão {{id}}",
       "data": "Dados",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Novo {{type}}",
       "queries-expressions": "Consultas e expressões",
       "toggle-size": "Alternar tamanho da barra lateral",
@@ -14284,6 +14304,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Restaurar"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Você não excluiu nenhum painel de controle recentemente.",
@@ -14446,6 +14470,10 @@
     },
     "results-table": {
       "datasource-header": "Fonte de dados",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 minuto",
       "deleted-remaining-header": "Tempo restante",
       "location-header": "Localização",
@@ -14939,10 +14967,13 @@
       "title": "Crie painéis rapidamente com sugestões e modelos"
     },
     "nav": {
+      "counter": "",
       "go-to": "Ir para o slide {{number}}",
-      "next": "Próximo",
-      "prev": "Voltar"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Explicar consulta",

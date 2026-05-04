@@ -55,14 +55,20 @@ export const FlagKeys = {
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
   QueryEditorNext: "queryEditorNext",
+  /** Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor */
+  QueryEditorNextMultiSelect: "queryEditorNextMultiSelect",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
+  /** Enables option to position series names above bars in the state timeline panel */
+  StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
+  /** Enables plugins setting from new apis */
+  UseMTPluginSettings: "useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   UseMTPlugins: "useMTPlugins",
 } as const;
@@ -299,6 +305,17 @@ export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): bo
 };
 
 /**
+ * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
+ *
+ * **Details:**
+ * - flag key: `queryEditorNextMultiSelect`
+ * - default value: `false`
+ */
+export const useFlagQueryEditorNextMultiSelect = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryEditorNextMultiSelect", false, options).value;
+};
+
+/**
  * Enables recently viewed dashboards section in the browsing dashboard page
  *
  * **Details:**
@@ -332,6 +349,17 @@ export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boole
 };
 
 /**
+ * Enables option to position series names above bars in the state timeline panel
+ *
+ * **Details:**
+ * - flag key: `stateTimeline.nameAboveBars`
+ * - default value: `false`
+ */
+export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("stateTimeline.nameAboveBars", false, options).value;
+};
+
+/**
  * Enables the 'Customize with Assistant' button on suggested dashboard cards
  *
  * **Details:**
@@ -340,6 +368,17 @@ export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boole
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
+};
+
+/**
+ * Enables plugins setting from new apis
+ *
+ * **Details:**
+ * - flag key: `useMTPluginSettings`
+ * - default value: `false`
+ */
+export const useFlagUseMTPluginSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("useMTPluginSettings", false, options).value;
 };
 
 /**

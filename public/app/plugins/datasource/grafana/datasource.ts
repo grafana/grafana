@@ -146,6 +146,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       } else if (target.queryType === GrafanaQueryType.RandomWalk || !target.queryType) {
         results.push(
           of({
+            key: target.refId,
             data: randomWalk(target, request),
             state: LoadingState.Done,
           })

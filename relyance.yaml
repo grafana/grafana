@@ -59,7 +59,6 @@ exclude:
   - emails
   - cue.mod
   - kinds
-  - kindsv2
 
   # Temporary and cache directories
   - tmp

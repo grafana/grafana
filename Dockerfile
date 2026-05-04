@@ -36,6 +36,8 @@ COPY e2e-playwright e2e-playwright
 COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
+# Yarn workspaces include scripts/uplot-compare; it must exist before install (scripts/ is copied later for cache layering).
+COPY scripts/uplot-compare scripts/uplot-compare
 
 #
 # Set the node env according to defaults or argument passed
@@ -87,7 +89,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 COPY embed.go Makefile package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
-COPY kindsv2 kindsv2
 COPY local local
 COPY packages/grafana-schema packages/grafana-schema
 COPY packages/grafana-data/src/themes/themeDefinitions packages/grafana-data/src/themes/themeDefinitions

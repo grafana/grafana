@@ -56,18 +56,34 @@ type Elector interface {
 	Run(ctx context.Context, fn func(ctx context.Context), opts ...RunOption) error
 }
 
-// NoopElector always acts as the leader (single-instance / backward compat).
-type NoopElector struct{}
+// DefaultElector always acts as the leader (single-instance / backward compat).
+type DefaultElector struct{}
 
-// NewNoopElector returns a NoopElector that always acts as leader.
-func NewNoopElector() *NoopElector {
-	return &NoopElector{}
+// NewDefaultElector returns a DefaultElector that always acts as leader.
+func NewDefaultElector() *DefaultElector {
+	return &DefaultElector{}
 }
 
 // Run calls fn immediately and blocks until ctx is cancelled.
 // RunOption values are accepted for interface compatibility but ignored.
-func (n *NoopElector) Run(ctx context.Context, fn func(ctx context.Context), _ ...RunOption) error {
+func (n *DefaultElector) Run(ctx context.Context, fn func(ctx context.Context), _ ...RunOption) error {
 	fn(ctx)
+	return ctx.Err()
+}
+
+// NoopElector is a true no-op: it never calls fn and simply blocks until ctx
+// is cancelled. Useful when the caller wants to satisfy the Elector interface
+// without actually running any leader work.
+type NoopElector struct{}
+
+// NewNoopElector returns a NoopElector.
+func NewNoopElector() *NoopElector {
+	return &NoopElector{}
+}
+
+// Run blocks until ctx is cancelled without ever invoking fn.
+func (n *NoopElector) Run(ctx context.Context, _ func(ctx context.Context), _ ...RunOption) error {
+	<-ctx.Done()
 	return ctx.Err()
 }
 

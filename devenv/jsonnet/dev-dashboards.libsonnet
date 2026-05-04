@@ -21,7 +21,6 @@
     "barchart-series-toggle": (import '../dev-dashboards/panel-barchart/barchart-series-toggle.json'),
     "barchart-thresholds-mappings": (import '../dev-dashboards/panel-barchart/barchart-thresholds-mappings.json'),
     "barchart-tooltips-legends": (import '../dev-dashboards/panel-barchart/barchart-tooltips-legends.json'),
-    "barchart_tests": (import '../dev-dashboards/panel-barchart/barchart_tests.json'),
     "candlestick": (import '../dev-dashboards/panel-candlestick/candlestick.json'),
     "candlestick_tests": (import '../dev-dashboards/panel-candlestick/candlestick_tests.json'),
     "canvas-connection-examples": (import '../dev-dashboards/panel-canvas/canvas-connection-examples.json'),

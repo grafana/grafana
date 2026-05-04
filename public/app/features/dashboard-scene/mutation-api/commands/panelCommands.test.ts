@@ -1,10 +1,12 @@
 import { config } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 
-import { getUpdatedHoverHeader } from '../../panel-edit/getPanelFrameOptions';
 import type { DashboardScene } from '../../scene/DashboardScene';
+import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { PanelElementEntry, PanelElementsData, MutationResult } from '../types';
@@ -96,7 +98,38 @@ function buildPanelScene(panels: VizPanel[] = [], elementMap: Record<string, num
       Object.assign(state, partial);
     }),
     updatePanelTitle: jest.fn((panel: VizPanel, title: string) => {
-      panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+      panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange?.state) });
+    }),
+    changePanelPlugin: jest.fn(),
+  };
+
+  currentTestScene = scene;
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return scene as unknown as DashboardScene;
+}
+
+function buildAutoGridPanelScene(panels: VizPanel[] = [], elementMap: Record<string, number> = {}): DashboardScene {
+  const body = AutoGridLayoutManager.createFromLayout(DefaultGridLayoutManager.fromVizPanels(panels));
+  const state: Record<string, unknown> = {
+    uid: 'test-dash',
+    isEditing: false,
+    body,
+  };
+
+  const scene = {
+    state,
+    serializer: mockSerializer(elementMap),
+    canEditDashboard: jest.fn(() => true),
+    onEnterEditMode: jest.fn(() => {
+      state.isEditing = true;
+    }),
+    forceRender: jest.fn(),
+    setState: jest.fn((partial: Record<string, unknown>) => {
+      Object.assign(state, partial);
+    }),
+    updatePanelTitle: jest.fn((panel: VizPanel, title: string) => {
+      panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange?.state) });
     }),
     changePanelPlugin: jest.fn(),
   };
@@ -695,6 +728,143 @@ describe('Panel mutation commands', () => {
 
       const tr = vizPanel.state.$timeRange as PanelTimeRange;
       expect(tr.state.timeFrom).toBe('1h');
+    });
+
+    it('sets conditionalRendering on an AutoGrid panel', async () => {
+      const scene = buildAutoGridPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      const elementName = await addPanel(client, 'Conditional Panel');
+
+      const result = await client.execute({
+        type: 'UPDATE_PANEL',
+        payload: {
+          element: { name: elementName },
+          panel: { kind: 'Panel', spec: {} },
+          conditionalRendering: {
+            kind: 'ConditionalRenderingGroup',
+            spec: {
+              visibility: 'hide',
+              condition: 'and',
+              items: [
+                {
+                  kind: 'ConditionalRenderingVariable',
+                  spec: { variable: 'env', operator: 'equals', value: 'prod' },
+                },
+              ],
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as AutoGridLayoutManager;
+      const vizPanel = body.getVizPanels()[0];
+      const autoGridItem = vizPanel.parent as AutoGridItem;
+      const serialized = autoGridItem.state.conditionalRendering?.serialize();
+      expect(serialized?.spec.visibility).toBe('hide');
+      expect(serialized?.spec.condition).toBe('and');
+      expect(serialized?.spec.items).toHaveLength(1);
+      expect(serialized?.spec.items[0].kind).toBe('ConditionalRenderingVariable');
+    });
+
+    it('sets conditionalRendering without passing panel', async () => {
+      const scene = buildAutoGridPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      const elementName = await addPanel(client, 'No Panel Payload');
+
+      const result = await client.execute({
+        type: 'UPDATE_PANEL',
+        payload: {
+          element: { name: elementName },
+          conditionalRendering: {
+            kind: 'ConditionalRenderingGroup',
+            spec: {
+              visibility: 'show',
+              condition: 'and',
+              items: [{ kind: 'ConditionalRenderingData', spec: { value: true } }],
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as AutoGridLayoutManager;
+      const vizPanel = body.getVizPanels()[0];
+      expect(vizPanel.state.title).toBe('No Panel Payload');
+      const autoGridItem = vizPanel.parent as AutoGridItem;
+      const serialized = autoGridItem.state.conditionalRendering?.serialize();
+      expect(serialized?.spec.visibility).toBe('show');
+      expect(serialized?.spec.items).toHaveLength(1);
+    });
+
+    it('rejects conditionalRendering on a GridLayout panel', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      const elementName = await addPanel(client, 'Grid Panel');
+
+      const result = await client.execute({
+        type: 'UPDATE_PANEL',
+        payload: {
+          element: { name: elementName },
+          panel: { kind: 'Panel', spec: {} },
+          conditionalRendering: {
+            kind: 'ConditionalRenderingGroup',
+            spec: {
+              visibility: 'show',
+              condition: 'and',
+              items: [{ kind: 'ConditionalRenderingData', spec: { value: true } }],
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Auto grid layout');
+    });
+
+    it('sets multiple conditions with or logic', async () => {
+      const scene = buildAutoGridPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      const elementName = await addPanel(client, 'Multi Condition Panel');
+
+      const result = await client.execute({
+        type: 'UPDATE_PANEL',
+        payload: {
+          element: { name: elementName },
+          panel: { kind: 'Panel', spec: {} },
+          conditionalRendering: {
+            kind: 'ConditionalRenderingGroup',
+            spec: {
+              visibility: 'show',
+              condition: 'or',
+              items: [
+                {
+                  kind: 'ConditionalRenderingVariable',
+                  spec: { variable: 'env', operator: 'notEquals', value: 'dev' },
+                },
+                {
+                  kind: 'ConditionalRenderingTimeRangeSize',
+                  spec: { value: '6h' },
+                },
+              ],
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as AutoGridLayoutManager;
+      const vizPanel = body.getVizPanels()[0];
+      const autoGridItem = vizPanel.parent as AutoGridItem;
+      const serialized = autoGridItem.state.conditionalRendering?.serialize();
+      expect(serialized?.spec.condition).toBe('or');
+      expect(serialized?.spec.items).toHaveLength(2);
+      expect(serialized?.spec.items[0].kind).toBe('ConditionalRenderingVariable');
+      expect(serialized?.spec.items[1].kind).toBe('ConditionalRenderingTimeRangeSize');
     });
   });
 
