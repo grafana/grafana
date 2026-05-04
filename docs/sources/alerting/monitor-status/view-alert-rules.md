@@ -25,6 +25,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state/
+  manage-contact-points:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
+  view-alert-state-history:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/#view-notification-history
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state-history/#view-notification-history
 ---
 
 # View alert rules
@@ -57,6 +67,28 @@ You can also change how the rule list is displayed using the **View as** option.
 
 For details on how rule states and alert instance states are displayed, refer to [View alert state](ref:view-alert-state).
 
+## View alert state history
+
+Use the State history view to get insight into how your individual alert instances behave over time. To access the State history view, complete the following steps.
+
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Alert rules**.
+1. Click an alert rule.
+1. Click the **History** tab.
+
+View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
+
+## View notification history
+
+You can view the notification history or an alert rule from a Rule view page. To view alert rule history, complete the following steps.
+
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Alert rules**.
+1. Select an alert rule and click **View**.
+1. Click the **Notifications** tab.
+
+From the **Notifications** tab you can view the history of your alert notifications and evaluate how many times you've been notified, verify that [contact points](ref:manage-contact-points) are functioning properly, and troubleshoot issues such as webhook failure or email delivery failure.
+
+To view notification history across all alert rules, refer to the [notification history view](ref:view-alert-state-history) on the Alerting History page.
+
 ## View, compare and restore alert rules versions.
 
 You can view, compare, and restore previous alert rule versions.
@@ -87,7 +119,7 @@ Admin users can delete all of the alert rules within a folder. To delete all the
 
 Only users with an Admin role can restore deleted Grafana-managed alert rules. After an alert rule is restored, it is restored with a new, different UID from the one it had before.
 
-1. Go to **Alerts & IRM** -> **Alerting** -> **Alert rules**, then click the **Recently deleted** tab.
+1. Go to **Alerts & IRM** -> **Alerting** -> **Recently deleted**.
 1. Click the **Restore** button to restore the alert rule or click **Delete permanently** to delete the alert rule.
 
 {{< admonition type="note" >}}
