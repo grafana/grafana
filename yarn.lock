@@ -20984,6 +20984,7 @@ __metadata:
     glob: "npm:11.1.0"
     history: "npm:4.10.1"
     html-tags: "npm:^5.1.0"
+    html-to-image: "npm:1.11.13"
     http-server: "npm:14.1.1"
     i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
@@ -21507,6 +21508,13 @@ __metadata:
   version: 5.1.0
   resolution: "html-tags@npm:5.1.0"
   checksum: 10/73d0448496ad9ac4a905427717908a3e72b8676d514e077437aaa9310deb43fd9f3eda58ac6b01b651db7431f3ddcc914e1f8e24052375dfe11d3ddfe4a20de7
+  languageName: node
+  linkType: hard
+
+"html-to-image@npm:1.11.13":
+  version: 1.11.13
+  resolution: "html-to-image@npm:1.11.13"
+  checksum: 10/f5950a0221b4ed4e59853db09917606309ebe3ddd2051c2f89aed3e37026d1893880f76e61bc2ca2280e3f1bbc0ad5b9ea5325188ff339987c8eeccbe8284f3f
   languageName: node
   linkType: hard
 
