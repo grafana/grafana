@@ -361,7 +361,19 @@ func (s *Service) reload(reloadable ssosettings.Reloadable, provider string, cur
 }
 
 func (s *Service) Reload(ctx context.Context, provider string) {
-	panic("not implemented") // TODO: Implement
+	reloadable, ok := s.reloadables[provider]
+	if !ok {
+		s.logger.Warn("no reloadable found for provider, skipping reload", "provider", provider)
+		return
+	}
+
+	settings, err := s.GetForProvider(ctx, provider)
+	if err != nil {
+		s.logger.Error("failed to get settings for provider, skipping reload", "provider", provider, "error", err)
+		return
+	}
+
+	go s.reload(reloadable, provider, *settings)
 }
 
 func (s *Service) RegisterReloadable(provider string, reloadable ssosettings.Reloadable) {
