@@ -4926,7 +4926,7 @@
           {
             "name": "limit",
             "in": "query",
-            "description": "number of results to return",
+            "description": "maximum number of results to return per page",
             "schema": {
               "type": "integer",
               "format": "int64"
@@ -4934,24 +4934,12 @@
             "example": 30
           },
           {
-            "name": "page",
+            "name": "continue",
             "in": "query",
-            "description": "page number (starting from 1)",
+            "description": "Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, otherwise '+' will silently decode to a space on the server and pagination will fail.",
             "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 1
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "number of results to skip",
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 0
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4960,7 +4948,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.UserTeamList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetUserTeamsResponse"
                 }
               }
             }
@@ -5674,6 +5662,7 @@
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetUserTeamsResponse": {
         "type": "object",
         "required": [
+          "metadata",
           "items"
         ],
         "properties": {
@@ -5690,6 +5679,9 @@
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
+          },
+          "metadata": {
+            "default": {}
           }
         }
       },

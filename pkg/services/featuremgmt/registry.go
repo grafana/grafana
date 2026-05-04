@@ -2881,7 +2881,7 @@ var (
 			Description:  "Enables plugins setting from new apis",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true},
 			Expression:   "false",
 			HideFromDocs: true,
 		},
@@ -3092,7 +3092,15 @@ var (
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
 			HideFromDocs: true,
-			Generate:     Generate{React: true, Go: true},
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "datasources.useNewStackInfoToSettingsCache",
+			Description: "Use the new cache for datasource.StackInfoToSettings, backend flag",
+			Stage:       FeatureStageGeneralAvailability,
+			Generate:    Generate{Go: true},
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

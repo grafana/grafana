@@ -312,7 +312,7 @@ func TestRunCleanup_ReplicaVersionAgnostic(t *testing.T) {
 
 // seedSnapshot writes a minimal but valid snapshot at indexKey under ns,
 // matching the layout BucketRemoteIndexStore expects: a single placeholder file
-// plus meta.json declaring it. Bypasses store.UploadIndex so tests can pin
+// plus a snapshot manifest declaring it. Bypasses store.UploadIndex so tests can pin
 // arbitrary UploadTimestamps without being tied to wall-clock or ULID.Time().
 // Takes *IndexMeta so callers can use mkMeta directly.
 func seedSnapshot(t *testing.T, ctx context.Context, bucket *blob.Bucket, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
@@ -324,7 +324,7 @@ func seedSnapshot(t *testing.T, ctx context.Context, bucket *blob.Bucket, ns res
 	}
 	metaBytes, err := json.Marshal(meta)
 	require.NoError(t, err)
-	require.NoError(t, bucket.WriteAll(ctx, pfx+metaJSONFile, metaBytes, nil))
+	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
 }
 
 // listSeededIndexKeys returns the index keys still present at ns in the bucket.
@@ -364,8 +364,15 @@ func TestRunCleanup_LockContentionSkipsNamespace(t *testing.T) {
 	// directly rather than via newCleanupTestBucket because we need distinct
 	// lock owners.
 	backend := newFakeBackend(newConditionalBucket())
-	storeA := NewBucketRemoteIndexStore(bucket, backend, "instance-A", 5*time.Second, 500*time.Millisecond)
-	storeB := NewBucketRemoteIndexStore(bucket, backend, "instance-B", 5*time.Second, 500*time.Millisecond)
+	lockOpts := LockOptions{TTL: 5 * time.Second, HeartbeatInterval: 500 * time.Millisecond}
+	storeA := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket: bucket, LockBackend: backend, LockOwner: "instance-A",
+		BuildLock: lockOpts, CleanupLock: lockOpts,
+	})
+	storeB := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket: bucket, LockBackend: backend, LockOwner: "instance-B",
+		BuildLock: lockOpts, CleanupLock: lockOpts,
+	})
 
 	nsA := resource.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	nsB := resource.NamespacedResource{Namespace: "stack-2", Group: "dashboard.grafana.app", Resource: "dashboards"}
@@ -405,7 +412,7 @@ func TestRunCleanup_IncompleteUploadsCounted(t *testing.T) {
 	ns := newTestNsResource()
 	old := makeULID(t, time.Now().Add(-48*time.Hour))
 	pfx := indexPrefix(ns, old.String())
-	// Stale prefix without meta.json — older than CleanupIncompleteUploads' minAge.
+	// Stale prefix without a snapshot manifest — older than CleanupIncompleteUploads' minAge.
 	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/data.bin", []byte("partial"), nil))
 
 	be, metrics := newCleanupTestBackend(t, store, nil)

@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "The repository for the selected folder could not be found. Please ensure that the folder is provisioned correctly.",
         "repository-not-found-title": "Repository not found"
       },
+      "error-already-in-target-folder": "Selected resources are already in the target folder.",
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
       "move-total": "In total, this will affect:",
@@ -7322,6 +7323,7 @@
       "terraform": "Managed by: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
       "current-file-not-found": "Current dashboard file could not be found",
@@ -8153,6 +8155,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
+      "default-active": "This data source is currently set as the default.",
+      "default-error": "Failed to update default data source",
+      "default-label": "Default",
+      "default-make-button": "Make default",
+      "default-remove-button": "Remove default",
+      "default-tooltip": "The default data source is preselected in new panels.",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
@@ -14258,6 +14266,8 @@
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
+      "footer-select": "Select...",
+      "footer-select-label": "Select multiple items",
       "new-type": "New {{type}}",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
@@ -14968,10 +14978,13 @@
       "title": "Kickstart dashboards with suggestions and templates"
     },
     "nav": {
+      "counter": "Slide {{current}} of {{total}}",
       "go-to": "Go to slide {{number}}",
-      "next": "Next",
-      "prev": "Previous"
-    }
+      "label": "Slide navigation",
+      "next": "Next slide",
+      "prev": "Previous slide"
+    },
+    "slide-announcement": "Slide {{current}} of {{total}}: {{title}}"
   },
   "sql-expressions": {
     "explain-query": "Explain query",

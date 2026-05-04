@@ -24,6 +24,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -546,12 +547,121 @@ func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestBleveSnapshotLifecycleWithFileBucket(t *testing.T) {
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "default"})
+	bucketURL := fileBucketURL(t, t.TempDir())
+	key := newTestNsResource()
+
+	beA, metricsA := newConfiguredSnapshotBackend(t, bucketURL)
+	beAStopped := false
+	t.Cleanup(func() {
+		if !beAStopped {
+			beA.Stop()
+		}
+	})
+	idxA, err := beA.BuildIndex(ctx, key, 10, nil, "startup", func(index resource.ResourceIndex) (int64, error) {
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					RV:    1,
+					Name:  "dash-prod",
+					Title: "Production Overview",
+					Key: &resourcepb.ResourceKey{
+						Name:      "dash-prod",
+						Namespace: key.Namespace,
+						Group:     key.Group,
+						Resource:  key.Resource,
+					},
+				},
+			},
+			{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					RV:    2,
+					Name:  "dash-api",
+					Title: "API Latency",
+					Key: &resourcepb.ResourceKey{
+						Name:      "dash-api",
+						Namespace: key.Namespace,
+						Group:     key.Group,
+						Resource:  key.Resource,
+					},
+				},
+			},
+		}}))
+		return 2, nil
+	}, nil, false, time.Time{})
+	require.NoError(t, err)
+	require.NotNil(t, idxA)
+
+	beA.runUploadSnapshots(ctx)
+	assert.Equal(t, 1.0, testutil.ToFloat64(metricsA.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+
+	indexes, err := beA.opts.Snapshot.Store.ListIndexes(ctx, key)
+	require.NoError(t, err)
+	require.Len(t, indexes, 1)
+
+	beA.Stop()
+	beAStopped = true
+
+	beB, metricsB := newConfiguredSnapshotBackend(t, bucketURL)
+	t.Cleanup(beB.Stop)
+	var builderCalled atomic.Bool
+	idxB, err := beB.BuildIndex(ctx, key, 10, nil, "startup", func(resource.ResourceIndex) (int64, error) {
+		builderCalled.Store(true)
+		return 0, fmt.Errorf("builder should not be called when a remote snapshot is available")
+	}, nil, false, time.Time{})
+	require.NoError(t, err)
+	require.NotNil(t, idxB)
+
+	assert.False(t, builderCalled.Load())
+	assert.Equal(t, 1.0, testutil.ToFloat64(metricsB.IndexSnapshotDownloads.WithLabelValues(snapshotStatusSuccess)))
+
+	res, err := idxB.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}},
+		Query: "Production",
+		Limit: 100,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), res.TotalHits)
+	require.Equal(t, "dash-prod", res.Results.Rows[0].Key.Name)
+}
+
+func newConfiguredSnapshotBackend(t *testing.T, bucketURL string) (*bleveBackend, *resource.BleveIndexMetrics) {
+	t.Helper()
+	cfg := snapshotOptionsTestCfg(t)
+	cfg.EnableSearch = true
+	cfg.BuildVersion = "11.5.0"
+	cfg.IndexSnapshotEnabled = true
+	cfg.IndexSnapshotBucketURL = bucketURL
+
+	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
+	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil)
+	require.NoError(t, err)
+	be, ok := opts.Backend.(*bleveBackend)
+	require.True(t, ok)
+	be.opts.Snapshot.MinDocChanges = 1
+	return be, metrics
+}
+
 func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	bucket := memblob.OpenBucket(nil)
 	t.Cleanup(func() { _ = bucket.Close() })
 
-	store := NewBucketRemoteIndexStore(bucket, newFakeBackend(newConditionalBucket()), "test-owner", 5*time.Second, 500*time.Millisecond)
+	lockOpts := LockOptions{TTL: 5 * time.Second, HeartbeatInterval: 500 * time.Millisecond}
+	store := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket:      bucket,
+		LockBackend: newFakeBackend(newConditionalBucket()),
+		LockOwner:   "test-owner",
+		BuildLock:   lockOpts,
+		CleanupLock: lockOpts,
+	})
 	key := newTestNsResource()
 	meta := IndexMeta{
 		GrafanaBuildVersion:   "11.5.0",

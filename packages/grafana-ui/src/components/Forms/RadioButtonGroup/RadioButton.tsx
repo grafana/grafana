@@ -112,6 +112,10 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
         fontWeight: theme.typography.fontWeightMedium,
         background: theme.colors.action.selected,
         zIndex: 1,
+        // this ensures the selected radio button is shown when forced colors are active
+        '@media (forced-colors: active)': {
+          outline: '1px solid transparent',
+        },
       },
 
       '&:focus + label, &:focus-visible + label': getFocusStyles(theme),

@@ -6,6 +6,15 @@ import (
 	"errors"
 )
 
+// EmbeddingDim is the fixed width of the `embedding halfvec(N)` column. Models
+// that produce shorter vectors (e.g. Vertex gemini-embedding-001 at 768) are
+// zero-padded up to this width on upsert; longer vectors are rejected.
+//
+// Zero-padding is harmless under cosine: the trailing zeros contribute nothing
+// to dot products or to the L2 norm, so similarity computations are
+// equivalent to running them on the un-padded native vectors.
+const EmbeddingDim = 1024
+
 // VectorBackend is vector storage isolated per (namespace, model) so an HNSW
 // never mixes embeddings from different vector spaces.
 type VectorBackend interface {

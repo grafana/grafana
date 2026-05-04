@@ -965,4 +965,8 @@ const (
 	// FlagGrafanaMeticulousAIRecorder
 	// Enable Meticulous AI session recorder for automated UI test generation
 	FlagGrafanaMeticulousAIRecorder = "grafana.meticulousAIRecorder"
+
+	// FlagDatasourcesUseNewStackInfoToSettingsCache
+	// Use the new cache for datasource.StackInfoToSettings, backend flag
+	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
 )
