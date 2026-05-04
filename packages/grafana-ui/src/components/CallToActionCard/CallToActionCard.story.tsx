@@ -1,6 +1,6 @@
-import { action } from 'storybook/actions';
 import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 import type { JSX } from 'react';
+import { action } from 'storybook/actions';
 
 import { Button } from '../Button/Button';
 

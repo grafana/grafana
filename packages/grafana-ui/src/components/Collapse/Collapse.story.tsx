@@ -1,6 +1,6 @@
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import { action } from 'storybook/actions';
 import { useArgs } from 'storybook/preview-api';
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';

@@ -1,8 +1,8 @@
-import { action } from 'storybook/actions';
 import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import { useState } from 'react';
 import * as React from 'react';
 import { type AsyncState } from 'react-use/lib/useAsync';
+import { action } from 'storybook/actions';
 
 import { type SelectableValue } from '@grafana/data';
 

@@ -1,6 +1,6 @@
-import { action } from 'storybook/actions';
 import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 import { useState } from 'react';
+import { action } from 'storybook/actions';
 
 import { dateTime, type DateTime } from '@grafana/data';
 

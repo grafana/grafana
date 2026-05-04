@@ -1,5 +1,5 @@
-import { action } from 'storybook/actions';
 import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { action } from 'storybook/actions';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Button } from '../Button/Button';

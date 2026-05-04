@@ -1,5 +1,5 @@
-import { action } from 'storybook/actions';
 import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { action } from 'storybook/actions';
 
 import { TagList } from './TagList';
 import mdx from './TagList.mdx';

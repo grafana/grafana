@@ -1,7 +1,7 @@
-import { action } from 'storybook/actions';
-import { useArgs } from 'storybook/preview-api';
 import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import { useId } from 'react';
+import { action } from 'storybook/actions';
+import { useArgs } from 'storybook/preview-api';
 
 import { dateTime } from '@grafana/data';
 

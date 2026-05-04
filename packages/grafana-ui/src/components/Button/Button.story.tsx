@@ -1,5 +1,5 @@
-import { action } from 'storybook/actions';
 import { type StoryFn } from '@storybook/react-webpack5';
+import { action } from 'storybook/actions';
 
 import { type ComponentSize } from '../../types/size';
 import { Card } from '../Card/Card';

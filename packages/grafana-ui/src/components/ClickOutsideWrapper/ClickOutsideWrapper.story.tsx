@@ -1,5 +1,5 @@
-import { action } from 'storybook/actions';
 import { type Meta } from '@storybook/react-webpack5';
+import { action } from 'storybook/actions';
 
 import { ClickOutsideWrapper } from './ClickOutsideWrapper';
 import mdx from './ClickOutsideWrapper.mdx';

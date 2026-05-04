@@ -1,6 +1,6 @@
-import { action } from 'storybook/actions';
 import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import { memo, useState } from 'react';
+import { action } from 'storybook/actions';
 
 import { Field } from '../Forms/Field';
 
