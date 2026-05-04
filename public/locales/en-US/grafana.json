@@ -9127,6 +9127,23 @@
       "label-input": "Input"
     }
   },
+  "feature-control": {
+    "button": {
+      "aria-label": "Feature control",
+      "close-tooltip": "Close feature control",
+      "open-tooltip": "Open feature control"
+    },
+    "delete-flag": "Delete",
+    "description": "Override frontend feature flags locally for testing and development purposes.",
+    "dismiss": "Dismiss feature control",
+    "dismiss-tooltip": "Removes the feature control UI and toolbar button. Use <1>{{ param }}</1> in the URL to enable it again. Any overrides defined will remain active.",
+    "flag-key": "Flag key",
+    "flag-key-placeholder": "my-component.my-flag",
+    "flag-value": "Flag value",
+    "new-flag": "new-flag-override",
+    "save-flag": "Save",
+    "title": "Feature control"
+  },
   "folder-filter": {
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
