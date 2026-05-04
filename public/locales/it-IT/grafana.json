@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Modifica YAML",
         "save": "Salva"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Elimina tutte le regole"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Elimina",
       "delete-modal-delete-button": "Elimina",
@@ -1573,8 +1575,14 @@
         "update-error": "Impossibile aggiornare il gruppo di regole",
         "update-success": "Gruppo di regole aggiornato correttamente"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Il gruppo selezionato non può essere modificato",
       "group-not-editable-description": "Questo gruppo appartiene a un'origine dati che non supporta la modifica.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Modifica gruppo di regole",
       "rule-group-error": "Errore durante il caricamento del gruppo di regole"
     },
@@ -3589,9 +3597,9 @@
         "declare-incident": "Dichiara incidente",
         "declare-incident-no-permission": "Non disponi dell'autorizzazione per accedere a Incidente",
         "instance-details": "Dettagli dell'istanza",
+        "section-silence": "",
         "silence-button": "Silenzia",
-        "silence-no-permission": "Non disponi dell'autorizzazione necessaria per creare silenzi",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Non disponi dell'autorizzazione necessaria per creare silenzi"
       },
       "labels-column-title": "Etichette",
       "no-firing-or-pending-instances": "Non sono presenti istanze di avviso in stato di attivazione o in sospeso per l'intervallo di tempo selezionato.",
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "In ordine alfabetico (A-Z)",
         "alphabetically-za": "In ordine alfabetico (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Elementi eliminati (prima il più recente)",
         "deleted-oldest": "Elementi eliminati (prima il meno recente)"
       }
@@ -5636,6 +5646,7 @@
         "panels": "Pannelli",
         "row": "Riga",
         "rows": "Righe",
+        "section-filters-set": "",
         "tab": "Scheda",
         "tabs": "Schede",
         "variable": "{{type}} variabile",
@@ -6453,7 +6464,6 @@
         "save-library-panel": "Salva pannello della libreria",
         "share": {
           "arrow": "Condividi",
-          "title": "Condividi",
           "tooltip": "Copia link"
         },
         "unlink-library-panel": "Scollega pannello della libreria"
@@ -6488,6 +6498,7 @@
     },
     "transformation-editor": {
       "input-data": "Dati di input",
+      "loading": "",
       "output-data": "Dati di uscita",
       "title-debug-transformation": "Esegui il debug della trasformazione"
     },
@@ -8133,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aggiungi a Preferiti",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Esplora i dati",
       "open-in-explore": "Apri nella visualizzazione Esplora",
       "remove-favorite": "Rimuovi da Preferiti"
@@ -8269,6 +8286,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Cerca"
     },
     "resource-dimension-editor": {
@@ -8655,6 +8673,7 @@
         "copy-link": "Copia il link alla riga del registro",
         "copy-to-clipboard": "Copia negli appunti",
         "inspect-value": "Ispeziona valore",
+        "show-details": "",
         "view-log-line": "Visualizza riga di registro"
       }
     },
@@ -10119,6 +10138,12 @@
     "cascader": {
       "clear-button": "Cancella selezione"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valore RGBA"
     },
@@ -10464,6 +10489,7 @@
     "sidebar": {
       "close": "Chiudi",
       "dock": "Aggancia",
+      "go-back": "",
       "hide": "Nascondi",
       "show": "Mostra",
       "undock": "Sgancia"
@@ -11220,6 +11246,7 @@
       "label-numbers": "Numeri",
       "label-signature": "Firma"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Sperimentale. Mostra un componente per gestire i campi visualizzati nei registri.",
     "description-enable-infinite-scrolling": "Sperimentale. Richiedi più risultati scorrendo fino alla fine dell'elenco dei registri.",
     "description-enable-logs-highlighting": "Utilizza uno schema di colorazione predefinito per evidenziare le parti rilevanti delle righe del registro.",
@@ -11329,6 +11356,8 @@
       "fields-section": "Campi",
       "hide-log-line": "Nascondi riga registro",
       "inline-mode": "Visualizza in linea",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Collega il valore",
       "links-section": "Collegamenti",
       "log-attributes-field": "Attributi del registro",
@@ -11515,6 +11544,7 @@
         "common-labels": "Etichette comuni:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Etichette comuni",
     "name-deduplication": "Deduplicazione",
     "name-details-mode": "Modalità pannello dettagli registro",
@@ -11577,13 +11607,13 @@
   "logstable": {
     "category-table": "Tabella dei registri",
     "description-show-controls": "Visualizza i controlli della tabella",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Abilita/disabilita il pulsante di collegamento alla riga registro nella prima colonna di ogni riga",
       "name": "Mostra il pulsante collegamento al registro delle copie"
-    },
-    "show-inspect-button": {
-      "description": "Abilita/disabilita il pulsante di ispezione della riga registro nella prima colonna di ogni riga",
-      "name": "Mostra pulsante di ispezione"
     }
   },
   "manage-dashbaords": {
@@ -11903,8 +11933,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Tutti",
-      "title-filtered": "Tutti (filtrati)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Cancella tutto"
@@ -13147,6 +13179,7 @@
       "token-user-description": "Il nome utente che verrà utilizzato per accedere al repository con il token API",
       "token-user-required": "Il nome utente è obbligatorio",
       "url-description": "L'URL del repository Bitbucket",
+      "url-pattern": "",
       "url-required": "L'URL del repository è obbligatorio"
     },
     "bootstrap-step": {
@@ -13560,6 +13593,7 @@
       "contact-admin": "Contatta l'amministratore di Grafana per convertire questa risorsa in locale o per eliminare tutte le risorse dal repository mancante.",
       "convert-to-local-button": "Converti in risorsa locale",
       "delete-button": "Elimina",
+      "go-to-dashboards": "",
       "job-error": "Si è verificato un errore durante l'elaborazione delle risorse non gestite",
       "job-success": "Risorse non gestite elaborate correttamente",
       "job-warning": "Alcune risorse sono state elaborate con avvisi. Rivedi i risultati.",
@@ -13806,7 +13840,8 @@
       "make-sure": "Crea un token con queste autorizzazioni"
     },
     "validation": {
-      "hidden-characters": "Questo campo contiene caratteri nascosti che potrebbero essere stati introdotti durante l'operazione di copia e incolla. Digita nuovamente il valore oppure cancellalo e riprova."
+      "hidden-characters": "Questo campo contiene caratteri nascosti che potrebbero essere stati introdotti durante l'operazione di copia e incolla. Digita nuovamente il valore oppure cancellalo e riprova.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Attenzione",
     "watch-stream": {
@@ -14100,7 +14135,6 @@
       "hide": "Nascondi {{type}}",
       "hide-help": "Nascondi la guida dell'origine dei dati",
       "hide-transformation-help": "Nascondi guida alla trasformazione",
-      "inspector": "Ispettore query",
       "more-actions": "Altre {{type}} azioni",
       "remove": "Rimuovi {{type}}",
       "remove-transformation-filter": "Rimuovi filtro",
@@ -14112,6 +14146,27 @@
     "alerts": {
       "no-alerts": "Nessuna regola di avviso per questo pannello",
       "no-alerts-description": "Crea una regola di avviso per ricevere una notifica quando i tuoi dati soddisfano determinate condizioni."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Vuoi davvero eliminare questa query?",
@@ -14149,6 +14204,7 @@
     },
     "footer": {
       "edit-option": "Modifica {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervallo",
         "max-data-points": "Punti dati massimi",
@@ -14159,6 +14215,7 @@
       "placeholder": {
         "no-limit": "Nessun limite"
       },
+      "query-inspector": "",
       "query-options": "Opzioni della query"
     },
     "header": {
@@ -14192,6 +14249,8 @@
       "alerts-loading": "Avvisi",
       "card-click": "Seleziona scheda {{id}}",
       "data": "Dati",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nuovo {{type}}",
       "queries-expressions": "Query ed espressioni",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
@@ -14245,6 +14304,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Ripristina"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Non hai eliminato nessun dashboard di recente.",
@@ -14407,6 +14470,10 @@
     },
     "results-table": {
       "datasource-header": "Sorgente dati",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "<1 min",
       "deleted-remaining-header": "Tempo rimanente",
       "location-header": "Posizione",
@@ -14761,6 +14828,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Pannello di controllo principale",
       "home-dashboard-placeholder": "Dashboard predefinito",
@@ -14896,10 +14967,13 @@
       "title": "Crea rapidamente dashboard grazie a suggerimenti e modelli"
     },
     "nav": {
+      "counter": "",
       "go-to": "Vai alla diapositiva {{number}}",
-      "next": "Avanti",
-      "prev": "Precedente"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Spiega query",
@@ -15930,6 +16004,7 @@
           "group-by": "Raggruppa per"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorato",
       "placeholder-select-stats": "Seleziona statistiche"
     },
@@ -15941,6 +16016,16 @@
         "group-by": "Raggruppa per"
       },
       "title-calc-alert": "I calcoli non avranno alcun effetto se non sono presenti campi da raggruppare"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
@@ -15964,6 +16049,9 @@
       "name": {
         "grouping-to-matrix": "Raggruppamento in matrice"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": ""
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16299,6 +16387,9 @@
       "label-time-field": "Campo dell'ora",
       "tooltip-statistic-should-calculated-series": "La statistica che dovrebbe essere calcolata per questa serie temporale.",
       "tooltip-time-field": "Il campo temporale che verrà utilizzato per la serie temporale. Se non selezionato, verrà utilizzato il primo trovato."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nome del primo campo",

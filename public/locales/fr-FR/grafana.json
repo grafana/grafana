@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Modifier le fichier YAML",
         "save": "Enregistrer"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nom",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Supprimer toutes les règles"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Supprimer",
       "delete-modal-delete-button": "Supprimer",
@@ -1573,8 +1575,14 @@
         "update-error": "Échec de la mise à jour du groupe de règles",
         "update-success": "Le groupe de règles a bien été mis à jour"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Le groupe sélectionné ne peut pas être modifié",
       "group-not-editable-description": "Ce groupe appartient à une source de données qui ne prend pas en charge la modification.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Modifier le groupe de règles",
       "rule-group-error": "Erreur lors du chargement du groupe de règles"
     },
@@ -3589,9 +3597,9 @@
         "declare-incident": "Déclarer un incident",
         "declare-incident-no-permission": "Vous n’avez pas l’autorisation d’accéder à l’incident",
         "instance-details": "Détails de l’instance",
+        "section-silence": "",
         "silence-button": "Mise en sourdine",
-        "silence-no-permission": "Vous n’avez pas l’autorisation de créer des mises en sourdine",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Vous n’avez pas l’autorisation de créer des mises en sourdine"
       },
       "labels-column-title": "Étiquettes",
       "no-firing-or-pending-instances": "Vous n’avez aucune instance d’alerte déclenchée ou en attente pour la plage temporelle sélectionnée.",
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "Par ordre alphabétique (A-Z)",
         "alphabetically-za": "Par ordre alphabétique (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Supprimés (du plus récent au plus ancien)",
         "deleted-oldest": "Supprimés (du plus ancien au plus récent)"
       }
@@ -5636,6 +5646,7 @@
         "panels": "Panneaux",
         "row": "Ligne",
         "rows": "Lignes",
+        "section-filters-set": "",
         "tab": "Onglet",
         "tabs": "Onglets",
         "variable": "Variable {{type}}",
@@ -6453,7 +6464,6 @@
         "save-library-panel": "Enregistrer le panneau de la bibliothèque",
         "share": {
           "arrow": "Partager",
-          "title": "Partager",
           "tooltip": "Copier le lien"
         },
         "unlink-library-panel": "Dissocier le panneau Bibliothèque"
@@ -6488,6 +6498,7 @@
     },
     "transformation-editor": {
       "input-data": "Données d’entrée",
+      "loading": "",
       "output-data": "Données sortantes",
       "title-debug-transformation": "Déboguer la transformation"
     },
@@ -8133,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Ajouter aux favoris",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Explorer les données",
       "open-in-explore": "Ouvrir dans l’Explorateur",
       "remove-favorite": "Retirer des favoris"
@@ -8269,6 +8286,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Rechercher"
     },
     "resource-dimension-editor": {
@@ -8655,6 +8673,7 @@
         "copy-link": "Copier le lien vers la ligne de journal",
         "copy-to-clipboard": "Copier dans le presse-papier",
         "inspect-value": "Inspecter la valeur",
+        "show-details": "",
         "view-log-line": "Afficher la ligne de journal"
       }
     },
@@ -10119,6 +10138,12 @@
     "cascader": {
       "clear-button": "Effacer la sélection"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valeur RVBA"
     },
@@ -10464,6 +10489,7 @@
     "sidebar": {
       "close": "Fermer",
       "dock": "Ancrer",
+      "go-back": "",
       "hide": "Masquer",
       "show": "Afficher",
       "undock": "Désancrer"
@@ -11220,6 +11246,7 @@
       "label-numbers": "Nombres",
       "label-signature": "Signature"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "En phase de test. Afficher un composant permettant de gérer les champs affichés à partir des journaux.",
     "description-enable-infinite-scrolling": "Expérimental. Obtenez plus de résultats en faisant défiler jusqu’en bas de la liste des logs.",
     "description-enable-logs-highlighting": "Utiliser un code couleurs prédéfini pour mettre en évidence les parties pertinentes des lignes de journal.",
@@ -11329,6 +11356,8 @@
       "fields-section": "Champs",
       "hide-log-line": "Masquer cette ligne de log",
       "inline-mode": "Afficher en ligne",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Valeur du lien",
       "links-section": "Liens",
       "log-attributes-field": "Attributs du journal",
@@ -11515,6 +11544,7 @@
         "common-labels": "Étiquettes communes :"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Étiquettes communes",
     "name-deduplication": "Déduplication",
     "name-details-mode": "Mode du panneau de détails des journaux",
@@ -11577,13 +11607,13 @@
   "logstable": {
     "category-table": "Tableau des journaux",
     "description-show-controls": "Afficher les commandes du tableau",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Active ou désactive le bouton de lien vers la ligne de journal dans la première colonne de chaque ligne",
       "name": "Afficher le bouton de lien pour copier le journal"
-    },
-    "show-inspect-button": {
-      "description": "Active ou désactive le bouton d’inspection de la ligne de journal dans la première colonne de chaque ligne",
-      "name": "Afficher le bouton d’inspection"
     }
   },
   "manage-dashbaords": {
@@ -11903,8 +11933,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Tout",
-      "title-filtered": "Tout (filtré)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Tout effacer"
@@ -13147,6 +13179,7 @@
       "token-user-description": "Le nom d’utilisateur qui sera utilisé pour accéder au référentiel avec le jeton d’API",
       "token-user-required": "Le nom d’utilisateur est requis",
       "url-description": "L’URL du dépôt Bitbucket",
+      "url-pattern": "",
       "url-required": "L’URL du dépôt est requise"
     },
     "bootstrap-step": {
@@ -13560,6 +13593,7 @@
       "contact-admin": "Contactez votre administrateur Grafana pour convertir cette ressource en ressource locale ou pour supprimer toutes les ressources du référentiel manquant.",
       "convert-to-local-button": "Convertir en local",
       "delete-button": "Supprimer",
+      "go-to-dashboards": "",
       "job-error": "Une erreur s’est produite lors du traitement des ressources orphelines",
       "job-success": "Ressources orphelines traitées avec succès",
       "job-warning": "Certaines ressources ont été traitées avec des avertissements. Veuillez examiner les résultats.",
@@ -13806,7 +13840,8 @@
       "make-sure": "Créer un jeton avec ces autorisations"
     },
     "validation": {
-      "hidden-characters": "Ce champ contient des caractères cachés qui ont peut-être été introduits par copier-coller. Veuillez ressaisir ou nettoyer la valeur, puis réessayer."
+      "hidden-characters": "Ce champ contient des caractères cachés qui ont peut-être été introduits par copier-coller. Veuillez ressaisir ou nettoyer la valeur, puis réessayer.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Avertissement",
     "watch-stream": {
@@ -14100,7 +14135,6 @@
       "hide": "Masquer {{type}}",
       "hide-help": "Masquer l’aide sur la source de données",
       "hide-transformation-help": "Masquer l’aide sur la transformation",
-      "inspector": "Inspecteur de requêtes",
       "more-actions": "Plus d’actions {{type}}",
       "remove": "Supprimer {{type}}",
       "remove-transformation-filter": "Supprimer le filtre",
@@ -14112,6 +14146,27 @@
     "alerts": {
       "no-alerts": "Aucune règle d’alerte pour ce panneau",
       "no-alerts-description": "Créez une règle d’alerte pour recevoir une notification lorsque vos données remplissent certaines conditions."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Voulez-vous vraiment supprimer cette requête ?",
@@ -14149,6 +14204,7 @@
     },
     "footer": {
       "edit-option": "Modifier {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalle",
         "max-data-points": "Points de données max.",
@@ -14159,6 +14215,7 @@
       "placeholder": {
         "no-limit": "Aucune limite"
       },
+      "query-inspector": "",
       "query-options": "Options de requête"
     },
     "header": {
@@ -14192,6 +14249,8 @@
       "alerts-loading": "Alertes",
       "card-click": "Sélectionner la carte {{id}}",
       "data": "Données",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nouveau {{type}}",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
@@ -14245,6 +14304,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Restaurer"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Vous n'avez pas supprimé de tableau de bord récemment.",
@@ -14407,6 +14470,10 @@
     },
     "results-table": {
       "datasource-header": "Source de données",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Temps restant",
       "location-header": "Emplacement",
@@ -14761,6 +14828,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Tableau de bord d'accueil",
       "home-dashboard-placeholder": "Tableau de bord par défaut",
@@ -14896,10 +14967,13 @@
       "title": "Créez rapidement des tableaux de bord à l’aide de suggestions et de modèles"
     },
     "nav": {
+      "counter": "",
       "go-to": "Accéder à la diapositive {{number}}",
-      "next": "Suivant",
-      "prev": "Précédent"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Expliquer la requête",
@@ -15930,6 +16004,7 @@
           "group-by": "Regrouper par"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignoré",
       "placeholder-select-stats": "Sélectionner les statistiques"
     },
@@ -15941,6 +16016,16 @@
         "group-by": "Regrouper par"
       },
       "title-calc-alert": "Les calculs n’auront aucun effet si aucun champ n’est groupé"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
@@ -15964,6 +16049,9 @@
       "name": {
         "grouping-to-matrix": "Regrouper en matrice"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": ""
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16299,6 +16387,9 @@
       "label-time-field": "Champ horaire",
       "tooltip-statistic-should-calculated-series": "La statistique qui doit être calculée pour cette série chronologique.",
       "tooltip-time-field": "Le champ temporel qui sera utilisé pour la série chronologique. S’il n’est pas sélectionné, le premier trouvé sera utilisé."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nom du premier champ",

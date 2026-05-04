@@ -7,7 +7,7 @@ import { type PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginDisabledBadge } from '../components/Badges/PluginDisabledBadge';
 import { PluginDetailsHeaderDependencies } from '../components/PluginDetailsHeaderDependencies';
 import { PluginDetailsHeaderSignature } from '../components/PluginDetailsHeaderSignature';
-import { getLatestCompatibleVersion } from '../helpers';
+import { formatGrafanaDependency, getLatestCompatibleVersion } from '../helpers';
 import { type CatalogPlugin } from '../types';
 
 export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
@@ -79,10 +79,11 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   }
 
   const pluginDependencies = plugin.details?.pluginDependencies;
-  let grafanaDependency = plugin.details?.grafanaDependency;
+  let rawGrafanaDependency = plugin.details?.grafanaDependency;
   if (useLatestCompatibleInfo && latestCompatibleVersion?.grafanaDependency) {
-    grafanaDependency = latestCompatibleVersion?.grafanaDependency;
+    rawGrafanaDependency = latestCompatibleVersion?.grafanaDependency;
   }
+  const grafanaDependency = rawGrafanaDependency ? formatGrafanaDependency(rawGrafanaDependency) : undefined;
   const hasNoDependencyInfo = !grafanaDependency && (!pluginDependencies || !pluginDependencies.length);
 
   if (!hasNoDependencyInfo) {

@@ -20,7 +20,7 @@ func NewDualWriter(
 ) (grafanarest.Storage, error) {
 	key := gr.String()
 	if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
-		builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
+		builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 	}
 
 	return dualWriteService.NewStorage(gr, legacy, storage)

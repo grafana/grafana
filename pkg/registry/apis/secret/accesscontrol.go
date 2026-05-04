@@ -27,7 +27,8 @@ var (
 	ScopeAllKeepers      = ScopeProviderSecretKeepers.GetResourceAllScope()
 )
 
-func registerAccessControlRoles(service accesscontrol.Service) error {
+// FixedRoleRegistrations returns the secret manager role registrations.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	// SecureValues
 	// These are broken down into more granular fixed roles on purpose.
 	// For inline Secure Values, we want to allow creation and deletion by Editors because there's no API to read/update.
@@ -141,12 +142,16 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	return service.DeclareFixedRoles(
+	return []accesscontrol.RoleRegistration{
 		secureValuesCreator,
 		secureValuesReader,
 		secureValuesUpdater,
 		secureValuesDeleter,
 		keepersReader,
 		keepersWriter,
-	)
+	}
+}
+
+func registerAccessControlRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }
