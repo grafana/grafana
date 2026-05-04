@@ -71,15 +71,8 @@ func DataSourceMetricsMiddleware() sdkhttpclient.Middleware {
 			return next
 		}
 
-		datasourceName, exists := opts.Labels["datasource_name"]
+		datasourceUID, exists := opts.Labels["datasource_uid"]
 		if !exists {
-			return next
-		}
-
-		datasourceLabelName, err := metricutil.SanitizeLabelName(datasourceName)
-		// if the datasource named cannot be turned into a prometheus
-		// label we will skip instrumenting these metrics.
-		if err != nil {
 			return next
 		}
 
@@ -95,7 +88,7 @@ func DataSourceMetricsMiddleware() sdkhttpclient.Middleware {
 		}
 
 		labels := prometheus.Labels{
-			"datasource":                    datasourceLabelName,
+			"datasource":                    datasourceUID,
 			"datasource_type":               datasourceLabelType,
 			"secure_socks_ds_proxy_enabled": strconv.FormatBool(opts.ProxyOptions != nil && opts.ProxyOptions.Enabled),
 		}
