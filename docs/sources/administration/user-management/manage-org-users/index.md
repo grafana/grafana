@@ -140,7 +140,7 @@ To copy an invitation link and send it directly to a user, click Copy Invite. Yo
 
 You can remove a user from an organization when they no longer require access to the dashboard or data sources owned by the organization. No longer requiring access to an organization might occur when the user has left your company or has internally moved to another organization.
 
-This action does not remove the user account from the Grafana server.
+If the user belongs to multiple organizations, this action only removes them from the current organization. However, if the user does not belong to any other organization after removal and is not a Grafana Server Admin, the user account is permanently deleted from the Grafana instance.
 
 ### Before you begin
 

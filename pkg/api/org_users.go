@@ -447,7 +447,11 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 
 // swagger:route DELETE /org/users/{user_id} org removeOrgUserForCurrentOrg
 //
-// Delete user in current organization.
+// Remove user from current organization.
+//
+// Removes the user from the current organization. If the user does not belong
+// to any other organization after removal and is not a Grafana Server Admin,
+// the user account will be permanently deleted from the Grafana instance.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `org.users:remove` with scope `users:*`.
@@ -473,7 +477,11 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *contextmodel.ReqContext) res
 
 // swagger:route DELETE /orgs/{org_id}/users/{user_id} orgs removeOrgUser
 //
-// Delete user in current organization.
+// Remove user from organization.
+//
+// Removes the user from the specified organization. Unlike the current-org
+// endpoint (DELETE /org/users/{user_id}), this does not delete orphaned
+// user accounts.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `org.users:remove` with scope `users:*`.
