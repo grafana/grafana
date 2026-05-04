@@ -387,6 +387,7 @@ export {
   dateTime,
   dateTimeAsMoment,
   dateTimeForTimeZone,
+  guessBrowserTimeZone,
   getWeekdayIndex,
   getWeekdayIndexByEnglishName,
   setWeekStart,

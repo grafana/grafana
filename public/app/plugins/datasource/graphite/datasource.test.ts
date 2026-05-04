@@ -1,5 +1,4 @@
 import { isArray } from 'lodash';
-import moment from 'moment';
 import { type Observable, of } from 'rxjs';
 
 import {
@@ -10,6 +9,7 @@ import {
   type DataQueryResponse,
   dateMath,
   dateTime,
+  dateTimeAsMoment,
   FieldType,
   getFrameDisplayName,
   type MetricFindValue,
@@ -1763,7 +1763,7 @@ describe('graphiteDatasource', () => {
   describe('translateTime', () => {
     it('does not mutate passed in date', async () => {
       const date = new Date('2025-06-30T00:00:59.000Z');
-      const functionDate = moment(date);
+      const functionDate = dateTimeAsMoment(date);
       const updatedDate = ctx.ds.translateTime(
         dateMath.toDateTime(functionDate.toDate(), { roundUp: undefined, timezone: undefined })!,
         true

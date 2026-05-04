@@ -235,7 +235,8 @@ export function roundToFiscal(fyStartMonth: number, dateTime: DateTime, unit: st
       if (roundUp) {
         roundToFiscal(fyStartMonth, dateTime, unit, false)?.add(11, 'M').endOf('M');
       } else {
-        dateTime.subtract((dateTimeAsMoment(dateTime).month() - fyStartMonth + 12) % 12, 'M').startOf('M');
+        const month = Number(dateTimeAsMoment(dateTime).month());
+        dateTime.subtract((month - fyStartMonth + 12) % 12, 'M').startOf('M');
       }
       return dateTime;
     case 'Q':
@@ -243,7 +244,8 @@ export function roundToFiscal(fyStartMonth: number, dateTime: DateTime, unit: st
         roundToFiscal(fyStartMonth, dateTime, unit, false)?.add(2, 'M').endOf('M');
       } else {
         // why + 12? to ensure this number is always a positive offset from fyStartMonth
-        dateTime.subtract((dateTimeAsMoment(dateTime).month() - fyStartMonth + 12) % 3, 'M').startOf('M');
+        const month = Number(dateTimeAsMoment(dateTime).month());
+        dateTime.subtract((month - fyStartMonth + 12) % 3, 'M').startOf('M');
       }
       return dateTime;
     default:

@@ -3654,6 +3654,7 @@ __metadata:
     "@types/d3-interpolate": "npm:^3.0.0"
     "@types/history": "npm:4.7.11"
     "@types/lodash": "npm:4.17.20"
+    "@types/luxon": "npm:^3"
     "@types/node": "npm:24.10.1"
     "@types/papaparse": "npm:5.3.16"
     "@types/react": "npm:18.3.18"
@@ -3670,6 +3671,7 @@ __metadata:
     fast_array_intersect: "npm:1.1.0"
     history: "npm:4.10.1"
     lodash: "npm:^4.17.23"
+    luxon: "npm:^3.7.2"
     marked: "npm:16.3.0"
     marked-mangle: "npm:1.1.12"
     moment: "npm:2.30.1"
@@ -11822,6 +11824,13 @@ __metadata:
   version: 2.1.7
   resolution: "@types/lucene@npm:2.1.7"
   checksum: 10/38bf8521a071697612f3629839f5d55558ae40ebba1486300f35b862d1b403758a0c5e9a8370bc1baae11d1779e6b1dae28c82f528ec8064dcee33dca008c910
+  languageName: node
+  linkType: hard
+
+"@types/luxon@npm:^3":
+  version: 3.7.1
+  resolution: "@types/luxon@npm:3.7.1"
+  checksum: 10/c7bc164c278393ea0be938f986c74b4cddfab9013b1aff4495b016f771ded1d5b7b7b4825b2c7f0b8799edce19c5f531c28ff434ab3dedf994ac2d99a20fd4c4
   languageName: node
   linkType: hard
 
@@ -25063,6 +25072,13 @@ __metadata:
   version: 2.1.1
   resolution: "lucene@npm:2.1.1"
   checksum: 10/9e5b922bb4aa35a22534b186c924a498deaf153813c0c2ed2dd7a4a27806ec25feea2e0b3691f3ae7b39826522af3c411aa24645646e0175ac18f4537add289e
+  languageName: node
+  linkType: hard
+
+"luxon@npm:^3.7.2":
+  version: 3.7.2
+  resolution: "luxon@npm:3.7.2"
+  checksum: 10/b24cd205ed306ce7415991687897dcc4027921ae413c9116590bc33a95f93b86ce52cf74ba72b4f5c5ab1c10090517f54ac8edfb127c049e0bf55b90dc2260be
   languageName: node
   linkType: hard
 
