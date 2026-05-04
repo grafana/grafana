@@ -7,9 +7,9 @@ Exhaustive documentation on OpenFeature can be found at [OpenFeature.dev](https:
 ## Steps to adding a feature flag
 
 1. Define the feature flag in [registry.go](../pkg/services/featuremgmt/registry.go).
-   - New flags must by named with a component, seperated by a dot. e.g `grafana.newPreferencesPage`.
+   - New flags must be named with a component, separated by a dot. e.g `grafana.newPreferencesPage`.
    - Set the `Generate` field to control which clients are generated for your flag (see [Generation targets](#generation-targets) below).
-   - To see what each feature stage means, look at the [related comments](../pkg/services/featuremgmt/features.go).
+   - To see what each feature stage means, look at the [related comments](../pkg/services/featuremgmt/registry.go).
    - If you are a community member, use the [CODEOWNERS](../.github/CODEOWNERS) file to determine which team owns the package you are updating.
 
 2. Run `make gen-feature-toggles` to regenerate all derived files: the backend constants, the legacy frontend types, the OpenFeature React client, and docs.
@@ -159,9 +159,9 @@ If using non-boolean flags (a unique feature of the new feature flag system), ex
 
 For advanced, non-React contexts (utilities, class methods, callbacks), you can use the OpenFeature client directly.
 
-However, because this is seperate from the React render loop there are important caveats you must be aware of:
+However, because this is separate from the React render loop there are important caveats you must be aware of:
 
-- Flag values are loaded asynchronously, so you cannot call `getBooleanValue()` just at the top-level of a module. You must wait until `app.ts` has initialised until you call a flag otherwise you will only get the default value
+- Flag values are loaded asynchronously, so you cannot call `getBooleanValue()` just at the top-level of a module. You must wait until `app.ts` has initialized before you call a flag, otherwise you will only get the default value
 - Flag values can change over the lifetime of the session, so do not store or cache the result. Always evaluate flags just in time when you use them, preferably in the if statement, for example.
 
 It is strongly preferred to use the React hooks instead of getting the client.

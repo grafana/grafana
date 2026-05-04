@@ -4,7 +4,7 @@ Grafana Labs uses a minimal [homegrown solution](https://github.com/grafana/plug
 
 Important notes:
 
-- We generally store all element identifiers ([CSS selectors](https://mdn.io/docs/Web/CSS/CSS_Selectors)) within the framework for reuse and maintainability.
+- We generally store all element identifiers ([CSS selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)) within the framework for reuse and maintainability.
 - We generally do not use stubs or mocks as to fully simulate a real user.
 - We also use Playwright for the [plugins' end-to-end tests](#playwright-for-plugins).
 
@@ -240,7 +240,7 @@ test(
     await page.goto(selectors.pages.Datasources.url);
     // Select datasource
     const dataSource = 'B';
-    await page.getByTextId(dataSource).click();
+    await page.getByTestId(dataSource).click();
   }
 );
 ```
@@ -291,4 +291,4 @@ You can add Playwright end-to-end tests for plugins to the [`e2e-playwright/plug
 
 > ### Playwright tests in Grafana Enterprise
 >
-> We are currently working on make Playwright available for creating end-to-end tests in [grafana-enterprise](https://github.com/grafana/grafana-enterprise).
+> We are currently working on making Playwright available for creating end-to-end tests in [grafana-enterprise](https://github.com/grafana/grafana-enterprise).

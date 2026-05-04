@@ -1,6 +1,6 @@
 # Styling Grafana
 
-[Emotion](https://emotion.sh/docs/introduction) is Grafana's default-to-be approach to styling React components. It provides a way for styles to be a consequence of properties and state of a component.
+[Emotion](https://emotion.sh/docs/introduction) is Grafana's default approach to styling React components. It provides a way for styles to be a consequence of properties and state of a component.
 
 ## Usage
 
@@ -8,7 +8,7 @@ For styling components, use [Emotion's `css` function](https://emotion.sh/docs/@
 
 ### Basic styling
 
-To access the Emotion theme in your styles, use the `useStyles` hook. This hook provides basic memoization and access to the theme object.
+To access the Emotion theme in your styles, use the `useStyles2` hook. This hook provides basic memoization and access to the theme object.
 
 > **Note:** Please remember to put `getStyles` function at the end of the file!
 
@@ -71,7 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     active: css({
       background: theme.colors.primary.main,
-      text: theme.colors.primary.contrastText,
+      color: theme.colors.primary.contrastText,
     }),
     icon: css({
       fontSize: theme.typography.bodySmall.fontSize,

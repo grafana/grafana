@@ -16,7 +16,7 @@ We want the deprecation plan to be in the form of written communication for all 
 
 > Grafana employees can find more details in our internal docs.
 
-Additionally, the size of the feature requires different notice times between depreciation and disabling as well as disabling and removal. The actual duration will depend on releases of Grafana and the table below should be used as a guide.
+Additionally, the size of the feature requires different notice times between deprecation and disabling as well as disabling and removal. The actual duration will depend on releases of Grafana and the table below should be used as a guide.
 
 ## Grace period between announcement and disabling feature by default
 
