@@ -3095,7 +3095,7 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "alerting.v0ReceiversAsLegacy",
+			Name:        "alerting.disableV0ReceiverConversion",
 			Description: "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyGo: true},

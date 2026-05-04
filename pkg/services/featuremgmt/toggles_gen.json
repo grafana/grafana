@@ -131,6 +131,19 @@
     },
     {
       "metadata": {
+        "name": "alerting.disableV0ReceiverConversion",
+        "resourceVersion": "1777923303116",
+        "creationTimestamp": "2026-05-04T19:35:03Z"
+      },
+      "spec": {
+        "description": "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.rulesAPIV2",
         "resourceVersion": "1776193652999",
         "creationTimestamp": "2026-04-14T19:07:32Z"
@@ -147,7 +160,8 @@
       "metadata": {
         "name": "alerting.v0ReceiversAsLegacy",
         "resourceVersion": "1777570728236",
-        "creationTimestamp": "2026-04-30T17:38:48Z"
+        "creationTimestamp": "2026-04-30T17:38:48Z",
+        "deletionTimestamp": "2026-05-04T19:35:03Z"
       },
       "spec": {
         "description": "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
