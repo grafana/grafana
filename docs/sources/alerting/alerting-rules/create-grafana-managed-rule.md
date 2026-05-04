@@ -236,7 +236,9 @@ The **Default** option allows to configure one query and one alert condition. Th
 
 1. Add one or more [expressions](ref:expression-queries).
 
-   a. For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series.
+   a. For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, **Resample**, and **SQL** options to generate separate alert for each series.
+
+   **SQL** expressions are particularly useful when a data source returns non-numeric data that needs to be transformed into a numeric value for alerting.
 
    When using Prometheus, you can use an instant vector and built-in functions, so you don't need to add additional expressions.
 

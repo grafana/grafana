@@ -57,6 +57,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/table-data/
+  sql-expressions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/sql-expressions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/sql-expressions/
+  sql-expression-alerts-example:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/sql-expression-alerts/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/sql-expression-alerts/
 ---
 
 # Queries and conditions
@@ -139,6 +149,14 @@ You can also use a Math expression to define the **alert condition**. For exampl
 Realigns a time range to a new set of timestamps, this is useful when comparing time series data from different data sources where the timestamps would otherwise not align.
 
 For more details, refer to the [Resample documentation](ref:resample-operation).
+
+### SQL
+
+Transforms query results using MySQL-like SQL syntax. SQL expressions are useful when a data source returns non-numeric or multi-field data that can't be used directly as an alert condition. For example, some data sources — such as the GitHub data source — return fields like status strings or boolean values instead of numeric time series.
+
+With a SQL expression, you can extract specific fields, convert them to numeric values, and use the result as your alert condition. For more details, refer to [SQL expressions](ref:sql-expressions).
+
+For a practical walkthrough, refer to [Create alerts with SQL expressions](ref:sql-expression-alerts-example).
 
 ### Threshold
 

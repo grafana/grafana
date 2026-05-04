@@ -157,7 +157,9 @@ For the most up-to-date reference of all supported SQL functionality, refer to t
 
 ## Alerting and recording rules
 
-SQL expressions integrates alerting and recording rules, allowing you to define complex conditions and metrics using standard SQL queries. The system processes your query results and automatically creates alert instances or recorded metrics based on the returned data structure.
+SQL expressions integrate with alerting and recording rules, allowing you to define complex conditions and metrics using standard SQL queries. The system processes your query results and automatically creates alert instances or recorded metrics based on the returned data structure.
+
+SQL expressions are particularly useful for creating alerts on data sources that return non-numeric data — such as the GitHub data source — where the raw query result can't be used directly as an alert condition. For a step-by-step example, refer to [Create alerts with SQL expressions](/docs/grafana/latest/alerting/examples/sql-expression-alerts/).
 
 For SQL Expressions to work properly with alerting and recording rules, your query must return:
 
