@@ -114,7 +114,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   getInterpolatedDataSourceUID(): string | undefined {
     if (this.props.query.datasource) {
       const instanceSettings = this.dataSourceSrv.getInstanceSettings(this.props.query.datasource);
-      return instanceSettings?.rawRef?.uid ?? instanceSettings?.uid;
+      if (instanceSettings) {
+        return instanceSettings.rawRef?.uid ?? instanceSettings.uid;
+      }
     }
 
     return this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid;
