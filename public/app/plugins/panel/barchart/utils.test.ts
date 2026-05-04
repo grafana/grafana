@@ -4,6 +4,7 @@ import {
   createDataFrame,
   createTheme,
   type DataFrame,
+  type Field,
   FieldColorModeId,
   type FieldConfigSource,
   FieldType,
@@ -28,7 +29,7 @@ import type { BarsOptions } from './bars';
 import * as barsModule from './bars';
 import type { Options } from './panelcfg.gen';
 import { applyBarChartFieldDefaults } from './test-helpers';
-import { prepConfig, type PrepConfigOpts, prepSeries } from './utils';
+import { getFieldKeyLabel, prepConfig, type PrepConfigOpts, prepSeries } from './utils';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -968,3 +969,36 @@ function withGetConfigSpy(capture: (opts: BarsOptions) => void, testFn: () => vo
     jest.restoreAllMocks();
   }
 }
+
+describe('getFieldKeyLabel', () => {
+  const baseField: Field = {
+    name: 'orders.raw_customers_first_name',
+    type: FieldType.string,
+    config: {},
+    values: [],
+  };
+
+  it('should return displayNameFromDS when set', () => {
+    const field: Field = {
+      ...baseField,
+      config: { displayNameFromDS: 'Orders Raw Customers First Name' },
+    };
+    expect(getFieldKeyLabel(field)).toBe('Orders Raw Customers First Name');
+  });
+
+  it('should fall back to field name when displayNameFromDS is not set', () => {
+    const field: Field = {
+      ...baseField,
+      config: {},
+    };
+    expect(getFieldKeyLabel(field)).toBe('orders.raw_customers_first_name');
+  });
+
+  it('should not use config.displayName (panel-level overrides are not datasource keys)', () => {
+    const field: Field = {
+      ...baseField,
+      config: { displayName: 'Panel Override Name' },
+    };
+    expect(getFieldKeyLabel(field)).toBe('orders.raw_customers_first_name');
+  });
+});
