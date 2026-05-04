@@ -154,6 +154,11 @@ export interface FeatureToggles {
   */
   provisioningExport?: boolean;
   /**
+  * Render the README.md of a Git Sync provisioned folder inline below its dashboards list
+  * @default false
+  */
+  provisioningReadmes?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   * @default false
   */
