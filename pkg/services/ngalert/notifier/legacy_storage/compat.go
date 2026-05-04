@@ -151,7 +151,11 @@ func PostableMimirReceiverToPostableGrafanaReceiver(r *apimodels.PostableApiRece
 		},
 	}
 	result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, r.GrafanaManagedReceivers...)
-	for idx, config := range v0 {
+	typeCount := make(map[string]int)
+	for _, config := range v0 {
+		integrationType := string(config.Schema.Type())
+		idx := typeCount[integrationType]
+		typeCount[integrationType]++
 		integration, err := MimirIntegrationConfigToPostableGrafanaReceiver(config, r.Name, idx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Mimir integration config to PostableGrafanaReceiver: %w", err)
@@ -170,7 +174,7 @@ func MimirIntegrationConfigToPostableGrafanaReceiver(config alertingNotify.Mimir
 
 	return &definition.PostableGrafanaReceiver{
 		// mimirIntegrationUID generates a stable, fixed-length UID for a converted Mimir integration that passes ValidateUID, 40-char limit for long names in particular
-		UID:                   mimirIntegrationUID(receiverName, idx),
+		UID:                   mimirIntegrationUID(receiverName, string(config.Schema.Type()), idx),
 		Name:                  receiverName,
 		Type:                  string(config.Schema.Type()),
 		Version:               string(config.Schema.Version),
@@ -180,9 +184,9 @@ func MimirIntegrationConfigToPostableGrafanaReceiver(config alertingNotify.Mimir
 	}, nil
 }
 
-func mimirIntegrationUID(receiverName string, idx int) string {
+func mimirIntegrationUID(receiverName string, integrationType string, idx int) string {
 	h := fnv.New64a()
-	_, _ = fmt.Fprintf(h, "%s-%d", receiverName, idx)
+	_, _ = fmt.Fprintf(h, "%s-%s-%d", receiverName, integrationType, idx)
 	return fmt.Sprintf("%016x", h.Sum64())
 }
 

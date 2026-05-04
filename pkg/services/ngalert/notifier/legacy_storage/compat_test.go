@@ -63,7 +63,7 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		converted := result.GrafanaManagedReceivers[0]
 		assert.Equal(t, "test-receiver", result.Name)
 		assert.Equal(t, "test-receiver", converted.Name)
-		assert.Equal(t, mimirIntegrationUID("test-receiver", 0), converted.UID)
+		assert.Equal(t, mimirIntegrationUID("test-receiver", "webhook", 0), converted.UID)
 		assert.JSONEq(t, string(expectedJSON), string(converted.Settings))
 		assert.False(t, converted.DisableResolveMessage)
 		assert.Nil(t, converted.SecureSettings)
@@ -94,9 +94,8 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		assert.Equal(t, "webhook", result.GrafanaManagedReceivers[1].Type)
 	})
 
-	t.Run("assigns sequential UIDs to converted Mimir integrations", func(t *testing.T) {
-		// email field comes before webhook in the Receiver struct, so after conversion:
-		// index 0 = email, index 1 = webhook
+	t.Run("assigns per-type UIDs to converted Mimir integrations", func(t *testing.T) {
+		// UIDs are indexed per integration type, so each type starts at 0.
 		em := emailV0.GetFullValidConfig()
 		wh := webhookV0.GetFullValidConfig()
 		receiver := &definitions.PostableApiReceiver{
@@ -111,8 +110,8 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, result.GrafanaManagedReceivers, 2)
 
-		assert.Equal(t, mimirIntegrationUID("multi-receiver", 0), result.GrafanaManagedReceivers[0].UID)
-		assert.Equal(t, mimirIntegrationUID("multi-receiver", 1), result.GrafanaManagedReceivers[1].UID)
+		assert.Equal(t, mimirIntegrationUID("multi-receiver", "email", 0), result.GrafanaManagedReceivers[0].UID)
+		assert.Equal(t, mimirIntegrationUID("multi-receiver", "webhook", 0), result.GrafanaManagedReceivers[1].UID)
 	})
 }
 
