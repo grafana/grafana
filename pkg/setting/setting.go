@@ -272,12 +272,13 @@ type Cfg struct {
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
-	DashboardVersionsToKeep          int
-	MinRefreshInterval               string
-	DefaultHomeDashboardPath         string
-	DashboardPerformanceMetrics      []string
-	PanelSeriesLimit                 int
-	DashboardSchemaMigrationCacheTTL time.Duration
+	DashboardVersionsToKeep                     int
+	MinRefreshInterval                          string
+	DefaultHomeDashboardPath                    string
+	DashboardPerformanceMetrics                 []string
+	PanelSeriesLimit                            int
+	DashboardSchemaMigrationCacheTTL            time.Duration
+	KioskModeHideVariablesAndTimePicker         bool
 
 	// Auth
 	LoginCookieName               string
@@ -1477,6 +1478,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
+	cfg.KioskModeHideVariablesAndTimePicker = dashboards.Key("kiosk_mode_hide_variables_and_time_picker").MustBool(false)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err

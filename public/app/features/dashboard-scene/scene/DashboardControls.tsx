@@ -168,7 +168,22 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
 
-  if (!model.hasControls()) {
+  const { chrome } = useGrafana();
+  const { kioskMode } = chrome.useState();
+  // When kiosk mode is active and the ini option is enabled, suppress time/variable controls.
+  // This is computed from reactive state so it automatically reverts when ESC exits kiosk mode.
+  const kioskHidesControls =
+    kioskMode === KioskMode.Full && config.kioskModeHideVariablesAndTimePicker && !editPanel;
+
+  const effectiveHideTimeControls = hideTimeControls || kioskHidesControls;
+  const effectiveHideVariableControls = hideVariableControls || kioskHidesControls;
+
+  if (!model.hasControls() || kioskHidesControls) {
+    // In kiosk mode with the ini option set, render no visible controls and no padding bar.
+    if (kioskHidesControls) {
+      return <RenderHiddenVariables dashboard={dashboard} />;
+    }
+
     // If dynamic dashboards is enabled, we need to show the edit/share/playlist buttons
     // However we shouldn't do it if we're in edit panel view
     // `DashboardControlActions` already check for edit panel view but we need to prevent showing the container as well
@@ -201,7 +216,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
     >
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
-        {!hideTimeControls && (
+        {!effectiveHideTimeControls && (
           <div className={styles.fixedControls}>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
@@ -222,7 +237,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       {config.featureToggles.scopeFilters && !editPanel && (
         <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
       )}
-      {!hideVariableControls && (
+      {!effectiveHideVariableControls && (
         <>
           <VariableControls dashboard={dashboard} />
           <DashboardDataLayerControls dashboard={dashboard} />
@@ -232,7 +247,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
       <DefaultControlsLoadingSkeleton
         dashboard={dashboard}
-        hideVariableControls={hideVariableControls}
+        hideVariableControls={effectiveHideVariableControls}
         hideLinksControls={hideLinksControls}
       />
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
