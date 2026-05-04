@@ -48,6 +48,7 @@ const HEADER_HEIGHT = 36;
 const ROW_HEIGHT = 36;
 const DIVIDER_HEIGHT = 0; // Yes - make it appear as a border on the row rather than a row itself
 const README_ROW_INITIAL_HEIGHT = 320;
+const README_ROW_PADDING_TOP = 16; // matches theme.spacing(2)
 
 export function DashboardsTree({
   items,
@@ -172,7 +173,7 @@ export function DashboardsTree({
         return DIVIDER_HEIGHT;
       }
       if (row.item.kind === 'ui' && row.item.uiKind === 'readme') {
-        return readmeHeight;
+        return readmeHeight + README_ROW_PADDING_TOP;
       }
 
       return ROW_HEIGHT;
@@ -268,7 +269,7 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 
   if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'readme' && data.folderUID) {
     return (
-      <div key={key} {...rowProps}>
+      <div key={key} {...rowProps} className={styles.readmeRow}>
         <ReadmeRowContent folderUID={data.folderUID} onMeasured={data.onReadmeMeasured} />
       </div>
     );
@@ -333,6 +334,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderTop: `1px solid ${theme.colors.border.weak}`,
       width: '100%',
       margin: 0,
+    }),
+
+    readmeRow: css({
+      paddingTop: theme.spacing(2),
+      flexDirection: 'column',
     }),
 
     headerRow: css({
