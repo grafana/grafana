@@ -5,15 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
@@ -911,4 +916,214 @@ func TestExtractResourceNameFromMetricsURL(t *testing.T) {
 
 func strPtr(s string) *string {
 	return &s
+}
+
+// newSubscriptionTestServer returns an httptest.Server that responds to
+// subscription detail requests with a fixed display name, counting every
+// request received.
+func newSubscriptionTestServer(t *testing.T, displayName string) (*httptest.Server, *atomic.Int64) {
+	t.Helper()
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprintf(w, `{"displayName":%q}`, displayName)
+	}))
+	t.Cleanup(srv.Close)
+	return srv, &hits
+}
+
+func TestRetrieveSubscriptionDetails_CachesAcrossCalls(t *testing.T) {
+	srv, hits := newSubscriptionTestServer(t, "My Subscription")
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+	for i := 0; i < 5; i++ {
+		name, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+		require.NoError(t, err)
+		require.Equal(t, "My Subscription", name)
+	}
+	require.Equal(t, int64(1), hits.Load(), "subscription detail fetch should hit upstream once across repeated calls")
+}
+
+func TestRetrieveSubscriptionDetails_CoalescesConcurrentCalls(t *testing.T) {
+	// Block the server until all goroutines are in flight, to guarantee that
+	// they race through the cache miss and into the singleflight group
+	// simultaneously.
+	release := make(chan struct{})
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		<-release
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{"displayName":"My Subscription"}`)
+	}))
+	t.Cleanup(srv.Close)
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+
+	const goroutines = 32
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			name, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+			require.NoError(t, err)
+			require.Equal(t, "My Subscription", name)
+		}()
+	}
+
+	// Give the goroutines a moment to enqueue on the flight group, then
+	// release the server handler.
+	time.Sleep(50 * time.Millisecond)
+	close(release)
+	wg.Wait()
+
+	require.Equal(t, int64(1), hits.Load(), "concurrent callers should share a single upstream fetch")
+}
+
+func TestRetrieveSubscriptionDetails_KeysDisambiguate(t *testing.T) {
+	// Two different datasource IDs and two different subscription IDs against
+	// the same upstream server must each perform their own fetch; they must
+	// not collide in the cache.
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprintf(w, `{"displayName":"name-for-%s"}`, strings.TrimPrefix(r.URL.Path, "/subscriptions/"))
+	}))
+	t.Cleanup(srv.Close)
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+
+	// Same datasource, different subscriptions: two fetches.
+	name, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+	require.NoError(t, err)
+	require.Equal(t, "name-for-sub-a", name)
+
+	name, err = ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-b", srv.URL, 1, 1, nil)
+	require.NoError(t, err)
+	require.Equal(t, "name-for-sub-b", name)
+
+	// Different datasource, same subscription ID: third fetch (no cross-ds leak).
+	name, err = ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 2, 1, nil)
+	require.NoError(t, err)
+	require.Equal(t, "name-for-sub-a", name)
+
+	require.Equal(t, int64(3), hits.Load())
+}
+
+func TestRetrieveSubscriptionDetails_ExpiredEntryRefetches(t *testing.T) {
+	srv, hits := newSubscriptionTestServer(t, "My Subscription")
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+	cacheKey := subscriptionCacheKey(1, 1, srv.URL, "sub-a")
+
+	// Prime the cache.
+	_, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), hits.Load())
+
+	// Forcibly expire the entry.
+	ds.subscriptionCache.Store(cacheKey, subscriptionCacheEntry{
+		displayName: "My Subscription",
+		expiresAt:   time.Now().Add(-time.Second),
+	})
+
+	_, err = ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(2), hits.Load(), "expired entry should trigger a refetch")
+}
+
+func TestRetrieveSubscriptionDetails_DoesNotCacheErrors(t *testing.T) {
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(srv.Close)
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+
+	for i := 0; i < 3; i++ {
+		_, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+		require.Error(t, err)
+	}
+	require.Equal(t, int64(3), hits.Load(), "failed lookups should retry on the next call rather than caching the failure")
+}
+
+func ctxWithUserLogin(login string) context.Context {
+	return azusercontext.WithCurrentUser(context.Background(), azusercontext.CurrentUserContext{
+		User: &backend.User{Login: login},
+	})
+}
+
+func TestRetrieveSubscriptionDetails_UserScopedAuthDoesNotPersist(t *testing.T) {
+	// In user-scoped auth modes every call must re-validate against Azure,
+	// because a user who has lost access between refreshes should not
+	// continue to see a cached display name.
+	srv, hits := newSubscriptionTestServer(t, "My Subscription")
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+	creds := &azcredentials.AadCurrentUserCredentials{}
+	ctx := ctxWithUserLogin("alice")
+
+	for i := 0; i < 3; i++ {
+		_, err := ds.retrieveSubscriptionDetails(srv.Client(), ctx, "sub-a", srv.URL, 1, 1, creds)
+		require.NoError(t, err)
+	}
+	require.Equal(t, int64(3), hits.Load(), "user-scoped auth must not persist cache entries across calls")
+}
+
+func TestRetrieveSubscriptionDetails_UserScopedAuthCoalescesConcurrent(t *testing.T) {
+	// Even without persistent caching, singleflight must coalesce a burst of
+	// concurrent in-flight callers into a single upstream fetch. This keeps
+	// dashboard fan-out cheap while still re-validating on the next refresh.
+	release := make(chan struct{})
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		<-release
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"displayName":"My Subscription"}`)
+	}))
+	t.Cleanup(srv.Close)
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+	creds := &azcredentials.AadCurrentUserCredentials{}
+	ctx := ctxWithUserLogin("alice")
+
+	const goroutines = 32
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			_, err := ds.retrieveSubscriptionDetails(srv.Client(), ctx, "sub-a", srv.URL, 1, 1, creds)
+			require.NoError(t, err)
+		}()
+	}
+
+	time.Sleep(50 * time.Millisecond)
+	close(release)
+	wg.Wait()
+
+	require.Equal(t, int64(1), hits.Load(), "concurrent user-scoped callers should still share a single fetch via singleflight")
+}
+
+func TestRetrieveSubscriptionDetails_ServicePrincipalAuthSharesAcrossUsers(t *testing.T) {
+	// With service-principal credentials the datasource issues requests with
+	// a single identity, so user A and user B observing the same subscription
+	// must share a cache entry.
+	srv, hits := newSubscriptionTestServer(t, "My Subscription")
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+	creds := &azcredentials.AzureClientSecretCredentials{}
+
+	_, err := ds.retrieveSubscriptionDetails(srv.Client(), ctxWithUserLogin("alice"), "sub-a", srv.URL, 1, 1, creds)
+	require.NoError(t, err)
+	_, err = ds.retrieveSubscriptionDetails(srv.Client(), ctxWithUserLogin("bob"), "sub-a", srv.URL, 1, 1, creds)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), hits.Load(), "service-principal mode shares cache across users")
 }
