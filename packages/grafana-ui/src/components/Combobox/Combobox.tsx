@@ -290,6 +290,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     getInputProps,
     getMenuProps,
     getItemProps,
+    getToggleButtonProps,
 
     selectItem,
   } = useCombobox({
@@ -409,7 +410,14 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         />
       )}
 
-      <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
+      <span
+        className={styles.suffixIcon}
+        role="button"
+        aria-label={t('combobox.toggle.title', 'Toggle options')}
+        {...getToggleButtonProps({ disabled })}
+      >
+        <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
+      </span>
     </>
   );
 

@@ -178,7 +178,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       },
     });
 
-  const { isOpen, highlightedIndex, getMenuProps, getInputProps, getItemProps } = useCombobox({
+  const { isOpen, highlightedIndex, getMenuProps, getInputProps, getItemProps, getToggleButtonProps } = useCombobox({
     items: options,
     itemToString,
     inputId: id,
@@ -369,7 +369,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 }}
               />
             )}
-            <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
+            <span
+              className={styles.suffixIcon}
+              role="button"
+              aria-label={t('multicombobox.toggle.title', 'Toggle options')}
+              {...getToggleButtonProps({ disabled })}
+            >
+              <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
+            </span>
           </div>
         </span>
       </div>

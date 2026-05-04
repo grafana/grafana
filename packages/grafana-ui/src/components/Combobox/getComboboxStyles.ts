@@ -170,6 +170,13 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         cursor: 'text',
       },
     }),
+    suffixIcon: css({
+      label: 'combobox-suffix-icon',
+      pointerEvents: 'auto',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+    }),
     adaptToParent: css({
       label: 'combobox-adapt-to-parent',
       maxWidth: '100%',
