@@ -78,6 +78,14 @@ func (s *uploadTestStore) ListIndexes(context.Context, resource.NamespacedResour
 	panic("ListIndexes not implemented for uploadTestStore")
 }
 
+func (s *uploadTestStore) ListIndexKeys(context.Context, resource.NamespacedResource) ([]ulid.ULID, error) {
+	panic("ListIndexKeys not implemented for uploadTestStore")
+}
+
+func (s *uploadTestStore) GetIndexMeta(context.Context, resource.NamespacedResource, ulid.ULID) (*IndexMeta, error) {
+	panic("GetIndexMeta not implemented for uploadTestStore")
+}
+
 func (s *uploadTestStore) DeleteIndex(context.Context, resource.NamespacedResource, ulid.ULID) error {
 	panic("DeleteIndex not implemented for uploadTestStore")
 }
@@ -160,18 +168,58 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	store := &uploadTestStore{}
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store})
 	key := newTestNsResource()
+	beforeBuild := time.Now().Add(-time.Second).Truncate(time.Second)
 	idx := newUploadTestIndex(t, be, key, 42)
 
 	require.NoError(t, be.uploadSnapshot(context.Background(), key, idx))
 	assert.Equal(t, int32(1), store.uploadCalls.Load())
 	assert.Equal(t, int64(42), store.uploadMeta.LatestResourceVersion)
 	assert.Equal(t, be.opts.BuildVersion, store.uploadMeta.GrafanaBuildVersion)
+	// BuildStartTimestamp must be populated from the index's internal build
+	// info (set by newBleveIndex), not left zero. Compare with second-level
+	// granularity since buildInfo persists Unix seconds.
+	assert.False(t, store.uploadMeta.BuildStartTimestamp.IsZero(), "BuildStartTimestamp should be set")
+	assert.False(t, store.uploadMeta.BuildStartTimestamp.Before(beforeBuild),
+		"BuildStartTimestamp %s should be at or after %s", store.uploadMeta.BuildStartTimestamp, beforeBuild)
 	assert.NotEmpty(t, store.uploaded)
 
 	snapshotParent := filepath.Join(be.opts.Root, "snapshots", resourceSubPath(key))
 	entries, err := os.ReadDir(snapshotParent)
 	require.NoError(t, err)
 	assert.Empty(t, entries)
+}
+
+// TestUploadSnapshot_PreservesOriginalBuildStartTime verifies that periodic
+// re-uploads of a long-lived index re-emit the original build-start time
+// (carried in the bleve index's internal buildInfo), not the upload time.
+func TestUploadSnapshot_PreservesOriginalBuildStartTime(t *testing.T) {
+	store := &uploadTestStore{}
+	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store})
+	key := newTestNsResource()
+
+	resourceDir := be.getResourceDir(key)
+	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
+
+	originalBuildTime := time.Now().Add(-72 * time.Hour).Truncate(time.Second)
+	index, err := newBleveIndex(
+		filepath.Join(resourceDir, formatIndexName(time.Now())),
+		bleve.NewIndexMapping(),
+		originalBuildTime,
+		be.opts.BuildVersion,
+		nil,
+	)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = index.Close() })
+	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
+	require.NoError(t, setRV(index, 42))
+
+	wrapped := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, nil, be.log)
+	wrapped.resourceVersion.Store(42)
+
+	require.NoError(t, be.uploadSnapshot(context.Background(), key, wrapped))
+	require.Equal(t, int32(1), store.uploadCalls.Load())
+	assert.Equal(t, originalBuildTime.UTC(), store.uploadMeta.BuildStartTimestamp,
+		"periodic re-upload should preserve the original build-start time")
 }
 
 func TestUploadSnapshot_LockContention(t *testing.T) {

@@ -178,6 +178,10 @@ export const getDataFrameVars = (dataFrames: DataFrame[]) => {
   const frame = dataFrames[0];
 
   for (const field of frame.fields) {
+    if (field.type === FieldType.nestedFrames) {
+      continue;
+    }
+
     const displayName = getFieldDisplayName(field, frame, dataFrames);
 
     if (keys[displayName]) {

@@ -25,7 +25,7 @@ import { refetchChildren } from '../state/actions';
 import { browseDashboardsReducer } from '../state/slice';
 
 import { browseDashboardsAPI } from './browseDashboardsAPI';
-import { PAGE_SIZE } from './services';
+import { PAGE_SIZE } from './constants';
 
 setBackendSrv(backendSrv);
 setupMockServer();
