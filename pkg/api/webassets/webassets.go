@@ -23,10 +23,9 @@ type ManifestInfo struct {
 	Integrity string `json:"integrity,omitempty"`
 
 	// The known entrypoints
-	App     *EntryPointInfo `json:"app,omitempty"`
-	Dark    *EntryPointInfo `json:"dark,omitempty"`
-	Light   *EntryPointInfo `json:"light,omitempty"`
-	Swagger *EntryPointInfo `json:"swagger,omitempty"`
+	App   *EntryPointInfo `json:"app,omitempty"`
+	Dark  *EntryPointInfo `json:"dark,omitempty"`
+	Light *EntryPointInfo `json:"light,omitempty"`
 }
 
 type EntryPointInfo struct {
@@ -37,14 +36,14 @@ type EntryPointInfo struct {
 }
 
 var (
-	entryPointAssetsCacheMu sync.RWMutex           // guard entryPointAssetsCache
-	entryPointAssetsCache   *dtos.EntryPointAssets // TODO: get rid of global state
+	entryPointAssetsCacheMu sync.RWMutex                      // guard entryPointAssetsCache
+	entryPointAssetsCache   map[string]*dtos.EntryPointAssets // TODO: get rid of global state
 	httpClient              = httpclient.New()
 )
 
-func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
+func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
 	entryPointAssetsCacheMu.RLock()
-	ret := entryPointAssetsCache
+	ret := entryPointAssetsCache[buildDir]
 	entryPointAssetsCacheMu.RUnlock()
 
 	if cfg.Env != setting.Dev && ret != nil {
@@ -58,7 +57,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 
 	cdn := "" // "https://grafana-assets.grafana.net/grafana/10.3.0-64123/"
 	if cdn != "" {
-		result, err = readWebAssetsFromCDN(ctx, cdn)
+		result, err = readWebAssetsFromCDN(ctx, buildDir, cdn)
 	}
 
 	// Get an OpenFeature client instance for feature flag evaluation
@@ -80,7 +79,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	}
 
 	if result == nil {
-		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", assetsFilename))
+		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, buildDir, assetsFilename))
 		if err == nil {
 			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
 			if cdn != "" {
@@ -89,8 +88,11 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 		}
 	}
 
-	entryPointAssetsCache = result
-	return entryPointAssetsCache, err
+	if entryPointAssetsCache == nil {
+		entryPointAssetsCache = make(map[string]*dtos.EntryPointAssets)
+	}
+	entryPointAssetsCache[buildDir] = result
+	return entryPointAssetsCache[buildDir], err
 }
 
 func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) {
@@ -105,8 +107,8 @@ func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) 
 	return readWebAssets(f)
 }
 
-func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPointAssets, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/build/assets-manifest.json", nil)
+func readWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) (*dtos.EntryPointAssets, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/"+buildDir+"/assets-manifest.json", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -145,23 +147,16 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
 		return nil, fmt.Errorf("missing app entry, try running `yarn build`")
 	}
-	if entryPoints.Dark == nil || len(entryPoints.Dark.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing dark entry, try running `yarn build`")
-	}
-	if entryPoints.Light == nil || len(entryPoints.Light.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing light entry, try running `yarn build`")
-	}
-	if entryPoints.Swagger == nil || len(entryPoints.Swagger.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing swagger entry, try running `yarn build`")
-	}
 
 	rsp := &dtos.EntryPointAssets{
-		JSFiles:         make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.JS)),
-		CSSFiles:        make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.CSS)),
-		Dark:            entryPoints.Dark.Assets.CSS[0],
-		Light:           entryPoints.Light.Assets.CSS[0],
-		Swagger:         make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.JS)),
-		SwaggerCSSFiles: make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.CSS)),
+		JSFiles:  make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.JS)),
+		CSSFiles: make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.CSS)),
+	}
+	if entryPoints.Dark != nil && len(entryPoints.Dark.Assets.CSS) > 0 {
+		rsp.Dark = entryPoints.Dark.Assets.CSS[0]
+	}
+	if entryPoints.Light != nil && len(entryPoints.Light.Assets.CSS) > 0 {
+		rsp.Light = entryPoints.Light.Assets.CSS[0]
 	}
 
 	for _, entry := range entryPoints.App.Assets.JS {
@@ -172,18 +167,6 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	}
 	for _, entry := range entryPoints.App.Assets.CSS {
 		rsp.CSSFiles = append(rsp.CSSFiles, dtos.EntryPointAsset{
-			FilePath:  entry,
-			Integrity: integrity[entry],
-		})
-	}
-	for _, entry := range entryPoints.Swagger.Assets.JS {
-		rsp.Swagger = append(rsp.Swagger, dtos.EntryPointAsset{
-			FilePath:  entry,
-			Integrity: integrity[entry],
-		})
-	}
-	for _, entry := range entryPoints.Swagger.Assets.CSS {
-		rsp.SwaggerCSSFiles = append(rsp.SwaggerCSSFiles, dtos.EntryPointAsset{
 			FilePath:  entry,
 			Integrity: integrity[entry],
 		})
