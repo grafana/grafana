@@ -123,8 +123,7 @@ func TestCreateProvider(t *testing.T) {
 			case setting.FeaturesServiceProviderType, setting.OFREPProviderType:
 				provider, err = features.NewOFREPProvider(tc.cfg.URL.String(), httpClient)
 			default:
-				// Static provider with standard flags
-				provider, err = CreateStaticProviderWithStandardFlags(nil)
+				provider, err = newStaticProviderFromCfg(cfg)
 			}
 			require.NoError(t, err)
 
