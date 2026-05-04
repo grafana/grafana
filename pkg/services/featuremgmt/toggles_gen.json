@@ -5918,17 +5918,20 @@
     {
       "metadata": {
         "name": "useMultipleScopeNodesEndpoint",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1777035186143",
         "creationTimestamp": "2025-08-29T14:46:39Z",
-        "deletionTimestamp": "2025-09-01T09:33:33Z"
+        "deletionTimestamp": "2025-09-01T09:33:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-24 12:53:06.14374 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Makes the frontend use the 'names' param for fetching multiple scope nodes at once",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5949,31 +5952,37 @@
     {
       "metadata": {
         "name": "useScopeSingleNodeEndpoint",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-07-31T14:32:41Z"
+        "resourceVersion": "1777035186143",
+        "creationTimestamp": "2025-07-31T14:32:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-24 12:53:06.14374 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "useScopesNavigationEndpoint",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-03-31T15:20:00Z"
+        "resourceVersion": "1777035186143",
+        "creationTimestamp": "2025-03-31T15:20:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-24 12:53:06.14374 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
