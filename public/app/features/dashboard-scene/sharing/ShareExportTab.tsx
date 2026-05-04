@@ -277,11 +277,14 @@ function stripMetadataForExport(metadata: ObjectMeta, isSharingExternally: boole
   const result: Record<string, any> = cloneDeep(metadata);
 
   delete result['managedFields'];
+  delete result['uid'];
 
   if (isSharingExternally) {
-    delete result['uid'];
+    delete result['name'];
     delete result['resourceVersion'];
     delete result['namespace'];
+    delete result['generation'];
+    delete result['creationTimestamp'];
 
     for (const key in result['labels']) {
       if (key.startsWith('grafana.app/')) {

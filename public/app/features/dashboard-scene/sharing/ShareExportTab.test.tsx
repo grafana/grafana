@@ -117,6 +117,7 @@ const mockV2ResourceResponse: DashboardWithAccessInfo<DashboardV2Spec> = {
     resourceVersion: '1',
     creationTimestamp: '2025-01-01T00:00:00Z',
     generation: 1,
+    ...({ uid: 'server-assigned-uuid-1234' } as Record<string, unknown>),
   },
   spec: mockV2Spec,
   access: {},
@@ -206,8 +207,31 @@ describe('ShareExportTab', () => {
       expect(result.json).not.toHaveProperty('status');
       expect(result.json).not.toHaveProperty('access');
       if ('metadata' in result.json) {
+        expect(result.json.metadata).not.toHaveProperty('uid');
+        expect(result.json.metadata).not.toHaveProperty('name');
         expect(result.json.metadata).not.toHaveProperty('resourceVersion');
         expect(result.json.metadata).not.toHaveProperty('namespace');
+        expect(result.json.metadata).not.toHaveProperty('generation');
+        expect(result.json.metadata).not.toHaveProperty('creationTimestamp');
+      }
+    });
+
+    it('should strip metadata.uid even when not sharing externally', async () => {
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource, isSharingExternally: false });
+
+      const result = await tab.getExportableDashboardJson();
+
+      expect(result.json).toMatchObject({
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        kind: 'Dashboard',
+      });
+      if ('metadata' in result.json) {
+        expect(result.json.metadata).not.toHaveProperty('uid');
+        expect(result.json.metadata).toHaveProperty('name', 'test-uid-v2');
+        expect(result.json.metadata).toHaveProperty('resourceVersion');
+        expect(result.json.metadata).toHaveProperty('generation');
+        expect(result.json.metadata).toHaveProperty('creationTimestamp');
       }
     });
 
