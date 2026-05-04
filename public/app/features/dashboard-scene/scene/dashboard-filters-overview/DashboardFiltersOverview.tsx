@@ -9,6 +9,7 @@ import { type AdHocFiltersVariable, type GroupByVariable } from '@grafana/scenes
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { FilterRow, GroupHeader } from './FiltersOverviewRow';
+import { reportFiltersOverviewInteraction } from './interactions';
 import { useFiltersOverviewState } from './useFiltersOverviewState';
 import { MULTI_OPERATOR_VALUES } from './utils';
 
@@ -145,12 +146,19 @@ export const DashboardFiltersOverview = ({
       </div>
 
       <Footer
-        onApply={actions.applyChanges}
+        onApply={() => {
+          const counts = actions.applyChanges();
+          reportFiltersOverviewInteraction('applied', { action: 'apply', ...counts });
+        }}
         onApplyAndClose={() => {
-          actions.applyChanges();
+          const counts = actions.applyChanges();
+          reportFiltersOverviewInteraction('applied', { action: 'apply_and_close', ...counts });
           onClose();
         }}
-        onClose={onClose}
+        onClose={() => {
+          reportFiltersOverviewInteraction('closed');
+          onClose();
+        }}
       />
     </div>
   );
