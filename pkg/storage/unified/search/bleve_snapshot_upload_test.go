@@ -78,6 +78,14 @@ func (s *uploadTestStore) ListIndexes(context.Context, resource.NamespacedResour
 	panic("ListIndexes not implemented for uploadTestStore")
 }
 
+func (s *uploadTestStore) ListIndexKeys(context.Context, resource.NamespacedResource) ([]ulid.ULID, error) {
+	panic("ListIndexKeys not implemented for uploadTestStore")
+}
+
+func (s *uploadTestStore) GetIndexMeta(context.Context, resource.NamespacedResource, ulid.ULID) (*IndexMeta, error) {
+	panic("GetIndexMeta not implemented for uploadTestStore")
+}
+
 func (s *uploadTestStore) DeleteIndex(context.Context, resource.NamespacedResource, ulid.ULID) error {
 	panic("DeleteIndex not implemented for uploadTestStore")
 }

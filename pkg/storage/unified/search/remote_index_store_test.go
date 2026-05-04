@@ -226,8 +226,7 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 
 	t.Run("missing snapshot manifest", func(t *testing.T) {
 		_, err := store.DownloadIndex(ctx, ns, key, t.TempDir())
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "reading snapshot manifest")
+		require.ErrorIs(t, err, ErrSnapshotNotFound)
 	})
 
 	t.Run("invalid JSON", func(t *testing.T) {

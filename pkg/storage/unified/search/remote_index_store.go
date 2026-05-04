@@ -37,6 +37,11 @@ const (
 // ErrNonRegularFile is returned when a non-regular file (symlink, pipe, socket, device) is found during index upload.
 var ErrNonRegularFile = errors.New("non-regular file found in index directory")
 
+// ErrSnapshotNotFound is returned when the snapshot manifest for the given
+// index key does not exist (e.g. the snapshot was deleted, or the upload is
+// still in progress and the manifest hasn't been written yet).
+var ErrSnapshotNotFound = errors.New("snapshot not found")
+
 // IndexMeta contains metadata about a remote index snapshot.
 type IndexMeta struct {
 	// GrafanaBuildVersion is the version of Grafana that built this index.
@@ -86,6 +91,17 @@ type RemoteIndexStore interface {
 	// ListIndexes lists all complete index snapshots for a namespaced resource.
 	// Note: indexes may be deleted between listing and subsequent operations.
 	ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error)
+
+	// ListIndexKeys returns the ULID keys of all index snapshots under the
+	// given namespaced resource. The returned list may include incomplete
+	// uploads (snapshots whose manifest has not yet been written); callers
+	// that need to distinguish complete from incomplete snapshots should
+	// follow up with GetIndexMeta. Ordering is unspecified.
+	ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error)
+
+	// GetIndexMeta returns the manifest for a single index snapshot. It
+	// returns ErrSnapshotNotFound if no manifest exists for the given key.
+	GetIndexMeta(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error)
 
 	// DeleteIndex deletes all files for an index snapshot.
 	DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error
@@ -318,20 +334,9 @@ func (s *BucketRemoteIndexStore) uploadFile(ctx context.Context, objectKey, loca
 func (s *BucketRemoteIndexStore) DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, destDir string) (_ *IndexMeta, retErr error) {
 	pfx := indexPrefix(nsResource, indexKey.String())
 
-	// Download and parse the snapshot manifest with a size limit to avoid OOM on malicious files.
-	var metaBuf bytes.Buffer
-	if err := s.bucket.Download(ctx, pfx+snapshotManifestFile, &resource.LimitedWriter{W: &metaBuf, N: maxSnapshotManifestSize}, nil); err != nil {
-		return nil, fmt.Errorf("reading snapshot manifest: %w", err)
-	}
-	var meta IndexMeta
-	if err := json.Unmarshal(metaBuf.Bytes(), &meta); err != nil {
-		return nil, fmt.Errorf("parsing snapshot manifest: %w", err)
-	}
-	if len(meta.Files) == 0 {
-		return nil, fmt.Errorf("snapshot manifest has empty file manifest for index %q", indexKey)
-	}
-	if err := validateManifestPaths(meta.Files); err != nil {
-		return nil, fmt.Errorf("invalid manifest: %w", err)
+	meta, err := s.GetIndexMeta(ctx, nsResource, indexKey)
+	if err != nil {
+		return nil, err
 	}
 
 	// fail if destDir already exist
@@ -386,7 +391,7 @@ func (s *BucketRemoteIndexStore) DownloadIndex(ctx context.Context, nsResource r
 	}
 	tmpDir = "" // prevent deferred cleanup of the now-renamed directory
 
-	return &meta, nil
+	return meta, nil
 }
 
 // validateManifestPaths rejects manifest entries that are not already in canonical form.
@@ -424,6 +429,60 @@ func (s *BucketRemoteIndexStore) downloadFile(ctx context.Context, objectKey, lo
 	return f.Close()
 }
 
+// ListIndexKeys lists the ULID-keyed snapshot subdirectories under the
+// namespaced-resource prefix using a delimited list, without reading any
+// manifest bodies. Non-ULID subdirectories (e.g. the sibling `locks/` prefix)
+// are skipped silently.
+func (s *BucketRemoteIndexStore) ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error) {
+	pfx := nsPrefix(nsResource)
+	iter := s.bucket.List(&blob.ListOptions{Prefix: pfx, Delimiter: "/"})
+	var keys []ulid.ULID
+	for {
+		obj, err := iter.Next(ctx)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("listing index keys: %w", err)
+		}
+		if !obj.IsDir {
+			continue
+		}
+		rel := strings.TrimSuffix(strings.TrimPrefix(obj.Key, pfx), "/")
+		key, err := ulid.Parse(rel)
+		if err != nil {
+			continue // skip non-ULID subdirs (e.g. /locks)
+		}
+		keys = append(keys, key)
+	}
+	return keys, nil
+}
+
+// GetIndexMeta fetches and validates the manifest for a single snapshot.
+// Returns ErrSnapshotNotFound if the manifest is missing (incomplete upload
+// or already deleted).
+func (s *BucketRemoteIndexStore) GetIndexMeta(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error) {
+	manifestKey := indexPrefix(nsResource, indexKey.String()) + snapshotManifestFile
+	var buf bytes.Buffer
+	if err := s.bucket.Download(ctx, manifestKey, &resource.LimitedWriter{W: &buf, N: maxSnapshotManifestSize}, nil); err != nil {
+		if gcerrors.Code(err) == gcerrors.NotFound {
+			return nil, ErrSnapshotNotFound
+		}
+		return nil, fmt.Errorf("reading snapshot manifest: %w", err)
+	}
+	var meta IndexMeta
+	if err := json.Unmarshal(buf.Bytes(), &meta); err != nil {
+		return nil, fmt.Errorf("parsing snapshot manifest: %w", err)
+	}
+	if len(meta.Files) == 0 {
+		return nil, fmt.Errorf("snapshot manifest has empty file manifest for index %q", indexKey)
+	}
+	if err := validateManifestPaths(meta.Files); err != nil {
+		return nil, fmt.Errorf("invalid manifest: %w", err)
+	}
+	return &meta, nil
+}
+
 func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
 	nsPfx := nsPrefix(nsResource)
 	result := make(map[ulid.ULID]*IndexMeta)
@@ -456,22 +515,12 @@ func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource res
 			continue
 		}
 
-		// Fetch and parse the snapshot manifest with a size limit.
-		var metaBuf bytes.Buffer
-		if err := s.bucket.Download(ctx, obj.Key, &resource.LimitedWriter{W: &metaBuf, N: maxSnapshotManifestSize}, nil); err != nil {
-			s.log.Error("failed to read snapshot manifest", "key", obj.Key, "err", err)
+		meta, err := s.GetIndexMeta(ctx, nsResource, indexKey)
+		if err != nil {
+			s.log.Warn("skipping index snapshot with invalid manifest", "key", obj.Key, "err", err)
 			continue
 		}
-		var meta IndexMeta
-		if err := json.Unmarshal(metaBuf.Bytes(), &meta); err != nil {
-			s.log.Error("failed to parse snapshot manifest", "key", obj.Key, "err", err)
-			continue
-		}
-		if len(meta.Files) == 0 || validateManifestPaths(meta.Files) != nil {
-			s.log.Warn("skipping index snapshot with invalid manifest", "key", obj.Key)
-			continue
-		}
-		result[indexKey] = &meta
+		result[indexKey] = meta
 	}
 
 	return result, nil
