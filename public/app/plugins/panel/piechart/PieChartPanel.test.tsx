@@ -12,6 +12,7 @@ import {
   getDefaultTimeRange,
   EventBusSrv,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel, comparePieChartItemsByValue } from './PieChartPanel';
@@ -131,6 +132,161 @@ describe('PieChartPanel', () => {
         expect(screen.queryByText(/Firefox/i)).toBeInTheDocument();
         const slices = screen.queryAllByTestId('data testid Pie Chart Slice');
         expect(slices.length).toBe(3);
+      });
+    });
+
+    describe('keyboard accessibility for data links', () => {
+      // These tests document the contract introduced when fixing the missing
+      // focus-indicator bug (see DataLinksContextMenu/WithContextMenu): pie
+      // slices that carry data links must be keyboard-focusable, announce the
+      // correct role to assistive tech, and open via Enter/Space — without any
+      // synthetic-MouseEvent dispatch in the panel.
+      //
+      // `getFieldDisplayValues` reads two pieces of state to populate
+      // FieldDisplay.hasLinks/getLinks: `field.config.links` (count) and
+      // `field.getLinks` (supplier function). In production both are set by
+      // `applyFieldOverrides`. In tests we have to provide both manually.
+      const buildLinkedFrame = (links: Array<{ title: string; url: string }>) => {
+        const frame = toDataFrame({
+          fields: [
+            {
+              name: 'Chrome',
+              type: FieldType.number,
+              values: [60],
+              config: { ...defaultConfig, links },
+            },
+            { name: 'Firefox', config: defaultConfig, type: FieldType.number, values: [20] },
+          ],
+        });
+        // Mirror what `applyFieldOverrides` would set: a supplier that returns
+        // resolved `LinkModel`s for the given row.
+        frame.fields[0].getLinks = () =>
+          links.map((l) => ({ href: l.url, title: l.title, target: undefined, origin: frame.fields[0] }));
+        return frame;
+      };
+
+      const seriesWithSingleLink = [buildLinkedFrame([{ title: 'Open dashboard', url: '/d/abc' }])];
+
+      const seriesWithMultipleLinks = [
+        buildLinkedFrame([
+          { title: 'Open dashboard', url: '/d/abc' },
+          { title: 'Open runbook', url: '/d/runbook' },
+        ]),
+      ];
+
+      it('renders a focusable anchor wrapper for slices with a single data link', () => {
+        setup({ data: { series: seriesWithSingleLink } });
+
+        const singleLinks = screen.getAllByTestId(selectors.components.DataLinksContextMenu.singleLink);
+        // One slice has a link, the other does not.
+        expect(singleLinks).toHaveLength(1);
+        // tagName is lowercase here because the `<a>` is parsed inside SVG
+        // context — it becomes a native SVG anchor, which is keyboard-
+        // focusable in all evergreen browsers.
+        expect(singleLinks[0].tagName.toLowerCase()).toBe('a');
+        expect(singleLinks[0]).toHaveAttribute('href', '/d/abc');
+      });
+
+      it('exposes role="button" + tabindex=0 + aria-haspopup on slices with multiple data links', () => {
+        setup({ data: { series: seriesWithMultipleLinks } });
+
+        // The legend also renders `role="button"` items per series, so we
+        // disambiguate the slice trigger by `aria-haspopup="menu"` (only the
+        // data-links trigger sets it).
+        const trigger = screen
+          .getAllByRole('button', { name: 'Chrome' })
+          .find((el) => el.getAttribute('aria-haspopup') === 'menu');
+
+        expect(trigger).toBeDefined();
+        expect(trigger).toHaveAttribute('tabindex', '0');
+        expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
+      });
+
+      it('does not add keyboard semantics to slices without data links', () => {
+        const seriesWithoutLinks = [
+          toDataFrame({
+            fields: [
+              { name: 'Chrome', config: defaultConfig, type: FieldType.number, values: [60] },
+              { name: 'Firefox', config: defaultConfig, type: FieldType.number, values: [20] },
+            ],
+          }),
+        ];
+        setup({ data: { series: seriesWithoutLinks } });
+
+        // The slice is plain — no `aria-haspopup` trigger, no single-link `<a>`.
+        // (Legend items render their own `role="button"` controls; we explicitly
+        // exclude them by also requiring `aria-haspopup="menu"`.)
+        expect(
+          screen.queryAllByRole('button').filter((el) => el.getAttribute('aria-haspopup') === 'menu')
+        ).toHaveLength(0);
+        expect(screen.queryAllByTestId(selectors.components.DataLinksContextMenu.singleLink)).toHaveLength(0);
+      });
+
+      it('opens the data-links context menu when Enter is pressed on a multi-link slice', async () => {
+        // Regression test: this used to require the panel to fabricate a
+        // synthetic `MouseEvent('click', { clientX, clientY })` from the
+        // slice's bounding-box centre. The element-anchored `openMenu` overload
+        // makes Enter/Space activation the responsibility of the shared
+        // component, so the panel just spreads `triggerProps`.
+        const user = userEvent.setup();
+        setup({ data: { series: seriesWithMultipleLinks } });
+
+        const trigger = screen
+          .getAllByRole('button', { name: 'Chrome' })
+          .find((el) => el.getAttribute('aria-haspopup') === 'menu')!;
+
+        // The two link titles are not yet on screen.
+        expect(screen.queryByText('Open dashboard')).not.toBeInTheDocument();
+        expect(screen.queryByText('Open runbook')).not.toBeInTheDocument();
+
+        trigger.focus();
+        await user.keyboard('{Enter}');
+
+        expect(screen.getByText('Open dashboard')).toBeInTheDocument();
+        expect(screen.getByText('Open runbook')).toBeInTheDocument();
+      });
+
+      it('renders focusable anchor with focus-visible class for single-link slices', () => {
+        setup({ data: { series: seriesWithSingleLink } });
+        const singleLink = screen.getByTestId(selectors.components.DataLinksContextMenu.singleLink);
+        // The anchor should have a class name generated by emotion (contains 'css-')
+        expect(singleLink.className).toMatch(/css-/);
+        // It should also have an href attribute
+        expect(singleLink).toHaveAttribute('href', '/d/abc');
+      });
+
+      it('opens the context menu when Space is pressed on a multi-link slice', async () => {
+        const user = userEvent.setup();
+        setup({ data: { series: seriesWithMultipleLinks } });
+
+        const trigger = screen
+          .getAllByRole('button', { name: 'Chrome' })
+          .find((el) => el.getAttribute('aria-haspopup') === 'menu')!;
+
+        expect(screen.queryByText('Open dashboard')).not.toBeInTheDocument();
+        trigger.focus();
+        await user.keyboard(' '); // Space key
+
+        expect(screen.getByText('Open dashboard')).toBeInTheDocument();
+        expect(screen.getByText('Open runbook')).toBeInTheDocument();
+      });
+
+      it('does not apply triggerProps to slices without data links', () => {
+        const seriesWithoutLinks = [
+          toDataFrame({
+            fields: [
+              { name: 'Chrome', config: defaultConfig, type: FieldType.number, values: [60] },
+              { name: 'Firefox', config: defaultConfig, type: FieldType.number, values: [20] },
+            ],
+          }),
+        ];
+        setup({ data: { series: seriesWithoutLinks } });
+
+        const slices = screen.getAllByTestId('data testid Pie Chart Slice');
+        slices.forEach((slice) => {
+          expect(slice).not.toHaveAttribute('role', 'button');
+          expect(slice).not.toHaveAttribute('aria-haspopup');
+        });
       });
     });
 
