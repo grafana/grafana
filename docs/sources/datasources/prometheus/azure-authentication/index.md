@@ -2,6 +2,7 @@
 aliases:
   - ../data-sources/prometheus/
   - ../features/datasources/prometheus/
+  - ../datasources/prometheus/configure/azure-authentication/
 description: Guide for authenticating with Azure Monitor Managed Service for Prometheus in Grafana
 keywords:
   - grafana
@@ -12,43 +13,70 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Authenticating with Azure
-title: Configure the Prometheus data source
-weight: 200
+menuTitle: Authenticate with Azure
+title: Connect to Azure Monitor Managed Service for Prometheus
+weight: 220
+review_date: 2026-03-10
 ---
 
 # Connect to Azure Monitor Managed Service for Prometheus
 
-After creating a Azure Monitor Managed Service for Prometheus data source:
+You can use the Prometheus data source with Azure authentication to connect to [Azure Monitor Managed Service for Prometheus](https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/prometheus-metrics-overview). Grafana authenticates using Microsoft Entra ID credentials, allowing you to securely query your Azure Monitor workspace.
 
-1. In the data source configuration page, locate the **Authentication** section
-2. Select your authentication method:
-   - **Managed Identity**: For Azure-hosted Grafana instances. To learn more about Entra login for Grafana, refer to [Configure Entra ID/Entra ID OAuth authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#configure-azure-adentra-id-oauth-authentication)
-   - **App Registration**: For service principal authentication
-   - **Current User**: Uses the current user's Entra ID credentials
+{{< admonition type="warning" >}}
+Azure authentication in the Prometheus data source is deprecated. Use the dedicated [Azure Monitor Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/) plugin instead. If you have an existing Azure authentication configuration, refer to [Migrate to Azure Monitor Managed Service for Prometheus](#migrate-to-azure-monitor-managed-service-for-prometheus) for instructions.
+{{< /admonition >}}
 
-3. Configure based on your chosen method:
+## Before you begin
 
-| Setting                     | Description                     | Example                                |
-| --------------------------- | ------------------------------- | -------------------------------------- |
-| **Directory (tenant) ID**   | Your Entra ID tenant ID         | `12345678-1234-1234-1234-123456789012` |
-| **Application (client) ID** | Your app registration client ID | `87654321-4321-4321-4321-210987654321` |
-| **Client secret**           | Your app registration secret    | `your-client-secret`                   |
+- You need the `Organization administrator` role to configure the data source.
+- Azure authentication must be enabled in your Grafana configuration. Set `azure_auth_enabled = true` under the `[auth]` section of your `grafana.ini` file. Refer to [Configure Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure_auth_enabled) for details.
+- Have your Azure Monitor workspace Prometheus endpoint URL ready. You can find this in the Azure portal under the Azure Monitor workspace overview.
+- Depending on your chosen authentication method, have the following ready:
+  - **App Registration**: Directory (tenant) ID, Application (client) ID, and Client Secret from your Microsoft Entra ID app registration.
+  - **Managed Identity**: No additional credentials needed for system-assigned identity. For user-assigned identity, you need the Client ID.
+  - **Workload Identity**: Available when Grafana is running in a Kubernetes environment with workload identity configured.
 
-When using Managed Identity for authentication:
+{{< admonition type="note" >}}
+If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token will override your Azure credentials.
+{{< /admonition >}}
 
-- No additional configuration required if using system-assigned identity.
-- For user-assigned identity, provide the **Client ID**.
+## Configure Azure authentication
 
-4. Set the **Prometheus server URL** to your Azure Monitor workspace endpoint:
+1. In the data source configuration page, locate the **Authentication** section.
+1. Select **Azure auth** from the authentication method drop-down.
+1. Select your authentication method:
+   - **App Registration** - For service principal authentication using Microsoft Entra ID.
+   - **Managed Identity** - For Azure-hosted Grafana instances. Requires `managedIdentityEnabled` in your Grafana Azure configuration. To learn more about Entra login for Grafana, refer to [Configure Entra ID/Entra ID OAuth authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#configure-azure-adentra-id-oauth-authentication).
+   - **Workload Identity** - For Kubernetes-hosted Grafana instances with workload identity. Requires `workloadIdentityEnabled` in your Grafana Azure configuration.
+
+1. Configure based on your chosen method:
+
+   **App Registration settings:**
+
+   | Setting                     | Description                     | Example                                       |
+   | --------------------------- | ------------------------------- | --------------------------------------------- |
+   | **Azure Cloud**             | Your Azure cloud environment    | `Azure`, `Azure China`, `Azure US Government` |
+   | **Directory (tenant) ID**   | Your Entra ID tenant ID         | `12345678-1234-1234-1234-123456789012`        |
+   | **Application (client) ID** | Your app registration client ID | `87654321-4321-4321-4321-210987654321`        |
+   | **Client Secret**           | Your app registration secret    | `your-client-secret`                          |
+
+   **Managed Identity settings:**
+   - No additional configuration required if using system-assigned identity.
+   - For user-assigned identity, provide the **Client ID**.
+
+   **Workload Identity settings:**
+   - No additional configuration required. Workload identity uses the credentials provided by the Kubernetes environment.
+
+1. Set the **Prometheus server URL** to your Azure Monitor workspace endpoint:
 
    ```
    https://your-workspace.eastus2.prometheus.monitor.azure.com
    ```
 
-5. Click **Save & test** to verify the connection
+1. Click **Save & test** to verify the connection.
 
-## Example configuration
+### Provisioning example
 
 ```yaml
 # Example provisioning configuration for App Registration
@@ -58,11 +86,11 @@ datasources:
     type: 'grafana-azureprometheus-datasource'
     url: 'https://your-workspace.eastus2.prometheus.monitor.azure.com'
     jsonData:
+      httpMethod: 'POST'
       azureCredentials:
         authType: 'clientsecret'
         azureCloud: 'AzureCloud'
         clientId: '<client_id>'
-        httpMethod: 'POST'
         tenantId: '<tenant_id>'
     secureJsonData:
       clientSecret: 'your-client-secret'
@@ -70,13 +98,14 @@ datasources:
 
 ## Migrate to Azure Monitor Managed Service for Prometheus
 
-Learn more about why this is happening: [Prometheus data source update: Redefining our big tent philosophy](https://grafana.com/blog/2025/06/16/prometheus-data-source-update-redefining-our-big-tent-philosophy/)
+Azure authentication in the core Prometheus data source is being replaced by the dedicated [Azure Monitor Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/) plugin. For background on this change, refer to [Prometheus data source update: Redefining our big tent philosophy](https://grafana.com/blog/2025/06/16/prometheus-data-source-update-redefining-our-big-tent-philosophy/).
 
-Before you begin, ensure you have the organization administrator role. If you are self-hosting Grafana, back up your existing dashboard configurations and queries.
+Before you begin:
 
-Grafana Cloud users will be automatically migrated to the relevant version of Prometheus, so no action needs to be taken.
-
-For air-gapped environments, download and install [Azure Monitor Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/), then follow the standard migration process.
+- Ensure you have the `Organization administrator` role.
+- If you are self-hosting Grafana, back up your existing dashboard configurations and queries.
+- Grafana Cloud users are automatically migrated, so no action is needed.
+- For air-gapped environments, download and install [Azure Monitor Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/), then follow the standard migration process.
 
 ### Migrate
 
@@ -87,17 +116,19 @@ For air-gapped environments, download and install [Azure Monitor Managed Service
 This feature toggle will be removed in Grafana 13, and the migration will be automatic.
 {{< /admonition >}}
 
+### Check migration status
+
 To determine if your Prometheus data sources have been migrated:
 
-1. Navigate to **Connections** > **Data sources**
-2. Select your Prometheus data source
-3. Look for a migration banner at the top of the configuration page
+1. Navigate to **Connections** > **Data sources**.
+2. Select your Prometheus data source.
+3. Look for a migration banner at the top of the configuration page.
 
 The banner displays one of the following messages:
 
-- **"Migration Notice"** - The data source has already been migrated
-- **"Deprecation Notice"** - The data source has not been migrated
-- **No banner** - No migration is needed for this data source
+- **"Migration Notice"** - The data source has already been migrated.
+- **"Deprecation Notice"** - The data source has not been migrated.
+- **No banner** - No migration is needed for this data source.
 
 ## Common migration issues
 
@@ -106,28 +137,28 @@ The following sections contain troubleshooting guidance.
 **Migration banner not appearing**
 
 - Verify the `prometheusTypeMigration` feature toggle is enabled.
-- Restart Grafana after enabling the feature toggle
+- Restart Grafana after enabling the feature toggle.
 
 **Azure Monitor Managed Service for Prometheus is not installed**
 
-- Verify that Azure Monitor Managed Service for Prometheus is installed by going to **Connections** > **Add new connection** and search for "Azure Monitor Managed Service for Prometheus"
-- Install Azure Monitor Managed Service for Prometheus if not already installed
+- Verify that Azure Monitor Managed Service for Prometheus is installed by going to **Connections** > **Add new connection** and search for "Azure Monitor Managed Service for Prometheus".
+- Install Azure Monitor Managed Service for Prometheus if not already installed.
 
 **After migrating, my data source returns "401 Unauthorized"**
 
-- If you are using self-hosted Grafana, check your .ini for `grafana-azureprometheus-datasource` is included in `forward_settings_to_plugins` under the `[azure]` heading.
+- If you are using self-hosted Grafana, check that `grafana-azureprometheus-datasource` is included in `forward_settings_to_plugins` under the `[azure]` heading in your `.ini` file.
 - If you are using Grafana Cloud, contact Grafana support.
 
 ### Rollback self-hosted Grafana without a backup
 
-If you don’t have a backup of your Grafana instance before the migration, remove the `prometheusTypeMigration` feature toggle, and run the following script. It reverts all the Azure Monitor Managed Service data source instances back to core Prometheus.
+If you don't have a backup of your Grafana instance before the migration, remove the `prometheusTypeMigration` feature toggle, and run the following script. It reverts all Azure Monitor Managed Service for Prometheus data sources back to core Prometheus.
 
 To revert the migration:
 
 1. Disable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles).
 2. Obtain a bearer token that has `read` and `write` permissions for your Grafana data source API. For more information on the data source API, refer to [Data source API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/data_source/).
 3. Run the script below. Make sure to provide your Grafana URL and bearer token.
-4. (Optional) Report the issue you were experiencing on the [Grafana repository](https://github.com/grafana/grafana/issues). Tag the issue with "datasource/migrate-prometheus-type"
+4. (Optional) Report the issue you were experiencing on the [Grafana repository](https://github.com/grafana/grafana/issues). Tag the issue with `datasource/migrate-prometheus-type`.
 
 ```bash
 #!/bin/bash
@@ -168,10 +199,6 @@ update_data_source() {
 # Function to process and update data source types
 update_data_source_type() {
     local result="$1"
-    local processed_count=0
-    local updated_count=0
-    local readonly_count=0
-    local skipped_count=0
 
     # Use jq to parse and process JSON
     echo "$result" | jq -c '.[]' | while read -r data; do
@@ -180,16 +207,12 @@ update_data_source_type() {
         data_type=$(echo "$data" | jq -r '.type')
         read_only=$(echo "$data" | jq -r '.readOnly // false')
 
-        processed_count=$((processed_count + 1))
-
         # Check conditions
         if [[ "$prometheus_type_migration" != "true" ]] || [[ "$data_type" != "grafana-azureprometheus-datasource" ]]; then
-            skipped_count=$((skipped_count + 1))
             continue
         fi
 
         if [[ "$read_only" == "true" ]]; then
-            readonly_count=$((readonly_count + 1))
             log_message "$uid is readOnly. If this data source is provisioned, edit the data source type to be \`prometheus\` in the provisioning file."
             continue
         fi
@@ -197,14 +220,7 @@ update_data_source_type() {
         # Update the data
         updated_data=$(echo "$data" | jq '.type = "prometheus" | .jsonData["prometheus-type-migration"] = false')
         update_data_source "$uid" "$updated_data"
-        updated_count=$((updated_count + 1))
-
-        # Log the raw data for debugging (optional - uncomment if needed)
-        # log_message "DEBUG - Updated data for $uid: $updated_data"
     done
-
-    # Note: These counts won't work in the while loop due to subshell
-    # Moving summary to the main function instead
 }
 
 # Function to get summary statistics
@@ -225,7 +241,7 @@ get_summary_stats() {
 
 # Main function to remove Prometheus type migration
 remove_prometheus_type_migration() {
-    log_message "Starting remove Azure Prometheus migration"
+    log_message "Starting Azure Prometheus migration rollback"
     log_message "Log file: $LOG_FILE"
     log_message "Grafana URL: $GRAFANA_URL"
 
@@ -241,7 +257,7 @@ remove_prometheus_type_migration() {
         log_message "Successfully fetched data sources"
         get_summary_stats "$response_body"
         update_data_source_type "$response_body"
-        log_message "Migration process completed"
+        log_message "Migration rollback completed"
     else
         log_message "error fetching data sources: HTTP $http_code - $response_body"
     fi
@@ -249,9 +265,9 @@ remove_prometheus_type_migration() {
 
 # Function to initialize log file
 initialize_log() {
-    echo "=== Grafana Azure Prometheus Migration Log ===" > "$LOG_FILE"
+    echo "=== Grafana Azure Prometheus Migration Rollback Log ===" > "$LOG_FILE"
     echo "Started at: $(date)" >> "$LOG_FILE"
-    echo "=============================================" >> "$LOG_FILE"
+    echo "========================================================" >> "$LOG_FILE"
     echo "" >> "$LOG_FILE"
 }
 
@@ -277,7 +293,7 @@ log_message "Script completed"
 
 # Final log message
 echo ""
-echo "Migration completed. Full log available at: $LOG_FILE"
+echo "Rollback completed. Full log available at: $LOG_FILE"
 ```
 
 If you continue to experience issues, check the Grafana server logs for detailed error messages and contact [Grafana Support](https://grafana.com/help/) with your troubleshooting results.

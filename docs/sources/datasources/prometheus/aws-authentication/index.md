@@ -2,6 +2,7 @@
 aliases:
   - ../data-sources/prometheus/
   - ../features/datasources/prometheus/
+  - ../datasources/prometheus/configure/aws-authentication/
 description: Guide for authenticating with Amazon Managed Service for Prometheus in Grafana
 keywords:
   - grafana
@@ -12,16 +13,35 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Authenticating with SigV4
-title: Configure the Prometheus data source
-weight: 200
+menuTitle: Authenticate with SigV4
+title: Connect to Amazon Managed Service for Prometheus
+weight: 210
+review_date: 2026-03-10
 ---
 
 # Connect to Amazon Managed Service for Prometheus
 
-1. In the data source configuration page, locate the **Auth** section
-2. Enable **SigV4 auth**
-3. Configure the following settings:
+You can use the core Prometheus data source with AWS Signature Version 4 (SigV4) authentication to connect to [Amazon Managed Service for Prometheus](https://aws.amazon.com/prometheus/). SigV4 signs every request with your AWS credentials, allowing Grafana to securely query your Amazon Managed Service for Prometheus workspace.
+
+{{< admonition type="warning" >}}
+SigV4 authentication in the core Prometheus data source is deprecated. Use the dedicated [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) plugin instead. If you have an existing SigV4 configuration, refer to [Migrate to Amazon Managed Service for Prometheus](#migrate-to-amazon-managed-service-for-prometheus) for instructions.
+{{< /admonition >}}
+
+## Before you begin
+
+- You need the `Organization administrator` role to configure the data source.
+- SigV4 authentication must be enabled in your Grafana configuration. Set `sigv4_auth_enabled = true` under the `[auth]` section of your `grafana.ini` file. Refer to [Configure Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled) for details.
+- Have your Amazon Managed Service for Prometheus workspace endpoint URL ready. You can find this in the AWS Console under the Amazon Managed Service for Prometheus workspace summary.
+- Depending on your chosen authentication method, have one of the following ready:
+  - AWS access key ID and secret access key
+  - A path to a credentials file
+  - An IAM role ARN (if using assume role)
+
+## Configure SigV4 authentication
+
+1. In the data source configuration page, locate the **Authentication** section.
+1. Select **SigV4 auth** from the authentication method drop-down.
+1. Configure the following settings:
 
    | Setting                     | Description                                    | Example                                                         |
    | --------------------------- | ---------------------------------------------- | --------------------------------------------------------------- |
@@ -31,14 +51,17 @@ weight: 200
    | **Secret Access Key**       | Your AWS secret key (if using access key auth) | `wJalrXUtn...`                                                  |
    | **Assume Role ARN**         | IAM role ARN (optional)                        | `arn:aws:iam::123456789:role/GrafanaRole`                       |
 
-4. Set the **HTTP URL** to your Amazon Managed Service for Prometheus workspace endpoint: `https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-12345678-1234-1234-1234-123456789012/`
+1. Set the **Prometheus server URL** to your Amazon Managed Service for Prometheus workspace endpoint:
 
-5. Click **Save & test** to verify the connection
+   ```
+   https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-12345678-1234-1234-1234-123456789012/
+   ```
 
-## Example configuration
+1. Click **Save & test** to verify the connection.
+
+### Provisioning example
 
 ```yaml
-# Example provisioning configuration
 apiVersion: 1
 datasources:
   - name: 'Amazon Managed Prometheus'
@@ -56,13 +79,14 @@ datasources:
 
 ## Migrate to Amazon Managed Service for Prometheus
 
-Learn more about why this is happening: [Prometheus data source update: Redefining our big tent philosophy](https://grafana.com/blog/2025/06/16/prometheus-data-source-update-redefining-our-big-tent-philosophy/)
+SigV4 authentication in the core Prometheus data source is being replaced by the dedicated [Amazon Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) plugin. For background on this change, refer to [Prometheus data source update: Redefining our big tent philosophy](https://grafana.com/blog/2025/06/16/prometheus-data-source-update-redefining-our-big-tent-philosophy/).
 
-Before you begin, ensure you have the organization administrator role. If you are self-hosting Grafana, back up your existing dashboard configurations and queries.
+Before you begin:
 
-Grafana Cloud users will be automatically migrated to the relevant version of Prometheus, so no action needs to be taken.
-
-For air-gapped environments, download and install [Amazon Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/), then follow the standard migration process.
+- Ensure you have the `Organization administrator` role.
+- If you are self-hosting Grafana, back up your existing dashboard configurations and queries.
+- Grafana Cloud users are automatically migrated, so no action is needed.
+- For air-gapped environments, download and install [Amazon Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/), then follow the standard migration process.
 
 ### Migrate
 
@@ -77,15 +101,15 @@ This feature toggle will be removed in Grafana 13, and the migration will be aut
 
 To determine if your Prometheus data sources have been migrated:
 
-1. Navigate to **Connections** > **Data sources**
-2. Select your Prometheus data source
-3. Look for a migration banner at the top of the configuration page
+1. Navigate to **Connections** > **Data sources**.
+2. Select your Prometheus data source.
+3. Look for a migration banner at the top of the configuration page.
 
 The banner displays one of the following messages:
 
-- **"Migration Notice"** - The data source has already been migrated
-- **"Deprecation Notice"** - The data source has not been migrated
-- **No banner** - No migration is needed for this data source
+- **"Migration Notice"** - The data source has already been migrated.
+- **"Deprecation Notice"** - The data source has not been migrated.
+- **No banner** - No migration is needed for this data source.
 
 ## Common migration issues
 
@@ -93,29 +117,29 @@ The following sections contain troubleshooting guidance.
 
 **Migration banner not appearing**
 
-- Verify the `prometheusTypeMigration` feature toggle is enabled
-- Restart Grafana after enabling the feature toggle
+- Verify the `prometheusTypeMigration` feature toggle is enabled.
+- Restart Grafana after enabling the feature toggle.
 
 **Amazon Managed Service for Prometheus is not installed**
 
-- Verify that Amazon Managed Service for Prometheus is installed by going to **Connections** > **Add new connection** and search for "Amazon Managed Service for Prometheus"
-- Install Amazon Managed Service for Prometheus if not already installed
+- Verify that Amazon Managed Service for Prometheus is installed by going to **Connections** > **Add new connection** and search for "Amazon Managed Service for Prometheus".
+- Install Amazon Managed Service for Prometheus if not already installed.
 
 **After migrating, my data source returns "401 Unauthorized"**
 
-- If you are using self-hosted Grafana, check your .ini for `grafana-amazonprometheus-datasource` is included in `forward_settings_to_plugins` under the `[aws]` heading.
+- If you are using self-hosted Grafana, check that `grafana-amazonprometheus-datasource` is included in `forward_settings_to_plugins` under the `[aws]` heading in your `.ini` file.
 - If you are using Grafana Cloud, contact Grafana support.
 
 ### Rollback self-hosted Grafana without a backup
 
-If you don’t have a backup of your Grafana instance before the migration, remove the `prometheusTypeMigration` feature toggle, and run the following script. It reverts all Amazon Managed Service for Prometheus data sources back to core Prometheus.
+If you don't have a backup of your Grafana instance before the migration, remove the `prometheusTypeMigration` feature toggle, and run the following script. It reverts all Amazon Managed Service for Prometheus data sources back to core Prometheus.
 
 To revert the migration:
 
 1. Disable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles).
 2. Obtain a bearer token that has `read` and `write` permissions for your Grafana data source API. For more information on the data source API, refer to [Data source API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/data_source/).
 3. Run the script below. Make sure to provide your Grafana URL and bearer token.
-4. (Optional) Report the issue you were experiencing on the [Grafana repository](https://github.com/grafana/grafana/issues). Tag the issue with "datasource/migrate-prometheus-type"
+4. (Optional) Report the issue you were experiencing on the [Grafana repository](https://github.com/grafana/grafana/issues). Tag the issue with `datasource/migrate-prometheus-type`.
 
 ```bash
 #!/bin/bash
@@ -186,13 +210,7 @@ update_data_source_type() {
         updated_data=$(echo "$data" | jq '.type = "prometheus" | .jsonData["prometheus-type-migration"] = false')
         update_data_source "$uid" "$updated_data"
         updated_count=$((updated_count + 1))
-
-        # Log the raw data for debugging (optional - uncomment if needed)
-        # log_message "DEBUG - Updated data for $uid: $updated_data"
     done
-
-    # Note: These counts won't work in the while loop due to subshell
-    # Moving summary to the main function instead
 }
 
 # Function to get summary statistics
@@ -213,7 +231,7 @@ get_summary_stats() {
 
 # Main function to remove Prometheus type migration
 remove_prometheus_type_migration() {
-    log_message "Starting remove Azure Prometheus migration"
+    log_message "Starting Amazon Managed Prometheus migration rollback"
     log_message "Log file: $LOG_FILE"
     log_message "Grafana URL: $GRAFANA_URL"
 
@@ -229,7 +247,7 @@ remove_prometheus_type_migration() {
         log_message "Successfully fetched data sources"
         get_summary_stats "$response_body"
         update_data_source_type "$response_body"
-        log_message "Migration process completed"
+        log_message "Migration rollback completed"
     else
         log_message "error fetching data sources: HTTP $http_code - $response_body"
     fi
@@ -237,9 +255,9 @@ remove_prometheus_type_migration() {
 
 # Function to initialize log file
 initialize_log() {
-    echo "=== Grafana Azure Prometheus Migration Log ===" > "$LOG_FILE"
+    echo "=== Grafana Amazon Prometheus Migration Rollback Log ===" > "$LOG_FILE"
     echo "Started at: $(date)" >> "$LOG_FILE"
-    echo "=============================================" >> "$LOG_FILE"
+    echo "========================================================" >> "$LOG_FILE"
     echo "" >> "$LOG_FILE"
 }
 
@@ -265,7 +283,7 @@ log_message "Script completed"
 
 # Final log message
 echo ""
-echo "Migration completed. Full log available at: $LOG_FILE"
+echo "Rollback completed. Full log available at: $LOG_FILE"
 ```
 
 If you continue to experience issues, check the Grafana server logs for detailed error messages and contact [Grafana Support](https://grafana.com/help/) with your troubleshooting results.

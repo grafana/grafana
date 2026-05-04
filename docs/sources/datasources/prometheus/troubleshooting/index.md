@@ -16,6 +16,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Prometheus data source issues
 weight: 600
+review_date: 2026-03-10
 ---
 
 # Troubleshoot Prometheus data source issues
@@ -53,7 +54,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 1. Check the network latency between Grafana and Prometheus.
 1. Verify that Prometheus is not overloaded or experiencing performance issues.
 1. Increase the **Query timeout** setting in the data source configuration under **Interval behavior**.
-1. Check the [Grafana server timeout configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana#timeout) for server-level timeout settings.
+1. Check the [Grafana server timeout configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#timeout) for server-level timeout settings.
 1. Reduce the time range or complexity of your query.
 1. Check if any network devices (load balancers, proxies) are timing out the connection.
 
@@ -85,6 +86,7 @@ The following errors occur when there are issues with authentication credentials
 1. Check that the authentication method selected matches your Prometheus configuration.
 1. If using a reverse proxy with authentication, verify the credentials are correct.
 1. For AWS SigV4 authentication, verify the IAM credentials and permissions. Alternatively, consider using the [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) for simplified AWS authentication.
+1. For Azure authentication, verify the Microsoft Entra ID credentials and permissions. Alternatively, consider using the [Azure Monitor Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/) for simplified Azure authentication.
 
 ### Forbidden (403)
 
@@ -98,6 +100,7 @@ The following errors occur when there are issues with authentication credentials
 1. Check Prometheus security settings and access control configuration.
 1. If using a reverse proxy, verify the proxy is not blocking the request.
 1. For AWS Managed Prometheus, verify the IAM policy grants the required permissions. Alternatively, consider using the [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) for simplified AWS authentication.
+1. For Azure Monitor Managed Prometheus, verify the Microsoft Entra ID role assignments. Alternatively, consider using the [Azure Monitor Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/) for simplified Azure authentication.
 
 ## Query errors
 
@@ -160,7 +163,7 @@ The following errors occur when there are issues with PromQL syntax or query exe
 1. Add label filters to limit the number of time series returned.
 1. Increase the **Min interval** or **Resolution** in the query options to reduce the number of data points.
 1. Use aggregation functions to combine time series.
-1. Adjust the **Series limit** setting in the data source configuration under **Other settings**.
+1. Adjust the **Series limit** setting in the data source configuration under **Other**.
 
 ### Invalid function or aggregation
 
@@ -202,7 +205,7 @@ The following errors occur when the data source is not configured correctly.
 1. Check your Prometheus configuration file for the `scrape_interval` setting.
 1. Update the **Scrape interval** in the Grafana data source configuration under **Interval behavior** to match.
 1. Use `$__rate_interval` instead of hardcoded time windows in `rate()` queries. This variable automatically adjusts based on your scrape interval.
-1. For more information, refer to [$\_\_rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
+1. For more information, refer to [`$__rate_interval` for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
 
 ## TLS and certificate errors
 
@@ -298,6 +301,10 @@ The following issues don't produce specific error messages but are commonly enco
 1. Check that Prometheus has alerting rules configured.
 1. Ensure Grafana can access the Prometheus rules API endpoint.
 1. Note that for Prometheus (unlike Mimir), the Alerting UI only supports viewing existing rules, not creating new ones.
+
+## Data doesn't appear in Metrics Drilldown or Explore
+
+If you have successfully tested the connection to a Prometheus data source or are sending metrics to Grafana Cloud and there is no metric data appearing in Metrics Drilldown or Explore, make sure you've selected the correct data source from the data source drop-down menu. When using `remote_write` to send metrics to Grafana Cloud, the data source name follows the convention `grafanacloud-stackname-prom`.
 
 ## Get additional help
 

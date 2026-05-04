@@ -5,7 +5,7 @@ description: Guide for using the Prometheus data source's query editor
 keywords:
   - grafana
   - prometheus
-  - logs
+  - metrics
   - queries
 labels:
   products:
@@ -15,13 +15,14 @@ labels:
 menuTitle: Query editor
 title: Prometheus query editor
 weight: 300
+review_date: 2026-03-10
 ---
 
 # Prometheus query editor
 
-Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/). The Prometheus query editor is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the PostgreSQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
+Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](https://prometheus.io/docs/querying/basics/). You can access the Prometheus query editor from a dashboard panel by clicking the ellipsis in the upper right of the panel and selecting **Edit**, or from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
 
-For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/). For options and functions common to all query editors, refer to [Query editors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 The Prometheus query editor has two modes:
 
@@ -73,7 +74,7 @@ Click **+ Operations** to select from a list of operations including Aggregation
 
 - **Legend**- Lets you customize the name for the time series. You can use a predefined or custom format.
   - **Auto** - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
-  - **Verbose** - Displays all label names.
+  - **Verbose** - Displays all label names and values.
   - **Custom** - Lets you customize the legend using label templates. For example, `{{hostname}}` is replaced with the value of the `hostname` label. To switch to a different legend mode, clear the input and click outside the field.
 
 - **Min step** - Sets the minimum interval between data points returned by the query. For example, setting this to `1h` suggests that data is collected or displayed at hourly intervals. This setting supports the `$__interval` and `$__rate_interval` macros. Note that the time range of the query is aligned to this step size, which may adjust the actual start and end times of the returned data.
@@ -81,12 +82,11 @@ Click **+ Operations** to select from a list of operations including Aggregation
 - **Format** - Determines how the data from your Prometheus query is interpreted and visualized in a panel. Choose from the following format options:
   - **Time series** - The default format. Refer to [Time series kind formats](https://grafana.com/developers/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
   - **Table** - Displays data in table format. This format works only in a [Table panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/).
-  - **Heatmap** - Displays Histogram-type metrics in a [Heatmap panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/) by converting cumulative histograms to regular ones and sorting the series by the bucket bound. Converts cumulative histogram data into regular histogram format and sorts the series by bucket boundaries for proper display.
+  - **Heatmap** - Displays Histogram-type metrics in a [Heatmap panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/) by converting cumulative histograms to regular ones and sorting the series by bucket boundaries.
 
 - **Type** - This setting determines the query type. These include:
   - **Both** - The default option. Returns results for both a **Range** query and an **Instant** query.
-  - **Range** - Returns a range vector - a set of time series
-    a set of time series where each series includes multiple data points over a period of time. You can choose to visualize the data as lines, bars, points, stacked lines, or stacked bars.
+  - **Range** - Returns a range vector, a set of time series where each series includes multiple data points over a period of time. You can choose to visualize the data as lines, bars, points, stacked lines, or stacked bars.
   - **Instant** - Returns a single data point per series — the most recent value within the selected time range. The results can be displayed in a table or as raw data. To visualize instant query results in a time series panel, start by adding field override, then add a property to the override called `Transform`, and set the Transform value to `Constant` in the drop-down. For more information, refer to the [Time Series Transform option documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#transform).
 
 {{< admonition type="note" >}}
@@ -115,15 +115,7 @@ Click the **Open book icon** to open the Metrics explorer, where you can search 
 
 If you would like to explore your metrics in the query builder further, you can open the **Metrics explorer** by clicking the first option in the metric select component of the query builder.
 
-The Metrics explorer displays all metrics in a paginated table list. The list shows the total number of metrics, as well as the name, type, and description for each metric. You can enter text into the search input to filter results.
-You can also filter by type.
-
-The following options are included under the **Additional Settings** drop-down:
-
-- **Include description in search**: Toggle on to search by both name and description.
-- **Include results with no metadata**: Toggle on to include metrics that lack type or description metadata.
-- **Disable text wrap**: Toggle on to disable text wrapping.
-- **Enable regex search**: Toggle on to filter metric names by regex search, which uses an additional call on the Prometheus API.
+The Metrics explorer displays all metrics in a paginated table list. The list shows the name, type, and description for each metric. You can enter text into the search input to filter results, and use the type filter to narrow metrics by type (Counter, Gauge, Histogram, Summary, etc.).
 
 {{< admonition type="note" >}}
 The Metrics explorer (Builder mode) and [Metrics browser (Code mode)](#metrics-browser-in-code-mode) are separate elements. The Metrics explorer does not have the ability to browse labels yet, but the Metrics browser can display all labels on a metric name.
@@ -163,7 +155,7 @@ When you are satisfied with your query, click **Run query**.
 
 ## Code mode
 
-**Code mode** is for the experienced Prometheus user with prior expertise in PromQL, Prometheus' query language. The Code mode editor allows you to create queries just as you would in Prometheus. For more information about PromQL see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
+**Code mode** is for the experienced Prometheus user with prior expertise in PromQL, Prometheus' query language. The Code mode editor allows you to create queries just as you would in Prometheus. For more information about PromQL see [Querying Prometheus](https://prometheus.io/docs/querying/basics/).
 
 {{< figure src="/static/img/docs/prometheus/code-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Code mode" >}}
 
@@ -195,6 +187,85 @@ In the **Values** section, there's a single search field that filters across all
 
 When you are satisfied with your query, click **Run query**.
 
+## Common query patterns
+
+The following examples show how to build common Prometheus queries and which query editor settings to pair with them. You can build these queries in either Builder mode or Code mode.
+
+### Monitor HTTP request rate
+
+Track the per-second rate of HTTP requests, aggregated across all instances:
+
+```promql
+sum by (status) (rate(http_requests_total[$__rate_interval]))
+```
+
+| Setting    | Value                |
+| ---------- | -------------------- |
+| **Legend** | Custom: `{{status}}` |
+| **Format** | Time series          |
+| **Type**   | Range                |
+
+This query uses `$__rate_interval` to automatically size the rate window based on your scrape interval. The `sum by (status)` aggregation groups results by HTTP status code, producing one line per status on the graph. In Builder mode, select the `http_requests_total` metric, add a `Rate` range function, then a `Sum` aggregation with `status` as the label.
+
+### Calculate request latency percentiles
+
+Compute the 99th-percentile request duration from a histogram metric:
+
+```promql
+histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[$__rate_interval])))
+```
+
+| Setting    | Value                 |
+| ---------- | --------------------- |
+| **Legend** | Custom: `p99 latency` |
+| **Format** | Time series           |
+| **Type**   | Range                 |
+
+The `le` (less than or equal) label is required in the `sum by` clause because `histogram_quantile` needs bucket boundaries to calculate percentiles. To compare multiple percentiles, duplicate the query and change `0.99` to `0.95` or `0.50`.
+
+To display the raw histogram buckets as a heatmap instead, skip the `histogram_quantile` wrapper and use these settings:
+
+```promql
+sum by (le) (rate(http_request_duration_seconds_bucket[$__rate_interval]))
+```
+
+| Setting    | Value   |
+| ---------- | ------- |
+| **Format** | Heatmap |
+| **Type**   | Range   |
+
+### Compare current values across instances
+
+Show the current memory usage of every instance in a table:
+
+```promql
+(1 - (node_memory_AvailableBytes / node_memory_MemTotal)) * 100
+```
+
+| Setting    | Value                  |
+| ---------- | ---------------------- |
+| **Legend** | Custom: `{{instance}}` |
+| **Format** | Table                  |
+| **Type**   | Instant                |
+
+Setting the **Type** to **Instant** returns a single value per series (the most recent data point), which is well-suited for table visualizations. In Builder mode, you can build this using two `Metrics` selectors joined with a `Binary operation`.
+
+### Track error ratio over time
+
+Calculate the ratio of failed requests to total requests:
+
+```promql
+sum(rate(http_requests_total{status=~"5.."}[$__rate_interval])) / sum(rate(http_requests_total[$__rate_interval]))
+```
+
+| Setting    | Value                 |
+| ---------- | --------------------- |
+| **Legend** | Custom: `error ratio` |
+| **Format** | Time series           |
+| **Type**   | Range                 |
+
+The regular expression label matcher `status=~"5.."` selects all 5xx status codes. This pattern is useful for SLO dashboards where you need to track error budgets. Pair with a [Threshold](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#thresholds) to visually highlight when the error ratio exceeds your target.
+
 ## Incremental dashboard queries (beta)
 
 Starting with Grafana v10, the Prometheus data source supports incremental querying for live dashboards. Instead of re-querying the entire time range on each refresh, Grafana can fetch only new data since the last query.
@@ -202,3 +273,7 @@ Starting with Grafana v10, the Prometheus data source supports incremental query
 You can enable or disable this feature in the data source configuration or provisioning file using the `incrementalQuerying` field in `jsonData`.
 
 You can also control the overlap between consecutive incremental queries using the `incrementalQueryOverlapWindow` field in `jsonData`. By default, this is set to `10m` (10 minutes). Increasing the `incrementalQueryOverlapWindow` value increases the time range covered by each incremental query. This can help in environments where the most recent data may be delayed or incomplete.
+
+## Get help
+
+If your queries return unexpected results or errors, refer to [Troubleshoot Prometheus data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/) for common solutions.
