@@ -758,9 +758,7 @@ func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.In
 		// dual-write caller from proceeding with the legacy SQL write, which would
 		// otherwise cause k8s and SQL to diverge until the next reconciliation.
 		if idx >= 0 && t.Spec.Members[idx].External {
-			return ErrExternalTeamMember.Build(ErrExternalTeamMemberData(
-				fmt.Errorf("user %q is externally-synced", userDetails.UID),
-			))
+			return ErrExternalTeamMember.Errorf("user %q is externally-synced", userDetails.UID)
 		}
 
 		switch {

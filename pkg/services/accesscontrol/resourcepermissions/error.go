@@ -5,12 +5,11 @@ import (
 )
 
 const (
-	invalidPermissionMessage  = `Permission [{{ .Public.permission }}] is invalid for this resource type`
-	invalidAssignmentMessage  = `Assignment [{{ .Public.assignment }}] is invalid for this resource type`
-	invalidParamMessage       = `Param [{{ .Public.param }}] is invalid`
-	invalidRequestBody        = `Request body is invalid: {{ .Public.reason }}`
-	invalidResourceIDMessage  = `Resource ID [{{ .Public.resourceID }}] is not valid: wildcard "*" is not allowed`
-	externalTeamMemberMessage = `Cannot modify permission of externally-synced team member`
+	invalidPermissionMessage = `Permission [{{ .Public.permission }}] is invalid for this resource type`
+	invalidAssignmentMessage = `Assignment [{{ .Public.assignment }}] is invalid for this resource type`
+	invalidParamMessage      = `Param [{{ .Public.param }}] is invalid`
+	invalidRequestBody       = `Request body is invalid: {{ .Public.reason }}`
+	invalidResourceIDMessage = `Resource ID [{{ .Public.resourceID }}] is not valid: wildcard "*" is not allowed`
 )
 
 var (
@@ -24,8 +23,8 @@ var (
 				MustTemplate(invalidAssignmentMessage, errutil.WithPublic(invalidAssignmentMessage))
 	ErrInvalidResourceID = errutil.BadRequest("resourcePermissions.invalidResourceID").
 				MustTemplate(invalidResourceIDMessage, errutil.WithPublic(invalidResourceIDMessage))
-	ErrExternalTeamMember = errutil.BadRequest("resourcePermissions.externalTeamMember").
-				MustTemplate(externalTeamMemberMessage, errutil.WithPublic(externalTeamMemberMessage))
+	ErrExternalTeamMember = errutil.BadRequest("resourcePermissions.externalTeamMember",
+		errutil.WithPublicMessage("Cannot modify permission of externally-synced team member"))
 )
 
 func ErrInvalidParamData(param string, err error) errutil.TemplateData {
@@ -67,8 +66,4 @@ func ErrInvalidResourceIDData(resourceID string) errutil.TemplateData {
 			"resourceID": resourceID,
 		},
 	}
-}
-
-func ErrExternalTeamMemberData(err error) errutil.TemplateData {
-	return errutil.TemplateData{Error: err}
 }
