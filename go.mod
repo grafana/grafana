@@ -4,8 +4,8 @@ go 1.26.2
 
 // Direct requirements -- every entry needs an owner
 require (
-	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.18.1-20250703125925-3f0fcf4bff96.1 // @grafana/data-sources-plugins
-	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.2-20250703125925-3f0fcf4bff96.1 // @grafana/data-sources-plugins
+	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.19.2-20260413103946-e19e4fde69b5.1 // @grafana/data-sources-plugins
+	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.11-20260413103946-e19e4fde69b5.1 // @grafana/data-sources-plugins
 	cloud.google.com/go/aiplatform v1.120.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/kms v1.26.0 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.62.1 // @grafana/grafana-backend-group
