@@ -11,7 +11,8 @@ This folder contains generic SQL editor behavior used by SQL Expressions. Keep t
 
 ## Completion Behavior
 
-- Generic SQL keywords are intentionally included and boosted so common words like `FROM` win over niche functions such as `from_unixtime`.
+- Generic SQL keyword completions come from CodeMirror's SQL language source in merge mode; avoid duplicating them in custom sources.
+- Custom table and column completions should keep enough boost to surface above language/default suggestions.
 - Qualified column completions should support table aliases from `FROM A AS a` and `JOIN B b`.
 - Column lookups for multiple tables should stay concurrent because provider calls are independent.
 

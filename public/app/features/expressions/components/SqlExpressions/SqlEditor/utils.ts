@@ -1,4 +1,9 @@
-import { type CodeMirrorCompletionSource } from '@grafana/ui/unstable';
+import {
+  type CodeMirrorCompletion,
+  type CodeMirrorCompletionContext,
+  type CodeMirrorCompletionResult,
+  type CodeMirrorCompletionSource,
+} from '@grafana/ui/unstable';
 
 import { getSqlCompletionSituation } from './completionSituation';
 
@@ -6,31 +11,6 @@ export type SqlCompletionKind = 'clause' | 'column' | 'function' | 'keyword' | '
 
 const SQL_WORD_PATTERN = /[\w$]*/;
 const SQL_COMPLETION_VALID_FOR_PATTERN = /^[\w$]*$/;
-
-// General completions cover expression keywords plus SELECT/FROM, which are needed before clause completions apply.
-const DEFAULT_SQL_KEYWORDS: SqlCompletionItem[] = [
-  'SELECT',
-  'FROM',
-  'AS',
-  'DISTINCT',
-  'CASE',
-  'WHEN',
-  'THEN',
-  'ELSE',
-  'END',
-  'AND',
-  'OR',
-  'NOT',
-  'NULL',
-  'IS',
-  'IN',
-  'BETWEEN',
-  'LIKE',
-  'EXISTS',
-  'ASC',
-  'DESC',
-  'CAST',
-].map((label) => ({ label, kind: 'keyword', boost: 50 }));
 
 export interface SqlCompletionItem {
   label: string;
@@ -72,11 +52,7 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
 
       return context.aborted
         ? null
-        : {
-            from: situation.from,
-            options: columns.map((item) => toCodeMirrorCompletion(item, 'column')),
-            validFor: SQL_COMPLETION_VALID_FOR_PATTERN,
-          };
+        : toPinnedCodeMirrorCompletionResult(context, situation.from, [{ items: columns, fallbackKind: 'column' }]);
     }
 
     if (situation.type === 'table') {
@@ -84,21 +60,13 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
 
       return context.aborted
         ? null
-        : {
-            from: situation.from,
-            options: tables.map((item) => toCodeMirrorCompletion(item, 'table')),
-            validFor: SQL_COMPLETION_VALID_FOR_PATTERN,
-          };
+        : toPinnedCodeMirrorCompletionResult(context, situation.from, [{ items: tables, fallbackKind: 'table' }]);
     }
 
     if (situation.type === 'clause') {
       const clauses = resolveClauses(completionProvider);
 
-      return {
-        from: situation.from,
-        options: clauses.map((item) => toCodeMirrorCompletion(item, 'clause')),
-        validFor: SQL_COMPLETION_VALID_FOR_PATTERN,
-      };
+      return toPinnedCodeMirrorCompletionResult(context, situation.from, [{ items: clauses, fallbackKind: 'clause' }]);
     }
 
     if (situation.type === 'none') {
@@ -110,19 +78,50 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
 
     return context.aborted
       ? null
-      : {
-          from: situation.from,
-          options: [
-            ...columns.map((item) => toCodeMirrorCompletion(item, 'column')),
-            ...DEFAULT_SQL_KEYWORDS.map((item) => toCodeMirrorCompletion(item, 'keyword')),
-            ...functions.map((item) => toCodeMirrorCompletion(item, 'function')),
-          ],
-          validFor: SQL_COMPLETION_VALID_FOR_PATTERN,
-        };
+      : toCodeMirrorCompletionResult(situation.from, [
+          { items: columns, fallbackKind: 'column' },
+          { items: functions, fallbackKind: 'function' },
+        ]);
   };
 }
 
-function toCodeMirrorCompletion(item: SqlCompletionItem, fallbackKind: SqlCompletionKind) {
+interface CompletionItemGroup {
+  items: SqlCompletionItem[];
+  fallbackKind: SqlCompletionKind;
+}
+
+function toCodeMirrorCompletionResult(from: number, groups: CompletionItemGroup[]): CodeMirrorCompletionResult {
+  return {
+    from,
+    options: toCodeMirrorCompletions(groups),
+    validFor: SQL_COMPLETION_VALID_FOR_PATTERN,
+  };
+}
+
+function toPinnedCodeMirrorCompletionResult(
+  context: CodeMirrorCompletionContext,
+  from: number,
+  groups: CompletionItemGroup[]
+): CodeMirrorCompletionResult {
+  const filterText = getCompletionFilterText(context, from);
+  const options = toCodeMirrorCompletions(groups).filter((completion) =>
+    matchesCompletionFilter(completion, filterText)
+  );
+
+  // CodeMirror keeps unfiltered source results above merged language/default results.
+  return {
+    from,
+    options,
+    filter: false,
+    getMatch: (completion) => getCompletionMatch(completion.label, filterText),
+  };
+}
+
+function toCodeMirrorCompletions(groups: CompletionItemGroup[]): CodeMirrorCompletion[] {
+  return groups.flatMap(({ items, fallbackKind }) => items.map((item) => toCodeMirrorCompletion(item, fallbackKind)));
+}
+
+function toCodeMirrorCompletion(item: SqlCompletionItem, fallbackKind: SqlCompletionKind): CodeMirrorCompletion {
   const kind = item.kind ?? fallbackKind;
 
   return {
@@ -134,6 +133,29 @@ function toCodeMirrorCompletion(item: SqlCompletionItem, fallbackKind: SqlComple
     section: getCompletionSection(kind),
     boost: item.boost,
   };
+}
+
+function getCompletionFilterText(context: CodeMirrorCompletionContext, from: number): string {
+  return context.state.doc.sliceString(from, context.pos).toLowerCase();
+}
+
+function matchesCompletionFilter(completion: CodeMirrorCompletion, filterText: string): boolean {
+  if (!filterText) {
+    return true;
+  }
+
+  return [completion.label, typeof completion.apply === 'string' ? completion.apply : undefined].some((value) =>
+    value?.toLowerCase().includes(filterText)
+  );
+}
+
+function getCompletionMatch(label: string, filterText: string): number[] {
+  if (!filterText) {
+    return [];
+  }
+
+  const matchIndex = label.toLowerCase().indexOf(filterText);
+  return matchIndex === -1 ? [] : [matchIndex, matchIndex + filterText.length];
 }
 
 function getCompletionType(kind: SqlCompletionKind): string {

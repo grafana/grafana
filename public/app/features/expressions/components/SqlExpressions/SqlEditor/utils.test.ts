@@ -97,7 +97,7 @@ describe('SQL editor completion utils', () => {
     ).resolves.toEqual(expect.objectContaining({ options: [] }));
   });
 
-  it('keeps keyword completions when the function provider throws', async () => {
+  it('returns general completions when the function provider throws', async () => {
     const result = await getCompletionResult(
       {
         functions: () => {
@@ -107,7 +107,7 @@ describe('SQL editor completion utils', () => {
       'SELECT ca'
     );
 
-    expect(result?.options).toEqual(expect.arrayContaining([expect.objectContaining({ label: 'CASE' })]));
+    expect(result).toEqual(expect.objectContaining({ options: [] }));
   });
 
   it('does not suggest clauses after a terminated statement', async () => {
@@ -230,36 +230,46 @@ describe('SQL editor completion utils', () => {
     );
   });
 
-  it('prioritizes generic SQL keywords over matching function names', async () => {
+  it('leaves generic SQL keyword completions to the merged language source', async () => {
     const result = await getCompletionResult(
       {
         functions: () => [{ label: 'from_unixtime', kind: 'function' }],
       },
       'SELECT A.__metric_name__\nfrom'
     );
-    const fromKeyword = result?.options.find((option) => option.label === 'FROM');
     const fromFunction = result?.options.find((option) => option.label === 'from_unixtime');
 
-    expect(fromKeyword).toEqual(
-      expect.objectContaining({
-        boost: expect.any(Number),
-        section: { name: 'Keywords', rank: 2 },
-        type: 'keyword',
-      })
-    );
     expect(fromFunction).toEqual(
       expect.objectContaining({
         section: { name: 'Functions', rank: 3 },
         type: 'function',
       })
     );
-    expect(fromKeyword?.boost ?? 0).toBeGreaterThan(fromFunction?.boost ?? 0);
+    expect(result?.options).not.toEqual(expect.arrayContaining([expect.objectContaining({ label: 'FROM' })]));
   });
 
-  it('suggests expression-level SQL keywords in general completions', async () => {
+  it('uses CodeMirror filtering for general completions so language keywords can rank normally', async () => {
+    const result = await getCompletionResult(
+      {
+        functions: () => [{ label: 'from_unixtime', kind: 'function' }],
+      },
+      'SELECT * from'
+    );
+
+    expect(result).toEqual(expect.objectContaining({ validFor: expect.any(RegExp) }));
+    expect(result?.filter).not.toBe(false);
+    expect(result?.options.map((option) => option.label)).toEqual(['from_unixtime']);
+  });
+
+  it('does not duplicate language SQL keywords in general completions', async () => {
+    const result = await getCompletionResult({ functions: () => [] }, 'SELEC');
+
+    expect(result?.options).not.toEqual(expect.arrayContaining([expect.objectContaining({ label: 'SELECT' })]));
+  });
+
+  it('does not duplicate expression-level SQL keywords in general completions', async () => {
     const result = await getCompletionResult({ functions: () => [] }, 'SELECT ca');
 
-    expect(result?.options).toEqual(expect.arrayContaining([expect.objectContaining({ label: 'CASE' })]));
-    expect(result?.options).not.toEqual(expect.arrayContaining([expect.objectContaining({ label: 'WHERE' })]));
+    expect(result?.options).not.toEqual(expect.arrayContaining([expect.objectContaining({ label: 'CASE' })]));
   });
 });

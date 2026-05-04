@@ -72,7 +72,6 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
         CLAUSE_COMPLETIONS.map((clause) => ({
           label: clause,
           kind: 'clause',
-          boost: 25,
         })),
       functions: () =>
         ALLOWED_FUNCTIONS.map((func) => ({
@@ -233,7 +232,7 @@ LIMIT
                 value={query.expression ?? initialQuery}
                 onChange={onEditorChange}
                 completionProvider={completionProvider}
-                completionMode="override"
+                completionMode="merge"
                 formatter={formatSQL}
                 height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
                 ariaLabel={t('expressions.sql-expression.editor.aria-label', 'SQL expression editor')}
