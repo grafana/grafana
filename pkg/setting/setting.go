@@ -1063,12 +1063,13 @@ type AnnotationAppPlatformSettings struct {
 	GRPCTLSSkipVerify bool   // Skip TLS verification (insecure, for testing)
 
 	// Postgres store configuration
-	PostgresConnectionString string        // PostgreSQL connection string
-	PostgresMaxConnections   int           // Maximum number of connections in the pool
-	PostgresMaxIdleConns     int           // Maximum number of idle connections
-	PostgresConnMaxLifetime  time.Duration // Maximum lifetime of a connection
-	PostgresTagCacheTTL      time.Duration // TTL for tag query cache
-	PostgresTagCacheSize     int           // Size of the tag query cache
+	PostgresConnStrings        []string      // Connection strings for data shards
+	PostgresMetadataConnString string        // Connection string for the metadata database
+	PostgresMaxConnections     int           // Maximum number of connections per shard
+	PostgresMaxIdleConns       int           // Maximum number of idle connections per shard
+	PostgresConnMaxLifetime    time.Duration // Maximum lifetime of a connection
+	PostgresTagCacheTTL        time.Duration // TTL for tag query cache
+	PostgresTagCacheSize       int           // Size of the tag query cache
 }
 
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
@@ -1084,13 +1085,29 @@ func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSetti
 		GRPCTLSSkipVerify: appPlatformSection.Key("grpc_tls_skip_verify").MustBool(false),
 
 		// Postgres configuration
-		PostgresConnectionString: appPlatformSection.Key("postgres_connection_string").MustString(""),
-		PostgresMaxConnections:   appPlatformSection.Key("postgres_max_connections").MustInt(10),
-		PostgresMaxIdleConns:     appPlatformSection.Key("postgres_max_idle_conns").MustInt(5),
-		PostgresConnMaxLifetime:  appPlatformSection.Key("postgres_conn_max_lifetime").MustDuration(time.Hour),
-		PostgresTagCacheTTL:      appPlatformSection.Key("postgres_tag_cache_ttl").MustDuration(60 * time.Second),
-		PostgresTagCacheSize:     appPlatformSection.Key("postgres_tag_cache_size").MustInt(1000),
+		PostgresConnStrings:        parseConnStrings(appPlatformSection.Key("postgres_connection_strings").MustString("")),
+		PostgresMetadataConnString: appPlatformSection.Key("postgres_metadata_connection_string").MustString(""),
+		PostgresMaxConnections:     appPlatformSection.Key("postgres_max_connections").MustInt(10),
+		PostgresMaxIdleConns:       appPlatformSection.Key("postgres_max_idle_conns").MustInt(5),
+		PostgresConnMaxLifetime:    appPlatformSection.Key("postgres_conn_max_lifetime").MustDuration(time.Hour),
+		PostgresTagCacheTTL:        appPlatformSection.Key("postgres_tag_cache_ttl").MustDuration(60 * time.Second),
+		PostgresTagCacheSize:       appPlatformSection.Key("postgres_tag_cache_size").MustInt(1000),
 	}
+}
+
+func parseConnStrings(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
 }
 
 // envNameFromIniName converts an ini-style name (section or key) to the
