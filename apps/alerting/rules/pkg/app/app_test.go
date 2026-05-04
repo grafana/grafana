@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulechain"
 )
 
 func makeDefaultRuntimeConfig() config.RuntimeConfig {
@@ -384,6 +385,96 @@ func TestRecordingRuleValidation_Errors(t *testing.T) {
 	}), "want query expression requires relative time range error")
 }
 
+func TestAlertRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
+	baseCfg := makeDefaultRuntimeConfig()
+	baseCfg.FolderValidator = func(ctx context.Context, folderUID string) (bool, error) {
+		return folderUID == "f1" || folderUID == "f2", nil
+	}
+	baseCfg.ResolveRuleChainMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleChainMembership, error) {
+		out := map[string]config.RuleChainMembership{}
+		for _, uid := range uids {
+			if uid == "uid-1" {
+				out[uid] = config.RuleChainMembership{ChainUID: "chain-1", Found: true}
+			} else {
+				out[uid] = config.RuleChainMembership{}
+			}
+		}
+		return out, nil
+	}
+
+	v := alertrule.NewValidator(baseCfg)
+
+	t.Run("delete blocked when rule is in chain", func(t *testing.T) {
+		err := v.Validate(context.Background(), &appsdk.AdmissionRequest{
+			Action:    resource.AdmissionActionDelete,
+			OldObject: baseAlertRule(),
+		})
+		if err == nil {
+			t.Fatalf("expected delete to be blocked")
+		}
+	})
+
+	t.Run("folder move blocked when rule is in chain", func(t *testing.T) {
+		oldRule := baseAlertRule()
+		newRule := baseAlertRule()
+		newRule.Annotations[v1.FolderAnnotationKey] = "f2"
+
+		err := v.Validate(context.Background(), &appsdk.AdmissionRequest{
+			Action:    resource.AdmissionActionUpdate,
+			Object:    newRule,
+			OldObject: oldRule,
+		})
+		if err == nil {
+			t.Fatalf("expected folder move to be blocked")
+		}
+	})
+}
+
+func TestRecordingRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
+	baseCfg := makeDefaultRuntimeConfig()
+	baseCfg.FolderValidator = func(ctx context.Context, folderUID string) (bool, error) {
+		return folderUID == "f1" || folderUID == "f2", nil
+	}
+	baseCfg.ResolveRuleChainMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleChainMembership, error) {
+		out := map[string]config.RuleChainMembership{}
+		for _, uid := range uids {
+			if uid == "uid-1" {
+				out[uid] = config.RuleChainMembership{ChainUID: "chain-1", Found: true}
+			} else {
+				out[uid] = config.RuleChainMembership{}
+			}
+		}
+		return out, nil
+	}
+
+	v := recordingrule.NewValidator(baseCfg)
+
+	t.Run("delete blocked when rule is in chain", func(t *testing.T) {
+		err := v.Validate(context.Background(), &appsdk.AdmissionRequest{
+			Action:    resource.AdmissionActionDelete,
+			OldObject: baseRecordingRule(),
+		})
+		if err == nil {
+			t.Fatalf("expected delete to be blocked")
+		}
+	})
+
+	t.Run("folder move blocked when rule is in chain", func(t *testing.T) {
+		oldRule := baseRecordingRule()
+		newRule := baseRecordingRule()
+		newRule.Annotations[v1.FolderAnnotationKey] = "f2"
+
+		err := v.Validate(context.Background(), &appsdk.AdmissionRequest{
+			Action:    resource.AdmissionActionUpdate,
+			Object:    newRule,
+			OldObject: oldRule,
+		})
+		if err == nil {
+			t.Fatalf("expected folder move to be blocked")
+		}
+	})
+}
+
 func baseRecordingRule() *v1.RecordingRule {
 	r := &v1.RecordingRule{}
 	r.SetGroupVersionKind(v1.RecordingRuleKind().GroupVersionKind())
@@ -403,3 +494,226 @@ func baseRecordingRule() *v1.RecordingRule {
 
 func boolPtr(b bool) *bool    { return &b }
 func strPtr(s string) *string { return &s }
+
+// --- RuleChain helpers ---
+
+func baseRuleChain() *v1.RuleChain {
+	r := &v1.RuleChain{}
+	r.SetGroupVersionKind(v1.RuleChainKind().GroupVersionKind())
+	r.Name = "chain-1"
+	r.Namespace = "ns1"
+	r.Annotations = map[string]string{v1.FolderAnnotationKey: "f1"}
+	r.Labels = map[string]string{}
+	r.Spec = v1.RuleChainSpec{
+		Trigger: v1.RuleChainIntervalTrigger{Interval: v1.RuleChainPromDuration("60s")},
+		RecordingRules: []v1.RuleChainRuleRef{
+			{Uid: "rec-1"},
+		},
+		AlertingRules: []v1.RuleChainRuleRef{
+			{Uid: "alert-1"},
+		},
+	}
+	return r
+}
+
+func ruleChainRuntimeConfig() config.RuntimeConfig {
+	cfg := makeDefaultRuntimeConfig()
+	cfg.ResolveRuleRef = func(ctx context.Context, uid string) (config.RuleRef, bool, error) {
+		switch uid {
+		case "rec-1", "rec-2", "alert-1":
+			return config.RuleRef{UID: uid, FolderUID: "f1"}, true, nil
+		case "other-folder-rule":
+			return config.RuleRef{UID: uid, FolderUID: "f2"}, true, nil
+		default:
+			return config.RuleRef{}, false, nil
+		}
+	}
+	cfg.ResolveRuleChainMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleChainMembership, error) {
+		out := make(map[string]config.RuleChainMembership, len(uids))
+		for _, uid := range uids {
+			out[uid] = config.RuleChainMembership{}
+		}
+		return out, nil
+	}
+	return cfg
+}
+
+func TestRuleChainValidation_Success(t *testing.T) {
+	r := baseRuleChain()
+	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
+	validator := rulechain.NewValidator(ruleChainRuntimeConfig())
+	require.NoError(t, validator.Validate(context.Background(), req))
+}
+
+func TestRuleChainValidation_Errors(t *testing.T) {
+	cfg := ruleChainRuntimeConfig()
+
+	mk := func(mut func(r *v1.RuleChain)) error {
+		r := baseRuleChain()
+		mut(r)
+		return rulechain.NewValidator(cfg).Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r})
+	}
+
+	t.Run("missing folder", func(t *testing.T) {
+		err := mk(func(r *v1.RuleChain) { r.Annotations = nil })
+		require.Error(t, err)
+	})
+
+	t.Run("folder does not exist", func(t *testing.T) {
+		err := mk(func(r *v1.RuleChain) { r.Annotations[v1.FolderAnnotationKey] = "bad" })
+		require.Error(t, err)
+	})
+
+	t.Run("bad interval", func(t *testing.T) {
+		err := mk(func(r *v1.RuleChain) { r.Spec.Trigger.Interval = v1.RuleChainPromDuration("30s") })
+		require.Error(t, err)
+	})
+
+	t.Run("empty recording rules nil", func(t *testing.T) {
+		err := mk(func(r *v1.RuleChain) { r.Spec.RecordingRules = nil })
+		require.Error(t, err)
+	})
+
+	t.Run("empty recording rules empty slice", func(t *testing.T) {
+		err := mk(func(r *v1.RuleChain) { r.Spec.RecordingRules = []v1.RuleChainRuleRef{} })
+		require.Error(t, err)
+	})
+
+	t.Run("empty uid in ref", func(t *testing.T) {
+		err := mk(func(r *v1.RuleChain) {
+			r.Spec.RecordingRules = []v1.RuleChainRuleRef{{Uid: ""}}
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("duplicate uid", func(t *testing.T) {
+		err := mk(func(r *v1.RuleChain) {
+			r.Spec.RecordingRules = []v1.RuleChainRuleRef{{Uid: "rec-1"}}
+			r.Spec.AlertingRules = []v1.RuleChainRuleRef{{Uid: "rec-1"}}
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("rule does not exist", func(t *testing.T) {
+		err := mk(func(r *v1.RuleChain) {
+			r.Spec.RecordingRules = []v1.RuleChainRuleRef{{Uid: "nonexistent"}}
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("rule in wrong folder", func(t *testing.T) {
+		err := mk(func(r *v1.RuleChain) {
+			r.Spec.RecordingRules = []v1.RuleChainRuleRef{{Uid: "other-folder-rule"}}
+			r.Spec.AlertingRules = nil
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("invalid provenance", func(t *testing.T) {
+		err := mk(func(r *v1.RuleChain) {
+			r.Annotations[v1.ProvenanceStatusAnnotationKey] = "invalid-provenance"
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("valid non-empty provenance accepted", func(t *testing.T) {
+		err := mk(func(r *v1.RuleChain) {
+			r.Annotations[v1.ProvenanceStatusAnnotationKey] = v1.ProvenanceStatusAPI
+		})
+		require.NoError(t, err)
+	})
+}
+
+func TestRuleChainValidation_MembershipGuardrails(t *testing.T) {
+	cfg := ruleChainRuntimeConfig()
+	// Override membership resolver: rec-1 already belongs to chain-other
+	cfg.ResolveRuleChainMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleChainMembership, error) {
+		out := make(map[string]config.RuleChainMembership, len(uids))
+		for _, uid := range uids {
+			if uid == "rec-1" {
+				out[uid] = config.RuleChainMembership{ChainUID: "chain-other", Found: true}
+			} else {
+				out[uid] = config.RuleChainMembership{}
+			}
+		}
+		return out, nil
+	}
+
+	t.Run("create blocked when rule belongs to another chain", func(t *testing.T) {
+		r := baseRuleChain()
+		err := rulechain.NewValidator(cfg).Validate(context.Background(), &appsdk.AdmissionRequest{
+			Action: resource.AdmissionActionCreate,
+			Object: r,
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "chain-other")
+	})
+
+	t.Run("update allowed when rule belongs to same chain", func(t *testing.T) {
+		cfg2 := cfg
+		cfg2.ResolveRuleChainMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleChainMembership, error) {
+			out := make(map[string]config.RuleChainMembership, len(uids))
+			for _, uid := range uids {
+				if uid == "rec-1" {
+					// Same chain as the object being validated (chain-1)
+					out[uid] = config.RuleChainMembership{ChainUID: "chain-1", Found: true}
+				} else {
+					out[uid] = config.RuleChainMembership{}
+				}
+			}
+			return out, nil
+		}
+		r := baseRuleChain()
+		err := rulechain.NewValidator(cfg2).Validate(context.Background(), &appsdk.AdmissionRequest{
+			Action: resource.AdmissionActionUpdate,
+			Object: r,
+		})
+		require.NoError(t, err)
+	})
+}
+
+func TestRuleChainMutation(t *testing.T) {
+	cfg := makeDefaultRuntimeConfig()
+
+	t.Run("folder label synced from annotation", func(t *testing.T) {
+		r := baseRuleChain()
+		r.Labels = nil
+		mutator := rulechain.NewMutator(cfg)
+		resp, err := mutator.Mutate(context.Background(), &appsdk.AdmissionRequest{
+			Action: resource.AdmissionActionCreate,
+			Object: r,
+		})
+		require.NoError(t, err)
+		updated := resp.UpdatedObject.(*v1.RuleChain)
+		assert.Equal(t, "f1", updated.Labels[v1.FolderLabelKey])
+	})
+
+	t.Run("duration clamped", func(t *testing.T) {
+		r := baseRuleChain()
+		r.Spec.Trigger.Interval = v1.RuleChainPromDuration("120s")
+		mutator := rulechain.NewMutator(cfg)
+		resp, err := mutator.Mutate(context.Background(), &appsdk.AdmissionRequest{
+			Action: resource.AdmissionActionCreate,
+			Object: r,
+		})
+		require.NoError(t, err)
+		updated := resp.UpdatedObject.(*v1.RuleChain)
+		assert.Equal(t, "2m", string(updated.Spec.Trigger.Interval))
+	})
+
+	t.Run("no annotation no label", func(t *testing.T) {
+		r := baseRuleChain()
+		r.Annotations = map[string]string{} // no folder annotation
+		r.Labels = nil
+		mutator := rulechain.NewMutator(cfg)
+		resp, err := mutator.Mutate(context.Background(), &appsdk.AdmissionRequest{
+			Action: resource.AdmissionActionCreate,
+			Object: r,
+		})
+		require.NoError(t, err)
+		updated := resp.UpdatedObject.(*v1.RuleChain)
+		if updated.Labels != nil {
+			assert.NotContains(t, updated.Labels, v1.FolderLabelKey)
+		}
+	})
+}
