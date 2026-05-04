@@ -153,6 +153,38 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 	return oas, nil
 }
 
+// getPathOperations returns the set of non-nil operations defined on a path.
+// Equivalent to builder.GetPathOperations in the root module, inlined here to
+// avoid a cross-module dependency that breaks go mod tidy.
+func getPathOperations(path *spec3.PathProps) map[string]*spec3.Operation {
+	ops := make(map[string]*spec3.Operation)
+	if path.Get != nil {
+		ops[http.MethodGet] = path.Get
+	}
+	if path.Head != nil {
+		ops[http.MethodHead] = path.Head
+	}
+	if path.Delete != nil {
+		ops[http.MethodDelete] = path.Delete
+	}
+	if path.Post != nil {
+		ops[http.MethodPost] = path.Post
+	}
+	if path.Put != nil {
+		ops[http.MethodPut] = path.Put
+	}
+	if path.Patch != nil {
+		ops[http.MethodPatch] = path.Patch
+	}
+	if path.Trace != nil {
+		ops[http.MethodTrace] = path.Trace
+	}
+	if path.Options != nil {
+		ops[http.MethodOptions] = path.Options
+	}
+	return ops
+}
+
 // safely copy components from src to dst
 func copyComponents(src *spec3.Components, dst *spec3.Components) {
 	if src.Schemas != nil {
