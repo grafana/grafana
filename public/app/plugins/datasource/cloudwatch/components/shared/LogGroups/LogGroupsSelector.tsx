@@ -9,6 +9,7 @@ import {
   Label,
   LoadingPlaceholder,
   Modal,
+  Pagination,
   Select,
   Space,
   TextLink,
@@ -21,6 +22,16 @@ import getStyles from '../../styles';
 import { Account, ALL_ACCOUNTS_OPTION } from '../Account';
 
 import Search from './Search';
+
+const LOG_GROUPS_PAGE_SIZE = 50;
+
+type LogGroupSortOrder = 'nameAsc' | 'nameDesc';
+
+const LOG_GROUP_SORT_OPTIONS: Array<SelectableValue<LogGroupSortOrder>> = [
+  { label: 'Name (A-Z)', value: 'nameAsc' },
+  { label: 'Name (Z-A)', value: 'nameDesc' },
+];
+const logGroupNameCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 type CrossAccountLogsQueryProps = {
   selectedLogGroups?: LogGroup[];
@@ -45,6 +56,8 @@ export const LogGroupsSelector = ({
   const [searchPhrase, setSearchPhrase] = useState('');
   const [searchAccountId, setSearchAccountId] = useState(ALL_ACCOUNTS_OPTION.value);
   const [isLoading, setIsLoading] = useState(false);
+  const [sortOrder, setSortOrder] = useState<LogGroupSortOrder>('nameAsc');
+  const [currentPage, setCurrentPage] = useState(1);
   const styles = useStyles2(getStyles);
   const selectedLogGroupsCounter = useMemo(
     () => selectedLogGroups.filter((lg) => !lg.name?.startsWith('$')).length,
@@ -59,6 +72,18 @@ export const LogGroupsSelector = ({
     label: selectedVariable,
     value: selectedVariable,
   };
+
+  const sortedLogGroups = useMemo(() => {
+    const sorted = [...selectableLogGroups].sort((a, b) => logGroupNameCollator.compare(a.name, b.name));
+
+    return sortOrder === 'nameDesc' ? sorted.reverse() : sorted;
+  }, [selectableLogGroups, sortOrder]);
+
+  const numberOfPages = Math.ceil(sortedLogGroups.length / LOG_GROUPS_PAGE_SIZE);
+  const paginatedLogGroups = useMemo(() => {
+    const pageOffset = (currentPage - 1) * LOG_GROUPS_PAGE_SIZE;
+    return sortedLogGroups.slice(pageOffset, pageOffset + LOG_GROUPS_PAGE_SIZE);
+  }, [currentPage, sortedLogGroups]);
 
   useEffect(() => {
     setSelectedLogGroups(props.selectedLogGroups ?? []);
@@ -89,6 +114,7 @@ export const LogGroupsSelector = ({
       const possibleLogGroups = await fetchLogGroups({
         logGroupPattern: searchTerm,
         accountId: accountId,
+        listAllLogGroups: true,
       });
       setSelectableLogGroups(
         possibleLogGroups.map((lg) => ({
@@ -98,6 +124,7 @@ export const LogGroupsSelector = ({
           accountLabel: lg.accountId ? accountNameById[lg.accountId] : undefined,
         }))
       );
+      setCurrentPage(1);
     } catch (err) {
       setSelectableLogGroups([]);
     }
@@ -146,15 +173,27 @@ export const LogGroupsSelector = ({
             accountOptions={accountOptions}
             accountId={searchAccountId}
           />
+          <div className={styles.sortField}>
+            <EditorField label="Sort order">
+              <Select
+                aria-label="Sort order"
+                options={LOG_GROUP_SORT_OPTIONS}
+                value={LOG_GROUP_SORT_OPTIONS.find((option) => option.value === sortOrder)}
+                onChange={(option) => {
+                  setSortOrder(option?.value ?? 'nameAsc');
+                  setCurrentPage(1);
+                }}
+              />
+            </EditorField>
+          </div>
         </div>
         <Space layout="block" v={2} />
         <div>
-          {!isLoading && selectableLogGroups.length >= 25 && (
+          {!isLoading && (
             <>
               <div className={styles.limitLabel}>
                 <Icon name="info-circle"></Icon>
-                Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your
-                search.
+                Use pagination to browse all matching results.
                 <p>
                   A{' '}
                   <TextLink
@@ -163,7 +202,7 @@ export const LogGroupsSelector = ({
                   >
                     maximum{' '}
                   </TextLink>{' '}
-                  of 50 Cloudwatch log groups can be queried at one time.
+                  of 50 CloudWatch log groups can be queried at one time.
                 </p>
               </div>
               <Space layout="block" v={1} />
@@ -192,7 +231,7 @@ export const LogGroupsSelector = ({
                   </tr>
                 )}
                 {!isLoading &&
-                  selectableLogGroups.map((row) => (
+                  paginatedLogGroups.map((row) => (
                     <tr className={styles.row} key={`${row.arn}`}>
                       <td className={styles.cell}>
                         <div className={styles.nestedEntry}>
@@ -214,6 +253,11 @@ export const LogGroupsSelector = ({
               </tbody>
             </table>
           </div>
+          {!isLoading && numberOfPages > 1 && (
+            <div className={styles.pagination}>
+              <Pagination currentPage={currentPage} numberOfPages={numberOfPages} onNavigate={setCurrentPage} />
+            </div>
+          )}
         </div>
         <Space layout="block" v={2} />
         <Label className={styles.logGroupCountLabel}>
