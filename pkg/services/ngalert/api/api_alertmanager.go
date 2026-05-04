@@ -144,6 +144,18 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, alerts)
 }
 
+func (srv AlertmanagerSrv) RoutePostAMAlerts(c *contextmodel.ReqContext, body apimodels.PostableAlerts) response.Response {
+	am, errResp := srv.AlertmanagerFor(c.GetOrgID())
+	if errResp != nil {
+		return errResp
+	}
+
+	if err := am.PutAlerts(c.Req.Context(), body); err != nil {
+		return response.Error(http.StatusInternalServerError, "could not put alerts", err)
+	}
+	return response.JSON(http.StatusOK, nil)
+}
+
 func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *contextmodel.ReqContext, id string) response.Response {
 	confId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {

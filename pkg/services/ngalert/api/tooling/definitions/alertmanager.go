@@ -115,6 +115,15 @@ import (
 //       400: ValidationError
 //       404: NotFound
 
+// swagger:route POST /alertmanager/grafana/api/v2/alerts alertmanager RoutePostGrafanaAMAlerts
+//
+// create alertmanager alerts
+//
+//     Responses:
+//       200: description: The alert was created successfully.
+//       400: ValidationError
+//       404: NotFound
+
 // swagger:route POST /alertmanager/{DatasourceUID}/api/v2/alerts alertmanager RoutePostAMAlerts
 //
 // create alertmanager alerts
@@ -603,10 +612,17 @@ type AlertsParams struct {
 	Receivers string `json:"receiver"`
 }
 
-// swagger:parameters RoutePostAMAlerts
+// swagger:parameters RoutePostAMAlerts RoutePostGrafanaAMAlerts
 type PostableAlerts struct {
 	// in:body
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`
+}
+
+func (pa *PostableAlerts) UnmarshalJSON(b []byte) error {
+	inner := []amv2.PostableAlert{}
+	res := json.Unmarshal(b, &inner)
+	pa.PostableAlerts = inner
+	return res
 }
 
 // swagger:parameters RoutePostAlertingConfig RoutePostGrafanaAlertingConfig
