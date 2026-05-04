@@ -447,7 +447,7 @@ export class GeomapPanel extends Component<Props, State> {
       view.setMaxZoom(config.maxZoom);
     }
     if (config.minZoom) {
-      view.setMaxZoom(config.minZoom);
+      view.setMinZoom(config.minZoom);
     }
     if (config.zoom && v?.id !== MapCenterID.Fit) {
       view.setZoom(config.zoom);

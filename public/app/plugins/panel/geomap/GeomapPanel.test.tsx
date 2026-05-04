@@ -573,6 +573,44 @@ describe('GeomapPanel - View Listener', () => {
       expect(ViewConstructor).toHaveBeenCalled();
     });
 
+    it('should call setMinZoom when minZoom is configured', async () => {
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+
+      // Clear any calls from initMapAsync before testing initMapView directly
+      mockView.setMinZoom!.mockClear();
+      mockView.setMaxZoom!.mockClear();
+
+      const viewConfig = {
+        ...props.options.view,
+        maxZoom: undefined,
+        minZoom: 3,
+      };
+      panel.initMapView(viewConfig);
+
+      expect(mockView.setMinZoom).toHaveBeenCalledWith(3);
+      expect(mockView.setMaxZoom).not.toHaveBeenCalled();
+    });
+
+    it('should call both setMinZoom and setMaxZoom when both are configured', async () => {
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+
+      // Clear any calls from initMapAsync before testing initMapView directly
+      mockView.setMinZoom!.mockClear();
+      mockView.setMaxZoom!.mockClear();
+
+      const viewConfig = {
+        ...props.options.view,
+        minZoom: 3,
+        maxZoom: 18,
+      };
+      panel.initMapView(viewConfig);
+
+      expect(mockView.setMinZoom).toHaveBeenCalledWith(3);
+      expect(mockView.setMaxZoom).toHaveBeenCalledWith(18);
+    });
+
     it('should handle shared view configuration', async () => {
       const div = document.createElement('div');
       await panel.initMapAsync(div);
