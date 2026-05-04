@@ -2083,51 +2083,90 @@ For example: `disabled_labels=grafana_folder`
 
 This section configures where Grafana Alerting writes alert state history. Refer to [Configure alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/) for end-to-end setup and examples.
 
-#### `enabled `
+#### `enabled`
 
-Enables recording alert state history. Default is `false`.
+Enables recording alert state history. Default is `true`.
 
-#### `backend `
+#### `backend`
 
-Select the backend used to store alert state history. Supported values: `loki`, `prometheus`, `multiple`.
+Select the backend used to store alert state history. Supported values: `annotations`, `loki`, `prometheus`, `multiple`. Default is `annotations`.
 
-#### `loki_remote_url `
+#### `primary`
 
-The URL of the Loki server used when `backend = loki` (or when `backend = multiple` and Loki is a primary/secondary).
+Used only when `backend = multiple`. Selects the primary backend used to serve state history queries. Supported values: `annotations`, `loki`.
 
-#### `prometheus_target_datasource_uid `
+#### `secondaries`
 
-Target Prometheus data source UID used for writing alert state changes when `backend = prometheus` (or when `backend = multiple` and Prometheus is a secondary).
+Used only when `backend = multiple`. Comma-separated list of additional backends to write state history data to (for example `prometheus` or `annotations,prometheus`).
 
-#### `prometheus_metric_name `
+#### `loki_remote_url`
 
-Optional. Metric name for the alert state metric. Default is `GRAFANA_ALERTS`.
+The URL of the Loki server. Required when `backend = loki`, or when Loki is configured as a primary or secondary with `backend = multiple`. You can use this option or specify separate read and write URLs with `loki_remote_read_url` and `loki_remote_write_url`.
 
-#### `prometheus_write_timeout `
+#### `loki_remote_read_url`
 
-Optional. Timeout for writing alert state data to the target data source. Default is `10s`.
+URL of the Loki read path. Use this with `loki_remote_write_url` for Loki deployments with separate read and write endpoints. Either `loki_remote_url`, or both `loki_remote_read_url` and `loki_remote_write_url`, is required for the `loki` backend.
 
-#### `primary `
+#### `loki_remote_write_url`
 
-Used only when `backend = multiple`. Selects the primary backend (for example `loki`).
+URL of the Loki write path. Use this with `loki_remote_read_url` for Loki deployments with separate read and write endpoints. Either `loki_remote_url`, or both `loki_remote_read_url` and `loki_remote_write_url`, is required for the `loki` backend.
 
-#### `secondaries `
+#### `loki_tenant_id`
 
-Used only when `backend = multiple`. Comma-separated list of secondary backends (for example `prometheus`).
+Optional tenant ID to attach to requests sent to Loki. Use this for multi-tenant Loki deployments.
+
+#### `loki_basic_auth_username`
+
+Optional username for basic authentication on requests sent to Loki. Leave blank to disable basic auth.
+
+#### `loki_basic_auth_password`
+
+Optional password for basic authentication on requests sent to Loki.
+
+#### `loki_max_query_length`
+
+Optional maximum query length for queries sent to Loki. Default is `721h`, which matches the default Loki value.
+
+#### `loki_max_query_size`
+
+Maximum size in bytes for queries sent to Loki. This limit applies to both user-provided filters and system-defined filters such as those applied by access control. If the filter exceeds this limit, the API returns an error with code `alerting.state-history.loki.requestTooLong`. Default is `65536` (64 KB).
+
+#### `prometheus_target_datasource_uid`
+
+Target data source UID for writing alert state changes as `GRAFANA_ALERTS` metrics. Required when `backend = prometheus`, or when Prometheus is configured as a secondary with `backend = multiple`.
+
+#### `prometheus_metric_name`
+
+Optional metric name for the alert state metric. Default is `GRAFANA_ALERTS`.
+
+#### `prometheus_write_timeout`
+
+Optional timeout for writing alert state data to the target data source. Default is `10s`.
+
+<hr>
+
+### `[unified_alerting.state_history.external_labels]`
+
+Optional extra labels to attach to outbound state history records or log streams. You can specify any number of label key-value pairs.
+
+```ini
+[unified_alerting.state_history.external_labels]
+mylabelkey = mylabelvalue
+```
 
 <hr>
 
 ### `[unified_alerting.state_history.annotations]`
 
-This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (see setting [unified_alerting.state_history].backend)
+This section controls retention of annotations created while evaluating alert rules when the alert state history backend is configured to `annotations` (refer to `[unified_alerting.state_history].backend`).
 
 #### `max_age`
 
-Configures for how long alert annotations are stored. Default is 0, which keeps them forever. This setting should be expressed as an duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
+How long alert annotations are stored. Default is `0`, which keeps them forever. Express this value as a duration, for example `6h` (hours), `10d` (days), `2w` (weeks), `1M` (month).
 
 #### `max_annotations_to_keep`
 
-Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
+Maximum number of alert annotations that Grafana stores. Default is `0`, which keeps all alert annotations.
 
 <hr>
 
