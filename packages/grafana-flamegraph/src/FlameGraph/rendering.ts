@@ -116,12 +116,12 @@ export function useFlameRender(options: RenderOptions) {
       wrapperWidth,
       collapsedMap,
       (item, x, y, width, height, label, muted) => {
-        if (muted) {
+        if (muted && !(matchedLabels && matchedLabels.has(label))) {
           // We do a bit of optimization for muted regions, and we render them all in single fill later on as they don't
-          // have labels and are the same color.
+          // have labels and are the same color. Nodes that match the current search are excluded so they get highlighted.
           mutedPath2D.rect(x, y, width, height);
         } else {
-          renderFunc(item, x, y, width, height, label);
+          renderFunc(item, x, y, width, height, label, muted);
         }
       }
     );
@@ -139,12 +139,21 @@ export function useFlameRender(options: RenderOptions) {
     totalViewTicks,
     direction,
     renderFunc,
+    matchedLabels,
     collapsedMap,
     mutedColor,
   ]);
 }
 
-type RenderFunc = (item: LevelItem, x: number, y: number, width: number, height: number, label: string) => void;
+type RenderFunc = (
+  item: LevelItem,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  label: string,
+  muted: boolean
+) => void;
 
 type RenderFuncWrap = (
   item: LevelItem,
@@ -176,10 +185,10 @@ function useRenderFunc(
       return () => {};
     }
 
-    const renderFunc: RenderFunc = (item, x, y, width, height, label) => {
+    const renderFunc: RenderFunc = (item, x, y, width, height, label, muted) => {
       ctx.beginPath();
       ctx.rect(x + BAR_BORDER_WIDTH, y, width, height);
-      ctx.fillStyle = getBarColor(item, label, false);
+      ctx.fillStyle = getBarColor(item, label, muted);
       ctx.stroke();
       ctx.fill();
 
