@@ -393,6 +393,8 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin p
 
 	if hs.Cfg.Env == setting.Dev {
 		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+	} else if assetPath == "module.js" || assetPath == "module.js.map" {
+		c.Resp.Header().Set("Cache-Control", "no-cache")
 	} else {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
