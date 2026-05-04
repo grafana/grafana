@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 
 import { Carousel, type CarouselProps } from './Carousel';
 import mdx from './Carousel.mdx';

@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 
 import { getAvailableIcons } from '../../types/icon';
 import { generateOptions } from '../Select/mockOptions';

@@ -1,7 +1,6 @@
-import { action } from '@storybook/addon-actions';
-import { useArgs } from '@storybook/preview-api';
-import { type Meta, type StoryFn, type StoryObj } from '@storybook/react';
-import { useEffect, useState } from 'react';
+import { type Meta, type StoryFn, type StoryObj } from '@storybook/react-webpack5';
+import { action } from 'storybook/actions';
+import { useArgs, useState, useEffect } from 'storybook/preview-api';
 
 import { Button } from '../Button/Button';
 import { Field } from '../Forms/Field';
@@ -198,7 +197,7 @@ export const ManyOptions: Story = {
     options: undefined,
     value: undefined,
   },
-  render: ({ numberOfOptions, ...args }: PropsAndCustomArgs) => {
+  render: function ManyOptions({ numberOfOptions, ...args }: PropsAndCustomArgs) {
     const [dynamicArgs, setArgs] = useArgs();
     const [options, setOptions] = useState<ComboboxOption[]>([]);
 
@@ -240,7 +239,7 @@ export const AsyncOptionsWithLabels: Story = {
     value: { label: 'Option 69', value: '69' },
     placeholder: 'Select an option',
   },
-  render: (args: PropsAndCustomArgs) => {
+  render: function AsyncOptionsWithLabels(args: PropsAndCustomArgs) {
     const [dynamicArgs, setArgs] = useArgs();
 
     return (
@@ -275,7 +274,7 @@ export const AsyncOptionsWithOnlyValues: Story = {
     value: { value: 'Option 69' },
     placeholder: 'Select an option',
   },
-  render: (args: PropsAndCustomArgs) => {
+  render: function AsyncOptionsWithOnlyValues(args: PropsAndCustomArgs) {
     const [dynamicArgs, setArgs] = useArgs();
 
     return (
