@@ -66,6 +66,33 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 			p.Description = "DataSource identifier"
 		}
 	}
+
+	content := map[string]*spec3.MediaType{
+		"application/json": {
+			MediaTypeProps: spec3.MediaTypeProps{
+				Schema: &spec.Schema{
+					SchemaProps: spec.SchemaProps{
+						Ref: spec.MustCreateRef("#/components/schemas/" + datasourceV0.QueryDataResponse{}.OpenAPIModelName()),
+					},
+				},
+			},
+		},
+	}
+
+	if b.cfg.EnableChunkedQueryStreaming {
+		content["text/jsonl"] = &spec3.MediaType{
+			MediaTypeProps: spec3.MediaTypeProps{
+				Schema: &spec.Schema{
+					SchemaProps: spec.SchemaProps{
+						Description: "Each line is a valid JSON event",
+						Type:        []string{"string"},
+						Format:      "",
+					},
+				},
+			},
+		}
+	}
+
 	// Add explicit response format
 	query.Post.Responses = &spec3.Responses{
 		ResponsesProps: spec3.ResponsesProps{
@@ -73,17 +100,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 				200: {
 					ResponseProps: spec3.ResponseProps{
 						Description: "OK",
-						Content: map[string]*spec3.MediaType{
-							"application/json": {
-								MediaTypeProps: spec3.MediaTypeProps{
-									Schema: &spec.Schema{
-										SchemaProps: spec.SchemaProps{
-											Ref: spec.MustCreateRef("#/components/schemas/" + datasourceV0.QueryDataResponse{}.OpenAPIModelName()),
-										},
-									},
-								},
-							},
-						},
+						Content:     content,
 					},
 				},
 			},
