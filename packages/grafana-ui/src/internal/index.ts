@@ -70,6 +70,7 @@ export { TableCell } from '../components/Table/Cells/TableCell';
 export { useTableStyles } from '../components/Table/TableRT/styles';
 export { migrateTableDisplayModeToCellOptions } from '../components/Table/utils';
 export { type DataLinksContextMenuApi } from '../components/DataLinks/DataLinksContextMenu';
+export { navigateOneClickLink } from '../components/DataLinks/navigateOneClickLink';
 export { MenuDivider } from '../components/Menu/MenuDivider';
 export { AbstractList } from '../components/List/AbstractList';
 export type { HttpSettingsBaseProps, AzureAuthSettings } from '../components/DataSourceSettings/types';

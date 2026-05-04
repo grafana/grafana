@@ -9,6 +9,7 @@ import { DashboardCursorSync } from '@grafana/schema';
 
 import { type AdHocFilterModel } from '../../../internal';
 import { useStyles2 } from '../../../themes/ThemeContext';
+import { navigateOneClickLink } from '../../DataLinks/navigateOneClickLink';
 import { type RangeSelection1D, type RangeSelection2D, type OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
 import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -396,7 +397,7 @@ export const TooltipPlugin2 = ({
             const oneClickLink = dataLinks.find((dataLink) => dataLink.oneClick === true);
 
             if (oneClickLink != null) {
-              window.open(oneClickLink.href, oneClickLink.target ?? '_self');
+              navigateOneClickLink(oneClickLink, e);
             } else {
               setTimeout(() => {
                 _isPinned = true;
