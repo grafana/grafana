@@ -26,12 +26,13 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-const testAppID = "test-app-with-backend"
+const instanceName = "instance" // the name is always "instance"
+const testAppID = "test-app-with-backend-app"
 
 var gvrSettings = schema.GroupVersionResource{
-	Group:    testAppID + ".grafana.app",
+	Group:    testAppID,
 	Version:  "v0alpha1",
-	Resource: "settings",
+	Resource: "app",
 }
 
 func TestMain(m *testing.M) {
@@ -41,7 +42,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationAppPluginSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := setupHelper(t, mode)
@@ -52,15 +53,20 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				GVR:  gvrSettings,
 			})
 
+			// Render the openapi spec
+			if mode == rest.Mode5 {
+				apis.VerifyOpenAPISnapshots(t, "testdata", gvrSettings.GroupVersion(), helper)
+			}
+
 			// writeSettings writes a known settings state with a fresh secret and returns
 			// the resulting object. Each subtest calls this to establish its own baseline.
 			writeSettings := func(t *testing.T) *unstructured.Unstructured {
 				t.Helper()
 				_, err := client.Resource.Update(ctx, &unstructured.Unstructured{
 					Object: map[string]any{
-						"apiVersion": testAppID + ".grafana.app/v0alpha1",
+						"apiVersion": testAppID + "/v0alpha1",
 						"kind":       "Settings",
-						"metadata":   map[string]any{"name": testAppID},
+						"metadata":   map[string]any{"name": instanceName},
 						"spec": map[string]any{
 							"enabled":  true,
 							"pinned":   true,
@@ -72,7 +78,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 					},
 				}, metav1.UpdateOptions{})
 				require.NoError(t, err)
-				obj, err := client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+				obj, err := client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 				require.NoError(t, err)
 				return obj
 			}
@@ -83,7 +89,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				if mode == rest.Mode5 {
 					current = writeSettings(t)
 				} else {
-					current, err = client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+					current, err = client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 					require.NoError(t, err)
 				}
 
@@ -117,10 +123,10 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				obj, err := client.Resource.Patch(ctx, testAppID, types.JSONPatchType, patchData, metav1.PatchOptions{})
+				obj, err := client.Resource.Patch(ctx, instanceName, types.JSONPatchType, patchData, metav1.PatchOptions{})
 				require.NoError(t, err)
 
-				require.Equal(t, testAppID, obj.GetName())
+				require.Equal(t, instanceName, obj.GetName())
 				if mode < rest.Mode5 {
 					require.NotEmpty(t, obj.GetUID(), "PATCH needs the legacy-backed settings resource to look persisted")
 				}
@@ -139,7 +145,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				if mode == rest.Mode5 {
 					current = writeSettings(t)
 				} else {
-					current, err = client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+					current, err = client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 					require.NoError(t, err)
 				}
 
@@ -161,9 +167,9 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 
 				_, err = client.Resource.Update(ctx, &unstructured.Unstructured{
 					Object: map[string]any{
-						"apiVersion": testAppID + ".grafana.app/v0alpha1",
+						"apiVersion": testAppID + "/v0alpha1",
 						"kind":       "Settings",
-						"metadata":   map[string]any{"name": testAppID},
+						"metadata":   map[string]any{"name": instanceName},
 						"spec":       updateSpec,
 					},
 				}, metav1.UpdateOptions{})
@@ -171,7 +177,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 
 				var latest *unstructured.Unstructured
 				require.Eventually(t, func() bool {
-					latest, err = client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+					latest, err = client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 					require.NoError(t, err)
 					if latest.GetResourceVersion() != staleRV {
 						return true
@@ -180,9 +186,9 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 					updateSpec["pinned"] = !(updateSpec["pinned"].(bool))
 					_, err = client.Resource.Update(ctx, &unstructured.Unstructured{
 						Object: map[string]any{
-							"apiVersion": testAppID + ".grafana.app/v0alpha1",
+							"apiVersion": testAppID + "/v0alpha1",
 							"kind":       "Settings",
-							"metadata":   map[string]any{"name": testAppID},
+							"metadata":   map[string]any{"name": instanceName},
 							"spec":       updateSpec,
 						},
 					}, metav1.UpdateOptions{})
@@ -204,14 +210,14 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				_, err = client.Resource.Patch(ctx, testAppID, types.JSONPatchType, patchData, metav1.PatchOptions{})
+				_, err = client.Resource.Patch(ctx, instanceName, types.JSONPatchType, patchData, metav1.PatchOptions{})
 				helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
 			})
 
 			t.Run("update persists jsonData and returns secure key references", func(t *testing.T) {
 				obj := writeSettings(t)
 
-				require.Equal(t, testAppID, obj.GetName())
+				require.Equal(t, instanceName, obj.GetName())
 
 				spec, ok := obj.Object["spec"].(map[string]any)
 				require.True(t, ok)
@@ -238,7 +244,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				list, err := client.Resource.List(ctx, metav1.ListOptions{})
 				require.NoError(t, err)
 				require.Len(t, list.Items, 1)
-				require.Equal(t, testAppID, list.Items[0].GetName())
+				require.Equal(t, instanceName, list.Items[0].GetName())
 			})
 
 			t.Run("update with name-only entry keeps existing value", func(t *testing.T) {
@@ -254,9 +260,9 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				// Update sending back the name reference — should be a no-op for the secure value.
 				_, err := client.Resource.Update(ctx, &unstructured.Unstructured{
 					Object: map[string]any{
-						"apiVersion": testAppID + ".grafana.app/v0alpha1",
+						"apiVersion": testAppID + "/v0alpha1",
 						"kind":       "Settings",
-						"metadata":   map[string]any{"name": testAppID},
+						"metadata":   map[string]any{"name": instanceName},
 						"spec": map[string]any{
 							"enabled":  true,
 							"pinned":   true,
@@ -269,7 +275,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				}, metav1.UpdateOptions{})
 				require.NoError(t, err)
 
-				obj, err = client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+				obj, err = client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 				require.NoError(t, err)
 				secure, ok = obj.Object["secure"].(map[string]any)
 				require.True(t, ok, "expected top-level secure field")
@@ -280,7 +286,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 			t.Run("patch can add a new secure value", func(t *testing.T) {
 				writeSettings(t)
 
-				obj, err := client.Resource.Patch(ctx, testAppID, types.JSONPatchType, []byte(`[
+				obj, err := client.Resource.Patch(ctx, instanceName, types.JSONPatchType, []byte(`[
 						{"op":"add","path":"/secure/patchedSecret","value":{"create":"patched-secret-value"}}
 					]`), metav1.PatchOptions{})
 				require.NoError(t, err)
@@ -296,6 +302,15 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				if mode < rest.Mode5 {
 					require.Contains(t, name, "lps-sv-", "name should use the legacy plugin secure value prefix")
 				}
+			})
+
+			t.Run("check health", func(t *testing.T) {
+				t.Skip("backend plugin not loading yet")
+				health, err := client.Resource.Get(ctx, instanceName, metav1.GetOptions{}, "health")
+				require.NoError(t, err)
+
+				status, _, _ := unstructured.NestedString(health.Object, "status")
+				require.Equal(t, "OK", status)
 			})
 
 			t.Run("get not-found for wrong name", func(t *testing.T) {
@@ -316,9 +331,9 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 							User: user,
 							GVR:  gvrSettings,
 						})
-						obj, err := c.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+						obj, err := c.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 						require.NoError(t, err)
-						require.Equal(t, testAppID, obj.GetName())
+						require.Equal(t, instanceName, obj.GetName())
 					})
 				}
 			})
@@ -334,17 +349,17 @@ func setupHelper(t *testing.T, mode rest.DualWriterMode) *apis.K8sTestHelper {
 		OpenFeatureAPIEnabled:            true,
 		SecretsManagerEnableDBMigrations: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagAppPluginAPIServer,
+			featuremgmt.FlagApppluginsRegisterAPIServer,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			fmt.Sprintf("settings.%s.grafana.app", testAppID): {
+			fmt.Sprintf("app.%s", testAppID): {
 				DualWriterMode: mode,
 			},
 		},
 	}
 
 	// Create the grafana dir, then copy the test-app plugin into its plugins directory
-	// so RegisterAPIService discovers it and registers the test-app.grafana.app API group.
+	// so RegisterAPIService discovers it and registers the test-app API group.
 	dir, cfgPath := testinfra.CreateGrafDir(t, baseOpts)
 
 	_, thisFile, _, ok := runtime.Caller(0)

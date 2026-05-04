@@ -1,7 +1,7 @@
 {
   "type": "app",
   "name": "Test App With Backend",
-  "id": "test-app-with-backend",
+  "id": "test-app-with-backend-app",
 
   "backend": true,
   "executable": "gpx_test-app-with-backend",
@@ -19,6 +19,6 @@
   },
 
   "dependencies": {
-    "grafanaDependency": ">=10.0.0"
+    "grafanaDependency": ">=12.0.0"
   }
 }

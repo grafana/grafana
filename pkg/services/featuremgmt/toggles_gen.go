@@ -830,9 +830,13 @@ const (
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
-	// FlagAppPluginAPIServer
+	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
-	FlagAppPluginAPIServer = "appPluginAPIServer"
+	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
+
+	// FlagApppluginsHandleProxyRequests
+	// Register the proxy endpoints
+	FlagApppluginsHandleProxyRequests = "appplugins.handleProxyRequests"
 
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without 'pending' stage

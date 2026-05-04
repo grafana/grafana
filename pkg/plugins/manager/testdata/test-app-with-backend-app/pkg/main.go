@@ -6,11 +6,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/app"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
-	"github.com/grafana/grafana/pkg/plugins/manager/testdata/test-app-with-backend/pkg/plugin"
+	"github.com/grafana/grafana/pkg/plugins/manager/testdata/test-app-with-backend-app/pkg/plugin"
 )
 
 func main() {
-	if err := app.Manage("test-app-with-backend", plugin.New, app.ManageOpts{}); err != nil {
+	if err := app.Manage("test-app-with-backend-app", plugin.New, app.ManageOpts{}); err != nil {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}
