@@ -24,11 +24,11 @@ review_date: 2026-05-01
 
 # InfluxDB query editor
 
-Each data source in Grafana has a unique query editor. For general information on query editors, refer to [Query editors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors). For general information on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
+The InfluxDB query editor helps you build and run queries against your InfluxDB data source. You can access it from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from any dashboard panel by clicking the ellipsis in the upper right of the panel and selecting **Edit**.
 
-The InfluxDB query editor is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the InfluxDB query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
+The editor supports three query languages, SQL, InfluxQL, and Flux, each with its own editing experience and macro system. You can also use the query editor to retrieve [log data](#query-logs).
 
-You can also use the query editor to retrieve [log data](#query-logs).
+For general information about Grafana query editors, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 ## Before you begin
 
