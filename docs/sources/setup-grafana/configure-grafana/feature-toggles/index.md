@@ -75,6 +75,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `externalVizSuggestions`                     | Enable all plugins to supply visualization suggestions (including 3rd party plugins)                                                                          | Yes                |
 | `opentsdbBackendMigration`                   | Run queries through the data source backend                                                                                                                   |                    |
 | `multiPropsVariables`                        | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
+| `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
 
 ## Public preview feature toggles

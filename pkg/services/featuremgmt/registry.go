@@ -2494,10 +2494,10 @@ var (
 		{
 			Name:        "dashboardSectionVariables",
 			Description: "Enables support for section level variables (rows and tabs)",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "smoothingTransformation",
