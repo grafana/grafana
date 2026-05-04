@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-const folderLabelSelectorKey = "dashboard.grafana.app/folder"
+const folderLabelSelectorKey = utils.AnnoKeyFolder
 
 func TestIntegrationVariablesV2(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
