@@ -32,13 +32,13 @@ declare module "@openfeature/core" {
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
     | "inlineLogDetailsNoScrolls"
+    | "useMTPluginSettings"
     | "splashScreen"
     | "grafana.newPreferencesPage"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
-    | "assistant.frontend.tools.dashboardTemplates"
-    | "grafana.meticulousAIRecorder";
+    | "assistant.frontend.tools.dashboardTemplates";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

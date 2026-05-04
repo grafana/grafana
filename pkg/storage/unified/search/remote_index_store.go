@@ -23,13 +23,30 @@ import (
 )
 
 const (
-	metaJSONFile = "meta.json"
-	// maxMetaJSONSize is the maximum allowed size for a meta.json file (1 MiB).
-	maxMetaJSONSize = 1 << 20
+	// snapshotManifestFile is the name of the manifest object written at the
+	// root of each index snapshot prefix. It is uploaded last and serves as the
+	// completion signal: its presence means the snapshot is fully uploaded.
+	// Named with a grafana- prefix to avoid confusion with Bleve's own
+	// index_meta.json that lives alongside it inside the snapshot.
+	snapshotManifestFile = "grafana-index-snapshot.json"
+	// maxSnapshotManifestSize is the maximum allowed size for a snapshot
+	// manifest file (1 MiB).
+	maxSnapshotManifestSize = 1 << 20
 )
 
 // ErrNonRegularFile is returned when a non-regular file (symlink, pipe, socket, device) is found during index upload.
 var ErrNonRegularFile = errors.New("non-regular file found in index directory")
+
+// ErrSnapshotNotFound is returned when the snapshot manifest for the given
+// index key does not exist (e.g. the snapshot was deleted, or the upload is
+// still in progress and the manifest hasn't been written yet).
+var ErrSnapshotNotFound = errors.New("snapshot not found")
+
+// ErrInvalidManifest is returned when the snapshot manifest exists but is
+// structurally invalid (oversized, unparseable, empty file list, or
+// non-canonical paths). Distinct from ErrSnapshotNotFound (manifest absent)
+// and from transient download errors.
+var ErrInvalidManifest = errors.New("invalid manifest")
 
 // IndexMeta contains metadata about a remote index snapshot.
 type IndexMeta struct {
@@ -37,6 +54,14 @@ type IndexMeta struct {
 	GrafanaBuildVersion string `json:"grafana_build_version"`
 	// UploadTimestamp is when the snapshot was uploaded.
 	UploadTimestamp time.Time `json:"upload_timestamp"`
+	// BuildStartTimestamp is when the bleve index was originally created
+	// (start of the from-scratch build that produced it). Persisted across
+	// periodic re-uploads of the same index, so it always describes the
+	// underlying data, not the most recent upload.
+	//
+	// Zero-value means "unknown" — snapshots produced before this field was
+	// introduced. Readers fall back to other criteria in that case.
+	BuildStartTimestamp time.Time `json:"build_start_timestamp,omitempty"`
 	// LatestResourceVersion is the latest resource version included in the index.
 	LatestResourceVersion int64 `json:"latest_resource_version"`
 	// Files maps relative file paths to their sizes in bytes.
@@ -81,6 +106,20 @@ type RemoteIndexStore interface {
 	// Note: indexes may be deleted between listing and subsequent operations.
 	ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error)
 
+	// ListIndexKeys returns the ULID keys of all index snapshots under the
+	// given namespaced resource. The returned list may include incomplete
+	// uploads (snapshots whose manifest has not yet been written); callers
+	// that need to distinguish complete from incomplete snapshots should
+	// follow up with GetIndexMeta. Ordering is unspecified.
+	ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error)
+
+	// GetIndexMeta returns the manifest for a single index snapshot. It
+	// returns ErrSnapshotNotFound if no manifest exists for the given key,
+	// or an error wrapping ErrInvalidManifest if the manifest exists but is
+	// structurally invalid (oversized, unparseable, empty file list, or
+	// non-canonical paths).
+	GetIndexMeta(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error)
+
 	// DeleteIndex deletes all files for an index snapshot.
 	DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error
 
@@ -90,35 +129,57 @@ type RemoteIndexStore interface {
 	CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource, minAge time.Duration) (int, error)
 }
 
+// LockOptions controls the timing and shutdown behaviour of an
+// objectStorageLock created by BucketRemoteIndexStore. Zero values fall back
+// to the defaults documented in objectStorageLockConfig.
+type LockOptions struct {
+	TTL                    time.Duration
+	HeartbeatInterval      time.Duration
+	HeartbeatUpdateTimeout time.Duration
+	ReleaseDeleteTimeout   time.Duration
+}
+
+// BucketRemoteIndexStoreConfig configures NewBucketRemoteIndexStore. Build and
+// cleanup locks have separate option blocks so they can diverge: build locks
+// are per-snapshot and benefit from a tight shutdown budget, while cleanup
+// locks run on a 6h cadence and can tolerate longer waits.
+type BucketRemoteIndexStoreConfig struct {
+	Bucket      resource.CDKBucket
+	LockBackend lockBackend
+	LockOwner   string
+	BuildLock   LockOptions
+	CleanupLock LockOptions
+}
+
 // BucketRemoteIndexStore implements RemoteIndexStore using a CDKBucket.
 //
 // Object storage layout:
 //
-//	/<namespace>/<resource>.<group>/<index-key>/index_meta.json
+//	/<namespace>/<resource>.<group>/<index-key>/index_meta.json   <- Bleve's own metadata, part of the index
 //	/<namespace>/<resource>.<group>/<index-key>/store/root.bolt
 //	/<namespace>/<resource>.<group>/<index-key>/store/*.zap
-//	/<namespace>/<resource>.<group>/<index-key>/meta.json  <- uploaded last, signals complete upload
+//	/<namespace>/<resource>.<group>/<index-key>/grafana-index-snapshot.json  <- uploaded last, signals complete upload
 //
-// meta.json is uploaded last during upload and deleted first during delete,
-// serving as the completion signal.
+// grafana-index-snapshot.json is uploaded last during upload and deleted first
+// during delete, serving as the completion signal.
 type BucketRemoteIndexStore struct {
-	bucket                resource.CDKBucket
-	lockBackend           lockBackend
-	lockOwner             string
-	lockTTL               time.Duration
-	lockHeartbeatInterval time.Duration
-	log                   log.Logger
+	bucket          resource.CDKBucket
+	lockBackend     lockBackend
+	lockOwner       string
+	buildLockOpts   LockOptions
+	cleanupLockOpts LockOptions
+	log             log.Logger
 }
 
 // NewBucketRemoteIndexStore creates a new RemoteIndexStore backed by the given bucket.
-func NewBucketRemoteIndexStore(bucket resource.CDKBucket, lockBackend lockBackend, lockOwner string, lockTTL, lockHeartbeatInterval time.Duration) *BucketRemoteIndexStore {
+func NewBucketRemoteIndexStore(cfg BucketRemoteIndexStoreConfig) *BucketRemoteIndexStore {
 	return &BucketRemoteIndexStore{
-		bucket:                bucket,
-		lockBackend:           lockBackend,
-		lockOwner:             lockOwner,
-		lockTTL:               lockTTL,
-		lockHeartbeatInterval: lockHeartbeatInterval,
-		log:                   log.New("bucket-remote-index-store"),
+		bucket:          cfg.Bucket,
+		lockBackend:     cfg.LockBackend,
+		lockOwner:       cfg.LockOwner,
+		buildLockOpts:   cfg.BuildLock,
+		cleanupLockOpts: cfg.CleanupLock,
+		log:             log.New("bucket-remote-index-store"),
 	}
 }
 
@@ -144,13 +205,7 @@ func cleanupLockKey(namespace string) string {
 }
 
 func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource) (IndexStoreLock, error) {
-	l, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           s.lockBackend,
-		Key:               buildIndexLockKey(nsResource),
-		Owner:             s.lockOwner,
-		TTL:               s.lockTTL,
-		HeartbeatInterval: s.lockHeartbeatInterval,
-	})
+	l, err := newObjectStorageLock(s.lockConfig(buildIndexLockKey(nsResource), s.buildLockOpts))
 	if err != nil {
 		return nil, fmt.Errorf("creating build lock: %w", err)
 	}
@@ -161,13 +216,7 @@ func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource 
 }
 
 func (s *BucketRemoteIndexStore) LockNamespaceForCleanup(ctx context.Context, namespace string) (IndexStoreLock, error) {
-	l, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           s.lockBackend,
-		Key:               cleanupLockKey(namespace),
-		Owner:             s.lockOwner,
-		TTL:               s.lockTTL,
-		HeartbeatInterval: s.lockHeartbeatInterval,
-	})
+	l, err := newObjectStorageLock(s.lockConfig(cleanupLockKey(namespace), s.cleanupLockOpts))
 	if err != nil {
 		return nil, fmt.Errorf("creating cleanup lock: %w", err)
 	}
@@ -175,6 +224,21 @@ func (s *BucketRemoteIndexStore) LockNamespaceForCleanup(ctx context.Context, na
 		return nil, err
 	}
 	return l, nil
+}
+
+// lockConfig folds a LockOptions block into the shared per-store backend/owner
+// fields. Zero-valued LockOptions fields are passed through to
+// newObjectStorageLock, which applies its own defaults.
+func (s *BucketRemoteIndexStore) lockConfig(key string, opts LockOptions) objectStorageLockConfig {
+	return objectStorageLockConfig{
+		Backend:                s.lockBackend,
+		Key:                    key,
+		Owner:                  s.lockOwner,
+		TTL:                    opts.TTL,
+		HeartbeatInterval:      opts.HeartbeatInterval,
+		HeartbeatUpdateTimeout: opts.HeartbeatUpdateTimeout,
+		ReleaseDeleteTimeout:   opts.ReleaseDeleteTimeout,
+	}
 }
 
 func (s *BucketRemoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (_ ulid.ULID, retErr error) {
@@ -202,9 +266,9 @@ func (s *BucketRemoteIndexStore) UploadIndex(ctx context.Context, nsResource res
 		if !d.Type().IsRegular() {
 			return fmt.Errorf("%w: %s (mode: %s)", ErrNonRegularFile, path, d.Type())
 		}
-		// Skip meta.json — we generate our own manifest and uploading a pre-existing
-		// one would cause a size mismatch on round-trip.
-		if d.Name() == metaJSONFile {
+		// Skip the snapshot manifest — we generate our own and uploading a
+		// pre-existing one would cause a size mismatch on round-trip.
+		if d.Name() == snapshotManifestFile {
 			return nil
 		}
 		rel, err := filepath.Rel(absLocalDir, path)
@@ -241,13 +305,13 @@ func (s *BucketRemoteIndexStore) UploadIndex(ctx context.Context, nsResource res
 		}
 	}
 
-	// Upload meta.json last — its presence signals a complete upload.
+	// Upload the snapshot manifest last — its presence signals a complete upload.
 	metaBytes, err := json.Marshal(meta)
 	if err != nil {
-		return ulid.ULID{}, fmt.Errorf("marshaling meta: %w", err)
+		return ulid.ULID{}, fmt.Errorf("marshaling snapshot manifest: %w", err)
 	}
-	if err := s.bucket.WriteAll(ctx, pfx+metaJSONFile, metaBytes, nil); err != nil {
-		return ulid.ULID{}, fmt.Errorf("uploading meta.json: %w", err)
+	if err := s.bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil); err != nil {
+		return ulid.ULID{}, fmt.Errorf("uploading snapshot manifest: %w", err)
 	}
 
 	return indexKey, nil
@@ -287,20 +351,9 @@ func (s *BucketRemoteIndexStore) uploadFile(ctx context.Context, objectKey, loca
 func (s *BucketRemoteIndexStore) DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, destDir string) (_ *IndexMeta, retErr error) {
 	pfx := indexPrefix(nsResource, indexKey.String())
 
-	// Download and parse meta.json with a size limit to avoid OOM on malicious files.
-	var metaBuf bytes.Buffer
-	if err := s.bucket.Download(ctx, pfx+metaJSONFile, &resource.LimitedWriter{W: &metaBuf, N: maxMetaJSONSize}, nil); err != nil {
-		return nil, fmt.Errorf("reading meta.json: %w", err)
-	}
-	var meta IndexMeta
-	if err := json.Unmarshal(metaBuf.Bytes(), &meta); err != nil {
-		return nil, fmt.Errorf("parsing meta.json: %w", err)
-	}
-	if len(meta.Files) == 0 {
-		return nil, fmt.Errorf("meta.json has empty file manifest for index %q", indexKey)
-	}
-	if err := validateManifestPaths(meta.Files); err != nil {
-		return nil, fmt.Errorf("invalid manifest: %w", err)
+	meta, err := s.GetIndexMeta(ctx, nsResource, indexKey)
+	if err != nil {
+		return nil, err
 	}
 
 	// fail if destDir already exist
@@ -335,7 +388,7 @@ func (s *BucketRemoteIndexStore) DownloadIndex(ctx context.Context, nsResource r
 		if err := os.MkdirAll(filepath.Dir(localPath), 0750); err != nil {
 			return nil, fmt.Errorf("creating directory for %s: %w", relPath, err)
 		}
-		if err := s.downloadFile(ctx, objectKey, localPath); err != nil {
+		if err := s.downloadFile(ctx, objectKey, localPath, expectedSize); err != nil {
 			return nil, fmt.Errorf("downloading %s: %w", relPath, err)
 		}
 
@@ -355,7 +408,7 @@ func (s *BucketRemoteIndexStore) DownloadIndex(ctx context.Context, nsResource r
 	}
 	tmpDir = "" // prevent deferred cleanup of the now-renamed directory
 
-	return &meta, nil
+	return meta, nil
 }
 
 // validateManifestPaths rejects manifest entries that are not already in canonical form.
@@ -365,32 +418,93 @@ func validateManifestPaths(files map[string]int64) error {
 		if clean != relPath {
 			return fmt.Errorf("non-canonical path %q (canonical: %q)", relPath, clean)
 		}
-		if clean == "." || filepath.IsAbs(clean) || strings.HasPrefix(clean, "..") {
+		if clean == "." || clean == ".." || filepath.IsAbs(clean) || strings.HasPrefix(clean, "../") {
 			return fmt.Errorf("invalid path %q", relPath)
 		}
 	}
 	return nil
 }
 
-// downloadFile creates localPath and streams the remote object into it.
-func (s *BucketRemoteIndexStore) downloadFile(ctx context.Context, objectKey, localPath string) error {
+// downloadFile creates localPath and streams the remote object into it,
+// capping the transfer at expectedSize+1 bytes so a misadvertised manifest
+// size or a bucket object that's grown out of band fails fast before we
+// transfer unbounded data. The snapshot manifest uses the same pattern.
+func (s *BucketRemoteIndexStore) downloadFile(ctx context.Context, objectKey, localPath string, expectedSize int64) error {
 	f, err := os.Create(localPath) //nolint:gosec // path is under a Grafana-controlled staging directory
 	if err != nil {
 		return err
 	}
 
-	if err := s.bucket.Download(ctx, objectKey, f, nil); err != nil {
+	lw := &resource.LimitedWriter{W: f, N: expectedSize + 1}
+	if err := s.bucket.Download(ctx, objectKey, lw, nil); err != nil {
 		_ = f.Close()
+		if errors.Is(err, resource.ErrWriteLimitExceeded) {
+			return fmt.Errorf("remote object exceeds expected size %d: %w", expectedSize, err)
+		}
 		return err
 	}
 	return f.Close()
+}
+
+// ListIndexKeys lists the ULID-keyed snapshot subdirectories under the
+// namespaced-resource prefix using a delimited list, without reading any
+// manifest bodies. Non-ULID subdirectories (e.g. the sibling `locks/` prefix)
+// are skipped silently.
+func (s *BucketRemoteIndexStore) ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error) {
+	pfx := nsPrefix(nsResource)
+	iter := s.bucket.List(&blob.ListOptions{Prefix: pfx, Delimiter: "/"})
+	var keys []ulid.ULID
+	for {
+		obj, err := iter.Next(ctx)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("listing index keys: %w", err)
+		}
+		if !obj.IsDir {
+			continue
+		}
+		rel := strings.TrimSuffix(strings.TrimPrefix(obj.Key, pfx), "/")
+		key, err := ulid.Parse(rel)
+		if err != nil {
+			continue // skip non-ULID subdirs (e.g. /locks)
+		}
+		keys = append(keys, key)
+	}
+	return keys, nil
+}
+
+func (s *BucketRemoteIndexStore) GetIndexMeta(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error) {
+	manifestKey := indexPrefix(nsResource, indexKey.String()) + snapshotManifestFile
+	var buf bytes.Buffer
+	if err := s.bucket.Download(ctx, manifestKey, &resource.LimitedWriter{W: &buf, N: maxSnapshotManifestSize}, nil); err != nil {
+		if gcerrors.Code(err) == gcerrors.NotFound {
+			return nil, ErrSnapshotNotFound
+		}
+		if errors.Is(err, resource.ErrWriteLimitExceeded) {
+			return nil, fmt.Errorf("%w: oversized snapshot manifest: %v", ErrInvalidManifest, err)
+		}
+		return nil, fmt.Errorf("reading snapshot manifest: %w", err)
+	}
+	var meta IndexMeta
+	if err := json.Unmarshal(buf.Bytes(), &meta); err != nil {
+		return nil, fmt.Errorf("%w: parsing snapshot manifest: %v", ErrInvalidManifest, err)
+	}
+	if len(meta.Files) == 0 {
+		return nil, fmt.Errorf("%w: empty file manifest for index %q", ErrInvalidManifest, indexKey)
+	}
+	if err := validateManifestPaths(meta.Files); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidManifest, err)
+	}
+	return &meta, nil
 }
 
 func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
 	nsPfx := nsPrefix(nsResource)
 	result := make(map[ulid.ULID]*IndexMeta)
 
-	// List all objects under the namespace prefix, looking for meta.json files
+	// List all objects under the namespace prefix, looking for snapshot manifest files
 	iter := s.bucket.List(&blob.ListOptions{Prefix: nsPfx})
 	for {
 		obj, err := iter.Next(ctx)
@@ -401,39 +515,29 @@ func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource res
 			return nil, fmt.Errorf("failed to list objects: %w", err)
 		}
 
-		// We only care about meta.json files
-		if !strings.HasSuffix(obj.Key, "/"+metaJSONFile) {
+		// We only care about snapshot manifest files
+		if !strings.HasSuffix(obj.Key, "/"+snapshotManifestFile) {
 			continue
 		}
 
-		// Extract index key from: <nsPfx><indexKey>/meta.json
+		// Extract index key from: <nsPfx><indexKey>/<snapshotManifestFile>
 		rel := strings.TrimPrefix(obj.Key, nsPfx)
-		keyStr := strings.TrimSuffix(rel, "/"+metaJSONFile)
+		keyStr := strings.TrimSuffix(rel, "/"+snapshotManifestFile)
 		if keyStr == "" || strings.Contains(keyStr, "/") {
 			continue // skip nested or malformed paths
 		}
 		indexKey, err := ulid.Parse(keyStr)
 		if err != nil {
-			s.log.Warn("skipping index with non-ULID key", "key", keyStr, "err", err)
+			s.log.Warn("skipping index snapshot with non-ULID key", "key", keyStr, "err", err)
 			continue
 		}
 
-		// Fetch and parse meta.json with a size limit.
-		var metaBuf bytes.Buffer
-		if err := s.bucket.Download(ctx, obj.Key, &resource.LimitedWriter{W: &metaBuf, N: maxMetaJSONSize}, nil); err != nil {
-			s.log.Error("failed to read meta.json", "key", obj.Key, "err", err)
+		meta, err := s.GetIndexMeta(ctx, nsResource, indexKey)
+		if err != nil {
+			s.log.Warn("skipping index snapshot with invalid manifest", "key", obj.Key, "err", err)
 			continue
 		}
-		var meta IndexMeta
-		if err := json.Unmarshal(metaBuf.Bytes(), &meta); err != nil {
-			s.log.Error("failed to parse meta.json", "key", obj.Key, "err", err)
-			continue
-		}
-		if len(meta.Files) == 0 || validateManifestPaths(meta.Files) != nil {
-			s.log.Warn("skipping index with invalid manifest", "key", obj.Key)
-			continue
-		}
-		result[indexKey] = &meta
+		result[indexKey] = meta
 	}
 
 	return result, nil
@@ -500,9 +604,9 @@ func (s *BucketRemoteIndexStore) ListNamespaceIndexes(ctx context.Context, names
 func (s *BucketRemoteIndexStore) DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error {
 	pfx := indexPrefix(nsResource, indexKey.String())
 
-	// Delete meta.json first
-	if err := s.bucket.Delete(ctx, pfx+metaJSONFile); err != nil && gcerrors.Code(err) != gcerrors.NotFound {
-		return fmt.Errorf("failed to delete meta.json: %w", err)
+	// Delete the snapshot manifest first
+	if err := s.bucket.Delete(ctx, pfx+snapshotManifestFile); err != nil && gcerrors.Code(err) != gcerrors.NotFound {
+		return fmt.Errorf("failed to delete snapshot manifest: %w", err)
 	}
 
 	// List all objects under this prefix and delete them
@@ -526,10 +630,11 @@ func (s *BucketRemoteIndexStore) DeleteIndex(ctx context.Context, nsResource res
 func (s *BucketRemoteIndexStore) CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource, minAge time.Duration) (int, error) {
 	nsPfx := nsPrefix(nsResource)
 
-	// First pass: collect all keys grouped by index prefix, recording the meta.json key if present.
+	// First pass: collect all keys grouped by index prefix, recording the
+	// snapshot manifest key if present.
 	type prefixInfo struct {
 		keys    []string
-		metaKey string // empty = no meta.json seen
+		metaKey string // empty = no snapshot manifest seen
 	}
 	prefixes := make(map[string]*prefixInfo)
 
@@ -564,23 +669,33 @@ func (s *BucketRemoteIndexStore) CleanupIncompleteUploads(ctx context.Context, n
 			prefixes[keyStr] = info
 		}
 		info.keys = append(info.keys, obj.Key)
-		if strings.HasSuffix(obj.Key, "/"+metaJSONFile) {
+		if strings.HasSuffix(obj.Key, "/"+snapshotManifestFile) {
 			info.metaKey = obj.Key
 		}
 	}
 
 	// Second pass: delete incomplete prefixes.
-	// A prefix is incomplete if it has no meta.json, or if the meta.json is
-	// positively known to be invalid (unparseable or empty file manifest).
+	// A prefix is incomplete if it has no snapshot manifest, or if the manifest
+	// is positively known to be invalid (unparseable or empty file list).
 	cleaned := 0
 	for keyStr, info := range prefixes {
 		if info.metaKey != "" {
-			valid, err := s.isValidManifest(ctx, info.metaKey)
+			// keyStr was produced by ulid.Parse on the way in, so re-parsing
+			// here is infallible.
+			indexKey, err := ulid.Parse(keyStr)
 			if err != nil {
-				s.log.Warn("skipping prefix due to manifest read error", "key", keyStr, "err", err)
 				continue
 			}
-			if valid {
+			_, err = s.GetIndexMeta(ctx, nsResource, indexKey)
+			switch {
+			case err == nil:
+				continue // valid manifest, prefix is complete
+			case errors.Is(err, ErrInvalidManifest):
+				// fall through to delete
+			default:
+				// Transient error or ErrSnapshotNotFound (manifest deleted
+				// between list and read — race; defer to next pass).
+				s.log.Warn("skipping prefix due to manifest read error", "key", keyStr, "err", err)
 				continue
 			}
 		}
@@ -594,26 +709,4 @@ func (s *BucketRemoteIndexStore) CleanupIncompleteUploads(ctx context.Context, n
 	}
 
 	return cleaned, nil
-}
-
-// isValidManifest downloads and parses a meta.json object with a size limit.
-// Returns (true, nil) for a valid manifest, (false, nil) for a positively
-// invalid one (oversized, corrupt JSON, or empty Files), and (false, err) for
-// transient download errors.
-func (s *BucketRemoteIndexStore) isValidManifest(ctx context.Context, metaKey string) (bool, error) {
-	var buf bytes.Buffer
-	if err := s.bucket.Download(ctx, metaKey, &resource.LimitedWriter{W: &buf, N: maxMetaJSONSize}, nil); err != nil {
-		if errors.Is(err, resource.ErrWriteLimitExceeded) {
-			return false, nil // positively invalid: oversized
-		}
-		return false, err // transient download error, skip this prefix
-	}
-	var meta IndexMeta
-	if err := json.Unmarshal(buf.Bytes(), &meta); err != nil {
-		return false, nil // positively invalid
-	}
-	if len(meta.Files) == 0 || validateManifestPaths(meta.Files) != nil {
-		return false, nil
-	}
-	return true, nil
 }

@@ -67,7 +67,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
@@ -162,7 +161,6 @@ var wireExtsBasicSet = wire.NewSet(
 	apisregistry.WireSetExts,
 	gsmKMSProviders.ProvideOSSKMSProviders,
 	gsmEncryptionManager.ProvideOSSDataKeyCache,
-	secretmetadata.ProvideSecureValueMetadataStorage,
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
 	configProviderExtras,

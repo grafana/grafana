@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,6 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+// errSkipRecentRemote is returned by uploadSnapshot when the cross-instance
+// upload-time probe finds a same-version remote snapshot uploaded within
+// UploadInterval. Callers treat this as a non-error skip.
+var errSkipRecentRemote = errors.New("skipping upload: recent remote snapshot exists")
+
 func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex) (retErr error) {
 	ctx, span := tracer.Start(ctx, "search.remote_index_snapshot.upload")
 	start := time.Now()
@@ -29,8 +35,12 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	var uploadKey ulid.ULID
 
 	defer func() {
+		skip := errors.Is(retErr, errSkipRecentRemote)
 		outcome := "success"
-		if retErr != nil {
+		switch {
+		case skip:
+			outcome = "skip_recent_remote"
+		case retErr != nil:
 			outcome = "error"
 		}
 		attrs := append([]attribute.KeyValue{}, commonSpanAttrs...)
@@ -41,11 +51,14 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		if uploadKey != (ulid.ULID{}) {
 			attrs = append(attrs, attribute.String("snapshot_key", uploadKey.String()))
 		}
-		if retErr != nil {
+		switch {
+		case skip:
+			logger.Info("Remote index snapshot upload skipped: recent remote snapshot exists", "elapsed", time.Since(start))
+		case retErr != nil:
 			span.RecordError(retErr)
 			span.SetStatus(codes.Error, retErr.Error())
 			logger.Warn("Remote index snapshot upload failed", "elapsed", time.Since(start), "err", retErr)
-		} else {
+		default:
 			logger.Info("Remote index snapshot upload completed", "elapsed", time.Since(start), "snapshot_key", uploadKey.String(), "snapshot_rv", rv)
 		}
 		span.SetAttributes(attrs...)
@@ -53,6 +66,20 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	}()
 
 	logger.Info("Remote index snapshot upload started")
+
+	// Cross-instance dedup: if another replica recently uploaded a same-version
+	// snapshot for this resource, skip without doing any local work. Probe
+	// failures fall through to today's upload path — the probe is an
+	// optimisation, not a correctness check.
+	if interval := b.opts.Snapshot.UploadInterval; interval > 0 {
+		k, _, err := findFreshSnapshotByUploadTime(ctx, b.opts.Snapshot.Store, key, interval, b.opts.BuildVersion)
+		if err != nil {
+			logger.Warn("Snapshot upload-time probe failed; proceeding with upload", "err", err)
+		} else if k != (ulid.ULID{}) {
+			span.SetAttributes(attribute.String("skip_remote_snapshot_key", k.String()))
+			return errSkipRecentRemote
+		}
+	}
 
 	lockAttrs := append([]attribute.KeyValue{attribute.String("lock_scope", "build")}, commonSpanAttrs...)
 	span.AddEvent("snapshot.lock.acquire.started", oteltrace.WithAttributes(lockAttrs...))
@@ -68,7 +95,7 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		if releaseErr := lock.Release(); releaseErr != nil {
 			span.AddEvent("snapshot.lock.release.failed", oteltrace.WithAttributes(lockAttrs...))
 			// A release failure after UploadIndex succeeds does not make the uploaded snapshot invalid.
-			logger.Warn("releasing snapshot upload lock", "err", releaseErr)
+			logger.Warn("releasing index snapshot upload lock", "err", releaseErr)
 			return
 		}
 		span.AddEvent("snapshot.lock.release.completed", oteltrace.WithAttributes(lockAttrs...))
@@ -111,10 +138,18 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		return fmt.Errorf("reading snapshot build info: %w", biErr)
 	}
 
-	uploadKey, err = b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, IndexMeta{
+	meta := IndexMeta{
 		GrafanaBuildVersion:   bi.BuildVersion,
 		LatestResourceVersion: rv,
-	})
+	}
+	// bi.BuildTime is the original index creation time; it survives reopens and
+	// downloads, so periodic re-uploads keep the original build-start time.
+	// Guard zero so legacy indexes without BuildTime stay zero in the manifest.
+	if bi.BuildTime > 0 {
+		meta.BuildStartTimestamp = time.Unix(bi.BuildTime, 0).UTC()
+	}
+
+	uploadKey, err = b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, meta)
 	if err != nil {
 		return fmt.Errorf("uploading snapshot: %w", err)
 	}
