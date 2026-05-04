@@ -51,8 +51,12 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
-	if dsInfo.Settings.BatchAPIEnabled && config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorBatchAPI") {
+	batchFlagEnabled := config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorBatchAPI")
+	if dsInfo.Settings.BatchAPIEnabled && batchFlagEnabled {
 		return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client)
+	}
+	if dsInfo.Settings.BatchAPIEnabled && !batchFlagEnabled {
+		e.Logger.Warn("Azure Monitor datasource has batchAPIEnabled=true but the azureMonitorBatchAPI feature toggle is off; falling back to the legacy ARM metrics endpoint")
 	}
 
 	result := backend.NewQueryDataResponse()
