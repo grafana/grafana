@@ -31,6 +31,22 @@ describe('sanitizeTextPanelContent', () => {
         <input checked="" disabled="" type="checkbox" class="some-class">`);
     expect(str).not.toMatch(/<input/);
   });
+
+  it('should allow button elements with safe attributes', () => {
+    const str = sanitizeTextPanelContent(
+      '<button class="btn" style="width: 100%; height: 50px; background-color: lightgrey; color: black" type="button">Click me</button>'
+    );
+    expect(str).toContain('<button');
+    expect(str).toContain('class="btn"');
+    expect(str).toContain('Click me');
+  });
+
+  it('should strip event handlers from button elements', () => {
+    const str = sanitizeTextPanelContent('<button onclick="alert(1)">Click me</button>');
+    expect(str).not.toContain('onclick');
+    expect(str).toContain('<button');
+    expect(str).toContain('Click me');
+  });
 });
 
 describe('sanitizeUrl', () => {
