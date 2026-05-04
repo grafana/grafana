@@ -59,7 +59,7 @@ export const AddCorrelationFormAppPlatform = ({ onClose, onCreated }: Props) => 
     const corrSpec = await generateAddSpec(data);
     return createCorrelation({
       correlation: {
-        metadata: {},
+        metadata: { generateName: 'correlation-' },
         apiVersion: 'correlations.grafana.app/v0alpha1',
         kind: 'Correlation',
         spec: corrSpec,
