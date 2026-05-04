@@ -68,3 +68,7 @@ func ErrInvalidResourceIDData(resourceID string) errutil.TemplateData {
 		},
 	}
 }
+
+func ErrExternalTeamMemberData(err error) errutil.TemplateData {
+	return errutil.TemplateData{Error: err}
+}

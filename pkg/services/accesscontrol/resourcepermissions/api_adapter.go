@@ -23,7 +23,6 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -759,9 +758,9 @@ func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.In
 		// dual-write caller from proceeding with the legacy SQL write, which would
 		// otherwise cause k8s and SQL to diverge until the next reconciliation.
 		if idx >= 0 && t.Spec.Members[idx].External {
-			return ErrExternalTeamMember.Build(errutil.TemplateData{
-				Error: fmt.Errorf("user %q is externally-synced", userDetails.UID),
-			})
+			return ErrExternalTeamMember.Build(ErrExternalTeamMemberData(
+				fmt.Errorf("user %q is externally-synced", userDetails.UID),
+			))
 		}
 
 		switch {
