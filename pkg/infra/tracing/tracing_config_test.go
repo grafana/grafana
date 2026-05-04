@@ -69,6 +69,10 @@ func TestTracingConfig(t *testing.T) {
 		ExpectedSampler           string
 		ExpectedSamplerParam      float64
 		ExpectedSamplingServerURL string
+
+		ExpectedCACert     string
+		ExpectedClientCert string
+		ExpectedClientKey  string
 	}{
 		{
 			Name:             "default config uses noop exporter",
@@ -177,6 +181,24 @@ func TestTracingConfig(t *testing.T) {
 			ExpectedSamplerParam:      0.5,
 			ExpectedSamplingServerURL: "http://example.com:5778/sampling",
 		},
+		{
+			Name: "OTLP mTLS config is parsed",
+			Cfg: `
+			[tracing.opentelemetry.otlp]
+			address = otlp.example.com:4317
+			insecure = false
+			ca_cert = /etc/ssl/ca.pem
+			client_cert = /etc/ssl/client.crt
+			client_key = /etc/ssl/client.key
+			`,
+			ExpectedExporter:   otlpExporter,
+			ExpectedAddress:    "otlp.example.com:4317",
+			ExpectedInsecure:   false,
+			ExpectedAttrs:      []attribute.KeyValue{},
+			ExpectedCACert:     "/etc/ssl/ca.pem",
+			ExpectedClientCert: "/etc/ssl/client.crt",
+			ExpectedClientKey:  "/etc/ssl/client.key",
+		},
 	} {
 		t.Run(test.Name, func(t *testing.T) {
 			// export environment variables
@@ -200,6 +222,9 @@ func TestTracingConfig(t *testing.T) {
 			assert.Equal(t, test.ExpectedPropagator, tracingConfig.Propagation)
 			assert.Equal(t, test.ExpectedAttrs, tracingConfig.CustomAttribs)
 			assert.Equal(t, test.ExpectedInsecure, tracingConfig.Insecure)
+			assert.Equal(t, test.ExpectedCACert, tracingConfig.CACert)
+			assert.Equal(t, test.ExpectedClientCert, tracingConfig.ClientCert)
+			assert.Equal(t, test.ExpectedClientKey, tracingConfig.ClientKey)
 
 			if test.ExpectedSampler != "" {
 				assert.Equal(t, test.ExpectedSampler, tracingConfig.Sampler)
