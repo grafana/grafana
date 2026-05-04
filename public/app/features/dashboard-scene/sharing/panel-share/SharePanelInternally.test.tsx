@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
 import { userEvent } from '../../../../../test/test-utils';
@@ -69,6 +69,38 @@ describe('SharePanelInternally', () => {
     await userEvent.click(copyImageLinkButton);
 
     expect(document.execCommand).toHaveBeenCalledWith('copy');
+  });
+
+  it('should preserve image settings in the URL after theme change', async () => {
+    config.appUrl = 'http://dashboards.grafana.com/grafana/';
+    config.rendererAvailable = true;
+    locationService.push('/d/dash-1?from=now-6h&to=now');
+
+    const tab = buildAndRenderScenario();
+
+    // Wait for the form to render
+    expect(await screen.findByText('Panel preview')).toBeInTheDocument();
+
+    // Change image dimensions
+    const widthInput = screen.getByPlaceholderText('1000');
+    const heightInput = screen.getByPlaceholderText('500');
+    const scaleInput = screen.getByPlaceholderText('1');
+
+    await userEvent.clear(widthInput);
+    await userEvent.type(widthInput, '800');
+    await userEvent.clear(heightInput);
+    await userEvent.type(heightInput, '600');
+    await userEvent.clear(scaleInput);
+    await userEvent.type(scaleInput, '2');
+
+    // Change theme
+    await act(() => tab.onThemeChange('light'));
+
+    // Verify the image URL includes both the custom dimensions and the theme
+    expect(tab.state.imageUrl).toContain('width=800');
+    expect(tab.state.imageUrl).toContain('height=600');
+    expect(tab.state.imageUrl).toContain('scale=2');
+    expect(tab.state.imageUrl).toContain('theme=light');
   });
 });
 
