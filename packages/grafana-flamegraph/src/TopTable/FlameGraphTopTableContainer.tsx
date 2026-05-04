@@ -8,6 +8,8 @@ import {
   type DataLinkClickEvent,
   type Field,
   FieldType,
+  formattedValueToString,
+  getValueFormat,
   type GrafanaTheme2,
   MappingType,
   escapeStringForRegex,
@@ -56,10 +58,22 @@ const FlameGraphTopTableContainer = memo(
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
 
+    // Separate the "other" entry from the main table
+    const { tableWithoutOther, otherEntry } = useMemo(() => {
+      const otherData = table['other'];
+      if (!otherData) {
+        return { tableWithoutOther: table, otherEntry: undefined };
+      }
+      const { ['other']: _, ...rest } = table;
+      return { tableWithoutOther: rest, otherEntry: otherData };
+    }, [table]);
+
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
+
+    const otherSectionHeight = otherEntry ? 32 : 0;
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
@@ -69,9 +83,11 @@ const FlameGraphTopTableContainer = memo(
               return null;
             }
 
+            const tableHeight = height - otherSectionHeight;
+
             const frame = buildTableDataFrame(
               data,
-              table,
+              tableWithoutOther,
               width,
               onSymbolClick,
               onSearch,
@@ -82,18 +98,31 @@ const FlameGraphTopTableContainer = memo(
               sandwichItem
             );
             return (
-              <Table
-                initialSortBy={sort}
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
-                data={frame}
-                width={width}
-                height={height}
-              />
+              <>
+                <Table
+                  initialSortBy={sort}
+                  onSortByChange={(s) => {
+                    if (s && s.length) {
+                      onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+                    }
+                    setSort(s);
+                  }}
+                  data={frame}
+                  width={width}
+                  height={tableHeight}
+                />
+                {otherEntry && (
+                  <OtherRow
+                    otherEntry={otherEntry}
+                    data={data}
+                    onSearch={onSearch}
+                    onSandwich={onSandwich}
+                    onSymbolClick={onSymbolClick}
+                    search={search}
+                    sandwichItem={sandwichItem}
+                  />
+                )}
+              </>
             );
           }}
         </AutoSizer>
@@ -362,6 +391,92 @@ function ActionCell(props: ActionCellProps) {
     </div>
   );
 }
+
+type OtherRowProps = {
+  otherEntry: TableData;
+  data: FlameGraphDataContainer;
+  onSearch: (str: string) => void;
+  onSandwich: (str?: string) => void;
+  onSymbolClick: (str: string) => void;
+  search?: string;
+  sandwichItem?: string;
+};
+
+function OtherRow({ otherEntry, data, onSearch, onSandwich, onSymbolClick, search, sandwichItem }: OtherRowProps) {
+  const styles = useStyles2(getOtherRowStyles);
+  const unit = data.selfField.config.unit;
+  const formatter = getValueFormat(unit || 'short');
+  const formattedSelf = formattedValueToString(formatter(otherEntry.self));
+
+  const isSearched = search === `^${escapeStringForRegex('other')}$`;
+  const isSandwiched = sandwichItem === 'other';
+
+  return (
+    <div className={styles.otherRow} data-testid="otherRow">
+      <div className={styles.otherRowActions}>
+        <IconButton
+          name={'search'}
+          size="sm"
+          variant={isSearched ? 'primary' : 'secondary'}
+          tooltip={isSearched ? 'Clear from search' : 'Search for symbol'}
+          aria-label={isSearched ? 'Clear from search' : 'Search for symbol'}
+          onClick={() => onSearch(isSearched ? '' : 'other')}
+        />
+        <IconButton
+          name={'gf-show-context'}
+          size="sm"
+          tooltip={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+          variant={isSandwiched ? 'primary' : 'secondary'}
+          aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+          onClick={() => onSandwich(isSandwiched ? undefined : 'other')}
+        />
+      </div>
+      <span className={styles.otherRowText}>
+        A total of <button className={styles.otherRowLink} onClick={() => onSymbolClick('other')}>{formattedSelf}</button> has been truncated and is represented by &quot;other&quot; in the flamegraph.
+      </span>
+    </div>
+  );
+}
+
+const getOtherRowStyles = (theme: GrafanaTheme2) => {
+  return {
+    otherRow: css({
+      label: 'otherRow',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+    }),
+    otherRowActions: css({
+      label: 'otherRowActions',
+      display: 'flex',
+      gap: theme.spacing(0.25),
+      flexShrink: 0,
+    }),
+    otherRowText: css({
+      label: 'otherRowText',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    }),
+    otherRowLink: css({
+      label: 'otherRowLink',
+      background: 'none',
+      border: 'none',
+      padding: 0,
+      color: theme.colors.text.link,
+      cursor: 'pointer',
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: 'inherit',
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    }),
+  };
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
