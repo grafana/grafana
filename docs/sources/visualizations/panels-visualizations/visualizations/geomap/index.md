@@ -393,7 +393,13 @@ The layer can also render a route with arrows.
 | Text label | configures a text label for each route. |
 | Arrow | sets the arrow styling to display along route, in order of data. Choose from: **None**, **Forward**, and **Reverse** |
 | Display tooltip | allows you to toggle tooltips for the layer. |
+| [Group by](#group-by) | Use this field to group routes. By default, data points are not grouped. |
+| [Use unique colors](#group-by) | Assign unique colors to each group. It's set to `false` by default. |
 <!-- prettier-ignore-end -->
+
+##### Group by
+
+Using the **Group by** option you can ensure that data points are only connected within groups sharing the same value, preventing unintended connections between unrelated points. Use it with the **Use unique colors** option to help visually distinguish different routes by assigning a unique color to each group.
 
 [Extensions for OpenLayers - Flow Line Style](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
 

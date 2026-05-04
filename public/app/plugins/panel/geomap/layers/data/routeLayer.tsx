@@ -36,6 +36,8 @@ import { getStyleDimension, isSegmentVisible } from '../../utils/utils';
 export interface RouteConfig {
   style: StyleConfig;
   arrow?: 0 | 1 | -1;
+  groupBy?: string;
+  useUniqueColors?: boolean;
 }
 
 const defaultOptions: RouteConfig = {
@@ -45,6 +47,8 @@ const defaultOptions: RouteConfig = {
     lineWidth: 2,
   },
   arrow: 0,
+  groupBy: '',
+  useUniqueColors: false,
 };
 
 export const ROUTE_LAYER_ID = 'route';
@@ -92,19 +96,36 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
     const style = await getStyleConfigState(config.style);
     const location = await getLocationMatchers(options.location);
-    const source = new FrameVectorSource(location);
+    const source = new FrameVectorSource(location, {
+      groupBy: config.groupBy
+    });
     const vectorLayer = new VectorImage({ source });
     const hasArrows = config.arrow === 1 || config.arrow === -1;
 
-    if (!style.fields && !hasArrows) {
-      // Set a global style
+    let groupColors: Record<string, string> = {};
+
+  if (!style.fields && !hasArrows) {
+    vectorLayer.setStyle((feature: FeatureLike) => {
       const styleBase = routeStyle(style.base);
       if (style.config.size && style.config.size.fixed) {
         // Applies width to base style if specified
         styleBase.getStroke()?.setWidth(style.config.size.fixed);
       }
-      vectorLayer.setStyle(styleBase);
-    } else {
+
+      if (config.useUniqueColors && config.groupBy) {
+        const groupValue = feature.get(config.groupBy);
+        if (groupValue) {
+          if (!groupColors[groupValue]) {
+            const hue = Math.floor((Object.keys(groupColors).length * 137.5) % 360);
+            groupColors[groupValue] = `hsl(${hue}, 70%, 50%)`;
+          }
+          styleBase.getStroke().setColor(groupColors[groupValue]);
+        }
+      }
+      
+      return styleBase;
+    });
+  } else {
       vectorLayer.setStyle((feature: FeatureLike) => {
         const idx: number = feature.get('rowIndex');
         const dims = style.dims;
@@ -300,36 +321,21 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
           return; // ignore empty
         }
 
+        if (config.useUniqueColors) {
+          groupColors = {};
+        }
+
         for (const frame of data.series) {
           if (style.fields || hasArrows) {
             style.dims = getStyleDimension(frame, style, theme);
           }
 
-          source.clear(true);
-          const info = getGeometryField(frame, location);
-          if (!info.field) {
-            source.changed();
-            break;
+          if (config.groupBy) {
+            source.updateLineStringGrouped(frame, config.groupBy);
+          } else {
+            source.updateLineString(frame);
           }
-          const coords: number[][] = [];
-          for (const v of info.field.values) {
-            if (v instanceof Point) {
-              coords.push(v.getCoordinates());
-            }
-          }
-          if (coords.length >= 2) {
-            const geometry = new LineString(coords);
-            source['addFeatureInternal'](
-              new Feature({
-                frame,
-                rowIndex: 0,
-                geometry,
-              })
-            );
-          }
-          source.changed();
-
-          break; // Only the first frame for now!
+          break;
         }
       },
 
@@ -357,6 +363,18 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
               ],
             },
             defaultValue: defaultOptions.arrow,
+          })
+          .addTextInput({
+            path: 'config.groupBy',
+            name: 'Group by',
+            description: 'Field to group routes by',
+            defaultValue: defaultOptions.groupBy,
+          })
+          .addBooleanSwitch({
+            path: 'config.useUniqueColors',
+            name: 'Use unique colors',
+            description: 'Assign unique colors to each group',
+            defaultValue: defaultOptions.useUniqueColors,
           });
       },
     };
