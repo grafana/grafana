@@ -21,15 +21,19 @@ interface Props {
  * Header shows the file name + an Edit pencil that opens the host editor;
  * the body either renders the markdown or shows an "Add README" empty state.
  *
- * Returns null when the feature toggle is off or the folder isn't provisioned.
+ * Returns null and triggers no data fetching when the feature toggle is off
+ * or when the folder isn't provisioned.
  */
 export function FolderReadmePanel({ folderUID }: Props) {
-  const styles = useStyles2(getStyles);
-  const { repository, folder, readmePath, status, markdownContent, refetch } = useFolderReadme(folderUID);
-
   if (!config.featureToggles.provisioningReadmes) {
     return null;
   }
+  return <FolderReadmePanelContent folderUID={folderUID} />;
+}
+
+function FolderReadmePanelContent({ folderUID }: Props) {
+  const styles = useStyles2(getStyles);
+  const { repository, folder, readmePath, status, markdownContent, refetch } = useFolderReadme(folderUID);
 
   if (!repository || status === 'loading') {
     return null;

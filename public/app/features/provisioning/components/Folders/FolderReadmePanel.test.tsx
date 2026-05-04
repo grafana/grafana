@@ -173,6 +173,13 @@ describe('FolderReadmePanel', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('does not invoke useFolderReadme when the feature toggle is off', () => {
+    config.featureToggles = { provisioningReadmes: false };
+    setReadmeResult();
+    render(<FolderReadmePanel folderUID="test-folder" />);
+    expect(mockUseFolderReadme).not.toHaveBeenCalled();
+  });
+
   it('renders nothing when the folder is not provisioned', () => {
     setReadmeResult({ repository: undefined });
 
