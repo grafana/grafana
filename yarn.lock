@@ -13455,6 +13455,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@zone-eu/mailsplit@npm:5.4.8":
+  version: 5.4.8
+  resolution: "@zone-eu/mailsplit@npm:5.4.8"
+  dependencies:
+    libbase64: "npm:1.3.0"
+    libmime: "npm:5.3.7"
+    libqp: "npm:2.1.1"
+  checksum: 10/31f78be7aef62df7ca62edf9de2ef426ac979d5a516ae8def9c76eea911bda92d8cd8d36a0e8c203cc975d9e5d25faf4b8056f1883a1d615d550684bb6fd38ae
+  languageName: node
+  linkType: hard
+
 "JSONStream@npm:^1.3.5":
   version: 1.3.5
   resolution: "JSONStream@npm:1.3.5"
@@ -17984,17 +17995,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"encoding-japanese@npm:2.0.0":
-  version: 2.0.0
-  resolution: "encoding-japanese@npm:2.0.0"
-  checksum: 10/aabdaa913fcd354ee3933142f121a2027cabb2cd2aff74d84464464d8e0b2bf2dc7223a0176d908954aa39c0682afe03045b6edf8042410bf5cc1fec34758e8f
-  languageName: node
-  linkType: hard
-
-"encoding-japanese@npm:2.1.0":
-  version: 2.1.0
-  resolution: "encoding-japanese@npm:2.1.0"
-  checksum: 10/9c06abca6176aa9db49567956950b9b18508d59bc98eb132b9c8f841422812470bf45c7cba049e35a0bbdb8c888d5dcffc4a76ea696c88d846f7f0834e9f67fc
+"encoding-japanese@npm:2.2.0":
+  version: 2.2.0
+  resolution: "encoding-japanese@npm:2.2.0"
+  checksum: 10/e77259312054ed0f3cdbb5b35d56d244ef4a56779d47e279e7b9da96e0f81b71b0ee2a74709eb047b06d1365f857501cfdbe62bd4e782a412123fd5933feda6c
   languageName: node
   linkType: hard
 
@@ -21845,7 +21849,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"iconv-lite@npm:^0.7.0, iconv-lite@npm:^0.7.2, iconv-lite@npm:~0.7.0":
+"iconv-lite@npm:0.7.2, iconv-lite@npm:^0.7.0, iconv-lite@npm:^0.7.2, iconv-lite@npm:~0.7.0":
   version: 0.7.2
   resolution: "iconv-lite@npm:0.7.2"
   dependencies:
@@ -24542,13 +24546,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"libbase64@npm:1.2.1":
-  version: 1.2.1
-  resolution: "libbase64@npm:1.2.1"
-  checksum: 10/b7b5c99c0c2305802e402cc6a21784396911e42853312a1aa530d11725c737776712d71b2fd2dc5f21b87a80fb186d29e6c472c34be31170aa86a587b23c1033
-  languageName: node
-  linkType: hard
-
 "libbase64@npm:1.3.0":
   version: 1.3.0
   resolution: "libbase64@npm:1.3.0"
@@ -24556,27 +24553,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"libmime@npm:5.2.0":
-  version: 5.2.0
-  resolution: "libmime@npm:5.2.0"
+"libmime@npm:5.3.7":
+  version: 5.3.7
+  resolution: "libmime@npm:5.3.7"
   dependencies:
-    encoding-japanese: "npm:2.0.0"
-    iconv-lite: "npm:0.6.3"
-    libbase64: "npm:1.2.1"
-    libqp: "npm:2.0.1"
-  checksum: 10/d8de523d99bedb1d8055ad27b731ea697c2627595aadbc090eca8393a10def85f4f43e94a240f72a17943203c5ef37b8b24ae53b94d3bb6aa7c9deb6388f79ea
-  languageName: node
-  linkType: hard
-
-"libmime@npm:5.3.5":
-  version: 5.3.5
-  resolution: "libmime@npm:5.3.5"
-  dependencies:
-    encoding-japanese: "npm:2.1.0"
+    encoding-japanese: "npm:2.2.0"
     iconv-lite: "npm:0.6.3"
     libbase64: "npm:1.3.0"
-    libqp: "npm:2.1.0"
-  checksum: 10/7f610cd981081919fc698d4fc1f2281ddf90f2ed4f7b60687a443901ec2c06b9837cb504daf78b6ad772643ec06c67131554ba7a05f645aaab00d984d07c584c
+    libqp: "npm:2.1.1"
+  checksum: 10/9f148cd94256f604e71af60c159ad08b8914029727220b2a048e1c95957b099a41fb0c8a225dd1af87d5dfd4fa7c26afd7cf83d395894b7214e6827d7e25511b
   languageName: node
   linkType: hard
 
@@ -24606,17 +24591,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"libqp@npm:2.0.1":
-  version: 2.0.1
-  resolution: "libqp@npm:2.0.1"
-  checksum: 10/5550280b09b1c0caa02870cdd0651be1de91cf74902ff4bfeb23889ae4c002fbedcf532aff3667e85ba2b0eda5b224ac12cae809653e71056439ee7216e70c55
-  languageName: node
-  linkType: hard
-
-"libqp@npm:2.1.0":
-  version: 2.1.0
-  resolution: "libqp@npm:2.1.0"
-  checksum: 10/a44681f80523a2f88fe737dd395bb5bdcc9a1f731e24b2e66ec1de2f92a6292516c9b628f0a81f53ad991233764b5ca0a322268492e1a4534be5d532172b182a
+"libqp@npm:2.1.1":
+  version: 2.1.1
+  resolution: "libqp@npm:2.1.1"
+  checksum: 10/cc59bd6ea61604b0505651fa79b722ff69d39b1fc609dad3ad4a20a51c6eb904babc0d1a59699a55a628063f31540232845bab471910d92c8b607120f563089e
   languageName: node
   linkType: hard
 
@@ -25128,31 +25106,20 @@ __metadata:
   linkType: hard
 
 "mailparser@npm:^3.5.0":
-  version: 3.7.1
-  resolution: "mailparser@npm:3.7.1"
+  version: 3.9.4
+  resolution: "mailparser@npm:3.9.4"
   dependencies:
-    encoding-japanese: "npm:2.1.0"
+    "@zone-eu/mailsplit": "npm:5.4.8"
+    encoding-japanese: "npm:2.2.0"
     he: "npm:1.2.0"
     html-to-text: "npm:9.0.5"
-    iconv-lite: "npm:0.6.3"
-    libmime: "npm:5.3.5"
+    iconv-lite: "npm:0.7.2"
+    libmime: "npm:5.3.7"
     linkify-it: "npm:5.0.0"
-    mailsplit: "npm:5.4.0"
-    nodemailer: "npm:6.9.13"
+    nodemailer: "npm:8.0.2"
     punycode.js: "npm:2.3.1"
-    tlds: "npm:1.252.0"
-  checksum: 10/02a1b27b70cdf77b2a52ac4f7e4e25abf019a1fc5e0e2a5a23f09e26c39471469797f98060dbc7b8aadfb8dae1f254ff65057ef90453ab25f037e8f53eba6bed
-  languageName: node
-  linkType: hard
-
-"mailsplit@npm:5.4.0":
-  version: 5.4.0
-  resolution: "mailsplit@npm:5.4.0"
-  dependencies:
-    libbase64: "npm:1.2.1"
-    libmime: "npm:5.2.0"
-    libqp: "npm:2.0.1"
-  checksum: 10/64a9e140ffaff5874b9fe6852514ffe119ee09ed4a0dd3a95a07997840519d07d93f451b3f9675b5524e44f5f12f8348680329183b2c723bac7bf84340c4e1cb
+    tlds: "npm:1.261.0"
+  checksum: 10/4b14060dea6d957b2fb339ed0a464934f3650fa88eb1a21a5758273b8f1923a707a1528666cd47a3aec797b92cdfde3a4452dc2c85987ec084084bd792879bda
   languageName: node
   linkType: hard
 
@@ -34125,12 +34092,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tlds@npm:1.252.0":
-  version: 1.252.0
-  resolution: "tlds@npm:1.252.0"
+"tlds@npm:1.261.0":
+  version: 1.261.0
+  resolution: "tlds@npm:1.261.0"
   bin:
     tlds: bin.js
-  checksum: 10/ea5b0d54ec7463e6da735eb45a6cd81533288cb95aa6ce62bd44c5b2264206ba6fabcc9202656ff2f0c7964dceeaa995622d9001efac2cd7e43aa07492a63235
+  checksum: 10/2dfb8c7e0c0c1fe8fd9966ead43f71c36c974aa498b4e290fb383ceb3be3b20b9517041560b966993fb30abd451a83bf37119fa8d99809ce01bbf5b21dd6c6d3
   languageName: node
   linkType: hard
 
