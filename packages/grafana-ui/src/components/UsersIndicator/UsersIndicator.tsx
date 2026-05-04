@@ -62,7 +62,7 @@ const getStyles = (theme: GrafanaTheme2, limit: number) => {
       marginLeft: theme.spacing(1),
       isolation: 'isolate',
 
-      '& > button': {
+      '& > *': {
         marginLeft: theme.spacing(-1), // Overlay the elements a bit on top of each other
 
         // Ensure overlaying user icons are stacked correctly with z-index on each element
