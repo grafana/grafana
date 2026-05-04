@@ -20,6 +20,7 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 import { TableCellDisplayMode } from '../types';
 
 import { COLUMN, TABLE } from './constants';
+import { getJustifyContent } from './styles';
 import { type MeasureCellHeightEntry, type TableRow } from './types';
 import {
   applyFilter,
@@ -45,7 +46,6 @@ import {
   getDefaultRowHeight,
   getDisplayName,
   getIsNestedTable,
-  getJustifyContent,
   getPillCellHeightMeasurer,
   getRowHeight,
   getTextHeightEstimator,

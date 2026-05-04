@@ -1,11 +1,12 @@
-import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
-import { type CSSProperties } from 'react';
-import { type ColumnWidth, type ColumnWidths, type SortColumn } from 'react-data-grid';
+import { type CSSProperties, type Key, type ReactNode } from 'react';
+import { type ColumnWidth, type ColumnWidths, type RenderRowProps, Row, type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { type Count, varPreLine } from 'uwrap';
 
 import {
+  DataHoverClearEvent,
+  DataHoverEvent,
   FieldType,
   type Field,
   formattedValueToString,
@@ -28,15 +29,18 @@ import {
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
+import { type PanelContext } from '../../PanelChrome';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
-import { inferPills } from './Cells/PillCell';
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
+import { type TextAlign } from './styles';
 import {
   type TableRow,
+  type TableSummaryRow,
+  type TableCellValue,
   type ColumnTypes,
   type FrameToRowsConverter,
   type Comparator,
@@ -45,6 +49,33 @@ import {
   type MeasureCellHeightEntry,
   type FilterType,
 } from './types';
+
+// inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
+// styles.ts → utils.tsx → renderers.tsx → PillCell.tsx → styles.ts
+/* ---------------------------- Pill inference ----------------------------- */
+const SPLIT_RE = /\s*,\s*/;
+
+export function inferPills(rawValue: TableCellValue): unknown[] {
+  if (rawValue === '' || rawValue == null) {
+    return [];
+  }
+
+  if (Array.isArray(rawValue)) {
+    return rawValue.filter((v) => v != null).map((v) => String(v).trim());
+  }
+
+  const value = String(rawValue);
+
+  if (value[0] === '[') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value.trim().split(SPLIT_RE);
+    }
+  }
+
+  return value.trim().split(SPLIT_RE);
+}
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
@@ -433,8 +464,6 @@ const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
   TableCellDisplayMode.ColorBackground,
 ]);
 
-export type TextAlign = 'left' | 'right' | 'center';
-
 /**
  * @internal
  * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
@@ -450,14 +479,6 @@ export function getAlignment(field: Field): TextAlign {
   }
 
   return align;
-}
-
-/**
- * @internal
- * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
- */
-export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
-  return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
 }
 
 const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
@@ -1197,18 +1218,50 @@ export function parseStyleJson(rawValue: unknown): CSSProperties | void {
   }
 }
 
-// Safari 26.0 introduced rendering bugs which require us to disable several features of the table.
-// The bugs were later fixed in Safari 26.2.
-export const IS_SAFARI_26 = (() => {
-  if (navigator == null) {
-    return false;
-  }
-  const userAgent = navigator.userAgent;
-  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
-  if (!safariVersionMatch) {
-    return false;
-  }
-  const majorVersion = +safariVersionMatch[1];
-  const minorVersion = +safariVersionMatch[2];
-  return majorVersion === 26 && minorVersion <= 1;
-})();
+/**
+ * @internal
+ * Factory for the `renderRow` prop on DataGrid. Applies aria attributes and shared-crosshair event handlers.
+ */
+export const renderRowFactory =
+  (
+    fields: Field[],
+    panelContext: PanelContext,
+    expandedRows: Set<string>,
+    enableSharedCrosshair: boolean,
+    getStableKey: (rowIdx: number) => string
+  ) =>
+  // eslint-disable-next-line react/display-name
+  (key: Key, props: RenderRowProps<TableRow, TableSummaryRow>): ReactNode => {
+    const { row } = props;
+    const rowIdx = row.__index;
+    const isExpanded = expandedRows.has(getStableKey(rowIdx));
+
+    // Don't render non-expanded child rows
+    if (row.__depth === 1) {
+      if (!isExpanded) {
+        return null;
+      }
+      return <Row key={key} aria-level={row.__index + 1} aria-expanded={isExpanded} {...props} />;
+    }
+
+    const handlers: Partial<typeof props> = {};
+    if (enableSharedCrosshair) {
+      const timeField = fields.find((f) => f.type === FieldType.time);
+      if (timeField) {
+        handlers.onMouseEnter = () => {
+          panelContext.eventBus.publish(
+            new DataHoverEvent({
+              point: {
+                time: timeField?.values[rowIdx],
+              },
+            })
+          );
+        };
+        handlers.onMouseLeave = () => {
+          panelContext.eventBus.publish(new DataHoverClearEvent());
+        };
+      }
+    }
+
+    return <Row key={key} {...props} {...handlers} />;
+  };

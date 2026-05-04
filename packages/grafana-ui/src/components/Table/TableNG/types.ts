@@ -19,7 +19,8 @@ import { type MatcherScope, type TableCellHeight, type TableFieldOptions } from 
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
-import { type ApplyFilterResult, type TextAlign } from './utils';
+import { type TextAlign } from './styles';
+import { type ApplyFilterResult } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
