@@ -1,6 +1,7 @@
 package search
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -61,7 +62,14 @@ func newTestRemoteIndexStore(t *testing.T, bucket resource.CDKBucket) *BucketRem
 
 func newTestRemoteIndexStoreWithLockOwner(t *testing.T, bucket resource.CDKBucket, backend lockBackend, owner string) *BucketRemoteIndexStore {
 	t.Helper()
-	return NewBucketRemoteIndexStore(bucket, backend, owner, 5*time.Second, 500*time.Millisecond)
+	opts := LockOptions{TTL: 5 * time.Second, HeartbeatInterval: 500 * time.Millisecond}
+	return NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket:      bucket,
+		LockBackend: backend,
+		LockOwner:   owner,
+		BuildLock:   opts,
+		CleanupLock: opts,
+	})
 }
 
 // createTestBleveIndex creates a real bleve index with sample documents.
@@ -164,11 +172,13 @@ func TestValidateManifestPaths(t *testing.T) {
 		wantErr string
 	}{
 		{name: "valid paths", files: map[string]int64{"store/root.bolt": 100, "store/00001.zap": 200}},
+		{name: "leading double-dot in filename", files: map[string]int64{"..foo/bar.zap": 100}},
 		{name: "path traversal", files: map[string]int64{"../../../tmp/escape": 100}, wantErr: "invalid path"},
 		{name: "absolute path", files: map[string]int64{"/tmp/escape": 100}, wantErr: "invalid path"},
 		{name: "non-canonical dotslash", files: map[string]int64{"./store/root.bolt": 100}, wantErr: "non-canonical"},
 		{name: "non-canonical double dot", files: map[string]int64{"store/../store/root.bolt": 100}, wantErr: "non-canonical"},
 		{name: "dot entry", files: map[string]int64{".": 100}, wantErr: "invalid path"},
+		{name: "parent dir entry", files: map[string]int64{"..": 100}, wantErr: "invalid path"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -214,24 +224,24 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 	key := ulid.Make()
 	pfx := indexPrefix(ns, key.String())
 
-	t.Run("missing meta.json", func(t *testing.T) {
+	t.Run("missing snapshot manifest", func(t *testing.T) {
 		_, err := store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "reading meta.json")
+		require.Contains(t, err.Error(), "reading snapshot manifest")
 	})
 
 	t.Run("invalid JSON", func(t *testing.T) {
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", []byte("{not json"), nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, []byte("{not json"), nil))
 		_, err := store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "parsing meta.json")
+		require.Contains(t, err.Error(), "parsing snapshot manifest")
 	})
 
 	t.Run("empty file manifest", func(t *testing.T) {
 		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{}}
 		metaBytes, err := json.Marshal(meta)
 		require.NoError(t, err)
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
 		_, err = store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "empty file manifest")
@@ -241,7 +251,7 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{"store/../store/root.bolt": 100}}
 		metaBytes, err := json.Marshal(meta)
 		require.NoError(t, err)
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
 		_, err = store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "non-canonical")
@@ -251,23 +261,53 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{"/etc/passwd": 100}}
 		metaBytes, err := json.Marshal(meta)
 		require.NoError(t, err)
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
 		_, err = store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid")
 	})
 
-	t.Run("oversized meta.json", func(t *testing.T) {
-		// Write a meta.json that exceeds the 1 MiB limit
-		oversized := make([]byte, maxMetaJSONSize+1)
+	t.Run("oversized snapshot manifest", func(t *testing.T) {
+		// Write a manifest that exceeds the 1 MiB limit
+		oversized := make([]byte, maxSnapshotManifestSize+1)
 		for i := range oversized {
 			oversized[i] = 'x'
 		}
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", oversized, nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, oversized, nil))
 		_, err := store.DownloadIndex(ctx, ns, key, filepath.Join(t.TempDir(), "dl"))
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "write limit exceeded")
 	})
+}
+
+func TestRemoteIndexStore_DownloadRejectsOversizedFile(t *testing.T) {
+	// A bucket object that exceeds the size advertised in the snapshot manifest
+	// must fail fast — we should not transfer unbounded bytes to disk before
+	// noticing.
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStore(t, bucket)
+	ns := newTestNsResource()
+	key := ulid.Make()
+	pfx := indexPrefix(ns, key.String())
+
+	const advertised = 10
+	meta := IndexMeta{
+		GrafanaBuildVersion: "11.0.0",
+		Files:               map[string]int64{"store/root.bolt": advertised},
+	}
+	metaBytes, err := json.Marshal(meta)
+	require.NoError(t, err)
+	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
+
+	// Plant a file far larger than what the snapshot manifest claims.
+	oversized := bytes.Repeat([]byte("x"), advertised*1000)
+	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", oversized, nil))
+
+	_, err = store.DownloadIndex(ctx, ns, key, filepath.Join(t.TempDir(), "dl"))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "exceeds expected size")
 }
 
 func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
@@ -284,7 +324,7 @@ func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
 
 	// Delete one file from the bucket to simulate partial upload
 	pfx := indexPrefix(ns, indexKey.String())
-	metaRaw, err := bucket.ReadAll(ctx, pfx+"meta.json")
+	metaRaw, err := bucket.ReadAll(ctx, pfx+snapshotManifestFile)
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(metaRaw, &meta))
 	for relPath := range meta.Files {
@@ -319,19 +359,19 @@ func TestRemoteIndexStore_UploadExcludesMetaJSON(t *testing.T) {
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
-	// Plant a stale meta.json in the source directory
-	require.NoError(t, os.WriteFile(filepath.Join(srcDir, "meta.json"), []byte(`{"stale":"data"}`), 0600))
+	// Plant a stale snapshot manifest in the source directory
+	require.NoError(t, os.WriteFile(filepath.Join(srcDir, snapshotManifestFile), []byte(`{"stale":"data"}`), 0600))
 
 	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
 	pfx := indexPrefix(ns, indexKey.String())
-	metaBytes, err := bucket.ReadAll(ctx, pfx+"meta.json")
+	metaBytes, err := bucket.ReadAll(ctx, pfx+snapshotManifestFile)
 	require.NoError(t, err)
 	var uploaded IndexMeta
 	require.NoError(t, json.Unmarshal(metaBytes, &uploaded))
-	require.NotContains(t, uploaded.Files, "meta.json")
+	require.NotContains(t, uploaded.Files, snapshotManifestFile)
 }
 
 // --- Error injection tests (memblob + errorBucket) ---
@@ -410,7 +450,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		require.Contains(t, err.Error(), "upload network timeout")
 	})
 
-	t.Run("meta.json write error", func(t *testing.T) {
+	t.Run("snapshot manifest write error", func(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
 		store := newTestRemoteIndexStore(t, &errorBucket{CDKBucket: real, writeAllErr: fmt.Errorf("write quota exceeded")})
@@ -421,13 +461,13 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		require.Contains(t, err.Error(), "write quota exceeded")
 	})
 
-	t.Run("meta.json download error", func(t *testing.T) {
+	t.Run("snapshot manifest download error", func(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
 		store := newTestRemoteIndexStore(t, &errorBucket{
 			CDKBucket: real,
 			downloadFn: func(key string) error {
-				if strings.HasSuffix(key, "/meta.json") {
+				if strings.HasSuffix(key, "/"+snapshotManifestFile) {
 					return fmt.Errorf("access denied")
 				}
 				return nil
@@ -492,13 +532,13 @@ func TestRemoteIndexStore_CleanupIncompleteUploads(t *testing.T) {
 	store := newTestRemoteIndexStore(t, bucket)
 	ns := newTestNsResource()
 
-	// Upload a complete index (has meta.json)
+	// Upload a complete index (has a snapshot manifest)
 	srcDir := createTestBleveIndex(t)
 	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 	completeKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
-	// Simulate an incomplete upload: write objects under a ULID prefix without meta.json
+	// Simulate an incomplete upload: write objects under a ULID prefix without a snapshot manifest
 	incompleteKey := ulid.Make()
 	incompletePfx := indexPrefix(ns, incompleteKey.String())
 	require.NoError(t, bucket.WriteAll(ctx, incompletePfx+"store/root.bolt", []byte("orphaned"), nil))
@@ -557,7 +597,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_CorruptManifest(t *testing.T)
 		key := ulid.Make()
 		pfx := indexPrefix(ns, key.String())
 		require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", []byte("data"), nil))
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", []byte("{corrupt"), nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, []byte("{corrupt"), nil))
 
 		cleaned, err := store.CleanupIncompleteUploads(ctx, ns, 0)
 		require.NoError(t, err)
@@ -569,7 +609,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_CorruptManifest(t *testing.T)
 		pfx := indexPrefix(ns, key.String())
 		require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", []byte("data"), nil))
 		emptyMeta, _ := json.Marshal(IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{}})
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", emptyMeta, nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, emptyMeta, nil))
 
 		cleaned, err := store.CleanupIncompleteUploads(ctx, ns, 0)
 		require.NoError(t, err)
@@ -881,4 +921,40 @@ func TestRemoteIndexStore_LockNamespaceForCleanup_DistinctFromBuildLock(t *testi
 	require.NoError(t, buildLock.Release())
 
 	require.NotEqual(t, cleanupLockKey(ns.Namespace), buildIndexLockKey(ns))
+}
+
+// Smoke-tests the LockOptions plumbing. Only TTL is observable in lockInfo;
+// HeartbeatUpdateTimeout behaviour is covered separately on objectStorageLock.
+func TestRemoteIndexStore_BuildAndCleanupLockTTLsWiredIndependently(t *testing.T) {
+	ctx := context.Background()
+	backend := newFakeBackend(newConditionalBucket())
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+
+	buildTTL := 1 * time.Second
+	cleanupTTL := 5 * time.Second
+	store := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket:      bucket,
+		LockBackend: backend,
+		LockOwner:   "instance-1",
+		BuildLock:   LockOptions{TTL: buildTTL, HeartbeatInterval: 200 * time.Millisecond},
+		CleanupLock: LockOptions{TTL: cleanupTTL, HeartbeatInterval: 200 * time.Millisecond},
+	})
+	ns := newTestNsResource()
+
+	buildLock, err := store.LockBuildIndex(ctx, ns)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = buildLock.Release() })
+
+	info, err := backend.Read(ctx, buildIndexLockKey(ns))
+	require.NoError(t, err)
+	require.Equal(t, buildTTL, info.TTL)
+
+	cleanupLock, err := store.LockNamespaceForCleanup(ctx, ns.Namespace)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = cleanupLock.Release() })
+
+	info, err = backend.Read(ctx, cleanupLockKey(ns.Namespace))
+	require.NoError(t, err)
+	require.Equal(t, cleanupTTL, info.TTL)
 }

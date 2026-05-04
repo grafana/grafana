@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Editar YAML",
         "save": "Salvar"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Excluir todas as regras"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Excluir",
       "delete-modal-delete-button": "Excluir",
@@ -1573,8 +1575,14 @@
         "update-error": "Erro ao atualizar o grupo de regras",
         "update-success": "Grupo de regras atualizado"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "O grupo selecionado não pode ser editado",
       "group-not-editable-description": "Este grupo pertence a uma fonte de dados que não é compatível com edição.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Editar grupo de regras",
       "rule-group-error": "Erro ao carregar o grupo de regras"
     },
@@ -8136,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Adicionar aos favoritos",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Explorar dados",
       "open-in-explore": "Abrir na visualização do Explore",
       "remove-favorite": "Remover dos favoritos"
@@ -13826,7 +13840,8 @@
       "make-sure": "Criar um token com essas permissões"
     },
     "validation": {
-      "hidden-characters": "Este campo contém caracteres ocultos que podem ter sido inseridos ao copiar e colar. Digite novamente ou limpe o valor e tente novamente."
+      "hidden-characters": "Este campo contém caracteres ocultos que podem ter sido inseridos ao copiar e colar. Digite novamente ou limpe o valor e tente novamente.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Aviso",
     "watch-stream": {
@@ -14234,6 +14249,8 @@
       "alerts-loading": "Alertas",
       "card-click": "Selecionar cartão {{id}}",
       "data": "Dados",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Novo {{type}}",
       "queries-expressions": "Consultas e expressões",
       "toggle-size": "Alternar tamanho da barra lateral",
@@ -14950,10 +14967,13 @@
       "title": "Crie painéis rapidamente com sugestões e modelos"
     },
     "nav": {
+      "counter": "",
       "go-to": "Ir para o slide {{number}}",
-      "next": "Próximo",
-      "prev": "Voltar"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Explicar consulta",

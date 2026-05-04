@@ -27,7 +27,7 @@ cards:
       description: The Grafana Foundation SDK is a set of tools, types, and libraries that let you define Grafana dashboards and resources using familiar programming languages like Go, TypeScript, Python, Java, and PHP. Use it in conjunction with `gcx` to push your programmatically generated resources.
     - title: Git Sync
       height: 24
-      href: ./git-sync/intro-git-sync/
+      href: ./git-sync/
       description: Git Sync lets you store your dashboard files in a GitHub repository and synchronize those changes with your Grafana instance, enabling version control, branching, and pull requests directly from Grafana.
     - title: On-prem file provisioning
       height: 24
@@ -64,7 +64,7 @@ Historically, managing Grafana as code involved various community and Grafana La
 
 - This approach requires handling HTTP requests and responses but provides complete control over resource management.
 - `gcx`, Git Sync, and the Foundation SDK are all built on top of these APIs.
-- To understand Dashboard Schemas accepted by the APIs, refer to the [JSON models documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/index.md).
+- To understand Dashboard Schemas accepted by the APIs, refer to the [JSON models documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/).
 
 ## Explore
 

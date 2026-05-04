@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML bewerken",
         "save": "Opslaan"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "naam",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Alle regels verwijderen"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Verwijderen",
       "delete-modal-delete-button": "Verwijderen",
@@ -1573,8 +1575,14 @@
         "update-error": "Kan regelgroep niet bijwerken",
         "update-success": "Regelgroep is bijgewerkt"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Geselecteerde groep kan niet worden bewerkt",
       "group-not-editable-description": "Deze groep behoort tot een gegevensbron die geen bewerking ondersteunt.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Regelgroep bewerken",
       "rule-group-error": "Er is een fout opgetreden bij het laden van de regelgroep"
     },
@@ -8136,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aan favorieten toevoegen",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Gegevens verkennen",
       "open-in-explore": "In Verkennen-weergave openen",
       "remove-favorite": "Uit favorieten verwijderen"
@@ -13826,7 +13840,8 @@
       "make-sure": "Een token aanmaken met deze toestemmingen"
     },
     "validation": {
-      "hidden-characters": "Dit veld bevat verborgen tekens die mogelijk zijn ingevoerd door kopiëren en plakken. Typ de waarde opnieuw of verwijder de verborgen tekens en probeer het opnieuw."
+      "hidden-characters": "Dit veld bevat verborgen tekens die mogelijk zijn ingevoerd door kopiëren en plakken. Typ de waarde opnieuw of verwijder de verborgen tekens en probeer het opnieuw.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Waarschuwing",
     "watch-stream": {
@@ -14234,6 +14249,8 @@
       "alerts-loading": "Waarschuwingen",
       "card-click": "Kaart {{id}} selecteren",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nieuw {{type}}",
       "queries-expressions": "Queries en expressies",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
@@ -14950,10 +14967,13 @@
       "title": "Maak snel dashboards aan met suggesties en sjablonen"
     },
     "nav": {
+      "counter": "",
       "go-to": "Naar slide {{number}}",
-      "next": "Volgende",
-      "prev": "Vorige"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Query uitleggen",

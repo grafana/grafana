@@ -151,3 +151,45 @@ func TestPartialHNSWName(t *testing.T) {
 	require.Equal(t, "dashboards_weird__name_hnsw", partialHNSWName("dashboards", "weird!!name"))
 	require.Equal(t, "dashboards_upper_ns_hnsw", partialHNSWName("dashboards", "UPPER-NS"))
 }
+
+func TestFitEmbedding(t *testing.T) {
+	t.Run("exact size returns input unchanged", func(t *testing.T) {
+		in := []float32{1, 2, 3, 4}
+		got, err := fitEmbedding(in, 4)
+		require.NoError(t, err)
+		require.Equal(t, in, got)
+	})
+
+	t.Run("shorter is zero-padded to dim", func(t *testing.T) {
+		got, err := fitEmbedding([]float32{1, 2, 3}, 6)
+		require.NoError(t, err)
+		require.Equal(t, []float32{1, 2, 3, 0, 0, 0}, got)
+	})
+
+	t.Run("padding does not mutate caller's slice", func(t *testing.T) {
+		in := []float32{1, 2, 3}
+		got, err := fitEmbedding(in, 5)
+		require.NoError(t, err)
+		// Mutate the result; original must be untouched.
+		got[0] = 99
+		require.Equal(t, []float32{1, 2, 3}, in)
+	})
+
+	t.Run("longer than dim returns error", func(t *testing.T) {
+		_, err := fitEmbedding([]float32{1, 2, 3, 4, 5}, 3)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "5 dims")
+		require.Contains(t, err.Error(), "at most 3")
+	})
+
+	t.Run("empty input pads to dim of zeros", func(t *testing.T) {
+		got, err := fitEmbedding(nil, 4)
+		require.NoError(t, err)
+		require.Equal(t, []float32{0, 0, 0, 0}, got)
+	})
+
+	t.Run("dim of zero rejects any non-empty input", func(t *testing.T) {
+		_, err := fitEmbedding([]float32{1}, 0)
+		require.Error(t, err)
+	})
+}

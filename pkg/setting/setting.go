@@ -406,10 +406,11 @@ type Cfg struct {
 	SqlDatasourceMaxConnLifetimeDefault int
 
 	// Snapshots
-	SnapshotEnabled      bool
-	ExternalSnapshotUrl  string
-	ExternalSnapshotName string
-	ExternalEnabled      bool
+	SnapshotEnabled       bool
+	ExternalSnapshotUrl   string
+	ExternalSnapshotName  string
+	ExternalEnabled       bool
+	ExternalSnapshotToken string
 
 	// Only used in https://snapshots.raintank.io/
 	SnapshotPublicMode bool
@@ -445,6 +446,7 @@ type Cfg struct {
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
 	FrontendAnalyticsConsoleReporting   bool
+	MeticulousAIRecordingToken          string
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -1520,6 +1522,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
+	cfg.MeticulousAIRecordingToken = analytics.Key("meticulous_ai_recording_token").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -2177,6 +2180,7 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
 
 	cfg.ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	cfg.ExternalSnapshotToken = valueAsString(snapshots, "external_snapshot_token", "")
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	return nil
