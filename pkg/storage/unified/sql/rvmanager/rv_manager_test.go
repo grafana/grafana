@@ -8,6 +8,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/bwmarrin/snowflake"
+	"github.com/go-sql-driver/mysql"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -205,6 +207,96 @@ func TestExecBatch_RetriesOnSQLiteBusy(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.ErrorIs(t, err, boom)
+	})
+}
+
+// TestExecBatch_RetriesOnDeadlock guards the cross-engine retry path: a MySQL
+// 1213 deadlock or a Postgres 40P01 deadlock_detected leaves the transaction
+// rolled back, so the whole batched WithTx is safe to run again. Without this
+// the batch surfaces an HTTP 500 to the caller and concurrent team-sync
+// addmember writes silently lose membership rows once the upstream retry
+// budget is exhausted.
+func TestExecBatch_RetriesOnDeadlock(t *testing.T) {
+	ctx := testutil.NewDefaultTestContext(t)
+
+	t.Run("retries on MySQL 1213 deadlock", func(t *testing.T) {
+		dbp := test.NewDBProviderMatchWords(t)
+		dialect := sqltemplate.DialectForDriver(dbp.DB.DriverName())
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: dialect,
+		})
+		require.NoError(t, err)
+
+		deadlock := &mysql.MySQLError{Number: 1213, Message: "Deadlock found when trying to get lock; try restarting transaction"}
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnError(deadlock)
+		dbp.SQLMock.ExpectRollback()
+
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnResult(sqlmock.NewResult(1, 1))
+		expectSuccessfulResourceVersionExec(t, dbp)
+		dbp.SQLMock.ExpectCommit()
+
+		key := &resourcepb.ResourceKey{Group: "retry-mysql-deadlock", Resource: "res"}
+		rv, err := manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			_, err := tx.ExecContext(txnCtx, "insert resource")
+			return "guid-1", err
+		})
+		require.NoError(t, err)
+		require.Equal(t, int64(200), rv)
+	})
+
+	t.Run("retries on Postgres 40P01 deadlock", func(t *testing.T) {
+		dbp := test.NewDBProviderMatchWords(t)
+		dialect := sqltemplate.DialectForDriver(dbp.DB.DriverName())
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: dialect,
+		})
+		require.NoError(t, err)
+
+		deadlock := &pgconn.PgError{Code: "40P01", Message: "deadlock detected"}
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnError(deadlock)
+		dbp.SQLMock.ExpectRollback()
+
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnResult(sqlmock.NewResult(1, 1))
+		expectSuccessfulResourceVersionExec(t, dbp)
+		dbp.SQLMock.ExpectCommit()
+
+		key := &resourcepb.ResourceKey{Group: "retry-pg-deadlock", Resource: "res"}
+		rv, err := manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			_, err := tx.ExecContext(txnCtx, "insert resource")
+			return "guid-1", err
+		})
+		require.NoError(t, err)
+		require.Equal(t, int64(200), rv)
+	})
+
+	t.Run("non-deadlock MySQL errors do not retry", func(t *testing.T) {
+		dbp := test.NewDBProviderMatchWords(t)
+		dialect := sqltemplate.DialectForDriver(dbp.DB.DriverName())
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: dialect,
+		})
+		require.NoError(t, err)
+
+		// 1062 is ER_DUP_ENTRY — not retryable, must fall through.
+		dup := &mysql.MySQLError{Number: 1062, Message: "Duplicate entry"}
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnError(dup)
+		dbp.SQLMock.ExpectRollback()
+
+		key := &resourcepb.ResourceKey{Group: "no-retry-dup", Resource: "res"}
+		_, err = manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			_, err := tx.ExecContext(txnCtx, "insert resource")
+			return "guid-1", err
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, dup)
 	})
 }
 
