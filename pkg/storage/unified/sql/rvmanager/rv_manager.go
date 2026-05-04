@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager")
@@ -70,12 +69,13 @@ const (
 	// [unified_storage] resource_version_batch_transaction_timeout ini key).
 	defaultBatchTimeout = 5 * time.Second
 
-	// SQLite serializes writes; under contention an INSERT/UPDATE can return
-	// SQLITE_BUSY even with the busy_timeout pragma. The transaction is rolled
-	// back, so the whole batched WithTx is safe to retry from the start.
-	sqliteBusyMaxRetries = 5
-	sqliteBusyMinBackoff = 50 * time.Millisecond
-	sqliteBusyMaxBackoff = 500 * time.Millisecond
+	// Bounded retry for transient transactional conflicts that leave the
+	// transaction rolled back (and therefore safe to re-run from the start):
+	// SQLite busy/locked, MySQL deadlock / lock-wait timeout, and PostgreSQL
+	// deadlock / serialization failures. See isRetryableTxnError.
+	txnRetryMaxRetries = 5
+	txnRetryMinBackoff = 50 * time.Millisecond
+	txnRetryMaxBackoff = 500 * time.Millisecond
 )
 
 // ResourceVersionManager handles resource version operations
@@ -379,14 +379,14 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 	}
 
 	err = runBatch()
-	if err != nil && sqlite.IsBusyOrLocked(err) {
+	if err != nil && isRetryableTxnError(err) {
 		boff := backoff.New(ctx, backoff.Config{
-			MinBackoff: sqliteBusyMinBackoff,
-			MaxBackoff: sqliteBusyMaxBackoff,
-			MaxRetries: sqliteBusyMaxRetries,
+			MinBackoff: txnRetryMinBackoff,
+			MaxBackoff: txnRetryMaxBackoff,
+			MaxRetries: txnRetryMaxRetries,
 		})
 		for boff.Ongoing() {
-			span.AddEvent("batch_transaction_retry_sqlite_busy", trace.WithAttributes(
+			span.AddEvent("batch_transaction_retry", trace.WithAttributes(
 				attribute.Int("attempt", boff.NumRetries()+1),
 				attribute.String("error", err.Error()),
 			))
@@ -395,7 +395,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 				break
 			}
 			err = runBatch()
-			if err == nil || !sqlite.IsBusyOrLocked(err) {
+			if err == nil || !isRetryableTxnError(err) {
 				break
 			}
 		}
