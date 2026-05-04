@@ -320,6 +320,7 @@ The following errors occur when there are issues with query syntax or execution.
    SELECT <field> FROM <measurement> WHERE <condition>
    ```
 
+1. For SQL, verify your query uses standard SQL syntax supported by InfluxDB 3.x. Common issues include using InfluxQL-specific syntax (such as `GROUP BY time()`) in SQL mode. Refer to the [InfluxDB SQL reference](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/) for supported functions.
 1. For Flux, ensure proper pipe-forward syntax and function calls.
 1. Use the InfluxDB UI or CLI to test your query directly.
 
@@ -348,6 +349,7 @@ The following errors occur when there are issues with query syntax or execution.
 1. Add filters to limit the number of series returned.
 1. Increase the **Max series** setting in the data source configuration under **Advanced Database Settings**.
 1. Use aggregation functions to reduce the number of data points.
+1. For SQL, use `$__dateBin(time)` to aggregate data into time buckets and reduce cardinality.
 1. For Flux, use `aggregateWindow()` to downsample data.
 
 ### FlightSQL errors (SQL query language)
@@ -494,9 +496,10 @@ The following issues don't produce specific error messages but are commonly enco
 **Solution:**
 
 1. Verify the time range includes data in your database.
-1. Check that the measurement and field names are correct.
+1. Check that the measurement and field names are correct. For SQL, table names in InfluxDB 3.x are case-sensitive.
 1. Test the query directly in the InfluxDB UI or CLI.
 1. Ensure filters are not excluding all data.
+1. For SQL, verify the `$__timeFilter(time)` macro is included so the query uses the dashboard time range.
 1. For InfluxQL, verify the retention policy contains data for the selected time range.
 
 ### Slow query performance
@@ -509,6 +512,7 @@ The following issues don't produce specific error messages but are commonly enco
 1. Add more specific filters to limit the data scanned.
 1. Increase the **Min time interval** setting to reduce the number of data points.
 1. Check InfluxDB server performance and resource utilization.
+1. For SQL, use `$__dateBin(time)` with aggregation functions to downsample data. Add `WHERE` clauses to narrow the query scope.
 1. For Flux, use `aggregateWindow()` to downsample data before visualization.
 1. Consider using continuous queries or tasks to pre-aggregate data.
 

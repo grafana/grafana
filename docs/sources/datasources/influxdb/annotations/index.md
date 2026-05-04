@@ -7,6 +7,7 @@ keywords:
   - events
   - influxql
   - flux
+  - sql
 labels:
   products:
     - cloud
@@ -101,6 +102,36 @@ from(bucket: "events")
 
 Grafana processes the resulting data frames as annotation events. Ensure the query returns a `_time` column and at least one text column.
 
+## SQL annotations
+
+SQL-configured data sources (InfluxDB 3.x) use the standard Grafana annotation query editor. Write a SQL query that returns a time column and at least one text column. Use the `$__timeFilter(time)` macro to scope results to the dashboard time range.
+
+### SQL annotation query example
+
+```sql
+SELECT time, title, description
+FROM events
+WHERE $__timeFilter(time)
+ORDER BY time ASC
+```
+
+### SQL range annotation example
+
+To display events with duration as shaded regions, return both a start time and an end time:
+
+```sql
+SELECT time, end_time, description, tags
+FROM maintenance_windows
+WHERE $__timeFilter(time)
+ORDER BY time ASC
+```
+
+Configure the field mappings:
+
+- **Text:** `description`
+- **Tags:** `tags`
+- **TimeEnd:** `end_time`
+
 ## Use template variables in annotations
 
 You can use template variables in your annotation queries to filter annotations based on dashboard variable selections. For example:
@@ -111,3 +142,5 @@ FROM events
 WHERE $timeFilter AND environment = '$environment'
 ORDER BY time ASC
 ```
+
+If your annotations aren't appearing or you encounter errors, refer to [Troubleshoot InfluxDB data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/troubleshooting/#annotation-errors).

@@ -27,7 +27,7 @@ review_date: 2026-05-01
 
 {{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Grafana includes a built-in InfluxDB data source plugin, enabling you to query and visualize data from InfluxDB without installing additional plugins. Grafana offers multiple configuration options for this data source, including a choice of three query languages (InfluxQL, SQL, and Flux) and a query editor with both code and visual builder modes.
+Grafana includes a built-in InfluxDB data source plugin, enabling you to query and visualize data from InfluxDB without installing additional plugins. Grafana offers multiple configuration options for this data source, including a choice of three query languages (SQL, InfluxQL, and Flux) and a query editor with both code and visual builder modes.
 
 ## Supported versions
 
@@ -55,9 +55,9 @@ The following documents help you set up and use the InfluxDB data source:
 
 - [Configure the InfluxDB data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure/)
 - [InfluxDB query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/query-editor/)
-- [InfluxDB template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/template-variables/)
 - [InfluxDB annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/annotations/)
 - [InfluxDB alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/alerting/)
+- [InfluxDB template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/template-variables/)
 - [Troubleshoot InfluxDB data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/troubleshooting/)
 
 ## Additional features

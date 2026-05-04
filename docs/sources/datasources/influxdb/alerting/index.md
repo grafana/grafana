@@ -134,3 +134,5 @@ Follow these best practices when creating InfluxDB alerts:
 - **Test queries first:** Verify your query returns expected results in Explore before creating an alert.
 - **Set realistic thresholds:** Base alert thresholds on historical data patterns.
 - **Use meaningful names:** Give alert rules descriptive names that indicate what they monitor.
+
+If you encounter errors when creating or evaluating alert rules, refer to [Troubleshoot InfluxDB data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/troubleshooting/#alerting-errors).

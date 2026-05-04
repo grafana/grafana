@@ -85,14 +85,34 @@ For SQL-configured data sources (InfluxDB 3.x), write a SQL query that returns a
 SELECT DISTINCT hostname FROM cpu
 ```
 
+You can list available tables:
+
+```sql
+SHOW TABLES
+```
+
+You can list columns in a specific table:
+
+```sql
+SHOW COLUMNS FROM cpu
+```
+
 ## Chain or nest variables
 
 You can create nested variables, sometimes called [chained variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#chained-variables).
 
-For example, if you have a variable named `region`, you can configure the `hosts` variable to display only hosts from the selected region using the following query:
+For example, if you have a variable named `region`, you can configure the `hosts` variable to display only hosts from the selected region.
+
+**InfluxQL:**
 
 ```sql
 SHOW TAG VALUES WITH KEY = "hostname"  WHERE region = '$region'
+```
+
+**SQL:**
+
+```sql
+SELECT DISTINCT hostname FROM cpu WHERE region = '$region'
 ```
 
 If you have a variable containing key names, you can use it in a **GROUP BY** clause. This allows you to adjust the grouping by selecting from the variable list at the top of the dashboard.
@@ -115,18 +135,31 @@ For more information, refer to [Add ad hoc filters](https://grafana.com/docs/gra
 The InfluxDB data source supports two variable syntaxes for use in the **Query** field:
 
 - **`$<varname>`** - This syntax is easy to read and write but doesn't allow you to use a variable in the middle of a word or expression.
+- **`${varname}`** - Use this syntax when you want to interpolate a variable in the middle of an expression.
+
+**InfluxQL examples:**
 
 ```sql
 SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^$host$/ AND $timeFilter GROUP BY time($__interval), "hostname"
 ```
 
-- **`${varname}`** - Use this syntax when you want to interpolate a variable in the middle of an expression.
-
 ```sql
 SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^${host}$/ AND $timeFilter GROUP BY time($__interval), "hostname"
 ```
 
-When you enable the **Multi-value** or **Include all value** options, Grafana converts the labels from plain text to a regex-compatible string, so you must use `=~` instead of `=`.
+When you enable the **Multi-value** or **Include all value** options with InfluxQL, Grafana converts the labels from plain text to a regex-compatible string, so you must use `=~` instead of `=`.
+
+**SQL examples:**
+
+```sql
+SELECT $__dateBin(time), mean(usage_system) FROM cpu WHERE $__timeFilter(time) AND host = '$host' GROUP BY $__dateBin(time)
+```
+
+```sql
+SELECT $__dateBin(time), mean(usage_system) FROM cpu WHERE $__timeFilter(time) AND host IN ($host) GROUP BY $__dateBin(time)
+```
+
+When you enable the **Multi-value** option with SQL, use the `IN` operator instead of `=` to match multiple values.
 
 ### Templated dashboard example
 

@@ -49,13 +49,13 @@ To configure the InfluxDB data source, you must have the `Administrator` role.
 
 InfluxData provides three query languages:
 
-- **Flux** - A functional data scripting language for InfluxDB 2.x. Refer to [Query InfluxDB with Flux](https://docs.influxdata.com/influxdb/cloud/query-data/get-started/query-influxdb/) for a basic guide on working with Flux.
-- **InfluxQL** - A SQL-like query language developed by InfluxData. It doesn't support advanced functions such as JOINs.
-- **SQL** - Native SQL language available for InfluxDB v3.x.
+- **SQL** - Standard SQL query language for InfluxDB 3.x and newer cloud products (Cloud Serverless, Cloud Dedicated, Clustered). SQL is InfluxData's recommended query language for new deployments. It supports JOINs, subqueries, and standard SQL functions. Refer to [InfluxDB SQL reference](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/) for the full list of supported statements, operators, and functions.
+- **InfluxQL** - A SQL-like query language developed by InfluxData, available across all InfluxDB versions. InfluxQL doesn't support advanced functions such as JOINs. Refer to the [InfluxQL reference](https://docs.influxdata.com/influxdb/cloud-serverless/reference/influxql/) for details.
+- **Flux** - A functional data scripting language for InfluxDB 2.x. Flux is not supported on InfluxDB 3.x. Refer to [Query InfluxDB with Flux](https://docs.influxdata.com/influxdb/cloud/query-data/get-started/query-influxdb/) for a basic guide.
 
-To help choose the best language for your needs, refer to
-a [comparison of Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/)
-and [Why InfluxData created Flux](https://www.influxdata.com/blog/why-were-building-flux-a-new-data-scripting-and-query-language/).
+{{< admonition type="note" >}}
+If you're migrating from InfluxDB 1.x or 2.x to InfluxDB 3.x, InfluxData recommends adopting SQL as your query language. Refer to InfluxData's [migration guide](https://docs.influxdata.com/influxdb3/cloud-serverless/guides/migrate-data/) for help transitioning your data and queries.
+{{< /admonition >}}
 
 If you're unsure which InfluxDB product you're using, refer to InfluxData's [InfluxDB product detection tool](https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/) for guidance.
 
@@ -178,6 +178,12 @@ The following table shows which fields are required for each query language:
 - **User** - The username used to sign in to InfluxDB.
 - **Password** - The password for the specified user. Used with InfluxQL queries.
 - **Token** - The authentication token used to query InfluxDB. Retrieve this from the [Tokens page](https://docs.influxdata.com/influxdb/v2/admin/tokens/view-tokens/) in the InfluxDB UI.
+
+**For SQL**
+
+- The **Database** field maps to the InfluxDB 3.x database (equivalent to a bucket).
+- Use a [database token](https://docs.influxdata.com/influxdb3/cloud-serverless/admin/tokens/database/) with read access to the target database. For InfluxDB Cloud Serverless and Cloud Dedicated, generate a token from the InfluxDB management console or CLI.
+- SQL queries use the FlightSQL (gRPC) protocol. If your InfluxDB instance doesn't use TLS, enable **Insecure Connection** in **Advanced Database Settings**.
 
 **For Flux**
 
