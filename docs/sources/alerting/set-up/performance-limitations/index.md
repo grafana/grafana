@@ -60,9 +60,11 @@ For more information, refer to [this GitHub issue](https://github.com/grafana/gr
 
 If you have a high number of alert rules or alert instances, the load on the database can get very high.
 
-By default, Grafana performs one SQL update per alert rule after each evaluation, which updates all alert instances belonging to the rule.
+By default, Grafana performs one SQL update per alert rule after each evaluation, which updates all alert instances belonging to the rule. This is controlled by the `alertingSaveStateCompressed` feature flag, which is enabled by default since Grafana v12.0.
 
-You can change this behavior by disabling the `alertingSaveStateCompressed` feature flag. In this case, Grafana performs a separate SQL update for each state change of an alert instance. This configuration is rarely recommended, as it can add significant database overhead for alert rules with many instances.
+You can change this behavior by disabling the `alertingSaveStateCompressed` feature flag. If compression is disabled and periodic saves aren't enabled (refer to [Save state periodically](#save-state-periodically)), Grafana performs a separate SQL update for each state change of an alert instance, which can add significant database overhead for alert rules with many instances.
+
+However, disabling compression while enabling batch-based periodic saves is a valid configuration. This is particularly relevant for environments that tuned batch settings prior to v12.0, as it restores the pre-v12.0 save behavior. Refer to [Batch-based periodic saves](#batch-based-periodic-saves) for details.
 
 ### Save state periodically
 
@@ -72,11 +74,15 @@ There are two approaches for periodic state saving:
 
 #### Compressed periodic saves
 
+{{< admonition type="note" >}}
+Combining compressed state storage with periodic saves requires **Grafana v12.4 or later**. In Grafana v12.0 through v12.3, these features are mutually exclusive — compression takes precedence and periodic save settings (such as `state_periodic_save_interval` and `state_periodic_save_batch_size`) are ignored. If you need periodic batch saves on v12.0–v12.3, disable `alertingSaveStateCompressed` and use [batch-based periodic saves](#batch-based-periodic-saves) instead.
+{{< /admonition >}}
+
 You can combine compressed alert state storage with periodic saves by enabling both `alertingSaveStateCompressed` and `alertingSaveStatePeriodic` feature toggles together.
 
 This approach groups all alert instances by rule UID and compresses them together for efficient storage.
 
-When both feature toggles are enabled, Grafana will save compressed alert states at the interval specified by `state_periodic_save_interval`. Note that in compressed mode, the `state_periodic_save_batch_size` setting is ignored as the system groups instances by rule UID rather than by batch size.
+When both feature toggles are enabled, Grafana saves compressed alert states at the interval specified by `state_periodic_save_interval`. Note that in compressed mode, the `state_periodic_save_batch_size` setting is ignored as the system groups instances by rule UID rather than by batch size.
 
 #### Batch-based periodic saves
 
