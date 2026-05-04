@@ -67,6 +67,7 @@
     "@babel/core": "7.28.0",
     "@babel/preset-env": "7.28.0",
     "@babel/preset-react": "7.27.1",
+    "@grafana/test-utils": "workspace:*",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@storybook/addon-webpack5-compiler-swc": "^4.0.2",
     "@storybook/react": "^10.0.8",

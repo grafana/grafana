@@ -3812,6 +3812,7 @@ __metadata:
     "@babel/preset-react": "npm:7.27.1"
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/test-utils": "workspace:*"
     "@grafana/ui": "npm:13.1.0-pre"
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@rollup/plugin-node-resolve": "npm:16.0.1"

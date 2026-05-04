@@ -76,8 +76,8 @@ describe('FlameGraph', () => {
 
     const canvas = screen.getByTestId('flameGraph') as HTMLCanvasElement;
     const ctx = canvas!.getContext('2d');
-    const calls = ctx!.__getDrawCalls();
-    expect(calls).toMatchSnapshot();
+    const calls = ctx!.__getEvents();
+    expect(calls).toMatchUPlotSnapshot([], { height: 550, width: 800 });
   });
 
   it('should render metadata', async () => {
@@ -172,8 +172,8 @@ describe('FlameGraph (new UI)', () => {
 
     const canvas = screen.getByTestId('flameGraph') as HTMLCanvasElement;
     const ctx = canvas!.getContext('2d');
-    const calls = ctx!.__getDrawCalls();
-    expect(calls).toMatchSnapshot();
+    const calls = ctx!.__getEvents();
+    expect(calls).toMatchUPlotSnapshot([], { height: 550, width: 800 });
   });
 
   it('should render metadata', async () => {
