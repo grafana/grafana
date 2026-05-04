@@ -1,14 +1,18 @@
 import { useState } from 'react';
 
+import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { addLibraryPanel } from 'app/features/library-panels/state/api';
+import { useDispatch } from 'app/types/store';
 
 import { type DashboardInputs, DashboardSource, type ImportDashboardDTO, LibraryPanelInputState } from '../../types';
 import { applyV1Inputs, interpolateLibraryPanelDatasources, stripExportMetadata } from '../utils/inputs';
@@ -28,6 +32,7 @@ type Props = {
 };
 
 export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, onCancel }: Props) {
+  const dispatch = useDispatch();
   const [uidReset, setUidReset] = useState(false);
   const folder = { uid: folderUid };
 
@@ -76,6 +81,12 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
 
       const api = await getDashboardAPI('v1');
       const result = await api.saveDashboard(dashboardK8SPayload);
+
+      // The v1 k8s save path goes directly through the app-platform Dashboard client and bypasses
+      // RTK Query, so we have to invalidate the browse-folder cache ourselves. Otherwise the
+      // newly-imported dashboard does not appear in the destination folder until a hard refresh.
+      dispatch(refetchChildren({ parentUID: form.folder.uid, pageSize: PAGE_SIZE }));
+      invalidateQuotaUsage(dispatch);
 
       if (result.url) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(result.url);
