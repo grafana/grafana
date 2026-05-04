@@ -84,6 +84,12 @@ export {
   getCorrelationsService,
   setCorrelationsService,
 } from './services/CorrelationsService';
+export {
+  type PanelScreenshotService,
+  type PanelScreenshotOptions,
+  getPanelScreenshotService,
+  setPanelScreenshotService,
+} from './services/PanelScreenshotService';
 export { getAppPluginVersion, isAppPluginInstalled } from './services/pluginMeta/apps';
 export {
   useAppPluginInstalled,

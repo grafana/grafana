@@ -271,6 +271,12 @@ export type PluginExtensionPanelContext = {
   targets: DataQuery[];
   scopedVars?: ScopedVars;
   data?: PanelData;
+  /**
+   * Set only in scenes-based dashboards. Pass to
+   * `getPanelScreenshotService().capture()` to capture the panel image.
+   * Undefined in legacy dashboard contexts.
+   */
+  panelKey?: string;
 };
 
 export type CentralAlertHistorySceneV1Props = {
