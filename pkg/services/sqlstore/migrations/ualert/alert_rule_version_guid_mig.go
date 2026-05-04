@@ -36,6 +36,13 @@ func AddAlertRuleGuidMigration(mg *migrator.Migrator) {
 
 	mg.AddMigration("populate rule guid in alert rule table", &setRuleGuidMigration{})
 
+	// Fix for https://github.com/grafana/grafana/issues/103076
+	// Versions 10.4.x through 11.5.x did not generate GUIDs when inserting new alert rules
+	// (InsertAlertRules did not set the guid field), causing the column default '' to be used.
+	// This migration assigns unique GUIDs to any rows that still have empty guid/rule_guid,
+	// which would otherwise cause unique constraint violations during index creation.
+	mg.AddMigration("fix empty guid in alert_rule and alert_rule_version tables", &fixEmptyGuidMigration{})
+
 	mg.AddMigration("drop index in alert_rule_version table on rule_org_id, rule_uid and version columns", migrator.NewDropIndexMigration(alertRuleVersion, alertRuleVersionUDX_OrgIdRuleUIDVersion))
 
 	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_uid, rule_guid and version columns",
@@ -198,5 +205,96 @@ func (c cleanUpRuleVersionsMigration) Exec(sess *xorm.Session, mg *migrator.Migr
 
 		mg.Logger.Debug(fmt.Sprintf("Batch %d of %d processed", i+1, batches))
 	}
+	return nil
+}
+
+// fixEmptyGuidMigration fixes alert_rule and alert_rule_version rows that have empty guid/rule_guid.
+// This can happen when alert rules were created by Grafana versions that did not generate GUIDs
+// on insert (10.4.x through 11.5.x). See https://github.com/grafana/grafana/issues/103076
+type fixEmptyGuidMigration struct {
+	migrator.MigrationBase
+}
+
+var _ migrator.CodeMigration = (*fixEmptyGuidMigration)(nil)
+
+func (c fixEmptyGuidMigration) SQL(migrator.Dialect) string {
+	return codeMigration
+}
+
+func (c fixEmptyGuidMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	// Step 1: Fix empty guids in alert_rule table
+	var lastId *int64
+	totalFixed := 0
+	for {
+		var results []int64
+		qq := sess.Table(`alert_rule`).Select("id").Where("guid = ''").OrderBy("id").Limit(500)
+		if lastId != nil {
+			qq = qq.Where("id > ?", lastId)
+		}
+		if err := qq.Find(&results); err != nil {
+			return err
+		}
+		if len(results) == 0 {
+			break
+		}
+
+		bd := strings.Builder{}
+		for idx, id := range results {
+			u := uuid.NewString()
+			if idx == 0 {
+				bd.WriteString(fmt.Sprintf("SELECT %d as id, '%s' as guid", id, u))
+				continue
+			}
+			bd.WriteString(fmt.Sprintf(" UNION ALL SELECT %d, '%s' ", id, u))
+		}
+
+		var q string
+		if mg.Dialect.DriverName() == migrator.MySQL {
+			q = fmt.Sprintf(`UPDATE alert_rule AS ar
+			INNER JOIN (%s) AS t ON ar.id = t.id
+			SET ar.guid = t.guid;`, bd.String())
+		} else {
+			q = fmt.Sprintf(`UPDATE alert_rule SET guid = t.guid FROM (%s) AS t WHERE alert_rule.id = t.id`, bd.String())
+		}
+
+		_, err := sess.Exec(q)
+		if err != nil {
+			mg.Logger.Error("Failed to fix empty guids in alert_rule table", "error", err)
+			return err
+		}
+
+		totalFixed += len(results)
+		lastId = util.Pointer(results[len(results)-1])
+	}
+
+	if totalFixed > 0 {
+		mg.Logger.Info("Fixed empty guids in alert_rule table", "count", totalFixed)
+	}
+
+	// Step 2: Fix empty rule_guids in alert_rule_version table by copying from alert_rule
+	q := `UPDATE alert_rule_version
+		SET rule_guid = alert_rule.guid
+		FROM alert_rule
+		WHERE alert_rule.uid = alert_rule_version.rule_uid
+		  AND alert_rule.org_id = alert_rule_version.rule_org_id
+		  AND alert_rule_version.rule_guid = '';`
+
+	if mg.Dialect.DriverName() == migrator.MySQL {
+		q = `UPDATE alert_rule_version AS arv
+			INNER JOIN alert_rule AS ar ON arv.rule_uid = ar.uid AND arv.rule_org_id = ar.org_id
+			SET arv.rule_guid = ar.guid
+			WHERE arv.rule_guid = '';`
+	}
+
+	result, err := sess.Exec(q)
+	if err != nil {
+		mg.Logger.Error("Failed to fix empty rule_guids in alert_rule_version table", "error", err)
+		return err
+	}
+
+	if rowsAffected, _ := result.RowsAffected(); rowsAffected > 0 {
+		mg.Logger.Info("Fixed empty rule_guids in alert_rule_version table", "count", rowsAffected)
+	}
+
 	return nil
 }
