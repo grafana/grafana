@@ -1,72 +1,139 @@
 import { css } from '@emotion/css';
-import { useId, useMemo, useState, type MouseEvent } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 
-import { PluginType, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
-import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import {
+  LoadingPlaceholder,
+  EmptyState,
+  Field,
+  IconButton,
+  RadioButtonGroup,
+  useStyles2,
+  Sidebar,
+  useSidebar,
+  Stack,
+} from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
-import { HorizontalGroup } from 'app/features/plugins/admin/components/HorizontalGroup';
 import { SearchField } from 'app/features/plugins/admin/components/SearchField';
-import { Sorters } from 'app/features/plugins/admin/helpers';
 import { useHistory } from 'app/features/plugins/admin/hooks/useHistory';
 import { useGetAll, useIsRemotePluginsAvailable } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { ROUTES } from '../../constants';
-
-import { CardGrid, type CardGridItem } from './CardGrid/CardGrid';
-import { CategoryHeader } from './CategoryHeader/CategoryHeader';
+import type { CardGridItem } from './CardGrid/CardGrid';
+import { FilterSidebar } from './FilterSidebar/FilterSidebar';
 import { NoAccessModal } from './NoAccessModal/NoAccessModal';
+import { PluginContentView } from './components/PluginContentView';
+import { FILTER_BY_OPTIONS, GROUP_BY_OPTIONS, TYPE_FILTER_OPTIONS } from './constants';
+import { useConnectionFiltersFromQuery } from './hooks/useConnectionFiltersFromQuery';
+import { useCategoryFilterOptions, useFilteredPlugins, usePluginsByCategory } from './hooks/usePluginFiltering';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  searchContainer: css({
-    paddingTop: theme.spacing(0.5),
-    paddingBottom: theme.spacing(1),
-    marginBottom: theme.spacing(3),
+  searchHeader: css({
+    paddingBottom: theme.spacing(2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
+  searchField: css({
+    flex: 1,
+  }),
+  groupByControl: css({
+    minWidth: '200px',
+  }),
   contentWrap: css({
-    height: 'calc(100vh - 350px)',
+    flex: 1,
     overflowY: 'auto',
+    padding: theme.spacing(2),
+    minHeight: 0,
   }),
-  spacer: css({
-    height: theme.spacing(2),
+  mainContent: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    minWidth: 0,
+    minHeight: 0,
+    overflow: 'hidden',
   }),
-  modal: css({
-    width: '500px',
+  filterButtonWrapper: css({
+    marginTop: theme.spacing(1),
+    position: 'relative',
+    width: '100%',
   }),
-  modalContent: css({
-    overflow: 'visible',
+  activeFilterDot: css({
+    position: 'absolute',
+    top: theme.spacing(0.25),
+    right: theme.spacing(0.75),
+    width: theme.spacing(0.75),
+    height: theme.spacing(0.75),
+    borderRadius: theme.shape.radius.circle,
+    backgroundColor: theme.colors.warning.text,
+    opacity: 0.8,
+    zIndex: 1,
+    pointerEvents: 'none',
   }),
-  actionBar: css({
-    [theme.breakpoints.up('xl')]: {
-      marginLeft: 'auto',
-    },
+  outerWrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    minHeight: 0,
+    position: 'relative',
+    overflow: 'hidden',
   }),
 });
 
 export function AddNewConnection() {
   const [queryParams, setQueryParams] = useQueryParams();
   const searchTerm = queryParams.search ? String(queryParams.search) : '';
-  const [isNoAccessModalOpen, setIsNoAccessModalOpen] = useState(false);
-  const [focusedItem, setFocusedItem] = useState<CardGridItem | null>(null);
-  const searchId = useId();
-  const sortId = useId();
-  const location = useLocation();
+  const [selectedItem, setSelectedItem] = useState<CardGridItem | null>(null);
+  const [isPaneOpen, setIsPaneOpen] = useState(false);
   const history = useHistory();
-  const locationSearch = locationSearchToObject(location.search);
-  const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
-  const filterBy = locationSearch.filterBy?.toString() || 'all';
+  const filterState = useConnectionFiltersFromQuery();
+  const { sortBy, filterBy, groupBy, categoryFilter, typeFilter } = filterState;
   const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const styles = useStyles2(getStyles);
-  const handleSearchChange = (val: string) => {
-    setQueryParams({
-      search: val,
-    });
-  };
+
+  const updateFilter = useCallback(
+    (params: Record<string, string>) => {
+      history.push({ query: { ...filterState, ...params } });
+    },
+    [filterState, history]
+  );
+  const handlers = useMemo(
+    () => ({
+      onSortByChange: (v: { value?: string } | string) =>
+        updateFilter({ sortBy: (typeof v === 'string' ? v : v.value) || 'nameAsc' }),
+      onFilterByChange: (v: string) => updateFilter({ filterBy: v }),
+      onGroupByChange: (v: { value?: string } | string) =>
+        updateFilter({ groupBy: (typeof v === 'string' ? v : v.value) || 'type' }),
+      onCategoryFilterChange: (v: { value?: string }) => updateFilter({ categoryFilter: v.value || 'all' }),
+      onTypeFilterChange: (v: { value?: string }) => updateFilter({ typeFilter: v.value || 'all' }),
+      onResetFilters: () =>
+        updateFilter({ sortBy: 'nameAsc', filterBy: 'all', categoryFilter: 'all', typeFilter: 'all' }),
+    }),
+    [updateFilter]
+  );
+
+  const sidebarContextValue = useSidebar({
+    hasOpenPane: isPaneOpen,
+    position: 'right',
+    persistanceKey: 'connections-sidebar',
+    defaultToCompact: true,
+    defaultToDocked: true,
+    onClosePane: () => setIsPaneOpen(false),
+    edgeMargin: 0,
+    bottomMargin: 0,
+  });
+
+  const handleSearchChange = useCallback(
+    (val: string) => {
+      setQueryParams({
+        search: val,
+      });
+    },
+    [setQueryParams]
+  );
+
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
 
   const { error, plugins, isLoading } = useGetAll(
@@ -78,183 +145,125 @@ export function AddNewConnection() {
     sortBy
   );
 
-  const filterByOptions = [
-    { value: 'all', label: t('connections.add-new-connection.filter-by-options.label.all', 'All') },
-    { value: 'installed', label: t('connections.add-new-connection.filter-by-options.label.installed', 'Installed') },
-    {
-      value: 'has-update',
-      label: t('connections.add-new-connection.filter-by-options.label.new-updates', 'New Updates'),
+  // Use filtering hooks with memoization
+  const categoryFilterOptions = useCategoryFilterOptions(plugins);
+  const { datasourceCardGridItems, appsCardGridItems } = useFilteredPlugins(
+    plugins,
+    groupBy,
+    categoryFilter,
+    typeFilter
+  );
+  const pluginsByCategory = usePluginsByCategory(plugins, typeFilter);
+
+  // Memoize card click handler
+  const onClickCardGridItem = useCallback(
+    (e: MouseEvent<HTMLElement>, item: CardGridItem) => {
+      if (!canCreateDataSources) {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedItem(item);
+        reportInteraction('connections_plugin_card_clicked', {
+          plugin_id: item.id,
+          creator_team: 'grafana_plugins_catalog',
+          schema_version: '1.0.0',
+        });
+      }
     },
-  ];
-
-  const onClickCardGridItem = (e: MouseEvent<HTMLElement>, item: CardGridItem) => {
-    if (!canCreateDataSources) {
-      e.preventDefault();
-      e.stopPropagation();
-      openModal(item);
-      reportInteraction('connections_plugin_card_clicked', {
-        plugin_id: item.id,
-        creator_team: 'grafana_plugins_catalog',
-        schema_version: '1.0.0',
-      });
-    }
-  };
-
-  const openModal = (item: CardGridItem) => {
-    setIsNoAccessModalOpen(true);
-    setFocusedItem(item);
-  };
-
-  const closeModal = () => {
-    setIsNoAccessModalOpen(false);
-    setFocusedItem(null);
-  };
-
-  const getPluginsByType = useMemo(() => {
-    return {
-      [PluginType.datasource]: plugins.filter((plugin) => plugin.type === PluginType.datasource),
-      [PluginType.app]: plugins.filter((plugin) => plugin.type === PluginType.app),
-    };
-  }, [plugins]);
-
-  const dataSourcesPlugins = getPluginsByType[PluginType.datasource];
-  const appsPlugins = getPluginsByType[PluginType.app];
-
-  const datasourceCardGridItems = useMemo(
-    () =>
-      dataSourcesPlugins.map((plugin) => ({
-        ...plugin,
-        logo: plugin.info.logos.small,
-        url: ROUTES.DataSourcesDetails.replace(':id', plugin.id),
-      })),
-    [dataSourcesPlugins]
+    [canCreateDataSources]
   );
 
-  const appsCardGridItems = useMemo(
-    () =>
-      appsPlugins.map((plugin) => ({
-        ...plugin,
-        logo: plugin.info.logos.small,
-        url: `/plugins/${plugin.id}`,
-      })),
-    [appsPlugins]
-  );
+  const handleCloseModal = useCallback(() => setSelectedItem(null), []);
 
-  const onSortByChange = (value: SelectableValue<string>) => {
-    history.push({ query: { sortBy: value.value } });
-  };
+  const hasActiveFilters =
+    categoryFilter !== 'all' || typeFilter !== 'all' || filterBy !== 'all' || sortBy !== 'nameAsc';
 
-  const onFilterByChange = (value: string) => {
-    history.push({ query: { filterBy: value } });
-  };
-
-  const showNoResults = useMemo(
-    () => !isLoading && !error && dataSourcesPlugins.length < 1 && appsPlugins.length < 1,
-    [isLoading, error, dataSourcesPlugins, appsPlugins]
-  );
+  const showNoResults = !isLoading && !error && datasourceCardGridItems.length === 0 && appsCardGridItems.length === 0;
 
   return (
     <>
-      {focusedItem && <NoAccessModal item={focusedItem} isOpen={isNoAccessModalOpen} onDismiss={closeModal} />}
+      {selectedItem && <NoAccessModal item={selectedItem} isOpen={true} onDismiss={handleCloseModal} />}
+      <div className={styles.outerWrapper} {...sidebarContextValue.outerWrapperProps}>
+        <div className={styles.mainContent}>
+          <div className={styles.searchHeader}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <div className={styles.searchField}>
+                <Field label={t('common.search', 'Search')} noMargin>
+                  <SearchField value={searchTerm} onSearch={handleSearchChange} id="connections-search-field" />
+                </Field>
+              </div>
+              <div className={styles.groupByControl}>
+                <Field label={t('connections.add-new-connection.group-by', 'Group by')} noMargin>
+                  <RadioButtonGroup value={groupBy} onChange={handlers.onGroupByChange} options={GROUP_BY_OPTIONS()} />
+                </Field>
+              </div>
+            </Stack>
+          </div>
 
-      <div className={styles.searchContainer}>
-        <HorizontalGroup wrap>
-          <Field label={t('common.search', 'Search')} htmlFor={searchId}>
-            <SearchField id={searchId} value={searchTerm} onSearch={handleSearchChange} />
-          </Field>
-          <HorizontalGroup className={styles.actionBar}>
-            {/* Filter by installed / all */}
-            {remotePluginsAvailable ? (
-              <Field label={t('plugins.filter.state', 'State')}>
-                <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
-              </Field>
-            ) : (
-              <Tooltip
-                content={t(
-                  'plugins.filter.disabled',
-                  'This filter has been disabled because the Grafana server cannot access grafana.com'
-                )}
-                placement="top"
-              >
-                <div>
-                  <Field label={t('plugins.filter.state', 'State')}>
-                    <RadioButtonGroup
-                      disabled={true}
-                      value={filterBy}
-                      onChange={onFilterByChange}
-                      options={filterByOptions}
-                    />
-                  </Field>
-                </div>
-              </Tooltip>
-            )}
-
-            {/* Sorting */}
-            <Field label={t('plugins.filter.sort', 'Sort')}>
-              <Combobox
-                id={sortId}
-                aria-label={t('plugins.filter.sort-list', 'Sort Plugins List')}
-                width={24}
-                value={sortBy?.toString()}
-                onChange={onSortByChange}
-                options={[
-                  { value: 'nameAsc', label: t('connections.add-new-connection.label.by-name-az', 'By name (A-Z)') },
-                  { value: 'nameDesc', label: t('connections.add-new-connection.label.by-name-za', 'By name (Z-A)') },
-                  {
-                    value: 'updated',
-                    label: t('connections.add-new-connection.label.by-updated-date', 'By updated date'),
-                  },
-                  {
-                    value: 'published',
-                    label: t('connections.add-new-connection.label.by-published-date', 'By published date'),
-                  },
-                  {
-                    value: 'downloads',
-                    label: t('connections.add-new-connection.label.by-downloads', 'By downloads'),
-                  },
-                ]}
+          <div className={styles.contentWrap}>
+            {isLoading && <LoadingPlaceholder text={t('common.loading', 'Loading...')} />}
+            {error && <EmptyState variant="not-found" message={String(error)} />}
+            {!isLoading && !error && (
+              <PluginContentView
+                groupBy={groupBy}
+                datasourceCardGridItems={datasourceCardGridItems}
+                appsCardGridItems={appsCardGridItems}
+                pluginsByCategory={pluginsByCategory}
+                onClickCardGridItem={onClickCardGridItem}
               />
-            </Field>
-          </HorizontalGroup>
-        </HorizontalGroup>
-      </div>
-      <div className={styles.contentWrap}>
-        {isLoading ? (
-          <LoadingPlaceholder text={t('common.loading', 'Loading...')} />
-        ) : !!error ? (
-          <Trans i18nKey="alerting.policies.update-errors.error-code" values={{ error: error.message }}>
-            Error message: "{{ error: error.message }}"
-          </Trans>
-        ) : (
-          <>
-            {/* Data Sources Section */}
-            {dataSourcesPlugins.length > 0 && (
-              <>
-                <CategoryHeader
-                  iconName="database"
-                  label={t('connections.connect-data.datasources-header', 'Data Sources')}
+            )}
+            {showNoResults && (
+              <EmptyState
+                variant="not-found"
+                message={t('connections.connect-data.empty-message', 'No results matching your query were found')}
+              />
+            )}
+          </div>
+        </div>
+        <Sidebar contextValue={sidebarContextValue}>
+          <Sidebar.Toolbar>
+            <div className={styles.filterButtonWrapper}>
+              {hasActiveFilters && <div className={styles.activeFilterDot} />}
+              <Sidebar.Button
+                icon="filter"
+                title={t('connections.add-new-connection.filters', 'Filters')}
+                onClick={() => setIsPaneOpen(!isPaneOpen)}
+              />
+            </div>
+          </Sidebar.Toolbar>
+          {isPaneOpen && (
+            <Sidebar.OpenPane>
+              <Sidebar.PaneHeader title={t('connections.add-new-connection.filters', 'Filters')}>
+                <IconButton
+                  name="history-alt"
+                  size="md"
+                  tooltip={t('connections.add-new-connection.reset-filters', 'Reset filters')}
+                  aria-label={t('connections.add-new-connection.reset-filters', 'Reset filters')}
+                  onClick={handlers.onResetFilters}
+                  disabled={!hasActiveFilters}
                 />
-                <CardGrid items={datasourceCardGridItems} onClickItem={onClickCardGridItem} />
-              </>
-            )}
-
-            {/* Apps Section */}
-            {appsPlugins.length > 0 && (
-              <>
-                <div className={styles.spacer} />
-                <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />
-                <CardGrid items={appsCardGridItems} onClickItem={onClickCardGridItem} />
-              </>
-            )}
-          </>
-        )}
-
-        {showNoResults && (
-          <EmptyState
-            variant="not-found"
-            message={t('connections.connect-data.empty-message', 'No results matching your query were found')}
-          />
-        )}
+              </Sidebar.PaneHeader>
+              <FilterSidebar
+                state={{
+                  groupBy,
+                  categoryFilter,
+                  typeFilter,
+                  filterBy,
+                  sortBy,
+                }}
+                handlers={{
+                  onCategoryFilterChange: handlers.onCategoryFilterChange,
+                  onTypeFilterChange: handlers.onTypeFilterChange,
+                  onFilterByChange: handlers.onFilterByChange,
+                  onSortByChange: handlers.onSortByChange,
+                }}
+                categoryFilterOptions={categoryFilterOptions}
+                typeFilterOptions={TYPE_FILTER_OPTIONS()}
+                filterByOptions={FILTER_BY_OPTIONS()}
+                remotePluginsAvailable={remotePluginsAvailable}
+              />
+            </Sidebar.OpenPane>
+          )}
+        </Sidebar>
       </div>
     </>
   );

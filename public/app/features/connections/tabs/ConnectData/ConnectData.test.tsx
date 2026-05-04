@@ -168,3 +168,107 @@ describe('Add new connection', () => {
     expect(screen.queryByText(new RegExp(exampleSentenceInModal))).toBeInTheDocument();
   });
 });
+
+describe('Group by', () => {
+  test('renders category headers when grouped by category and category is set', async () => {
+    renderPage(
+      [
+        getCatalogPluginMock({ id: 'ds-1', name: 'DS 1', type: PluginType.datasource, category: 'tsdb' }),
+        getCatalogPluginMock({ id: 'ds-2', name: 'DS 2', type: PluginType.datasource, category: 'logging' }),
+      ],
+      '/add-new-connection?groupBy=category'
+    );
+
+    expect(await screen.findByText('Time series databases')).toBeVisible();
+    expect(screen.getByText('Logging & document databases')).toBeVisible();
+  });
+
+  test('plugins without category appear under Others when grouped by category', async () => {
+    renderPage(
+      [getCatalogPluginMock({ id: 'ds-1', name: 'No Category DS', type: PluginType.datasource })],
+      '/add-new-connection?groupBy=category'
+    );
+
+    expect(await screen.findByText('No Category DS')).toBeVisible();
+    expect(screen.getByText('Others')).toBeVisible();
+  });
+});
+
+describe('Category filter', () => {
+  const pluginsWithCategories = [
+    getCatalogPluginMock({ id: 'ds-tsdb', name: 'TSDB Plugin', type: PluginType.datasource, category: 'tsdb' }),
+    getCatalogPluginMock({ id: 'ds-sql', name: 'SQL Plugin', type: PluginType.datasource, category: 'sql' }),
+    getCatalogPluginMock({ id: 'ds-cloud', name: 'Cloud Plugin', type: PluginType.datasource, category: 'cloud' }),
+  ];
+
+  test('shows all plugins when categoryFilter is all', async () => {
+    renderPage(pluginsWithCategories, '/add-new-connection?categoryFilter=all');
+
+    expect(await screen.findByText('TSDB Plugin')).toBeVisible();
+    expect(screen.getByText('SQL Plugin')).toBeVisible();
+    expect(screen.getByText('Cloud Plugin')).toBeVisible();
+  });
+
+  test('shows only matching plugins when categoryFilter is set', async () => {
+    renderPage(pluginsWithCategories, '/add-new-connection?categoryFilter=tsdb');
+
+    expect(await screen.findByText('TSDB Plugin')).toBeVisible();
+    expect(screen.queryByText('SQL Plugin')).not.toBeInTheDocument();
+    expect(screen.queryByText('Cloud Plugin')).not.toBeInTheDocument();
+  });
+});
+
+describe('Type filter', () => {
+  const mixedPlugins = [
+    getCatalogPluginMock({ id: 'ds-1', name: 'My DataSource', type: PluginType.datasource, category: 'tsdb' }),
+    getCatalogPluginMock({ id: 'app-1', name: 'My App', type: PluginType.app, category: 'cloud' }),
+  ];
+
+  test('shows only datasources when typeFilter is datasource in category view', async () => {
+    renderPage(mixedPlugins, '/add-new-connection?groupBy=category&typeFilter=datasource');
+
+    expect(await screen.findByText('My DataSource')).toBeVisible();
+    expect(screen.queryByText('My App')).not.toBeInTheDocument();
+  });
+
+  test('shows only apps when typeFilter is app in category view', async () => {
+    renderPage(mixedPlugins, '/add-new-connection?groupBy=category&typeFilter=app');
+
+    expect(await screen.findByText('My App')).toBeVisible();
+    expect(screen.queryByText('My DataSource')).not.toBeInTheDocument();
+  });
+});
+
+describe('Filter sidebar', () => {
+  test('renders filter button in sidebar toolbar', async () => {
+    renderPage([mockCatalogDataSourcePlugin]);
+
+    expect(await screen.findByLabelText('Filters')).toBeVisible();
+  });
+
+  test('opens filter pane when filter button is clicked', async () => {
+    renderPage([mockCatalogDataSourcePlugin]);
+
+    await userEvent.click(await screen.findByLabelText('Filters'));
+
+    expect(screen.getByLabelText('Filter by category')).toBeVisible();
+    expect(screen.getByText('State')).toBeVisible();
+    expect(screen.getByText('Sort')).toBeVisible();
+  });
+
+  test('reset button is disabled when no filters are active', async () => {
+    renderPage([mockCatalogDataSourcePlugin]);
+
+    await userEvent.click(await screen.findByLabelText('Filters'));
+
+    expect(screen.getByLabelText('Reset filters')).toBeDisabled();
+  });
+
+  test('reset button is enabled when filters are active', async () => {
+    renderPage([mockCatalogDataSourcePlugin], '/add-new-connection?filterBy=installed');
+
+    await userEvent.click(await screen.findByLabelText('Filters'));
+
+    expect(screen.getByLabelText('Reset filters')).toBeEnabled();
+  });
+});

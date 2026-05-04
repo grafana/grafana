@@ -2547,7 +2547,6 @@
       },
       "update-errors": {
         "conflict": "The notification policy tree has been updated by another user.",
-        "error-code": "Error message: \"{{error}}\"",
         "routes": {
           "conflictingMatchers": "Cannot add or update route: matchers conflict with an external routing tree if we merged matchers {{-matchers}}. This would make the route unreachable.",
           "unknownMatchers": "<unknown matchers>"
@@ -4988,11 +4987,23 @@
   },
   "connections": {
     "add-new-connection": {
+      "category": "Category",
+      "filter-by-category": "Filter by category",
       "filter-by-options": {
         "label": {
           "all": "All",
           "installed": "Installed",
           "new-updates": "New Updates"
+        }
+      },
+      "filter-by-state-disabled": "This filter has been disabled because the Grafana server cannot access grafana.com",
+      "filter-by-type": "Filter by type",
+      "filters": "Filters",
+      "group-by": "Group by",
+      "group-by-options": {
+        "label": {
+          "category": "Category",
+          "type": "Type"
         }
       },
       "label": {
@@ -5001,7 +5012,12 @@
         "by-name-za": "By name (Z-A)",
         "by-published-date": "By published date",
         "by-updated-date": "By updated date"
-      }
+      },
+      "reset-filters": "Reset filters",
+      "sort": "Sort",
+      "sort-list": "Sort Plugins List",
+      "state": "State",
+      "type": "Type"
     },
     "advisor-redirect-notice": {
       "aria-label-link-to-advisor": "Link to Advisor",
@@ -12913,12 +12929,6 @@
       "message": {
         "ok": "OK"
       }
-    },
-    "filter": {
-      "disabled": "This filter has been disabled because the Grafana server cannot access grafana.com",
-      "sort": "Sort",
-      "sort-list": "Sort Plugins List",
-      "state": "State"
     },
     "get-feature-state-info": {
       "text": {

@@ -111,6 +111,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     versionSignatureType,
     versionSignedByOrgName,
     url,
+    category,
   } = plugin;
 
   const isDisabled = !!error;
@@ -158,6 +159,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
           ? PluginUpdateStrategy.Assigned
           : undefined,
     },
+    category,
     distributionType: plugin.versionDistributionType,
   };
 }
@@ -175,6 +177,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     hasUpdate,
     accessControl,
     angularDetected,
+    category,
   } = plugin;
 
   const isDisabled = !!error;
@@ -215,6 +218,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
       enabled: isV1Managed,
       strategy: isV1Managed ? PluginUpdateStrategy.Assigned : undefined,
     },
+    category,
   };
 }
 
@@ -288,6 +292,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
           ? PluginUpdateStrategy.Assigned
           : undefined,
     },
+    category: remote?.category || local?.category || '',
     distributionType: remote?.versionDistributionType,
   };
 }
