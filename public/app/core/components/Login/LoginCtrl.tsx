@@ -3,6 +3,7 @@ import { memo, useState, useCallback, type JSX } from 'react';
 import { t } from '@grafana/i18n';
 import { type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 import config from 'app/core/config';
+import { broadcastLogin } from 'app/core/utils/sessionBroadcast';
 
 import { type LoginDTO } from './types';
 
@@ -108,6 +109,7 @@ export const LoginCtrl = memo(({ resetCode, children }: Props) => {
         .post<LoginDTO>('/login', formModel, { showErrorAlert: false })
         .then((result) => {
           setResult(result);
+          broadcastLogin();
           if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
             toGrafana();
             return;

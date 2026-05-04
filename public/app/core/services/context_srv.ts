@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
 import { getSessionExpiry } from 'app/core/utils/auth';
+import { onLoginFromOtherTab } from 'app/core/utils/sessionBroadcast';
 import { type UserPermission, AccessControlAction } from 'app/types/accessControl';
 import { type CurrentUserInternal } from 'app/types/config';
 
@@ -104,6 +105,7 @@ export class ContextSrv {
     this.minRefreshInterval = config.minRefreshInterval;
 
     this.scheduleTokenRotationJob();
+    this.listenForLoginFromOtherTab();
   }
 
   async fetchUserPermissions() {
@@ -264,6 +266,16 @@ export class ContextSrv {
       .catch((e) => {
         console.error(e);
       });
+  }
+
+  // When another tab logs in, reload this tab so it picks up the new session cookie.
+  // Only reloads if this tab is currently showing the login page (user not signed in).
+  private listenForLoginFromOtherTab() {
+    onLoginFromOtherTab(() => {
+      if (!this.isSignedIn) {
+        window.location.reload();
+      }
+    });
   }
 }
 
