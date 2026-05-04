@@ -64,14 +64,32 @@ export function serializeFolderPath(path: string[]): string {
   return encodeURIComponent(path.join(','));
 }
 
+// Helper function to get the base path for an app plugin URL for comparison purposes.
+// e.g., /a/grafana-metricsdrilldown-app/drilldown -> /a/grafana-metricsdrilldown-app
+//       /a/grafana-metricsdrilldown-app           -> /a/grafana-metricsdrilldown-app
+export function getAppPathForComparison(pathname: string): string {
+  return pathname.split('/').slice(0, 3).join('/');
+}
+
 // Pathname comes from location.pathname
 export function isCurrentPath(pathname: string, to: string): boolean {
-  const isDashboard = to.startsWith('/d/');
+  const normalizedTo = normalizePath(to);
+  const isDashboard = normalizedTo.startsWith('/d/');
+  const isAppPlugin = normalizedTo.startsWith('/a/');
 
   if (isDashboard) {
     // For dashboards, the title is appended to the path when we navigate to just the dashboard id, hence we need to disregard this
-    return getDashboardPathForComparison(pathname) === normalizePath(to);
+    return getDashboardPathForComparison(pathname) === normalizedTo;
   }
+
+  if (isAppPlugin) {
+    // For app plugins, the app may add sub-paths (e.g., /a/grafana-metricsdrilldown-app/drilldown)
+    // Compare only the base app path (/a/{app-id})
+    // Note: If we ever need to link to specific subpaths within an app and distinguish between them,
+    // this logic would need to be refined to check if `to` itself has a subpath.
+    return getAppPathForComparison(pathname) === getAppPathForComparison(normalizedTo);
+  }
+
   //Ignore query params
-  return pathname === normalizePath(to);
+  return pathname === normalizedTo;
 }

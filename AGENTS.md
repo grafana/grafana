@@ -159,3 +159,9 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 - **Frontend tests**: The `yarn test` script includes `--watch` by default. Always use `yarn jest --no-watch` or add `--watchAll=false` to run tests once and exit.
 - **Backend tests**: Some packages (e.g. `pkg/api/`) have slow test compilation (~2 min) due to large dependency graphs. Use targeted test runs with `-run TestName` where possible.
 - All standard build/test/lint commands are documented in the Commands section above.
+
+### Git configuration
+
+- Set the commit author to the current contributor. If unknown, ask for their name and email.
+- Always add the AI agent as co-author in the commit message.
+- Always run `yarn lint` on changed frontend files before committing.
