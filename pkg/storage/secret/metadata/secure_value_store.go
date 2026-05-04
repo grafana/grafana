@@ -555,6 +555,10 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, input []contrac
 		s.metrics.SecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
+	if len(input) == 0 {
+		return nil
+	}
+
 	req := deleteSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		ToDelete:    input,
@@ -575,8 +579,8 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, input []contrac
 		return fmt.Errorf("getting rows affected: %w", err)
 	}
 	// Deleting is idempotent so modifiedCunt must be in {0, 1}
-	if modifiedCount > 1 {
-		return fmt.Errorf("secureValueMetadataStorage.Delete: delete more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
+	if int(modifiedCount) > len(input) {
+		return fmt.Errorf("secureValueMetadataStorage.Delete: expected to delete at most %d rows but deleted %d, this is a bug, check the where condition", len(input), modifiedCount)
 	}
 
 	return nil
@@ -837,42 +841,4 @@ func (s *secureValueMetadataStorage) fetchByIds(ctx context.Context, secureValue
 	}
 
 	return out, nil
-}
-
-func (s *secureValueMetadataStorage) DeleteByIds(ctx context.Context, secureValueIDs []string) (err error) {
-	start := s.clock.Now()
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.deleteByIds", trace.WithAttributes(
-		attribute.StringSlice("secureValueIDs", secureValueIDs),
-	))
-
-	defer span.End()
-
-	defer func() {
-		success := err == nil
-
-		if !success {
-			span.SetStatus(codes.Error, "SecureValueMetadataStorage.deleteByIds failed")
-			span.RecordError(err)
-		}
-
-		logging.FromContext(ctx).Info("SecureValueMetadataStorage.DeleteByIds", "secureValueIDs", secureValueIDs, "err", err)
-		s.metrics.SecureValueDeleteByIds.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
-	}()
-
-	req := deleteSecureValuesByIds{
-		SQLTemplate:    sqltemplate.New(s.dialect),
-		SecureValueIDs: secureValueIDs,
-	}
-
-	q, err := sqltemplate.Execute(sqlSecureValuesDeleteByIds, req)
-	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValuesDeleteByIds.Name(), err)
-	}
-
-	_, err = s.db.ExecContext(ctx, q, req.GetArgs()...)
-	if err != nil {
-		return fmt.Errorf("deleting secure values by ids: %w", err)
-	}
-
-	return nil
 }

@@ -2,6 +2,7 @@ package metadata_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -264,16 +265,29 @@ func TestPropertyDelete(t *testing.T) {
 		rapid.Check(t, func(t *rapid.T) {
 			sut := testutils.Setup(tt)
 
-			// The list of secure values created during the test
+			// The latest version of secure values created during the test
 			secureValues := make([]*secretv1beta1.SecureValue, 0)
 
 			t.Repeat(map[string]func(*rapid.T){
 				// Create a random secure value
 				"create": func(t *rapid.T) {
 					sv := testutils.AnySecureValueGen.Draw(t, "sv")
-					createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+					createdSv, err := sut.SecureValueMetadataStorage.Create(t.Context(), contracts.SystemKeeperName, sv.DeepCopy(), "actor-uid")
 					require.NoError(t, err)
-					secureValues = append(secureValues, createdSv)
+					i := slices.IndexFunc(secureValues, func(v *secretv1beta1.SecureValue) bool {
+						return v.Namespace == createdSv.Namespace && v.Name == createdSv.Name
+					})
+
+					// Set new version to active since it'll be read later on
+					require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version))
+
+					// Secure value is not in the slice
+					if i == -1 {
+						secureValues = append(secureValues, createdSv)
+					} else {
+						// Replace old version (now inactive) with new version
+						secureValues[i] = createdSv
+					}
 				},
 
 				// Bulk delete a subset of the created secure values
@@ -281,6 +295,7 @@ func TestPropertyDelete(t *testing.T) {
 					if len(secureValues) == 0 {
 						return
 					}
+
 					i := rapid.IntRange(0, len(secureValues)).Draw(t, "i")
 					keep := secureValues[:i]
 					delete := secureValues[i:]
@@ -294,6 +309,7 @@ func TestPropertyDelete(t *testing.T) {
 							Version:   sv.Status.Version,
 						})
 					}
+
 					require.NoError(t, sut.SecureValueMetadataStorage.Delete(t.Context(), deleteInput))
 
 					// Ensure the non-deleted ones are still reachable.

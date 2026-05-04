@@ -16,14 +16,13 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlKeeperCreate            = mustTemplate("keeper_create.sql")
-	sqlKeeperRead              = mustTemplate("keeper_read.sql")
-	sqlKeeperReadActive        = mustTemplate("keeper_read_active.sql")
-	sqlKeeperUpdate            = mustTemplate("keeper_update.sql")
-	sqlKeeperList              = mustTemplate("keeper_list.sql")
-	sqlKeeperDelete            = mustTemplate("keeper_delete.sql")
-	sqlKeeperSetAsActive       = mustTemplate("keeper_set_as_active.sql")
-	sqlSecureValuesDeleteByIds = mustTemplate("secure_value_delete_by_ids.sql")
+	sqlKeeperCreate      = mustTemplate("keeper_create.sql")
+	sqlKeeperRead        = mustTemplate("keeper_read.sql")
+	sqlKeeperReadActive  = mustTemplate("keeper_read_active.sql")
+	sqlKeeperUpdate      = mustTemplate("keeper_update.sql")
+	sqlKeeperList        = mustTemplate("keeper_list.sql")
+	sqlKeeperDelete      = mustTemplate("keeper_delete.sql")
+	sqlKeeperSetAsActive = mustTemplate("keeper_set_as_active.sql")
 
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
@@ -304,15 +303,5 @@ type addGCAttemptCountSecureValues struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r addGCAttemptCountSecureValues) Validate() error {
-	return nil // TODO
-}
-
-type deleteSecureValuesByIds struct {
-	sqltemplate.SQLTemplate
-	SecureValueIDs []string
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`
-func (r deleteSecureValuesByIds) Validate() error {
 	return nil // TODO
 }
