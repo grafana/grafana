@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
+	"path"
 	"regexp"
 	"sync"
 	"time"
@@ -67,5 +68,5 @@ func extractProxyPath(originalRawPath string) string {
 }
 
 func getProxyPath(c *contextmodel.ReqContext) string {
-	return extractProxyPath(c.Req.URL.EscapedPath())
+	return path.Join("/", extractProxyPath(c.Req.URL.EscapedPath()))
 }
