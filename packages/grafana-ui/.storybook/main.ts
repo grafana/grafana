@@ -1,7 +1,10 @@
 import path, { dirname, join } from 'node:path';
 import type { StorybookConfig } from '@storybook/react-webpack5';
 import remarkGfm from 'remark-gfm';
-import { copyAssetsSync } from './copyAssets';
+import { copyAssetsSync } from './copyAssets.ts';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
 
 const coreComponentsGlobs: StorybookConfig['stories'] = [
   // Specific high-level documentation pages
@@ -48,7 +51,7 @@ const mainConfig: StorybookConfig = {
     },
     getAbsolutePath('@storybook/addon-a11y'),
     {
-      name: getAbsolutePath('@storybook/preset-scss'),
+      name: '@storybook/preset-scss',
       options: {
         styleLoaderOptions: {
           // this is required for theme switching .use() and .unuse()
@@ -86,7 +89,7 @@ const mainConfig: StorybookConfig = {
     check: true,
     reactDocgen: 'react-docgen-typescript',
     reactDocgenTypescriptOptions: {
-      tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
+      tsconfigPath: path.resolve(import.meta.dirname, 'tsconfig.json'),
       shouldExtractLiteralValuesFromEnum: true,
       shouldRemoveUndefinedFromOptional: true,
       propFilter: (prop) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
@@ -131,8 +134,9 @@ const mainConfig: StorybookConfig = {
     backgrounds: false,
   },
 };
-module.exports = mainConfig;
 
 function getAbsolutePath(value: string): any {
   return dirname(require.resolve(join(value, 'package.json')));
 }
+
+export default mainConfig;

@@ -1,17 +1,17 @@
-diff --git a/dist/builder-manager/index.js b/dist/builder-manager/index.js
-index c68536f748afc0397c5522102b239d899cd5cb61..b997503dd116d5241b4781b643d10ee03cc8ed1c 100644
---- a/dist/builder-manager/index.js
-+++ b/dist/builder-manager/index.js
-@@ -2001,7 +2001,7 @@ var mr = /^\/($|\?)/, L, A, _t = /* @__PURE__ */ o(async (e) => {
+diff --git a/dist/_node-chunks/builder-manager-UBFFXMB4.js b/dist/_node-chunks/builder-manager-UBFFXMB4.js
+index 9284eef7282459f033478d34c63f791a001a4e81..135701a991d45c4f6afa2e9642c43448e1039c28 100644
+--- a/dist/_node-chunks/builder-manager-UBFFXMB4.js
++++ b/dist/_node-chunks/builder-manager-UBFFXMB4.js
+@@ -1445,7 +1445,7 @@ var CORE_DIR_ORIGIN = join(resolvePackageDir("storybook"), "dist/manager"), isRo
        // legacy font formats
        ".woff": "dataurl",
        ".eot": "dataurl",
 -      ".ttf": "dataurl"
 +      ".ttf": "dataurl",
      },
-     target: re,
-     supported: st,
-@@ -2015,7 +2015,7 @@ var mr = /^\/($|\?)/, L, A, _t = /* @__PURE__ */ o(async (e) => {
+     target: BROWSER_TARGETS,
+     supported: SUPPORTED_FEATURES,
+@@ -1459,7 +1459,7 @@ var CORE_DIR_ORIGIN = join(resolvePackageDir("storybook"), "dist/manager"), isRo
      // turn this on to assist with debugging the bundling of managerEntries
      // treeShaking: true,
      sourcemap: !1,
@@ -20,9 +20,9 @@ index c68536f748afc0397c5522102b239d899cd5cb61..b997503dd116d5241b4781b643d10ee0
      jsxFactory: "React.createElement",
      jsxFragment: "React.Fragment",
      jsx: "transform",
-@@ -2024,17 +2024,17 @@ var mr = /^\/($|\?)/, L, A, _t = /* @__PURE__ */ o(async (e) => {
+@@ -1468,17 +1468,17 @@ var CORE_DIR_ORIGIN = join(resolvePackageDir("storybook"), "dist/manager"), isRo
      legalComments: "external",
-     plugins: [Z(pr), (0, At.pnpPlugin)()],
+     plugins: [globalExternals(globalsModuleInfoMap)],
      banner: {
 -      js: "try{"
 +      js: "try{",
@@ -32,13 +32,13 @@ index c68536f748afc0397c5522102b239d899cd5cb61..b997503dd116d5241b4781b643d10ee0
 +      js: '}catch(e){ console.error("[Storybook] One of your manager-entries failed: " + import.meta.url, e); }',
      },
      define: {
-       "process.env": JSON.stringify(a),
-       ...cr(a),
+       "process.env": JSON.stringify(envs),
+       ...stringifyProcessEnvs(envs),
        global: "window",
 -      module: "{}"
 -    }
 +      module: "{}",
 +    },
    };
- }, "getConfig"), jt = {
-   get: /* @__PURE__ */ o(async () => {
+ }, executor = {
+   get: async () => {
