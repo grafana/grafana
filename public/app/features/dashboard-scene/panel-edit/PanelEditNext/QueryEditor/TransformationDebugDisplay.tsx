@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Drawer, Icon, JSONFormatter, Stack, useStyles2 } from '@grafana/ui';
+import { Drawer, Icon, IconButton, JSONFormatter, Stack, useStyles2 } from '@grafana/ui';
 
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 import { useTransformationDebugData } from './hooks/useTransformationDebugData';
@@ -37,7 +37,16 @@ export function TransformationDebugDisplay() {
       <Stack direction="row" gap={1}>
         <div className={styles.debug}>
           <div className={styles.debugTitle}>
-            <Trans i18nKey="query-editor-next.transformation-debug.input-data">Input data</Trans>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Trans i18nKey="query-editor-next.transformation-debug.input-data">Input data</Trans>
+              <IconButton
+                name="copy"
+                size="sm"
+                tooltip={t('query-editor-next.transformation-debug.copy-input', 'Copy input data to clipboard')}
+                aria-label={t('query-editor-next.transformation-debug.copy-input', 'Copy input data to clipboard')}
+                onClick={() => navigator.clipboard.writeText(JSON.stringify(input, null, 2))}
+              />
+            </Stack>
           </div>
           <div className={styles.debugJson}>
             <JSONFormatter json={input} />
@@ -48,7 +57,16 @@ export function TransformationDebugDisplay() {
         </div>
         <div className={styles.debug}>
           <div className={styles.debugTitle}>
-            <Trans i18nKey="query-editor-next.transformation-debug.output-data">Output data</Trans>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Trans i18nKey="query-editor-next.transformation-debug.output-data">Output data</Trans>
+              <IconButton
+                name="copy"
+                size="sm"
+                tooltip={t('query-editor-next.transformation-debug.copy-output', 'Copy output data to clipboard')}
+                aria-label={t('query-editor-next.transformation-debug.copy-output', 'Copy output data to clipboard')}
+                onClick={() => navigator.clipboard.writeText(JSON.stringify(output, null, 2))}
+              />
+            </Stack>
           </div>
           <div className={styles.debugJson}>
             <JSONFormatter json={output} />
