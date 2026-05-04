@@ -66,6 +66,12 @@ Following is a list of PostgreSQL configuration options:
 
 **Connection section:**
 
+{{< admonition type="note" >}}
+**Grafana Cloud users:** Grafana Cloud can't reach databases on `localhost`, `127.0.0.1`, or private IP ranges (`10.x`, `172.16.x`, `192.168.x`) directly. If your PostgreSQL instance isn't publicly accessible, you must set up [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to establish a secure tunnel between Grafana Cloud and your private network. If you experience intermittent connection drops with the Docker-based PDC agent, try switching to the binary-based agent instead.
+
+If your database is publicly accessible but protected by a firewall, you must allowlist Grafana Cloud's outbound IP addresses. Grafana Cloud doesn't provide per-stack static IPs — only service-level IP ranges. For the current list of outbound IPs, refer to [Allow Grafana Cloud IPs in a firewall](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/allow-grafana-cloud-ips/).
+{{< /admonition >}}
+
 | Setting       | Description                                                                                                                                                                                          |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Host URL      | The IP address/hostname and optional port of your PostgreSQL instance. The default PostgreSQL port is `5432`. For IPv6 addresses, use the format `[::1]:5432`. To connect through a Unix socket, enter the socket directory path (for example, `/var/run/postgresql`). |
@@ -77,10 +83,25 @@ Following is a list of PostgreSQL configuration options:
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Username              | Enter the username used to connect to your PostgreSQL database.                                                                                                                                                                                                                               |
 | Password              | Enter the password used to connect to the PostgreSQL database. This field is optional. If left empty, the PostgreSQL client driver resolves the password using the standard [PostgreSQL password file](https://www.postgresql.org/docs/current/static/libpq-pgpass.html) (`.pgpass`). To use a non-default password file location, set the `PGPASSFILE` environment variable in the Grafana server process. |
-| TLS/SSL Mode          | Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When TLS/SSL Mode is disabled, TLS/SSL Method and TLS/SSL Auth Details aren’t visible options.                                                                                    |
+| TLS/SSL Mode          | Determines whether and how a secure TLS/SSL connection is negotiated with the server. Refer to the [TLS/SSL mode reference](#tlsssl-mode-reference) for guidance on each mode. When set to `disable`, the TLS/SSL Method and Auth Details options aren't visible. |
 | TLS/SSL Method        | Determines how TLS/SSL certificates are configured.                                                                                                                                                                                                                                           |
 | - File system path    | This option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process.                                                                      |
 | - Certificate content | This option allows you to configure certificates by specifying their content. The content is stored and encrypted in the Grafana database. When connecting to the database, the certificates are saved as files, on the local filesystem, in the Grafana data path.                           |
+
+### TLS/SSL mode reference
+
+Choose the TLS/SSL mode based on your security requirements and where your database is hosted:
+
+| Mode | Encryption | Server identity verified | When to use |
+| ---- | ---------- | ------------------------ | ----------- |
+| `disable` | No | No | Local development or trusted private networks only. Don't use in production. |
+| `require` | Yes | No | **Recommended minimum for cloud-hosted databases** such as Amazon RDS, Azure Database for PostgreSQL, and Google Cloud SQL. Encrypts the connection but doesn't verify the server's certificate. |
+| `verify-ca` | Yes | CA only | Use when you need to confirm the server certificate is signed by a trusted CA but don't need to verify the hostname. |
+| `verify-full` | Yes | CA + hostname | **Most secure option.** Verifies both the CA and that the server hostname matches the certificate. Recommended for production when you control the certificates. |
+
+{{< admonition type="note" >}}
+Most cloud-hosted PostgreSQL services (Amazon RDS, Azure Database for PostgreSQL, Google Cloud SQL) require at minimum `require` mode. If you leave TLS/SSL Mode set to `disable`, the connection may be rejected by the server. Check your cloud provider's documentation for the recommended `sslmode` setting.
+{{< /admonition >}}
 
 **TLS/SSL Auth Details:**
 
