@@ -245,8 +245,8 @@ github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e h1:zP30ZbtnWjy0KJxTo
 github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e/go.mod h1:Tl9i4F2CPp3cOiXo06JObTh05tENG/NV/ombn2XOY7Y=
 github.com/grafana/grafana-app-sdk v0.54.0 h1:sO2TKsfJ0pT5Lyx/ronZM/TrSrQG3EVYbhW5r0la+y8=
 github.com/grafana/grafana-app-sdk v0.54.0/go.mod h1:sct5XtHBWMTOUUi9/XG2ehRr56iNAWWqOGVBr5W9rFA=
-github.com/grafana/grafana-app-sdk/logging v0.53.2 h1:FFbPvto2WwWdVElHr9o1SGlOVLWF1n1l7p/YY5zkQ6E=
-github.com/grafana/grafana-app-sdk/logging v0.53.2/go.mod h1:f0r/XriExa4jpUMHnI9aTRYzbbMHiDV+MXSpaSRGqIE=
+github.com/grafana/grafana-app-sdk/logging v0.54.0 h1:WvBPeswe1zkwRmieIf2w0N5l0UgAsNCzywr+6jzZRdA=
+github.com/grafana/grafana-app-sdk/logging v0.54.0/go.mod h1:t0rXNkTz3R6PLpjxk4BIl2erHYkMBX+rd+UHSL0k5nw=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLmAhwA4m6iGUD4w1YkydEWWjazn9qxCFT8W0=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000/go.mod h1:/ZklAgE1i4f3Z8uriXwESmCr1VLF8lBGaJspuaGuf78=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
@@ -476,8 +476,8 @@ go.opentelemetry.io/contrib/exporters/autoexport v0.68.0 h1:0D3GFvELGIwQGfC6agLs
 go.opentelemetry.io/contrib/exporters/autoexport v0.68.0/go.mod h1:DM2NV7Zb8CcGeVPt6glouY0FAiwZQ/iqgcWExhgWeN8=
 go.opentelemetry.io/contrib/propagators/jaeger v1.43.0 h1:peiLMz1+aqJE+3L4mOVtR9wlmv+yh/JVYXCBjqmzJJE=
 go.opentelemetry.io/contrib/propagators/jaeger v1.43.0/go.mod h1:Agvif+4A8p/3UtZzJ0MCcDEuQwgtrzM71DueU41DCs8=
-go.opentelemetry.io/contrib/samplers/jaegerremote v0.34.0 h1:RZjNfF9OoR4oPLEWaP+Memql2MNVkZvnwjB2N5tR3cA=
-go.opentelemetry.io/contrib/samplers/jaegerremote v0.34.0/go.mod h1:b5U9IcSnv+lMvEcSOXZB61kXSf0KkwickleKWuAQclw=
+go.opentelemetry.io/contrib/samplers/jaegerremote v0.37.0 h1:MPbz6oY3ZM1GuzCdqKU2TSsE7W71W6e578f/m2q9rHw=
+go.opentelemetry.io/contrib/samplers/jaegerremote v0.37.0/go.mod h1:+JlICiUxqOsm1bu6zTvygwOl5b5DRO+u8A+IgnL2ONs=
 go.opentelemetry.io/otel v1.21.0/go.mod h1:QZzNPQPm1zLX4gZK4cMi+71eaorMSGT3A4znnUvNNEo=
 go.opentelemetry.io/otel v1.43.0 h1:mYIM03dnh5zfN7HautFE4ieIig9amkNANT+xcVxAj9I=
 go.opentelemetry.io/otel v1.43.0/go.mod h1:JuG+u74mvjvcm8vj8pI5XiHy1zDeoCS2LB1spIq7Ay0=
