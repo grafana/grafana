@@ -5,6 +5,7 @@ import {
   type AdHocFilterWithLabels,
   type Spec as DashboardV2Spec,
   type VariableKind,
+  type CustomVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -159,6 +160,72 @@ export function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], fi
   return true;
 }
 
+function escapeCsvValue(value: string) {
+  return value.replace(/\\/g, '\\\\').replace(/,/g, '\\,');
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function customVariableQueryWithCurrent(variable: CustomVariableKind): string | undefined {
+  const current = variable.spec.current;
+  if (!current) {
+    return undefined;
+  }
+
+  const currentValues = (Array.isArray(current.value) ? current.value : [current.value]).map((v) => String(v));
+  const currentTexts = (Array.isArray(current.text) ? current.text : [current.text]).map((t) => String(t));
+
+  if (variable.spec.valuesFormat === 'json') {
+    let existingOptions: Array<{ value: string; text: string }> = [];
+    if (variable.spec.query) {
+      try {
+        const parsed = JSON.parse(variable.spec.query);
+        if (Array.isArray(parsed)) {
+          existingOptions = parsed.filter(isObjectRecord).map((o) => ({
+            value: String(o.value ?? ''),
+            text: String(o.text ?? o.value ?? ''),
+          }));
+        }
+      } catch {
+        existingOptions = [];
+      }
+    }
+
+    const existingValues = new Set(existingOptions.map((o) => o.value));
+    const appendedOptions = currentValues
+      .map((value, i) => ({
+        value,
+        text: currentTexts[i] ?? value,
+      }))
+      .filter((option) => !existingValues.has(option.value));
+
+    const options = [...existingOptions, ...appendedOptions];
+    return JSON.stringify(options);
+  }
+
+  const existingValues = new Set(
+    (variable.spec.query.match(/(?:\\,|[^,])+/g) ?? []).map((entry) => {
+      const unescaped = entry.replace(/\\,/g, ',');
+      const keyValueMatch = /^\s*(.+)\s:\s(.+)$/.exec(unescaped);
+      return keyValueMatch ? keyValueMatch[2].trim() : unescaped.trim();
+    })
+  );
+
+  const appendedValues = currentValues
+    .filter((value) => !existingValues.has(value))
+    .map(escapeCsvValue)
+    .join(',');
+  if (!variable.spec.query) {
+    return appendedValues;
+  }
+  if (!appendedValues) {
+    return variable.spec.query;
+  }
+  return `${variable.spec.query},${appendedValues}`;
+}
+
 export function applyVariableChangesV2(
   saveModel: DashboardV2Spec,
   originalSaveModel: DashboardV2Spec,
@@ -229,6 +296,14 @@ function applyVariableKindListChanges(
       )
     ) {
       hasChanges = true;
+    }
+
+    if (saveVariables && variable.kind === 'CustomVariable' && original.kind === 'CustomVariable') {
+      // CustomVariable runtime options are derived from query, so include the saved selection in query.
+      const currentAsQuery = customVariableQueryWithCurrent(variable);
+      if (currentAsQuery !== undefined) {
+        variable.spec.query = currentAsQuery;
+      }
     }
 
     if (!saveVariables) {

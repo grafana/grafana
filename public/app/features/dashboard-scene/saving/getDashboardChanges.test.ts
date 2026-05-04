@@ -717,3 +717,61 @@ describe('getRawDashboardV2Changes - section variables', () => {
     expect(result.hasChanges).toBe(false);
   });
 });
+
+describe('getRawDashboardV2Changes - custom variable query persistence', () => {
+  const makeV2Dashboard = (query: string, currentValue: string): DashboardV2Spec => ({
+    title: 'Dashboard V2',
+    description: '',
+    cursorSync: 'Crosshair',
+    editable: true,
+    links: [],
+    tags: [],
+    preload: false,
+    liveNow: false,
+    timeSettings: {
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '5m',
+      autoRefreshIntervals: [],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    variables: [
+      {
+        kind: 'CustomVariable',
+        spec: {
+          name: 'custom0',
+          query,
+          current: { text: currentValue, value: currentValue },
+          options: [],
+          multi: false,
+          includeAll: false,
+          hide: 'dontHide',
+          skipUrlSync: false,
+          allowCustomValue: true,
+          valuesFormat: 'csv',
+        },
+      },
+    ],
+    elements: {},
+    annotations: [],
+    layout: {
+      kind: 'GridLayout',
+      spec: { items: [] },
+    },
+  });
+
+  it('appends current value to CustomVariable query when saving variable defaults', () => {
+    const initial = makeV2Dashboard('custom0', 'foo');
+    const changed = makeV2Dashboard('custom0', 'bar');
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+    const variable = result.changedSaveModel.variables?.[0];
+
+    expect(variable?.kind).toBe('CustomVariable');
+    if (variable?.kind === 'CustomVariable') {
+      expect(variable.spec.current?.value).toBe('bar');
+      expect(variable.spec.query).toBe('custom0,bar');
+    }
+  });
+});
