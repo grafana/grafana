@@ -28,3 +28,17 @@ jobs:
       sender: "${{ github.event.pull_request.user.login }}"
       comment: "Closes: ${{ github.repository }}#${{ github.event.pull_request.number }}"
     secrets: inherit # zizmor: ignore[secrets-inherit]
+
+  # Policy-Bot gets confused when no job is ever scheduled.
+  # Because ubuntu-latest is free for open-source repos, and this is still faster than any test suite, we'll just add an
+  #   always OK check to this workflow. Other workflows aren't affected, because they're run on the OSS repo.
+  always_ok:
+    name: No security patch
+    # Inverse of trigger_downstream_create_security_patch
+    if: github.repository != 'grafana/grafana-security-mirror'
+    runs-on: ubuntu-latest
+    # We need no permissions.
+    permissions: {}
+    steps:
+      - name: No patch detected
+        run: echo This is an OSS repository PR, and as such, no patch will be created.
