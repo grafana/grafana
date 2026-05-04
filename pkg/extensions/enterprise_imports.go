@@ -229,6 +229,8 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	_ "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	_ "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
+	_ "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
+	_ "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
 	_ "github.com/grafana/grafana/pkg/registry/apis/datasource"
 	_ "github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	_ "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
