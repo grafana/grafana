@@ -63,7 +63,7 @@ func TestSnapshotDownloadEmitsSpan(t *testing.T) {
 
 	store := &fakeRemoteIndexStore{}
 	store.put(makeULID(t, time.Now()), &IndexMeta{
-		GrafanaBuildVersion:   "11.5.0",
+		BuildVersion:   "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now(),
 	})
