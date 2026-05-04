@@ -95,9 +95,6 @@ func (d *RPM) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 			{"/src/packaging/rpm/systemd/grafana-server.service", "/pkg/usr/lib/systemd/system/grafana-server.service"},
 		},
 		AfterInstall: "/src/packaging/rpm/control/postinst",
-		Depends: []string{
-			"/sbin/service",
-		},
 		ExtraArgs: []string{
 			"--rpm-posttrans=/src/packaging/rpm/control/posttrans",
 			"--rpm-digest=sha256",

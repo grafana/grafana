@@ -100,7 +100,6 @@ fpm \
   --config-files=/etc/sysconfig/grafana-server \
   --config-files=/usr/lib/systemd/system/grafana-server.service \
   --after-install="${SRC}/packaging/rpm/control/postinst" \
-  --depends=/sbin/service \
   --architecture="${PKG_ARCH}" \
   --description=Grafana \
   --license="${FPM_LICENSE:-AGPLv3}" \
