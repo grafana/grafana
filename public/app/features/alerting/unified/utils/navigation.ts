@@ -23,6 +23,7 @@ const ContactPointsTab = {
  */
 export const NAV_IDS = {
   ALERT_ACTIVITY: 'alert-activity',
+  INSIGHTS: 'insights',
   NOTIFICATION_CONFIG: 'notification-config',
   RECEIVERS: 'receivers',
   ROUTES: 'am-routes',
@@ -34,7 +35,10 @@ export const NAV_IDS = {
 export const ALERTING_PATHS: Record<string, RelativeUrl> = {
   ALERTS: '/alerting/alerts',
   ALERT_GROUPS: '/alerting/groups',
+  HISTORY: '/alerting/history',
+  INSIGHTS: '/alerting/insights',
   NOTIFICATIONS: '/alerting/notifications',
+  NOTIFICATIONS_HISTORY: '/alerting/notifications-history',
   TEMPLATES: '/alerting/notifications/templates',
   TIME_INTERVALS: '/alerting/routes/mute-timing',
   ROUTES: '/alerting/routes',

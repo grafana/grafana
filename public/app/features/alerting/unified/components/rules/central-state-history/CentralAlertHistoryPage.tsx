@@ -6,6 +6,7 @@ import { config } from '@grafana/runtime';
 import { Box, Tab, TabContent, TabsBar, Text, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
+import { useAlertHistoryNav } from '../../../navigation/useInsightsNav';
 import { NotificationsScene } from '../../../notifications/NotificationsScene';
 import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
@@ -18,8 +19,10 @@ enum ActiveTab {
 }
 
 function HistoryPage() {
+  const { navId, pageNav } = useAlertHistoryNav();
   const styles = useStyles2(getStyles);
   const [queryParams, setQueryParams] = useQueryParams();
+  const useV2Nav = config.featureToggles.alertingNavigationV2;
   const notificationsEnabled = config.featureToggles.alertingNotificationHistoryGlobal;
 
   const activeTab =
@@ -27,8 +30,18 @@ function HistoryPage() {
       ? ActiveTab.Notifications
       : ActiveTab.AlertEvents;
 
+  // V2 Navigation: Notifications is a separate page under Insights, so no tabs needed here
+  if (useV2Nav) {
+    return (
+      <AlertingPageWrapper navId={navId} pageNav={pageNav} isLoading={false}>
+        <CentralAlertHistoryScene />
+      </AlertingPageWrapper>
+    );
+  }
+
+  // Legacy Navigation: Show tabs for Alert events and Notifications within this page
   return (
-    <AlertingPageWrapper navId="alerts-history" isLoading={false}>
+    <AlertingPageWrapper navId={navId} isLoading={false}>
       {notificationsEnabled && (
         <TabsBar>
           <Tab

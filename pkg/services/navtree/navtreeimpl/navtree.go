@@ -556,14 +556,33 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory) {
-		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead))) {
+	hasAlertHistory := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	hasNotificationHistory := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNotificationHistoryGlobal)
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+		// V2 Navigation: Group History and Notifications under single "Insights" parent (tabs managed on frontend)
+		if hasAlertHistory || hasNotificationHistory {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-				Text: "History",
-				Id:   "alerts-history",
-				Url:  s.cfg.AppSubURL + "/alerting/history",
-				Icon: "history",
+				Text:     "Insights",
+				SubTitle: "View system insights, alert state history, and notification history",
+				Id:       "insights",
+				Url:      s.cfg.AppSubURL + "/alerting/insights",
+				Icon:     "graph-bar",
 			})
+		}
+	} else {
+		// Legacy: Show History as standalone item
+		if hasAlertHistory {
+			if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead))) {
+				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+					Text: "History",
+					Id:   "alerts-history",
+					Url:  s.cfg.AppSubURL + "/alerting/history",
+					Icon: "history",
+				})
+			}
 		}
 	}
 

@@ -87,6 +87,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-alerts.title', 'Alert activity');
     case 'alert-activity':
       return t('nav.alerting-activity.title', 'Alert activity');
+    case 'insights':
+      return t('nav.alerting-insights.title', 'Insights');
     case 'alerting-admin':
       return t('nav.alerting-admin.title', 'Settings');
     case 'alerts/recently-deleted':
@@ -255,6 +257,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.alerting-alerts.subtitle', 'Visualize active and pending alerts');
     case 'alert-activity':
       return t('nav.alerting-activity.subtitle', 'View alerts and active notifications');
+    case 'insights':
+      return t('nav.alerting-insights.subtitle', 'View system insights, alert state history, and notification history');
     case 'alerts/recently-deleted':
       return t('nav.alerts-recently-deleted.subtitle', 'See recently deleted alert rules');
     case 'datasources':

@@ -2184,10 +2184,13 @@
     "navigation": {
       "active-notifications": "Active notifications",
       "alert-rules": "Alert rules",
+      "alert-state-history": "Alert state history",
       "alerts": "Alerts",
       "contact-points": "Contact points",
+      "notification-history": "Notification history",
       "notification-policies": "Notification policies",
       "recently-deleted": "Recently deleted",
+      "system-insights": "System insights",
       "templates": "Templates",
       "time-intervals": "Time intervals"
     },
@@ -11984,6 +11987,10 @@
     },
     "alerting-home": {
       "title": "Home"
+    },
+    "alerting-insights": {
+      "subtitle": "View system insights, alert state history, and notification history",
+      "title": "Insights"
     },
     "alerting-legacy": {
       "title": "Alerting (legacy)"
