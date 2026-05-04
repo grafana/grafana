@@ -7,6 +7,7 @@ export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
 }
 export const ISO_8601: DateTimeBuiltinFormat = moment.ISO_8601;
+export const ISO_8601_WEEK = 'GGGG-[W]WW';
 export type DateTimeInput = Date | string | number | Array<string | number> | DateTime | null; // | undefined;
 export type FormatInput = string | DateTimeBuiltinFormat | undefined;
 export type DurationInput = string | number | DateTimeDuration;
