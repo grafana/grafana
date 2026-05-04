@@ -1,7 +1,6 @@
-import { startCase } from 'lodash';
 import { useCallback } from 'react';
 
-import { type FieldConfigEditorBuilder, type StandardEditorProps } from '@grafana/data';
+import { type FieldConfigEditorBuilder, type StandardEditorProps, startCase } from '@grafana/data';
 import { type HideableFieldConfig, type HideSeriesConfig } from '@grafana/schema';
 
 import { FilterPill } from '../../components/FilterPill/FilterPill';
