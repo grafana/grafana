@@ -450,6 +450,34 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
     // No more fields
     expect(frame.fields.length).toBe(7);
   });
+
+  test('handles spans with missing durationNanos gracefully (no NaN)', () => {
+    const traces: TraceSearchMetadata[] = [
+      {
+        traceID: '1',
+        rootServiceName: 'test-service',
+        rootTraceName: 'test-operation',
+        startTimeUnixNano: '1702984850354934104',
+        durationMs: 1,
+        spanSet: {
+          spans: [
+            {
+              spanID: '11',
+              startTimeUnixNano: '1702984850354934104',
+              // durationNanos intentionally omitted to simulate incomplete span
+            },
+          ],
+          matched: 1,
+        },
+      },
+    ];
+    const frameList = createTableFrameFromTraceQlQueryAsSpans(traces as TraceSearchMetadata[], defaultSettings);
+    const frame = frameList[0];
+    const durationField = frame.fields.find((f) => f.name === 'duration');
+    expect(durationField).toBeDefined();
+    expect(durationField!.values[0]).toBe(0);
+    expect(Number.isNaN(durationField!.values[0])).toBe(false);
+  });
 });
 
 describe('transformFromOTLP()', () => {
@@ -481,5 +509,43 @@ describe('transformFromOTLP()', () => {
         ],
       },
     }).not.toBeFalsy();
+  });
+
+  test('handles spans with missing endTimeUnixNano gracefully (no NaN)', () => {
+    const otlpWithMissingEnd: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[] = [
+      {
+        resource: {
+          attributes: [{ key: 'service.name', value: { stringValue: 'test-service' } }],
+          droppedAttributesCount: 0,
+        },
+        instrumentationLibrarySpans: [
+          {
+            spans: [
+              {
+                traceId: 'AAAAAAAAAABguiq7RPE+rg==',
+                spanId: 'cmteMBAvwNA=',
+                parentSpanId: '',
+                name: 'incomplete-span',
+                kind: 'SPAN_KIND_SERVER' as any,
+                startTimeUnixNano: 1627471657255809000,
+                endTimeUnixNano: undefined as unknown as number,
+                attributes: [],
+                droppedAttributesCount: 0,
+                droppedEventsCount: 0,
+                droppedLinksCount: 0,
+                status: { code: 0 },
+                events: [],
+                links: [],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const res = transformFromOTLP(otlpWithMissingEnd, false);
+    const durationField = res.data[0].fields.find((f: { name: string }) => f.name === 'duration');
+    expect(durationField).toBeDefined();
+    expect(durationField!.values[0]).toBe(0);
+    expect(Number.isNaN(durationField!.values[0])).toBe(false);
   });
 });

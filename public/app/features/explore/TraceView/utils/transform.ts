@@ -49,8 +49,8 @@ export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null 
       }
       return {
         ...s,
-        duration: s.duration * 1000,
-        startTime: s.startTime * 1000,
+        duration: (s.duration || 0) * 1000,
+        startTime: (s.startTime || 0) * 1000,
         processID: s.spanID,
         flags: 0,
         references,
