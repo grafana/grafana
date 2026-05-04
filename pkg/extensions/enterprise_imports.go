@@ -616,6 +616,8 @@ import (
 	_ "gocloud.dev/secrets/hashivault"
 	_ "golang.org/x/net/http2"
 	_ "golang.org/x/net/idna"
+	_ "golang.org/x/oauth2"
+	_ "golang.org/x/oauth2/google/externalaccount"
 	_ "golang.org/x/sync/errgroup"
 	_ "golang.org/x/sync/semaphore"
 	_ "golang.org/x/sync/singleflight"
