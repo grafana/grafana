@@ -1,6 +1,3 @@
-import { css } from '@emotion/css';
-
-import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
@@ -25,8 +22,6 @@ export class SharePanelInternally extends ShareLinkTab {
 }
 
 function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelInternally>) {
-  const styles = useStyles2(getStyles);
-
   const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading, imageUrl, panelRef } = model.useState();
 
   const panelTitle = panelRef?.resolve().state.title;
@@ -34,14 +29,14 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
   const isDashboardSaved = Boolean(dashboard.state.uid);
 
   return (
-    <div>
+    <Stack gap={2} direction="column">
       <Text variant="body">
         <Trans i18nKey="link.share-panel.config-description">
           Create a personalized, direct link to share your panel within your organization, with the following
           customization settings:
         </Trans>
       </Text>
-      <div className={styles.configurationContainer}>
+      <Stack gap={1} direction="column" alignItems="flex-start">
         <ShareInternallyConfiguration
           useLockedTime={useLockedTime}
           onToggleLockedTime={model.onToggleLockedTime}
@@ -61,8 +56,8 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
         >
           <Trans i18nKey="link.share.copy-link-button">Copy link</Trans>
         </ClipboardButton>
-      </div>
-      <Divider spacing={2} />
+      </Stack>
+      <Divider spacing={0} />
       <Stack gap={2} direction="column">
         {!isDashboardSaved && (
           <Alert severity="info" title={t('share-modal.link.save-alert', 'Dashboard is not saved')} bottomSpacing={0}>
@@ -94,12 +89,6 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
           theme={selectedTheme}
         />
       </Stack>
-    </div>
+    </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  configurationContainer: css({
-    marginTop: theme.spacing(2),
-  }),
-});
