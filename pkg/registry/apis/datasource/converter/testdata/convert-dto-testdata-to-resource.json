@@ -25,6 +25,7 @@
       "bbb": true,
       "ccc": 1.234
     },
+    "ordinal": 1,
     "readOnly": true,
     "title": "Hello",
     "url": "http://something/",

@@ -60,7 +60,8 @@ type DataSource struct {
 	// swagger:ignore
 	BasicAuthPassword string            `json:"-"`
 	WithCredentials   bool              `json:"withCredentials"`
-	IsDefault         bool              `json:"isDefault"`
+	IsDefault         bool              `json:"isDefault"` // ordinal = 1
+	Ordinal           int64             `json:"ordinal,omitzero" xorm:"ordinal"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
@@ -171,7 +172,8 @@ type AddDataSourceCommand struct {
 	BasicAuth       bool              `json:"basicAuth"`
 	BasicAuthUser   string            `json:"basicAuthUser"`
 	WithCredentials bool              `json:"withCredentials"`
-	IsDefault       bool              `json:"isDefault"`
+	IsDefault       bool              `json:"isDefault"` // ordinal = 1
+	Ordinal         int64             `json:"ordinal,omitzero"`
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
@@ -198,7 +200,8 @@ type UpdateDataSourceCommand struct {
 	BasicAuth       bool              `json:"basicAuth"`
 	BasicAuthUser   string            `json:"basicAuthUser"`
 	WithCredentials bool              `json:"withCredentials"`
-	IsDefault       bool              `json:"isDefault"`
+	IsDefault       bool              `json:"isDefault"` // ordinal = 1
+	Ordinal         int64             `json:"ordinal,omitzero"`
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`

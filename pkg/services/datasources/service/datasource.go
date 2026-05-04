@@ -313,6 +313,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	// Set the first created data source as default
 	if len(dataSources) == 0 {
 		cmd.IsDefault = true
+		cmd.Ordinal = 1
 	}
 
 	if cmd.Name == "" {

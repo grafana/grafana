@@ -3868,6 +3868,7 @@ export type DataSourceListItemDto = {
   isDefault?: boolean;
   jsonData?: Json;
   name?: string;
+  ordinal?: number;
   orgId?: number;
   readOnly?: boolean;
   type?: string;
@@ -3891,6 +3892,7 @@ export type DataSource = {
   isDefault?: boolean;
   jsonData?: Json;
   name?: string;
+  ordinal?: number;
   orgId?: number;
   readOnly?: boolean;
   secureJsonFields?: {
@@ -3912,6 +3914,7 @@ export type AddDataSourceCommand = {
   isDefault?: boolean;
   jsonData?: Json;
   name?: string;
+  ordinal?: number;
   secureJsonData?: {
     [key: string]: string;
   };
@@ -4003,6 +4006,7 @@ export type UpdateDataSourceCommand = {
   isDefault?: boolean;
   jsonData?: Json;
   name?: string;
+  ordinal?: number;
   secureJsonData?: {
     [key: string]: string;
   };

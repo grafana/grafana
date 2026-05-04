@@ -82,6 +82,7 @@ describe('<ConnectionsTab>', () => {
           hasWriteRights={true}
           dataSources={dss}
           dataSourcesCount={dss.length}
+          sortable={false}
         />
       );
 
@@ -101,6 +102,7 @@ describe('<ConnectionsTab>', () => {
           hasWriteRights={true}
           dataSources={dss}
           dataSourcesCount={dss.length}
+          sortable={false}
         />
       );
 
@@ -120,6 +122,7 @@ describe('<ConnectionsTab>', () => {
           hasWriteRights={true}
           dataSources={dss}
           dataSourcesCount={dss.length}
+          sortable={false}
         />
       );
 

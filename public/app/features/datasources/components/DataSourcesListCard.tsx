@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
+import { type DraggableProvided } from '@hello-pangea/dnd';
 import Skeleton from 'react-loading-skeleton';
 
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
+import { Card, Icon, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
 import { type DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
@@ -19,9 +20,10 @@ export interface Props {
   hasWriteRights: boolean;
   hasExploreRights: boolean;
   failure?: DatasourceFailureDetails;
+  dragHandleProps?: DraggableProvided['dragHandleProps'];
 }
 
-export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights, failure }: Props) {
+export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights, failure, dragHandleProps }: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
 
@@ -64,6 +66,16 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
           >
             <Trans i18nKey="datasources.data-sources-list-card.explore">Explore</Trans>
           </LinkButton>
+        )}
+
+        {dragHandleProps && (
+          <div className={styles.draggable} {...dragHandleProps}>
+            <Icon
+              aria-label={t('layers.layer-drag-drop-list.draggable-aria-label', 'Drag and drop to reorder')}
+              name="draggabledots"
+              size="lg"
+            />
+          </div>
         )}
       </Card.Tags>
     </Card>
@@ -115,6 +127,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     button: css({
       marginLeft: theme.spacing(2),
+    }),
+    draggable: css({
+      marginLeft: theme.spacing(2),
+      display: 'inline',
     }),
   };
 };

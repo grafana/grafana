@@ -528,10 +528,17 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref common.Refere
 							Format: "",
 						},
 					},
+					"ordinal": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
 					"isDefault": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
+							Description: "Deprecated: use ordinal=1",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 					"url": {
