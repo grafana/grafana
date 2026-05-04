@@ -673,4 +673,67 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		}
 		require.ElementsMatch(t, members, names, "no member should be silently lost")
 	})
+
+	// Cross-instance team-sync hits this race: instance A and instance B both
+	// Get the team at the same RV, each appends a different user to its own
+	// stale Spec.Members snapshot, and both submit Update. Without an RV
+	// precondition, B's full-replace Update silently drops the user A just
+	// added because that user isn't on B's submitted list.
+	//
+	// In a single-process integration test the in-flight Updates serialise
+	// inside the apiserver, so we simulate the cross-instance behaviour by
+	// keeping a stale snapshot in memory while another writer commits, then
+	// replaying the stale snapshot — which is exactly what happens to the
+	// instance whose Get landed before the peer's commit.
+	t.Run("stale-RV update with different members must not silently drop members", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-stalerv-", []map[string]interface{}{})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+
+		// Stale snapshot taken before any member is added.
+		stale, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		// Peer instance commits first: editor is now on the team.
+		fresh, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NoError(t, unstructured.SetNestedSlice(fresh.Object, []interface{}{
+			memberSpec(editorUID, "member", false),
+		}, "spec", "members"))
+		_, err = teamClient.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// This instance's Update — built from the stale snapshot — appends
+		// viewer. With the RV precondition the apiserver returns 409, the
+		// caller refreshes, and both editor and viewer end up on the team
+		// (mirrors synchronizer.addUserToTeam's retry.RetryOnConflict).
+		require.NoError(t, unstructured.SetNestedSlice(stale.Object, []interface{}{
+			memberSpec(viewerUID, "member", false),
+		}, "spec", "members"))
+		_, err = teamClient.Resource.Update(ctx, stale, metav1.UpdateOptions{})
+		require.Error(t, err, "stale-RV update must be rejected, otherwise editor is silently removed")
+		require.True(t, errors.IsConflict(err), "stale-RV update must surface as 409 Conflict, got %v", err)
+
+		// Refresh and retry, mirroring the synchronizer's retry loop.
+		refreshed, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		current, _, _ := unstructured.NestedSlice(refreshed.Object, "spec", "members")
+		current = append(current, memberSpec(viewerUID, "member", false))
+		require.NoError(t, unstructured.SetNestedSlice(refreshed.Object, current, "spec", "members"))
+		_, err = teamClient.Resource.Update(ctx, refreshed, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		final, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		finalMembers, _, _ := unstructured.NestedSlice(final.Object, "spec", "members")
+		names := make([]string, 0, len(finalMembers))
+		for _, raw := range finalMembers {
+			m := raw.(map[string]interface{})
+			names = append(names, m["name"].(string))
+		}
+		require.ElementsMatch(t, []string{editorUID, viewerUID}, names,
+			"both members must be present; the stale-RV writer must not have erased editor")
+	})
 }

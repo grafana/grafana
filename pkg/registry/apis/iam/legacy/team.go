@@ -397,6 +397,15 @@ type UpdateTeamCommand struct {
 	IsProvisioned bool
 	ExternalUID   string
 
+	// PreviousUpdated is the team row's `updated` value the caller observed
+	// when it built this Update. When set, the SQL UPDATE is gated on
+	// `updated = ?` so a stale Update — for example one whose snapshot
+	// pre-dates a peer instance's full-replace Spec.Members write — is
+	// rejected with ErrTeamUpdateConflict instead of silently overwriting.
+	// Callers that don't pass an RV (legacy paths) leave this zero and the
+	// gate clause is omitted.
+	PreviousUpdated legacysql.DBTime
+
 	// MemberDeletes / MemberUpdates / MemberCreates reconcile the team's
 	// members in the same SQL transaction as the team row update. Callers
 	// must pre-resolve both TeamID and UserID on MemberCreates entries;
@@ -404,6 +413,13 @@ type UpdateTeamCommand struct {
 	MemberDeletes []DeleteTeamMemberCommand
 	MemberUpdates []UpdateTeamMemberCommand
 	MemberCreates []CreateTeamMemberCommand
+}
+
+// HasPreviousUpdated drives the conditional `AND updated = ?` clause in
+// update_team.sql. Templates can't call IsZero on embedded fields directly,
+// so this method exposes the check.
+func (c UpdateTeamCommand) HasPreviousUpdated() bool {
+	return !c.PreviousUpdated.IsZero()
 }
 
 type UpdateTeamResult struct {
@@ -457,8 +473,22 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 		if err != nil {
 			return fmt.Errorf("failed to execute team update template %q: %w", sqlUpdateTeamTemplate.Name(), err)
 		}
-		if _, err := st.Exec(ctx, teamQuery, teamReq.GetArgs()...); err != nil {
+		res, err := st.Exec(ctx, teamQuery, teamReq.GetArgs()...)
+		if err != nil {
 			return fmt.Errorf("failed to update team: %w", err)
+		}
+		if cmd.HasPreviousUpdated() {
+			// 0 rows affected after a PreviousUpdated-gated UPDATE means the
+			// caller's resourceVersion is stale (the GetTeamInternalID
+			// pre-flight already verified the team exists). Surface as a
+			// dedicated error so the apiserver layer can map it to a 409.
+			n, rowsErr := res.RowsAffected()
+			if rowsErr != nil {
+				return fmt.Errorf("rows affected: %w", rowsErr)
+			}
+			if n == 0 {
+				return team.ErrTeamUpdateConflict
+			}
 		}
 
 		if len(cmd.MemberDeletes) > 0 {

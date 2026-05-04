@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
@@ -143,21 +145,20 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 		}
 	}
 
-	// TOCTOU note: the current-members read happens outside the write tx
-	// that runs inside legacy.UpdateTeam, so a concurrent writer may alter
-	// the team_member rows between diffMembers and the write. The apiserver
-	// resourceVersion check on the Team row does not cover team_member, so
-	// full-replace Updates can interleave. The two races that matter:
-	//   * Two writers adding the same user: the second INSERT hits the
-	//     UNIQUE(org_id, team_id, user_id) constraint; legacy.UpdateTeam
-	//     returns ErrTeamMemberAlreadyAdded and we surface 409 below so the
-	//     client re-reads and retries.
-	//   * A writer deleting a member that is already gone: the DELETE is a
-	//     no-op (affects 0 rows) — harmless.
-	// Moving this read into WithTransaction would close the remaining gap
-	// but requires the legacy store to expose a tx-scoped ListTeamBindings
-	// so we don't re-trigger the SQLite self-deadlock described on
-	// GetTeamInternalID.
+	// TOCTOU note: the current-members read still happens outside the write
+	// tx (closed in a follow-up commit). The remaining hazard — two writers
+	// who Get at the same RV and then submit different Spec.Members lists,
+	// silently dropping each other's just-added members — is closed by the
+	// PreviousUpdated precondition plumbed through to legacy.UpdateTeam:
+	// the second writer's stale RV no longer matches, the SQL UPDATE
+	// matches 0 rows, and the store surfaces ErrTeamUpdateConflict, which
+	// the synchronizer's retry.RetryOnConflict converts into a fresh
+	// Get + recompute.
+	//
+	// The same-user-add race still relies on the UNIQUE(org_id, team_id,
+	// user_id) constraint surfacing as ErrTeamMemberAlreadyAdded → 409.
+	// A writer deleting a member that is already gone is a no-op DELETE —
+	// harmless.
 	currentMembers, err := s.listAllTeamMembers(ctx, ns, teamObj.Name)
 	if err != nil {
 		return oldObj, false, err
@@ -171,12 +172,31 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	if err != nil {
 		return oldObj, false, err
 	}
+	// Plumb the caller's resourceVersion through so legacy.UpdateTeam can
+	// gate the SQL UPDATE on it. RV format: ms-precision unix timestamp,
+	// produced by toTeamObject below; round-trips through DBTime cleanly
+	// (asymmetric ms/second wire format keeps it matching rows that older
+	// builds wrote at second precision).
+	if rv := teamObj.GetResourceVersion(); rv != "" {
+		ms, parseErr := strconv.ParseInt(rv, 10, 64)
+		if parseErr != nil {
+			return oldObj, false, apierrors.NewBadRequest(fmt.Sprintf("invalid resourceVersion %q: %v", rv, parseErr))
+		}
+		updateCmd.PreviousUpdated = legacysql.NewDBTime(time.UnixMilli(ms).UTC())
+	}
 
 	result, err := s.store.UpdateTeam(ctx, ns, updateCmd)
 	if err != nil {
 		// Race with another writer adding the same member first — surface as
 		// 409 so retry.RetryOnConflict (or the client) can re-read and recompute.
 		if errors.Is(err, team.ErrTeamMemberAlreadyAdded) {
+			return oldObj, false, apierrors.NewConflict(teamResource.GroupResource(), name, err)
+		}
+		// Stale resourceVersion: another writer (often a peer Grafana
+		// instance running the same team-sync) committed since our Get.
+		// 409 lets the caller's retry.RetryOnConflict re-read and rebuild
+		// the desired Spec.Members against fresh state.
+		if errors.Is(err, team.ErrTeamUpdateConflict) {
 			return oldObj, false, apierrors.NewConflict(teamResource.GroupResource(), name, err)
 		}
 		return oldObj, false, err
