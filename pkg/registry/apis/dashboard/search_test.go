@@ -699,6 +699,18 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Fields:  defaultFields,
 			},
 		},
+		"type dashboards only": {
+			queryString: "type=dashboards",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+			},
+		},
 		"type folder only": {
 			queryString: "type=folder",
 			expected: &resourcepb.ResourceSearchRequest{
@@ -711,8 +723,33 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Fields:  defaultFields,
 			},
 		},
+		"type folders only": {
+			queryString: "type=folders",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: folderKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+			},
+		},
 		"both types should include federated": {
 			queryString: "type=dashboard&type=folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"both plural types should include federated": {
+			queryString: "type=dashboards&type=folders",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options:   &resourcepb.ListOptions{Key: dashboardKey},
 				Query:     "",

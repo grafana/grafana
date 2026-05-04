@@ -93,9 +93,9 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "type",
 										In:          "query",
-										Description: "search dashboards or folders.  When empty, this will search both",
+										Description: "search dashboards or folders.  When empty, this will search both. Supports singular and plural resource names.",
 										Required:    false,
-										Schema:      spec.StringProperty().WithEnum("folder", "dashboard"),
+										Schema:      spec.StringProperty().WithEnum("folder", "folders", "dashboard", "dashboards"),
 									},
 								},
 								{
@@ -478,7 +478,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	}
 
 	// A search request can include multiple types, we need to acces the slice directly.
-	types := queryParams["type"]
+	types := normalizeSearchTypes(queryParams["type"])
 	hasDash := len(types) == 0 || slices.Contains(types, "dashboard")
 	hasFolder := len(types) == 0 || slices.Contains(types, "folder")
 	// If both types are present, we need to search both dashboards and folders, by default is nothing is set we also search both.
@@ -657,6 +657,25 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		})
 	}
 	return searchRequest, nil
+}
+
+func normalizeSearchTypes(types []string) []string {
+	if len(types) == 0 {
+		return types
+	}
+
+	normalized := make([]string, 0, len(types))
+	for _, t := range types {
+		switch t {
+		case "dashboards":
+			t = "dashboard"
+		case "folders":
+			t = "folder"
+		}
+		normalized = append(normalized, t)
+	}
+
+	return normalized
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {

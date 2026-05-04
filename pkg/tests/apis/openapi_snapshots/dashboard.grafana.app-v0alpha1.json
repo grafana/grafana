@@ -1655,12 +1655,14 @@
           {
             "name": "type",
             "in": "query",
-            "description": "search dashboards or folders.  When empty, this will search both",
+            "description": "search dashboards or folders.  When empty, this will search both. Supports singular and plural resource names.",
             "schema": {
               "type": "string",
               "enum": [
                 "folder",
-                "dashboard"
+                "folders",
+                "dashboard",
+                "dashboards"
               ]
             }
           },

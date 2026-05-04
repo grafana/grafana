@@ -768,8 +768,8 @@ export type SearchDashboardsAndFoldersApiResponse = /** status 200 undefined */ 
 export type SearchDashboardsAndFoldersApiArg = {
   /** user query string */
   query?: string;
-  /** search dashboards or folders.  When empty, this will search both */
-  type?: 'folder' | 'dashboard';
+  /** search dashboards or folders.  When empty, this will search both. Supports singular and plural resource names. */
+  type?: 'folder' | 'folders' | 'dashboard' | 'dashboards';
   /** search/list within a folder (not recursive) */
   folder?: string;
   /** count distinct terms for selected fields */
