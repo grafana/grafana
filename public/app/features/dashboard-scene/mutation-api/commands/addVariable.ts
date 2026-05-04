@@ -6,14 +6,14 @@
 
 import { type z } from 'zod';
 
-import { sceneGraph } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { replaceVariableSet } from './variableUtils';
+import { buildVariableChangePath, resolveVariableScope } from './variableScope';
+import { getOwnerVariableArray, replaceOwnerVariableSet } from './variableUtils';
 
 export const addVariablePayloadSchema = payloads.addVariable;
 
@@ -32,10 +32,12 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
     enterEditModeIfNeeded(scene);
 
     try {
-      const { variable: variableKind, position } = payload;
+      const { variable: variableKind, position, parentPath } = payload;
       const name = variableKind.spec.name;
 
-      const existingVariables = scene.state.$variables;
+      const { owner, layoutPathPrefix } = resolveVariableScope(scene, parentPath);
+
+      const existingVariables = owner.state.$variables;
       if (existingVariables) {
         const existing = existingVariables.state.variables.find((v) => v.state.name === name);
         if (existing) {
@@ -46,8 +48,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
       const sceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
 
-      const varSet = sceneGraph.getVariables(scene);
-      const currentVariables = [...varSet.state.variables];
+      const currentVariables = [...getOwnerVariableArray(owner)];
 
       if (position !== undefined && position >= 0 && position < currentVariables.length) {
         currentVariables.splice(position, 0, sceneVariable);
@@ -55,12 +56,14 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
         currentVariables.push(sceneVariable);
       }
 
-      replaceVariableSet(scene, currentVariables);
+      replaceOwnerVariableSet(owner, currentVariables);
+
+      const changePath = buildVariableChangePath(layoutPathPrefix, name);
 
       return {
         success: true,
         data: { variable: variableKind },
-        changes: [{ path: `/variables/${name}`, previousValue: null, newValue: variableKind }],
+        changes: [{ path: changePath, previousValue: null, newValue: variableKind }],
       };
     } catch (error) {
       return {

@@ -6,14 +6,14 @@
 
 import { type z } from 'zod';
 
-import { sceneGraph } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { replaceVariableSet } from './variableUtils';
+import { buildVariableChangePath, findSectionPathsContainingVariable, resolveVariableScope } from './variableScope';
+import { dashboardHasVariableNamed, getOwnerVariableArray, replaceOwnerVariableSet } from './variableUtils';
 
 export const updateVariablePayloadSchema = payloads.updateVariable;
 
@@ -32,10 +32,27 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
     enterEditModeIfNeeded(scene);
 
     try {
-      const { name, variable: variableKind } = payload;
+      const { name, variable: variableKind, parentPath } = payload;
 
-      const varSet = sceneGraph.getVariables(scene);
-      const currentVariables = [...varSet.state.variables];
+      let scope;
+      if (parentPath === undefined || parentPath === '/') {
+        if (!dashboardHasVariableNamed(scene, name)) {
+          const sectionPaths = findSectionPathsContainingVariable(scene, name);
+          if (sectionPaths.length === 0) {
+            throw new Error(`Variable '${name}' not found`);
+          }
+          throw new Error(
+            `Variable '${name}' is not on the dashboard. Pass parentPath to update a section variable (e.g. "${sectionPaths[0]}").`
+          );
+        }
+        scope = resolveVariableScope(scene, '/');
+      } else {
+        scope = resolveVariableScope(scene, parentPath);
+      }
+
+      const { owner, layoutPathPrefix } = scope;
+
+      const currentVariables = [...getOwnerVariableArray(owner)];
 
       const existingIndex = currentVariables.findIndex((v) => v.state.name === name);
       if (existingIndex === -1) {
@@ -48,14 +65,16 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
       const newSceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
       currentVariables[existingIndex] = newSceneVariable;
 
-      replaceVariableSet(scene, currentVariables);
+      replaceOwnerVariableSet(owner, currentVariables);
+
+      const changePath = buildVariableChangePath(layoutPathPrefix, name);
 
       return {
         success: true,
         data: { variable: variableKind },
         changes: [
           {
-            path: `/variables/${name}`,
+            path: changePath,
             previousValue: previousState,
             newValue: variableKind,
           },

@@ -8,7 +8,8 @@ import { type z } from 'zod';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { replaceVariableSet } from './variableUtils';
+import { buildVariableChangePath, findSectionPathsContainingVariable, resolveVariableScope } from './variableScope';
+import { dashboardHasVariableNamed, getOwnerVariableArray, replaceOwnerVariableSet } from './variableUtils';
 
 export const removeVariablePayloadSchema = payloads.removeVariable;
 
@@ -24,13 +25,31 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
   handler: async (payload, context) => {
     const { scene } = context;
-    const { name } = payload;
+    const { name, parentPath } = payload;
     enterEditModeIfNeeded(scene);
 
     try {
-      const variables = scene.state.$variables;
+      let scope;
+      if (parentPath === undefined || parentPath === '/') {
+        if (!dashboardHasVariableNamed(scene, name)) {
+          const sectionPaths = findSectionPathsContainingVariable(scene, name);
+          if (sectionPaths.length === 0) {
+            throw new Error(`Variable '${name}' not found`);
+          }
+          throw new Error(
+            `Variable '${name}' is not on the dashboard. Pass parentPath to remove a section variable (e.g. "${sectionPaths[0]}").`
+          );
+        }
+        scope = resolveVariableScope(scene, '/');
+      } else {
+        scope = resolveVariableScope(scene, parentPath);
+      }
+
+      const { owner, layoutPathPrefix } = scope;
+
+      const variables = owner.state.$variables;
       if (!variables) {
-        throw new Error('Dashboard has no variable set');
+        throw new Error(`Variable '${name}' not found`);
       }
 
       const variable = variables.getByName(name);
@@ -40,13 +59,15 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
       const previousState = variable.state;
 
-      const updatedVariables = variables.state.variables.filter((v) => v.state.name !== name);
-      replaceVariableSet(scene, updatedVariables);
+      const updatedVariables = getOwnerVariableArray(owner).filter((v) => v.state.name !== name);
+      replaceOwnerVariableSet(owner, updatedVariables);
+
+      const changePath = buildVariableChangePath(layoutPathPrefix, name);
 
       return {
         success: true,
         data: { name },
-        changes: [{ path: `/variables/${name}`, previousValue: previousState, newValue: null }],
+        changes: [{ path: changePath, previousValue: previousState, newValue: null }],
       };
     } catch (error) {
       return {
