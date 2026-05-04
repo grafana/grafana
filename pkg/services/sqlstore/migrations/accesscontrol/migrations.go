@@ -231,5 +231,12 @@ func AddMigration(mg *migrator.Migrator) {
 		Name: "datasource_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: true,
 	}))
 
+	// Expand role.uid column from 40 to 255 so that longer UIDs
+	// are no longer silently truncated by MySQL. SQLite does
+	// not enforce VARCHAR length so the change is a no-op there.
+	mg.AddMigration("Expand role.uid length to 255", migrator.NewRawSQLMigration("").
+		Postgres("ALTER TABLE role ALTER COLUMN uid TYPE VARCHAR(255);").
+		Mysql("ALTER TABLE role MODIFY uid NVARCHAR(255) NOT NULL;"))
+
 	AddDatasourceTypeMigration(mg)
 }

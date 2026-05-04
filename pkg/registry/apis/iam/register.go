@@ -381,6 +381,15 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		MaximumNameLength:           80,
 		RequireDeprecatedInternalID: true,
 	})
+	// Role UIDs are persisted in the `role.uid` column (VARCHAR(255)); cap the
+	// apiserver name at the same length so callers get a clear validation error
+	// instead of a silent database truncation.
+	opts.StorageOptsRegister(iamv0.RoleInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 255,
+	})
+	opts.StorageOptsRegister(iamv0.GlobalRoleInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 255,
+	})
 
 	if enableTeamsApi {
 		if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi); err != nil {
