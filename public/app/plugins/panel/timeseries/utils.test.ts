@@ -1,4 +1,4 @@
-import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
+import { createTheme, FieldType, createDataFrame, toDataFrame, type PanelData } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { LineInterpolation } from '@grafana/ui';
 
@@ -8,6 +8,8 @@ import {
   getGroupedFilters,
   getTimezones,
   isTooltipScrollable,
+  LTTB_THRESHOLD,
+  lttbPreviewData,
   prepareGraphableFields,
   setClassicPaletteIdxs,
 } from './utils';
@@ -616,5 +618,124 @@ describe('prepareGraphableFields with xNumFieldIdx', () => {
     const frames = prepareGraphableFields([df], createTheme(), undefined, 1);
     expect(frames).not.toBeNull();
     expect(frames![0].fields[0].name).toBe('x');
+  });
+});
+
+describe('lttbPreviewData', () => {
+  const makeFrame = (length: number, extraFields?: Array<{ name: string; type: FieldType; values: unknown[] }>) => {
+    return createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [...Array(length).keys()] },
+        { name: 'value', type: FieldType.number, values: [...Array(length).keys()] },
+        ...(extraFields ?? []),
+      ],
+    });
+  };
+
+  it('returns frames unchanged when below the threshold', () => {
+    const result = lttbPreviewData({ series: [makeFrame(3)] } as PanelData);
+
+    expect(result.series[0].length).toBe(3);
+    expect(result.series[0].fields[0].values).toEqual([0, 1, 2]);
+  });
+
+  it('returns frames unchanged when there is no time field', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'b', type: FieldType.number, values: [4, 5, 6] },
+      ],
+    });
+    const result = lttbPreviewData({ series: [frame] } as PanelData);
+
+    expect(result.series[0].length).toBe(3);
+  });
+
+  it('returns frames unchanged when there is no numeric field', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'label', type: FieldType.string, values: ['a', 'b', 'c'] },
+      ],
+    });
+    const result = lttbPreviewData({ series: [frame] } as PanelData);
+
+    expect(result.series[0].length).toBe(3);
+  });
+
+  it('downsamples frames exceeding the threshold to LTTB_THRESHOLD points', () => {
+    const result = lttbPreviewData({ series: [makeFrame(1000)] } as PanelData);
+
+    expect(result.series[0].length).toBe(LTTB_THRESHOLD);
+    expect(result.series[0].fields[0].values).toHaveLength(LTTB_THRESHOLD);
+    expect(result.series[0].fields[1].values).toHaveLength(LTTB_THRESHOLD);
+  });
+
+  it('always preserves the first and last data points', () => {
+    const result = lttbPreviewData({ series: [makeFrame(1000)] } as PanelData);
+
+    const outTimes = result.series[0].fields[0].values;
+    expect(outTimes[0]).toBe(0);
+    expect(outTimes[outTimes.length - 1]).toBe(999);
+  });
+
+  it('processes each frame independently', () => {
+    const result = lttbPreviewData({ series: [makeFrame(3), makeFrame(500)] } as PanelData);
+
+    expect(result.series[0].length).toBe(3);
+    expect(result.series[1].length).toBe(LTTB_THRESHOLD);
+  });
+
+  it('does not mutate the original data', () => {
+    const frame = makeFrame(500);
+    const data = { series: [frame] } as PanelData;
+    lttbPreviewData(data);
+
+    expect(data.series[0].fields[0].values).toHaveLength(500);
+    expect(data.series[0].length).toBe(500);
+  });
+
+  it('downsamples to a custom threshold when provided', () => {
+    const result = lttbPreviewData({ series: [makeFrame(100)] } as PanelData, 30);
+
+    expect(result.series[0].length).toBe(30);
+    expect(result.series[0].fields[0].values).toHaveLength(30);
+    expect(result.series[0].fields[1].values).toHaveLength(30);
+
+    const outTimes = result.series[0].fields[0].values;
+    expect(outTimes[0]).toBe(0);
+    expect(outTimes[outTimes.length - 1]).toBe(99);
+  });
+
+  it('skips frames at or below the custom threshold', () => {
+    const result = lttbPreviewData({ series: [makeFrame(30)] } as PanelData, 30);
+
+    expect(result.series[0].length).toBe(30);
+    expect(result.series[0].fields[0].values).toEqual([...Array(30).keys()]);
+  });
+
+  it('clears interval on the time field to prevent gaps', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [...Array(500).keys()], config: { interval: 10000 } },
+        { name: 'value', type: FieldType.number, values: [...Array(500).keys()] },
+      ],
+    });
+    const result = lttbPreviewData({ series: [frame] } as PanelData);
+
+    const timeField = result.series[0].fields[0];
+    expect(timeField.config.interval).toBeUndefined();
+  });
+
+  it('does not modify config on frames below the threshold', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [...Array(3).keys()], config: { interval: 10000 } },
+        { name: 'value', type: FieldType.number, values: [...Array(3).keys()] },
+      ],
+    });
+    const result = lttbPreviewData({ series: [frame] } as PanelData);
+
+    expect(result.series[0].fields[0].config.interval).toBe(10000);
   });
 });
