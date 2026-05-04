@@ -15,7 +15,7 @@ export const shouldUseK8sApi = (alertmanager?: string) => {
   return alertmanager === GRAFANA_RULES_SOURCE_NAME;
 };
 
-type EntityToCheck = {
+export type EntityToCheck = {
   metadata?: ObjectMeta;
 };
 

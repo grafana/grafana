@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`useTimeIntervalAbility external (Mimir) alertmanager should deny View and Create and list the expected required permissions 1`] = `
+{
+  "create": {
+    "anyOfPermissions": [
+      "alert.notifications:write",
+      "alert.notifications.time-intervals:write",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+  "view": {
+    "anyOfPermissions": [
+      "alert.notifications:read",
+      "alert.notifications.time-intervals:read",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+}
+`;
