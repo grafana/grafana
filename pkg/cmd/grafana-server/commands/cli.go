@@ -110,6 +110,7 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 	if err := featuremgmt.InitOpenFeatureWithCfg(cfg); err != nil {
 		return err
 	}
+	cfg.ResolveGrafanaComProxyAPIToken()
 
 	s, err := server.Initialize(
 		cli.Context,

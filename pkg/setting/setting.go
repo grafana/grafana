@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/common/model"
 	"gopkg.in/ini.v1"
 
@@ -535,6 +537,9 @@ type Cfg struct {
 	// Grafana.com SSO API token used for Unified SSO between instances and Grafana.com.
 	GrafanaComSSOAPIToken string
 
+	// GrafanaComProxyAPIToken is the dedicated auth token for Grafana.com proxy requests and plugin installs.
+	GrafanaComProxyAPIToken string
+
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]any
 	GeomapEnableCustomBaseLayers bool
@@ -751,6 +756,16 @@ type InstallPlugin struct {
 	URL     string `json:"url,omitempty"`
 }
 
+// ResolveGrafanaComProxyAPIToken must be called after OpenFeature is initialized.
+// It sets GrafanaComProxyAPIToken to the dedicated token when the dedicatedGrafanaComProxyAPIToken
+// flag is enabled and proxy_token is configured; otherwise falls back to sso_api_token.
+func (cfg *Cfg) ResolveGrafanaComProxyAPIToken() {
+	if openfeature.NewDefaultClient().Boolean(context.Background(), "dedicatedGrafanaComProxyAPIToken", false, openfeature.EvaluationContext{}) && cfg.GrafanaComProxyAPIToken != "" {
+		return
+	}
+	cfg.GrafanaComProxyAPIToken = cfg.GrafanaComSSOAPIToken
+}
+
 // AddChangePasswordLink returns if login form is disabled or not since
 // the same intention can be used to hide both features.
 func (cfg *Cfg) AddChangePasswordLink() bool {
@@ -813,6 +828,7 @@ func RedactedValue(key, value string) string {
 		"API_TOKEN$",
 		"WEBHOOK_TOKEN$",
 		"INSTALL_TOKEN$",
+		"PROXY_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1658,6 +1674,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
 	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
+	cfg.GrafanaComProxyAPIToken = valueAsString(iniFile.Section("grafana_com"), "proxy_token", "")
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 
