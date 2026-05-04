@@ -15,6 +15,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot PostgreSQL data source issues
 weight: 600
+review_date: 2026-05-04
 ---
 
 # Troubleshoot PostgreSQL data source issues
@@ -242,13 +243,15 @@ The following errors occur when there are issues with SQL syntax or query execut
 
 **Error message:** "macro '$\_\_timeFilter' not found" or incorrect query results with macros
 
-**Cause:** Grafana macros are not being properly expanded.
+**Cause:** Grafana macros aren't being properly expanded.
 
 **Solution:**
 
 1. Verify the macro syntax is correct, for example `$__timeFilter(time_column)`.
 1. Ensure the column name passed to the macro exists in your table.
+1. Check that the macro isn't inside a SQL comment (`--` or `/* */`). Grafana strips comments before expanding macros, so macros inside comments are silently ignored.
 1. Use the **Preview** toggle in Builder mode to see the expanded query.
+1. Open the [Query inspector](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-inspector) to view the exact SQL sent to PostgreSQL after macro expansion.
 1. For time-based macros, ensure the column contains timestamp data.
 
 ## Performance issues

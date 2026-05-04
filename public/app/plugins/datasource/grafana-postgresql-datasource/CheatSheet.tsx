@@ -32,7 +32,7 @@ export function CheatSheet() {
       Macros:
       <ul className={styles.ulPadding}>
         <li>$__time(column) -&gt; column as &quot;time&quot;</li>
-        <li>$__timeEpoch -&gt; extract(epoch from column) as &quot;time&quot;</li>
+        <li>$__timeEpoch(column) -&gt; extract(epoch from column) as &quot;time&quot;</li>
         <li>
           $__timeFilter(column) -&gt; column BETWEEN &apos;2017-04-21T05:01:17Z&apos; AND
           &apos;2017-04-21T05:01:17Z&apos;

@@ -15,6 +15,7 @@ labels:
 menuTitle: PostgreSQL
 title: PostgreSQL data source
 weight: 1200
+review_date: 2026-05-04
 ---
 
 # PostgreSQL data source
