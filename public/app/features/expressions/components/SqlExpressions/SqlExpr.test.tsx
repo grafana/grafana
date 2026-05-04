@@ -80,6 +80,20 @@ describe('SqlExpr', () => {
     });
   });
 
+  it('keeps the editor empty when an existing expression is cleared', () => {
+    const onChange = jest.fn();
+    const refIds = [{ value: 'A' }];
+    const initialQuery = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
+    const clearedQuery = { ...initialQuery, expression: '' };
+    const { rerender } = render(<SqlExpr onChange={onChange} refIds={refIds} query={initialQuery} queries={[]} />);
+
+    rerender(<SqlExpr onChange={onChange} refIds={refIds} query={clearedQuery} queries={[]} />);
+
+    expect(SqlEditorMock.mock.calls[SqlEditorMock.mock.calls.length - 1][0]).toEqual(
+      expect.objectContaining({ value: '' })
+    );
+  });
+
   it('adds alerting format when alerting prop is true', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];

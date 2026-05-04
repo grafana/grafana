@@ -230,7 +230,7 @@ LIMIT
           {({ width, height }: Size) => (
             <div style={{ width }}>
               <SqlEditor
-                value={query.expression || initialQuery}
+                value={query.expression ?? initialQuery}
                 onChange={onEditorChange}
                 completionProvider={completionProvider}
                 completionMode="override"
