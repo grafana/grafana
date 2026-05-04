@@ -76,6 +76,50 @@ describe('nullToValue Transformer', () => {
     expect(result.fields[2].values).toEqual(['a', -1, 'b', -1, -1, -1, -1, -1, -1, 'c']);
   });
 
+  test('should not replace nulls when noValue is empty string', () => {
+    const df = createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        {
+          name: 'One',
+          type: FieldType.number,
+          config: { noValue: '' },
+          values: [4, null, 8],
+        },
+        {
+          name: 'Two',
+          type: FieldType.number,
+          config: {},
+          values: [null, 6, null],
+        },
+      ],
+    });
+
+    const result = nullToValue(df);
+
+    expect(result.fields[1].values).toEqual([4, null, 8]);
+    expect(result.fields[2].values).toEqual([null, 6, null]);
+  });
+
+  test('should not replace nulls when noValue is undefined', () => {
+    const df = createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        {
+          name: 'One',
+          type: FieldType.number,
+          values: [4, null, 8],
+        },
+      ],
+    });
+
+    const result = nullToValue(df);
+
+    expect(result.fields[1].values).toEqual([4, null, 8]);
+  });
+
   test('should have no effect without nulls', () => {
     const df = createDataFrame({
       refId: 'A',

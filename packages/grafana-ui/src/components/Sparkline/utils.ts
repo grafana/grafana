@@ -80,7 +80,8 @@ export function getYRange(alignedFrame: DataFrame): Range.MinMax {
   max = Math.max(max!, field.config.max ?? -Infinity);
 
   // if noValue is set, ensure that it is included in the range as well
-  const noValue = +field.config?.noValue!;
+  const noValueConfig = field.config?.noValue;
+  const noValue = noValueConfig !== '' && noValueConfig != null ? +noValueConfig : NaN;
   if (!Number.isNaN(noValue)) {
     min = Math.min(min, noValue);
     max = Math.max(max, noValue);
