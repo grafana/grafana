@@ -41,6 +41,19 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 1. Check that PostgreSQL is configured to accept connections from the Grafana server in `pg_hba.conf`.
 1. For Grafana Cloud, ensure you have configured [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) if your PostgreSQL instance is not publicly accessible.
 
+### Grafana Cloud can't reach a private database
+
+**Error message:** `dial tcp: connect: connection refused`, `i/o timeout`, or `context deadline exceeded` when using Grafana Cloud with a database on a private network.
+
+**Cause:** Grafana Cloud runs in a hosted environment and can't directly reach databases on `localhost`, `127.0.0.1`, or private IP ranges (`10.x`, `172.16.x`, `192.168.x`). This is the most common issue when migrating from self-hosted Grafana to Grafana Cloud.
+
+**Solution:**
+
+1. Set up [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to create a secure tunnel between Grafana Cloud and your private network.
+1. Install the PDC agent on a machine that has network access to your PostgreSQL instance.
+1. If you experience intermittent connection drops with the Docker-based PDC agent, try the binary-based agent instead — this has resolved stability issues in some environments.
+1. Update the **Host URL** in the data source settings to use the hostname as seen from the PDC agent's network (not `localhost`).
+
 ### Request timed out
 
 **Error message:** "context deadline exceeded" or "i/o timeout"
@@ -59,18 +72,31 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 
 **Error message:** `failed to connect to ... : hostname resolving error` or `lookup hostname: no such host`
 
-**Cause:** The hostname specified in the data source configuration cannot be resolved.
+**Cause:** The hostname specified in the data source configuration can't be resolved.
 
 **Solution:**
 
 1. Verify the hostname is spelled correctly.
 1. Check that DNS resolution is working on the Grafana server.
-1. Try using an IP address instead of a hostname.
+1. Try using the database's public IP address instead of a hostname. This is a useful diagnostic step and can serve as a workaround if DNS resolution is the issue.
 1. Ensure the PostgreSQL server is accessible from the Grafana server's network.
+1. For Grafana Cloud, DNS resolution behavior can differ between stack regions and cloud providers. If a hostname resolves from one stack but not another, try the direct IP address and contact [Grafana Support](https://grafana.com/docs/grafana-cloud/account-management/support/).
 
 ## Authentication errors
 
 The following errors occur when there are issues with authentication credentials or permissions.
+
+### No PostgreSQL user name specified
+
+**Error message:** `FATAL: no PostgreSQL user name specified in startup packet (SQLSTATE 28000)`
+
+**Cause:** The connection to PostgreSQL was attempted without a username. This typically means the **Username** field in the data source configuration is empty or was cleared.
+
+**Solution:**
+
+1. Open the data source settings and verify the **Username** field contains a valid PostgreSQL user.
+1. Click **Save & test** and confirm the connection succeeds.
+1. If the username disappears after saving, check your Grafana version. A bug in Grafana v13.1 on the fast release channel caused the username field to be cleared on save. Upgrading to a patched release or switching to the steady release channel resolves this issue.
 
 ### Password authentication failed
 
@@ -199,6 +225,25 @@ The following errors occur when there are issues with the database configuration
 ## Query errors
 
 The following errors occur when there are issues with SQL syntax or query execution.
+
+### Query truncated by double-dash in string literals
+
+**Error message:** Unexpected syntax errors or truncated results when string values contain `--` (double dash).
+
+**Cause:** In Grafana versions before 13.1, the SQL comment-stripping parser didn't correctly handle `--` inside single-quoted strings. A query like `WHERE name = 'value--suffix'` would be truncated at the `--`, causing the rest of the query to be silently dropped. This also affected strings with consecutive hyphens (for example, `'10YDE-VE-------2'` would be truncated to `'10YDE-VE`).
+
+This was fixed in Grafana 13.1 with a quote-aware comment-stripping parser (PR #121772). The fix also handles PostgreSQL dollar-quoted strings (`$$...$$`).
+
+**Solution:**
+
+1. Upgrade to Grafana 13.1 or later, which includes the fix.
+1. If you can't upgrade immediately, work around the issue by using PostgreSQL string concatenation to avoid literal `--` in your queries:
+
+   ```sql
+   WHERE name = 'value' || '--' || 'suffix'
+   ```
+
+1. Alternatively, use a parameterized approach with a template variable for the value.
 
 ### Query syntax error
 
