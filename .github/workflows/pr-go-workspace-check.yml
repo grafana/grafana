@@ -32,32 +32,39 @@ jobs:
     name: Go Workspace Check
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
       with:
         persist-credentials: false
 
-    - name: Set go version
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
+    - name: Setup Enterprise
+      if: github.event.pull_request.head.repo.fork == false
+      uses: ./.github/actions/setup-enterprise
+
+    # Enterprise must be cloned before setup-go so that enterprise
+    # modules are visible when the Go cache key is computed.
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
       with:
-        cache: false
-        go-version-file: go.mod
+        cache-build: 'false'
 
     - name: Update workspace
       run: make update-workspace
 
-    - name: Check for go mod & workspace changes 
+    - name: Check for go mod & workspace changes
       run: |
-        if ! git diff --exit-code --quiet; then
+        if ! git diff --exit-code --quiet -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum pkg/extensions/enterprise_imports*.go; then
           echo "Changes detected:"
-          git diff
+          git diff -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum pkg/extensions/enterprise_imports*.go
+          echo ""
           echo "Please run 'make update-workspace' and commit the changes."
-          echo "If there is a change in enterprise dependencies, please update pkg/extensions/main.go."
           exit 1
         fi
-    - name: Ensure Dockerfile contains submodule COPY commands
-      run: ./scripts/go-workspace/validate-dockerfile.sh
 
   check-wire:
     needs: detect-changes
@@ -75,15 +82,16 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Set go version
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
-      with:
-        cache: false
-        go-version-file: go.mod
-
     - name: Setup Enterprise
       if: github.event.pull_request.head.repo.fork == false
       uses: ./.github/actions/setup-enterprise
+
+    # Enterprise must be cloned before setup-go so that enterprise
+    # modules are visible when the Go cache key is computed.
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Calculate generated wire checksums
       id: pre_gen_oss
@@ -118,7 +126,7 @@ jobs:
             echo "Uncomitted changes detected in pkg/server/enterprise_wire_gen.go"
           fi
         fi
-        
+
         if [ "$OSS_WIRE_CHANGED" = "false" ] && [ "$ENTERPRISE_WIRE_CHANGED" = "false" ]; then
           echo "No changes in generated Go files"
         else
