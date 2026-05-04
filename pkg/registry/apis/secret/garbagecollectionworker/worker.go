@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
-	"slices"
 	"sync"
 	"time"
 
@@ -92,30 +90,41 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 
 	wg.Wait()
 
-	secureValuesWithError := make([]string, 0)
+	secureValuesWithError := make([]secretv1beta1.SecureValue, 0)
 	for i, sv := range secureValues {
 		if errs[i] == nil {
 			continue
 		}
-		secureValuesWithError = append(secureValuesWithError, string(sv.UID))
+		secureValuesWithError = append(secureValuesWithError, sv)
 	}
 
 	if len(secureValuesWithError) > 0 {
-		counts, err := w.secureValueMetadataStorage.AddGCAttemptCount(ctx, secureValuesWithError)
+		ids := make([]string, 0, len(secureValuesWithError))
+		for _, sv := range secureValuesWithError {
+			ids = append(ids, string(sv.UID))
+		}
+
+		counts, err := w.secureValueMetadataStorage.AddGCAttemptCount(ctx, ids)
 		if err != nil {
 			return secureValues, errors.Join(append(errs, fmt.Errorf("incrementing gc retry count for secure values: %w", err))...)
 		}
 
-		// Remove secure values that haven't reached the max number of attempts yet
-		maps.DeleteFunc(counts, func(_id string, count int) bool {
-			return count < w.Cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue
-		})
-
 		if len(counts) > 0 {
-			secureValueIDs := slices.Collect(maps.Keys(counts))
-			logging.FromContext(ctx).Error("deleting secure values that gc worker is unable to clean up after retrying", "secureValueIDs", secureValueIDs)
-			if err := w.secureValueMetadataStorage.DeleteByIds(ctx, secureValueIDs); err != nil {
-				return secureValues, errors.Join(append(errs, fmt.Errorf("deleting secure values by ids: %w", err))...)
+			// Delete secure values that exceeed max retries
+			deleteInput := make([]contracts.DeleteInput, 0, len(secureValuesWithError))
+			for _, sv := range secureValuesWithError {
+				if counts[string(sv.UID)] > w.Cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue {
+					deleteInput = append(deleteInput, contracts.DeleteInput{
+						Namespace: xkube.Namespace(sv.Namespace),
+						Name:      sv.Name,
+						Version:   sv.Status.Version,
+					})
+				}
+			}
+
+			logging.FromContext(ctx).Error("deleting secure values that gc worker is unable to clean up after retrying", "deleteInput", deleteInput)
+			if err := w.secureValueMetadataStorage.Delete(ctx, deleteInput); err != nil {
+				return secureValues, errors.Join(append(errs, fmt.Errorf("deleting secure values: %w", err))...)
 			}
 		}
 	}
@@ -143,7 +152,9 @@ func (w *Worker) Cleanup(ctx context.Context, sv *secretv1beta1.SecureValue) err
 	}
 
 	// Metadata deletion is not idempotent but not found errors are ignored
-	if err := w.secureValueMetadataStorage.Delete(ctx, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version); err != nil && !errors.Is(err, contracts.ErrSecureValueNotFound) {
+	if err := w.secureValueMetadataStorage.Delete(ctx, []contracts.DeleteInput{{
+		Namespace: xkube.Namespace(sv.Namespace), Name: sv.Name, Version: sv.Status.Version,
+	}}); err != nil && !errors.Is(err, contracts.ErrSecureValueNotFound) {
 		return fmt.Errorf("deleting secure value from metadata storage: %w", err)
 	}
 

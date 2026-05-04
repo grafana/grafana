@@ -317,15 +317,6 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlSecureValuesDeleteByIds: {
-				{
-					Name: "delete secure values by ids",
-					Data: &deleteSecureValuesByIds{
-						SQLTemplate:    mocks.NewTestingSQLTemplate(),
-						SecureValueIDs: []string{"1", "2"},
-					},
-				},
-			},
 		},
 	})
 }
