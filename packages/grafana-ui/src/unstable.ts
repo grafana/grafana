@@ -11,15 +11,12 @@
 
 export * from './utils/skeleton';
 
-export { TableNG } from './components/Table/TableNG/TableNG';
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
 export type {
-  CodeEditorProps as CodeMirrorEditorProps,
-  CodeEditorCompletionMode as CodeMirrorCompletionMode,
-} from './components/CodeMirror/CodeEditor';
-export type {
-  Completion as CodeMirrorCompletion,
-  CompletionContext as CodeMirrorCompletionContext,
-  CompletionResult as CodeMirrorCompletionResult,
-  CompletionSource as CodeMirrorCompletionSource,
-} from '@codemirror/autocomplete';
+  CodeMirrorCompletionMode,
+  CodeMirrorCompletionSource,
+  CodeMirrorEditorLanguage,
+  CodeMirrorEditorProps,
+  CodeMirrorExtension,
+} from './components/CodeMirror/types';
+export { TableNG } from './components/Table/TableNG/TableNG';

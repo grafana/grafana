@@ -1,15 +1,14 @@
-import { type CompletionSource } from '@codemirror/autocomplete';
 import { action } from '@storybook/addon-actions';
 import { type Meta, type StoryFn } from '@storybook/react';
 import { useEffect, useState } from 'react';
 
 import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
-import { type CodeEditorLanguage } from './languageLoader';
+import { type CodeMirrorCompletionSource, type CodeMirrorEditorLanguage } from './types';
 
-const languageOptions: CodeEditorLanguage[] = ['sql', 'json'];
+const languageOptions: CodeMirrorEditorLanguage[] = ['sql', 'json'];
 
-const keywordCompletionSource: CompletionSource = (context) => {
+const keywordCompletionSource: CodeMirrorCompletionSource = (context) => {
   const word = context.matchBefore(/\w*/);
 
   if (!word || (word.from === word.to && !context.explicit)) {
