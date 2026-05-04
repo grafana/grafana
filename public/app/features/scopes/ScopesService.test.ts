@@ -1022,6 +1022,91 @@ describe('ScopesService', () => {
         true
       );
     });
+
+    it('should clear scopes URL params when enabling with no applied scopes', () => {
+      // Covers the firstScope-falsy short-circuit in the defer guard:
+      // when appliedScopes is empty, the guard does not fire and the URL
+      // write proceeds with empty scopes and scope_node: null.
+      selectorService.state.appliedScopes = [];
+      selectorService.state.scopes = {};
+
+      service.setEnabled(true);
+
+      expect(locationService.partial).toHaveBeenCalledWith(
+        {
+          scopes: [],
+          scope_node: null,
+          scope_parent: null,
+        },
+        true
+      );
+    });
+
+    it('should not write URL when setEnabled is called with the current enabled state', () => {
+      selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'node1' }];
+      selectorService.state.scopes = {
+        scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+      };
+
+      service.setEnabled(true);
+      jest.clearAllMocks();
+
+      // Calling setEnabled(true) again should be a no-op since state is unchanged.
+      service.setEnabled(true);
+
+      expect(locationService.partial).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('setReadOnly', () => {
+    beforeEach(() => {
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '',
+      });
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+    });
+
+    it('should update readOnly state when changed', () => {
+      service.setReadOnly(true);
+
+      expect(service.state.readOnly).toBe(true);
+    });
+
+    it('should not call closeAndReset when setting readOnly to false', () => {
+      selectorService.state.opened = true;
+      selectorService.closeAndReset = jest.fn();
+
+      service.setReadOnly(false);
+
+      expect(selectorService.closeAndReset).not.toHaveBeenCalled();
+    });
+
+    it('should close the selector when setting readOnly to true with selector opened', () => {
+      selectorService.state.opened = true;
+      selectorService.closeAndReset = jest.fn();
+
+      service.setReadOnly(true);
+
+      expect(selectorService.closeAndReset).toHaveBeenCalled();
+    });
+
+    it('should not close the selector when setting readOnly to true with selector already closed', () => {
+      selectorService.state.opened = false;
+      selectorService.closeAndReset = jest.fn();
+
+      service.setReadOnly(true);
+
+      expect(selectorService.closeAndReset).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cleanUp', () => {
+    it('should unsubscribe all subscriptions without throwing', () => {
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      expect(() => service.cleanUp()).not.toThrow();
+    });
   });
 
   describe('back/forward navigation handling', () => {
