@@ -106,15 +106,6 @@ const mainConfig: StorybookConfig = {
     },
   }),
   webpackFinal: async (config) => {
-    // expose jquery as a global so jquery plugins don't break at runtime.
-    config.module?.rules?.push({
-      test: require.resolve('jquery'),
-      loader: 'expose-loader',
-      options: {
-        exposes: ['$', 'jQuery'],
-      },
-    });
-
     // Tell storybook to resolve imports with the @grafana-app/source condition for
     // the packages in this repo.
     if (config && config.resolve) {
