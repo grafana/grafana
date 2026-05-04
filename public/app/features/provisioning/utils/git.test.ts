@@ -215,6 +215,39 @@ describe('getRepoFileUrl', () => {
       })
     ).toBeUndefined();
   });
+
+  it('uses tree segment for GitHub directory paths (trailing slash)', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'github',
+        url: 'https://github.com/owner/repo',
+        branch: 'main',
+        filePath: 'dashboards/team-a/',
+      })
+    ).toBe('https://github.com/owner/repo/tree/main/dashboards/team-a');
+  });
+
+  it('uses tree segment for GitLab directory paths (trailing slash)', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'gitlab',
+        url: 'https://gitlab.com/group/repo',
+        branch: 'main',
+        filePath: 'docs/',
+      })
+    ).toBe('https://gitlab.com/group/repo/-/tree/main/docs');
+  });
+
+  it('keeps the src segment for Bitbucket directory paths', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'bitbucket',
+        url: 'https://bitbucket.org/workspace/repo',
+        branch: 'main',
+        filePath: 'docs/',
+      })
+    ).toBe('https://bitbucket.org/workspace/repo/src/main/docs');
+  });
 });
 
 describe('getRepoEditFileUrl', () => {

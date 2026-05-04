@@ -123,8 +123,11 @@ type GetRepoFileUrlParams = {
 };
 
 /**
- * Build a URL to a specific source file in a repository.
+ * Build a URL to a specific file or directory in a repository.
  * Only works for git providers (GitHub, GitLab, Bitbucket).
+ *
+ * If `filePath` ends with `/`, the path is treated as a directory and the
+ * URL uses the provider's tree segment instead of blob.
  */
 export function getRepoFileUrl({
   repoType,
@@ -139,59 +142,7 @@ export function getRepoFileUrl({
 
   const effectiveBranch = branch || 'main';
   const fullPath = pathPrefix ? `${pathPrefix.replace(/\/+$/, '')}/${filePath}` : filePath;
-
-  switch (repoType) {
-    case 'github':
-      return buildRepoUrl({
-        baseUrl: url,
-        branch: effectiveBranch,
-        providerSegments: ['blob'],
-        path: fullPath,
-      });
-    case 'gitlab':
-      return buildRepoUrl({
-        baseUrl: url,
-        branch: effectiveBranch,
-        providerSegments: ['-', 'blob'],
-        path: fullPath,
-      });
-    case 'bitbucket':
-      return buildRepoUrl({
-        baseUrl: url,
-        branch: effectiveBranch,
-        providerSegments: ['src'],
-        path: fullPath,
-      });
-    default:
-      return undefined;
-  }
-}
-
-/**
- * Build a host URL for an arbitrary path inside the repository — file or
- * directory. Picks the right segment per provider (`blob` for files,
- * `tree` for directories), so e.g. links like `dev/resources/GTM/` in a
- * README don't 404 on GitHub.
- */
-export function getRepoLinkUrl({
-  repoType,
-  url,
-  branch,
-  filePath,
-}: {
-  repoType: RepoType;
-  url: string | undefined;
-  branch?: string | undefined;
-  /** Repo-relative path. Trailing slash means the target is a directory. */
-  filePath: string | undefined;
-}): string | undefined {
-  if (!url || !filePath) {
-    return undefined;
-  }
-
-  const isDir = filePath.endsWith('/');
-  const effectiveBranch = branch || 'main';
-  const cleanPath = stripSlashes(filePath);
+  const isDir = fullPath.endsWith('/');
 
   switch (repoType) {
     case 'github':
@@ -199,21 +150,21 @@ export function getRepoLinkUrl({
         baseUrl: url,
         branch: effectiveBranch,
         providerSegments: [isDir ? 'tree' : 'blob'],
-        path: cleanPath,
+        path: fullPath,
       });
     case 'gitlab':
       return buildRepoUrl({
         baseUrl: url,
         branch: effectiveBranch,
         providerSegments: ['-', isDir ? 'tree' : 'blob'],
-        path: cleanPath,
+        path: fullPath,
       });
     case 'bitbucket':
       return buildRepoUrl({
         baseUrl: url,
         branch: effectiveBranch,
         providerSegments: ['src'],
-        path: cleanPath,
+        path: fullPath,
       });
     default:
       return undefined;

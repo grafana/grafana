@@ -1,6 +1,6 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getRepoLinkUrl, getRepoRawFileUrl } from './git';
+import { getRepoFileUrl, getRepoRawFileUrl } from './git';
 
 interface RewriteOptions {
   repository: RepositoryView;
@@ -41,7 +41,7 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       return;
     }
 
-    const absolute = getRepoLinkUrl({
+    const absolute = getRepoFileUrl({
       repoType: options.repository.type,
       url: options.repository.url,
       branch: options.repository.branch,
