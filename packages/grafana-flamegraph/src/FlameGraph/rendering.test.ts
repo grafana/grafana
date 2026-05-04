@@ -188,3 +188,123 @@ describe('walkTree', () => {
     ]);
   });
 });
+
+describe('walkTree with HiDPI (devicePixelRatio=2)', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true, writable: true });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true, writable: true });
+  });
+
+  it('should scale height and y coordinates by devicePixelRatio', () => {
+    const root: LevelItem = {
+      start: 0,
+      itemIndexes: [0],
+      value: 100,
+      level: 0,
+      children: [{ start: 0, itemIndexes: [1], children: [], value: 100, level: 1 }],
+    };
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [100, 100], level: [0, 1], label: ['root', 'child'], self: [0, 100] }),
+      { collapsing: false }
+    );
+
+    const renderData: RenderData[] = [];
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      }
+    );
+
+    // With DPR=2: height = 22*2 = 44, y values are multiples of 44, x/width are also 2x
+    expect(renderData[0]).toMatchObject({ y: 0, height: 44 });
+    expect(renderData[1]).toMatchObject({ y: 44, height: 44 });
+  });
+
+  it('should scale pixelsPerTick by devicePixelRatio, giving 2x wider bars', () => {
+    const root: LevelItem = { start: 0, itemIndexes: [0], children: [], value: 100, level: 0 };
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [100], level: [0], label: ['root'], self: [100] }),
+      { collapsing: false }
+    );
+
+    const renderData: RenderData[] = [];
+    // wrapperWidth=100, so with DPR=2: pixelsPerTick = 100*2/100 = 2 canvas px/tick
+    // width = 100 ticks * 2 px/tick - BAR_BORDER_WIDTH * 2 * 2 = 200 - 2 = 198
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      }
+    );
+
+    // With DPR=1 the width would be 99 (100 - 1 border). With DPR=2 it should be 198 (200 - 2 border).
+    expect(renderData[0].width).toBe(198);
+  });
+
+  it('should produce coordinates exactly 2x those from DPR=1', () => {
+    const container = textToDataContainer(`
+      [0///////////]
+      [1][3//][4///]
+      [2]     [5///]
+    `)!;
+    const root = container.getLevels()[0][0];
+
+    // Collect DPR=2 render data
+    const dpr2Data: RenderData[] = [];
+    walkTree(
+      root,
+      'children',
+      container,
+      14,
+      0,
+      1,
+      14,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        dpr2Data.push({ item, x, y, width, height, label, muted });
+      }
+    );
+
+    // Switch to DPR=1 and collect reference data
+    Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true, writable: true });
+    const dpr1Data: RenderData[] = [];
+    walkTree(
+      root,
+      'children',
+      container,
+      14,
+      0,
+      1,
+      14,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        dpr1Data.push({ item, x, y, width, height, label, muted });
+      }
+    );
+
+    expect(dpr2Data).toHaveLength(dpr1Data.length);
+    for (let i = 0; i < dpr1Data.length; i++) {
+      expect(dpr2Data[i].x).toBeCloseTo(dpr1Data[i].x * 2);
+      expect(dpr2Data[i].y).toBe(dpr1Data[i].y * 2);
+      expect(dpr2Data[i].height).toBe(dpr1Data[i].height * 2);
+    }
+  });
+});
