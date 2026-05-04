@@ -125,6 +125,29 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 	return client.GetStats(ctx, r)
 }
 
+func (ds *distributorServer) VectorSearch(ctx context.Context, r *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.VectorSearch")
+	defer span.End()
+
+	// No per-namespace locality — every search pod hits the same pgvector
+	// backend — so pick any healthy instance.
+	rs, err := ds.ring.GetAllHealthy(searchRingRead)
+	if err != nil || len(rs.Instances) == 0 {
+		return nil, fmt.Errorf("no healthy search instances available: %w", err)
+	}
+	inst := rs.Instances[rand.Intn(len(rs.Instances))]
+	client, err := ds.clientPool.GetClientForInstance(inst)
+	if err != nil {
+		return nil, err
+	}
+	var ns string
+	if r.Key != nil {
+		ns = r.Key.Namespace
+	}
+	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, metadata.MD{}), ns)
+	return client.(*RingClient).Client.VectorSearch(ctx, r)
+}
+
 func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.RebuildIndexes")
 	defer span.End()

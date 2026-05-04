@@ -473,7 +473,7 @@ func newRetryBudgetTestServer(t *testing.T, storage StorageBackend) *searchServe
 		},
 		InitMinCount: 1,
 	}
-	s, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil)
+	s, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, s)
 	return s

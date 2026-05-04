@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -52,6 +53,7 @@ type service struct {
 	// -- Shared Components
 	backend       resource.StorageBackend
 	vectorBackend vector.VectorBackend
+	embedder      *embedder.Embedder
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
@@ -101,10 +103,11 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
+	embedderInstance *embedder.Embedder,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, vectorBackend, nil)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, vectorBackend, embedderInstance, nil)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -140,11 +143,12 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
+	embedderInstance *embedder.Embedder,
 	searchClient resourcepb.ResourceIndexClient,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, vectorBackend, searchClient)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, vectorBackend, embedderInstance, searchClient)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -201,6 +205,7 @@ func newService(
 	searchRing *ring.Ring,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
+	embedder *embedder.Embedder,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
 	authn := grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
@@ -208,6 +213,7 @@ func newService(
 	return &service{
 		backend:            backend,
 		vectorBackend:      vectorBackend,
+		embedder:           embedder,
 		cfg:                cfg,
 		features:           features,
 		authenticator:      authn,
@@ -371,6 +377,8 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 
 	serverOptions := ServerOptions{
 		Backend:        s.backend,
+		VectorBackend:  s.vectorBackend,
+		Embedder:       s.embedder,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
 		Reg:            s.reg,

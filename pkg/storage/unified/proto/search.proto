@@ -17,6 +17,9 @@ service ResourceIndex {
 
   // Rebuild the search index
   rpc RebuildIndexes(RebuildIndexesRequest) returns (RebuildIndexesResponse);
+
+  // Semantic search
+  rpc VectorSearch(VectorSearchRequest) returns (VectorSearchResponse);
 }
 
 // Get statistics across multiple resources
@@ -214,5 +217,60 @@ message RebuildIndexesResponse {
 
   // Whether all pods in the ring were contacted (only set by distributor)
   bool ContactedAllInstances = 5;
+}
+
+// VectorSearchRequest searches a resource type for nearest neighbors of a
+// query string. The server embeds the query with the configured embedding
+// model (TaskRetrievalQuery hint) before searching.
+message VectorSearchRequest {
+  // Resource type to search within (namespace + group + resource).
+  ResourceKey key = 1;
+
+  // Free-text query. The server embeds it before searching; clients
+  // never see or pass raw embeddings.
+  string query = 2;
+
+  // Maximum results to return. Defaults to 50 when zero, capped at 200.
+  int64 limit = 3;
+
+  // Optional filters applied as exact-match constraints on top of vector
+  // ranking. Reserved keys: "uid" matches resource UIDs (name field), "folder" matches
+  // folder UIDs. All other keys are matched as JSONB metadata containment.
+  repeated Requirement filters = 4;
+}
+
+message VectorSearchResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // Ranked results, ordered by ascending score (lower = closer).
+  repeated VectorSearchResult results = 2;
+}
+
+message VectorSearchResult {
+  // Resource UID (k8s metadata.name convention).
+  string name = 1;
+
+  // Human-readable display title for UI rendering.
+  string title = 2;
+
+  // Sub-resource identifier within the parent (e.g. "panel/5" for a
+  // dashboard panel). Empty when the result is the whole resource.
+  string subresource = 3;
+
+  // The text that was embedded — useful for highlighting and debugging.
+  string content = 4;
+
+  // Raw cosine distance from pgvector's <=> operator. Lower is closer;
+  // range [0, 2] for normalized vectors. Pass-through unchanged from the
+  // backend so callers (e.g. grafana-assistant-app's RAG pipeline) get
+  // the same semantics they get from a direct query.
+  double score = 5;
+
+  // Folder UID for client-side filter chips.
+  string folder = 6;
+
+  // Structured metadata as raw JSON; caller unmarshals as needed.
+  bytes metadata = 7;
 }
 
