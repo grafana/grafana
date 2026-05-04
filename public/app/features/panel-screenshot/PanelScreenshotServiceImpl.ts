@@ -7,6 +7,7 @@ const LOSSY_QUALITY = 0.92;
 
 type Format = NonNullable<PanelScreenshotOptions['format']>;
 type PluginSource = 'html-to-image' | 'override';
+type ErrorKind = 'panel_not_in_dom' | 'html_to_image_failed' | 'unknown';
 
 export class PanelScreenshotServiceImpl implements PanelScreenshotService {
   async capture(panelKey: string, options: PanelScreenshotOptions = {}): Promise<Blob> {
@@ -45,7 +46,7 @@ export class PanelScreenshotServiceImpl implements PanelScreenshotService {
 }
 
 function resolvePanelElement(panelKey: string): HTMLElement {
-  const selector = `[data-viz-panel-key="${cssEscape(panelKey)}"]`;
+  const selector = `[data-viz-panel-key="${CSS.escape(panelKey)}"]`;
   const element = document.querySelector<HTMLElement>(selector);
   if (!element) {
     throw new Error(
@@ -119,6 +120,10 @@ async function captureWithHtmlToImage(element: HTMLElement, format: Format): Pro
       return htmlToImage.toBlob(element, { quality: LOSSY_QUALITY, type: 'image/jpeg' }).then(requireBlob);
     case 'webp':
       return htmlToImage.toBlob(element, { quality: LOSSY_QUALITY, type: 'image/webp' }).then(requireBlob);
+    default: {
+      const exhaustive: never = format;
+      throw new Error(`Unsupported screenshot format: ${exhaustive}`);
+    }
   }
 }
 
@@ -129,17 +134,21 @@ function requireBlob(blob: Blob | null): Blob {
   return blob;
 }
 
-function report(panelType: string, start: number, ok: boolean, errorKind: string | undefined, plugin: PluginSource) {
-  reportInteraction('grafana_panel_screenshot_captured', {
-    panelType,
-    durationMs: Math.round(performance.now() - start),
-    ok,
-    errorKind,
-    plugin,
-  });
+function report(panelType: string, start: number, ok: boolean, errorKind: ErrorKind | undefined, plugin: PluginSource) {
+  try {
+    reportInteraction('grafana_panel_screenshot_captured', {
+      panelType,
+      durationMs: Math.round(performance.now() - start),
+      ok,
+      errorKind,
+      plugin,
+    });
+  } catch {
+    // Analytics failures must not bubble up or fail the capture.
+  }
 }
 
-function classifyError(err: unknown): string {
+function classifyError(err: unknown): ErrorKind {
   if (err instanceof Error) {
     if (err.message.startsWith('Panel not in DOM')) {
       return 'panel_not_in_dom';
@@ -147,14 +156,6 @@ function classifyError(err: unknown): string {
     if (err.message.includes('html-to-image')) {
       return 'html_to_image_failed';
     }
-    return err.name || 'error';
   }
   return 'unknown';
-}
-
-function cssEscape(value: string): string {
-  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
-    return CSS.escape(value);
-  }
-  return value.replace(/["\\]/g, '\\$&');
 }
