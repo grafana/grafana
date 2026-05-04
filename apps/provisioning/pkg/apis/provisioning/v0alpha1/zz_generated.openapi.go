@@ -831,6 +831,20 @@ func schema_pkg_apis_provisioning_v0alpha1_FileList(ref common.ReferenceCallback
 							},
 						},
 					},
+					"dashboardCount": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Number of dashboard files (supported extensions: .json, .yaml, .yml) found in the repository tree",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"folderCount": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Number of folders (directory entries) found in the repository tree",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 				},
 				Required: []string{"items"},
 			},

@@ -653,6 +653,12 @@ type FileList struct {
 
 	// +listType=atomic
 	Items []FileItem `json:"items"`
+
+	// Number of dashboard files (supported extensions: .json, .yaml, .yml) found in the repository tree
+	DashboardCount int64 `json:"dashboardCount,omitempty"`
+
+	// Number of folders (directory entries) found in the repository tree
+	FolderCount int64 `json:"folderCount,omitempty"`
 }
 
 func (FileList) OpenAPIModelName() string {

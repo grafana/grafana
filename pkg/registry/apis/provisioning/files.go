@@ -404,8 +404,10 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 	}
 
 	items := make([]provisioning.FileItem, 0, len(rsp))
+	var folderCount, dashboardCount int64
 	for _, v := range rsp {
 		if !v.Blob {
+			folderCount++
 			continue
 		}
 		items = append(items, provisioning.FileItem{
@@ -413,9 +415,16 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 			Size: v.Size,
 			Hash: v.Hash,
 		})
+		if resources.IsPathSupported(v.Path) == nil && !resources.IsFolderMetadataFile(v.Path) {
+			dashboardCount++
+		}
 	}
 
-	return &provisioning.FileList{Items: items}, nil
+	return &provisioning.FileList{
+		Items:          items,
+		DashboardCount: dashboardCount,
+		FolderCount:    folderCount,
+	}, nil
 }
 
 // checkQuota verifies that the repository resource quota allows the operation.

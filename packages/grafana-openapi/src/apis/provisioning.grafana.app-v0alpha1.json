@@ -2593,6 +2593,16 @@
                       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
                       "type": "string"
                     },
+                    "dashboardCount": {
+                      "description": "Number of dashboard files (supported extensions: .json, .yaml, .yml) found in the repository tree",
+                      "type": "integer",
+                      "format": "int64"
+                    },
+                    "folderCount": {
+                      "description": "Number of folders (directory entries) found in the repository tree",
+                      "type": "integer",
+                      "format": "int64"
+                    },
                     "items": {
                       "type": "array",
                       "items": {
@@ -4294,6 +4304,16 @@
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
+          },
+          "dashboardCount": {
+            "description": "Number of dashboard files (supported extensions: .json, .yaml, .yml) found in the repository tree",
+            "type": "integer",
+            "format": "int64"
+          },
+          "folderCount": {
+            "description": "Number of folders (directory entries) found in the repository tree",
+            "type": "integer",
+            "format": "int64"
           },
           "items": {
             "type": "array",
