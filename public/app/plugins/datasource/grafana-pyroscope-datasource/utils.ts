@@ -38,6 +38,9 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
           switch (currentToken.type) {
             case 'label-key':
               labelKey = getMaybeTokenStringContent(currentToken);
+              if (labelKey.startsWith('"') && labelKey.endsWith('"')) {
+                labelKey = labelKey.slice(1, -1).replace(/\\(.)/g, '$1');
+              }
               break;
             case 'label-value':
               labelValue = getMaybeTokenStringContent(currentToken);
@@ -56,12 +59,23 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
   return labelMatchers;
 }
 
+export function labelNameNeedsQuoting(name: string): boolean {
+  return !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name);
+}
+
+export function formatLabelName(name: string): string {
+  if (!labelNameNeedsQuoting(name)) {
+    return name;
+  }
+  return `"${name.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
 export function toPromLikeExpr(labelMatchers: AbstractLabelMatcher[]): string {
   const expr = labelMatchers
     .map((selector: AbstractLabelMatcher) => {
       const operator = ToPromLikeMap[selector.operator];
       if (operator) {
-        return `${selector.name}${operator}"${selector.value}"`;
+        return `${formatLabelName(selector.name)}${operator}"${selector.value}"`;
       } else {
         return '';
       }
@@ -126,7 +140,7 @@ export const grammar: Grammar = {
         pattern: /#.*/,
       },
       'label-key': {
-        pattern: /[a-zA-Z_]\w*(?=\s*(=|!=|=~|!~))/,
+        pattern: /(?:"(?:\\.|[^\\"])*"|[a-zA-Z_]\w*)(?=\s*(=|!=|=~|!~))/,
         alias: 'attr-name',
         greedy: true,
       },
