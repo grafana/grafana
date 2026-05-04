@@ -11,6 +11,7 @@ import { trackDsSearched } from '../tracking';
 
 const ascendingSortValue = 'alpha-asc';
 const descendingSortValue = 'alpha-desc';
+const ordinalSortValue = 'ordinal';
 
 const sortOptions = [
   // We use this unicode 'en dash' character (U+2013), because it looks nicer
@@ -22,9 +23,10 @@ const sortOptions = [
 
 export interface DataSourcesListHeaderProps {
   filterCheckbox?: FilterCheckbox;
+  sortable: boolean;
 }
 
-export function DataSourcesListHeader({ filterCheckbox }: DataSourcesListHeaderProps) {
+export function DataSourcesListHeader({ filterCheckbox, sortable }: DataSourcesListHeaderProps) {
   const dispatch = useDispatch();
 
   const debouncedTrackSearch = useMemo(
@@ -54,8 +56,9 @@ export function DataSourcesListHeader({ filterCheckbox }: DataSourcesListHeaderP
 
   const sortPicker = {
     onChange: setSort,
-    value: isSortAscending ? ascendingSortValue : descendingSortValue,
-    getSortOptions: () => Promise.resolve(sortOptions),
+    value: sortable ? ordinalSortValue : isSortAscending ? ascendingSortValue : descendingSortValue,
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+    getSortOptions: () => Promise.resolve(sortable ? [{ label: 'Priority', value: ascendingSortValue }] : sortOptions),
   };
 
   return (

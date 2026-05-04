@@ -188,7 +188,7 @@ export function DataSourcesListView({
   return (
     <div className={styles.container}>
       {/* List Header */}
-      <DataSourcesListHeader filterCheckbox={favoritesCheckbox} />
+      <DataSourcesListHeader filterCheckbox={favoritesCheckbox} sortable={sortable} />
 
       {/* List */}
       {dataSources.length === 0 && !isLoading && (
