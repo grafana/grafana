@@ -140,9 +140,7 @@ func RegisterAPIService(
 			NewPluginAccessChecker(accessControl),
 			AppPluginRunnerOptions{
 				RegisterProxy: registerProxy, // FROM feature toggles
-				LegacyStore: NewLegacySettingsStore(plugin.JSONData.ID,
-					plugin.JSONData.AutoEnabled, // This needs to be handled by a wrapper -- so it works in mode5
-					pluginSettings),
+				LegacyStore:   NewLegacySettingsStore(plugin.JSONData.ID, pluginSettings),
 			},
 		)
 		if err != nil {

@@ -20,7 +20,6 @@ func newTestStorage(plugins map[string]*pluginsettings.DTO) *settingsStorage {
 	ri := apppluginV0.SettingsResourceInfo.WithGroupAndShortName("test-app", "test-app")
 	return &settingsStorage{
 		pluginID:       "test-app",
-		autoEnabled:    true,
 		pluginSettings: &pluginsettings.FakePluginSettings{Plugins: plugins},
 		resourceInfo:   &ri,
 	}
@@ -48,8 +47,8 @@ func TestSettingsGet_NoPersistedSettings(t *testing.T) {
 	require.Equal(t, "default", settings.Namespace)
 	require.Equal(t, getLegacySettingsUID(1, "test-app"), settings.UID)
 	require.Equal(t, getLegacySettingsResourceVersion(nil), settings.ResourceVersion)
-	require.True(t, settings.Spec.Enabled) // auto-enabled!
-	require.True(t, settings.Spec.Pinned)  // auto-enabled!
+	require.False(t, settings.Spec.Enabled)
+	require.False(t, settings.Spec.Pinned)
 	require.Nil(t, settings.Spec.JsonData.Object)
 }
 
