@@ -2882,7 +2882,7 @@ var (
 			Description:  "Enables plugins setting from new apis",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true},
 			Expression:   "false",
 			HideFromDocs: true,
 		},

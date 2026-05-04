@@ -3,6 +3,7 @@ package openapi
 import (
 	"fmt"
 	"maps"
+	"net/http"
 	"slices"
 	"strings"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
 type PluginOptions struct {
@@ -206,7 +206,7 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 			tag = tag[:idx]
 		}
 		v.Parameters = append(params, v.Parameters...)
-		for m, op := range builder.GetPathOperations(&v.PathProps) {
+		for m, op := range getPathOperations(&v.PathProps) {
 			if op.Extensions == nil {
 				op.Extensions = make(spec.Extensions)
 			}
@@ -272,4 +272,33 @@ func copyComponents(src *spec3.Components, dst *spec3.Components) {
 		}
 		maps.Copy(dst.RequestBodies, src.RequestBodies)
 	}
+}
+
+func getPathOperations(path *spec3.PathProps) map[string]*spec3.Operation {
+	ops := make(map[string]*spec3.Operation)
+	if path.Get != nil {
+		ops[http.MethodGet] = path.Get
+	}
+	if path.Head != nil {
+		ops[http.MethodHead] = path.Head
+	}
+	if path.Delete != nil {
+		ops[http.MethodDelete] = path.Delete
+	}
+	if path.Post != nil {
+		ops[http.MethodPost] = path.Post
+	}
+	if path.Put != nil {
+		ops[http.MethodPut] = path.Put
+	}
+	if path.Patch != nil {
+		ops[http.MethodPatch] = path.Patch
+	}
+	if path.Trace != nil {
+		ops[http.MethodTrace] = path.Trace
+	}
+	if path.Options != nil {
+		ops[http.MethodOptions] = path.Options
+	}
+	return ops
 }

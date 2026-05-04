@@ -20,7 +20,6 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/openapi"
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -73,7 +72,7 @@ type AppPluginAPIBuilder struct {
 }
 
 func NewAppPluginAPIBuilder(
-	plugin openapi.PluginInfo,
+	plugin pluginspec.PluginInfo,
 	apiVersion string,
 	client PluginClient, // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper,
