@@ -241,10 +241,10 @@ describe('SQL editor completion utils', () => {
 
     expect(fromFunction).toEqual(
       expect.objectContaining({
-        section: { name: 'Functions', rank: 3 },
         type: 'function',
       })
     );
+    expect(fromFunction).not.toHaveProperty('section');
     expect(result?.options).not.toEqual(expect.arrayContaining([expect.objectContaining({ label: 'FROM' })]));
   });
 

@@ -130,7 +130,6 @@ function toCodeMirrorCompletion(item: SqlCompletionItem, fallbackKind: SqlComple
     detail: item.detail,
     info: item.documentation,
     type: getCompletionType(kind),
-    section: getCompletionSection(kind),
     boost: item.boost,
   };
 }
@@ -170,21 +169,6 @@ function getCompletionType(kind: SqlCompletionKind): string {
       return 'keyword';
     case 'table':
       return 'variable';
-  }
-}
-
-function getCompletionSection(kind: SqlCompletionKind) {
-  switch (kind) {
-    case 'clause':
-      return { name: 'Clauses', rank: 2 };
-    case 'column':
-      return { name: 'Columns', rank: 1 };
-    case 'function':
-      return { name: 'Functions', rank: 3 };
-    case 'keyword':
-      return { name: 'Keywords', rank: 2 };
-    case 'table':
-      return { name: 'Tables', rank: 0 };
   }
 }
 
