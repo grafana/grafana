@@ -41,6 +41,7 @@ export const getSectionFields = (): Section => {
           'scopes',
           'authUrl',
           'tokenUrl',
+          'tokenExchangeTimeout',
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
@@ -84,6 +85,7 @@ export const getSectionFields = (): Section => {
           'serverDiscoveryUrl',
           'authUrl',
           'tokenUrl',
+          'tokenExchangeTimeout',
           'apiUrl',
           'allowSignUp',
           'autoLogin',
@@ -280,6 +282,7 @@ export const getSectionFields = (): Section => {
           'scopes',
           'authUrl',
           'tokenUrl',
+          'tokenExchangeTimeout',
           'apiUrl',
           'allowSignUp',
           'autoLogin',
@@ -496,6 +499,14 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         },
         message: t('auth-config.fields.token-url-required', 'This field is required and must be a valid URL.'),
       },
+    },
+    tokenExchangeTimeout: {
+      label: t('auth-config.fields.token-exchange-timeout-label', 'Token exchange timeout (seconds)'),
+      type: 'text',
+      description: t(
+        'auth-config.fields.token-exchange-timeout-description',
+        'The timeout in seconds for the OAuth token exchange request. Defaults to 15 seconds if not set or set to 0.'
+      ),
     },
     scopes: {
       label: scopesLabel,
