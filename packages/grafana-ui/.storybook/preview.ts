@@ -63,7 +63,7 @@ const preview: Preview = {
     actions: { argTypesRegex: '^on[A-Z].*' },
     docs: {
       container: ThemedDocsContainer,
-      codePanel: true
+      codePanel: true,
     },
     a11y: {
       test: 'error',
