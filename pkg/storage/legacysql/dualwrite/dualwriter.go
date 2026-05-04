@@ -324,16 +324,12 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	}
 
 	log := logging.FromContext(ctx).With("method", "Delete", "name", name, "resource", d.gr.String())
-	ctx = utils.SetFolderRemovePermissions(ctx, false)
 
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		log.Error("failed to DELETE object in legacy storage", "err", err)
 		return nil, false, err
 	}
-
-	// We can now flip it again.
-	ctx = utils.SetFolderRemovePermissions(ctx, true)
 
 	if errorIsOK {
 		// If errors are okay and unified is not primary, we can just run it as background operation.
