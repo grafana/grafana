@@ -2953,6 +2953,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "postgresqlSuperuserWarning",
+			Description:  "Add warning about a PostgreSQL data source using a superuser user",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:            "cacheConfigUnifiedStorageMigration",
 			Description:     "Enables cache configs data migration to unified storage",
 			Stage:           FeatureStageExperimental,

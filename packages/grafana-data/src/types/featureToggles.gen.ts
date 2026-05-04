@@ -1702,6 +1702,11 @@ export interface FeatureToggles {
   */
   enableColorblindSafePanelOptions?: boolean;
   /**
+  * Add warning about a PostgreSQL data source using a superuser user
+  * @default false
+  */
+  postgresqlSuperuserWarning?: boolean;
+  /**
   * Enables cache configs data migration to unified storage
   * @default false
   */

@@ -918,6 +918,10 @@ const (
 	// Enables heatmap visualization support for Pyroscope profiles
 	FlagProfilesHeatmap = "profilesHeatmap"
 
+	// FlagPostgresqlSuperuserWarning
+	// Add warning about a PostgreSQL data source using a superuser user
+	FlagPostgresqlSuperuserWarning = "postgresqlSuperuserWarning"
+
 	// FlagCacheConfigUnifiedStorageMigration
 	// Enables cache configs data migration to unified storage
 	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"

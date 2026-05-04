@@ -344,6 +344,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-01,tracesDrilldownTimeSeeker,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-04-01,clearPreviousFieldValues,experimental,@grafana/dataviz-squad,false,false,true
 2026-04-02,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
+2026-04-06,postgresqlSuperuserWarning,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-03,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-04-10,querycaching.redirectToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-04-13,querycaching.enableConnectionsClient,experimental,@grafana/grafana-operator-experience-squad,false,false,false

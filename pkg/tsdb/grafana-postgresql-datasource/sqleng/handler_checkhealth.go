@@ -8,8 +8,12 @@ import (
 	"net"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -25,7 +29,36 @@ func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckH
 		}
 		return errResponse, nil
 	}
+	return checkHealthSuccess(ctx, e)
+}
+
+type superuserDetector interface {
+	DetectSuperuser(ctx context.Context) (bool, error)
+}
+
+func checkHealthSuccess(ctx context.Context, d superuserDetector) (*backend.CheckHealthResult, error) {
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPostgresqlSuperuserWarning, false, openfeature.TransactionContext(ctx)) {
+		if isSuperuser, err := d.DetectSuperuser(ctx); err == nil && isSuperuser {
+			details, _ := json.Marshal(map[string]any{"superuser": true})
+			return &backend.CheckHealthResult{
+				Status:      backend.HealthStatusOk,
+				Message:     "Database Connection OK",
+				JSONDetails: details,
+			}, nil
+		}
+	}
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
+}
+
+// DetectSuperuser returns true if the current database user is a PostgreSQL superuser.
+// Errors are silently ignored — callers should treat any error as non-superuser.
+func (e *DataSourceHandler) DetectSuperuser(ctx context.Context) (bool, error) {
+	var isSuperuser string
+	err := e.pool.QueryRow(ctx, "SELECT current_setting('is_superuser')").Scan(&isSuperuser)
+	if err != nil {
+		return false, err
+	}
+	return isSuperuser == "on", nil
 }
 
 // ErrToHealthCheckResult converts error into user friendly health check message
