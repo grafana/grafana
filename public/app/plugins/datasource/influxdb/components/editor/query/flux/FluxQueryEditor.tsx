@@ -9,6 +9,7 @@ import {
   CodeEditorSuggestionItemKind,
   InlineFormLabel,
   LinkButton,
+  type Monaco,
   type MonacoEditor,
   Segment,
   type Themeable2,
@@ -17,6 +18,21 @@ import {
 
 import type InfluxDatasource from '../../../../datasource';
 import { type InfluxQuery } from '../../../../types';
+
+import { conf, language } from './language';
+
+// we must only run the setup code once
+let fluxSetupDone = false;
+const langId = 'flux';
+
+function ensureFlux(monaco: Monaco) {
+  if (!fluxSetupDone) {
+    fluxSetupDone = true;
+    monaco.languages.register({ id: langId });
+    monaco.languages.setMonarchTokensProvider(langId, language);
+    monaco.languages.setLanguageConfiguration(langId, conf);
+  }
+}
 
 interface Props extends Themeable2 {
   onChange: (query: InfluxQuery) => void;
@@ -178,13 +194,14 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
         <CodeEditor
           height={'100%'}
           containerStyles={styles.editorContainerStyles}
-          language="sql"
+          language={langId}
           value={query.query || ''}
           onBlur={this.onFluxQueryChange}
           onSave={this.onFluxQueryChange}
           showMiniMap={false}
           showLineNumbers={true}
           getSuggestions={this.getSuggestions}
+          onBeforeEditorMount={ensureFlux}
           onEditorDidMount={this.editorDidMountCallbackHack}
         />
         <div className={cx('gf-form-inline', styles.editorActions)}>
