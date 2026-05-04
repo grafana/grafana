@@ -120,6 +120,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 	for _, alertState := range transitions {
 		alerts = append(alerts, state.StateToPostableAlert(alertState, srv.appUrl, srv.featureManager))
 	}
+	state.ReleaseEvictedStaleTransitionValueMaps(transitions)
 
 	return response.JSON(http.StatusOK, alerts)
 }

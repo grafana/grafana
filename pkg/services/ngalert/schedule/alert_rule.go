@@ -473,7 +473,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 		))
 	}
 	start = a.clock.Now()
-	_ = a.stateManager.ProcessEvalResults(
+	transitions := a.stateManager.ProcessEvalResults(
 		ctx,
 		e.scheduledAt,
 		e.rule,
@@ -488,6 +488,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 			sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
 		},
 	)
+	state.ReleaseEvictedStaleTransitionValueMaps(transitions)
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
 	return nil
