@@ -114,28 +114,40 @@ func (s *iamAuthorizer) Authorize(ctx context.Context, attr authorizer.Attribute
 	return authz.Authorize(ctx, attr)
 }
 
-// newTeamAuthorizer creates an authorizer for teams that handles the "members" and "groups" subresources
-// with a get_permissions check on the parent team resource.
+// newTeamAuthorizer creates an authorizer for teams that handles the
+// "members", "groups", "addmember" and "removemember" subresources.
+//   - members / groups: read paths, gated on `get_permissions` on the
+//     parent team (same as before; the body of /members lists current
+//     bindings).
+//   - addmember / removemember: writes a single team_member row; gated
+//     on `update` on the parent team — same RBAC bar as a full PUT
+//     teams/{name}, since the effective change is the same shape.
 func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
-	check := func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
-			Verb:      utils.VerbGetPermissions,
-			Group:     attr.GetAPIGroup(),
-			Resource:  attr.GetResource(),
-			Namespace: attr.GetNamespace(),
-			Name:      attr.GetName(),
-		}, "")
-		if err != nil {
-			return authorizer.DecisionDeny, "", err
+	check := func(verb string, denyReason string) gfauthorizer.SubresourceCheck {
+		return func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
+				Verb:      verb,
+				Group:     attr.GetAPIGroup(),
+				Resource:  attr.GetResource(),
+				Namespace: attr.GetNamespace(),
+				Name:      attr.GetName(),
+			}, "")
+			if err != nil {
+				return authorizer.DecisionDeny, "", err
+			}
+			if !res.Allowed {
+				return authorizer.DecisionDeny, denyReason, nil
+			}
+			return authorizer.DecisionAllow, "", nil
 		}
-		if !res.Allowed {
-			return authorizer.DecisionDeny, "requires team getpermissions", nil
-		}
-		return authorizer.DecisionAllow, "", nil
 	}
+	getPermissions := check(utils.VerbGetPermissions, "requires team getpermissions")
+	update := check(utils.VerbUpdate, "requires team update")
 	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
-		"members": check,
-		"groups":  check,
+		"members":      getPermissions,
+		"groups":       getPermissions,
+		"addmember":    update,
+		"removemember": update,
 	})
 }
 

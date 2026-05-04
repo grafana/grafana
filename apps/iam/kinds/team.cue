@@ -46,5 +46,38 @@ teamv0alpha1: teamKind & {
 				}
 			}
 		}
+		// 201 Created on fresh add, 200 OK on idempotent re-add or remove.
+		"/addmember": {
+			"POST": {
+				name: "createTeamMember"
+				request: {
+					body: {
+						name: string
+						permission?: string
+						external?: bool
+					}
+				}
+				response: {
+					team: string
+					user: string
+					permission: string
+					external:   bool
+				}
+			}
+		}
+		"/removemember": {
+			"POST": {
+				name: "deleteTeamMember"
+				request: {
+					body: {
+						name: string
+					}
+				}
+				response: {
+					team: string
+					user: string
+				}
+			}
+		}
 	}
 }

@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"testing"
@@ -550,5 +551,126 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Len(t, members, 1)
 		m := members[0].(map[string]interface{})
 		require.Equal(t, editorUID, m["name"])
+	})
+
+	// /teams/{name}/addMember and /teams/{name}/removeMember target a single
+	// team_member row per call, so cross-instance team-sync converges a
+	// user's membership without shipping the entire member list and without
+	// the stale-snapshot full-replace hazard the PUT path has. This test
+	// covers the happy path (insert / hydrate / delete) and the idempotency
+	// contracts the synchronizer relies on (re-add → 409, re-remove → 200
+	// with removed=false).
+	t.Run("addMember/removeMember subresources are atomic and idempotent", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-subres-", []map[string]interface{}{})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+		teamUID := created.GetName()
+		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+
+		addPath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/addmember", namespace, teamUID)
+		removePath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/removemember", namespace, teamUID)
+		addBody := func(uid, perm string, external bool) []byte {
+			b, err := json.Marshal(map[string]interface{}{"name": uid, "permission": perm, "external": external})
+			require.NoError(t, err)
+			return b
+		}
+		removeBody := func(uid string) []byte {
+			b, err := json.Marshal(map[string]interface{}{"name": uid})
+			require.NoError(t, err)
+			return b
+		}
+
+		// addMember inserts the row; Get on the parent Team hydrates it
+		// back through the same Spec.Members slice the PUT path uses.
+		// First call returns 201 Created (fresh insert).
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: addBody(editorUID, "member", true),
+		}, &map[string]interface{}{})
+		require.Equal(t, 201, rsp.Response.StatusCode, "first addMember should be 201 Created, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
+
+		fetched, err := teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		members, _, _ := unstructured.NestedSlice(fetched.Object, "spec", "members")
+		require.Len(t, members, 1)
+		require.Equal(t, editorUID, members[0].(map[string]interface{})["name"])
+
+		// Re-adding the same user is an idempotent no-op: the handler
+		// short-circuits before the Update and returns 200 OK (vs the
+		// fresh-insert 201). The synchronizer relies on this so a
+		// converged-but-resynced run doesn't surface as an error.
+		rsp = apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: addBody(editorUID, "member", true),
+		}, &map[string]interface{}{})
+		require.Equal(t, 200, rsp.Response.StatusCode, "second addMember should be idempotent 200, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
+
+		// removeMember deletes the row.
+		rsp = apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: removePath, Body: removeBody(editorUID),
+		}, &map[string]interface{}{})
+		require.Equal(t, 200, rsp.Response.StatusCode, "removeMember response: %s", string(rsp.Body))
+
+		fetched, err = teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		members, _, _ = unstructured.NestedSlice(fetched.Object, "spec", "members")
+		require.Empty(t, members)
+
+		// removeMember on an absent membership is a no-op success
+		// (removed=false), not 404 — the synchronizer relies on this so
+		// concurrent removeMember calls from peer instances don't surface
+		// as errors that increment the failure counter.
+		rsp = apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: removePath, Body: removeBody(editorUID),
+		}, &map[string]interface{}{})
+		require.Equal(t, 200, rsp.Response.StatusCode, "second removeMember should be 200 idempotent, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
+	})
+
+	// Concurrent /addMember of *different* users on the same team is the
+	// scenario that silently lost members through the full PUT path. With
+	// the subresource each call inserts exactly one team_member row and
+	// the full-list semantics never come into play, so both members must
+	// always end up on the team.
+	t.Run("concurrent addMember of different users preserves every membership", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-subres-race-", []map[string]interface{}{})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+		teamUID := created.GetName()
+		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+		addPath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/addmember", namespace, teamUID)
+
+		members := []string{editorUID, viewerUID}
+		var wg sync.WaitGroup
+		barrier := make(chan struct{})
+		errs := make([]int, len(members))
+		for i, uid := range members {
+			wg.Add(1)
+			go func(i int, uid string) {
+				defer wg.Done()
+				<-barrier
+				body, err := json.Marshal(map[string]interface{}{"name": uid, "permission": "member", "external": true})
+				require.NoError(t, err)
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: body,
+				}, &map[string]interface{}{})
+				errs[i] = rsp.Response.StatusCode
+			}(i, uid)
+		}
+		close(barrier)
+		wg.Wait()
+		for i, code := range errs {
+			require.Equal(t, 201, code, "goroutine %d (uid=%s) addMember should be 201 Created, got %d", i, members[i], code)
+		}
+
+		fetched, err := teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		final, _, _ := unstructured.NestedSlice(fetched.Object, "spec", "members")
+		names := make([]string, 0, len(final))
+		for _, raw := range final {
+			names = append(names, raw.(map[string]interface{})["name"].(string))
+		}
+		require.ElementsMatch(t, members, names, "no member should be silently lost")
 	})
 }
