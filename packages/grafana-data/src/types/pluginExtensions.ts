@@ -272,11 +272,11 @@ export type PluginExtensionPanelContext = {
   scopedVars?: ScopedVars;
   data?: PanelData;
   /**
-   * Opaque, stable identifier for the panel. Pass to
-   * `getPanelScreenshotService().capture(panelKey)` from `@grafana/runtime`
-   * to capture an image of the panel as the user currently sees it.
+   * Set only in scenes-based dashboards. Pass to
+   * `getPanelScreenshotService().capture()` to capture the panel image.
+   * Undefined in legacy dashboard contexts.
    */
-  panelKey: string;
+  panelKey?: string;
 };
 
 export type CentralAlertHistorySceneV1Props = {

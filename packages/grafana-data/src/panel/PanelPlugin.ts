@@ -531,6 +531,23 @@ export class PanelPlugin<
    *
    * Consumed by `getPanelScreenshotService().capture()` from `@grafana/runtime`.
    *
+   * @example
+   * ```ts
+   * new PanelPlugin(MyCanvasPanel).setScreenshotImage(async ({ element, format }) => {
+   *   const canvas = element.querySelector<HTMLCanvasElement>('canvas');
+   *   if (!canvas) {
+   *     return null; // fall through to default capture path
+   *   }
+   *   // Re-render synchronously before reading - required for WebGL contexts
+   *   // that don't preserve their drawing buffer.
+   *   myRenderer.renderSync();
+   *   const mimeType = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
+   *   return await new Promise<Blob | null>((resolve) =>
+   *     canvas.toBlob(resolve, mimeType, format === 'png' ? undefined : 0.92)
+   *   );
+   * });
+   * ```
+   *
    * @alpha
    */
   setScreenshotImage(handler: PanelScreenshotHandler) {

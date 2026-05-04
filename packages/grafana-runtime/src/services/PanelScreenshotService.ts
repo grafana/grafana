@@ -28,6 +28,10 @@ export interface PanelScreenshotService {
    * consuming this service from a panel-menu extension. The value is opaque -
    * pass it through unchanged.
    *
+   * Override hooks registered via `PanelPlugin.setScreenshotImage()` are only
+   * consulted in scenes-based dashboards. In legacy dashboards, capture()
+   * always uses the default html-to-image path.
+   *
    * @param panelKey opaque panel identifier (see `PluginExtensionPanelContext.panelKey`)
    * @param options output format options
    * @returns a Blob containing the rendered image bytes
