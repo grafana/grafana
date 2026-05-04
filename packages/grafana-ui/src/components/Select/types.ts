@@ -41,7 +41,14 @@ export interface SelectCommonProps<T> {
   createOptionPosition?: 'first' | 'last';
   defaultValue?: any;
   disabled?: boolean;
-  filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
+  /**
+   * Custom filter function for options shown in the menu. The callback
+   * receives react-select's wrapped option shape: `data` holds the full
+   * `SelectableValue<T>`, while `label` and `value` are the resolved
+   * `getOptionLabel` / `getOptionValue` results — the same shape that
+   * react-select's own `createFilter` expects.
+   */
+  filterOption?: (option: { label?: string; value?: T; data: SelectableValue<T> }, searchQuery: string) => boolean;
   formatOptionLabel?: (item: SelectableValue<T>, formatOptionMeta: FormatOptionLabelMeta<T>) => React.ReactNode;
   /** Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => React.ReactNode;

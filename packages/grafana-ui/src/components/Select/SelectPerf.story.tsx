@@ -21,7 +21,7 @@ const meta: Meta = {
 export default meta;
 
 const _customFilter = createFilter({ ignoreAccents: false });
-function customFilter(opt: SelectableValue, searchQuery: string) {
+function customFilter(opt: { label?: string; value?: string; data: SelectableValue }, searchQuery: string) {
   return _customFilter(
     {
       label: opt.label ?? '',
