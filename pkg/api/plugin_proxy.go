@@ -51,10 +51,17 @@ func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 	}
 
 	proxyPath := getProxyPath(c)
+
+	secureJsonData, err := hs.SecretsService.DecryptJsonData(c.Req.Context(), ps.SecureJSONData)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to decrypt plugin settings", err)
+		return
+	}
+
 	p, err := pluginproxy.NewPluginProxy(ps, plugin.Routes,
 		c.Req, c.Resp, c.SignedInUser,
 		proxyPath, hs.Cfg.DataProxyLogging, hs.Cfg.SendUserHeader,
-		hs.SecretsService, hs.tracer, pluginProxyTransport, hs.AccessControl, hs.Features)
+		secureJsonData, hs.tracer, pluginProxyTransport, hs.AccessControl, hs.Features)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to create plugin proxy", err)
 		return

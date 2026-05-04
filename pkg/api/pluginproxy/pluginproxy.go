@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -34,7 +33,7 @@ type PluginProxy struct {
 	matchedRoute     *plugins.Route
 	dataProxyLogging bool // from cfg
 	sendUserHeader   bool // from cfg
-	secretsService   secrets.Service
+	secureJsonData   map[string]string
 	tracer           tracing.Tracer
 	transport        *http.Transport
 	features         featuremgmt.FeatureToggles
@@ -45,7 +44,7 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route,
 	r *http.Request, w http.ResponseWriter, signedInUser identity.Requester,
 	proxyPath string,
 	dataProxyLogging bool, sendUserHeader bool,
-	secretsService secrets.Service, tracer tracing.Tracer,
+	secureJsonData map[string]string, tracer tracing.Tracer,
 	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles) (*PluginProxy, error) {
 	return &PluginProxy{
 		accessControl:    accessControl,
@@ -55,9 +54,9 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route,
 		resp:             w,
 		signedInUser:     signedInUser,
 		proxyPath:        proxyPath,
-		sendUserHeader:   dataProxyLogging,
-		dataProxyLogging: sendUserHeader,
-		secretsService:   secretsService,
+		dataProxyLogging: dataProxyLogging,
+		sendUserHeader:   sendUserHeader,
+		secureJsonData:   secureJsonData,
 		tracer:           tracer,
 		transport:        transport,
 		features:         features,
@@ -157,15 +156,9 @@ func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
 }
 
 func (proxy PluginProxy) director(req *http.Request) {
-	secureJsonData, err := proxy.secretsService.DecryptJsonData(proxy.req.Context(), proxy.ps.SecureJSONData)
-	if err != nil {
-		writeJSONErr(proxy.resp, proxy.req, 500, "Failed to decrypt plugin settings", err)
-		return
-	}
-
 	data := templateData{
 		JsonData:       proxy.ps.JSONData,
-		SecureJsonData: secureJsonData,
+		SecureJsonData: proxy.secureJsonData,
 	}
 
 	interpolatedURL, err := interpolateString(proxy.matchedRoute.URL, data)
