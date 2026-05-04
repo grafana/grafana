@@ -224,6 +224,7 @@ In addition, the following functions are also available for templating notificat
 | `stringSlice`  | ...string                  | string        | Returns the passed strings as a slice of strings. auto-escaping.                                                                                                                                                 |
 | `date`         | string, [Time](#time)      | string        | Format a time in the specified format. For format options, refer to [Go's time format documentation](https://pkg.go.dev/time#pkg-constants).                                                                     |
 | `tz`           | string, [Time](#time)      | [Time](#time) | Returns the time in the specified timezone, such as `Europe/Paris`. For available timezone options, refer to the [list of tz database time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). |
+| `sortBy`       | field string, list         | list          | Sorts a list of objects by a field. Supports sorting by a field in a struct or a key in a map. Nested fields can be accessed using dot notation (e.g. `Labels.severity`).                                        |
 
 Here's an example using some functions to format text:
 
