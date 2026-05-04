@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Stack, EmptyState, LinkButton, useStyles2 } from '@grafana/ui';
+
+import { getFooterLinks } from '../Footer/Footer';
 
 export interface Props {
   /**
@@ -16,6 +19,30 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
   const styles = useStyles2(getStyles);
   const lowerCaseEntity = entity.toLowerCase();
 
+  const communityLinkInfo = useMemo(() => {
+    const footerLinks = getFooterLinks();
+    const link = footerLinks.find((l) => l.id === 'community');
+    const url = link?.url;
+
+    if (!url) {
+      return undefined;
+    }
+
+    const defaultText = t('nav.help/community', 'Community');
+    const isCustomText = link?.text && link.text !== defaultText;
+
+    // Override the default footer UTM attribution with one specific to this component
+    let finalUrl = url;
+    if (url.includes('utm_source=grafana_footer')) {
+      finalUrl = url.replace('utm_source=grafana_footer', 'utm_source=entity_not_found');
+    }
+
+    return {
+      url: finalUrl,
+      text: isCustomText ? link.text : undefined,
+    };
+  }, []);
+
   return (
     <div className={styles.container} data-testid={selectors.components.EntityNotFound.container}>
       <EmptyState
@@ -27,15 +54,17 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
               <Trans i18nKey="entity-not-found.home-link">Back to Home</Trans>
             </LinkButton>
 
-            <LinkButton
-              icon="question-circle"
-              href="https://community.grafana.com"
-              target="_blank"
-              rel="noreferrer"
-              variant="secondary"
-            >
-              <Trans i18nKey="entity-not-found.community-link">Community Help</Trans>
-            </LinkButton>
+            {communityLinkInfo && (
+              <LinkButton
+                icon="question-circle"
+                href={communityLinkInfo.url}
+                target="_blank"
+                rel="noreferrer"
+                variant="secondary"
+              >
+                {communityLinkInfo.text ?? <Trans i18nKey="entity-not-found.community-link">Community Help</Trans>}
+              </LinkButton>
+            )}
           </Stack>
         }
       >
