@@ -23,11 +23,11 @@ review_date: 2026-05-01
 
 # Troubleshoot InfluxDB data source issues
 
-This document provides solutions to common issues you may encounter when configuring or using the InfluxDB data source. For configuration instructions, refer to [Configure the InfluxDB data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure/).
+This document provides solutions to common issues you may encounter when configuring or using the InfluxDB data source. Issues are organized to follow the typical setup and usage workflow. For configuration instructions, refer to [Configure the InfluxDB data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure/).
 
 ## Connection errors
 
-The following errors occur when Grafana cannot establish or maintain a connection to InfluxDB.
+The following errors occur when Grafana can't establish or maintain a connection to InfluxDB.
 
 ### "Plugin health check failed" or "An error occurred within the plugin"
 
@@ -49,7 +49,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 
 **Error message:** "error performing influxQL query" or "error performing flux query" or "error performing sql query"
 
-**Cause:** Grafana cannot establish a network connection to the InfluxDB server.
+**Cause:** Grafana can't establish a network connection to the InfluxDB server.
 
 **Solution:**
 
@@ -110,7 +110,7 @@ The following errors occur when there are issues with authentication credentials
 
 **Error message:** "403 Forbidden" or "access denied"
 
-**Cause:** The authenticated user or token does not have permission to access the requested resource.
+**Cause:** The authenticated user or token doesn't have permission to access the requested resource.
 
 **Solution:**
 
@@ -118,45 +118,6 @@ The following errors occur when there are issues with authentication credentials
 1. Check the token's permissions in the InfluxDB UI under **API Tokens**.
 1. Ensure the organization ID is correct for Flux queries.
 1. For InfluxQL with InfluxDB 2.x, verify the DBRP mapping is configured correctly.
-
-### 404 Not Found when sending Telegraf metrics to Grafana Cloud
-
-**Error message:** "404 Not Found" when Telegraf writes to the Grafana Cloud InfluxDB-compatible endpoint.
-
-**Cause:** The Telegraf `influxdb_v2` output plugin isn't compatible with the Grafana Cloud metrics endpoint. This commonly occurs when using PrivateLink or the standard InfluxDB-compatible write endpoint.
-
-**Solution:**
-
-1. Switch the Telegraf output plugin from `influxdb_v2` to `influxdb` (v1) in your Telegraf configuration.
-1. Ensure the endpoint URL and credentials match those shown in your Grafana Cloud InfluxDB configuration page.
-1. Restart Telegraf after making the change.
-
-### Browser access mode disabled
-
-**Error message:** "Direct browser access in the InfluxDB datasource is no longer available. Switch to server access mode."
-
-**Cause:** The data source is configured for direct browser access, which is no longer supported.
-
-**Solution:**
-
-1. Open the data source configuration in Grafana.
-1. Change the access mode to **Server (default)**.
-1. Click **Save & test** to verify the connection.
-
-### Content Security Policy (CSP) violation
-
-**Symptoms:**
-
-- CSP violation errors in the browser console referencing the InfluxDB plugin
-- `net::ERR_ABORTED` on proxy requests
-- The InfluxDB plugin attempts direct browser-to-InfluxDB connections
-
-**Cause:** You're running an outdated version of Grafana. Browser access mode was removed in Grafana 9.2.0, and older versions may attempt direct browser connections that violate CSP policies.
-
-**Solution:**
-
-1. Upgrade to the latest stable Grafana release. The InfluxDB data source requires Grafana 12.3.0 or later.
-1. After upgrading, verify the data source access mode is set to **Server (default)**.
 
 ## Configuration errors
 
@@ -220,83 +181,32 @@ Each query language uses a different API endpoint. If you select the wrong langu
 1. Refer to [Manage DBRP Mappings](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/) for guidance.
 1. Verify the database name in Grafana matches the DBRP mapping.
 
-## Query errors
+### Browser access mode disabled
 
-The following errors occur when there are issues with query syntax or execution.
+**Error message:** "Direct browser access in the InfluxDB datasource is no longer available. Switch to server access mode."
 
-### Query syntax error
-
-**Error message:** "error parsing query: found THING" or "failed to parse query: found WERE, expected ; at line 1, char 38"
-
-**Cause:** The query contains invalid syntax.
+**Cause:** The data source is configured for direct browser access, which is no longer supported.
 
 **Solution:**
 
-1. Check your query syntax for typos or invalid keywords.
-1. For InfluxQL, verify the query follows the correct syntax:
+1. Open the data source configuration in Grafana.
+1. Change the access mode to **Server (default)**.
+1. Click **Save & test** to verify the connection.
 
-   ```sql
-   SELECT <field> FROM <measurement> WHERE <condition>
-   ```
+### Content Security Policy (CSP) violation
 
-1. For Flux, ensure proper pipe-forward syntax and function calls.
-1. Use the InfluxDB UI or CLI to test your query directly.
+**Symptoms:**
 
-### Query timeout limit exceeded
+- CSP violation errors in the browser console referencing the InfluxDB plugin
+- `net::ERR_ABORTED` on proxy requests
+- The InfluxDB plugin attempts direct browser-to-InfluxDB connections
 
-**Error message:** "query-timeout limit exceeded"
-
-**Cause:** The query took longer than the configured timeout limit in InfluxDB.
+**Cause:** You're running an outdated version of Grafana. Browser access mode was removed in Grafana 9.2.0, and older versions may attempt direct browser connections that violate CSP policies.
 
 **Solution:**
 
-1. Reduce the time range of your query.
-1. Add more specific filters to limit the data scanned.
-1. Increase the query timeout setting in InfluxDB if you have admin access.
-1. Optimize your query to reduce complexity.
-
-### Too many series or data points
-
-**Error message:** "max-series-per-database limit exceeded" or "A query returned too many data points and the results have been truncated"
-
-**Cause:** The query is returning more data than the configured limits allow.
-
-**Solution:**
-
-1. Reduce the time range of your query.
-1. Add filters to limit the number of series returned.
-1. Increase the **Max series** setting in the data source configuration under **Advanced Database Settings**.
-1. Use aggregation functions to reduce the number of data points.
-1. For Flux, use `aggregateWindow()` to downsample data.
-
-### FlightSQL errors (SQL query language)
-
-**Error message:** Messages prefixed with `"flightsql: "` followed by a gRPC error description.
-
-**Cause:** The SQL (FlightSQL) backend encountered an error communicating with InfluxDB 3.x.
-
-**Possible causes and solutions:**
-
-| Error code | Cause | Solution |
-| ---------- | ----- | -------- |
-| `InvalidArgument` | The SQL query syntax is invalid. | Check your SQL query for syntax errors. |
-| `PermissionDenied` | The token doesn't have access to the requested resource. | Verify the token has read access to the database. |
-| `NotFound` | The requested table or database doesn't exist. | Check the database name and table name in your query. |
-| `Unavailable` | The InfluxDB server is unreachable. | Verify InfluxDB is running and the URL is correct. |
-| `Unauthenticated` | The token is missing, invalid, or expired. | Update the token in the data source configuration. |
-
-### No time column found
-
-**Error message:** "no time column found"
-
-**Cause:** The query result does not include a time column, which is required for time series visualization.
-
-**Solution:**
-
-1. Ensure your query includes a time field.
-1. For Flux, verify the query includes `_time` in the output.
-1. For SQL, ensure the query returns a timestamp column.
-1. Check that the time field is not being filtered out or excluded.
+1. Upgrade to the latest stable Grafana release. The InfluxDB data source requires Grafana 12.3.0 or later.
+1. After upgrading, verify the data source access mode is set to **Server (default)**.
 
 ## Health check errors
 
@@ -391,9 +301,164 @@ The following errors occur when clicking **Save & test** to validate the data so
 1. Check that data has been written to the database.
 1. If the database is new, add some test data to verify the connection.
 
+## Query errors
+
+The following errors occur when there are issues with query syntax or execution.
+
+### Query syntax error
+
+**Error message:** "error parsing query: found THING" or "failed to parse query: found WERE, expected ; at line 1, char 38"
+
+**Cause:** The query contains invalid syntax.
+
+**Solution:**
+
+1. Check your query syntax for typos or invalid keywords.
+1. For InfluxQL, verify the query follows the correct syntax:
+
+   ```sql
+   SELECT <field> FROM <measurement> WHERE <condition>
+   ```
+
+1. For Flux, ensure proper pipe-forward syntax and function calls.
+1. Use the InfluxDB UI or CLI to test your query directly.
+
+### Query timeout limit exceeded
+
+**Error message:** "query-timeout limit exceeded"
+
+**Cause:** The query took longer than the configured timeout limit in InfluxDB.
+
+**Solution:**
+
+1. Reduce the time range of your query.
+1. Add more specific filters to limit the data scanned.
+1. Increase the query timeout setting in InfluxDB if you have admin access.
+1. Optimize your query to reduce complexity.
+
+### Too many series or data points
+
+**Error message:** "max-series-per-database limit exceeded" or "A query returned too many data points and the results have been truncated"
+
+**Cause:** The query is returning more data than the configured limits allow.
+
+**Solution:**
+
+1. Reduce the time range of your query.
+1. Add filters to limit the number of series returned.
+1. Increase the **Max series** setting in the data source configuration under **Advanced Database Settings**.
+1. Use aggregation functions to reduce the number of data points.
+1. For Flux, use `aggregateWindow()` to downsample data.
+
+### FlightSQL errors (SQL query language)
+
+**Error message:** Messages prefixed with `"flightsql: "` followed by a gRPC error description.
+
+**Cause:** The SQL (FlightSQL) backend encountered an error communicating with InfluxDB 3.x.
+
+**Possible causes and solutions:**
+
+| Error code | Cause | Solution |
+| ---------- | ----- | -------- |
+| `InvalidArgument` | The SQL query syntax is invalid. | Check your SQL query for syntax errors. |
+| `PermissionDenied` | The token doesn't have access to the requested resource. | Verify the token has read access to the database. |
+| `NotFound` | The requested table or database doesn't exist. | Check the database name and table name in your query. |
+| `Unavailable` | The InfluxDB server is unreachable. | Verify InfluxDB is running and the URL is correct. |
+| `Unauthenticated` | The token is missing, invalid, or expired. | Update the token in the data source configuration. |
+
+### No time column found
+
+**Error message:** "no time column found"
+
+**Cause:** The query result doesn't include a time column, which is required for time-series visualization.
+
+**Solution:**
+
+1. Ensure your query includes a time field.
+1. For Flux, verify the query includes `_time` in the output.
+1. For SQL, ensure the query returns a timestamp column.
+1. Check that the time field is not being filtered out or excluded.
+
+## Annotation errors
+
+The following errors occur when using InfluxDB annotations on dashboards.
+
+### "Query missing in annotation definition"
+
+**Cause:** The annotation query field is empty.
+
+**Solution:**
+
+1. Navigate to **Dashboard settings** > **Annotations**.
+1. Select the InfluxDB annotation.
+1. Enter a valid query in the **InfluxQL Query** field. The query must include `WHERE $timeFilter`. For example:
+
+   ```sql
+   SELECT title, description FROM events WHERE $timeFilter ORDER BY time ASC
+   ```
+
+### "Flux requires the standard annotation query"
+
+**Cause:** A Flux data source is using the legacy InfluxQL annotation editor instead of the standard Flux query editor.
+
+**Solution:**
+
+1. Delete the existing annotation query.
+1. Create a new annotation query and select your Flux-configured InfluxDB data source.
+1. Write a Flux query that returns data frames with time and text fields. For example:
+
+   ```flux
+   from(bucket: "events")
+     |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+     |> filter(fn: (r) => r["_measurement"] == "deployments")
+   ```
+
+### Annotations don't appear on the graph
+
+**Cause:** Annotations are configured but aren't visible on the dashboard.
+
+**Solution:**
+
+1. Verify the annotation query returns data by testing it in Explore.
+1. Check the dashboard time range covers the time period of your annotation events.
+1. Ensure the annotation toggle is enabled in the dashboard (check the annotation icon in the top menu bar).
+1. For InfluxQL, confirm the query includes `WHERE $timeFilter`.
+1. If your query returns multiple columns, verify the field mappings (**Text**, **Tags**, **TimeEnd**) are set correctly.
+
+## Alerting errors
+
+The following errors occur when using InfluxDB queries with Grafana Alerting.
+
+### Alert rule fails with template variable errors
+
+**Cause:** The alert query contains template variables such as `$hostname` or `$region`.
+
+**Solution:**
+
+Alert queries can't use template variables because Grafana evaluates alert rules on the backend without dashboard context. Replace template variables with hard-coded values:
+
+1. Open the alert rule.
+1. Replace any `$variable` references with literal values.
+1. Save the alert rule.
+
+If you need the same query in both a dashboard panel and an alert rule, maintain two separate queries: one with variables for the dashboard and one with hard-coded values for alerting.
+
+### Alert evaluation returns "no data"
+
+**Cause:** The alert query doesn't return time-series data that Grafana can evaluate.
+
+**Solution:**
+
+1. Test the query in Explore first to verify it returns data.
+1. For InfluxQL, ensure the query uses an aggregation function (such as `mean`, `sum`, `count`) with `GROUP BY time($__interval)`.
+1. For Flux, use `aggregateWindow()` to produce time-bucketed results.
+1. For SQL, use `$__dateBin(time)` or `$__timeGroup(time)` to aggregate by time.
+1. Check that the alert evaluation time range contains data. Alerts use a fixed time range, not the dashboard's time picker.
+1. Verify the data source connection is working by clicking **Save & test** in the data source settings.
+
 ## Other common issues
 
-The following issues don't produce specific error messages but are commonly encountered.
+The following issues don't produce specific error messages but are commonly encountered during day-to-day use.
 
 ### "Data source was not found"
 
@@ -409,6 +474,18 @@ The following issues don't produce specific error messages but are commonly enco
 1. Edit each affected panel and reselect the correct InfluxDB data source from the data source drop-down.
 1. Click **Apply** to save each panel.
 1. To avoid this issue, update existing data sources instead of deleting and recreating them.
+
+### 404 Not Found when sending Telegraf metrics to Grafana Cloud
+
+**Error message:** "404 Not Found" when Telegraf writes to the Grafana Cloud InfluxDB-compatible endpoint.
+
+**Cause:** The Telegraf `influxdb_v2` output plugin isn't compatible with the Grafana Cloud metrics endpoint. This commonly occurs when using PrivateLink or the standard InfluxDB-compatible write endpoint.
+
+**Solution:**
+
+1. Switch the Telegraf output plugin from `influxdb_v2` to `influxdb` (v1) in your Telegraf configuration.
+1. Ensure the endpoint URL and credentials match those shown in your Grafana Cloud InfluxDB configuration page.
+1. Restart Telegraf after making the change.
 
 ### Empty query results
 
