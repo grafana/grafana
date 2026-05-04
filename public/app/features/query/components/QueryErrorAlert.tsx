@@ -7,8 +7,9 @@ import {
   useAssistant,
   useProvidePageContext,
 } from '@grafana/assistant';
-import { type DataQueryError, type GrafanaTheme2 } from '@grafana/data';
+import { type DataQueryError, type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Icon, useStyles2 } from '@grafana/ui';
 
@@ -54,8 +55,30 @@ export function QueryErrorAlert({ error, query }: Props) {
           />
         </div>
       )}
+      <QueryErrorActions error={error} query={query} />
     </div>
   );
+}
+
+function QueryErrorActions({ error, query }: Props) {
+  try {
+    const { isLoading, components } = usePluginComponents({
+      extensionPointId: PluginExtensionPoints.QueryEditorErrorAction,
+    });
+
+    if (isLoading || !components.length) {
+      return null;
+    }
+
+    return renderLimitedComponents({
+      props: { error, query },
+      components,
+      limit: 1,
+      pluginId: /grafana-adaptive.*/,
+    });
+  } catch {
+    return null;
+  }
 }
 
 function buildAssistantContext(error: DataQueryError, message: string, query?: DataQuery) {

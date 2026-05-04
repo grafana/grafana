@@ -3,6 +3,7 @@ import type * as React from 'react';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { type ScopedVars } from './ScopedVars';
+import { type DataQueryError } from './datasource';
 import { type DataSourcePluginMeta, type DataSourceSettings } from './datasource';
 import { type IconName } from './icon';
 import { type PanelData } from './panel';
@@ -237,6 +238,7 @@ export enum PluginExtensionPoints {
   AdvisorCompletedChecks = 'grafana/advisor/completed-checks/v1',
   AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',
   AdvisorRetryCheck = 'grafana/advisor/retry-check/v1',
+  QueryEditorErrorAction = 'grafana/query-editor-error/action/v1',
 }
 
 // Don't use directly in a plugin!
@@ -277,6 +279,11 @@ export type CentralAlertHistorySceneV1Props = {
   defaultTimeRange?: { from: string; to: string };
   hideFilters?: boolean;
   hideAlertRuleColumn?: boolean;
+};
+
+export type PluginExtensionQueryEditorErrorActionContext = {
+  error: DataQueryError;
+  query?: DataQuery;
 };
 
 export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
