@@ -38,9 +38,11 @@ export function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEd
       <EditPaneHeader element={element} editPane={editPane} />
       <ScrollContainer showScrollIndicators={true}>
         <div className={styles.categories}>
-          <Box display="flex" alignItems={'center'} paddingTop={2} paddingLeft={2} paddingRight={2}>
-            {element.renderTopButton?.()}
-          </Box>
+          {element.renderTopButton && (
+            <Box display="flex" alignItems={'center'} paddingTop={2} paddingLeft={2} paddingRight={2}>
+              {element.renderTopButton()}
+            </Box>
+          )}
           {categories.map((cat) => cat.renderElement())}
         </div>
       </ScrollContainer>

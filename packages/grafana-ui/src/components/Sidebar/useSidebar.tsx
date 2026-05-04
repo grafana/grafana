@@ -21,7 +21,7 @@ export interface SidebarContextValue {
   contentMargin: number;
   isHidden: boolean;
   canGoBack?: boolean;
-  onToggleDock: () => void;
+  onToggleDock?: () => void;
   onResize: (diff: number) => void;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
@@ -96,10 +96,8 @@ export function useSidebar({
   const [_, setCompactDrag] = React.useState(0);
 
   const onToggleDock = useCallback(() => {
-    if (!isMobile) {
-      setIsDocked((prev) => !prev);
-    }
-  }, [isMobile, setIsDocked]);
+    setIsDocked((prev) => !prev);
+  }, [setIsDocked]);
 
   // Calculate how much space the outer wrapper needs to reserve for the sidebar toolbar + pane (if docked)
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
@@ -147,7 +145,7 @@ export function useSidebar({
 
   return {
     isDocked: effectiveIsDocked,
-    onToggleDock,
+    onToggleDock: isMobile ? undefined : onToggleDock,
     onResize,
     outerWrapperProps,
     position,

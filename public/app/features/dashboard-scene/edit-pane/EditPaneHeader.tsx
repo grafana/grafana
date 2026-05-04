@@ -39,20 +39,6 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   return (
     <Sidebar.PaneHeader title={elementInfo.typeName}>
       {element.renderActions && element.renderActions()}
-      {onCopy && (
-        <Button
-          variant="secondary"
-          size="sm"
-          icon="clipboard-alt"
-          fill="text"
-          data-testid={selectors.components.EditPaneHeader.copy}
-          onClick={onCopy}
-          tooltip={t('dashboard.layout.common.copy-tooltip', 'Copy')}
-          tooltipPlacement="bottom"
-        >
-          <Trans i18nKey="dashboard.layout.common.copy">Copy</Trans>
-        </Button>
-      )}
       {onDuplicate && (
         <Button
           tooltip={t('dashboard.layout.common.duplicate', 'Duplicate')}
@@ -65,6 +51,20 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
           onClick={onDuplicate}
         >
           <Trans i18nKey="dashboard.layout.common.duplicate">Duplicate</Trans>
+        </Button>
+      )}
+      {onCopy && (
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="clipboard-alt"
+          fill="text"
+          data-testid={selectors.components.EditPaneHeader.copy}
+          onClick={onCopy}
+          tooltip={t('dashboard.layout.common.copy-tooltip', 'Copy')}
+          tooltipPlacement="bottom"
+        >
+          <Trans i18nKey="dashboard.layout.common.copy">Copy</Trans>
         </Button>
       )}
       {canPaste && hasCopiedPanel && (

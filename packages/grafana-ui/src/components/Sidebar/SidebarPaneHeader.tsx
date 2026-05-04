@@ -43,15 +43,17 @@ export function SidebarPaneHeader({ children, title }: Props) {
           {title}
         </Text>
         <div className={styles.flexGrow} />
-        <IconButton
-          name={'web-section-alt'}
-          onClick={sidebarContext.onToggleDock}
-          className={sidebarContext.isDocked ? undefined : styles.dockedButtonUndocked}
-          tooltip={
-            sidebarContext.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')
-          }
-          data-testid={selectors.components.Sidebar.dockToggle}
-        />
+        {sidebarContext.onToggleDock && (
+          <IconButton
+            name={'web-section-alt'}
+            onClick={sidebarContext.onToggleDock}
+            className={sidebarContext.isDocked ? undefined : styles.dockedButtonUndocked}
+            tooltip={
+              sidebarContext.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')
+            }
+            data-testid={selectors.components.Sidebar.dockToggle}
+          />
+        )}
         {sidebarContext.onClosePane && (
           <IconButton
             variant="secondary"
