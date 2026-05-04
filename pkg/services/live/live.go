@@ -15,6 +15,7 @@ import (
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/gobwas/glob"
+	"github.com/grafana/authlib/types"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -175,6 +176,7 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
+	g.GrafanaScope.Features["pulse"] = &features.PulseHandler{AccessControl: dashboardService}
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -492,6 +494,14 @@ type DashboardActivityChannel interface {
 // This is used by wire to inject the channel into the dashboard API service.
 func ProvideDashboardActivityChannel(live *GrafanaLive) DashboardActivityChannel {
 	return live.GrafanaScope.Dashboards
+}
+
+// PulseChannelPublish exposes a tightly-scoped Live publish surface
+// for the Pulse service. The Pulse package wraps this in its own typed
+// Publisher so that live ↔ pulse remains a one-way dependency.
+func (g *GrafanaLive) PulseChannelPublish(orgID int64, channel string, data []byte) error {
+	ns := types.OrgNamespaceFormatter(orgID)
+	return g.Publish(ns, channel, data)
 }
 
 func (g *GrafanaLive) getStreamPlugin(ctx context.Context, pluginID string) (backend.StreamHandler, error) {

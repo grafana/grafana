@@ -24,6 +24,7 @@ import organizationReducers from 'app/features/org/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
 import { reducer as pluginsReducer } from 'app/features/plugins/admin/state/reducer';
 import userReducers from 'app/features/profile/state/reducers';
+import { pulseApi } from 'app/features/pulse/api/pulseApi';
 import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
 import supportBundlesReducer from 'app/features/support-bundles/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
@@ -58,6 +59,7 @@ const rootReducers = {
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
+  [pulseApi.reducerPath]: pulseApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [scopeAPIv0alpha1.reducerPath]: scopeAPIv0alpha1.reducer,
   ...allApiClientReducers,

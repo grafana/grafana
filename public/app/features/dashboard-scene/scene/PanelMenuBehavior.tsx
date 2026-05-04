@@ -171,6 +171,19 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       },
     });
 
+    // Pulse menu item: opens the dashboard's pulse drawer scoped to
+    // this panel. Only visible when the feature toggle is on.
+    if (config.featureToggles.dashboardPulse && !isEmbedded) {
+      const panelId = getPanelIdForVizPanel(panel);
+      items.push({
+        text: t('panel.header-menu.pulse', 'Pulse on this panel'),
+        iconClassName: 'comment-alt',
+        onClick: () => {
+          dashboard.onShowPulseDrawer(panelId);
+        },
+      });
+    }
+
     if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),

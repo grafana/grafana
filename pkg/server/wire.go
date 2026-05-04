@@ -280,6 +280,10 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(queryhistory.Service), new(*queryhistory.QueryHistoryService)),
 	correlations.ProvideService,
 	wire.Bind(new(correlations.Service), new(*correlations.CorrelationsService)),
+	// Pulse is wired only for OSS builds (see wireexts_oss.go). Enterprise
+	// builds carry a pre-generated enterprise_wire_gen.go in the grafana-
+	// enterprise repo, so any addition to the shared wireBasicSet would
+	// force a companion PR every time we touch Pulse wiring.
 	quotaimpl.ProvideService,
 	remotecache.ProvideService,
 	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),

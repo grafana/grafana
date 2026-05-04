@@ -235,6 +235,10 @@ const (
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
+	// FlagDashboardPulse
+	// Enables Pulse, threaded conversations attached to dashboards and panels (Slack-style threads with @user and #panel mentions, subscriptions, and notifications)
+	FlagDashboardPulse = "dashboardPulse"
+
 	// FlagSceneCsvExport
 	// Enables CSV export using scenes dashboard architecture
 	FlagSceneCsvExport = "sceneCsvExport"

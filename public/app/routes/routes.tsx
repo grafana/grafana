@@ -550,6 +550,10 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),
     },
+    config.featureToggles.dashboardPulse && {
+      path: '/pulse',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "PulsePage" */ 'app/features/pulse/PulsePage')),
+    },
     {
       // Redirect the /femt dev page to the root
       path: '/femt',

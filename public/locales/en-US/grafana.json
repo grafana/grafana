@@ -6328,6 +6328,10 @@
         "title": "Outline",
         "tooltip": "Content outline"
       },
+      "pulse": {
+        "title": "Pulse",
+        "tooltip": "Open Pulse"
+      },
       "redo": "Redo",
       "snapshot": {
         "tooltip": "Open original dashboard"
@@ -6453,6 +6457,10 @@
         "playlist-previous": "Go to previous dashboard",
         "playlist-stop": "Stop playlist",
         "public-dashboard": "Public",
+        "pulse": {
+          "label": "Pulse",
+          "tooltip": "Open Pulse — start or join the conversation about this dashboard"
+        },
         "save-dashboard": {
           "label": "Save",
           "tooltip": "Save changes"
@@ -12603,6 +12611,7 @@
       "more": "More...",
       "new-alert-rule": "New alert rule",
       "paste-styles": "Paste styles",
+      "pulse": "Pulse on this panel",
       "query": "Query",
       "remove": "Remove",
       "replace-library-panel": "Replace library panel",
@@ -14074,6 +14083,108 @@
       "last-active-label": "Last active",
       "origin-label": "Origin",
       "role-label": "Role"
+    }
+  },
+  "pulse": {
+    "composer": {
+      "cancel": "Cancel",
+      "hint-markdown": "Cmd/Ctrl+Enter to send · @user · #panel · **markdown**",
+      "input-aria": "Pulse message",
+      "placeholder": "Pulse on this dashboard… (@ for users, # for panels, **markdown** supported)",
+      "preview-empty": "Nothing to preview yet.",
+      "send": "Submit",
+      "submit-error": "Could not submit thread. Please check Pulse API and try again.",
+      "tab-preview": "Preview",
+      "tab-write": "Write"
+    },
+    "drawer": {
+      "back": "Back to threads",
+      "closed-tag": "Closed",
+      "empty-body": "Use Pulse to leave context-aware comments on this dashboard. Your team will be notified.",
+      "empty-cta": "Start the first thread",
+      "empty-title": "Nothing to discuss yet",
+      "last-activity": "Last activity: {{when}}",
+      "loading": "Loading threads…",
+      "loading-thread": "Loading thread…",
+      "new-thread": "Start a thread",
+      "next-page": "Next",
+      "page-indicator": "Page {{page}}",
+      "prev-page": "Previous",
+      "start-on-dashboard": "Start a thread on this dashboard",
+      "start-on-panel": "Start a thread on panel #{{id}}",
+      "thread-author-avatar-alt": "Avatar for {{name}}",
+      "thread-author-unknown": "User",
+      "thread-fallback": "Conversation",
+      "thread-meta_one": "{{count}} replies",
+      "thread-meta_other": "{{count}} replies",
+      "thread-missing": "Thread not found.",
+      "threads-on-dashboard": "Threads on this dashboard",
+      "threads-on-panel": "Threads on panel #{{id}}",
+      "title": "Pulse",
+      "title-panel": "Pulse · panel #{{id}}"
+    },
+    "overview": {
+      "author-unknown": "Unknown",
+      "closed": "Closed",
+      "column": {
+        "author": "Author",
+        "dashboard": "Dashboard",
+        "last-activity": "Last activity",
+        "replies": "Replies",
+        "thread": "Thread"
+      },
+      "empty": {
+        "all": "No threads yet",
+        "all-hint": "Start a thread on any dashboard panel and it will appear here.",
+        "filtered": "No matching threads",
+        "filtered-hint": "Try clearing the search or switching back to all threads."
+      },
+      "error": {
+        "message": "Something went wrong while fetching threads. Please refresh and try again.",
+        "title": "Failed to load Pulse threads"
+      },
+      "loading": "Loading threads…",
+      "refreshing": "Updating…",
+      "scope": {
+        "all": "All threads",
+        "mine": "My threads"
+      },
+      "search-placeholder": "Search by thread content or dashboard title",
+      "status": {
+        "all": "All",
+        "closed": "Closed",
+        "open": "Open"
+      },
+      "subtitle": "Browse every Pulse thread across your dashboards. Open a thread to jump straight into the conversation.",
+      "untitled": "Untitled thread"
+    },
+    "thread": {
+      "author-bot": "Automation #{{id}}",
+      "author-bot-named": "{{name}} (automation)",
+      "author-user": "User #{{id}}",
+      "back": "Back to threads",
+      "close-thread": "Close thread",
+      "close-thread-confirm": "Close thread",
+      "close-thread-text": "Closing this thread keeps the history visible but prevents new replies. Admins can reopen it later.",
+      "close-thread-title": "Close thread",
+      "closed-badge": "Closed",
+      "closed-notice": "This thread is closed. Ask an admin to reopen it if more discussion is needed.",
+      "delete": "Delete pulse",
+      "delete-confirm": "Delete",
+      "delete-text": "Are you sure you want to delete this pulse?",
+      "delete-thread": "Delete thread",
+      "delete-thread-confirm": "Delete thread",
+      "delete-thread-text": "This permanently deletes the conversation and all its replies. This cannot be undone.",
+      "delete-thread-title": "Delete thread",
+      "delete-title": "Delete pulse",
+      "edit": "Edit pulse",
+      "edited": "(edited)",
+      "empty": "No pulses yet.",
+      "loading": "Loading…",
+      "reopen-thread": "Reopen thread",
+      "reply-placeholder": "Reply… (@ for users, # for panels)",
+      "tombstone": "This pulse was deleted.",
+      "untitled": "Conversation"
     }
   },
   "query": {

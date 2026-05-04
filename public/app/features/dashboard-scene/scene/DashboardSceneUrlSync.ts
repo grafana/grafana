@@ -8,6 +8,7 @@ import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { type DashboardScene, type DashboardSceneState } from './DashboardScene';
 import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { PulseDrawer } from './PulseDrawer';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
@@ -15,7 +16,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView', 'pulse'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -107,6 +108,18 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.shareView = undefined;
     }
 
+    // Pulse drawer bootstrap. When the URL carries `?pulse=...` on
+    // initial load (e.g. a deep link from the global Pulse overview) we
+    // mount the drawer overlay here; once mounted, PulseDrawer's own
+    // SceneObjectUrlSyncConfig handles the rest of the lifecycle. We
+    // skip this when an overlay already exists so toggling the drawer
+    // from the dashboard toolbar isn't disturbed.
+    if (typeof values.pulse === 'string' && !(this._scene.state.overlay instanceof PulseDrawer)) {
+      update.overlay = pulseDrawerFromUrlValue(values.pulse);
+    } else if (values.pulse === null && this._scene.state.overlay instanceof PulseDrawer) {
+      update.overlay = undefined;
+    }
+
     const layout = this._scene.state.body;
     if (layout instanceof DefaultGridLayoutManager) {
       const UNSAFE_fitPanels = typeof values.autofitpanels === 'string';
@@ -134,4 +147,32 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
     });
   }
+}
+
+/**
+ * pulseDrawerFromUrlValue parses the `pulse` query parameter and returns
+ * a freshly-constructed PulseDrawer so the URL deep link mounts the
+ * overlay with the correct initial state.
+ *
+ * Accepted shapes:
+ *   - "open"          → empty drawer
+ *   - "panel-<id>"    → drawer scoped to a panel
+ *   - "thread-<uid>"  → drawer that auto-opens a specific thread
+ *
+ * Once the drawer mounts, its own `SceneObjectUrlSyncConfig` takes over.
+ */
+function pulseDrawerFromUrlValue(value: string): PulseDrawer {
+  if (value.startsWith('panel-')) {
+    const id = parseInt(value.slice('panel-'.length), 10);
+    if (!Number.isNaN(id)) {
+      return new PulseDrawer({ panelId: id });
+    }
+  }
+  if (value.startsWith('thread-')) {
+    const uid = value.slice('thread-'.length).trim();
+    if (uid) {
+      return new PulseDrawer({ initialThreadUID: uid });
+    }
+  }
+  return new PulseDrawer({});
 }

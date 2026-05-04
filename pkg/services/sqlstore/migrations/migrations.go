@@ -74,6 +74,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	addCorrelationsMigrations(mg)
 
+	addPulseMigrations(mg)
+
 	addPublicDashboardMigration(mg)
 	addDbFileStorageMigration(mg)
 
