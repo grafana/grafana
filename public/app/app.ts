@@ -84,7 +84,9 @@ import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { initEchoSrv } from './core/services/echo/init';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { changeTheme } from './core/services/theme';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
+import { getSelectableThemes } from './core/components/ThemeSelector/getSelectableThemes';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
@@ -132,6 +134,10 @@ const extensionsExports = extensionsIndex.keys().map((key) => {
 
 export class GrafanaApp {
   context!: GrafanaContextType;
+  private currentUrlTheme = this.getThemeFromUrl();
+  private hasAppliedUrlTheme = false;
+  private readonly validThemeIds = new Set(getSelectableThemes().map((theme) => theme.id));
+  private readonly fallbackThemeId = contextSrv.user.theme || config.defaultTheme;
 
   async init() {
     try {
@@ -281,6 +287,8 @@ export class GrafanaApp {
 
       // Read initial kiosk mode from url at app startup
       chromeService.setKioskModeFromUrl(queryParams.kiosk);
+      this.syncThemeWithUrl();
+      locationService.getHistory().listen(() => this.syncThemeWithUrl());
 
       // Clean up old search local storage values
       try {
@@ -321,6 +329,35 @@ export class GrafanaApp {
     } finally {
       stopMeasure('frontend_app_init');
     }
+  }
+
+  private syncThemeWithUrl() {
+    const nextUrlTheme = this.getThemeFromUrl();
+    if (nextUrlTheme === this.currentUrlTheme) {
+      return;
+    }
+
+    this.currentUrlTheme = nextUrlTheme;
+
+    if (!nextUrlTheme) {
+      if (this.hasAppliedUrlTheme) {
+        this.hasAppliedUrlTheme = false;
+        changeTheme(this.fallbackThemeId, true);
+      }
+      return;
+    }
+
+    if (!this.validThemeIds.has(nextUrlTheme)) {
+      return;
+    }
+
+    this.hasAppliedUrlTheme = true;
+    changeTheme(nextUrlTheme, true);
+  }
+
+  private getThemeFromUrl() {
+    const urlTheme = locationService.getSearchObject().theme;
+    return typeof urlTheme === 'string' ? urlTheme : undefined;
   }
 }
 
