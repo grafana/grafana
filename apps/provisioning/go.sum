@@ -101,8 +101,8 @@ github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 h1:/m/qmt7Ay+HK+GVbI
 github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3/go.mod h1:6zFIzal2FCd0JC1pE0ZTb2ftC0Jr/zsQR4zRNRdDfZA=
 github.com/grafana/grafana-app-sdk v0.54.0 h1:sO2TKsfJ0pT5Lyx/ronZM/TrSrQG3EVYbhW5r0la+y8=
 github.com/grafana/grafana-app-sdk v0.54.0/go.mod h1:sct5XtHBWMTOUUi9/XG2ehRr56iNAWWqOGVBr5W9rFA=
-github.com/grafana/grafana-app-sdk/logging v0.53.2 h1:FFbPvto2WwWdVElHr9o1SGlOVLWF1n1l7p/YY5zkQ6E=
-github.com/grafana/grafana-app-sdk/logging v0.53.2/go.mod h1:f0r/XriExa4jpUMHnI9aTRYzbbMHiDV+MXSpaSRGqIE=
+github.com/grafana/grafana-app-sdk/logging v0.54.0 h1:WvBPeswe1zkwRmieIf2w0N5l0UgAsNCzywr+6jzZRdA=
+github.com/grafana/grafana-app-sdk/logging v0.54.0/go.mod h1:t0rXNkTz3R6PLpjxk4BIl2erHYkMBX+rd+UHSL0k5nw=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44 h1:/aHFQcMfdIWkNMGMAdx3URhRc9sulLVfhOKTw3xvQ8Y=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44/go.mod h1:EmAylyKtOt1DFHMmb9mOqITWsX0Czr76zK2LJ1f+pOs=
 github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6 h1:TJdvWzgR/2oTWUV2qw0OGTJiw4qlnxKDCTUt8khbc2M=
