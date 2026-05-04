@@ -219,7 +219,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
         expect(await screen.findByRole('dialog', { name: 'Manage folder owner' })).toBeInTheDocument();
 
-        await user.click(screen.getByRole('combobox'));
+        await user.click(screen.getByRole('combobox', { name: /team/i }));
         await user.click(await screen.findByText(/test team/i));
 
         await user.click(screen.getByRole('button', { name: 'Save owner' }));
