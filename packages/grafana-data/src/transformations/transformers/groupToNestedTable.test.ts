@@ -751,4 +751,105 @@ describe('GroupToSubframe transformer - V2 native config', () => {
       expect(received[0]).toEqual([testSeries]);
     });
   });
+
+  it('should set expandAllRows on the outer frame meta when expandAllRows is true', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'message', type: FieldType.string, values: ['one', 'two', 'two'] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        expandAllRows: true,
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result[0].meta?.custom?.expandAllRows).toBe(true);
+    });
+  });
+
+  it('should not set expandAllRows on the outer frame meta when expandAllRows is false', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'message', type: FieldType.string, values: ['one', 'two', 'two'] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        expandAllRows: false,
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result[0].meta).toBeUndefined();
+    });
+  });
+
+  it('should not set expandAllRows when expandAllRows is omitted (defaults to false)', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'message', type: FieldType.string, values: ['one', 'two'] },
+        { name: 'values', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result[0].meta).toBeUndefined();
+    });
+  });
+
+  it('should preserve expandAllRows when migrating from V1 to V2', () => {
+    const v1Options: GroupToNestedTableTransformerOptions = {
+      expandAllRows: true,
+      fields: {
+        message: {
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+      },
+    };
+
+    const v2 = migrateGroupToNestedTableOptions(v1Options);
+    expect(v2.expandAllRows).toBe(true);
+  });
 });

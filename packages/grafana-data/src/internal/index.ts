@@ -50,6 +50,7 @@ export {
   type GroupToNestedTableTransformerOptionsV2,
   type GroupToNestedTableMatcherConfig,
   SHOW_NESTED_HEADERS_DEFAULT,
+  EXPAND_ALL_ROWS_DEFAULT,
   migrateGroupToNestedTableOptions,
   isV1GroupToNestedTableOptions,
 } from '../transformations/transformers/groupToNestedTable';
