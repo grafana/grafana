@@ -1,58 +1,64 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DataLinksContextMenu } from './DataLinksContextMenu';
 
-const fakeAriaLabel = 'fake aria label';
-describe('DataLinksContextMenu', () => {
-  it('renders context menu when there are more than one data links', () => {
-    render(
-      <DataLinksContextMenu
-        links={() => [
-          {
-            href: '/link1',
-            title: 'Link1',
-            target: '_blank',
-            origin: {},
-          },
-          {
-            href: '/link2',
-            title: 'Link2',
-            target: '_blank',
-            origin: {},
-          },
-        ]}
-      >
-        {() => {
-          return <div aria-label="fake aria label" />;
-        }}
-      </DataLinksContextMenu>
-    );
+const twoLinks = () => [
+  { href: '/link1', title: 'Link1', target: '_blank' as const, origin: {} },
+  { href: '/link2', title: 'Link2', target: '_blank' as const, origin: {} },
+];
 
-    expect(screen.getByLabelText(fakeAriaLabel)).toBeInTheDocument();
-    expect(screen.queryAllByLabelText(selectors.components.DataLinksContextMenu.singleLink)).toHaveLength(0);
+const singleLink = () => [{ href: '/link1', title: 'Link1', target: '_blank' as const, origin: {} }];
+
+describe('DataLinksContextMenu', () => {
+  it('passes openMenu and targetClassName to children for multiple links', () => {
+    const childrenSpy = jest.fn(() => <div aria-label="child" />);
+    render(<DataLinksContextMenu links={twoLinks}>{childrenSpy}</DataLinksContextMenu>);
+
+    expect(childrenSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ openMenu: expect.any(Function), targetClassName: expect.any(String) })
+    );
+    expect(screen.queryByTestId(selectors.components.DataLinksContextMenu.singleLink)).not.toBeInTheDocument();
   });
 
-  it('renders link when there is a single data link', () => {
+  it('opens context menu and renders menu items on click', async () => {
     render(
-      <DataLinksContextMenu
-        links={() => [
-          {
-            href: '/link1',
-            title: 'Link1',
-            target: '_blank',
-            origin: {},
-          },
-        ]}
-      >
-        {() => {
-          return <div aria-label="fake aria label" />;
-        }}
+      <DataLinksContextMenu links={twoLinks}>
+        {({ openMenu }) => <button aria-label="trigger" onClick={openMenu} />}
       </DataLinksContextMenu>
     );
 
-    expect(screen.getByLabelText(fakeAriaLabel)).toBeInTheDocument();
-    expect(screen.getByTestId(selectors.components.DataLinksContextMenu.singleLink)).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText('trigger'));
+
+    expect(screen.getByText('Data links')).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Link1' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Link2' })).toBeInTheDocument();
+  });
+
+  it('renders single link with correct attributes and style', () => {
+    render(
+      <DataLinksContextMenu links={singleLink} style={{ color: 'red' }}>
+        {() => <div aria-label="child" />}
+      </DataLinksContextMenu>
+    );
+
+    const link = screen.getByTestId(selectors.components.DataLinksContextMenu.singleLink);
+    expect(link).toHaveAttribute('href', '/link1');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('title', 'Link1');
+    expect(link).toHaveStyle({ color: 'red', overflow: 'hidden', display: 'flex' });
+  });
+
+  it('calls onClick on single link when clicked', async () => {
+    const onClick = jest.fn();
+    const linkWithClick = () => [{ href: '/link1', title: 'Link1', target: '_blank' as const, origin: {}, onClick }];
+
+    render(<DataLinksContextMenu links={linkWithClick}>{() => <span>click me</span>}</DataLinksContextMenu>);
+
+    await userEvent.click(screen.getByText('click me'));
+
+    expect(onClick).toHaveBeenCalled();
   });
 });
