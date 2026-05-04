@@ -90,8 +90,8 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
       ).toBeVisible();
 
-      // Open Street Map
-      await input.fill('Open Street Map');
+      // OpenStreetMap
+      await input.fill('OpenStreetMap');
       await input.press('Enter');
       await expect(page.locator('[data-testid="layer-drag-drop-list"]')).toContainText('osm-standard');
       await expect(
