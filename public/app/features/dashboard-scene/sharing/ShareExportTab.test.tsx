@@ -1,3 +1,5 @@
+import saveAs from 'file-saver';
+
 import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import {
@@ -14,6 +16,8 @@ import * as exporters from '../scene/export/exporters';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 import { ShareExportTab } from './ShareExportTab';
+
+jest.mock('file-saver', () => ({ default: jest.fn() }));
 
 jest.mock('app/features/dashboard/api/dashboard_api');
 
@@ -361,6 +365,35 @@ describe('ShareExportTab', () => {
       expect(dashboardApiModule.getDashboardAPI).not.toHaveBeenCalled();
       expect(result.json).toMatchObject({ title: 'Test Dashboard V1', uid: 'test-uid-v1' });
       expect(result.initialSaveModelVersion).toBe('v1');
+    });
+  });
+
+  describe('onSaveAsFile filename', () => {
+    it('should use dashboard title for v1 classic export filename', async () => {
+      const tab = buildV1DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.Classic });
+
+      await tab.onSaveAsFile();
+
+      expect(saveAs).toHaveBeenCalledTimes(1);
+      const [, filename] = (saveAs as jest.Mock).mock.calls[0];
+      expect(filename).toMatch(/^Test Dashboard V1-\d+\.json$/);
+    });
+
+    it('should use dashboard title from spec for v2 resource export filename', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource });
+
+      await tab.onSaveAsFile();
+
+      expect(saveAs).toHaveBeenCalledTimes(1);
+      const [, filename] = (saveAs as jest.Mock).mock.calls[0];
+      expect(filename).toMatch(/^Test Dashboard V2-\d+\.json$/);
+    });
+
+    afterEach(() => {
+      (saveAs as jest.Mock).mockClear();
     });
   });
 
