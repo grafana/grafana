@@ -34,7 +34,7 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
-import { ExpressionDatasourceUID } from '../../expressions/types';
+import { ExpressionDatasourceUID, ExpressionQuery } from '../../expressions/types';
 
 import { type QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -286,6 +286,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     });
   };
 
+  onDisableQuery = () => {
+    const { query, onChange, onRunQuery } = this.props;
+    const expressionQuery = query as unknown as ExpressionQuery;
+    const newDisabled = !expressionQuery.disabled;
+    onChange({ ...query, disabled: newDisabled } as TQuery);
+    onRunQuery();
+
+    reportInteraction('query_editor_row_disable_query_clicked', {
+      disabled: newDisabled,
+    });
+  };
+
   onToggleHelp = () => {
     this.setState((state) => ({
       showingHelp: !state.showingHelp,
@@ -402,11 +414,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef, app } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
+    const isDisabled = !!(query as unknown as ExpressionQuery).disabled;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
     const isEditingQueryLibrary = queryLibraryRef !== undefined;
     const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
     const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    const hasExpressionQuery = this.props.queries.some((q) => q.datasource?.uid === ExpressionDatasourceUID);
 
     return (
       <>
@@ -441,6 +455,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
 
+        {(isExpressionQuery || hasExpressionQuery) && (
+          <QueryOperationToggleAction
+            title={
+              isDisabled
+                ? t('query-operation.header.enable-expression', 'Enable expression')
+                : t('query-operation.header.disable-expression', 'Disable expression')
+            }
+            icon="ban"
+            active={isDisabled}
+            onClick={this.onDisableQuery}
+          />
+        )}
         {!hideHideQueryButton ? (
           <QueryOperationToggleAction
             dataTestId={selectors.components.QueryEditorRow.actionButton('Hide response')}
@@ -451,6 +477,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             }
             icon={isHidden ? 'eye-slash' : 'eye'}
             active={isHidden}
+            disabled={isDisabled}
             onClick={this.onHideQuery}
           />
         ) : null}
@@ -475,6 +502,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         onChangeDataSource={onChangeDataSource}
         dataSource={dataSource}
         hidden={query.hide}
+        disabled={!!(query as unknown as ExpressionQuery).disabled}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
         renderExtras={() => <>{renderHeaderExtras && renderHeaderExtras()}</>}

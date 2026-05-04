@@ -216,6 +216,9 @@ export function callQueryMethod(
     return from(datasource.query(request));
   }
 
+  // Filter out disabled queries before execution
+  request.targets = request.targets.filter((t) => !(t as ExpressionQuery).disabled);
+
   for (const target of request.targets) {
     if (isExpressionReference(target.datasource)) {
       return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);

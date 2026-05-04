@@ -12,6 +12,7 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
   query: TQuery;
   queries: TQuery[];
   hidden?: boolean;
+  disabled?: boolean;
   dataSource: DataSourceInstanceSettings;
   renderExtras?: () => ReactNode;
   onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
@@ -22,7 +23,7 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
 }
 
 export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQuery>) => {
-  const { query, queries, onChange, collapsedText, renderExtras, hidden, hideRefId = false } = props;
+  const { query, queries, onChange, collapsedText, renderExtras, hidden, disabled, hideRefId = false } = props;
 
   const styles = useStyles2(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -118,7 +119,12 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
         )}
         {renderDataSource(props, styles)}
         {renderExtras && <div className={styles.itemWrapper}>{renderExtras()}</div>}
-        {hidden && (
+        {disabled && (
+          <em className={styles.contextInfo}>
+            <Trans i18nKey="query.query-editor-row-header.disabled">Disabled</Trans>
+          </em>
+        )}
+        {hidden && !disabled && (
           <em className={styles.contextInfo}>
             <Trans i18nKey="query.query-editor-row-header.hidden">Hidden</Trans>
           </em>
