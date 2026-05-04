@@ -11639,6 +11639,11 @@
       "published-by": "Published by",
       "updated-on": "Updated on"
     },
+    "import-provisioned": {
+      "error": "An error occurred while importing the dashboard.",
+      "library-panels-blocked-body": "This dashboard contains library panels that cannot be created through a provisioned import. Import into a non-provisioned folder instead, or remove the library panel references first.",
+      "library-panels-blocked-title": "Library panels not supported"
+    },
     "import-resource-format-error": {
       "cancel": "Cancel",
       "title": "Unsupported format",

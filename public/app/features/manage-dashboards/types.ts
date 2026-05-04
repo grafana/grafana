@@ -41,6 +41,10 @@ export enum DashboardSource {
   Json = 1,
 }
 
+// Provisioning-optional fields (ref, path, comment, workflow, repo) are appended here rather
+// than running a second useForm, because ImportForm's prop type is Pick<UseFormReturn<ImportDashboardDTO>, ...>
+// and register is invariant in its key parameter — a second form would require rewiring every
+// shared field. The fields are only rendered and validated when the target folder is repo-managed.
 export interface ImportDashboardDTO {
   title: string;
   uid: string;
@@ -49,6 +53,12 @@ export interface ImportDashboardDTO {
   dataSources: DataSourceInstanceSettings[];
   elements: LibraryElementDTO[];
   folder: { uid: string; title?: string };
+  // Provisioning fields — only used when importing into a repo-managed folder
+  ref?: string;
+  path?: string;
+  comment?: string;
+  workflow?: string;
+  repo?: string;
 }
 
 export enum InputType {
@@ -89,4 +99,13 @@ export interface DashboardInputs {
 
 export type DatasourceSelection = { uid: string; type: string; name?: string };
 
-export type ImportFormDataV2 = SaveDashboardCommand<DashboardV2Spec> & Record<string, unknown>;
+// Provisioning-optional fields are widened on the Record<string, unknown> side so the same
+// useForm instance can drive both standard and provisioned import paths.
+export type ImportFormDataV2 = SaveDashboardCommand<DashboardV2Spec> &
+  Record<string, unknown> & {
+    ref?: string;
+    path?: string;
+    comment?: string;
+    workflow?: string;
+    repo?: string;
+  };

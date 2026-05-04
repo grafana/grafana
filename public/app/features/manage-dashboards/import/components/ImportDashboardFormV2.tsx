@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { Controller, type FieldErrors, type FieldPath, type UseFormReturn } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { Button, Field, type FormFieldErrors, type FormsOnSubmit, Stack, Input, Alert } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
 import {
   type DashboardInput,
@@ -24,6 +24,8 @@ interface Props extends Pick<UseFormReturn<ImportFormDataV2>, 'register' | 'cont
   onCancel: () => void;
   onSubmit: FormsOnSubmit<ImportFormDataV2>;
   hasFloatGridItems: boolean;
+  children?: ReactNode;
+  submitDisabled?: boolean;
 }
 
 export const ImportDashboardFormV2 = ({
@@ -35,6 +37,8 @@ export const ImportDashboardFormV2 = ({
   onCancel,
   onSubmit,
   hasFloatGridItems,
+  children,
+  submitDisabled,
 }: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
   const [uidReset, setUidReset] = useState(false);
@@ -78,12 +82,13 @@ export const ImportDashboardFormV2 = ({
       <Field label={t('dashboard-scene.import-dashboard-form-v2.label-folder', 'Folder')} noMargin>
         <Controller
           render={({ field: { ref, value, onChange, ...field } }) => (
-            <FolderPicker
+            <ProvisioningAwareFolderPicker
               {...field}
               onChange={(uid, title) => {
                 onChange(uid, title);
               }}
               value={value}
+              showAllFolders
             />
           )}
           name="folderUid"
@@ -197,12 +202,14 @@ export const ImportDashboardFormV2 = ({
           </Trans>
         </Alert>
       )}
+      {children}
 
       <Stack direction="row" gap={2}>
         <Button
           type="submit"
           data-testid={selectors.components.ImportDashboardForm.submit}
           variant={getButtonVariant(errors)}
+          disabled={submitDisabled}
           onClick={() => {
             setSubmitted(true);
           }}

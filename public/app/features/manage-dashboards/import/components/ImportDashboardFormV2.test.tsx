@@ -39,10 +39,14 @@ jest.mock('../utils/validation', () => ({
   validateUid: jest.fn().mockResolvedValue(true),
 }));
 
-jest.mock('app/core/components/Select/FolderPicker', () => ({
-  FolderPicker: ({ value, onChange }: { value: string; onChange: (val: string, title: string) => void }) => (
-    <input data-testid="folder-picker" value={value} onChange={(e) => onChange(e.target.value, 'Test Folder')} />
-  ),
+jest.mock('app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker', () => ({
+  ProvisioningAwareFolderPicker: ({
+    value,
+    onChange,
+  }: {
+    value: string;
+    onChange: (val: string, title: string) => void;
+  }) => <input data-testid="folder-picker" value={value} onChange={(e) => onChange(e.target.value, 'Test Folder')} />,
 }));
 
 jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => ({

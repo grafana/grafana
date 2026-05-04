@@ -7,9 +7,15 @@ import {
   defaultGridLayoutKind,
   type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import {
+  useGetResourceRepositoryView,
+  RepoViewStatus,
+} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { type DashboardInputs, DashboardSource, InputType } from '../../types';
+import { useImportProvisionedSave } from '../hooks/useImportProvisionedSave';
 
 import { ImportOverviewV2 } from './ImportOverviewV2';
 
@@ -22,10 +28,14 @@ jest.mock('../utils/validation', () => ({
   validateUid: jest.fn().mockResolvedValue(true),
 }));
 
-jest.mock('app/core/components/Select/FolderPicker', () => ({
-  FolderPicker: ({ value, onChange }: { value: string; onChange: (val: string, title: string) => void }) => (
-    <input data-testid="folder-picker" value={value} onChange={(e) => onChange?.(e.target.value, 'Test Folder')} />
-  ),
+jest.mock('app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker', () => ({
+  ProvisioningAwareFolderPicker: ({
+    value,
+    onChange,
+  }: {
+    value: string;
+    onChange: (val: string, title: string) => void;
+  }) => <input data-testid="folder-picker" value={value} onChange={(e) => onChange?.(e.target.value, 'Test Folder')} />,
 }));
 
 jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => ({
@@ -52,8 +62,64 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
   ),
 }));
 
-const mockGetDashboardAPI = jest.mocked(getDashboardAPI);
+jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
+  useGetResourceRepositoryView: jest.fn(),
+  RepoViewStatus: {
+    Disabled: 'disabled',
+    Loading: 'loading',
+    Ready: 'ready',
+    Error: 'error',
+    Orphaned: 'orphaned',
+  },
+}));
 
+jest.mock('../hooks/useImportProvisionedSave', () => ({
+  useImportProvisionedSave: jest.fn(),
+}));
+
+jest.mock('app/features/provisioning/components/Shared/ResourceEditFormSharedFields', () => ({
+  ResourceEditFormSharedFields: () => <div data-testid="resource-edit-shared-fields" />,
+}));
+
+jest.mock('app/features/provisioning/components/Shared/RepoInvalidStateBanner', () => ({
+  RepoInvalidStateBanner: ({ noRepository, isReadOnlyRepo }: { noRepository: boolean; isReadOnlyRepo: boolean }) => (
+    <div data-testid="repo-invalid-banner" data-no-repo={noRepository} data-read-only={isReadOnlyRepo} />
+  ),
+}));
+
+jest.mock('app/features/provisioning/Shared/ProvisioningAlert', () => ({
+  ProvisioningAlert: ({ error }: { error: string }) => <div data-testid="provisioning-alert">{error}</div>,
+}));
+
+jest.mock('app/features/provisioning/components/defaults', () => ({
+  getDefaultWorkflow: jest.fn().mockReturnValue('write'),
+  getDefaultRef: jest.fn().mockReturnValue('main'),
+  getCanPushToConfiguredBranch: jest.fn().mockReturnValue(true),
+}));
+
+jest.mock('app/features/provisioning/components/utils/path', () => ({
+  generatePath: jest.fn().mockReturnValue('test-dashboard.json'),
+  slugifyForFilename: jest.fn().mockReturnValue('test-dashboard'),
+  splitPath: jest.fn().mockReturnValue({ directory: '', filename: 'test-dashboard.json' }),
+  joinPath: jest.fn((_dir: string, file: string) => file),
+}));
+
+jest.mock('app/features/provisioning/components/utils/timestamp', () => ({
+  generateTimestamp: jest.fn().mockReturnValue('2026-05-04-abc12'),
+}));
+
+const mockGetDashboardAPI = jest.mocked(getDashboardAPI);
+const mockUseGetResourceRepositoryView = jest.mocked(useGetResourceRepositoryView);
+const mockUseImportProvisionedSave = jest.mocked(useImportProvisionedSave);
+
+const mockRepository: RepositoryView = {
+  name: 'test-repo',
+  branch: 'main',
+  type: 'github',
+  target: 'folder',
+  title: 'Test Repo',
+  workflows: ['write', 'branch'],
+};
 describe('ImportOverviewV2', () => {
   let saveDashboard = jest.fn().mockResolvedValue({ url: '/d/test-uid/test-dashboard' });
 
@@ -100,6 +166,19 @@ describe('ImportOverviewV2', () => {
       listDashboardHistory: jest.fn(),
       getDashboardHistoryVersions: jest.fn(),
       restoreDashboardVersion: jest.fn(),
+    });
+
+    // Default: non-provisioned mode for existing tests
+    mockUseGetResourceRepositoryView.mockReturnValue({
+      status: RepoViewStatus.Ready,
+      isLoading: false,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+    });
+    mockUseImportProvisionedSave.mockReturnValue({
+      save: jest.fn(),
+      isLoading: false,
+      error: undefined,
     });
   });
 
@@ -257,6 +336,113 @@ describe('ImportOverviewV2', () => {
 
       const savedData = saveDashboard.mock.calls[0][0];
       expect(savedData.k8s?.name).toBe('custom-uid');
+    });
+  });
+
+  describe('provisioned mode', () => {
+    function setupProvisioned() {
+      const mockSave = jest.fn();
+      mockUseGetResourceRepositoryView.mockReturnValue({
+        repository: mockRepository,
+        status: RepoViewStatus.Ready,
+        isLoading: false,
+        isInstanceManaged: false,
+        isReadOnlyRepo: false,
+      });
+      mockUseImportProvisionedSave.mockReturnValue({
+        save: mockSave,
+        isLoading: false,
+        error: undefined,
+      });
+      return { mockSave };
+    }
+
+    it('renders ResourceEditFormSharedFields when folder is repo-managed', async () => {
+      setupProvisioned();
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('resource-edit-shared-fields')).toBeInTheDocument();
+      });
+    });
+
+    it('submits via provisioned save hook', async () => {
+      const { mockSave } = setupProvisioned();
+      const user = userEvent.setup();
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout);
+
+      const datasourcePicker = screen.getByTestId('datasource-picker-prometheus');
+      await user.type(datasourcePicker, 'prom-uid');
+      await user.click(screen.getByRole('button', { name: /import/i }));
+
+      await waitFor(() => {
+        expect(mockSave).toHaveBeenCalledWith(
+          expect.objectContaining({
+            apiVersion: 'v2',
+            title: 'Test Dashboard',
+          })
+        );
+      });
+    });
+
+    it('does not call standard API in provisioned mode', async () => {
+      setupProvisioned();
+      const user = userEvent.setup();
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout);
+
+      const datasourcePicker = screen.getByTestId('datasource-picker-prometheus');
+      await user.type(datasourcePicker, 'prom-uid');
+      await user.click(screen.getByRole('button', { name: /import/i }));
+
+      await waitFor(() => {
+        expect(saveDashboard).not.toHaveBeenCalled();
+      });
+    });
+
+    it('renders RepoInvalidStateBanner when repo is read-only', async () => {
+      mockUseGetResourceRepositoryView.mockReturnValue({
+        repository: mockRepository,
+        status: RepoViewStatus.Ready,
+        isLoading: false,
+        isInstanceManaged: false,
+        isReadOnlyRepo: true,
+      });
+      mockUseImportProvisionedSave.mockReturnValue({
+        save: jest.fn(),
+        isLoading: false,
+        error: undefined,
+      });
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout);
+
+      await waitFor(() => {
+        const banner = screen.getByTestId('repo-invalid-banner');
+        expect(banner).toHaveAttribute('data-read-only', 'true');
+      });
+    });
+
+    it('disables submit when repo is read-only', async () => {
+      mockUseGetResourceRepositoryView.mockReturnValue({
+        repository: mockRepository,
+        status: RepoViewStatus.Ready,
+        isLoading: false,
+        isInstanceManaged: false,
+        isReadOnlyRepo: true,
+      });
+      mockUseImportProvisionedSave.mockReturnValue({
+        save: jest.fn(),
+        isLoading: false,
+        error: undefined,
+      });
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout);
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      });
     });
   });
 });
