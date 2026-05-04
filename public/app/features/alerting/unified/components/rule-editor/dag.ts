@@ -96,7 +96,7 @@ export function getTargets(model: ExpressionQuery) {
     return parseRefsFromMathExpression(model.expression ?? '');
   }
   if (isClassicCondition) {
-    return model.conditions?.map((c) => c.query.params[0]) ?? [];
+    return model.conditions?.flatMap((c) => (c.query.params?.[0] ? [c.query.params[0]] : [])) ?? [];
   }
   if (isSqlExpression) {
     return parseRefsFromSqlExpression(model.expression ?? '');

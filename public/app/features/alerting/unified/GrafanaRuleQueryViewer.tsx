@@ -357,7 +357,7 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
             <div className={styles.blue}>
               <Trans i18nKey="alerting.classic-condition-viewer.of">OF</Trans>
             </div>
-            <div className={styles.bold}>{query.params[0]}</div>
+            <div className={styles.bold}>{query.params?.[0]}</div>
             <div className={styles.blue}>{evalFunctions[evaluator.type].text}</div>
             <div className={styles.bold}>
               {isRange ? `(${evaluator.params[0]}; ${evaluator.params[1]})` : evaluator.params[0]}

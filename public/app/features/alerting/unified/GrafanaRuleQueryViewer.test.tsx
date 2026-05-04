@@ -16,6 +16,18 @@ describe('GrafanaRuleQueryViewer', () => {
     expect(screen.getByTestId('expressions-container')).toHaveStyle('flex-wrap: wrap');
   });
 
+  it('renders classic_conditions with missing query.params without crashing', async () => {
+    const rule = mockCombinedRule();
+
+    const malformedExpression = getExpression('F', undefined);
+
+    render(
+      <GrafanaRuleQueryViewer queries={[...queries, malformedExpression]} condition="A" rule={rule} />
+    );
+
+    await waitFor(() => expect(screen.getByTestId('expressions-container')).toBeInTheDocument());
+  });
+
   it('should catch cyclical references', async () => {
     const rule = mockCombinedRule();
 
@@ -53,7 +65,7 @@ const queries = [
   getDataSourceQuery('E'),
 ];
 
-function getExpression(refId: string) {
+function getExpression(refId: string, queryParams: string[] | undefined = ['A']) {
   const expr = {
     refId: refId,
     datasourceUid: '__expr__',
@@ -73,7 +85,7 @@ function getExpression(refId: string) {
             type: 'and',
           },
           query: {
-            params: ['A'],
+            params: queryParams,
           },
           reducer: {
             params: [],
