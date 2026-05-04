@@ -50,7 +50,7 @@ import { Annotation } from '../../utils/constants';
 import { getRulesSourceUid, ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
-import { createListFilterLink, groups } from '../../utils/navigation';
+import { groups } from '../../utils/navigation';
 import {
   type RulePluginOrigin,
   getRulePluginOrigin,
@@ -71,6 +71,7 @@ import { Details } from './Details';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import { useAlertRule } from './RuleContext';
 import { ActiveTab } from './activeTab';
+import { buildRuleViewerParentItem } from './pageNav';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
@@ -520,15 +521,8 @@ function usePageNav(rule: CombinedRule) {
         hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
       },
     ],
-    parentItem: {
-      text: groupName,
-      url: groupDetailsUrl,
-      // @TODO support nested folders here
-      parentItem: {
-        text: namespaceName,
-        url: createListFilterLink([['namespace', namespaceName]]),
-      },
-    },
+    // @TODO support nested folders here
+    parentItem: buildRuleViewerParentItem(groupName, namespaceName, groupDetailsUrl),
   };
 
   return {

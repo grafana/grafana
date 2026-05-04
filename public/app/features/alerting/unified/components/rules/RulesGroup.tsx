@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { type CombinedRuleGroup, type CombinedRuleNamespace, type RulesSource } from 'app/types/unified-alerting';
 
+import { isUngroupedVirtualGroup } from '../../hooks/useCombinedRuleNamespaces';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
@@ -17,7 +18,6 @@ import {
   getPromGroupReadOnlyStatus,
   getRulerGroupReadOnlyStatus,
   isFederatedRuleGroup,
-  isUngroupedRuleGroup,
   rulerRuleType,
 } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
@@ -83,6 +83,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   // check what view mode we are in
   const isListView = viewMode === 'list';
   const isGroupView = viewMode === 'grouped';
+  const isVirtualUngroupedGroup = isUngroupedVirtualGroup(group);
 
   const actionIcons: React.ReactNode[] = [];
 
@@ -97,7 +98,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
       const baseUrl = makeFolderLink(folderUID);
-      if (isGroupView) {
+      // The virtual "Ungrouped" bucket is a UI-only construct — its name has no backend
+      // representation, so group-level details/edit URLs would 404. Skip those actions.
+      if (isGroupView && !isVirtualUngroupedGroup) {
         actionIcons.push(
           <ActionIcon
             aria-label={t('alerting.rule-group-action.details', 'rule group details')}
@@ -175,16 +178,16 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     }
   }
 
-  // ungrouped rules are rules that are in the "default" group name
   let groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />;
   if (isListView) {
     groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />;
-  } else if (isUngroupedRuleGroup(group.name)) {
-    const firstRuleName = group.rules[0]?.name ?? t('alerting.rules-group.unknown-rule', 'Unknown Rule');
-    const groupDisplayName = t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', {
-      ruleName: firstRuleName,
-    });
-    groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={groupDisplayName} />;
+  } else if (isVirtualUngroupedGroup) {
+    groupName = (
+      <RuleLocation
+        namespace={decodeGrafanaNamespace(namespace).name}
+        group={t('alerting.rules-group.ungrouped', 'Ungrouped')}
+      />
+    );
   }
 
   return (
