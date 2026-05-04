@@ -4,11 +4,11 @@ import { useCanvasEventsEffect } from '../hooks/useCanvasEventsEffect.ts';
 import { useDiffImageData } from '../hooks/useDiffImageData.ts';
 import type { ComparePlotsProps } from '../types.ts';
 
-import { AssertionStatusBadge } from './AssertionStatusBadge.tsx';
+import { CanvasDiff } from './CanvasDiff.tsx';
+import { CanvasHeader } from './CanvasHeader.tsx';
 import { CanvasStack } from './CanvasStack.tsx';
-import { DiffCanvas } from './DiffCanvas.tsx';
-import { JestActionsButtons, JestOutputModal } from './JestActions.tsx';
-import { PlotHeader } from './PlotHeader.tsx';
+import { CompareHeader } from './CompareHeader.tsx';
+import { JestOutputModal } from './JestActions.tsx';
 
 export function ComparePlots({
   defaultWidth,
@@ -32,7 +32,8 @@ export function ComparePlots({
   const [renderExpectedSetupEvents, setRenderExpectedSetupEvents] = useState(true);
   const [renderActualSetupEvents, setRenderActualSetupEvents] = useState(true);
   const [renderDiffSetupEvents, setRenderDiffSetupEvents] = useState(true);
-  const [jestModalDismissed, setJestModalDismissed] = useState(false);
+  // @todo terrible name, confuse
+  const [modalDismissed, setModalDismissed] = useState(false);
 
   useCanvasEventsEffect(actualUPlotRef, payload.actual, payload.uPlotCanvasEvents, renderActualSetupEvents);
   useCanvasEventsEffect(expectedUPlotRef, payload.expected, payload.uPlotCanvasEvents, renderExpectedSetupEvents);
@@ -93,63 +94,39 @@ export function ComparePlots({
 
   useEffect(() => {
     if (acceptBaselineState.kind === 'running') {
-      setJestModalDismissed(false);
+      setModalDismissed(false);
     }
   }, [acceptBaselineState.kind]);
 
-  const jestModalOpen = acceptBaselineState.kind !== 'idle' && !jestModalDismissed;
+  const jestModalOpen = acceptBaselineState.kind !== 'idle' && !modalDismissed;
 
   return (
     <>
-      <div className="compare-title-row">
-        <div className="compare-title-leading">
-          <button type="button" className="compare-back-btn" onClick={onBackToIndex} aria-label="Back to payload list">
-            ← Back
-          </button>
-          <h3 className="compare-title">Test: {payload.testName}</h3>
-        </div>
-        {payload.snapshotAssertionPassed !== undefined ? (
-          <AssertionStatusBadge passed={payload.snapshotAssertionPassed} />
-        ) : null}
-        <div className="compare-title-actions">
-          {payload.testPath && jestModalDismissed && (jestKind === 'success' || jestKind === 'error') ? (
-            <button type="button" className="jest-view-output-btn" onClick={() => setJestModalDismissed(false)}>
-              View jest output
-            </button>
-          ) : null}
-          <JestActionsButtons
-            passed={payload.snapshotAssertionPassed ?? false}
-            kind={jestKind}
-            onRerunTest={onRerunTest}
-            updateSnapshot={jestUpdateSnapshot}
-            onAcceptBaseline={onAcceptBaseline}
-          />
-          <button
-            type="button"
-            className="compare-next-failed-btn"
-            disabled={nextFailedTestBasename === null}
-            onClick={onGoToNextFailedTest}
-            title={
-              nextFailedTestBasename === null
-                ? 'No other payload with a failing snapshot (or status still loading)'
-                : 'Open the next payload whose snapshot assertion failed'
-            }
-          >
-            Next failed test
-          </button>
-        </div>
-      </div>
+      <CompareHeader
+        onBackToIndex={onBackToIndex}
+        testName={payload.testName}
+        snapshotAssertionPassed={payload.snapshotAssertionPassed}
+        testPath={payload.testPath}
+        jestModalDismissed={modalDismissed}
+        jestKind={jestKind}
+        onViewJestOutput={() => setModalDismissed(false)}
+        onRerunTest={onRerunTest}
+        updateSnapshot={jestUpdateSnapshot}
+        onAcceptBaseline={onAcceptBaseline}
+        nextFailedTestBasename={nextFailedTestBasename}
+        onNextFailedTest={onGoToNextFailedTest}
+      />
       <div className={`wrap${showActualOnly ? ' wrap--actual-only' : ''}`}>
         {!showActualOnly ? (
           <div className="plot-panel expected">
-            <PlotHeader
+            <CanvasHeader
               title={'Expected'}
               onClick={() => setRenderExpectedSetupEvents((prev) => !prev)}
-              renderSetupEvents={renderExpectedSetupEvents}
+              showCanvasContext={renderExpectedSetupEvents}
               mixBlendMode={blendMode}
               onChangeBlendMode={setBlendMode}
               showBlend={showOverlay && hasDiff}
-              hasAxesEvents={!!payload.uPlotCanvasEvents.length}
+              hasCanvasContext={!!payload.uPlotCanvasEvents.length}
             />
             <CanvasStack
               uPlotRef={expectedUPlotRef}
@@ -164,14 +141,14 @@ export function ComparePlots({
         ) : null}
 
         <div className="plot-panel actual">
-          <PlotHeader
+          <CanvasHeader
             title={'Actual'}
             onClick={() => setRenderActualSetupEvents((prev) => !prev)}
-            renderSetupEvents={renderActualSetupEvents}
+            showCanvasContext={renderActualSetupEvents}
             mixBlendMode={blendMode}
             onChangeBlendMode={setBlendMode}
             showBlend={showOverlay && hasDiff}
-            hasAxesEvents={!!payload.uPlotCanvasEvents.length}
+            hasCanvasContext={!!payload.uPlotCanvasEvents.length}
           />
           <CanvasStack
             uPlotRef={actualUPlotRef}
@@ -185,7 +162,7 @@ export function ComparePlots({
         </div>
         {!showActualOnly ? (
           <div className="diff-panel-wrap">
-            <DiffCanvas
+            <CanvasDiff
               width={width}
               height={height}
               hasDiff={hasDiff}
@@ -202,7 +179,7 @@ export function ComparePlots({
       </div>
       <JestOutputModal
         open={jestModalOpen}
-        onClose={() => setJestModalDismissed(true)}
+        onClose={() => setModalDismissed(true)}
         kind={jestKind}
         updateSnapshot={jestUpdateSnapshot}
         message={jestMessage}

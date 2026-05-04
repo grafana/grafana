@@ -1,13 +1,18 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
-import * as React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { isUPlotComparePayload, readSnapshotAssertionPassed } from '../testUtils.ts';
-import type { AcceptBaselineState, ResolvedPayload, UPlotComparePayload } from '../types.ts';
+import { isCanvasComparePayload, readSnapshotAssertionPassed } from '../testUtils.ts';
+import type { AcceptBaselineState, ResolvedPayload, JestCanvasMockComparePayload } from '../types.ts';
 
 import { AssertionStatusBadge } from './AssertionStatusBadge.tsx';
 import { ComparePlots } from './ComparePlots.tsx';
 
-/** When payload JSON has no `width`/`height` (older files), uplot-compare still needs a canvas size for replay. */
+type ViewState =
+  | { kind: 'loading' }
+  | { kind: 'ready'; payload: ResolvedPayload }
+  | { kind: 'blocked'; error?: string; hint?: string };
+
+/** When payload JSON has no `width`/`height` (older files), jest-canvas-mock-compare still needs a canvas size for replay. */
 const FALLBACK_CANVAS_WIDTH = 400;
 const FALLBACK_CANVAS_HEIGHT = 200;
 const PUBLIC_PAYLOAD_FILES = Object.keys(import.meta.glob('../../public/**/*.json', { eager: true }))
@@ -16,7 +21,7 @@ const PUBLIC_PAYLOAD_FILES = Object.keys(import.meta.glob('../../public/**/*.jso
   // eslint-disable-next-line @grafana/no-locale-compare
   .sort((a, b) => a.localeCompare(b));
 
-function readPayloadDimensions(raw: UPlotComparePayload): Pick<ResolvedPayload, 'width' | 'height'> {
+function readPayloadDimensions(raw: JestCanvasMockComparePayload): Pick<ResolvedPayload, 'width' | 'height'> {
   const w = raw.width;
   const h = raw.height;
   return {
@@ -24,11 +29,6 @@ function readPayloadDimensions(raw: UPlotComparePayload): Pick<ResolvedPayload, 
     height: h,
   };
 }
-
-type ViewState =
-  | { kind: 'loading' }
-  | { kind: 'ready'; payload: ResolvedPayload }
-  | { kind: 'blocked'; error?: string; hint?: string };
 
 function isSafePayloadBasename(name: string): boolean {
   if (!name || name.includes('/') || name.includes('\\') || name.includes('..')) {
@@ -100,8 +100,8 @@ function sortPayloadFilesForIndex(
     }
     const ma = modifiedMsByBasename[a];
     const mb = modifiedMsByBasename[b];
-    const maNum = typeof ma === 'number' && !Number.isNaN(ma) ? ma : -Infinity;
-    const mbNum = typeof mb === 'number' && !Number.isNaN(mb) ? mb : -Infinity;
+    const maNum = !Number.isNaN(ma) ? ma : -Infinity;
+    const mbNum = !Number.isNaN(mb) ? mb : -Infinity;
     if (maNum !== mbNum) {
       return mbNum - maNum;
     }
@@ -150,23 +150,20 @@ function parseAcceptBaselineResponse(data: unknown): {
   };
 }
 
-export const CompareUPlotCanvases = ({
-  defaultWidth = FALLBACK_CANVAS_WIDTH,
-  defaultHeight = FALLBACK_CANVAS_HEIGHT,
-}) => {
-  const [view, setView] = React.useState<ViewState>({ kind: 'loading' });
-  const [acceptBaselineState, setAcceptBaselineState] = React.useState<AcceptBaselineState>({ kind: 'idle' });
-  const [selectedFile, setSelectedFile] = React.useState<string | null>(null);
-  const [fileModifiedLabels, setFileModifiedLabels] = React.useState<Record<string, string>>({});
-  const [fileModifiedTimestampMs, setFileModifiedTimestampMs] = React.useState<Record<string, number>>({});
-  const [fileSnapshotAssertionPassed, setFileSnapshotAssertionPassed] = React.useState<
-    Record<string, boolean | undefined>
-  >({});
+export const CompareCanvas = ({ defaultWidth = FALLBACK_CANVAS_WIDTH, defaultHeight = FALLBACK_CANVAS_HEIGHT }) => {
+  const [view, setView] = useState<ViewState>({ kind: 'loading' });
+  const [acceptBaselineState, setAcceptBaselineState] = useState<AcceptBaselineState>({ kind: 'idle' });
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [fileModifiedLabels, setFileModifiedLabels] = useState<Record<string, string>>({});
+  const [fileModifiedTimestampMs, setFileModifiedTimestampMs] = useState<Record<string, number>>({});
+  const [fileSnapshotAssertionPassed, setFileSnapshotAssertionPassed] = useState<Record<string, boolean | undefined>>(
+    {}
+  );
 
   /**
    * @todo route with links instead so folks can open each in a new tab
    */
-  const navigate = React.useCallback((basename: string, mode: 'push' | 'replace') => {
+  const navigate = useCallback((basename: string, mode: 'push' | 'replace') => {
     const url = new URL(window.location.href);
     url.searchParams.set('file', basename);
     if (mode === 'push') {
@@ -176,13 +173,13 @@ export const CompareUPlotCanvases = ({
     }
   }, []);
 
-  const applyPayload = React.useCallback(
-    (raw: ResolvedPayload | UPlotComparePayload, sourceLabel: string, options?: { resetJestActions?: boolean }) => {
-      if (!isUPlotComparePayload(raw)) {
+  const applyPayload = useCallback(
+    (raw: JestCanvasMockComparePayload, sourceLabel: string, options?: { resetJestActions?: boolean }) => {
+      if (!isCanvasComparePayload(raw)) {
         setView({
           kind: 'blocked',
           error: `${sourceLabel}: not a valid uplot snapshot payload`,
-          hint: 'Paste the JSON logged by toMatchUPlotSnapshot or choose a payload file.',
+          hint: 'Paste the JSON logged by toMatchCanvasSnapshot or choose a payload file.',
         });
         return;
       }
@@ -198,7 +195,7 @@ export const CompareUPlotCanvases = ({
           expected: raw.expected as CanvasRenderingContext2DEvent[],
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           actual: raw.actual as CanvasRenderingContext2DEvent[],
-          uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
+          uPlotCanvasEvents: Array.isArray(raw.canvasContextEvents) ? raw.canvasContextEvents : [],
           ...readPayloadDimensions(raw),
           snapshotAssertionPassed: raw.snapshotAssertionPassed,
         },
@@ -207,7 +204,7 @@ export const CompareUPlotCanvases = ({
     []
   );
 
-  const navigateToIndex = React.useCallback(() => {
+  const navigateToIndex = useCallback(() => {
     const url = new URL(window.location.href);
     url.searchParams.delete('file');
     window.history.pushState({}, '', url);
@@ -219,7 +216,7 @@ export const CompareUPlotCanvases = ({
     });
   }, []);
 
-  const setTest = React.useCallback(
+  const setTest = useCallback(
     async (basename: string, historyMode?: 'push' | 'replace') => {
       if (!isSafePayloadBasename(basename)) {
         setView({
@@ -240,7 +237,7 @@ export const CompareUPlotCanvases = ({
           });
           return;
         }
-        const raw: ResolvedPayload = await res.json();
+        const raw: JestCanvasMockComparePayload = await res.json();
         applyPayload(raw, basename);
         if (historyMode) {
           navigate(basename, historyMode);
@@ -256,24 +253,24 @@ export const CompareUPlotCanvases = ({
     [applyPayload, navigate]
   );
 
-  const indexOrderedPayloadFiles = React.useMemo(
+  const indexOrderedPayloadFiles = useMemo(
     () => sortPayloadFilesForIndex(PUBLIC_PAYLOAD_FILES, fileSnapshotAssertionPassed, fileModifiedTimestampMs),
     [fileModifiedTimestampMs, fileSnapshotAssertionPassed]
   );
 
-  const nextFailedTestBasename = React.useMemo(
+  const nextFailedTestBasename = useMemo(
     () => findNextFailedBasename(indexOrderedPayloadFiles, fileSnapshotAssertionPassed, selectedFile),
     [fileSnapshotAssertionPassed, indexOrderedPayloadFiles, selectedFile]
   );
 
-  const goToNextFailedTest = React.useCallback(() => {
+  const goToNextFailedTest = useCallback(() => {
     if (!nextFailedTestBasename) {
       return;
     }
     void setTest(nextFailedTestBasename, 'push');
   }, [nextFailedTestBasename, setTest]);
 
-  const reloadPayloadAfterJest = React.useCallback(async () => {
+  const reloadPayloadAfterJest = useCallback(async () => {
     const basename = selectedFile ?? new URLSearchParams(window.location.search).get('file');
     if (!basename || !isSafePayloadBasename(basename)) {
       return;
@@ -286,7 +283,7 @@ export const CompareUPlotCanvases = ({
         return;
       }
       const rawUnknown: unknown = await res.json();
-      if (!isUPlotComparePayload(rawUnknown)) {
+      if (!isCanvasComparePayload(rawUnknown)) {
         return;
       }
       const assertionPassed = readSnapshotAssertionPassed(rawUnknown);
@@ -299,14 +296,14 @@ export const CompareUPlotCanvases = ({
     }
   }, [applyPayload, selectedFile]);
 
-  const runJestForPayload = React.useCallback(
+  const runJestForPayload = useCallback(
     async (payload: ResolvedPayload, updateSnapshot: boolean) => {
       if (!payload.testPath) {
         return;
       }
       setAcceptBaselineState({ kind: 'running', updateSnapshot });
       try {
-        const res = await fetch('/__uplot-compare/test', {
+        const res = await fetch('/compare/test', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -363,21 +360,21 @@ export const CompareUPlotCanvases = ({
     [reloadPayloadAfterJest]
   );
 
-  const onRerunTest = React.useCallback(() => {
+  const onRerunTest = useCallback(() => {
     if (view.kind !== 'ready') {
       return;
     }
     void runJestForPayload(view.payload, false);
   }, [runJestForPayload, view]);
 
-  const onAcceptBaseline = React.useCallback(() => {
+  const onAcceptBaseline = useCallback(() => {
     if (view.kind !== 'ready') {
       return;
     }
     void runJestForPayload(view.payload, true);
   }, [runJestForPayload, view]);
 
-  const loadFromLocation = React.useCallback(() => {
+  const loadFromLocation = useCallback(() => {
     const run = async () => {
       const params = new URLSearchParams(window.location.search);
       const fileParam = params.get('file');
@@ -407,11 +404,11 @@ export const CompareUPlotCanvases = ({
     void run();
   }, [setTest]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadFromLocation();
   }, [loadFromLocation]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let cancelled = false;
     const loadSnapshotAssertionFlags = async () => {
       const entries = await Promise.all(
@@ -439,7 +436,7 @@ export const CompareUPlotCanvases = ({
     };
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let cancelled = false;
     const loadFileModifiedDates = async () => {
       const entries = await Promise.all(
@@ -485,7 +482,7 @@ export const CompareUPlotCanvases = ({
     };
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const onPopState = () => {
       loadFromLocation();
     };

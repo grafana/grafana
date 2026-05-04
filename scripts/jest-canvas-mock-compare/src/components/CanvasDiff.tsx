@@ -1,8 +1,9 @@
-import { Differ, Viewer } from 'json-diff-kit';
-import * as React from 'react';
 import 'json-diff-kit/dist/viewer.css';
+import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
+import { Viewer, Differ } from 'json-diff-kit';
+import { useEffect, useMemo, useRef } from 'react';
 
-import type { CanvasEventArray } from '../types.ts';
+import { ToggleCanvasContextButton } from './CanvasContextToggleButton.tsx';
 
 interface DiffCanvasProps {
   width: number;
@@ -13,11 +14,11 @@ interface DiffCanvasProps {
   onToggleOverlay: () => void;
   renderDiffSetupEvents: boolean;
   onToggleDiffSetupEvents: () => void;
-  expected?: CanvasEventArray;
-  actual?: CanvasEventArray;
+  expected?: CanvasRenderingContext2DEvent[];
+  actual?: CanvasRenderingContext2DEvent[];
 }
 
-export function DiffCanvas({
+export function CanvasDiff({
   width,
   height,
   hasDiff,
@@ -29,9 +30,9 @@ export function DiffCanvas({
   expected,
   actual,
 }: DiffCanvasProps) {
-  const diffCanvasRef = React.useRef<HTMLCanvasElement | null>(null);
+  const diffCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const differ = React.useMemo(
+  const differ = useMemo(
     () =>
       new Differ({
         detectCircular: true,
@@ -42,9 +43,9 @@ export function DiffCanvas({
     []
   );
 
-  const diff = React.useMemo(() => differ.diff(expected, actual), [differ, expected, actual]);
+  const diff = useMemo(() => differ.diff(expected, actual), [differ, expected, actual]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const diffContext = diffCanvasRef.current?.getContext('2d');
     if (!diffContext) {
       return;
@@ -71,9 +72,7 @@ export function DiffCanvas({
       <div className="plot-header">
         <div className={'plot-label'}>Diff</div>
         <div className="plot-actions">
-          <button className="plot-action-btn" type="button" onClick={onToggleDiffSetupEvents}>
-            {renderDiffSetupEvents ? 'Hide uPlot setup' : 'Show uPlot setup'}
-          </button>
+          <ToggleCanvasContextButton onClick={onToggleDiffSetupEvents} showCanvasContext={renderDiffSetupEvents} />
           <button className="overlay-toggle-btn" type="button" onClick={onToggleOverlay}>
             {showOverlay ? 'Hide overlay' : 'Overlay on charts'}
           </button>

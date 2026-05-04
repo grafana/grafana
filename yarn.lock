@@ -3891,6 +3891,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/jest-canvas-mock-compare@workspace:*, @grafana/jest-canvas-mock-compare@workspace:^, @grafana/jest-canvas-mock-compare@workspace:scripts/jest-canvas-mock-compare":
+  version: 0.0.0-use.local
+  resolution: "@grafana/jest-canvas-mock-compare@workspace:scripts/jest-canvas-mock-compare"
+  dependencies:
+    "@grafana/eslint-plugin": "workspace:packages/grafana-eslint-rules"
+    "@types/react": "npm:^19.1.2"
+    "@types/react-dom": "npm:^19.1.2"
+    "@vitejs/plugin-react": "npm:^4.4.1"
+    eslint: "npm:9.32.0"
+    jest-canvas-mock: "npm:^2.5.2"
+    json-diff-kit: "npm:1.0.35"
+    react: "npm:^19.1.0"
+    react-dom: "npm:^19.1.0"
+    typescript: "npm:6.0.2"
+    vite: "npm:^6.3.4"
+  languageName: unknown
+  linkType: soft
+
 "@grafana/lezer-logql@npm:0.2.9":
   version: 0.2.9
   resolution: "@grafana/lezer-logql@npm:0.2.9"
@@ -4311,8 +4329,8 @@ __metadata:
   resolution: "@grafana/test-utils@workspace:packages/grafana-test-utils"
   dependencies:
     "@grafana/api-clients": "workspace:*"
+    "@grafana/jest-canvas-mock-compare": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/uplot-compare": "workspace:*"
     "@openfeature/react-sdk": "npm:^1.3.0"
     "@swc/core": "npm:1.13.3"
     "@swc/jest": "npm:^0.2.26"
@@ -4492,24 +4510,6 @@ __metadata:
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
-  languageName: unknown
-  linkType: soft
-
-"@grafana/uplot-compare@workspace:*, @grafana/uplot-compare@workspace:^, @grafana/uplot-compare@workspace:scripts/uplot-compare":
-  version: 0.0.0-use.local
-  resolution: "@grafana/uplot-compare@workspace:scripts/uplot-compare"
-  dependencies:
-    "@grafana/eslint-plugin": "workspace:packages/grafana-eslint-rules"
-    "@types/react": "npm:^19.1.2"
-    "@types/react-dom": "npm:^19.1.2"
-    "@vitejs/plugin-react": "npm:^4.4.1"
-    eslint: "npm:9.32.0"
-    jest-canvas-mock: "npm:^2.5.2"
-    json-diff-kit: "npm:1.0.35"
-    react: "npm:^19.1.0"
-    react-dom: "npm:^19.1.0"
-    typescript: "npm:6.0.2"
-    vite: "npm:^6.3.4"
   languageName: unknown
   linkType: soft
 
@@ -20802,6 +20802,7 @@ __metadata:
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/i18n": "workspace:*"
+    "@grafana/jest-canvas-mock-compare": "workspace:^"
     "@grafana/lezer-logql": "npm:0.2.9"
     "@grafana/llm": "npm:1.0.8"
     "@grafana/monaco-logql": "npm:^0.0.8"
@@ -20816,7 +20817,6 @@ __metadata:
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
     "@grafana/ui": "workspace:*"
-    "@grafana/uplot-compare": "workspace:^"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.19"

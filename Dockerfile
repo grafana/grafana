@@ -36,8 +36,8 @@ COPY e2e-playwright e2e-playwright
 COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
-# Yarn workspaces include scripts/uplot-compare; it must exist before install (scripts/ is copied later for cache layering).
-COPY scripts/uplot-compare scripts/uplot-compare
+# Yarn workspaces include scripts/jest-canvas-mock-compare; it must exist before install (scripts/ is copied later for cache layering).
+COPY scripts/jest-canvas-mock-compare scripts/jest-canvas-mock-compare
 
 #
 # Set the node env according to defaults or argument passed

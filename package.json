@@ -18,7 +18,7 @@
     "codeowners-manifest:generate": "node ./scripts/codeowners-manifest/generate.js",
     "codeowners-manifest:metadata": "node ./scripts/codeowners-manifest/metadata.js",
     "codeowners-manifest:raw": "node ./scripts/codeowners-manifest/raw.js",
-    "uplot-compare": "yarn workspace @grafana/uplot-compare dev -- -p 5173",
+    "canvas-compare": "yarn workspace @grafana/jest-canvas-mock-compare dev -- -p 5173",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.ts",
     "e2e:schema-v2": "KUBERNETES_DASHBOARDS=true yarn playwright test --project dashboards",
     "e2e:playwright": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep-invert @cloud-plugins",
@@ -93,9 +93,9 @@
     "@emotion/eslint-plugin": "11.12.0",
     "@grafana/eslint-config": "8.2.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
+    "@grafana/jest-canvas-mock-compare": "workspace:^",
     "@grafana/plugin-e2e": "^3.4.12",
     "@grafana/test-utils": "workspace:*",
-    "@grafana/uplot-compare": "workspace:^",
     "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^6.0.0",
     "@playwright/test": "1.56.1",
@@ -478,7 +478,7 @@
       "packages/*",
       "public/app/plugins/*/*",
       "e2e-playwright/test-plugins/*",
-      "scripts/uplot-compare"
+      "scripts/jest-canvas-mock-compare"
     ]
   },
   "engines": {

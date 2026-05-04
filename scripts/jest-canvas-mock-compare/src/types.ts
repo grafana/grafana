@@ -1,16 +1,13 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 
-import type { eventsToCanvasScript } from './canvasUtils.ts';
-
-export type { UPlotComparePayload } from './exportedTypes.ts';
-
-export type CanvasEventArray = Parameters<typeof eventsToCanvasScript>[0];
+// @todo y tho?
+export type { JestCanvasMockComparePayload } from './exportedTypes.ts';
 
 export type ResolvedPayload = {
   testName: string;
   testPath?: string;
-  expected: CanvasEventArray;
-  actual: CanvasEventArray;
+  expected: CanvasRenderingContext2DEvent[];
+  actual: CanvasRenderingContext2DEvent[];
   uPlotCanvasEvents: CanvasRenderingContext2DEvent[];
   width?: number;
   height?: number;

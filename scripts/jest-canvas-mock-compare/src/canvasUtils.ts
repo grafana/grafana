@@ -1,6 +1,8 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 
 /**
+ * Converts jest-canvas-mock CanvasRenderingContext2DEvent[] to CanvasRenderingContext2D calls,
+ * i.e. this will re-reapply the recorded canvas calls from the test execution against the actual canvas
  * @param data
  * @param ctx
  */
@@ -110,7 +112,7 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: CanvasRenderingConte
       const fillRule = props.fillRule ?? 'nonzero';
       if (!Array.isArray(p) || p.length === 0) {
         // `ctx.fill(emptyPath2D)` is a no-op. Replaying `fill()` without rebuilding the path
-        // would incorrectly re-fill the *previous* path (see uplot-compare with candlestick
+        // would incorrectly re-fill the *previous* path (see jest-canvas-mock-compare with candlestick
         // drawMarkers: flat + hollowPath empty segments).
         ctx.beginPath();
         ctx.fill(fillRule);

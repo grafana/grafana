@@ -4,13 +4,13 @@ import { type Context, toMatchSnapshot } from 'jest-snapshot';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { type UPlotComparePayload } from '@grafana/uplot-compare';
+import { type JestCanvasMockComparePayload } from '@grafana/jest-canvas-mock-compare';
 
-import { createUPlotComparePayloadBasename } from '../uplotComparePayload';
+import { createCanvasComparePayloadBasename } from '../canvasComparePayload';
 
 export type ToMatchSnapshotRest = Parameters<typeof toMatchSnapshot> extends [unknown, ...infer R] ? R : never;
 
-type UPlotSnapshotSize = {
+type CanvasSize = {
   width: number;
   height: number;
 };
@@ -19,11 +19,11 @@ type SnapshotMismatch = jest.CustomMatcherResult & {
   expected?: string;
 };
 
-export function toMatchUPlotSnapshot(
+export function toMatchCanvasSnapshot(
   this: MatcherContext,
   received: CanvasRenderingContext2DEvent[],
-  uPlotCanvasEvents: CanvasRenderingContext2DEvent[],
-  size: UPlotSnapshotSize,
+  canvasContextEvents: CanvasRenderingContext2DEvent[],
+  size: CanvasSize,
   snapshotHint?: string,
   ...rest: ToMatchSnapshotRest
 ): jest.CustomMatcherResult {
@@ -52,23 +52,23 @@ export function toMatchUPlotSnapshot(
     try {
       parsedExpected = parseSnapshotJson(expected) as CanvasRenderingContext2DEvent[];
     } catch (e) {
-      console.error('toMatchUPlotSnapshot: failed to parse expected snapshot JSON', e);
+      console.error('toMatchCanvasSnapshot: failed to parse expected snapshot JSON', e);
       return result;
     }
 
     const testName = this.currentTestName ?? '';
-    const payload: UPlotComparePayload = {
+    const payload: JestCanvasMockComparePayload = {
       testName,
       testPath: this.testPath,
       expected: parsedExpected,
       actual: received,
-      uPlotCanvasEvents: uPlotCanvasEvents,
+      canvasContextEvents: canvasContextEvents,
       width: payloadWidth,
       height: payloadHeight,
       snapshotAssertionPassed: result.pass,
     };
 
-    const { fullPath, publicBasename } = resolveUPlotComparePayloadWriteTarget(testName);
+    const { fullPath, publicBasename } = resolveCanvasComparePayloadWriteTarget(testName);
     try {
       mkdirSync(path.dirname(fullPath), { recursive: true });
       writeFileSync(fullPath, `${JSON.stringify(payload)}\n`, 'utf8');
@@ -76,11 +76,11 @@ export function toMatchUPlotSnapshot(
       compareUrl.searchParams.set('file', publicBasename);
       // Use stderr so jest-fail-on-console (console.* hooks) does not treat this as a test failure
       process.stderr.write(
-        `To debug this diff visually, run \`yarn uplot-compare\`, then open:\n\n${compareUrl.toString()}\n\n(Payload written to ${fullPath})\n`
+        `To debug this diff visually, run \`yarn canvas-compare\`, then open:\n${compareUrl.toString()}\n(Payload written to ${fullPath})\n\n`
       );
     } catch (e) {
       console.warn(
-        `[toMatchUPlotSnapshot] Could not write compare payload to ${fullPath}:`,
+        `[toMatchCanvasSnapshot] Could not write compare payload to ${fullPath}:`,
         e instanceof Error ? e.message : e
       );
     }
@@ -103,16 +103,11 @@ function parseSnapshotJson(text: string) {
  * Return public and filesystem paths
  * @param testName
  */
-function resolveUPlotComparePayloadWriteTarget(testName: string): { fullPath: string; publicBasename: string } {
-  const fromEnv = process.env.UPLOT_COMPARE_PAYLOAD_FILE;
-  if (fromEnv) {
-    const fullPath = path.isAbsolute(fromEnv) ? fromEnv : path.resolve(process.cwd(), fromEnv);
-    return { fullPath, publicBasename: path.basename(fullPath) };
-  }
-  const basename = createUPlotComparePayloadBasename(testName);
+function resolveCanvasComparePayloadWriteTarget(testName: string): { fullPath: string; publicBasename: string } {
+  const basename = createCanvasComparePayloadBasename(testName);
   // Resolve via `package.json` so this does not break if the workspace's main entry moves
   // (e.g. to a built `dist/` folder). `./package.json` is explicitly listed in the workspace's `exports`.
-  const uplotCompareRoot = path.dirname(require.resolve('@grafana/uplot-compare/package.json'));
-  const fullPath = path.join(uplotCompareRoot, 'public', basename);
+  const compareRoot = path.dirname(require.resolve('@grafana/jest-canvas-mock-compare/package.json'));
+  const fullPath = path.join(compareRoot, 'public', basename);
   return { fullPath, publicBasename: basename };
 }

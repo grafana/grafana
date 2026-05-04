@@ -1,4 +1,4 @@
-import { SLUG_MAX_LENGTH, slugifyJestTestNameForFilename } from './uplotComparePayload';
+import { SLUG_MAX_LENGTH, slugifyJestTestNameForFilename } from './canvasComparePayload';
 
 describe('slugifyJestTestNameForFilename', () => {
   it('returns "unknown" for empty, whitespace-only, and unsafe-only input', () => {
@@ -22,7 +22,7 @@ describe('slugifyJestTestNameForFilename', () => {
   it('replaces Jest › and > test path separators with underscores', () => {
     expect(slugifyJestTestNameForFilename('Suite › child')).toBe('Suite_child');
     expect(slugifyJestTestNameForFilename('a > b > c')).toBe('a_b_c');
-    expect(slugifyJestTestNameForFilename('Panel › uPlot > drawMarkers')).toBe('Panel_uPlot_drawMarkers');
+    expect(slugifyJestTestNameForFilename('Panel › canvas > drawMarkers')).toBe('Panel_canvas_drawMarkers');
   });
 
   it('strips combining marks after NFKD (e.g. accents)', () => {

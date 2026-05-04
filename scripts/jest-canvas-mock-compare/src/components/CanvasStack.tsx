@@ -11,14 +11,14 @@ export function CanvasStack(props: {
 }) {
   return (
     <div className="canvas-stack">
-      <canvas ref={props.uPlotRef} className="canvas" width={props.width} height={props.height}></canvas>
+      <canvas ref={props.uPlotRef} className="canvas" width={props.width} height={props.height} />
       <canvas
         ref={props.overlayRef}
         className={`canvas diff-overlay-canvas${props.showOverlay && props.hasDiff ? ' is-visible' : ''}`}
         width={props.width}
         height={props.height}
         style={{ mixBlendMode: props.mixBlendMode }}
-      ></canvas>
+      />
     </div>
   );
 }

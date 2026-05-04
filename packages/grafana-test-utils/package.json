@@ -62,8 +62,8 @@
     "rxjs": "7.8.2"
   },
   "devDependencies": {
+    "@grafana/jest-canvas-mock-compare": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/uplot-compare": "workspace:*",
     "@swc/core": "1.13.3",
     "@swc/jest": "^0.2.26",
     "@types/chance": "^1.1.7",

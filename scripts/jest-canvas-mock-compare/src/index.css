@@ -1,16 +1,8 @@
 .overlay {
-    position: absolute;
-    opacity: 0.5;
-    left: 0;
-    top: 0;
-
-    #expected,
-    #actual {
-        position: absolute;
-        mix-blend-mode: difference;
-        pointer-events: none;
-        filter: invert(100%);
-    }
+  position: absolute;
+  opacity: 0.5;
+  left: 0;
+  top: 0;
 }
 
 .wrap {
