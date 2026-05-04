@@ -29,7 +29,9 @@ func main() {
 	tsFile, err := os.Create("./../../../../../public/app/features/dashboard/components/ShareModal/SharePublicDashboard/SupportedPubdashDatasources.ts")
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
+	defer tsFile.Close()
 	err = tsTemplate.Execute(tsFile, slugs)
 	if err != nil {
 		fmt.Println(err)
