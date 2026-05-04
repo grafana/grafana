@@ -876,6 +876,42 @@ func TestIntegrationIsAlreadyOnUnifiedStorage(t *testing.T) {
 		},
 	}
 
+	cleanLegacyTables := func(t *testing.T) {
+		t.Helper()
+		sess := env.engine.NewSession()
+		defer sess.Close()
+		_, err := sess.Exec("DELETE FROM dashboard")
+		require.NoError(t, err)
+		_, err = sess.Exec("DELETE FROM folder")
+		require.NoError(t, err)
+	}
+
+	// Use raw SQL inserts so xorm's auto-`updated`/`created` magic doesn't overwrite
+	// the timestamps we are deliberately setting for the test.
+	insertDashboard := func(t *testing.T, uid string, updated time.Time) {
+		t.Helper()
+		sess := env.engine.NewSession()
+		defer sess.Close()
+		_, err := sess.Exec(
+			`INSERT INTO dashboard (version, slug, title, data, org_id, created, updated, folder_id, is_folder, has_acl, is_public, uid)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			1, uid, "test "+uid, "{}", 1, updated.UTC(), updated.UTC(), 0, false, false, false, uid,
+		)
+		require.NoError(t, err)
+	}
+
+	insertFolder := func(t *testing.T, uid string, updated time.Time) {
+		t.Helper()
+		sess := env.engine.NewSession()
+		defer sess.Close()
+		_, err := sess.Exec(
+			`INSERT INTO folder (uid, org_id, title, created, updated)
+			 VALUES (?, ?, ?, ?, ?)`,
+			uid, 1, "folder "+uid, updated.UTC(), updated.UTC(),
+		)
+		require.NoError(t, err)
+	}
+
 	insertKVState := func(t *testing.T, key string, status dualwriteStorageStatus) {
 		t.Helper()
 		orgID := int64(0)
@@ -1071,6 +1107,7 @@ func TestIntegrationIsAlreadyOnUnifiedStorage(t *testing.T) {
 	})
 
 	t.Run("Run skips migration when already on unified storage", func(t *testing.T) {
+		cleanLegacyTables(t)
 		insertKVState(t, configKey, migratedStatus)
 		runner2, fake := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
 		runMigration(t, env.engine, runner2, migrator.SQLite)
@@ -1078,9 +1115,57 @@ func TestIntegrationIsAlreadyOnUnifiedStorage(t *testing.T) {
 	})
 
 	t.Run("Run proceeds with migration when not on unified storage", func(t *testing.T) {
+		cleanLegacyTables(t)
 		insertKVState(t, configKey, dualwriteStorageStatus{ReadUnified: false, WriteUnified: false, Migrated: 0})
 		runner2, fake := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
 		runMigration(t, env.engine, runner2, migrator.SQLite)
 		require.Equal(t, 1, fake.migrateCalled, "Migrate should be called when not on unified storage")
+	})
+
+	t.Run("returns false when legacy dashboard has edits after migrated stamp", func(t *testing.T) {
+		cleanLegacyTables(t)
+		insertKVState(t, configKey, migratedStatus)
+		insertDashboard(t, "dash-after", time.UnixMilli(migratedStatus.Migrated).Add(time.Hour))
+
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got, "should not skip migration when legacy dashboard has edits after the dualwrite stamp")
+	})
+
+	t.Run("returns false when legacy folder has edits after migrated stamp", func(t *testing.T) {
+		cleanLegacyTables(t)
+		insertKVState(t, configKey, migratedStatus)
+		insertFolder(t, "folder-after", time.UnixMilli(migratedStatus.Migrated).Add(time.Hour))
+
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got, "should not skip migration when legacy folder has edits after the dualwrite stamp")
+	})
+
+	t.Run("returns true when legacy edits all predate migrated stamp", func(t *testing.T) {
+		cleanLegacyTables(t)
+		insertKVState(t, configKey, migratedStatus)
+		insertDashboard(t, "dash-before", time.UnixMilli(migratedStatus.Migrated).Add(-time.Hour))
+		insertFolder(t, "folder-before", time.UnixMilli(migratedStatus.Migrated).Add(-time.Hour))
+
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.True(t, got, "should skip migration when all legacy edits predate the dualwrite stamp")
+	})
+
+	t.Run("Run proceeds with migration when legacy has edits after migrated stamp", func(t *testing.T) {
+		cleanLegacyTables(t)
+		insertKVState(t, configKey, migratedStatus)
+		insertDashboard(t, "dash-postmigrate", time.UnixMilli(migratedStatus.Migrated).Add(time.Hour))
+
+		runner2, fake := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
+		runMigration(t, env.engine, runner2, migrator.SQLite)
+		require.Equal(t, 1, fake.migrateCalled, "Migrate should be called when legacy has post-stamp edits")
 	})
 }

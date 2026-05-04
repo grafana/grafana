@@ -371,13 +371,21 @@ func (s dualwriteStorageStatus) migratedToUnified() bool {
 
 // isAlreadyOnUnifiedStorage checks persisted dualwrite state used by prior versions of Grafana.
 // Returns true when all resources in the definition were already migrated to unified storage
-// (read_unified=true, write_unified=true, write_legacy=false, and migrated>0).
+// (read_unified=true, write_unified=true, write_legacy=false, and migrated>0) AND legacy SQL
+// has not been touched since the migration was recorded.
 // This is to prevent data loss, as otherwise unified storage will be wiped and repopulated
 // from sql, destroying resources that only exist in unified storage.
 //
 // Two historical locations are checked:
 //   - kv_store table with namespace "unified.dualwrite" (12.1.0+)
 //   - <data_path>/dualwrite.json file containing a map[string]StorageStatus (12.0.0)
+//
+// The dualwrite state is necessary but not sufficient: feature flags (e.g. kubernetesDashboards,
+// provisioning) can route the API around the dualwriter without touching the persisted state.
+// In that case writes silently resume against legacy SQL while the dualwrite row becomes a
+// stale fossil. We therefore also verify that legacy has not been edited after the recorded
+// "migrated" timestamp; if it has, unified is not currently authoritative and the migration
+// must run to bring legacy edits into unified.
 //
 // This legacy path was only ever exposed for folders/dashboards, so this check is skipped
 // for every other migration definition.
@@ -396,24 +404,73 @@ func (r *MigrationRunner) isAlreadyOnUnifiedStorage(sess *xorm.Session) (bool, e
 		return false, fmt.Errorf("failed to read dualwrite state file: %w", err)
 	}
 
+	var earliestMigrated int64
 	for _, key := range configResources {
-		if status, ok := fileStatuses[key]; ok {
-			if !status.migratedToUnified() {
-				return false, nil
+		var (
+			status dualwriteStorageStatus
+			found  bool
+		)
+		if s, ok := fileStatuses[key]; ok {
+			status, found = s, true
+		} else {
+			kvStatus, kvFound, err := r.readDualwriteKVState(sess, key)
+			if err != nil {
+				return false, err
 			}
-			continue
-		}
-
-		status, found, err := r.readDualwriteKVState(sess, key)
-		if err != nil {
-			return false, err
+			status, found = kvStatus, kvFound
 		}
 		if !found || !status.migratedToUnified() {
 			return false, nil
 		}
+		if earliestMigrated == 0 || status.Migrated < earliestMigrated {
+			earliestMigrated = status.Migrated
+		}
+	}
+
+	legacyTouched, err := r.legacyEditedAfter(sess, earliestMigrated)
+	if err != nil {
+		return false, fmt.Errorf("failed to check legacy edits since dualwrite stamp: %w", err)
+	}
+	if legacyTouched {
+		r.log.Warn(
+			"dualwrite state shows folders/dashboards migrated to unified, but legacy SQL has edits since — running migration to bring legacy edits into unified",
+			"migrated_at", time.UnixMilli(earliestMigrated).UTC().Format(time.RFC3339))
+		return false, nil
 	}
 
 	return true, nil
+}
+
+// legacyEditedAfter reports whether the legacy "dashboard" or "folder" tables contain any
+// rows with `updated` after the given Unix-millis timestamp. Both tables are scanned because
+// folders are stored in `dashboard` (with is_folder=1) on older instances and in `folder` on
+// newer ones; one or the other may carry the post-stamp activity. Missing tables are treated
+// as empty so the check is a no-op on installs that never ran the legacy schema.
+func (r *MigrationRunner) legacyEditedAfter(sess *xorm.Session, migratedMillis int64) (bool, error) {
+	if migratedMillis <= 0 {
+		return false, nil
+	}
+	threshold := time.UnixMilli(migratedMillis).UTC()
+
+	for _, table := range []string{"dashboard", "folder"} {
+		exists, err := sess.IsTableExist(table)
+		if err != nil {
+			return false, fmt.Errorf("failed to check legacy table %s: %w", table, err)
+		}
+		if !exists {
+			continue
+		}
+		var present int
+		// SELECT 1 ... LIMIT 1 is supported on Postgres, MySQL and SQLite.
+		ok, err := sess.SQL(fmt.Sprintf("SELECT 1 FROM %s WHERE updated > ? LIMIT 1", table), threshold).Get(&present)
+		if err != nil {
+			return false, fmt.Errorf("failed to check legacy edits in %s: %w", table, err)
+		}
+		if ok {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // readDualwriteKVState loads dualwrite state for the given resource key from kv_store.
