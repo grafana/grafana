@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
@@ -619,6 +619,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-streaming',
       marginRight: 0,
       color: theme.colors.success.text,
+      [theme.transitions.handleMotion('no-preference')]: {
+        animationName: keyframes({
+          '0%': { opacity: 0 },
+          '50%': { opacity: 1 },
+          '100%': { opacity: 0 },
+        }),
+        animationDuration: '4s',
+        animationIterationCount: 'infinite',
+        animationDelay: '0.5s',
+      },
 
       '&:hover': {
         color: theme.colors.success.text,
