@@ -47,7 +47,7 @@ The following errors occur when Grafana can't establish or maintain a connection
 
 ### Failed to connect to InfluxDB
 
-**Error message:** "error performing influxQL query" or "error performing flux query" or "error performing sql query"
+**Error message:** `error performing influxQL query` or `error performing flux query` or `error performing sql query`
 
 **Cause:** Grafana can't establish a network connection to the InfluxDB server.
 
@@ -62,7 +62,7 @@ The following errors occur when Grafana can't establish or maintain a connection
 
 ### PDC connection fails with "no such host"
 
-**Error message:** "socks connect tcp ... -> influxdb.host:8086: dial tcp: lookup ... no such host"
+**Error message:** `socks connect tcp ... -> influxdb.host:8086: dial tcp: lookup ... no such host`
 
 **Cause:** When using [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/), the InfluxDB URL can't be resolved through the SOCKS proxy tunnel.
 
@@ -75,7 +75,7 @@ The following errors occur when Grafana can't establish or maintain a connection
 
 ### Request timed out
 
-**Error message:** "context deadline exceeded" or "request timeout" or "dial tcp \<IP\>:\<port\>: i/o timeout"
+**Error message:** `context deadline exceeded` or `request timeout` or `dial tcp <IP>:<port>: i/o timeout`
 
 **Cause:** The connection to InfluxDB timed out before receiving a response. This is common after Grafana upgrades when infrastructure changes (such as database host migrations) happen at the same time.
 
@@ -123,9 +123,9 @@ The following errors occur when there are issues with authentication credentials
 
 The following errors occur when the data source is not configured correctly.
 
-### Missing URL
+### URL not configured
 
-**Error message:** "missing URL from datasource configuration"
+**Error message:** `missing URL from datasource configuration`
 
 **Cause:** The data source URL field is empty.
 
@@ -153,11 +153,11 @@ The following errors occur when the data source is not configured correctly.
 | 2.x (OSS/Cloud)  | Flux                      | InfluxQL is also available via the v1 compatibility API, but requires [DBRP mapping](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/). |
 | 3.x / Cloud Dedicated / Cloud Serverless | SQL or InfluxQL | Flux is not supported on InfluxDB 3.x. |
 
-Each query language uses a different API endpoint. If you select the wrong language for your InfluxDB version, health checks and queries will fail.
+Each query language uses a different API endpoint. If you select the wrong language for your InfluxDB version, health checks and queries fail.
 
 ### Invalid data source info received
 
-**Error message:** "invalid data source info received"
+**Error message:** `invalid data source info received`
 
 **Cause:** The data source configuration is incomplete or corrupted.
 
@@ -183,7 +183,7 @@ Each query language uses a different API endpoint. If you select the wrong langu
 
 ### Browser access mode disabled
 
-**Error message:** "Direct browser access in the InfluxDB datasource is no longer available. Switch to server access mode."
+**Error message:** `Direct browser access in the InfluxDB datasource is no longer available. Switch to server access mode.`
 
 **Cause:** The data source is configured for direct browser access, which is no longer supported.
 
@@ -291,7 +291,7 @@ The following errors occur when clicking **Save & test** to validate the data so
 
 ### 0 measurements found
 
-**Error message:** "datasource is working. 0 measurements found"
+**Error message:** `datasource is working. 0 measurements found`
 
 **Cause:** The connection is successful, but the database contains no measurements.
 
@@ -334,7 +334,7 @@ The following errors occur when there are issues with query syntax or execution.
 
 1. Reduce the time range of your query.
 1. Add more specific filters to limit the data scanned.
-1. Increase the query timeout setting in InfluxDB if you have admin access.
+1. Increase the query timeout setting in InfluxDB if you have administrator access.
 1. Optimize your query to reduce complexity.
 
 ### Too many series or data points
@@ -467,7 +467,7 @@ The following issues don't produce specific error messages but are commonly enco
 **Symptoms:**
 
 - Dashboard panels display "data source \<UID\> was not found"
-- Manually re-running queries in the panel editor works after reselecting the data source
+- Manually re-running queries in the panel editor works after you select the data source again
 
 **Cause:** Dashboard panels reference an old or deleted data source UID. This happens when a data source is deleted and recreated, since the new data source gets a different UID.
 

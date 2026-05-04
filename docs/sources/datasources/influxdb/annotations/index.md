@@ -104,7 +104,7 @@ Grafana processes the resulting data frames as annotation events. Ensure the que
 
 ## SQL annotations
 
-SQL-configured data sources (InfluxDB 3.x) use the standard Grafana annotation query editor. Write a SQL query that returns a time column and at least one text column. Use the `$__timeFilter(time)` macro to scope results to the dashboard time range.
+SQL-configured data sources (InfluxDB 3.x) use the standard Grafana annotation query editor. Write an SQL query that returns a time column and at least one text column. Use the `$__timeFilter(time)` macro to scope results to the dashboard time range.
 
 ### SQL annotation query example
 

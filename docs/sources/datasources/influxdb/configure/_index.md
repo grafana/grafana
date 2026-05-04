@@ -49,7 +49,7 @@ To configure the InfluxDB data source, you must have the `Administrator` role.
 
 InfluxData provides three query languages:
 
-- **SQL** - Standard SQL query language for InfluxDB 3.x and newer cloud products (Cloud Serverless, Cloud Dedicated, Clustered). SQL is InfluxData's recommended query language for new deployments. It supports JOINs, subqueries, and standard SQL functions. Refer to [InfluxDB SQL reference](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/) for the full list of supported statements, operators, and functions.
+- **SQL** - Standard SQL query language for InfluxDB 3.x and newer cloud products (Cloud Serverless, Cloud Dedicated, Clustered). InfluxData recommends SQL for new deployments. It supports JOINs, subqueries, and standard SQL functions. Refer to [InfluxDB SQL reference](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/) for the full list of supported statements, operators, and functions.
 - **InfluxQL** - A SQL-like query language developed by InfluxData, available across all InfluxDB versions. InfluxQL doesn't support advanced functions such as JOINs. Refer to the [InfluxQL reference](https://docs.influxdata.com/influxdb/cloud-serverless/reference/influxql/) for details.
 - **Flux** - A functional data scripting language for InfluxDB 2.x. Flux is not supported on InfluxDB 3.x. Refer to [Query InfluxDB with Flux](https://docs.influxdata.com/influxdb/cloud/query-data/get-started/query-influxdb/) for a basic guide.
 
@@ -144,7 +144,7 @@ Toggle **Auth and TLS/SSL Settings** to expand authentication and security optio
 
 TLS/SSL Certificates are encrypted and stored in the Grafana database.
 
-- **TLS client auth** - When enabled, add the `Server name`, `Client cert` and `Client key`. The client provides a certificate that the server validates to establish the client’s trusted identity. The client key encrypts the data between client and server.
+- **TLS client auth** - When enabled, add the `Server name`, `Client cert` and `Client key`. The client provides a certificate that the server validates to establish the client's trusted identity. The client key encrypts the data between client and server.
   - **Server name** - Name of the server. Example: `server1.domain.com`
   - **Client cert** - Add the client certificate.
   - **Client key** - Add the client key.
@@ -203,7 +203,7 @@ Toggle **Advanced Database Settings** to expand optional settings that give you 
 **For InfluxQL**
 
 - **HTTP method** - Sets the HTTP method used to query your data source. The POST method allows for larger queries that would return an error using the GET method. The default method is `POST`.
-- **Autocomplete range** - Sets a time range limit for the query editor's autocomplete to reduce the execution time of tag filter queries. As a result, any tags not present within the defined time range will be filtered out. For example, setting the value to 12h will include only tag keys/values from the past 12 hours. This feature is recommended for use with very large databases, where significant performance improvements can be observed.
+- **Autocomplete range** - Sets a time range limit for the query editor autocomplete to reduce the execution time of tag filter queries. Tags not present within the defined time range are filtered out. For example, setting the value to `12h` includes only tag keys and values from the past 12 hours. This feature is recommended for very large databases, where significant performance improvements can be observed.
 
 **For SQL**
 

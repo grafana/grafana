@@ -24,7 +24,7 @@ review_date: 2026-05-01
 
 # InfluxDB query editor
 
-Grafana's query editors are unique to each data source. For general information on Grafana query editors, refer to [Query editors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors). For general information on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
+Each data source in Grafana has a unique query editor. For general information on query editors, refer to [Query editors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors). For general information on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 The InfluxDB query editor is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the InfluxDB query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
@@ -42,7 +42,7 @@ If you're new to InfluxDB, these terms are used throughout the query editor:
 | Term | Description |
 | ---- | ----------- |
 | **Measurement** | A logical grouping of fields, tags, and timestamps, similar to a table in a relational database. |
-| **Field** | A column in a measurement that stores the actual data values (numbers, strings, booleans). |
+| **Field** | A column in a measurement that stores the actual data values (numbers, strings, Boolean values). |
 | **Tag** | A column used for metadata and indexing. Tags are indexed and optimized for filtering. |
 | **Retention policy** | An InfluxDB 1.x setting that controls how long data is stored before automatic deletion. |
 | **Bucket** | An InfluxDB 2.x and 3.x storage location that combines a database and retention policy. |
@@ -64,7 +64,7 @@ The InfluxQL query editor helps you select metrics and tags to create InfluxQL q
 Visual query editor mode contains the following components:
 
 - **FROM** - Select a measurement to query.
-- **WHERE** - Select filters by clicking the **+ sign**. You can enter regular expressions or use the text input for regex tag values.
+- **WHERE** - Select filters by clicking the **+ sign**. You can enter regular expressions or use the text input for regular expression tag values.
 - **SELECT** - Select fields and functions from the drop-down. You can add multiple fields and functions by clicking the **+ sign**.
 - **GROUP BY** - Select a tag from the drop-down menu.
 - **TIMEZONE** - _Optional_ Group data by a specific timezone.
@@ -83,9 +83,9 @@ If you use raw query mode, your query must include `WHERE $timeFilter`. You shou
 ### Match by regular expressions
 
 You can enter regular expressions for metric names or tag filter values.
-Wrap the regex pattern in forward slashes (`/`), as shown in this example: `/measurement/`.
+Wrap the regular expression pattern in forward slashes (`/`), as shown in this example: `/measurement/`.
 
-Grafana automatically adjusts the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
+Grafana automatically adjusts the filter tag condition to use the InfluxDB regular expression match condition operator (`=~`).
 
 ### Field and aggregation functions
 
@@ -155,18 +155,18 @@ Select the format from the **Format** drop-down in the query editor.
 
 ### Macros
 
-You can use macros in your query to automatically substitute them with values from Grafana's context.
+You can use macros in your query to automatically substitute them with values from the Grafana context.
 
 | Macro example               | Replaced with |
 | --------------------------- | ------------- |
 | `$__timeFrom`               | The start of the currently active time selection, such as `cast('2020-06-11T13:31:00Z' as timestamp)`. |
 | `$__timeTo`                 | The end of the currently active time selection, such as `cast('2020-06-11T14:31:00Z' as timestamp)`. |
 | `$__timeFilter(<column>)`   | A time range filter applied to the specified column. Expands to `<column> >= $__timeFrom AND <column> <= $__timeTo`. |
-| `$__interval`               | An interval string that corresponds to Grafana's calculated interval based on the time range of the active time selection, such as `interval '5 second'`. |
-| `$__dateBin(<column>)`      | Applies [date_bin](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function using `$__interval`. Column must be a timestamp. |
-| `$__dateBinAlias(<column>)` | Applies [date_bin](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function with a `_binned` suffix alias. Column must be a timestamp. |
-| `$__timeGroup(<column>)`    | Groups results by a time interval using `date_bin` with `$__interval`. Column must be a timestamp. |
-| `$__timeGroupAlias(<column>)` | Groups results by a time interval using `date_bin` with `$__interval` and adds a `_binned` suffix alias. Column must be a timestamp. |
+| `$__interval`               | An interval string that corresponds to the Grafana calculated interval based on the time range of the active time selection, such as `interval '5 second'`. |
+| `$__dateBin(<column>)`      | Applies the [`date_bin`](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function using `$__interval`. Column must be a timestamp. |
+| `$__dateBinAlias(<column>)` | Applies the [`date_bin`](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function with a `_binned` suffix alias. Column must be a timestamp. |
+| `$__timeGroup(<column>)`    | Groups results by a time interval using `date_bin()` with `$__interval`. Column must be a timestamp. |
+| `$__timeGroupAlias(<column>)` | Groups results by a time interval using `date_bin()` with `$__interval` and adds a `_binned` suffix alias. Column must be a timestamp. |
 
 ### SQL query examples
 
@@ -233,15 +233,17 @@ to [InfluxDB 1.8 API compatibility](https://github.com/influxdata/influxdb-clien
 
 ### Use macros
 
-You can enter macros in the query to replace them with values from Grafana's context.
-Macros support copying and pasting from [Chronograf](https://www.influxdata.com/time-series-platform/chronograf/).
+You can enter macros in the query to replace them with values from the Grafana context.
+<!-- vale Grafana.Spelling = NO -->
+Macros support copying and pasting from [InfluxData Chronograf](https://www.influxdata.com/time-series-platform/chronograf/).
+<!-- vale Grafana.Spelling = YES -->
 
 | Macro example      | Replaced with |
 | ------------------ | ------------- |
 | `v.timeRangeStart` | The start of the currently active time selection, such as `2020-06-11T13:31:00Z`. |
 | `v.timeRangeStop`  | The end of the currently active time selection, such as `2020-06-11T14:31:00Z`. |
-| `v.windowPeriod`   | An interval string compatible with Flux that corresponds to Grafana's calculated interval based on the time range of the active time selection, such as `5s`. |
-| `v.defaultBucket`  | The data source configuration's **Default Bucket** setting. |
+| `v.windowPeriod`   | An interval string compatible with Flux that corresponds to the Grafana calculated interval based on the time range of the active time selection, such as `5s`. |
+| `v.defaultBucket`  | The **Default Bucket** value from the data source configuration. |
 | `v.organization`   | The data source configuration's **Organization** setting. |
 
 For example, consider the following Flux query:
@@ -255,7 +257,7 @@ from(bucket: v.defaultBucket)
   |> yield(name: "mean")
 ```
 
-This Flux query is interpolated into the following query and sent to InfluxDB, with the interval and time period values changing according to the active time selection:
+Grafana interpolates this Flux query into the following and sends it to InfluxDB, with the interval and time period values changing according to the active time selection:
 
 ```flux
 from(bucket: "grafana")

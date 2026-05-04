@@ -117,24 +117,26 @@ SELECT DISTINCT hostname FROM cpu WHERE region = '$region'
 
 If you have a variable containing key names, you can use it in a **GROUP BY** clause. This allows you to adjust the grouping by selecting from the variable list at the top of the dashboard.
 
-## Use ad-hoc filters
+## Use **Ad hoc filters**
 
-InfluxDB supports the **Ad hoc filters** variable type for InfluxQL. This variable type allows you to define multiple key/value filters, which Grafana automatically applies to all your InfluxDB queries. Ad-hoc filters also support expressions.
+InfluxDB supports the **Ad hoc filters** variable type for InfluxQL. This variable type allows you to define multiple key/value filters, which Grafana automatically applies to all your InfluxDB queries. **Ad hoc filters** also support expressions.
 
-To add ad-hoc filters:
+To add **Ad hoc filters**:
 
 1. Navigate to **Dashboard settings** > **Variables**.
 1. Click **Add variable**.
 1. Select **Ad hoc filters** as the variable type.
 1. Select your InfluxDB data source.
 
+<!-- vale Grafana.Spelling = NO -->
 For more information, refer to [Add ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+<!-- vale Grafana.Spelling = YES -->
 
 ## Choose a variable syntax
 
 The InfluxDB data source supports two variable syntaxes for use in the **Query** field:
 
-- **`$<varname>`** - This syntax is easy to read and write but doesn't allow you to use a variable in the middle of a word or expression.
+- **`$<varname>`** - Use this syntax for standalone variable references. It doesn't allow you to use a variable in the middle of a word or expression.
 - **`${varname}`** - Use this syntax when you want to interpolate a variable in the middle of an expression.
 
 **InfluxQL examples:**
@@ -147,7 +149,7 @@ SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^$host$/ AND $timeFilter
 SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^${host}$/ AND $timeFilter GROUP BY time($__interval), "hostname"
 ```
 
-When you enable the **Multi-value** or **Include all value** options with InfluxQL, Grafana converts the labels from plain text to a regex-compatible string, so you must use `=~` instead of `=`.
+When you enable the **Multi-value** or **Include all value** options with InfluxQL, Grafana converts the labels from plain text to a regular expression-compatible string, so you must use `=~` instead of `=`.
 
 **SQL examples:**
 
