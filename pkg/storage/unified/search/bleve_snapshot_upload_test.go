@@ -191,13 +191,13 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	require.NoError(t, be.uploadSnapshot(context.Background(), key, idx))
 	assert.Equal(t, int32(1), store.uploadCalls.Load())
 	assert.Equal(t, int64(42), store.uploadMeta.LatestResourceVersion)
-	assert.Equal(t, be.opts.BuildVersion, store.uploadMeta.GrafanaBuildVersion)
-	// BuildStartTimestamp must be populated from the index's internal build
+	assert.Equal(t, be.opts.BuildVersion, store.uploadMeta.BuildVersion)
+	// BuildTime must be populated from the index's internal build
 	// info (set by newBleveIndex), not left zero. Compare with second-level
 	// granularity since buildInfo persists Unix seconds.
-	assert.False(t, store.uploadMeta.BuildStartTimestamp.IsZero(), "BuildStartTimestamp should be set")
-	assert.False(t, store.uploadMeta.BuildStartTimestamp.Before(beforeBuild),
-		"BuildStartTimestamp %s should be at or after %s", store.uploadMeta.BuildStartTimestamp, beforeBuild)
+	assert.False(t, store.uploadMeta.BuildTime.IsZero(), "BuildTime should be set")
+	assert.False(t, store.uploadMeta.BuildTime.Before(beforeBuild),
+		"BuildTime %s should be at or after %s", store.uploadMeta.BuildTime, beforeBuild)
 	assert.NotEmpty(t, store.uploaded)
 
 	snapshotParent := filepath.Join(be.opts.Root, "snapshots", resourceSubPath(key))
@@ -235,7 +235,7 @@ func TestUploadSnapshot_PreservesOriginalBuildStartTime(t *testing.T) {
 
 	require.NoError(t, be.uploadSnapshot(context.Background(), key, wrapped))
 	require.Equal(t, int32(1), store.uploadCalls.Load())
-	assert.Equal(t, originalBuildTime.UTC(), store.uploadMeta.BuildStartTimestamp,
+	assert.Equal(t, originalBuildTime.UTC(), store.uploadMeta.BuildTime,
 		"periodic re-upload should preserve the original build-start time")
 }
 
@@ -358,7 +358,7 @@ func TestUploadSnapshot_SkipsWhenRecentSameVersionRemoteExists(t *testing.T) {
 	}
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
 	store.probeKeys = []ulid.ULID{recent}
-	store.probeMetas[recent] = &IndexMeta{GrafanaBuildVersion: "11.5.0"}
+	store.probeMetas[recent] = &IndexMeta{BuildVersion: "11.5.0"}
 
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
 	key := newTestNsResource()
@@ -382,7 +382,7 @@ func TestUploadSnapshot_ProceedsWhenRemoteIsDifferentVersion(t *testing.T) {
 	}
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
 	store.probeKeys = []ulid.ULID{recent}
-	store.probeMetas[recent] = &IndexMeta{GrafanaBuildVersion: "11.4.0"}
+	store.probeMetas[recent] = &IndexMeta{BuildVersion: "11.4.0"}
 
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
 	key := newTestNsResource()
@@ -428,7 +428,7 @@ func TestRunUploadSnapshots_SkipRecentRemote(t *testing.T) {
 	}
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
 	store.probeKeys = []ulid.ULID{recent}
-	store.probeMetas[recent] = &IndexMeta{GrafanaBuildVersion: "11.5.0"}
+	store.probeMetas[recent] = &IndexMeta{BuildVersion: "11.5.0"}
 
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1})
 	key := newTestNsResource()

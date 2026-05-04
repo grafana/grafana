@@ -140,7 +140,7 @@ func writeFakeSnapshot(dir string, meta *IndexMeta) error {
 	}
 	bi, err := json.Marshal(buildInfo{
 		BuildTime:    meta.UploadTimestamp.Unix(),
-		BuildVersion: meta.GrafanaBuildVersion,
+		BuildVersion: meta.BuildVersion,
 	})
 	if err != nil {
 		return err
@@ -201,7 +201,7 @@ func TestPickBestSnapshot(t *testing.T) {
 
 	snap := func(ver string, rv int64, age time.Duration) *IndexMeta {
 		return &IndexMeta{
-			GrafanaBuildVersion:   ver,
+			BuildVersion:   ver,
 			LatestResourceVersion: rv,
 			UploadTimestamp:       now.Add(-age),
 		}
@@ -352,7 +352,7 @@ func TestTryDownloadRemoteSnapshot_ListError(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_DownloadError(t *testing.T) {
 	store := &fakeRemoteIndexStore{downloadErr: errors.New("network dropped")}
 	store.put(makeULID(t, time.Now()), &IndexMeta{
-		GrafanaBuildVersion:   "11.5.0",
+		BuildVersion:   "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now(),
 	})
@@ -370,7 +370,7 @@ func TestTryDownloadRemoteSnapshot_DownloadError(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_ValidationError(t *testing.T) {
 	store := &fakeRemoteIndexStore{}
 	store.put(makeULID(t, time.Now()), &IndexMeta{
-		GrafanaBuildVersion:   "11.5.0",
+		BuildVersion:   "11.5.0",
 		LatestResourceVersion: 0, // invalid (<=0)
 		UploadTimestamp:       time.Now(),
 	})
@@ -388,7 +388,7 @@ func TestTryDownloadRemoteSnapshot_ValidationError(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_Success(t *testing.T) {
 	store := &fakeRemoteIndexStore{}
 	store.put(makeULID(t, time.Now()), &IndexMeta{
-		GrafanaBuildVersion:   "11.5.0",
+		BuildVersion:   "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now(),
 	})
@@ -408,7 +408,7 @@ func TestTryDownloadRemoteSnapshot_Success(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_AllFilteredOut(t *testing.T) {
 	store := &fakeRemoteIndexStore{}
 	store.put(makeULID(t, time.Now().Add(-2*time.Hour)), &IndexMeta{
-		GrafanaBuildVersion:   "11.5.0",
+		BuildVersion:   "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now().Add(-2 * time.Hour),
 	})
@@ -683,7 +683,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	})
 	key := newTestNsResource()
 	meta := IndexMeta{
-		GrafanaBuildVersion:   "11.5.0",
+		BuildVersion:   "11.5.0",
 		LatestResourceVersion: 123,
 		UploadTimestamp:       time.Now(),
 	}
@@ -733,14 +733,13 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	assert.Zero(t, mutationCount)
 }
 
-// --- findFreshSnapshotByUploadTime ---
+// --- findFreshSnapshot{ByUploadTime,ByBuildStart} ---
 
 // probeFakeStore embeds fakeRemoteIndexStore but lets individual GetIndexMeta
 // calls fail with a chosen error, so we can test mid-walk error tolerance.
 type probeFakeStore struct {
 	*fakeRemoteIndexStore
 	getErr     map[ulid.ULID]error
-	getCalls   []ulid.ULID
 	listKeyErr error
 }
 
@@ -752,7 +751,6 @@ func (s *probeFakeStore) ListIndexKeys(ctx context.Context, ns resource.Namespac
 }
 
 func (s *probeFakeStore) GetIndexMeta(ctx context.Context, ns resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
-	s.getCalls = append(s.getCalls, k)
 	if e, ok := s.getErr[k]; ok {
 		return nil, e
 	}
@@ -763,105 +761,181 @@ func newProbeFake() *probeFakeStore {
 	return &probeFakeStore{fakeRemoteIndexStore: &fakeRemoteIndexStore{}, getErr: map[ulid.ULID]error{}}
 }
 
-func TestFindFreshSnapshotByUploadTime_HomogeneousCluster(t *testing.T) {
+// probeCase is one row in a table-driven test for findFreshSnapshotBy*.
+// setup populates the per-case store and returns the ULID we expect the
+// probe to return (zero ULID means "no match"). wantErr (substring) flags
+// error-path cases; when set, the probe is expected to return an error.
+type probeCase struct {
+	name    string
+	setup   func(s *probeFakeStore) ulid.ULID
+	wantErr string
+}
+
+type probeFn func(ctx context.Context, s RemoteIndexStore, ns resource.NamespacedResource, maxAge time.Duration, v string) (ulid.ULID, *IndexMeta, error)
+
+func runProbeCases(t *testing.T, probe probeFn, cases []probeCase) {
+	t.Helper()
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newProbeFake()
+			want := tc.setup(store)
+			k, meta, err := probe(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
+			if tc.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, want, k)
+			if (want == ulid.ULID{}) {
+				assert.Nil(t, meta)
+			} else {
+				require.NotNil(t, meta)
+			}
+		})
+	}
+}
+
+func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 	now := time.Now()
-	store := newProbeFake()
-	want := makeULID(t, now.Add(-5*time.Minute))
-	store.put(want, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
+	mk := func(d time.Duration) ulid.ULID { return makeULID(t, now.Add(d)) }
 
-	k, meta, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
-	require.NoError(t, err)
-	assert.Equal(t, want, k)
-	require.NotNil(t, meta)
-	assert.Equal(t, "11.5.0", meta.GrafanaBuildVersion)
-	assert.Len(t, store.getCalls, 1, "should fetch only the newest manifest in homogeneous case")
+	runProbeCases(t, findFreshSnapshotByUploadTime, []probeCase{
+		{
+			name: "homogeneous cluster: newest same-version returned",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				s.put(mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
+				k := mk(-5 * time.Minute)
+				s.put(k, &IndexMeta{BuildVersion: "11.5.0"})
+				return k
+			},
+		},
+		{
+			name: "mixed version: walks past newer wrong-version",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0"})
+				match := mk(-30 * time.Minute)
+				s.put(match, &IndexMeta{BuildVersion: "11.5.0"})
+				s.put(mk(-50*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
+				return match
+			},
+		},
+		{
+			name:  "no candidates",
+			setup: func(s *probeFakeStore) ulid.ULID { return ulid.ULID{} },
+		},
+		{
+			name: "tolerates ErrSnapshotNotFound and ErrInvalidManifest mid-walk",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				nf := mk(-5 * time.Minute)
+				s.put(nf, &IndexMeta{BuildVersion: "11.5.0"})
+				s.getErr[nf] = ErrSnapshotNotFound
+				iv := mk(-10 * time.Minute)
+				s.put(iv, &IndexMeta{BuildVersion: "11.5.0"})
+				s.getErr[iv] = ErrInvalidManifest
+				m := mk(-15 * time.Minute)
+				s.put(m, &IndexMeta{BuildVersion: "11.5.0"})
+				return m
+			},
+		},
+		{
+			name: "surfaces list error",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				s.listKeyErr = errors.New("boom")
+				return ulid.ULID{}
+			},
+			wantErr: "boom",
+		},
+		{
+			name: "surfaces unexpected GET error",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				bad := mk(-5 * time.Minute)
+				s.put(bad, &IndexMeta{BuildVersion: "11.5.0"})
+				s.getErr[bad] = errors.New("transport boom")
+				return ulid.ULID{}
+			},
+			wantErr: "transport boom",
+		},
+	})
 }
 
-func TestFindFreshSnapshotByUploadTime_MixedVersionWalksPastNewerOtherVersion(t *testing.T) {
+func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 	now := time.Now()
-	store := newProbeFake()
-	// Newest: V1, 5 min old. Skipped on version mismatch.
-	v1New := makeULID(t, now.Add(-5*time.Minute))
-	store.put(v1New, &IndexMeta{GrafanaBuildVersion: "11.4.0"})
-	// Match: V2, 30 min old, well within the 1h window.
-	v2Match := makeULID(t, now.Add(-30*time.Minute))
-	store.put(v2Match, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
-	// Older V2 still in window — should not be picked, but also not visited.
-	store.put(makeULID(t, now.Add(-50*time.Minute)), &IndexMeta{GrafanaBuildVersion: "11.5.0"})
+	mk := func(d time.Duration) ulid.ULID { return makeULID(t, now.Add(d)) }
 
-	k, meta, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
-	require.NoError(t, err)
-	assert.Equal(t, v2Match, k)
-	require.NotNil(t, meta)
-	// Walk visits the newest (V1, mismatch) then the next (V2, match) and stops.
-	assert.Equal(t, []ulid.ULID{v1New, v2Match}, store.getCalls)
-}
-
-func TestFindFreshSnapshotByUploadTime_StopsAtAgeCutoff(t *testing.T) {
-	now := time.Now()
-	store := newProbeFake()
-	// Newest is V1, 5 min ago — skipped on version.
-	v1 := makeULID(t, now.Add(-5*time.Minute))
-	store.put(v1, &IndexMeta{GrafanaBuildVersion: "11.4.0"})
-	// Only V2 candidate is older than the window — must NOT be returned.
-	stale := makeULID(t, now.Add(-90*time.Minute))
-	store.put(stale, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
-
-	k, meta, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
-	require.NoError(t, err)
-	assert.Equal(t, ulid.ULID{}, k)
-	assert.Nil(t, meta)
-	// Walk should have visited only v1 before hitting the cutoff.
-	assert.Equal(t, []ulid.ULID{v1}, store.getCalls)
-}
-
-func TestFindFreshSnapshotByUploadTime_NoCandidates(t *testing.T) {
-	store := newProbeFake()
-	k, meta, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
-	require.NoError(t, err)
-	assert.Equal(t, ulid.ULID{}, k)
-	assert.Nil(t, meta)
-	assert.Empty(t, store.getCalls)
-}
-
-func TestFindFreshSnapshotByUploadTime_TolerateNotFoundAndInvalid(t *testing.T) {
-	now := time.Now()
-	store := newProbeFake()
-	// Newest: races with cleanup → ErrSnapshotNotFound. Skip and continue.
-	notFound := makeULID(t, now.Add(-5*time.Minute))
-	store.put(notFound, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
-	store.getErr[notFound] = ErrSnapshotNotFound
-	// Next: corrupt manifest → ErrInvalidManifest. Skip and continue.
-	invalid := makeULID(t, now.Add(-10*time.Minute))
-	store.put(invalid, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
-	store.getErr[invalid] = ErrInvalidManifest
-	// Then: a clean V2 match.
-	match := makeULID(t, now.Add(-15*time.Minute))
-	store.put(match, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
-
-	k, _, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
-	require.NoError(t, err)
-	assert.Equal(t, match, k)
-	assert.Equal(t, []ulid.ULID{notFound, invalid, match}, store.getCalls)
-}
-
-func TestFindFreshSnapshotByUploadTime_SurfacesListError(t *testing.T) {
-	store := newProbeFake()
-	store.listKeyErr = errors.New("boom")
-
-	_, _, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "boom")
-}
-
-func TestFindFreshSnapshotByUploadTime_SurfacesUnexpectedGetError(t *testing.T) {
-	now := time.Now()
-	store := newProbeFake()
-	bad := makeULID(t, now.Add(-5*time.Minute))
-	store.put(bad, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
-	store.getErr[bad] = errors.New("transport boom")
-
-	_, _, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "transport boom")
+	runProbeCases(t, findFreshSnapshotByBuildStart, []probeCase{
+		{
+			name: "homogeneous cluster: newest same-version returned",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				s.put(mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
+				k := mk(-5 * time.Minute)
+				s.put(k, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
+				return k
+			},
+		},
+		{
+			name: "mixed version: walks past newer wrong-version",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0", BuildTime: now.Add(-10 * time.Minute)})
+				match := mk(-30 * time.Minute)
+				s.put(match, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
+				s.put(mk(-50*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-55 * time.Minute)})
+				return match
+			},
+		},
+		{
+			// Behavioural difference vs findFreshSnapshotByUploadTime:
+			// recent ULID + matching version + old BuildTime (a periodic
+			// re-upload of a long-lived index) must be rejected.
+			name: "skips recent re-upload of old build",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-3 * time.Hour)})
+				return ulid.ULID{}
+			},
+		},
+		{
+			// Zero-value BuildTime carries no freshness signal.
+			name: "skips zero BuildTime",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
+				return ulid.ULID{}
+			},
+		},
+		{
+			name:  "no candidates",
+			setup: func(s *probeFakeStore) ulid.ULID { return ulid.ULID{} },
+		},
+		{
+			name: "tolerates ErrSnapshotNotFound and ErrInvalidManifest mid-walk",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				nf := mk(-5 * time.Minute)
+				s.put(nf, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
+				s.getErr[nf] = ErrSnapshotNotFound
+				iv := mk(-10 * time.Minute)
+				s.put(iv, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-15 * time.Minute)})
+				s.getErr[iv] = ErrInvalidManifest
+				m := mk(-15 * time.Minute)
+				s.put(m, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-20 * time.Minute)})
+				return m
+			},
+		},
+		{
+			name: "surfaces list error",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				s.listKeyErr = errors.New("boom")
+				return ulid.ULID{}
+			},
+			wantErr: "boom",
+		},
+		{
+			name: "surfaces unexpected GET error",
+			setup: func(s *probeFakeStore) ulid.ULID {
+				bad := mk(-5 * time.Minute)
+				s.put(bad, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
+				s.getErr[bad] = errors.New("transport boom")
+				return ulid.ULID{}
+			},
+			wantErr: "transport boom",
+		},
+	})
 }

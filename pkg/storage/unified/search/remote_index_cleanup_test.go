@@ -37,7 +37,7 @@ const (
 
 func mkMeta(version string, rv int64, uploadedAt time.Time) *IndexMeta {
 	return &IndexMeta{
-		GrafanaBuildVersion:   version,
+		BuildVersion:   version,
 		LatestResourceVersion: rv,
 		UploadTimestamp:       uploadedAt,
 	}
