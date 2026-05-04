@@ -42,6 +42,12 @@ var ErrNonRegularFile = errors.New("non-regular file found in index directory")
 // still in progress and the manifest hasn't been written yet).
 var ErrSnapshotNotFound = errors.New("snapshot not found")
 
+// ErrInvalidManifest is returned when the snapshot manifest exists but is
+// structurally invalid (oversized, unparseable, empty file list, or
+// non-canonical paths). Distinct from ErrSnapshotNotFound (manifest absent)
+// and from transient download errors.
+var ErrInvalidManifest = errors.New("invalid manifest")
+
 // IndexMeta contains metadata about a remote index snapshot.
 type IndexMeta struct {
 	// GrafanaBuildVersion is the version of Grafana that built this index.
@@ -100,7 +106,10 @@ type RemoteIndexStore interface {
 	ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error)
 
 	// GetIndexMeta returns the manifest for a single index snapshot. It
-	// returns ErrSnapshotNotFound if no manifest exists for the given key.
+	// returns ErrSnapshotNotFound if no manifest exists for the given key,
+	// or an error wrapping ErrInvalidManifest if the manifest exists but is
+	// structurally invalid (oversized, unparseable, empty file list, or
+	// non-canonical paths).
 	GetIndexMeta(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error)
 
 	// DeleteIndex deletes all files for an index snapshot.
@@ -468,17 +477,20 @@ func (s *BucketRemoteIndexStore) GetIndexMeta(ctx context.Context, nsResource re
 		if gcerrors.Code(err) == gcerrors.NotFound {
 			return nil, ErrSnapshotNotFound
 		}
+		if errors.Is(err, resource.ErrWriteLimitExceeded) {
+			return nil, fmt.Errorf("%w: oversized snapshot manifest: %v", ErrInvalidManifest, err)
+		}
 		return nil, fmt.Errorf("reading snapshot manifest: %w", err)
 	}
 	var meta IndexMeta
 	if err := json.Unmarshal(buf.Bytes(), &meta); err != nil {
-		return nil, fmt.Errorf("parsing snapshot manifest: %w", err)
+		return nil, fmt.Errorf("%w: parsing snapshot manifest: %v", ErrInvalidManifest, err)
 	}
 	if len(meta.Files) == 0 {
-		return nil, fmt.Errorf("snapshot manifest has empty file manifest for index %q", indexKey)
+		return nil, fmt.Errorf("%w: empty file manifest for index %q", ErrInvalidManifest, indexKey)
 	}
 	if err := validateManifestPaths(meta.Files); err != nil {
-		return nil, fmt.Errorf("invalid manifest: %w", err)
+		return nil, fmt.Errorf("%w: %v", ErrInvalidManifest, err)
 	}
 	return &meta, nil
 }
@@ -663,12 +675,22 @@ func (s *BucketRemoteIndexStore) CleanupIncompleteUploads(ctx context.Context, n
 	cleaned := 0
 	for keyStr, info := range prefixes {
 		if info.metaKey != "" {
-			valid, err := s.isValidManifest(ctx, info.metaKey)
+			// keyStr was produced by ulid.Parse on the way in, so re-parsing
+			// here is infallible.
+			indexKey, err := ulid.Parse(keyStr)
 			if err != nil {
-				s.log.Warn("skipping prefix due to manifest read error", "key", keyStr, "err", err)
 				continue
 			}
-			if valid {
+			_, err = s.GetIndexMeta(ctx, nsResource, indexKey)
+			switch {
+			case err == nil:
+				continue // valid manifest, prefix is complete
+			case errors.Is(err, ErrInvalidManifest):
+				// fall through to delete
+			default:
+				// Transient error or ErrSnapshotNotFound (manifest deleted
+				// between list and read — race; defer to next pass).
+				s.log.Warn("skipping prefix due to manifest read error", "key", keyStr, "err", err)
 				continue
 			}
 		}
@@ -684,24 +706,3 @@ func (s *BucketRemoteIndexStore) CleanupIncompleteUploads(ctx context.Context, n
 	return cleaned, nil
 }
 
-// isValidManifest downloads and parses a snapshot manifest object with a size limit.
-// Returns (true, nil) for a valid manifest, (false, nil) for a positively
-// invalid one (oversized, corrupt JSON, or empty Files), and (false, err) for
-// transient download errors.
-func (s *BucketRemoteIndexStore) isValidManifest(ctx context.Context, metaKey string) (bool, error) {
-	var buf bytes.Buffer
-	if err := s.bucket.Download(ctx, metaKey, &resource.LimitedWriter{W: &buf, N: maxSnapshotManifestSize}, nil); err != nil {
-		if errors.Is(err, resource.ErrWriteLimitExceeded) {
-			return false, nil // positively invalid: oversized
-		}
-		return false, err // transient download error, skip this prefix
-	}
-	var meta IndexMeta
-	if err := json.Unmarshal(buf.Bytes(), &meta); err != nil {
-		return false, nil // positively invalid
-	}
-	if len(meta.Files) == 0 || validateManifestPaths(meta.Files) != nil {
-		return false, nil
-	}
-	return true, nil
-}
