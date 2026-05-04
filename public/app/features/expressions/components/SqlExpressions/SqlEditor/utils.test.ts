@@ -71,6 +71,45 @@ describe('SQL editor completion utils', () => {
     );
   });
 
+  it('returns empty table completions when the table provider throws', async () => {
+    await expect(
+      getCompletionResult(
+        {
+          tables: () => {
+            throw new Error('tables failed');
+          },
+        },
+        'SELECT * FROM '
+      )
+    ).resolves.toEqual(expect.objectContaining({ options: [] }));
+  });
+
+  it('returns empty clause completions when the clause provider throws', async () => {
+    await expect(
+      getCompletionResult(
+        {
+          clauses: () => {
+            throw new Error('clauses failed');
+          },
+        },
+        'SELECT * FROM A '
+      )
+    ).resolves.toEqual(expect.objectContaining({ options: [] }));
+  });
+
+  it('keeps keyword completions when the function provider throws', async () => {
+    const result = await getCompletionResult(
+      {
+        functions: () => {
+          throw new Error('functions failed');
+        },
+      },
+      'SELECT ca'
+    );
+
+    expect(result?.options).toEqual(expect.arrayContaining([expect.objectContaining({ label: 'CASE' })]));
+  });
+
   it('does not suggest clauses after a terminated statement', async () => {
     const completionProvider = {
       clauses: () => [{ label: 'NEXT_CLAUSE' }],
@@ -215,5 +254,12 @@ describe('SQL editor completion utils', () => {
       })
     );
     expect(fromKeyword?.boost ?? 0).toBeGreaterThan(fromFunction?.boost ?? 0);
+  });
+
+  it('suggests expression-level SQL keywords in general completions', async () => {
+    const result = await getCompletionResult({ functions: () => [] }, 'SELECT ca');
+
+    expect(result?.options).toEqual(expect.arrayContaining([expect.objectContaining({ label: 'CASE' })]));
+    expect(result?.options).not.toEqual(expect.arrayContaining([expect.objectContaining({ label: 'WHERE' })]));
   });
 });

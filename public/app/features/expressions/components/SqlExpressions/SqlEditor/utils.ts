@@ -7,18 +7,29 @@ export type SqlCompletionKind = 'clause' | 'column' | 'function' | 'keyword' | '
 const SQL_WORD_PATTERN = /[\w$]*/;
 const SQL_COMPLETION_VALID_FOR_PATTERN = /^[\w$]*$/;
 
-// Include common SQL keywords in the generic completion set so accepting a completion does not prefer niche functions.
+// General completions cover expression keywords plus SELECT/FROM, which are needed before clause completions apply.
 const DEFAULT_SQL_KEYWORDS: SqlCompletionItem[] = [
   'SELECT',
   'FROM',
-  'WHERE',
-  'JOIN',
-  'LEFT JOIN',
-  'INNER JOIN',
-  'GROUP BY',
-  'ORDER BY',
-  'HAVING',
-  'LIMIT',
+  'AS',
+  'DISTINCT',
+  'CASE',
+  'WHEN',
+  'THEN',
+  'ELSE',
+  'END',
+  'AND',
+  'OR',
+  'NOT',
+  'NULL',
+  'IS',
+  'IN',
+  'BETWEEN',
+  'LIKE',
+  'EXISTS',
+  'ASC',
+  'DESC',
+  'CAST',
 ].map((label) => ({ label, kind: 'keyword', boost: 50 }));
 
 export interface SqlCompletionItem {
@@ -81,7 +92,7 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
     }
 
     if (situation.type === 'clause') {
-      const clauses = completionProvider.clauses?.() ?? [];
+      const clauses = resolveClauses(completionProvider);
 
       return {
         from: situation.from,
@@ -95,7 +106,7 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
     }
 
     const columns = await resolveColumnsForTables(completionProvider, situation.tables);
-    const functions = (await completionProvider.functions?.()) ?? [];
+    const functions = await resolveFunctions(completionProvider);
 
     return context.aborted
       ? null
@@ -156,7 +167,11 @@ function getCompletionSection(kind: SqlCompletionKind) {
 }
 
 async function resolveTables(completionProvider: SqlCompletionProvider): Promise<SqlCompletionItem[]> {
-  return (await completionProvider.tables?.()) ?? [];
+  try {
+    return (await completionProvider.tables?.()) ?? [];
+  } catch {
+    return [];
+  }
 }
 
 async function resolveColumns(
@@ -165,6 +180,22 @@ async function resolveColumns(
 ): Promise<SqlCompletionItem[]> {
   try {
     return (await completionProvider.columns?.(completionContext)) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function resolveClauses(completionProvider: SqlCompletionProvider): SqlCompletionItem[] {
+  try {
+    return completionProvider.clauses?.() ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function resolveFunctions(completionProvider: SqlCompletionProvider): Promise<SqlCompletionItem[]> {
+  try {
+    return (await completionProvider.functions?.()) ?? [];
   } catch {
     return [];
   }
