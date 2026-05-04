@@ -672,6 +672,76 @@ describe('TableNG hooks', () => {
         ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2);
       });
 
+      it('includes nestedFooterHeight in expanded row height', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields });
+        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const nestedRows = frameToRecords(frame);
+        const defaultHeight = 40;
+        const nestedFooterHeight = 34; // equivalent to 1 reducer: LINE_HEIGHT + CELL_PADDING * 2
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              nestedData: [frame],
+              fields: [
+                { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+                { name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} },
+              ],
+              columnWidths: [100],
+              defaultHeight,
+              defaultNestedHeight: defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+              visibleNestedRowCounts: [3],
+              nestedFooterHeight,
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({ __index: 0, __depth: 1, data: frame });
+          }).result.current
+          // 3 nested rows + header + footer + padding + scrollbar
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE + nestedFooterHeight);
+      });
+
+      it('includes nestedFooterHeight in the no-data expanded row height', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields });
+        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const nestedRows = frameToRecords(frame);
+        const nestedFooterHeight = 34;
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              nestedData: [frame],
+              fields: [
+                { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+                { name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} },
+              ],
+              columnWidths: [100],
+              defaultHeight: 40,
+              defaultNestedHeight: 40,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+              visibleNestedRowCounts: [0],
+              nestedFooterHeight,
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({ __depth: 1, data: undefined, __index: 0 });
+          }).result.current
+        ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2 + nestedFooterHeight);
+      });
+
       it('calculates the height to return using default height', () => {
         const { fields } = setupData();
         const frame = createDataFrame({ fields });
@@ -706,7 +776,7 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + 16); // 3 rows + header + padding + scrollbar
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE); // 3 rows + header + padding + scrollbar
       });
 
       it('uses defaultNestedHeight (not defaultHeight) for the nested sub-table header', () => {
@@ -744,7 +814,7 @@ describe('TableNG hooks', () => {
             });
           }).result.current
           // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + padding + scrollbar
-        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + 16);
+        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE);
       });
 
       it('uses a string-based default height for the nested rows', () => {
