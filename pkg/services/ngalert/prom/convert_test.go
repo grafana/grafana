@@ -19,6 +19,36 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+func TestNewConverter_DatasourceTypeValidation(t *testing.T) {
+	base := Config{
+		DatasourceUID:   "uid",
+		DefaultInterval: 2 * time.Minute,
+	}
+
+	t.Run("accepts prometheus, loki, and managed prometheus types", func(t *testing.T) {
+		for _, dsType := range []string{
+			datasources.DS_PROMETHEUS,
+			datasources.DS_LOKI,
+			datasources.DS_AMAZON_PROMETHEUS,
+			datasources.DS_AZURE_PROMETHEUS,
+		} {
+			cfg := base
+			cfg.DatasourceType = dsType
+			_, err := NewConverter(cfg)
+			require.NoError(t, err, "datasource type %q should be accepted", dsType)
+		}
+	})
+
+	t.Run("rejects unsupported datasource type", func(t *testing.T) {
+		cfg := base
+		cfg.DatasourceType = datasources.DS_GRAPHITE
+		_, err := NewConverter(cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "invalid datasource type")
+		require.Contains(t, err.Error(), datasources.DS_GRAPHITE)
+	})
+}
+
 func TestPrometheusRulesToGrafana(t *testing.T) {
 	defaultInterval := 2 * time.Minute
 
