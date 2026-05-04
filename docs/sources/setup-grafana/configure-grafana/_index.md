@@ -697,9 +697,23 @@ Disable creation of a Grafana Admin user on first start of Grafana. Default is `
 The name of the default Grafana Admin user, who has full permissions.
 Default is `admin`.
 
+This setting is only used during the initial startup when no users exist in the database. Changing it after the admin user has been created has no effect. To change the admin username after initial setup, use the Grafana UI or the [Admin API](/docs/grafana/latest/developers/http_api/admin/).
+
 #### `admin_password`
 
 The password of the default Grafana Admin. Set once on first-run. Default is `admin`.
+
+This setting is only used during the initial startup when no users exist in the database. Changing it after the admin user has been created has no effect, including when set through the `GF_SECURITY_ADMIN_PASSWORD` environment variable or Docker Secrets (`GF_SECURITY_ADMIN_PASSWORD__FILE`). To reset the admin password after initial setup, run:
+
+```bash
+grafana cli admin reset-admin-password <new-password>
+```
+
+In Docker or Kubernetes environments, you can override the container entrypoint to reset the password on every startup:
+
+```bash
+grafana cli admin reset-admin-password "$GF_SECURITY_ADMIN_PASSWORD" && /run.sh
+```
 
 #### `admin_email`
 

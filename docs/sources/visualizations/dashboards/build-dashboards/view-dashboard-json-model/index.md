@@ -53,6 +53,16 @@ There are currently three dashboard JSON schema models:
 [Observability as Code](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/) works with both versions of the JSON model, but it's fully compatible with version 2.
 {{< /admonition >}}
 
+## Risks of editing the JSON model directly
+
+Editing the JSON model directly is a powerful option, but it comes with risks that you should be aware of before making changes:
+
+- **Data source UIDs are instance-specific.** If you copy a dashboard JSON from one Grafana instance to another, the `datasource` UIDs in the panels won't match. You need to update them to the correct UIDs on the target instance, or use [provisioning variables](https://grafana.com/docs/grafana/latest/administration/provisioning/#using-a-provisioned-dashboard) to make them portable.
+- **Dashboard and panel IDs can collide.** The numeric `id` field is assigned by the database and is unique per instance. When you import a JSON model, set `id` to `null` so Grafana assigns a new one. The `uid` field should also be unique; duplicates overwrite existing dashboards.
+- **Schema version mismatches.** The `schemaVersion` field tracks the JSON schema version. Importing a dashboard with a newer schema version into an older Grafana instance can cause rendering errors or data loss.
+- **Permissions are not included.** Dashboard JSON doesn't contain permission settings. After importing, the dashboard inherits the permissions of the target folder. You need to reconfigure any custom permissions manually.
+- **Invalid JSON breaks the dashboard.** Malformed JSON or invalid field values can make the dashboard unloadable. Use the **JSON Model** tab in the dashboard settings to validate changes before saving, and keep a backup of the working JSON.
+
 ## Access and update the JSON model {#view-json}
 
 To access the JSON representation of a dashboard:
