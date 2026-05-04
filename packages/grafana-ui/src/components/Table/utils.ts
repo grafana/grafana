@@ -1,5 +1,5 @@
 import { type Property } from 'csstype';
-import { clone, sampleSize } from 'lodash';
+import { clone } from 'lodash';
 import memoize from 'micro-memoize';
 import { type HeaderGroup, type Row } from 'react-table';
 import tinycolor from 'tinycolor2';
@@ -752,12 +752,11 @@ export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFram
       // the mean length
       else {
         for (const field of stringFields) {
-          // This could result in duplicate values but
-          // that should be fairly unlikely. This could potentially
-          // be improved using a Set datastructure but
-          // going to leave that one as an exercise for
-          // the reader to contemplate and possibly code
-          const vals = sampleSize(field.values, SAMPLE_SIZE);
+          const indices = new Set<number>();
+          while (indices.size < SAMPLE_SIZE) {
+            indices.add(Math.floor(Math.random() * field.values.length));
+          }
+          const vals = [...indices].map((i) => field.values[i]);
           const meanLength = (vals[0]?.length + vals[1]?.length + vals[2]?.length) / 3;
 
           if (meanLength > longestLength) {
