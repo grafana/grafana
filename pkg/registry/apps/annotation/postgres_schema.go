@@ -17,6 +17,9 @@ import (
 //go:embed migrations/*.sql
 var embedMigrations embed.FS
 
+//go:embed metadata_migrations/*.sql
+var embedMetadataMigrations embed.FS
+
 // PartitionInfo contains metadata about a partition
 type PartitionInfo struct {
 	Name       string
@@ -161,9 +164,17 @@ func listPartitions(ctx context.Context, pool *pgxpool.Pool) ([]PartitionInfo, e
 	return partitions, nil
 }
 
-// runMigrations executes database migrations using goose
+// runMigrations executes data shard migrations using goose
 func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) error {
-	// goose operates on *sql.DB, so we need to create one from our pgxpool
+	return runMigrationsFrom(ctx, pool, logger, embedMigrations, "migrations")
+}
+
+// runMetadataMigrations executes metadata database migrations using goose
+func runMetadataMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) error {
+	return runMigrationsFrom(ctx, pool, logger, embedMetadataMigrations, "metadata_migrations")
+}
+
+func runMigrationsFrom(ctx context.Context, pool *pgxpool.Pool, logger log.Logger, fs embed.FS, dir string) error {
 	db := stdlib.OpenDBFromPool(pool)
 	defer func() {
 		if err := db.Close(); err != nil {
@@ -172,14 +183,14 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) e
 	}()
 
 	// Configure goose to use embedded migrations
-	goose.SetBaseFS(embedMigrations)
+	goose.SetBaseFS(fs)
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		return fmt.Errorf("failed to set goose dialect: %w", err)
 	}
 
 	// Run all pending migrations
-	if err := goose.UpContext(ctx, db, "migrations"); err != nil {
+	if err := goose.UpContext(ctx, db, dir); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
