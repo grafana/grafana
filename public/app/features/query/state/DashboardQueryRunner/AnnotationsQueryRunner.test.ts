@@ -95,7 +95,7 @@ describe('AnnotationsQueryRunner', () => {
 
     describe('but result is missing events prop', () => {
       it('then it should return the correct results', async () => {
-        const { options, executeAnnotationQueryMock } = getTestContext(of({ id: '1' } as AnnotationQueryResponse));
+        const { options, executeAnnotationQueryMock } = getTestContext(of({ id: 1 } as AnnotationQueryResponse));
 
         await expect(runner.run(options)).toEmitValuesWith((received) => {
           expect(received).toHaveLength(1);
