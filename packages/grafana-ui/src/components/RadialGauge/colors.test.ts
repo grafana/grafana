@@ -1,5 +1,3 @@
-import { defaultsDeep } from 'lodash';
-
 import { createTheme, type Field, type FieldDisplay, FieldType, ThresholdsMode } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
@@ -38,17 +36,29 @@ describe('RadialGauge color utils', () => {
         values: [70, 40, 30, 90, 55],
       }) satisfies Field;
 
-    const buildFieldDisplay = (field: Field, part = {}): FieldDisplay =>
-      defaultsDeep(part, {
-        field: field.config,
+    const buildFieldDisplay = (field: Field, part: DeepPartial<FieldDisplay> = {}): FieldDisplay =>
+      ({
+        name: field.name,
         colIndex: 0,
+        hasLinks: false,
+        field: {
+          ...field.config,
+          ...part.field,
+          thresholds: {
+            ...field.config.thresholds,
+            ...part.field?.thresholds,
+          },
+        },
         view: {
           getFieldDisplayProcessor: jest.fn(() => jest.fn(() => ({ color: undefined }))),
+          ...part.view,
         },
         display: {
+          text: '75',
           numeric: 75,
+          ...part.display,
         },
-      });
+      }) as unknown as FieldDisplay;
 
     it('should map threshold colors correctly (with baseColor if displayProcessor does not return colors)', () => {
       expect(
