@@ -9,6 +9,9 @@ export function createMetadataRequest(
   const labels = Object.keys(labelsAndValues);
 
   return async function metadataRequestMock(url: string, params?: Record<string, string | number>) {
+    if (url === 'detected_labels') {
+      return null;
+    }
     if (url === lokiLabelsEndpoint) {
       return labels;
     } else {

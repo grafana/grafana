@@ -57,6 +57,46 @@ describe('Language completion provider', () => {
       await languageProvider.start(mockTimeRange);
       expect(fetchSpy).toHaveBeenCalledTimes(2);
     });
+
+    it('should probe detected_labels on start and use it when fetching labels', async () => {
+      const rangeMock = { start: 1560153109000, end: 1560163909000 };
+      const detectedDatasource = createLokiDatasource();
+      jest.spyOn(detectedDatasource, 'getTimeRangeParams').mockReturnValue(rangeMock);
+      jest.spyOn(detectedDatasource, 'interpolateString').mockImplementation((s: string) => s);
+
+      const detectedLabelsResponse = [{ label: 'service' }, { label: 'job' }];
+      const metadataSpy = jest.spyOn(detectedDatasource, 'metadataRequest').mockImplementation(async (url, params) => {
+        if (url === 'detected_labels') {
+          return detectedLabelsResponse;
+        }
+        throw new Error(`Unexpected url: ${url}`);
+      });
+
+      const languageProvider = new LanguageProvider(detectedDatasource);
+      const fetchLabelsSpy = jest.spyOn(languageProvider, 'fetchLabels');
+
+      await languageProvider.start();
+
+      expect(fetchLabelsSpy).not.toHaveBeenCalled();
+      expect(metadataSpy).toHaveBeenCalledWith(
+        'detected_labels',
+        { start: rangeMock.start, end: rangeMock.end },
+        expect.objectContaining({ showErrorAlert: false, showSuccessAlert: false })
+      );
+      expect(languageProvider.started).toBe(true);
+      expect(languageProvider.getLabelKeys()).toEqual(['service', 'job']);
+
+      const labels = await languageProvider.fetchLabels();
+      expect(labels).toEqual(['job', 'service']);
+      expect(metadataSpy).toHaveBeenCalledTimes(2);
+      expect(metadataSpy).toHaveBeenNthCalledWith(
+        2,
+        'detected_labels',
+        { start: rangeMock.start, end: rangeMock.end },
+        undefined
+      );
+      expect(languageProvider.labelKeys).toEqual(['job', 'service']);
+    });
   });
 
   describe('fetchSeries', () => {
@@ -421,29 +461,26 @@ describe('Language completion provider', () => {
       throwError: true,
     };
 
-    const expectedResponse: DetectedFieldsResult = {
-      fields: [
-        {
-          label: 'bytes',
-          type: 'bytes',
-          cardinality: 6,
-          parsers: ['logfmt'],
-        },
-        {
-          label: 'traceID',
-          type: 'string',
-          cardinality: 50,
-          parsers: null,
-        },
-        {
-          label: 'active_series',
-          type: 'int',
-          cardinality: 8,
-          parsers: ['logfmt'],
-        },
-      ],
-      limit: 999,
-    };
+    const expectedResponse: DetectedFieldsResult = [
+      {
+        label: 'bytes',
+        type: 'bytes',
+        cardinality: 6,
+        parsers: ['logfmt'],
+      },
+      {
+        label: 'traceID',
+        type: 'string',
+        cardinality: 50,
+        parsers: null,
+      },
+      {
+        label: 'active_series',
+        type: 'int',
+        cardinality: 8,
+        parsers: ['logfmt'],
+      },
+    ];
 
     const datasource = detectedFieldsSetup(expectedResponse, {
       end: mockTimeRange.to.valueOf(),

@@ -14,7 +14,7 @@ import { type BackendSrvRequest, config } from '@grafana/runtime';
 import { LokiQueryType } from './dataquery.gen';
 import { DEFAULT_MAX_LINES_SAMPLE, type LokiDatasource } from './datasource';
 import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
-import { getStreamSelectorsFromQuery } from './queryUtils';
+import { getStreamSelectorsFromQuery, isQueryWithError } from './queryUtils';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import {
   extractLabelKeysFromDataFrame,
@@ -32,6 +32,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
   started = false;
   startedTimeRange?: TimeRange;
   datasource: LokiDatasource;
+
+  /** True when the Loki `detected_labels` and `detected_fields` endpoints are available (probed once in {@link LokiLanguageProvider.start}). */
+  private detectedEndpointsSupported?: boolean;
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
@@ -85,7 +88,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       newRangeParams.end !== prevRangeParams.end
     ) {
       this.startedTimeRange = range;
-      this.startTask = this.fetchLabels({ timeRange: range }).then(() => {
+      this.startTask = this.attemptDetectedEndpointsStart(range).then(() => {
         this.started = true;
         return [];
       });
@@ -93,6 +96,37 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     return this.startTask;
   };
+
+  /**
+   * Probes whether the `detected_labels` metadata API exists. Runs at most once per language provider instance.
+   */
+  private async attemptDetectedEndpointsStart(timeRange: TimeRange) {
+    if (this.detectedEndpointsSupported === undefined) {
+      await this.checkDetectedLabelsExists(timeRange);
+    }
+    if (this.detectedEndpointsSupported === false) {
+      await this.fetchLabels({ timeRange });
+    }
+  }
+
+  private async checkDetectedLabelsExists(timeRange: TimeRange): Promise<void> {
+    try {
+      const { start, end } = this.datasource.getTimeRangeParams(timeRange);
+      const data = await this.request('detected_labels', { start, end }, true, {
+        showErrorAlert: false,
+        showSuccessAlert: false,
+      });
+      // Endpoint does not throw and return labels
+      if (Array.isArray(data)) {
+        this.labelKeys = data.map((label) => label.label);
+        this.detectedEndpointsSupported = true;
+      } else {
+        this.detectedEndpointsSupported = false;
+      }
+    } catch (e) {
+      this.detectedEndpointsSupported = false;
+    }
+  }
 
   /**
    * Returns the label keys that have been fetched.
@@ -153,9 +187,15 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @returns A promise containing an array of label keys.
    * @throws An error if the fetch operation fails.
    */
-  async fetchLabels(options?: { streamSelector?: string; timeRange?: TimeRange }): Promise<string[]> {
+  async fetchLabels(options: { streamSelector?: string; timeRange?: TimeRange } = {}): Promise<string[]> {
+    if (this.detectedEndpointsSupported) {
+      return this.fetchDetectedLabels({
+        expr: options.streamSelector,
+        timeRange: options.timeRange,
+      });
+    }
     // We'll default to use `/labels`. If the flag is disabled, and there's a streamSelector, we'll use the series endpoint.
-    if (config.featureToggles.lokiLabelNamesQueryApi || !options?.streamSelector) {
+    else if (config.featureToggles.lokiLabelNamesQueryApi || !options?.streamSelector) {
       return this.fetchLabelsByLabelsEndpoint(options);
     } else {
       const data = await this.fetchSeriesLabels(options.streamSelector, { timeRange: options.timeRange });
@@ -254,6 +294,42 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return data;
   };
 
+  async fetchDetectedLabels(
+    queryOptions: {
+      expr?: string;
+      timeRange?: TimeRange;
+      scopedVars?: ScopedVars;
+    },
+    requestOptions?: Partial<BackendSrvRequest>
+  ): Promise<string[]> {
+    const interpolatedExpr =
+      queryOptions.expr && queryOptions.expr !== EMPTY_SELECTOR
+        ? this.datasource.interpolateString(queryOptions.expr, queryOptions.scopedVars)
+        : undefined;
+
+    const range = queryOptions?.timeRange ?? this.getDefaultTimeRange();
+    const rangeParams = this.datasource.getTimeRangeParams(range);
+    const { start, end } = rangeParams;
+    const params: KeyValue<string | number> = { start, end };
+    if (interpolatedExpr) {
+      params.query = interpolatedExpr;
+    }
+
+    try {
+      const data = await this.request('detected_labels', params, true, requestOptions);
+      if (Array.isArray(data)) {
+        this.labelKeys = data
+          .map((label) => label.label)
+          .sort()
+          .filter((label: string) => HIDDEN_LABELS.includes(label) === false);
+        return this.labelKeys;
+      }
+    } catch (error) {
+      console.error('error', error);
+    }
+    return [];
+  }
+
   // Cache key is a bit different here. We round up to a minute the intervals.
   // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
   // millisecond while still actually getting all the keys for the correct interval. This still can create problems
@@ -275,7 +351,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       scopedVars?: ScopedVars;
     },
     requestOptions?: Partial<BackendSrvRequest>
-  ): Promise<DetectedFieldsResult | Error> {
+  ): Promise<DetectedFieldsResult> {
     const interpolatedExpr =
       queryOptions.expr && queryOptions.expr !== EMPTY_SELECTOR
         ? this.datasource.interpolateString(queryOptions.expr, queryOptions.scopedVars)
@@ -285,6 +361,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
       throw new Error('fetchDetectedFields requires query expression');
     }
 
+    if (isQueryWithError(interpolatedExpr)) {
+      console.error('fetchDetectedFields: invalid query');
+      return [];
+    }
+
     const url = `detected_fields`;
     const range = queryOptions?.timeRange ?? this.getDefaultTimeRange();
     const rangeParams = this.datasource.getTimeRangeParams(range);
@@ -292,15 +373,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const params: KeyValue<string | number> = { start, end, limit: queryOptions?.limit ?? 1000 };
     params.query = interpolatedExpr;
 
-    return new Promise(async (resolve, reject) => {
-      try {
-        const data = await this.request(url, params, true, requestOptions);
-        resolve(data);
-      } catch (error) {
-        console.error('error', error);
-        reject(error);
-      }
-    });
+    try {
+      const data = await this.request(url, params, true, requestOptions);
+      return data;
+    } catch (error) {
+      console.error('error', error);
+    }
+    return [];
   }
 
   async fetchDetectedFieldValues(
@@ -487,6 +566,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
     streamSelector: string,
     options?: { maxLines?: number; timeRange?: TimeRange }
   ): Promise<ParserAndLabelKeysResult> {
+    if (this.detectedEndpointsSupported) {
+      return this.getParserAndLabelKeysByDetectedLabels({
+        expr: streamSelector,
+        timeRange: options?.timeRange,
+        limit: options?.maxLines,
+      });
+    }
+
     const empty = {
       extractedLabelKeys: [],
       structuredMetadataKeys: [],
@@ -522,6 +609,51 @@ export default class LokiLanguageProvider extends LanguageProvider {
       hasPack,
       hasLogfmt,
     };
+  }
+
+  /**
+   * Wrapper for fetchDetectedFields to be used by getParserAndLabelKeys.
+   */
+  private async getParserAndLabelKeysByDetectedLabels(queryOptions: {
+    expr: string;
+    timeRange?: TimeRange;
+    limit?: number;
+  }): Promise<ParserAndLabelKeysResult> {
+    const fields = await this.fetchDetectedFields(
+      {
+        expr: queryOptions.expr,
+        timeRange: queryOptions?.timeRange,
+        limit: queryOptions?.limit,
+      },
+      {
+        showErrorAlert: false,
+        showSuccessAlert: false,
+      }
+    );
+
+    const response: ParserAndLabelKeysResult = {
+      extractedLabelKeys: [],
+      structuredMetadataKeys: [],
+      unwrapLabelKeys: [],
+      hasJSON: false,
+      hasPack: false,
+      hasLogfmt: false,
+    };
+
+    if (!Array.isArray(fields)) {
+      return response;
+    }
+
+    response.hasJSON = fields.some((field) => field.parsers && field.parsers.includes('json'));
+    // See https://github.com/grafana/grafana/blob/8cb77e1eae906e9b4a2343ad80a5fac21b040f8f/public/app/plugins/datasource/loki/lineParser.ts#L20
+    response.hasPack = fields.some((field) => field.label === '_entry');
+    response.hasLogfmt = fields.some((field) => field.parsers && field.parsers.includes('logfmt'));
+    response.extractedLabelKeys = fields.map((field) => field.label);
+    response.structuredMetadataKeys = fields.filter((field) => field.parsers === null).map((field) => field.label);
+    // See https://github.com/grafana/grafana/blob/722aac6cbac64b84c4424d1194661c5c32b2f8ca/public/app/plugins/datasource/loki/responseUtils.ts#L84
+    response.unwrapLabelKeys = fields.filter((field) => field.type !== 'string').map((field) => field.label);
+
+    return response;
   }
 
   /**

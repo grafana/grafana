@@ -548,12 +548,17 @@ export class LokiDatasource
 
     const res = await this.getResource(url, params, options);
 
-    // detected_field/${label}/values has different structure then other metadata responses
+    // detected_field/${label}/values has different structure than other metadata responses
     if (!res.data && res.values) {
       return res.values ?? [];
     }
 
-    // detected_fields has a different return structure then other metadata responses
+    // detected_labels has different structure than other metadata responses
+    if (res && 'detectedLabels' in res && Array.isArray(res.detectedLabels)) {
+      return res.detectedLabels ?? [];
+    }
+
+    // detected_fields has a different return structure than other metadata responses
     if (!res.data && res.fields) {
       return res.fields ?? [];
     }
