@@ -551,7 +551,16 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			extras = append(extras, gitrepo.Extra(decrypter))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
+			// The operator runs as a separate process; webhook callbacks must
+			// be registered against an externally-reachable URL pointing at
+			// the main Grafana server. [operator] provisioning_server_public_url
+			// is the operator-specific knob; fall back to the instance-level
+			// [provisioning] public_root_url so a single setting drives both
+			// the in-process and operator deployments.
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
+			if provisioningAppURL == "" {
+				provisioningAppURL = c.Settings.ProvisioningPublicRootURL
+			}
 			if provisioningAppURL != "" {
 				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
 			}
