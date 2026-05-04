@@ -6,6 +6,43 @@ scopes:
         operator: equals
         value: shoe
 
+  # Cluster 1 needs a scope definition; the tree references it but the API
+  # returns 404 without one. defaultPath drives tree expansion to the leaf node.
+  cluster1:
+    title: Cluster 1
+    defaultPath:
+      - gdev-scopes
+      - gdev-scopes-clusters
+      - gdev-scopes-clusters-cluster1-node
+    filters:
+      - key: cluster
+        operator: equals
+        value: cluster1
+
+  # app1 with defaultPath — tree expansion via production path.
+  app1:
+    title: Application 1
+    defaultPath:
+      - gdev-scopes
+      - gdev-scopes-production
+      - gdev-scopes-production-app1-prod
+    filters:
+      - key: app
+        operator: equals
+        value: app1
+
+  # app2 with defaultPath — tree expansion via production path.
+  app2:
+    title: Application 2
+    defaultPath:
+      - gdev-scopes
+      - gdev-scopes-production
+      - gdev-scopes-production-app2-prod
+    filters:
+      - key: app
+        operator: equals
+        value: app2
+
   shoes:
     title: Shoes
     filters:
