@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -25,6 +26,7 @@ type TeamAPI struct {
 	license                  licensing.Licensing
 	cfg                      *setting.Cfg
 	preferenceService        pref.Service
+	preferenceK8sHandler     *prefapi.K8sHandler
 	ds                       dashboards.DashboardService
 	logger                   log.Logger
 	features                 featuremgmt.FeatureToggles
@@ -41,6 +43,7 @@ func ProvideTeamAPI(
 	license licensing.Licensing,
 	cfg *setting.Cfg,
 	preferenceService pref.Service,
+	preferenceK8sHandler *prefapi.K8sHandler,
 	ds dashboards.DashboardService,
 	features featuremgmt.FeatureToggles,
 	clientConfigProvider apiserver.DirectRestConfigProvider,
@@ -53,6 +56,7 @@ func ProvideTeamAPI(
 		license:                  license,
 		cfg:                      cfg,
 		preferenceService:        preferenceService,
+		preferenceK8sHandler:     preferenceK8sHandler,
 		ds:                       ds,
 		logger:                   log.New("team-api"),
 		features:                 features,
