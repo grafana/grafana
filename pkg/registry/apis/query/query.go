@@ -97,7 +97,6 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 			}
 		}
 		connectLogger.Debug("responder sending status code", "statusCode", statusCode, "caller", getCaller(ctx))
-		b.reportStatus(ctx, *statusCode)
 	}
 	responderOnErrorFn := func(err error) {
 		connectLogger.Error("error caught in handler", "err", err, "caller", getCaller(ctx))
@@ -110,6 +109,10 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 		span.RecordError(err)
 
 		statusCode := 0
+		ERROR_
+		FIXME: this manipulation with the status-code does not have an effect
+		on the real http status code returned by the service
+		ERROR_
 		var k8sErr *errorsK8s.StatusError
 		switch {
 		case errors.As(err, &k8sErr):
@@ -125,10 +128,9 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 			// so we use the zero to indicate the unknown.
 			connectLogger.Debug("Connect: unknown error returned", "error", err)
 		}
-		b.reportStatus(ctx, statusCode)
 	}
 
-	responder := newRawResponderWrapper(ctx, w, responderOnObjectFn, responderOnErrorFn)
+	responder := newRawResponderWrapper(ctx, w, responderOnObjectFn, responderOnErrorFn, func(statusCode int) { b.reportStatus(ctx, statusCode) })
 
 	raw := &query.QueryDataRequest{}
 	err := web.Bind(httpreq, raw)
@@ -335,18 +337,20 @@ func handleQuery(
 }
 
 type rawResponderWrapper struct {
-	w          http.ResponseWriter
-	ctx        context.Context
-	onObjectFn func(statusCode *int, obj runtime.Object)
-	onErrorFn  func(err error)
+	w            http.ResponseWriter
+	ctx          context.Context
+	onObjectFn   func(statusCode *int, obj runtime.Object)
+	onErrorFn    func(err error)
+	reportStatus func(statusCode int)
 }
 
-func newRawResponderWrapper(ctx context.Context, w http.ResponseWriter, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) rest.Responder {
+func newRawResponderWrapper(ctx context.Context, w http.ResponseWriter, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error), reportStatus func(statusCode int)) rest.Responder {
 	return &rawResponderWrapper{
-		w:          w,
-		ctx:        ctx,
-		onObjectFn: onObjectFn,
-		onErrorFn:  onErrorFn,
+		w:            w,
+		ctx:          ctx,
+		onObjectFn:   onObjectFn,
+		onErrorFn:    onErrorFn,
+		reportStatus: reportStatus,
 	}
 }
 
@@ -364,6 +368,7 @@ func (r rawResponderWrapper) Object(statusCode int, obj runtime.Object) {
 	if err := json.NewEncoder(r.w).Encode(obj); err != nil {
 		http.Error(r.w, err.Error(), http.StatusInternalServerError)
 	}
+	r.reportStatus(statusCode)
 }
 
 func (r rawResponderWrapper) Error(err error) {
@@ -374,7 +379,8 @@ func (r rawResponderWrapper) Error(err error) {
 	// a marker so we can see in the browser that this mode was chosen
 	r.w.Header().Set("X-Ds-Querier-Raw", "1")
 
-	errhttp.Write(r.ctx, err, r.w)
+	statusCode := errhttp.Write(r.ctx, err, r.w)
+	r.reportStatus(statusCode)
 }
 
 func logEmptyRefids(queries []v0alpha1.DataQuery, logger log.Logger) {
