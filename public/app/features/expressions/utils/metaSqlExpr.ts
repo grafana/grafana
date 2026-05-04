@@ -4,6 +4,7 @@ import { getDefaultTimeRange, DataFrameView } from '@grafana/data';
 import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/plugin-ui';
 import { type DataQuery } from '@grafana/schema';
 
+import { quoteIdentifierIfNecessary, unquoteIdentifier } from 'app/plugins/datasource/mysql/sqlUtil';
 import { dataSource } from '../ExpressionDatasource';
 
 export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuery[]): Promise<SQLSelectableValue[]> {
@@ -12,7 +13,7 @@ export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuer
     return [];
   }
 
-  const queryString = `SELECT * FROM ${query.table} LIMIT 1`;
+  const queryString = `SELECT * FROM ${quoteIdentifierIfNecessary(unquoteIdentifier(query.table))} LIMIT 1`;
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
     { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
@@ -26,7 +27,7 @@ export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuer
       name,
       text: name,
       label: name,
-      value: quoteIdentifierIfNecessary(name),
+      value: quoteIdentifierIfNecessary(unquoteIdentifier(name)),
       type,
     };
   });
@@ -109,10 +110,6 @@ function mapColumnTypeToIcon(type: string) {
     default:
       return undefined;
   }
-}
-
-function quoteIdentifierIfNecessary(value: string) {
-  return /^[a-zA-Z_][a-zA-Z0-9_$]*$/g.test(value) ? value : `\`${value}\``;
 }
 
 // based off https://github.com/grafana/grafana/blob/main/pkg/expr/sql/parser_allow.go
