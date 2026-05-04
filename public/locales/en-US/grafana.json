@@ -4421,7 +4421,8 @@
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
-      "panels": "Panels"
+      "panels": "Panels",
+      "readme": "README"
     },
     "my-team-folders": "My team folders",
     "name-cell": {
@@ -4461,6 +4462,18 @@
       "request-extension": "Request quota extension",
       "resource-detail-dashboards": "You've created {{usage}} of {{limit}} dashboards ({{percentage}}%).",
       "resource-detail-folders": "You've created {{usage}} of {{limit}} folders ({{percentage}}%)."
+    },
+    "readme": {
+      "add-hint": "Add a README.md file to your repository to display documentation here.",
+      "create": "Create README",
+      "create-on-bitbucket": "Create README on Bitbucket",
+      "create-on-github": "Create README on GitHub",
+      "create-on-gitlab": "Create README on GitLab",
+      "edit-readme": "Edit README",
+      "hint": "Looking for an overview of this folder? <2>See the README</2>",
+      "not-found": "No README.md file found in this folder.",
+      "not-provisioned": "This folder is not managed by a Git repository.",
+      "parse-error": "Unable to display README content."
     },
     "recently-viewed": {
       "clear": "Clear history",

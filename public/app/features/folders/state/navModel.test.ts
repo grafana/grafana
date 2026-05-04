@@ -4,12 +4,13 @@ import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
 
-import { buildNavModel, getAlertingTabID } from './navModel';
+import { buildNavModel, getAlertingTabID, getReadmeTabID } from './navModel';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     unifiedAlertingEnabled: true,
+    featureToggles: {},
   },
 }));
 
@@ -90,6 +91,46 @@ describe('buildNavModel', () => {
       expect(alertingTab).toBeDefined();
       expect(alertingTab?.icon).toBe('bell');
       expect(alertingTab?.url).toBe(`${mockFolder.url}/alerting`);
+    });
+  });
+
+  describe('README tab visibility', () => {
+    afterEach(() => {
+      // Reset between tests so toggles don't leak.
+      config.featureToggles = {};
+    });
+
+    it('shows the README tab first when a folder is provisioned and the toggle is enabled', () => {
+      config.featureToggles = { provisioningReadmes: true };
+
+      const provisionedFolder: FolderDTO = { ...mockFolder, managedBy: ManagerKind.Repo };
+
+      const navModel = buildNavModel(provisionedFolder);
+      const readmeTab = navModel.children?.find((child) => child.id === getReadmeTabID(provisionedFolder.uid));
+
+      expect(readmeTab).toBeDefined();
+      expect(readmeTab?.url).toBe(`${provisionedFolder.url}/readme`);
+      expect(navModel.children?.[0]?.id).toBe(getReadmeTabID(provisionedFolder.uid));
+    });
+
+    it('hides the README tab when the toggle is off', () => {
+      config.featureToggles = { provisioningReadmes: false };
+
+      const provisionedFolder: FolderDTO = { ...mockFolder, managedBy: ManagerKind.Repo };
+
+      const navModel = buildNavModel(provisionedFolder);
+      const readmeTab = navModel.children?.find((child) => child.id === getReadmeTabID(provisionedFolder.uid));
+
+      expect(readmeTab).toBeUndefined();
+    });
+
+    it('hides the README tab on non-provisioned folders even when the toggle is on', () => {
+      config.featureToggles = { provisioningReadmes: true };
+
+      const navModel = buildNavModel(mockFolder);
+      const readmeTab = navModel.children?.find((child) => child.id === getReadmeTabID(mockFolder.uid));
+
+      expect(readmeTab).toBeUndefined();
     });
   });
 });

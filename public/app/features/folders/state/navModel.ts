@@ -9,15 +9,52 @@ import { type FolderDTO, type FolderParent } from 'app/types/folders';
 
 export const FOLDER_ID = 'manage-folder';
 
+export const getReadmeTabID = (folderUID: string) => `folder-readme-${folderUID}`;
 export const getDashboardsTabID = (folderUID: string) => `folder-dashboards-${folderUID}`;
 export const getLibraryPanelsTabID = (folderUID: string) => `folder-library-panels-${folderUID}`;
 export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folderUID}`;
 export const getPermissionsTabID = (folderUID: string) => `folder-permissions-${folderUID}`;
 export const getSettingsTabID = (folderUID: string) => `folder-settings-${folderUID}`;
 
-export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: FolderParent[]): NavModelItem {
+interface BuildNavModelOptions {
+  /**
+   * Treat the folder as provisioned regardless of `folder.managedBy`. Useful
+   * when the caller has stronger context (e.g. provisioning settings tell us
+   * the folder is the repository root or a sub-folder of a repo, even when
+   * the folder DTO doesn't carry the manager annotation).
+   */
+  isProvisionedFolder?: boolean;
+}
+
+export function buildNavModel(
+  folder: FolderDTO | FolderParent,
+  parentsArg?: FolderParent[],
+  options: BuildNavModelOptions = {}
+): NavModelItem {
   const parents = parentsArg ?? ('parents' in folder ? folder.parents : undefined);
-  const isProvisioned = 'managedBy' in folder ? folder.managedBy === ManagerKind.Repo : false;
+  const detectedProvisioned = 'managedBy' in folder ? folder.managedBy === ManagerKind.Repo : false;
+  const isProvisioned = options.isProvisionedFolder ?? detectedProvisioned;
+
+  const children: NavModelItem[] = [];
+
+  // Show the README tab first for provisioned folders when the feature is enabled.
+  if (isProvisioned && config.featureToggles.provisioningReadmes) {
+    children.push({
+      active: false,
+      icon: 'document-info',
+      id: getReadmeTabID(folder.uid),
+      text: t('browse-dashboards.manage-folder-nav.readme', 'README'),
+      url: `${folder.url}/readme`,
+    });
+  }
+
+  children.push({
+    active: false,
+    icon: 'apps',
+    id: getDashboardsTabID(folder.uid),
+    text: t('browse-dashboards.manage-folder-nav.dashboards', 'Dashboards'),
+    url: folder.url,
+  });
 
   const model: NavModelItem = {
     icon: 'folder',
@@ -25,15 +62,7 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
     subTitle: getNavSubTitle('manage-folder'),
     url: folder.url,
     text: folder.title,
-    children: [
-      {
-        active: false,
-        icon: 'apps',
-        id: getDashboardsTabID(folder.uid),
-        text: t('browse-dashboards.manage-folder-nav.dashboards', 'Dashboards'),
-        url: folder.url,
-      },
-    ],
+    children,
   };
 
   if (parents && parents.length > 0) {
