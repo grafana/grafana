@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -640,6 +642,95 @@ func TestIntegrationAnnotations(t *testing.T) {
 	})
 }
 
+func TestIntegrationAnnotationsAlwaysOnMigrations(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sql := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.AnnotationMaximumTagsLength = 60
+
+	t.Run("RunDashboardUIDMigrations should normalize wrapped driver names", func(t *testing.T) {
+		driverName := ""
+		expectedUID := ""
+		title := ""
+
+		switch {
+		case db.IsTestDbMySQL():
+			driverName = migrator.MySQL + "WithHooks"
+			expectedUID = "test-wrapped-mysql-uid"
+			title = "Test Wrapped MySQL Driver"
+		case db.IsTestDbPostgres():
+			driverName = migrator.Postgres + "WithHooks"
+			expectedUID = "test-wrapped-postgres-uid"
+			title = "Test Wrapped Postgres Driver"
+		default:
+			t.Skip("wrapped driver regression test requires mysql or postgres")
+		}
+
+		l := log.New("annotation.test")
+		mockDashSvc := testutil.NewMockDashboardService(t)
+
+		dashboard := testutil.CreateDashboard(t, mockDashSvc, dashboards.SaveDashboardCommand{
+			UserID: 1,
+			OrgID:  1,
+			Dashboard: simplejson.NewFromAny(map[string]any{
+				"title": title,
+				"uid":   expectedUID,
+			}),
+		})
+
+		tempStore := NewXormStore(cfg, l, sql, tagimpl.ProvideService(sql), nil)
+		annotation := &annotations.Item{
+			OrgID:        1,
+			UserID:       1,
+			DashboardID:  dashboard.ID,
+			DashboardUID: dashboard.UID,
+			Text:         "test wrapped driver migration",
+			Type:         "alert",
+			Epoch:        100,
+		}
+		err := tempStore.Add(context.Background(), annotation)
+		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			err := tempStore.Delete(context.Background(), &annotations.DeleteParams{ID: annotation.ID, OrgID: 1})
+			assert.NoError(t, err)
+		})
+
+		err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Exec("UPDATE annotation SET dashboard_uid = NULL WHERE id = ?", annotation.ID)
+			return err
+		})
+		require.NoError(t, err)
+
+		sess := sql.GetEngine().NewSession()
+		t.Cleanup(func() {
+			sess.Close()
+		})
+
+		err = migrations.RunDashboardUIDMigrations(sess, driverName, l)
+		require.NoError(t, err)
+
+		var result struct {
+			DashboardUID *string `xorm:"dashboard_uid"`
+		}
+		err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+			has, err := sess.Table("annotation").
+				Where("id = ?", annotation.ID).
+				Get(&result)
+			if err != nil {
+				return err
+			}
+			if !has {
+				return fmt.Errorf("annotation not found")
+			}
+			return nil
+		})
+		require.NoError(t, err)
+		require.NotNil(t, result.DashboardUID)
+		assert.Equal(t, expectedUID, *result.DashboardUID)
+	})
+}
 func BenchmarkFindTags_10k(b *testing.B) {
 	benchmarkFindTags(b, 10000)
 }
