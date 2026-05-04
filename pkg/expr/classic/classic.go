@@ -113,13 +113,14 @@ func (cmd *ConditionsCmd) Execute(ctx context.Context, t time.Time, vars mathexp
 	number.SetMeta(matches)
 
 	var v float64
-	// isNoData must be checked first because it is possible for both isNoData and isFiring
-	// to be true at the same time
-	if isNoData {
-		number.SetValue(nil)
-	} else if isFiring {
+	// isFiring takes precedence over isNoData. When both are true (e.g. condition A
+	// fires and condition B is NoData, joined with OR), the rule should fire.
+	// This matches the behavior of legacy alerting where firing was checked first.
+	if isFiring {
 		v = 1
 		number.SetValue(&v)
+	} else if isNoData {
+		number.SetValue(nil)
 	} else {
 		// the default value of v is 0
 		number.SetValue(&v)
