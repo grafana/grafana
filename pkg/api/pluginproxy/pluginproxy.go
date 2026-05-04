@@ -234,7 +234,7 @@ func (proxy PluginProxy) logRequest() {
 		"body", body)
 }
 
-// Equivalent to
+// Equivalent to c.JsonApiErr in /pkg/services/contexthandler/model/model.go#L70
 func writeJSONErr(w http.ResponseWriter, r *http.Request, status int, message string, err error) {
 	resp := make(map[string]any)
 	if err != nil {
