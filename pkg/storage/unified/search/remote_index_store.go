@@ -702,4 +702,3 @@ func (s *BucketRemoteIndexStore) CleanupIncompleteUploads(ctx context.Context, n
 
 	return cleaned, nil
 }
-
