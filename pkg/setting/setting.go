@@ -211,6 +211,10 @@ type Cfg struct {
 	CSPEnabled bool
 	// CSPTemplate contains the Content Security Policy template.
 	CSPTemplate string
+	// CSPMinimalEnabled toggles applying a hardcoded minimal Content Security Policy template as a
+	// fallback when CSPEnabled is false. Ensures a baseline CSP is always present. The minimal
+	// template itself is not configurable; it lives in pkg/middleware/csp.go.
+	CSPMinimalEnabled bool
 	// CSPReportEnabled toggles Content Security Policy Report Only support.
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
@@ -1924,6 +1928,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
 	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
+	cfg.CSPMinimalEnabled = security.Key("content_security_policy_minimal").MustBool(false)
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
 	cfg.FormActionAdditionalHosts = security.Key("form_action_additional_hosts").Strings(" ")

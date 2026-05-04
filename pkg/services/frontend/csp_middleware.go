@@ -31,6 +31,12 @@ func CSPMiddleware() web.Middleware {
 				"form_action_additional_hosts", requestConfig.FormActionAdditionalHosts,
 			)
 
+			// TODO: this per-tenant frontend service CSP middleware does NOT yet honor
+			// `content_security_policy_minimal` (the minimal-CSP fallback). The classic
+			// middleware in pkg/middleware/csp.go does. To keep behavior consistent, this
+			// path should also apply middleware.MinimalCSPTemplate when CSPEnabled is false,
+			// CSPMinimalEnabled is true, and CSPReportOnlyEnabled is false. 
+
 			// Bail early if CSP is not enabled for this tenant
 			if !hasFullCSP {
 				next.ServeHTTP(w, r)

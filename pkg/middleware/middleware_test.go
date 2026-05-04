@@ -94,6 +94,73 @@ func TestMiddleWareContentSecurityPolicyHeaders(t *testing.T) {
 		cfg.CSPReportOnlyTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
 		cfg.AppURL = "http://localhost:3000/"
 	})
+
+	// expected to match the hardcoded minimalCSPTemplate in pkg/middleware/csp.go
+	minimalPolicy := `^script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' 'nonce-[^']+';object-src 'none';base-uri 'self'$`
+
+	middlewareScenario(t, "middleware should add minimal Content-Security-Policy when full CSP is disabled", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Regexp(t, minimalPolicy, sc.resp.Header().Get("Content-Security-Policy"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPEnabled = false
+		cfg.CSPMinimalEnabled = true
+		cfg.AppURL = "http://localhost:3000/"
+	})
+
+	middlewareScenario(t, "middleware should prefer full CSP over minimal when both are enabled (no duplicate header)", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		headers := sc.resp.Header().Values("Content-Security-Policy")
+		require.Len(t, headers, 1, "expected exactly one Content-Security-Policy header, got %v", headers)
+		assert.Regexp(t, policy, headers[0])
+		assert.NotRegexp(t, `object-src 'none'`, headers[0], "minimal template should not have been applied")
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPEnabled = true
+		cfg.CSPTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.CSPMinimalEnabled = true
+		cfg.AppURL = "http://localhost:3000/"
+	})
+
+	middlewareScenario(t, "middleware should not add Content-Security-Policy when both full and minimal are disabled", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Empty(t, sc.resp.Header().Get("Content-Security-Policy"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPEnabled = false
+		cfg.CSPMinimalEnabled = false
+		cfg.AppURL = "http://localhost:3000/"
+	})
+
+	middlewareScenario(t, "minimal CSP should be suppressed when CSP-Report-Only is enabled", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+
+		// no enforced CSP header at all — would defeat the purpose of monitor-only mode
+		assert.Empty(t, sc.resp.Header().Get("Content-Security-Policy"))
+		// report-only header is still set
+		assert.Regexp(t, policy, sc.resp.Header().Get("Content-Security-Policy-Report-Only"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPEnabled = false
+		cfg.CSPMinimalEnabled = true
+		cfg.CSPReportOnlyEnabled = true
+		cfg.CSPReportOnlyTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.AppURL = "http://localhost:3000/"
+	})
+
+	middlewareScenario(t, "full CSP and CSP-Report-Only can still coexist and share a nonce", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+
+		cspHeader := sc.resp.Header().Get("Content-Security-Policy")
+		cspReportOnlyHeader := sc.resp.Header().Get("Content-Security-Policy-Report-Only")
+
+		assert.Regexp(t, policy, cspHeader)
+		assert.Regexp(t, policy, cspReportOnlyHeader)
+		assert.Equal(t, cspHeader, cspReportOnlyHeader, "full CSP and report-only CSP should share the same nonce")
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPEnabled = true
+		cfg.CSPTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.CSPMinimalEnabled = true // also enabled, but full takes precedence
+		cfg.CSPReportOnlyEnabled = true
+		cfg.CSPReportOnlyTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.AppURL = "http://localhost:3000/"
+	})
 }
 
 func TestMiddlewareContext(t *testing.T) {

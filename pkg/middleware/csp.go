@@ -14,11 +14,29 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// minimalCSPTemplate is the hardcoded Content-Security-Policy used as a baseline when
+// `content_security_policy = false` and `content_security_policy_minimal = true`. It is intentionally
+// not configurable: it only sets the directives strictly required for Grafana's XSS protections
+// (script-src, object-src, base-uri) so it can be combined with an existing CSP (e.g. from a
+// reverse proxy) without unnecessarily restricting it. $NONCE is replaced per request.
+const minimalCSPTemplate = "script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' $NONCE;object-src 'none';base-uri 'self'"
+
 // ContentSecurityPolicy sets the configured Content-Security-Policy and/or Content-Security-Policy-Report-Only header(s) in the response.
+//
+// If CSP has been explicitly enabled via `content_security_policy = true`, the configured
+// `content_security_policy_template` is used. Otherwise, when `content_security_policy_minimal`
+// is enabled, a hardcoded minimal template (see minimalCSPTemplate) is applied as a baseline so
+// we still get XSS protection out of the box without overwriting or duplicating any CSP that was
+// set up explicitly by the operator. The minimal fallback is also suppressed when
+// `content_security_policy_report_only` is enabled, since the operator is in monitor-only mode and
+// an enforced minimal CSP would defeat that intent.
 func ContentSecurityPolicy(cfg *setting.Cfg, logger log.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		if cfg.CSPEnabled {
+		switch {
+		case cfg.CSPEnabled:
 			next = cspMiddleware(cfg, next, logger)
+		case cfg.CSPMinimalEnabled && !cfg.CSPReportOnlyEnabled:
+			next = cspMinimalMiddleware(cfg, next, logger)
 		}
 		if cfg.CSPReportOnlyEnabled {
 			next = cspReportOnlyMiddleware(cfg, next, logger)
@@ -47,6 +65,16 @@ func cspMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.
 		ctx := contexthandler.FromContext(req.Context())
 		hosts := CSPHostLists{FormActionAdditionalHosts: cfg.FormActionAdditionalHosts}
 		policy := ReplacePolicyVariables(cfg.CSPTemplate, cfg.AppURL, hosts, ctx.RequestNonce)
+		rw.Header().Set("Content-Security-Policy", policy)
+		next.ServeHTTP(rw, req)
+	})
+}
+
+func cspMinimalMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		ctx := contexthandler.FromContext(req.Context())
+		hosts := CSPHostLists{FormActionAdditionalHosts: cfg.FormActionAdditionalHosts}
+		policy := ReplacePolicyVariables(minimalCSPTemplate, cfg.AppURL, hosts, ctx.RequestNonce)
 		rw.Header().Set("Content-Security-Policy", policy)
 		next.ServeHTTP(rw, req)
 	})
