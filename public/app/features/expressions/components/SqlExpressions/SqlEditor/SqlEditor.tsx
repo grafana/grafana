@@ -1,5 +1,8 @@
+import { css } from '@emotion/css';
 import { useCallback, useMemo, type ReactNode } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor, type CodeMirrorCompletionMode } from '@grafana/ui/unstable';
 
 import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
@@ -25,6 +28,7 @@ export const SqlEditor = ({
   ariaLabel,
   children,
 }: SqlEditorProps) => {
+  const styles = useStyles2(getStyles);
   const completionSource = useMemo(() => {
     if (!completionProvider) {
       return undefined;
@@ -41,16 +45,27 @@ export const SqlEditor = ({
 
   return (
     <>
-      <CodeMirrorEditor
-        language="sql"
-        value={value}
-        onChange={onChange}
-        height={typeof height === 'number' ? `${height}px` : height}
-        aria-label={ariaLabel}
-        completionMode={completionMode}
-        completionSources={completionSource ? [completionSource] : undefined}
-      />
+      <div className={styles.editorBorder}>
+        <CodeMirrorEditor
+          language="sql"
+          value={value}
+          onChange={onChange}
+          height={typeof height === 'number' ? `${height}px` : height}
+          aria-label={ariaLabel}
+          completionMode={completionMode}
+          completionSources={completionSource ? [completionSource] : undefined}
+        />
+      </div>
       {children?.({ formatQuery })}
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  editorBorder: css({
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderTopLeftRadius: theme.shape.radius.default,
+    borderTopRightRadius: theme.shape.radius.default,
+    overflow: 'hidden',
+  }),
+});
