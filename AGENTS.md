@@ -8,6 +8,7 @@ This file provides guidance to AI agents when working with code in the Grafana r
 
 - `docs/AGENTS.md` — Documentation style guide (for work under `docs/`)
 - `public/app/features/alerting/unified/AGENTS.md` — Alerting squad patterns
+- `public/app/plugins/panel/AGENTS.md` — Built-in panel (visualization) plugin testing workflow and patterns
 
 ## Project Overview
 
