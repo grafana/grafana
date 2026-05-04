@@ -1,4 +1,3 @@
-import { useFlagUseMTPlugins } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
