@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML bearbeiten",
         "save": "Speichern"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "Name",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Alle Regeln löschen"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Löschen",
       "delete-modal-delete-button": "Löschen",
@@ -1573,8 +1575,14 @@
         "update-error": "Die Regelgruppe konnte nicht aktualisiert werden",
         "update-success": "Regelgruppe erfolgreich aktualisiert"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Die ausgewählte Gruppe kann nicht bearbeitet werden",
       "group-not-editable-description": "Diese Gruppe gehört zu einer Datenquelle, die keine Bearbeitung unterstützt.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Regelgruppe bearbeiten",
       "rule-group-error": "Fehler beim Laden der Regelgruppe"
     },
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "Alphabetisch (A–Z)",
         "alphabetically-za": "Alphabetisch (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Gelöscht (neueste zuerst)",
         "deleted-oldest": "Gelöscht (älteste zuerst)"
       }
@@ -8134,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Zu Favoriten hinzufügen",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Daten untersuchen",
       "open-in-explore": "In Explore View öffnen",
       "remove-favorite": "Von Favoriten entfernen"
@@ -13577,6 +13593,7 @@
       "contact-admin": "Wenden Sie sich an Ihren Grafana-Administrator, um diese Ressource in eine lokale Ressource umzuwandeln oder alle Ressourcen aus dem fehlenden Repository zu löschen.",
       "convert-to-local-button": "In lokal konvertieren",
       "delete-button": "Löschen",
+      "go-to-dashboards": "",
       "job-error": "Bei der Verarbeitung verwaister Ressourcen ist ein Fehler aufgetreten",
       "job-success": "Verwaiste Ressourcen erfolgreich verarbeitet",
       "job-warning": "Einige Ressourcen wurden mit Warnungen verarbeitet. Bitte überprüfen Sie die Ergebnisse.",
@@ -13823,7 +13840,8 @@
       "make-sure": "Token mit diesen Berechtigungen erstellen"
     },
     "validation": {
-      "hidden-characters": "Dieses Feld enthält versteckte Zeichen, die möglicherweise durch Kopieren und Einfügen eingefügt wurden. Bitte geben Sie den Wert erneut ein oder bereinigen Sie ihn und versuchen Sie es erneut."
+      "hidden-characters": "Dieses Feld enthält versteckte Zeichen, die möglicherweise durch Kopieren und Einfügen eingefügt wurden. Bitte geben Sie den Wert erneut ein oder bereinigen Sie ihn und versuchen Sie es erneut.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Warnung",
     "watch-stream": {
@@ -14231,6 +14249,8 @@
       "alerts-loading": "Warnungen",
       "card-click": "Karte {{id}} auswählen",
       "data": "Daten",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "{{type}} neu",
       "queries-expressions": "Abfragen und Ausdrücke",
       "toggle-size": "Seitenleistengröße umschalten",
@@ -14284,6 +14304,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Wiederherstellen"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Sie haben in letzter Zeit keine Dashboards gelöscht.",
@@ -14446,6 +14470,10 @@
     },
     "results-table": {
       "datasource-header": "Datenquelle",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 Min.",
       "deleted-remaining-header": "Verbleibende Zeit",
       "location-header": "Standort",
@@ -14939,10 +14967,13 @@
       "title": "Erstellen Sie mit Vorschlägen und Vorlagen im Handumdrehen Dashboards"
     },
     "nav": {
+      "counter": "",
       "go-to": "Zur Folie {{number}}",
-      "next": "Weiter",
-      "prev": "Zurück"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Abfrage erklären",

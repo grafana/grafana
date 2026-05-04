@@ -511,7 +511,8 @@
       "action-buttons": {
         "edit-yaml": "编辑 YAML",
         "save": "保存"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "姓名",
@@ -1285,7 +1286,8 @@
       "delete": {
         "button": {
           "label": "删除所有规则"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "删除",
       "delete-modal-delete-button": "删除",
@@ -1568,8 +1570,14 @@
         "update-error": "更新规则组失败",
         "update-success": "已成功更新规则组"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "无法编辑所选组",
       "group-not-editable-description": "此组所属的数据源不支持编辑。",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "编辑规则组",
       "rule-group-error": "加载规则组时出错"
     },
@@ -4461,6 +4469,8 @@
       "label": {
         "alphabetically-az": "按字母顺序 (A-Z)",
         "alphabetically-za": "按字母顺序 (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "已删除（最新靠前）",
         "deleted-oldest": "已删除（最旧靠前）"
       }
@@ -8088,6 +8098,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "添加到收藏夹",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "浏览数据",
       "open-in-explore": "在浏览视图中打开",
       "remove-favorite": "从收藏夹中移除"
@@ -13502,6 +13518,7 @@
       "contact-admin": "请与您的 Grafana 管理员联系，以便将此资源转换为本地资源，或删除该缺失存储库中的所有资源。",
       "convert-to-local-button": "转换为本地资源",
       "delete-button": "删除",
+      "go-to-dashboards": "",
       "job-error": "处理孤立资源时发生错误",
       "job-success": "孤立资源已成功处理",
       "job-warning": "某些资源已处理完毕，但有警告。请查看结果。",
@@ -13740,7 +13757,8 @@
       "make-sure": "创建具有以下权限的令牌"
     },
     "validation": {
-      "hidden-characters": "此字段包含可能通过复制粘贴引入的隐藏字符。请重新输入或清理该值，然后重试。"
+      "hidden-characters": "此字段包含可能通过复制粘贴引入的隐藏字符。请重新输入或清理该值，然后重试。",
+      "url-with-credentials": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {
@@ -14145,6 +14163,8 @@
       "alerts-loading": "警报",
       "card-click": "选择卡片 {{id}}",
       "data": "数据",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新{{type}}",
       "queries-expressions": "查询和表达式",
       "toggle-size": "切换侧边栏大小",
@@ -14195,6 +14215,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "还原"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "您最近没有删除任何数据面板。",
@@ -14355,6 +14379,10 @@
     },
     "results-table": {
       "datasource-header": "数据源",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 分钟",
       "deleted-remaining-header": "剩余时间",
       "location-header": "位置",
@@ -14847,10 +14875,13 @@
       "title": "借助建议和模板快速创建数据面板"
     },
     "nav": {
+      "counter": "",
       "go-to": "前往幻灯片 {{number}}",
-      "next": "下一个",
-      "prev": "上一个"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "解释查询",

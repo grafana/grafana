@@ -520,7 +520,8 @@
       "action-buttons": {
         "edit-yaml": "Редактировать YAML",
         "save": "Сохранить"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "имя",
@@ -1300,7 +1301,8 @@
       "delete": {
         "button": {
           "label": "Удалить все правила"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Удалить",
       "delete-modal-delete-button": "Удалить",
@@ -1583,8 +1585,14 @@
         "update-error": "Не удалось обновить группу правил",
         "update-success": "Группа правил обновлена"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Выбранную группу нельзя редактировать",
       "group-not-editable-description": "Эта группа принадлежит к источнику данных, который не поддерживает редактирование.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Редактирование группы правил",
       "rule-group-error": "Ошибка при загрузке группы правил"
     },
@@ -4551,6 +4559,8 @@
       "label": {
         "alphabetically-az": "В алфавитном порядке (прямом)",
         "alphabetically-za": "В алфавитном порядке (обратном)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Удалено (сначала новые)",
         "deleted-oldest": "Удалено (сначала старые)"
       }
@@ -8226,6 +8236,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Добавить в избранное",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Просмотреть данные",
       "open-in-explore": "Открыть в режиме Explore",
       "remove-favorite": "Удалить из избранного"
@@ -13727,6 +13743,7 @@
       "contact-admin": "Чтобы преобразовать этот ресурс в локальный или удалить все ресурсы из отсутствующего репозитория, обратитесь к администратору Grafana.",
       "convert-to-local-button": "Преобразовать в локальные",
       "delete-button": "Удалить",
+      "go-to-dashboards": "",
       "job-error": "Ошибка при обработке потерянных ресурсов",
       "job-success": "Потерянные ресурсы обработаны",
       "job-warning": "Некоторые ресурсы были обработаны с предупреждениями. Просмотрите результаты.",
@@ -13989,7 +14006,8 @@
       "make-sure": "Создать токен с этими разрешениями"
     },
     "validation": {
-      "hidden-characters": "Это поле содержит скрытые символы, которые могли появиться при копировании и вставке. Повторно введите значение или удалите его и повторите попытку."
+      "hidden-characters": "Это поле содержит скрытые символы, которые могли появиться при копировании и вставке. Повторно введите значение или удалите его и повторите попытку.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Предупреждение",
     "watch-stream": {
@@ -14403,6 +14421,8 @@
       "alerts-loading": "Оповещения",
       "card-click": "Выбрать карту {{id}}",
       "data": "Данные",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Новый {{type}}",
       "queries-expressions": "Запросы и выражения",
       "toggle-size": "Переключить размер боковой панели",
@@ -14462,6 +14482,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Восстановить"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "В последнее время вы не удаляли ни одного дашборда.",
@@ -14628,6 +14652,10 @@
     },
     "results-table": {
       "datasource-header": "Источник данных",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 мин.",
       "deleted-remaining-header": "Оставшееся время",
       "location-header": "Расположение",
@@ -15123,10 +15151,13 @@
       "title": "Оперативно создавайте дашборды с помощью рекомендаций и шаблонов"
     },
     "nav": {
+      "counter": "",
       "go-to": "Перейти к слайду {{number}}",
-      "next": "Далее",
-      "prev": "Назад"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Объяснить запрос",

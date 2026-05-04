@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"math/rand"
 	"regexp"
 	"time"
 
@@ -160,6 +161,9 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	key = section + "/" + key
 
@@ -181,12 +185,6 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 }
 
 func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
-	if k.db.IsClosed() {
-		return func(yield func(KeyValue, error) bool) {
-			yield(KeyValue{}, fmt.Errorf("database is closed"))
-		}
-	}
-
 	if section == "" {
 		return func(yield func(KeyValue, error) bool) {
 			yield(KeyValue{}, fmt.Errorf("section is required"))
@@ -194,10 +192,26 @@ func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) 
 	}
 
 	return func(yield func(KeyValue, error) bool) {
+		// Re-check at iteration time, not just when BatchGet() was called.
+		// The closure can be invoked much later, after ctx has been
+		// cancelled (e.g. gRPC Stop) or the DB has been closed.
+		if err := ctx.Err(); err != nil {
+			yield(KeyValue{}, err)
+			return
+		}
+		if k.db.IsClosed() {
+			yield(KeyValue{}, fmt.Errorf("database is closed"))
+			return
+		}
+
 		txn := k.db.NewTransaction(false)
 		defer txn.Discard()
 
 		for _, key := range keys {
+			if err := ctx.Err(); err != nil {
+				yield(KeyValue{}, err)
+				return
+			}
 			keyWithSection := section + "/" + key
 
 			item, err := txn.Get([]byte(keyWithSection))
@@ -233,6 +247,7 @@ func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) 
 // badgerWriteCloser implements io.WriteCloser for badgerKV
 type badgerWriteCloser struct {
 	db             *badger.DB
+	ctx            context.Context
 	keyWithSection string
 	buf            *bytes.Buffer
 	closed         bool
@@ -242,6 +257,9 @@ type badgerWriteCloser struct {
 func (w *badgerWriteCloser) Write(p []byte) (int, error) {
 	if w.closed {
 		return 0, fmt.Errorf("write to closed writer")
+	}
+	if err := w.ctx.Err(); err != nil {
+		return 0, err
 	}
 	return w.buf.Write(p)
 }
@@ -253,6 +271,9 @@ func (w *badgerWriteCloser) Close() error {
 	}
 	w.closed = true
 
+	if err := w.ctx.Err(); err != nil {
+		return err
+	}
 	if w.db.IsClosed() {
 		return fmt.Errorf("database is closed")
 	}
@@ -284,9 +305,13 @@ func (k *badgerKV) Save(ctx context.Context, section string, key string) (io.Wri
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	return &badgerWriteCloser{
 		db:             k.db,
+		ctx:            ctx,
 		keyWithSection: section + "/" + key,
 		buf:            &bytes.Buffer{},
 		closed:         false,
@@ -304,6 +329,9 @@ func (k *badgerKV) Delete(ctx context.Context, section string, key string) error
 	if key == "" {
 		return fmt.Errorf("key is required")
 	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
@@ -318,11 +346,6 @@ func (k *badgerKV) Delete(ctx context.Context, section string, key string) error
 }
 
 func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
-	if k.db.IsClosed() {
-		return func(yield func(string, error) bool) {
-			yield("", fmt.Errorf("database is closed"))
-		}
-	}
 	if section == "" {
 		return func(yield func(string, error) bool) {
 			yield("", fmt.Errorf("section is required"))
@@ -352,12 +375,28 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 	count := int64(0)
 
 	return func(yield func(string, error) bool) {
+		// Re-check at iteration time, not just when Keys() was called.
+		// The closure can be invoked much later, after ctx has been
+		// cancelled (e.g. gRPC Stop) or the DB has been closed.
+		if err := ctx.Err(); err != nil {
+			yield("", err)
+			return
+		}
+		if k.db.IsClosed() {
+			yield("", fmt.Errorf("database is closed"))
+			return
+		}
+
 		txn := k.db.NewTransaction(false)
 		iter := txn.NewIterator(opts)
 		defer txn.Discard()
 		defer iter.Close()
 
 		for iter.Seek([]byte(start)); iter.Valid(); iter.Next() {
+			if err := ctx.Err(); err != nil {
+				yield("", err)
+				return
+			}
 			item := iter.Item()
 			if opt.Limit > 0 && count >= opt.Limit {
 				break
@@ -419,6 +458,9 @@ func (k *badgerKV) BatchDelete(ctx context.Context, section string, keys []strin
 	defer txn.Discard()
 
 	for _, key := range keys {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		keyWithSection := section + "/" + key
 
 		// Delete the key (BadgerDB's Delete is idempotent - succeeds even if key doesn't exist)
@@ -432,6 +474,9 @@ func (k *badgerKV) BatchDelete(ctx context.Context, section string, keys []strin
 }
 
 func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if k.db.IsClosed() {
 		return fmt.Errorf("database is closed")
 	}
@@ -444,10 +489,41 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
 	}
 
+	// Retry the batch operation up to `maxAttempts` times in case of conflict, with a
+	// random delay between retries to increase the chances of success. Badger will
+	// fail the `Commit()` call on the transaction if a conflict is detected internally,
+	// which can happen if multiple callers are trying to apply a similar batch of
+	// operations at the same time.
+	const maxAttempts = 5
+	const maxRetryJitter = 100 * time.Millisecond
+	var lastConflict error
+	for attempt := range maxAttempts {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		err := k.batchOnce(ctx, section, ops)
+		if errors.Is(err, badger.ErrConflict) {
+			lastConflict = err
+			if attempt < maxAttempts-1 {
+				if err := sleepWithJitter(ctx, maxRetryJitter); err != nil {
+					return err
+				}
+			}
+			continue
+		}
+		return err
+	}
+	return fmt.Errorf("after %d attempts: %w", maxAttempts, lastConflict)
+}
+
+func (k *badgerKV) batchOnce(ctx context.Context, section string, ops []BatchOp) error {
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
 
 	for i, op := range ops {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		keyWithSection := section + "/" + op.Key
 
 		switch op.Mode {
@@ -504,4 +580,17 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 	}
 
 	return txn.Commit()
+}
+
+func sleepWithJitter(ctx context.Context, max time.Duration) error {
+	delay := time.Duration(rand.Int63n(int64(max) + 1))
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
 }

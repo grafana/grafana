@@ -276,6 +276,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
@@ -558,15 +559,20 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	vectorBackend, err := vector.ProvideVectorBackend(cfg)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
-		Cfg:          cfg,
-		Features:     featureToggles,
-		DB:           sqlStore,
-		Tracer:       tracingService,
-		Reg:          registerer,
-		Authzc:       accessClient,
-		Docs:         documentBuilderSupplier,
-		SecureValues: inlineSecureValueSupport,
+		Cfg:           cfg,
+		Features:      featureToggles,
+		DB:            sqlStore,
+		Tracer:        tracingService,
+		Reg:           registerer,
+		Authzc:        accessClient,
+		Docs:          documentBuilderSupplier,
+		SecureValues:  inlineSecureValueSupport,
+		VectorBackend: vectorBackend,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1256,15 +1262,20 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	vectorBackend, err := vector.ProvideVectorBackend(cfg)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
-		Cfg:          cfg,
-		Features:     featureToggles,
-		DB:           sqlStore,
-		Tracer:       tracingService,
-		Reg:          registerer,
-		Authzc:       accessClient,
-		Docs:         documentBuilderSupplier,
-		SecureValues: inlineSecureValueSupport,
+		Cfg:           cfg,
+		Features:      featureToggles,
+		DB:            sqlStore,
+		Tracer:        tracingService,
+		Reg:           registerer,
+		Authzc:        accessClient,
+		Docs:          documentBuilderSupplier,
+		SecureValues:  inlineSecureValueSupport,
+		VectorBackend: vectorBackend,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)

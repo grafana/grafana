@@ -13,8 +13,10 @@ export interface LoadedProperties extends EventProperty {
   sourceEntryPoint: SourceEntryPoint;
   /** The specific UI location within the product where the event fired. */
   eventLocation: EventLocation;
-  /** Whether the Dashboard Assistant AI feature was enabled at the time of the event. */
-  isDashboardAssistantEnabled?: boolean;
+  /** Whether the dashboard templates assistant is enabled. */
+  isDashboardTemplatesAssistantEnabled?: boolean;
+  /** Whether the suggested dashboards assistant is enabled. */
+  isSuggestedDashboardAssistantButtonEnabled?: boolean;
 }
 
 export interface ItemClickedProperties extends EventProperty {
@@ -32,8 +34,12 @@ export interface ItemClickedProperties extends EventProperty {
   eventLocation: EventLocation;
   /** How the user found the item — e.g. via search, browsing, or a suggestion. */
   discoveryMethod: DiscoveryMethod;
-  /** Whether the Dashboard Assistant AI feature was enabled at the time of the event. */
-  isDashboardAssistantEnabled?: boolean;
+  /** Whether the dashboard templates assistant is enabled. */
+  isDashboardTemplatesAssistantEnabled?: boolean;
+  /** Whether the suggested dashboards assistant is enabled. */
+  isSuggestedDashboardAssistantButtonEnabled?: boolean;
+  /** The action taken by the user on the library item. */
+  action?: 'view_template' | 'use_dashboard' | 'assistant';
 }
 
 export interface SearchPerformedProperties extends EventProperty {
@@ -92,6 +98,11 @@ export interface EntryPointClickedProperties extends EventProperty {
   entryPoint: SourceEntryPoint;
   /** The category of content accessible through this entry point. */
   contentKind: ContentKind;
+}
+
+export interface CreateFromScratchClickedProperties extends EventProperty {
+  /** The specific UI location within the product where the button was clicked. */
+  eventLocation: EventLocation;
 }
 
 export interface CompatibilityCheckTriggeredProperties extends EventProperty {

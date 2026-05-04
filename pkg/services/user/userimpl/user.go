@@ -60,7 +60,11 @@ func ProvideService(db db.DB,
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		return s.k8sService.Create(ctx, cmd)
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.Create(k8sCtx, cmd)
 	}
 
 	return s.legacyService.Create(ctx, cmd)
