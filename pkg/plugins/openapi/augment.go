@@ -68,7 +68,7 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 			}
 
 			example := map[string]any{
-				"meta": map[string]any{
+				"metadata": map[string]any{
 					"name": app_INSTANCE_NAME,
 				},
 				"spec": map[string]any{
