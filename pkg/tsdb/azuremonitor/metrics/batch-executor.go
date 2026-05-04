@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -15,7 +16,9 @@ import (
 
 // isBatchableQuery reports whether a backend query can be sent to the Metrics
 // Batch API. Queries that use a custom namespace (custom metrics, Application
-// Insights custom telemetry) must fall back to the legacy ARM metrics endpoint.
+// Insights custom telemetry) or a Guest OS / Windows Azure Diagnostics (WAD)
+// namespace must fall back to the legacy ARM metrics endpoint — those metrics
+// are not exposed via the metrics-batch data plane.
 func isBatchableQuery(query backend.DataQuery) bool {
 	var model dataquery.AzureMonitorQuery
 	if err := json.Unmarshal(query.JSON, &model); err != nil {
@@ -27,6 +30,12 @@ func isBatchableQuery(query backend.DataQuery) bool {
 	}
 	if az.CustomNamespace != nil && *az.CustomNamespace != "" {
 		return false
+	}
+	if az.MetricNamespace != nil {
+		ns := strings.ToLower(strings.TrimSpace(*az.MetricNamespace))
+		if strings.HasPrefix(ns, "windows azure") || strings.HasPrefix(ns, "wad") {
+			return false
+		}
 	}
 	return true
 }
