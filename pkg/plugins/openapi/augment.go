@@ -302,32 +302,3 @@ func copyComponents(src *spec3.Components, dst *spec3.Components) {
 		maps.Copy(dst.RequestBodies, src.RequestBodies)
 	}
 }
-
-func getPathOperations(path *spec3.PathProps) map[string]*spec3.Operation {
-	ops := make(map[string]*spec3.Operation)
-	if path.Get != nil {
-		ops[http.MethodGet] = path.Get
-	}
-	if path.Head != nil {
-		ops[http.MethodHead] = path.Head
-	}
-	if path.Delete != nil {
-		ops[http.MethodDelete] = path.Delete
-	}
-	if path.Post != nil {
-		ops[http.MethodPost] = path.Post
-	}
-	if path.Put != nil {
-		ops[http.MethodPut] = path.Put
-	}
-	if path.Patch != nil {
-		ops[http.MethodPatch] = path.Patch
-	}
-	if path.Trace != nil {
-		ops[http.MethodTrace] = path.Trace
-	}
-	if path.Options != nil {
-		ops[http.MethodOptions] = path.Options
-	}
-	return ops
-}
