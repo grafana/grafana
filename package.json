@@ -295,7 +295,7 @@
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/plugin-ui": "^0.13.1",
-    "@grafana/prometheus": "13.1.2",
+    "@grafana/prometheus": "patch:@grafana/prometheus@npm%3A13.1.2#~/.yarn/patches/@grafana-prometheus-npm-13.1.2-46ff9be179.patch",
     "@grafana/runtime": "workspace:*",
     "@grafana/scenes": "^8.0.0",
     "@grafana/scenes-react": "^8.0.0",

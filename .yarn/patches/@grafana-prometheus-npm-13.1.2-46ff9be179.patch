@@ -1,0 +1,249 @@
+diff --git a/dist/cjs/querybuilder/parsing.cjs b/dist/cjs/querybuilder/parsing.cjs
+index 504560fa1a9819e0d076735ce0a07b2a1502b598..3a8fce0df37c25541d7617e4fd0a53f81be99781 100644
+--- a/dist/cjs/querybuilder/parsing.cjs
++++ b/dist/cjs/querybuilder/parsing.cjs
+@@ -8,6 +8,18 @@ var binaryScalarOperations = require('./binaryScalarOperations.cjs');
+ var parsingUtils = require('./parsingUtils.cjs');
+ 
+ "use strict";
++const DOTTED_METRIC_PATTERN = /^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)/;
++function tryReconstructDottedMetric(expr, node) {
++  if (node.type.id !== lezerPromql.VectorSelector) {
++    return null;
++  }
++  const nodeText = expr.slice(node.from, node.to);
++  const match = nodeText.match(DOTTED_METRIC_PATTERN);
++  if (match) {
++    return { name: match[1], end: node.from + match[1].length };
++  }
++  return null;
++}
+ function buildVisualQueryFromString(expr) {
+   expr = parsingUtils.replaceBuiltInVariable(expr);
+   const { replacedExpr, replacedVariables } = parsingUtils.replaceVariables(expr);
+@@ -65,6 +77,15 @@ function handleExpression(expr, node, context) {
+       break;
+     }
+     case lezerPromql.UnquotedLabelMatcher: {
++      const matchOp = node.getChild(lezerPromql.MatchOp);
++      if (!matchOp && visQuery.metric === "") {
++        const matcherText = expr.slice(node.from, node.to).trim();
++        const dottedMatch = matcherText.match(DOTTED_METRIC_PATTERN);
++        if (dottedMatch && dottedMatch[1] === matcherText) {
++          visQuery.metric = dottedMatch[1];
++          break;
++        }
++      }
+       visQuery.labels.push(getLabel(expr, node, lezerPromql.LabelName));
+       const err = node.getChild(parsingUtils.ErrorId);
+       if (err) {
+@@ -88,6 +109,12 @@ function handleExpression(expr, node, context) {
+       if (isIntervalVariableError(node)) {
+         break;
+       }
++      if (visQuery.metric.includes(".")) {
++        const errorText = expr.slice(node.from, node.to);
++        if (errorText === "." || visQuery.metric.includes(errorText)) {
++          break;
++        }
++      }
+       context.errors.push(parsingUtils.makeError(expr, node));
+       break;
+     }
+@@ -95,6 +122,20 @@ function handleExpression(expr, node, context) {
+       if (node.type.id === lezerPromql.ParenExpr) {
+         context.errors.push(parsingUtils.makeError(expr, node));
+       }
++      if (node.type.id === lezerPromql.VectorSelector && visQuery.metric === "") {
++        const dotted = tryReconstructDottedMetric(expr, node);
++        if (dotted) {
++          visQuery.metric = dotted.name;
++          let child2 = node.firstChild;
++          while (child2) {
++            if (child2.from >= dotted.end) {
++              handleExpression(expr, child2, context);
++            }
++            child2 = child2.nextSibling;
++          }
++          break;
++        }
++      }
+       let child = node.firstChild;
+       while (child) {
+         handleExpression(expr, child, context);
+diff --git a/dist/cjs/querybuilder/parsingUtils.cjs b/dist/cjs/querybuilder/parsingUtils.cjs
+index b0d14625fdaacddb5bacbb8d3267f24772072b3f..2e4e311f822985b27bd3d2d9ff519c36a496f351 100644
+--- a/dist/cjs/querybuilder/parsingUtils.cjs
++++ b/dist/cjs/querybuilder/parsingUtils.cjs
+@@ -84,7 +84,7 @@ function getAllByType(expr, cur, type) {
+ }
+ const regexifyLabelValuesQueryString = (query) => {
+   const queryArray = query.split(" ");
+-  return queryArray.map((query2) => `${query2}.*`).join("");
++  return queryArray.map((query2) => `${query2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}.*`).join("");
+ };
+ const BUILT_IN_VARIABLES = [
+   { variable: "$__interval_ms", replacement: "79_999_999_999" },
+diff --git a/dist/cjs/datasource.cjs b/dist/cjs/datasource.cjs
+index c76471e1166d9ca9fb7eb335a6de7b55a26c936c..fc1927e4d7687e4e34f91401c9599ec65969d8df 100644
+--- a/dist/cjs/datasource.cjs
++++ b/dist/cjs/datasource.cjs
+@@ -178,7 +178,7 @@ class PrometheusDatasource extends runtime.DataSourceWithBackend {
+     data = data || {};
+     for (const [key, value] of this.customQueryParameters) {
+       if (data[key] == null) {
+-        data[key] = value;
++        data[key] = this.interpolateString(value);
+       }
+     }
+     let queryUrl = this.url + url;
+diff --git a/dist/cjs/resource_clients.cjs b/dist/cjs/resource_clients.cjs
+index 05de7f2b74e38b6c5127287c3719ef5e336d4c37..2e5ecd18fb3d253b878d9be5f228d5a48b2bcfa9 100644
+--- a/dist/cjs/resource_clients.cjs
++++ b/dist/cjs/resource_clients.cjs
+@@ -118,13 +118,13 @@ class LabelsApiClient extends BaseResourceClient {
+       const effectiveLimit = this.getEffectiveLimit(limit);
+       const searchParams = { limit: effectiveLimit, ...timeParams, ...match ? { "match[]": match } : {} };
+       const interpolatedName = this.datasource.interpolateString(labelKey);
+-      const interpolatedAndEscapedName = utf8_support.escapeForUtf8Support(language_utils.removeQuotesIfExist(interpolatedName));
+-      const effectiveMatch = `${match != null ? match : ""}-${interpolatedAndEscapedName}`;
++      const cleanName = language_utils.removeQuotesIfExist(interpolatedName);
++      const effectiveMatch = `${match != null ? match : ""}-${cleanName}`;
+       const maybeCachedValues = this._cache.getLabelValues(timeRange, effectiveMatch, effectiveLimit);
+       if (maybeCachedValues) {
+         return maybeCachedValues;
+       }
+-      const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
++      const url = `/api/v1/label/${cleanName}/values`;
+       const value = await this.requestLabels(url, searchParams, caching.getDefaultCacheHeaders(this.datasource.cacheLevel));
+       this._cache.setLabelValues(timeRange, effectiveMatch, effectiveLimit, value != null ? value : []);
+       return value != null ? value : [];
+diff --git a/dist/esm/querybuilder/parsing.mjs b/dist/esm/querybuilder/parsing.mjs
+index 9c2a4733051170bf616ef666de3bcc8b85f6bfa8..318c433ddb0d0215b5e26f654356a6c2cb099edb 100644
+--- a/dist/esm/querybuilder/parsing.mjs
++++ b/dist/esm/querybuilder/parsing.mjs
+@@ -4,6 +4,18 @@ import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations.mjs
+ import { replaceBuiltInVariable, replaceVariables, makeError, ErrorId, getString, returnBuiltInVariable, getAllByType, isFunctionOrAggregation, makeBinOp, getLeftMostChild } from './parsingUtils.mjs';
+ 
+ "use strict";
++const DOTTED_METRIC_PATTERN = /^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)/;
++function tryReconstructDottedMetric(expr, node) {
++  if (node.type.id !== VectorSelector) {
++    return null;
++  }
++  const nodeText = expr.slice(node.from, node.to);
++  const match = nodeText.match(DOTTED_METRIC_PATTERN);
++  if (match) {
++    return { name: match[1], end: node.from + match[1].length };
++  }
++  return null;
++}
+ function buildVisualQueryFromString(expr) {
+   expr = replaceBuiltInVariable(expr);
+   const { replacedExpr, replacedVariables } = replaceVariables(expr);
+@@ -61,6 +73,15 @@ function handleExpression(expr, node, context) {
+       break;
+     }
+     case UnquotedLabelMatcher: {
++      const matchOp = node.getChild(MatchOp);
++      if (!matchOp && visQuery.metric === "") {
++        const matcherText = expr.slice(node.from, node.to).trim();
++        const dottedMatch = matcherText.match(DOTTED_METRIC_PATTERN);
++        if (dottedMatch && dottedMatch[1] === matcherText) {
++          visQuery.metric = dottedMatch[1];
++          break;
++        }
++      }
+       visQuery.labels.push(getLabel(expr, node, LabelName));
+       const err = node.getChild(ErrorId);
+       if (err) {
+@@ -84,6 +105,12 @@ function handleExpression(expr, node, context) {
+       if (isIntervalVariableError(node)) {
+         break;
+       }
++      if (visQuery.metric.includes(".")) {
++        const errorText = expr.slice(node.from, node.to);
++        if (errorText === "." || visQuery.metric.includes(errorText)) {
++          break;
++        }
++      }
+       context.errors.push(makeError(expr, node));
+       break;
+     }
+@@ -91,6 +118,20 @@ function handleExpression(expr, node, context) {
+       if (node.type.id === ParenExpr) {
+         context.errors.push(makeError(expr, node));
+       }
++      if (node.type.id === VectorSelector && visQuery.metric === "") {
++        const dotted = tryReconstructDottedMetric(expr, node);
++        if (dotted) {
++          visQuery.metric = dotted.name;
++          let child2 = node.firstChild;
++          while (child2) {
++            if (child2.from >= dotted.end) {
++              handleExpression(expr, child2, context);
++            }
++            child2 = child2.nextSibling;
++          }
++          break;
++        }
++      }
+       let child = node.firstChild;
+       while (child) {
+         handleExpression(expr, child, context);
+diff --git a/dist/esm/querybuilder/parsingUtils.mjs b/dist/esm/querybuilder/parsingUtils.mjs
+index 800edc7424074f8c7a3b62160a96c611b35fa16d..e5a810ce4346f2bbe76879c21aca347c5ff9eb13 100644
+--- a/dist/esm/querybuilder/parsingUtils.mjs
++++ b/dist/esm/querybuilder/parsingUtils.mjs
+@@ -80,7 +80,7 @@ function getAllByType(expr, cur, type) {
+ }
+ const regexifyLabelValuesQueryString = (query) => {
+   const queryArray = query.split(" ");
+-  return queryArray.map((query2) => `${query2}.*`).join("");
++  return queryArray.map((query2) => `${query2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}.*`).join("");
+ };
+ const BUILT_IN_VARIABLES = [
+   { variable: "$__interval_ms", replacement: "79_999_999_999" },
+diff --git a/dist/esm/datasource.mjs b/dist/esm/datasource.mjs
+index 0868442cbff9d5638f82e105fed184016a6d8f6c..6d36e334c8ed908235967b038d34233724c866c9 100644
+--- a/dist/esm/datasource.mjs
++++ b/dist/esm/datasource.mjs
+@@ -174,7 +174,7 @@ class PrometheusDatasource extends DataSourceWithBackend {
+     data = data || {};
+     for (const [key, value] of this.customQueryParameters) {
+       if (data[key] == null) {
+-        data[key] = value;
++        data[key] = this.interpolateString(value);
+       }
+     }
+     let queryUrl = this.url + url;
+diff --git a/dist/esm/resource_clients.mjs b/dist/esm/resource_clients.mjs
+index 97ef92f2354bfe9ba742dd4fe7cdc90b39917b5e..a3431b986552c6b27a4d36695037afcf894982bf 100644
+--- a/dist/esm/resource_clients.mjs
++++ b/dist/esm/resource_clients.mjs
+@@ -3,7 +3,7 @@ import { EMPTY_SELECTOR, MATCH_ALL_LABELS, METRIC_LABEL, DEFAULT_SERIES_LIMIT }
+ import { processHistogramMetrics, getRangeSnapInterval, removeQuotesIfExist } from './language_utils.mjs';
+ import { buildVisualQueryFromString } from './querybuilder/parsing.mjs';
+ import { PrometheusCacheLevel } from './types.mjs';
+-import { escapeForUtf8Support, utf8Support } from './utf8_support.mjs';
++import { utf8Support } from './utf8_support.mjs';
+ 
+ "use strict";
+ class BaseResourceClient {
+@@ -114,13 +114,13 @@ class LabelsApiClient extends BaseResourceClient {
+       const effectiveLimit = this.getEffectiveLimit(limit);
+       const searchParams = { limit: effectiveLimit, ...timeParams, ...match ? { "match[]": match } : {} };
+       const interpolatedName = this.datasource.interpolateString(labelKey);
+-      const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
+-      const effectiveMatch = `${match != null ? match : ""}-${interpolatedAndEscapedName}`;
++      const cleanName = removeQuotesIfExist(interpolatedName);
++      const effectiveMatch = `${match != null ? match : ""}-${cleanName}`;
+       const maybeCachedValues = this._cache.getLabelValues(timeRange, effectiveMatch, effectiveLimit);
+       if (maybeCachedValues) {
+         return maybeCachedValues;
+       }
+-      const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
++      const url = `/api/v1/label/${cleanName}/values`;
+       const value = await this.requestLabels(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+       this._cache.setLabelValues(timeRange, effectiveMatch, effectiveLimit, value != null ? value : []);
+       return value != null ? value : [];

@@ -4134,6 +4134,57 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/prometheus@patch:@grafana/prometheus@npm%3A13.1.2#~/.yarn/patches/@grafana-prometheus-npm-13.1.2-46ff9be179.patch":
+  version: 13.1.2
+  resolution: "@grafana/prometheus@patch:@grafana/prometheus@npm%3A13.1.2#~/.yarn/patches/@grafana-prometheus-npm-13.1.2-46ff9be179.patch::version=13.1.2&hash=94147a"
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@floating-ui/react": "npm:0.27.19"
+    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@hello-pangea/dnd": "npm:18.0.1"
+    "@leeoniya/ufuzzy": "npm:1.0.19"
+    "@lezer/common": "npm:1.5.2"
+    "@lezer/highlight": "npm:1.2.3"
+    "@lezer/lr": "npm:1.4.8"
+    "@prometheus-io/lezer-promql": "npm:0.307.3"
+    "@types/debounce-promise": "npm:3.1.9"
+    "@types/lodash": "npm:4.17.20"
+    "@types/react": "npm:18.3.18"
+    "@types/react-dom": "npm:18.3.5"
+    "@types/react-highlight-words": "npm:0.20.0"
+    "@types/semver": "npm:7.7.1"
+    "@types/uuid": "npm:10.0.0"
+    debounce-promise: "npm:3.1.2"
+    lodash: "npm:^4.17.23"
+    moment: "npm:2.30.1"
+    moment-timezone: "npm:0.5.47"
+    monaco-editor: "npm:0.34.1"
+    monaco-promql: "npm:1.8.0"
+    pluralize: "npm:8.0.0"
+    prismjs: "npm:1.30.0"
+    react-highlight-words: "npm:0.21.0"
+    react-use: "npm:17.6.0"
+    react-window: "npm:1.8.11"
+    rxjs: "npm:7.8.2"
+    semver: "npm:7.7.3"
+    uuid: "npm:11.1.0"
+  peerDependencies:
+    "@grafana/assistant": ">=0.1.0"
+    "@grafana/data": ">=11.5.0"
+    "@grafana/e2e-selectors": ">=11.5.0"
+    "@grafana/i18n": ">=12.3.0"
+    "@grafana/runtime": ">=11.5.0"
+    "@grafana/schema": ">=11.5.0"
+    "@grafana/ui": ">=11.5.0"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  peerDependenciesMeta:
+    "@grafana/assistant":
+      optional: true
+  checksum: 10/36c279b4eca920696b8afba834d28e8d8a9fbcd149d999584d0dd9b64f4796ebcd8d64d0a197cb04eb30dcf7c1aaa2ac473375784d0ed080075273c54dd47978
+  languageName: node
+  linkType: hard
+
 "@grafana/runtime@npm:13.1.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
@@ -20808,7 +20859,7 @@ __metadata:
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.4.12"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/prometheus": "npm:13.1.2"
+    "@grafana/prometheus": "patch:@grafana/prometheus@npm%3A13.1.2#~/.yarn/patches/@grafana-prometheus-npm-13.1.2-46ff9be179.patch"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:^8.0.0"
     "@grafana/scenes-react": "npm:^8.0.0"
