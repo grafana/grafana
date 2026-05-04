@@ -111,10 +111,18 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		return fmt.Errorf("reading snapshot build info: %w", biErr)
 	}
 
-	uploadKey, err = b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, IndexMeta{
+	meta := IndexMeta{
 		GrafanaBuildVersion:   bi.BuildVersion,
 		LatestResourceVersion: rv,
-	})
+	}
+	// bi.BuildTime is the original index creation time; it survives reopens and
+	// downloads, so periodic re-uploads keep the original build-start time.
+	// Guard zero so legacy indexes without BuildTime stay zero in the manifest.
+	if bi.BuildTime > 0 {
+		meta.BuildStartTimestamp = time.Unix(bi.BuildTime, 0).UTC()
+	}
+
+	uploadKey, err = b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, meta)
 	if err != nil {
 		return fmt.Errorf("uploading snapshot: %w", err)
 	}
