@@ -914,7 +914,7 @@ jobs:
           VERSION: ${{ needs.setup.outputs.version }}
         run: |
           TAG_VERSION="${VERSION//+/-}"
-          echo "TAG_VERSION=$TAG_VERSION" >> "$GITHUB_OUTPUT"
+          echo "TAG_VERSION=$TAG_VERSION" | tee -a "$GITHUB_OUTPUT"
           cat artifacts-*.txt > artifacts.txt
           grep 'docker\.tar\.gz$' artifacts.txt | xargs -I % docker load -i % | sed 's/Loaded image: //g' | tee docker_images
           while read -r line; do
