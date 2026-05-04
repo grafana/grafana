@@ -74,10 +74,7 @@ export function FoldersToMigrate({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>('count-desc');
 
-  const unmanagedFolders = useMemo(
-    () => folders.filter((f) => !f.managedBy && f.dashboardCount > 0),
-    [folders]
-  );
+  const unmanagedFolders = useMemo(() => folders.filter((f) => !f.managedBy && f.dashboardCount > 0), [folders]);
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const matched = !q
@@ -160,10 +157,7 @@ export function FoldersToMigrate({
           variant="not-found"
           message={
             unmanagedFolders.length === 0
-              ? t(
-                  'provisioning.stats.dashboards-to-migrate-all-managed',
-                  'All folders are already managed.'
-                )
+              ? t('provisioning.stats.dashboards-to-migrate-all-managed', 'All folders are already managed.')
               : t(
                   'provisioning.stats.dashboards-to-migrate-empty',
                   'No folders or dashboards match the current search.'
@@ -281,11 +275,7 @@ function FolderEntry({
               const checked = selectedDashboardUids.has(dash.uid);
               return (
                 <div key={`dash-${dash.uid}`} className={styles.childRow}>
-                  <Checkbox
-                    value={checked}
-                    onChange={() => onToggleDashboard(dash.uid)}
-                    aria-label={dash.title}
-                  />
+                  <Checkbox value={checked} onChange={() => onToggleDashboard(dash.uid)} aria-label={dash.title} />
                   <Icon name="apps" size="sm" />
                   <Text variant="bodySmall">{dash.title}</Text>
                 </div>

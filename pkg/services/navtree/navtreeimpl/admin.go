@@ -60,7 +60,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			provisioningChildren = append(provisioningChildren, &navtree.NavLink{
 				Text:     "Migrate to GitOps",
 				Id:       "provisioning-migrate-to-gitops",
-				SubTitle: "Move dashboards and folders into a Git repository",
+				SubTitle: "Migrate folders and dashboards to a Git repository",
 				Url:      s.cfg.AppSubURL + "/admin/provisioning?tab=migrate",
 				Keywords: []string{"git sync", "git-sync", "gitops", "migrate", "export", "as code"},
 			})
@@ -68,7 +68,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
-			SubTitle: "View and manage your provisioning connections",
+			SubTitle: "Manage Git Sync, connections, and as-code provisioning",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
 			Keywords: []string{"git sync", "git-sync", "repository", "version control", "as code"},
 			Children: provisioningChildren,

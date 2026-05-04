@@ -25,7 +25,7 @@ export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isLoading = isLoadingRepos || isLoadingConnections;
-  const isStatsEnabled = !!config.featureToggles.provisioningExport;
+  const isMigrateTabEnabled = !!config.featureToggles.provisioningExport;
 
   const urlTab = searchParams.get('tab');
   const defaultTab = useMemo(() => {
@@ -41,10 +41,10 @@ export default function HomePage() {
     return 'getting-started';
   }, [isLoading, items?.length, connections?.length]);
 
-  // If the URL points at the stats tab but the feature flag is off (e.g. a stale
+  // If the URL points at the Migrate tab but the feature flag is off (e.g. a stale
   // bookmark), fall back to the default tab so the bar, content, and action button
   // stay in sync.
-  const activeTab = urlTab === 'migrate' && !isStatsEnabled ? defaultTab : (urlTab ?? defaultTab);
+  const activeTab = urlTab === 'migrate' && !isMigrateTabEnabled ? defaultTab : (urlTab ?? defaultTab);
 
   // Handler to update URL when tab changes
   const handleTabChange = (tab: string) => {
@@ -71,16 +71,16 @@ export default function HomePage() {
       },
     ];
 
-    if (isStatsEnabled) {
+    if (isMigrateTabEnabled) {
       tabs.push({
         value: 'migrate',
-        label: t('provisioning.home-page.tab-stats', 'Migrate to GitOps'),
-        title: t('provisioning.home-page.tab-stats-title', 'Migrate to GitOps'),
+        label: t('provisioning.home-page.tab-migrate', 'Migrate to GitOps'),
+        title: t('provisioning.home-page.tab-migrate-title', 'Migrate to GitOps'),
       });
     }
 
     return tabs;
-  }, [isStatsEnabled]);
+  }, [isMigrateTabEnabled]);
 
   const onConfirmDelete = () => {
     deleteAll({});
@@ -127,7 +127,7 @@ export default function HomePage() {
   const navIndex = useSelector((state) => state.navIndex);
   const migrateNavId = 'provisioning-migrate-to-gitops';
   const navId =
-    activeTab === 'migrate' && isStatsEnabled && navIndex[migrateNavId] ? migrateNavId : 'provisioning';
+    activeTab === 'migrate' && isMigrateTabEnabled && navIndex[migrateNavId] ? migrateNavId : 'provisioning';
 
   return (
     <Page

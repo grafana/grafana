@@ -4,18 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import {
-  Alert,
-  Button,
-  Checkbox,
-  Combobox,
-  Drawer,
-  Field,
-  Stack,
-  Text,
-  TextLink,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, Checkbox, Combobox, Drawer, Field, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
@@ -69,13 +58,7 @@ function resolveSelectedDashboards(
   return refs;
 }
 
-export function MigrateDrawer({
-  folders,
-  repos,
-  selectedFolderUids,
-  selectedDashboardUids,
-  onClose,
-}: Props) {
+export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDashboardUids, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const repoOptions = useMemo(
     () =>
@@ -89,7 +72,11 @@ export function MigrateDrawer({
     [repos]
   );
   const [selectedRepoName, setSelectedRepoName] = useState<string | undefined>(repoOptions[0]?.value);
-  const { repository, isReadOnlyRepo, isLoading: isLoadingRepo } = useGetResourceRepositoryView({
+  const {
+    repository,
+    isReadOnlyRepo,
+    isLoading: isLoadingRepo,
+  } = useGetResourceRepositoryView({
     name: selectedRepoName,
   });
   const [createJob, { isLoading: isSubmitting }] = useCreateRepositoryJobsMutation();
@@ -124,10 +111,7 @@ export function MigrateDrawer({
   const submit = async (data: BulkActionFormData) => {
     if (!repository?.name) {
       setError(
-        t(
-          'provisioning.stats.migrate-drawer-no-repo',
-          'No repository connected. Connect one before migrating.'
-        )
+        t('provisioning.stats.migrate-drawer-no-repo', 'No repository connected. Connect one before migrating.')
       );
       return;
     }
@@ -153,12 +137,7 @@ export function MigrateDrawer({
       }
       onClose();
     } catch (err) {
-      setError(
-        extractErrorMessage(
-          err,
-          t('provisioning.stats.migrate-drawer-error', 'Failed to start migration job')
-        )
-      );
+      setError(extractErrorMessage(err, t('provisioning.stats.migrate-drawer-error', 'Failed to start migration job')));
     }
   };
 
@@ -203,10 +182,10 @@ export function MigrateDrawer({
                 <Stack direction="column" gap={2}>
                   <Text>
                     <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-intro">
-                      Migration runs as a one-time job. It exports the selected dashboards (and the folders
-                      that contain them) to the connected repository so Git becomes the source of truth.
-                      Once a dashboard is managed, every subsequent change in Grafana is also pushed to the
-                      repository, and pulls from the repository sync back into Grafana. See the{' '}
+                      Migration runs as a one-time job. It exports the selected dashboards (and the folders that contain
+                      them) to the connected repository so Git becomes the source of truth. Once a dashboard is managed,
+                      every subsequent change in Grafana is also pushed to the repository, and pulls from the repository
+                      sync back into Grafana. See the{' '}
                       <TextLink
                         external
                         href="https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/intro-git-sync/"
@@ -219,20 +198,20 @@ export function MigrateDrawer({
                   <ul className={styles.explainerList}>
                     <li>
                       <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-edits">
-                        Dashboards can still be edited in Grafana while the job runs, but those changes may
-                        not make it into the export.
+                        Dashboards can still be edited in Grafana while the job runs, but those changes may not make it
+                        into the export.
                       </Trans>
                     </li>
                     <li>
                       <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-unsupported">
-                        Alerts and library panels are not supported in provisioned folders. Anything inside
-                        a migrated folder that isn&apos;t a dashboard stays behind in Grafana.
+                        Alerts and library panels are not supported in provisioned folders. Anything inside a migrated
+                        folder that isn&apos;t a dashboard stays behind in Grafana.
                       </Trans>
                     </li>
                     <li>
                       <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-folders">
-                        The folder structure is replicated in the repository. The original folders are kept
-                        in Grafana — empty after migration if every dashboard inside them moved.
+                        The folder structure is replicated in the repository. The original folders are kept in Grafana —
+                        empty after migration if every dashboard inside them moved.
                       </Trans>
                     </li>
                     <li>
@@ -249,17 +228,18 @@ export function MigrateDrawer({
                   <ul className={styles.explainerList}>
                     <li>
                       <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-workflow-write">
-                        <strong>Push directly to <code>main</code></strong>: the job writes a single commit
-                        to the default branch. Dashboards become managed as soon as the commit lands —
-                        smoothest experience, but it does mean the change skips review.
+                        <strong>
+                          Push directly to <code>main</code>
+                        </strong>
+                        : the job writes a single commit to the default branch. Dashboards become managed as soon as the
+                        commit lands — smoothest experience, but it does mean the change skips review.
                       </Trans>
                     </li>
                     <li>
                       <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-workflow-branch">
-                        <strong>Push to a branch and open a pull request</strong>: the job pushes to the
-                        branch you pick and opens a PR. Dashboards stay unmanaged until the PR is merged
-                        into <code>main</code>. Pick this when you need review, but expect to manage the
-                        PR before migration completes.
+                        <strong>Push to a branch and open a pull request</strong>: the job pushes to the branch you pick
+                        and opens a PR. Dashboards stay unmanaged until the PR is merged into <code>main</code>. Pick
+                        this when you need review, but expect to manage the PR before migration completes.
                       </Trans>
                     </li>
                   </ul>

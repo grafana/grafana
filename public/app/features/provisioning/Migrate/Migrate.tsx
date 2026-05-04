@@ -215,8 +215,8 @@ function MigrateToGitopsHeader() {
       </Stack>
       <Text color="secondary">
         <Trans i18nKey="provisioning.stats.header-subtitle">
-          Manage your dashboards and folders like code — every change tracked, every update reviewed, every
-          environment reproducible. Connect a Git repository to get started.
+          Manage your dashboards and folders like code — every change tracked, every update reviewed, every environment
+          reproducible. Connect a Git repository to get started.
         </Trans>
       </Text>
     </Stack>
@@ -319,13 +319,7 @@ function FolderProgressCard({ folders }: { folders: FolderRow[] }) {
   );
 }
 
-function OverviewStatCards({
-  totals,
-  folders,
-}: {
-  totals: ReturnType<typeof aggregateTotals>;
-  folders: FolderRow[];
-}) {
+function OverviewStatCards({ totals, folders }: { totals: ReturnType<typeof aggregateTotals>; folders: FolderRow[] }) {
   const styles = useStyles2(getStyles);
   const progressSubLabel =
     totals.gitSync > 0
@@ -381,13 +375,7 @@ interface NextStep {
   primary?: boolean;
 }
 
-function NextStepsPanel({
-  totals,
-  repos,
-}: {
-  totals: ReturnType<typeof aggregateTotals>;
-  repos: Repository[];
-}) {
+function NextStepsPanel({ totals, repos }: { totals: ReturnType<typeof aggregateTotals>; repos: Repository[] }) {
   const styles = useStyles2(getStyles);
   const hasRepo = repos.length > 0;
   const hasStartedMigrating = totals.managed > 0;
@@ -428,7 +416,7 @@ function NextStepsPanel({
       title: t('provisioning.stats.next-step-run-title', 'Run the migration'),
       description: t(
         'provisioning.stats.next-step-run-pending',
-        'Open the Migrate drawer when you\'re ready, review the workflow, and start the job. You can run it again later for anything that\'s still unmanaged.'
+        "Open the Migrate drawer when you're ready, review the workflow, and start the job. You can run it again later for anything that's still unmanaged."
       ),
     },
   ];
@@ -489,8 +477,8 @@ function NextStepsPanel({
             </Text>
             <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="provisioning.stats.next-steps-complete-body">
-                Every dashboard on this instance is managed by Git Sync. New ones will show up here when
-                they need migrating.
+                Every dashboard on this instance is managed by Git Sync. New ones will show up here when they need
+                migrating.
               </Trans>
             </Text>
           </Stack>

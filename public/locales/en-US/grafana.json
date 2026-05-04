@@ -13497,10 +13497,10 @@
       "tab-connections-title": "List of connections",
       "tab-getting-started": "Get started",
       "tab-getting-started-title": "Get started",
+      "tab-migrate": "Migrate to GitOps",
+      "tab-migrate-title": "Migrate to GitOps",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
-      "tab-stats": "Migrate to GitOps",
-      "tab-stats-title": "Migrate to GitOps",
       "title-delete-all-configured-repositories": "Delete all configured repositories"
     },
     "http-utils": {

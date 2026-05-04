@@ -27,30 +27,17 @@ interface Props {
  * first repository" prompt instead. Hidden entirely when there's a repo and
  * no unmanaged folders to surface.
  */
-export function QuickWinsPanel({
-  folders,
-  repos,
-  selected,
-  onToggle,
-  onSelectAll,
-  onMigrateClick,
-}: Props) {
+export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll, onMigrateClick }: Props) {
   const styles = useStyles2(getStyles);
   const hasRepo = repos.length > 0;
 
   // Eligible = unmanaged folders with at least one dashboard. The folder
   // leaderboard already orders unmanaged folders by dashboardCount desc, so
   // slicing the top N gives the highest-leverage migration targets.
-  const eligibleFolders = useMemo(
-    () => folders.filter((f) => !f.managedBy && f.dashboardCount > 0),
-    [folders]
-  );
+  const eligibleFolders = useMemo(() => folders.filter((f) => !f.managedBy && f.dashboardCount > 0), [folders]);
   const topFolders = eligibleFolders.slice(0, TOP_N);
   const totalUnmanagedFolders = eligibleFolders.length;
-  const selectedInTop = useMemo(
-    () => topFolders.filter((f) => selected.has(f.uid)).length,
-    [topFolders, selected]
-  );
+  const selectedInTop = useMemo(() => topFolders.filter((f) => selected.has(f.uid)).length, [topFolders, selected]);
 
   if (!hasRepo) {
     return (
@@ -61,14 +48,12 @@ export function QuickWinsPanel({
           </div>
           <Stack direction="column" gap={0} flex={1}>
             <Text variant="h5">
-              <Trans i18nKey="provisioning.stats.quick-wins-heading-no-repo">
-                Connect your first repository
-              </Trans>
+              <Trans i18nKey="provisioning.stats.quick-wins-heading-no-repo">Connect your first repository</Trans>
             </Text>
             <Text color="secondary" variant="bodySmall">
               <Trans i18nKey="provisioning.stats.quick-wins-subtitle-no-repo">
-                Pick a Git provider, point Grafana at a repo, and the Migrate flow lights up. Until then,
-                the dashboards on your instance stay where they are.
+                Pick a Git provider, point Grafana at a repo, and the Migrate flow lights up. Until then, the dashboards
+                on your instance stay where they are.
               </Trans>
             </Text>
           </Stack>

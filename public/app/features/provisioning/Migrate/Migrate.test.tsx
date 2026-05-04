@@ -407,7 +407,7 @@ describe('Migrate', () => {
     expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
 
-it('expands a folder row to show its direct dashboards', async () => {
+  it('expands a folder row to show its direct dashboards', async () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 }],
@@ -540,7 +540,7 @@ it('expands a folder row to show its direct dashboards', async () => {
     expect(screen.getByText(/showing 1 of 1 folders/i)).toBeInTheDocument();
   });
 
-it('renders the Provisioning tools panel as tiles ordered Git Sync, Terraform, GCX, File System', () => {
+  it('renders the Provisioning tools panel as tiles ordered Git Sync, Terraform, GCX, File System', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
