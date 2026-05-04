@@ -8,12 +8,11 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -25,7 +24,7 @@ const (
 
 var _ KV = &SqlKV{}
 
-var sqlKVLog = log.New("resource-sqlkv")
+var sqlKVLog = slog.With("component", "resource-sqlkv")
 
 // DataImportRow represents a single append-only resource_history row written during bulk import.
 type DataImportRow struct {
