@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { useArgs } from '@storybook/preview-api';
-import { type StoryFn, type Meta } from '@storybook/react';
+import { useArgs } from 'storybook/preview-api';
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 import { oneLineTrim } from 'common-tags';
 import { useCallback, useState } from 'react';
 

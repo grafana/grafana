@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type Meta, type StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import { useState } from 'react';
 
 import { Button } from '../Button/Button';

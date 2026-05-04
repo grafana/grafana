@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import { useEffect, useState } from 'react';
 
 import { VizLayout } from './VizLayout';

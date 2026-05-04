@@ -1,6 +1,6 @@
-import { action } from '@storybook/addon-actions';
-import { useArgs } from '@storybook/preview-api';
-import { type Meta, type StoryFn } from '@storybook/react';
+import { action } from 'storybook/actions';
+import { useArgs } from 'storybook/preview-api';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 
 import { RefreshPicker } from './RefreshPicker';
 import mdx from './RefreshPicker.mdx';

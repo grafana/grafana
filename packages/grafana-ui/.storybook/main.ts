@@ -34,46 +34,36 @@ copyAssetsSync();
 
 const mainConfig: StorybookConfig = {
   stories,
-  addons: [
-    {
-      name: '@storybook/addon-docs',
-      options: {
-        mdxPluginOptions: {
-          mdxCompileOptions: {
-            remarkPlugins: [remarkGfm],
-          },
+
+  addons: [{
+    name: getAbsolutePath("@storybook/addon-docs"),
+    options: {
+      mdxPluginOptions: {
+        mdxCompileOptions: {
+          remarkPlugins: [remarkGfm],
         },
       },
     },
-    {
-      name: '@storybook/addon-essentials',
-      options: {
-        backgrounds: false,
+  }, getAbsolutePath('@storybook/addon-a11y'), {
+    name: getAbsolutePath("@storybook/preset-scss"),
+    options: {
+      styleLoaderOptions: {
+        // this is required for theme switching .use() and .unuse()
+        injectType: 'lazyStyleTag',
       },
-    },
-    getAbsolutePath('@storybook/addon-a11y'),
-    {
-      name: '@storybook/preset-scss',
-      options: {
-        styleLoaderOptions: {
-          // this is required for theme switching .use() and .unuse()
-          injectType: 'lazyStyleTag',
-        },
-        cssLoaderOptions: {
-          url: false,
-          importLoaders: 2,
-        },
-        sassLoaderOptions: {
-          sassOptions: {
-            // silencing these warnings since we're planning to remove sass when angular is gone
-            silenceDeprecations: ['import', 'global-builtin'],
-          },
+      cssLoaderOptions: {
+        url: false,
+        importLoaders: 2,
+      },
+      sassLoaderOptions: {
+        sassOptions: {
+          // silencing these warnings since we're planning to remove sass when angular is gone
+          silenceDeprecations: ['import', 'global-builtin'],
         },
       },
     },
-    getAbsolutePath('@storybook/addon-storysource'),
-    getAbsolutePath('@storybook/addon-webpack5-compiler-swc'),
-  ],
+  }, getAbsolutePath('@storybook/addon-webpack5-compiler-swc')],
+
   framework: {
     name: getAbsolutePath('@storybook/react-webpack5'),
     options: {
@@ -83,8 +73,10 @@ const mainConfig: StorybookConfig = {
       },
     },
   },
+
   logLevel: 'debug',
   staticDirs: ['static', { from: 'images', to: 'images' }],
+
   typescript: {
     check: true,
     reactDocgen: 'react-docgen-typescript',
@@ -96,6 +88,7 @@ const mainConfig: StorybookConfig = {
       savePropValueAsString: true,
     },
   },
+
   swc: () => ({
     jsc: {
       transform: {
@@ -105,6 +98,7 @@ const mainConfig: StorybookConfig = {
       },
     },
   }),
+
   webpackFinal: async (config) => {
     // expose jquery as a global so jquery plugins don't break at runtime.
     config.module?.rules?.push({
@@ -127,6 +121,10 @@ const mainConfig: StorybookConfig = {
 
     return config;
   },
+
+  features: {
+    backgrounds: false
+  }
 };
 module.exports = mainConfig;
 

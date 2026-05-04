@@ -1,6 +1,6 @@
-import { action } from '@storybook/addon-actions';
-import { useArgs, useEffect, useState } from '@storybook/preview-api';
-import type { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { action } from 'storybook/actions';
+import { useArgs, useEffect, useState } from 'storybook/preview-api';
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-webpack5';
 import { type ComponentProps } from 'react';
 
 import { Field } from '../Forms/Field';

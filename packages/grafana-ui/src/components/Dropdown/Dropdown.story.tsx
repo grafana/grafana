@@ -1,4 +1,4 @@
-import { type Meta } from '@storybook/react';
+import { type Meta } from '@storybook/react-webpack5';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Button } from '../Button/Button';

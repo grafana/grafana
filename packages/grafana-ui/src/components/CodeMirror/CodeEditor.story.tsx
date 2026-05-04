@@ -1,6 +1,6 @@
 import { type CompletionSource } from '@codemirror/autocomplete';
-import { action } from '@storybook/addon-actions';
-import { type Meta, type StoryFn } from '@storybook/react';
+import { action } from 'storybook/actions';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import { useEffect, useState } from 'react';
 
 import { CodeEditor } from './CodeEditor';
