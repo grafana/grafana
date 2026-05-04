@@ -8,6 +8,7 @@ import (
 
 	ofrep "github.com/open-feature/go-sdk-contrib/providers/ofrep"
 	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -122,8 +123,7 @@ func TestCreateProvider(t *testing.T) {
 			case setting.FeaturesServiceProviderType, setting.OFREPProviderType:
 				provider, err = features.NewOFREPProvider(tc.cfg.URL.String(), httpClient)
 			default:
-				// Static provider with standard flags
-				provider, err = CreateStaticProviderWithStandardFlags(nil)
+				provider, err = newStaticProviderFromCfg(cfg)
 			}
 			require.NoError(t, err)
 
@@ -140,7 +140,7 @@ func TestCreateProvider(t *testing.T) {
 				_, ok := provider.(*ofrep.Provider)
 				assert.True(t, ok, "expected provider to be of type ofrep.Provider")
 			default:
-				_, ok := provider.(*inMemoryBulkProvider)
+				_, ok := provider.(memprovider.InMemoryProvider)
 				assert.True(t, ok, "expected provider to be of type memprovider.InMemoryProvider")
 			}
 		})
