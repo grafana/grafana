@@ -1,3 +1,4 @@
+import { compare } from 'fast-json-patch';
 import { debounce } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
@@ -198,6 +199,19 @@ export class DashboardSceneChangeTracker {
 
   private init() {
     this._changesWorker = createWorker();
+  }
+
+  public checkForChangesImmediately() {
+    const changedDashboard = this._dashboard.getSaveModel?.();
+    const initialDashboard = this._dashboard.getInitialSaveModel?.();
+    if (typeof changedDashboard !== 'object' || typeof initialDashboard !== 'object') {
+      return;
+    }
+    // Strip functions and other non-clonable properties before comparing
+    const changed = JSON.parse(JSON.stringify(changedDashboard));
+    const initial = JSON.parse(JSON.stringify(initialDashboard));
+    const ops = compare(initial, changed);
+    this.updateIsDirty(ops.length > 0 || this.hasMetadataChanges());
   }
 
   public startTrackingChanges() {

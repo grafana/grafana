@@ -377,6 +377,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Propagate change edit mode change to children
     this.state.body.editModeChanged?.(true);
 
+    this._changeTracker.checkForChangesImmediately();
     this._changeTracker.startTrackingChanges();
   };
 
