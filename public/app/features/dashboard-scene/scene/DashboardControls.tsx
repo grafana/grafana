@@ -5,6 +5,7 @@ import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -17,6 +18,9 @@ import {
   SceneObjectUrlSyncConfig,
   type SceneObjectUrlValues,
   type CancelActivationHandler,
+  type SceneObject,
+  type SceneVariable,
+  SceneVariableSet,
 } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -26,7 +30,10 @@ import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/C
 import { KioskMode } from 'app/types/dashboard';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
+import { findVizPanelByPathId } from '../utils/pathId';
 import { getDashboardSceneFor } from '../utils/utils';
+import { keepOnlyUserDefinedVariables } from '../utils/variables';
+import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
@@ -39,6 +46,45 @@ import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
+
+function getPanelEditVariables(
+  dashboard: DashboardScene,
+  sectionVariablesEnabled: boolean
+): SceneVariable[] | undefined {
+  const viewPanelKey = dashboard.state.viewPanel;
+  const panel =
+    dashboard.state.editPanel?.state.panelRef.resolve() ??
+    (viewPanelKey ? findVizPanelByPathId(dashboard, viewPanelKey) : null) ??
+    undefined;
+
+  if (!panel || !sectionVariablesEnabled) {
+    return undefined;
+  }
+
+  const result: SceneVariable[] = [];
+  const seenNames = new Set<string>();
+  let current: SceneObject | undefined = panel.parent ?? panel;
+
+  while (current) {
+    if (current.state.$variables instanceof SceneVariableSet) {
+      const variables = filterSectionRepeatLocalVariables(
+        current.state.$variables.state.variables,
+        current.state.$variables
+      ).filter(keepOnlyUserDefinedVariables);
+
+      for (const variable of variables) {
+        const name = variable.state.name;
+        if (!seenNames.has(name)) {
+          seenNames.add(name);
+          result.push(variable);
+        }
+      }
+    }
+    current = current.parent;
+  }
+
+  return result;
+}
 
 export interface DashboardControlsState extends SceneObjectState {
   timePicker: SceneTimePicker;
@@ -136,9 +182,10 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 
   public hasControls(): boolean {
     const dashboard = getDashboardSceneFor(this);
-    const hasVariables = sceneGraph
-      .getVariables(this)
-      ?.state.variables.some((v) => v.state.hide !== VariableHide.hideVariable);
+    const sectionVariablesEnabled = getFeatureFlagClient().getBooleanValue('dashboardSectionVariables', false);
+    const panelEditVariables = getPanelEditVariables(dashboard, sectionVariablesEnabled);
+    const variables = panelEditVariables ?? sceneGraph.getVariables(this)?.state.variables ?? [];
+    const hasVariables = variables.some((v) => v.state.hide !== VariableHide.hideVariable);
     const hasAnnotations = sceneGraph.getDataLayers(this).some((d) => d.state.isEnabled && !d.state.isHidden);
     const hasLinks = getDashboardSceneFor(this).state.links?.length > 0;
     const hideLinks = this.state.hideLinksControls || !hasLinks;
@@ -167,6 +214,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const styles = useStyles2(getStyles, isQueryEditorNext);
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
+  const sectionVariablesEnabled = getFeatureFlagClient().getBooleanValue('dashboardSectionVariables', false);
+  const panelEditVariables = getPanelEditVariables(dashboard, sectionVariablesEnabled);
 
   if (!model.hasControls()) {
     // If dynamic dashboards is enabled, we need to show the edit/share/playlist buttons
@@ -224,7 +273,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {!hideVariableControls && (
         <>
-          <VariableControls dashboard={dashboard} />
+          <VariableControls dashboard={dashboard} variablesOverride={panelEditVariables} />
           <DashboardDataLayerControls dashboard={dashboard} />
         </>
       )}

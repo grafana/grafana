@@ -4,12 +4,26 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
+import {
+  CustomVariable,
+  LocalValueVariable,
+  SceneGridLayout,
+  SceneVariableSet,
+  ScopesVariable,
+  TextBoxVariable,
+  VizPanel,
+} from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardControls, type DashboardControlsState } from './DashboardControls';
@@ -49,6 +63,14 @@ function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
 }
 
 describe('DashboardControls', () => {
+  beforeEach(() => {
+    setTestFlags({});
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   describe('Given a standard scene', () => {
     it('should initialize with default values', () => {
       const scene = buildTestScene();
@@ -197,6 +219,44 @@ describe('DashboardControls', () => {
 
       const { container } = render(<scene.Component model={scene} />);
       expect(container.querySelector('.react-loading-skeleton')).not.toBeInTheDocument();
+    });
+
+    it.each([
+      {
+        title: 'should include only viewed panel ancestor section variables in panel view mode',
+        featureFlags: { dashboardSectionVariables: true },
+        sceneBuilder: buildPanelViewVariablesScene,
+        expectedVisible: ['ancestorVar', 'dashboardVar', 'dupVar'],
+        expectedHidden: ['otherSectionVar'],
+      },
+      {
+        title: 'should include only edited panel ancestor section variables in panel edit mode',
+        featureFlags: { dashboardSectionVariables: true },
+        sceneBuilder: buildPanelEditVariablesScene,
+        expectedVisible: ['ancestorVar', 'dashboardVar', 'dupVar'],
+        expectedHidden: ['otherSectionVar'],
+      },
+      {
+        title: 'should not include section variables in panel edit mode when section feature is disabled',
+        sceneBuilder: buildPanelEditVariablesScene,
+        expectedVisible: ['dashboardVar'],
+        expectedHidden: ['ancestorVar', 'otherSectionVar'],
+      },
+      {
+        title: 'should hide repeat local section variables in panel edit mode',
+        featureFlags: { dashboardSectionVariables: true },
+        sceneBuilder: buildPanelEditSceneWithRepeatVariable,
+        expectedVisible: ['repeatSource'],
+        expectedUnique: ['repeatSource'],
+      },
+    ])('$title', async ({ featureFlags, sceneBuilder, expectedVisible, expectedHidden, expectedUnique }) => {
+      await assertPanelEditVariableVisibility({
+        sceneBuilder,
+        featureFlags,
+        expectedVisible,
+        expectedHidden,
+        expectedUnique,
+      });
     });
   });
 
@@ -538,4 +598,155 @@ function buildTestScene(state?: Partial<DashboardControlsState>): DashboardContr
   variable.activate();
 
   return dashboard.state.controls as DashboardControls;
+}
+
+async function assertPanelEditVariableVisibility({
+  sceneBuilder,
+  featureFlags,
+  expectedVisible = [],
+  expectedHidden = [],
+  expectedUnique = [],
+}: {
+  sceneBuilder: () => { controls: DashboardControls };
+  featureFlags?: Record<string, boolean>;
+  expectedVisible?: string[];
+  expectedHidden?: string[];
+  expectedUnique?: string[];
+}) {
+  setTestFlags(featureFlags ?? {});
+  const { controls } = sceneBuilder();
+  render(<controls.Component model={controls} />);
+
+  for (const variableName of expectedVisible) {
+    expect(await screen.findByText(variableName)).toBeInTheDocument();
+  }
+
+  for (const variableName of expectedHidden) {
+    expect(screen.queryByText(variableName)).not.toBeInTheDocument();
+  }
+
+  for (const variableName of expectedUnique) {
+    expect(screen.queryAllByText(variableName)).toHaveLength(1);
+  }
+}
+
+function buildPanelEditVariablesScene() {
+  return buildPanelEditControlsScene({
+    uid: 'panel-edit-variables',
+    editedPanelKey: 'edited-panel',
+    rows: [
+      new RowItem({
+        title: 'Ancestor row',
+        $variables: new SceneVariableSet({
+          variables: [
+            new TextBoxVariable({ name: 'ancestorVar', value: 'from-ancestor' }),
+            new TextBoxVariable({ name: 'dupVar', value: 'from-ancestor' }),
+          ],
+        }),
+      }),
+      new RowItem({
+        title: 'Other row',
+        $variables: new SceneVariableSet({
+          variables: [new TextBoxVariable({ name: 'otherSectionVar', value: 'other' })],
+        }),
+      }),
+    ],
+    dashboardVariables: [
+      new TextBoxVariable({ name: 'dashboardVar', value: 'from-dashboard' }),
+      new TextBoxVariable({ name: 'dupVar', value: 'from-dashboard' }),
+    ],
+  });
+}
+
+function buildPanelViewVariablesScene() {
+  const { dashboard, controls, editedPanel } = buildPanelEditControlsScene({
+    uid: 'panel-view-variables',
+    editedPanelKey: 'edited-panel',
+    rows: [
+      new RowItem({
+        title: 'Ancestor row',
+        $variables: new SceneVariableSet({
+          variables: [
+            new TextBoxVariable({ name: 'ancestorVar', value: 'from-ancestor' }),
+            new TextBoxVariable({ name: 'dupVar', value: 'from-ancestor' }),
+          ],
+        }),
+      }),
+      new RowItem({
+        title: 'Other row',
+        $variables: new SceneVariableSet({
+          variables: [new TextBoxVariable({ name: 'otherSectionVar', value: 'other' })],
+        }),
+      }),
+    ],
+    dashboardVariables: [
+      new TextBoxVariable({ name: 'dashboardVar', value: 'from-dashboard' }),
+      new TextBoxVariable({ name: 'dupVar', value: 'from-dashboard' }),
+    ],
+  });
+
+  dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
+
+  return { controls };
+}
+
+function buildPanelEditSceneWithRepeatVariable() {
+  return buildPanelEditControlsScene({
+    uid: 'panel-edit-repeat',
+    editedPanelKey: 'repeat-panel',
+    rows: [
+      new RowItem({
+        title: 'Repeat row',
+        repeatByVariable: 'repeatSource',
+        $variables: new SceneVariableSet({
+          variables: [
+            new LocalValueVariable({ name: 'repeatSource', value: 'local-repeat-value', text: 'local-repeat-value' }),
+            new CustomVariable({ name: 'repeatSource', query: 'sec1,sec2', value: ['sec1'], text: ['sec1'] }),
+          ],
+        }),
+      }),
+    ],
+    dashboardVariables: [new TextBoxVariable({ name: 'dashboardVar', value: 'from-dashboard' })],
+  });
+}
+
+function buildPanelEditControlsScene({
+  uid,
+  editedPanelKey,
+  rows,
+  dashboardVariables,
+}: {
+  uid: string;
+  editedPanelKey: string;
+  rows: RowItem[];
+  dashboardVariables: Array<TextBoxVariable | CustomVariable>;
+}) {
+  const editedPanel = new VizPanel({ key: editedPanelKey, pluginId: 'text' });
+  const rowItems = rows.map((row, index) => {
+    const isEditedPanelRow = index === 0;
+    const panel = isEditedPanelRow ? editedPanel : new VizPanel({ key: `other-panel-${index}`, pluginId: 'text' });
+    const gridItem = new DashboardGridItem({ body: panel });
+
+    row.setState({
+      layout: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({ children: [gridItem] }),
+      }),
+    });
+
+    return row;
+  });
+
+  const dashboard = new DashboardScene({
+    uid,
+    $variables: new SceneVariableSet({
+      variables: dashboardVariables,
+    }),
+    body: new RowsLayoutManager({ rows: rowItems }),
+    controls: new DashboardControls({}),
+  });
+
+  dashboard.setState({ editPanel: buildPanelEditScene(editedPanel) });
+  dashboard.activate();
+
+  return { dashboard, controls: dashboard.state.controls as DashboardControls, editedPanel };
 }
