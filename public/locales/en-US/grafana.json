@@ -6463,6 +6463,10 @@
         },
         "save-dashboard-short": "Save",
         "save-library-panel": "Save library panel",
+        "save-template": {
+          "label": "Save",
+          "tooltip": "Save template changes"
+        },
         "share": {
           "arrow": "Share",
           "tooltip": "Copy link"
@@ -6476,6 +6480,9 @@
       "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
+      "save-as-template": {
+        "label": "Save as template"
+      },
       "save-dashboard": {
         "label": "Save dashboard",
         "tooltip": "Save changes"
@@ -6677,7 +6684,10 @@
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
+      "edit-template-button": "Edit",
+      "edit-template-button-label": "Edit template: {{title}}",
       "no-preview": "No preview available ",
+      "use-template-button": "Use template",
       "view-dashboard-button": "View dashboard",
       "view-dashboard-button-label": "View dashboard: {{title}}",
       "view-template-button": "View template",
@@ -6734,8 +6744,15 @@
     "suggested-error-description": "Failed to load suggested dashboard.",
     "suggested-error-title": "Error loading suggested dashboard",
     "template-dashboard-modal": {
-      "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
+      "description": "Get started with Grafana templates. Connect your data to power them with real metrics.",
+      "tab-custom": "Custom templates",
+      "tab-grafana": "Grafana-provisioned",
       "title": "Start a dashboard from a template"
+    },
+    "template-filters": {
+      "creator-placeholder": "Filter by created by",
+      "search-placeholder": "Search",
+      "sort-placeholder": "Sort"
     }
   },
   "dashboard-links": {
@@ -7512,7 +7529,9 @@
         "label-details": "Details",
         "title": "Save dashboard",
         "title-copy": "Save dashboard copy",
-        "title-provisioned": "Provisioned dashboard"
+        "title-provisioned": "Provisioned dashboard",
+        "title-template": "Save as template",
+        "title-update-template": "Save template"
       }
     },
     "save-dashboard-form": {
@@ -7636,6 +7655,18 @@
       "switch-options": "Switch options",
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
+    },
+    "template-edit-banner": {
+      "body": "Edits made will update this template. <2>If you wish to use this template as a dashboard, click here</2>",
+      "title": "You are editing {{ templateName }}"
+    },
+    "template-saved-banner": {
+      "body": "The {{ templateName }} template was created. You can access it in the <1>template gallery</1>.",
+      "title": "Template created"
+    },
+    "template-use-banner": {
+      "body": "Save this dashboard and edit it for your use case",
+      "title": "You are using {{ templateName }} template in a new dashboard"
     },
     "text-box-variable": {
       "name-default-value": "Default value"
@@ -8053,9 +8084,9 @@
       "label-name": "Name"
     },
     "build-a-dashboard-button": {
-      "blank": "Blank",
       "build-a-dashboard": "Build a dashboard",
-      "from-suggestions": "From suggestions"
+      "from-suggestions": "From suggestions",
+      "new-dashboard": "New dashboard"
     },
     "build-categories": {
       "categories": {

@@ -1479,6 +1479,20 @@
     },
     {
       "metadata": {
+        "name": "dashboard.orgTemplates",
+        "resourceVersion": "1777582448454",
+        "creationTimestamp": "2026-04-30T20:54:08Z"
+      },
+      "spec": {
+        "description": "Enables org-defined dashboard templates for enterprise",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardAssistantPopover",
         "resourceVersion": "1773181791824",
         "creationTimestamp": "2026-03-10T22:29:51Z"

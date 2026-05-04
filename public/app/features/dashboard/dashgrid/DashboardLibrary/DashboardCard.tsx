@@ -6,7 +6,7 @@ import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Box, Button, Card, IconButton, TagList, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -34,7 +34,7 @@ interface Props {
   showDatasourceProvidedBadge?: boolean;
   showCommunityBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
-  kind: 'template_dashboard' | 'suggested_dashboard';
+  kind: 'template_dashboard' | 'suggested_dashboard' | 'org_template';
   /** Show the compact compatibility badge (replaces showCompatibilityButton) */
   showCompatibilityBadge?: boolean;
   /** State for the compatibility badge (idle, loading, success, error) */
@@ -43,6 +43,9 @@ interface Props {
   onCompatibilityCheck?: () => void;
   /** Whether to show the "Customize with assistant" button (caller must check relevant feature flags) */
   showAssistantButton?: boolean;
+  onEdit?: () => void;
+  /** Optional tags to display at the bottom of the card */
+  tags?: string[];
 }
 
 function DashboardCardComponent({
@@ -61,6 +64,8 @@ function DashboardCardComponent({
   compatibilityState,
   onCompatibilityCheck,
   showAssistantButton,
+  onEdit,
+  tags,
 }: Props) {
   const styles = useStyles2(getStyles);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
@@ -155,8 +160,10 @@ function DashboardCardComponent({
           >
             {kind === 'template_dashboard' ? (
               <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
-            ) : (
+            ) : kind === 'suggested_dashboard' ? (
               <Trans i18nKey="dashboard-library.card.view-dashboard-button">View dashboard</Trans>
+            ) : (
+              <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
             )}
           </Button>
           {assistantAvailable && showAssistantButton && (
@@ -174,6 +181,18 @@ function DashboardCardComponent({
               <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
             </Button>
           )}
+          {onEdit && (
+            <Button
+              variant="secondary"
+              className={styles.overlayButton}
+              onClick={onEdit}
+              aria-label={t('dashboard-library.card.edit-template-button-label', 'Edit template: {{title}}', {
+                title,
+              })}
+            >
+              <Trans i18nKey="dashboard-library.card.edit-template-button">Edit</Trans>
+            </Button>
+          )}
         </div>
       </div>
       <div className={styles.bottomSection}>
@@ -185,6 +204,11 @@ function DashboardCardComponent({
             {dashboard.description || t('dashboard-library.dashboard-card.no-description', 'No description available')}
           </Card.Description>
         </div>
+        {tags && tags.length > 0 && (
+          <div className={styles.tagsContainer}>
+            <TagList tags={tags} className={styles.tagList} />
+          </div>
+        )}
         {hasCompatActions && (
           <div className={styles.actionsContainer}>
             {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
@@ -398,6 +422,12 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     noDescription: css({
       fontStyle: 'italic',
+    }),
+    tagsContainer: css({
+      paddingTop: theme.spacing(1),
+    }),
+    tagList: css({
+      justifyContent: 'flex-start',
     }),
     actionsContainer: css({
       display: 'flex',

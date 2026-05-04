@@ -172,6 +172,7 @@ export const availableIconsIndex = {
   grafana: true,
   grid: true,
   'graph-bar': true,
+  grid: true,
   'hand-pointer': true,
   heart: true,
   'heart-rate': true,

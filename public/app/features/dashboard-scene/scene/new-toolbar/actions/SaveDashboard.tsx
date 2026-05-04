@@ -1,17 +1,38 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { useFlagDashboardOrgTemplates } from '@grafana/runtime/internal';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 
 import { type ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const { meta, isDirty, uid, editview, editPanel } = dashboard.state;
+  const isOrgTemplatesFlagEnabled = useFlagDashboardOrgTemplates();
 
   const isNew = !Boolean(uid || dashboard.isManaged());
   const isManaged = dashboard.isManaged();
   // In dashboard settings we still use the nav toolbar for a short while
   const buttonSize = Boolean(editview) || editPanel ? 'sm' : 'md';
+
+  // Org-template edit flow
+  if (meta.isOrgTemplate) {
+    if (!meta.canSave) {
+      return null;
+    }
+    return (
+      <Button
+        onClick={() => dashboard.openSaveDrawer({ updateOrgTemplate: true })}
+        tooltip={t('dashboard.toolbar.new.save-template.tooltip', 'Save template changes')}
+        size={buttonSize}
+        variant={isDirty ? 'primary' : 'secondary'}
+        data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
+      >
+        <Trans i18nKey="dashboard.toolbar.new.save-template.label">Save</Trans>
+      </Button>
+    );
+  }
 
   // if we only can save
   if (isNew) {
@@ -67,6 +88,15 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
               icon="copy"
               onClick={() => dashboard.openSaveDrawer({ saveAsCopy: true })}
             />
+            {isOrgTemplatesFlagEnabled && getSaveAsTemplateForm() !== null && (
+              <Menu.Item
+                label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
+                icon="grid"
+                onClick={() => {
+                  dashboard.openSaveDrawer({ saveAsOrgTemplate: true });
+                }}
+              />
+            )}
           </Menu>
         }
       >
