@@ -143,6 +143,10 @@ type DBDataResponse struct {
 	refID        string
 }
 
+func (e *DataSourceHandler) GetPool() *pgxpool.Pool {
+	return e.pool
+}
+
 func (e *DataSourceHandler) Dispose() {
 	e.log.Debug("Disposing DB...")
 
