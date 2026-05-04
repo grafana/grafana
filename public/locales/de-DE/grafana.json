@@ -8144,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Zu Favoriten hinzufügen",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Daten untersuchen",
       "open-in-explore": "In Explore View öffnen",
       "remove-favorite": "Von Favoriten entfernen"
@@ -14243,6 +14249,8 @@
       "alerts-loading": "Warnungen",
       "card-click": "Karte {{id}} auswählen",
       "data": "Daten",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "{{type}} neu",
       "queries-expressions": "Abfragen und Ausdrücke",
       "toggle-size": "Seitenleistengröße umschalten",
@@ -14959,10 +14967,13 @@
       "title": "Erstellen Sie mit Vorschlägen und Vorlagen im Handumdrehen Dashboards"
     },
     "nav": {
+      "counter": "",
       "go-to": "Zur Folie {{number}}",
-      "next": "Weiter",
-      "prev": "Zurück"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Abfrage erklären",
