@@ -47,10 +47,7 @@ interface DashboardsTreeProps {
 const HEADER_HEIGHT = 36;
 const ROW_HEIGHT = 36;
 const DIVIDER_HEIGHT = 0; // Yes - make it appear as a border on the row rather than a row itself
-// Static height for the inline README row. The panel body has maxHeight: 60vh
-// so it can't grow unboundedly. React-window's outer container (overflow: auto)
-// computes scrollHeight from rendered descendants, not from itemSizes, and the
-// readme is always the last item — so nothing below it can be misaligned.
+// README is always the last item, so an approximate height is fine.
 const README_ROW_HEIGHT = 320;
 const README_ROW_PADDING_TOP = 16; // matches theme.spacing(2)
 
