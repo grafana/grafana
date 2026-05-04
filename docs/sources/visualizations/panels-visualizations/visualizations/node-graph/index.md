@@ -265,3 +265,48 @@ Optional fields:
 | icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana [built in icons](https://developers.grafana.com/ui/latest/index.html?path=/story/iconography-icon--icons-overview) are allowed.                                                                                                                                                      |
 | nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                        |
 | highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                      |
+
+### Set field options
+
+The tables above reference `config.displayName`, `config.color.fixedColor`, and `field.config.color.mode`. Set these values in each field's `config` object in the data frame returned by your data source.
+
+If you are building a data source plugin or returning data frames from an API, define these field options in the field definition. For example, in a JSON data frame response:
+
+```json
+{
+  "fields": [
+    {
+      "name": "arc__success",
+      "type": "number",
+      "values": [0.7],
+      "config": {
+        "displayName": "Success rate",
+        "color": {
+          "fixedColor": "green",
+          "mode": "fixed"
+        }
+      }
+    },
+    {
+      "name": "detail__latency",
+      "type": "number",
+      "values": [42],
+      "config": {
+        "displayName": "Latency (ms)",
+        "unit": "ms"
+      }
+    }
+  ]
+}
+```
+
+Common field properties used by the node graph panel:
+
+| Property                  | Description                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `config.displayName`      | Readable label shown in tooltips and context menus instead of the raw field name.                             |
+| `config.color.fixedColor` | Fixed color for `arc__*` fields (for example, `"green"`, `"red"`, `"#FF5733"`).                              |
+| `config.color.mode`       | Color mode for the `color` field. Use `"fixed"` for a single color or `"continuous-GrYlRd"` for a gradient.  |
+| `config.unit`             | Unit displayed alongside numeric values (for example, `"ms"`, `"percent"`, `"bytes"`).                       |
+
+For more details about the data frame format, refer to [Data frames](https://grafana.com/developers/dataplane/).
