@@ -10,7 +10,7 @@
 
 // Generated from public/app/plugins/panel/debug/panelcfg.cue file.
 
-export const pluginVersion = "13.0.0";
+export const pluginVersion = "13.0.2";
 
 export type UpdateConfig = {
   render: boolean,
