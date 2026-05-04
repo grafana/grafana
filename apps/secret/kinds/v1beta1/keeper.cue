@@ -17,6 +17,7 @@ KeeperSpec: {
 #AWSConfig: {
 	region:      string
 	assumeRole?: #AWSAssumeRole
+	kmsKeyId?:   string
 }
 
 #AWSAssumeRole: {

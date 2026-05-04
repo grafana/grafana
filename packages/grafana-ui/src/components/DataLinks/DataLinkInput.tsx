@@ -29,6 +29,9 @@ interface DataLinkInputProps {
   onChange: (url: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   placeholder?: string;
+  // For accessibility, this should be the id of the label that describes this input.
+  // This is needed because the input is rendered as a contenteditable div and can't use the normal label/htmlFor logic.
+  ['aria-labelledby']?: string;
 }
 
 const datalinksSyntax: Grammar = {
@@ -81,6 +84,7 @@ export const DataLinkInput = memo(
     onChange,
     suggestions,
     placeholder = 'http://your-grafana.com/d/000000010/annotations',
+    ['aria-labelledby']: ariaLabelledby,
   }: DataLinkInputProps) => {
     const editorRef = useRef<Editor>(null);
     const styles = useStyles2(getStyles);
@@ -122,6 +126,7 @@ export const DataLinkInput = memo(
       setScrollTop(getElementPosition(activeRef.current, suggestionsIndex));
     }, [suggestionsIndex]);
 
+    // istanbul ignore next: Slate editor keyboard handling
     const onKeyDown = React.useCallback((event: React.KeyboardEvent, next: () => void) => {
       if (!stateRef.current.showingSuggestions) {
         if (event.key === '=' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
@@ -156,10 +161,8 @@ export const DataLinkInput = memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // istanbul ignore next: Slate blur sync
     useEffect(() => {
-      // Update the state of the link in the parent. This is basically done on blur but we need to do it after
-      // our state have been updated. The duplicity of state is done for perf reasons and also because local
-      // state also contains things like selection and formating.
       if (prevLinkUrl && prevLinkUrl.selection.isFocused && !linkUrl.selection.isFocused) {
         stateRef.current.onChange(Plain.serialize(linkUrl));
       }
@@ -169,6 +172,7 @@ export const DataLinkInput = memo(
       setLinkUrl(value);
     }, []);
 
+    // istanbul ignore next: Slate editor variable insertion
     const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
       const precedingChar: string = getCharactersAroundCaret();
       const precedingDollar = precedingChar === '$';
@@ -185,6 +189,7 @@ export const DataLinkInput = memo(
       stateRef.current.onChange(Plain.serialize(editor.value));
     };
 
+    // istanbul ignore next: Slate editor caret detection
     const getCharactersAroundCaret = () => {
       const input: HTMLSpanElement | null = document.getElementById('data-link-input')!;
       let precedingChar = '',
@@ -241,6 +246,7 @@ export const DataLinkInput = memo(
                   padding: '3px 8px',
                 })
               )}
+              aria-labelledby={ariaLabelledby}
             />
           </div>
         </div>

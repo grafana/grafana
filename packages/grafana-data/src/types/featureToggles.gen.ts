@@ -309,11 +309,6 @@ export interface FeatureToggles {
   */
   datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
   /**
-  * use raw output mode for the data source querier
-  * @default false
-  */
-  datasourcesQuerierRawOutput?: boolean;
-  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
@@ -1486,6 +1481,11 @@ export interface FeatureToggles {
   * @default false
   */
   queryEditorNext?: boolean;
+  /**
+  * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
+  * @default false
+  */
+  queryEditorNextMultiSelect?: boolean;
   /**
   * Enables search for team bindings in the app platform API
   * @default false

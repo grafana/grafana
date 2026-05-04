@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Editar YAML",
         "save": "Guardar"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nombre",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Eliminar todas las reglas"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Eliminar",
       "delete-modal-delete-button": "Eliminar",
@@ -1573,8 +1575,14 @@
         "update-error": "Error al actualizar el grupo de reglas",
         "update-success": "Grupo de reglas actualizado correctamente"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "El grupo seleccionado no se puede editar",
       "group-not-editable-description": "Este grupo pertenece a una fuente de datos que no admite la edición.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Editar grupo de reglas",
       "rule-group-error": "Error al cargar el grupo de reglas"
     },
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "Alfabéticamente (A-Z)",
         "alphabetically-za": "Alfabéticamente (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Eliminados (el más nuevo primero)",
         "deleted-oldest": "Eliminados (el más antiguo primero)"
       }
@@ -8134,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Añadir a favoritos",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Explorar datos",
       "open-in-explore": "Abrir en Explorar vista",
       "remove-favorite": "Eliminar de favoritos"
@@ -13577,6 +13593,7 @@
       "contact-admin": "Ponte en contacto con tu administrador de Grafana para convertir este recurso en local o eliminar todos los recursos del repositorio que falta.",
       "convert-to-local-button": "Convertir a local",
       "delete-button": "Eliminar",
+      "go-to-dashboards": "",
       "job-error": "Se ha producido un error al procesar los recursos huérfanos.",
       "job-success": "Recursos huérfanos procesados correctamente",
       "job-warning": "Algunos recursos se han procesado con advertencias. Revisa los resultados.",
@@ -13823,7 +13840,8 @@
       "make-sure": "Crear un token con estos permisos"
     },
     "validation": {
-      "hidden-characters": "Este campo contiene caracteres ocultos que es posible que se hayan introducido al copiar y pegar. Vuelve a escribir el valor o límpialo e inténtalo de nuevo."
+      "hidden-characters": "Este campo contiene caracteres ocultos que es posible que se hayan introducido al copiar y pegar. Vuelve a escribir el valor o límpialo e inténtalo de nuevo.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Advertencia",
     "watch-stream": {
@@ -14231,6 +14249,8 @@
       "alerts-loading": "Alertas",
       "card-click": "Seleccionar tarjeta {{id}}",
       "data": "Datos",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nueva {{type}}",
       "queries-expressions": "Consultas y expresiones",
       "toggle-size": "Alternar tamaño de la barra lateral",
@@ -14284,6 +14304,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Restaurar"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "No has eliminado ningún panel de control recientemente.",
@@ -14446,6 +14470,10 @@
     },
     "results-table": {
       "datasource-header": "Fuente de datos",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "<1 min",
       "deleted-remaining-header": "Tiempo restante",
       "location-header": "Ubicación",
@@ -14939,10 +14967,13 @@
       "title": "Pon en marcha dashboards con sugerencias y plantillas."
     },
     "nav": {
+      "counter": "",
       "go-to": "Ir a la diapositiva {{number}}",
-      "next": "Siguiente",
-      "prev": "Anterior"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Explicar consulta",

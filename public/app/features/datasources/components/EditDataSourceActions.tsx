@@ -1,11 +1,25 @@
+import { useState } from 'react';
+
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
+import {
+  config,
+  usePluginLinks,
+  useFavoriteDatasources,
+  getDataSourceSrv,
+  reportInteraction,
+  isFetchError,
+} from '@grafana/runtime';
+import { Button, Dropdown, LinkButton, Menu, Icon, IconButton, Badge, Tooltip } from '@grafana/ui';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useDispatch } from 'app/types/store';
 
+import * as api from '../api';
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
-import { useDataSource } from '../state/hooks';
+import { useDataSource, useDataSourceRights } from '../state/hooks';
+import { setIsDefault } from '../state/reducers';
 import { trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
@@ -48,6 +62,94 @@ const FavoriteButton = ({ uid }: { uid: string }) => {
         data-testid="favorite-button"
       />
     )
+  );
+};
+
+const DefaultButton = ({ uid }: { uid: string }) => {
+  const [loading, setLoading] = useState(false);
+
+  const dataSource = useDataSource(uid);
+  const rights = useDataSourceRights(uid);
+  const editable = rights.hasWriteRights && !rights.readOnly;
+
+  const dispatch = useDispatch();
+
+  const onChangeDefault = async (value: boolean) => {
+    if (loading) {
+      return;
+    }
+    setLoading(true);
+
+    try {
+      // Make manual API calls to avoid pre-emptively saving other changes from the EditDataSource form
+      const ds = await api.getDataSourceByUid(uid);
+      await api.updateDataSource({ ...ds, isDefault: value });
+      dispatch(setIsDefault(value));
+    } catch (error) {
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('datasources.edit-data-source-actions.default-error', 'Failed to update default data source'),
+            isFetchError(error) ? error.data.message : error instanceof Error ? error.message : undefined
+          )
+        )
+      );
+    }
+
+    setLoading(false);
+  };
+
+  if (!editable) {
+    return dataSource.isDefault ? (
+      <Badge
+        text={
+          <Tooltip
+            content={[
+              t(
+                'datasources.edit-data-source-actions.default-active',
+                'This data source is currently set as the default.'
+              ),
+              t(
+                'datasources.edit-data-source-actions.default-tooltip',
+                'The default data source is preselected in new panels.'
+              ),
+            ].join(' ')}
+          >
+            <span>
+              <Trans i18nKey="datasources.edit-data-source-actions.default-label">Default</Trans>
+            </span>
+          </Tooltip>
+        }
+        color="blue"
+      />
+    ) : null;
+  }
+
+  return (
+    <Button
+      variant="secondary"
+      size="sm"
+      tooltip={[
+        dataSource.isDefault &&
+          t('datasources.edit-data-source-actions.default-active', 'This data source is currently set as the default.'),
+        t(
+          'datasources.edit-data-source-actions.default-tooltip',
+          'The default data source is preselected in new panels.'
+        ),
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      onClick={() => onChangeDefault(!dataSource.isDefault)}
+      icon={loading ? 'spinner' : undefined}
+      iconPlacement="right"
+      disabled={loading}
+    >
+      {dataSource.isDefault ? (
+        <Trans i18nKey="datasources.edit-data-source-actions.default-remove-button">Remove default</Trans>
+      ) : (
+        <Trans i18nKey="datasources.edit-data-source-actions.default-make-button">Make default</Trans>
+      )}
+    </Button>
   );
 };
 
@@ -105,6 +207,7 @@ export function EditDataSourceActions({ uid }: Props) {
   return (
     <>
       <FavoriteButton uid={uid} />
+      <DefaultButton uid={uid} />
       {hasExploreRights && (
         <>
           {!hasActions ? (

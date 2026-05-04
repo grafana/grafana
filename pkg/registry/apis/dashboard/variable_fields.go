@@ -9,9 +9,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-const variableFolderLabelKey = "dashboard.grafana.app/folder"
+const variableFolderLabelKey = utils.AnnoKeyFolder
 
 // VariableToSelectableFields returns fields available for selectors.
 func VariableToSelectableFields(obj *dashv2.Variable) fields.Set {

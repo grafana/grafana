@@ -119,6 +119,17 @@ type SnapshotOptions struct {
 	// MinDocChanges is the minimum persisted mutation count required before a new
 	// upload is attempted after a previous successful upload.
 	MinDocChanges int
+
+	// CleanupGracePeriod is the time a newly uploaded snapshot must have existed
+	// before its predecessor in the same Grafana-version group is eligible for
+	// cleanup. Consumed by the cleanup loop only; no effect on upload/download.
+	CleanupGracePeriod time.Duration
+
+	// CleanupInterval is how often the background cleanup pass runs. The first
+	// run after start is jittered uniformly in [0, CleanupInterval) to spread
+	// listings across replicas deployed together. Zero disables periodic cleanup
+	// (the loop is not started).
+	CleanupInterval time.Duration
 }
 
 type bleveBackend struct {
@@ -210,8 +221,19 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
 
 	if opts.Snapshot.Store != nil {
+		// Initialise snapshot metric label series only on instances where the
+		// feature is actually wired up; ProvideIndexMetrics deliberately skips
+		// this so disabled instances stay quiet. See InitSnapshotMetrics for the
+		// full rationale.
+		be.indexMetrics.InitSnapshotMetrics()
+
 		be.bgTasksWg.Add(1)
 		go be.uploadSnapshotsPeriodically(ctx)
+
+		if opts.Snapshot.CleanupInterval > 0 {
+			be.bgTasksWg.Add(1)
+			go be.cleanupSnapshotsPeriodically(ctx)
+		}
 	}
 
 	if be.indexMetrics != nil {
@@ -385,11 +407,12 @@ func (b *bleveBackend) clearUploadTracking(key resource.NamespacedResource) {
 }
 
 const (
-	snapshotUploadCheckInterval       = 5 * time.Minute
-	snapshotUploadStatusSuccess       = "success"
-	snapshotUploadStatusSkipNoChanges = "skip_no_changes"
-	snapshotUploadStatusSkipLockHeld  = "skip_lock_contention"
-	snapshotUploadStatusError         = "error"
+	snapshotUploadCheckInterval          = 5 * time.Minute
+	snapshotUploadStatusSuccess          = "success"
+	snapshotUploadStatusSkipNoChanges    = "skip_no_changes"
+	snapshotUploadStatusSkipLockHeld     = "skip_lock_contention"
+	snapshotUploadStatusSkipRecentRemote = "skip_recent_remote"
+	snapshotUploadStatusError            = "error"
 )
 
 func (b *bleveBackend) uploadSnapshotsPeriodically(ctx context.Context) {
@@ -435,9 +458,17 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 
 		start := time.Now()
 		if err := b.uploadSnapshot(ctx, key, idx); err != nil {
-			if errors.Is(err, errLockHeld) {
+			switch {
+			case errors.Is(err, errLockHeld):
 				b.recordSnapshotUploadStatus(snapshotUploadStatusSkipLockHeld)
-			} else {
+			case errors.Is(err, errSkipRecentRemote):
+				// A recent remote upload covers this resource for the cross-instance
+				// dedup window. Update lastUploadTime so this replica's local probe
+				// also rate-limits to once per UploadInterval, and don't reset the
+				// mutation baseline — we didn't actually take a snapshot.
+				b.setUploadTracking(key, time.Now())
+				b.recordSnapshotUploadStatus(snapshotUploadStatusSkipRecentRemote)
+			default:
 				b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 				b.log.Warn("snapshot upload failed", "key", key, "err", err)
 			}

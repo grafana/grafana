@@ -1,7 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
 import { config, getBackendSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { getAPINamespace } from '../../../api/utils';
@@ -95,7 +94,9 @@ class K8sAPI implements DashboardSnapshotSrv {
   readonly url: string;
 
   constructor() {
-    this.url = `/apis/${this.apiVersion}/namespaces/${getAPINamespace()}/snapshots`;
+    // Anonymous users get org-0 which is invalid; use 'default' namespace (public mode)
+    const namespace = getAPINamespace() === 'org-0' ? 'default' : getAPINamespace();
+    this.url = `/apis/${this.apiVersion}/namespaces/${namespace}/snapshots`;
   }
 
   async create(cmd: SnapshotCreateCommand) {
@@ -123,27 +124,19 @@ class K8sAPI implements DashboardSnapshotSrv {
   }
 
   async getSnapshot(uid: string): Promise<DashboardDTO> {
-    const headers: Record<string, string> = {};
-    if (!contextSrv.isSignedIn) {
-      alert('TODO... need a barer token for anonymous use case');
-      const token = `??? TODO, get anon token for snapshots (${contextSrv.user?.name}) ???`;
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     // Fetch both snapshot metadata and dashboard content in parallel
+    // Anonymous access is handled server-side via public_mode in the snapshot authorizer
     const [snapshotResponse, dashboardResponse] = await Promise.all([
       lastValueFrom(
         getBackendSrv().fetch<K8sSnapshotResource>({
           url: this.url + '/' + uid,
           method: 'GET',
-          headers: headers,
         })
       ),
       lastValueFrom(
         getBackendSrv().fetch<K8sDashboardSubresource>({
           url: this.url + '/' + uid + '/dashboard',
           method: 'GET',
-          headers: headers,
         })
       ),
     ]);

@@ -1829,13 +1829,21 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		// Verify global resource counts:
 		// - Folders: 12 total (6 from repo1 + 6 from repo2) - folders are duplicated per repository
 		// - Dashboards: 3 total (only from repo1) - repo2's dashboards fail with ownership conflicts
-		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, dashboards.Items, 3, "should have 3 dashboards (only from repo1)")
+		// Poll because repo2's sync job can return before the folder/dashboard
+		// list endpoints have observed all of the newly-created resources.
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+			if !assert.NoError(collect, err) {
+				return
+			}
+			assert.Len(collect, dashboards.Items, 3, "should have 3 dashboards (only from repo1)")
 
-		folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, folders.Items, 12, "should have 12 folders (6 from repo1 + 6 from repo2)")
+			folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+			if !assert.NoError(collect, err) {
+				return
+			}
+			assert.Len(collect, folders.Items, 12, "should have 12 folders (6 from repo1 + 6 from repo2)")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should observe all dashboards and folders after both repos sync")
 
 		// Clean up
 		err = helper.Repositories.Resource.Delete(ctx, repo1, metav1.DeleteOptions{})
