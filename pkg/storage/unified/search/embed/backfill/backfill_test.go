@@ -42,10 +42,10 @@ func makeListItem(ns, name string, rv int64) listItem {
 	}
 }
 
-func newBackfiller(t *testing.T, storage *fakeStorage, vec *fakeVector) *Backfiller {
+func newBackfiller(t *testing.T, storage *fakeStorage, vec *fakeVector) *VectorBackfiller {
 	t.Helper()
 	emb := newFakeEmbedder(&fakeText{dim: 4})
-	b, err := New(Options{
+	b, err := NewVectorBackfiller(Options{
 		Storage:       storage,
 		VectorBackend: vec,
 		Embedder:      emb,

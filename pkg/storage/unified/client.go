@@ -9,6 +9,7 @@ import (
 	"github.com/fullstorydev/grpchan"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -33,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
-	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -169,7 +169,7 @@ func newClient(opts options.StorageOptions,
 			}
 		}
 
-		// only enabled if
+		// only ever enabled for local dev
 		bf, err := backfill.ProvideVectorBackfiller(cfg, backend, vectorBackend, embedderInstance)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create embedding backfiller: %w", err)

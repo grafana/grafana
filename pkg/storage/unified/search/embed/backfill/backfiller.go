@@ -24,7 +24,7 @@ type Options struct {
 	Log           log.Logger
 }
 
-type Backfiller struct {
+type VectorBackfiller struct {
 	storage       resource.StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
@@ -33,7 +33,7 @@ type Backfiller struct {
 	log           log.Logger
 }
 
-func New(opts Options) (*Backfiller, error) {
+func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	if opts.Storage == nil {
 		return nil, fmt.Errorf("backfill: Storage is required")
 	}
@@ -62,7 +62,7 @@ func New(opts Options) (*Backfiller, error) {
 		builders[r] = b
 	}
 
-	return &Backfiller{
+	return &VectorBackfiller{
 		storage:       opts.Storage,
 		vectorBackend: opts.VectorBackend,
 		embedder:      opts.Embedder,
@@ -74,7 +74,7 @@ func New(opts Options) (*Backfiller, error) {
 
 // Run first acquires a Postgres advisory lock so that only one process runs the
 // backfiller at a time.
-func (b *Backfiller) Run(ctx context.Context) error {
+func (b *VectorBackfiller) Run(ctx context.Context) error {
 	release, acquired, err := b.vectorBackend.TryAcquireBackfillLock(ctx)
 	if err != nil {
 		return fmt.Errorf("backfill: acquire lock: %w", err)
@@ -90,7 +90,7 @@ func (b *Backfiller) Run(ctx context.Context) error {
 }
 
 // runBackfill processes every incomplete vector_backfill_jobs row serially.
-func (b *Backfiller) runBackfill(ctx context.Context) {
+func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	log := b.log.FromContext(ctx)
 
 	jobs, err := b.vectorBackend.ListIncompleteBackfillJobs(ctx)
@@ -110,7 +110,6 @@ func (b *Backfiller) runBackfill(ctx context.Context) {
 		if err := b.runBackfillJob(ctx, job); err != nil {
 			log.Error("backfill: job failed",
 				"job_id", job.ID, "model", job.Model, "err", err)
-			// Stamp the error so an operator can see it. Re-run on next pod start.
 			_ = b.vectorBackend.UpdateBackfillJobCheckpoint(ctx, job.ID, job.LastSeenKey, err.Error())
 			continue
 		}
@@ -125,7 +124,7 @@ func (b *Backfiller) runBackfill(ctx context.Context) {
 // runBackfillJob iterates registered Builders for the job. When job.Resource is empty is means all builders.
 // Builders are processed in deterministic resource-name order; each one gets its own paginated cross-namespace scan.
 // last_seen_key contains the continue token and the resource name so we know which builder to resume from.
-func (b *Backfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob) error {
+func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob) error {
 	if job.Model != b.embedder.Model {
 		return fmt.Errorf("job model %q != configured model %q", job.Model, b.embedder.Model)
 	}
@@ -183,14 +182,14 @@ func (b *Backfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob)
 	return nil
 }
 
-func (b *Backfiller) hasBuilderForResource(resource string) bool {
+func (b *VectorBackfiller) hasBuilderForResource(resource string) bool {
 	_, ok := b.builders[resource]
 	return ok
 }
 
 // sortedBuilders returns the registered Builders in deterministic order
 // so iteration matches across pod restarts.
-func (b *Backfiller) sortedBuilders() []embed.Builder {
+func (b *VectorBackfiller) sortedBuilders() []embed.Builder {
 	keys := make([]string, 0, len(b.builders))
 	for k := range b.builders {
 		keys = append(keys, k)
@@ -205,7 +204,7 @@ func (b *Backfiller) sortedBuilders() []embed.Builder {
 
 // runBackfillPage processes up to backfillPageSize items. Returns the
 // next-page token; empty when the iterator exhausted (no more pages).
-func (b *Backfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob, builder embed.Builder, pageToken string) (string, error) {
+func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob, builder embed.Builder, pageToken string) (string, error) {
 	req := &resourcepb.ListRequest{
 		Limit:           backfillPageSize,
 		NextPageToken:   pageToken,
@@ -260,7 +259,7 @@ func (b *Backfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob
 
 // processBackfillItem runs the per-resource pipeline: skip if RV>stopping_rv
 // or already embedded, else extract → embed → upsert.
-func (b *Backfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) error {
+func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) error {
 	rv := iter.ResourceVersion()
 	if rv > job.StoppingRV {
 		return nil

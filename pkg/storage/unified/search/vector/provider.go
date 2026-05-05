@@ -14,12 +14,6 @@ func ProvideVectorBackend(cfg *setting.Cfg) (VectorBackend, error) {
 	return InitVectorBackend(context.Background(), cfg, true)
 }
 
-// InitVectorBackend opens the [database_vector] connection and returns a
-// pgvectorBackend. ownsSchema=true applies schema migrations and starts
-// the promoter goroutine bound to ctx (cancel ctx to stop the backend).
-// ownsSchema=false yields a read-only backend with no background work,
-// suitable for search-server pods. Returns (nil, nil) when
-// EnableVectorBackend is false.
 func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, ownsSchema bool) (VectorBackend, error) {
 	if !cfg.EnableVectorBackend {
 		return nil, nil
@@ -49,6 +43,7 @@ func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, ownsSchema bool) (
 	}
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
+
 	// Pass the engine as the GC keep-alive — without this the local
 	// `engine` goes out of scope when this function returns, and xorm's
 	// finalizer eventually closes the underlying *sql.DB while the

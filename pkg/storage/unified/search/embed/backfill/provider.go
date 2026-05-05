@@ -18,7 +18,7 @@ func ProvideVectorBackfiller(
 	storage resource.StorageBackend,
 	vb vector.VectorBackend,
 	emb *embedder.Embedder,
-) (*Backfiller, error) {
+) (*VectorBackfiller, error) {
 	if cfg == nil || !cfg.VectorBackfillerEnabled {
 		return nil, nil
 	}
@@ -28,7 +28,7 @@ func ProvideVectorBackfiller(
 	if storage == nil || vb == nil || emb == nil {
 		return nil, nil
 	}
-	return New(Options{
+	return NewVectorBackfiller(Options{
 		Storage:       storage,
 		VectorBackend: vb,
 		Embedder:      emb,
