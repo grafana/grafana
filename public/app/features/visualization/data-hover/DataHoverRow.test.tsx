@@ -18,6 +18,7 @@ function makeFeature(opts: {
     getId: () => 'test-feature',
     getGeometry: () => undefined,
     getProperties: () => opts.properties ?? {},
+
     get: (key: string) => {
       if (key === 'frame') {
         return opts.frame;
