@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -17,6 +18,7 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"github.com/grafana/dskit/services"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
@@ -198,6 +200,11 @@ func NewStorageBackend(
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	}
 
+	if cfg.EnableKVLeases && !cfg.EnableSQLKVCompatibilityMode {
+		kvBackendOpts.EnableKVLeases = true
+		kvBackendOpts.Holder = resolveLeaseHolder(cfg)
+	}
+
 	if cfg.EnableSQLKVCompatibilityMode {
 		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
 			Dialect:                 dialect,
@@ -230,6 +237,19 @@ func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
 		Log:                     log.New("storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	})
+}
+
+func resolveLeaseHolder(cfg *setting.Cfg) string {
+	if cfg.InstanceID != "" {
+		return cfg.InstanceID
+	}
+
+	hostname, err := os.Hostname()
+	if err == nil {
+		return hostname
+	}
+
+	return fmt.Sprintf("storage-backend-%s", uuid.NewString())
 }
 
 type BackendOptions struct {

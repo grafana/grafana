@@ -246,6 +246,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
 	// enable sqlkv backwards compatibility mode with sql/backend
 	cfg.EnableSQLKVCompatibilityMode = section.Key("enable_sqlkv_compatibility_mode").MustBool(true)
+	// enable per-resource leases in the KV backend; only effective when the
+	// SQL RV manager is not in use.
+	cfg.EnableKVLeases = section.Key("enable_kv_leases").MustBool(false)
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
