@@ -108,12 +108,8 @@ function calculateFolderStatus(node: TreeItem): SyncStatus | undefined {
     return node.status;
   }
 
-  // If any child is pending, folder is pending. _folder.json is folder metadata,
-  // not an independently synced resource, so it is excluded from this aggregation.
+  // If any child is pending, folder is pending.
   for (const child of node.children) {
-    if (isFolderMetadataPath(child.path)) {
-      continue;
-    }
     const childStatus = child.type === 'Folder' ? calculateFolderStatus(child) : child.status;
     if (childStatus === 'pending') {
       return 'pending';
@@ -123,15 +119,34 @@ function calculateFolderStatus(node: TreeItem): SyncStatus | undefined {
   return node.status;
 }
 
+// _folder.json is folder metadata: its sync state is determined by comparing the
+// file hash against the parent folder's resource hash (which is the metadata hash).
+// Returns undefined for root-level _folder.json (no parent folder resource exists).
+function getFolderMetadataResourceHash(
+  metadataPath: string,
+  mergedByPath: Map<string, MergedItem>
+): string | undefined {
+  const lastSlash = metadataPath.lastIndexOf('/');
+  if (lastSlash === -1) {
+    return undefined;
+  }
+  const parentPath = metadataPath.substring(0, lastSlash);
+  return mergedByPath.get(parentPath)?.resource?.hash;
+}
+
 export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   const nodeMap = new Map<string, TreeItem>();
   const roots: TreeItem[] = [];
+  const mergedByPath = new Map(mergedItems.map((item) => [item.path, item]));
 
   // Create all nodes (files, dashboards, folders)
   for (const item of mergedItems) {
     const type = getItemType(item.path, item.resource);
-    const showStatus =
-      !isFolderMetadataPath(item.path) && (type === 'Dashboard' || type === 'Folder' || item.path.endsWith('.json'));
+    const isFolderMetadata = isFolderMetadataPath(item.path);
+    const showStatus = type === 'Dashboard' || type === 'Folder' || item.path.endsWith('.json');
+    const resourceHash = isFolderMetadata
+      ? getFolderMetadataResourceHash(item.path, mergedByPath)
+      : item.resource?.hash;
 
     nodeMap.set(item.path, {
       path: item.path,
@@ -141,7 +156,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       children: [],
       resourceName: item.resource?.name,
       hash: item.file?.hash ?? item.resource?.hash,
-      status: showStatus ? getStatus(item.file?.hash, item.resource?.hash) : undefined,
+      status: showStatus ? getStatus(item.file?.hash, resourceHash) : undefined,
       hasFile: !!item.file,
     });
   }

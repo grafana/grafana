@@ -568,17 +568,20 @@ describe('buildTree', () => {
     expect(result[0].missingFolderMetadata).toBe(false);
   });
 
-  it('should keep folder synced when only _folder.json has no matching resource', () => {
-    // _folder.json is folder metadata — it should not flip the parent folder to pending,
-    // and it should not show its own sync status.
-    const syncedResource = { ...mockResource, hash: 'matching-hash' };
+  it('should mark _folder.json synced when its hash matches the parent folder resource hash', () => {
+    // The folder resource hash IS the synced metadata hash, so _folder.json is compared
+    // against its parent folder's resource hash (not its own resource — it has none).
+    const syncedDashboard = { ...mockResource, hash: 'matching-hash' };
     const mergedItems = [
       { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: mockFolderResource },
-      { path: 'dashboards/_folder.json', file: { path: 'dashboards/_folder.json', size: '200', hash: 'meta123' } },
+      {
+        path: 'dashboards/_folder.json',
+        file: { path: 'dashboards/_folder.json', size: '200', hash: mockFolderResource.hash },
+      },
       {
         path: 'dashboards/my-dashboard.json',
         file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'matching-hash' },
-        resource: syncedResource,
+        resource: syncedDashboard,
       },
     ];
 
@@ -587,10 +590,61 @@ describe('buildTree', () => {
     expect(result[0].type).toBe('Folder');
     expect(result[0].status).toBe('synced');
     const metadataNode = result[0].children.find((c) => c.path === 'dashboards/_folder.json');
-    expect(metadataNode?.status).toBeUndefined();
+    expect(metadataNode?.status).toBe('synced');
   });
 
-  it('should keep root-level folder synced when only root _folder.json has no resource', () => {
+  it('should mark _folder.json and parent folder pending when _folder.json was updated locally', () => {
+    // File hash differs from the folder resource hash → metadata file was updated in repo
+    // but not yet synced. Both the file row and the parent folder must reflect this.
+    const syncedDashboard = { ...mockResource, hash: 'matching-hash' };
+    const mergedItems = [
+      { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: mockFolderResource },
+      {
+        path: 'dashboards/_folder.json',
+        file: { path: 'dashboards/_folder.json', size: '200', hash: 'updated-meta-hash' },
+      },
+      {
+        path: 'dashboards/my-dashboard.json',
+        file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'matching-hash' },
+        resource: syncedDashboard,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].status).toBe('pending');
+    const metadataNode = result[0].children.find((c) => c.path === 'dashboards/_folder.json');
+    expect(metadataNode?.status).toBe('pending');
+  });
+
+  it('should mark _folder.json and parent folder pending when _folder.json was added but folder has no metadata hash yet', () => {
+    // File present in repo but parent folder resource has empty hash → freshly added,
+    // not yet reflected on the resource.
+    const folderWithoutMetadataHash = { ...mockFolderResource, hash: '' };
+    const syncedDashboard = { ...mockResource, hash: 'matching-hash' };
+    const mergedItems = [
+      { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: folderWithoutMetadataHash },
+      {
+        path: 'dashboards/_folder.json',
+        file: { path: 'dashboards/_folder.json', size: '200', hash: 'new-meta-hash' },
+      },
+      {
+        path: 'dashboards/my-dashboard.json',
+        file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'matching-hash' },
+        resource: syncedDashboard,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].status).toBe('pending');
+    const metadataNode = result[0].children.find((c) => c.path === 'dashboards/_folder.json');
+    expect(metadataNode?.status).toBe('pending');
+  });
+
+  it('should compare root-level _folder.json against repository state (no parent resource)', () => {
+    // Root-level _folder.json has no parent folder resource, so we cannot determine a
+    // matching resource hash — it falls back to pending until the backend reports otherwise.
     const rootFolderResource: ResourceListItem = {
       ...mockFolderResource,
       path: 'dashboards',
@@ -609,7 +663,7 @@ describe('buildTree', () => {
     const result = buildTree(mergedItems);
 
     const rootMetadata = result.find((n) => n.path === '_folder.json');
-    expect(rootMetadata?.status).toBeUndefined();
+    expect(rootMetadata?.status).toBe('pending');
     const folder = result.find((n) => n.path === 'dashboards');
     expect(folder?.status).toBe('synced');
   });
