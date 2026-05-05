@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
@@ -48,7 +50,7 @@ func newBackfiller(t *testing.T, storage *fakeStorage, vec *fakeVector) *Backfil
 		VectorBackend: vec,
 		Embedder:      emb,
 		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
-		Builders:      []Builder{NewDashboardBuilder(0)},
+		Builders:      []embed.Builder{dashboard.New()},
 	})
 	require.NoError(t, err)
 	return b

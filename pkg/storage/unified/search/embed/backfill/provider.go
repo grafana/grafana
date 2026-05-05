@@ -4,6 +4,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
@@ -31,7 +33,7 @@ func ProvideVectorBackfiller(
 		VectorBackend: vb,
 		Embedder:      emb,
 		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
-		Builders:      []Builder{NewDashboardBuilder(0)},
+		Builders:      []embed.Builder{dashboard.New()},
 		Log:           log.New("backfill"),
 	})
 }

@@ -8,46 +8,31 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
-// backfillPageSize is the number of items processed per ListIterator call.
-// Smaller pages keep memory steady and surface checkpointing more often;
-// larger pages trade memory for fewer storage round-trips.
 const backfillPageSize = 100
 
-// Options bundles the backfiller's dependencies. All fields except
-// Builders and Log are required.
 type Options struct {
 	Storage       resource.StorageBackend
 	VectorBackend vector.VectorBackend
 	Embedder      *embedder.Embedder
 	BatchEmbedder *embedder.BatchEmbedder
-	Builders      []Builder
+	Builders      []embed.Builder
 	Log           log.Logger
 }
 
-// Backfiller drains incomplete vector_backfill_jobs rows on startup,
-// embedding any resources whose vectors are missing. Single goroutine —
-// see Run.
 type Backfiller struct {
 	storage       resource.StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
 	batchEmbedder *embedder.BatchEmbedder
-
-	// builders is keyed by Resource(). We don't allow two Builders with
-	// the same resource name (even across different groups) so the cursor
-	// — which encodes only the resource — can disambiguate on resume.
-	builders map[string]Builder
-
-	log log.Logger
+	builders      map[string]embed.Builder
+	log           log.Logger
 }
 
-// New validates options and constructs a Backfiller. Callers wire it into
-// the modular path's invisible vector module (or the in-process newClient)
-// and call Run from a background goroutine.
 func New(opts Options) (*Backfiller, error) {
 	if opts.Storage == nil {
 		return nil, fmt.Errorf("backfill: Storage is required")
@@ -68,7 +53,7 @@ func New(opts Options) (*Backfiller, error) {
 		opts.Log = log.New("backfill")
 	}
 
-	builders := make(map[string]Builder, len(opts.Builders))
+	builders := make(map[string]embed.Builder, len(opts.Builders))
 	for _, b := range opts.Builders {
 		r := b.Resource()
 		if _, dup := builders[r]; dup {
@@ -87,15 +72,8 @@ func New(opts Options) (*Backfiller, error) {
 	}, nil
 }
 
-// Run executes the backfill loop and returns when it's done (all incomplete
-// jobs processed or ctx cancelled). It does not block waiting for new jobs —
-// new model rollouts insert rows into vector_backfill_jobs and get picked
-// up on the next process restart.
-//
-// Run first acquires a Postgres advisory lock so that only one pod runs the
-// backfiller at a time. If another pod already holds the lock, Run returns
-// nil immediately and that pod's restart is the next opportunity to take
-// over.
+// Run first acquires a Postgres advisory lock so that only one process runs the
+// backfiller at a time.
 func (b *Backfiller) Run(ctx context.Context) error {
 	release, acquired, err := b.vectorBackend.TryAcquireBackfillLock(ctx)
 	if err != nil {
@@ -112,9 +90,6 @@ func (b *Backfiller) Run(ctx context.Context) error {
 }
 
 // runBackfill processes every incomplete vector_backfill_jobs row serially.
-// Process restarts pick up new jobs (e.g. after an operator inserts a new model
-// row) on next boot. Errors mark the job's last_error column and are retried
-// on the next startup.
 func (b *Backfiller) runBackfill(ctx context.Context) {
 	log := b.log.FromContext(ctx)
 
@@ -147,29 +122,16 @@ func (b *Backfiller) runBackfill(ctx context.Context) {
 	}
 }
 
-// runBackfillJob iterates every registered Builder under the job's model.
-// Builders are processed in deterministic resource-name order; each one
-// gets its own paginated cross-namespace scan.
-//
-// Resume: last_seen_key is JSON-encoded as (resource, token) — see
-// cursor.go. The encoded resource pins the token to the Builder it was
-// captured against. On a cold start we skip Builders sorted before the
-// matching one (their iterations already completed in the previous run),
-// resume the matching one at its saved token, and run any later
-// Builders from scratch. If the cursor's resource doesn't match any
-// registered Builder (e.g. a Builder was removed), the cursor is logged
-// and ignored, and every Builder runs from scratch.
+// runBackfillJob iterates registered Builders for the job. When job.Resource is empty is means all builders.
+// Builders are processed in deterministic resource-name order; each one gets its own paginated cross-namespace scan.
+// last_seen_key contains the continue token and the resource name so we know which builder to resume from.
 func (b *Backfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob) error {
 	if job.Model != b.embedder.Model {
-		// Job was queued for a model the backfiller isn't running. Operator
-		// must redeploy with the matching model or delete the job row.
 		return fmt.Errorf("job model %q != configured model %q", job.Model, b.embedder.Model)
 	}
 
 	// If the job targets a specific resource, that resource must be
-	// registered. An unknown target means there's nothing for this pod to
-	// do — log and let the job complete cleanly rather than spinning on
-	// every restart.
+	// registered.
 	if job.Resource != "" && !b.hasBuilderForResource(job.Resource) {
 		b.log.Warn("backfill: job targets unregistered resource; marking complete",
 			"job_id", job.ID, "job_resource", job.Resource)
@@ -221,8 +183,6 @@ func (b *Backfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob)
 	return nil
 }
 
-// hasBuilderForResource reports whether the registry contains a Builder
-// for the given resource name.
 func (b *Backfiller) hasBuilderForResource(resource string) bool {
 	_, ok := b.builders[resource]
 	return ok
@@ -230,13 +190,13 @@ func (b *Backfiller) hasBuilderForResource(resource string) bool {
 
 // sortedBuilders returns the registered Builders in deterministic order
 // so iteration matches across pod restarts.
-func (b *Backfiller) sortedBuilders() []Builder {
+func (b *Backfiller) sortedBuilders() []embed.Builder {
 	keys := make([]string, 0, len(b.builders))
 	for k := range b.builders {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	out := make([]Builder, 0, len(b.builders))
+	out := make([]embed.Builder, 0, len(b.builders))
 	for _, k := range keys {
 		out = append(out, b.builders[k])
 	}
@@ -245,7 +205,7 @@ func (b *Backfiller) sortedBuilders() []Builder {
 
 // runBackfillPage processes up to backfillPageSize items. Returns the
 // next-page token; empty when the iterator exhausted (no more pages).
-func (b *Backfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob, builder Builder, pageToken string) (string, error) {
+func (b *Backfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob, builder embed.Builder, pageToken string) (string, error) {
 	req := &resourcepb.ListRequest{
 		Limit:           backfillPageSize,
 		NextPageToken:   pageToken,
@@ -300,7 +260,7 @@ func (b *Backfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob
 
 // processBackfillItem runs the per-resource pipeline: skip if RV>stopping_rv
 // or already embedded, else extract → embed → upsert.
-func (b *Backfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder Builder, iter resource.ListIterator) error {
+func (b *Backfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) error {
 	rv := iter.ResourceVersion()
 	if rv > job.StoppingRV {
 		return nil
