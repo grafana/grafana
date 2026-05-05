@@ -42,7 +42,6 @@ type subProxyREST struct {
 }
 
 func newProxy(b *AppPluginAPIBuilder) *subProxyREST {
-
 	return &subProxyREST{
 		pluginID:         b.pluginJSON.ID,
 		routes:           b.pluginJSON.Routes,
@@ -56,7 +55,6 @@ func newProxy(b *AppPluginAPIBuilder) *subProxyREST {
 		pluginProxyTransport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: b.opts.PluginsAppsSkipVerifyTLS,
-				Renegotiation:      tls.RenegotiateFreelyAsClient,
 				MinVersion:         tls.VersionTLS13,
 			},
 			Proxy: http.ProxyFromEnvironment,
@@ -122,7 +120,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			PluginVersion: pluginCtx.PluginVersion,
 			Enabled:       true,
 		}
-		if err = json.Unmarshal(pluginCtx.AppInstanceSettings.JSONData, ps.JSONData); err != nil {
+		if err = json.Unmarshal(pluginCtx.AppInstanceSettings.JSONData, &ps.JSONData); err != nil {
 			responder.Error(err)
 			return
 		}
@@ -142,7 +140,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			proxyPath, r.DataProxyLogging, r.SendUserHeader,
 			secureJsonData, r.tracer, r.pluginProxyTransport, r.accessControl, r.features)
 		if err != nil {
-			responder.Error(fmt.Errorf("Failed to create plugin proxy %w", err))
+			responder.Error(fmt.Errorf("failed to create plugin proxy: %w", err))
 			return
 		}
 		p.HandleRequest()
