@@ -596,7 +596,7 @@ func TestWrapper_Watch(t *testing.T) {
 		require.ErrorIs(t, err, ErrUnauthorized)
 	})
 
-	t.Run("PassThroughWatchFilter bypasses wrapping: returns inner watcher and Stop reaches it", func(t *testing.T) {
+	t.Run("PassThroughWatchFilter bypasses wrapping: returns inner watcher", func(t *testing.T) {
 		setup := newTestSetup(t)
 
 		fakeWatcher := watch.NewFake()
