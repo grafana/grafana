@@ -12,9 +12,9 @@ export { getDataSourcePlugin, registerRuntimeDataSource } from './plugin';
 
 export {
   useInstanceSettings,
-  useFindInstanceSettings,
+  useInstanceSettingsList,
   useDataSourcePlugin,
   type UseInstanceSettingsResult,
-  type UseFindInstanceSettingsResult,
+  type UseInstanceSettingsListResult,
   type UseDataSourcePluginResult,
 } from './hooks';

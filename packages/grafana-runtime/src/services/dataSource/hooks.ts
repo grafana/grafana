@@ -20,7 +20,7 @@ export interface UseInstanceSettingsResult {
 /**
  * @public
  */
-export interface UseFindInstanceSettingsResult {
+export interface UseInstanceSettingsListResult {
   isLoading: boolean;
   error?: Error;
   /** Flattened items across all pages fetched so far. */
@@ -59,7 +59,7 @@ export function useInstanceSettings(ref?: DataSourceRef | string | null): UseIns
  *
  * @public
  */
-export function useFindInstanceSettings(filters?: GetDataSourceListFilters): UseFindInstanceSettingsResult {
+export function useInstanceSettingsList(filters?: GetDataSourceListFilters): UseInstanceSettingsListResult {
   const [items, setItems] = useState<DataSourceInstanceSettings[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);

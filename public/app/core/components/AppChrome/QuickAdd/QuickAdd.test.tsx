@@ -12,7 +12,7 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
-    useFindInstanceSettings: jest.fn().mockReturnValue({
+    useInstanceSettingsList: jest.fn().mockReturnValue({
       items: [{ name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' }],
       isLoading: false,
       hasMore: false,

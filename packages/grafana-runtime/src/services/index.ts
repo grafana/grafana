@@ -50,11 +50,11 @@ export {
   registerRuntimeDataSource,
   reload as reloadDataSources,
   useInstanceSettings,
-  useFindInstanceSettings,
+  useInstanceSettingsList,
   useDataSourcePlugin,
   type DataSourceInstanceSettingsPage,
   type FindInstanceSettingsOptions,
   type UseInstanceSettingsResult,
-  type UseFindInstanceSettingsResult,
+  type UseInstanceSettingsListResult,
   type UseDataSourcePluginResult,
 } from './dataSource';

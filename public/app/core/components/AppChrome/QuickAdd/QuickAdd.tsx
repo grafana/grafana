@@ -3,7 +3,7 @@ import { Fragment, useMemo, useState } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useFindInstanceSettings, reportInteraction, config } from '@grafana/runtime';
+import { useInstanceSettingsList, reportInteraction, config } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
@@ -29,7 +29,7 @@ export const QuickAdd = ({}: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const theme = useTheme2();
-  const { items: testDataSources } = useFindInstanceSettings(
+  const { items: testDataSources } = useInstanceSettingsList(
     config.featureToggles.dashboardTemplates ? testDsFilters : undefined
   );
 
