@@ -28,7 +28,7 @@ jobs:
     # Only run on push to main (not needed for workflow_call releases)
     if: github.repository == 'grafana/grafana' && github.event_name == 'push'
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:

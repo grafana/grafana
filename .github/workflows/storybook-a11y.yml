@@ -11,7 +11,7 @@ permissions: {}
 jobs:
   detect-changes:
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
