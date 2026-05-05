@@ -2,7 +2,9 @@ package storewrapper
 
 import (
 	"context"
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -475,30 +477,19 @@ func TestWrapper_Watch(t *testing.T) {
 		setup.mockAuth.AssertExpectations(t)
 	})
 
-	t.Run("nil filter is fail-closed and rejects all events", func(t *testing.T) {
+	t.Run("nil filter (RejectAllWatchFilter) is fail-closed: Watch returns Unauthorized", func(t *testing.T) {
 		setup := newTestSetup(t)
-
-		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}
 
 		fakeWatcher := watch.NewFake()
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
 		setup.wrapper.inner = watcherStore
 
-		// Returning nil from WatchFilter is treated as RejectAllWatchFilter (fail-closed).
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(WatchEventFilter(nil), nil)
+		// RejectAllWatchFilter is the nil sentinel; the wrapper must refuse to start the watch.
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(RejectAllWatchFilter, nil)
 
-		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
-		require.NoError(t, err)
-		defer w.Stop()
-
-		fakeWatcher.Add(obj)
-		fakeWatcher.Stop()
-
-		events := make([]watch.Event, 0, len(w.ResultChan()))
-		for e := range w.ResultChan() {
-			events = append(events, e)
-		}
-		require.Empty(t, events, "nil filter must reject all data events (fail-closed)")
+		_, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.Error(t, err)
+		assert.True(t, k8serrors.IsUnauthorized(err), "expected Unauthorized, got %v", err)
 	})
 
 	t.Run("AllowAllWatchFilter forwards all events", func(t *testing.T) {
@@ -536,8 +527,11 @@ func TestWrapper_Watch(t *testing.T) {
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
 		setup.wrapper.inner = watcherStore
 
-		// Filter that rejects everything — Bookmark must still get through.
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(RejectAllWatchFilter, nil)
+		// Non-nil filter that rejects every data event — Bookmark must still get through.
+		denyAll := WatchEventFilter(func(events []watch.Event) ([]bool, error) {
+			return make([]bool, len(events)), nil
+		})
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(denyAll, nil)
 
 		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
@@ -564,7 +558,10 @@ func TestWrapper_Watch(t *testing.T) {
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
 		setup.wrapper.inner = watcherStore
 
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(RejectAllWatchFilter, nil)
+		denyAll := WatchEventFilter(func(events []watch.Event) ([]bool, error) {
+			return make([]bool, len(events)), nil
+		})
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(denyAll, nil)
 
 		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
@@ -612,6 +609,207 @@ func TestWrapper_Watch(t *testing.T) {
 
 		_, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.ErrorIs(t, err, ErrUnauthorized)
+	})
+
+	t.Run("emits watch.Error event when filter returns an error and then closes", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		boom := errors.New("filter boom")
+		filter := WatchEventFilter(func(events []watch.Event) ([]bool, error) {
+			return nil, boom
+		})
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(filter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+		defer w.Stop()
+
+		fakeWatcher.Add(obj)
+
+		// First event must be a watch.Error carrying the filter's error message.
+		event := <-w.ResultChan()
+		require.Equal(t, watch.Error, event.Type)
+		status, ok := event.Object.(*metaV1.Status)
+		require.True(t, ok, "expected Status object on watch.Error event, got %T", event.Object)
+		assert.Equal(t, metaV1.StatusFailure, status.Status)
+		assert.Contains(t, status.Message, boom.Error())
+
+		// After the error, the result channel must close (run() returned)
+		// and the inner watcher must have been stopped.
+		select {
+		case _, open := <-w.ResultChan():
+			assert.False(t, open, "result channel should be closed after filter error")
+		case <-time.After(time.Second):
+			t.Fatal("result channel did not close after filter error")
+		}
+		assert.True(t, fakeWatcher.IsStopped(), "inner watcher should be stopped after filter error")
+	})
+
+	t.Run("Stop is idempotent and does not panic on repeated calls", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+
+		require.NotPanics(t, func() {
+			w.Stop()
+			w.Stop()
+			w.Stop()
+		})
+	})
+
+	t.Run("each filtered watcher Stops its own inner (no shared sync.Once)", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+
+		// First watcher.
+		fakeWatcher1 := watch.NewFake()
+		setup.wrapper.inner = &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher1}
+		w1, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+
+		// Second watcher, distinct inner.
+		fakeWatcher2 := watch.NewFake()
+		setup.wrapper.inner = &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher2}
+		w2, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+
+		w1.Stop()
+		assert.True(t, fakeWatcher1.IsStopped(), "first inner watcher should be stopped")
+
+		w2.Stop()
+		assert.True(t, fakeWatcher2.IsStopped(),
+			"second inner watcher should also be stopped (regression: package-level sync.Once)")
+	})
+
+	t.Run("cancelling the request context shuts the watcher down", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+
+		ctx, cancel := context.WithCancel(setup.ctx)
+		w, err := setup.wrapper.Watch(ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+		defer w.Stop()
+
+		cancel()
+
+		// run() should observe ctx.Done() and exit, closing the result channel.
+		select {
+		case _, open := <-w.ResultChan():
+			assert.False(t, open, "result channel should be closed after ctx cancel")
+		case <-time.After(time.Second):
+			t.Fatal("result channel did not close after ctx cancel")
+		}
+	})
+
+	t.Run("blocked consumer plus Stop does not deadlock the goroutine", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+
+		// Push more events than the result channel can buffer, without ever reading.
+		// fakeWatcher.Add blocks on its own internal channel, so do it in a goroutine.
+		// After Stop closes the inner watcher, further Adds panic on a closed
+		// channel — that's fine, we just want to keep events in flight while we
+		// race Stop against a blocked send in the filter goroutine.
+		go func() {
+			defer func() { _ = recover() }()
+			for i := int32(0); i < watch.DefaultChanSize*3; i++ {
+				fakeWatcher.Add(&fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}})
+			}
+		}()
+
+		// Give the producer a moment to fill the inner and result channels.
+		time.Sleep(50 * time.Millisecond)
+
+		// Stop must return promptly even though the goroutine is blocked on a send
+		// and we never drained the result channel.
+		stopped := make(chan struct{})
+		go func() {
+			w.Stop()
+			close(stopped)
+		}()
+
+		select {
+		case <-stopped:
+		case <-time.After(2 * time.Second):
+			t.Fatal("Stop() blocked while a slow consumer was holding the result channel")
+		}
+	})
+
+	t.Run("ticker-driven flush does not terminate the watcher", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		// Re-create the wrapper with a short flush interval so the ticker case fires.
+		setup.wrapper = New(watcherStore, setup.mockAuth, WithWatchFlushInterval(10*time.Millisecond))
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+		defer w.Stop()
+
+		// fakeWatcher's inner channel is unbuffered, so Add blocks until the
+		// filteredWatcher's run goroutine reads it. If the ticker case kills the
+		// run goroutine, Add hangs — do it in a goroutine so the test can fail
+		// via time.After instead of hanging the suite.
+		add := func(name string) {
+			go func() {
+				defer func() { _ = recover() }()
+				fakeWatcher.Add(&fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: name}})
+			}()
+		}
+
+		add("first")
+
+		select {
+		case event, open := <-w.ResultChan():
+			require.True(t, open, "result channel closed before first event was forwarded")
+			assert.Equal(t, watch.Added, event.Type)
+		case <-time.After(time.Second):
+			t.Fatal("did not receive first event within timeout")
+		}
+
+		// Wait long enough for several ticker ticks to fire. If the ticker case
+		// has its polarity inverted, run() will have exited by now and the
+		// second event will never make it through.
+		time.Sleep(50 * time.Millisecond)
+		add("second")
+
+		select {
+		case event, open := <-w.ResultChan():
+			require.True(t, open, "result channel closed before second event was forwarded (regression: ticker case polarity)")
+			assert.Equal(t, watch.Added, event.Type)
+		case <-time.After(time.Second):
+			t.Fatal("did not receive second event after ticker tick (regression: ticker case polarity)")
+		}
 	})
 }
 

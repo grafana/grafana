@@ -3,6 +3,7 @@ package storewrapper
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -263,6 +264,12 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 }
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	// Check if the underlying storage supports Watch
+	watcher, ok := w.inner.(k8srest.Watcher)
+	if !ok {
+		return nil, fmt.Errorf("watch is not supported on the underlying storage")
+	}
+
 	// Build the filter once, before starting the watch, so callers get an immediate
 	// error if authorization state cannot be resolved (e.g. auth backend unavailable).
 	filter, err := w.authorizer.WatchFilter(ctx)
@@ -275,18 +282,14 @@ func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOption
 		return nil, errors.NewUnauthorized("watch filter not implemented")
 	}
 
-	// Check if the underlying storage supports Watch
-	watcher, ok := w.inner.(k8srest.Watcher)
-	if !ok {
-		return nil, fmt.Errorf("watch is not supported on the underlying storage")
-	}
-
 	// Call the underlying storage's Watch method
 	inner, err := watcher.Watch(w.storeCtx(ctx), options)
 	if err != nil {
 		return nil, err
 	}
-	return newFilteredWatcher(inner, filter, w.watchFlushInterval), nil
+	// Return a new filtered watcher that runs the filter over the buffered events
+	// and forwards the events to the caller.
+	return newFilteredWatcher(ctx, inner, filter, w.watchFlushInterval), nil
 }
 
 // filteredWatcher wraps a watch.Interface and runs the WatchEventFilter over
@@ -298,18 +301,19 @@ func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOption
 // and flushed either when the buffer is full or the ticker fires, amortizing the
 // cost of expensive filter implementations (e.g. BatchCheck RPCs) across bursts.
 type filteredWatcher struct {
-	inner         watch.Interface
-	filter        WatchEventFilter
-	flushInterval time.Duration
-	result        chan watch.Event
-	done          chan struct{}
+	inner         watch.Interface  // The underlying watch.Interface.
+	filter        WatchEventFilter // Filter to apply to the buffered events.
+	flushInterval time.Duration    // The interval to flush the buffered events.
+	result        chan watch.Event // Forwarded events to the caller.
+	stopOnce      sync.Once        // Ensures Stop() is called only once to prevent race conditions.
+	done          chan struct{}    // Closed when the watcher Stop() method is called.
 }
 
 // watchBatchSize is the maximum number of events buffered before a forced flush.
 // Matches watch.DefaultChanSize so the batch can never exceed the inner channel capacity.
 const watchBatchSize = 100
 
-func newFilteredWatcher(inner watch.Interface, filter WatchEventFilter, flushInterval time.Duration) *filteredWatcher {
+func newFilteredWatcher(ctx context.Context, inner watch.Interface, filter WatchEventFilter, flushInterval time.Duration) *filteredWatcher {
 	fw := &filteredWatcher{
 		inner:         inner,
 		filter:        filter,
@@ -317,11 +321,24 @@ func newFilteredWatcher(inner watch.Interface, filter WatchEventFilter, flushInt
 		result:        make(chan watch.Event, watch.DefaultChanSize),
 		done:          make(chan struct{}),
 	}
-	go fw.run()
+	go fw.run(ctx)
 	return fw
 }
 
-func (fw *filteredWatcher) run() {
+// sendEvent forwards an event to the caller.
+// It returns if the user context is done or the watcher is stopped.
+func (fw *filteredWatcher) sendEvent(ctx context.Context, event watch.Event) {
+	select {
+	case <-ctx.Done(): // User context is done.
+		return
+	case <-fw.done: // Closed when the watcher Stop() method is called.
+		return
+	case fw.result <- event: // Forward the event to the caller.
+		return
+	}
+}
+
+func (fw *filteredWatcher) run(ctx context.Context) {
 	defer close(fw.result)
 
 	// A nil channel blocks forever in select, disabling the ticker case when
@@ -335,26 +352,32 @@ func (fw *filteredWatcher) run() {
 
 	var pending []watch.Event
 
-	flush := func() {
+	flush := func() bool {
 		if len(pending) == 0 {
-			return
+			return true
 		}
 		allowed, err := fw.filter(pending)
 		if err != nil {
+			errEvent := watch.Event{Type: watch.Error, Object: &metaV1.Status{Status: metaV1.StatusFailure, Message: err.Error()}}
+			fw.sendEvent(ctx, errEvent)
+
 			fw.inner.Stop()
 			pending = pending[:0]
-			return
+			return false
 		}
 		for i, event := range pending {
 			if i < len(allowed) && allowed[i] {
-				fw.result <- event
+				fw.sendEvent(ctx, event)
 			}
 		}
 		pending = pending[:0]
+		return true
 	}
 
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case <-fw.done:
 			return
 		case event, ok := <-fw.inner.ResultChan():
@@ -363,23 +386,36 @@ func (fw *filteredWatcher) run() {
 			}
 			// Protocol events carry no resource data and must never be delayed.
 			if event.Type == watch.Bookmark || event.Type == watch.Error {
-				flush() // drain pending first to preserve ordering
-				fw.result <- event
+				// Drain pending first to preserve ordering.
+				if flushed := flush(); !flushed {
+					// Flush failed, stop the watcher.
+					return
+				}
+				fw.sendEvent(ctx, event)
 				continue
 			}
 			pending = append(pending, event)
+			// Flush if the buffer is full or we have no flush interval.
 			if fw.flushInterval == 0 || len(pending) >= watchBatchSize {
-				flush()
+				if flushed := flush(); !flushed {
+					// Flush failed, stop the watcher.
+					return
+				}
 			}
 		case <-tickerC:
-			flush()
+			if flushed := flush(); !flushed {
+				// Flush failed, stop the watcher.
+				return
+			}
 		}
 	}
 }
 
 func (fw *filteredWatcher) Stop() {
-	close(fw.done)
-	fw.inner.Stop()
+	fw.stopOnce.Do(func() {
+		close(fw.done)
+		fw.inner.Stop()
+	})
 }
 
 func (fw *filteredWatcher) ResultChan() <-chan watch.Event {
