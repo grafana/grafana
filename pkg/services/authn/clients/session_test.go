@@ -37,7 +37,7 @@ func TestSession_Test(t *testing.T) {
 	disabled := s.Test(context.Background(), &authn.Request{HTTPRequest: validHTTPReq})
 	assert.False(t, disabled)
 
-	s.cfg.LoginCookieName = cookieName
+	cfg.LoginCookieName = cookieName
 
 	good := s.Test(context.Background(), &authn.Request{HTTPRequest: validHTTPReq})
 	assert.True(t, good)

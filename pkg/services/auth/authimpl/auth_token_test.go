@@ -716,7 +716,7 @@ func createTestContext(t *testing.T) *testContext {
 
 	tokenService := &UserAuthTokenService{
 		sqlStore:             sqlstore,
-		cfg:                  cfg,
+		cfgResolver:          &auth.StaticSessionConfigResolver{Cfg: cfg},
 		log:                  log.New("test-logger"),
 		singleflight:         new(singleflight.Group),
 		externalSessionStore: extSessionStore,
@@ -725,6 +725,7 @@ func createTestContext(t *testing.T) *testContext {
 
 	return &testContext{
 		sqlstore:        sqlstore,
+		cfg:             cfg,
 		tokenService:    tokenService,
 		extSessionStore: &extSessionStore,
 	}
@@ -732,6 +733,7 @@ func createTestContext(t *testing.T) *testContext {
 
 type testContext struct {
 	sqlstore        db.DB
+	cfg             *setting.Cfg
 	tokenService    *UserAuthTokenService
 	extSessionStore *auth.ExternalSessionStore
 }
