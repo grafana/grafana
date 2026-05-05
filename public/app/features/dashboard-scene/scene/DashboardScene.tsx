@@ -473,6 +473,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
+    // CUJ-only signal: ends dashboard_edit journey when the user actually leaves
+    // edit mode, regardless of whether changes were discarded or there were
+    // none to begin with. dashboardEditDiscarded only fires on the dirty path,
+    // so we'd otherwise lose the no-op exit case.
+    reportInteraction('dashboards_edit_exited', { restoreInitialState }, { silent: true });
+
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.

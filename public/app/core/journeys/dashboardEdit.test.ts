@@ -120,6 +120,15 @@ describe('dashboardEdit journey wiring', () => {
     expect(mockHandle.end).toHaveBeenCalledWith('discarded');
   });
 
+  it('should end journey with discarded when user exits edit mode without changes', () => {
+    loadWiring();
+
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: 'abc123' });
+    simulateInteraction('dashboards_edit_exited', { restoreInitialState: false });
+
+    expect(mockHandle.end).toHaveBeenCalledWith('discarded');
+  });
+
   // The wiring no longer guards end() with isActive - it trusts the idempotent
   // end() contract. On the real handle a second end() is a no-op; Faro sees only
   // one journey_complete measurement per journey. This test now just verifies

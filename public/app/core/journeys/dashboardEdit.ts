@@ -16,11 +16,14 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *   - success: grafana_dashboard_saved — dashboard saved (update of existing)
  *   - success: grafana_dashboard_created — dashboard saved (new dashboard created)
  *   - discarded: dashboards_edit_discarded — user discards all changes and exits edit mode
+ *   - discarded: dashboards_edit_exited — user exits edit mode (no-changes path; idempotent
+ *     with edit_discarded which fires earlier on the dirty path)
  *   - abandoned: SPA route change to a different pathname (user navigates away mid-edit)
  *   - timeout: 30 min — no end condition fires
  *
  * Silent interactions added by this journey:
  *   - dashboards_new_dashboard_init — emitted in DashboardScene.tsx when /dashboard/new activates
+ *   - dashboards_edit_exited — emitted in DashboardScene.tsx when exitEditMode resolves
  */
 
 registerJourneyTriggers('dashboard_edit', (tracker) => {
@@ -84,6 +87,16 @@ onJourneyInstance('dashboard_edit', (handle) => {
 
   add(
     onInteraction('dashboards_edit_discarded', () => {
+      handle.end('discarded');
+    })
+  );
+
+  // Catches the no-changes exit path: dashboards_edit_discarded only fires on
+  // dirty exit, edit_exited fires on every exit so the journey terminates
+  // cleanly even when the user opens edit mode and leaves without changing
+  // anything. handle.end is idempotent with the success/discarded paths above.
+  add(
+    onInteraction('dashboards_edit_exited', () => {
       handle.end('discarded');
     })
   );
