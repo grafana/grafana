@@ -157,6 +157,13 @@ export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetP
 
 export const generatePartialEditSpec = (data: EditFormDTO, correlation: Correlation): Partial<CorrelationSpec> => {
   let partialSpec: Partial<CorrelationSpec> = {};
+
+  // we will want to clear any target data if the correlation is being updated to external
+  // null sent in a PATCH will delete the property
+  if (data.type === 'external') {
+    partialSpec.target = null;
+  }
+
   if (data.label !== correlation.label) {
     partialSpec.label = data.label;
   }
