@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { closePopover } from '../../utils/closePopover';
@@ -84,6 +85,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                   onMouseLeave={hidePopper}
                   color={theme.visualization.getColorByName(color || '#000000')}
                   aria-label={color}
+                  data-testid={selectors.components.ColorPicker.container}
                 />
               )}
             </>

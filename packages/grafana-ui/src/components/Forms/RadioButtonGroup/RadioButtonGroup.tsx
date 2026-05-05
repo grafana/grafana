@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { type HTMLAttributes, useCallback, useEffect, useId, useRef } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue, toIconName } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
@@ -92,6 +93,7 @@ export function RadioButtonGroup<T>({
       role="radiogroup"
       aria-label={ariaLabel}
       aria-labelledby={ariaLabelledBy}
+      data-testid={selectors.components.RadioGroup.container}
       className={cx(styles.radioGroup, fullWidth && styles.fullWidth, invalid && styles.invalid, className)}
     >
       {options.map((opt, i) => {
