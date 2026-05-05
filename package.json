@@ -60,7 +60,7 @@
     "start:noTsCheck": "yarn start -- --env noTsCheck=1",
     "start:noLint": "yarn start -- --env noTsCheck=1 --env noLint=1",
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.ts --profile --json > compilation-stats.json",
-    "storybook": "yarn workspace @grafana/ui storybook --ci",
+    "storybook": "yarn workspace @grafana/ui storybook",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
     "themes-generate": "yarn workspace @grafana/data themes-schema && esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --conditions=@grafana-app/source --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
     "themes:usage": "eslint . --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --plugin '@grafana' --rule '{ @grafana/theme-token-usage: \"error\" }'",
@@ -468,7 +468,7 @@
     "js-yaml@npm:4.1.0": "^4.1.0",
     "js-yaml@npm:=4.1.0": "^4.1.0",
     "nodemailer": "8.0.4",
-    "@storybook/core@npm:8.6.18": "patch:@storybook/core@npm%3A8.6.18#~/.yarn/patches/@storybook-core-npm-8.6.18-cff02a3017.patch",
+    "storybook@npm:10.3.6": "patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch",
     "protobufjs@npm:8.0.0": "8.0.1",
     "@types/slate/immutable": "^4.0.0",
     "@types/slate-react/immutable": "^4.0.0"

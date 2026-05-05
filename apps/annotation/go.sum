@@ -78,8 +78,8 @@ github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2 h1:vYkwPeFo9
 github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 h1:/m/qmt7Ay+HK+GVbIvXrJIRHC07xFM6nWFMmyePmAUs=
 github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3/go.mod h1:6zFIzal2FCd0JC1pE0ZTb2ftC0Jr/zsQR4zRNRdDfZA=
-github.com/grafana/grafana-app-sdk v0.54.0 h1:sO2TKsfJ0pT5Lyx/ronZM/TrSrQG3EVYbhW5r0la+y8=
-github.com/grafana/grafana-app-sdk v0.54.0/go.mod h1:sct5XtHBWMTOUUi9/XG2ehRr56iNAWWqOGVBr5W9rFA=
+github.com/grafana/grafana-app-sdk v0.54.1 h1:p57YZ9l26IPaPtKvv973B610GbSIB/I4OzKQlRMRJOk=
+github.com/grafana/grafana-app-sdk v0.54.1/go.mod h1:sOc4Nt/aDFRYUfPlXSL4RJq4KzwJCO7ujV1e0JoSzVM=
 github.com/grafana/grafana-app-sdk/logging v0.54.0 h1:WvBPeswe1zkwRmieIf2w0N5l0UgAsNCzywr+6jzZRdA=
 github.com/grafana/grafana-app-sdk/logging v0.54.0/go.mod h1:t0rXNkTz3R6PLpjxk4BIl2erHYkMBX+rd+UHSL0k5nw=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 h1:HWRh5R2+9EifMyIHV7ZV+MIZqgz+PMpZ14Jynv3O2Zs=
