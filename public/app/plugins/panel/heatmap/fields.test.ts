@@ -698,6 +698,50 @@ describe('Heatmap data', () => {
       expect(heatmap.heatmap?.fields.map((f) => f.name)).toEqual(['x', 'y']);
       expect(heatmap.heatmap?.length).toEqual(1);
     });
+
+    // Without the xBinIncr <= 0 guard, xBucketSize: 0 would be passed to uPlot's
+    // tick generation causing an infinite loop in the browser.
+    it('returns warning when numeric X values do not increase sequentially', () => {
+      const frame = toDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'x', type: FieldType.number, values: [5, 5, 5, 5] },
+          { name: 'y', type: FieldType.number, values: [1, 2, 1, 2] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
+        ],
+      });
+
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [frame],
+        palette: ['#000', '#fff'],
+      });
+
+      expect(heatmap.warning).toEqual('X values do not increase sequentially');
+      expect(heatmap.heatmap?.fields.map((f) => f.name)).toEqual(['x', 'y', 'count']);
+      expect(heatmap.heatmap?.length).toEqual(4);
+    });
+
+    it('returns warning when numeric X values decrease', () => {
+      const frame = toDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'x', type: FieldType.number, values: [5, 5, 3, 3] },
+          { name: 'y', type: FieldType.number, values: [1, 2, 1, 2] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
+        ],
+      });
+
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [frame],
+        palette: ['#000', '#fff'],
+      });
+
+      expect(heatmap.warning).toEqual('X values do not increase sequentially');
+      expect(heatmap.heatmap?.fields.map((f) => f.name)).toEqual(['x', 'y', 'count']);
+      expect(heatmap.heatmap?.length).toEqual(4);
+    });
   });
 
   describe('filter values', () => {
