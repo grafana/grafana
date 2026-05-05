@@ -99,6 +99,10 @@ func ProvideServiceWrapper(store Store) ServiceWrapper {
 	return service.ProvideServiceWrapper(store)
 }
 
+func ProvideServiceWrapperImpl(store Store) *PublicDashboardServiceWrapperImpl {
+	return service.ProvideServiceWrapper(store)
+}
+
 func ProvideMetricsService(store Store, prom prometheus.Registerer) (*metric.Service, error) {
 	return metric.ProvideService(store, prom)
 }
