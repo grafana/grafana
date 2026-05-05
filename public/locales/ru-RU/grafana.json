@@ -4366,6 +4366,7 @@
         "repository-not-found-message": "Репозиторий для выбранной папки не найден. Убедитесь, что правильно подготовили папку.",
         "repository-not-found-title": "Репозиторий не найден"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Ошибка при перемещении ресурсов",
       "error-no-target-folder-path": "Недопустимый или пустой путь к целевой папке. Повторите попытку.",
       "move-total": "Действие окажет влияние на следующие элементы:",
@@ -7395,6 +7396,7 @@
       "terraform": "Управляется Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Не удалось переместить дашборд",
       "cancel-action": "Отмена",
       "current-file-not-found": "Текущий файл дашборда не найден",
@@ -15639,7 +15641,6 @@
       "forwards-time-aria-label": "Переместить временной диапазон вперед",
       "to": "на",
       "zoom-out-button": "Уменьшение масштаба временного диапазона",
-      "zoom-out-tooltip": "Уменьшение временного диапазона <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Уменьшение временного диапазона <br/> t -"
     },
     "time-range": {

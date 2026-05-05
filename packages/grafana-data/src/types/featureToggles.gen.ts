@@ -1131,11 +1131,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
-  * Enables restore deleted dashboards feature
-  * @default true
-  */
-  restoreDashboards?: boolean;
-  /**
   * Enables recently viewed dashboards section in the browsing dashboard page
   * @default false
   */
@@ -1443,7 +1438,7 @@ export interface FeatureToggles {
   multiPropsVariables?: boolean;
   /**
   * Enables support for section level variables (rows and tabs)
-  * @default false
+  * @default true
   */
   dashboardSectionVariables?: boolean;
   /**

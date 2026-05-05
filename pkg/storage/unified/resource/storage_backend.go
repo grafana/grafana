@@ -527,6 +527,8 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 	totalDeleted := int64(0)
 	totalDryRun := int64(0)
+	deletedPerNamespace := map[string]int64{}
+	dryRunPerNamespace := map[string]int64{}
 
 	// get the start and end keys for the list operation based on the resource prefix
 	// for example, for dashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
@@ -637,6 +639,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				if b.garbageCollection.DryRun {
 					// if in dry run mode, just count the keys to delete
 					totalDryRun += int64(len(keysToDelete))
+					dryRunPerNamespace[dk.Namespace] += int64(len(keysToDelete))
 					continue
 				}
 
@@ -648,6 +651,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 				// update the total number of keys deleted
 				keysDeleted = keysDeleted + int64(len(keysToDelete))
+				deletedPerNamespace[dk.Namespace] += int64(len(keysToDelete))
 			}
 		}
 
@@ -672,6 +676,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			"rows", totalDeleted,
 			"seconds", time.Since(start).Seconds(),
 		)
+		for ns, count := range deletedPerNamespace {
+			b.log.Info("garbage collection deleted history per namespace",
+				"group", group,
+				"resource", resourceName,
+				"namespace", ns,
+				"rows", count,
+			)
+		}
 	}
 
 	if totalDryRun > 0 {
@@ -681,6 +693,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			"rows", totalDryRun,
 			"seconds", time.Since(start).Seconds(),
 		)
+		for ns, count := range dryRunPerNamespace {
+			b.log.Info("garbage collection dry run per namespace",
+				"group", group,
+				"resource", resourceName,
+				"namespace", ns,
+				"rows", count,
+			)
+		}
 	}
 
 	return nil

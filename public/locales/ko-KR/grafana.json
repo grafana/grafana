@@ -4300,6 +4300,7 @@
         "repository-not-found-message": "선택한 폴더의 리포지토리를 찾을 수 없습니다. 폴더가 올바르게 프로비저닝되었는지 확인하세요.",
         "repository-not-found-title": "리포지토리를 찾을 수 없습니다"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "리소스 이동 도중 오류 발생",
       "error-no-target-folder-path": "대상 폴더 경로가 잘못되었거나 비어 있습니다. 다시 선택해 주세요.",
       "move-total": "영향을 미칠 항목:",
@@ -7272,6 +7273,7 @@
       "terraform": "관리자: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "대시보드를 이동하지 못했습니다",
       "cancel-action": "취소",
       "current-file-not-found": "현재 대시보드 파일을 찾을 수 없습니다",
@@ -15360,7 +15362,6 @@
       "forwards-time-aria-label": "시간 범위를 이후로 변경",
       "to": "종료",
       "zoom-out-button": "시간 범위 확대",
-      "zoom-out-tooltip": "시간 범위 축소 <br/> CTRL+Z",
       "zoom-out-tooltip-new": "시간 범위 축소 <br/> t -"
     },
     "time-range": {
