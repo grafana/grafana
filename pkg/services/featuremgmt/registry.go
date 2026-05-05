@@ -623,10 +623,10 @@ var (
 		{
 			Name:        "annotationsClustering",
 			Description: "Enables annotation clustering and switches to refactored annotation code",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "dashboardNewLayouts",
