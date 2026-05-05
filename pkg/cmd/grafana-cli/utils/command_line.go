@@ -27,6 +27,7 @@ type CommandLine interface {
 	PluginRepoURL() string
 	PluginURL() string
 	GcomToken() string
+	GrafanaComProxyAPIToken() string
 }
 
 type ApiClient interface {
@@ -103,6 +104,19 @@ func (c *ContextCommandLine) GcomToken() string {
 	if err != nil {
 		logger.Debug("Could not parse config file", err)
 		return ""
+	}
+	return cfg.GrafanaComSSOAPIToken
+}
+
+func (c *ContextCommandLine) GrafanaComProxyAPIToken() string {
+	cfg, err := c.Config()
+
+	if err != nil {
+		logger.Debug("Could not parse config file", err)
+		return ""
+	}
+	if cfg.GrafanaComProxyAPIToken != "" {
+		return cfg.GrafanaComProxyAPIToken
 	}
 	return cfg.GrafanaComSSOAPIToken
 }
