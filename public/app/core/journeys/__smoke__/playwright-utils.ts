@@ -22,15 +22,23 @@ export function jitter(n: number): number {
 }
 
 /**
- * Navigate to the home page via SPA route (React Router) rather than a full
- * page navigation. Required for journey-end signals that depend on
- * locationService observers or React component unmount: `page.goto()` is a hard
- * nav that destroys the JS context, so abandon-on-route-change handlers and
- * page-leave unmount handlers don't get a chance to fire and flush.
- *
- * Strategy: click an in-app `<a href="/">` (Grafana logo / home link) which
- * React Router intercepts. Falls back to history+popstate if the anchor isn't
- * mounted - some routes hide the global nav.
+ * SPA-navigate within Grafana via history.pushState + popstate dispatch. Use
+ * this instead of `page.goto()` when the journey relies on continuity of the
+ * JS context (locationService observers, React unmount handlers, in-flight
+ * journey state). `page.goto()` is a hard nav that destroys context before
+ * those handlers can flush.
+ */
+export async function spaNavigate(page: Page, path: string): Promise<void> {
+  await page.evaluate((to) => {
+    window.history.pushState({}, '', to);
+    window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+  }, path);
+}
+
+/**
+ * Navigate to the home page via SPA route. Prefers clicking an in-app
+ * `<a href="/">` (Grafana logo) so React Router's link interception kicks in;
+ * falls back to history pushState if no such anchor is mounted.
  */
 export async function spaNavigateHome(page: Page): Promise<void> {
   const homeLink = page.locator('a[href="/"]').first();
@@ -42,10 +50,7 @@ export async function spaNavigateHome(page: Page): Promise<void> {
       // fall through to popstate
     }
   }
-  await page.evaluate(() => {
-    window.history.pushState({}, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
-  });
+  await spaNavigate(page, '/');
 }
 
 export function pickTypingPattern(): TypingPattern {
