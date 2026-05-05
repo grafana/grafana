@@ -29,32 +29,34 @@ export function QueryErrorAlert({ error, query }: Props) {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.icon}>
-        <Icon name="exclamation-triangle" />
-      </div>
-      <div className={styles.message}>
-        {message}
-        {error.traceId != null && (
-          <>
-            <br />{' '}
-            <span>
-              <Trans i18nKey="query.query-error-alert.trace-id" values={{ traceId: error.traceId }}>
-                (Trace ID: {'{{traceId}}'})
-              </Trans>
-            </span>
-          </>
+      <div className={styles.row}>
+        <div className={styles.icon}>
+          <Icon name="exclamation-triangle" />
+        </div>
+        <div className={styles.message}>
+          {message}
+          {error.traceId != null && (
+            <>
+              <br />{' '}
+              <span>
+                <Trans i18nKey="query.query-error-alert.trace-id" values={{ traceId: error.traceId }}>
+                  (Trace ID: {'{{traceId}}'})
+                </Trans>
+              </span>
+            </>
+          )}
+        </div>
+        {isAvailable && (
+          <div className={styles.assistantButton}>
+            <OpenAssistantButton
+              origin="grafana/query-editor-error"
+              prompt={`Help me analyze and fix the following ${error.type ? `\`${error.type}\`` : ''} query error: \`\`\`${message}\`\`\``}
+              title={t('query.query-error-alert.fix-with-assistant', 'Fix with Assistant')}
+              size="sm"
+            />
+          </div>
         )}
       </div>
-      {isAvailable && (
-        <div className={styles.assistantButton}>
-          <OpenAssistantButton
-            origin="grafana/query-editor-error"
-            prompt={`Help me analyze and fix the following ${error.type ? `\`${error.type}\`` : ''} query error: \`\`\`${message}\`\`\``}
-            title={t('query.query-error-alert.fix-with-assistant', 'Fix with Assistant')}
-            size="sm"
-          />
-        </div>
-      )}
       <QueryErrorActions error={error} query={query} />
     </div>
   );
@@ -116,6 +118,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     marginTop: theme.spacing(0.5),
     background: theme.colors.background.secondary,
+  }),
+  row: css({
     display: 'flex',
     alignItems: 'center',
   }),
