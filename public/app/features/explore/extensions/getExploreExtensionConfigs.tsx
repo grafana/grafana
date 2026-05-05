@@ -1,4 +1,5 @@
 import { type PluginExtensionAddedLinkConfig, PluginExtensionPoints } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -8,6 +9,7 @@ import { createAddedLinkConfig } from '../../plugins/extensions/utils';
 import { changeCorrelationEditorDetails } from '../state/main';
 import { runQueries } from '../state/query';
 
+import { ExploreToAlertingModal } from './AddAlertRule/ExploreToAlertingModal';
 import { ExploreToDashboardPanel } from './AddToDashboard/ExploreToDashboardPanel';
 import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
 import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
@@ -39,6 +41,45 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
           openModal({
             title: getAddToDashboardTitle(),
             body: ({ onDismiss }) => <ExploreToDashboardPanel onClose={onDismiss!} exploreId={context?.exploreId!} />,
+          });
+        },
+      }),
+      createAddedLinkConfig<PluginExtensionExploreContext>({
+        // This is called at the top level, so will break if we add a translation here 😱
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        title: 'Add alert rule',
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        description: 'Create an alert rule from the current Explore query',
+        targets: [PluginExtensionPoints.ExploreToolbarAction],
+        icon: 'bell',
+        category: 'Alerts',
+        configure: (context) => {
+          if (!config.unifiedAlertingEnabled) {
+            return undefined;
+          }
+
+          const canCreateAlertRule =
+            contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) ||
+            contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
+
+          if (!canCreateAlertRule) {
+            return undefined;
+          }
+
+          const hasQueries = context?.targets && context.targets.length > 0;
+          if (!hasQueries) {
+            return undefined;
+          }
+
+          return {};
+        },
+        onClick: (_, { context, openModal }) => {
+          openModal({
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            title: 'Create alert rule',
+            body: ({ onDismiss }) => (
+              <ExploreToAlertingModal onDismiss={onDismiss!} queries={context?.targets ?? []} />
+            ),
           });
         },
       }),
