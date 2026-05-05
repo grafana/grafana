@@ -36,9 +36,9 @@ When adding a data source, the database user you specify should have only `SELEC
 Example:
 
 ```sql
- CREATE USER grafanareader WITH PASSWORD 'password';
- GRANT USAGE ON SCHEMA schema TO grafanareader;
- GRANT SELECT ON schema.table TO grafanareader;
+CREATE USER grafanareader WITH PASSWORD 'password';
+GRANT USAGE ON SCHEMA schema TO grafanareader;
+GRANT SELECT ON schema.table TO grafanareader;
 ```
 
 Replace `schema` and `table` with your schema and table names.
