@@ -73,7 +73,8 @@ async function discardEdit(page: Page): Promise<void> {
 
   // The discard confirmation only renders if there are changes; without a
   // mid-edit change we may exit cleanly without it. Try the explicit discard
-  // path; if absent, the journey ends via the editleave handler.
+  // path; if absent, the journey ends via the dashboards_edit_exited handler
+  // which fires on every exit regardless of dirty state.
   try {
     await page.getByTestId(DISCARD_CHANGES_BUTTON).waitFor({ state: 'visible', timeout: 3_000 });
     await page.getByTestId(DISCARD_CHANGES_BUTTON).click();
