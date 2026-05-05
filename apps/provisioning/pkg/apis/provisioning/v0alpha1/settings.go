@@ -53,6 +53,9 @@ type RepositoryView struct {
 
 	// The supported workflows
 	Workflows []Workflow `json:"workflows"`
+
+	// Commit message options. Mirrors the same-named field on the repository spec.
+	Commit *CommitOptions `json:"commit,omitempty"`
 }
 
 func (RepositoryView) OpenAPIModelName() string {

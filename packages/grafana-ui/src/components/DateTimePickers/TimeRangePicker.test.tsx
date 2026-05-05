@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTime, makeTimeRange, type TimeRange, type BootData } from '@grafana/data';
+import { dateTime, makeTimeRange, type TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { TimeRangeProvider } from './TimeRangeContext';
@@ -154,41 +154,7 @@ it('does not submit wrapping forms', async () => {
   expect(onSubmit).not.toHaveBeenCalled();
 });
 
-it('shows CTRL+Z in zoom out tooltip when feature flag is disabled', async () => {
-  window.grafanaBootData = {
-    settings: {
-      featureToggles: {
-        newTimeRangeZoomShortcuts: false,
-      },
-    },
-  } as BootData;
-
-  render(
-    <TimeRangePicker
-      onChangeTimeZone={() => {}}
-      onChange={(value) => {}}
-      value={value}
-      onMoveBackward={() => {}}
-      onMoveForward={() => {}}
-      onZoom={() => {}}
-    />
-  );
-
-  const zoomButton = screen.getByLabelText('Zoom out time range');
-  await userEvent.hover(zoomButton);
-
-  expect(await screen.findByText(/CTRL\+Z/)).toBeInTheDocument();
-});
-
-it('shows t - in zoom out tooltip when feature flag is enabled', async () => {
-  window.grafanaBootData = {
-    settings: {
-      featureToggles: {
-        newTimeRangeZoomShortcuts: true,
-      },
-    },
-  } as BootData;
-
+it('shows t - in zoom out tooltip', async () => {
   render(
     <TimeRangePicker
       onChangeTimeZone={() => {}}

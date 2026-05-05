@@ -12,13 +12,22 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/oklog/ulid/v2"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// snapshotDownloadStatus labels for the index_server_snapshot_downloads_total counter.
+// Labels for the index_server_snapshot_downloads_total counter.
 const (
+	// snapshotPolicyTiered selects via pickBestSnapshot (initial startup;
+	// any version >= MinBuildVersion accepted, with tiered preference).
+	snapshotPolicyTiered = "tiered"
+	// snapshotPolicySameVersion selects via findFreshSnapshotByBuildStart
+	// (rebuild; strict same-version freshness).
+	snapshotPolicySameVersion = "same_version"
+
 	snapshotStatusSuccess       = "success"
 	snapshotStatusEmpty         = "empty"
 	snapshotStatusDownloadError = "download_error"
@@ -33,6 +42,14 @@ type snapshotCandidate struct {
 	version *semver.Version // always non-nil; pickBestSnapshot drops unparseable entries
 	tier    int             // 0 = best, 2 = last resort
 }
+
+// snapshotSelectFn picks a snapshot under a given policy.
+//
+// Returns:
+//   - (key, meta, nil):                a snapshot was chosen.
+//   - (zero ULID, nil, nil):           no candidate; caller proceeds to its fallback.
+//   - (zero ULID, nil, err):           selection failed; caller treats as a download error.
+type snapshotSelectFn func(context.Context) (ulid.ULID, *IndexMeta, error)
 
 // tryDownloadRemoteSnapshot lists remote snapshots for the given resource,
 // picks the best candidate (see pickBestSnapshot), downloads and opens it
@@ -50,49 +67,175 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	resourceDir string,
 	logger log.Logger,
 ) (bleve.Index, string, int64, error) {
-	store := b.opts.Snapshot.Store
+	logger.Info("Remote index snapshot download started", "policy", snapshotPolicyTiered)
+	return b.downloadSelectedSnapshot(ctx, key, resourceDir,
+		snapshotPolicyTiered, "search.remote_index_snapshot.download", logger,
+		func(ctx context.Context) (ulid.ULID, *IndexMeta, error) {
+			all, err := b.opts.Snapshot.Store.ListIndexes(ctx, key)
+			if err != nil {
+				return ulid.ULID{}, nil, fmt.Errorf("listing remote snapshots: %w", err)
+			}
+			c, ok := b.pickBestSnapshot(all, time.Now())
+			if !ok {
+				return ulid.ULID{}, nil, nil
+			}
+			return c.key, c.meta, nil
+		},
+	)
+}
 
-	all, err := store.ListIndexes(ctx, key)
-	if err != nil {
-		b.recordSnapshotDownloadStatus(snapshotStatusDownloadError)
-		return nil, "", 0, fmt.Errorf("listing remote snapshots: %w", err)
+// tryDownloadFreshSnapshot probes the remote index store for a same-version
+// snapshot whose BuildTime is within the last maxFreshSnapshotAge AND
+// strictly after lastImportTime, downloads and opens it locally.
+//
+// Used on the rebuild path: when a fresh-enough same-version snapshot
+// exists, we download it instead of paying the cost of rebuilding from
+// scratch.
+//
+// Return contract mirrors tryDownloadRemoteSnapshot:
+//   - On success: (idx, dirName, rv, nil)
+//   - No fresh candidate: (nil, "", 0, nil) — caller should rebuild
+//   - Error: (nil, "", 0, err)
+//
+// Combining the two cutoffs: the probe accepts BuildTime > now-maxAge.
+// We bump maxAge down so that BuildTime > lastImportTime is also enforced
+// in the same pass — equivalent to BuildTime > max(now-maxAge, lastImport).
+func (b *bleveBackend) tryDownloadFreshSnapshot(
+	ctx context.Context,
+	key resource.NamespacedResource,
+	resourceDir string,
+	lastImportTime time.Time,
+	maxFreshSnapshotAge time.Duration,
+	logger log.Logger,
+) (bleve.Index, string, int64, error) {
+	logger.Info("Fresh remote index snapshot download started", "policy", snapshotPolicySameVersion, "max_fresh_age", maxFreshSnapshotAge, "last_import_time", lastImportTime)
+
+	// Combine the freshness cutoff with the lastImportTime correctness check.
+	// Both are "BuildTime must be after X"; take the more restrictive X.
+	effectiveMaxAge := maxFreshSnapshotAge
+	if !lastImportTime.IsZero() {
+		if since := time.Since(lastImportTime); since < effectiveMaxAge {
+			effectiveMaxAge = since
+		}
 	}
 
-	candidate, ok := b.pickBestSnapshot(all, time.Now())
-	if !ok {
-		b.recordSnapshotDownloadStatus(snapshotStatusEmpty)
+	return b.downloadSelectedSnapshot(ctx, key, resourceDir,
+		snapshotPolicySameVersion, "search.remote_index_snapshot.download_fresh", logger,
+		func(ctx context.Context) (ulid.ULID, *IndexMeta, error) {
+			if effectiveMaxAge <= 0 {
+				// lastImportTime is in the future (clock skew) or
+				// maxFreshSnapshotAge is non-positive; no snapshot can satisfy
+				// the freshness window.
+				return ulid.ULID{}, nil, nil
+			}
+			k, m, err := findFreshSnapshotByBuildStart(ctx, b.opts.Snapshot.Store, key, effectiveMaxAge, b.opts.BuildVersion)
+			if err != nil {
+				return ulid.ULID{}, nil, fmt.Errorf("probing for fresh snapshot: %w", err)
+			}
+			return k, m, nil
+		},
+	)
+}
+
+// downloadSelectedSnapshot is the shared scaffolding for tryDownload*
+// helpers: trace span, completion / failure log, outcome metric, and the
+// reserve-download-open-validate flow. Each policy provides its
+// selection logic via selectFn; the template handles everything else.
+func (b *bleveBackend) downloadSelectedSnapshot(
+	ctx context.Context,
+	key resource.NamespacedResource,
+	resourceDir string,
+	policy string,
+	spanName string,
+	logger log.Logger,
+	selectFn snapshotSelectFn,
+) (_ bleve.Index, _ string, _ int64, retErr error) {
+	ctx, span := tracer.Start(ctx, spanName)
+	start := time.Now()
+	outcome := snapshotStatusSuccess
+	var snapKey ulid.ULID
+	var meta *IndexMeta
+
+	defer func() {
+		attrs := []attribute.KeyValue{
+			attribute.String("namespace", key.Namespace),
+			attribute.String("group", key.Group),
+			attribute.String("resource", key.Resource),
+			attribute.String("policy", policy),
+			attribute.String("outcome", outcome),
+		}
+		if meta != nil {
+			attrs = append(attrs,
+				attribute.String("snapshot_key", snapKey.String()),
+				attribute.String("snapshot_version", meta.BuildVersion),
+				attribute.Int64("snapshot_rv", meta.LatestResourceVersion),
+			)
+			// Zero-value BuildTime means the snapshot was uploaded before #768
+			// added the field; logging "0001-01-01" would be misleading.
+			if !meta.BuildTime.IsZero() {
+				attrs = append(attrs, attribute.String("snapshot_build_time", meta.BuildTime.UTC().Format(time.RFC3339)))
+			}
+		}
+		span.SetAttributes(attrs...)
+		elapsed := time.Since(start)
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+			logger.Warn("Remote index snapshot download failed", "elapsed", elapsed, "policy", policy, "outcome", outcome, "err", retErr)
+		} else {
+			logger.Info("Remote index snapshot download completed", "elapsed", elapsed, "policy", policy, "outcome", outcome)
+		}
+		b.recordSnapshotDownloadOutcome(policy, outcome)
+		span.End()
+	}()
+
+	var err error
+	snapKey, meta, err = selectFn(ctx)
+	if err != nil {
+		outcome = snapshotStatusDownloadError
+		return nil, "", 0, err
+	}
+	if meta == nil {
+		outcome = snapshotStatusEmpty
 		return nil, "", 0, nil
 	}
 
-	logger = logger.New(
-		"snapshot_key", candidate.key.String(),
-		"snapshot_version", candidate.version.String(),
-		"snapshot_rv", candidate.meta.LatestResourceVersion,
-		"snapshot_uploaded", candidate.meta.UploadTimestamp,
-		"snapshot_tier", candidate.tier,
-	)
+	logFields := []any{
+		"snapshot_key", snapKey.String(),
+		"snapshot_version", meta.BuildVersion,
+		"snapshot_rv", meta.LatestResourceVersion,
+		"snapshot_uploaded", meta.UploadTimestamp,
+	}
+	if !meta.BuildTime.IsZero() {
+		logFields = append(logFields, "snapshot_build_time", meta.BuildTime)
+	}
+	logger = logger.New(logFields...)
 
-	// Pick a fresh destination directory name. DownloadIndex refuses to overwrite
-	// an existing destDir; the bump-on-exists loop mirrors what BuildIndex does
-	// when creating new file-based indexes.
+	// Pick a fresh destination directory name. DownloadIndex refuses to
+	// overwrite an existing destDir; the bump-on-exists loop mirrors what
+	// BuildIndex does when creating new file-based indexes.
 	destDir, name, err := b.reserveSnapshotDir(resourceDir)
 	if err != nil {
-		b.recordSnapshotDownloadStatus(snapshotStatusDownloadError)
+		outcome = snapshotStatusDownloadError
 		return nil, "", 0, fmt.Errorf("reserving local snapshot dir: %w", err)
 	}
 
-	start := time.Now()
-	downloadedMeta, err := store.DownloadIndex(ctx, key, candidate.key, destDir)
+	// TODO: retry DownloadIndex on transient errors before falling through to
+	// a from-scratch KV rebuild. The object store is its own fault domain;
+	// a single failed download shouldn't force a full rebuild for large
+	// indexes (e.g. a 1M-doc dashboard index would re-pay every read).
+	downloadStart := time.Now()
+	downloadedMeta, err := b.opts.Snapshot.Store.DownloadIndex(ctx, key, snapKey, destDir)
 	if err != nil {
 		_ = os.RemoveAll(destDir)
-		b.recordSnapshotDownloadStatus(snapshotStatusDownloadError)
+		outcome = snapshotStatusDownloadError
 		return nil, "", 0, fmt.Errorf("downloading snapshot: %w", err)
 	}
 
 	idx, err := bleve.OpenUsing(destDir, map[string]interface{}{"bolt_timeout": boltTimeout})
 	if err != nil {
 		_ = os.RemoveAll(destDir)
-		b.recordSnapshotDownloadStatus(snapshotStatusValidateError)
+		outcome = snapshotStatusValidateError
 		return nil, "", 0, fmt.Errorf("opening downloaded snapshot: %w", err)
 	}
 
@@ -100,30 +243,27 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	if err != nil {
 		_ = idx.Close()
 		_ = os.RemoveAll(destDir)
-		b.recordSnapshotDownloadStatus(snapshotStatusValidateError)
+		outcome = snapshotStatusValidateError
 		return nil, "", 0, fmt.Errorf("validating downloaded snapshot: %w", err)
 	}
 
-	elapsed := time.Since(start)
-	b.recordSnapshotDownloadStatus(snapshotStatusSuccess)
 	if b.indexMetrics != nil {
-		b.indexMetrics.IndexSnapshotDownloadDuration.Observe(elapsed.Seconds())
+		b.indexMetrics.IndexSnapshotDownloadDuration.Observe(time.Since(downloadStart).Seconds())
 	}
 
-	uploadedAt := candidate.meta.UploadTimestamp
+	uploadedAt := meta.UploadTimestamp
 	if downloadedMeta != nil && !downloadedMeta.UploadTimestamp.IsZero() {
 		uploadedAt = downloadedMeta.UploadTimestamp
 	}
 	// A downloaded snapshot becomes the new upload baseline for this index.
-	if err := setSnapshotMutationCount(idx, 0); err != nil {
+	if err := writeSnapshotMutationCount(idx, 0); err != nil {
 		_ = idx.Close()
 		_ = os.RemoveAll(destDir)
-		b.recordSnapshotDownloadStatus(snapshotStatusValidateError)
+		outcome = snapshotStatusValidateError
 		return nil, "", 0, fmt.Errorf("resetting snapshot mutation count: %w", err)
 	}
 	b.setUploadTracking(key, uploadedAt)
 
-	logger.Info("Downloaded remote index snapshot", "elapsed", elapsed, "rv", rv, "directory", destDir)
 	return idx, name, rv, nil
 }
 
@@ -151,7 +291,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 		// Hard filter: unparseable version (we can't tier it). Metadata validation
 		// lives here rather than in the store so we don't have to duplicate it
 		// across store implementations.
-		v, err := semver.NewVersion(m.GrafanaBuildVersion)
+		v, err := semver.NewVersion(m.BuildVersion)
 		if err != nil {
 			droppedUnparseable++
 			continue
@@ -163,7 +303,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 			tier:    snapshotTier(v, minVersion, running),
 		}
 		candidates = append(candidates, c)
-		b.log.Debug("snapshot candidate",
+		b.log.Debug("index snapshot candidate",
 			"key", c.key.String(),
 			"tier", c.tier,
 			"version", c.version.String(),
@@ -173,7 +313,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 	}
 
 	if len(candidates) == 0 {
-		b.log.Debug("no snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable)
+		b.log.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable)
 		return snapshotCandidate{}, false
 	}
 
@@ -190,7 +330,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 		return candidates[i].meta.UploadTimestamp.After(candidates[j].meta.UploadTimestamp)
 	})
 
-	b.log.Debug("selected snapshot",
+	b.log.Debug("selected index snapshot",
 		"key", candidates[0].key.String(),
 		"tier", candidates[0].tier,
 		"candidates", len(candidates),
@@ -255,9 +395,130 @@ func (b *bleveBackend) validateDownloadedIndex(idx bleve.Index) (int64, error) {
 	return rv, nil
 }
 
-func (b *bleveBackend) recordSnapshotDownloadStatus(status string) {
+func (b *bleveBackend) recordSnapshotDownloadOutcome(policy, status string) {
 	if b.indexMetrics == nil {
 		return
 	}
-	b.indexMetrics.IndexSnapshotDownloads.WithLabelValues(status).Inc()
+	b.indexMetrics.IndexSnapshotDownloads.WithLabelValues(policy, status).Inc()
+}
+
+// findFreshSnapshotByUploadTime walks namespace snapshots newest-first and
+// returns the first one whose BuildVersion matches runningVersion and
+// whose ULID time falls within [now-maxAge, now]. Returns a zero key and nil
+// meta when no such snapshot exists.
+//
+// Walking (rather than checking only the newest) is necessary in mixed-version
+// clusters — either transiently during rolling upgrades, or as a deliberate
+// steady-state configuration. V1 and V2 replicas may interleave uploads, so
+// the newest snapshot can be the wrong version while a same-version match
+// lives a few keys back. In homogeneous clusters the walk degenerates to one
+// GET.
+//
+// ErrSnapshotNotFound / ErrInvalidManifest on individual keys is tolerated
+// (skip and continue) — these are races with cleanup or concurrently-written
+// manifests and shouldn't fail the probe. Other errors are surfaced.
+func findFreshSnapshotByUploadTime(
+	ctx context.Context,
+	store RemoteIndexStore,
+	ns resource.NamespacedResource,
+	maxAge time.Duration,
+	runningVersion string,
+) (ulid.ULID, *IndexMeta, error) {
+	keys, err := store.ListIndexKeys(ctx, ns)
+	if err != nil {
+		return ulid.ULID{}, nil, fmt.Errorf("listing index keys: %w", err)
+	}
+
+	// Sort newest-first by ULID time. ULID time equals upload time (set in
+	// UploadIndex from the ULID's own timestamp), so this is also the
+	// upload-time ordering.
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].Time() > keys[j].Time()
+	})
+
+	cutoff := time.Now().Add(-maxAge)
+	for _, k := range keys {
+		// ULID time is the upload time. Once we cross the cutoff, no
+		// remaining candidate can satisfy the freshness criterion.
+		if !ulid.Time(k.Time()).After(cutoff) {
+			return ulid.ULID{}, nil, nil
+		}
+
+		meta, err := store.GetIndexMeta(ctx, ns, k)
+		if err != nil {
+			if errors.Is(err, ErrSnapshotNotFound) || errors.Is(err, ErrInvalidManifest) {
+				continue
+			}
+			return ulid.ULID{}, nil, fmt.Errorf("reading manifest for %s: %w", k, err)
+		}
+
+		if meta.BuildVersion == runningVersion {
+			return k, meta, nil
+		}
+	}
+
+	return ulid.ULID{}, nil, nil
+}
+
+// findFreshSnapshotByBuildStart is the build-start-time variant of
+// findFreshSnapshotByUploadTime: it returns the first same-version
+// snapshot whose BuildTime (not upload time) falls within
+// [now-maxAge, now].
+//
+// Use this for data-freshness questions, e.g. "is the remote snapshot
+// fresh enough to skip a rebuild?". Periodic re-uploads preserve the
+// original BuildTime and are correctly rejected once the
+// underlying data ages out, even when their ULID is recent.
+//
+// Manifests with a zero-value BuildTime are skipped (no freshness
+// signal). The stopping rule is unchanged: BuildTime <= ULID time, so a
+// ULID below the cutoff cannot yield a fresh build-start time.
+func findFreshSnapshotByBuildStart(
+	ctx context.Context,
+	store RemoteIndexStore,
+	ns resource.NamespacedResource,
+	maxAge time.Duration,
+	runningVersion string,
+) (ulid.ULID, *IndexMeta, error) {
+	keys, err := store.ListIndexKeys(ctx, ns)
+	if err != nil {
+		return ulid.ULID{}, nil, fmt.Errorf("listing index keys: %w", err)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].Time() > keys[j].Time()
+	})
+
+	cutoff := time.Now().Add(-maxAge)
+	for _, k := range keys {
+		// BuildTime <= UploadTimestamp = ULID time. Once ULID
+		// time crosses the cutoff, no remaining candidate can satisfy.
+		if !ulid.Time(k.Time()).After(cutoff) {
+			return ulid.ULID{}, nil, nil
+		}
+
+		meta, err := store.GetIndexMeta(ctx, ns, k)
+		if err != nil {
+			if errors.Is(err, ErrSnapshotNotFound) || errors.Is(err, ErrInvalidManifest) {
+				continue
+			}
+			return ulid.ULID{}, nil, fmt.Errorf("reading manifest for %s: %w", k, err)
+		}
+
+		if meta.BuildVersion != runningVersion {
+			continue
+		}
+		// Zero-value BuildTime carries no freshness signal; never selected.
+		if meta.BuildTime.IsZero() {
+			continue
+		}
+		if meta.BuildTime.After(cutoff) {
+			return k, meta, nil
+		}
+		// Recent ULID but old BuildTime (e.g. periodic re-upload
+		// of a long-lived index): keep walking — an earlier candidate may
+		// still have a fresh build-start time.
+	}
+
+	return ulid.ULID{}, nil, nil
 }

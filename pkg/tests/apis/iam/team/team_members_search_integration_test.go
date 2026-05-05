@@ -81,12 +81,6 @@ func doTeamMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		GVR:       gvrTeams,
 	})
 
-	tbClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: orgNS,
-		GVR:       gvrTeamBindings,
-	})
-
 	// Create team1 - will have 5 members
 	team1, err := teamClient.Resource.Create(ctx, createTeamObject(helper, "team-1", "Team 1", "team-1@example.com"), metav1.CreateOptions{})
 	require.NoError(t, err)
@@ -111,12 +105,19 @@ func doTeamMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		users = append(users, u)
 	}
 
-	// Create team bindings: all 5 users -> team1
+	// Add all 5 users to team1 via spec.members (admin, not external).
+	members := make([]interface{}, 0, len(users))
 	for _, u := range users {
-		tbObj := createTeamBindingObject(helper, u.GetName(), team1.GetName())
-		_, err := tbClient.Resource.Create(ctx, tbObj, metav1.CreateOptions{})
-		require.NoError(t, err)
+		members = append(members, map[string]interface{}{
+			"kind":       "User",
+			"name":       u.GetName(),
+			"permission": "admin",
+			"external":   false,
+		})
 	}
+	require.NoError(t, unstructured.SetNestedSlice(team1.Object, members, "spec", "members"))
+	team1, err = teamClient.Resource.Update(ctx, team1, metav1.UpdateOptions{})
+	require.NoError(t, err)
 
 	t.Run("returns the bound members for the team", func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/teams/%s/members", team1.GetName())

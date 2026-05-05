@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
-import { dateTimeFormatTimeAgo } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
+import { Badge, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
@@ -22,6 +23,7 @@ export function RepositoryListItem({ repository }: Props) {
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
+  const styles = useStyles2(getStyles);
 
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
@@ -57,12 +59,12 @@ export function RepositoryListItem({ repository }: Props) {
   };
 
   return (
-    <Card noMargin key={name}>
-      <Card.Figure>
+    <Card noMargin key={name} className={styles.card}>
+      <Card.Figure className={styles.figure}>
         <RepoIcon type={spec?.type} />
       </Card.Figure>
       <Card.Heading>
-        <Stack gap={2} direction="row" alignItems="center">
+        <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
           {isReadOnlyRepo && (
@@ -92,7 +94,7 @@ export function RepositoryListItem({ repository }: Props) {
         </Stack>
       </Card.Description>
 
-      <Card.Meta>{getRepositoryMeta()}</Card.Meta>
+      <Card.Meta className={styles.meta}>{getRepositoryMeta()}</Card.Meta>
 
       <Card.Actions>
         <Stack gap={1} direction="row">
@@ -130,3 +132,30 @@ function getListURL(repo: Repository, stats: ResourceCount): string {
   }
   return '/dashboards';
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    [theme.breakpoints.down('md')]: {
+      '&&': {
+        gridTemplate: `
+          "Figure"
+          "Heading"
+          "Meta"
+          "Description" 1fr
+          "Actions" / 1fr
+        `,
+      },
+    },
+  }),
+  figure: css({
+    [theme.breakpoints.down('md')]: {
+      '&&': {
+        marginRight: 0,
+        marginBottom: theme.spacing(1),
+      },
+    },
+  }),
+  meta: css({
+    flexWrap: 'wrap',
+  }),
+});

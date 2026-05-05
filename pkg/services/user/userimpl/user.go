@@ -2,12 +2,10 @@ package userimpl
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -62,7 +60,11 @@ func ProvideService(db db.DB,
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		return s.k8sService.Create(ctx, cmd)
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.Create(k8sCtx, cmd)
 	}
 
 	return s.legacyService.Create(ctx, cmd)
@@ -115,56 +117,36 @@ func (s *Service) GetByLoginWithPassword(ctx context.Context, cmd *user.GetUserB
 }
 
 func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetByLogin", trace.WithAttributes(
-		attribute.String("loginOrEmail", cmd.LoginOrEmail),
-	))
-	defer span.End()
-
-	ctxLogger := s.logger.FromContext(ctx)
-
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		if hasOrgID(ctx) {
-			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-			return s.k8sService.GetByLogin(ctx, cmd)
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
 		}
-
-		err := errors.New("no orgID in context")
-		ctxLogger.Warn("no orgID in context, falling back to legacy", "method", "GetByLogin")
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
+		return s.k8sService.GetByLogin(k8sCtx, cmd)
 	}
 
-	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByLogin(ctx, cmd)
 }
 
 func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetByEmail", trace.WithAttributes(
-		attribute.String("email", cmd.Email),
-	))
-	defer span.End()
-
-	ctxLogger := s.logger.FromContext(ctx)
-
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		if hasOrgID(ctx) {
-			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-			return s.k8sService.GetByEmail(ctx, cmd)
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
 		}
-
-		err := errors.New("no orgID in context")
-		ctxLogger.Warn("no orgID in context, falling back to legacy", "method", "GetByEmail")
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
+		return s.k8sService.GetByEmail(k8sCtx, cmd)
 	}
 
-	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByEmail(ctx, cmd)
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		return s.k8sService.Update(ctx, cmd)
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.Update(k8sCtx, cmd)
 	}
 
 	return s.legacyService.Update(ctx, cmd)
@@ -172,7 +154,11 @@ func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error
 
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		return s.k8sService.UpdateLastSeenAt(ctx, cmd)
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.UpdateLastSeenAt(k8sCtx, cmd)
 	}
 
 	return s.legacyService.UpdateLastSeenAt(ctx, cmd)

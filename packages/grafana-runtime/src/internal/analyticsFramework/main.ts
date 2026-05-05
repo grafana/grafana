@@ -4,7 +4,7 @@
 
 import { reportInteraction } from '../../analytics/utils';
 
-import { type Event, type EventProperty } from './types';
+import { type Exact, type Event, type EventProperty } from './types';
 
 export const defineFeatureEvents = (
   repo: Event['repo'] = 'grafana',
@@ -12,6 +12,6 @@ export const defineFeatureEvents = (
   defaultProps?: EventProperty
 ) => {
   return <P extends EventProperty | undefined = undefined>(eventName: string) =>
-    (props: P extends undefined ? void : P) =>
+    <A extends P extends EventProperty ? P : never>(props: P extends EventProperty ? Exact<P, A> : void) =>
       reportInteraction(`${repo}_${feature}_${eventName}`, { ...defaultProps, ...(props ?? undefined) });
 };

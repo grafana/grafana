@@ -10,9 +10,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
+
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
@@ -21,6 +24,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
@@ -252,17 +256,18 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			resourceInfo:                    &ds,
 			dsConfigHandlerRequestsDuration: b.dataSourceCRUDMetric,
 		}
+		// NOTE! there is currently NO PATH that is using unified storage to read!
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {
 			return err
 		}
 		storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		if err != nil {
+			return err
+		}
 		storage[ds.StoragePath("access")] = &subAccessREST{
 			builder: b,
 			getter:  legacyStore,
-		}
-		if err != nil {
-			return err
 		}
 	} else {
 		storage[ds.StoragePath()] = &connectionAccess{
@@ -333,11 +338,29 @@ func (b *DataSourceAPIBuilder) applyDefaultStorageConfig(opts builder.APIGroupOp
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
-	instance, err := b.datasources.GetInstanceSettings(ctx, uid)
+	ctx, span := tracing.Start(ctx, "datasource.getPluginContext",
+		attribute.String("namespace", request.NamespaceValue(ctx)),
+		attribute.String("plugin_id", b.pluginJSON.ID),
+		attribute.String("datasource_uid", uid),
+	)
+	defer span.End()
+
+	getInstanceCtx, getInstanceSpan := tracing.Start(ctx, "datasource.getPluginContext.getInstanceSettings")
+	instance, err := b.datasources.GetInstanceSettings(getInstanceCtx, uid)
+	getInstanceSpan.End()
 	if err != nil {
+		err = tracing.Error(span, err)
 		return backend.PluginContext{}, err
 	}
-	return b.contextProvider.PluginContextForDataSource(ctx, instance)
+
+	buildContextCtx, buildContextSpan := tracing.Start(ctx, "datasource.getPluginContext.buildPluginContext")
+	pluginCtx, err := b.contextProvider.PluginContextForDataSource(buildContextCtx, instance)
+	buildContextSpan.End()
+	if err != nil {
+		err = tracing.Error(span, err)
+		return backend.PluginContext{}, err
+	}
+	return pluginCtx, nil
 }
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {

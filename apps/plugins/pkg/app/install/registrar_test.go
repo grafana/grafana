@@ -288,6 +288,10 @@ func (f *fakeClientGenerator) GetCustomRouteClient(schema.GroupVersion, string) 
 	return nil, nil
 }
 
+func (f *fakeClientGenerator) DiscoveryClient() (resource.DiscoveryClient, error) {
+	return nil, nil
+}
+
 type fakeResourceClient struct {
 	client *fakePluginInstallClient
 }
