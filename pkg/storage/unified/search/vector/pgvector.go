@@ -310,6 +310,18 @@ func (b *pgvectorBackend) UpdateBackfillJobCheckpoint(ctx context.Context, id in
 	return nil
 }
 
+func (b *pgvectorBackend) MarkBackfillJobError(ctx context.Context, id int64, lastErr string) error {
+	req := &sqlVectorBackfillJobsSetErrorRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		ID:          id,
+		LastError:   sql.NullString{String: lastErr, Valid: lastErr != ""},
+	}
+	if _, err := dbutil.Exec(ctx, b.db, sqlVectorBackfillJobsSetError, req); err != nil {
+		return fmt.Errorf("mark backfill job %d error: %w", id, err)
+	}
+	return nil
+}
+
 func (b *pgvectorBackend) CompleteBackfillJob(ctx context.Context, id int64) error {
 	req := &sqlVectorBackfillJobsCompleteRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),

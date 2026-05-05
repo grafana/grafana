@@ -282,8 +282,9 @@ func TestRunBackfillJob_ModelMismatch_StampsErrorAndContinues(t *testing.T) {
 
 	assert.Empty(t, vec.upserts)
 	assert.Empty(t, vec.completedJobIDs, "job left incomplete after model mismatch")
-	require.NotEmpty(t, vec.checkpoints, "error should be persisted via checkpoint")
-	assert.Contains(t, vec.checkpoints[len(vec.checkpoints)-1].LastError, "wrong-model")
+	assert.Empty(t, vec.checkpoints, "checkpoint must not be touched on error — it would rewind cursor")
+	require.Len(t, vec.errorMarks, 1, "error should be stamped via MarkBackfillJobError")
+	assert.Contains(t, vec.errorMarks[0].LastError, "wrong-model")
 }
 
 func TestRunBackfillJob_PaginatedAcrossPages(t *testing.T) {

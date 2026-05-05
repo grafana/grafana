@@ -34,6 +34,7 @@ var (
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
 	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
 	sqlVectorBackfillJobsUpdate          = mustTemplate("vector_backfill_jobs_update.sql")
+	sqlVectorBackfillJobsSetError        = mustTemplate("vector_backfill_jobs_set_error.sql")
 	sqlVectorBackfillJobsComplete        = mustTemplate("vector_backfill_jobs_complete.sql")
 )
 
@@ -150,6 +151,19 @@ type sqlVectorBackfillJobsUpdateRequest struct {
 }
 
 func (r *sqlVectorBackfillJobsUpdateRequest) Validate() error {
+	if r.ID == 0 {
+		return fmt.Errorf("missing id")
+	}
+	return nil
+}
+
+type sqlVectorBackfillJobsSetErrorRequest struct {
+	sqltemplate.SQLTemplate
+	ID        int64
+	LastError sql.NullString
+}
+
+func (r *sqlVectorBackfillJobsSetErrorRequest) Validate() error {
 	if r.ID == 0 {
 		return fmt.Errorf("missing id")
 	}

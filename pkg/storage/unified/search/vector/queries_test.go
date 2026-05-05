@@ -112,6 +112,16 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlVectorBackfillJobsSetError: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsSetErrorRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						ID:          7,
+						LastError:   sql.NullString{String: "boom", Valid: true},
+					},
+				},
+			},
 			sqlVectorBackfillJobsComplete: {
 				{
 					Name: "simple",

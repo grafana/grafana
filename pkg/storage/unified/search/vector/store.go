@@ -54,6 +54,11 @@ type VectorBackend interface {
 	// acceptable since the resource embedder is single-goroutine.
 	UpdateBackfillJobCheckpoint(ctx context.Context, id int64, lastSeenKey string, lastErr string) error
 
+	// MarkBackfillJobError stamps last_error without touching last_seen_key.
+	// The error path uses this so a job that fails mid-run keeps the most
+	// recent per-item checkpoint instead of rewinding to a stale snapshot.
+	MarkBackfillJobError(ctx context.Context, id int64, lastErr string) error
+
 	// CompleteBackfillJob marks the job is_complete=true.
 	CompleteBackfillJob(ctx context.Context, id int64) error
 

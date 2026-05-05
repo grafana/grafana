@@ -110,7 +110,7 @@ func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 		if err := b.runBackfillJob(ctx, job); err != nil {
 			log.Error("backfill: job failed",
 				"job_id", job.ID, "model", job.Model, "err", err)
-			_ = b.vectorBackend.UpdateBackfillJobCheckpoint(ctx, job.ID, job.LastSeenKey, err.Error())
+			_ = b.vectorBackend.MarkBackfillJobError(ctx, job.ID, err.Error())
 			continue
 		}
 		if err := b.vectorBackend.CompleteBackfillJob(ctx, job.ID); err != nil {

@@ -41,7 +41,7 @@ func (i *fakeListIterator) ContinueToken() string {
 	return fmt.Sprintf("tok-%d", nextAbs)
 }
 
-func (i *fakeListIterator) item() listItem        { return i.full[i.pageStart+i.idx-1] }
+func (i *fakeListIterator) item() listItem         { return i.full[i.pageStart+i.idx-1] }
 func (i *fakeListIterator) ResourceVersion() int64 { return i.item().RV }
 func (i *fakeListIterator) Namespace() string      { return i.item().Namespace }
 func (i *fakeListIterator) Name() string           { return i.item().Name }
@@ -181,8 +181,10 @@ type fakeVector struct {
 	// Backfill bookkeeping:
 	jobs            []vector.BackfillJob
 	checkpoints     []checkpointCall
+	errorMarks      []errorMarkCall
 	completedJobIDs []int64
 	updateErr       error
+	markErrErr      error
 	completeErr     error
 
 	// Advisory-lock simulation:
@@ -197,10 +199,15 @@ type checkpointCall struct {
 	LastError   string
 }
 
+type errorMarkCall struct {
+	ID        int64
+	LastError string
+}
+
 type deleteCall struct{ Namespace, Model, Resource, UID string }
 type deleteSubsCall struct {
 	Namespace, Model, Resource, UID string
-	Subresources                     []string
+	Subresources                    []string
 }
 
 func newFakeVector() *fakeVector {
@@ -276,6 +283,15 @@ func (f *fakeVector) UpdateBackfillJobCheckpoint(_ context.Context, id int64, ke
 		return f.updateErr
 	}
 	f.checkpoints = append(f.checkpoints, checkpointCall{ID: id, LastSeenKey: key, LastError: e})
+	return nil
+}
+func (f *fakeVector) MarkBackfillJobError(_ context.Context, id int64, e string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.markErrErr != nil {
+		return f.markErrErr
+	}
+	f.errorMarks = append(f.errorMarks, errorMarkCall{ID: id, LastError: e})
 	return nil
 }
 func (f *fakeVector) CompleteBackfillJob(_ context.Context, id int64) error {

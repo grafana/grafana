@@ -97,6 +97,9 @@ func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context) ([]vecto
 func (f *fakeVectorBackend) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil
 }
+func (f *fakeVectorBackend) MarkBackfillJobError(context.Context, int64, string) error {
+	return nil
+}
 func (f *fakeVectorBackend) CompleteBackfillJob(context.Context, int64) error { return nil }
 func (f *fakeVectorBackend) TryAcquireBackfillLock(context.Context) (func(), bool, error) {
 	return func() {}, true, nil
