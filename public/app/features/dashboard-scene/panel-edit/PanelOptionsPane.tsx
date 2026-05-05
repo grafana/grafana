@@ -198,7 +198,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
               <img alt={pluginMeta.name} src={pluginMeta.info.logos.small} className={styles.pluginIcon} />
               <Text
                 data-testid={selectors.components.PanelEditor.OptionsPane.header}
-                element="h3"
+                element="h2"
                 variant="body"
                 weight="medium"
                 truncate
