@@ -52,6 +52,12 @@ func (s *Service) registerScenarios() {
 	})
 
 	s.registerScenario(&Scenario{
+		ID:      kinds.TestDataQueryTypeSeededRandomWalk,
+		Name:    "Seeded Random Walk",
+		handler: s.handleSeededRandomWalkScenario,
+	})
+
+	s.registerScenario(&Scenario{
 		ID:      kinds.TestDataQueryTypePredictablePulse,
 		Name:    "Predictable Pulse",
 		handler: s.handlePredictablePulseScenario,
@@ -315,7 +321,27 @@ func (s *Service) handleRandomWalkScenario(ctx context.Context, req *backend.Que
 
 		for i := 0; i < seriesCount; i++ {
 			respD := resp.Responses[q.RefID]
-			respD.Frames = append(respD.Frames, RandomWalk(q, model, i))
+			respD.Frames = append(respD.Frames, RandomWalk(q, model, i, time.Now().UnixNano()))
+			resp.Responses[q.RefID] = respD
+		}
+	}
+
+	return resp, nil
+}
+
+func (s *Service) handleSeededRandomWalkScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := GetJSONModel(q.JSON)
+		if err != nil {
+			continue
+		}
+		seriesCount := model.SeriesCount
+
+		for i := 0; i < seriesCount; i++ {
+			respD := resp.Responses[q.RefID]
+			respD.Frames = append(respD.Frames, RandomWalk(q, model, i, q.TimeRange.From.UnixNano()+q.TimeRange.To.UnixNano()))
 			resp.Responses[q.RefID] = respD
 		}
 	}
@@ -432,7 +458,7 @@ func (s *Service) handleRandomWalkWithErrorScenario(ctx context.Context, req *ba
 		}
 
 		respD := resp.Responses[q.RefID]
-		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0))
+		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0, time.Now().UnixNano()))
 		respD.Error = fmt.Errorf("this is an error and it can include URLs http://grafana.com/")
 		resp.Responses[q.RefID] = respD
 	}
@@ -454,7 +480,7 @@ func (s *Service) handleRandomWalkSlowScenario(ctx context.Context, req *backend
 		time.Sleep(parsedInterval)
 
 		respD := resp.Responses[q.RefID]
-		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0))
+		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0, time.Now().UnixNano()))
 		resp.Responses[q.RefID] = respD
 	}
 
@@ -853,8 +879,8 @@ func (s *Service) handleErrorWithSourceScenario(ctx context.Context, req *backen
 	return resp, nil
 }
 
-func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *data.Frame {
-	rand := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
+func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int, seed int64) *data.Frame {
+	rand := rand.New(rand.NewSource(seed + int64(index)))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
 	startValue := model.StartValue

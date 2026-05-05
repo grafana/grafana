@@ -58,6 +58,46 @@ func TestTestdataScenarios(t *testing.T) {
 		})
 	})
 
+	t.Run("seeded random walk ", func(t *testing.T) {
+		t.Run("Should start at the requested value", func(t *testing.T) {
+			from := time.Now()
+			to := from.Add(5 * time.Minute)
+
+			query := backend.DataQuery{
+				RefID: "A",
+				TimeRange: backend.TimeRange{
+					From: from,
+					To:   to,
+				},
+				Interval:      100 * time.Millisecond,
+				MaxDataPoints: 100,
+				JSON:          []byte(`{"startValue": 1.234}`),
+			}
+
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
+				Queries:       []backend.DataQuery{query},
+			}
+
+			resp, err := s.handleSeededRandomWalkScenario(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses[query.RefID]
+			require.True(t, exists)
+			require.NoError(t, dResp.Error)
+
+			require.Len(t, dResp.Frames, 1)
+			frame := dResp.Frames[0]
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, "time", frame.Fields[0].Name)
+			require.Equal(t, "A-series", frame.Fields[1].Name)
+			val, ok := frame.Fields[1].ConcreteAt(0)
+			require.True(t, ok)
+			require.Equal(t, 1.234, val)
+		})
+	})
+
 	t.Run("random walk table", func(t *testing.T) {
 		t.Run("Should return a table that looks like value/min/max", func(t *testing.T) {
 			from := time.Now()

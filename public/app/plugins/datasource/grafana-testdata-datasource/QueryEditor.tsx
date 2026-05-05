@@ -283,6 +283,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === TestDataQueryType.RandomWalk && (
         <RandomWalkEditor onChange={onInputChange} query={query} ds={datasource} />
       )}
+      {scenarioId === TestDataQueryType.SeededRandomWalk && (
+        <RandomWalkEditor onChange={onInputChange} query={query} ds={datasource} />
+      )}
       {scenarioId === TestDataQueryType.StreamingClient && (
         <StreamingClientEditor onChange={onStreamClientChange} query={query} ds={datasource} />
       )}

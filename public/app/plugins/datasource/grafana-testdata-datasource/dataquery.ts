@@ -23,6 +23,7 @@ export enum TestDataQueryType {
   PredictablePulse = 'predictable_pulse',
   QueryMeta = 'query_meta',
   RandomWalk = 'random_walk',
+  SeededRandomWalk = 'seeded_random_walk',
   RandomWalkTable = 'random_walk_table',
   RandomWalkWithError = 'random_walk_with_error',
   RawFrame = 'raw_frame',

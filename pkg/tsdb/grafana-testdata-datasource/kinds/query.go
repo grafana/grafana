@@ -69,6 +69,7 @@ const (
 	TestDataQueryTypePredictablePulse             TestDataQueryType = "predictable_pulse"
 	TestDataQueryTypeQueryMeta                    TestDataQueryType = "query_meta"
 	TestDataQueryTypeRandomWalk                   TestDataQueryType = "random_walk"
+	TestDataQueryTypeSeededRandomWalk             TestDataQueryType = "seeded_random_walk"
 	TestDataQueryTypeRandomWalkTable              TestDataQueryType = "random_walk_table"
 	TestDataQueryTypeRandomWalkWithError          TestDataQueryType = "random_walk_with_error"
 	TestDataQueryTypeRawFrame                     TestDataQueryType = "raw_frame"
