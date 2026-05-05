@@ -137,7 +137,21 @@ INNER JOIN "user" on "user".id = dashboard.created_by
 WHERE $__timeFilter(dashboard.created)
 ```
 
-You can use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/) in queries. For example, to filter by a variable named `hostname`: `WHERE hostname IN($hostname)`.
+You can use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/) in queries to create dynamic, reusable dashboards. For example, to filter by a variable named `hostname`:
+
+```sql
+SELECT
+  $__time("time_date_time"),
+  value_double AS value,
+  hostname
+FROM test_data
+WHERE
+  $__timeFilter("time_date_time")
+  AND hostname IN($hostname)
+ORDER BY time
+```
+
+For more information on creating and using template variables with PostgreSQL, refer to [PostgreSQL template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/).
 
 ### Table query with time range columns
 
