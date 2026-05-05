@@ -14,7 +14,7 @@ import { getDataSourcePlugin } from './plugin';
 export interface UseInstanceSettingsResult {
   isLoading: boolean;
   error?: Error;
-  data?: DataSourceInstanceSettings;
+  settings?: DataSourceInstanceSettings;
 }
 
 /**
@@ -36,7 +36,7 @@ export interface UseFindInstanceSettingsResult {
 export interface UseDataSourcePluginResult {
   isLoading: boolean;
   error?: Error;
-  data?: DataSourceApi;
+  dataSource?: DataSourceApi;
 }
 
 /**
@@ -48,7 +48,7 @@ export interface UseDataSourcePluginResult {
 export function useInstanceSettings(ref?: DataSourceRef | string | null): UseInstanceSettingsResult {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const { loading, error, value } = useAsync(() => getInstanceSettings(ref), [ref]);
-  return { isLoading: loading, error, data: value };
+  return { isLoading: loading, error, settings: value };
 }
 
 /**
@@ -106,5 +106,5 @@ export function useFindInstanceSettings(filters?: GetDataSourceListFilters): Use
 export function useDataSourcePlugin(ref?: DataSourceRef | string | null): UseDataSourcePluginResult {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const { loading, error, value } = useAsync(() => getDataSourcePlugin(ref), [ref]);
-  return { isLoading: loading, error, data: value };
+  return { isLoading: loading, error, dataSource: value };
 }
