@@ -10,12 +10,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
 
 type ctxAppDTO struct{}
 
 type shimDTO struct {
-	getDecryptedSecureJSONData func(context.Context) (map[string]string, error)
+	getDecryptedSecureJSONData pluginsettings.SecureJsonGetter
 }
 
 // This can be removed when we no longer support loading directly from the legacy SQL store

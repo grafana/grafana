@@ -18,6 +18,7 @@ import (
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
@@ -50,6 +51,10 @@ type PluginContextWrapper interface {
 type AppPluginRunnerOptions struct {
 	RegisterProxy bool
 
+	DataProxyLogging         bool // from cfg
+	SendUserHeader           bool // from cfg
+	PluginsAppsSkipVerifyTLS bool // from cfg
+
 	// When this exists, dual write settings will be used
 	LegacyStore grafanarest.Storage
 
@@ -66,6 +71,8 @@ type AppPluginAPIBuilder struct {
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService // Used with unified storage
 	accessChecker   PluginAccessChecker
+	features        featuremgmt.FeatureToggles
+	tracer          tracing.Tracer
 
 	// optional configuration
 	opts AppPluginRunnerOptions
@@ -82,6 +89,8 @@ func NewAppPluginAPIBuilder(
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
 	opts AppPluginRunnerOptions, // can change without updating wire :)
+	tracer tracing.Tracer, // needed for proxy
+	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
 	return &AppPluginAPIBuilder{
 		pluginJSON: plugin.JSONData,
@@ -95,6 +104,8 @@ func NewAppPluginAPIBuilder(
 		decrypter:       decrypter,
 		accessChecker:   accessChecker,
 		opts:            opts,
+		features:        features,
+		tracer:          tracer,
 	}, nil
 }
 
@@ -107,6 +118,9 @@ func RegisterAPIService(
 	pluginSettings pluginsettings.Service,
 	accessControl ac.AccessControl,
 	decrypter decrypt.DecryptService,
+	tracer tracing.Tracer, // needed for proxy
+	features featuremgmt.FeatureToggles, // needed for proxy
+	cfg *setting.Cfg,
 ) (*AppPluginAPIBuilder, error) {
 	ctx := context.Background()
 	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsRegisterAPIServer, false, openfeature.TransactionContext(ctx)) {
@@ -144,7 +158,13 @@ func RegisterAPIService(
 				RegisterProxy: registerProxy, // FROM feature toggles
 				LegacyStore:   NewLegacySettingsStore(plugin.JSONData.ID, pluginSettings),
 				AccessControl: accessControl,
+
+				DataProxyLogging:         cfg.DataProxyLogging,
+				SendUserHeader:           cfg.SendUserHeader,
+				PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
 			},
+			tracer,
+			features,
 		)
 		if err != nil {
 			return nil, err

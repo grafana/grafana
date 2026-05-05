@@ -2,10 +2,14 @@ package appplugin
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,24 +18,53 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
 
 type subProxyREST struct {
-	pluginID        string
-	routes          []*plugins.Route
-	contextProvider func(ctx context.Context) (context.Context, backend.PluginContext, error)
-	accessControl   ac.AccessControl
+	pluginID             string
+	routes               []*plugins.Route
+	contextProvider      func(ctx context.Context) (context.Context, backend.PluginContext, error)
+	accessControl        ac.AccessControl
+	tracer               tracing.Tracer
+	features             featuremgmt.FeatureToggles
+	pluginProxyTransport *http.Transport
+
+	DataProxyLogging bool // from cfg
+	SendUserHeader   bool // from cfg
 }
 
 func newProxy(b *AppPluginAPIBuilder) *subProxyREST {
+
 	return &subProxyREST{
-		pluginID:        b.pluginJSON.ID,
-		routes:          b.pluginJSON.Routes,
-		contextProvider: b.getPluginContext,
-		accessControl:   b.opts.AccessControl,
+		pluginID:         b.pluginJSON.ID,
+		routes:           b.pluginJSON.Routes,
+		contextProvider:  b.getPluginContext,
+		accessControl:    b.opts.AccessControl,
+		DataProxyLogging: b.opts.DataProxyLogging,
+		SendUserHeader:   b.opts.SendUserHeader,
+		tracer:           b.tracer,
+		features:         b.features,
+
+		pluginProxyTransport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: b.opts.PluginsAppsSkipVerifyTLS,
+				Renegotiation:      tls.RenegotiateFreelyAsClient,
+			},
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			TLSHandshakeTimeout: 10 * time.Second,
+		},
 	}
 }
 
@@ -68,6 +101,10 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	if ns == "" {
 		return nil, k8serrors.NewBadRequest("missing namespace in connect context")
 	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx, pluginCtx, err := r.contextProvider(request.WithNamespace(req.Context(), ns))
@@ -78,29 +115,46 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		m := newConnectMetric("proxy", r.pluginID)
 		defer m.Record()
 
-		clonedReq, err := proxyRequest(req)
-		if err != nil {
-			backend.Logger.Error("failed to create proxy request", "error", err)
-			m.SetError()
+		ps := &pluginsettings.DTO{
+			OrgID:         pluginCtx.OrgID, // Or from the namespace
+			PluginID:      r.pluginID,
+			PluginVersion: pluginCtx.PluginVersion,
+			Enabled:       true,
+		}
+		if err = json.Unmarshal(pluginCtx.AppInstanceSettings.JSONData, ps.JSONData); err != nil {
 			responder.Error(err)
 			return
 		}
 
-		// TODO... actually proxy!!!
-		_, err = w.Write(fmt.Appendf(nil, "TODO, proxy: %s // %v // %v", clonedReq.URL.Path, pluginCtx.AppInstanceSettings.JSONData, ctx))
+		proxyReq, proxyPath, err := proxyRequest(ctx, req)
 		if err != nil {
 			responder.Error(err)
+			return
 		}
+
+		secureJsonData := func(ctx context.Context) (map[string]string, error) {
+			return pluginCtx.AppInstanceSettings.DecryptedSecureJSONData, nil
+		}
+
+		p, err := pluginproxy.NewPluginProxy(ps, r.routes,
+			proxyReq, w, user,
+			proxyPath, r.DataProxyLogging, r.SendUserHeader,
+			secureJsonData, r.tracer, r.pluginProxyTransport, r.accessControl, r.features)
+		if err != nil {
+			responder.Error(fmt.Errorf("Failed to create plugin proxy %w", err))
+			return
+		}
+		p.HandleRequest()
 	}), nil
 }
 
-func proxyRequest(req *http.Request) (*http.Request, error) {
+func proxyRequest(ctx context.Context, req *http.Request) (*http.Request, string, error) {
 	idx := strings.LastIndex(req.URL.Path, "/proxy")
 	if idx < 0 {
-		return nil, fmt.Errorf("expected proxy path") // 400?
+		return nil, "", fmt.Errorf("expected proxy path") // 400?
 	}
 
-	clonedReq := req.Clone(req.Context())
+	clonedReq := req.Clone(ctx)
 	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/proxy"):], "/")
 
 	clonedReq.URL = &url.URL{
@@ -108,5 +162,5 @@ func proxyRequest(req *http.Request) (*http.Request, error) {
 		RawQuery: clonedReq.URL.RawQuery,
 	}
 
-	return clonedReq, nil
+	return clonedReq, rawURL, nil
 }
