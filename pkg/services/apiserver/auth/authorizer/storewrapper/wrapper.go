@@ -36,7 +36,9 @@ var RejectAllWatchFilter WatchEventFilter = nil
 
 // PassThroughWatchFilter is used to bypass the filter and forward the inner watch.Interface directly to the caller.
 var PassThroughWatchFilter WatchEventFilter = func(_ []watch.Event) ([]bool, error) {
-	return make([]bool, 0), nil
+	// The error is a safety net to prevent the filter from being used accidentally
+	// silently dropping all events without returning an error.
+	return nil, errors.NewUnauthorized("watch filter not implemented")
 }
 
 // isPassThroughWatchFilter returns true if the filter is the PassThroughWatchFilter.
@@ -281,7 +283,7 @@ func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOption
 		return nil, err
 	}
 	// Fail-closed: a nil filter is treated as RejectAllWatchFilter.
-	// Implementors should return AllowAllWatchFilter explicitly for unrestricted resources.
+	// Implementors should return PassThroughWatchFilter explicitly for unrestricted resources.
 	if filter == nil {
 		return nil, errors.NewUnauthorized("watch filter not implemented")
 	}
