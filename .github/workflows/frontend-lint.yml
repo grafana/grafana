@@ -11,7 +11,7 @@ permissions: {}
 jobs:
   detect-changes:
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
@@ -38,7 +38,7 @@ jobs:
     # the `lint-frontend-prettier-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.prettier == 'true'
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     steps:
     - uses: actions/checkout@v5
       with:
@@ -56,7 +56,7 @@ jobs:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.prettier == 'true'
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     steps:
     - uses: actions/checkout@v5
       with:
@@ -79,7 +79,9 @@ jobs:
     # the `lint-frontend-typecheck-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
     - uses: actions/checkout@v5
       with:
@@ -98,7 +100,9 @@ jobs:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
     - uses: actions/checkout@v5
       with:
@@ -121,7 +125,7 @@ jobs:
     # the `lint-frontend-api-clients-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     name: Verify API clients
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     steps:
     - uses: actions/checkout@v5
       with:
@@ -149,7 +153,7 @@ jobs:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: Verify API clients (enterprise)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     steps:
     - uses: actions/checkout@v5
       with:
@@ -181,7 +185,7 @@ jobs:
       id-token: write
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed-frontend-packages == 'true'
     name: Verify packed frontend packages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     steps:
     - name: Checkout build commit
       uses: actions/checkout@v5
@@ -204,7 +208,7 @@ jobs:
       id-token: write
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed == 'true'
     name: Check circular dependencies
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-x64
     steps:
     - name: Checkout build commit
       uses: actions/checkout@v5
