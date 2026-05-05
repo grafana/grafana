@@ -1,12 +1,13 @@
 import { type Page } from '@playwright/test';
 
-import { jitter, spaNavigateHome } from './__smoke__/playwright-utils.ts';
+import { jitter, spaNavigate, spaNavigateHome } from './__smoke__/playwright-utils.ts';
 import { type JourneyDriver } from './__smoke__/types.ts';
 
 // Title of the fixture dashboard auto-created by the smoke runner. Kept in
 // sync with FIXTURE_TITLE in scripts/cuj-smoke.ts so the open-fixture scenario
 // has a stable target row in the browse-dashboards table.
 const FIXTURE_TITLE = 'CUJ Smoke Fixture';
+const FIXTURE_PATH = '/d/cuj-smoke-fixture';
 
 const BROWSE_TO_RESOURCE_SCENARIOS = ['open-fixture', 'abandon'] as const;
 
@@ -14,9 +15,11 @@ const BROWSE_DASHBOARDS_TABLE = 'data-testid browse-dashboards-table';
 const BROWSE_DASHBOARDS_ROW = `data-testid browse dashboards row ${FIXTURE_TITLE}`;
 
 /**
- * Navigate to /dashboards and click the fixture row. Triggers
- * grafana_browse_dashboards_page_view + page_click_list_item +
- * dashboards_init_dashboard_completed -> success.
+ * Navigate to /dashboards (page_view starts the journey), then click the
+ * fixture row if it's rendered. The browse table is virtualised, so in test
+ * envs with many dashboards the fixture row may not be in DOM - fall back to
+ * SPA-navigating directly to the fixture so the journey still ends cleanly
+ * via dashboards_init_dashboard_completed.
  */
 async function openFixture(page: Page): Promise<void> {
   await page.goto('/dashboards');
@@ -25,23 +28,30 @@ async function openFixture(page: Page): Promise<void> {
   } catch {
     return;
   }
+  await page.waitForTimeout(200 + jitter(400));
 
   const fixtureRow = page.getByTestId(BROWSE_DASHBOARDS_ROW);
-  try {
-    await fixtureRow.waitFor({ state: 'visible', timeout: 10_000 });
-  } catch {
-    // Fixture row not in viewport (large folder list); the page_view start
-    // already fired so let the journey time out as `timeout`.
-    return;
+  let clicked = false;
+  if ((await fixtureRow.count()) > 0) {
+    try {
+      await fixtureRow.getByRole('link').first().click({ timeout: 3_000 });
+      clicked = true;
+    } catch {
+      // Fall through to SPA nav.
+    }
   }
 
-  await page.waitForTimeout(200 + jitter(400));
-  await fixtureRow.getByRole('link').first().click();
-  // Wait for the dashboard URL so dashboards_init_dashboard_completed has time to fire.
+  if (!clicked) {
+    // Row not virtualised in or click failed - SPA-navigate so
+    // dashboards_init_dashboard_completed still fires in the same context
+    // (page_view start already fired on /dashboards).
+    await spaNavigate(page, FIXTURE_PATH);
+  }
+
   try {
     await page.waitForURL(/\/d\/cuj-smoke-fixture/, { timeout: 10_000 });
   } catch {
-    // Click missed; journey will end via timeout.
+    // Navigation didn't land - journey will time out.
   }
 }
 
