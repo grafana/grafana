@@ -65,7 +65,8 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if options.FieldSelector != nil {
 		for _, r := range options.FieldSelector.Requirements() {
 			switch r.Field {
-			case "spec.datasource.name":
+			case "spec.source.name",
+				"spec.datasource.name": // this is for backwards compatibility as the selector was previously on datasource.name (which is not an actual path in the schema)
 				switch r.Operator {
 				case selection.Equals, selection.DoubleEquals:
 					uids = []string{r.Value}
