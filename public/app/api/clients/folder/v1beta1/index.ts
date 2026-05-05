@@ -134,6 +134,7 @@ export const {
   useUpdateFolderMutation,
   useReplaceFolderMutation,
   useGetAffectedItemsQuery,
+  useGetFolderCountsQuery,
 } = folderAPIv1beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files

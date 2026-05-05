@@ -319,11 +319,11 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(await screen.findByRole('tab', { name: 'Dashboards' })).toBeInTheDocument();
       expect(await screen.findByRole('tab', { name: 'Dashboards' })).toHaveAttribute('aria-selected', 'true');
 
-      expect(await screen.findByRole('tab', { name: 'Panels' })).toBeInTheDocument();
-      expect(await screen.findByRole('tab', { name: 'Panels' })).toHaveAttribute('aria-selected', 'false');
+      expect(await screen.findByRole('tab', { name: /^Panels/ })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /^Panels/ })).toHaveAttribute('aria-selected', 'false');
 
-      expect(await screen.findByRole('tab', { name: 'Alert rules' })).toBeInTheDocument();
-      expect(await screen.findByRole('tab', { name: 'Alert rules' })).toHaveAttribute('aria-selected', 'false');
+      expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toHaveAttribute('aria-selected', 'false');
     });
 
     it('displays the filters and hides the actions initially', async () => {
