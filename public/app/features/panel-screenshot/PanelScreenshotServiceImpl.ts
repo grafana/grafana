@@ -95,7 +95,7 @@ function findPluginIdByPathId(root: unknown, panelPathId: string): string | unde
     }
     if (typeof node.getPathId === 'function' && typeof state.pluginId === 'string') {
       try {
-        if ((node.getPathId as () => string)() === panelPathId) {
+        if (node.getPathId() === panelPathId) {
           return state.pluginId;
         }
       } catch {
