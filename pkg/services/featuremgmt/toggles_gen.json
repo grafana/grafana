@@ -2672,6 +2672,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.orgDashboardTemplates",
+        "resourceVersion": "1777989950811",
+        "creationTimestamp": "2026-05-05T14:05:50Z"
+      },
+      "spec": {
+        "description": "Enables org-defined dashboard templates for enterprise",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-12-06T20:21:21Z"
