@@ -1,8 +1,8 @@
-import {
-  type CodeMirrorCompletion,
-  type CodeMirrorCompletionContext,
-  type CodeMirrorCompletionResult,
-  type CodeMirrorCompletionSource,
+import type {
+  CodeMirrorCompletion,
+  CodeMirrorCompletionContext,
+  CodeMirrorCompletionResult,
+  CodeMirrorCompletionSource,
 } from '@grafana/ui/unstable';
 
 import { getSqlCompletionSituation } from './completionSituation';
