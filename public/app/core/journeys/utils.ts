@@ -26,21 +26,20 @@ export function str(value: unknown): string {
   if (value == null) {
     return '';
   }
-  const t = typeof value;
-  if (t === 'string') {
-    return value as string;
+  if (typeof value === 'string') {
+    return value;
   }
-  if (t === 'boolean' || t === 'bigint') {
+  if (typeof value === 'boolean' || typeof value === 'bigint') {
     return String(value);
   }
-  if (t === 'number') {
+  if (typeof value === 'number') {
     if (Number.isFinite(value)) {
       return String(value);
     }
     warnUnsupported(`number:${value}`);
     return '';
   }
-  warnUnsupported(t);
+  warnUnsupported(typeof value);
   return '';
 }
 
