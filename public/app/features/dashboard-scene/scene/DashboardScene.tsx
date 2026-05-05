@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
+import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
   SceneDataTransformer,
   sceneGraph,
