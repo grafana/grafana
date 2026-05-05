@@ -227,7 +227,7 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 			require.NoError(t, err)
 			rows.Next()
 			var duration int
-			rows.Scan(&duration)
+			require.NoError(t, rows.Scan(&duration))
 			require.Equal(t, pair.expectedLeaseDuration, duration)
 		}
 	})
@@ -283,7 +283,7 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 			},
 			"lease": func(t *rapid.T) {
 				// Taken from secureValueMetadataStorage.acquireLeases
-				minAge := 300 * time.Second
+				minAge := 10 * time.Minute
 				leaseTTL := 300 * time.Second
 				maxBatchSize := rapid.Uint16Range(1, 10).Draw(t, "maxBatchSize")
 				modelSvs, modelErr := model.LeaseInactiveSecureValues(sut.Clock.Now(), minAge, leaseTTL, maxBatchSize)

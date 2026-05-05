@@ -66,7 +66,7 @@ func TestBasic(t *testing.T) {
 		require.NoError(t, err)
 
 		// Advance time to wait for grace period
-		sut.Clock.AdvanceBy(10 * time.Minute)
+		sut.Clock.AdvanceBy(11 * time.Minute)
 
 		svs, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
 		require.NoError(t, err)
