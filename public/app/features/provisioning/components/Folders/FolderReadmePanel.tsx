@@ -1,4 +1,6 @@
 import { css } from '@emotion/css';
+import { useEffect, useRef } from 'react';
+import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -35,6 +37,27 @@ function FolderReadmePanelContent({ folderUID }: Props) {
   const styles = useStyles2(getStyles);
   const { repository, folder, readmePath, status, markdownContent, refetch } = useFolderReadme(folderUID);
 
+  const sectionRef = useRef<HTMLElement>(null);
+  const intersection = useIntersection(sectionRef, { threshold: 0.5 });
+  const reportedStatusRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!repository || status === 'loading') {
+      return;
+    }
+    if (!intersection?.isIntersecting) {
+      return;
+    }
+    if (reportedStatusRef.current === status) {
+      return;
+    }
+    reportedStatusRef.current = status;
+    reportInteraction('grafana_provisioning_readme_panel_viewed', {
+      repositoryType: repository.type,
+      status,
+    });
+  }, [intersection, repository, status]);
+
   if (!repository || status === 'loading') {
     return null;
   }
@@ -58,7 +81,12 @@ function FolderReadmePanelContent({ folderUID }: Props) {
   });
 
   return (
-    <section id={FOLDER_README_ANCHOR_ID} className={styles.panel} aria-labelledby={`${FOLDER_README_ANCHOR_ID}-title`}>
+    <section
+      ref={sectionRef}
+      id={FOLDER_README_ANCHOR_ID}
+      className={styles.panel}
+      aria-labelledby={`${FOLDER_README_ANCHOR_ID}-title`}
+    >
       <header className={styles.header}>
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name="file-alt" size="sm" />
@@ -119,6 +147,7 @@ function ReadmeBody({ status, markdownContent, repository, readmePath, newFileUr
           markdown={markdownContent}
           repository={repository}
           baseDirInRepo={getReadmeBaseDir(repository.path, readmePath)}
+          repositoryType={repository.type}
         />
       ) : (
         <Text color="secondary">
@@ -128,7 +157,7 @@ function ReadmeBody({ status, markdownContent, repository, readmePath, newFileUr
     case 'missing':
       return <AddReadmeEmptyState newFileUrl={newFileUrl} repositoryType={repository.type} />;
     case 'error':
-      return <ReadmeLoadError onRetry={refetch} />;
+      return <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} />;
   }
 }
 
@@ -136,14 +165,34 @@ function RenderedMarkdown({
   markdown,
   repository,
   baseDirInRepo,
+  repositoryType,
 }: {
   markdown: string;
   repository: RepositoryView;
   baseDirInRepo: string;
+  repositoryType: string | undefined;
 }) {
   const html = renderMarkdown(markdown);
   const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
-  return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: rewritten }} />;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) {
+      return;
+    }
+    const handleClick = (e: MouseEvent) => {
+      if (e.target instanceof HTMLElement && e.target.closest('a')) {
+        reportInteraction('grafana_provisioning_readme_link_clicked', {
+          repositoryType,
+        });
+      }
+    };
+    el.addEventListener('click', handleClick);
+    return () => el.removeEventListener('click', handleClick);
+  }, [repositoryType]);
+
+  return <div ref={containerRef} className="markdown-html" dangerouslySetInnerHTML={{ __html: rewritten }} />;
 }
 
 /**
@@ -185,10 +234,19 @@ function AddReadmeEmptyState({ newFileUrl, repositoryType }: { newFileUrl?: stri
   );
 }
 
-function ReadmeLoadError({ onRetry }: { onRetry: () => void }) {
+function ReadmeLoadError({ onRetry, repositoryType }: { onRetry: () => void; repositoryType: string | undefined }) {
   return (
     <Alert severity="warning" title={t('browse-dashboards.readme.load-error-title', "Couldn't load README")}>
-      <Button variant="secondary" size="sm" onClick={onRetry}>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => {
+          reportInteraction('grafana_provisioning_readme_retry_clicked', {
+            repositoryType,
+          });
+          onRetry();
+        }}
+      >
         <Trans i18nKey="browse-dashboards.readme.load-error-retry">Try again</Trans>
       </Button>
     </Alert>
