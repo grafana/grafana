@@ -101,7 +101,7 @@ describe('Migrate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseRepositoryList.mockReturnValue([[], false]);
-    mockUseFolderLeaderboard.mockReturnValue({ data: [], isLoading: false, isError: false });
+    mockUseFolderLeaderboard.mockReturnValue({ data: [], isLoading: false, isError: false, isTruncated: false });
   });
 
   it('renders a loading indicator while fetching stats', () => {
@@ -150,6 +150,7 @@ describe('Migrate', () => {
       ],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     // Disabled before any selection. The footer button uses "Migrate selected (0)";
@@ -182,6 +183,7 @@ describe('Migrate', () => {
       ],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     expect(screen.queryByRole('button', { name: /migrate selected/i })).not.toBeInTheDocument();
@@ -230,6 +232,7 @@ describe('Migrate', () => {
       ],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     // The gauge card uses an exact "Folders managed" label; the next-steps
@@ -288,6 +291,7 @@ describe('Migrate', () => {
       data: [makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 12 })],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     expect(screen.getByText(/connect your first repository/i)).toBeInTheDocument();
@@ -321,6 +325,7 @@ describe('Migrate', () => {
       ],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     // "Quick wins" appears in the panel heading and is also referenced from
@@ -349,6 +354,7 @@ describe('Migrate', () => {
       ],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     // The Quick wins heading uses Title Case; the next-steps copy mentions
@@ -372,6 +378,7 @@ describe('Migrate', () => {
       data: [makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 2 })],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     expect(screen.getByText(/dashboards to migrate/i)).toBeInTheDocument();
@@ -397,6 +404,7 @@ describe('Migrate', () => {
       ],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     // Default sort is "Most dashboards" — Alpha (5) precedes Beta (2) in the
@@ -430,6 +438,7 @@ describe('Migrate', () => {
       ],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     await userEvent.click(screen.getByRole('button', { name: /^expand payments$/i }));
@@ -467,6 +476,7 @@ describe('Migrate', () => {
       ],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     await userEvent.click(screen.getByRole('checkbox', { name: /select folder payments/i }));
@@ -511,6 +521,7 @@ describe('Migrate', () => {
       ],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     await userEvent.click(screen.getByRole('checkbox', { name: /select folder payments/i }));
@@ -539,6 +550,7 @@ describe('Migrate', () => {
       ],
       isLoading: false,
       isError: false,
+      isTruncated: false,
     });
     render(<Migrate />);
     // "Payments" appears in the Quick wins card and the table row.

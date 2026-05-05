@@ -381,6 +381,11 @@ function NextStepsPanel({ totals, repos }: { totals: ReturnType<typeof aggregate
   const hasStartedMigrating = totals.managed > 0;
   const hasDashboards = totals.instanceTotal > 0;
   const everythingManaged = hasDashboards && totals.unmanaged === 0;
+  // The "All set!" celebration is only honest when every managed dashboard is
+  // actually on Git Sync. With Terraform/GCX/file-system-managed dashboards in
+  // the mix, the page can't claim Git Sync coverage — the user still has work
+  // to do if they want a consistent GitOps setup.
+  const everythingOnGitSync = everythingManaged && totals.gitSync === totals.managed;
 
   // Step state machine. Steps marked `done` get a green check; the next step
   // after the last done one is the "active" step that drives the user's
@@ -468,7 +473,7 @@ function NextStepsPanel({ totals, repos }: { totals: ReturnType<typeof aggregate
           );
         })}
       </ol>
-      {everythingManaged && (
+      {everythingOnGitSync ? (
         <div className={styles.stepperComplete}>
           <Icon name="check-circle" size="lg" />
           <Stack direction="column" gap={0}>
@@ -483,6 +488,23 @@ function NextStepsPanel({ totals, repos }: { totals: ReturnType<typeof aggregate
             </Text>
           </Stack>
         </div>
+      ) : (
+        everythingManaged && (
+          <div className={styles.stepperComplete}>
+            <Icon name="info-circle" size="lg" />
+            <Stack direction="column" gap={0}>
+              <Text weight="medium">
+                <Trans i18nKey="provisioning.stats.next-steps-other-managed-title">All dashboards are managed</Trans>
+              </Text>
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="provisioning.stats.next-steps-other-managed-body">
+                  Every dashboard is provisioned, but some are managed by tools other than Git Sync. Migrate them if you
+                  want a single GitOps source of truth.
+                </Trans>
+              </Text>
+            </Stack>
+          </div>
+        )
       )}
       <TextLink external href={CONFIGURE_GRAFANA_DOCS_URL} variant="bodySmall">
         <Trans i18nKey="provisioning.stats.migration-guide">Migration guide</Trans>
@@ -573,7 +595,12 @@ export function Migrate() {
   const totals = useMemo(() => aggregateTotals(breakdowns), [breakdowns]);
   const styles = useStyles2(getStyles);
 
-  const { data: folders, isLoading: isLeaderboardLoading, isError: isLeaderboardError } = useFolderLeaderboard();
+  const {
+    data: folders,
+    isLoading: isLeaderboardLoading,
+    isError: isLeaderboardError,
+    isTruncated: isLeaderboardTruncated,
+  } = useFolderLeaderboard();
   const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());
   const [selectedDashboardUids, setSelectedDashboardUids] = useState<Set<string>>(new Set());
   const [migrateDrawerOpen, setMigrateDrawerOpen] = useState(false);
@@ -661,6 +688,20 @@ export function Migrate() {
   return (
     <Stack direction="column" gap={3}>
       <MigrateToGitopsHeader />
+      {isLeaderboardTruncated && (
+        <Alert
+          severity="warning"
+          title={t(
+            'provisioning.stats.leaderboard-truncated-title',
+            'Showing a partial view of folders and dashboards'
+          )}
+        >
+          <Trans i18nKey="provisioning.stats.leaderboard-truncated-body">
+            This instance has more folders or dashboards than this page can scan in one go. The list below covers a
+            subset; migrate from it in batches and reload the page after each migration to surface the next batch.
+          </Trans>
+        </Alert>
+      )}
       <OverviewStatCards totals={totals} folders={folders} />
       <div className={styles.mainGrid}>
         <div className={styles.tableColumn}>

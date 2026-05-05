@@ -126,22 +126,15 @@ export function QuickWinsPanel({
       <div className={styles.cards}>
         {topFolders.map((folder) => {
           const isSelected = selected.has(folder.uid);
+          // <label> wrapping the checkbox: clicking anywhere on the card
+          // toggles the checkbox via native label-control association, keyboard
+          // focus lands on the checkbox itself, and there are no nested
+          // interactives (which would be invalid markup and cause double-fire).
           return (
-            <button
-              key={folder.uid}
-              type="button"
-              className={styles.card}
-              aria-pressed={isSelected}
-              onClick={(e) => {
-                // The Checkbox's own onChange handles its click. Without this
-                // bail-out, the click bubbles to the button and onToggle fires
-                // a second time, cancelling the toggle.
-                if (e.target instanceof HTMLElement && e.target.closest('input[type="checkbox"]')) {
-                  return;
-                }
-                onToggle(folder.uid);
-              }}
-            >
+            // The nested Checkbox renders an <input>, which the label associates with
+            // via its DOM tree. The rule can't see through the @grafana/ui component.
+            // eslint-disable-next-line jsx-a11y/label-has-associated-control
+            <label key={folder.uid} className={styles.card} data-selected={isSelected || undefined}>
               <Stack direction="row" gap={1} alignItems="center">
                 <Checkbox value={isSelected} onChange={() => onToggle(folder.uid)} aria-label={folder.title} />
                 <Icon name="folder" />
@@ -156,7 +149,7 @@ export function QuickWinsPanel({
                   </Text>
                 </Stack>
               </Stack>
-            </button>
+            </label>
           );
         })}
       </div>
@@ -211,7 +204,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderColor: theme.colors.border.medium,
       background: theme.colors.background.secondary,
     },
-    '&[aria-pressed="true"]': {
+    '&[data-selected="true"]': {
       borderColor: theme.colors.primary.border,
       background: theme.colors.background.secondary,
     },

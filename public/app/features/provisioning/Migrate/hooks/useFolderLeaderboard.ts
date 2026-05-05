@@ -49,17 +49,29 @@ interface State {
   data: FolderRow[];
   isLoading: boolean;
   isError: boolean;
+  /**
+   * True when either the folder or dashboard fetch hit MAX_PAGES * PAGE_SIZE
+   * and stopped paging. The leaderboard then represents only a subset of the
+   * instance — surface this so the page can warn the admin.
+   */
+  isTruncated: boolean;
+}
+
+interface PagedResult<T> {
+  rows: T[];
+  truncated: boolean;
 }
 
 async function fetchAllFolders(): Promise<
-  Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>
+  PagedResult<{ uid: string; title: string; parentUid?: string; managedBy?: string }>
 > {
   const searcher = getGrafanaSearcher();
-  const all: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }> = [];
+  const rows: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }> = [];
   // Use the searcher with `kind: ['folder']` and no location filter so we get
   // every folder on the instance — root-level *and* nested. listFolders only
   // returns immediate children of a single parent, which would silently drop
   // subfolders from the leaderboard.
+  let truncated = false;
   for (let page = 1; page <= MAX_PAGES; page++) {
     const result = await searcher.search({
       kind: ['folder'],
@@ -68,32 +80,36 @@ async function fetchAllFolders(): Promise<
       offset: (page - 1) * PAGE_SIZE,
       limit: PAGE_SIZE,
     });
-    const rows: DashboardQueryResult[] = result.view.toArray();
-    for (const item of rows) {
+    const items: DashboardQueryResult[] = result.view.toArray();
+    for (const item of items) {
       // `item.location` is the full ancestor path; the immediate parent is the
       // last segment, with the literal `general` UID stripped.
       const path = typeof item.location === 'string' ? item.location : '';
       const segments = path.split('/').filter((s) => s && s !== GENERAL_FOLDER_UID);
       const parentUid = segments.length > 0 ? segments[segments.length - 1] : undefined;
-      all.push({
+      rows.push({
         uid: item.uid,
         title: item.name,
         parentUid,
         managedBy: extractManagerKind(item.managedBy),
       });
     }
-    if (rows.length < PAGE_SIZE) {
+    if (items.length < PAGE_SIZE) {
       break;
     }
+    if (page === MAX_PAGES) {
+      truncated = true;
+    }
   }
-  return all;
+  return { rows, truncated };
 }
 
 async function fetchAllDashboards(): Promise<
-  Array<{ uid: string; title: string; ancestors: string[]; managedBy?: string; url: string }>
+  PagedResult<{ uid: string; title: string; ancestors: string[]; managedBy?: string; url: string }>
 > {
   const searcher = getGrafanaSearcher();
-  const all: Array<{ uid: string; title: string; ancestors: string[]; managedBy?: string; url: string }> = [];
+  const rows: Array<{ uid: string; title: string; ancestors: string[]; managedBy?: string; url: string }> = [];
+  let truncated = false;
   for (let page = 1; page <= MAX_PAGES; page++) {
     const result = await searcher.search({
       kind: ['dashboard'],
@@ -102,8 +118,8 @@ async function fetchAllDashboards(): Promise<
       offset: (page - 1) * PAGE_SIZE,
       limit: PAGE_SIZE,
     });
-    const rows: DashboardQueryResult[] = result.view.toArray();
-    for (const item of rows) {
+    const items: DashboardQueryResult[] = result.view.toArray();
+    for (const item of items) {
       const view = queryResultToViewItem(item, result.view);
       // `item.location` is the full ancestor path, e.g. "rootUid/subUid". The
       // searcher returns the literal `general` UID for dashboards that sit at
@@ -111,7 +127,7 @@ async function fetchAllDashboards(): Promise<
       // aggregate() picks them up via an empty ancestor path.
       const path = typeof item.location === 'string' ? item.location : '';
       const ancestors = path.split('/').filter((segment) => segment && segment !== GENERAL_FOLDER_UID);
-      all.push({
+      rows.push({
         uid: view.uid,
         title: view.title,
         ancestors,
@@ -119,11 +135,14 @@ async function fetchAllDashboards(): Promise<
         url: view.url ?? '',
       });
     }
-    if (rows.length < PAGE_SIZE) {
+    if (items.length < PAGE_SIZE) {
       break;
     }
+    if (page === MAX_PAGES) {
+      truncated = true;
+    }
   }
-  return all;
+  return { rows, truncated };
 }
 
 function aggregate(
@@ -246,7 +265,12 @@ function aggregate(
  * to consume it.
  */
 export function useFolderLeaderboard(): State {
-  const [state, setState] = useState<State>({ data: [], isLoading: true, isError: false });
+  const [state, setState] = useState<State>({
+    data: [],
+    isLoading: true,
+    isError: false,
+    isTruncated: false,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -256,10 +280,15 @@ export function useFolderLeaderboard(): State {
         if (cancelled) {
           return;
         }
-        setState({ data: aggregate(folders, dashboards), isLoading: false, isError: false });
+        setState({
+          data: aggregate(folders.rows, dashboards.rows),
+          isLoading: false,
+          isError: false,
+          isTruncated: folders.truncated || dashboards.truncated,
+        });
       } catch (err) {
         if (!cancelled) {
-          setState({ data: [], isLoading: false, isError: true });
+          setState({ data: [], isLoading: false, isError: true, isTruncated: false });
         }
       }
     })();
