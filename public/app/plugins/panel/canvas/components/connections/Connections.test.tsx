@@ -113,14 +113,13 @@ describe('Connections', () => {
       calculateCoordinates.mockClear();
       connectionsObj.updateConnectionsAfterIndividualMove(sourceElement as ElementState);
 
-      // Verify calculateCoordinates was called
-      expect(calculateCoordinates).toHaveBeenCalled();
-
-      // Verify it was called with the expected parameters (sourceRect, parentRect, info, target, scale)
-      const call = calculateCoordinates.mock.calls[0];
-      expect(call[2]).toBe(connectionsObj.state[0].info); // info parameter
-      expect(call[3]).toBe(targetElement); // target parameter
-      expect(call[4]).toBe(1); // transformScale parameter
+      expect(calculateCoordinates).toHaveBeenCalledWith(
+        expect.anything(), // sourceRect
+        expect.anything(), // parentRect
+        connectionsObj.state[0].info,
+        targetElement,
+        1
+      );
     });
 
     it('should update coordinates through shared utility', () => {
@@ -183,8 +182,13 @@ describe('Connections', () => {
       calculateCoordinates.mockClear();
       connectionsObj.updateConnectionsAfterGroupMove(movedElements, selectedTargets);
 
-      // Verify calculateCoordinates was called
-      expect(calculateCoordinates).toHaveBeenCalled();
+      expect(calculateCoordinates).toHaveBeenCalledWith(
+        expect.anything(), // sourceRect
+        expect.anything(), // parentRect
+        connectionsObj.state[0].info,
+        targetElement,
+        1
+      );
     });
 
     it('should update both coordinates through shared utility', () => {
