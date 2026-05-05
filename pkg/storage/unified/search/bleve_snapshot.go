@@ -196,7 +196,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 		// Hard filter: unparseable version (we can't tier it). Metadata validation
 		// lives here rather than in the store so we don't have to duplicate it
 		// across store implementations.
-		v, err := semver.NewVersion(m.GrafanaBuildVersion)
+		v, err := semver.NewVersion(m.BuildVersion)
 		if err != nil {
 			droppedUnparseable++
 			continue
@@ -208,7 +208,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 			tier:    snapshotTier(v, minVersion, running),
 		}
 		candidates = append(candidates, c)
-		b.log.Debug("snapshot candidate",
+		b.log.Debug("index snapshot candidate",
 			"key", c.key.String(),
 			"tier", c.tier,
 			"version", c.version.String(),
@@ -218,7 +218,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 	}
 
 	if len(candidates) == 0 {
-		b.log.Debug("no snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable)
+		b.log.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable)
 		return snapshotCandidate{}, false
 	}
 
@@ -235,7 +235,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 		return candidates[i].meta.UploadTimestamp.After(candidates[j].meta.UploadTimestamp)
 	})
 
-	b.log.Debug("selected snapshot",
+	b.log.Debug("selected index snapshot",
 		"key", candidates[0].key.String(),
 		"tier", candidates[0].tier,
 		"candidates", len(candidates),
@@ -305,4 +305,125 @@ func (b *bleveBackend) recordSnapshotDownloadStatus(status string) {
 		return
 	}
 	b.indexMetrics.IndexSnapshotDownloads.WithLabelValues(status).Inc()
+}
+
+// findFreshSnapshotByUploadTime walks namespace snapshots newest-first and
+// returns the first one whose BuildVersion matches runningVersion and
+// whose ULID time falls within [now-maxAge, now]. Returns a zero key and nil
+// meta when no such snapshot exists.
+//
+// Walking (rather than checking only the newest) is necessary in mixed-version
+// clusters — either transiently during rolling upgrades, or as a deliberate
+// steady-state configuration. V1 and V2 replicas may interleave uploads, so
+// the newest snapshot can be the wrong version while a same-version match
+// lives a few keys back. In homogeneous clusters the walk degenerates to one
+// GET.
+//
+// ErrSnapshotNotFound / ErrInvalidManifest on individual keys is tolerated
+// (skip and continue) — these are races with cleanup or concurrently-written
+// manifests and shouldn't fail the probe. Other errors are surfaced.
+func findFreshSnapshotByUploadTime(
+	ctx context.Context,
+	store RemoteIndexStore,
+	ns resource.NamespacedResource,
+	maxAge time.Duration,
+	runningVersion string,
+) (ulid.ULID, *IndexMeta, error) {
+	keys, err := store.ListIndexKeys(ctx, ns)
+	if err != nil {
+		return ulid.ULID{}, nil, fmt.Errorf("listing index keys: %w", err)
+	}
+
+	// Sort newest-first by ULID time. ULID time equals upload time (set in
+	// UploadIndex from the ULID's own timestamp), so this is also the
+	// upload-time ordering.
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].Time() > keys[j].Time()
+	})
+
+	cutoff := time.Now().Add(-maxAge)
+	for _, k := range keys {
+		// ULID time is the upload time. Once we cross the cutoff, no
+		// remaining candidate can satisfy the freshness criterion.
+		if !ulid.Time(k.Time()).After(cutoff) {
+			return ulid.ULID{}, nil, nil
+		}
+
+		meta, err := store.GetIndexMeta(ctx, ns, k)
+		if err != nil {
+			if errors.Is(err, ErrSnapshotNotFound) || errors.Is(err, ErrInvalidManifest) {
+				continue
+			}
+			return ulid.ULID{}, nil, fmt.Errorf("reading manifest for %s: %w", k, err)
+		}
+
+		if meta.BuildVersion == runningVersion {
+			return k, meta, nil
+		}
+	}
+
+	return ulid.ULID{}, nil, nil
+}
+
+// findFreshSnapshotByBuildStart is the build-start-time variant of
+// findFreshSnapshotByUploadTime: it returns the first same-version
+// snapshot whose BuildTime (not upload time) falls within
+// [now-maxAge, now].
+//
+// Use this for data-freshness questions, e.g. "is the remote snapshot
+// fresh enough to skip a rebuild?". Periodic re-uploads preserve the
+// original BuildTime and are correctly rejected once the
+// underlying data ages out, even when their ULID is recent.
+//
+// Manifests with a zero-value BuildTime are skipped (no freshness
+// signal). The stopping rule is unchanged: BuildTime <= ULID time, so a
+// ULID below the cutoff cannot yield a fresh build-start time.
+func findFreshSnapshotByBuildStart(
+	ctx context.Context,
+	store RemoteIndexStore,
+	ns resource.NamespacedResource,
+	maxAge time.Duration,
+	runningVersion string,
+) (ulid.ULID, *IndexMeta, error) {
+	keys, err := store.ListIndexKeys(ctx, ns)
+	if err != nil {
+		return ulid.ULID{}, nil, fmt.Errorf("listing index keys: %w", err)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].Time() > keys[j].Time()
+	})
+
+	cutoff := time.Now().Add(-maxAge)
+	for _, k := range keys {
+		// BuildTime <= UploadTimestamp = ULID time. Once ULID
+		// time crosses the cutoff, no remaining candidate can satisfy.
+		if !ulid.Time(k.Time()).After(cutoff) {
+			return ulid.ULID{}, nil, nil
+		}
+
+		meta, err := store.GetIndexMeta(ctx, ns, k)
+		if err != nil {
+			if errors.Is(err, ErrSnapshotNotFound) || errors.Is(err, ErrInvalidManifest) {
+				continue
+			}
+			return ulid.ULID{}, nil, fmt.Errorf("reading manifest for %s: %w", k, err)
+		}
+
+		if meta.BuildVersion != runningVersion {
+			continue
+		}
+		// Zero-value BuildTime carries no freshness signal; never selected.
+		if meta.BuildTime.IsZero() {
+			continue
+		}
+		if meta.BuildTime.After(cutoff) {
+			return k, meta, nil
+		}
+		// Recent ULID but old BuildTime (e.g. periodic re-upload
+		// of a long-lived index): keep walking — an earlier candidate may
+		// still have a fresh build-start time.
+	}
+
+	return ulid.ULID{}, nil, nil
 }

@@ -4366,6 +4366,7 @@
         "repository-not-found-message": "Репозиторий для выбранной папки не найден. Убедитесь, что правильно подготовили папку.",
         "repository-not-found-title": "Репозиторий не найден"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Ошибка при перемещении ресурсов",
       "error-no-target-folder-path": "Недопустимый или пустой путь к целевой папке. Повторите попытку.",
       "move-total": "Действие окажет влияние на следующие элементы:",
@@ -7395,6 +7396,7 @@
       "terraform": "Управляется Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Не удалось переместить дашборд",
       "cancel-action": "Отмена",
       "current-file-not-found": "Текущий файл дашборда не найден",
@@ -8236,6 +8238,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Добавить в избранное",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Просмотреть данные",
       "open-in-explore": "Открыть в режиме Explore",
       "remove-favorite": "Удалить из избранного"
@@ -14415,6 +14423,8 @@
       "alerts-loading": "Оповещения",
       "card-click": "Выбрать карту {{id}}",
       "data": "Данные",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Новый {{type}}",
       "queries-expressions": "Запросы и выражения",
       "toggle-size": "Переключить размер боковой панели",
@@ -15143,10 +15153,13 @@
       "title": "Оперативно создавайте дашборды с помощью рекомендаций и шаблонов"
     },
     "nav": {
+      "counter": "",
       "go-to": "Перейти к слайду {{number}}",
-      "next": "Далее",
-      "prev": "Назад"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Объяснить запрос",
@@ -15628,7 +15641,6 @@
       "forwards-time-aria-label": "Переместить временной диапазон вперед",
       "to": "на",
       "zoom-out-button": "Уменьшение масштаба временного диапазона",
-      "zoom-out-tooltip": "Уменьшение временного диапазона <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Уменьшение временного диапазона <br/> t -"
     },
     "time-range": {

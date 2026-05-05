@@ -4300,6 +4300,7 @@
         "repository-not-found-message": "選択したフォルダのリポジトリが見つかりませんでした。フォルダが正しくプロビジョニングされていることを確認してください。",
         "repository-not-found-title": "リポジトリが見つかりません"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "リソースの移動中にエラーが発生しました",
       "error-no-target-folder-path": "ターゲットフォルダパスが無効または空です。もう一度選択してください。",
       "move-total": "全体で次に影響します：",
@@ -7272,6 +7273,7 @@
       "terraform": "管理者：Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "ダッシュボードの移動に失敗しました",
       "cancel-action": "キャンセル",
       "current-file-not-found": "現在のダッシュボードファイルが見つかりませんでした",
@@ -8098,6 +8100,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "お気に入りに追加",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "データを調査",
       "open-in-explore": "Exploreビューで開く",
       "remove-favorite": "お気に入りから削除"
@@ -14157,6 +14165,8 @@
       "alerts-loading": "アラート",
       "card-click": "カード{{id}}を選択",
       "data": "データ",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新規{{type}} ",
       "queries-expressions": "クエリと式",
       "toggle-size": "サイドバーのサイズを切り替える",
@@ -14867,10 +14877,13 @@
       "title": "おすすめやテンプレートを活用して、ダッシュボードの作成をスムーズに開始できます"
     },
     "nav": {
+      "counter": "",
       "go-to": "スライド{{number}}へ移動",
-      "next": "次へ",
-      "prev": "前へ"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "クエリを説明",
@@ -15349,7 +15362,6 @@
       "forwards-time-aria-label": "時間範囲を前に移動",
       "to": "へ",
       "zoom-out-button": "時間範囲をズームアウト",
-      "zoom-out-tooltip": "時間範囲ズームアウト <br/> CTRL+Z",
       "zoom-out-tooltip-new": "時間範囲ズームアウト <br/> t -"
     },
     "time-range": {

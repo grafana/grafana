@@ -1,3 +1,4 @@
+import { isString } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
@@ -14,11 +15,12 @@ export const getDataSources = async (): Promise<DataSourceSettings[]> => {
 const LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX = 'lds-sv-';
 
 export interface K8sMetadata {
-  name: string;
   namespace: string;
-  uid?: string;
+  name: string; // Equivalent to legacy UID
+  generateName?: string; // only valid for create
+  uid?: string; // do not confuse this with legacy UID
   resourceVersion: string;
-  generation?: number;
+  generation?: number; // increments when the spec changes
   creationTimestamp?: string;
   labels: { [key: string]: string };
   annotations: { [key: string]: string };
@@ -66,7 +68,7 @@ export const getDataSourceK8sGroup = (uid: string): string => {
 export const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
   dsSettings: Partial<DataSourceSettings>,
   version: string
-): Partial<DataSourceSettingsK8s> => {
+): Partial<DataSourceSettingsK8s & {}> => {
   let k8sSpec: DatasourceInstanceK8sSpec = {
     access: dsSettings.access ? dsSettings.access : '',
     jsonData: dsSettings.jsonData ? dsSettings.jsonData : {},
@@ -241,16 +243,14 @@ export const createDataSourceWithK8sAPI = async (dataSource: Partial<DataSourceS
   if (dataSource.secureJsonData) {
     dsK8sSettings.secure = {};
     for (let [k, v] of Object.entries(dataSource.secureJsonData)) {
-      if (v !== '') {
-        let value = {
-          create: v,
-          name: k,
-        };
-        if (isRecordOfString(value)) {
-          dsK8sSettings.secure[k] = value;
-        }
+      if (v !== '' && isString(v)) {
+        dsK8sSettings.secure[k] = { create: v };
       }
     }
+  }
+  // K8s apis require an explicit name, or request to generate the name for POST
+  if (!(dsK8sSettings.metadata!.name || dsK8sSettings.metadata!.generateName)) {
+    dsK8sSettings.metadata!.generateName = 'g'; // prefix for server generated unique name
   }
   return getBackendSrv().post(
     `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources`,

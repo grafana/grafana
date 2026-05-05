@@ -4366,6 +4366,7 @@
         "repository-not-found-message": "Úložiště pro vybranou složku se nepodařilo najít. Ujistěte se, že je složka správně nastavena.",
         "repository-not-found-title": "Úložiště nebylo nalezeno"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Chyba při přesouvání zdrojů",
       "error-no-target-folder-path": "Cesta k cílové složce je neplatná nebo prázdná, vyberte ji znovu.",
       "move-total": "Celkově to ovlivní:",
@@ -7395,6 +7396,7 @@
       "terraform": "Spravuje: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Nástěnku se nepodařilo přesunout",
       "cancel-action": "Zrušit",
       "current-file-not-found": "Aktuální soubor nástěnky se nepodařilo najít",
@@ -8236,6 +8238,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Přidat do oblíbených",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Prozkoumat data",
       "open-in-explore": "Otevřít v zobrazení Prozkoumat",
       "remove-favorite": "Odebrat z oblíbených"
@@ -14415,6 +14423,8 @@
       "alerts-loading": "Výstrahy",
       "card-click": "Vybrat kartu {{id}}",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nový {{type}}",
       "queries-expressions": "Dotazy a výrazy",
       "toggle-size": "Přepnout velikost postranního panelu",
@@ -15143,10 +15153,13 @@
       "title": "Vytvářejte nástěnky rychleji díky návrhům a šablonám"
     },
     "nav": {
+      "counter": "",
       "go-to": "Přejít na snímek {{number}}",
-      "next": "Další",
-      "prev": "Předchozí"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Vysvětlit dotaz",
@@ -15628,7 +15641,6 @@
       "forwards-time-aria-label": "Přesunout časový rozsah dopředu",
       "to": "do",
       "zoom-out-button": "Oddálit časový rozsah",
-      "zoom-out-tooltip": "Oddálení časového rozsahu <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Oddálení časového rozsahu <br/> t -"
     },
     "time-range": {

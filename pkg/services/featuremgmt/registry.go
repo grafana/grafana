@@ -1961,14 +1961,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "restoreDashboards",
-			Description: "Enables restore deleted dashboards feature",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "recentlyViewedDashboards",
 			Description: "Enables recently viewed dashboards section in the browsing dashboard page",
 			Stage:       FeatureStageExperimental,
@@ -2494,10 +2486,10 @@ var (
 		{
 			Name:        "dashboardSectionVariables",
 			Description: "Enables support for section level variables (rows and tabs)",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "smoothingTransformation",
@@ -2873,7 +2865,7 @@ var (
 			Description:  "Enables plugins setting from new apis",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true},
 			Expression:   "false",
 			HideFromDocs: true,
 		},

@@ -106,6 +106,26 @@ func runLeaseContention(t *testing.T, store kv.KV) {
 		require.NoError(t, m.Release(ctx, leaseA))
 		require.NoError(t, m.Release(ctx, leaseB))
 	})
+
+	t.Run("names sharing a prefix do not interfere", func(t *testing.T) {
+		m := lease.NewManager(store, "holder-shared-prefix")
+		shortName := "contention/shared-prefix/a/b"
+		longName := "contention/shared-prefix/a/b/c"
+
+		short, err := m.Acquire(ctx, shortName)
+		require.NoError(t, err)
+		long, err := m.Acquire(ctx, longName)
+		require.NoError(t, err)
+		require.NoError(t, m.Release(ctx, short))
+		require.NoError(t, m.Release(ctx, long))
+
+		long, err = m.Acquire(ctx, longName)
+		require.NoError(t, err)
+		short, err = m.Acquire(ctx, shortName)
+		require.NoError(t, err)
+		require.NoError(t, m.Release(ctx, short))
+		require.NoError(t, m.Release(ctx, long))
+	})
 }
 
 func runLeaseConcurrency(t *testing.T, store kv.KV) {
