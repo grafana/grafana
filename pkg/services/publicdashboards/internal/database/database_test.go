@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/service"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,7 +26,7 @@ import (
 )
 
 // This is what the db sets empty time settings to
-var DefaultTimeSettings = &TimeSettings{}
+var DefaultTimeSettings = &models.TimeSettings{}
 
 // Default time to pass in with seconds rounded
 var DefaultTime = time.Now().UTC().Round(time.Second)
@@ -50,9 +50,9 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	var bDash *dashboards.Dashboard
 	var cDash *dashboards.Dashboard
 
-	var aPublicDash *PublicDashboard
-	var bPublicDash *PublicDashboard
-	var cPublicDash *PublicDashboard
+	var aPublicDash *models.PublicDashboard
+	var bPublicDash *models.PublicDashboard
+	var cPublicDash *models.PublicDashboard
 
 	var orgId int64 = 1
 
@@ -67,16 +67,16 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 		cDash = createTestDashboard("c", orgId, "", false)
 
 		// these are in order of how they should be returned from ListPUblicDashboards
-		aPublicDash = insertPublicDashboard(t, publicdashboardStore, aDash.UID, orgId, false, PublicShareType)
-		bPublicDash = insertPublicDashboard(t, publicdashboardStore, bDash.UID, orgId, true, PublicShareType)
-		cPublicDash = insertPublicDashboard(t, publicdashboardStore, cDash.UID, orgId, true, PublicShareType)
+		aPublicDash = insertPublicDashboard(t, publicdashboardStore, aDash.UID, orgId, false, models.PublicShareType)
+		bPublicDash = insertPublicDashboard(t, publicdashboardStore, bDash.UID, orgId, true, models.PublicShareType)
+		cPublicDash = insertPublicDashboard(t, publicdashboardStore, cDash.UID, orgId, true, models.PublicShareType)
 	}
 
 	t.Run("FindAll will return dashboard list based on orgId with pagination", func(t *testing.T) {
 		setup()
 
 		// should not be included in response
-		_ = insertPublicDashboard(t, publicdashboardStore, "wrongOrgId", 777, false, PublicShareType)
+		_ = insertPublicDashboard(t, publicdashboardStore, "wrongOrgId", 777, false, models.PublicShareType)
 
 		permissions := []accesscontrol.Permission{
 			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", aDash.UID)},
@@ -88,7 +88,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 
 		actest.AddUserPermissionToDB(t, sqlStore, usr)
 
-		query := &PublicDashboardListQuery{
+		query := &models.PublicDashboardListQuery{
 			User:   usr,
 			OrgID:  orgId,
 			Page:   1,
@@ -126,8 +126,8 @@ func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
 	t.Run("ExistsEnabledByAccessToken will return true when at least one public dashboard has a matching access token", func(t *testing.T) {
 		setup()
 
-		_, err := publicdashboardStore.Create(context.Background(), SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		_, err := publicdashboardStore.Create(context.Background(), models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc123",
 				DashboardUid: savedDashboard.UID,
@@ -148,8 +148,8 @@ func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
 	t.Run("ExistsEnabledByAccessToken will return false when IsEnabled=false", func(t *testing.T) {
 		setup()
 
-		_, err := publicdashboardStore.Create(context.Background(), SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		_, err := publicdashboardStore.Create(context.Background(), models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    false,
 				Uid:          "abc123",
 				DashboardUid: savedDashboard.UID,
@@ -194,8 +194,8 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 	t.Run("ExistsEnabledByDashboardUid Will return true when dashboard has at least one enabled public dashboard", func(t *testing.T) {
 		setup()
 
-		_, err := publicdashboardStore.Create(context.Background(), SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		_, err := publicdashboardStore.Create(context.Background(), models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc123",
 				DashboardUid: savedDashboard.UID,
@@ -216,8 +216,8 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 	t.Run("ExistsEnabledByDashboardUid will return false when dashboard has public dashboards but they are not enabled", func(t *testing.T) {
 		setup()
 
-		_, err := publicdashboardStore.Create(context.Background(), SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		_, err := publicdashboardStore.Create(context.Background(), models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    false,
 				Uid:          "abc123",
 				DashboardUid: savedDashboard.UID,
@@ -238,8 +238,8 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 	t.Run("ExistsEnabledByDashboardUid will return false for a different org", func(t *testing.T) {
 		setup()
 
-		_, err := publicdashboardStore.Create(context.Background(), SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		_, err := publicdashboardStore.Create(context.Background(), models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc123",
 				DashboardUid: savedDashboard.UID,
@@ -274,7 +274,7 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 
 	t.Run("returns public dashboard by dashboardUid", func(t *testing.T) {
 		setup()
-		savedPubdash := insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, false, PublicShareType)
+		savedPubdash := insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, false, models.PublicShareType)
 		pubdash, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard.OrgID, savedDashboard.UID)
 		require.NoError(t, err)
 		assert.Equal(t, savedPubdash, pubdash)
@@ -289,8 +289,8 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 
 	t.Run("returns along with public dashboard when exists", func(t *testing.T) {
 		setup()
-		cmd := SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		cmd := models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "pubdash-uid",
 				DashboardUid: savedDashboard.UID,
@@ -327,13 +327,13 @@ func TestIntegrationFindByOrgAndUid(t *testing.T) {
 	var cfg *setting.Cfg
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
-	var savedPubdash *PublicDashboard
+	var savedPubdash *models.PublicDashboard
 
 	setup := func() {
 		sqlStore, cfg = db.InitTestDBWithCfg(t)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
-		savedPubdash = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, false, PublicShareType)
+		savedPubdash = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, false, models.PublicShareType)
 	}
 
 	t.Run("returns public dashboard by org and uid", func(t *testing.T) {
@@ -367,7 +367,7 @@ func TestIntegrationFindByAccessToken(t *testing.T) {
 
 	t.Run("returns public dashboard by accessToken", func(t *testing.T) {
 		setup()
-		savedPubdash := insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, false, PublicShareType)
+		savedPubdash := insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, false, models.PublicShareType)
 		pubdash, err := publicdashboardStore.FindByAccessToken(context.Background(), savedPubdash.AccessToken)
 		require.NoError(t, err)
 		assert.Equal(t, savedPubdash, pubdash)
@@ -382,8 +382,8 @@ func TestIntegrationFindByAccessToken(t *testing.T) {
 
 	t.Run("returns along with public dashboard when exists", func(t *testing.T) {
 		setup()
-		cmd := SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		cmd := models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "pubdash-uid",
 				DashboardUid: savedDashboard.UID,
@@ -428,17 +428,17 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
 		savedDashboard2 = createTestDashboard("testDashie2", 1, "", true)
-		insertPublicDashboard(t, publicdashboardStore, savedDashboard2.UID, savedDashboard2.OrgID, false, PublicShareType)
+		insertPublicDashboard(t, publicdashboardStore, savedDashboard2.UID, savedDashboard2.OrgID, false, models.PublicShareType)
 	}
 
 	t.Run("saves new public dashboard", func(t *testing.T) {
 		setup()
-		cmd := SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		cmd := models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				IsEnabled:            true,
 				AnnotationsEnabled:   true,
 				TimeSelectionEnabled: true,
-				Share:                PublicShareType,
+				Share:                models.PublicShareType,
 				Uid:                  "pubdash-uid",
 				DashboardUid:         savedDashboard.UID,
 				OrgId:                savedDashboard.OrgID,
@@ -468,8 +468,8 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 
 	t.Run("guards from saving without dashboardUid", func(t *testing.T) {
 		setup()
-		cmd := SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		cmd := models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "pubdash-uid",
 				DashboardUid: "",
@@ -507,8 +507,8 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		setup()
 
 		pdUid := "asdf1234"
-		cmd := SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		cmd := models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				Uid:                  pdUid,
 				DashboardUid:         savedDashboard.UID,
 				OrgId:                savedDashboard.OrgID,
@@ -526,15 +526,15 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 
 		// inserting two different public dashboards to test update works and only affect the desired pd by uid
 		anotherPdUid := "anotherUid"
-		cmd = SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		cmd = models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				Uid:                  anotherPdUid,
 				DashboardUid:         anotherSavedDashboard.UID,
 				OrgId:                anotherSavedDashboard.OrgID,
 				IsEnabled:            true,
 				AnnotationsEnabled:   false,
 				TimeSelectionEnabled: false,
-				Share:                PublicShareType,
+				Share:                models.PublicShareType,
 				CreatedAt:            DefaultTime,
 				CreatedBy:            7,
 				AccessToken:          "fakeaccesstoken",
@@ -545,21 +545,21 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 		assert.EqualValues(t, affectedRows, 1)
 
-		updatedPublicDashboard := PublicDashboard{
+		updatedPublicDashboard := models.PublicDashboard{
 			Uid:                  pdUid,
 			DashboardUid:         savedDashboard.UID,
 			OrgId:                savedDashboard.OrgID,
 			IsEnabled:            false,
 			AnnotationsEnabled:   true,
 			TimeSelectionEnabled: true,
-			Share:                EmailShareType,
-			TimeSettings:         &TimeSettings{From: "now-8", To: "now"},
+			Share:                models.EmailShareType,
+			TimeSettings:         &models.TimeSettings{From: "now-8", To: "now"},
 			UpdatedAt:            time.Now().UTC().Round(time.Second),
 			UpdatedBy:            8,
 		}
 
 		// update initial record
-		cmd = SavePublicDashboardCommand{PublicDashboard: updatedPublicDashboard}
+		cmd = models.SavePublicDashboardCommand{PublicDashboard: updatedPublicDashboard}
 		rowsAffected, err := publicdashboardStore.Update(context.Background(), cmd)
 		require.NoError(t, err)
 		assert.EqualValues(t, rowsAffected, 1)
@@ -589,15 +589,15 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		setup()
 
 		pdUid := "orgScopedUpdateUid"
-		createCmd := SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		createCmd := models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				Uid:                  pdUid,
 				DashboardUid:         savedDashboard.UID,
 				OrgId:                savedDashboard.OrgID,
 				IsEnabled:            false,
 				AnnotationsEnabled:   true,
 				TimeSelectionEnabled: true,
-				Share:                PublicShareType,
+				Share:                models.PublicShareType,
 				CreatedAt:            DefaultTime,
 				CreatedBy:            7,
 				AccessToken:          "anotherfakeaccesstoken",
@@ -607,15 +607,15 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 		assert.EqualValues(t, affectedRows, 1)
 
-		updateCmd := SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		updateCmd := models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				Uid:                  pdUid,
 				OrgId:                savedDashboard.OrgID + 1,
 				IsEnabled:            true,
 				AnnotationsEnabled:   false,
 				TimeSelectionEnabled: false,
-				Share:                EmailShareType,
-				TimeSettings:         &TimeSettings{From: "now-1h", To: "now"},
+				Share:                models.EmailShareType,
+				TimeSettings:         &models.TimeSettings{From: "now-1h", To: "now"},
 				UpdatedAt:            time.Now().UTC(),
 				UpdatedBy:            8,
 			},
@@ -631,7 +631,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		assert.Equal(t, false, pdRetrieved.IsEnabled)
 		assert.Equal(t, true, pdRetrieved.AnnotationsEnabled)
 		assert.Equal(t, true, pdRetrieved.TimeSelectionEnabled)
-		assert.Equal(t, PublicShareType, pdRetrieved.Share)
+		assert.Equal(t, models.PublicShareType, pdRetrieved.Share)
 	})
 }
 
@@ -650,8 +650,8 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 	}
 	t.Run("GetOrgIdByAccessToken will OrgId when enabled", func(t *testing.T) {
 		setup()
-		cmd := SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		cmd := models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc123",
 				DashboardUid: savedDashboard.UID,
@@ -672,8 +672,8 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 
 	t.Run("GetOrgIdByAccessToken will return current OrgId when IsEnabled=false", func(t *testing.T) {
 		setup()
-		cmd := SavePublicDashboardCommand{
-			PublicDashboard: PublicDashboard{
+		cmd := models.SavePublicDashboardCommand{
+			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    false,
 				Uid:          "abc123",
 				DashboardUid: savedDashboard.UID,
@@ -708,13 +708,13 @@ func TestIntegrationDelete(t *testing.T) {
 	var cfg *setting.Cfg
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
-	var savedPublicDashboard *PublicDashboard
+	var savedPublicDashboard *models.PublicDashboard
 
 	setup := func() {
 		sqlStore, cfg = db.InitTestDBWithCfg(t)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
-		savedPublicDashboard = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, PublicShareType)
+		savedPublicDashboard = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, models.PublicShareType)
 	}
 
 	t.Run("Delete success", func(t *testing.T) {
@@ -763,7 +763,7 @@ func TestIntegrationDeleteByDashboardUIDs(t *testing.T) {
 		sqlStore, cfg = db.InitTestDBWithCfg(t)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
-		_ = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, PublicShareType)
+		_ = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, models.PublicShareType)
 	}
 
 	t.Run("returns nil when dashboardUIDs is empty", func(t *testing.T) {
@@ -816,10 +816,10 @@ func TestIntegrationGetMetrics(t *testing.T) {
 		savedDashboard2 = createTestDashboard("testDashie2", 1, "", false)
 		savedDashboard3 = createTestDashboard("testDashie3", 2, "", false)
 		savedDashboard4 = createTestDashboard("testDashie4", 2, "", false)
-		insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, PublicShareType)
-		insertPublicDashboard(t, publicdashboardStore, savedDashboard2.UID, savedDashboard2.OrgID, true, PublicShareType)
-		insertPublicDashboard(t, publicdashboardStore, savedDashboard3.UID, savedDashboard3.OrgID, true, EmailShareType)
-		insertPublicDashboard(t, publicdashboardStore, savedDashboard4.UID, savedDashboard4.OrgID, false, EmailShareType)
+		insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, models.PublicShareType)
+		insertPublicDashboard(t, publicdashboardStore, savedDashboard2.UID, savedDashboard2.OrgID, true, models.PublicShareType)
+		insertPublicDashboard(t, publicdashboardStore, savedDashboard3.UID, savedDashboard3.OrgID, true, models.EmailShareType)
+		insertPublicDashboard(t, publicdashboardStore, savedDashboard4.UID, savedDashboard4.OrgID, false, models.EmailShareType)
 	}
 
 	t.Run("returns correct list of metrics", func(t *testing.T) {
@@ -834,16 +834,16 @@ func TestIntegrationGetMetrics(t *testing.T) {
 		disabledAndEmailCount := -1
 		disabledAndPublicCount := -1
 		for _, metric := range metrics.TotalPublicDashboards {
-			if metric.ShareType == string(PublicShareType) && metric.IsEnabled {
+			if metric.ShareType == string(models.PublicShareType) && metric.IsEnabled {
 				enabledAndPublicCount = int(metric.TotalCount)
 			}
-			if metric.ShareType == string(PublicShareType) && !metric.IsEnabled {
+			if metric.ShareType == string(models.PublicShareType) && !metric.IsEnabled {
 				disabledAndPublicCount = int(metric.TotalCount)
 			}
-			if metric.ShareType == string(EmailShareType) && metric.IsEnabled {
+			if metric.ShareType == string(models.EmailShareType) && metric.IsEnabled {
 				enabledAndEmailCount = int(metric.TotalCount)
 			}
-			if metric.ShareType == string(EmailShareType) && !metric.IsEnabled {
+			if metric.ShareType == string(models.EmailShareType) && !metric.IsEnabled {
 				disabledAndEmailCount = int(metric.TotalCount)
 			}
 		}
@@ -877,7 +877,7 @@ func createTestDashboard(title string, orgID int64, folderUID string, isFolder b
 }
 
 // helper function to insert a public dashboard
-func insertPublicDashboard(t *testing.T, publicdashboardStore *PublicDashboardStoreImpl, dashboardUid string, orgId int64, isEnabled bool, shareType ShareType) *PublicDashboard {
+func insertPublicDashboard(t *testing.T, publicdashboardStore *PublicDashboardStoreImpl, dashboardUid string, orgId int64, isEnabled bool, shareType models.ShareType) *models.PublicDashboard {
 	ctx := context.Background()
 
 	uid := util.GenerateShortUID()
@@ -885,13 +885,13 @@ func insertPublicDashboard(t *testing.T, publicdashboardStore *PublicDashboardSt
 	accessToken, err := service.GenerateAccessToken()
 	require.NoError(t, err)
 
-	cmd := SavePublicDashboardCommand{
-		PublicDashboard: PublicDashboard{
+	cmd := models.SavePublicDashboardCommand{
+		PublicDashboard: models.PublicDashboard{
 			Uid:          uid,
 			DashboardUid: dashboardUid,
 			OrgId:        orgId,
 			IsEnabled:    isEnabled,
-			TimeSettings: &TimeSettings{},
+			TimeSettings: &models.TimeSettings{},
 			CreatedBy:    1,
 			CreatedAt:    time.Now(),
 			AccessToken:  accessToken,

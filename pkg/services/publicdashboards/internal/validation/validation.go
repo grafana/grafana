@@ -3,26 +3,26 @@ package validation
 import (
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func ValidatePublicDashboard(dto *SavePublicDashboardDTO) error {
+func ValidatePublicDashboard(dto *models.SavePublicDashboardDTO) error {
 	// if it is empty we override it in the service with public for retro compatibility
 	if dto.PublicDashboard.Share != "" && !IsValidShareType(dto.PublicDashboard.Share) {
-		return ErrInvalidShareType.Errorf("ValidateSavePublicDashboard: invalid share type")
+		return models.ErrInvalidShareType.Errorf("ValidateSavePublicDashboard: invalid share type")
 	}
 
 	return nil
 }
 
-func ValidateQueryPublicDashboardRequest(req PublicDashboardQueryDTO, pd *PublicDashboard) error {
+func ValidateQueryPublicDashboardRequest(req models.PublicDashboardQueryDTO, pd *models.PublicDashboard) error {
 	if req.IntervalMs < 0 {
-		return ErrInvalidInterval.Errorf("ValidateQueryPublicDashboardRequest: intervalMS should be greater than 0")
+		return models.ErrInvalidInterval.Errorf("ValidateQueryPublicDashboardRequest: intervalMS should be greater than 0")
 	}
 
 	if req.MaxDataPoints < 0 {
-		return ErrInvalidMaxDataPoints.Errorf("ValidateQueryPublicDashboardRequest: maxDataPoints should be greater than 0")
+		return models.ErrInvalidMaxDataPoints.Errorf("ValidateQueryPublicDashboardRequest: maxDataPoints should be greater than 0")
 	}
 
 	if pd.TimeSelectionEnabled {
@@ -30,11 +30,11 @@ func ValidateQueryPublicDashboardRequest(req PublicDashboardQueryDTO, pd *Public
 
 		_, err := timeRange.ParseFrom()
 		if err != nil {
-			return ErrInvalidTimeRange.Errorf("ValidateQueryPublicDashboardRequest: time range from is invalid")
+			return models.ErrInvalidTimeRange.Errorf("ValidateQueryPublicDashboardRequest: time range from is invalid")
 		}
 		_, err = timeRange.ParseTo()
 		if err != nil {
-			return ErrInvalidTimeRange.Errorf("ValidateQueryPublicDashboardRequest: time range to is invalid")
+			return models.ErrInvalidTimeRange.Errorf("ValidateQueryPublicDashboardRequest: time range to is invalid")
 		}
 	}
 
@@ -53,8 +53,8 @@ func IsValidShortUID(uid string) bool {
 	return uid != "" && util.IsValidShortUID(uid)
 }
 
-func IsValidShareType(shareType ShareType) bool {
-	for _, t := range ValidShareTypes {
+func IsValidShareType(shareType models.ShareType) bool {
+	for _, t := range models.ValidShareTypes {
 		if t == shareType {
 			return true
 		}

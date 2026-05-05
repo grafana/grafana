@@ -16,8 +16,8 @@ import (
 	dashboard2 "github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/testhelpers"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/util"
@@ -314,7 +314,7 @@ func TestIntegrationGetQueryDataResponse(t *testing.T) {
 	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{}, nil)
 	service.QueryDataService = fakeQueryService
 
-	publicDashboardQueryDTO := PublicDashboardQueryDTO{
+	publicDashboardQueryDTO := models.PublicDashboardQueryDTO{
 		IntervalMs:    int64(1),
 		MaxDataPoints: int64(1),
 	}
@@ -342,11 +342,11 @@ func TestIntegrationGetQueryDataResponse(t *testing.T) {
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
 		isEnabled := true
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
 			OrgID:        dashboard.OrgID,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				IsEnabled: &isEnabled,
 			},
 		}
@@ -364,14 +364,14 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 	color := "red"
 	name := "annoName"
 	t.Run("service identity has correct permissions to get annotations dashboards and query datasources", func(t *testing.T) {
-		fakeStore := &FakePublicDashboardStore{}
+		fakeStore := &publicdashboards.FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).
-			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, nil)
+			Return(&models.PublicDashboard{Uid: "uid1", IsEnabled: true}, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboards.NewDashboard("dash1"), nil)
 		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, nil)
 
-		reqDTO := AnnotationsQueryDTO{
+		reqDTO := models.AnnotationsQueryDTO{
 			From: 1,
 			To:   2,
 		}
@@ -389,7 +389,7 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 
 	t.Run("Test events from tag queries overwrite built-in annotation queries and duplicate events are not returned", func(t *testing.T) {
 		dash := dashboards.NewDashboard("test")
-		grafanaAnnotation := DashAnnotation{
+		grafanaAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       name,
@@ -402,7 +402,7 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 			},
 			Type: util.Pointer("dashboard"),
 		}
-		grafanaTagAnnotation := DashAnnotation{
+		grafanaTagAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       name,
@@ -414,13 +414,13 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 				Type:     "tags",
 			},
 		}
-		annos := []DashAnnotation{grafanaAnnotation, grafanaTagAnnotation}
+		annos := []models.DashAnnotation{grafanaAnnotation, grafanaTagAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
 
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: true}
+		pubdash := &models.PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: true}
 
 		annotationsRepo := &annotations.FakeAnnotationsRepo{}
-		fakeStore := &FakePublicDashboardStore{}
+		fakeStore := &publicdashboards.FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -439,9 +439,9 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 			},
 		}, nil).Maybe()
 
-		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		items, err := service.FindAnnotations(context.Background(), models.AnnotationsQueryDTO{}, "abc123")
 
-		expected := AnnotationEvent{
+		expected := models.AnnotationEvent{
 			Id:          1,
 			DashboardId: 1,
 			PanelId:     0,
@@ -460,7 +460,7 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 
 	t.Run("Test panelId set to zero when annotation event is for a tags query", func(t *testing.T) {
 		dash := dashboards.NewDashboard("test")
-		grafanaAnnotation := DashAnnotation{
+		grafanaAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       name,
@@ -472,12 +472,12 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 				Type:     "tags",
 			},
 		}
-		annos := []DashAnnotation{grafanaAnnotation}
+		annos := []models.DashAnnotation{grafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
 
 		annotationsRepo := &annotations.FakeAnnotationsRepo{}
-		fakeStore := &FakePublicDashboardStore{}
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: true}
+		fakeStore := &publicdashboards.FakePublicDashboardStore{}
+		pubdash := &models.PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: true}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -496,9 +496,9 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 			},
 		}, nil).Maybe()
 
-		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		items, err := service.FindAnnotations(context.Background(), models.AnnotationsQueryDTO{}, "abc123")
 
-		expected := AnnotationEvent{
+		expected := models.AnnotationEvent{
 			Id:          1,
 			DashboardId: 1,
 			PanelId:     0,
@@ -517,13 +517,13 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 
 	t.Run("Test can get grafana annotations and will skip annotation queries and disabled annotations", func(t *testing.T) {
 		dash := dashboards.NewDashboard("test")
-		disabledGrafanaAnnotation := DashAnnotation{
+		disabledGrafanaAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     false,
 			Name:       name,
 			IconColor:  color,
 		}
-		grafanaAnnotation := DashAnnotation{
+		grafanaAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       name,
@@ -536,17 +536,17 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 			},
 			Type: util.Pointer("dashboard"),
 		}
-		queryAnnotation := DashAnnotation{
+		queryAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("prometheus", "abc123"),
 			Enable:     true,
 			Name:       name,
 		}
-		annos := []DashAnnotation{grafanaAnnotation, queryAnnotation, disabledGrafanaAnnotation}
+		annos := []models.DashAnnotation{grafanaAnnotation, queryAnnotation, disabledGrafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
 
 		annotationsRepo := &annotations.FakeAnnotationsRepo{}
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: true}
-		fakeStore := &FakePublicDashboardStore{}
+		pubdash := &models.PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: true}
+		fakeStore := &publicdashboards.FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -565,9 +565,9 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 			},
 		}, nil).Maybe()
 
-		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		items, err := service.FindAnnotations(context.Background(), models.AnnotationsQueryDTO{}, "abc123")
 
-		expected := AnnotationEvent{
+		expected := models.AnnotationEvent{
 			Id:          1,
 			DashboardId: 1,
 			PanelId:     1,
@@ -586,14 +586,14 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 
 	t.Run("test will return nothing when dashboard has no annotations", func(t *testing.T) {
 		dashboard := dashboards.NewDashboard("dashWithNoAnnotations")
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: true}
-		fakeStore := &FakePublicDashboardStore{}
+		pubdash := &models.PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: true}
+		fakeStore := &publicdashboards.FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, nil)
 
-		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		items, err := service.FindAnnotations(context.Background(), models.AnnotationsQueryDTO{}, "abc123")
 
 		require.NoError(t, err)
 		assert.Empty(t, items)
@@ -601,7 +601,7 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 
 	t.Run("test will return nothing when pubdash annotations are disabled", func(t *testing.T) {
 		dash := dashboards.NewDashboard("test")
-		grafanaAnnotation := DashAnnotation{
+		grafanaAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       name,
@@ -614,23 +614,23 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 			},
 			Type: util.Pointer("dashboard"),
 		}
-		annos := []DashAnnotation{grafanaAnnotation}
+		annos := []models.DashAnnotation{grafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: false}
-		fakeStore := &FakePublicDashboardStore{}
+		pubdash := &models.PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: false}
+		fakeStore := &publicdashboards.FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, nil)
 
-		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		items, err := service.FindAnnotations(context.Background(), models.AnnotationsQueryDTO{}, "abc123")
 
 		require.NoError(t, err)
 		assert.Empty(t, items)
 	})
 
 	t.Run("test will error when annotations repo returns an error", func(t *testing.T) {
-		grafanaAnnotation := DashAnnotation{
+		grafanaAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       name,
@@ -645,17 +645,17 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 		dash := dashboards.NewDashboard("test")
 		annotationsRepo := &annotations.FakeAnnotationsRepo{}
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Maybe()
-		annos := []DashAnnotation{grafanaAnnotation}
+		annos := []models.DashAnnotation{grafanaAnnotation}
 		dash = AddAnnotationsToDashboard(t, dash, annos)
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dash.UID, AnnotationsEnabled: true}
-		fakeStore := &FakePublicDashboardStore{}
+		pubdash := &models.PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dash.UID, AnnotationsEnabled: true}
+		fakeStore := &publicdashboards.FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 
 		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, annotationsRepo)
 
-		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		items, err := service.FindAnnotations(context.Background(), models.AnnotationsQueryDTO{}, "abc123")
 
 		require.Error(t, err)
 		require.Nil(t, items)
@@ -663,7 +663,7 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 
 	t.Run("Test find annotations does not panics when Target in datasource is nil", func(t *testing.T) {
 		dash := dashboards.NewDashboard("test")
-		grafanaAnnotation := DashAnnotation{
+		grafanaAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       name,
@@ -672,11 +672,11 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 			Target:     nil,
 		}
 
-		annos := []DashAnnotation{grafanaAnnotation}
+		annos := []models.DashAnnotation{grafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: true}
+		pubdash := &models.PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: true}
 
-		fakeStore := &FakePublicDashboardStore{}
+		fakeStore := &publicdashboards.FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
@@ -696,9 +696,9 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 
 		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, annotationsRepo)
 
-		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		items, err := service.FindAnnotations(context.Background(), models.AnnotationsQueryDTO{}, "abc123")
 
-		expected := AnnotationEvent{
+		expected := models.AnnotationEvent{
 			Id:          1,
 			DashboardId: 1,
 			PanelId:     1,
@@ -722,7 +722,7 @@ func TestIntegrationGetMetricRequest(t *testing.T) {
 	service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, nil, nil)
 	dashboard := createTestDashboard(t, "testDashie", 1, "", true, []map[string]any{}, nil)
 
-	publicDashboard := &PublicDashboard{
+	publicDashboard := &models.PublicDashboard{
 		Uid:          "1",
 		DashboardUid: dashboard.UID,
 		IsEnabled:    true,
@@ -730,7 +730,7 @@ func TestIntegrationGetMetricRequest(t *testing.T) {
 	}
 
 	t.Run("will return an error when validation fails", func(t *testing.T) {
-		publicDashboardQueryDTO := PublicDashboardQueryDTO{
+		publicDashboardQueryDTO := models.PublicDashboardQueryDTO{
 			IntervalMs:    int64(-1),
 			MaxDataPoints: int64(-1),
 		}
@@ -741,7 +741,7 @@ func TestIntegrationGetMetricRequest(t *testing.T) {
 	})
 
 	t.Run("will not return an error when validation succeeds", func(t *testing.T) {
-		publicDashboardQueryDTO := PublicDashboardQueryDTO{
+		publicDashboardQueryDTO := models.PublicDashboardQueryDTO{
 			IntervalMs:    int64(1),
 			MaxDataPoints: int64(1),
 		}
@@ -767,16 +767,16 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 
 	fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(publicDashboard, nil)
 
-	publicDashboardQueryDTO := PublicDashboardQueryDTO{
+	publicDashboardQueryDTO := models.PublicDashboardQueryDTO{
 		IntervalMs:    int64(10000000),
 		MaxDataPoints: int64(200),
 	}
 
 	isEnabled := true
-	dto := &SavePublicDashboardDTO{
+	dto := &models.SavePublicDashboardDTO{
 		DashboardUid: publicDashboard.UID,
 		OrgID:        9999999,
-		PublicDashboard: &PublicDashboardDTO{
+		PublicDashboard: &models.PublicDashboardDTO{
 			IsEnabled: &isEnabled,
 		},
 	}
@@ -785,10 +785,10 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	isEnabled = false
-	nonPublicDto := &SavePublicDashboardDTO{
+	nonPublicDto := &models.SavePublicDashboardDTO{
 		DashboardUid: nonPublicDashboard.UID,
 		OrgID:        9999999,
-		PublicDashboard: &PublicDashboardDTO{
+		PublicDashboard: &models.PublicDashboardDTO{
 			IsEnabled: &isEnabled,
 		},
 	}
@@ -854,7 +854,7 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 			publicDashboardQueryDTO,
 		)
 
-		require.ErrorContains(t, err, ErrPanelNotFound.Error())
+		require.ErrorContains(t, err, models.ErrPanelNotFound.Error())
 	})
 
 	t.Run("metric request built with hidden query", func(t *testing.T) {
@@ -1206,17 +1206,17 @@ func TestBuildTimeSettings(t *testing.T) {
 	testCases := []struct {
 		name      string
 		dashboard *dashboards.Dashboard
-		pubdash   *PublicDashboard
-		reqDTO    PublicDashboardQueryDTO
+		pubdash   *models.PublicDashboard
+		reqDTO    models.PublicDashboardQueryDTO
 		panelID   int64
-		want      TimeSettings
+		want      models.TimeSettings
 	}{
 		{
 			name:      "should return default time range with timezone with relative time range",
 			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Australia/Sydney")},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
-			reqDTO:    PublicDashboardQueryDTO{},
-			want: TimeSettings{
+			pubdash:   &models.PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    models.PublicDashboardQueryDTO{},
+			want: models.TimeSettings{
 				From: strconv.FormatInt(startOfYesterdaySydney.UnixMilli(), 10),
 				To:   strconv.FormatInt(endOfYesterdaySydney.UnixMilli(), 10),
 			},
@@ -1224,9 +1224,9 @@ func TestBuildTimeSettings(t *testing.T) {
 		{
 			name:      "should return default time range with UTC timezone with relative time range with unknown timezone",
 			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "browser")},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
-			reqDTO:    PublicDashboardQueryDTO{},
-			want: TimeSettings{
+			pubdash:   &models.PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    models.PublicDashboardQueryDTO{},
+			want: models.TimeSettings{
 				From: strconv.FormatInt(startOfYesterdayUTC.UnixMilli(), 10),
 				To:   strconv.FormatInt(endOfYesterdayUTC.UnixMilli(), 10),
 			},
@@ -1234,12 +1234,12 @@ func TestBuildTimeSettings(t *testing.T) {
 		{
 			name:      "should return default time range with timezone with relative time range if time selection is not enabled",
 			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Australia/Sydney")},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
-			reqDTO: PublicDashboardQueryDTO{
-				TimeRange: TimeRangeDTO{
+			pubdash:   &models.PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO: models.PublicDashboardQueryDTO{
+				TimeRange: models.TimeRangeDTO{
 					Timezone: "Europe/Madrid",
 				}},
-			want: TimeSettings{
+			want: models.TimeSettings{
 				From: strconv.FormatInt(startOfYesterdaySydney.UnixMilli(), 10),
 				To:   strconv.FormatInt(endOfYesterdaySydney.UnixMilli(), 10),
 			},
@@ -1247,9 +1247,9 @@ func TestBuildTimeSettings(t *testing.T) {
 		{
 			name:      "should return user time range with dashboard timezone with relative time range",
 			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Europe/Madrid")},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
-			reqDTO:    PublicDashboardQueryDTO{},
-			want: TimeSettings{
+			pubdash:   &models.PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    models.PublicDashboardQueryDTO{},
+			want: models.TimeSettings{
 				From: strconv.FormatInt(startOfYesterdayMadrid.UnixMilli(), 10),
 				To:   strconv.FormatInt(endOfYesterdayMadrid.UnixMilli(), 10),
 			},
@@ -1257,9 +1257,9 @@ func TestBuildTimeSettings(t *testing.T) {
 		{
 			name:      "should return user time range with dashboard timezone with relative time range for the last hour",
 			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1h", "now", "Europe/Madrid")},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
-			reqDTO:    PublicDashboardQueryDTO{},
-			want: TimeSettings{
+			pubdash:   &models.PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    models.PublicDashboardQueryDTO{},
+			want: models.TimeSettings{
 				From: strconv.FormatInt(fakeNow.Add(-time.Hour).UnixMilli(), 10),
 				To:   strconv.FormatInt(fakeNow.UnixMilli(), 10),
 			},
@@ -1267,9 +1267,9 @@ func TestBuildTimeSettings(t *testing.T) {
 		{
 			name:      "should use dashboard time if pubdash time empty",
 			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
-			reqDTO:    PublicDashboardQueryDTO{},
-			want: TimeSettings{
+			pubdash:   &models.PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    models.PublicDashboardQueryDTO{},
+			want: models.TimeSettings{
 				From: defaultFromMs,
 				To:   defaultToMs,
 			},
@@ -1277,14 +1277,14 @@ func TestBuildTimeSettings(t *testing.T) {
 		{
 			name:      "should use dashboard time when time selection is disabled",
 			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
-			reqDTO: PublicDashboardQueryDTO{
-				TimeRange: TimeRangeDTO{
+			pubdash:   &models.PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO: models.PublicDashboardQueryDTO{
+				TimeRange: models.TimeRangeDTO{
 					From: selectionFromMs,
 					To:   selectionToMs,
 				},
 			},
-			want: TimeSettings{
+			want: models.TimeSettings{
 				From: defaultFromMs,
 				To:   defaultToMs,
 			},
@@ -1292,14 +1292,14 @@ func TestBuildTimeSettings(t *testing.T) {
 		{
 			name:      "should use selected values if time selection is enabled",
 			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: true},
-			reqDTO: PublicDashboardQueryDTO{
-				TimeRange: TimeRangeDTO{
+			pubdash:   &models.PublicDashboard{TimeSelectionEnabled: true},
+			reqDTO: models.PublicDashboardQueryDTO{
+				TimeRange: models.TimeRangeDTO{
 					From: selectionFromMs,
 					To:   selectionToMs,
 				},
 			},
-			want: TimeSettings{
+			want: models.TimeSettings{
 				From: selectionFromMs,
 				To:   selectionToMs,
 			},
@@ -1307,11 +1307,11 @@ func TestBuildTimeSettings(t *testing.T) {
 		{
 			name:      "should use default values if time selection is enabled but the time range is empty",
 			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: true},
-			reqDTO: PublicDashboardQueryDTO{
-				TimeRange: TimeRangeDTO{},
+			pubdash:   &models.PublicDashboard{TimeSelectionEnabled: true},
+			reqDTO: models.PublicDashboardQueryDTO{
+				TimeRange: models.TimeRangeDTO{},
 			},
-			want: TimeSettings{
+			want: models.TimeSettings{
 				From: defaultFromMs,
 				To:   defaultToMs,
 			},
@@ -1319,15 +1319,15 @@ func TestBuildTimeSettings(t *testing.T) {
 		{
 			name:      "should use panel relative time when time selection is disabled",
 			dashboard: &dashboards.Dashboard{Data: dashboardDataWithPanelRelativeTime},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
-			reqDTO: PublicDashboardQueryDTO{
-				TimeRange: TimeRangeDTO{
+			pubdash:   &models.PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO: models.PublicDashboardQueryDTO{
+				TimeRange: models.TimeRangeDTO{
 					From: selectionFromMs,
 					To:   selectionToMs,
 				},
 			},
 			panelID: 1,
-			want: TimeSettings{
+			want: models.TimeSettings{
 				From: strconv.FormatInt(startOfYesterdayMadrid.UnixMilli(), 10),
 				To:   strconv.FormatInt(fakeNow.UnixMilli(), 10),
 			},
@@ -1335,15 +1335,15 @@ func TestBuildTimeSettings(t *testing.T) {
 		{
 			name:      "should use selected values if time selection is enabled for panels with relative time set",
 			dashboard: &dashboards.Dashboard{Data: dashboardDataWithPanelRelativeTime},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: true},
-			reqDTO: PublicDashboardQueryDTO{
-				TimeRange: TimeRangeDTO{
+			pubdash:   &models.PublicDashboard{TimeSelectionEnabled: true},
+			reqDTO: models.PublicDashboardQueryDTO{
+				TimeRange: models.TimeRangeDTO{
 					From: selectionFromMs,
 					To:   selectionToMs,
 				},
 			},
 			panelID: 1,
-			want: TimeSettings{
+			want: models.TimeSettings{
 				From: selectionFromMs,
 				To:   selectionToMs,
 			},

@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/database"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -46,7 +46,7 @@ func newPublicDashboardServiceImpl(
 	serviceWrapper := ProvideServiceWrapper(publicDashboardStore)
 
 	license := licensingtest.NewFakeLicensing()
-	license.On("FeatureEnabled", FeaturePublicDashboardsEmailSharing).Return(false)
+	license.On("FeatureEnabled", models.FeaturePublicDashboardsEmailSharing).Return(false)
 
 	return &PublicDashboardServiceImpl{
 		AnnotationsRepo:    annotationsRepo,

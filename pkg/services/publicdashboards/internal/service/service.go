@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/validation"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -122,7 +122,7 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 }
 
 // FindByDashboardUid this method would be replaced by another implementation for Enterprise version
-func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
+func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.FindByDashboardUid")
 	defer span.End()
 	return pd.serviceWrapper.FindByDashboardUid(ctx, orgId, dashboardUid)
@@ -130,12 +130,12 @@ func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, or
 
 // Find should only be used when accessing a public dashboard by email/link or creating a new one to check for colliding UIDs.
 // Prefer `FindByDashboardUid` for anything else.
-func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*PublicDashboard, error) {
+func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*models.PublicDashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.Find")
 	defer span.End()
 	pubdash, err := pd.store.Find(ctx, uid)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Find: failed to find public dashboard%w", err)
+		return nil, models.ErrInternalServerError.Errorf("Find: failed to find public dashboard%w", err)
 	}
 	return pubdash, nil
 }
@@ -153,33 +153,33 @@ func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId i
 		var dashboardErr dashboardaccess.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
 			if dashboardErr.StatusCode == 404 {
-				return nil, ErrDashboardNotFound.Errorf("FindDashboard: dashboard not found by orgId: %d and dashboardUid: %s", orgId, dashboardUid)
+				return nil, models.ErrDashboardNotFound.Errorf("FindDashboard: dashboard not found by orgId: %d and dashboardUid: %s", orgId, dashboardUid)
 			}
 		}
-		return nil, ErrInternalServerError.Errorf("FindDashboard: failed to find dashboard by orgId: %d and dashboardUid: %s: %w", orgId, dashboardUid, err)
+		return nil, models.ErrInternalServerError.Errorf("FindDashboard: failed to find dashboard by orgId: %d and dashboardUid: %s: %w", orgId, dashboardUid, err)
 	}
 
 	return dash, nil
 }
 
 // FindByAccessToken Gets public dashboard by access token
-func (pd *PublicDashboardServiceImpl) FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
+func (pd *PublicDashboardServiceImpl) FindByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.FindByAccessToken")
 	defer span.End()
 	pubdash, err := pd.store.FindByAccessToken(ctx, accessToken)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("FindByAccessToken: failed to find a public dashboard: %w", err)
+		return nil, models.ErrInternalServerError.Errorf("FindByAccessToken: failed to find a public dashboard: %w", err)
 	}
 
 	if pubdash == nil {
-		return nil, ErrPublicDashboardNotFound.Errorf("FindByAccessToken: Public dashboard not found accessToken: %s", accessToken)
+		return nil, models.ErrPublicDashboardNotFound.Errorf("FindByAccessToken: Public dashboard not found accessToken: %s", accessToken)
 	}
 
 	return pubdash, nil
 }
 
 // FindEnabledPublicDashboardAndDashboardByAccessToken Gets public dashboard and a dashboard by access token if public dashboard is enabled
-func (pd *PublicDashboardServiceImpl) FindEnabledPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error) {
+func (pd *PublicDashboardServiceImpl) FindEnabledPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.FindEnabledPublicDashboardAndDashboardByAccessToken")
 	defer span.End()
 	pubdash, dash, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
@@ -188,18 +188,18 @@ func (pd *PublicDashboardServiceImpl) FindEnabledPublicDashboardAndDashboardByAc
 	}
 
 	if !pubdash.IsEnabled {
-		return nil, nil, ErrPublicDashboardNotEnabled.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Public dashboard is not enabled accessToken: %s", accessToken)
+		return nil, nil, models.ErrPublicDashboardNotEnabled.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Public dashboard is not enabled accessToken: %s", accessToken)
 	}
 
-	if !pd.license.FeatureEnabled(FeaturePublicDashboardsEmailSharing) && pubdash.Share == EmailShareType {
-		return nil, nil, ErrPublicDashboardNotFound.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Dashboard not found accessToken: %s", accessToken)
+	if !pd.license.FeatureEnabled(models.FeaturePublicDashboardsEmailSharing) && pubdash.Share == models.EmailShareType {
+		return nil, nil, models.ErrPublicDashboardNotFound.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Dashboard not found accessToken: %s", accessToken)
 	}
 
 	return pubdash, dash, err
 }
 
 // FindPublicDashboardAndDashboardByAccessToken Gets public dashboard and a dashboard by access token
-func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error) {
+func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.FindPublicDashboardAndDashboardByAccessToken")
 	defer span.End()
 	pubdash, err := pd.FindByAccessToken(ctx, accessToken)
@@ -213,14 +213,14 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 	}
 
 	if dash == nil {
-		return nil, nil, ErrPublicDashboardNotFound.Errorf("FindPublicDashboardAndDashboardByAccessToken: Dashboard not found accessToken: %s", accessToken)
+		return nil, nil, models.ErrPublicDashboardNotFound.Errorf("FindPublicDashboardAndDashboardByAccessToken: Dashboard not found accessToken: %s", accessToken)
 	}
 
 	return pubdash, dash, nil
 }
 
 // Creates and validates the public dashboard and saves it to the database
-func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardDTO) (*models.PublicDashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.Create")
 	defer span.End()
 	// validate fields
@@ -237,18 +237,18 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 
 	// validate the dashboard does not already have a public dashboard
 	existingPubdash, err := pd.FindByDashboardUid(ctx, u.OrgID, dto.DashboardUid)
-	if err != nil && !errors.Is(err, ErrPublicDashboardNotFound) {
+	if err != nil && !errors.Is(err, models.ErrPublicDashboardNotFound) {
 		return nil, err
 	}
 
 	if existingPubdash != nil {
 		// If there is no license and the public dashboard was email-shared, we should update it to public
-		if !pd.license.FeatureEnabled(FeaturePublicDashboardsEmailSharing) && existingPubdash.Share == EmailShareType {
+		if !pd.license.FeatureEnabled(models.FeaturePublicDashboardsEmailSharing) && existingPubdash.Share == models.EmailShareType {
 			dto.Uid = existingPubdash.Uid
-			dto.PublicDashboard.Share = PublicShareType
+			dto.PublicDashboard.Share = models.PublicShareType
 			return pd.Update(ctx, u, dto)
 		}
-		return nil, ErrDashboardIsPublic.Errorf("Create: public dashboard for dashboard %s already exists", dto.DashboardUid)
+		return nil, models.ErrDashboardIsPublic.Errorf("Create: public dashboard for dashboard %s already exists", dto.DashboardUid)
 	}
 
 	publicDashboard, err := pd.newCreatePublicDashboard(ctx, dto)
@@ -256,21 +256,21 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		return nil, err
 	}
 
-	cmd := SavePublicDashboardCommand{
+	cmd := models.SavePublicDashboardCommand{
 		PublicDashboard: *publicDashboard,
 	}
 
 	affectedRows, err := pd.store.Create(ctx, cmd)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Create: failed to create the public dashboard with Uid %s: %w", publicDashboard.Uid, err)
+		return nil, models.ErrInternalServerError.Errorf("Create: failed to create the public dashboard with Uid %s: %w", publicDashboard.Uid, err)
 	} else if affectedRows == 0 {
-		return nil, ErrInternalServerError.Errorf("Create: failed to create a database entry for public dashboard with Uid %s. 0 rows changed, no error reported.", publicDashboard.Uid)
+		return nil, models.ErrInternalServerError.Errorf("Create: failed to create a database entry for public dashboard with Uid %s. 0 rows changed, no error reported.", publicDashboard.Uid)
 	}
 
 	//Get latest public dashboard to return
 	newPubdash, err := pd.store.Find(ctx, publicDashboard.Uid)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Create: failed to find the public dashboard: %w", err)
+		return nil, models.ErrInternalServerError.Errorf("Create: failed to find the public dashboard: %w", err)
 	}
 
 	pd.logIsEnabledChanged(existingPubdash, newPubdash, u)
@@ -279,7 +279,7 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 }
 
 // Update: updates an existing public dashboard based on publicdashboard.Uid
-func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardDTO) (*models.PublicDashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.Update")
 	defer span.End()
 	// validate fields
@@ -297,38 +297,38 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	// get existing public dashboard if exists
 	existingPubdash, err := pd.store.FindByOrgAndUid(ctx, u.OrgID, dto.Uid)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s and orgId: %d: %w", dto.Uid, u.OrgID, err)
+		return nil, models.ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s and orgId: %d: %w", dto.Uid, u.OrgID, err)
 	} else if existingPubdash == nil {
-		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.Uid)
+		return nil, models.ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.Uid)
 	}
 
 	// validate the public dashboard belongs to the dashboard
 	if existingPubdash.DashboardUid != dto.DashboardUid {
-		return nil, ErrInvalidUid.Errorf("Update: the public dashboard does not belong to the dashboard")
+		return nil, models.ErrInvalidUid.Errorf("Update: the public dashboard does not belong to the dashboard")
 	}
 
 	publicDashboard := newUpdatePublicDashboard(dto, existingPubdash)
 
 	// set values to update
-	cmd := SavePublicDashboardCommand{
+	cmd := models.SavePublicDashboardCommand{
 		PublicDashboard: *publicDashboard,
 	}
 
 	// persist
 	affectedRows, err := pd.store.Update(ctx, cmd)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Update: failed to update public dashboard: %w", err)
+		return nil, models.ErrInternalServerError.Errorf("Update: failed to update public dashboard: %w", err)
 	}
 
 	// 404 if not found
 	if affectedRows == 0 {
-		return nil, ErrPublicDashboardNotFound.Errorf("Update: failed to update public dashboard not found by uid: %s", dto.Uid)
+		return nil, models.ErrPublicDashboardNotFound.Errorf("Update: failed to update public dashboard not found by uid: %s", dto.Uid)
 	}
 
 	// get latest public dashboard to return
 	newPubdash, err := pd.store.FindByOrgAndUid(ctx, existingPubdash.OrgId, existingPubdash.Uid)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s and orgId: %d: %w", existingPubdash.Uid, existingPubdash.OrgId, err)
+		return nil, models.ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s and orgId: %d: %w", existingPubdash.Uid, existingPubdash.OrgId, err)
 	}
 
 	pd.logIsEnabledChanged(existingPubdash, newPubdash, u)
@@ -349,7 +349,7 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardUid(ctx context.Context)
 			return uid, nil
 		}
 	}
-	return "", ErrInternalServerError.Errorf("failed to generate a unique uid for public dashboard")
+	return "", models.ErrInternalServerError.Errorf("failed to generate a unique uid for public dashboard")
 }
 
 // NewPublicDashboardAccessToken Generates a unique accessToken to create a public dashboard. Will make 3 attempts and fail if it cannot find an unused access token
@@ -369,17 +369,17 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 			return accessToken, nil
 		}
 	}
-	return "", ErrInternalServerError.Errorf("failed to generate a unique accessToken for public dashboard")
+	return "", models.ErrInternalServerError.Errorf("failed to generate a unique accessToken for public dashboard")
 }
 
 // FindAllWithPagination Returns a list of public dashboards by orgId, based on permissions and with pagination
-func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error) {
+func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context, query *models.PublicDashboardListQuery) (*models.PublicDashboardListResponseWithPagination, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.FindAllWithPagination")
 	defer span.End()
 	query.Offset = query.Limit * (query.Page - 1)
 	resp, err := pd.store.FindAll(ctx, query)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetPublicDashboards: %w", err)
+		return nil, models.ErrInternalServerError.Errorf("FindAllWithPagination: GetPublicDashboards: %w", err)
 	}
 
 	// join in the dashboard data
@@ -396,7 +396,7 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 		Type:          model.TypeDashboard,
 	})
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetDashboards: %w", err)
+		return nil, models.ErrInternalServerError.Errorf("FindAllWithPagination: GetDashboards: %w", err)
 	}
 
 	dashMap := make(map[string]dashboards.DashboardSearchProjection)
@@ -465,20 +465,20 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, u
 	// get existing public dashboard if exists
 	existingPubdash, err := pd.store.FindByOrgAndUid(ctx, orgId, uid)
 	if err != nil {
-		return ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: %s and orgId: %d: %w", uid, orgId, err)
+		return models.ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: %s and orgId: %d: %w", uid, orgId, err)
 	}
 	if existingPubdash == nil {
-		return ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: %s", uid)
+		return models.ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: %s", uid)
 	}
 
 	// validate the public dashboard belongs to the requested org
 	if existingPubdash.OrgId != orgId {
-		return ErrPublicDashboardWrongOrg.Errorf("Delete: public dashboard does not belong to org %d", orgId)
+		return models.ErrPublicDashboardWrongOrg.Errorf("Delete: public dashboard does not belong to org %d", orgId)
 	}
 
 	// validate the public dashboard belongs to the dashboard
 	if existingPubdash.DashboardUid != dashboardUid {
-		return ErrInvalidUid.Errorf("Delete: the public dashboard does not belong to the dashboard")
+		return models.ErrInvalidUid.Errorf("Delete: the public dashboard does not belong to the dashboard")
 	}
 	return pd.serviceWrapper.Delete(ctx, orgId, uid)
 }
@@ -490,7 +490,7 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, u
 // this is an additional validation, all data sources implements QueryData interface and should have proper validations
 // of these limits
 // for the maxDataPoints we took a hard limit from prometheus which is 11000
-func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO PublicDashboardQueryDTO, ts TimeSettings) (int64, int64) {
+func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO models.PublicDashboardQueryDTO, ts models.TimeSettings) (int64, int64) {
 	// arbitrary max value for all data sources, it is actually a hard limit defined in prometheus
 	safeResolution := int64(11000)
 
@@ -513,7 +513,7 @@ func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO Pub
 }
 
 // Log when PublicDashboard.ExistsEnabledByDashboardUid changed
-func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard, u *user.SignedInUser) {
+func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *models.PublicDashboard, newPubdash *models.PublicDashboard, u *user.SignedInUser) {
 	if publicDashboardIsEnabledChanged(existingPubdash, newPubdash) {
 		verb := "disabled"
 		if newPubdash.IsEnabled {
@@ -528,7 +528,7 @@ func (pd *PublicDashboardServiceImpl) GetSQLSchemas(ctx context.Context, user id
 }
 
 // Checks to see if PublicDashboard.ExistsEnabledByDashboardUid is true on create or changed on update
-func publicDashboardIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard) bool {
+func publicDashboardIsEnabledChanged(existingPubdash *models.PublicDashboard, newPubdash *models.PublicDashboard) bool {
 	// creating dashboard, enabled true
 	newDashCreated := existingPubdash == nil && newPubdash.IsEnabled
 	// updating dashboard, enabled changed
@@ -545,7 +545,7 @@ func GenerateAccessToken() (string, error) {
 	return fmt.Sprintf("%x", token[:]), nil
 }
 
-func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Context, dto *models.SavePublicDashboardDTO) (*models.PublicDashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.newCreatePublicDashboard")
 	defer span.End()
 	//Check if uid already exists, if none then auto generate
@@ -555,7 +555,7 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 	if uid != "" {
 		existingPubdash, _ := pd.store.Find(ctx, uid)
 		if existingPubdash != nil {
-			return nil, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", uid)
+			return nil, models.ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", uid)
 		}
 	} else {
 		uid, err = pd.NewPublicDashboardUid(ctx)
@@ -569,7 +569,7 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 	if accessToken != "" {
 		existingPubdash, _ := pd.store.FindByAccessToken(ctx, accessToken)
 		if existingPubdash != nil {
-			return nil, ErrPublicDashboardAccessTokenExists.Errorf("Create: public dashboard access token %s already exists", accessToken)
+			return nil, models.ErrPublicDashboardAccessTokenExists.Errorf("Create: public dashboard access token %s already exists", accessToken)
 		}
 	} else {
 		accessToken, err = pd.NewPublicDashboardAccessToken(ctx)
@@ -584,19 +584,19 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 
 	share := dto.PublicDashboard.Share
 	if dto.PublicDashboard.Share == "" {
-		share = PublicShareType
+		share = models.PublicShareType
 	}
 
 	now := time.Now()
 
-	return &PublicDashboard{
+	return &models.PublicDashboard{
 		Uid:                  uid,
 		DashboardUid:         dto.DashboardUid,
 		OrgId:                dto.OrgID,
 		IsEnabled:            isEnabled,
 		AnnotationsEnabled:   annotationsEnabled,
 		TimeSelectionEnabled: timeSelectionEnabled,
-		TimeSettings:         &TimeSettings{},
+		TimeSettings:         &models.TimeSettings{},
 		Share:                share,
 		CreatedBy:            dto.UserId,
 		CreatedAt:            now,
@@ -606,7 +606,7 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 	}, nil
 }
 
-func newUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) *PublicDashboard {
+func newUpdatePublicDashboard(dto *models.SavePublicDashboardDTO, pd *models.PublicDashboard) *models.PublicDashboard {
 	pubdashDTO := dto.PublicDashboard
 	timeSelectionEnabled := returnValueOrDefault(pubdashDTO.TimeSelectionEnabled, pd.TimeSelectionEnabled)
 	isEnabled := returnValueOrDefault(pubdashDTO.IsEnabled, pd.IsEnabled)
@@ -617,7 +617,7 @@ func newUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) 
 		share = pd.Share
 	}
 
-	return &PublicDashboard{
+	return &models.PublicDashboard{
 		Uid:                  pd.Uid,
 		OrgId:                pd.OrgId,
 		IsEnabled:            isEnabled,

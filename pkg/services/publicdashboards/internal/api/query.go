@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/validation"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -28,7 +28,7 @@ import (
 func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 	if !validation.IsValidAccessToken(accessToken) {
-		return response.Err(ErrInvalidAccessToken.Errorf("ViewPublicDashboard: invalid access token"))
+		return response.Err(models.ErrInvalidAccessToken.Errorf("ViewPublicDashboard: invalid access token"))
 	}
 
 	dto, err := api.PublicDashboardService.GetPublicDashboardForView(c.Req.Context(), accessToken)
@@ -54,17 +54,17 @@ func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Respons
 func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 	if !validation.IsValidAccessToken(accessToken) {
-		return response.Err(ErrInvalidAccessToken.Errorf("QueryPublicDashboard: invalid access token"))
+		return response.Err(models.ErrInvalidAccessToken.Errorf("QueryPublicDashboard: invalid access token"))
 	}
 
 	panelId, err := strconv.ParseInt(web.Params(c.Req)[":panelId"], 10, 64)
 	if err != nil {
-		return response.Err(ErrInvalidPanelId.Errorf("QueryPublicDashboard: error parsing panelId %v", err))
+		return response.Err(models.ErrInvalidPanelId.Errorf("QueryPublicDashboard: error parsing panelId %v", err))
 	}
 
-	reqDTO := PublicDashboardQueryDTO{}
+	reqDTO := models.PublicDashboardQueryDTO{}
 	if err = web.Bind(c.Req, &reqDTO); err != nil {
-		return response.Err(ErrBadRequest.Errorf("QueryPublicDashboard: error parsing request: %v", err))
+		return response.Err(models.ErrBadRequest.Errorf("QueryPublicDashboard: error parsing request: %v", err))
 	}
 
 	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipDSCache, reqDTO, panelId, accessToken)
@@ -89,10 +89,10 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 func (api *Api) GetPublicAnnotations(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 	if !validation.IsValidAccessToken(accessToken) {
-		return response.Err(ErrInvalidAccessToken.Errorf("GetPublicAnnotations: invalid access token"))
+		return response.Err(models.ErrInvalidAccessToken.Errorf("GetPublicAnnotations: invalid access token"))
 	}
 
-	reqDTO := AnnotationsQueryDTO{
+	reqDTO := models.AnnotationsQueryDTO{
 		From: c.QueryInt64("from"),
 		To:   c.QueryInt64("to"),
 	}
@@ -134,7 +134,7 @@ type QueryPublicDashboardParams struct {
 // swagger:response getPublicAnnotationsResponse
 type GetPublicAnnotationsResponse struct {
 	// in: body
-	Body []AnnotationEvent `json:"body"`
+	Body []models.AnnotationEvent `json:"body"`
 }
 
 // swagger:parameters getPublicAnnotations

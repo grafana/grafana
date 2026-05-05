@@ -9,7 +9,7 @@ import (
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	models "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -23,20 +23,20 @@ const (
 //go:generate mockery --name Service --structname FakePublicDashboardService --inpackage --filename public_dashboard_service_mock.go
 type Service interface {
 	GetPublicDashboardForView(ctx context.Context, accessToken string) (*dtos.DashboardFullWithMeta, error)
-	FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error)
-	FindEnabledPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error)
-	FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
-	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	FindAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
+	FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *dashboards.Dashboard, error)
+	FindEnabledPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *dashboards.Dashboard, error)
+	FindByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, error)
+	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error)
+	FindAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error)
 	FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error)
-	FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error)
-	Find(ctx context.Context, uid string) (*PublicDashboard, error)
-	Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
-	Update(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
+	FindAllWithPagination(ctx context.Context, query *models.PublicDashboardListQuery) (*models.PublicDashboardListResponseWithPagination, error)
+	Find(ctx context.Context, uid string) (*models.PublicDashboard, error)
+	Create(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardDTO) (*models.PublicDashboard, error)
+	Update(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardDTO) (*models.PublicDashboard, error)
 	Delete(ctx context.Context, orgId int64, uid string, dashboardUid string) error
 
-	GetMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
-	GetQueryDataResponse(ctx context.Context, skipDSCache bool, reqDTO PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error)
+	GetMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error)
+	GetQueryDataResponse(ctx context.Context, skipDSCache bool, reqDTO models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error)
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
 	NewPublicDashboardAccessToken(ctx context.Context) (string, error)
 	NewPublicDashboardUid(ctx context.Context) (string, error)
@@ -51,27 +51,27 @@ type Service interface {
 //
 //go:generate mockery --name ServiceWrapper --structname FakePublicDashboardServiceWrapper --inpackage --filename public_dashboard_service_wrapper_mock.go
 type ServiceWrapper interface {
-	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
+	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error)
 	Delete(ctx context.Context, orgId int64, uid string) error
 	DeleteByDashboardUIDs(ctx context.Context, orgId int64, dashboardUIDs []string) error
 }
 
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
 type Store interface {
-	Find(ctx context.Context, uid string) (*PublicDashboard, error)
-	FindByOrgAndUid(ctx context.Context, orgId int64, uid string) (*PublicDashboard, error)
-	FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
-	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	FindAll(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error)
-	Create(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
-	Update(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
+	Find(ctx context.Context, uid string) (*models.PublicDashboard, error)
+	FindByOrgAndUid(ctx context.Context, orgId int64, uid string) (*models.PublicDashboard, error)
+	FindByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, error)
+	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error)
+	FindAll(ctx context.Context, query *models.PublicDashboardListQuery) (*models.PublicDashboardListResponseWithPagination, error)
+	Create(ctx context.Context, cmd models.SavePublicDashboardCommand) (int64, error)
+	Update(ctx context.Context, cmd models.SavePublicDashboardCommand) (int64, error)
 	Delete(ctx context.Context, orgId int64, uid string) (int64, error)
 	DeleteByDashboardUIDs(ctx context.Context, orgId int64, dashboardUIDs []string) error
 
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	ExistsEnabledByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (bool, error)
-	GetMetrics(ctx context.Context) (*Metrics, error)
+	GetMetrics(ctx context.Context) (*models.Metrics, error)
 }
 
 //go:generate mockery --name Middleware --structname FakePublicDashboardMiddleware --inpackage --filename public_dashboard_middleware_mock.go

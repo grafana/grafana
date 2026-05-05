@@ -12,8 +12,8 @@ import (
 	dashboard2 "github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/testhelpers"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -28,7 +28,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 
 	t.Run("use request time range when time selection is enabled, dashboard time range when disabled", func(t *testing.T) {
 		dash := dashboards.NewDashboard("test")
-		grafanaAnnotation := DashAnnotation{
+		grafanaAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       "annoName",
@@ -41,7 +41,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 			},
 			Type: util.Pointer("dashboard"),
 		}
-		annos := []DashAnnotation{grafanaAnnotation}
+		annos := []models.DashAnnotation{grafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
 
 		dashboard.Data.SetPath([]string{"time", "from"}, "2026-01-01T00:00:00.000Z")
@@ -57,7 +57,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 		annotationsRepo := &annotations.FakeAnnotationsRepo{}
 
 		t.Run("time selection enabled, use request time range", func(t *testing.T) {
-			pubdash := &PublicDashboard{
+			pubdash := &models.PublicDashboard{
 				Uid:                  "uid1",
 				IsEnabled:            true,
 				OrgId:                1,
@@ -65,7 +65,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 				AnnotationsEnabled:   true,
 				TimeSelectionEnabled: true,
 			}
-			fakeStore := &FakePublicDashboardStore{}
+			fakeStore := &publicdashboards.FakePublicDashboardStore{}
 			fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 			fakeDashboardService := &dashboards.FakeDashboardService{}
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -88,7 +88,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 				},
 			}, nil).Once()
 
-			reqDTO := AnnotationsQueryDTO{
+			reqDTO := models.AnnotationsQueryDTO{
 				From: requestFromMs,
 				To:   requestToMs,
 			}
@@ -102,7 +102,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 		})
 
 		t.Run("time selection disabled, use dashboard default time range", func(t *testing.T) {
-			pubdash := &PublicDashboard{
+			pubdash := &models.PublicDashboard{
 				Uid:                  "uid2",
 				IsEnabled:            true,
 				OrgId:                1,
@@ -110,7 +110,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 				AnnotationsEnabled:   true,
 				TimeSelectionEnabled: false,
 			}
-			fakeStore := &FakePublicDashboardStore{}
+			fakeStore := &publicdashboards.FakePublicDashboardStore{}
 			fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 			fakeDashboardService := &dashboards.FakeDashboardService{}
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -133,7 +133,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 				},
 			}, nil).Once()
 
-			reqDTO := AnnotationsQueryDTO{
+			reqDTO := models.AnnotationsQueryDTO{
 				From: requestFromMs,
 				To:   requestToMs,
 			}
@@ -151,7 +151,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 			outOfRangeTime, _ := time.Parse(time.RFC3339, "2025-01-01T00:00:00.000Z")
 			outOfRangeTimeMs := outOfRangeTime.UnixMilli()
 
-			pubdash := &PublicDashboard{
+			pubdash := &models.PublicDashboard{
 				Uid:                  "uid2",
 				IsEnabled:            true,
 				OrgId:                1,
@@ -159,7 +159,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 				AnnotationsEnabled:   true,
 				TimeSelectionEnabled: false,
 			}
-			fakeStore := &FakePublicDashboardStore{}
+			fakeStore := &publicdashboards.FakePublicDashboardStore{}
 			fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 			fakeDashboardService := &dashboards.FakeDashboardService{}
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -182,7 +182,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 				},
 			}, nil).Once()
 
-			reqDTO := AnnotationsQueryDTO{
+			reqDTO := models.AnnotationsQueryDTO{
 				From: requestFromMs,
 				To:   requestToMs,
 			}
@@ -241,7 +241,7 @@ func TestGetAnnotationsTimeRange(t *testing.T) {
 	testCases := []struct {
 		name                 string
 		dashboard            *dashboards.Dashboard
-		reqDTO               AnnotationsQueryDTO
+		reqDTO               models.AnnotationsQueryDTO
 		timeSelectionEnabled bool
 		wantFrom             int64
 		wantTo               int64
@@ -249,7 +249,7 @@ func TestGetAnnotationsTimeRange(t *testing.T) {
 		{
 			name:      "time selection enabled, should use request time range",
 			dashboard: &dashboards.Dashboard{Data: defaultV1DashboardData},
-			reqDTO: AnnotationsQueryDTO{
+			reqDTO: models.AnnotationsQueryDTO{
 				From: requestFromMs,
 				To:   requestToMs,
 			},
@@ -262,7 +262,7 @@ func TestGetAnnotationsTimeRange(t *testing.T) {
 			dashboard: &dashboards.Dashboard{
 				Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Europe/Madrid"),
 			},
-			reqDTO: AnnotationsQueryDTO{
+			reqDTO: models.AnnotationsQueryDTO{
 				From: requestFromMs,
 				To:   requestToMs,
 			},
@@ -273,7 +273,7 @@ func TestGetAnnotationsTimeRange(t *testing.T) {
 		{
 			name:      "time selection disabled, should use dashboard time range",
 			dashboard: &dashboards.Dashboard{Data: defaultV1DashboardData},
-			reqDTO: AnnotationsQueryDTO{
+			reqDTO: models.AnnotationsQueryDTO{
 				From: requestFromMs,
 				To:   requestToMs,
 			},
@@ -286,7 +286,7 @@ func TestGetAnnotationsTimeRange(t *testing.T) {
 			dashboard: &dashboards.Dashboard{
 				Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Europe/Madrid"),
 			},
-			reqDTO: AnnotationsQueryDTO{
+			reqDTO: models.AnnotationsQueryDTO{
 				From: requestFromMs,
 				To:   requestToMs,
 			},
@@ -299,7 +299,7 @@ func TestGetAnnotationsTimeRange(t *testing.T) {
 			dashboard: &dashboards.Dashboard{
 				Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", ""),
 			},
-			reqDTO: AnnotationsQueryDTO{
+			reqDTO: models.AnnotationsQueryDTO{
 				From: requestFromMs,
 				To:   requestToMs,
 			},
@@ -312,7 +312,7 @@ func TestGetAnnotationsTimeRange(t *testing.T) {
 			dashboard: &dashboards.Dashboard{
 				Data: buildJsonDataWithTimeRange("now-1h", "now", "Europe/Madrid"),
 			},
-			reqDTO: AnnotationsQueryDTO{
+			reqDTO: models.AnnotationsQueryDTO{
 				From: 0,
 				To:   0,
 			},
@@ -323,7 +323,7 @@ func TestGetAnnotationsTimeRange(t *testing.T) {
 		{
 			name:      "time selection enabled, v2 dashboard, should use request time range",
 			dashboard: &dashboards.Dashboard{Data: defaultV2DashboardData},
-			reqDTO: AnnotationsQueryDTO{
+			reqDTO: models.AnnotationsQueryDTO{
 				From: requestFromMs,
 				To:   requestToMs,
 			},
@@ -334,7 +334,7 @@ func TestGetAnnotationsTimeRange(t *testing.T) {
 		{
 			name:      "time selection disabled, v2 dashboard, should use dashboard time range",
 			dashboard: &dashboards.Dashboard{Data: defaultV2DashboardData},
-			reqDTO: AnnotationsQueryDTO{
+			reqDTO: models.AnnotationsQueryDTO{
 				From: requestFromMs,
 				To:   requestToMs,
 			},

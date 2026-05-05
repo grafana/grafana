@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,9 +41,9 @@ func ProvideStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.Feature
 }
 
 // FindAllWithPagination Returns a list of public dashboards by orgId, based on permissions and with pagination
-func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error) {
-	resp := &PublicDashboardListResponseWithPagination{
-		PublicDashboards: make([]*PublicDashboardListResponse, 0),
+func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, query *models.PublicDashboardListQuery) (*models.PublicDashboardListResponseWithPagination, error) {
+	resp := &models.PublicDashboardListResponseWithPagination{
+		PublicDashboards: make([]*models.PublicDashboardListResponse, 0),
 		TotalCount:       0,
 	}
 
@@ -80,13 +80,13 @@ func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, query *PublicDas
 }
 
 // Find Returns public dashboard by Uid or nil if not found
-func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*models.PublicDashboard, error) {
 	if uid == "" {
 		return nil, nil
 	}
 
 	var found bool
-	publicDashboard := &PublicDashboard{Uid: uid}
+	publicDashboard := &models.PublicDashboard{Uid: uid}
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		found, err = sess.Get(publicDashboard)
@@ -105,13 +105,13 @@ func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*Publi
 }
 
 // FindByOrgAndUid Returns public dashboard by org and uid or nil if not found
-func (d *PublicDashboardStoreImpl) FindByOrgAndUid(ctx context.Context, orgId int64, uid string) (*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) FindByOrgAndUid(ctx context.Context, orgId int64, uid string) (*models.PublicDashboard, error) {
 	if uid == "" {
 		return nil, nil
 	}
 
 	var found bool
-	publicDashboard := &PublicDashboard{}
+	publicDashboard := &models.PublicDashboard{}
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		found, err = sess.Where("uid = ? AND org_id = ?", uid, orgId).Get(publicDashboard)
@@ -130,13 +130,13 @@ func (d *PublicDashboardStoreImpl) FindByOrgAndUid(ctx context.Context, orgId in
 }
 
 // FindByAccessToken Returns public dashboard by access token or nil if not found
-func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, error) {
 	if accessToken == "" {
 		return nil, nil
 	}
 
 	var found bool
-	publicDashboard := &PublicDashboard{AccessToken: accessToken}
+	publicDashboard := &models.PublicDashboard{AccessToken: accessToken}
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		found, err = sess.Get(publicDashboard)
@@ -155,12 +155,12 @@ func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, access
 }
 
 // FindByDashboardUid Retrieves public dashboard by dashboard uid or nil if not found
-func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
 	if dashboardUid == "" || orgId == 0 {
 		return nil, nil
 	}
 	var found bool
-	publicDashboard := &PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
+	publicDashboard := &models.PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		found, err = sess.Get(publicDashboard)
@@ -236,7 +236,7 @@ func (d *PublicDashboardStoreImpl) GetOrgIdByAccessToken(ctx context.Context, ac
 }
 
 // Creates a public dashboard
-func (d *PublicDashboardStoreImpl) Create(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error) {
+func (d *PublicDashboardStoreImpl) Create(ctx context.Context, cmd models.SavePublicDashboardCommand) (int64, error) {
 	if cmd.PublicDashboard.DashboardUid == "" {
 		return 0, dashboards.ErrDashboardIdentifierNotSet
 	}
@@ -252,7 +252,7 @@ func (d *PublicDashboardStoreImpl) Create(ctx context.Context, cmd SavePublicDas
 }
 
 // Updates existing public dashboard
-func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error) {
+func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd models.SavePublicDashboardCommand) (int64, error) {
 	var affectedRows int64
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
@@ -324,9 +324,9 @@ func (d *PublicDashboardStoreImpl) DeleteByDashboardUIDs(ctx context.Context, or
 	})
 }
 
-func (d *PublicDashboardStoreImpl) GetMetrics(ctx context.Context) (*Metrics, error) {
-	metrics := &Metrics{
-		TotalPublicDashboards: []*TotalPublicDashboard{},
+func (d *PublicDashboardStoreImpl) GetMetrics(ctx context.Context) (*models.Metrics, error) {
+	metrics := &models.Metrics{
+		TotalPublicDashboards: []*models.TotalPublicDashboard{},
 	}
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL("SELECT COUNT(*) as total_count, is_enabled, share as share_type  FROM dashboard_public GROUP BY is_enabled, share").Find(&metrics.TotalPublicDashboards)

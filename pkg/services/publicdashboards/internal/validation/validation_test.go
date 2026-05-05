@@ -3,21 +3,21 @@ package validation
 import (
 	"testing"
 
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestValidatePublicDashboard(t *testing.T) {
 	t.Run("Returns no error when valid shareType value is received", func(t *testing.T) {
-		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", UserId: 1, PublicDashboard: &PublicDashboardDTO{Share: EmailShareType}}
+		dto := &models.SavePublicDashboardDTO{DashboardUid: "abc123", UserId: 1, PublicDashboard: &models.PublicDashboardDTO{Share: models.EmailShareType}}
 
 		err := ValidatePublicDashboard(dto)
 		require.NoError(t, err)
 	})
 
 	t.Run("Returns error when invalid shareType value", func(t *testing.T) {
-		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", UserId: 1, PublicDashboard: &PublicDashboardDTO{Share: "invalid"}}
+		dto := &models.SavePublicDashboardDTO{DashboardUid: "abc123", UserId: 1, PublicDashboard: &models.PublicDashboardDTO{Share: "invalid"}}
 
 		err := ValidatePublicDashboard(dto)
 		require.Error(t, err)
@@ -26,8 +26,8 @@ func TestValidatePublicDashboard(t *testing.T) {
 
 func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 	type args struct {
-		req PublicDashboardQueryDTO
-		pd  *PublicDashboard
+		req models.PublicDashboardQueryDTO
+		pd  *models.PublicDashboard
 	}
 	tests := []struct {
 		name    string
@@ -37,15 +37,15 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 		{
 			name: "Returns no error when input is valid",
 			args: args{
-				req: PublicDashboardQueryDTO{
+				req: models.PublicDashboardQueryDTO{
 					IntervalMs:    1000,
 					MaxDataPoints: 1000,
-					TimeRange: TimeRangeDTO{
+					TimeRange: models.TimeRangeDTO{
 						From: "now-1h",
 						To:   "now",
 					},
 				},
-				pd: &PublicDashboard{
+				pd: &models.PublicDashboard{
 					TimeSelectionEnabled: true,
 				},
 			},
@@ -54,11 +54,11 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 		{
 			name: "Returns no error when input is valid and time selection is disabled",
 			args: args{
-				req: PublicDashboardQueryDTO{
+				req: models.PublicDashboardQueryDTO{
 					IntervalMs:    1000,
 					MaxDataPoints: 1000,
 				},
-				pd: &PublicDashboard{
+				pd: &models.PublicDashboard{
 					TimeSelectionEnabled: false,
 				},
 			},
@@ -67,33 +67,33 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 		{
 			name: "Returns validation error when intervalMs is less than 0",
 			args: args{
-				req: PublicDashboardQueryDTO{
+				req: models.PublicDashboardQueryDTO{
 					IntervalMs: -1,
 				},
-				pd: &PublicDashboard{},
+				pd: &models.PublicDashboard{},
 			},
 			wantErr: true,
 		},
 		{
 			name: "Returns validation error when maxDataPoints is less than 0",
 			args: args{
-				req: PublicDashboardQueryDTO{
+				req: models.PublicDashboardQueryDTO{
 					MaxDataPoints: -1,
 				},
-				pd: &PublicDashboard{},
+				pd: &models.PublicDashboard{},
 			},
 			wantErr: true,
 		},
 		{
 			name: "Returns validation error when time range from is invalid",
 			args: args{
-				req: PublicDashboardQueryDTO{
-					TimeRange: TimeRangeDTO{
+				req: models.PublicDashboardQueryDTO{
+					TimeRange: models.TimeRangeDTO{
 						From: "invalid",
 						To:   "1622560000000",
 					},
 				},
-				pd: &PublicDashboard{
+				pd: &models.PublicDashboard{
 					TimeSelectionEnabled: true,
 				},
 			},
@@ -102,13 +102,13 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 		{
 			name: "Returns validation error when time range to is invalid",
 			args: args{
-				req: PublicDashboardQueryDTO{
-					TimeRange: TimeRangeDTO{
+				req: models.PublicDashboardQueryDTO{
+					TimeRange: models.TimeRangeDTO{
 						From: "1622560000000",
 						To:   "invalid",
 					},
 				},
-				pd: &PublicDashboard{
+				pd: &models.PublicDashboard{
 					TimeSelectionEnabled: true,
 				},
 			},
@@ -117,13 +117,13 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 		{
 			name: "Returns validation error when time range from or to is blank",
 			args: args{
-				req: PublicDashboardQueryDTO{
-					TimeRange: TimeRangeDTO{
+				req: models.PublicDashboardQueryDTO{
+					TimeRange: models.TimeRangeDTO{
 						From: "",
 						To:   "",
 					},
 				},
-				pd: &PublicDashboard{
+				pd: &models.PublicDashboard{
 					TimeSelectionEnabled: true,
 				},
 			},

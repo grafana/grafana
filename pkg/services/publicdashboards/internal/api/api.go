@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -121,7 +121,7 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 		page = 1
 	}
 
-	resp, err := api.PublicDashboardService.FindAllWithPagination(c.Req.Context(), &PublicDashboardListQuery{
+	resp, err := api.PublicDashboardService.FindAllWithPagination(c.Req.Context(), &models.PublicDashboardListQuery{
 		OrgID: c.GetOrgID(),
 		Query: c.Query("query"),
 		Page:  page,
@@ -150,7 +150,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if !validation.IsValidShortUID(dashboardUid) {
-		return response.Err(ErrPublicDashboardIdentifierNotSet.Errorf("GetPublicDashboard: no dashboard Uid for public dashboard specified"))
+		return response.Err(models.ErrPublicDashboardIdentifierNotSet.Errorf("GetPublicDashboard: no dashboard Uid for public dashboard specified"))
 	}
 
 	pd, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.GetOrgID(), dashboardUid)
@@ -158,8 +158,8 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 		return response.Err(err)
 	}
 
-	if pd == nil || (!api.license.FeatureEnabled(FeaturePublicDashboardsEmailSharing) && pd.Share == EmailShareType) {
-		return response.Err(ErrPublicDashboardNotFound.Errorf("GetPublicDashboard: public dashboard not found"))
+	if pd == nil || (!api.license.FeatureEnabled(models.FeaturePublicDashboardsEmailSharing) && pd.Share == models.EmailShareType) {
+		return response.Err(models.ErrPublicDashboardNotFound.Errorf("GetPublicDashboard: public dashboard not found"))
 	}
 
 	return response.JSON(http.StatusOK, pd)
@@ -182,28 +182,28 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if !validation.IsValidShortUID(dashboardUid) {
-		return response.Err(ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", dashboardUid))
+		return response.Err(models.ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", dashboardUid))
 	}
 
-	pdDTO := &PublicDashboardDTO{}
+	pdDTO := &models.PublicDashboardDTO{}
 	if err := web.Bind(c.Req, pdDTO); err != nil {
-		return response.Err(ErrBadRequest.Errorf("CreatePublicDashboard: bad request data %v", err))
+		return response.Err(models.ErrBadRequest.Errorf("CreatePublicDashboard: bad request data %v", err))
 	}
 
 	//validate uid
 	uid := pdDTO.Uid
 	if uid != "" && !validation.IsValidShortUID(uid) {
-		return response.Err(ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", uid))
+		return response.Err(models.ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", uid))
 	}
 
 	//validate accessToken
 	accessToken := pdDTO.AccessToken
 	if accessToken != "" && !validation.IsValidAccessToken(accessToken) {
-		return response.Err(ErrInvalidAccessToken.Errorf("CreatePublicDashboard: invalid Access Token %s", accessToken))
+		return response.Err(models.ErrInvalidAccessToken.Errorf("CreatePublicDashboard: invalid Access Token %s", accessToken))
 	}
 
 	// Always set the orgID and userID from the session
-	dto := &SavePublicDashboardDTO{
+	dto := &models.SavePublicDashboardDTO{
 		UserId:          c.UserID,
 		OrgID:           c.GetOrgID(),
 		DashboardUid:    dashboardUid,
@@ -236,21 +236,21 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if !validation.IsValidShortUID(dashboardUid) {
-		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid dashboard Uid %s", dashboardUid))
+		return response.Err(models.ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid dashboard Uid %s", dashboardUid))
 	}
 
 	uid := web.Params(c.Req)[":uid"]
 	if !validation.IsValidShortUID(uid) {
-		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
+		return response.Err(models.ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
 	}
 
-	pdDTO := &PublicDashboardDTO{}
+	pdDTO := &models.PublicDashboardDTO{}
 	if err := web.Bind(c.Req, pdDTO); err != nil {
-		return response.Err(ErrBadRequest.Errorf("UpdatePublicDashboard: bad request data %v", err))
+		return response.Err(models.ErrBadRequest.Errorf("UpdatePublicDashboard: bad request data %v", err))
 	}
 
 	// Always set the orgID and userID from the session
-	dto := SavePublicDashboardDTO{
+	dto := models.SavePublicDashboardDTO{
 		Uid:             uid,
 		UserId:          c.UserID,
 		OrgID:           c.GetOrgID(),
@@ -280,12 +280,12 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	if !validation.IsValidShortUID(uid) {
-		return response.Err(ErrInvalidUid.Errorf("DeletePublicDashboard: invalid Uid %s", uid))
+		return response.Err(models.ErrInvalidUid.Errorf("DeletePublicDashboard: invalid Uid %s", uid))
 	}
 
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if !validation.IsValidShortUID(dashboardUid) {
-		return response.Err(ErrInvalidUid.Errorf("DeletePublicDashboard: invalid dashboard Uid %s", dashboardUid))
+		return response.Err(models.ErrInvalidUid.Errorf("DeletePublicDashboard: invalid dashboard Uid %s", dashboardUid))
 	}
 
 	err := api.PublicDashboardService.Delete(c.Req.Context(), c.GetOrgID(), uid, dashboardUid)
@@ -312,7 +312,7 @@ func toJsonStreamingResponse(ctx context.Context, features featuremgmt.FeatureTo
 // swagger:response listPublicDashboardsResponse
 type ListPublicDashboardsResponse struct {
 	// in: body
-	Body PublicDashboardListResponseWithPagination `json:"body"`
+	Body models.PublicDashboardListResponseWithPagination `json:"body"`
 }
 
 // swagger:parameters getPublicDashboard
@@ -324,7 +324,7 @@ type GetPublicDashboardParams struct {
 // swagger:response getPublicDashboardResponse
 type GetPublicDashboardResponse struct {
 	// in: body
-	Body PublicDashboard `json:"body"`
+	Body models.PublicDashboard `json:"body"`
 }
 
 // swagger:parameters createPublicDashboard
@@ -334,13 +334,13 @@ type CreatePublicDashboardParams struct {
 	DashboardUid string `json:"dashboardUid"`
 	// in:body
 	// required:true
-	Body PublicDashboardDTO
+	Body models.PublicDashboardDTO
 }
 
 // swagger:response createPublicDashboardResponse
 type CreatePublicDashboardResponse struct {
 	// in: body
-	Body PublicDashboard `json:"body"`
+	Body models.PublicDashboard `json:"body"`
 }
 
 // swagger:parameters updatePublicDashboard
@@ -353,13 +353,13 @@ type UpdatePublicDashboardParams struct {
 	Uid string `json:"uid"`
 	// in:body
 	// required:true
-	Body PublicDashboardDTO
+	Body models.PublicDashboardDTO
 }
 
 // swagger:response updatePublicDashboardResponse
 type UpdatePublicDashboardResponse struct {
 	// in: body
-	Body PublicDashboard `json:"body"`
+	Body models.PublicDashboard `json:"body"`
 }
 
 // swagger:parameters deletePublicDashboard

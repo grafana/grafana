@@ -18,8 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/validation"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -28,8 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-var timeSettings = &TimeSettings{From: "now-12h", To: "now"}
-var defaultPubdashTimeSettings = &TimeSettings{}
+var timeSettings = &models.TimeSettings{From: "now-12h", To: "now"}
+var defaultPubdashTimeSettings = &models.TimeSettings{}
 var dashboardData = simplejson.NewFromAny(map[string]any{"time": map[string]any{"from": "now-8h", "to": "now"}})
 var SignedInUser = &user.SignedInUser{UserID: 1234, Login: "user@login.com"}
 
@@ -45,7 +45,7 @@ func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	type storeResp struct {
-		pd  *PublicDashboard
+		pd  *models.PublicDashboard
 		d   *dashboards.Dashboard
 		err error
 	}
@@ -324,7 +324,7 @@ func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 			Name:        "returns a dashboard with the time picker shown",
 			AccessToken: accessToken,
 			StoreResp: &storeResp{
-				pd:  &PublicDashboard{AccessToken: accessToken, IsEnabled: true, TimeSelectionEnabled: true},
+				pd:  &models.PublicDashboard{AccessToken: accessToken, IsEnabled: true, TimeSelectionEnabled: true},
 				d:   d,
 				err: nil,
 			},
@@ -352,7 +352,7 @@ func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 			Name:        "returns a dashboard with the time picker hidden",
 			AccessToken: accessToken,
 			StoreResp: &storeResp{
-				pd:  &PublicDashboard{AccessToken: accessToken, IsEnabled: true, TimeSelectionEnabled: false},
+				pd:  &models.PublicDashboard{AccessToken: accessToken, IsEnabled: true, TimeSelectionEnabled: false},
 				d:   d,
 				err: nil,
 			},
@@ -380,7 +380,7 @@ func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			fakeStore := &FakePublicDashboardStore{}
+			fakeStore := &publicdashboards.FakePublicDashboardStore{}
 			fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(test.StoreResp.pd, test.StoreResp.err)
 			fakeDashboardService := &dashboards.FakeDashboardService{}
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(test.StoreResp.d, test.StoreResp.err)
@@ -487,9 +487,9 @@ func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 			APIVersion: "v2beta1",
 		}
 
-		fakeStore := &FakePublicDashboardStore{}
+		fakeStore := &publicdashboards.FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(
-			&PublicDashboard{AccessToken: accessToken, IsEnabled: true, TimeSelectionEnabled: true}, nil,
+			&models.PublicDashboard{AccessToken: accessToken, IsEnabled: true, TimeSelectionEnabled: true}, nil,
 		)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(v2Dash, nil)
@@ -530,9 +530,9 @@ func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 				APIVersion: apiVersion,
 			}
 
-			fakeStore := &FakePublicDashboardStore{}
+			fakeStore := &publicdashboards.FakePublicDashboardStore{}
 			fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(
-				&PublicDashboard{AccessToken: accessToken, IsEnabled: true, TimeSelectionEnabled: false}, nil,
+				&models.PublicDashboard{AccessToken: accessToken, IsEnabled: true, TimeSelectionEnabled: false}, nil,
 			)
 			fakeDashboardService := &dashboards.FakeDashboardService{}
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(v1Dash, nil)
@@ -565,7 +565,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	type storeResp struct {
-		pd  *PublicDashboard
+		pd  *models.PublicDashboard
 		d   *dashboards.Dashboard
 		err error
 	}
@@ -581,7 +581,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 			Name:        "returns a dashboard",
 			AccessToken: "abc123",
 			StoreResp: &storeResp{
-				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: true},
+				pd:  &models.PublicDashboard{AccessToken: "abcdToken", IsEnabled: true},
 				d:   &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 				err: nil,
 			},
@@ -592,7 +592,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 			Name:        "returns dashboard when isEnabled is false",
 			AccessToken: "abc123",
 			StoreResp: &storeResp{
-				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: false},
+				pd:  &models.PublicDashboard{AccessToken: "abcdToken", IsEnabled: false},
 				d:   &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 				err: nil,
 			},
@@ -600,17 +600,17 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 			DashResp: &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 		},
 		{
-			Name:        "returns ErrPublicDashboardNotFound if PublicDashboard missing",
+			Name:        "returns models.ErrPublicDashboardNotFound if PublicDashboard missing",
 			AccessToken: "abc123",
 			StoreResp:   &storeResp{pd: nil, d: nil, err: nil},
-			ErrResp:     ErrPublicDashboardNotFound,
+			ErrResp:     models.ErrPublicDashboardNotFound,
 			DashResp:    nil,
 		},
 		{
-			Name:        "returns ErrPublicDashboardNotFound if Dashboard missing",
+			Name:        "returns models.ErrPublicDashboardNotFound if Dashboard missing",
 			AccessToken: "abc123",
 			StoreResp:   &storeResp{pd: nil, d: nil, err: nil},
-			ErrResp:     ErrPublicDashboardNotFound,
+			ErrResp:     models.ErrPublicDashboardNotFound,
 			DashResp:    nil,
 		},
 	}
@@ -619,7 +619,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			fakeDashboardService := &dashboards.FakeDashboardService{}
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(test.StoreResp.d, test.StoreResp.err)
-			fakeStore := &FakePublicDashboardStore{}
+			fakeStore := &publicdashboards.FakePublicDashboardStore{}
 			fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(test.StoreResp.pd, test.StoreResp.err)
 			service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, nil)
 
@@ -644,7 +644,7 @@ func TestIntegrationGetEnabledPublicDashboard(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	type storeResp struct {
-		pd  *PublicDashboard
+		pd  *models.PublicDashboard
 		d   *dashboards.Dashboard
 		err error
 	}
@@ -660,7 +660,7 @@ func TestIntegrationGetEnabledPublicDashboard(t *testing.T) {
 			Name:        "returns a dashboard",
 			AccessToken: "abc123",
 			StoreResp: &storeResp{
-				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: true},
+				pd:  &models.PublicDashboard{AccessToken: "abcdToken", IsEnabled: true},
 				d:   &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 				err: nil,
 			},
@@ -668,21 +668,21 @@ func TestIntegrationGetEnabledPublicDashboard(t *testing.T) {
 			DashResp: &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 		},
 		{
-			Name:        "returns ErrPublicDashboardNotFound when isEnabled is false",
+			Name:        "returns models.ErrPublicDashboardNotFound when isEnabled is false",
 			AccessToken: "abc123",
 			StoreResp: &storeResp{
-				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: false},
+				pd:  &models.PublicDashboard{AccessToken: "abcdToken", IsEnabled: false},
 				d:   &dashboards.Dashboard{UID: "mydashboard"},
 				err: nil,
 			},
-			ErrResp:  ErrPublicDashboardNotFound,
+			ErrResp:  models.ErrPublicDashboardNotFound,
 			DashResp: nil,
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			fakeStore := &FakePublicDashboardStore{}
+			fakeStore := &publicdashboards.FakePublicDashboardStore{}
 			fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(test.StoreResp.pd, test.StoreResp.err)
 			fakeDashboardService := &dashboards.FakeDashboardService{}
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(test.StoreResp.d, test.StoreResp.err)
@@ -719,15 +719,15 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 
 		isEnabled, annotationsEnabled, timeSelectionEnabled := true, false, true
 
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
 			OrgID:        dashboard.OrgID,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				IsEnabled:            &isEnabled,
 				AnnotationsEnabled:   &annotationsEnabled,
 				TimeSelectionEnabled: &timeSelectionEnabled,
-				Share:                EmailShareType,
+				Share:                models.EmailShareType,
 			},
 		}
 
@@ -794,15 +794,15 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 			dashboard := createTestDashboard(t, "testDashie", 1, "", true, []map[string]any{}, nil)
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
-			dto := &SavePublicDashboardDTO{
+			dto := &models.SavePublicDashboardDTO{
 				DashboardUid: dashboard.UID,
 				UserId:       7,
 				OrgID:        dashboard.OrgID,
-				PublicDashboard: &PublicDashboardDTO{
+				PublicDashboard: &models.PublicDashboardDTO{
 					IsEnabled:            tt.IsEnabled,
 					TimeSelectionEnabled: tt.TimeSelectionEnabled,
 					AnnotationsEnabled:   tt.AnnotationsEnabled,
-					Share:                PublicShareType,
+					Share:                models.PublicShareType,
 				},
 			}
 
@@ -824,11 +824,11 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
 		isEnabled := true
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			OrgID:        dashboard.OrgID,
 			UserId:       7,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				IsEnabled: &isEnabled,
 			},
 		}
@@ -850,11 +850,11 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
 		isEnabled := true
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			OrgID:        dashboard.OrgID,
 			UserId:       7,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				IsEnabled: &isEnabled,
 			},
 		}
@@ -871,7 +871,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 
 	t.Run("Throws an error when given pubdash uid already exists", func(t *testing.T) {
 		dashboard := dashboards.NewDashboard("testDashie")
-		pubdash := &PublicDashboard{
+		pubdash := &models.PublicDashboard{
 			Uid:                "ExistingUid",
 			IsEnabled:          true,
 			AnnotationsEnabled: false,
@@ -880,7 +880,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 			TimeSettings:       timeSettings,
 		}
 
-		publicDashboardStore := &FakePublicDashboardStore{}
+		publicDashboardStore := &publicdashboards.FakePublicDashboardStore{}
 		publicDashboardStore.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 		publicDashboardStore.On("Find", mock.Anything, "ExistingUid").Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
@@ -889,11 +889,11 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, publicDashboardStore, fakeDashboardService, nil)
 
 		isEnabled := true
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: "an-id",
 			OrgID:        dashboard.OrgID,
 			UserId:       7,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				Uid:       "ExistingUid",
 				IsEnabled: &isEnabled,
 			},
@@ -901,7 +901,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 
 		_, err := service.Create(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
-		require.Equal(t, err, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.PublicDashboard.Uid))
+		require.Equal(t, err, models.ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.PublicDashboard.Uid))
 	})
 
 	t.Run("Create public dashboard with given pubdash uid", func(t *testing.T) {
@@ -912,11 +912,11 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 
 		isEnabled := true
 
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
 			OrgID:        dashboard.OrgID,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				Uid:       "GivenUid",
 				IsEnabled: &isEnabled,
 			},
@@ -933,7 +933,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 
 	t.Run("Throws an error when pubdash with given access token input already exists", func(t *testing.T) {
 		dashboard := dashboards.NewDashboard("testDashie")
-		pubdash := &PublicDashboard{
+		pubdash := &models.PublicDashboard{
 			Uid:                "ExistingUid",
 			AccessToken:        "ExistingAccessToken",
 			IsEnabled:          true,
@@ -943,20 +943,20 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 			TimeSettings:       timeSettings,
 		}
 
-		publicDashboardStore := &FakePublicDashboardStore{}
+		publicDashboardStore := &publicdashboards.FakePublicDashboardStore{}
 		publicDashboardStore.On("Find", mock.Anything, mock.Anything).Return(nil, nil)
 		publicDashboardStore.On("FindByAccessToken", mock.Anything, "ExistingAccessToken").Return(pubdash, nil)
-		publicDashboardStore.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(nil, ErrPublicDashboardNotFound.Errorf(""))
+		publicDashboardStore.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrPublicDashboardNotFound.Errorf(""))
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, publicDashboardStore, fakeDashboardService, nil)
 
 		isEnabled := true
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: "an-id",
 			OrgID:        dashboard.OrgID,
 			UserId:       7,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				AccessToken: "ExistingAccessToken",
 				IsEnabled:   &isEnabled,
 			},
@@ -964,7 +964,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 
 		_, err := service.Create(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
-		require.Equal(t, err, ErrPublicDashboardAccessTokenExists.Errorf("Create: public dashboard access token %s already exists", dto.PublicDashboard.AccessToken))
+		require.Equal(t, err, models.ErrPublicDashboardAccessTokenExists.Errorf("Create: public dashboard access token %s already exists", dto.PublicDashboard.AccessToken))
 	})
 
 	t.Run("Create public dashboard with given pubdash access token", func(t *testing.T) {
@@ -975,11 +975,11 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 
 		isEnabled := true
 
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
 			OrgID:        dashboard.OrgID,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				AccessToken: "GivenAccessToken",
 				IsEnabled:   &isEnabled,
 			},
@@ -996,7 +996,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 
 	t.Run("Throws an error when pubdash with generated access token already exists", func(t *testing.T) {
 		dashboard := dashboards.NewDashboard("testDashie")
-		pubdash := &PublicDashboard{
+		pubdash := &models.PublicDashboard{
 			IsEnabled:          true,
 			AnnotationsEnabled: false,
 			DashboardUid:       "NOTTHESAME",
@@ -1004,18 +1004,18 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 			TimeSettings:       timeSettings,
 		}
 
-		publicDashboardStore := &FakePublicDashboardStore{}
+		publicDashboardStore := &publicdashboards.FakePublicDashboardStore{}
 		publicDashboardStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(pubdash, nil)
 		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, publicDashboardStore, nil, nil)
 
 		_, err := service.NewPublicDashboardAccessToken(context.Background())
 		require.Error(t, err)
-		require.Equal(t, err, ErrInternalServerError.Errorf("failed to generate a unique accessToken for public dashboard"))
+		require.Equal(t, err, models.ErrInternalServerError.Errorf("failed to generate a unique accessToken for public dashboard"))
 	})
 
 	t.Run("Returns error if public dashboard exists", func(t *testing.T) {
-		publicdashboardStore := &FakePublicDashboardStore{}
-		publicdashboardStore.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(&PublicDashboard{Uid: "newPubdashUid"}, nil)
+		publicdashboardStore := &publicdashboards.FakePublicDashboardStore{}
+		publicdashboardStore.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(&models.PublicDashboard{Uid: "newPubdashUid"}, nil)
 		publicdashboardStore.On("Find", mock.Anything, mock.Anything).Return(nil, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, publicdashboardStore, fakeDashboardService, nil)
@@ -1024,10 +1024,10 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
 		isEnabled, annotationsEnabled := true, false
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				AnnotationsEnabled: &annotationsEnabled,
 				IsEnabled:          &isEnabled,
 			},
@@ -1036,7 +1036,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		savedPubdash, err := service.Create(context.Background(), SignedInUser, dto)
 		assert.Error(t, err)
 		assert.Nil(t, savedPubdash)
-		assert.True(t, ErrDashboardIsPublic.Is(err))
+		assert.True(t, models.ErrDashboardIsPublic.Is(err))
 	})
 
 	t.Run("Validate pubdash has default share value", func(t *testing.T) {
@@ -1047,11 +1047,11 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
 		isEnabled := true
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			OrgID:        dashboard.OrgID,
 			UserId:       7,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				IsEnabled: &isEnabled,
 			},
 		}
@@ -1062,7 +1062,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgID, dashboard.UID)
 		require.NoError(t, err)
 		// if share type is empty should be populated with public by default
-		assert.Equal(t, PublicShareType, pubdash.Share)
+		assert.Equal(t, models.PublicShareType, pubdash.Share)
 	})
 }
 
@@ -1086,10 +1086,10 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 
 	t.Run("Updating public dashboard", func(t *testing.T) {
 		isEnabled, annotationsEnabled, timeSelectionEnabled := true, false, false
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				IsEnabled:            &isEnabled,
 				AnnotationsEnabled:   &annotationsEnabled,
 				TimeSelectionEnabled: &timeSelectionEnabled,
@@ -1102,12 +1102,12 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 
 		isEnabled, annotationsEnabled, timeSelectionEnabled = true, true, true
 
-		dto = &SavePublicDashboardDTO{
+		dto = &models.SavePublicDashboardDTO{
 			Uid:          savedPubdash.Uid,
 			DashboardUid: dashboard.UID,
 			OrgID:        9,
 			UserId:       8,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				IsEnabled:            &isEnabled,
 				AnnotationsEnabled:   &annotationsEnabled,
 				TimeSelectionEnabled: &timeSelectionEnabled,
@@ -1135,10 +1135,10 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	t.Run("Updating set empty time settings", func(t *testing.T) {
 		isEnabled := true
 
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				IsEnabled: &isEnabled,
 			},
 		}
@@ -1146,12 +1146,12 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		savedPubdash, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		dto = &SavePublicDashboardDTO{
+		dto = &models.SavePublicDashboardDTO{
 			Uid:          savedPubdash.Uid,
 			DashboardUid: dashboard.UID,
 			OrgID:        9,
 			UserId:       8,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				IsEnabled: &isEnabled,
 			},
 		}
@@ -1159,16 +1159,16 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		updatedPubdash, err := service.Update(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		assert.Equal(t, &TimeSettings{}, updatedPubdash.TimeSettings)
+		assert.Equal(t, &models.TimeSettings{}, updatedPubdash.TimeSettings)
 	})
 
 	t.Run("Should fail when public dashboard uid does not match dashboard uid", func(t *testing.T) {
 		isEnabled := true
 
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				IsEnabled: &isEnabled,
 			},
 		}
@@ -1177,12 +1177,12 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		savedPubdash, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		dto = &SavePublicDashboardDTO{
+		dto = &models.SavePublicDashboardDTO{
 			Uid:          savedPubdash.Uid,
 			DashboardUid: dashboard2.UID,
 			OrgID:        9,
 			UserId:       8,
-			PublicDashboard: &PublicDashboardDTO{
+			PublicDashboard: &models.PublicDashboardDTO{
 				IsEnabled: &isEnabled,
 			},
 		}
@@ -1191,10 +1191,10 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Updating not existent dashboard", func(t *testing.T) {
-		dto := &SavePublicDashboardDTO{
+		dto := &models.SavePublicDashboardDTO{
 			DashboardUid:    "NOTEXISTENTDASHBOARD",
 			UserId:          7,
-			PublicDashboard: &PublicDashboardDTO{},
+			PublicDashboard: &models.PublicDashboardDTO{},
 		}
 		fds := &dashboards.FakeDashboardService{}
 		fds.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(nil, dashboards.ErrDashboardNotFound)
@@ -1210,16 +1210,16 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	})
 
 	trueBooleanField := true
-	timeSettings := &TimeSettings{From: "now-8", To: "now"}
-	shareType := EmailShareType
+	timeSettings := &models.TimeSettings{From: "now-8", To: "now"}
+	shareType := models.EmailShareType
 
 	testCases := []struct {
 		Name                 string
 		IsEnabled            *bool
 		TimeSelectionEnabled *bool
 		AnnotationsEnabled   *bool
-		TimeSettings         *TimeSettings
-		ShareType            ShareType
+		TimeSettings         *models.TimeSettings
+		ShareType            models.ShareType
 	}{
 		{
 			Name:                 "isEnabled",
@@ -1265,14 +1265,14 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 
 			isEnabled, annotationsEnabled, timeSelectionEnabled := true, true, false
 
-			dto := &SavePublicDashboardDTO{
+			dto := &models.SavePublicDashboardDTO{
 				DashboardUid: dashboard.UID,
 				UserId:       7,
-				PublicDashboard: &PublicDashboardDTO{
+				PublicDashboard: &models.PublicDashboardDTO{
 					IsEnabled:            &isEnabled,
 					AnnotationsEnabled:   &annotationsEnabled,
 					TimeSelectionEnabled: &timeSelectionEnabled,
-					Share:                PublicShareType,
+					Share:                models.PublicShareType,
 				},
 			}
 
@@ -1280,12 +1280,12 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 			savedPubdash, err := service.Create(context.Background(), SignedInUser, dto)
 			require.NoError(t, err)
 
-			dto = &SavePublicDashboardDTO{
+			dto = &models.SavePublicDashboardDTO{
 				Uid:          savedPubdash.Uid,
 				DashboardUid: dashboard.UID,
 				OrgID:        9,
 				UserId:       8,
-				PublicDashboard: &PublicDashboardDTO{
+				PublicDashboard: &models.PublicDashboardDTO{
 					IsEnabled:            tt.IsEnabled,
 					AnnotationsEnabled:   tt.AnnotationsEnabled,
 					TimeSelectionEnabled: tt.TimeSelectionEnabled,
@@ -1319,10 +1319,10 @@ func assertOldValueIfNull(t *testing.T, expectedValue bool, oldValue bool, nulla
 func TestIntegrationDeletePublicDashboard(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	pubdash := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "uid"}
+	pubdash := &models.PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "uid"}
 
 	type mockFindResponse struct {
-		PublicDashboard *PublicDashboard
+		PublicDashboard *models.PublicDashboard
 		Err             error
 	}
 
@@ -1347,28 +1347,28 @@ func TestIntegrationDeletePublicDashboard(t *testing.T) {
 		},
 		{
 			Name:            "Public dashboard not found",
-			ExpectedErrResp: ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: pubdashUID and orgId: 1: error"),
+			ExpectedErrResp: models.ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: pubdashUID and orgId: 1: error"),
 			mockFindStore:   &mockFindResponse{pubdash, errors.New("error")},
 			mockDeleteStore: &mockDeleteResponse{0, nil},
 			orgId:           1,
 		},
 		{
 			Name:            "Public dashboard not found by UID",
-			ExpectedErrResp: ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: pubdashUID"),
+			ExpectedErrResp: models.ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: pubdashUID"),
 			mockFindStore:   &mockFindResponse{nil, nil},
 			mockDeleteStore: &mockDeleteResponse{0, nil},
 			orgId:           1,
 		},
 		{
 			Name:            "Public dashboard UID does not belong to the dashboard",
-			ExpectedErrResp: ErrInvalidUid.Errorf("Delete: the public dashboard does not belong to the dashboard"),
-			mockFindStore:   &mockFindResponse{&PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "wrong"}, nil},
+			ExpectedErrResp: models.ErrInvalidUid.Errorf("Delete: the public dashboard does not belong to the dashboard"),
+			mockFindStore:   &mockFindResponse{&models.PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "wrong"}, nil},
 			mockDeleteStore: &mockDeleteResponse{0, nil},
 			orgId:           1,
 		},
 		{
 			Name:            "Public dashboard from another org is treated as not found",
-			ExpectedErrResp: ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: pubdashUID"),
+			ExpectedErrResp: models.ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: pubdashUID"),
 			mockFindStore:   &mockFindResponse{nil, nil},
 			mockDeleteStore: &mockDeleteResponse{0, nil},
 			orgId:           2,
@@ -1376,7 +1376,7 @@ func TestIntegrationDeletePublicDashboard(t *testing.T) {
 
 		{
 			Name:            "Failed to delete - Database error",
-			ExpectedErrResp: ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by Uid: pubdashUID db error!"),
+			ExpectedErrResp: models.ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by Uid: pubdashUID db error!"),
 			mockFindStore:   &mockFindResponse{pubdash, nil},
 			mockDeleteStore: &mockDeleteResponse{1, errors.New("db error!")},
 			orgId:           1,
@@ -1385,7 +1385,7 @@ func TestIntegrationDeletePublicDashboard(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.Name, func(t *testing.T) {
-			store := NewFakePublicDashboardStore(t)
+			store := publicdashboards.NewFakePublicDashboardStore(t)
 			store.On("FindByOrgAndUid", mock.Anything, tt.orgId, "pubdashUID").Return(tt.mockFindStore.PublicDashboard, tt.mockFindStore.Err)
 			if tt.ExpectedErrResp == nil || tt.mockDeleteStore.StoreRespErr != nil {
 				store.On("Delete", mock.Anything, tt.orgId, "pubdashUID").Return(tt.mockDeleteStore.AffectedRowsResp, tt.mockDeleteStore.StoreRespErr)
@@ -1403,8 +1403,8 @@ func TestIntegrationDeletePublicDashboard(t *testing.T) {
 
 func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T) {
 	type args struct {
-		reqDTO PublicDashboardQueryDTO
-		ts     TimeSettings
+		reqDTO models.PublicDashboardQueryDTO
+		ts     models.TimeSettings
 	}
 	tests := []struct {
 		name                  string
@@ -1415,11 +1415,11 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return original interval",
 			args: args{
-				reqDTO: PublicDashboardQueryDTO{
+				reqDTO: models.PublicDashboardQueryDTO{
 					IntervalMs:    10000,
 					MaxDataPoints: 300,
 				},
-				ts: TimeSettings{
+				ts: models.TimeSettings{
 					From: "now-3h",
 					To:   "now",
 				},
@@ -1430,11 +1430,11 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return safe interval because of a small interval",
 			args: args{
-				reqDTO: PublicDashboardQueryDTO{
+				reqDTO: models.PublicDashboardQueryDTO{
 					IntervalMs:    1000,
 					MaxDataPoints: 300,
 				},
-				ts: TimeSettings{
+				ts: models.TimeSettings{
 					From: "now-6h",
 					To:   "now",
 				},
@@ -1445,11 +1445,11 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return safe interval for long time range",
 			args: args{
-				reqDTO: PublicDashboardQueryDTO{
+				reqDTO: models.PublicDashboardQueryDTO{
 					IntervalMs:    100,
 					MaxDataPoints: 300,
 				},
-				ts: TimeSettings{
+				ts: models.TimeSettings{
 					From: "now-90d",
 					To:   "now",
 				},
@@ -1460,8 +1460,8 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return safe interval when reqDTO is empty",
 			args: args{
-				reqDTO: PublicDashboardQueryDTO{},
-				ts: TimeSettings{
+				reqDTO: models.PublicDashboardQueryDTO{},
+				ts: models.TimeSettings{
 					From: "now-90d",
 					To:   "now",
 				},
@@ -1484,24 +1484,24 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 
 func TestDashboardEnabledChanged(t *testing.T) {
 	t.Run("created isEnabled: false", func(t *testing.T) {
-		assert.False(t, publicDashboardIsEnabledChanged(nil, &PublicDashboard{IsEnabled: false}))
+		assert.False(t, publicDashboardIsEnabledChanged(nil, &models.PublicDashboard{IsEnabled: false}))
 	})
 
 	t.Run("created isEnabled: true", func(t *testing.T) {
-		assert.True(t, publicDashboardIsEnabledChanged(nil, &PublicDashboard{IsEnabled: true}))
+		assert.True(t, publicDashboardIsEnabledChanged(nil, &models.PublicDashboard{IsEnabled: true}))
 	})
 
 	t.Run("updated isEnabled same", func(t *testing.T) {
-		assert.False(t, publicDashboardIsEnabledChanged(&PublicDashboard{IsEnabled: true}, &PublicDashboard{IsEnabled: true}))
+		assert.False(t, publicDashboardIsEnabledChanged(&models.PublicDashboard{IsEnabled: true}, &models.PublicDashboard{IsEnabled: true}))
 	})
 
 	t.Run("updated isEnabled changed", func(t *testing.T) {
-		assert.True(t, publicDashboardIsEnabledChanged(&PublicDashboard{IsEnabled: false}, &PublicDashboard{IsEnabled: true}))
+		assert.True(t, publicDashboardIsEnabledChanged(&models.PublicDashboard{IsEnabled: false}, &models.PublicDashboard{IsEnabled: true}))
 	})
 }
 
 func TestPublicDashboardServiceImpl_NewPublicDashboardUid(t *testing.T) {
-	mockedDashboard := &PublicDashboard{
+	mockedDashboard := &models.PublicDashboard{
 		IsEnabled:          true,
 		AnnotationsEnabled: false,
 		DashboardUid:       "NOTTHESAME",
@@ -1514,7 +1514,7 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardUid(t *testing.T) {
 	}
 
 	type mockResponse struct {
-		PublicDashboard *PublicDashboard
+		PublicDashboard *models.PublicDashboard
 		Err             error
 	}
 	tests := []struct {
@@ -1541,7 +1541,7 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardUid(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			store := NewFakePublicDashboardStore(t)
+			store := publicdashboards.NewFakePublicDashboardStore(t)
 			store.On("Find", mock.Anything, mock.Anything).
 				Return(tt.mockStore.PublicDashboard, tt.mockStore.Err)
 
@@ -1558,14 +1558,14 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardUid(t *testing.T) {
 				store.AssertNumberOfCalls(t, "Find", 1)
 			} else {
 				store.AssertNumberOfCalls(t, "Find", 3)
-				assert.True(t, ErrInternalServerError.Is(err))
+				assert.True(t, models.ErrInternalServerError.Is(err))
 			}
 		})
 	}
 }
 
 func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) {
-	mockedDashboard := &PublicDashboard{
+	mockedDashboard := &models.PublicDashboard{
 		IsEnabled:          true,
 		AnnotationsEnabled: false,
 		DashboardUid:       "NOTTHESAME",
@@ -1578,7 +1578,7 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) 
 	}
 
 	type mockResponse struct {
-		PublicDashboard *PublicDashboard
+		PublicDashboard *models.PublicDashboard
 		Err             error
 	}
 	tests := []struct {
@@ -1605,7 +1605,7 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) 
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			store := NewFakePublicDashboardStore(t)
+			store := publicdashboards.NewFakePublicDashboardStore(t)
 			store.On("FindByAccessToken", mock.Anything, mock.Anything).
 				Return(tt.mockStore.PublicDashboard, tt.mockStore.Err)
 
@@ -1622,7 +1622,7 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) 
 				store.AssertNumberOfCalls(t, "FindByAccessToken", 1)
 			} else {
 				store.AssertNumberOfCalls(t, "FindByAccessToken", 3)
-				assert.True(t, ErrInternalServerError.Is(err))
+				assert.True(t, models.ErrInternalServerError.Is(err))
 			}
 		})
 	}
@@ -1654,9 +1654,9 @@ func CreateDatasource(dsType string, uid string) struct {
 	}
 }
 
-func AddAnnotationsToDashboard(t *testing.T, dash *dashboards.Dashboard, annotations []DashAnnotation) *dashboards.Dashboard {
+func AddAnnotationsToDashboard(t *testing.T, dash *dashboards.Dashboard, annotations []models.DashAnnotation) *dashboards.Dashboard {
 	type annotationsDto struct {
-		List []DashAnnotation `json:"list"`
+		List []models.DashAnnotation `json:"list"`
 	}
 	annos := annotationsDto{}
 	annos.List = annotations

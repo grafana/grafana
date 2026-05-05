@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -63,7 +63,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			AccessToken:          validAccessToken,
 			ExpectedHttpResponse: http.StatusNotFound,
 			DashboardResult:      nil,
-			Err:                  ErrPublicDashboardNotFound.Errorf(""),
+			Err:                  models.ErrPublicDashboardNotFound.Errorf(""),
 			FixedErrorResponse:   "",
 		},
 		{
@@ -192,14 +192,14 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	t.Run("Status code is 400 when the intervalMS is lesser than 0", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
-		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrBadRequest.Errorf(""))
+		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, models.ErrBadRequest.Errorf(""))
 		resp := callAPI(server, http.MethodPost, getValidQueryPath(validAccessToken), strings.NewReader(`{"intervalMs":-100,"maxDataPoints":1000}`), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
 	t.Run("Status code is 400 when the maxDataPoints is lesser than 0", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
-		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrBadRequest.Errorf(""))
+		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, models.ErrBadRequest.Errorf(""))
 		resp := callAPI(server, http.MethodPost, getValidQueryPath(validAccessToken), strings.NewReader(`{"intervalMs":100,"maxDataPoints":-1000}`), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
@@ -235,7 +235,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 	testCases := []struct {
 		Name                  string
 		ExpectedHttpResponse  int
-		Annotations           []AnnotationEvent
+		Annotations           []models.AnnotationEvent
 		ServiceError          error
 		AccessToken           string
 		From                  string
@@ -245,7 +245,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 		{
 			Name:                  "will return success when there is no error and to and from are provided",
 			ExpectedHttpResponse:  http.StatusOK,
-			Annotations:           []AnnotationEvent{{Id: 1}},
+			Annotations:           []models.AnnotationEvent{{Id: 1}},
 			ServiceError:          nil,
 			AccessToken:           validAccessToken,
 			From:                  "123",
@@ -290,7 +290,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			if test.ExpectedHttpResponse == http.StatusOK {
-				var items []AnnotationEvent
+				var items []models.AnnotationEvent
 				err := json.Unmarshal(response.Body.Bytes(), &items)
 				assert.NoError(t, err)
 				assert.Equal(t, items, test.Annotations)
