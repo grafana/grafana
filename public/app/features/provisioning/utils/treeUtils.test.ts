@@ -692,6 +692,111 @@ describe('buildTree', () => {
     expect(result[0].status).toBe('synced');
   });
 
+  it('should mark _folder.json and inferred parent folder pending when parent has no resource', () => {
+    // Matrix row 6: parent folder is inferred from file paths but not yet provisioned
+    // (no resource), so getFolderMetadataResourceHash returns undefined → pending row,
+    // pending folder via child propagation.
+    const syncedDashboard = { ...mockResource, hash: 'matching-hash' };
+    const mergedItems = [
+      // Inferred folder (no resource) — same shape mergeFilesAndResources produces.
+      { path: 'dashboards', file: { path: 'dashboards', hash: '' } },
+      {
+        path: 'dashboards/_folder.json',
+        file: { path: 'dashboards/_folder.json', size: '200', hash: 'some-meta-hash' },
+      },
+      {
+        path: 'dashboards/my-dashboard.json',
+        file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'matching-hash' },
+        resource: syncedDashboard,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    const folder = result.find((n) => n.path === 'dashboards');
+    expect(folder?.type).toBe('Folder');
+    expect(folder?.resourceName).toBeUndefined();
+    expect(folder?.status).toBe('pending');
+    const metadataNode = folder?.children.find((c) => c.path === 'dashboards/_folder.json');
+    expect(metadataNode?.status).toBe('pending');
+  });
+
+  it('should mark folder pending when _folder.json is synced but a sibling dashboard is pending', () => {
+    // Matrix row 9: a synced metadata file does not save the parent folder when another
+    // child (a dashboard) is out of sync — the dashboard's pending status propagates.
+    const driftedDashboard = { ...mockResource, hash: 'resource-hash' };
+    const mergedItems = [
+      { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: mockFolderResource },
+      {
+        path: 'dashboards/_folder.json',
+        file: { path: 'dashboards/_folder.json', size: '200', hash: mockFolderResource.hash },
+      },
+      {
+        path: 'dashboards/my-dashboard.json',
+        file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'file-hash-drifted' },
+        resource: driftedDashboard,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].status).toBe('pending');
+    const metadataNode = result[0].children.find((c) => c.path === 'dashboards/_folder.json');
+    expect(metadataNode?.status).toBe('synced');
+    const dashboardNode = result[0].children.find((c) => c.path === 'dashboards/my-dashboard.json');
+    expect(dashboardNode?.status).toBe('pending');
+  });
+
+  it('should evaluate sibling folders independently when one has pending metadata and the other is fully synced', () => {
+    // Matrix row 12: a pending _folder.json in one folder must not bleed into a sibling
+    // folder that is fully synced.
+    const folderASynced: ResourceListItem = {
+      ...mockFolderResource,
+      path: 'folder-a',
+      name: 'folder-a-uid',
+      hash: 'meta-a',
+    };
+    const folderBSynced: ResourceListItem = {
+      ...mockFolderResource,
+      path: 'folder-b',
+      name: 'folder-b-uid',
+      hash: 'meta-b',
+    };
+    const dashboardA = { ...mockResource, name: 'dash-a', hash: 'dash-a-hash' };
+    const dashboardB = { ...mockResource, name: 'dash-b', hash: 'dash-b-hash' };
+    const mergedItems = [
+      { path: 'folder-a', file: { path: 'folder-a', hash: '' }, resource: folderASynced },
+      // folder-a metadata is updated remotely (file hash differs from resource hash) → pending
+      {
+        path: 'folder-a/_folder.json',
+        file: { path: 'folder-a/_folder.json', size: '200', hash: 'meta-a-drifted' },
+      },
+      {
+        path: 'folder-a/dashboard.json',
+        file: { path: 'folder-a/dashboard.json', size: '100', hash: 'dash-a-hash' },
+        resource: dashboardA,
+      },
+      // folder-b is fully synced (metadata file hash matches resource hash)
+      { path: 'folder-b', file: { path: 'folder-b', hash: '' }, resource: folderBSynced },
+      {
+        path: 'folder-b/_folder.json',
+        file: { path: 'folder-b/_folder.json', size: '200', hash: folderBSynced.hash },
+      },
+      {
+        path: 'folder-b/dashboard.json',
+        file: { path: 'folder-b/dashboard.json', size: '100', hash: 'dash-b-hash' },
+        resource: dashboardB,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    const folderA = result.find((n) => n.path === 'folder-a');
+    const folderB = result.find((n) => n.path === 'folder-b');
+    expect(folderA?.status).toBe('pending');
+    expect(folderB?.status).toBe('synced');
+  });
+
   it('should compare root-level _folder.json against repository state (no parent resource)', () => {
     // Root-level _folder.json has no parent folder resource, so we cannot determine a
     // matching resource hash — it falls back to pending until the backend reports otherwise.
