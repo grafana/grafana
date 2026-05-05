@@ -42,21 +42,36 @@ interface FakeDashboard {
   managedBy?: string;
 }
 
-function mockSearcherWith({ folders, dashboards }: { folders: FakeFolder[]; dashboards: FakeDashboard[] }) {
+interface MockArgs {
+  folders: FakeFolder[];
+  dashboards: FakeDashboard[];
+  /**
+   * Override the `totalRows` the searcher reports for the folder fetch. Used
+   * to simulate a dataset larger than what the hook can fetch (so the
+   * truncation check can fire without a 5,000-item fixture).
+   */
+  folderTotalRows?: number;
+  /** Same idea, for the dashboard fetch. */
+  dashboardTotalRows?: number;
+}
+
+function mockSearcherWith({ folders, dashboards, folderTotalRows, dashboardTotalRows }: MockArgs) {
   // The hook fires two `searcher.search` calls — one with `kind: ['folder']`,
   // one with `kind: ['dashboard']`. Branch on the kind so the mock returns the
   // right fixture for each.
   mockGetGrafanaSearcher.mockReturnValue({
     search: jest.fn(async (req: { kind?: string[] }) => {
       const kind = req?.kind?.[0];
-      const rows: Array<FakeFolder | FakeDashboard> = kind === 'folder' ? folders : dashboards;
+      const isFolder = kind === 'folder';
+      const rows: Array<FakeFolder | FakeDashboard> = isFolder ? folders : dashboards;
+      const total = (isFolder ? folderTotalRows : dashboardTotalRows) ?? rows.length;
       return {
         view: {
           toArray: () => rows,
         },
         loadMoreItems: jest.fn(),
         isItemLoaded: () => true,
-        totalRows: rows.length,
+        totalRows: total,
       };
     }),
   } as unknown as ReturnType<typeof getGrafanaSearcher>);
@@ -193,6 +208,35 @@ describe('useFolderLeaderboard', () => {
 
     const general = result.current.data.find((f) => f.uid === 'general');
     expect(general?.managedBy).toBeUndefined();
+  });
+
+  it('does not flag truncation when the searcher returned every row', async () => {
+    mockSearcherWith({
+      folders: [{ uid: 'a', name: 'A', location: '' }],
+      dashboards: [{ uid: 'd', name: 'd', url: '/d/d', location: 'a' }],
+    });
+
+    const { result } = renderHook(() => useFolderLeaderboard());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isTruncated).toBe(false);
+  });
+
+  it('flags truncation when the searcher reports more rows than were fetched', async () => {
+    // The fixture itself only has 1 folder and 1 dashboard, but the searcher
+    // reports totalRows: 99999 — simulating an instance with way more rows
+    // than the hook's MAX_PAGES * PAGE_SIZE cap.
+    mockSearcherWith({
+      folders: [{ uid: 'a', name: 'A', location: '' }],
+      dashboards: [{ uid: 'd', name: 'd', url: '/d/d', location: 'a' }],
+      folderTotalRows: 99999,
+      dashboardTotalRows: 99999,
+    });
+
+    const { result } = renderHook(() => useFolderLeaderboard());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isTruncated).toBe(true);
   });
 
   it('sets isError when the searcher rejects', async () => {

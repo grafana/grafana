@@ -88,7 +88,7 @@ async function fetchAllFolders(): Promise<
   // every folder on the instance — root-level *and* nested. listFolders only
   // returns immediate children of a single parent, which would silently drop
   // subfolders from the leaderboard.
-  let truncated = false;
+  let totalRows = 0;
   for (let page = 1; page <= MAX_PAGES; page++) {
     const result = await searcher.search({
       kind: ['folder'],
@@ -98,6 +98,14 @@ async function fetchAllFolders(): Promise<
       limit: PAGE_SIZE,
     });
     const items: DashboardQueryResult[] = result.view.toArray();
+    // The searcher reports the total matching count on every response; cache
+    // it so we can compare what we *collected* against what *exists* once the
+    // loop ends. Comparing rows.length to totalRows is the only honest check
+    // for truncation — using "page 25 was full" produces a false positive
+    // when the dataset size is exactly MAX_PAGES * PAGE_SIZE.
+    if (typeof result.totalRows === 'number') {
+      totalRows = result.totalRows;
+    }
     for (const item of items) {
       rows.push({
         uid: item.uid,
@@ -109,11 +117,8 @@ async function fetchAllFolders(): Promise<
     if (items.length < PAGE_SIZE) {
       break;
     }
-    if (page === MAX_PAGES) {
-      truncated = true;
-    }
   }
-  return { rows, truncated };
+  return { rows, truncated: totalRows > rows.length };
 }
 
 async function fetchAllDashboards(): Promise<
@@ -121,7 +126,7 @@ async function fetchAllDashboards(): Promise<
 > {
   const searcher = getGrafanaSearcher();
   const rows: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }> = [];
-  let truncated = false;
+  let totalRows = 0;
   for (let page = 1; page <= MAX_PAGES; page++) {
     const result = await searcher.search({
       kind: ['dashboard'],
@@ -131,6 +136,9 @@ async function fetchAllDashboards(): Promise<
       limit: PAGE_SIZE,
     });
     const items: DashboardQueryResult[] = result.view.toArray();
+    if (typeof result.totalRows === 'number') {
+      totalRows = result.totalRows;
+    }
     for (const item of items) {
       const view = queryResultToViewItem(item, result.view);
       rows.push({
@@ -144,11 +152,8 @@ async function fetchAllDashboards(): Promise<
     if (items.length < PAGE_SIZE) {
       break;
     }
-    if (page === MAX_PAGES) {
-      truncated = true;
-    }
   }
-  return { rows, truncated };
+  return { rows, truncated: totalRows > rows.length };
 }
 
 function aggregate(
