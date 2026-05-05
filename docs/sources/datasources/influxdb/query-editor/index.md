@@ -190,6 +190,7 @@ FROM cpu
 WHERE $__timeFilter(time)
 GROUP BY $__dateBin(time)
 ORDER BY time
+```
 
 **Using JOINs across tables:**
 
