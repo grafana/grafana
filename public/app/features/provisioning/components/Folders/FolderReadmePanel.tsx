@@ -4,13 +4,15 @@ import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Alert, Button, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
+
+import { FolderReadmeEvents } from './analytics/main';
 
 export const FOLDER_README_ANCHOR_ID = 'folder-readme';
 
@@ -52,10 +54,7 @@ function FolderReadmePanelContent({ folderUID }: Props) {
       return;
     }
     reportedStatusRef.current = status;
-    reportInteraction('grafana_provisioning_readme_panel_viewed', {
-      repositoryType: repository.type,
-      status,
-    });
+    FolderReadmeEvents.panelViewed({ repositoryType: repository.type, status });
   }, [intersection, repository, status]);
 
   if (!repository || status === 'loading') {
@@ -109,9 +108,7 @@ function FolderReadmePanelContent({ folderUID }: Props) {
             tooltip={t('browse-dashboards.readme.edit-tooltip', 'Edit README')}
             aria-label={t('browse-dashboards.readme.edit-tooltip', 'Edit README')}
             onClick={() => {
-              reportInteraction('grafana_provisioning_readme_edit_clicked', {
-                repositoryType: repository.type,
-              });
+              FolderReadmeEvents.editClicked({ repositoryType: repository.type });
             }}
           />
         )}
@@ -170,7 +167,7 @@ function RenderedMarkdown({
   markdown: string;
   repository: RepositoryView;
   baseDirInRepo: string;
-  repositoryType: string | undefined;
+  repositoryType: RepositoryView['type'];
 }) {
   const html = renderMarkdown(markdown);
   const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
@@ -183,9 +180,7 @@ function RenderedMarkdown({
     }
     const handleClick = (e: MouseEvent) => {
       if (e.target instanceof HTMLElement && e.target.closest('a')) {
-        reportInteraction('grafana_provisioning_readme_link_clicked', {
-          repositoryType,
-        });
+        FolderReadmeEvents.linkClicked({ repositoryType });
       }
     };
     el.addEventListener('click', handleClick);
@@ -206,7 +201,13 @@ function getReadmeBaseDir(repositoryPath: string | undefined, readmePath: string
   return [repositoryPath ?? '', readmeDir].filter(Boolean).join('/');
 }
 
-function AddReadmeEmptyState({ newFileUrl, repositoryType }: { newFileUrl?: string; repositoryType?: string }) {
+function AddReadmeEmptyState({
+  newFileUrl,
+  repositoryType,
+}: {
+  newFileUrl?: string;
+  repositoryType: RepositoryView['type'];
+}) {
   return (
     <Stack direction="column" alignItems="center" gap={2}>
       <Text color="secondary">
@@ -222,9 +223,7 @@ function AddReadmeEmptyState({ newFileUrl, repositoryType }: { newFileUrl?: stri
           icon="external-link-alt"
           variant="secondary"
           onClick={() => {
-            reportInteraction('grafana_provisioning_readme_create_clicked', {
-              repositoryType: repositoryType ?? 'unknown',
-            });
+            FolderReadmeEvents.createClicked({ repositoryType });
           }}
         >
           <Trans i18nKey="browse-dashboards.readme.add-readme">Add README</Trans>
@@ -234,16 +233,14 @@ function AddReadmeEmptyState({ newFileUrl, repositoryType }: { newFileUrl?: stri
   );
 }
 
-function ReadmeLoadError({ onRetry, repositoryType }: { onRetry: () => void; repositoryType: string | undefined }) {
+function ReadmeLoadError({ onRetry, repositoryType }: { onRetry: () => void; repositoryType: RepositoryView['type'] }) {
   return (
     <Alert severity="warning" title={t('browse-dashboards.readme.load-error-title', "Couldn't load README")}>
       <Button
         variant="secondary"
         size="sm"
         onClick={() => {
-          reportInteraction('grafana_provisioning_readme_retry_clicked', {
-            repositoryType,
-          });
+          FolderReadmeEvents.retryClicked({ repositoryType });
           onRetry();
         }}
       >

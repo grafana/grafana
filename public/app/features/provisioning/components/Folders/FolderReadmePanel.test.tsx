@@ -1,20 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
 
 import { FOLDER_README_ANCHOR_ID, FolderReadmePanel } from './FolderReadmePanel';
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: jest.fn(),
-}));
+import { FolderReadmeEvents } from './analytics/main';
 
 jest.mock('../../hooks/useFolderReadme');
 
 const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
-const mockReportInteraction = reportInteraction as jest.MockedFunction<typeof reportInteraction>;
+const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
+const createClickedSpy = jest.spyOn(FolderReadmeEvents, 'createClicked').mockImplementation();
 
 const mockRepository = {
   name: 'test-repo',
@@ -93,9 +90,7 @@ describe('FolderReadmePanel', () => {
     render(<FolderReadmePanel folderUID="test-folder" />);
     fireEvent.click(screen.getByRole('link', { name: /Edit README/i }));
 
-    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_provisioning_readme_edit_clicked', {
-      repositoryType: 'github',
-    });
+    expect(editClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github' });
   });
 
   describe('Add README empty state (status: missing)', () => {
@@ -117,9 +112,7 @@ describe('FolderReadmePanel', () => {
       render(<FolderReadmePanel folderUID="test-folder" />);
       fireEvent.click(screen.getByRole('link', { name: /Add README/i }));
 
-      expect(mockReportInteraction).toHaveBeenCalledWith('grafana_provisioning_readme_create_clicked', {
-        repositoryType: 'github',
-      });
+      expect(createClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github' });
     });
 
     it('hides the Edit icon when no README exists', () => {
