@@ -664,7 +664,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		for i, test := range branchTests {
 			t.Run(test.name, func(t *testing.T) {
 				repoName := fmt.Sprintf("git-branch-test-%d", i+1)
-				gitRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+				gitRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 					"Name":          repoName,
 					"URL":           baseURL,
 					"Branch":        test.branch,
@@ -694,7 +694,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 	t.Run("Git repository rejects duplicate empty paths on same branch when sync is enabled", func(t *testing.T) {
 		baseURL := "https://github.com/grafana/test-repo-empty-path-branch"
 
-		firstRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+		firstRepo := helper.RenderObject(t, "../testdata/github-empty-path.json.tmpl", map[string]any{
 			"Name":          "git-empty-branch-1",
 			"URL":           baseURL,
 			"Branch":        "main",
@@ -706,7 +706,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "First repository with empty path should succeed")
 
-		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+		secondRepo := helper.RenderObject(t, "../testdata/github-empty-path.json.tmpl", map[string]any{
 			"Name":          "git-empty-branch-2",
 			"URL":           baseURL,
 			"Branch":        "main",
@@ -724,7 +724,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
 		}
 
-		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+		thirdRepo := helper.RenderObject(t, "../testdata/github-empty-path.json.tmpl", map[string]any{
 			"Name":          "git-empty-branch-3",
 			"URL":           baseURL,
 			"Branch":        "develop",
@@ -740,7 +740,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 	t.Run("Git repository allows conflicting paths when sync is disabled", func(t *testing.T) {
 		baseURL := "https://github.com/grafana/test-repo-branch-sync-disabled"
 
-		firstRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+		firstRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":          "git-branch-disabled-1",
 			"URL":           baseURL,
 			"Branch":        "main",
@@ -752,7 +752,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "First repository with sync disabled should succeed")
 
-		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+		secondRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":          "git-branch-disabled-2",
 			"URL":           baseURL,
 			"Branch":        "main",
@@ -764,7 +764,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Second repository with duplicate path should succeed when sync is disabled")
 
-		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+		thirdRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":          "git-branch-disabled-3",
 			"URL":           baseURL,
 			"Branch":        "develop",
@@ -776,7 +776,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		_, err = helper.Repositories.Resource.Create(ctx, thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Third repository with different branch should succeed when sync is disabled")
 
-		fourthRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+		fourthRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":          "git-branch-disabled-4",
 			"URL":           baseURL,
 			"Branch":        "main",
@@ -1881,7 +1881,10 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		// Clean up
 		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 		require.NoError(t, err)
-		helper.WaitForRepositoryDeleted(t, ctx, repo)
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			assert.True(collect, apierrors.IsNotFound(err), "repository %s should be deleted", repo)
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository %s should be deleted", repo)
 	})
 
 	t.Run("multiple repositories with empty path - duplicate sync-enabled root path is rejected", func(t *testing.T) {
@@ -1903,7 +1906,7 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 
 		// Step 2: Create second repository with same URL, branch, and empty path.
 		// Empty path represents the repository root, so this is a duplicate path.
-		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+		secondRepo := helper.RenderObject(t, "../testdata/github-empty-path.json.tmpl", map[string]any{
 			"Name":          repo2,
 			"SyncEnabled":   true,
 			"SyncTarget":    "folder",
@@ -1922,7 +1925,10 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		// Clean up
 		err = helper.Repositories.Resource.Delete(ctx, repo1, metav1.DeleteOptions{})
 		require.NoError(t, err)
-		helper.WaitForRepositoryDeleted(t, ctx, repo1)
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err := helper.Repositories.Resource.Get(ctx, repo1, metav1.GetOptions{})
+			assert.True(collect, apierrors.IsNotFound(err), "repository %s should be deleted", repo1)
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository %s should be deleted", repo1)
 	})
 }
 
