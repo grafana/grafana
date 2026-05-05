@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/client-go/util/retry"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
@@ -26,9 +25,11 @@ import (
 // PUTs.
 //
 // Idempotency: removing a user that's already absent returns 200 OK,
-// not an error. Cross-instance team-sync relies on this so concurrent
-// removeMember calls from peer instances don't surface as 4xx that
-// increment the failure counter.
+// not an error.
+//
+// Concurrency: the underlying Update is RV-checked; on a race the
+// handler returns 409 Conflict to the caller (no in-handler retry) so
+// the caller can refresh and re-issue.
 type TeamRemoveMemberREST struct {
 	getter  rest.Getter
 	updater rest.Updater
@@ -71,7 +72,7 @@ func (s *TeamRemoveMemberREST) ProducesMIMETypes(verb string) []string {
 }
 
 // ProducesObject implements rest.StorageMetadata.
-func (s *TeamRemoveMemberREST) ProducesObject(verb string) interface{} { return s.New() }
+func (s *TeamRemoveMemberREST) ProducesObject(verb string) any { return s.New() }
 
 // ConnectMethods implements rest.Connecter — POST only.
 func (s *TeamRemoveMemberREST) ConnectMethods() []string { return []string{http.MethodPost} }
@@ -106,36 +107,34 @@ func (s *TeamRemoveMemberREST) Connect(ctx context.Context, name string, _ runti
 
 		nsCtx := common.WithSubresourceNamespace(ctx)
 
-		var removed bool
-		err := retry.RetryOnConflict(membersRetry, func() error {
-			obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-			t, ok := obj.(*iamv0alpha1.Team)
-			if !ok {
-				return fmt.Errorf("team store returned unexpected type %T", obj)
-			}
-			filtered := make([]iamv0alpha1.TeamTeamMember, 0, len(t.Spec.Members))
-			removed = false
-			for _, m := range t.Spec.Members {
-				if m.Kind == "User" && m.Name == body.Name {
-					removed = true
-					continue
-				}
-				filtered = append(filtered, m)
-			}
-			if !removed {
-				return nil
-			}
-			t.Spec.Members = filtered
-			_, _, updErr := s.updater.Update(nsCtx, name, rest.DefaultUpdatedObjectInfo(t),
-				nil, nil, false, &metav1.UpdateOptions{})
-			return updErr
-		})
+		obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
 		if err != nil {
 			responder.Error(err)
 			return
+		}
+		t, ok := obj.(*iamv0alpha1.Team)
+		if !ok {
+			responder.Error(fmt.Errorf("team store returned unexpected type %T", obj))
+			return
+		}
+		filtered := make([]iamv0alpha1.TeamTeamMember, 0, len(t.Spec.Members))
+		var removed bool
+		for _, m := range t.Spec.Members {
+			if m.Kind == "User" && m.Name == body.Name {
+				removed = true
+				continue
+			}
+			filtered = append(filtered, m)
+		}
+		if removed {
+			t.Spec.Members = filtered
+			// Update returns 409 Conflict on RV mismatch; the handler
+			// surfaces it unchanged so the caller can refresh and retry.
+			if _, _, err := s.updater.Update(nsCtx, name, rest.DefaultUpdatedObjectInfo(t),
+				nil, nil, false, &metav1.UpdateOptions{}); err != nil {
+				responder.Error(err)
+				return
+			}
 		}
 
 		// 200 OK whether or not a row existed; the request is idempotent.

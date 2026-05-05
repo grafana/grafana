@@ -5,36 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/client-go/util/retry"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 )
-
-// membersRetry is the backoff used by the addmember/removemember handlers.
-// retry.DefaultRetry (5 attempts, ~50ms total) is too small under sustained
-// cross-instance team-sync load: each call races against peer instances
-// rewriting Spec.Members on the same team, and an exhausted retry surfaces as
-// silent membership loss because the synchronizer logs at warn but the outer
-// sync HTTP handler still returns 200. ~5–8s of jittered budget gives the
-// retry loop enough room to converge against fresh state in practice.
-var membersRetry = wait.Backoff{
-	Steps:    15,
-	Duration: 50 * time.Millisecond,
-	Factor:   1.5,
-	Jitter:   0.2,
-	Cap:      2 * time.Second,
-}
 
 // TeamAddMemberREST exposes POST /teams/{name}/addmember as a server-side
 // helper that turns a single-user request into a Spec.Members write. The
@@ -45,13 +27,9 @@ var membersRetry = wait.Backoff{
 //
 // Concurrency: the apiserver's Update runs through unified storage's
 // optimistic-concurrency check (resourceVersion). When two writers race
-// the second one gets 409 Conflict and we retry inside this handler with
-// retry.RetryOnConflict, refreshing Spec.Members against post-write
-// state. That collapses the synchronizer's distributed retry loop into
-// one request — and as a side-effect, since the synchronizer no longer
-// keeps a stale Spec.Members snapshot in memory, the cross-instance
-// silent-loss race that motivated this endpoint can no longer manifest
-// from the synchronizer's side.
+// the second one gets 409 Conflict and the handler returns it to the
+// caller as-is (single Get + Update, no in-handler retry). Callers are
+// expected to retry against fresh state.
 type TeamAddMemberREST struct {
 	getter  rest.Getter
 	updater rest.Updater
@@ -98,7 +76,7 @@ func (s *TeamAddMemberREST) ProducesMIMETypes(verb string) []string {
 }
 
 // ProducesObject implements rest.StorageMetadata.
-func (s *TeamAddMemberREST) ProducesObject(verb string) interface{} { return s.New() }
+func (s *TeamAddMemberREST) ProducesObject(verb string) any { return s.New() }
 
 // ConnectMethods implements rest.Connecter — POST only.
 func (s *TeamAddMemberREST) ConnectMethods() []string { return []string{http.MethodPost} }
@@ -143,58 +121,61 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 		// dual-writer Get/Update can resolve the namespace.
 		nsCtx := common.WithSubresourceNamespace(ctx)
 
+		obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		t, ok := obj.(*iamv0alpha1.Team)
+		if !ok {
+			responder.Error(fmt.Errorf("team store returned unexpected type %T", obj))
+			return
+		}
 		var (
 			alreadyMember     bool
 			resultingPerm     iamv0alpha1.TeamTeamPermission
 			resultingExternal bool
+			needUpdate        bool
 		)
-		err := retry.RetryOnConflict(membersRetry, func() error {
-			obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
-			if err != nil {
-				return err
+		found := -1
+		for i, m := range t.Spec.Members {
+			if m.Kind == "User" && m.Name == body.Name {
+				alreadyMember = true
+				found = i
+				break
 			}
-			t, ok := obj.(*iamv0alpha1.Team)
-			if !ok {
-				return fmt.Errorf("team store returned unexpected type %T", obj)
-			}
-			alreadyMember = false
-			found := -1
-			for i, m := range t.Spec.Members {
-				if m.Kind == "User" && m.Name == body.Name {
-					alreadyMember = true
-					found = i
-					break
-				}
-			}
-			if found >= 0 {
-				// Re-add updates Permission to whatever the caller sent
-				// but leaves External untouched: External tracks how the
-				// membership was created (IdP sync vs manual) and isn't
-				// a state /addmember should flip.
-				existing := t.Spec.Members[found]
-				resultingPerm = permStr
-				resultingExternal = existing.External
-				if existing.Permission == permStr {
-					return nil
-				}
+		}
+		if found >= 0 {
+			// Re-add updates Permission to whatever the caller sent
+			// but leaves External untouched: External tracks how the
+			// membership was created (IdP sync vs manual) and isn't
+			// a state /addmember should flip.
+			existing := t.Spec.Members[found]
+			resultingPerm = permStr
+			resultingExternal = existing.External
+			if existing.Permission != permStr {
 				t.Spec.Members[found].Permission = permStr
-			} else {
-				resultingPerm = permStr
-				resultingExternal = external
-				t.Spec.Members = append(t.Spec.Members, iamv0alpha1.TeamTeamMember{
-					Kind:       "User",
-					Name:       body.Name,
-					Permission: permStr,
-					External:   external,
-				})
+				needUpdate = true
 			}
-			_, _, updErr := s.updater.Update(nsCtx, name, rest.DefaultUpdatedObjectInfo(t),
-				nil, nil, false, &metav1.UpdateOptions{})
-			return updErr
-		})
-		if err != nil {
-			responder.Error(err)
-			return
+		} else {
+			resultingPerm = permStr
+			resultingExternal = external
+			t.Spec.Members = append(t.Spec.Members, iamv0alpha1.TeamTeamMember{
+				Kind:       "User",
+				Name:       body.Name,
+				Permission: permStr,
+				External:   external,
+			})
+			needUpdate = true
+		}
+		if needUpdate {
+			// Update returns 409 Conflict on RV mismatch; the handler
+			// surfaces it unchanged so the caller can refresh and retry.
+			if _, _, err := s.updater.Update(nsCtx, name, rest.DefaultUpdatedObjectInfo(t),
+				nil, nil, false, &metav1.UpdateOptions{}); err != nil {
+				responder.Error(err)
+				return
+			}
 		}
 
 		// 201 Created on a fresh insert, 200 OK otherwise — covers both
