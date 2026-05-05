@@ -17,12 +17,11 @@ jest.mock('app/features/provisioning/hooks/useIsProvisionedInstance', () => ({
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
-    getDataSourceSrv: () => ({
-      getList: jest
-        .fn()
-        .mockReturnValue([
-          { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-        ]),
+    useFindInstanceSettings: jest.fn().mockReturnValue({
+      items: [{ name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' }],
+      isLoading: false,
+      hasMore: false,
+      fetchMore: jest.fn(),
     }),
   };
 });

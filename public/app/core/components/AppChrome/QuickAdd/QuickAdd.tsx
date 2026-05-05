@@ -3,7 +3,7 @@ import { Fragment, useMemo, useState } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
+import { useFindInstanceSettings, reportInteraction, config } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
@@ -20,6 +20,8 @@ import {
   findCreateActionGroups,
 } from './utils';
 
+const testDsFilters = { type: 'grafana-testdata-datasource' };
+
 export interface Props {}
 
 export const QuickAdd = ({}: Props) => {
@@ -27,40 +29,40 @@ export const QuickAdd = ({}: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const theme = useTheme2();
+  const { items: testDataSources } = useFindInstanceSettings(
+    config.featureToggles.dashboardTemplates ? testDsFilters : undefined
+  );
 
   const actionGroups = useMemo(() => {
     const groups = findCreateActionGroups(navBarTree);
 
-    if (config.featureToggles.dashboardTemplates) {
-      const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-      if (testDataSources.length > 0) {
-        const templateItem: NavModelItem = {
-          id: 'browse-template-dashboard',
-          text: t('navigation.quick-add.new-template-dashboard-button', 'Use template'),
-          url: '/dashboards?templateDashboards=true&source=quickAdd',
-          onClick: () => {
-            isAnalyticsFrameworkEnabled
-              ? NewDashboardLibraryInteractions.entryPointClicked({
-                  entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
-                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-                })
-              : DashboardLibraryInteractions.entryPointClicked({
-                  entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
-                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-                });
-          },
-        };
+    if (config.featureToggles.dashboardTemplates && testDataSources.length > 0) {
+      const templateItem: NavModelItem = {
+        id: 'browse-template-dashboard',
+        text: t('navigation.quick-add.new-template-dashboard-button', 'Use template'),
+        url: '/dashboards?templateDashboards=true&source=quickAdd',
+        onClick: () => {
+          isAnalyticsFrameworkEnabled
+            ? NewDashboardLibraryInteractions.entryPointClicked({
+                entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
+                contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+              })
+            : DashboardLibraryInteractions.entryPointClicked({
+                entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
+                contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+              });
+        },
+      };
 
-        // Matches NavIDDashboards ("dashboards/browse") from pkg/services/navtree/models.go
-        const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
-        if (dashboardGroup) {
-          dashboardGroup.items.push(templateItem);
-        }
+      // Matches NavIDDashboards ("dashboards/browse") from pkg/services/navtree/models.go
+      const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
+      if (dashboardGroup) {
+        dashboardGroup.items.push(templateItem);
       }
     }
 
     return groups;
-  }, [isAnalyticsFrameworkEnabled, navBarTree]);
+  }, [isAnalyticsFrameworkEnabled, navBarTree, testDataSources]);
 
   const showQuickAdd = actionGroups.some((g) => g.items.length > 0);
 

@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { config, useFindInstanceSettings, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, useTheme2 } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
@@ -30,6 +30,8 @@ import { ManagerKind } from '../../apiserver/types';
 
 import { NewFolderForm } from './NewFolderForm';
 
+const testDsFilters = { type: 'grafana-testdata-datasource' };
+
 interface Props {
   parentFolder?: FolderDTO;
   canCreateFolder: boolean;
@@ -53,6 +55,10 @@ export default function CreateNewButton({
   const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const theme = useTheme2();
+  const { items: testDataSources } = useFindInstanceSettings(
+    config.featureToggles.dashboardTemplates ? testDsFilters : undefined
+  );
+  const renderPreBuiltDashboardAction = config.featureToggles.dashboardTemplates && testDataSources.length > 0;
 
   const handleVisibleChange = () => {
     if (!isOpen) {
@@ -62,12 +68,6 @@ export default function CreateNewButton({
     }
     setIsOpen(!isOpen);
   };
-
-  let renderPreBuiltDashboardAction = false;
-  if (config.featureToggles.dashboardTemplates) {
-    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-    renderPreBuiltDashboardAction = testDataSources.length > 0;
-  }
 
   const onCreateFolder = async (folderName: string, teamOwnerRefs?: OwnerReference[]) => {
     try {

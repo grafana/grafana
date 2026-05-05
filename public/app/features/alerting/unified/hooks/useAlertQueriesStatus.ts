@@ -1,19 +1,17 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
-import { getDataSourceSrv, isExpressionReference } from '@grafana/runtime';
+import { getInstanceSettings, isExpressionReference } from '@grafana/runtime';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 export function useAlertQueriesStatus(queries: AlertQuery[]) {
-  const allDataSourcesAvailable = useMemo(
-    () =>
-      queries
-        .filter((query) => !isExpressionReference(query.datasourceUid))
-        .every((query) => {
-          const instanceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-          return Boolean(instanceSettings);
-        }),
-    [queries]
-  );
+  const [allDataSourcesAvailable, setAllDataSourcesAvailable] = useState(true);
+
+  useEffect(() => {
+    const dsQueries = queries.filter((query) => !isExpressionReference(query.datasourceUid));
+    Promise.all(dsQueries.map((query) => getInstanceSettings(query.datasourceUid))).then((results) => {
+      setAllDataSourcesAvailable(results.every(Boolean));
+    });
+  }, [queries]);
 
   return { allDataSourcesAvailable };
 }
