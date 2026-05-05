@@ -1,4 +1,4 @@
-import { type DataSourceApi } from '@grafana/data';
+import { DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { RuntimeDataSource } from '../RuntimeDataSource';
@@ -7,15 +7,44 @@ import { _resetForTests as resetInstanceSettings, init } from './instanceSetting
 import {
   _resetForTests as resetPlugin,
   getDataSourcePlugin,
-  getRuntimeDataSourcePlugin,
   registerRuntimeDataSource,
-  setGetDataSourcePlugin,
+  setDataSourceImporter,
 } from './plugin';
 
 class TestRuntime extends RuntimeDataSource {
   query() {
     return Promise.resolve({ data: [] });
   }
+}
+
+function ds(overrides: Partial<DataSourceInstanceSettings> = {}): DataSourceInstanceSettings {
+  return {
+    id: 1,
+    uid: 'uid-alpha',
+    name: 'Alpha',
+    type: 'test-db',
+    access: 'direct',
+    jsonData: {},
+    readOnly: false,
+    meta: {
+      id: 'test-db',
+      name: 'Test DB',
+      type: 'datasource',
+      module: '',
+      baseUrl: '',
+      info: {
+        author: { name: '' },
+        description: '',
+        links: [],
+        logos: { small: '', large: '' },
+        screenshots: [],
+        updated: '',
+        version: '',
+      },
+      metrics: true,
+    } as DataSourcePluginMeta,
+    ...overrides,
+  } as DataSourceInstanceSettings;
 }
 
 beforeEach(() => {
@@ -26,28 +55,61 @@ beforeEach(() => {
 
 describe('plugin', () => {
   describe('getDataSourcePlugin', () => {
-    it('delegates to the injected implementation', async () => {
-      const mockImpl = jest.fn().mockResolvedValue({ name: 'mock-ds' } as unknown as DataSourceApi);
-      setGetDataSourcePlugin(mockImpl);
+    it('loads and returns a datasource instance', async () => {
+      const settings = ds();
+      init({ [settings.name]: settings }, settings.name);
 
-      const result = await getDataSourcePlugin('uid-alpha');
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      const MockClass = jest.fn().mockReturnValue(instance);
+      setDataSourceImporter(jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} }));
 
-      expect(mockImpl).toHaveBeenCalledWith('uid-alpha', undefined);
-      expect(result).toEqual({ name: 'mock-ds' });
+      const result = await getDataSourcePlugin(settings.uid);
+
+      expect(MockClass).toHaveBeenCalledWith(settings);
+      expect(result).toBe(instance);
     });
 
-    it('throws if not initialized', async () => {
-      await expect(getDataSourcePlugin('uid-alpha')).rejects.toThrow(/has not been initialized/);
+    it('caches the instance and does not call the importer twice', async () => {
+      const settings = ds();
+      init({ [settings.name]: settings }, settings.name);
+
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      const mockImport = jest.fn().mockResolvedValue({
+        DataSourceClass: jest.fn().mockReturnValue(instance),
+        components: {},
+      });
+      setDataSourceImporter(mockImport);
+
+      const first = await getDataSourcePlugin(settings.uid);
+      const second = await getDataSourcePlugin(settings.uid);
+
+      expect(mockImport).toHaveBeenCalledTimes(1);
+      expect(first).toBe(second);
+    });
+
+    it('throws when the datasource is not found', async () => {
+      init({}, '');
+      setDataSourceImporter(jest.fn());
+
+      await expect(getDataSourcePlugin('unknown-uid')).rejects.toThrow(/was not found/);
+    });
+
+    it('throws when the importer has not been set', async () => {
+      const settings = ds();
+      init({ [settings.name]: settings }, settings.name);
+
+      await expect(getDataSourcePlugin(settings.uid)).rejects.toThrow(/has not been set/);
     });
   });
 
   describe('registerRuntimeDataSource', () => {
-    it('makes the runtime instance available via getRuntimeDataSourcePlugin', () => {
+    it('makes the runtime instance available via getDataSourcePlugin', async () => {
       init({}, '');
       const runtime = new TestRuntime('plugin-id', 'runtime-uid');
       registerRuntimeDataSource({ dataSource: runtime });
 
-      expect(getRuntimeDataSourcePlugin('runtime-uid')).toBe(runtime);
+      const result = await getDataSourcePlugin('runtime-uid');
+      expect(result).toBe(runtime);
     });
 
     it('throws on duplicate uid', () => {
