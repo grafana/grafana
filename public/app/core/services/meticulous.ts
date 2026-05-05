@@ -6,7 +6,7 @@ function isAuthPath(pathname: string): boolean {
 
 // if we ever hit an auth path, stop recording and never restart it.
 export async function updateMeticulousRecording(pathname: string): Promise<void> {
-  if (window.Meticulous == undefined) {
+  if (window.Meticulous == null || window.__meticulous == null) {
     return;
   }
 
