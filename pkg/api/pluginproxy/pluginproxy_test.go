@@ -1,6 +1,7 @@
 package pluginproxy
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -517,7 +517,15 @@ func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secureJsonDat
 			ReqRole: org.RoleEditor,
 		}
 	}
-	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, r, httptest.NewRecorder(), signedInUser, "", cfg.DataProxyLogging, cfg.SendUserHeader, secureJsonData, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, r, httptest.NewRecorder(), signedInUser, "",
+		cfg.DataProxyLogging, cfg.SendUserHeader,
+		func(context.Context) (map[string]string, error) {
+			return secureJsonData, nil
+		},
+		tracing.InitializeTracerForTest(), &http.Transport{},
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		featuremgmt.WithFeatures(),
+	)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)

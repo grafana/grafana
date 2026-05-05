@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/tls"
 	"net"
 	"net/http"
@@ -52,10 +53,8 @@ func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 
 	proxyPath := getProxyPath(c)
 
-	secureJsonData, err := hs.SecretsService.DecryptJsonData(c.Req.Context(), ps.SecureJSONData)
-	if err != nil {
-		c.JsonApiErr(500, "Failed to decrypt plugin settings", err)
-		return
+	secureJsonData := func(ctx context.Context) (map[string]string, error) {
+		return hs.SecretsService.DecryptJsonData(ctx, ps.SecureJSONData)
 	}
 
 	p, err := pluginproxy.NewPluginProxy(ps, plugin.Routes,
