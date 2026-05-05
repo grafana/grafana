@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { Components, selectors } from '@grafana/e2e-selectors';
@@ -46,6 +47,7 @@ export function SecondaryActions({
   const styles = getStyles(theme);
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
+  const recentQueriesUI = useBooleanFlagValue('queryHistoryRecentQueriesUI', false);
   const canReadQueries = config.featureToggles.savedQueriesRBAC
     ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
     : contextSrv.isSignedIn;
@@ -66,7 +68,11 @@ export function SecondaryActions({
           {queryLibraryEnabled && canReadQueries && (
             <ToolbarButton
               data-testid={selectors.pages.Explore.General.addFromQueryLibrary}
-              aria-label={t('explore.secondary-actions.add-from-query-library', 'Add from saved queries')}
+              aria-label={
+                recentQueriesUI
+                  ? t('explore.secondary-actions.add-from-query-library', 'Add from query library')
+                  : t('explore.secondary-actions.add-from-saved-queries', 'Add from saved queries')
+              }
               variant="canvas"
               onClick={() =>
                 openQueryLibraryDrawer({
@@ -74,24 +80,30 @@ export function SecondaryActions({
                   options: { context: CoreApp.Explore },
                 })
               }
-              icon="plus"
+              icon={recentQueriesUI ? 'book-open' : 'plus'}
               disabled={addQueryRowButtonDisabled}
             >
-              <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add from saved queries</Trans>
+              {recentQueriesUI ? (
+                <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add from query library</Trans>
+              ) : (
+                <Trans i18nKey="explore.secondary-actions.add-from-saved-queries">Add from saved queries</Trans>
+              )}
             </ToolbarButton>
           )}
         </>
       )}
-      <ToolbarButton
-        key="query-history"
-        variant={drawerOpened ? 'active' : 'canvas'}
-        aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
-        onClick={() => setDrawerOpened(!drawerOpened)}
-        data-testid={Components.QueryTab.queryHistoryButton}
-        icon="history"
-      >
-        <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
-      </ToolbarButton>
+      {!recentQueriesUI && (
+        <ToolbarButton
+          key="query-history"
+          variant={drawerOpened ? 'active' : 'canvas'}
+          aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
+          onClick={() => setDrawerOpened(!drawerOpened)}
+          data-testid={Components.QueryTab.queryHistoryButton}
+          icon="history"
+        >
+          <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
+        </ToolbarButton>
+      )}
       <ToolbarButton
         variant={queryInspectorButtonActive ? 'active' : 'canvas'}
         aria-label={t('explore.secondary-actions.query-inspector-button-aria-label', 'Query inspector')}

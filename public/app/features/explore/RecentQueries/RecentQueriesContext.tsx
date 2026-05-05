@@ -25,6 +25,7 @@ export interface RecentQueriesContextType {
   queries: RichHistoryQuery[];
   totalQueries: number;
   isLoading: boolean;
+  settingsLoaded: boolean;
   settings: RichHistorySettings;
   selectedQuery: RichHistoryQuery | null;
   supportedFeatures: RichHistorySupportedFeatures;
@@ -68,6 +69,7 @@ export const RecentQueriesContext = createContext<RecentQueriesContextType>({
   queries: [],
   totalQueries: 0,
   isLoading: false,
+  settingsLoaded: false,
   settings: DEFAULT_SETTINGS,
   selectedQuery: null,
   supportedFeatures: supportedFeatures(),
@@ -94,6 +96,7 @@ export function RecentQueriesProvider({ children }: { children: ReactNode }) {
   const [queries, setQueries] = useState<RichHistoryQuery[]>([]);
   const [totalQueries, setTotalQueries] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [settings, setSettings] = useState<RichHistorySettings>(DEFAULT_SETTINGS);
   const [selectedQuery, setSelectedQuery] = useState<RichHistoryQuery | null>(null);
   const [filters, setFilters] = useState<RichHistorySearchFilters>(DEFAULT_FILTERS);
@@ -112,6 +115,10 @@ export function RecentQueriesProvider({ children }: { children: ReactNode }) {
         setFilters((prev) => ({ ...prev, to: loadedSettings.retentionPeriod }));
       } catch {
         // Settings load failed; keep defaults
+      } finally {
+        if (!cancelled) {
+          setSettingsLoaded(true);
+        }
       }
     }
 
@@ -202,6 +209,7 @@ export function RecentQueriesProvider({ children }: { children: ReactNode }) {
       queries,
       totalQueries,
       isLoading,
+      settingsLoaded,
       settings,
       selectedQuery,
       supportedFeatures: features,
@@ -223,6 +231,7 @@ export function RecentQueriesProvider({ children }: { children: ReactNode }) {
       queries,
       totalQueries,
       isLoading,
+      settingsLoaded,
       settings,
       selectedQuery,
       features,
