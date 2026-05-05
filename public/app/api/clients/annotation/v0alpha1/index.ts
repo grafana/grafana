@@ -70,6 +70,13 @@ export function annotationEventToSpec(event: AnnotationEvent, scopes?: string[])
   return spec;
 }
 
+// Legacy query responses return numeric IDs (number or string, e.g. 23 or "23");
+// the k8s backend requires the "a-{id}" prefix. Already-prefixed names pass through.
+function toK8sName(id: string | number): string {
+  const s = String(id);
+  return s.startsWith('a-') ? s : `a-${s}`;
+}
+
 /** Build the wire payload for a POST (create) request. */
 export function buildCreatePayload(event: AnnotationEvent, scopes?: string[]): AnnotationForCreate {
   return {
@@ -92,7 +99,7 @@ export const annotationK8sClient = {
     }
 
     const client = getResourceClient();
-    const existing = await client.get(event.id);
+    const existing = await client.get(toK8sName(event.id));
     const nextSpec = annotationEventToSpec(event, scopes);
 
     // Explicit assignment ensures undefined fields (timeEnd, scopes) from nextSpec
@@ -105,13 +112,13 @@ export const annotationK8sClient = {
     return client.update(merged);
   },
 
-  remove(name: string): Promise<unknown> {
-    return getResourceClient().delete(name, false);
+  remove(name: string | number): Promise<unknown> {
+    return getResourceClient().delete(toK8sName(name), false);
   },
 
   async tags(limit = 1000): Promise<AnnotationTagItem[]> {
     const url = `/apis/${ANNOTATION_API_GROUP}/${ANNOTATION_API_VERSION}/namespaces/${getAPINamespace()}/${TAGS_RESOURCE}`;
     const response = await getBackendSrv().get<AnnotationTagList>(url, { limit });
-    return response.items ?? [];
+    return response.tags ?? [];
   },
 };

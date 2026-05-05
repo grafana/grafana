@@ -78,7 +78,7 @@ class K8sAnnotationServer implements AnnotationServer {
 
   async tags() {
     const items = await annotationK8sClient.tags();
-    return items.map(({ name, count }) => ({ term: name, count }));
+    return items.map(({ tag, count }) => ({ term: tag, count }));
   }
 }
 

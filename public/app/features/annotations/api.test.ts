@@ -81,18 +81,19 @@ describe('annotationServer with kubernetesAnnotations toggle ON', () => {
     getFn.mockResolvedValue({
       apiVersion: 'annotation.grafana.app/v0alpha1',
       kind: 'Annotation',
-      metadata: { name: 'name-1', resourceVersion: 'rv-7', creationTimestamp: '' },
+      metadata: { name: 'a-1', resourceVersion: 'rv-7', creationTimestamp: '' },
       spec: { text: 'old', time: 1 },
     });
     putFn.mockResolvedValue({});
 
-    await annotationServer().update({ id: 'name-1', time: 2, text: 'new' }, ['scope-a']);
+    // Bare numeric id as returned by legacy /api/annotations
+    await annotationServer().update({ id: '1', time: 2, text: 'new' }, ['scope-a']);
 
-    expect(getFn).toHaveBeenCalledWith(`${baseURL}/annotations/name-1`);
+    expect(getFn).toHaveBeenCalledWith(`${baseURL}/annotations/a-1`);
 
     const [putUrl, body] = putFn.mock.calls[0];
-    expect(putUrl).toBe(`${baseURL}/annotations/name-1`);
-    expect(body.metadata.name).toBe('name-1');
+    expect(putUrl).toBe(`${baseURL}/annotations/a-1`);
+    expect(body.metadata.name).toBe('a-1');
     expect(body.metadata.resourceVersion).toBe('rv-7');
     expect(body.spec.scopes).toEqual(['scope-a']);
     expect(body.spec.text).toBe('new');
@@ -100,15 +101,15 @@ describe('annotationServer with kubernetesAnnotations toggle ON', () => {
 
   it('delete DELETEs the k8s resource by metadata.name', async () => {
     deleteFn.mockResolvedValue({});
-    await annotationServer().delete({ id: 'name-1' });
+    await annotationServer().delete({ id: '1' });
 
     const [url, , opts] = deleteFn.mock.calls[0];
-    expect(url).toBe(`${baseURL}/annotations/name-1`);
+    expect(url).toBe(`${baseURL}/annotations/a-1`);
     expect(opts).toEqual({ showSuccessAlert: false });
   });
 
   it('tags hits the custom k8s /tags route and maps to {term,count}', async () => {
-    getFn.mockResolvedValue({ items: [{ name: 'a', count: 3 }] });
+    getFn.mockResolvedValue({ tags: [{ tag: 'a', count: 3 }] });
     const tags = await annotationServer().tags();
     expect(getFn).toHaveBeenCalledWith(`${baseURL}/tags`, { limit: 1000 });
     expect(tags).toEqual([{ term: 'a', count: 3 }]);

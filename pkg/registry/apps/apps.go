@@ -102,7 +102,8 @@ func ProvideAppInstallers(
 	//
 	// Developers are encouraged to explore the built-in functionality of the App Platform
 	// to control the app registration (see `docs/apps/example/README.md`).
-	if cfg.AnnotationAppPlatform.Enabled {
+	//nolint:staticcheck // kubernetesAnnotations FF must also enable the app so routes exist when frontend routes to the new API
+	if cfg.AnnotationAppPlatform.Enabled || features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
 		installers = append(installers, annotationAppInstaller)
 	}
 	return installers

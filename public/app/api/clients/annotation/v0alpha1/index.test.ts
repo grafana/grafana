@@ -107,7 +107,7 @@ describe('annotationK8sClient', () => {
       apiVersion: 'annotation.grafana.app/v0alpha1',
       kind: 'Annotation',
       metadata: {
-        name: 'name-2',
+        name: 'a-2',
         namespace: 'stack-1',
         resourceVersion: '42',
         creationTimestamp: '2024-01-01T00:00:00Z',
@@ -116,16 +116,17 @@ describe('annotationK8sClient', () => {
     });
     putFn.mockResolvedValue({});
 
+    // Pass the bare numeric ID as the legacy /api/annotations endpoint returns it
     await annotationK8sClient.update(
-      { id: 'name-2', time: 2, timeEnd: 5, text: 'new', isRegion: true, panelId: 3, dashboardUID: 'dash-1' },
+      { id: '2', time: 2, timeEnd: 5, text: 'new', isRegion: true, panelId: 3, dashboardUID: 'dash-1' },
       ['scope-a']
     );
 
-    expect(getFn).toHaveBeenCalledWith(`${baseURL}/annotations/name-2`);
+    expect(getFn).toHaveBeenCalledWith(`${baseURL}/annotations/a-2`);
 
     const [putUrl, putBody] = putFn.mock.calls[0];
-    expect(putUrl).toBe(`${baseURL}/annotations/name-2`);
-    expect(putBody.metadata.name).toBe('name-2');
+    expect(putUrl).toBe(`${baseURL}/annotations/a-2`);
+    expect(putBody.metadata.name).toBe('a-2');
     expect(putBody.metadata.resourceVersion).toBe('42');
     expect(putBody.spec).toMatchObject({
       text: 'new',
@@ -137,16 +138,30 @@ describe('annotationK8sClient', () => {
     });
   });
 
+  it('update accepts an already-prefixed a-{id} name without double-prefixing', async () => {
+    getFn.mockResolvedValue({
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      kind: 'Annotation',
+      metadata: { name: 'a-2', resourceVersion: '1', creationTimestamp: '' },
+      spec: { text: 'x', time: 1 },
+    });
+    putFn.mockResolvedValue({});
+
+    await annotationK8sClient.update({ id: 'a-2', time: 1, text: 'x' });
+
+    expect(getFn).toHaveBeenCalledWith(`${baseURL}/annotations/a-2`);
+  });
+
   it('update clears timeEnd when the new event is no longer a region', async () => {
     getFn.mockResolvedValue({
       apiVersion: 'annotation.grafana.app/v0alpha1',
       kind: 'Annotation',
-      metadata: { name: 'name-3', resourceVersion: '1', creationTimestamp: '' },
+      metadata: { name: 'a-3', resourceVersion: '1', creationTimestamp: '' },
       spec: { text: 'x', time: 1, timeEnd: 9 },
     });
     putFn.mockResolvedValue({});
 
-    await annotationK8sClient.update({ id: 'name-3', time: 5, text: 'x', isRegion: false });
+    await annotationK8sClient.update({ id: '3', time: 5, text: 'x', isRegion: false });
 
     const [, putBody] = putFn.mock.calls[0];
     expect(putBody.spec.timeEnd).toBeUndefined();
@@ -160,18 +175,18 @@ describe('annotationK8sClient', () => {
 
   it('remove DELETEs by metadata.name with showSuccessAlert disabled', async () => {
     deleteFn.mockResolvedValue({});
-    await annotationK8sClient.remove('name-3');
+    await annotationK8sClient.remove('3');
 
     const [delUrl, , delOpts] = deleteFn.mock.calls[0];
-    expect(delUrl).toBe(`${baseURL}/annotations/name-3`);
+    expect(delUrl).toBe(`${baseURL}/annotations/a-3`);
     expect(delOpts).toEqual({ showSuccessAlert: false });
   });
 
   it('tags hits the custom /tags route and unwraps items', async () => {
-    getFn.mockResolvedValue({ items: [{ name: 'a', count: 3 }] });
+    getFn.mockResolvedValue({ tags: [{ tag: 'a', count: 3 }] });
     const tags = await annotationK8sClient.tags();
     expect(getFn).toHaveBeenCalledWith(`${baseURL}/tags`, { limit: 1000 });
-    expect(tags).toEqual([{ name: 'a', count: 3 }]);
+    expect(tags).toEqual([{ tag: 'a', count: 3 }]);
   });
 
   it('tags returns [] when items is missing', async () => {

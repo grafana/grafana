@@ -18,10 +18,10 @@ export type AnnotationForCreate = ResourceForCreate<AnnotationSpec, 'Annotation'
 export type AnnotationList = ResourceList<AnnotationSpec, object, 'Annotation'>;
 
 export interface AnnotationTagItem {
-  name: string;
+  tag: string;
   count: number;
 }
 
 export interface AnnotationTagList {
-  items?: AnnotationTagItem[];
+  tags?: AnnotationTagItem[];
 }
