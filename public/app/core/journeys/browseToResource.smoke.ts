@@ -1,6 +1,6 @@
 import { type Page } from '@playwright/test';
 
-import { jitter } from './__smoke__/playwright-utils.ts';
+import { jitter, spaNavigateHome } from './__smoke__/playwright-utils.ts';
 import { type JourneyDriver } from './__smoke__/types.ts';
 
 // Title of the fixture dashboard auto-created by the smoke runner. Kept in
@@ -46,8 +46,9 @@ async function openFixture(page: Page): Promise<void> {
 }
 
 /**
- * Land on /dashboards (start fires) and immediately navigate home without
- * clicking anything. Journey ends via timeout or tab unload.
+ * Land on /dashboards (start fires) and SPA-navigate home without clicking
+ * anything. Journey ends as `abandoned` via abandonOnRouteChange when the
+ * locationService observer sees the route leave the browse area.
  */
 async function abandon(page: Page): Promise<void> {
   await page.goto('/dashboards');
@@ -57,7 +58,11 @@ async function abandon(page: Page): Promise<void> {
     // Even the table didn't show — the page_view interaction may still have fired.
   }
   await page.waitForTimeout(300 + jitter(700));
-  await page.goto('/');
+  // SPA-navigate so abandonOnRouteChange (locationService observer) fires in
+  // the same JS context. A hard `page.goto('/')` would trigger beforeunload but
+  // the unload context tears down before Faro can flush the abandon event.
+  await spaNavigateHome(page);
+  await page.waitForTimeout(500);
 }
 
 export const browseToResourceDriver: JourneyDriver = {
