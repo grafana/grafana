@@ -60,6 +60,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
+			Keywords: []string{"git sync", "git-sync", "repository", "version control", "as code"},
 		})
 	}
 

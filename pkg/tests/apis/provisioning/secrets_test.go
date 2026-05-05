@@ -4,12 +4,13 @@ import (
 	"context"
 	"strings"
 	"testing"
-	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
 func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
@@ -34,12 +35,14 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 		{
 			name: "inline github token encrypted",
 			values: map[string]any{
-				"SecureTokenCreate":         "some-token",
-				"SecureWebhookSecretCreate": "some-secret",
-				"SyncEnabled":               true,
-				"Target":                    "folder",
+				"Token":         "some-token",
+				"WebhookSecret": "some-secret",
+				"SyncEnabled":   true,
+				"SyncTarget":    "folder",
+				"GenerateName":  "test-",
+				"WorkflowsJSON": `[]`,
 			},
-			inputFile: "testdata/github-with-inline-secrets.json.tmpl",
+			inputFile: common.TestdataPath("github.json.tmpl"),
 			expectedFields: []expectedField{
 				{
 					Path:           []string{"secure", "token", "name"},
@@ -83,18 +86,21 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 			err = helper.Repositories.Resource.Delete(ctx, obj.GetName(), metav1.DeleteOptions{})
 			require.NoError(t, err, "failed to delete repository")
 
-			// Finalizers will be running async... so we need to wait until it is actually removed
-			require.Eventually(t, func() bool {
-				_, err := helper.Repositories.Resource.Get(ctx, obj.GetName(), metav1.GetOptions{})
-				return apierrors.IsNotFound(err)
-			}, time.Second*15, time.Millisecond*300, "should be removed")
+			helper.WaitForRepositoryDeleted(t, ctx, obj.GetName())
 
-			// now check that we can no longer decrypt the requested values
-			results, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", obj.GetNamespace(), created...)
-			require.NoError(t, err, "failed to execute decrypt with removed secrets")
-			for k, v := range results {
-				require.ErrorContains(t, v.Error(), "not found", "expecting not found error for all secrets: %s", k)
-			}
+			// Inline secrets are cleaned up asynchronously (owner-reference GC
+			// and the secret garbage-collection worker) after the repository
+			// finalizer chain completes, so poll until every secret reports
+			// not found rather than asserting once.
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				results, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", obj.GetNamespace(), created...)
+				if !assert.NoError(collect, err, "failed to execute decrypt with removed secrets") {
+					return
+				}
+				for k, v := range results {
+					assert.ErrorContains(collect, v.Error(), "not found", "expecting not found error for all secrets: %s", k)
+				}
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "inline secrets should be removed after repository deletion")
 		})
 	}
 }

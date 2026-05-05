@@ -19,14 +19,15 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 
 	const repo = "move-auth-test"
 	testRepo := common.TestRepo{
-		Name: repo,
+		Name:      repo,
+		Workflows: []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard.json",
 		},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    0,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Grant the editor user dashboard permissions (the default editor role
 	// does not include dashboards:write/dashboards:create which are required

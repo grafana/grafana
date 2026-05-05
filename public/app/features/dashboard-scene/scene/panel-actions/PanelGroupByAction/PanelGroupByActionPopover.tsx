@@ -103,7 +103,12 @@ export function PanelGroupByActionPopover({
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-      <div className={styles.menuContainer} onClick={(ev) => ev.stopPropagation()}>
+      <div
+        className={styles.menuContainer}
+        onClick={(ev) => ev.stopPropagation()}
+        onPointerDown={(ev) => ev.stopPropagation()}
+        onPointerUp={(ev) => ev.stopPropagation()}
+      >
         <Stack direction="column">
           <div className={styles.searchContainer}>
             <FilterInput

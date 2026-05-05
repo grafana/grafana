@@ -22,7 +22,7 @@ var (
 					return "", errors.New("provided object must be of type *RecordingRule")
 				}
 
-				return cast.Spec.Title, nil
+				return string(cast.Spec.Title), nil
 			},
 		},
 			{

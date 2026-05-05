@@ -90,6 +90,27 @@ func TestCloudWatchQuery(t *testing.T) {
 			assert.Contains(t, deepLink, "label")
 		})
 
+		t.Run("includes id and it's a math expression query", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
+			query := &CloudWatchQuery{
+				RefId:            "A",
+				Region:           "us-east-1",
+				Statistic:        "Average",
+				Expression:       "SEARCH(someexpression)",
+				Period:           300,
+				Id:               "id1",
+				MatchExact:       true,
+				Label:            "${PROP('Namespace')}",
+				MetricQueryType:  MetricQueryTypeSearch,
+				MetricEditorMode: MetricEditorModeRaw,
+			}
+
+			deepLink, err := query.BuildDeepLink(startTime, endTime)
+			require.NoError(t, err)
+			assert.Contains(t, deepLink, "id%22%3A%22a%22")
+		})
+
 		t.Run("includes account id in case its a metric stat query and an account id is set", func(t *testing.T) {
 			startTime := time.Now()
 			endTime := startTime.Add(2 * time.Hour)

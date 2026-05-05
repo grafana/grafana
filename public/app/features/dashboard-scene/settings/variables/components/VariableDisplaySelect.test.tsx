@@ -94,7 +94,7 @@ describe('VariableDisplaySelect', () => {
 
     render(<VariableDisplaySelect onChange={onChange} display={VariableHide.inControlsMenu} type="query" />);
 
-    const combobox = screen.getByRole('combobox');
+    const combobox = screen.getByRole('combobox', { name: 'Display' });
     await user.click(combobox);
 
     const aboveDashboardOption = await screen.findByText('Above dashboard');

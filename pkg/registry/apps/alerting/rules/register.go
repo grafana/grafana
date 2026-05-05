@@ -116,17 +116,15 @@ func RegisterAppInstaller(
 				return nil
 			}
 
-			if notificationSettings.NamedRoutingTree != nil {
-				if err := vd.Validate(ngmodels.NotificationSettingsFromPolicy(notificationSettings.NamedRoutingTree.RoutingTree)); err != nil {
-					return err
-				}
-				return nil
-			}
-
-			// Only validate receiver presence; construct minimal settings
-			if err := vd.Validate(ngmodels.NotificationSettingsFromContact(ngmodels.ContactPointRouting{Receiver: notificationSettings.SimplifiedRouting.Receiver})); err != nil {
+			settingsModel, err := alertrule.ConvertNotificationSettings(&notificationSettings)
+			if err != nil {
 				return err
 			}
+
+			if err := vd.Validate(settingsModel); err != nil {
+				return err
+			}
+
 			return nil
 		},
 	}

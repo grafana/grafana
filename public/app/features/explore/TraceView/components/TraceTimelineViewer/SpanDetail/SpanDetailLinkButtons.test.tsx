@@ -1,5 +1,3 @@
-import type React from 'react';
-
 import { CoreApp, type TimeRange } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
@@ -27,8 +25,7 @@ const timeRange = {
   to: new Date(1000),
 } as unknown as TimeRange;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getContent(result: React.ReactElement<any>) {
+function getContent(result: ReturnType<typeof getSpanDetailLinkButtons>) {
   return result.props.children.props.children[0];
 }
 

@@ -54,6 +54,7 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -127,6 +128,7 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -198,6 +200,7 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -323,6 +326,7 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("invalid json"),
 				}
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				parser.On("Parse", mock.Anything, finfo).Return(nil, fmt.Errorf("parse error"))
 			},
 			changes: []repository.VersionedFileChange{{
@@ -374,6 +378,7 @@ func TestCalculateChanges(t *testing.T) {
 				meta, _ := utils.MetaAccessor(obj)
 
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				parsed := &resources.ParsedResource{
 					Info: finfo,
 					Repo: provisioning.ResourceRepositoryInfo{
@@ -444,6 +449,7 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -517,6 +523,7 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -724,6 +731,7 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -796,6 +804,7 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -865,6 +874,7 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file with spaces.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file with spaces.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file with spaces.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -1083,4 +1093,155 @@ func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 			require.Equal(t, tt.wantSnap, got)
 		})
 	}
+}
+
+func TestHasStrippedMetadata(t *testing.T) {
+	t.Run("original has extra metadata, parsed has only name", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"namespace":   "default",
+				"labels":      map[string]any{"team": "platform"},
+				"annotations": map[string]any{"custom/note": "important"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		require.True(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("original and parsed have same metadata", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("original has labels, parsed lost them", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":   "my-dash",
+				"labels": map[string]any{"team": "platform"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		require.True(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("original has empty labels, not counted", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"labels":      map[string]any{},
+				"annotations": map[string]any{},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("parsed has more annotations than original, not stripped", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"annotations": map[string]any{"custom/note": "important"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name": "my-dash",
+				"annotations": map[string]any{
+					"custom/note":         "important",
+					"grafana.app/managed": "repo",
+				},
+			},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("original annotation key removed by parser", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"annotations": map[string]any{"custom/note": "important", "old/key": "value"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"annotations": map[string]any{"custom/note": "important"},
+			},
+		}}
+		require.True(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("namespace changed by parser", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash", "namespace": "custom-ns"},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash", "namespace": "default"},
+		}}
+		require.True(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("namespace same in both, not stripped", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash", "namespace": "default"},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash", "namespace": "default"},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("empty namespace in original is not counted", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash", "namespace": ""},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("label value changed but key still present, not stripped", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":   "my-dash",
+				"labels": map[string]any{"team": "platform"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":   "my-dash",
+				"labels": map[string]any{"team": "other"},
+			},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("label key removed by parser", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":   "my-dash",
+				"labels": map[string]any{"team": "platform", "env": "prod"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":   "my-dash",
+				"labels": map[string]any{"team": "platform"},
+			},
+		}}
+		require.True(t, hasRemovedMetadata(original, parsed))
+	})
 }

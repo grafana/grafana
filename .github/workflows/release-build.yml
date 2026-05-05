@@ -282,7 +282,7 @@ jobs:
           set -euo pipefail
           for f in dist/*.tar.gz; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
@@ -379,7 +379,7 @@ jobs:
           set -euo pipefail
           for f in dist/*.deb dist/*.rpm; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
@@ -411,6 +411,28 @@ jobs:
           name: artifacts-deb-rpm-${{ matrix.name }}
           path: upload/artifacts-deb-rpm-${{ matrix.name }}
           retention-days: 1
+
+  verify-rpm-stig:
+    name: verify rpm stig (linux-amd64)
+    runs-on: ubuntu-x64-large
+    needs:
+      - build-deb-rpm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-deb-rpm-linux-amd64
+          path: dist
+      - name: Verify RPM permissions (DISA-STIG)
+        run: |
+          for PKG in dist/*.rpm; do break; done
+          bash scripts/verify-pkg-stig.sh "$PKG"
 
   build-docker-alpine:
     name: docker (alpine) / ${{ matrix.name }}
@@ -467,17 +489,18 @@ jobs:
           ARCH_TAG: ${{ matrix.arch-tag }}
         run: |
           for TARGZ in dist/*.tar.gz; do break; done
+          TAG_VERSION="${BUILD_VERSION//+/-}"
           make build-docker \
             -o "$TARGZ" \
             BUILD_VERSION="$BUILD_VERSION" \
             BUILD_NUMBER="$BUILD_NUMBER" \
-            DOCKER_TAG="grafana/grafana-image-tags:${BUILD_VERSION}-${ARCH_TAG}"
+            DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-${ARCH_TAG}"
       - name: Generate checksums
         run: |
           set -euo pipefail
           for f in dist/*.docker.tar.gz; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
@@ -565,17 +588,18 @@ jobs:
           ARCH_TAG: ${{ matrix.arch-tag }}
         run: |
           for TARGZ in dist/*.tar.gz; do break; done
+          TAG_VERSION="${BUILD_VERSION//+/-}"
           make build-docker-ubuntu \
             -o "$TARGZ" \
             BUILD_VERSION="$BUILD_VERSION" \
             BUILD_NUMBER="$BUILD_NUMBER" \
-            DOCKER_TAG="grafana/grafana-image-tags:${BUILD_VERSION}-ubuntu-${ARCH_TAG}"
+            DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-${ARCH_TAG}"
       - name: Generate checksums
         run: |
           set -euo pipefail
           for f in dist/*.ubuntu.docker.tar.gz; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
@@ -821,7 +845,7 @@ jobs:
       runs-on: ubuntu-x64-small
 
   publish-dockerhub:
-    if: github.ref_name == 'main'
+    if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
     permissions:
       contents: read
       id-token: write
@@ -886,24 +910,25 @@ jobs:
         env:
           VERSION: ${{ needs.setup.outputs.version }}
         run: |
+          TAG_VERSION="${VERSION//+/-}"
           cat artifacts-*.txt > artifacts.txt
           grep 'docker\.tar\.gz$' artifacts.txt | xargs -I % docker load -i % | sed 's/Loaded image: //g' | tee docker_images
           while read -r line; do
             docker push "$line"
           done < docker_images
 
-          docker manifest create grafana/grafana:main "grafana/grafana-image-tags:${VERSION}-amd64" "grafana/grafana-image-tags:${VERSION}-arm64"  "grafana/grafana-image-tags:${VERSION}-armv7"
-          docker manifest create grafana/grafana:main-ubuntu "grafana/grafana-image-tags:${VERSION}-ubuntu-amd64" "grafana/grafana-image-tags:${VERSION}-ubuntu-arm64"  "grafana/grafana-image-tags:${VERSION}-ubuntu-armv7"
-          docker manifest create "grafana/grafana-dev:${VERSION}" "grafana/grafana-image-tags:${VERSION}-amd64" "grafana/grafana-image-tags:${VERSION}-arm64"  "grafana/grafana-image-tags:${VERSION}-armv7"
-          docker manifest create "grafana/grafana-dev:${VERSION}-ubuntu" "grafana/grafana-image-tags:${VERSION}-ubuntu-amd64" "grafana/grafana-image-tags:${VERSION}-ubuntu-arm64"  "grafana/grafana-image-tags:${VERSION}-ubuntu-armv7"
+          docker manifest create grafana/grafana:main "grafana/grafana-image-tags:${TAG_VERSION}-amd64" "grafana/grafana-image-tags:${TAG_VERSION}-arm64"  "grafana/grafana-image-tags:${TAG_VERSION}-armv7"
+          docker manifest create grafana/grafana:main-ubuntu "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-amd64" "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-arm64"  "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-armv7"
+          docker manifest create "grafana/grafana-dev:${TAG_VERSION}" "grafana/grafana-image-tags:${TAG_VERSION}-amd64" "grafana/grafana-image-tags:${TAG_VERSION}-arm64"  "grafana/grafana-image-tags:${TAG_VERSION}-armv7"
+          docker manifest create "grafana/grafana-dev:${TAG_VERSION}-ubuntu" "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-amd64" "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-arm64"  "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-armv7"
 
           docker manifest push grafana/grafana:main
           docker manifest push grafana/grafana:main-ubuntu
-          docker manifest push "grafana/grafana-dev:${VERSION}"
-          docker manifest push "grafana/grafana-dev:${VERSION}-ubuntu"
+          docker manifest push "grafana/grafana-dev:${TAG_VERSION}"
+          docker manifest push "grafana/grafana-dev:${TAG_VERSION}-ubuntu"
 
   dispatch-npm-canaries:
-    if: github.ref_name == 'main'
+    if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
     name: Dispatch publish NPM canaries
     permissions:
       actions: write

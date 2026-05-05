@@ -56,7 +56,7 @@ LibraryPanelKind: {
 
 LibraryPanelKindSpec: {
 	// Panel ID for the library panel in the dashboard
-	id: number
+	id: int32 & >=0
 	// Title for the library panel in the dashboard
 	title: string
 
@@ -78,7 +78,7 @@ AnnotationPanelFilter: {
 	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
-	ids: [...uint32]
+	ids: [...int32 & >=0]
 }
 
 // Annotation event field source. Defines how to obtain the value for an annotation event field.
@@ -690,7 +690,7 @@ TabsLayoutTabSpec: {
 }
 
 PanelSpec: {
-	id:          number
+	id:          int32 & >=0
 	title:       string
 	description: string
 	links: [...DataLink]
@@ -779,8 +779,8 @@ VariableSort: "disabled" | "alphabeticalAsc" | "alphabeticalDesc" | "numericalAs
 VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
+VariableHide: *"dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu"
 
 // Determine whether regex applies to variable value or display text
 // Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)

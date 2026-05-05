@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo } from 'react';
+import { memo, useId } from 'react';
 
 import {
   type Action,
@@ -21,6 +21,7 @@ import {
   InlineFieldRow,
   JSONFormatter,
   RadioButtonGroup,
+  Stack,
   Switch,
   useStyles2,
   useTheme2,
@@ -53,6 +54,14 @@ const DEFAULT_HTTP_CONFIG: FetchOptions = {
 export const ActionEditor = memo(({ index, value, onChange, suggestions, showOneClick }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+  const titleId = useId();
+  const confirmationId = useId();
+  const oneClickId = useId();
+  const connectionId = useId();
+  const methodId = useId();
+  const urlId = useId();
+  const bodyId = useId();
+  const colorPickerId = useId();
 
   const getActionConfig = (): FetchOptions | InfinityOptions => {
     if (value.type === ActionType.Infinity) {
@@ -175,9 +184,10 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     );
 
   return (
-    <div className={styles.listItem}>
-      <Field label={t('grafana-ui.action-editor.modal.action-title', 'Title')} className={styles.inputField}>
+    <Stack direction="column" gap={2}>
+      <Field label={t('grafana-ui.action-editor.modal.action-title', 'Title')} className={styles.inputField} noMargin>
         <SuggestionsInput
+          id={titleId}
           value={value.title}
           onChange={onTitleChange}
           suggestions={suggestions}
@@ -193,8 +203,10 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
           'Provide a descriptive prompt to confirm or cancel the action.'
         )}
         className={styles.inputField}
+        noMargin
       >
         <SuggestionsInput
+          id={confirmationId}
           value={value.confirmation}
           onChange={onConfirmationChange}
           suggestions={suggestions}
@@ -212,42 +224,48 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
             'grafana-ui.action-editor.modal.one-click-description',
             'Only one link or action can have one click enabled at a time'
           )}
+          noMargin
         >
-          <Switch value={value.oneClick || false} onChange={onOneClickChanged} />
+          <Switch id={oneClickId} value={value.oneClick || false} onChange={onOneClickChanged} />
         </Field>
       )}
 
-      <InlineFieldRow>
-        <InlineField label={t('grafana-ui.action-editor.modal.connection', 'Connection')} labelWidth={LABEL_WIDTH}>
-          <ConnectionPicker
-            actionType={value.type}
-            datasourceUid={value?.[ActionType.Infinity]?.datasourceUid}
-            onChange={onConnectionChange}
-          />
-        </InlineField>
-      </InlineFieldRow>
+      <div>
+        <InlineFieldRow>
+          <InlineField label={t('grafana-ui.action-editor.modal.connection', 'Connection')} labelWidth={LABEL_WIDTH}>
+            <ConnectionPicker
+              id={connectionId}
+              actionType={value.type}
+              datasourceUid={value?.[ActionType.Infinity]?.datasourceUid}
+              onChange={onConnectionChange}
+            />
+          </InlineField>
+        </InlineFieldRow>
 
-      <InlineFieldRow>
-        <InlineField label={t('grafana-ui.action-editor.modal.action-method', 'Method')} labelWidth={LABEL_WIDTH}>
-          <RadioButtonGroup<HttpRequestMethod>
-            value={actionConfig.method}
-            options={httpMethodOptions}
-            onChange={onMethodChange}
-            fullWidth
-          />
-        </InlineField>
-      </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label={t('grafana-ui.action-editor.modal.action-method', 'Method')} labelWidth={LABEL_WIDTH}>
+            <RadioButtonGroup<HttpRequestMethod>
+              value={actionConfig.method}
+              options={httpMethodOptions}
+              onChange={onMethodChange}
+              id={methodId}
+              fullWidth
+            />
+          </InlineField>
+        </InlineFieldRow>
 
-      <InlineFieldRow>
-        <InlineField label={t('actions.action-editor.label-url', 'URL')} labelWidth={LABEL_WIDTH} grow={true}>
-          <SuggestionsInput
-            value={actionConfig.url}
-            onChange={onUrlChange}
-            suggestions={suggestions}
-            placeholder={t('actions.action-editor.placeholder-url', 'URL')}
-          />
-        </InlineField>
-      </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label={t('actions.action-editor.label-url', 'URL')} labelWidth={LABEL_WIDTH} grow={true}>
+            <SuggestionsInput
+              id={urlId}
+              value={actionConfig.url}
+              onChange={onUrlChange}
+              suggestions={suggestions}
+              placeholder={t('actions.action-editor.placeholder-url', 'URL')}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      </div>
 
       <Field
         label={t('grafana-ui.action-editor.modal.action-variables', 'Variables')}
@@ -260,11 +278,12 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       <Field
         label={t('grafana-ui.action-editor.modal.action-query-params', 'Query parameters')}
         className={styles.fieldGap}
+        noMargin
       >
         <ParamsEditor value={actionConfig.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
       </Field>
 
-      <Field label={t('actions.action-editor.label-headers', 'Headers')}>
+      <Field label={t('actions.action-editor.label-headers', 'Headers')} noMargin>
         <ParamsEditor
           value={actionConfig.headers ?? []}
           onChange={onHeadersChange}
@@ -274,8 +293,9 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       </Field>
 
       {actionConfig.method !== HttpRequestMethod.GET && (
-        <Field label={t('grafana-ui.action-editor.modal.action-body', 'Body')} className={styles.inputField}>
+        <Field label={t('grafana-ui.action-editor.modal.action-body', 'Body')} className={styles.inputField} noMargin>
           <SuggestionsInput
+            id={bodyId}
             value={actionConfig.body}
             onChange={onBodyChange}
             suggestions={suggestions}
@@ -291,19 +311,20 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         </>
       )}
 
-      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')} style={{ marginTop: '8px' }}>
+      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')} style={{ marginTop: '8px' }} noMargin>
         <InlineField
           label={t('actions.action-editor.button.style.background-color', 'Color')}
           labelWidth={LABEL_WIDTH}
           className={styles.colorPicker}
         >
           <ColorPicker
+            id={colorPickerId}
             color={value?.style?.backgroundColor || theme.colors.secondary.main}
             onChange={onBackgroundColorChange}
           />
         </InlineField>
       </Field>
-    </div>
+    </Stack>
   );
 });
 

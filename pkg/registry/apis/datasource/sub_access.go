@@ -37,9 +37,14 @@ func (r *subAccessREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	m := newConnectMetric("access", r.builder.pluginJSON.ID)
+
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer m.Record()
+
 		access, err := r.getAccessInfo(ctx, name)
 		if err != nil {
+			m.SetError()
 			responder.Error(err)
 		} else {
 			responder.Object(200, access)

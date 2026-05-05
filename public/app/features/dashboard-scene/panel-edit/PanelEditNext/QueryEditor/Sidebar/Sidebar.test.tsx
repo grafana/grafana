@@ -17,6 +17,13 @@ describe('QueryEditorSidebar', () => {
     jest.clearAllMocks();
   });
 
+  it('does not render bulk actions bar when fewer than 2 items are selected', () => {
+    // Default state has no items selected (selectedQueryRefIds = [], selectedTransformationIds = [])
+    renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />);
+
+    expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
+  });
+
   it('should call setSidebarSize with Full when toggling from Mini', async () => {
     const setSidebarSize = jest.fn();
     const { user } = renderWithQueryEditorProvider(

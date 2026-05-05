@@ -16,7 +16,8 @@ jobs:
         [
           "@grafana/datapro",
           "@grafana/dataviz-squad",
-          "@grafana/grafana-frontend-navigation"
+          "@grafana/grafana-frontend-navigation",
+          "@grafana/grafana-operator-experience-squad"
         ]
     steps:
       - name: Define opted-in teams

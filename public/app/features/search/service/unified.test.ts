@@ -3,16 +3,12 @@ import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { type GrafanaSearcher, type SearchQuery } from './types';
+import { type SearchQuery } from './types';
 import { toDashboardResults, type SearchHit, type SearchAPIResponse, UnifiedSearcher } from './unified';
 
 beforeEach(() => {
   jest.clearAllMocks();
 });
-
-const mockFallbackSearcher = {
-  search: jest.fn(),
-} as unknown as GrafanaSearcher;
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -26,12 +22,12 @@ describe('Unified Storage Searcher', () => {
 
     server.use(
       getCustomSearchHandler([
-        { name: 'folder1', title: 'Folder 1', resource: 'folder' },
-        { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboard', folder: 'folder1' },
+        { name: 'folder1', title: 'Folder 1', resource: 'folders' },
+        { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards', folder: 'folder1' },
       ])
     );
 
-    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+    const searcher = new UnifiedSearcher();
 
     const response = await searcher.search(query);
 
@@ -48,9 +44,9 @@ describe('Unified Storage Searcher', () => {
   it('should perform search and sync folders with missing folder', async () => {
     server.use(
       getCustomSearchHandler([
-        { name: 'folder2', title: 'Folder 2', resource: 'folder' },
-        { name: 'db1', title: 'DB 1', resource: 'dashboard', folder: 'folder1' },
-        { name: 'db2', title: 'DB 2', resource: 'dashboard', folder: 'folder2' },
+        { name: 'folder2', title: 'Folder 2', resource: 'folders' },
+        { name: 'db1', title: 'DB 1', resource: 'dashboards', folder: 'folder1' },
+        { name: 'db2', title: 'DB 2', resource: 'dashboards', folder: 'folder2' },
       ])
     );
 
@@ -59,7 +55,7 @@ describe('Unified Storage Searcher', () => {
       limit: 50,
     };
 
-    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+    const searcher = new UnifiedSearcher();
 
     const response = await searcher.search(query);
 
@@ -88,12 +84,12 @@ describe('Unified Storage Searcher', () => {
       ])
     );
 
-    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+    const searcher = new UnifiedSearcher();
     const response = await searcher.search(query);
 
     expect(response.view.length).toBe(1);
 
-    await response.loadMoreItems(0, 1);
+    await response.loadMoreItems(1);
 
     expect(response.view.length).toBe(2);
     // TODO: right now this does not work (see unified.ts#getNextPage() for details) once the frame appending is fixed
@@ -108,24 +104,24 @@ describe('Unified Storage Searcher', () => {
         {
           name: 'team-owned-dashboard',
           title: 'Team owned dashboard',
-          resource: 'dashboard',
+          resource: 'dashboards',
           ownerReferences: ['iam.grafana.app/Team/team-a'],
         },
         {
           name: 'other-team-dashboard',
           title: 'Other team dashboard',
-          resource: 'dashboard',
+          resource: 'dashboards',
           ownerReferences: ['iam.grafana.app/Team/team-b'],
         },
         {
           name: 'unowned-dashboard',
           title: 'Unowned dashboard',
-          resource: 'dashboard',
+          resource: 'dashboards',
         },
       ])
     );
 
-    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+    const searcher = new UnifiedSearcher();
 
     const response = await searcher.search({
       query: '*',
@@ -142,7 +138,7 @@ describe('toDashboardResults', () => {
   it('can create dashboard search results and set meta sortBy so column is added for sprinkles sort field', () => {
     const mockHits: SearchHit[] = [
       {
-        resource: 'dashboard',
+        resource: 'dashboards',
         name: 'Main Dashboard',
         title: 'Main Dashboard Title',
         location: '/dashboards/1',
@@ -152,7 +148,7 @@ describe('toDashboardResults', () => {
         url: '/dashboards/1/main-dashboard-title',
       },
       {
-        resource: 'dashboard',
+        resource: 'dashboards',
         name: 'Main Dashboard',
         title: 'Main Dashboard Title',
         location: '/dashboards/1',
@@ -181,7 +177,7 @@ describe('toDashboardResults', () => {
   it('will trim "-" from the sort field name', () => {
     const mockHits: SearchHit[] = [
       {
-        resource: 'dashboard',
+        resource: 'dashboards',
         name: 'Main Dashboard',
         title: 'Main Dashboard Title',
         location: '/dashboards/1',
@@ -214,12 +210,12 @@ describe('toDashboardResults', () => {
 
       server.use(
         getCustomSearchHandler([
-          { name: 'folder1', title: 'Folder 1', resource: 'folder' },
-          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboard', folder: 'folder1' },
+          { name: 'folder1', title: 'Folder 1', resource: 'folders' },
+          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards', folder: 'folder1' },
         ])
       );
 
-      const searcher = new UnifiedSearcher(mockFallbackSearcher);
+      const searcher = new UnifiedSearcher();
       const response = await searcher.search({ query: 'test', limit: 50 });
 
       const locationInfo = response.view.dataFrame.meta?.custom?.locationInfo;
@@ -232,12 +228,12 @@ describe('toDashboardResults', () => {
 
       server.use(
         getCustomSearchHandler([
-          { name: 'folder1', title: 'Folder 1', resource: 'folder' },
-          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboard', folder: 'folder1' },
+          { name: 'folder1', title: 'Folder 1', resource: 'folders' },
+          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards', folder: 'folder1' },
         ])
       );
 
-      const searcher = new UnifiedSearcher(mockFallbackSearcher);
+      const searcher = new UnifiedSearcher();
       const response = await searcher.search({ query: 'test', limit: 50 });
 
       const locationInfo = response.view.dataFrame.meta?.custom?.locationInfo;

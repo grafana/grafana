@@ -36,11 +36,12 @@ func (c *fakeAccessClient) BatchCheck(_ context.Context, _ authtypes.AuthInfo, r
 	for _, item := range req.Checks {
 		results[item.CorrelationID] = authtypes.BatchCheckResult{
 			Allowed: c.fn(authtypes.CheckRequest{
-				Verb:      item.Verb,
-				Group:     item.Group,
-				Resource:  item.Resource,
-				Namespace: req.Namespace,
-				Name:      item.Name,
+				Verb:        item.Verb,
+				Group:       item.Group,
+				Resource:    item.Resource,
+				Subresource: item.Subresource,
+				Namespace:   req.Namespace,
+				Name:        item.Name,
 			}),
 		}
 	}
@@ -147,7 +148,8 @@ func TestCanAccessAnnotations(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, captured, 1)
 		assert.Equal(t, "dashboard.grafana.app", captured[0].Group)
-		assert.Equal(t, "annotations", captured[0].Resource)
+		assert.Equal(t, "dashboards", captured[0].Resource)
+		assert.Equal(t, "annotations", captured[0].Subresource)
 		assert.Equal(t, dashUID, captured[0].Name)
 		assert.Equal(t, ns, captured[0].Namespace)
 		assert.Equal(t, utils.VerbList, captured[0].Verb)

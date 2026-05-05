@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
-	common "k8s.io/kube-openapi/pkg/common"
+	k8scommon "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
@@ -69,7 +70,7 @@ type TeamSearchHandler struct {
 }
 
 func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles, accessClient authlib.AccessClient) *TeamSearchHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), resourceClient, legacyTeamSearcher, features)
+	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), resourceClient, legacyTeamSearcher)
 
 	return &TeamSearchHandler{
 		client:       searchClient,
@@ -80,7 +81,7 @@ func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTea
 	}
 }
 
-func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
 	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchTeams"].Schema
 
 	return &builder.APIRoutes{
@@ -270,7 +271,7 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	limit := 50
+	limit := common.DefaultListLimit
 	offset := 0
 	page := 1
 	if queryParams.Has("limit") {
@@ -284,6 +285,15 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 	} else if queryParams.Has("page") {
 		page, _ = strconv.Atoi(queryParams.Get("page"))
 		offset = (page - 1) * limit
+	}
+
+	if limit > common.MaxListLimit {
+		http.Error(w, fmt.Sprintf("limit parameter exceeds maximum of %d", common.MaxListLimit), http.StatusBadRequest)
+		return
+	}
+
+	if limit < 1 {
+		limit = common.DefaultListLimit
 	}
 
 	searchRequest := &resourcepb.ResourceSearchRequest{

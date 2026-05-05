@@ -333,6 +333,27 @@ describe('TimeRangeForm', () => {
     expect(to).toHaveClass('react-calendar__tile--rangeEnd');
   });
 
+  it('should update the selected range when clicking the same date twice in the calendar', async () => {
+    const { getAllByRole, getCalendarDayByLabelText, findByLabelText } = setup();
+    const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });
+
+    await user.click(openCalendarButton[0]);
+
+    const targetDay = getCalendarDayByLabelText('June 15, 2021');
+    await user.click(targetDay);
+    await user.click(targetDay);
+
+    const updatedTarget = getCalendarDayByLabelText('June 15, 2021');
+    expect(updatedTarget).toHaveClass('react-calendar__tile--rangeStart');
+    expect(updatedTarget).toHaveClass('react-calendar__tile--rangeEnd');
+
+    const previousRangeStart = getCalendarDayByLabelText('June 17, 2021');
+    expect(previousRangeStart).not.toHaveClass('react-calendar__tile--rangeStart');
+
+    expect(await findByLabelText('From')).toHaveValue('2021-06-15 00:00:00');
+    expect(await findByLabelText('To')).toHaveValue('2021-06-15 23:59:59');
+  });
+
   it('should copy time range to clipboard', async () => {
     setup();
 

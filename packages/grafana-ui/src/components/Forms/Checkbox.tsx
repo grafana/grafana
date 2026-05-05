@@ -7,6 +7,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
+import { useFieldContext } from './FieldContext';
 import { getLabelStyles } from './Label';
 
 export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
@@ -29,7 +30,19 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
  */
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   (
-    { label, description, value, htmlValue, onChange, disabled, className, indeterminate, invalid, ...inputProps },
+    {
+      label,
+      description,
+      value,
+      htmlValue,
+      onChange,
+      disabled: disabledProp,
+      className,
+      indeterminate,
+      invalid: invalidProp,
+      id: idProp,
+      ...inputProps
+    },
     ref
   ) => {
     const handleOnChange = useCallback(
@@ -40,6 +53,10 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       },
       [onChange]
     );
+    const fieldContext = useFieldContext();
+    const id = idProp ?? fieldContext.id;
+    const invalid = invalidProp ?? fieldContext.invalid;
+    const disabled = disabledProp ?? fieldContext.disabled;
     const styles = useStyles2(getCheckboxStyles, invalid);
 
     return (
@@ -53,6 +70,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             onChange={handleOnChange}
             value={htmlValue}
             aria-invalid={!!invalid}
+            id={id}
             {...inputProps}
             ref={(element) => {
               if (element && indeterminate) {

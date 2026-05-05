@@ -712,3 +712,95 @@ receivers:
 		})
 	}
 }
+
+// Regression test: upstream Mimir/Cortex-compat Alertmanagers return an empty,
+// null, or missing `alertmanager_config` when no config has been saved. Before
+// the fix, UnmarshalYAML/UnmarshalJSON left amSimple nil, which made the
+// subsequent MarshalJSON return a 500 on GET config requests.
+func Test_ExternalAlertmanagerConfig_EmptyUpstreamConfig_RoundTrip(t *testing.T) {
+	t.Run("YAML", func(t *testing.T) {
+		for _, tc := range []struct {
+			desc  string
+			input string
+		}{
+			{
+				desc: "empty string",
+				input: `
+template_files: {}
+alertmanager_config: ""
+`,
+			},
+			{
+				desc: "null",
+				input: `
+template_files: {}
+alertmanager_config: null
+`,
+			},
+			{
+				desc: "missing",
+				input: `
+template_files: {}
+`,
+			},
+		} {
+			t.Run(tc.desc, func(t *testing.T) {
+				var cfg ExternalAlertmanagerConfig
+				require.NoError(t, yaml.Unmarshal([]byte(tc.input), &cfg))
+				require.NotNil(t, cfg.amSimple, "amSimple must be non-nil so Marshal does not error")
+
+				out, err := yaml.Marshal(&cfg)
+				require.NoError(t, err, "YAML round-trip must not error for empty upstream config")
+				require.NotEmpty(t, out)
+
+				jsonOut, err := json.Marshal(&cfg)
+				require.NoError(t, err, "JSON re-encode must not error for empty upstream config")
+				require.NotEmpty(t, jsonOut)
+			})
+		}
+	})
+
+	t.Run("JSON", func(t *testing.T) {
+		for _, tc := range []struct {
+			desc  string
+			input string
+		}{
+			{
+				desc:  "null",
+				input: `{"template_files":{},"alertmanager_config":null}`,
+			},
+			{
+				desc:  "missing",
+				input: `{"template_files":{}}`,
+			},
+			{
+				desc:  "empty object",
+				input: `{"template_files":{},"alertmanager_config":{}}`,
+			},
+		} {
+			t.Run(tc.desc, func(t *testing.T) {
+				var cfg ExternalAlertmanagerConfig
+				require.NoError(t, json.Unmarshal([]byte(tc.input), &cfg))
+				require.NotNil(t, cfg.amSimple, "amSimple must be non-nil so Marshal does not error")
+
+				jsonOut, err := json.Marshal(&cfg)
+				require.NoError(t, err, "JSON round-trip must not error for empty upstream config")
+				require.NotEmpty(t, jsonOut)
+
+				yamlOut, err := yaml.Marshal(&cfg)
+				require.NoError(t, err, "YAML re-encode must not error for empty upstream config")
+				require.NotEmpty(t, yamlOut)
+			})
+		}
+	})
+
+	// Guard against accidental removal of the nil-check in Marshal: a
+	// zero-value struct that was never decoded must still error out.
+	t.Run("undecoded struct still errors on marshal", func(t *testing.T) {
+		var cfg ExternalAlertmanagerConfig
+		_, err := json.Marshal(&cfg)
+		require.Error(t, err)
+		_, err = yaml.Marshal(&cfg)
+		require.Error(t, err)
+	})
+}

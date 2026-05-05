@@ -16,6 +16,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { type AdHocFilterItem, PanelChrome, withTheme2, type Themeable2, PanelContextProvider } from '@grafana/ui';
+import { TEMPO_STREAMING_PROGRESS_REF_ID } from 'app/plugins/datasource/tempo/streaming';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
@@ -46,7 +47,13 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
   const { tableResult, range } = item;
   const loadingInState = selectIsWaitingForData(exploreId);
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
-  return { loading, tableResult, range };
+  const hasTempoStreamingProgressTable = tableResult?.some((f) => f.refId === TEMPO_STREAMING_PROGRESS_REF_ID);
+  return {
+    loading,
+    tableResult,
+    range,
+    queryStreaming: item.queryResponse.state === LoadingState.Streaming || Boolean(hasTempoStreamingProgressTable),
+  };
 }
 
 const connector = connect(mapStateToProps, {});
@@ -61,7 +68,7 @@ export class TableContainer extends PureComponent<Props, State> {
 
   hasSubFrames = (data: DataFrame) => data.fields.some((f) => f.type === FieldType.nestedFrames);
 
-  getTableHeight(rowCount: number, hasSubFrames: boolean) {
+  getTableHeight(rowCount: number, hasSubFrames: boolean, queryStreaming: boolean) {
     if (rowCount === 0) {
       return 200;
     }
@@ -69,6 +76,9 @@ export class TableContainer extends PureComponent<Props, State> {
     // if there are multiple tables, there is no min
     const height = Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
 
+    if (queryStreaming) {
+      return height;
+    }
     // esure minimum height of 300
     return Math.max(height, 300);
   }
@@ -91,8 +101,18 @@ export class TableContainer extends PureComponent<Props, State> {
   }
 
   render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, timeZone, theme, eventBus } =
-      this.props;
+    const {
+      loading,
+      onCellFilterAdded,
+      tableResult,
+      width,
+      splitOpenFn,
+      range,
+      timeZone,
+      theme,
+      eventBus,
+      queryStreaming = false,
+    } = this.props;
 
     const { showAll } = this.state;
 
@@ -174,7 +194,7 @@ export class TableContainer extends PureComponent<Props, State> {
                   ),
                 ]}
                 width={width}
-                height={this.getTableHeight(data.length, this.hasSubFrames(data))}
+                height={this.getTableHeight(data.length, this.hasSubFrames(data), queryStreaming)}
                 loadingState={loading ? LoadingState.Loading : undefined}
               >
                 {(innerWidth, innerHeight) => (

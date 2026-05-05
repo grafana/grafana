@@ -3,6 +3,7 @@ import {
   DataSourceApi,
   type DataSourceInstanceSettings,
   type DataSourceRef,
+  PluginType,
   type ScopedVars,
   isObject,
   matchPluginId,
@@ -18,7 +19,15 @@ import {
   type TemplateSrv,
   isExpressionReference,
 } from '@grafana/runtime';
-import { ExpressionDatasourceRef, UserStorage } from '@grafana/runtime/internal';
+import {
+  ExpressionDatasourceRef,
+  getPluginIdFromDatasourceInstanceType,
+  getDatasourcePluginMeta,
+  logPluginMetaError,
+  logPluginMetaWarning,
+  refetchDatasourcePluginMetas,
+  UserStorage,
+} from '@grafana/runtime/internal';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
@@ -216,7 +225,20 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     try {
-      const dsPlugin = await pluginImporter.importDataSource(instanceSettings.meta);
+      // check if we're dealing with a builtin default frontend data sources as // -- Grafana --, -- Mixed etc
+      const pluginId = getPluginIdFromDatasourceInstanceType(instanceSettings.type, instanceSettings.name);
+
+      // Fall back to instanceSettings.meta when the plugin meta lookup misses so that
+      // runtime-registered datasources (which aren't in the plugin meta map) still load.
+      let meta = await getDatasourcePluginMeta(pluginId);
+      if (!meta) {
+        logPluginMetaWarning(
+          `Plugin meta for datasource ${key} (pluginId: ${pluginId}) was not found, falling back to instanceSettings.meta`,
+          PluginType.datasource
+        );
+        meta = instanceSettings.meta;
+      }
+      const dsPlugin = await pluginImporter.importDataSource(meta);
       // check if its in cache now
       if (this.datasources[key]) {
         return this.datasources[key];
@@ -235,8 +257,8 @@ export class DatasourceSrv implements DataSourceService {
         const anyInstance: any = instance;
         anyInstance.name = instanceSettings.name;
         anyInstance.id = instanceSettings.id;
-        anyInstance.type = instanceSettings.type;
-        anyInstance.meta = instanceSettings.meta;
+        anyInstance.type = pluginId;
+        anyInstance.meta = meta;
         anyInstance.uid = instanceSettings.uid;
         anyInstance.getRef = DataSourceApi.prototype.getRef;
       }
@@ -373,6 +395,11 @@ export class DatasourceSrv implements DataSourceService {
     config.datasources = settings.datasources;
     config.defaultDatasource = settings.defaultDatasource;
     this.init(settings.datasources, settings.defaultDatasource);
+    // Refresh the deduplicated plugin metadata cache in the background.
+    // This does not need to block reload since init() already has the full data.
+    refetchDatasourcePluginMetas(settings).catch((error) => {
+      logPluginMetaError('Failed to refresh datasource plugin metadata', error);
+    });
   }
 }
 

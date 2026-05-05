@@ -11,6 +11,8 @@ import (
 	"gopkg.in/ini.v1"
 
 	alertingCluster "github.com/grafana/alerting/cluster"
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -113,7 +115,8 @@ type UnifiedAlertingSettings struct {
 	DisableJitter                             bool
 	ExecuteAlerts                             bool
 	DefaultConfiguration                      string
-	Enabled                                   *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
+	Enabled                                   *bool                               // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
+	AllowedIntegrations                       map[schema.IntegrationType]struct{} // nil means all allowed
 	DisabledOrgs                              map[int64]struct{}
 	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
 	// Only for internal use and not user configuration.
@@ -155,6 +158,10 @@ type UnifiedAlertingSettings struct {
 	BacktestingMaxEvaluations int
 
 	IgnorePendingForNoDataAndError bool
+
+	// LimitEmailToOrgMembers restricts email contact point recipients to users that belong to the organization (including disabled users).
+	// Applied only during contact point configuration (Create/Update), not at notification send time.
+	LimitEmailToOrgMembers bool
 }
 
 type RecordingRuleSettings struct {
@@ -265,6 +272,18 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.Enabled, err = cfg.readUnifiedAlertingEnabledSetting(ua)
 	if err != nil {
 		return fmt.Errorf("failed to read unified alerting enabled setting: %w", err)
+	}
+
+	integrationsStr := valueAsString(ua, "allowed_integrations", "")
+	if integrationsStr != "" {
+		uaCfg.AllowedIntegrations = make(map[schema.IntegrationType]struct{})
+		for _, integration := range util.SplitString(integrationsStr) {
+			iType, err := alertingNotify.IntegrationTypeFromString(integration)
+			if err != nil {
+				return err
+			}
+			uaCfg.AllowedIntegrations[iType] = struct{}{}
+		}
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
@@ -599,6 +618,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaCfg.BacktestingMaxEvaluations < 0 {
 		uaCfg.BacktestingMaxEvaluations = 100
 	}
+
+	uaCfg.LimitEmailToOrgMembers = ua.Key("limit_email_to_org_members").MustBool(false)
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

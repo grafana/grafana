@@ -1,17 +1,23 @@
-import { fireEvent, render, screen } from 'test/test-utils';
+import { fireEvent, render, screen, testWithFeatureToggles } from 'test/test-utils';
 
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
+import { useFoldersQuery } from './useFoldersQuery';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 
 const [_, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA_folderC }] = getFolderFixtures();
 
 setupMockServer();
 setBackendSrv(backendSrv);
+
+jest.mock('./useFoldersQuery', () => {
+  const actual = jest.requireActual('./useFoldersQuery');
+  return { ...actual, useFoldersQuery: jest.fn() };
+});
 
 jest.mock('./useTeamOwnedFolder', () => {
   const actual = jest.requireActual('./useTeamOwnedFolder');
@@ -24,15 +30,17 @@ jest.mock('./useTeamOwnedFolder', () => {
 describe('NestedFolderPicker', () => {
   const mockOnChange = jest.fn();
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
-  let featureTogglesBackup: typeof config.featureToggles;
   const useGetTeamFoldersMock = useGetTeamFolders as jest.Mock;
+  const useFoldersQueryMock = useFoldersQuery as jest.Mock;
 
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
-    featureTogglesBackup = { ...config.featureToggles };
   });
 
   beforeEach(() => {
+    const { useFoldersQuery: realUseFoldersQuery } = jest.requireActual('./useFoldersQuery');
+    useFoldersQueryMock.mockImplementation(realUseFoldersQuery);
+
     useGetTeamFoldersMock.mockImplementation((options?: { skip: boolean }) => {
       if (options?.skip) {
         return { foldersByTeam: [], isLoading: false, error: undefined };
@@ -53,12 +61,10 @@ describe('NestedFolderPicker', () => {
 
   afterAll(() => {
     window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
-    config.featureToggles = featureTogglesBackup;
   });
 
   afterEach(() => {
     jest.resetAllMocks();
-    config.featureToggles = { ...featureTogglesBackup };
   });
 
   it('renders a button with the correct label when no folder is selected', async () => {
@@ -235,49 +241,85 @@ describe('NestedFolderPicker', () => {
     expect(mockOnChange).toHaveBeenCalledWith(folderA_folderC.item.uid, folderA_folderC.item.title);
   });
 
-  it('shows team folders when feature toggle is enabled', async () => {
-    config.featureToggles.teamFolders = true;
+  it('shows an error when folder browsing fails', async () => {
+    useFoldersQueryMock.mockReturnValue({
+      emptyFolders: new Set<string>(),
+      items: [],
+      isLoading: false,
+      error: new Error('Failed to load folders'),
+      requestNextPage: jest.fn(),
+    });
+
     const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
     await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
-    expect(await screen.findByLabelText('Team folders')).toBeInTheDocument();
-    expect(await screen.findByLabelText('Team Folder One')).toBeInTheDocument();
+    expect(await screen.findByText('Error loading some folders')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load folders')).toBeInTheDocument();
   });
 
-  it('shows team folders at top level when root folder is hidden', async () => {
-    config.featureToggles.teamFolders = true;
-    const { user } = render(<NestedFolderPicker showRootFolder={false} onChange={mockOnChange} />);
-    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+  describe('when teamFolders is enabled', () => {
+    testWithFeatureToggles({ enable: ['teamFolders'] });
 
-    const teamFolders = await screen.findByLabelText('Team folders');
-    const topLevelFolder = await screen.findByLabelText(folderA.item.title);
+    it('shows team folders when feature toggle is enabled', async () => {
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
-    expect(screen.queryByLabelText('Dashboards')).not.toBeInTheDocument();
-    expect(teamFolders).toBeInTheDocument();
-    expect(await screen.findByLabelText('Team Folder One')).toBeInTheDocument();
-    expect(teamFolders.getAttribute('aria-level')).toBe(topLevelFolder.getAttribute('aria-level'));
+      expect(await screen.findByLabelText('Team folders')).toBeInTheDocument();
+      expect(await screen.findByLabelText('Team Folder One')).toBeInTheDocument();
+    });
+
+    it('shows an error when team folders fail to load', async () => {
+      useGetTeamFoldersMock.mockReturnValue({
+        foldersByTeam: [],
+        isLoading: false,
+        error: new Error('Team folders failed'),
+      });
+
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      expect(await screen.findByText('Error loading team folders')).toBeInTheDocument();
+      expect(await screen.findByText('Team folders failed')).toBeInTheDocument();
+      expect(await screen.findByLabelText('Dashboards')).toBeInTheDocument();
+      expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
+      expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
+    });
+
+    it('shows team folders at top level when root folder is hidden', async () => {
+      const { user } = render(<NestedFolderPicker showRootFolder={false} onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      const teamFolders = await screen.findByLabelText('Team folders');
+      const topLevelFolder = await screen.findByLabelText(folderA.item.title);
+
+      expect(screen.queryByLabelText('Dashboards')).not.toBeInTheDocument();
+      expect(teamFolders).toBeInTheDocument();
+      expect(await screen.findByLabelText('Team Folder One')).toBeInTheDocument();
+      expect(teamFolders.getAttribute('aria-level')).toBe(topLevelFolder.getAttribute('aria-level'));
+    });
+
+    it('does auto-select a team folder when root is selected', () => {
+      render(<NestedFolderPicker value="" onChange={mockOnChange} />);
+
+      expect(mockOnChange).toHaveBeenCalled();
+    });
+
+    it('does not auto-select a team folder when no value', () => {
+      render(<NestedFolderPicker onChange={mockOnChange} />);
+
+      expect(mockOnChange).not.toHaveBeenCalled();
+    });
   });
 
-  it('does not render team folders when feature toggle is disabled', async () => {
-    config.featureToggles.teamFolders = false;
-    const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
-    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+  describe('when teamFolders is disabled', () => {
+    testWithFeatureToggles({ disable: ['teamFolders'] });
 
-    expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Team Folder One')).not.toBeInTheDocument();
-  });
+    it('does not render team folders when feature toggle is disabled', async () => {
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
-  it('does auto-select a team folder when root is selected', () => {
-    config.featureToggles.teamFolders = true;
-    render(<NestedFolderPicker value="" onChange={mockOnChange} />);
-
-    expect(mockOnChange).toHaveBeenCalled();
-  });
-
-  it('does not auto-select a team folder when no value', () => {
-    config.featureToggles.teamFolders = true;
-    render(<NestedFolderPicker onChange={mockOnChange} />);
-
-    expect(mockOnChange).not.toHaveBeenCalled();
+      expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Team Folder One')).not.toBeInTheDocument();
+    });
   });
 });

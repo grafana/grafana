@@ -39,7 +39,7 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 	// datasourcesRerouteLegacyCRUDAPIs requires these flags to be enabled
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagQueryService) ||
-		!hs.Features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
+		!hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
 		return routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			return response.Error(http.StatusInternalServerError,
 				"datasourcesRerouteLegacyCRUDAPIs requires queryService and queryServiceWithConnections feature flags",
