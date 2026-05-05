@@ -195,7 +195,7 @@ interface DataSourcesListVirtualizedProps {
   hasWriteRights: boolean;
   hasExploreRights: boolean;
   datasourceFailureByUID: Map<string, DatasourceFailureDetails>;
-  scrollRef: RefObject<HTMLDivElement>;
+  scrollRef: RefObject<HTMLDivElement | null>;
   rowVirtualizer: ReturnType<typeof useVirtualizer<HTMLDivElement, Element>>;
 }
 
