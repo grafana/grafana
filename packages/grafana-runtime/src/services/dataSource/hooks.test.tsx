@@ -6,7 +6,7 @@ import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
-import { useDataSourcePlugin, useFindInstanceSettings, useInstanceSettings } from './hooks';
+import { useDataSourcePlugin, useInstanceSettingsList, useInstanceSettings } from './hooks';
 import { _resetForTests as resetInstanceSettings, init } from './instanceSettings';
 import { _resetForTests as resetPlugin, setDataSourceImporter } from './plugin';
 
@@ -87,9 +87,9 @@ describe('useInstanceSettings', () => {
   });
 });
 
-describe('useFindInstanceSettings', () => {
+describe('useInstanceSettingsList', () => {
   it('populates items and reports hasMore=false for the initial page', async () => {
-    const { result } = renderHook(() => useFindInstanceSettings());
+    const { result } = renderHook(() => useInstanceSettingsList());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.items.length).toBeGreaterThan(0);
@@ -97,7 +97,7 @@ describe('useFindInstanceSettings', () => {
   });
 
   it('is safe to call fetchMore when there are no more pages', async () => {
-    const { result } = renderHook(() => useFindInstanceSettings());
+    const { result } = renderHook(() => useInstanceSettingsList());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {

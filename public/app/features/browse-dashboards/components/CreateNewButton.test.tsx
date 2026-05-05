@@ -17,7 +17,7 @@ jest.mock('app/features/provisioning/hooks/useIsProvisionedInstance', () => ({
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
-    useFindInstanceSettings: jest.fn().mockReturnValue({
+    useInstanceSettingsList: jest.fn().mockReturnValue({
       items: [{ name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' }],
       isLoading: false,
       hasMore: false,
