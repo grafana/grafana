@@ -545,4 +545,98 @@ func TestRenameResourceFile(t *testing.T) {
 		require.NotEqual(t, newFolderID, folderName)
 		require.Equal(t, dashboardGVK, gvk)
 	})
+
+	// Pure path-only renames (git blob hash unchanged) skip strict server-side
+	// validation: the spec already lives in the cluster and may legitimately
+	// fail rules introduced after it was first persisted. A synthetic GVR is
+	// used so the SupportsFolderAnnotation path and the v1-dashboard exemption
+	// do not interfere with the assertion.
+	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
+	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
+
+	makeRenameMocks := func(t *testing.T, oldHash, newHash string) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
+		t.Helper()
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old/x.json", Hash: oldHash}
+		repo.On("Read", mock.Anything, "old/x.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "fake.grafana.app/v1",
+				"kind":       "Fake",
+				"metadata":   map[string]any{"name": "same-name"},
+			}},
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "fake.grafana.app/v1",
+			"kind":       "Fake",
+			"metadata":   map[string]any{"name": "same-name"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new/x.json", Hash: newHash}
+		repo.On("Read", mock.Anything, "new/x.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		grafanaObj := managedGrafanaObj("same-name", "default", nil)
+		mockClient.On("Get", mock.Anything, "same-name", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		return repo, mockParser, mockClient, newObj
+	}
+
+	t.Run("same identity rename with unchanged hash sends FieldValidation Ignore", func(t *testing.T) {
+		repo, mockParser, mockClient, newObj := makeRenameMocks(t, "blob-1", "blob-1")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "same-name", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything)
+		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("same identity rename with changed hash keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, newObj := makeRenameMocks(t, "blob-1", "blob-2")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "same-name", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("same identity rename with empty hashes keeps FieldValidation Strict", func(t *testing.T) {
+		// Defensive case: if Hash is unavailable on either side, fall back to
+		// strict validation rather than silently bypassing it.
+		repo, mockParser, mockClient, newObj := makeRenameMocks(t, "", "")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "same-name", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
 }

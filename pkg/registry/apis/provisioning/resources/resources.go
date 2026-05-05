@@ -415,6 +415,18 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		if err := oldParsed.DryRun(ctx); err != nil {
 			return "", "", schema.GroupVersionKind{}, err
 		}
+		// Pure path-only rename (git blob hash unchanged): the file content is
+		// byte-identical, so the UPDATE we are about to send carries the same
+		// spec the cluster already accepted. Skip strict schema validation so
+		// a path/folder change is not blocked by stricter rules introduced
+		// after the resource was first persisted (e.g. legacy dashboards
+		// saved before the CUE validator was enforced).
+		// Rename-with-edits (different hashes) keeps strict validation: the
+		// new content is a real change and any validation failure must be
+		// surfaced rather than silently admitted.
+		if oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
+			newParsed.SkipStrictValidation = true
+		}
 	}
 
 	oldFolderName := oldParsed.ExistingFolder()

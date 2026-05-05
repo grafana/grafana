@@ -124,6 +124,13 @@ type ParsedResource struct {
 	// Create or Update
 	Action provisioning.ResourceAction
 
+	// SkipStrictValidation requests FieldValidation=Ignore on the apiserver
+	// write. Used by in-place renames so that a path/folder change cannot be
+	// blocked by strict schema validation of an unchanged spec — a dashboard
+	// that already lives in the cluster (e.g. saved before stricter CUE
+	// schemas were enforced) must remain renameable.
+	SkipStrictValidation bool
+
 	// The results from dry run
 	DryRunResponse *unstructured.Unstructured
 
@@ -283,8 +290,8 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	fieldValidation := "Strict"
-	if f.GVR == DashboardResource {
-		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	if f.SkipStrictValidation || f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: dashboard exemption is temporary while we improve validation
 	}
 
 	// Handle deletion action separately
@@ -365,8 +372,8 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	identitySpan.End()
 
 	fieldValidation := "Strict"
-	if f.GVR == DashboardResource {
-		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	if f.SkipStrictValidation || f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: dashboard exemption is temporary while we improve validation
 	}
 
 	// Check for ownership conflicts
