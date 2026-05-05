@@ -17,6 +17,7 @@ const (
 	GRPCServer              string = "grpc-server"
 	UnifiedBackend          string = "unified-backend"
 	UnifiedVectorBackend    string = "unified-vector-backend"
+	UnifiedVectorBackfill   string = "unified-vector-backfill"
 	FrontendServer          string = "frontend-server"
 	OperatorServer          string = "operator"
 )

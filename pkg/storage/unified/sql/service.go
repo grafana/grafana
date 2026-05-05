@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -180,7 +181,16 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		s.subservices = append(s.subservices, s.queue, s.scheduler)
 	}
 
-	err := s.initializeSubservicesManager()
+	bf, err := backfill.ProvideVectorBackfiller(cfg, backend, vectorBackend, embedderInstance)
+	if err != nil {
+		return nil, fmt.Errorf("create vector backfiller: %w", err)
+	}
+	if bf != nil {
+		s.subservices = append(s.subservices,
+			services.NewBasicService(nil, bf.Run, nil).WithName(modules.UnifiedVectorBackfill))
+	}
+
+	err = s.initializeSubservicesManager()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}

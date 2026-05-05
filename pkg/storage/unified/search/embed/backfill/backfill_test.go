@@ -1,0 +1,316 @@
+package backfill
+
+import (
+	"context"
+	"encoding/json"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+)
+
+// minimalDashboardJSON returns a small dashboard payload the dashboard
+// extractor will turn into a single panel item.
+func minimalDashboardJSON(uid, title string) []byte {
+	body, _ := json.Marshal(map[string]any{
+		"uid":   uid,
+		"title": title,
+		"panels": []any{
+			map[string]any{
+				"id":          1,
+				"title":       "CPU",
+				"description": "CPU usage",
+			},
+		},
+	})
+	return body
+}
+
+// makeListItem packages a minimal dashboard JSON into a listItem with the
+// given namespace, name, and RV.
+func makeListItem(ns, name string, rv int64) listItem {
+	return listItem{
+		Namespace: ns,
+		Name:      name,
+		RV:        rv,
+		Value:     minimalDashboardJSON(name, name+"-title"),
+	}
+}
+
+func newBackfiller(t *testing.T, storage *fakeStorage, vec *fakeVector) *Backfiller {
+	t.Helper()
+	emb := newFakeEmbedder(&fakeText{dim: 4})
+	b, err := New(Options{
+		Storage:       storage,
+		VectorBackend: vec,
+		Embedder:      emb,
+		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
+		Builders:      []Builder{NewDashboardBuilder(0)},
+	})
+	require.NoError(t, err)
+	return b
+}
+
+func TestRunBackfill_NoIncompleteJobs_NoOp(t *testing.T) {
+	vec := newFakeVector()
+	o := newBackfiller(t, newFakeStorage(), vec)
+	o.runBackfill(context.Background())
+	assert.Empty(t, vec.checkpoints)
+	assert.Empty(t, vec.completedJobIDs)
+}
+
+func TestRun_LockUnavailable_SkipsAllWork(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "a", 1)}
+
+	vec := newFakeVector()
+	vec.lockUnavailable = true
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "test-model", StoppingRV: 100,
+	}}
+
+	o := newBackfiller(t, storage, vec)
+	require.NoError(t, o.Run(context.Background()))
+
+	assert.Equal(t, 1, vec.lockAttempts, "should attempt to acquire the lock")
+	assert.Equal(t, 0, vec.lockReleases, "should not release a lock it didn't acquire")
+	assert.Empty(t, vec.checkpoints, "no work should happen without the lock")
+	assert.Empty(t, vec.upserts)
+	assert.Empty(t, vec.completedJobIDs)
+}
+
+func TestRun_LockAcquired_ReleasedOnReturn(t *testing.T) {
+	vec := newFakeVector()
+	o := newBackfiller(t, newFakeStorage(), vec)
+	require.NoError(t, o.Run(context.Background()))
+
+	assert.Equal(t, 1, vec.lockAttempts)
+	assert.Equal(t, 1, vec.lockReleases, "lock must be released when Run returns")
+}
+
+func TestRunBackfillJob_HappyPath_EmbedsAndCompletes(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItem("ns-1", "dash-a", 50),
+		makeListItem("ns-1", "dash-b", 60),
+		makeListItem("ns-2", "dash-c", 70),
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{
+		ID: 42, Model: "test-model", StoppingRV: 100,
+	}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 3, "one upsert per dashboard")
+	require.Len(t, vec.completedJobIDs, 1)
+	assert.Equal(t, int64(42), vec.completedJobIDs[0])
+
+	// One checkpoint per processed item.
+	require.Len(t, vec.checkpoints, 3)
+	for _, c := range vec.checkpoints {
+		assert.Empty(t, c.LastError, "happy path leaves last_error empty")
+	}
+}
+
+func TestRunBackfillJob_SkipsExistingEmbeddings(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItem("ns-1", "dash-a", 50),
+		makeListItem("ns-1", "dash-b", 60),
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "test-model", StoppingRV: 100,
+	}}
+	// dash-a already has an embedding — backfill should skip it.
+	vec.markExists("ns-1", "test-model", "dashboards", "dash-a")
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "only the missing dashboard is embedded")
+	v := vec.upserts[0][0]
+	assert.Equal(t, "dash-b", v.UID)
+}
+
+func TestRunBackfillJob_SkipsItemsAboveStoppingRV(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItem("ns", "old", 50),
+		makeListItem("ns", "new", 999), // RV > stopping_rv
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "test-model", StoppingRV: 100,
+	}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "items past stopping_rv belong to the live worker")
+	assert.Equal(t, "old", vec.upserts[0][0].UID)
+}
+
+func TestRunBackfillJob_ResumesFromLastSeenKey(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItem("ns", "a", 1),
+		makeListItem("ns", "b", 2),
+		makeListItem("ns", "c", 3),
+	}
+
+	vec := newFakeVector()
+	// Pretend a previous run already processed items 0 + 1 ("a" and "b") and
+	// checkpointed at "tok-2" (start at the third item) for the dashboards
+	// builder.
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "test-model", StoppingRV: 100,
+		LastSeenKey: encodeCursor("dashboards", "tok-2"),
+	}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "resume should only embed the remaining item")
+	assert.Equal(t, "c", vec.upserts[0][0].UID)
+	require.Len(t, vec.completedJobIDs, 1)
+}
+
+func TestRunBackfillJob_CursorForUnknownResource_StartsFromScratch(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItem("ns", "a", 1),
+		makeListItem("ns", "b", 2),
+	}
+
+	vec := newFakeVector()
+	// Cursor refers to a Builder that's no longer registered. The
+	// backfiller should ignore the cursor (not blindly trust the token
+	// against the wrong keyspace) and run every registered Builder
+	// from the beginning.
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "test-model", StoppingRV: 100,
+		LastSeenKey: encodeCursor("removed-resource", "tok-9999"),
+	}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 2, "every dashboard should be embedded after cursor is ignored")
+	require.Len(t, vec.completedJobIDs, 1)
+}
+
+func TestRunBackfillJob_TargetedResource_RunsMatchingBuilder(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItem("ns", "a", 1),
+		makeListItem("ns", "b", 2),
+	}
+
+	vec := newFakeVector()
+	// Job explicitly targets the dashboards resource. Since only the
+	// dashboards builder is registered, this is functionally equivalent
+	// to the resource="" case but exercises the filter pass-through.
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "test-model", Resource: "dashboards", StoppingRV: 100,
+	}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 2, "targeted dashboards job should embed all dashboards")
+	require.Len(t, vec.completedJobIDs, 1)
+}
+
+func TestRunBackfillJob_TargetedUnknownResource_CompletesNoOp(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "a", 1)}
+
+	vec := newFakeVector()
+	// Job targets a resource that has no registered builder. The
+	// backfiller should mark the job complete and move on rather than
+	// stamp an error and re-run forever.
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "test-model", Resource: "folders", StoppingRV: 100,
+	}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts, "no builder for the targeted resource → no embeddings")
+	require.Len(t, vec.completedJobIDs, 1, "job completes silently rather than spinning")
+}
+
+func TestRunBackfillJob_MalformedCursor_StartsFromScratch(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "a", 1)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "test-model", StoppingRV: 100,
+		LastSeenKey: "not-json-at-all",
+	}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "malformed cursor → start fresh, embed everything")
+	require.Len(t, vec.completedJobIDs, 1)
+}
+
+func TestRunBackfillJob_ModelMismatch_StampsErrorAndContinues(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "a", 1)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "wrong-model", StoppingRV: 100,
+	}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts)
+	assert.Empty(t, vec.completedJobIDs, "job left incomplete after model mismatch")
+	require.NotEmpty(t, vec.checkpoints, "error should be persisted via checkpoint")
+	assert.Contains(t, vec.checkpoints[len(vec.checkpoints)-1].LastError, "wrong-model")
+}
+
+func TestRunBackfillJob_PaginatedAcrossPages(t *testing.T) {
+	// Build a larger result set than backfillPageSize to force pagination.
+	const total = backfillPageSize + 5
+
+	storage := newFakeStorage()
+	storage.listItems = make([]listItem, total)
+	for i := range storage.listItems {
+		storage.listItems[i] = makeListItem("ns", uniqName(i), int64(i+1))
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{
+		ID: 7, Model: "test-model", StoppingRV: int64(total + 100),
+	}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Len(t, vec.upserts, total, "every item across all pages is embedded")
+	require.Len(t, vec.completedJobIDs, 1)
+}
+
+func uniqName(i int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyz"
+	out := []byte{letters[i%26], letters[(i/26)%26]}
+	if i >= 26*26 {
+		out = append(out, letters[(i/(26*26))%26])
+	}
+	return string(out)
+}

@@ -87,8 +87,20 @@ func (f *fakeVectorBackend) DeleteSubresources(context.Context, string, string, 
 func (f *fakeVectorBackend) GetSubresourceContent(context.Context, string, string, string, string) (map[string]string, error) {
 	return nil, nil
 }
+func (f *fakeVectorBackend) Exists(context.Context, string, string, string, string) (bool, error) {
+	return false, nil
+}
 func (f *fakeVectorBackend) GetLatestRV(context.Context) (int64, error) { return 0, nil }
-func (f *fakeVectorBackend) Run(context.Context) error                  { return nil }
+func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context) ([]vector.BackfillJob, error) {
+	return nil, nil
+}
+func (f *fakeVectorBackend) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
+	return nil
+}
+func (f *fakeVectorBackend) CompleteBackfillJob(context.Context, int64) error { return nil }
+func (f *fakeVectorBackend) TryAcquireBackfillLock(context.Context) (func(), bool, error) {
+	return func() {}, true, nil
+}
 
 // newTestSearchServer builds a searchServer with just the fields the
 // VectorSearch handler needs, skipping all of newSearchServer's larger

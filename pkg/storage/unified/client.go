@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -166,6 +167,20 @@ func newClient(opts options.StorageOptions,
 			if err := services.StartAndAwaitRunning(ctx, backendService); err != nil {
 				return nil, fmt.Errorf("failed to start storage backend: %w", err)
 			}
+		}
+
+		// only enabled if
+		bf, err := backfill.ProvideVectorBackfiller(cfg, backend, vectorBackend, embedderInstance)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create embedding backfiller: %w", err)
+		}
+		if bf != nil {
+			// Single-binary lifetime: tie Run to the process via context.Background.
+			go func() {
+				if rerr := bf.Run(context.Background()); rerr != nil {
+					cfg.Logger.Error("embedding backfiller stopped", "err", rerr)
+				}
+			}()
 		}
 
 		serverOptions := sql.ServerOptions{
