@@ -412,6 +412,7 @@ const (
 	snapshotUploadStatusSkipNoChanges    = "skip_no_changes"
 	snapshotUploadStatusSkipLockHeld     = "skip_lock_contention"
 	snapshotUploadStatusSkipRecentRemote = "skip_recent_remote"
+	snapshotUploadStatusSkipNotOwner     = "skip_not_owner"
 	snapshotUploadStatusError            = "error"
 )
 
@@ -435,6 +436,17 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 	for _, key := range b.GetOpenIndexes() {
 		idx := b.peekCachedIndex(key)
 		if idx == nil || idx.indexStorage != indexStorageFile {
+			continue
+		}
+
+		owned, err := b.ownsIndexFn(key)
+		if err != nil {
+			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
+			b.log.Warn("failed to check if index belongs to this instance", "key", key, "err", err)
+			continue
+		}
+		if !owned {
+			b.recordSnapshotUploadStatus(snapshotUploadStatusSkipNotOwner)
 			continue
 		}
 
