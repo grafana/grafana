@@ -33,7 +33,6 @@ const (
 	DS_AZURE_PROMETHEUS  = "grafana-azureprometheus-datasource"
 	DS_TEMPO             = "tempo"
 	DS_TESTDATA          = "grafana-testdata-datasource"
-	DS_ZIPKIN            = "zipkin"
 	// CustomHeaderName is the prefix that is used to store the name of a custom header.
 	CustomHeaderName = "httpHeaderName"
 	// CustomHeaderValue is the prefix that is used to store the value of a custom header.

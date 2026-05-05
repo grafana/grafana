@@ -27,7 +27,6 @@ var requiredURL = map[string]bool{
 	datasources.DS_LOKI:              true,
 	datasources.DS_OPENTSDB:          true,
 	datasources.DS_TEMPO:             true,
-	datasources.DS_ZIPKIN:            true,
 	datasources.DS_MYSQL:             true,
 	datasources.DS_POSTGRES:          true,
 	datasources.DS_MSSQL:             true,

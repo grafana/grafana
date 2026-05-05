@@ -1,6 +1,6 @@
 /* eslint-disable @grafana/no-restricted-img-srcs */
-import type { PluginMetasResponse } from '../types';
-import type { Meta } from '../types/meta/meta_object_gen';
+import type {PluginMetasResponse} from '../types';
+import type {Meta} from '../types/meta/meta_object_gen';
 
 export const clockPanelMetaOnPrem: Meta = structuredClone({
   kind: 'Meta',
@@ -4367,71 +4367,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           loadingStrategy: 'script',
         },
         baseURL: 'app/plugins/panel/xychart',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
-        name: 'zipkin',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'zipkin',
-          type: 'datasource',
-          name: 'Zipkin',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'app/plugins/datasource/zipkin/dist/img/zipkin-logo.svg',
-              large: 'app/plugins/datasource/zipkin/dist/img/zipkin-logo.svg',
-            },
-            updated: '',
-            version: '12.4.0-pre',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'Placeholder for the distributed tracing system.',
-            links: [
-              {
-                name: 'Learn more',
-                url: 'https://zipkin.io',
-              },
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/datasources/zipkin/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '>=10.3.0-0',
-            grafanaVersion: '*',
-          },
-          backend: true,
-          category: 'tracing',
-          executable: 'gpx_zipkin',
-          metrics: true,
-          tracing: true,
-        },
-        class: 'core',
-        module: {
-          path: 'app/plugins/datasource/zipkin/dist/module.js',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/datasource/zipkin/dist',
         signature: {
           status: 'internal',
         },
