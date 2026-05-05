@@ -19,7 +19,7 @@ const createConnection = (overrides?: Partial<CanvasConnection>): CanvasConnecti
 });
 
 // Helper to create a mock element
-const createMockElement = (name: string, connections?: CanvasConnection[]): Partial<ElementState> => {
+const createMockElement = (name: string, connections?: CanvasConnection[]): ElementState => {
   const mockDiv = document.createElement('div');
 
   return {
@@ -30,7 +30,7 @@ const createMockElement = (name: string, connections?: CanvasConnection[]): Part
       type: 'test-element',
       connections: connections || [],
     },
-  };
+  } as unknown as ElementState;
 };
 
 // Mock coordinate calculator that returns predictable values

@@ -43,7 +43,7 @@ const createConnection = (overrides?: Partial<CanvasConnection>): CanvasConnecti
 });
 
 // Helper to create a mock element
-const createMockElement = (name: string, connections?: CanvasConnection[]): Partial<ElementState> => {
+const createMockElement = (name: string, connections?: CanvasConnection[]): ElementState => {
   const mockDiv = document.createElement('div');
   mockDiv.getBoundingClientRect = jest.fn(() => ({
     left: 100,
@@ -71,25 +71,26 @@ const createMockElement = (name: string, connections?: CanvasConnection[]): Part
       type: 'test-element',
       connections: connections || [],
     },
-  };
+  } as unknown as ElementState;
 };
 
 // Helper to create a mock scene
-const createMockScene = (): Partial<Scene> => ({
-  byName: new Map(),
-  scale: 1,
-  connections: {
-    updateState: jest.fn(),
-  } as unknown as Scene['connections'],
-  moved: {
-    next: jest.fn(),
-  } as unknown as Scene['moved'],
-});
+const createMockScene = (): Scene =>
+  ({
+    byName: new Map(),
+    scale: 1,
+    connections: {
+      updateState: jest.fn(),
+    } as unknown as Scene['connections'],
+    moved: {
+      next: jest.fn(),
+    } as unknown as Scene['moved'],
+  }) as unknown as Scene;
 
 describe('Connections2', () => {
   describe('updateConnectionsAfterIndividualMove - integration', () => {
     it('should call calculateCoordinates2 with correct parameters', () => {
-      const mockScene = createMockScene() as Scene;
+      const mockScene = createMockScene();
       const connectionsObj = new Connections2(mockScene);
 
       const sourceElement = createMockElement('source', [
@@ -125,7 +126,7 @@ describe('Connections2', () => {
     });
 
     it('should update coordinates through shared utility', () => {
-      const mockScene = createMockScene() as Scene;
+      const mockScene = createMockScene();
       const connectionsObj = new Connections2(mockScene);
 
       const sourceElement = createMockElement('source', [
@@ -156,7 +157,7 @@ describe('Connections2', () => {
 
   describe('updateConnectionsAfterGroupMove - integration', () => {
     it('should call calculateCoordinates2 when both elements are selected', () => {
-      const mockScene = createMockScene() as Scene;
+      const mockScene = createMockScene();
       const connectionsObj = new Connections2(mockScene);
 
       const sourceElement = createMockElement('source', [
@@ -189,7 +190,7 @@ describe('Connections2', () => {
     });
 
     it('should update both coordinates through shared utility', () => {
-      const mockScene = createMockScene() as Scene;
+      const mockScene = createMockScene();
       const connectionsObj = new Connections2(mockScene);
 
       const sourceElement = createMockElement('source', [
