@@ -183,14 +183,13 @@ ORDER BY time
 
 ```sql
 SELECT
-  $__dateBin(time),
+  $__dateBin(time) AS time,
   mean(usage_system) AS avg_system,
   mean(usage_user) AS avg_user
 FROM cpu
 WHERE $__timeFilter(time)
 GROUP BY $__dateBin(time)
 ORDER BY time
-```
 
 **Using JOINs across tables:**
 
