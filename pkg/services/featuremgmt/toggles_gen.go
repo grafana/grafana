@@ -642,10 +642,6 @@ const (
 	// Enables datasource resource permissions via the K8s IAM resource permission APIs
 	FlagKubernetesAuthzDatasourceResourcePermissions = "kubernetesAuthzDatasourceResourcePermissions"
 
-	// FlagRestoreDashboards
-	// Enables restore deleted dashboards feature
-	FlagRestoreDashboards = "restoreDashboards"
-
 	// FlagAlertEnrichment
 	// Enable configuration of alert enrichments in Grafana Cloud.
 	FlagAlertEnrichment = "alertEnrichment"

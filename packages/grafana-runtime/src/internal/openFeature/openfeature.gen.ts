@@ -113,10 +113,10 @@ export const useFlagCreatedByMeSearchFilter = (options?: ReactFlagEvaluationOpti
  *
  * **Details:**
  * - flag key: `dashboardSectionVariables`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDashboardSectionVariables = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboardSectionVariables", false, options).value;
+  return useFlag("dashboardSectionVariables", true, options).value;
 };
 
 /**

@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "De repository van de geselecteerde map kon niet worden gevonden. Controleer of de map juist is geconfigureerd.",
         "repository-not-found-title": "Repository niet gevonden"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Fout bij verplaatsen van bronnen",
       "error-no-target-folder-path": "Pad naar doelmap is ongeldig of leeg, selecteer opnieuw.",
       "move-total": "In totaal heeft dit invloed op:",
@@ -7313,6 +7314,7 @@
       "terraform": "Beheerd door: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Kan dashboard niet verplaatsen",
       "cancel-action": "Annuleren",
       "current-file-not-found": "Huidig dashboardbestand kon niet worden gevonden",
@@ -15453,7 +15455,6 @@
       "forwards-time-aria-label": "Tijdsbereik vooruitzetten",
       "to": "tot",
       "zoom-out-button": "Tijdsbereik uitzoomen",
-      "zoom-out-tooltip": "Tijdsbereik uitzoomen <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Tijdsbereik uitzoomen <br/> t -"
     },
     "time-range": {

@@ -4300,6 +4300,7 @@
         "repository-not-found-message": "選択したフォルダのリポジトリが見つかりませんでした。フォルダが正しくプロビジョニングされていることを確認してください。",
         "repository-not-found-title": "リポジトリが見つかりません"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "リソースの移動中にエラーが発生しました",
       "error-no-target-folder-path": "ターゲットフォルダパスが無効または空です。もう一度選択してください。",
       "move-total": "全体で次に影響します：",
@@ -7272,6 +7273,7 @@
       "terraform": "管理者：Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "ダッシュボードの移動に失敗しました",
       "cancel-action": "キャンセル",
       "current-file-not-found": "現在のダッシュボードファイルが見つかりませんでした",
@@ -15360,7 +15362,6 @@
       "forwards-time-aria-label": "時間範囲を前に移動",
       "to": "へ",
       "zoom-out-button": "時間範囲をズームアウト",
-      "zoom-out-tooltip": "時間範囲ズームアウト <br/> CTRL+Z",
       "zoom-out-tooltip-new": "時間範囲ズームアウト <br/> t -"
     },
     "time-range": {
