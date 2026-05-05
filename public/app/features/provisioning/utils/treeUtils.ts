@@ -163,7 +163,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
 
   // Detect provisioned folders missing _folder.json metadata. If the folder resource
   // has a non-empty hash, the metadata was previously synced — its absence means the
-  // file was removed from the repo, so the folder is pending until the next sync.
+  // file was removed from the remote repo, so the folder is pending until the next sync.
   for (const [path, node] of nodeMap) {
     if (node.type === 'Folder' && node.resourceName) {
       const metadataPath = getFolderMetadataPath(path);

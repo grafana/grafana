@@ -602,9 +602,9 @@ describe('buildTree', () => {
     expect(metadataNode?.status).toBe('synced');
   });
 
-  it('should mark _folder.json and parent folder pending when _folder.json was updated locally', () => {
-    // File hash differs from the folder resource hash → metadata file was updated in repo
-    // but not yet synced. Both the file row and the parent folder must reflect this.
+  it('should mark _folder.json and parent folder pending when _folder.json was updated remotely', () => {
+    // File hash differs from the folder resource hash → metadata file was updated in the
+    // remote repo but not yet synced. Both the file row and the parent folder must reflect this.
     const syncedDashboard = { ...mockResource, hash: 'matching-hash' };
     const mergedItems = [
       { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: mockFolderResource },
@@ -651,9 +651,9 @@ describe('buildTree', () => {
     expect(metadataNode?.status).toBe('pending');
   });
 
-  it('should mark parent folder pending when _folder.json was removed locally but folder resource still has metadata hash', () => {
-    // File missing from repo but folder resource still has a non-empty hash → metadata
-    // was previously synced and the file was deleted. The folder must reflect pending.
+  it('should mark parent folder pending when _folder.json was removed remotely but folder resource still has metadata hash', () => {
+    // File missing from the remote repo but folder resource still has a non-empty hash →
+    // metadata was previously synced and the file was deleted. The folder must reflect pending.
     const syncedDashboard = { ...mockResource, hash: 'matching-hash' };
     const mergedItems = [
       { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: mockFolderResource },
