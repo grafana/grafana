@@ -753,8 +753,12 @@ func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.In
 			return m.Kind == subjectKindUser && m.Name == userDetails.UID
 		})
 
+		// External members are owned by team-sync and must not be mutated through
+		// this path. Returning an error (rather than a silent no-op) prevents the
+		// dual-write caller from proceeding with the legacy SQL write, which would
+		// otherwise cause k8s and SQL to diverge until the next reconciliation.
 		if idx >= 0 && t.Spec.Members[idx].External {
-			return nil
+			return ErrExternalTeamMember.Errorf("user %q is externally-synced", userDetails.UID)
 		}
 
 		switch {

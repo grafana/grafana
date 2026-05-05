@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -50,18 +51,18 @@ var ErrInvalidManifest = errors.New("invalid manifest")
 
 // IndexMeta contains metadata about a remote index snapshot.
 type IndexMeta struct {
-	// GrafanaBuildVersion is the version of Grafana that built this index.
-	GrafanaBuildVersion string `json:"grafana_build_version"`
+	// BuildVersion is the version of Grafana that built this index.
+	BuildVersion string `json:"build_version"`
 	// UploadTimestamp is when the snapshot was uploaded.
 	UploadTimestamp time.Time `json:"upload_timestamp"`
-	// BuildStartTimestamp is when the bleve index was originally created
-	// (start of the from-scratch build that produced it). Persisted across
-	// periodic re-uploads of the same index, so it always describes the
-	// underlying data, not the most recent upload.
+	// BuildTime is when the bleve index was originally created (start of
+	// the from-scratch build that produced it). Persisted across periodic
+	// re-uploads of the same index, so it always describes the underlying
+	// data, not the most recent upload.
 	//
-	// Zero-value means "unknown" — snapshots produced before this field was
-	// introduced. Readers fall back to other criteria in that case.
-	BuildStartTimestamp time.Time `json:"build_start_timestamp,omitempty"`
+	// Zero-value means "unknown"; readers must not treat it as a freshness
+	// signal.
+	BuildTime time.Time `json:"build_time,omitempty"`
 	// LatestResourceVersion is the latest resource version included in the index.
 	LatestResourceVersion int64 `json:"latest_resource_version"`
 	// Files maps relative file paths to their sizes in bytes.
@@ -77,8 +78,9 @@ type IndexStoreLock interface {
 // RemoteIndexStore manages index snapshots on remote storage.
 // Index keys are immutable: each snapshot uses a unique ULID key.
 type RemoteIndexStore interface {
-	// LockBuildIndex acquires a distributed build lock for namespace/group/resource.
-	LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource) (IndexStoreLock, error)
+	// LockBuildIndex acquires a distributed build/upload lock for namespace/group/resource.
+	// buildVersion scopes contention to replicas running the same exact Grafana version.
+	LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource, buildVersion string) (IndexStoreLock, error)
 
 	// LockNamespaceForCleanup acquires a distributed cleanup lock for a namespace.
 	// Uses a different lock key than LockBuildIndex so cleanup never blocks an
@@ -193,8 +195,12 @@ func nsPrefix(ns resource.NamespacedResource) string {
 	return fmt.Sprintf("%s/", resourceSubPath(ns))
 }
 
-func buildIndexLockKey(ns resource.NamespacedResource) string {
-	return fmt.Sprintf("%s/locks/build", resourceSubPath(ns))
+func buildIndexLockKey(ns resource.NamespacedResource, buildVersion string) string {
+	return fmt.Sprintf("%s/locks/build-%s", resourceSubPath(ns), versionLockSegment(buildVersion))
+}
+
+func versionLockSegment(buildVersion string) string {
+	return base64.RawURLEncoding.EncodeToString([]byte(buildVersion))
 }
 
 // cleanupLockKey returns the object-storage lock key used to serialise cleanup
@@ -204,8 +210,11 @@ func cleanupLockKey(namespace string) string {
 	return fmt.Sprintf("%s/locks/cleanup", cleanFileSegment(namespace))
 }
 
-func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource) (IndexStoreLock, error) {
-	l, err := newObjectStorageLock(s.lockConfig(buildIndexLockKey(nsResource), s.buildLockOpts))
+func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	if buildVersion == "" {
+		return nil, fmt.Errorf("build version must not be empty")
+	}
+	l, err := newObjectStorageLock(s.lockConfig(buildIndexLockKey(nsResource, buildVersion), s.buildLockOpts))
 	if err != nil {
 		return nil, fmt.Errorf("creating build lock: %w", err)
 	}

@@ -37,6 +37,8 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
+  /** Enables org-defined dashboard templates for enterprise */
+  GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -111,10 +113,10 @@ export const useFlagCreatedByMeSearchFilter = (options?: ReactFlagEvaluationOpti
  *
  * **Details:**
  * - flag key: `dashboardSectionVariables`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDashboardSectionVariables = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboardSectionVariables", false, options).value;
+  return useFlag("dashboardSectionVariables", true, options).value;
 };
 
 /**
@@ -203,6 +205,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", false, options).value;
+};
+
+/**
+ * Enables org-defined dashboard templates for enterprise
+ *
+ * **Details:**
+ * - flag key: `grafana.orgDashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.orgDashboardTemplates", false, options).value;
 };
 
 /**
