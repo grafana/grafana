@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "Seçili klasöre ait depo bulunamadı. Lütfen klasörün doğru şekilde sağlandığından emin olun.",
         "repository-not-found-title": "Depo bulunamadı"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Kaynaklar taşınırken hata oluştu",
       "error-no-target-folder-path": "Hedef klasör yolu geçersiz veya boş, lütfen tekrar seçin.",
       "move-total": "Bu işlem toplamda şunları etkileyecektir:",
@@ -7313,6 +7314,7 @@
       "terraform": "Yöneten: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Pano taşınamadı",
       "cancel-action": "İptal et",
       "current-file-not-found": "Geçerli pano dosyası bulunamadı",
@@ -15453,7 +15455,6 @@
       "forwards-time-aria-label": "Zaman aralığını ileri al",
       "to": "bitiş",
       "zoom-out-button": "Zaman aralığını büyüt",
-      "zoom-out-tooltip": "Zaman aralığını küçült <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Zaman aralığını küçült <br/> t -"
     },
     "time-range": {

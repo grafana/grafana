@@ -4366,6 +4366,7 @@
         "repository-not-found-message": "Nie znaleziono repozytorium dla wybranego folderu. Upewnij się, że folder jest prawidłowo przygotowany.",
         "repository-not-found-title": "Nie znaleziono repozytorium"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Błąd przenoszenia zasobów",
       "error-no-target-folder-path": "Ścieżka do folderu docelowego jest nieprawidłowa lub pusta. Wybierz ponownie.",
       "move-total": "Łącznie wpłynie to na następujące elementy:",
@@ -7395,6 +7396,7 @@
       "terraform": "Zarządzane przez Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Nie udało się przenieść pulpitu",
       "cancel-action": "Anuluj",
       "current-file-not-found": "Nie znaleziono bieżącego pliku pulpitu",
@@ -15639,7 +15641,6 @@
       "forwards-time-aria-label": "Przesuń zakres czasu do przodu",
       "to": "do",
       "zoom-out-button": "Oddal zakres czasu",
-      "zoom-out-tooltip": "Oddal zakres czasu <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Oddal zakres czasu <br/> t -"
     },
     "time-range": {

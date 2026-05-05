@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "Não foi possível encontrar o repositório para a pasta selecionada. Certifique-se de que a pasta está aprovisionada corretamente.",
         "repository-not-found-title": "Repositório não encontrado"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Erro ao mover recursos",
       "error-no-target-folder-path": "O caminho da pasta de destino é inválido ou está vazio, selecione novamente.",
       "move-total": "No total, isto afetará:",
@@ -7313,6 +7314,7 @@
       "terraform": "Gerido por: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Não foi possível mover o painel de controlo",
       "cancel-action": "Cancelar",
       "current-file-not-found": "Não foi possível encontrar o ficheiro do painel de controlo atual",
@@ -15453,7 +15455,6 @@
       "forwards-time-aria-label": "Mover o intervalo de tempo para a frente",
       "to": "para",
       "zoom-out-button": "Diminuir o zoom do intervalo de tempo",
-      "zoom-out-tooltip": "Diminuir o zoom do intervalo de tempo <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Diminuir o zoom do intervalo de tempo <br/> t -"
     },
     "time-range": {

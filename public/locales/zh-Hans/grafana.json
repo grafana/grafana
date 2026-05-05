@@ -4300,6 +4300,7 @@
         "repository-not-found-message": "找不到所选文件夹的存储库。请确保已正确预置文件夹。",
         "repository-not-found-title": "找不到存储库"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "移动资源时出错",
       "error-no-target-folder-path": "目标文件夹路径无效或为空，请再次选择。",
       "move-total": "总体而言，这将影响：",
@@ -7272,6 +7273,7 @@
       "terraform": "管理者：Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "移动数据面板失败",
       "cancel-action": "取消",
       "current-file-not-found": "找不到当前数据面板文件",
@@ -15360,7 +15362,6 @@
       "forwards-time-aria-label": "向前移动时间范围",
       "to": "至",
       "zoom-out-button": "缩放时间范围",
-      "zoom-out-tooltip": "时间范围拉宽 <br/> CTRL+Z",
       "zoom-out-tooltip-new": "时间范围拉宽 <br/> t -"
     },
     "time-range": {
