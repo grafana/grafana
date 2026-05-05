@@ -4,7 +4,6 @@ import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import {
   useCallback,
-  useEffect,
   useId,
   useMemo,
   useRef,
@@ -24,14 +23,9 @@ import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
-import { Pagination } from '../../Pagination/Pagination';
 import { usePanelContext } from '../../PanelChrome';
-import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
-import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { type DataLinksActionsTooltipState } from '../utils';
 
-import { buildColumnsFromFields, type ColumnBuildConfig } from './columnBuilder';
-import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
 import { RowExpander } from './components/RowExpander';
 import { COLUMN, TABLE } from './constants';
 import {
@@ -48,6 +42,7 @@ import {
   useSortedRows,
 } from './hooks';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
+import { TableDataGrid } from './TableDataGrid';
 import {
   type CellRootRenderer,
   type FromFieldsResult,
@@ -69,7 +64,6 @@ import {
   getDisplayName,
   getVisibleFields,
   renderRowFactory,
-  rowKeyGetter,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -222,7 +216,6 @@ export function TableNested(props: TableNGProps) {
     }
     return new Set();
   });
-  const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
@@ -326,16 +319,6 @@ export function TableNested(props: TableNGProps) {
   const showPagination = enablePagination && numRows > 0;
   const styles = useStyles2(getGridStyles, showPagination, transparent);
 
-  const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
-  useEffect(() => {
-    if (scrollToIndex !== undefined && sortedRows && gridRef.current?.scrollToCell) {
-      const rowIdx = sortedRows.findIndex((row) => row.__index === scrollToIndex);
-      gridRef.current.scrollToCell({ rowIdx });
-      setScrollToIndex(undefined);
-      setSelectedRows(new Set<string>([rowKeyGetter(sortedRows[rowIdx])]));
-    }
-  }, [scrollToIndex, sortedRows]);
-
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
       return (row: TableRow) => (expandedRows.has(getRowStableKey(row.__index)) ? TABLE.MAX_CELL_HEIGHT : 0);
@@ -378,7 +361,6 @@ export function TableNested(props: TableNGProps) {
         rowHeight,
         bottomSummaryRows: hasFooter ? [{}] : undefined,
         summaryRowHeight: footerHeight,
-        headerRowClass: styles.headerRow,
         headerRowHeight: noHeader ? 0 : headerHeight,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
@@ -386,7 +368,6 @@ export function TableNested(props: TableNGProps) {
       hasFooter,
       sortColumns,
       rowHeight,
-      styles.headerRow,
       noHeader,
       setSortColumns,
       onSortByChange,
@@ -643,81 +624,50 @@ export function TableNested(props: TableNGProps) {
     [cellRootRenderers]
   );
 
-  const itemsRangeStart = pageRangeStart;
-  const displayedEnd = pageRangeEnd;
-
   return (
-    <>
-      <DataGrid<TableRow, TableSummaryRow, string>
-        {...commonDataGridProps}
-        role="treegrid"
-        ref={gridRef}
-        className={styles.grid}
-        columns={structureRevColumns}
-        rows={paginatedRows}
-        rowKeyGetter={rowKeyGetter}
-        isRowSelectionDisabled={() => initialRowIndex !== undefined}
-        selectedRows={selectedRows}
-        onSelectedRowsChange={setSelectedRows}
-        headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
-        headerRowHeight={headerHeight}
-        onColumnResize={resizeHandler}
-        onCellClick={onCellClick}
-        onCellKeyDown={({ column, row }, event) => {
-          if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
-            event.preventGridDefault();
-            gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 });
-            return;
-          }
-
-          if (disableKeyboardEvents || event.isDefaultPrevented()) {
-            event.preventGridDefault();
-          }
-        }}
-        renderers={{
-          renderRow,
-          renderCell: renderCellRoot,
-          noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
-        }}
-      />
-
-      {enablePagination && numRows > 0 && (
-        <div className={styles.paginationContainer}>
-          <Pagination
-            className="table-ng-pagination"
-            currentPage={page + 1}
-            numberOfPages={numPages}
-            showSmallVersion={smallPagination}
-            onNavigate={(toPage) => {
-              setPage(toPage - 1);
-            }}
-          />
-          {!smallPagination && (
-            <div className={styles.paginationSummary}>
-              <Trans i18nKey="grafana-ui.table.pagination-summary">
-                {{ itemsRangeStart }} - {{ displayedEnd }} of {{ numRows }} rows
-              </Trans>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tooltipState && (
-        <DataLinksActionsTooltip
-          links={tooltipState.links ?? []}
-          actions={tooltipState.actions}
-          coords={tooltipState.coords}
-          onTooltipClose={() => setTooltipState(undefined)}
-        />
-      )}
-
-      {inspectCell && (
-        <TableCellInspector
-          mode={inspectCell.mode ?? TableCellInspectorMode.text}
-          value={inspectCell.value}
-          onDismiss={() => setInspectCell(null)}
-        />
-      )}
-    </>
+    <TableDataGrid
+      role="treegrid"
+      gridRef={gridRef}
+      columns={structureRevColumns}
+      rows={paginatedRows}
+      noValue={noValue}
+      renderers={{ renderRow, renderCell: renderCellRoot }}
+      onColumnResize={resizeHandler}
+      onCellClick={onCellClick}
+      onCellKeyDown={({ column, row }, event) => {
+        if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
+          event.preventGridDefault();
+          gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 });
+          return;
+        }
+        if (disableKeyboardEvents || event.isDefaultPrevented()) {
+          event.preventGridDefault();
+        }
+      }}
+      sortColumns={sortColumns}
+      setSortColumns={setSortColumns}
+      onSortByChange={onSortByChange}
+      rowHeight={rowHeight}
+      enableVirtualization={enableVirtualization}
+      hasFooter={hasFooter}
+      footerHeight={footerHeight}
+      noHeader={!!noHeader}
+      headerHeight={headerHeight}
+      transparent={transparent}
+      initialRowIndex={initialRowIndex}
+      sortedRows={sortedRows}
+      enablePagination={enablePagination}
+      numRows={numRows}
+      page={page}
+      setPage={setPage}
+      numPages={numPages}
+      pageRangeStart={pageRangeStart}
+      pageRangeEnd={pageRangeEnd}
+      smallPagination={smallPagination}
+      tooltipState={tooltipState}
+      onTooltipClose={() => setTooltipState(undefined)}
+      inspectCell={inspectCell}
+      onInspectCellDismiss={() => setInspectCell(null)}
+    />
   );
 }
