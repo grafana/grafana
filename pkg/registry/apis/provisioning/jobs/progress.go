@@ -133,6 +133,12 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 					r.failedUpdates = append(r.failedUpdates, result.PreviousPath())
 				}
 			}
+
+			// Folder creation failures may be surfaced as warnings.
+			var pathErr *resources.PathCreationError
+			if errors.As(result.Warning(), &pathErr) {
+				r.failedCreations = append(r.failedCreations, pathErr.Path)
+			}
 		}
 
 		if reason := result.WarningReason(); reason != "" {

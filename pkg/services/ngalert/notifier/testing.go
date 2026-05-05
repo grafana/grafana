@@ -645,6 +645,7 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		secretsService,
 		options.featureToggles,
 		nil,
+		false,
 		moaOpts...,
 	)
 	require.NoError(t, err)

@@ -1,10 +1,10 @@
-import { action } from '@storybook/addon-actions';
-import { type Meta, type StoryFn } from '@storybook/react';
+import type { Meta, StoryFn } from '@storybook/react';
 import { useEffect, useState } from 'react';
+import { action } from 'storybook/actions';
 
 import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
-import { type CodeMirrorCompletionSource, type CodeMirrorEditorLanguage } from './types';
+import type { CodeMirrorCompletionSource, CodeMirrorEditorLanguage } from './types';
 
 const languageOptions: CodeMirrorEditorLanguage[] = ['sql', 'json'];
 

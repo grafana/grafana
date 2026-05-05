@@ -251,7 +251,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			})
 		}
 		if current != cfg.Name {
-			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
+			return NewFolderManagedByOtherError(folder.ID, current)
 		}
 
 		meta, err := utils.MetaAccessor(obj)
@@ -282,6 +282,26 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 				return fmt.Errorf("unable to use provisioning identity %w", err)
 			}
 			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+				// A managed folder being moved into a path that exceeds the
+				// folder API's max depth is the same user-side problem as a
+				// fresh create: surface it as a typed warning so the sync is
+				// not retried in a loop.
+				if IsFolderDepthExceededAPIError(err) {
+					return NewFolderDepthExceededError(folder.Path, err)
+				}
+				// A managed folder ending up with a UID longer than 40 chars
+				// (typically via _folder.json metadata) cannot be repaired by
+				// a retry; surface it as a typed warning instead.
+				if IsFolderUIDTooLongAPIError(err) {
+					return NewFolderUIDTooLongError(folder.Path, folder.ID, err)
+				}
+				// Catch-all for any other folder-API validation 4xx
+				// (illegal-uid-chars, reserved-uid, etc.). The repository
+				// owner must fix the offending input; retrying produces
+				// the same rejection.
+				if IsFolderValidationAPIError(err) {
+					return NewFolderValidationError(folder.Path, err)
+				}
 				return fmt.Errorf("update folder: %w", err)
 			}
 		}
@@ -353,10 +373,36 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 				})
 			}
 			if current != cfg.Name {
-				return fmt.Errorf("target folder is managed by a different repository (%s)", current)
+				return NewFolderManagedByOtherError(folder.ID, current)
 			}
 
 			return nil
+		}
+
+		// The folder API enforces a global maximum folder depth that
+		// provisioning cannot influence. Repositories containing paths
+		// deeper than this limit will fail forever, so surface it as a
+		// typed warning instead of a retryable error and let the sync
+		// keep going for the rest of the tree.
+		if IsFolderDepthExceededAPIError(err) {
+			return NewFolderDepthExceededError(folder.Path, err)
+		}
+		// Same reasoning as depth above: a UID longer than the folder
+		// API's 40-character limit is a permanent rejection. Path-derived
+		// UIDs are always truncated to <=40 by appendHashSuffix, so this
+		// only fires for user-supplied UIDs (typically a _folder.json
+		// stable UID, but also any future caller-provided UID source).
+		// Surface it as a typed warning so the sync moves on.
+		if IsFolderUIDTooLongAPIError(err) {
+			return NewFolderUIDTooLongError(folder.Path, folder.ID, err)
+		}
+		// Catch-all for any other folder-API validation 4xx the more
+		// specific matchers above did not claim (illegal-uid-chars,
+		// reserved-uid, future folder validations). The repository owner
+		// must fix the offending input; retrying produces the same
+		// rejection.
+		if IsFolderValidationAPIError(err) {
+			return NewFolderValidationError(folder.Path, err)
 		}
 
 		return fmt.Errorf("failed to create folder: %w", err)

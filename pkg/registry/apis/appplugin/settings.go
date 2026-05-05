@@ -6,11 +6,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -34,6 +36,21 @@ func getLegacySecureValueName(pluginID string, key string) string {
 	h.Write([]byte("|"))
 	h.Write([]byte(key))
 	return legacyPluginSecureValueNamePrefix + hex.EncodeToString(h.Sum(nil))
+}
+
+func getLegacySettingsUID(orgID int64, pluginID string) types.UID {
+	h := sha256.New()
+	h.Write([]byte(strconv.FormatInt(orgID, 10)))
+	h.Write([]byte("|"))
+	h.Write([]byte(pluginID))
+	return types.UID("lps-uid-" + hex.EncodeToString(h.Sum(nil)))
+}
+
+func getLegacySettingsResourceVersion(ps *pluginsettings.DTO) string {
+	if ps == nil || ps.Updated.IsZero() {
+		return "0"
+	}
+	return strconv.FormatInt(ps.Updated.UnixMilli(), 10)
 }
 
 // toSecureJSONData translates InlineSecureValues from a write request into the
@@ -96,8 +113,10 @@ func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOpt
 
 	obj := &apppluginv0alpha1.Settings{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: nsInfo.Value,
+			Name:            name,
+			Namespace:       nsInfo.Value,
+			UID:             getLegacySettingsUID(nsInfo.OrgID, s.pluginID),
+			ResourceVersion: getLegacySettingsResourceVersion(nil),
 		},
 	}
 
@@ -109,6 +128,7 @@ func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOpt
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 	if err == nil {
+		obj.SetResourceVersion(getLegacySettingsResourceVersion(ps))
 		obj.Spec.Enabled = ps.Enabled
 		obj.Spec.Pinned = ps.Pinned
 		obj.Spec.JsonData = common.Unstructured{Object: ps.JSONData}

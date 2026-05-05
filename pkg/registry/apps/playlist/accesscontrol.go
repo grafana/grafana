@@ -10,7 +10,8 @@ const (
 	ActionPlaylistsWrite = "playlists:write"
 )
 
-func DeclareFixedRoles(service accesscontrol.Service) error {
+// FixedRoleRegistrations returns the playlist role registrations.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	playlistsReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "playlists:reader",
@@ -39,5 +40,9 @@ func DeclareFixedRoles(service accesscontrol.Service) error {
 		Grants: []string{string(org.RoleEditor), string(org.RoleAdmin)},
 	}
 
-	return service.DeclareFixedRoles(playlistsReaderRole, playlistsWriterRole)
+	return []accesscontrol.RoleRegistration{playlistsReaderRole, playlistsWriterRole}
+}
+
+func DeclareFixedRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }
