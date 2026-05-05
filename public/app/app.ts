@@ -42,8 +42,6 @@ import {
   setPanelScreenshotService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
-  setJourneyTracker,
-  setJourneyRegistry,
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
@@ -53,6 +51,8 @@ import {
   setDataSourcePluginImporter,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
+  setJourneyRegistry,
+  setJourneyTracker,
   setPanelDataErrorView,
   setPanelRenderer,
   setPluginPage,
