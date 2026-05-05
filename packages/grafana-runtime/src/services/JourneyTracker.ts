@@ -44,9 +44,20 @@ export interface JourneyOptions {
   attributes?: Record<string, string>;
   /** Auto-end the journey with outcome 'timeout' after this many ms. Default 5 min. */
   timeoutMs?: number;
-  /** @internal - set by registry, not by callers */
+}
+
+/**
+ * Extended options used by the registry when invoking the tracker. These fields
+ * are sourced from {@link JourneyMeta} and must not be set by feature code -
+ * splitting them off the public {@link JourneyOptions} ensures callers cannot
+ * silently bypass registry intent.
+ *
+ * @internal
+ */
+export interface JourneyStartOptions extends JourneyOptions {
+  /** If true (default), starting a same-type journey cancels the previous instance. */
   cancelOnRestart?: boolean;
-  /** @internal - set by registry from JourneyMeta.parents, not by callers */
+  /** Parent journey types from {@link JourneyMeta.parents}. */
   parents?: string[];
 }
 

@@ -41,14 +41,14 @@ import {
   setCorrelationsService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
-  setJourneyTracker,
-  setJourneyRegistry,
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
   initOpenFeature,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
+  setJourneyRegistry,
+  setJourneyTracker,
   setPanelDataErrorView,
   setPanelRenderer,
   setPluginPage,
