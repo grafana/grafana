@@ -228,7 +228,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-12,kubernetesAuthzRoleBindingsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-03-16,kubernetesAuthzRolesAndRoleBindingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-03-17,kubernetesAuthzDatasourceResourcePermissions,experimental,@grafana/identity-access-team,false,false,false
-2025-05-23,restoreDashboards,GA,@grafana/grafana-frontend-navigation,false,false,false
 2025-12-10,recentlyViewedDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-01-13,experimentRecentlyViewedDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-02-24,createdByMeSearchFilter,experimental,@grafana/grafana-frontend-navigation,false,false,true

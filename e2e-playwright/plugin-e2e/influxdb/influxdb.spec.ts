@@ -8,7 +8,7 @@ test(
   async ({ createDataSourceConfigPage, page }) => {
     await createDataSourceConfigPage({ type: 'influxdb' });
 
-    await expect(await page.getByText('Type: InfluxDB', { exact: true })).toBeVisible();
+    await expect(await page.getByText(/^Type\s*InfluxDB$/, { exact: true })).toBeVisible();
     await expect(await page.getByRole('heading', { name: 'HTTP', exact: true })).toBeVisible();
   }
 );

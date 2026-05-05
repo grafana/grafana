@@ -213,17 +213,17 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	// Teams-specific redirect: read team permissions from TeamBinding K8s API instead of
+	// Teams-specific redirect: read team permissions from Team.Spec.Members instead of
 	// the generic resource permissions API. Falls back to legacy on failure.
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if a.service.options.Resource == "teams" && a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsRedirect) {
-		teamPermissions, err := a.getTeamPermissionsFromTeamBindings(c, c.Namespace, resourceID)
+		teamPermissions, err := a.getTeamPermissionsFromMembers(c, c.Namespace, resourceID)
 		if err != nil {
 			span.RecordError(err)
 			if errors.Is(err, ErrRestConfigNotAvailable) {
-				a.logger.Debug("k8s API not available for team permissions via teambindings, falling back to legacy", "error", err, "resourceID", resourceID)
+				a.logger.Debug("k8s API not available for team permissions via team members, falling back to legacy", "error", err, "resourceID", resourceID)
 			} else {
-				a.logger.Warn("Failed to get team permissions from teambindings k8s API, falling back to legacy", "error", err, "resourceID", resourceID)
+				a.logger.Warn("Failed to get team permissions from team members k8s API, falling back to legacy", "error", err, "resourceID", resourceID)
 			}
 		} else {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "get", a.service.options.Resource, "success").Inc()
@@ -366,20 +366,20 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	// Teams-specific dual-write: write to TeamBinding K8s API, then always fall through
-	// to the legacy path so both systems stay in sync during migration.
+	// Teams-specific dual-write: write to Team.Spec.Members via the K8s API, then always
+	// fall through to the legacy path so both systems stay in sync during migration.
 	// On failure — including ErrRestConfigNotAvailable — the K8s error is logged but the
 	// legacy write still proceeds, matching the read path's fallback behavior and keeping
 	// the system available during transient K8s outages.
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if a.service.options.Resource == "teams" && a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsRedirect) {
-		err := a.setUserPermissionViaTeamBinding(c, c.Namespace, resourceID, userID, cmd.Permission)
+		err := a.setUserPermissionInTeamMembers(c, c.Namespace, resourceID, userID, cmd.Permission)
 		if err != nil {
 			span.RecordError(err)
 			if errors.Is(err, ErrRestConfigNotAvailable) {
-				a.logger.Debug("k8s API not available for team permissions via teambindings, continuing with legacy", "error", err, "resourceID", resourceID)
+				a.logger.Debug("k8s API not available for team permissions via team members, continuing with legacy", "error", err, "resourceID", resourceID)
 			} else {
-				a.logger.Warn("Failed to set user permission via teambinding k8s API, continuing with legacy", "error", err, "resourceID", resourceID)
+				a.logger.Warn("Failed to set user permission via team members k8s API, continuing with legacy", "error", err, "resourceID", resourceID)
 			}
 		} else {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
