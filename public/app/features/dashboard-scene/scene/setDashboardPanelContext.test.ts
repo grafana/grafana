@@ -1,4 +1,4 @@
-import { type AdHocVariableModel, EventBusSrv, type GroupByVariableModel, type VariableModel } from '@grafana/data';
+import { type AdHocVariableModel, EventBusSrv, type GroupByVariableModel, type Scope, type VariableModel } from '@grafana/data';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
@@ -141,6 +141,27 @@ describe('setDashboardPanelContext', () => {
         resetAnnotationServerForTests();
       }
     });
+
+    it('should include active scopes in k8s create request', async () => {
+      config.featureToggles.kubernetesAnnotations = true;
+      config.namespace = 'stack-1';
+      postFn.mockResolvedValue({});
+
+      const mockScope: Scope = { metadata: { name: 'scope-a' }, spec: { title: 'Scope A' } };
+      jest.spyOn(sceneGraph, 'getScopes').mockReturnValue([mockScope]);
+
+      try {
+        const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+        await context.onAnnotationCreate!({ from: 100, to: 200, description: 'with scope', tags: [] });
+
+        const [, body] = postFn.mock.calls[0];
+        expect(body.spec.scopes).toEqual(['scope-a']);
+      } finally {
+        jest.restoreAllMocks();
+        config.featureToggles.kubernetesAnnotations = false;
+        resetAnnotationServerForTests();
+      }
+    });
   });
 
   describe('onAnnotationUpdate', () => {
@@ -190,6 +211,33 @@ describe('setDashboardPanelContext', () => {
           expect.anything()
         );
       } finally {
+        config.featureToggles.kubernetesAnnotations = false;
+        resetAnnotationServerForTests();
+      }
+    });
+
+    it('should include active scopes in k8s update request', async () => {
+      config.featureToggles.kubernetesAnnotations = true;
+      config.namespace = 'stack-1';
+      getFn.mockResolvedValue({
+        apiVersion: 'annotation.grafana.app/v0alpha1',
+        kind: 'Annotation',
+        metadata: { name: 'event-id-123', resourceVersion: 'rv-2', creationTimestamp: '' },
+        spec: { text: 'old', time: 1 },
+      });
+      putFn.mockResolvedValue({});
+
+      const mockScope: Scope = { metadata: { name: 'scope-b' }, spec: { title: 'Scope B' } };
+      jest.spyOn(sceneGraph, 'getScopes').mockReturnValue([mockScope]);
+
+      try {
+        const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+        await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'scoped update', tags: [] });
+
+        const [, body] = putFn.mock.calls[0];
+        expect(body.spec.scopes).toEqual(['scope-b']);
+      } finally {
+        jest.restoreAllMocks();
         config.featureToggles.kubernetesAnnotations = false;
         resetAnnotationServerForTests();
       }

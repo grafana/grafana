@@ -23,5 +23,5 @@ export interface AnnotationTagItem {
 }
 
 export interface AnnotationTagList {
-  items: AnnotationTagItem[];
+  items?: AnnotationTagItem[];
 }

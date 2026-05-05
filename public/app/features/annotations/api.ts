@@ -48,13 +48,8 @@ class LegacyAnnotationServer implements AnnotationServer {
   }
 }
 
-/**
- * Hybrid server used when the `kubernetesAnnotations` feature toggle is enabled.
- *
- * Manual CRUD and tag autocomplete are routed to the new `annotation.grafana.app/v0alpha1`
- * k8s API. Reads (`query`, `forAlert`) are intentionally left on the legacy `/api/annotations`
- * endpoint until the custom `/search` route is wired up.
- */
+// When kubernetesAnnotations is enabled, CRUD/tags go to annotation.grafana.app.
+// query/forAlert stay on legacy until a /search sub-resource is available.
 class K8sAnnotationServer implements AnnotationServer {
   private legacy = new LegacyAnnotationServer();
 

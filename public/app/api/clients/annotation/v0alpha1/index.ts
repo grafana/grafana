@@ -85,11 +85,7 @@ export const annotationK8sClient = {
     return getResourceClient().create(buildCreatePayload(event, scopes));
   },
 
-  /**
-   * Fetches the existing annotation, merges the supplied event/scopes onto its spec,
-   * and PUTs the result back. Fetch-then-merge is required because k8s updates need the
-   * current `metadata.resourceVersion` for optimistic concurrency.
-   */
+  // Fetch-then-merge: k8s PUT requires the current resourceVersion for optimistic concurrency.
   async update(event: AnnotationEvent, scopes?: string[]): Promise<Annotation> {
     if (!event.id) {
       throw new Error('Annotation id (metadata.name) is required for update');
@@ -99,17 +95,11 @@ export const annotationK8sClient = {
     const existing = await client.get(event.id);
     const nextSpec = annotationEventToSpec(event, scopes);
 
+    // Explicit assignment ensures undefined fields (timeEnd, scopes) from nextSpec
+    // overwrite any existing values — `...nextSpec` alone wouldn't remove them.
     const merged: Annotation = {
       ...existing,
-      spec: {
-        ...existing.spec,
-        ...nextSpec,
-        // timeEnd should track the new event semantics: if it's no longer a region the
-        // mapper omits it from `nextSpec`, so we must clear it explicitly here.
-        timeEnd: nextSpec.timeEnd,
-        // Same for scopes: if the caller passes [] we drop them, otherwise carry through.
-        scopes: nextSpec.scopes,
-      },
+      spec: { ...existing.spec, ...nextSpec, timeEnd: nextSpec.timeEnd, scopes: nextSpec.scopes },
     };
 
     return client.update(merged);
