@@ -245,7 +245,7 @@ func NewAPIBuilder(
 		// Default cap for the files API. Callers (e.g. RegisterAPIService)
 		// may overwrite b.maxFileSize after construction; any non-positive
 		// value (<=0) disables the cap.
-		maxFileSize: 5 * 1024 * 1024,
+		maxFileSize: setting.ProvisioningMaxFileSizeDefault,
 	}
 
 	for _, builder := range extraBuilders {

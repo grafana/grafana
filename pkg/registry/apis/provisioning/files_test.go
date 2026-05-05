@@ -574,11 +574,15 @@ func TestHandleGetRawFile_MaxFileSize(t *testing.T) {
 			}, nil)
 
 			connector := &filesConnector{access: mockAccess, maxFileSize: tc.maxFileSize}
+			// handleRequest wraps readWriter with the size limiter at the
+			// connector boundary. Mirror that here so the unit test exercises
+			// the same enforcement point as production.
+			limited := connector.withSizeLimit(mockReadWriter)
 
 			_, err := connector.handleGetRawFile(
 				context.Background(),
 				resources.DualWriteOptions{Path: path},
-				mockReadWriter,
+				limited,
 				authorizer,
 			)
 

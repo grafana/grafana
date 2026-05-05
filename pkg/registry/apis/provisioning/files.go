@@ -47,18 +47,35 @@ func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clien
 	}
 }
 
-// checkReadSize rejects file payloads larger than the configured cap. Returns
-// nil when the cap is disabled (<=0) or info is nil.
-func (c *filesConnector) checkReadSize(info *repository.FileInfo) error {
-	if c.maxFileSize <= 0 || info == nil {
-		return nil
+// sizeLimitedReaderWriter wraps a repository.ReaderWriter and rejects reads
+// that exceed maxBytes. The check fires immediately after the underlying
+// repository returns the file bytes, so callers (including DualReadWriter
+// which parses the result) never see oversized payloads.
+type sizeLimitedReaderWriter struct {
+	repository.ReaderWriter
+	maxBytes int64
+}
+
+func (s *sizeLimitedReaderWriter) Read(ctx context.Context, path, ref string) (*repository.FileInfo, error) {
+	info, err := s.ReaderWriter.Read(ctx, path, ref)
+	if err != nil {
+		return info, err
 	}
-	if int64(len(info.Data)) > c.maxFileSize {
-		return apierrors.NewRequestEntityTooLargeError(
-			fmt.Sprintf("file %q is %d bytes; max allowed is %d bytes", info.Path, len(info.Data), c.maxFileSize),
+	if s.maxBytes > 0 && info != nil && int64(len(info.Data)) > s.maxBytes {
+		return nil, apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("file %q is %d bytes; max allowed is %d bytes", info.Path, len(info.Data), s.maxBytes),
 		)
 	}
-	return nil
+	return info, nil
+}
+
+// withSizeLimit returns rw wrapped so its Read method enforces the connector's
+// configured max file size. Returns rw unchanged when the cap is disabled.
+func (c *filesConnector) withSizeLimit(rw repository.ReaderWriter) repository.ReaderWriter {
+	if c.maxFileSize <= 0 {
+		return rw
+	}
+	return &sizeLimitedReaderWriter{ReaderWriter: rw, maxBytes: c.maxFileSize}
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -118,6 +135,10 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 		responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
 		return
 	}
+	// Enforce max_file_size right at the repo boundary so oversized payloads
+	// are rejected before parsing/DryRun runs in DualReadWriter.Read or before
+	// the bytes are streamed back from handleGetRawFile.
+	readWriter = c.withSizeLimit(readWriter)
 
 	dualReadWriter, authorizer, err := c.createDualReadWriter(ctx, repo, readWriter)
 	if err != nil {
@@ -277,9 +298,6 @@ func (c *filesConnector) handleGet(ctx context.Context, opts resources.DualWrite
 	if err != nil {
 		return nil, err
 	}
-	if err := c.checkReadSize(resource.Info); err != nil {
-		return nil, err
-	}
 	return resource.AsResourceWrapper(), nil
 }
 
@@ -300,9 +318,6 @@ func (c *filesConnector) handleGetRawFile(ctx context.Context, opts resources.Du
 			return nil, apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), opts.Path)
 		}
 		return nil, fmt.Errorf("read raw file: %w", err)
-	}
-	if err := c.checkReadSize(info); err != nil {
-		return nil, err
 	}
 
 	return &provisioning.ResourceWrapper{
