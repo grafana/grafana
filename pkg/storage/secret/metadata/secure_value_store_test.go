@@ -186,6 +186,51 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 		require.Equal(t, 1, len(values3))
 		require.Equal(t, sv.UID, values3[0].UID)
 	})
+
+	t.Run("lease duration is computed by taking number of gc attempts into account", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		// Create and delete a secure value (set to inactive)
+		sv, err := sut.CreateSv(t.Context())
+		require.NoError(t, err)
+		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
+		require.NoError(t, err)
+
+		sut.Clock.AdvanceBy(11 * time.Minute)
+
+		type pair struct {
+			dur                   time.Duration
+			expectedLeaseDuration int
+		}
+
+		for _, pair := range []pair{
+			{0 * time.Second, 300},
+			{301 * time.Second, 600},
+			{601 * time.Second, 1200},
+			{1201 * time.Second, 2400},
+		} {
+			// Advance time enough for existing leases to expire
+			sut.Clock.AdvanceBy(pair.dur)
+
+			// Acquire leases
+			values, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 10)
+			require.NoError(t, err)
+			require.Len(t, values, 1)
+
+			// Pretend something went wrong and increment attempt count
+			_, err = sut.SecureValueMetadataStorage.AddGCAttemptCount(t.Context(), []string{string(values[0].UID)})
+			require.NoError(t, err)
+
+			rows, err := sut.Database.QueryContext(t.Context(), "SELECT lease_duration FROM secret_secure_value WHERE guid = ?", values[0].UID)
+			require.NoError(t, err)
+			rows.Next()
+			var duration int
+			rows.Scan(&duration)
+			require.Equal(t, pair.expectedLeaseDuration, duration)
+		}
+	})
 }
 
 func TestPropertySecureValueMetadataStorage(t *testing.T) {

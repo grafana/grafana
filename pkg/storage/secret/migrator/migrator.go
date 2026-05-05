@@ -249,4 +249,9 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Type:    migrator.DB_Int,
 		Default: "0",
 	}))
+	mg.AddMigration("add lease_duration to secret_secure_value table", migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:    "lease_duration",
+		Type:    migrator.DB_Integer,
+		Default: "0",
+	}))
 }
