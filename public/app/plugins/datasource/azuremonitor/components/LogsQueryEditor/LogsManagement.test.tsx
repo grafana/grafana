@@ -138,4 +138,80 @@ describe('LogsQueryEditor.LogsManagement', () => {
       })
     );
   });
+
+  describe('with auxiliary logs enabled', () => {
+    it('should show "Basic & Aux" label when auxiliary logs is enabled', async () => {
+      const mockDatasource = createMockDatasource();
+      const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: undefined } });
+      const onChange = jest.fn();
+
+      render(
+        <LogsManagement
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+          setError={() => {}}
+          auxiliaryLogsEnabled={true}
+        />
+      );
+
+      expect(await screen.findByLabelText('Basic & Aux')).toBeInTheDocument();
+    });
+
+    it('should show auxiliary warning modal when Basic & Aux is clicked', async () => {
+      const mockDatasource = createMockDatasource();
+      const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: undefined } });
+      const onChange = jest.fn();
+
+      render(
+        <LogsManagement
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+          setError={() => {}}
+          auxiliaryLogsEnabled={true}
+        />
+      );
+
+      const logsManagementOption = await screen.findByLabelText('Basic & Aux');
+      await userEvent.click(logsManagementOption);
+
+      expect(await screen.findByText('Basic & Auxiliary Logs Queries')).toBeInTheDocument();
+      expect(await screen.findByText(/no response time SLAs/)).toBeInTheDocument();
+    });
+
+    it('should set basicLogsQuery to true when Basic & Aux is confirmed', async () => {
+      const mockDatasource = createMockDatasource();
+      const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: undefined } });
+      const onChange = jest.fn();
+
+      render(
+        <LogsManagement
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+          setError={() => {}}
+          auxiliaryLogsEnabled={true}
+        />
+      );
+
+      const logsManagementOption = await screen.findByLabelText('Basic & Aux');
+      await userEvent.click(logsManagementOption);
+      const acknowledgedAction = await screen.findByText('Confirm');
+      await userEvent.click(acknowledgedAction);
+
+      expect(onChange).toBeCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({
+            basicLogsQuery: true,
+            query: '',
+            dashboardTime: true,
+          }),
+        })
+      );
+    });
+  });
 });

@@ -7,19 +7,45 @@ import { type AzureQueryEditorFieldProps } from '../../types/types';
 
 import { setBasicLogsQuery, setDashboardTime, setKustoQuery } from './setQueryValue';
 
-export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEditorFieldProps) {
+interface LogsManagementProps extends AzureQueryEditorFieldProps {
+  auxiliaryLogsEnabled?: boolean;
+}
+
+export function LogsManagement({ query, onQueryChange: onChange, auxiliaryLogsEnabled }: LogsManagementProps) {
   const [basicLogsAckOpen, setBasicLogsAckOpen] = useState<boolean>(false);
+
+  const searchLogsLabel = auxiliaryLogsEnabled
+    ? t('components.logs-management.label-basic-and-aux', 'Basic & Aux')
+    : t('components.logs-management.label-basic', 'Basic');
+
+  const modalTitle = auxiliaryLogsEnabled
+    ? t('components.logs-management.title-basic-aux-logs-queries', 'Basic & Auxiliary Logs Queries')
+    : t('components.logs-management.title-basic-logs-queries', 'Basic Logs Queries');
+
+  const modalBody = auxiliaryLogsEnabled
+    ? t(
+        'components.logs-management.body-basic-aux-logs-queries',
+        'Are you sure you want to switch to Basic & Auxiliary Logs?'
+      )
+    : t('components.logs-management.body-basic-logs-queries', 'Are you sure you want to switch to Basic Logs?');
+
+  const modalDescription = auxiliaryLogsEnabled
+    ? t(
+        'components.logs-management.description-basic-aux-logs-queries',
+        'Basic & Auxiliary Logs queries incur cost based on the amount of data scanned. Auxiliary logs have no response time SLAs and should not be used for dashboards requiring real-time data or for alerting.'
+      )
+    : t(
+        'components.logs-management.description-basic-logs-queries',
+        'Basic Logs queries incur cost based on the amount of data scanned.'
+      );
 
   return (
     <>
       <ConfirmModal
         isOpen={basicLogsAckOpen}
-        title={t('components.logs-management.title-basic-logs-queries', 'Basic Logs Queries')}
-        body={t('components.logs-management.body-basic-logs-queries', 'Are you sure you want to switch to Basic Logs?')}
-        description={t(
-          'components.logs-management.description-basic-logs-queries',
-          'Basic Logs queries incur cost based on the amount of data scanned.'
-        )}
+        title={modalTitle}
+        body={modalBody}
+        description={modalDescription}
         confirmText={t('components.logs-management.confirmText-confirm', 'Confirm')}
         onConfirm={() => {
           setBasicLogsAckOpen(false);
@@ -36,15 +62,22 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
       />
       <InlineField
         label={t('components.logs-management.label-logs', 'Logs')}
-        tooltip={t(
-          'components.logs-management.tooltip-logs',
-          'Specifies whether to run a Basic or Analytics Logs query.'
-        )}
+        tooltip={
+          auxiliaryLogsEnabled
+            ? t(
+                'components.logs-management.tooltip-logs-aux',
+                'Specifies whether to run a Basic & Auxiliary or Analytics Logs query.'
+              )
+            : t(
+                'components.logs-management.tooltip-logs',
+                'Specifies whether to run a Basic or Analytics Logs query.'
+              )
+        }
       >
         <RadioButtonGroup
           options={[
             { label: 'Analytics', value: false },
-            { label: 'Basic', value: true },
+            { label: searchLogsLabel, value: true },
           ]}
           value={query.azureLogAnalytics?.basicLogsQuery ?? false}
           size={'md'}

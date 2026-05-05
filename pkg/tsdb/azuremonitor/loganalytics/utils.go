@@ -70,7 +70,7 @@ func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled
 	}
 
 	if !basicLogsEnabled {
-		return false, backend.DownstreamError(fmt.Errorf("basic Logs queries are disabled for this data source"))
+		return false, backend.DownstreamError(fmt.Errorf("basic and auxiliary Logs queries are disabled for this data source"))
 	}
 
 	return true, nil

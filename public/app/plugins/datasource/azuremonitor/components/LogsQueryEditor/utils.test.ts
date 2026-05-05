@@ -66,6 +66,21 @@ describe('LogsQueryEditor utils', () => {
     it('should return true if basic logs are enabled and selected single resource is an LA workspace variable', () => {
       expect(shouldShowBasicLogsToggle(['$ws'], true)).toBe(true);
     });
+
+    it('should return true when called with combined search logs enablement (auxiliary only)', () => {
+      // This tests the pattern used by LogsQueryEditor: searchLogsEnabled = basicLogsEnabled || auxiliaryLogsEnabled
+      const auxiliaryLogsEnabled = true;
+      const basicLogsEnabled = false;
+      const searchLogsEnabled = basicLogsEnabled || auxiliaryLogsEnabled;
+      expect(
+        shouldShowBasicLogsToggle(
+          [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          searchLogsEnabled
+        )
+      ).toBe(true);
+    });
   });
 
   describe('calculateTimeRange', () => {

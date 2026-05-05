@@ -74,6 +74,11 @@
       "label-authentication": "Authentication type",
       "title-authentication": "Authentication"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "Auxiliary Logs",
+      "description-auxiliary-logs": "Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for <2>Auxiliary Logs</2>. Auxiliary logs have no response time SLAs, are intended for ad-hoc queries and data exploration only, and should not be used for dashboards requiring real-time data or for alerting.",
+      "label-enable-auxiliary-logs": "Enable Auxiliary Logs"
+    },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Basic Logs",
       "description-basic-logs": "Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for <2>Basic Logs</2>.",
@@ -174,12 +179,18 @@
       "tooltip-limit": "Restrict the number of rows returned (default is 1000)."
     },
     "logs-management": {
+      "body-basic-aux-logs-queries": "Are you sure you want to switch to Basic & Auxiliary Logs?",
       "body-basic-logs-queries": "Are you sure you want to switch to Basic Logs?",
       "confirmText-confirm": "Confirm",
+      "description-basic-aux-logs-queries": "Basic & Auxiliary Logs queries incur cost based on the amount of data scanned. Auxiliary logs have no response time SLAs and should not be used for dashboards requiring real-time data or for alerting.",
       "description-basic-logs-queries": "Basic Logs queries incur cost based on the amount of data scanned.",
+      "label-basic": "Basic",
+      "label-basic-and-aux": "Basic & Aux",
       "label-logs": "Logs",
+      "title-basic-aux-logs-queries": "Basic & Auxiliary Logs Queries",
       "title-basic-logs-queries": "Basic Logs Queries",
-      "tooltip-logs": "Specifies whether to run a Basic or Analytics Logs query."
+      "tooltip-logs": "Specifies whether to run a Basic or Analytics Logs query.",
+      "tooltip-logs-aux": "Specifies whether to run a Basic & Auxiliary or Analytics Logs query."
     },
     "logs-query-builder": {
       "title-no-tables": "Resource loaded successfully but without any tables"

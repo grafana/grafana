@@ -462,7 +462,7 @@ describe('LogsQueryEditor', () => {
 
       expect(await screen.findByLabelText('la-workspace-1')).toBeDisabled();
       expect(
-        await screen.findByText('When using Basic Logs, you may only select one resource at a time.')
+        await screen.findByText('When using Basic & Auxiliary Logs, you may only select one resource at a time.')
       ).toBeInTheDocument();
     });
   });
@@ -499,7 +499,7 @@ describe('LogsQueryEditor', () => {
       await act(async () => {
         await waitFor(() =>
           expect(
-            screen.findByText(/This is a Basic Logs query and incurs cost per GiB scanned./)
+            screen.findByText(/This is a Basic\/Auxiliary Logs query and incurs cost per GiB scanned./)
           ).resolves.toBeInTheDocument()
         );
       });
