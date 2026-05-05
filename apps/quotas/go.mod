@@ -40,13 +40,14 @@ replace (
 	github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
+	github.com/grafana/grafana/pkg/util/sqlite => ../../pkg/util/sqlite
 
 	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
 )
 
 require (
 	github.com/grafana/grafana v6.1.6+incompatible
-	github.com/grafana/grafana-app-sdk v0.54.0
+	github.com/grafana/grafana-app-sdk v0.54.1
 	github.com/grafana/grafana-app-sdk/logging v0.54.0
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0
 	github.com/stretchr/testify v1.11.1
@@ -231,6 +232,7 @@ require (
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv v0.0.0 // indirect
+	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
 	github.com/grafana/sqlds/v5 v5.1.1 // indirect
