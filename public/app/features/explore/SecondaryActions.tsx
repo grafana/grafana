@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { useState } from 'react';
 
 import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { Components, selectors } from '@grafana/e2e-selectors';
@@ -12,6 +13,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueryType } from './QueryLibrary/types';
+import { RecentQueriesModal } from './RecentQueries/RecentQueriesModal';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
@@ -48,6 +50,7 @@ export function SecondaryActions({
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
   const recentQueriesUI = useBooleanFlagValue('queryHistoryRecentQueriesUI', false);
+  const [recentQueriesOpen, setRecentQueriesOpen] = useState(false);
   const canReadQueries = config.featureToggles.savedQueriesRBAC
     ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
     : contextSrv.isSignedIn;
@@ -90,6 +93,23 @@ export function SecondaryActions({
               )}
             </ToolbarButton>
           )}
+        </>
+      )}
+      {recentQueriesUI && !queryLibraryEnabled && (
+        <>
+          <ToolbarButton
+            variant="canvas"
+            aria-label={t('explore.secondary-actions.recent-queries-button-aria-label', 'Recent queries')}
+            onClick={() => setRecentQueriesOpen(true)}
+            icon="history"
+          >
+            <Trans i18nKey="explore.secondary-actions.recent-queries-button">Recent queries</Trans>
+          </ToolbarButton>
+          <RecentQueriesModal
+            isOpen={recentQueriesOpen}
+            onClose={() => setRecentQueriesOpen(false)}
+            onSelectQuery={onSelectQueryFromLibrary}
+          />
         </>
       )}
       {!recentQueriesUI && (

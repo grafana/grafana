@@ -9,6 +9,13 @@ import { QueriesDrawerContextProviderMock } from './QueriesDrawer/mocks';
 import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 import { SecondaryActions } from './SecondaryActions';
 
+const useBooleanFlagValueMock = jest.fn().mockReturnValue(false);
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (...args: Parameters<typeof useBooleanFlagValueMock>) => useBooleanFlagValueMock(...args),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
@@ -152,5 +159,38 @@ describe('SecondaryActions', () => {
     );
 
     expect(screen.queryByRole('button', { name: /Add from saved queries/i })).not.toBeInTheDocument();
+  });
+
+  it('should render Recent queries button when recentQueriesUI is enabled and queryLibrary is disabled', () => {
+    useBooleanFlagValueMock.mockReturnValue(true);
+
+    render(
+      <QueryLibraryContextProviderMock queryLibraryEnabled={false}>
+        <SecondaryActions
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
+
+    expect(screen.getByRole('button', { name: /Recent queries/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Query history/i })).not.toBeInTheDocument();
+  });
+
+  it('should not render Recent queries button when recentQueriesUI is enabled and queryLibrary is also enabled', () => {
+    useBooleanFlagValueMock.mockReturnValue(true);
+
+    render(
+      <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+        <SecondaryActions
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
+
+    expect(screen.queryByRole('button', { name: /Recent queries/i })).not.toBeInTheDocument();
   });
 });
