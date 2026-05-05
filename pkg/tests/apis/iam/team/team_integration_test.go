@@ -558,8 +558,9 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	// user's membership without shipping the entire member list and without
 	// the stale-snapshot full-replace hazard the PUT path has. This test
 	// covers the happy path (insert / hydrate / delete) and the idempotency
-	// contracts the synchronizer relies on (re-add → 409, re-remove → 200
-	// with removed=false).
+	// contracts the synchronizer relies on: addMember returns 201 on a
+	// fresh insert and 200 on a re-add, removeMember returns 200 whether
+	// or not the row existed.
 	t.Run("addMember/removeMember subresources are atomic and idempotent", func(t *testing.T) {
 		ctx := context.Background()
 		obj := newTeamWithMembers("team-members-subres-", []map[string]interface{}{})

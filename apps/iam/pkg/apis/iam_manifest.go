@@ -207,6 +207,8 @@ var appManifestData = app.ManifestData{
 																},
 																Required: []string{
 																	"name",
+																	"permission",
+																	"external",
 																},
 															}},
 													}},

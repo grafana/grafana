@@ -3,9 +3,9 @@
 package v0alpha1
 
 type CreateTeamMemberRequestBody struct {
-	Name       string  `json:"name"`
-	Permission *string `json:"permission,omitempty"`
-	External   *bool   `json:"external,omitempty"`
+	Name       string `json:"name"`
+	Permission string `json:"permission"`
+	External   bool   `json:"external"`
 }
 
 // NewCreateTeamMemberRequestBody creates a new CreateTeamMemberRequestBody object.

@@ -25,10 +25,10 @@ import (
 // goes through the same Get + Update path the apiserver uses for full
 // PUTs.
 //
-// Idempotency: removing a user that's already absent is a no-op success
-// (status reason "NotFound"), not an error. Cross-instance team-sync
-// relies on this so concurrent removeMember calls from peer instances
-// don't surface as 4xx that increment the failure counter.
+// Idempotency: removing a user that's already absent returns 200 OK,
+// not an error. Cross-instance team-sync relies on this so concurrent
+// removeMember calls from peer instances don't surface as 4xx that
+// increment the failure counter.
 type TeamRemoveMemberREST struct {
 	getter  rest.Getter
 	updater rest.Updater

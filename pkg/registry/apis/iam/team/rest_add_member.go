@@ -129,13 +129,13 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 			responder.Error(apierrors.NewBadRequest("body.name is required (user UID)"))
 			return
 		}
-		permStr := iamv0alpha1.TeamTeamPermission(deref(body.Permission, string(iamv0alpha1.TeamTeamPermissionMember)))
+		permStr := iamv0alpha1.TeamTeamPermission(body.Permission)
 		// Validate permission early so we don't waste a Get on a bad request.
 		if _, err := toLegacyPermission(permStr); err != nil {
 			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}
-		external := body.External != nil && *body.External
+		external := body.External
 		span.SetAttributes(attribute.String("user.name", body.Name))
 
 		// Subresource handlers receive a ctx without the namespace value
@@ -143,7 +143,11 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 		// dual-writer Get/Update can resolve the namespace.
 		nsCtx := common.WithSubresourceNamespace(ctx)
 
-		var alreadyMember bool
+		var (
+			alreadyMember     bool
+			resultingPerm     iamv0alpha1.TeamTeamPermission
+			resultingExternal bool
+		)
 		err := retry.RetryOnConflict(membersRetry, func() error {
 			obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
 			if err != nil {
@@ -154,18 +158,36 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 				return fmt.Errorf("team store returned unexpected type %T", obj)
 			}
 			alreadyMember = false
-			for _, m := range t.Spec.Members {
+			found := -1
+			for i, m := range t.Spec.Members {
 				if m.Kind == "User" && m.Name == body.Name {
 					alreadyMember = true
-					return nil
+					found = i
+					break
 				}
 			}
-			t.Spec.Members = append(t.Spec.Members, iamv0alpha1.TeamTeamMember{
-				Kind:       "User",
-				Name:       body.Name,
-				Permission: permStr,
-				External:   external,
-			})
+			if found >= 0 {
+				// Re-add updates Permission to whatever the caller sent
+				// but leaves External untouched: External tracks how the
+				// membership was created (IdP sync vs manual) and isn't
+				// a state /addmember should flip.
+				existing := t.Spec.Members[found]
+				resultingPerm = permStr
+				resultingExternal = existing.External
+				if existing.Permission == permStr {
+					return nil
+				}
+				t.Spec.Members[found].Permission = permStr
+			} else {
+				resultingPerm = permStr
+				resultingExternal = external
+				t.Spec.Members = append(t.Spec.Members, iamv0alpha1.TeamTeamMember{
+					Kind:       "User",
+					Name:       body.Name,
+					Permission: permStr,
+					External:   external,
+				})
+			}
 			_, _, updErr := s.updater.Update(nsCtx, name, rest.DefaultUpdatedObjectInfo(t),
 				nil, nil, false, &metav1.UpdateOptions{})
 			return updErr
@@ -175,7 +197,8 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 			return
 		}
 
-		// 201 Created on a fresh insert, 200 OK on an idempotent re-add.
+		// 201 Created on a fresh insert, 200 OK otherwise — covers both
+		// the idempotent re-add and an in-place permission update.
 		status := http.StatusCreated
 		if alreadyMember {
 			status = http.StatusOK
@@ -184,19 +207,11 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 			CreateTeamMemberBody: iamv0alpha1.CreateTeamMemberBody{
 				Team:       name,
 				User:       body.Name,
-				Permission: string(permStr),
-				External:   external,
+				Permission: string(resultingPerm),
+				External:   resultingExternal,
 			},
 		})
 	}), nil
-}
-
-// deref returns *p when non-nil, otherwise the supplied default.
-func deref[T any](p *T, def T) T {
-	if p == nil {
-		return def
-	}
-	return *p
 }
 
 // decodeJSONBody returns a 400 BadRequest on parse errors instead of a

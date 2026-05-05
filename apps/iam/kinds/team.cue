@@ -53,8 +53,8 @@ teamv0alpha1: teamKind & {
 				request: {
 					body: {
 						name: string
-						permission?: string
-						external?: bool
+						permission: string
+						external:   bool
 					}
 				}
 				response: {
