@@ -27,7 +27,6 @@ import {
 import { ManagerKind } from 'app/features/apiserver/types';
 
 import { CONFIGURE_GRAFANA_DOCS_URL, GETTING_STARTED_URL } from '../constants';
-import { useRepositoryList } from '../hooks/useRepositoryList';
 import gitSvg from '../img/git.svg';
 
 import { FoldersToMigrate } from './FoldersToMigrate';
@@ -586,10 +585,19 @@ function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   );
 }
 
-export function Migrate() {
+interface MigrateProps {
+  /**
+   * Connected repositories. Sourced from the parent HomePage (which already
+   * runs `useRepositoryList`); we don't refetch here to avoid a duplicate
+   * round-trip and the brief flash of "no repo connected" CTAs that came with
+   * the second query's first render.
+   */
+  repos: Repository[];
+}
+
+export function Migrate({ repos }: MigrateProps) {
   const { data, isLoading: isStatsLoading, isError: isStatsError, error } = useGetResourceStatsQuery();
-  const [repos] = useRepositoryList({ watch: false });
-  const repoList = repos ?? [];
+  const repoList = repos;
 
   const breakdowns = useMemo(() => computeBreakdowns(data), [data]);
   const totals = useMemo(() => aggregateTotals(breakdowns), [breakdowns]);
@@ -648,6 +656,27 @@ export function Migrate() {
       return next;
     });
   }, []);
+
+  // Effective total — folders count as one unit each; dashboards only count
+  // when they're not already covered by a selected folder. This is the same
+  // derivation FoldersToMigrate uses; lifted here so the Quick wins panel
+  // can decide between "Migrate top N" and "Migrate selected (n)" without
+  // having to know the folder coverage.
+  const totalSelected = useMemo(() => {
+    const covered = new Set<string>();
+    for (const folder of folders) {
+      if (selectedFolderUids.has(folder.uid)) {
+        folder.allDashboards.forEach((d) => covered.add(d.uid));
+      }
+    }
+    let independent = 0;
+    selectedDashboardUids.forEach((uid) => {
+      if (!covered.has(uid)) {
+        independent += 1;
+      }
+    });
+    return selectedFolderUids.size + independent;
+  }, [folders, selectedFolderUids, selectedDashboardUids]);
 
   if (isStatsLoading || isLeaderboardLoading) {
     return (
@@ -709,6 +738,7 @@ export function Migrate() {
             folders={folders}
             repos={repoList}
             selected={selectedFolderUids}
+            totalSelected={totalSelected}
             onToggle={toggleFolder}
             onSelectAll={selectAllFolders}
             onSelectTop={selectTopFolders}

@@ -24,7 +24,11 @@ const mockGetGrafanaSearcher = getGrafanaSearcher as jest.MockedFunction<typeof 
 interface FakeFolder {
   uid: string;
   name: string;
-  /** Full ancestor path; the immediate parent is the last segment. */
+  /**
+   * Immediate parent folder UID, or empty for root. Mirrors the unified
+   * searcher's `DashboardHit.folder`/`item.location` semantics — *not* a
+   * slash-separated ancestor path, just the immediate parent.
+   */
   location: string;
   managedBy?: string;
 }
@@ -33,6 +37,7 @@ interface FakeDashboard {
   uid: string;
   name: string;
   url?: string;
+  /** Immediate parent folder UID; same semantics as FakeFolder.location. */
   location: string;
   managedBy?: string;
 }
@@ -68,9 +73,11 @@ describe('useFolderLeaderboard', () => {
         { uid: 'parent', name: 'Parent', location: '' },
         { uid: 'child', name: 'Child', location: 'parent' },
       ],
+      // d2's `location` is just `child`, not `parent/child`. The hook walks
+      // the folder→parent map itself to find the full ancestor chain.
       dashboards: [
         { uid: 'd1', name: 'D1', url: '/d/d1', location: 'parent' },
-        { uid: 'd2', name: 'D2', url: '/d/d2', location: 'parent/child' },
+        { uid: 'd2', name: 'D2', url: '/d/d2', location: 'child' },
       ],
     });
 
@@ -159,6 +166,25 @@ describe('useFolderLeaderboard', () => {
       dashboards: [
         { uid: 'r1', name: 'r1', url: '/d/r1', location: '', managedBy: ManagerKind.Repo },
         { uid: 'r2', name: 'r2', url: '/d/r2', location: '' },
+      ],
+    });
+
+    const { result } = renderHook(() => useFolderLeaderboard());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const general = result.current.data.find((f) => f.uid === 'general');
+    expect(general?.managedBy).toBeUndefined();
+  });
+
+  it('leaves the General row unmanaged when root dashboards are managed by different tools', async () => {
+    // Mix of repo-managed + terraform-managed dashboards under the root: even
+    // though every dashboard has *some* manager, they don't agree on which
+    // one — the row stays unmanaged so the user can consolidate it.
+    mockSearcherWith({
+      folders: [],
+      dashboards: [
+        { uid: 'r1', name: 'r1', url: '/d/r1', location: '', managedBy: ManagerKind.Repo },
+        { uid: 'r2', name: 'r2', url: '/d/r2', location: '', managedBy: ManagerKind.Terraform },
       ],
     });
 

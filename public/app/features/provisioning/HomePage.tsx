@@ -94,7 +94,7 @@ export default function HomePage() {
       case 'getting-started':
         return <GettingStarted items={items ?? []} />;
       case 'migrate':
-        return <Migrate />;
+        return <Migrate repos={items ?? []} />;
       case 'repositories':
       default:
         return <RepositoryList items={items ?? []} />;

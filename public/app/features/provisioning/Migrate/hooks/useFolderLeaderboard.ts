@@ -62,6 +62,23 @@ interface PagedResult<T> {
   truncated: boolean;
 }
 
+/**
+ * The unified searcher exposes only the *immediate* parent folder UID in
+ * `item.location` (`DashboardHit.folder`), not the full ancestor chain.
+ * Treat it as that — the recursive ancestor walk happens in aggregate(),
+ * using the folder→parent map we build from the folder fetch.
+ */
+function readImmediateParent(location: unknown): string | undefined {
+  if (typeof location !== 'string') {
+    return undefined;
+  }
+  const trimmed = location.trim();
+  if (!trimmed || trimmed === GENERAL_FOLDER_UID) {
+    return undefined;
+  }
+  return trimmed;
+}
+
 async function fetchAllFolders(): Promise<
   PagedResult<{ uid: string; title: string; parentUid?: string; managedBy?: string }>
 > {
@@ -82,15 +99,10 @@ async function fetchAllFolders(): Promise<
     });
     const items: DashboardQueryResult[] = result.view.toArray();
     for (const item of items) {
-      // `item.location` is the full ancestor path; the immediate parent is the
-      // last segment, with the literal `general` UID stripped.
-      const path = typeof item.location === 'string' ? item.location : '';
-      const segments = path.split('/').filter((s) => s && s !== GENERAL_FOLDER_UID);
-      const parentUid = segments.length > 0 ? segments[segments.length - 1] : undefined;
       rows.push({
         uid: item.uid,
         title: item.name,
-        parentUid,
+        parentUid: readImmediateParent(item.location),
         managedBy: extractManagerKind(item.managedBy),
       });
     }
@@ -105,10 +117,10 @@ async function fetchAllFolders(): Promise<
 }
 
 async function fetchAllDashboards(): Promise<
-  PagedResult<{ uid: string; title: string; ancestors: string[]; managedBy?: string; url: string }>
+  PagedResult<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }>
 > {
   const searcher = getGrafanaSearcher();
-  const rows: Array<{ uid: string; title: string; ancestors: string[]; managedBy?: string; url: string }> = [];
+  const rows: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }> = [];
   let truncated = false;
   for (let page = 1; page <= MAX_PAGES; page++) {
     const result = await searcher.search({
@@ -121,16 +133,10 @@ async function fetchAllDashboards(): Promise<
     const items: DashboardQueryResult[] = result.view.toArray();
     for (const item of items) {
       const view = queryResultToViewItem(item, result.view);
-      // `item.location` is the full ancestor path, e.g. "rootUid/subUid". The
-      // searcher returns the literal `general` UID for dashboards that sit at
-      // the root, so we strip that out — the synthetic General row in
-      // aggregate() picks them up via an empty ancestor path.
-      const path = typeof item.location === 'string' ? item.location : '';
-      const ancestors = path.split('/').filter((segment) => segment && segment !== GENERAL_FOLDER_UID);
       rows.push({
         uid: view.uid,
         title: view.title,
-        ancestors,
+        parentUid: readImmediateParent(item.location),
         managedBy: view.managedBy,
         url: view.url ?? '',
       });
@@ -147,23 +153,39 @@ async function fetchAllDashboards(): Promise<
 
 function aggregate(
   folders: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>,
-  dashboards: Array<{ uid: string; title: string; ancestors: string[]; managedBy?: string; url: string }>
+  dashboards: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }>
 ): FolderRow[] {
   // Migration is recursive: picking a folder migrates that folder plus every
-  // descendant folder and dashboard. The dashboard count for a folder is the
-  // number of dashboards anywhere in its subtree, so we walk every dashboard's
-  // ancestor path and increment the counter for each ancestor.
-  //
-  // Dashboards that sit directly under the General root (empty ancestor path)
-  // are still migration targets — they roll up into a synthetic "General"
-  // row that picks them all up in one shot.
+  // descendant folder and dashboard. The unified searcher only reports a
+  // dashboard's *immediate* parent, so we have to walk the folder→parent map
+  // ourselves to count dashboards against every ancestor. Dashboards directly
+  // under the General root (no parent) roll up into a synthetic "General" row.
+  const folderParent = new Map<string, string | undefined>();
+  for (const folder of folders) {
+    folderParent.set(folder.uid, folder.parentUid);
+  }
+  // Walks from the immediate parent up to the root, returning [parent, …, root].
+  // Cycle-safe: stops if a UID is revisited (shouldn't happen in well-formed
+  // data, but the API can occasionally return broken payloads).
+  const ancestorsOf = (start: string | undefined): string[] => {
+    const chain: string[] = [];
+    const seen = new Set<string>();
+    let cursor = start;
+    while (cursor && !seen.has(cursor)) {
+      chain.push(cursor);
+      seen.add(cursor);
+      cursor = folderParent.get(cursor);
+    }
+    return chain;
+  };
+
   const dashboardCountByFolder = new Map<string, number>();
   const directDashboardsByFolder = new Map<string, FolderPeekDashboard[]>();
   const allDashboardsByFolder = new Map<string, FolderPeekDashboard[]>();
   const rootDirectDashboards: FolderPeekDashboard[] = [];
   let rootDashboardCount = 0;
-  let rootManagedCount = 0;
-  let rootSampleManager: string | undefined;
+  const rootManagerKinds = new Set<string>();
+  let rootHasUnmanaged = false;
 
   const pushTo = (map: Map<string, FolderPeekDashboard[]>, folderUid: string, dash: FolderPeekDashboard) => {
     const existing = map.get(folderUid);
@@ -176,20 +198,22 @@ function aggregate(
 
   for (const dash of dashboards) {
     const dashItem: FolderPeekDashboard = { uid: dash.uid, title: dash.title, url: dash.url };
-    if (dash.ancestors.length === 0) {
+    const ancestors = ancestorsOf(dash.parentUid);
+    if (ancestors.length === 0) {
       rootDashboardCount += 1;
       rootDirectDashboards.push(dashItem);
       if (dash.managedBy) {
-        rootManagedCount += 1;
-        rootSampleManager = rootSampleManager ?? dash.managedBy;
+        rootManagerKinds.add(dash.managedBy);
+      } else {
+        rootHasUnmanaged = true;
       }
       continue;
     }
-    for (const ancestorUid of dash.ancestors) {
+    for (const ancestorUid of ancestors) {
       dashboardCountByFolder.set(ancestorUid, (dashboardCountByFolder.get(ancestorUid) ?? 0) + 1);
       pushTo(allDashboardsByFolder, ancestorUid, dashItem);
     }
-    pushTo(directDashboardsByFolder, dash.ancestors[dash.ancestors.length - 1], dashItem);
+    pushTo(directDashboardsByFolder, ancestors[0], dashItem);
   }
 
   // Group folders by parent so each row knows its direct subfolders.
@@ -221,12 +245,15 @@ function aggregate(
 
   if (rootDashboardCount > 0 || (subfoldersByParent.get(GENERAL_FOLDER_UID)?.length ?? 0) > 0) {
     // The General "folder" doesn't have its own managedBy on the backend.
-    // Mirror the single-managed assumption from real folders: if every root
-    // dashboard reports the same manager, treat the General row as managed.
-    // Mixed states fall through to undefined so the row still appears as a
-    // migration target.
+    // Mirror the single-managed assumption from real folders: only treat the
+    // General row as managed when every root dashboard agrees on the *same*
+    // manager kind. A mix of repo-managed + terraform-managed dashboards, or
+    // any unmanaged dashboard, falls through to undefined so the row still
+    // appears as a migration target.
     const generalManagedBy =
-      rootDashboardCount > 0 && rootManagedCount === rootDashboardCount ? rootSampleManager : undefined;
+      !rootHasUnmanaged && rootDashboardCount > 0 && rootManagerKinds.size === 1
+        ? rootManagerKinds.values().next().value
+        : undefined;
     rows.push({
       uid: GENERAL_FOLDER_UID,
       title: t('provisioning.stats.general-folder-title', 'General (root dashboards)'),

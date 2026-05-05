@@ -10,8 +10,7 @@ import { extractErrorMessage } from 'app/api/utils';
 
 import { type BulkActionFormData } from '../components/BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../components/Shared/ResourceEditFormSharedFields';
-import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../components/defaults';
-import { generateTimestamp } from '../components/utils/timestamp';
+import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../components/defaults';
 import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 
 import { type FolderRow } from './hooks/useFolderLeaderboard';
@@ -93,7 +92,11 @@ export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDash
   const initialValues: BulkActionFormData = useMemo(
     () => ({
       comment: '',
-      ref: `migrate-to-gitops/${generateTimestamp()}`,
+      // When the default workflow is `branch`, seed the ref with a fresh
+      // branch name so the form looks ready to push a PR; when it's `write`
+      // the ref is unused at submit time, so mirror the configured default
+      // branch like the other provisioning forms do via getDefaultRef().
+      ref: getDefaultRef(repository, 'migrate-to-gitops/'),
       workflow: getDefaultWorkflow(repository),
     }),
     [repository]
@@ -141,7 +144,10 @@ export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDash
       }
       onClose();
     } catch (err) {
-      setError(extractErrorMessage(err, t('provisioning.stats.migrate-drawer-error', 'Failed to start migration job')));
+      const fallback = deleteOriginals
+        ? t('provisioning.stats.migrate-drawer-error-migrate', 'Failed to start migration job')
+        : t('provisioning.stats.migrate-drawer-error-push', 'Failed to start export job');
+      setError(extractErrorMessage(err, fallback));
     }
   };
 

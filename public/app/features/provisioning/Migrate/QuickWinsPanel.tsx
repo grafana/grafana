@@ -16,6 +16,13 @@ interface Props {
   folders: FolderRow[];
   repos: Repository[];
   selected: Set<string>;
+  /**
+   * Total number of selected items across the whole page (folders +
+   * independent dashboards). The panel uses this to decide between
+   * "Migrate top N" (pre-select the top cards) and "Migrate selected (n)"
+   * (respect what the user already picked anywhere on the page).
+   */
+  totalSelected: number;
   onToggle: (uid: string) => void;
   onSelectAll: () => void;
   onSelectTop: (uids: string[]) => void;
@@ -32,6 +39,7 @@ export function QuickWinsPanel({
   folders,
   repos,
   selected,
+  totalSelected,
   onToggle,
   onSelectAll,
   onSelectTop,
@@ -46,7 +54,6 @@ export function QuickWinsPanel({
   const eligibleFolders = useMemo(() => folders.filter((f) => !f.managedBy && f.dashboardCount > 0), [folders]);
   const topFolders = eligibleFolders.slice(0, TOP_N);
   const totalUnmanagedFolders = eligibleFolders.length;
-  const selectedInTop = useMemo(() => topFolders.filter((f) => selected.has(f.uid)).length, [topFolders, selected]);
 
   if (!hasRepo) {
     return (
@@ -78,16 +85,21 @@ export function QuickWinsPanel({
     return null;
   }
 
-  const ctaLabel =
-    selectedInTop > 0
-      ? t('provisioning.stats.quick-wins-cta-selected', 'Migrate selected ({{count}})', { count: selectedInTop })
-      : t('provisioning.stats.quick-wins-cta-default', 'Migrate top {{count}}', { count: topFolders.length });
+  // Three CTA states:
+  // 1. Nothing selected anywhere → "Migrate top N", and clicking pre-selects
+  //    the top folders so the drawer reflects what's about to migrate.
+  // 2. Selection lives only outside this panel (e.g. a folder ticked in the
+  //    main table) → "Migrate selected ({{total}})"; don't merge the top
+  //    folders in, just open the drawer with the user's existing picks.
+  // 3. At least one top card is ticked → "Migrate selected ({{total}})"
+  //    same as (2). The user's selection wins either way.
+  const isPreselectMode = totalSelected === 0;
+  const ctaLabel = isPreselectMode
+    ? t('provisioning.stats.quick-wins-cta-default', 'Migrate top {{count}}', { count: topFolders.length })
+    : t('provisioning.stats.quick-wins-cta-selected', 'Migrate selected ({{count}})', { count: totalSelected });
 
   const handleMigrateClick = () => {
-    // "Migrate top N" without anything ticked should still pre-select the
-    // top folders so the drawer shows what's about to migrate. With one or
-    // more cards already ticked, respect that selection and don't add to it.
-    if (selectedInTop === 0) {
+    if (isPreselectMode) {
       onSelectTop(topFolders.map((f) => f.uid));
     }
     onMigrateClick();

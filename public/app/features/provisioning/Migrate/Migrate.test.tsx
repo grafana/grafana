@@ -2,9 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
-
-import { useRepositoryList } from '../hooks/useRepositoryList';
+import { type Repository, useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { Migrate } from './Migrate';
 import { type FolderRow, useFolderLeaderboard } from './hooks/useFolderLeaderboard';
@@ -62,16 +60,16 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   })),
 }));
 
-jest.mock('../hooks/useRepositoryList', () => ({
-  useRepositoryList: jest.fn(() => [[], false]),
-}));
-
 jest.mock('./hooks/useFolderLeaderboard', () => ({
   useFolderLeaderboard: jest.fn(() => ({ data: [], isLoading: false, isError: false })),
 }));
 
+const REPO: Repository = {
+  metadata: { name: 'my-repo' },
+  spec: { type: 'github', sync: { target: 'folder' } },
+} as unknown as Repository;
+
 const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;
-const mockUseRepositoryList = useRepositoryList as jest.MockedFunction<typeof useRepositoryList>;
 const mockUseFolderLeaderboard = useFolderLeaderboard as jest.MockedFunction<typeof useFolderLeaderboard>;
 
 function mockQuery(value: Partial<ReturnType<typeof useGetResourceStatsQuery>>) {
@@ -100,39 +98,29 @@ function makeFolder(partial: Partial<FolderRow> & { uid: string; title: string }
 describe('Migrate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseRepositoryList.mockReturnValue([[], false]);
     mockUseFolderLeaderboard.mockReturnValue({ data: [], isLoading: false, isError: false, isTruncated: false });
   });
 
   it('renders a loading indicator while fetching stats', () => {
     mockQuery({ isLoading: true, isSuccess: false, status: 'pending' });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     expect(screen.getByText(/loading stats/i)).toBeInTheDocument();
   });
 
   it('renders an error alert on failure', () => {
     mockQuery({ isError: true, isSuccess: false, status: 'rejected', error: { status: 500 } });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     expect(screen.getByText(/failed to load provisioning stats/i)).toBeInTheDocument();
   });
 
   it('renders the empty state with the Migrate to GitOps header when there are no resources', () => {
     mockQuery({ data: { instance: [], unmanaged: [], managed: [] } });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     expect(screen.getByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
     expect(screen.getByText(/no provisioned resources yet/i)).toBeInTheDocument();
   });
 
   it('shows a Migrate selected bulk action at the bottom of Dashboards to migrate', async () => {
-    mockUseRepositoryList.mockReturnValue([
-      [
-        {
-          metadata: { name: 'my-repo' },
-          spec: { type: 'github', sync: { target: 'folder' } },
-        },
-      ] as ReturnType<typeof useRepositoryList>[0],
-      false,
-    ]);
     mockQuery({
       data: {
         instance: [
@@ -152,7 +140,7 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[REPO]} />);
     // Disabled before any selection. The footer button uses "Migrate selected (0)";
     // Quick wins uses "Migrate top 2" so the (0) match is unambiguous.
     const initial = screen.getByRole('button', { name: /migrate selected \(0\)/i });
@@ -185,7 +173,7 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     expect(screen.queryByRole('button', { name: /migrate selected/i })).not.toBeInTheDocument();
   });
 
@@ -197,12 +185,11 @@ describe('Migrate', () => {
         managed: [],
       },
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     expect(screen.getByText(/^experimental$/i)).toBeInTheDocument();
   });
 
   it('puts a primary Connect button in the next steps when no repository is connected', () => {
-    mockUseRepositoryList.mockReturnValue([[], false]);
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
@@ -210,7 +197,7 @@ describe('Migrate', () => {
         managed: [],
       },
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     const connectLink = screen.getByRole('link', { name: /^connect$/i });
     expect(connectLink).toHaveAttribute('href', '/admin/provisioning/getting-started');
   });
@@ -234,7 +221,7 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     // The gauge card uses an exact "Folders managed" label; the next-steps
     // panel also includes the phrase as part of a longer sentence, so we
     // accept multiple matches here.
@@ -266,7 +253,7 @@ describe('Migrate', () => {
       },
     });
 
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
 
     // "Dashboards" replaces the old "Total resources" label. It also appears
     // in the Folders managed gauge subtext, so accept multiple matches.
@@ -279,7 +266,6 @@ describe('Migrate', () => {
   });
 
   it('replaces Quick wins with a "Connect a repository" CTA when no repo is connected', () => {
-    mockUseRepositoryList.mockReturnValue([[], false]);
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 12 }],
@@ -293,21 +279,12 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     expect(screen.getByText(/connect your first repository/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /connect a repository/i })).toBeInTheDocument();
   });
 
   it('shows Quick wins folder cards when the leaderboard surfaces unmanaged folders', () => {
-    mockUseRepositoryList.mockReturnValue([
-      [
-        {
-          metadata: { name: 'my-repo' },
-          spec: { type: 'github', sync: { target: 'folder' } },
-        },
-      ] as ReturnType<typeof useRepositoryList>[0],
-      false,
-    ]);
     mockQuery({
       data: {
         instance: [
@@ -327,7 +304,7 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[REPO]} />);
     // "Quick wins" appears in the panel heading and is also referenced from
     // the Recommended next steps copy, so accept multiple matches.
     expect(screen.getAllByText(/quick wins/i).length).toBeGreaterThan(0);
@@ -356,7 +333,7 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     // The Quick wins heading uses Title Case; the next-steps copy mentions
     // "Quick wins" inside a longer sentence. Assert that the panel heading
     // (exact match) is gone — that's the signal that the panel is hidden.
@@ -380,7 +357,7 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     expect(screen.getByText(/dashboards to migrate/i)).toBeInTheDocument();
     // The row only carries the expand toggle, the checkbox, and the folder
     // metadata. No per-row Open or Migrate buttons.
@@ -406,7 +383,7 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     // Default sort is "Most dashboards" — Alpha (5) precedes Beta (2) in the
     // table even though the leaderboard returned them the other way around.
     const titles = screen.getAllByText(/^(Alpha|Beta)$/);
@@ -440,7 +417,7 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     await userEvent.click(screen.getByRole('button', { name: /^expand payments$/i }));
     expect(screen.getByText('Daily revenue')).toBeInTheDocument();
     expect(screen.getByText('Refund rate')).toBeInTheDocument();
@@ -478,7 +455,7 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     await userEvent.click(screen.getByRole('checkbox', { name: /select folder payments/i }));
     // The footer button counts the folder as one unit — the cascade into the
     // job's resource list is derived at submit time, not stored in the per-
@@ -493,15 +470,6 @@ describe('Migrate', () => {
   });
 
   it('opens the migrate drawer when the bulk action is clicked', async () => {
-    mockUseRepositoryList.mockReturnValue([
-      [
-        {
-          metadata: { name: 'my-repo' },
-          spec: { type: 'github', sync: { target: 'folder' } },
-        },
-      ] as ReturnType<typeof useRepositoryList>[0],
-      false,
-    ]);
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 3 }],
@@ -523,7 +491,7 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[REPO]} />);
     await userEvent.click(screen.getByRole('checkbox', { name: /select folder payments/i }));
     // Both Quick wins and the footer expose Migrate selected — clicking either
     // opens the drawer.
@@ -552,7 +520,7 @@ describe('Migrate', () => {
       isError: false,
       isTruncated: false,
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     // "Payments" appears in the Quick wins card and the table row.
     expect(screen.getAllByText('Payments').length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText('Already managed')).not.toBeInTheDocument();
@@ -568,7 +536,7 @@ describe('Migrate', () => {
         managed: [],
       },
     });
-    render(<Migrate />);
+    render(<Migrate repos={[]} />);
     expect(screen.getByText('Provisioning tools')).toBeInTheDocument();
     expect(screen.getAllByText(/^git sync$/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/^terraform$/i)).toBeInTheDocument();
