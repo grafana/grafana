@@ -754,7 +754,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.NoError(t, err, "Third repository with different branch and empty path should succeed")
 	})
 
-	t.Run("Git repository rejects exact duplicates but allows overlaps when sync is disabled", func(t *testing.T) {
+	t.Run("Git repository allows conflicting paths when sync is disabled", func(t *testing.T) {
 		baseURL := "https://github.com/grafana/test-repo-branch-sync-disabled"
 
 		firstRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
@@ -779,8 +779,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"WorkflowsJSON": `[]`,
 		})
 		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.Error(t, err, "Second repository with duplicate path should fail even when sync is disabled")
-		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
+		require.NoError(t, err, "Second repository with duplicate path should succeed when sync is disabled")
 
 		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
 			"Name":          "git-branch-disabled-3",

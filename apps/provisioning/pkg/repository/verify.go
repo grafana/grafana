@@ -70,9 +70,8 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// Duplicate repository locations are rejected once branch is configured.
-	// Parent folder conflict checks stay gated by sync.Enabled to support multi-step onboarding.
-	if cfg.Spec.Type.IsGit() && cfg.URL() != "" && (cfg.Spec.Sync.Enabled || cfg.Branch() != "") {
+	// When sync is enabled, repository locations must be unique by URL, branch, and normalized path.
+	if cfg.Spec.Type.IsGit() && cfg.Spec.Sync.Enabled {
 		for _, v := range all {
 			// skip itself
 			if cfg.Name == v.Name {
@@ -83,10 +82,6 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
 						cfg.Path(),
 						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
-				}
-
-				if !cfg.Spec.Sync.Enabled {
-					continue
 				}
 
 				if repositoryPathsOverlap(v.Path(), cfg.Path()) {

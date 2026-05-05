@@ -128,7 +128,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
-			name: "forbids duplicate git path when sync is disabled",
+			name: "allows duplicate git path when sync is disabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
@@ -154,8 +154,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr:         true,
-			wantErrContains: ErrRepositoryDuplicatePath.Error(),
+			wantErr:         false,
 			maxRepositories: 10,
 		},
 		{
@@ -188,12 +187,12 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
-			name: "forbids duplicate normalized path when sync is disabled",
+			name: "forbids duplicate normalized path when sync is enabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: false},
+					Sync: provisioning.SyncOptions{Enabled: true},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "https://github.com/org/repo",
 						Branch: "main",
@@ -248,7 +247,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
-			name: "forbids duplicate empty paths when sync is disabled",
+			name: "allows duplicate empty paths when sync is disabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
@@ -274,8 +273,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr:         true,
-			wantErrContains: ErrRepositoryDuplicatePath.Error(),
+			wantErr:         false,
 			maxRepositories: 10,
 		},
 		{
