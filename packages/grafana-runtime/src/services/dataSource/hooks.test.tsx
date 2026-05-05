@@ -71,7 +71,7 @@ describe('useInstanceSettings', () => {
 
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.data?.name).toBe('Alpha');
+    expect(result.current.settings?.name).toBe('Alpha');
     expect(result.current.error).toBeUndefined();
   });
 
@@ -80,10 +80,10 @@ describe('useInstanceSettings', () => {
       initialProps: { ref: 'uid-alpha' },
     });
 
-    await waitFor(() => expect(result.current.data?.name).toBe('Alpha'));
+    await waitFor(() => expect(result.current.settings?.name).toBe('Alpha'));
 
     rerender({ ref: 'uid-bravo' });
-    await waitFor(() => expect(result.current.data?.name).toBe('Bravo'));
+    await waitFor(() => expect(result.current.settings?.name).toBe('Bravo'));
   });
 });
 
@@ -117,7 +117,7 @@ describe('useDataSourcePlugin', () => {
     const { result } = renderHook(() => useDataSourcePlugin('uid-alpha'));
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.data).toBeTruthy();
+    expect(result.current.dataSource).toBeTruthy();
     expect(result.current.error).toBeUndefined();
   });
 
