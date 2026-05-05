@@ -7,7 +7,7 @@ import {
   type ScopedVars,
   type TimeRange,
 } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourcePlugin } from '@grafana/runtime';
 
 import { type AwsUrl, encodeUrl } from '../aws_url';
 import { type CloudWatchLogsQuery } from '../dataquery.gen';
@@ -65,7 +65,7 @@ export async function addDataLinksToLogsResponse(
 async function createInternalXrayLink(datasourceUid: string, region: string): Promise<DataLink | undefined> {
   let ds;
   try {
-    ds = await getDataSourceSrv().get(datasourceUid);
+    ds = await getDataSourcePlugin(datasourceUid);
   } catch (e) {
     console.error('Could not load linked xray data source, it was probably deleted after it was linked', e);
     return undefined;

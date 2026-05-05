@@ -13,7 +13,7 @@ import {
   type GrafanaTheme2,
 } from '@grafana/data';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { getAppEvents, usePluginInteractionReporter, getDataSourceSrv, config } from '@grafana/runtime';
+import { getAppEvents, usePluginInteractionReporter, useDataSourcePlugin, config } from '@grafana/runtime';
 import { Alert, Input, type FieldProps, Field, Divider, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
@@ -205,21 +205,8 @@ export const ConfigEditor = (props: Props) => {
 };
 
 function useDatasource(props: Props) {
-  const [datasource, setDatasource] = useState<CloudWatchDatasource>();
-
-  useEffect(() => {
-    if (props.options.version) {
-      getDataSourceSrv()
-        .get(props.options.name)
-        .then((datasource) => {
-          if (datasource instanceof CloudWatchDatasource) {
-            setDatasource(datasource);
-          }
-        });
-    }
-  }, [props.options.version, props.options.name]);
-
-  return datasource;
+  const { dataSource } = useDataSourcePlugin(props.options.name);
+  return dataSource instanceof CloudWatchDatasource ? dataSource : undefined;
 }
 
 function useTimoutValidation(value: string | undefined) {
