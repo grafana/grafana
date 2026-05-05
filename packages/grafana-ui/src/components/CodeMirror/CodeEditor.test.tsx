@@ -156,7 +156,7 @@ describe('CodeMirror CodeEditor', () => {
       },
     } as unknown as CodeMirrorEditorView;
 
-    expect(spaceBinding?.run(view)).toBe(true);
+    expect(spaceBinding?.run?.(view)).toBe(true);
     expect(replaceSelection).toHaveBeenCalledWith(' ');
     expect(dispatch).toHaveBeenCalledWith({ changes: { from: 6, insert: ' ' } });
     expect(startCompletionMock).toHaveBeenCalledWith(view);
