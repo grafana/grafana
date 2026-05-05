@@ -34,6 +34,7 @@ func RunLeaseTest(t *testing.T, newKV NewKVFunc) {
 	t.Run("concurrency", func(t *testing.T) { runLeaseConcurrency(t, store) })
 	t.Run("expiration", func(t *testing.T) { runLeaseExpiration(t, store) })
 	t.Run("release semantics", func(t *testing.T) { runLeaseReleaseSemantics(t, store) })
+	t.Run("extend", func(t *testing.T) { runLeaseExtend(t, store) })
 	t.Run("notifying loss", func(t *testing.T) { runLeaseLoss(t, store) })
 	t.Run("kv errors", func(t *testing.T) { runLeaseKVErrors(t, &leaseFailingKV{KV: store}) })
 	t.Run("property-based testing", func(t *testing.T) { runLeasePBT(t, store) })
@@ -276,6 +277,92 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 
 		err = m.Release(ctx, l)
 		require.ErrorIs(t, err, lease.ErrLeaseLost)
+	})
+}
+
+func runLeaseExtend(t *testing.T, store kv.KV) {
+	const ttl = 50 * time.Millisecond
+	ctx := t.Context()
+
+	t.Run("extend success", func(t *testing.T) {
+		m := lease.NewManager(store, "holder-extend", lease.WithInternalMinTTL(ttl))
+
+		l, err := m.Acquire(ctx, "extend/success", lease.WithTTL(ttl))
+		require.NoError(t, err)
+
+		err = m.Extend(ctx, l, lease.WithTTL(ttl))
+		require.NoError(t, err)
+
+		require.NoError(t, m.Release(ctx, l))
+	})
+
+	t.Run("extend resets Lost timer", func(t *testing.T) {
+		m := lease.NewManager(store, "holder-extend-timer", lease.WithInternalMinTTL(ttl))
+
+		l, err := m.Acquire(ctx, "extend/timer", lease.WithTTL(ttl))
+		require.NoError(t, err)
+
+		// Wait most of the TTL, then extend.
+		time.Sleep(ttl * 3 / 4)
+		err = m.Extend(ctx, l, lease.WithTTL(ttl))
+		require.NoError(t, err)
+
+		// Wait the original TTL — should NOT have lost the lease because we extended.
+		time.Sleep(ttl * 3 / 4)
+		select {
+		case <-l.Lost():
+			t.Fatal("Lost() fired despite successful extend")
+		default:
+		}
+
+		// After the extended TTL elapses, Lost() should fire.
+		time.Sleep(ttl)
+		select {
+		case <-l.Lost():
+		case <-time.After(time.Second):
+			t.Fatal("Lost() did not fire after extended TTL elapsed")
+		}
+	})
+
+	t.Run("extend after expiry returns ErrLeaseLost", func(t *testing.T) {
+		m := lease.NewManager(store, "holder-extend-expired", lease.WithInternalMinTTL(ttl))
+
+		l, err := m.Acquire(ctx, "extend/expired", lease.WithTTL(ttl))
+		require.NoError(t, err)
+
+		time.Sleep(ttl + 50*time.Millisecond)
+
+		err = m.Extend(ctx, l, lease.WithTTL(ttl))
+		require.ErrorIs(t, err, lease.ErrLeaseLost)
+	})
+
+	t.Run("extend by wrong holder returns ErrLeaseLost", func(t *testing.T) {
+		a := lease.NewManager(store, "holder-extend-a", lease.WithInternalMinTTL(ttl))
+		b := lease.NewManager(store, "holder-extend-b", lease.WithInternalMinTTL(ttl))
+
+		l, err := a.Acquire(ctx, "extend/wrong-holder", lease.WithTTL(ttl))
+		require.NoError(t, err)
+
+		err = b.Extend(ctx, l, lease.WithTTL(ttl))
+		require.ErrorIs(t, err, lease.ErrLeaseLost)
+
+		require.NoError(t, a.Release(ctx, l))
+	})
+
+	t.Run("extend keeps lease held against other acquirers", func(t *testing.T) {
+		a := lease.NewManager(store, "holder-extend-keep-a", lease.WithInternalMinTTL(ttl))
+		b := lease.NewManager(store, "holder-extend-keep-b", lease.WithInternalMinTTL(ttl))
+
+		l, err := a.Acquire(ctx, "extend/keep-held", lease.WithTTL(ttl))
+		require.NoError(t, err)
+
+		err = a.Extend(ctx, l, lease.WithTTL(ttl))
+		require.NoError(t, err)
+
+		_, err = b.Acquire(ctx, "extend/keep-held", lease.WithTTL(ttl))
+		require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
+
+		require.NoError(t, a.Release(ctx, l))
 	})
 }
 

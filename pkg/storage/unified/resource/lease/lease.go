@@ -237,6 +237,41 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 	return nil
 }
 
+// Extend extends an active lease's TTL in-place. The lease must still be valid
+// and held by this manager's holder. Returns ErrLeaseLost if the lease has
+// expired, been released, or is held by a different holder.
+func (m *Manager) Extend(ctx context.Context, lease *Lease, opts ...AcquireOption) error {
+	cfg := acquireOptions{ttl: defaultTTL}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
+	if cfg.ttl < m.minTTL {
+		return fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, m.minTTL)
+	}
+
+	key := leaseKey(lease.name, lease.generation)
+	meta, err := m.read(ctx, key)
+	if err != nil {
+		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
+	}
+
+	if meta.Holder != m.holder || !meta.ValidAsOf(time.Now()) {
+		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+	}
+
+	now := time.Now()
+	expires := now.Add(cfg.ttl)
+	meta.Expires = expires.UnixNano()
+	if err := m.save(ctx, key, meta); err != nil {
+		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
+	}
+
+	lease.lostTimer.Stop()
+	lease.lostTimer = time.AfterFunc(time.Until(expires), lease.notifyLoss)
+	return nil
+}
+
 func (m *Manager) latest(ctx context.Context, name string) (string, int64, error) {
 	prefix := name + generationSeparator
 	opts := kv.ListOptions{
