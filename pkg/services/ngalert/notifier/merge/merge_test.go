@@ -204,7 +204,6 @@ func TestMerge(t *testing.T) {
 							Name: "grafana-default-email_mimir-12345",
 						},
 					})
-
 				}),
 				RenameResources: RenameResources{
 					Receivers: map[string]string{
