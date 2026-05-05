@@ -316,26 +316,32 @@ export function invalidateCachedPromise<T>(promise: PromiseFunction<T>, options?
  * Replaces the cached promise entry with an already-resolved value, so subsequent reads with the
  * same key return `updatedValue` without re-invoking the function.
  *
- * The key is derived from the promise function's name and body via {@link getCacheKeyFromPromise},
- * unless an explicit `cacheKey` is provided — in which case it takes precedence and `promise` is
- * only used for type inference.
- *
+ * The key is derived from the promise function's name and body via {@link getCacheKeyFromPromise}.
  * Adds the entry even when no prior value was cached for the key.
  *
  * @template T - The type of the resolved promise value
  * @param promise - The promise-returning function whose cache entry should be replaced. Inline
- *   arrow functions are anonymous and require an explicit `cacheKey` — or assign the arrow to a
- *   `const` first so name inference applies.
+ *   arrow functions are anonymous and will be rejected — use the `cacheKey` overload instead, or
+ *   assign the arrow to a `const` first so name inference applies.
  * @param updatedValue - The resolved value to cache. Subsequent cache reads with the same
  *   key will resolve to this value without re-invoking the function.
- * @param options - Optional options object
- * @param options.cacheKey - Optional explicit cache key. When provided, takes precedence over the key
- *   derived from `promise`.
- * @throws {Error} when neither a named function nor a `cacheKey` is supplied
+ * @throws {Error} when the function is anonymous
  */
-export function replaceCachedPromise<T>(promise: PromiseFunction<T>, updatedValue: T, options?: CacheKeyOptions): void {
-  const { cacheKey } = options ?? {};
-  const key = cacheKey ?? getCacheKeyFromPromise(promise);
+export function replaceCachedPromise<T>(promise: PromiseFunction<T>, updatedValue: T): void;
+/**
+ * Replaces the cached promise entry with an already-resolved value, so subsequent reads with the
+ * same key return `updatedValue` without re-invoking the function.
+ *
+ * Adds the entry even when no prior value was cached for the key.
+ *
+ * @param cacheKey - The explicit cache key for the entry to replace.
+ * @param updatedValue - The resolved value to cache. Subsequent cache reads with the same
+ *   key will resolve to this value without re-invoking the function.
+ * @throws {Error} when `cacheKey` is empty
+ */
+export function replaceCachedPromise(cacheKey: string, updatedValue: unknown): void;
+export function replaceCachedPromise(promiseOrKey: PromiseFunction<unknown> | string, updatedValue: unknown): void {
+  const key = typeof promiseOrKey === 'string' ? promiseOrKey : getCacheKeyFromPromise(promiseOrKey);
 
   if (!key) {
     throw new Error(`replaceCachedPromise function must be invoked with a named function or cacheKey`);

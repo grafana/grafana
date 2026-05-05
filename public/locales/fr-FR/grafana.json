@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "Le référentiel du dossier sélectionné est introuvable. Veuillez vérifier que le dossier est correctement provisionné.",
         "repository-not-found-title": "Référentiel introuvable"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Erreur lors du déplacement des ressources",
       "error-no-target-folder-path": "Le chemin du dossier cible est invalide ou vide ; veuillez sélectionner à nouveau.",
       "move-total": "Au total, cela affectera :",
@@ -7313,6 +7314,7 @@
       "terraform": "Géré par : Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Échec du déplacement du tableau de bord",
       "cancel-action": "Annuler",
       "current-file-not-found": "Le fichier du tableau de bord actuel est introuvable",
@@ -15453,7 +15455,6 @@
       "forwards-time-aria-label": "Avancer la plage de temps",
       "to": "à",
       "zoom-out-button": "Dézoomer la plage de temps",
-      "zoom-out-tooltip": "Zoom arrière sur la plage de temps <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Zoom arrière sur la plage de temps <br/> t -"
     },
     "time-range": {

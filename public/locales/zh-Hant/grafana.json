@@ -4300,6 +4300,7 @@
         "repository-not-found-message": "找不到所選資料夾的儲存庫。請確認資料夾已正確佈建。",
         "repository-not-found-title": "找不到儲存庫"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "移動資源時發生錯誤",
       "error-no-target-folder-path": "目標資料夾路徑無效或空白，請再選擇一次。",
       "move-total": "總體而言，這會影響：",
@@ -7272,6 +7273,7 @@
       "terraform": "管理者：Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "無法移動儀表板",
       "cancel-action": "取消",
       "current-file-not-found": "找不到目前的儀表板檔案",
@@ -15360,7 +15362,6 @@
       "forwards-time-aria-label": "將時間範圍向前移動",
       "to": "至",
       "zoom-out-button": "縮小時間範圍",
-      "zoom-out-tooltip": "時間範圍縮小 <br/> CTRL+Z",
       "zoom-out-tooltip-new": "時間範圍縮小 <br/> t -"
     },
     "time-range": {
