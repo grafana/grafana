@@ -35,10 +35,11 @@ interface Props {
   placeholder?: string;
   color?: string;
   maxFiles?: number;
+  id?: string;
 }
 
 export const ResourcePicker = (props: Props) => {
-  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color, maxFiles } = props;
+  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color, maxFiles, id } = props;
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -82,6 +83,7 @@ export const ResourcePicker = (props: Props) => {
     <InlineFieldRow>
       <InlineField label={null} grow>
         <Input
+          id={id}
           value={getDisplayName(src, name)}
           placeholder={placeholder}
           readOnly={true}
@@ -162,6 +164,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     verticalAlign: 'middle',
     display: 'inline-block',
     fill: 'currentColor',
-    width: '25px',
+    width: '20px',
   }),
 });

@@ -25,7 +25,7 @@ import (
 
 const (
 	UserResource      = "users"
-	UserResourceGroup = "iam.grafana.com"
+	UserResourceGroup = "iam.grafana.app"
 )
 
 var (

@@ -1,6 +1,19 @@
+import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import { type Observable } from 'rxjs';
 
+import { type ToMatchSnapshotRest } from './toMatchUPlotSnapshot';
+
 export const OBSERVABLE_TEST_TIMEOUT_IN_MS = 1000;
+
+export interface CustomSnapshotMatchers extends jest.ExpectExtendMap {
+  toMatchUPlotSnapshot(
+    received: CanvasRenderingContext2DEvent[],
+    uPlotCanvasEvents: CanvasRenderingContext2DEvent[],
+    size: { width: number; height: number },
+    snapshotHint?: string,
+    ...rest: ToMatchSnapshotRest
+  ): jest.CustomMatcherResult;
+}
 
 export interface ObservableMatchers<R, T = {}> extends jest.ExpectExtendMap {
   toEmitValues<T>(received: Observable<T>, expected: T[]): Promise<jest.CustomMatcherResult>;

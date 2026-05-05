@@ -5,11 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
@@ -19,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 var (
@@ -74,13 +76,42 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", model.FolderLabelKey, err))
 	}
 
+	var (
+		titleFilter  provisioning.ListRuleStringFilter
+		pausedFilter provisioning.ListRuleBoolFilter
+	)
+	if opts.FieldSelector != nil && !opts.FieldSelector.Empty() {
+		for _, r := range opts.FieldSelector.Requirements() {
+			isEq := r.Operator == selection.Equals || r.Operator == selection.DoubleEquals
+			switch r.Field {
+			case "spec.title":
+				if !isEq {
+					return nil, k8serrors.NewBadRequest("unsupported operator for spec.title (only = supported)")
+				}
+				titleFilter.Include = []string{r.Value}
+			case "spec.paused":
+				if !isEq {
+					return nil, k8serrors.NewBadRequest("unsupported operator for spec.paused (only = supported)")
+				}
+				v, err := strconv.ParseBool(r.Value)
+				if err != nil {
+					return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid value for spec.paused: %s", r.Value))
+				}
+				pausedFilter.Value = &v
+			default:
+				return nil, k8serrors.NewBadRequest(fmt.Sprintf("unknown field selector: %s", r.Field))
+			}
+		}
+	}
+
 	rules, provenanceMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:      ngmodels.RuleTypeFilterRecording,
 		Limit:         opts.Limit,
 		ContinueToken: opts.Continue,
 		GroupFilter:   groupFilter,
 		FolderFilter:  folderFilter,
-		// TODO: add field selectors for filtering
+		TitleFilter:   titleFilter,
+		PausedFilter:  pausedFilter,
 	})
 	if err != nil {
 		return nil, err

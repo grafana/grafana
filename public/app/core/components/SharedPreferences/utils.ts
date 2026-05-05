@@ -10,6 +10,7 @@ import { LOCALES } from 'app/core/internationalization/locales';
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
+  /** @deprecated No used in the new functional component */
   preferenceType: 'org' | 'team' | 'user';
   onConfirm?: () => Promise<boolean>;
 }
@@ -19,7 +20,7 @@ export type State = UserPreferencesDTO & {
   isSubmitting: boolean;
 };
 
-export type PrefsState = Omit<UpdatePrefsCmd, 'theme'> & { theme?: string };
+export type PrefsState = UserPreferencesDTO;
 
 export const toUpdatePrefsCmd = (state: PrefsState): UpdatePrefsCmd => ({
   ...state,

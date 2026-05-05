@@ -8,13 +8,18 @@ test.use({
 
 test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
   test('renders successfully', async ({ gotoDashboardPage, selectors }) => {
-    const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '31' }),
+    });
 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Value Options All')),
       'stat panel is rendered'
     ).toBeVisible();
 
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+    await expect(panelContent, 'panel has content').not.toBeEmpty();
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
     await expect(errorInfo, 'no errors in the panels').toBeHidden();
   });
@@ -69,6 +74,9 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
       queryParams: new URLSearchParams({ editPanel: '15' }),
     });
 
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+    await expect(panelContent, 'panel has content').not.toBeEmpty();
+
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).locator('.uplot'),
       'no sparkline chart when graphMode is none'
@@ -120,6 +128,9 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
       queryParams: new URLSearchParams({ editPanel: '6' }),
     });
 
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+    await expect(panelContent, 'panel has content').not.toBeEmpty();
+
     // panel 6 uses colorMode: background — threshold colors fill the cell backgrounds
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
     await expect(errorInfo, 'no errors with colorMode: background').toBeHidden();
@@ -130,6 +141,9 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '14' }),
     });
+
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+    await expect(panelContent, 'panel has content').not.toBeEmpty();
 
     // panel 14 uses colorMode: value — threshold colors applied to text only
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
@@ -146,24 +160,34 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
     await expect(page.getByTestId('icon-arrow-up'), 'upward arrow is shown for positive percent change').toBeVisible();
   });
 
-  test('percent change: zero shows no directional arrow', async ({ gotoDashboardPage, page }) => {
-    await gotoDashboardPage({
+  test('percent change: zero shows no directional arrow', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '32' }),
     });
 
     // panel 32: fixed CSV data 50 → 100 → 50 (0% net change) — shows "0%" text but no arrow
+    // wait for the percent-change widget to render before asserting arrow absence, otherwise
+    // toBeHidden() passes instantly on not-yet-attached icons (false positive).
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+    await expect(panelContent, 'percent change widget rendered').toContainText('0%');
+
     await expect(page.getByTestId('icon-arrow-up'), 'no upward arrow for zero percent change').toBeHidden();
     await expect(page.getByTestId('icon-arrow-down'), 'no downward arrow for zero percent change').toBeHidden();
   });
 
-  test('percent change: NaN is not displayed', async ({ gotoDashboardPage, page }) => {
-    await gotoDashboardPage({
+  test('percent change: NaN is not displayed', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '30' }),
     });
 
     // panel 30: fixed CSV data 0 → 0 (0/0 = NaN percent change) — percent change widget is hidden
+    // wait for the stat value to render before asserting arrow absence, otherwise toBeHidden()
+    // passes instantly on not-yet-attached icons (false positive).
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+    await expect(panelContent, 'stat value rendered').toContainText('0');
+
     await expect(page.getByTestId('icon-arrow-up'), 'no upward arrow for NaN percent change').toBeHidden();
     await expect(page.getByTestId('icon-arrow-down'), 'no downward arrow for NaN percent change').toBeHidden();
   });

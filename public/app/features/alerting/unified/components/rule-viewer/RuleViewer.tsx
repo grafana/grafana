@@ -38,6 +38,7 @@ import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
+import { useEnrichmentUrlParams } from '../../hooks/useEnrichmentUrlParams';
 import { useHasInhibitedInstances } from '../../hooks/useHasInhibitedInstances';
 import { useHasRulerV2 } from '../../hooks/useHasRuler';
 import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
@@ -69,6 +70,7 @@ import { ContactPointLink } from './ContactPointLink';
 import { Details } from './Details';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import { useAlertRule } from './RuleContext';
+import { ActiveTab } from './activeTab';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
@@ -76,16 +78,6 @@ import { Notifications } from './tabs/Notifications';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 import { RulePageEnrichmentSectionExtension } from './tabs/extensions/RuleViewerExtension';
-
-export enum ActiveTab {
-  Query = 'query',
-  Instances = 'instances',
-  History = 'history',
-  Notifications = 'notifications',
-  Routing = 'routing',
-  VersionHistory = 'version-history',
-  Enrichment = 'enrichment',
-}
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
@@ -452,6 +444,7 @@ function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
 
 function usePageNav(rule: CombinedRule) {
   const [activeTab, setActiveTab] = useActiveTab();
+  useEnrichmentUrlParams({ activeTab, setActiveTab });
 
   const { annotations, promRule, rulerRule } = rule;
 

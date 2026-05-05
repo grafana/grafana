@@ -520,7 +520,8 @@
       "action-buttons": {
         "edit-yaml": "Редактировать YAML",
         "save": "Сохранить"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "имя",
@@ -1300,7 +1301,8 @@
       "delete": {
         "button": {
           "label": "Удалить все правила"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Удалить",
       "delete-modal-delete-button": "Удалить",
@@ -1583,8 +1585,14 @@
         "update-error": "Не удалось обновить группу правил",
         "update-success": "Группа правил обновлена"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Выбранную группу нельзя редактировать",
       "group-not-editable-description": "Эта группа принадлежит к источнику данных, который не поддерживает редактирование.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Редактирование группы правил",
       "rule-group-error": "Ошибка при загрузке группы правил"
     },
@@ -3627,9 +3635,9 @@
         "declare-incident": "Сообщить об инциденте",
         "declare-incident-no-permission": "У вас нет разрешения на доступ к инциденту",
         "instance-details": "Сведения об экземпляре",
+        "section-silence": "",
         "silence-button": "Временное отключение",
-        "silence-no-permission": "У вас нет разрешения на создание временных отключений",
-        "silence-title-with-name": ""
+        "silence-no-permission": "У вас нет разрешения на создание временных отключений"
       },
       "labels-column-title": "Метки",
       "no-firing-or-pending-instances": "У вас нет экземпляров оповещений в состоянии отправки или ожидания для выбранного временного интервала.",
@@ -4358,6 +4366,7 @@
         "repository-not-found-message": "Репозиторий для выбранной папки не найден. Убедитесь, что правильно подготовили папку.",
         "repository-not-found-title": "Репозиторий не найден"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Ошибка при перемещении ресурсов",
       "error-no-target-folder-path": "Недопустимый или пустой путь к целевой папке. Повторите попытку.",
       "move-total": "Действие окажет влияние на следующие элементы:",
@@ -4551,6 +4560,8 @@
       "label": {
         "alphabetically-az": "В алфавитном порядке (прямом)",
         "alphabetically-za": "В алфавитном порядке (обратном)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Удалено (сначала новые)",
         "deleted-oldest": "Удалено (сначала старые)"
       }
@@ -6550,6 +6561,7 @@
     },
     "transformation-editor": {
       "input-data": "Ввод данных",
+      "loading": "",
       "output-data": "Данные вывода",
       "title-debug-transformation": "Отладка преобразования"
     },
@@ -7384,6 +7396,7 @@
       "terraform": "Управляется Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Не удалось переместить дашборд",
       "cancel-action": "Отмена",
       "current-file-not-found": "Текущий файл дашборда не найден",
@@ -8225,6 +8238,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Добавить в избранное",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Просмотреть данные",
       "open-in-explore": "Открыть в режиме Explore",
       "remove-favorite": "Удалить из избранного"
@@ -8361,6 +8380,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Поиск"
     },
     "resource-dimension-editor": {
@@ -10236,6 +10256,12 @@
     "cascader": {
       "clear-button": "Очистить выбор"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Значение RGBA"
     },
@@ -10581,6 +10607,7 @@
     "sidebar": {
       "close": "Закрыть",
       "dock": "Закрепить",
+      "go-back": "",
       "hide": "Скрыть",
       "show": "Показать",
       "undock": "Открепить"
@@ -11347,6 +11374,7 @@
       "label-numbers": "Номера",
       "label-signature": "Подпись"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Экспериментальная функция. Показывает компонент для управления отображаемыми полями из журналов.",
     "description-enable-infinite-scrolling": "Экспериментальная функция. Запросите больше результатов, прокрутив список журналов до конца.",
     "description-enable-logs-highlighting": "Используйте стандартную цветовую схему для выделения необходимых строк журнала.",
@@ -11650,6 +11678,7 @@
         "common-labels": "Общие метки:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Общие метки",
     "name-deduplication": "Дедупликация",
     "name-details-mode": "Сведения о журналах на панели",
@@ -12038,8 +12067,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Все",
-      "title-filtered": "Все (после фильтра)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Очистить всё"
@@ -13714,6 +13745,7 @@
       "contact-admin": "Чтобы преобразовать этот ресурс в локальный или удалить все ресурсы из отсутствующего репозитория, обратитесь к администратору Grafana.",
       "convert-to-local-button": "Преобразовать в локальные",
       "delete-button": "Удалить",
+      "go-to-dashboards": "",
       "job-error": "Ошибка при обработке потерянных ресурсов",
       "job-success": "Потерянные ресурсы обработаны",
       "job-warning": "Некоторые ресурсы были обработаны с предупреждениями. Просмотрите результаты.",
@@ -13976,7 +14008,8 @@
       "make-sure": "Создать токен с этими разрешениями"
     },
     "validation": {
-      "hidden-characters": "Это поле содержит скрытые символы, которые могли появиться при копировании и вставке. Повторно введите значение или удалите его и повторите попытку."
+      "hidden-characters": "Это поле содержит скрытые символы, которые могли появиться при копировании и вставке. Повторно введите значение или удалите его и повторите попытку.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Предупреждение",
     "watch-stream": {
@@ -14390,6 +14423,8 @@
       "alerts-loading": "Оповещения",
       "card-click": "Выбрать карту {{id}}",
       "data": "Данные",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Новый {{type}}",
       "queries-expressions": "Запросы и выражения",
       "toggle-size": "Переключить размер боковой панели",
@@ -14449,6 +14484,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Восстановить"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "В последнее время вы не удаляли ни одного дашборда.",
@@ -14615,6 +14654,10 @@
     },
     "results-table": {
       "datasource-header": "Источник данных",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 мин.",
       "deleted-remaining-header": "Оставшееся время",
       "location-header": "Расположение",
@@ -14971,6 +15014,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Главный дашборд",
       "home-dashboard-placeholder": "Дашборд по умолчанию",
@@ -15106,10 +15153,13 @@
       "title": "Оперативно создавайте дашборды с помощью рекомендаций и шаблонов"
     },
     "nav": {
+      "counter": "",
       "go-to": "Перейти к слайду {{number}}",
-      "next": "Далее",
-      "prev": "Назад"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Объяснить запрос",
@@ -15591,7 +15641,6 @@
       "forwards-time-aria-label": "Переместить временной диапазон вперед",
       "to": "на",
       "zoom-out-button": "Уменьшение масштаба временного диапазона",
-      "zoom-out-tooltip": "Уменьшение временного диапазона <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Уменьшение временного диапазона <br/> t -"
     },
     "time-range": {
@@ -16188,6 +16237,9 @@
         "grouping-to-matrix": "Группировка в матрицу"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Рассчитайте гистограмму по вводным данным."
@@ -16522,6 +16574,9 @@
       "label-time-field": "Поле времени",
       "tooltip-statistic-should-calculated-series": "Статистика, которая должна быть рассчитана для этого временного ряда.",
       "tooltip-time-field": "Поле времени, которое будет использоваться для временного ряда. Если оно не выбрано, будет использоваться первое найденное."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Имя первого поля",

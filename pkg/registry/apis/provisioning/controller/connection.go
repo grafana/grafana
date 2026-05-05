@@ -127,8 +127,9 @@ func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStar
 	defer logger.Info("Shutting down ConnectionController")
 
 	logger.Info("Starting workers", "count", workerCount)
-	for range workerCount {
-		go wait.UntilWithContext(ctx, cc.runWorker, time.Second)
+	for i := range workerCount {
+		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
+		go wait.UntilWithContext(workerCtx, cc.runWorker, time.Second)
 	}
 
 	logger.Info("Started workers")
