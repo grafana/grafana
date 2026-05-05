@@ -19,14 +19,16 @@ export function getPluginJson() {
 }
 
 export async function getEntries(): Promise<Record<string, string>> {
-  const pluginsJson = await glob(path.resolve(process.cwd(), '**/plugin.json'), {
+  // glob uses POSIX-style forward slashes, so normalize on Windows.
+  const cwdPosix = process.cwd().replace(/\\/g, '/');
+  const pluginsJson = await glob(`${cwdPosix}/**/plugin.json`, {
     ignore: ['**/dist/**'],
     absolute: true,
   });
 
   const plugins = await Promise.all(
     pluginsJson.map((pluginJson) => {
-      const folder = path.dirname(pluginJson);
+      const folder = path.dirname(pluginJson).replace(/\\/g, '/');
       return glob(`${folder}/module.{ts,tsx,js,jsx}`, { absolute: true });
     })
   );
