@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcekv "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"go.opentelemetry.io/otel"
@@ -56,8 +57,9 @@ func NewModule(opts Options,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
+	kvProvider *resourcekv.EventualKVProvider,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, storeProvider, reconcileCRDs)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, storeProvider, reconcileCRDs, kvProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -83,6 +85,7 @@ func newModuleServer(opts Options,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
+	kvProvider *resourcekv.EventualKVProvider,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -117,6 +120,7 @@ func newModuleServer(opts Options,
 		healthNotifier:   NewHealthNotifier(),
 		storeProvider:    storeProvider,
 		reconcileCRDs:    reconcileCRDs,
+		kvProvider:       kvProvider,
 	}
 
 	return s, nil
@@ -143,6 +147,7 @@ type ModuleServer struct {
 	searchClient     resourcepb.ResourceIndexClient
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
+	kvProvider       *resourcekv.EventualKVProvider
 	license          licensing.Licensing
 
 	pidFile     string
@@ -234,7 +239,7 @@ func (s *ModuleServer) Run() error {
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
 			disableStorageServices := !m.IsModuleEnabled(modules.StorageServer)
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, disableStorageServices)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, disableStorageServices, s.kvProvider)
 			if err != nil {
 				return nil, err
 			}

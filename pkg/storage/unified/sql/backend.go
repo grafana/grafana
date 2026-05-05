@@ -107,12 +107,13 @@ func NewStorageBackend(
 	reg prometheus.Registerer,
 	storageMetrics *resource.StorageMetrics,
 	disableStorageServices bool,
+	kvProvider *kv.EventualKVProvider,
 ) (resource.StorageBackend, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))
 	switch storageType {
 	case options.StorageTypeFile:
-		return NewFileBackend(cfg)
+		return NewFileBackend(cfg, kvProvider)
 	case options.StorageTypeUnifiedGrpc:
 		return nil, nil
 	default: // fall back to SQL backend
@@ -166,6 +167,10 @@ func NewStorageBackend(
 		return nil, fmt.Errorf("error creating sqlkv: %s", err)
 	}
 
+	if kvProvider != nil {
+		kvProvider.Set(sqlkv)
+	}
+
 	tenantDeleterCfg := resource.NewTenantDeleterConfig(cfg)
 	if tenantDeleterCfg != nil {
 		if gcomClient := newTenantDeleterGcomClient(cfg); gcomClient != nil {
@@ -214,7 +219,7 @@ func NewStorageBackend(
 	return resource.NewKVStorageBackend(kvBackendOpts)
 }
 
-func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
+func NewFileBackend(cfg *setting.Cfg, kvProvider *kv.EventualKVProvider) (resource.StorageBackend, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	dataPath := apiserverCfg.Key("storage_path").
 		MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
@@ -225,6 +230,9 @@ func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
 	}
 
 	kvStore := resource.NewBadgerKV(db)
+	if kvProvider != nil {
+		kvProvider.Set(kvStore)
+	}
 	return resource.NewKVStorageBackend(resource.KVBackendOptions{
 		KvStore:                 kvStore,
 		Log:                     log.New("storage-backend"),
