@@ -1,16 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useAsyncFn } from 'react-use';
 
-import {
-  type DataSourceApi,
-  type DataSourceInstanceSettings,
-  type DataSourceRef,
-  type ScopedVars,
-} from '@grafana/data';
+import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
 
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
-import { getInstanceSettings, getInstanceSettingsList } from './instanceSettings';
+import { findInstanceSettings, getInstanceSettings } from './instanceSettings';
 import { getDataSourcePlugin } from './plugin';
 
 /**
@@ -25,7 +20,7 @@ export interface UseInstanceSettingsResult {
 /**
  * @public
  */
-export interface UseInstanceSettingsListResult {
+export interface UseFindInstanceSettingsResult {
   isLoading: boolean;
   error?: Error;
   /** Flattened items across all pages fetched so far. */
@@ -50,32 +45,27 @@ export interface UseDataSourcePluginResult {
  *
  * @public
  */
-export function useInstanceSettings(
-  ref?: DataSourceRef | string | null,
-  scopedVars?: ScopedVars
-): UseInstanceSettingsResult {
-  // scopedVars is intentionally not a dep — callers typically pass an unstable
-  // reference and interpolation has already happened before the hook runs.
+export function useInstanceSettings(ref?: DataSourceRef | string | null): UseInstanceSettingsResult {
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getInstanceSettings(ref, scopedVars), [ref]);
+  const { loading, error, value } = useAsync(() => getInstanceSettings(ref), [ref]);
   return { isLoading: loading, error, data: value };
 }
 
 /**
- * React hook wrapping {@link getInstanceSettingsList}. Items are flattened
+ * React hook wrapping {@link findInstanceSettings}. Items are flattened
  * across pages; call `fetchMore` to load additional pages. Items reset when
  * `filters` changes (by reference — pass a stable object to avoid extra
  * fetches).
  *
  * @public
  */
-export function useInstanceSettingsList(filters?: GetDataSourceListFilters): UseInstanceSettingsListResult {
+export function useFindInstanceSettings(filters?: GetDataSourceListFilters): UseFindInstanceSettingsResult {
   const [items, setItems] = useState<DataSourceInstanceSettings[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
 
   const [fetchState, fetchPage] = useAsyncFn(
-    (nextCursor?: string) => getInstanceSettingsList({ filters, cursor: nextCursor }),
+    (nextCursor?: string) => findInstanceSettings({ filters, cursor: nextCursor }),
     [filters], // object equality — pass a stable ref to avoid extra fetches
     { loading: true }
   );
@@ -113,11 +103,8 @@ export function useInstanceSettingsList(filters?: GetDataSourceListFilters): Use
  *
  * @public
  */
-export function useDataSourcePlugin(
-  ref?: DataSourceRef | string | null,
-  scopedVars?: ScopedVars
-): UseDataSourcePluginResult {
+export function useDataSourcePlugin(ref?: DataSourceRef | string | null): UseDataSourcePluginResult {
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getDataSourcePlugin(ref, scopedVars), [ref]);
+  const { loading, error, value } = useAsync(() => getDataSourcePlugin(ref), [ref]);
   return { isLoading: loading, error, data: value };
 }

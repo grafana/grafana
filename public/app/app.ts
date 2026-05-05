@@ -46,7 +46,7 @@ import {
   getPanelPluginMetas,
   initDataSources,
   initOpenFeature,
-  setDataSourcePluginImporter,
+  setGetDataSourcePlugin,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
   setPanelDataErrorView,
@@ -105,8 +105,8 @@ import { usePluginComponents } from './features/plugins/extensions/usePluginComp
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
+import { getDataSourcePlugin } from './features/plugins/getDataSourcePlugin';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
-import { pluginImporter } from './features/plugins/importer/pluginImporter';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -255,10 +255,10 @@ export class GrafanaApp {
       document.addEventListener('click', interceptLinkClicks);
 
       // Init async data source services (populates cache from boot data so
-      // new `getInstanceSettings` / `useInstanceSettingsList` callers don't
+      // new `getInstanceSettings` / `findInstanceSettings` callers don't
       // need to wait on a network round trip).
       initDataSources(config.datasources, config.defaultDatasource);
-      setDataSourcePluginImporter(pluginImporter);
+      setGetDataSourcePlugin(getDataSourcePlugin);
 
       // Init DataSourceSrv (legacy sync API; retained for backwards compatibility)
       const dataSourceSrv = new DatasourceSrv();

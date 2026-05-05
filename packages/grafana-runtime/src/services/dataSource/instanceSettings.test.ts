@@ -1,13 +1,13 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
 
-import { invalidateCache } from '../../utils/getCachedPromise';
+import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import {
   _resetForTests,
+  findInstanceSettings,
   getInstanceSettings,
-  getInstanceSettingsList,
   init,
   reload,
   upsertRuntimeDataSource,
@@ -110,7 +110,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   _resetForTests();
-  invalidateCache();
+  invalidateCachedPromisesCache();
   backendGet.mockReset();
 });
 
@@ -160,10 +160,10 @@ describe('instanceSettings', () => {
     });
   });
 
-  describe('getInstanceSettingsList', () => {
+  describe('findInstanceSettings', () => {
     it('returns a paginated response shape', async () => {
       init(fixtures, 'Bravo');
-      const page = await getInstanceSettingsList();
+      const page = await findInstanceSettings();
       expect(page.hasMore).toBe(false);
       expect(page.nextCursor).toBeUndefined();
       expect(Array.isArray(page.items)).toBe(true);
@@ -171,7 +171,7 @@ describe('instanceSettings', () => {
 
     it('filters out built-in grafana / mixed / dashboard by default', async () => {
       init(fixtures, 'Bravo');
-      const page = await getInstanceSettingsList();
+      const page = await findInstanceSettings();
       const names = page.items.map((x) => x.name);
       expect(names).not.toContain('-- Mixed --');
       expect(names).not.toContain('-- Dashboard --');
@@ -181,13 +181,13 @@ describe('instanceSettings', () => {
 
     it('honours the `mixed` filter', async () => {
       init(fixtures, 'Bravo');
-      const page = await getInstanceSettingsList({ filters: { mixed: true } });
+      const page = await findInstanceSettings({ filters: { mixed: true } });
       expect(page.items.some((x) => x.name === '-- Mixed --')).toBe(true);
     });
 
     it('honours the `tracing` filter and excludes metrics-only sources', async () => {
       init(fixtures, 'Bravo');
-      const page = await getInstanceSettingsList({ filters: { tracing: true } });
+      const page = await findInstanceSettings({ filters: { tracing: true } });
       const names = page.items.map((x) => x.name);
       expect(names).toEqual(['Charlie']);
     });

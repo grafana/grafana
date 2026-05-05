@@ -1,56 +1,24 @@
-import {
-  DataSourceApi,
-  type DataSourceJsonData,
-  type DataSourcePlugin,
-  type DataSourcePluginMeta,
-  type DataSourceRef,
-  type ScopedVars,
-} from '@grafana/data';
-import { type DataQuery } from '@grafana/schema';
+import { type DataSourceApi, type DataSourceRef, type ScopedVars } from '@grafana/data';
 
-import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
-import { getInstanceSettings, upsertRuntimeDataSource } from './instanceSettings';
+import { upsertRuntimeDataSource } from './instanceSettings';
 
-type GenericDataSourcePlugin = DataSourcePlugin<
-  DataSourceApi<DataQuery, DataSourceJsonData>,
-  DataQuery,
-  DataSourceJsonData
->;
+type GetDataSourcePluginFn = (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) => Promise<DataSourceApi>;
 
-/**
- * Plugin importer injected from application code. The runtime package cannot
- * depend on `public/app/features/plugins/importer`, so the concrete importer
- * is registered at boot via {@link setDataSourcePluginImporter}.
- *
- * @internal
- */
-export interface DataSourcePluginImporter {
-  importDataSource(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin>;
-}
-
-let pluginImporter: DataSourcePluginImporter | undefined;
-const instances: Record<string, DataSourceApi> = {};
+let getDataSourcePluginFn: GetDataSourcePluginFn | undefined;
 const runtimeByUid: Record<string, DataSourceApi> = {};
 
 /**
- * Register the plugin importer implementation. Called once from application
- * boot so the runtime package can lazy-load data source plugins.
+ * Register the implementation of {@link getDataSourcePlugin}. Called once
+ * from application boot. The runtime package cannot depend on
+ * `public/app/features/plugins`, so the concrete implementation is injected
+ * here at startup.
  *
  * @internal
  */
-export function setDataSourcePluginImporter(importer: DataSourcePluginImporter): void {
-  pluginImporter = importer;
-}
-
-function requireImporter(): DataSourcePluginImporter {
-  if (!pluginImporter) {
-    throw new Error(
-      'DataSourcePluginImporter has not been set. Call setDataSourcePluginImporter during application boot.'
-    );
-  }
-  return pluginImporter;
+export function setGetDataSourcePlugin(fn: GetDataSourcePluginFn): void {
+  getDataSourcePluginFn = fn;
 }
 
 /**
@@ -64,56 +32,29 @@ export async function getDataSourcePlugin(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
-  const settings = await getInstanceSettings(ref, scopedVars);
-  if (!settings) {
-    throw new Error(`Datasource ${describeRef(ref)} was not found`);
+  if (!getDataSourcePluginFn) {
+    throw new Error(
+      'getDataSourcePlugin has not been initialized. Call setGetDataSourcePlugin during application boot.'
+    );
   }
+  return getDataSourcePluginFn(ref, scopedVars);
+}
 
-  const cached = instances[settings.uid];
-  if (cached) {
-    return cached;
-  }
-
-  const runtime = runtimeByUid[settings.uid];
-  if (runtime) {
-    instances[settings.uid] = runtime;
-    return runtime;
-  }
-
-  const dsPlugin = await requireImporter().importDataSource(settings.meta);
-
-  // Another caller may have populated the cache while we were awaiting.
-  if (instances[settings.uid]) {
-    return instances[settings.uid];
-  }
-
-  const instance = new dsPlugin.DataSourceClass(settings);
-  instance.components = dsPlugin.components;
-
-  if (!instance.userStorage) {
-    // DataSourceApi does not instantiate userStorage; DataSourceWithBackend does.
-    instance.userStorage = new UserStorage(settings.type);
-  }
-
-  // Legacy plugins that don't extend DataSourceApi need manual patching.
-  if (!(instance instanceof DataSourceApi)) {
-    const anyInstance: { [key: string]: unknown } = instance;
-    anyInstance.name = settings.name;
-    anyInstance.id = settings.id;
-    anyInstance.type = settings.type;
-    anyInstance.meta = settings.meta;
-    anyInstance.uid = settings.uid;
-    anyInstance.getRef = DataSourceApi.prototype.getRef;
-  }
-
-  instances[settings.uid] = instance;
-  return instance;
+/**
+ * Look up a runtime data source plugin instance by uid. Called by the core
+ * implementation of {@link getDataSourcePlugin} before attempting a full
+ * plugin load.
+ *
+ * @internal
+ */
+export function getRuntimeDataSourcePlugin(uid: string): DataSourceApi | undefined {
+  return runtimeByUid[uid];
 }
 
 /**
  * Register a runtime data source. Writes to both the instance-settings cache
- * and the plugin-instance cache so the data source is available to
- * {@link getInstanceSettings}, {@link getInstanceSettingsList} and
+ * and the runtime-instance map so the data source is available to
+ * {@link getInstanceSettings}, {@link findInstanceSettings} and
  * {@link getDataSourcePlugin}.
  *
  * @public
@@ -121,23 +62,12 @@ export async function getDataSourcePlugin(
 export function registerRuntimeDataSource(entry: RuntimeDataSourceRegistration): void {
   const { dataSource } = entry;
 
-  if (runtimeByUid[dataSource.uid] || instances[dataSource.uid]) {
+  if (runtimeByUid[dataSource.uid]) {
     throw new Error(`A runtime data source with uid ${dataSource.uid} has already been registered`);
   }
 
   upsertRuntimeDataSource(dataSource.instanceSettings);
   runtimeByUid[dataSource.uid] = dataSource;
-  instances[dataSource.uid] = dataSource;
-}
-
-function describeRef(ref: DataSourceRef | string | null | undefined): string {
-  if (ref == null) {
-    return 'default';
-  }
-  if (typeof ref === 'string') {
-    return ref;
-  }
-  return ref.uid ?? ref.type ?? 'unknown';
 }
 
 /**
@@ -146,10 +76,7 @@ function describeRef(ref: DataSourceRef | string | null | undefined): string {
  * @internal
  */
 export function _resetForTests(): void {
-  pluginImporter = undefined;
-  for (const key of Object.keys(instances)) {
-    delete instances[key];
-  }
+  getDataSourcePluginFn = undefined;
   for (const key of Object.keys(runtimeByUid)) {
     delete runtimeByUid[key];
   }
