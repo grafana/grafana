@@ -724,6 +724,9 @@ require (
 )
 
 replace (
+	// Pin to this version as the next one deprecates the imports which cause linting issues. Remove after migrating to AWS SDK v2.
+	github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.55.7
+
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 	github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
