@@ -500,7 +500,6 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 	users := make([]*user.UserSearchHitDTO, 0, len(searchResp.Hits))
 	for _, hit := range searchResp.Hits {
 		users = append(users, &user.UserSearchHitDTO{
-			ID:            hit.Id,
 			UID:           hit.Name,
 			Name:          hit.Title,
 			Login:         hit.Login,

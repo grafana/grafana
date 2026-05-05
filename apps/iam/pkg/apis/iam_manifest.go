@@ -894,11 +894,6 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
-								"id": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"integer"},
-									},
-								},
 								"lastSeenAt": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"integer"},
@@ -941,7 +936,6 @@ var appManifestData = app.ManifestData{
 								},
 							},
 							Required: []string{
-								"id",
 								"name",
 								"title",
 								"login",

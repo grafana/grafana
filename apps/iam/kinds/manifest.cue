@@ -85,7 +85,6 @@ v0alpha1: {
 }
 
 #UserHit: {
-	id:            int64
 	name:          string
 	title:         string
 	login:         string

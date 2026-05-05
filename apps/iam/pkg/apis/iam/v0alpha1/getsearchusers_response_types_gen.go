@@ -4,7 +4,6 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type GetSearchUsersUserHit struct {
-	Id            int64           `json:"id"`
 	Name          string          `json:"name"`
 	Title         string          `json:"title"`
 	Login         string          `json:"login"`

@@ -5050,18 +5050,7 @@
       },
       "GetSearchUsersUserHit": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "title",
-          "login",
-          "email",
-          "role",
-          "lastSeenAt",
-          "lastSeenAtAge",
-          "provisioned",
-          "score"
-        ],
+        "required": ["name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "score"],
         "properties": {
           "accessControl": {
             "type": "object",
@@ -5073,11 +5062,6 @@
           "email": {
             "type": "string",
             "default": ""
-          },
-          "id": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
           },
           "lastSeenAt": {
             "type": "integer",

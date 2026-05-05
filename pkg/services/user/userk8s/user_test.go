@@ -1672,7 +1672,6 @@ func TestUserK8sService_Search(t *testing.T) {
 			requesterOrgID: 1,
 			cmd:            &user.SearchUsersQuery{},
 			serverResponse: searchResponse(v0alpha1.GetSearchUsersUserHit{
-				Id:            42,
 				Name:          "uid-one",
 				Title:         "John Doe",
 				Login:         "jdoe",
@@ -1687,7 +1686,6 @@ func TestUserK8sService_Search(t *testing.T) {
 				PerPage:    100,
 				Users: []*user.UserSearchHitDTO{
 					{
-						ID:            42,
 						UID:           "uid-one",
 						Name:          "John Doe",
 						Login:         "jdoe",
@@ -1821,7 +1819,6 @@ func TestUserK8sService_Search(t *testing.T) {
 				require.Len(t, result.Users, len(tt.expectResult.Users))
 				for i, expected := range tt.expectResult.Users {
 					got := result.Users[i]
-					assert.Equal(t, expected.ID, got.ID, "ID")
 					assert.Equal(t, expected.UID, got.UID, "UID")
 					assert.Equal(t, expected.Name, got.Name, "Name")
 					assert.Equal(t, expected.Login, got.Login, "Login")
