@@ -238,7 +238,7 @@ export const mapNumbertoTimeInSlider = (num: number) => {
 
 export function createDateStringFromTs(ts: number) {
   return dateTimeFormat(ts, {
-    format: 'MMMM D',
+    format: 'MMMM D, YYYY',
   });
 }
 
