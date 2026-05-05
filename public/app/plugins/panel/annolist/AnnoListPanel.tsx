@@ -16,8 +16,17 @@ import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, ScrollContainer, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/internal';
+import { type AnnotationEventResource, annotationK8sClient } from 'app/api/clients/annotation/v0alpha1';
+import { getAPINamespace } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
+interface DisplayItem {
+  identity: { type: string; name: string };
+  displayName: string;
+  avatarURL?: string;
+  internalId?: number;
+}
 
 import { AnnotationListItem } from './AnnotationListItem';
 import { type Options } from './panelcfg.gen';
@@ -26,6 +35,9 @@ interface UserInfo {
   id?: number;
   login?: string;
   email?: string;
+  // The k8s identity ref ("user:<uid>") used to filter through the new /search endpoint.
+  // Absent when the legacy path (kubernetesAnnotations FF off) populated this entry.
+  uid?: string;
 }
 
 export interface Props extends PanelProps<Options> {}
@@ -91,44 +103,58 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     // https://github.com/grafana/grafana/blob/main/public/app/features/annotations/annotations_srv.ts
 
     const { options } = this.props;
-    const { queryUser, queryTags } = this.state;
+    const { queryUser, queryTags, requestId } = this.state;
 
-    const params: {
-      tags: typeof options.tags;
-      limit: typeof options.limit;
-      type: string;
-    } & Record<string, unknown> = {
-      tags: options.tags,
-      limit: options.limit,
-      type: 'annotation', // Skip the Annotations that are really alerts.  (Use the alerts panel!)
-    };
-
-    if (options.onlyFromThisDashboard) {
-      params.dashboardUID = getDashboardSrv().getCurrent()?.uid;
-    }
+    const dashboardUID = options.onlyFromThisDashboard ? getDashboardSrv().getCurrent()?.uid : undefined;
 
     let timeInfo = '';
+    let from: number | undefined;
+    let to: number | undefined;
     if (options.onlyInTimeRange) {
       const { timeRange } = this.props;
-      params.from = timeRange.from.valueOf();
-      params.to = timeRange.to.valueOf();
+      from = timeRange.from.valueOf();
+      to = timeRange.to.valueOf();
     } else {
       timeInfo = 'All Time';
     }
 
-    if (queryUser) {
-      params.userId = queryUser.id;
-    }
+    const interpolatedTags = options.tags?.length
+      ? options.tags.map((tag) => this.props.replaceVariables(tag))
+      : undefined;
+    const tags = queryTags.length
+      ? interpolatedTags
+        ? [...interpolatedTags, ...queryTags]
+        : queryTags
+      : interpolatedTags;
 
-    if (options.tags && options.tags.length) {
-      params.tags = options.tags.map((tag) => this.props.replaceVariables(tag));
+    let annotations: AnnotationEvent[];
+    if (config.featureToggles.kubernetesAnnotations) {
+      // /search hardcodes Type: "annotation" on the backend, so the legacy `type: 'annotation'`
+      // filter is implicit. User filter switches from legacy `userId` to k8s `createdBy`.
+      const events = await annotationK8sClient.search(
+        {
+          dashboardUID,
+          from,
+          to,
+          limit: options.limit,
+          tags,
+          createdBy: queryUser?.uid ? `user:${queryUser.uid}` : undefined,
+        },
+        requestId
+      );
+      annotations = await this.hydrateIdentities(events);
+    } else {
+      const params: Record<string, unknown> = {
+        tags,
+        limit: options.limit,
+        type: 'annotation', // Skip the Annotations that are really alerts.  (Use the alerts panel!)
+        dashboardUID,
+        from,
+        to,
+        userId: queryUser?.id,
+      };
+      annotations = await getBackendSrv().get('/api/annotations', params, requestId);
     }
-
-    if (queryTags.length) {
-      params.tags = params.tags ? [...params.tags, ...queryTags] : queryTags;
-    }
-
-    const annotations = await getBackendSrv().get('/api/annotations', params, this.state.requestId);
 
     this.setState({
       annotations,
@@ -136,6 +162,41 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       loaded: true,
     });
   }
+
+  // Hydrate identity-derived fields (userId/login/email/avatarUrl) on each event by
+  // batching one IAM /display lookup per unique createdBy key. The k8s AnnotationSpec
+  // does not carry identity, so we read it from metadata.annotations and resolve
+  // display info via the IAM API. Email is unavailable from /display; we substitute
+  // displayName so the existing "Created by" tooltip still has a meaningful label.
+  private hydrateIdentities = async (events: AnnotationEventResource[]): Promise<AnnotationEvent[]> => {
+    const keys = Array.from(
+      new Set(events.map((e) => e.createdBy).filter((k): k is string => Boolean(k)))
+    );
+    if (keys.length === 0) {
+      return events;
+    }
+
+    const url = `/apis/iam.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/display`;
+    const response = await getBackendSrv().get<{ display?: DisplayItem[] }>(url, { key: keys });
+    const byKey = new Map<string, DisplayItem>();
+    for (const d of response.display ?? []) {
+      byKey.set(`${d.identity.type}:${d.identity.name}`, d);
+    }
+
+    return events.map((event) => {
+      const display = event.createdBy ? byKey.get(event.createdBy) : undefined;
+      if (!display) {
+        return event;
+      }
+      return {
+        ...event,
+        userId: display.internalId,
+        login: display.displayName,
+        email: display.displayName,
+        avatarUrl: display.avatarURL,
+      };
+    });
+  };
 
   onAnnoClick = async (anno: AnnotationEvent) => {
     if (!anno.time) {
@@ -218,11 +279,16 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   };
 
   onUserClick = (anno: AnnotationEvent) => {
+    // Hydrated events expose the k8s identity ref ("user:<uid>") via createdBy when
+    // kubernetesAnnotations is on. Stash the uid so the next /search can filter by it.
+    const createdBy = (anno as AnnotationEventResource).createdBy;
+    const uid = createdBy?.startsWith('user:') ? createdBy.slice('user:'.length) : undefined;
     this.setState({
       queryUser: {
         id: anno.userId,
         login: anno.login,
         email: anno.email,
+        uid,
       },
     });
   };

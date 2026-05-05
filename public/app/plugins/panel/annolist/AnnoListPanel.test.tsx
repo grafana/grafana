@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type AnnotationEvent, type FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../core/services/backend_srv';
@@ -307,6 +307,140 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(await screen.findByRole('img')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('with kubernetesAnnotations toggle ON', () => {
+    const SEARCH_URL = '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/search';
+    const DISPLAY_URL = '/apis/iam.grafana.app/v0alpha1/namespaces/stack-1/display';
+
+    const k8sAnnotation = {
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      kind: 'Annotation',
+      metadata: {
+        name: 'a-14',
+        annotations: { 'grafana.app/createdBy': 'user:u-001' },
+        resourceVersion: '1',
+        creationTimestamp: '',
+      },
+      spec: {
+        text: 'Result text',
+        time: Date.UTC(2021, 0, 1, 0, 0, 0, 0),
+        timeEnd: Date.UTC(2021, 0, 1, 0, 0, 0, 0),
+        dashboardUID: '7MeksYbmk',
+        panelID: 13,
+        tags: ['Result tag A', 'Result tag B'],
+      },
+    };
+
+    const display = {
+      identity: { type: 'user', name: 'u-001' },
+      displayName: 'jane.doe',
+      avatarURL: '/avatar/u-001.png',
+      internalId: 1,
+    };
+
+    const setupK8sContext = async (options: Options = defaultOptions) => {
+      jest.clearAllMocks();
+      config.featureToggles.kubernetesAnnotations = true;
+      config.namespace = 'stack-1';
+
+      const getMock = jest.spyOn(backendSrv, 'get');
+      getMock.mockImplementation(async (url) => {
+        if (typeof url === 'string' && url.includes('/search')) {
+          return { items: [k8sAnnotation] };
+        }
+        if (typeof url === 'string' && url.includes('/display')) {
+          return { display: [display] };
+        }
+        return [];
+      });
+
+      const dash = { uid: 'srx16xR4z', formatDate: (time: number) => new Date(time).toISOString() };
+      setDashboardSrv({ getCurrent: () => dash } as DashboardSrv);
+
+      const props: Props = {
+        data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
+        eventBus: {
+          subscribe: jest.fn(),
+          getStream: jest.fn().mockImplementation(() => ({ subscribe: jest.fn() })),
+          publish: jest.fn(),
+          removeAllListeners: jest.fn(),
+          newScopedBus: jest.fn(),
+        },
+        fieldConfig: {} as unknown as FieldConfigSource,
+        height: 400,
+        id: 1,
+        onChangeTimeRange: jest.fn(),
+        onFieldConfigChange: jest.fn(),
+        onOptionsChange: jest.fn(),
+        options,
+        renderCounter: 1,
+        replaceVariables: (str: string) => str,
+        timeRange: getDefaultTimeRange(),
+        timeZone: 'utc',
+        title: 'Test Title',
+        transparent: false,
+        width: 320,
+      };
+      render(<AnnoListPanel {...props} />);
+      await waitFor(() => expect(getMock).toHaveBeenCalled());
+      return { getMock };
+    };
+
+    afterEach(() => {
+      config.featureToggles.kubernetesAnnotations = false;
+    });
+
+    it('hits the k8s /search endpoint with translated params', async () => {
+      const { getMock } = await setupK8sContext();
+
+      // /search call: legacy `tags` becomes repeated `tag`, no `type: 'annotation'` (backend hardcodes it)
+      expect(getMock).toHaveBeenCalledWith(
+        SEARCH_URL,
+        expect.objectContaining({
+          dashboardUID: 'srx16xR4z',
+          limit: 10,
+          tag: ['tag A', 'tag B'],
+        }),
+        expect.stringMatching(/^anno-list-panel-\d\.\d+/)
+      );
+    });
+
+    it('hydrates identity fields via the IAM /display endpoint and renders the avatar', async () => {
+      const { getMock } = await setupK8sContext();
+
+      expect(getMock).toHaveBeenCalledWith(DISPLAY_URL, { key: ['user:u-001'] });
+
+      // displayName substitutes for both login (gates avatar) and email (tooltip text)
+      const avatar = await screen.findByRole('img');
+      expect(avatar).toBeInTheDocument();
+      expect(await screen.findByText(/result text/i)).toBeInTheDocument();
+    });
+
+    it('clicking the avatar filters subsequent searches by createdBy uid', async () => {
+      const { getMock } = await setupK8sContext();
+      getMock.mockClear();
+      // Re-mock for the post-click search
+      getMock.mockImplementation(async (url) => {
+        if (typeof url === 'string' && url.includes('/search')) {
+          return { items: [k8sAnnotation] };
+        }
+        if (typeof url === 'string' && url.includes('/display')) {
+          return { display: [display] };
+        }
+        return [];
+      });
+
+      await userEvent.click(await screen.findByRole('img'));
+
+      await waitFor(() => {
+        expect(getMock).toHaveBeenCalledWith(
+          SEARCH_URL,
+          expect.objectContaining({ createdBy: 'user:u-001' }),
+          expect.any(String)
+        );
       });
     });
   });

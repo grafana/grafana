@@ -2,6 +2,7 @@ import { type AnnotationEvent } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { getAPINamespace } from 'app/api/utils';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
+import { AnnoKeyCreatedBy } from 'app/features/apiserver/types';
 
 import {
   ANNOTATION_API_GROUP,
@@ -88,11 +89,16 @@ function nameToLegacyId(name: string | undefined): string | undefined {
   return name.startsWith('a-') ? name.slice(2) : name;
 }
 
+/** AnnotationEvent extended with the raw `createdBy` identity ref ("user:<uid>") so
+ * callers can hydrate identity fields (login/email/avatarUrl) via the IAM display
+ * endpoint without losing access to the legacy-shaped event. */
+export type AnnotationEventResource = AnnotationEvent & { createdBy?: string };
+
 /** Build the `AnnotationEvent`-shaped object that callers of the legacy
  * /api/annotations response expect, from a k8s Annotation resource. */
-export function annotationToEvent(anno: Annotation): AnnotationEvent {
+export function annotationToEvent(anno: Annotation): AnnotationEventResource {
   const { spec, metadata } = anno;
-  const event: AnnotationEvent = {
+  const event: AnnotationEventResource = {
     id: nameToLegacyId(metadata.name),
     time: spec.time,
     text: spec.text,
@@ -108,6 +114,10 @@ export function annotationToEvent(anno: Annotation): AnnotationEvent {
   }
   if (typeof spec.panelID === 'number') {
     event.panelId = spec.panelID;
+  }
+  const createdBy = metadata.annotations?.[AnnoKeyCreatedBy];
+  if (createdBy) {
+    event.createdBy = createdBy;
   }
   return event;
 }
@@ -199,7 +209,7 @@ export const annotationK8sClient = {
     return response.tags ?? [];
   },
 
-  async search(params: Record<string, unknown>, requestId?: string): Promise<AnnotationEvent[]> {
+  async search(params: Record<string, unknown>, requestId?: string): Promise<AnnotationEventResource[]> {
     const url = `/apis/${ANNOTATION_API_GROUP}/${ANNOTATION_API_VERSION}/namespaces/${getAPINamespace()}/${SEARCH_RESOURCE}`;
     const response = await getBackendSrv().get<AnnotationList>(url, toSearchQueryParams(params), requestId);
     return (response.items ?? []).map(annotationToEvent);

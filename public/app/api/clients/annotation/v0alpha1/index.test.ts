@@ -283,4 +283,29 @@ describe('annotationToEvent', () => {
     });
     expect(event.id).toBe('foo');
   });
+
+  it('exposes the createdBy identity ref when present in metadata.annotations', () => {
+    const event = annotationToEvent({
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      kind: 'Annotation',
+      metadata: {
+        name: 'a-1',
+        annotations: { 'grafana.app/createdBy': 'user:u-001' },
+        resourceVersion: '1',
+        creationTimestamp: '',
+      },
+      spec: { text: 'x', time: 1 },
+    });
+    expect(event.createdBy).toBe('user:u-001');
+  });
+
+  it('omits createdBy when metadata.annotations is missing the key', () => {
+    const event = annotationToEvent({
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      kind: 'Annotation',
+      metadata: { name: 'a-1', resourceVersion: '1', creationTimestamp: '' },
+      spec: { text: 'x', time: 1 },
+    });
+    expect(event.createdBy).toBeUndefined();
+  });
 });
