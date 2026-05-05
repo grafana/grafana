@@ -18,17 +18,19 @@ export interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'child
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-tabs--docs
  */
-export const TabsBar = forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder = false, ...rest }, ref) => {
-  const styles = useStyles2(getStyles);
+export const TabsBar = forwardRef<HTMLDivElement, Props>(
+  ({ children, className, hideBorder = false, ...rest }, ref) => {
+    const styles = useStyles2(getStyles);
 
-  return (
-    <div className={cx(styles.tabsWrapper, hideBorder && styles.noBorder, className)} ref={ref} {...rest}>
-      <div className={styles.tabs} role="tablist">
-        {children}
+    return (
+      <div className={cx(styles.tabsWrapper, hideBorder && styles.noBorder, className)} ref={ref} {...rest}>
+        <div className={styles.tabs} role="tablist">
+          {children}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tabsWrapper: css({

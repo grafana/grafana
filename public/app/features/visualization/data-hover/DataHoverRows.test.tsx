@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { type FeatureLike } from 'ol/Feature';
 
 import { createDataFrame, FieldType } from '@grafana/data';
-
 import { type GeomapLayerHover } from 'app/plugins/panel/geomap/event';
 import { type MapLayerState } from 'app/plugins/panel/geomap/types';
 
@@ -22,10 +21,17 @@ function makeFeature(opts: {
   return {
     getId: () => opts.id,
     getGeometry: () => undefined,
-    getProperties: () => ({ ...(opts.properties ?? {}), ...(opts.frame ? { frame: opts.frame, rowIndex: opts.rowIndex ?? 0 } : {}) }),
+    getProperties: () => ({
+      ...(opts.properties ?? {}),
+      ...(opts.frame ? { frame: opts.frame, rowIndex: opts.rowIndex ?? 0 } : {}),
+    }),
     get: (key: string) => {
-      if (key === 'frame') return opts.frame;
-      if (key === 'rowIndex') return opts.rowIndex ?? 0;
+      if (key === 'frame') {
+        return opts.frame;
+      }
+      if (key === 'rowIndex') {
+        return opts.rowIndex ?? 0;
+      }
       return (opts.properties ?? {})[key];
     },
   } as unknown as FeatureLike;

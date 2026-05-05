@@ -43,7 +43,9 @@ describe('renderValue', () => {
 describe('getDisplayValuesAndLinks', () => {
   it('returns null when all fields are hidden from tooltip', () => {
     const data = createDataFrame({
-      fields: [{ name: 'value', type: FieldType.number, values: [42], config: { custom: { hideFrom: { tooltip: true } } } }],
+      fields: [
+        { name: 'value', type: FieldType.number, values: [42], config: { custom: { hideFrom: { tooltip: true } } } },
+      ],
     });
     expect(getDisplayValuesAndLinks(data, 0)).toBeNull();
   });
@@ -120,7 +122,9 @@ describe('DataHoverView component', () => {
 
   it('returns null when all fields are hidden from tooltip', () => {
     const data = createDataFrame({
-      fields: [{ name: 'hidden', type: FieldType.string, values: ['x'], config: { custom: { hideFrom: { tooltip: true } } } }],
+      fields: [
+        { name: 'hidden', type: FieldType.string, values: ['x'], config: { custom: { hideFrom: { tooltip: true } } } },
+      ],
     });
     const { container } = render(<DataHoverView data={data} rowIndex={0} />);
     expect(container).toBeEmptyDOMElement();
