@@ -1951,9 +1951,10 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		// Clean up
 		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 		require.NoError(t, err)
+		helper.WaitForRepositoryDeleted(t, ctx, repo)
 	})
 
-	t.Run("multiple repositories with empty path - creation succeeds but sync warns on ownership conflicts", func(t *testing.T) {
+	t.Run("multiple repositories with empty path - duplicate sync-enabled root path is rejected", func(t *testing.T) {
 		const repo1 = "empty-path-repo-1"
 		const repo2 = "empty-path-repo-2"
 
@@ -1968,57 +1969,28 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		}
 		helper.CreateLocalRepo(t, testRepo1)
 
-		// Step 2: Create second repository with same empty path
-		// Creation should succeed (no duplicate path validation error)
-		// but sync should warn because dashboards are owned by repo1
-		testRepo2 := common.TestRepo{
-			Name:                   repo2,
-			Template:               common.TestdataPath("github.json.tmpl"),
-			SyncTarget:             "folder",
-			Workflows:              []string{},
-			SkipResourceAssertions: true, // Skip because we can't easily count per-repo resources
-		}
-		helper.CreateLocalRepo(t, testRepo2)
+		// Step 2: Create second repository with same URL, branch, and empty path.
+		// Empty path represents the repository root, so this is a duplicate path.
+		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          repo2,
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{})
+		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
 
-		// Verify both repositories have empty paths
+		// Verify first repository has empty path
 		repo1Obj, err := helper.Repositories.Resource.Get(ctx, repo1, metav1.GetOptions{})
 		require.NoError(t, err)
 		path1, _, _ := unstructured.NestedString(repo1Obj.Object, "spec", "github", "path")
 		require.Equal(t, "", path1, "repo1 should have empty path")
 
-		repo2Obj, err := helper.Repositories.Resource.Get(ctx, repo2, metav1.GetOptions{})
-		require.NoError(t, err)
-		path2, _, _ := unstructured.NestedString(repo2Obj.Object, "spec", "github", "path")
-		require.Equal(t, "", path2, "repo2 should have empty path")
-
-		// Verify repo2 sync completed with warning state (ownership conflicts)
-		syncState, _, _ := unstructured.NestedString(repo2Obj.Object, "status", "sync", "state")
-		require.Equal(t, "warning", syncState, "repo2 sync should complete with warning state due to ownership conflicts")
-
-		// Verify global resource counts:
-		// - Folders: 12 total (6 from repo1 + 6 from repo2) - folders are duplicated per repository
-		// - Dashboards: 3 total (only from repo1) - repo2's dashboards fail with ownership conflicts
-		// Poll because repo2's sync job can return before the folder/dashboard
-		// list endpoints have observed all of the newly-created resources.
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-			assert.Len(collect, dashboards.Items, 3, "should have 3 dashboards (only from repo1)")
-
-			folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-			assert.Len(collect, folders.Items, 12, "should have 12 folders (6 from repo1 + 6 from repo2)")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should observe all dashboards and folders after both repos sync")
-
 		// Clean up
 		err = helper.Repositories.Resource.Delete(ctx, repo1, metav1.DeleteOptions{})
 		require.NoError(t, err)
-		err = helper.Repositories.Resource.Delete(ctx, repo2, metav1.DeleteOptions{})
-		require.NoError(t, err)
+		helper.WaitForRepositoryDeleted(t, ctx, repo1)
 	})
 }
 
