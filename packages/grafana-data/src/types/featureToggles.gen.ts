@@ -1131,11 +1131,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
-  * Enables restore deleted dashboards feature
-  * @default true
-  */
-  restoreDashboards?: boolean;
-  /**
   * Enables recently viewed dashboards section in the browsing dashboard page
   * @default false
   */

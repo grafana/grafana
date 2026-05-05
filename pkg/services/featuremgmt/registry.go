@@ -1961,14 +1961,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "restoreDashboards",
-			Description: "Enables restore deleted dashboards feature",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "recentlyViewedDashboards",
 			Description: "Enables recently viewed dashboards section in the browsing dashboard page",
 			Stage:       FeatureStageExperimental,

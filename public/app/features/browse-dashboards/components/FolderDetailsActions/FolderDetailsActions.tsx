@@ -36,15 +36,13 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
       {canReadTeams && config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
         <FolderOwners ownerReferences={folderDTO.ownerReferences} />
       )}
-      {config.featureToggles.restoreDashboards && (
-        <LinkButton
-          variant="secondary"
-          href={config.appSubUrl + '/dashboard/recently-deleted'}
-          onClick={handleButtonClickToRecentlyDeleted}
-        >
-          <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
-        </LinkButton>
-      )}
+      <LinkButton
+        variant="secondary"
+        href={config.appSubUrl + '/dashboard/recently-deleted'}
+        onClick={handleButtonClickToRecentlyDeleted}
+      >
+        <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
+      </LinkButton>
       {folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />}
       {(canCreateDashboards || canCreateFolders) && (
         <CreateNewButton

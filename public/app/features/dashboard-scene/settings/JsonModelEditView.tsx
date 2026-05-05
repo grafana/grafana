@@ -236,7 +236,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
       }
 
       if (isNameExistsError(error)) {
-        return <NameAlreadyExistsError saveButton={saveButton} cancelButton={cancelButton} />;
+        return <NameAlreadyExistsError />;
       }
 
       if (isPluginDashboardError(error)) {
