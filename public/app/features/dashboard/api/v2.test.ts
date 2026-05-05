@@ -322,13 +322,10 @@ describe('v2 dashboard API', () => {
 
     it.each([
       ['update path (metadata.name set)', { name: 'imported-dash' }, mockPut],
-      ['create path (metadata.name unset)', undefined, mockPost],
-    ])('should set grant-permissions annotation on the %s', async (_name, k8sName, requestMock) => {
+      ['create path (metadata.name unset)', {}, mockPost],
+    ])('should set grant-permissions annotation on the %s', async (_name, k8s, requestMock) => {
       const api = new K8sDashboardV2API();
-      await api.saveDashboard({
-        dashboard: defaultDashboardV2Spec(),
-        ...(k8sName ? { k8s: k8sName } : {}),
-      });
+      await api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s });
 
       expect(requestMock).toHaveBeenCalledTimes(1);
       const requestBody = requestMock.mock.calls[0][1];
