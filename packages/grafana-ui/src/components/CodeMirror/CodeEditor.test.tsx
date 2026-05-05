@@ -1,6 +1,6 @@
-import { acceptCompletion, autocompletion, type CompletionSource } from '@codemirror/autocomplete';
+import { acceptCompletion, autocompletion, startCompletion, type CompletionSource } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
+import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
 import { render, screen, waitFor } from '@testing-library/react';
 import { EditorView } from '@uiw/react-codemirror';
 
@@ -30,6 +30,7 @@ jest.mock('@codemirror/autocomplete', () => {
   return {
     ...actual,
     autocompletion: jest.fn(() => []),
+    startCompletion: jest.fn(() => true),
   };
 });
 
@@ -47,6 +48,7 @@ jest.mock('@grafana/faro-web-sdk', () => ({
 }));
 
 const autocompletionMock = autocompletion as jest.MockedFunction<typeof autocompletion>;
+const startCompletionMock = startCompletion as jest.MockedFunction<typeof startCompletion>;
 const loadLanguageExtensionMock = loadLanguageExtension as jest.MockedFunction<typeof loadLanguageExtension>;
 
 const getExtensions = () => capturedProps?.extensions ?? [];
@@ -72,6 +74,7 @@ describe('CodeMirror CodeEditor', () => {
   beforeEach(() => {
     capturedProps = undefined;
     autocompletionMock.mockClear();
+    startCompletionMock.mockClear();
     loadLanguageExtensionMock.mockClear();
     loadLanguageExtensionMock.mockResolvedValue(null);
     (faro.api.pushError as jest.Mock).mockClear();
@@ -137,6 +140,26 @@ describe('CodeMirror CodeEditor', () => {
     const tabBinding = getKeyBindings().find((binding) => binding.key === 'Tab');
 
     expect(tabBinding).toEqual(expect.objectContaining({ key: 'Tab', run: acceptCompletion }));
+  });
+
+  it('binds Space to insert a space and start completions when completion sources are configured', () => {
+    render(<CodeEditor value="SELECT" onChange={jest.fn()} completionSources={[jest.fn()]} />);
+
+    const spaceBinding = getKeyBindings().find((binding) => binding.key === 'Space');
+    const replaceSelection = jest.fn(() => ({ changes: { from: 6, insert: ' ' } }));
+    const dispatch = jest.fn();
+    const view = {
+      dispatch,
+      state: {
+        readOnly: false,
+        replaceSelection,
+      },
+    } as unknown as CodeMirrorEditorView;
+
+    expect(spaceBinding?.run(view)).toBe(true);
+    expect(replaceSelection).toHaveBeenCalledWith(' ');
+    expect(dispatch).toHaveBeenCalledWith({ changes: { from: 6, insert: ' ' } });
+    expect(startCompletionMock).toHaveBeenCalledWith(view);
   });
 
   it('adds accessibility attributes to the editor content when provided', () => {
