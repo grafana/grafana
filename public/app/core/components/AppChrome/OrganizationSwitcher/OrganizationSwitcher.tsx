@@ -18,9 +18,8 @@ export function OrganizationSwitcher() {
     if (!option.value) {
       return;
     }
-    // dispatch() actually runs the thunk. Calling setUserOrganization() without
-    // dispatching just builds the action and discards it. Await it so
-    // /api/user/using/:orgId completes before navigation and preferred-org persists.
+    // Await so /api/user/using/:orgId completes before
+  navigation
     await dispatch(setUserOrganization(option.value.orgId));
     window.location.assign(`/?orgId=${option.value.orgId}`);
   };
