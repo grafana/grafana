@@ -364,11 +364,7 @@ func (s *ModuleServer) Run() error {
 }
 
 // initUnifiedVectorBackend constructs the shared vector backend + embedder
-// values that StorageServer and SearchServer modules consume. The promoter
-// goroutine runs inside pgvectorBackend itself (started in
-// vector.InitVectorBackend when ownsSchema=true); the backfiller is owned
-// by sql.ProvideUnifiedStorageGrpcService. This module no longer hosts any
-// long-running work.
+// values that StorageServer and SearchServer modules consume.
 func (s *ModuleServer) initUnifiedVectorBackend(storageServerEnabled bool) func() (services.Service, error) {
 	return func() (services.Service, error) {
 		if s.vectorBackend == nil {

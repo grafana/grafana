@@ -187,7 +187,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	}
 	if bf != nil {
 		s.subservices = append(s.subservices,
-			services.NewBasicService(nil, bf.Run, nil).WithName(modules.UnifiedVectorBackfill))
+			services.NewBasicService(nil, bf.Run, nil).WithName("vector-backfiller"))
 	}
 
 	err = s.initializeSubservicesManager()
