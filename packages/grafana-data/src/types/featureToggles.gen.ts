@@ -1438,7 +1438,7 @@ export interface FeatureToggles {
   multiPropsVariables?: boolean;
   /**
   * Enables support for section level variables (rows and tabs)
-  * @default false
+  * @default true
   */
   dashboardSectionVariables?: boolean;
   /**

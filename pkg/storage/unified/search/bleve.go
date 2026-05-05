@@ -577,7 +577,13 @@ type buildInfo struct {
 // If built successfully, the new index replaces the old index in the cache (if there was any).
 // Existing index in the file system is reused, if it exists, and if size indicates that we should use file-based index,
 // and lastImportTime check passes (if the index was built before lastImportTime, it will be rebuilt).
-// The return value of "builder" should be the RV returned from List. This will be stored as the index RV
+// The return value of "builder" should be the RV returned from List. This will be stored as the index RV.
+//
+// maxFreshSnapshotAge is the maximum age (by BuildTime) of a remote snapshot
+// that BuildIndex will download instead of rebuilding from scratch on the
+// rebuild path. Zero disables the strict same-version fast path; the snapshot
+// store, if configured, is still consulted on the initial-startup path via
+// pickBestSnapshot.
 //
 //nolint:gocyclo
 func (b *bleveBackend) BuildIndex(
@@ -590,6 +596,7 @@ func (b *bleveBackend) BuildIndex(
 	updater resource.UpdateFn,
 	rebuild bool,
 	lastImportTime time.Time,
+	maxFreshSnapshotAge time.Duration,
 ) (resource.ResourceIndex, error) {
 	_, span := tracer.Start(ctx, "search.bleveBackend.BuildIndex")
 	defer span.End()
@@ -687,6 +694,19 @@ func (b *bleveBackend) BuildIndex(
 				} else if dlIdx != nil {
 					index, fileIndexName, indexRV = dlIdx, dlName, dlRV
 				}
+			}
+		} else if rebuild && b.opts.Snapshot.Store != nil && size >= b.opts.Snapshot.MinDocCount && maxFreshSnapshotAge > 0 {
+			// Rebuild path: before paying the cost of a from-scratch
+			// rebuild, check whether the remote index store holds a same-version snapshot
+			// fresh enough to serve as a drop-in replacement. Strict policy:
+			// exact BuildVersion match, BuildTime within maxFreshSnapshotAge
+			// AND strictly after lastImportTime. On miss, fall through to
+			// rebuild — no tiered fallback (we already have a working index).
+			dlIdx, dlName, dlRV, dlErr := b.tryDownloadFreshSnapshot(ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge, logWithDetails)
+			if dlErr != nil {
+				logWithDetails.Warn("Failed to download fresh remote snapshot, will rebuild from scratch", "err", dlErr)
+			} else if dlIdx != nil {
+				index, fileIndexName, indexRV = dlIdx, dlName, dlRV
 			}
 		}
 
