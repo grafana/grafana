@@ -38,7 +38,8 @@ export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSele
 
   const repoUIDs = selectedUIDs.map(getRepoUid).filter((repoId): repoId is string => !!repoId);
 
-  const selectedItemsRepoUID = repoUIDs.length > 0 ? repoUIDs[0] : undefined;
+  // Skip 'non_provisioned' sentinel so downstream queries don't fire against a non-existent folder
+  const selectedItemsRepoUID = repoUIDs.find((uid) => uid !== 'non_provisioned');
   const isCrossRepo = new Set(repoUIDs).size > 1;
 
   const isInLockedRepo = (uid: string) => {
