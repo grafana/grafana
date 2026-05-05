@@ -13,7 +13,6 @@ const FIXTURE_PATH = '/d/cuj-smoke-fixture';
 const EDIT_BUTTON = 'data-testid Edit dashboard button';
 const SAVE_BUTTON = 'data-testid Save dashboard button';
 const EXIT_BUTTON = 'data-testid Exit edit mode button';
-const DISCARD_CHANGES_BUTTON = 'data-testid Discard changes button';
 const DASHBOARD_SAVE_DRAWER_BUTTON = 'data-testid Save dashboard drawer button';
 
 async function openFixtureAndEdit(page: Page): Promise<boolean> {
@@ -57,7 +56,14 @@ async function saveEdit(page: Page): Promise<void> {
 }
 
 /**
- * Enter edit mode, click Exit, confirm Discard. End: discarded.
+ * Enter edit mode, click the toggle (or Exit) to leave. Journey ends as
+ * `discarded` via dashboards_edit_exited (fires on every exit regardless of
+ * dirty state) - no need to chase the Discard confirmation.
+ *
+ * Two toolbar layouts exist: the new toolbar uses one button that toggles
+ * between Edit and Exit (keeps the `editButton` testid); the old toolbar
+ * renders a separate `exitButton`. Try the toggle first, fall back to the
+ * dedicated exit button.
  */
 async function discardEdit(page: Page): Promise<void> {
   if (!(await openFixtureAndEdit(page))) {
@@ -65,21 +71,13 @@ async function discardEdit(page: Page): Promise<void> {
   }
 
   try {
-    await page.getByTestId(EXIT_BUTTON).waitFor({ state: 'visible', timeout: 5_000 });
-    await page.getByTestId(EXIT_BUTTON).click();
+    await page.getByTestId(EDIT_BUTTON).click({ timeout: 3_000 });
   } catch {
-    return;
-  }
-
-  // The discard confirmation only renders if there are changes; without a
-  // mid-edit change we may exit cleanly without it. Try the explicit discard
-  // path; if absent, the journey ends via the dashboards_edit_exited handler
-  // which fires on every exit regardless of dirty state.
-  try {
-    await page.getByTestId(DISCARD_CHANGES_BUTTON).waitFor({ state: 'visible', timeout: 3_000 });
-    await page.getByTestId(DISCARD_CHANGES_BUTTON).click();
-  } catch {
-    // No confirm needed — exit was clean.
+    try {
+      await page.getByTestId(EXIT_BUTTON).click({ timeout: 3_000 });
+    } catch {
+      return;
+    }
   }
   await page.waitForTimeout(500);
 }
