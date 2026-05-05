@@ -42,12 +42,19 @@ export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSele
   const selectedItemsRepoUID = repoUIDs.find((uid) => uid !== 'non_provisioned');
   const isCrossRepo = new Set(repoUIDs).size > 1;
 
+  const hasSelection = repoUIDs.length > 0;
+
   const isInLockedRepo = (uid: string) => {
     // if whole instance is provisioned, all items are considered in the locked (same) repo
     if (isProvisionedInstance) {
       return true;
     }
-    return !selectedItemsRepoUID || getRepoUid(uid) === selectedItemsRepoUID;
+    if (!selectedItemsRepoUID) {
+      // No provisioned repo in selection — if nothing is selected allow any item,
+      // otherwise lock to non-provisioned only so provisioned items can't be mixed in
+      return !hasSelection || getRepoUid(uid) === 'non_provisioned';
+    }
+    return getRepoUid(uid) === selectedItemsRepoUID;
   };
   const isUidInReadOnlyRepo = (uid: string) => {
     const repo = getRepositoryByUid(getRepoUid(uid));
