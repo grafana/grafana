@@ -1,13 +1,13 @@
 import { render, screen } from 'test/test-utils';
 
 import { NavModelItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
+import { DataSourceType } from '../utils/datasource';
 
 import { AlertmanagerPageWrapper } from './AlertingPageWrapper';
 
@@ -44,29 +44,8 @@ describe('AlertmanagerPageWrapper', () => {
       expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
     });
 
-    it('should hide AlertManagerPicker when external data sources have manageAlerts=false', () => {
-      const dataSourceWithoutManageAlerts = mockDataSource<AlertManagerDataSourceJsonData>({
-        name: 'prometheus-no-manage',
-        uid: 'prometheus-no-manage-uid',
-        type: 'prometheus',
-        jsonData: {
-          manageAlerts: false,
-        },
-      });
-      setupDataSources(dataSourceWithoutManageAlerts);
-
-      grantUserPermissions([
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingRuleExternalRead,
-      ]);
-
-      renderTestComponent();
-
-      expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
-    });
-
-    it('should show AlertManagerPicker when external data sources have manageAlerts=true', () => {
-      const dataSourceWithManageAlerts = mockDataSource({
+    it('should hide AlertManagerPicker when only Prometheus-compatible datasources exist (even with manageAlerts=true)', () => {
+      const prometheusWithManageAlerts = mockDataSource({
         name: 'prometheus-managed',
         uid: 'prometheus-managed-uid',
         type: 'prometheus',
@@ -74,49 +53,7 @@ describe('AlertmanagerPageWrapper', () => {
           manageAlerts: true,
         },
       });
-      setupDataSources(dataSourceWithManageAlerts);
-
-      grantUserPermissions([
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingRuleExternalRead,
-      ]);
-
-      renderTestComponent();
-
-      expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
-    });
-
-    it('should show AlertManagerPicker when external data sources have manageAlerts=undefined and config default is true', () => {
-      config.defaultDatasourceManageAlertsUiToggle = true;
-
-      const dataSourceDefaultManageAlerts = mockDataSource({
-        name: 'prometheus-default',
-        uid: 'prometheus-default-uid',
-        type: 'prometheus',
-        jsonData: {}, // manageAlerts uses config.defaultDatasourceManageAlertsUiToggle when undefined
-      });
-      setupDataSources(dataSourceDefaultManageAlerts);
-
-      grantUserPermissions([
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingRuleExternalRead,
-      ]);
-
-      renderTestComponent();
-
-      expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
-    });
-
-    it('should hide AlertManagerPicker when external data sources have manageAlerts=undefined and config default is false', () => {
-      config.defaultDatasourceManageAlertsUiToggle = false;
-
-      const dataSourceDefaultManageAlerts = mockDataSource({
-        name: 'prometheus-default',
-        uid: 'prometheus-default-uid',
-        type: 'prometheus',
-        jsonData: {}, // manageAlerts uses config.defaultDatasourceManageAlertsUiToggle when undefined
-      });
-      setupDataSources(dataSourceDefaultManageAlerts);
+      setupDataSources(prometheusWithManageAlerts);
 
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,
@@ -128,26 +65,16 @@ describe('AlertmanagerPageWrapper', () => {
       expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
     });
 
-    it('should show AlertManagerPicker when multiple external data sources exist with at least one managing alerts', () => {
-      const dsWithManageAlerts = mockDataSource({
-        name: 'prometheus-1',
-        uid: 'prometheus-1-uid',
-        type: 'prometheus',
+    it('should hide AlertManagerPicker when only Loki datasources exist (even with manageAlerts=true)', () => {
+      const lokiWithManageAlerts = mockDataSource({
+        name: 'loki-managed',
+        uid: 'loki-managed-uid',
+        type: 'loki',
         jsonData: {
           manageAlerts: true,
         },
       });
-
-      const dsWithoutManageAlerts = mockDataSource({
-        name: 'prometheus-2',
-        uid: 'prometheus-2-uid',
-        type: 'prometheus',
-        jsonData: {
-          manageAlerts: false,
-        },
-      });
-
-      setupDataSources(dsWithManageAlerts, dsWithoutManageAlerts);
+      setupDataSources(lokiWithManageAlerts);
 
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,
@@ -156,10 +83,72 @@ describe('AlertmanagerPageWrapper', () => {
 
       renderTestComponent();
 
+      expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
+    });
+
+    it('should show AlertManagerPicker when an Alertmanager-type datasource exists', () => {
+      const alertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
+        name: 'external-alertmanager',
+        uid: 'external-alertmanager-uid',
+        type: DataSourceType.Alertmanager,
+      });
+      setupDataSources(alertmanagerDataSource);
+
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+      ]);
+
+      renderTestComponent();
+
       expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
     });
 
-    it('should work correctly when only Grafana built-in alertmanager is available (no external datasources)', () => {
+    it('should show AlertManagerPicker when both Prometheus and Alertmanager datasources exist', () => {
+      const prometheusDs = mockDataSource({
+        name: 'prometheus-1',
+        uid: 'prometheus-1-uid',
+        type: 'prometheus',
+        jsonData: {
+          manageAlerts: true,
+        },
+      });
+      const alertmanagerDs = mockDataSource<AlertManagerDataSourceJsonData>({
+        name: 'external-alertmanager',
+        uid: 'external-alertmanager-uid',
+        type: DataSourceType.Alertmanager,
+      });
+      setupDataSources(prometheusDs, alertmanagerDs);
+
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        AccessControlAction.AlertingRuleExternalRead,
+      ]);
+
+      renderTestComponent();
+
+      expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
+    });
+
+    it('should hide AlertManagerPicker when user lacks external notifications permission even if Alertmanager datasources exist', () => {
+      const alertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
+        name: 'external-alertmanager',
+        uid: 'external-alertmanager-uid',
+        type: DataSourceType.Alertmanager,
+      });
+      setupDataSources(alertmanagerDataSource);
+
+      // AlertingNotificationsRead grants access to the built-in Grafana AM only;
+      // AlertingNotificationsExternalRead is required to see external AM datasources.
+      grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
+
+      renderTestComponent();
+
+      expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
+    });
+
+    it('should hide AlertManagerPicker when only Grafana built-in alertmanager is available (no external datasources)', () => {
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsWrite,
@@ -170,45 +159,6 @@ describe('AlertmanagerPageWrapper', () => {
           <div>Built-in alertmanager content</div>
         </AlertmanagerPageWrapper>
       );
-
-      expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
-    });
-
-    it('should show AlertManagerPicker for supported external data source types (Loki)', () => {
-      const lokiDataSource = mockDataSource({
-        name: 'loki-managed',
-        uid: 'loki-managed-uid',
-        type: 'loki',
-        jsonData: {
-          manageAlerts: true,
-        },
-      });
-      setupDataSources(lokiDataSource);
-
-      grantUserPermissions([
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingRuleExternalRead,
-      ]);
-
-      renderTestComponent();
-
-      expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
-    });
-
-    it('should hide AlertManagerPicker when user lacks permissions even if external data sources exist', () => {
-      const dataSourceWithManageAlerts = mockDataSource({
-        name: 'prometheus-managed',
-        uid: 'prometheus-managed-uid',
-        type: 'prometheus',
-        jsonData: {
-          manageAlerts: true,
-        },
-      });
-      setupDataSources(dataSourceWithManageAlerts);
-
-      grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
-
-      renderTestComponent();
 
       expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
     });
