@@ -94,7 +94,9 @@ export function TablePanel(props: Props) {
       sortByBehavior={sortByBehavior}
       sortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
-      onColumnResize={(displayName, resizedWidth, fieldScope) => onColumnResize(displayName, resizedWidth, fieldScope, props)}
+      onColumnResize={(displayName, resizedWidth, fieldScope) =>
+        onColumnResize(displayName, resizedWidth, fieldScope, props)
+      }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       frozenColumns={options.frozenColumns?.left}
       enablePagination={options.enablePagination}
@@ -144,7 +146,9 @@ function onColumnResize(fieldDisplayName: string, width: number, fieldScope: Mat
   const propId = 'custom.width';
 
   // look for existing override
-  const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName && o.matcher.scope === fieldScope);
+  const override = overrides.find(
+    (o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName && o.matcher.scope === fieldScope
+  );
 
   if (override) {
     // look for existing property

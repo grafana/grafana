@@ -9,7 +9,13 @@ import {
   type CSSProperties,
   useEffect,
 } from 'react';
-import { type Column, type ColumnWidths, type DataGridHandle, type DataGridProps, type SortColumn } from 'react-data-grid';
+import {
+  type Column,
+  type ColumnWidths,
+  type DataGridHandle,
+  type DataGridProps,
+  type SortColumn,
+} from 'react-data-grid';
 
 import { type DataFrame, type Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
 import { type MatcherScope } from '@grafana/schema';
@@ -587,7 +593,11 @@ export function useColumnResize(
 
   const dispatchEvent = useCallback(() => {
     if (colResizeState.current.columnKey) {
-      onColumnResize(colResizeState.current.columnKey, Math.floor(colResizeState.current.width), colResizeState.current.fieldScope);
+      onColumnResize(
+        colResizeState.current.columnKey,
+        Math.floor(colResizeState.current.width),
+        colResizeState.current.fieldScope
+      );
       colResizeState.current = { ...INITIAL_COL_RESIZE_STATE };
     }
     window.removeEventListener('click', dispatchEvent, { capture: true });
