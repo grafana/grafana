@@ -70,7 +70,9 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// When sync is enabled, repository locations must be unique by URL, branch, and path.
+	// If repo is git and sync is enabled, ensure no other repository is defined with a conflicting path.
+	// Path checks are skipped when sync is disabled to allow the onboarding wizard to create repositories
+	// in multiple steps (first with empty path, then configure path, then enable sync).
 	if cfg.Spec.Type.IsGit() && cfg.Spec.Sync.Enabled {
 		for _, v := range all {
 			// skip itself
@@ -84,12 +86,14 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
 				}
 
+				// Skip parent/child conflict check when both paths are empty (both at repository root)
 				if v.Path() != "" || cfg.Path() != "" {
 					relPath, err := filepath.Rel(v.Path(), cfg.Path())
 					if err != nil {
 						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
 					}
-					// Rel returns "../" when relative paths are not related.
+					// https://pkg.go.dev/path/filepath#Rel
+					// Rel will return "../" if the relative paths are not related
 					if !strings.HasPrefix(relPath, "../") {
 						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
 							fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
