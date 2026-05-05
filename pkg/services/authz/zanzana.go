@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 // ProvideZanzanaClient used to register ZanzanaClient.
@@ -89,7 +90,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 }
 
 // ProvideEmbeddedZanzanaServer creates and registers embedded ZanzanaServer.
-func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource) (zanzana.Server, error) {
+func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource, kvProvider *kv.EventualKVProvider) (zanzana.Server, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zServer.NewNoopServer(), nil
@@ -102,7 +103,7 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 		return nil, fmt.Errorf("failed to create zanzana store: %w", err)
 	}
 
-	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, reconcileCRDs)
+	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, reconcileCRDs, kvProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
