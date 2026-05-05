@@ -89,6 +89,7 @@ describe('settings', () => {
           undefined,
           undefined,
           {
+            showErrorAlert: false,
             validatePath: true,
           }
         );
@@ -150,6 +151,7 @@ describe('settings', () => {
         expect(response).toMatchObject(legacyMyOrgTestAppSettings);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
           validatePath: true,
         });
       });
@@ -180,6 +182,7 @@ describe('settings', () => {
         expect(resp3).toMatchObject(legacyMyOrgTestAppSettings);
         expect(backendSrv.get).toHaveBeenCalledTimes(3);
         expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
           validatePath: true,
         });
       });

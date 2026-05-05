@@ -159,7 +159,7 @@ describe('settings', () => {
           '/apis/myorg-test-app.grafana.app/v0alpha1/namespaces/default/settings/myorg-test-app',
           undefined,
           undefined,
-          { validatePath: true }
+          { showErrorAlert: false, validatePath: true }
         );
       });
 
@@ -236,6 +236,7 @@ describe('settings', () => {
         expect(response).toEqual(legacyMyOrgTestAppSettings);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
           validatePath: true,
         });
         expect(backendSrv.post).toHaveBeenCalledTimes(1);
@@ -288,6 +289,7 @@ describe('settings', () => {
         );
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
           validatePath: true,
         });
       });

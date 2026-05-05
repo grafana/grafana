@@ -84,6 +84,7 @@ describe('settings', () => {
           undefined,
           undefined,
           {
+            showErrorAlert: false,
             validatePath: true,
           }
         );
@@ -101,6 +102,7 @@ describe('settings', () => {
           undefined,
           undefined,
           {
+            showErrorAlert: false,
             validatePath: true,
           }
         );
@@ -162,6 +164,7 @@ describe('settings', () => {
         expect(response).toMatchObject(legacyMyOrgTestAppSettings);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
           validatePath: true,
         });
       });
@@ -188,6 +191,7 @@ describe('settings', () => {
         expect(response).toEqual(legacyMyOrgTestAppSettings);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
           validatePath: true,
         });
       });
@@ -200,6 +204,7 @@ describe('settings', () => {
         expect(resp1).toStrictEqual(resp2);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
           validatePath: true,
         });
       });
@@ -248,6 +253,7 @@ describe('settings', () => {
         expect(response).toEqual(legacyMyOrgTestAppSettings);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
           validatePath: true,
         });
       });
@@ -260,6 +266,7 @@ describe('settings', () => {
         expect(resp1).toStrictEqual(resp2);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
           validatePath: true,
         });
       });

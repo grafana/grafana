@@ -11,7 +11,7 @@ import { type Settings as v0alpha1Settings } from './types';
 import { getApiVersion, getCacheKey, getLegacyCacheKey, getNamespace, isAuthError } from './utils';
 
 export function getLegacySettings(pluginId: string, showErrorAlert?: boolean): Promise<PluginMeta> {
-  const options = showErrorAlert ? { showErrorAlert, validatePath: true } : { validatePath: true };
+  const options = { showErrorAlert, validatePath: true };
 
   return getBackendSrv()
     .get(`/api/plugins/${pluginId}/settings`, undefined, undefined, options)
@@ -27,7 +27,7 @@ export function getLegacySettings(pluginId: string, showErrorAlert?: boolean): P
 }
 
 export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean): Promise<v0alpha1Settings> {
-  const options = showErrorAlert ? { showErrorAlert, validatePath: true } : { validatePath: true };
+  const options = { showErrorAlert, validatePath: true };
 
   return getBackendSrv()
     .get<v0alpha1Settings>(

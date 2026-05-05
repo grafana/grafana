@@ -79,6 +79,7 @@ describe('settings', () => {
           undefined,
           undefined,
           {
+            showErrorAlert: false,
             validatePath: true,
           }
         );
@@ -98,6 +99,7 @@ describe('settings', () => {
           undefined,
           undefined,
           {
+            showErrorAlert: false,
             validatePath: true,
           }
         );
@@ -115,7 +117,7 @@ describe('settings', () => {
           '/api/plugins/myorg-someplugin-app/settings',
           undefined,
           undefined,
-          { validatePath: true }
+          { showErrorAlert: false, validatePath: true }
         );
       });
 
@@ -175,6 +177,7 @@ describe('settings', () => {
         expect(enabled).toEqual(true);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
           validatePath: true,
         });
       });
@@ -187,6 +190,7 @@ describe('settings', () => {
         expect(enabled).toEqual(false);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
           validatePath: true,
         });
       });
