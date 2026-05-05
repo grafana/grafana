@@ -21,7 +21,7 @@ export function OrganizationSwitcher() {
     // Await so /api/user/using/:orgId completes before
   navigation
     await dispatch(setUserOrganization(option.value.orgId));
-    window.location.assign(`/?orgId=${option.value.orgId}`);
+    window.location.assign(${config.appSubUrl}/?orgId=${option.value.orgId});
   };
   useEffect(() => {
     if (
