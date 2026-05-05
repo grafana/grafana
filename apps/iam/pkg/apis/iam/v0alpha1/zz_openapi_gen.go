@@ -617,6 +617,13 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref common.ReferenceCall
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -696,7 +703,7 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "score"},
+				Required: []string{"id", "name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "score"},
 			},
 		},
 	}

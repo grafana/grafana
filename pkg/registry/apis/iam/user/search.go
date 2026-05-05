@@ -296,7 +296,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		Query:  searchQuery,
-		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole},
+		Fields: []string{resource.SEARCH_FIELD_LEGACY_ID, resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole},
 		// The query is a wildcard (*...*), so only Name is used from each
 		// QueryField to specify which fields to search in (Type and Boost
 		// are ignored for wildcard queries).
@@ -444,6 +444,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 	loginIDX := -1
 	lastSeenAtIDX := -1
 	roleIDX := -1
+	legacyIDIDX := -1
 
 	for i, v := range result.Results.Columns {
 		switch v.Name {
@@ -457,6 +458,8 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 			lastSeenAtIDX = i
 		case builders.USER_ROLE:
 			roleIDX = i
+		case resource.SEARCH_FIELD_LEGACY_ID:
+			legacyIDIDX = i
 		}
 	}
 
@@ -497,6 +500,12 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 			if len(row.Cells[lastSeenAtIDX]) == 8 {
 				hit.LastSeenAt = int64(binary.BigEndian.Uint64(row.Cells[lastSeenAtIDX]))
 				hit.LastSeenAtAge = util.GetAgeString(time.Unix(hit.LastSeenAt, 0))
+			}
+		}
+
+		if legacyIDIDX >= 0 && row.Cells[legacyIDIDX] != nil {
+			if len(row.Cells[legacyIDIDX]) == 8 {
+				hit.Id = int64(binary.BigEndian.Uint64(row.Cells[legacyIDIDX]))
 			}
 		}
 

@@ -2,7 +2,9 @@ package userk8s
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -49,6 +51,13 @@ func (s *UserK8sService) getUserClient() (*iamv0alpha1.UserClient, error) {
 		return nil, errors.New("client generator not initialized")
 	}
 	return iamv0alpha1.NewUserClientFromGenerator(s.clientGenerator)
+}
+
+func (s *UserK8sService) getCustomRouteClient(namespace string) (*iamv0alpha1.CustomRouteClient, error) {
+	if s.clientGenerator == nil {
+		return nil, errors.New("client generator not initialized")
+	}
+	return iamv0alpha1.NewCustomRouteClientFromGenerator(s.clientGenerator, namespace)
 }
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
@@ -422,7 +431,92 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 }
 
 func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
-	return nil, errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.search", trace.WithAttributes(
+		attribute.String("query", cmd.Query),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID := cmd.OrgID
+	if orgID == 0 {
+		var err error
+		orgID, err = s.getOrgID(ctx, ctxLogger)
+		if err != nil {
+			ctxLogger.Error("failed to get orgID from context in Search", "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	routeClient, err := s.getCustomRouteClient(namespace)
+	if err != nil {
+		ctxLogger.Error("failed to get custom route client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	limit := cmd.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	page := cmd.Page
+	if page <= 0 {
+		page = 1
+	}
+
+	params := url.Values{}
+	if cmd.Query != "" {
+		params.Set("query", cmd.Query)
+	}
+	params.Set("limit", strconv.Itoa(limit))
+	params.Set("page", strconv.Itoa(page))
+
+	raw, err := routeClient.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
+		Path:  "/searchUsers",
+		Verb:  "GET",
+		Query: params,
+	})
+	if err != nil {
+		ctxLogger.Error("k8s user search request failed", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	var searchResp iamv0alpha1.GetSearchUsersResponse
+	if err := json.Unmarshal(raw, &searchResp); err != nil {
+		ctxLogger.Error("failed to decode k8s user search response", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	users := make([]*user.UserSearchHitDTO, 0, len(searchResp.Hits))
+	for _, hit := range searchResp.Hits {
+		users = append(users, &user.UserSearchHitDTO{
+			ID:            hit.Id,
+			UID:           hit.Name,
+			Name:          hit.Title,
+			Login:         hit.Login,
+			Email:         hit.Email,
+			LastSeenAt:    time.Unix(hit.LastSeenAt, 0),
+			LastSeenAtAge: hit.LastSeenAtAge,
+			IsProvisioned: hit.Provisioned,
+		})
+	}
+
+	return &user.SearchUserQueryResult{
+		TotalCount: searchResp.TotalHits,
+		Users:      users,
+		Page:       page,
+		PerPage:    limit,
+	}, nil
 }
 
 func (s *UserK8sService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
