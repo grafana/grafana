@@ -5,7 +5,7 @@ import { type VizTooltipItem } from '@grafana/ui/internal';
 
 import { ExemplarTooltip } from './ExemplarTooltip';
 
-function makeItems(overrides: Partial<VizTooltipItem>[] = []): VizTooltipItem[] {
+function makeItems(overrides: Array<Partial<VizTooltipItem>> = []): VizTooltipItem[] {
   return overrides.map((o) => ({ label: 'label', value: 'value', ...o }));
 }
 
