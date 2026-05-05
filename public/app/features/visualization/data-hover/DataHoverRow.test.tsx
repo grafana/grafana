@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { type FeatureLike } from 'ol/Feature';
 
-import { ArrayDataFrame, createDataFrame, FieldType } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 
 import { DataHoverRow } from './DataHoverRow';
 
