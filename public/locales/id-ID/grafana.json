@@ -4300,6 +4300,7 @@
         "repository-not-found-message": "Repositori untuk folder yang dipilih tidak dapat ditemukan. Pastikan folder disediakan dengan benar.",
         "repository-not-found-title": "Repositori tidak ditemukan"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Kesalahan saat memindahkan sumber daya",
       "error-no-target-folder-path": "Jalur folder target tidak valid atau kosong, harap pilih lagi.",
       "move-total": "Secara keseluruhan, ini akan memengaruhi:",
@@ -7272,6 +7273,7 @@
       "terraform": "Dikelola oleh: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Gagal memindahkan dasbor",
       "cancel-action": "Batalkan",
       "current-file-not-found": "File dasbor saat ini tidak dapat ditemukan",
@@ -15360,7 +15362,6 @@
       "forwards-time-aria-label": "Pindahkan rentang waktu ke depan",
       "to": "ke",
       "zoom-out-button": "Perkecil rentang waktu",
-      "zoom-out-tooltip": "Perkecil rentang waktu <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Perkecil rentang waktu <br/> t -"
     },
     "time-range": {

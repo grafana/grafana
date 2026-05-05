@@ -4,6 +4,7 @@ import (
 	//nolint:gosec // Test SHA-1 hash (generated for testing purposes only, never used in production)
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -173,21 +174,23 @@ func requireRepoFolderTitle(t *testing.T, helper *common.ProvisioningTestHelper,
 		if !assert.NoError(c, err, "failed to list folders") {
 			return
 		}
+		// Collect what we did see for the repo so a flake's error message
+		// shows whether the folder is missing entirely vs. has a wrong title.
+		var seen []string
 		for _, f := range list.Items {
 			mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
 			if mgr != repoName {
 				continue
 			}
 			srcPath, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
-			if srcPath != expectedSourcePath {
-				continue
-			}
 			title, _, _ := unstructured.NestedString(f.Object, "spec", "title")
-			if title == expectedTitle {
+			if srcPath == expectedSourcePath && title == expectedTitle {
 				return
 			}
+			seen = append(seen, fmt.Sprintf("{name=%s sourcePath=%q title=%q}", f.GetName(), srcPath, title))
 		}
-		c.Errorf("no folder managed by %q at path %q with title %q found", repoName, expectedSourcePath, expectedTitle)
+		c.Errorf("no folder managed by %q at path %q with title %q found; folders for repo: [%s]",
+			repoName, expectedSourcePath, expectedTitle, strings.Join(seen, ", "))
 	}, 30*time.Second, 100*time.Millisecond,
 		"expected folder with title %q at path %q for repo %q", expectedTitle, expectedSourcePath, repoName)
 }

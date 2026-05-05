@@ -83,7 +83,7 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 
 	lockAttrs := append([]attribute.KeyValue{attribute.String("lock_scope", "build")}, commonSpanAttrs...)
 	span.AddEvent("snapshot.lock.acquire.started", oteltrace.WithAttributes(lockAttrs...))
-	lock, err := b.opts.Snapshot.Store.LockBuildIndex(ctx, key)
+	lock, err := b.opts.Snapshot.Store.LockBuildIndex(ctx, key, b.opts.BuildVersion)
 	if err != nil {
 		span.AddEvent("snapshot.lock.acquire.failed", oteltrace.WithAttributes(lockAttrs...))
 		return fmt.Errorf("acquiring snapshot upload lock: %w", err)
@@ -139,14 +139,14 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	}
 
 	meta := IndexMeta{
-		GrafanaBuildVersion:   bi.BuildVersion,
+		BuildVersion:          bi.BuildVersion,
 		LatestResourceVersion: rv,
 	}
 	// bi.BuildTime is the original index creation time; it survives reopens and
 	// downloads, so periodic re-uploads keep the original build-start time.
 	// Guard zero so legacy indexes without BuildTime stay zero in the manifest.
 	if bi.BuildTime > 0 {
-		meta.BuildStartTimestamp = time.Unix(bi.BuildTime, 0).UTC()
+		meta.BuildTime = time.Unix(bi.BuildTime, 0).UTC()
 	}
 
 	uploadKey, err = b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, meta)

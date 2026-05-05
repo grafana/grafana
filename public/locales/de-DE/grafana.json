@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "Das Repository für den ausgewählten Ordner konnte nicht gefunden werden. Bitte stellen Sie sicher, dass der Ordner korrekt bereitgestellt wird.",
         "repository-not-found-title": "Repository nicht gefunden"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Fehler beim Verschieben von Ressourcen",
       "error-no-target-folder-path": "Der Zielordnerpfad ist ungültig oder leer, bitte wählen Sie ihn erneut aus.",
       "move-total": "Insgesamt betrifft dies:",
@@ -7313,6 +7314,7 @@
       "terraform": "Verwaltet von: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Dashboard konnte nicht verschoben werden",
       "cancel-action": "Abbrechen",
       "current-file-not-found": "Die aktuelle Dashboard-Datei konnte nicht gefunden werden",
@@ -15453,7 +15455,6 @@
       "forwards-time-aria-label": "Zeitbereich nach vorne verschieben",
       "to": "bis",
       "zoom-out-button": "Zeitbereich verkleinern",
-      "zoom-out-tooltip": "Zeitbereich verkleinern <br/> STRG+Z",
       "zoom-out-tooltip-new": "Zeitbereich verkleinern <br/> t -"
     },
     "time-range": {
