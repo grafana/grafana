@@ -450,7 +450,6 @@ func TestWrapper_Watch(t *testing.T) {
 		deniedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "denied"}}
 
 		allowedEvent := watch.Event{Type: watch.Added, Object: allowedObj}
-		deniedEvent := watch.Event{Type: watch.Added, Object: deniedObj}
 
 		fakeWatcher := watch.NewFake()
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
@@ -477,12 +476,15 @@ func TestWrapper_Watch(t *testing.T) {
 		event := <-w.ResultChan()
 		assert.Equal(t, allowedEvent, event)
 
-		// The denied event must not appear; close the watcher and drain to confirm.
+		// The denied event must not appear; close the inner watcher and drain
+		// the result channel in extra to confirm no other events were forwarded.
 		fakeWatcher.Stop()
-		for range w.ResultChan() {
+		var extra []watch.Event
+		for e := range w.ResultChan() {
+			extra = append(extra, e)
 		}
+		assert.Empty(t, extra, "no further events should have been forwarded")
 
-		_ = deniedEvent // referenced to confirm it is not received
 		setup.mockAuth.AssertExpectations(t)
 	})
 
