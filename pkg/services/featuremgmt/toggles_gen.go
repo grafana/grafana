@@ -722,6 +722,10 @@ const (
 	// Enable syncing plugin installations to the installs API
 	FlagPluginInstallAPISync = "pluginInstallAPISync"
 
+	// FlagGrafanaDedicatedGrafanaComProxyAPIToken
+	// Use a dedicated auth token for Grafana.com proxy requests and plugin installs
+	FlagGrafanaDedicatedGrafanaComProxyAPIToken = "grafana.dedicatedGrafanaComProxyAPIToken"
+
 	// FlagJaegerEnableGrpcEndpoint
 	// Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
 	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"

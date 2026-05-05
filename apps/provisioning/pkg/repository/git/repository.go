@@ -53,7 +53,7 @@ func NewRepository(
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
-	var opts []options.Option
+	opts := []options.Option{options.WithCapabilityNegotiation()}
 	if gitConfig.SkipGitSuffix {
 		opts = append(opts, options.WithoutGitSuffix())
 	}
