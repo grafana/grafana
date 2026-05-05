@@ -115,10 +115,34 @@ describe('annotationServer with kubernetesAnnotations toggle ON', () => {
     expect(tags).toEqual([{ term: 'a', count: 3 }]);
   });
 
-  it('query stays on the legacy /api/annotations endpoint', async () => {
-    getFn.mockResolvedValue([]);
-    await annotationServer().query({ from: 1 }, 'req-1');
-    expect(getFn).toHaveBeenCalledWith('/api/annotations', { from: 1 }, 'req-1');
+  it('query hits the k8s /search sub-resource and returns a DataFrame', async () => {
+    getFn.mockResolvedValue({
+      kind: 'AnnotationList',
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      metadata: {},
+      items: [
+        {
+          apiVersion: 'annotation.grafana.app/v0alpha1',
+          kind: 'Annotation',
+          metadata: { name: 'a-7', resourceVersion: '1', creationTimestamp: '' },
+          spec: { text: 'hi', time: 100, dashboardUID: 'd' },
+        },
+      ],
+    });
+
+    const frame = await annotationServer().query(
+      { from: 1, to: 2, dashboardUID: 'd', limit: 100, matchAny: false },
+      'req-1'
+    );
+
+    expect(getFn).toHaveBeenCalledWith(
+      `${baseURL}/search`,
+      { from: 1, to: 2, dashboardUID: 'd', limit: 100, tagsMatchAny: false },
+      'req-1'
+    );
+    expect(frame.length).toBe(1);
+    expect(frame.fields.find((f) => f.name === 'id')?.values[0]).toBe('7');
+    expect(frame.fields.find((f) => f.name === 'text')?.values[0]).toBe('hi');
   });
 
   it('forAlert stays on the legacy /api/annotations endpoint', async () => {

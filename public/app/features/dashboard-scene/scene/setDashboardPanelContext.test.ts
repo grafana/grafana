@@ -265,10 +265,12 @@ describe('setDashboardPanelContext', () => {
       try {
         const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
-        await context.onAnnotationDelete!('event-id-123');
+        // Bare numeric id from the legacy /api/annotations response — the k8s client
+        // is responsible for prefixing it with "a-" before hitting the new endpoint.
+        await context.onAnnotationDelete!('123');
 
         expect(deleteFn).toHaveBeenCalledWith(
-          '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/annotations/event-id-123',
+          '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/annotations/a-123',
           undefined,
           { showSuccessAlert: false }
         );

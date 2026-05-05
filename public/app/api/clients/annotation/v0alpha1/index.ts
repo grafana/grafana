@@ -8,6 +8,7 @@ import {
   ANNOTATION_API_VERSION,
   type Annotation,
   type AnnotationForCreate,
+  type AnnotationList,
   type AnnotationSpec,
   type AnnotationTagItem,
   type AnnotationTagList,
@@ -15,6 +16,7 @@ import {
 
 const ANNOTATIONS_RESOURCE = 'annotations';
 const TAGS_RESOURCE = 'tags';
+const SEARCH_RESOURCE = 'search';
 
 let cachedClient: ScopedResourceClient<AnnotationSpec, object, 'Annotation'> | null = null;
 
@@ -77,6 +79,81 @@ function toK8sName(id: string | number): string {
   return s.startsWith('a-') ? s : `a-${s}`;
 }
 
+// Inverse of toK8sName: strip the "a-" prefix from the resource name so callers
+// see the same id shape the legacy /api/annotations response used.
+function nameToLegacyId(name: string | undefined): string | undefined {
+  if (!name) {
+    return undefined;
+  }
+  return name.startsWith('a-') ? name.slice(2) : name;
+}
+
+/** Build the `AnnotationEvent`-shaped object that callers of the legacy
+ * /api/annotations response expect, from a k8s Annotation resource. */
+export function annotationToEvent(anno: Annotation): AnnotationEvent {
+  const { spec, metadata } = anno;
+  const event: AnnotationEvent = {
+    id: nameToLegacyId(metadata.name),
+    time: spec.time,
+    text: spec.text,
+  };
+  if (spec.timeEnd != null) {
+    event.timeEnd = spec.timeEnd;
+  }
+  if (spec.tags && spec.tags.length > 0) {
+    event.tags = spec.tags;
+  }
+  if (spec.dashboardUID) {
+    event.dashboardUID = spec.dashboardUID;
+  }
+  if (typeof spec.panelID === 'number') {
+    event.panelId = spec.panelID;
+  }
+  return event;
+}
+
+// Translate legacy-shaped params (matchAny, panelId, tags) to the names expected
+// by /search (tagsMatchAny, panelID, tag). Accepts a loose record because the
+// AnnotationServer.query interface is loosely typed; recognized keys
+// (see AnnotationSearchParams) are validated by type.
+function toSearchQueryParams(params: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (typeof params.from === 'number') {
+    out.from = params.from;
+  }
+  if (typeof params.to === 'number') {
+    out.to = params.to;
+  }
+  if (typeof params.limit === 'number') {
+    out.limit = params.limit;
+  }
+  if (typeof params.continue === 'string' && params.continue) {
+    out.continue = params.continue;
+  }
+  if (typeof params.dashboardUID === 'string' && params.dashboardUID) {
+    out.dashboardUID = params.dashboardUID;
+  }
+  if (typeof params.panelId === 'number') {
+    out.panelID = params.panelId;
+  }
+  if (Array.isArray(params.tags) && params.tags.length > 0) {
+    out.tag = params.tags;
+  }
+  if (typeof params.matchAny === 'boolean') {
+    out.tagsMatchAny = params.matchAny;
+  }
+  if (Array.isArray(params.scopes) && params.scopes.length > 0) {
+    out.scope = params.scopes;
+  }
+  if (typeof params.scopesMatchAny === 'boolean') {
+    out.scopesMatchAny = params.scopesMatchAny;
+  }
+  if (typeof params.createdBy === 'string' && params.createdBy) {
+    out.createdBy = params.createdBy;
+  }
+  return out;
+}
+
 /** Build the wire payload for a POST (create) request. */
 export function buildCreatePayload(event: AnnotationEvent, scopes?: string[]): AnnotationForCreate {
   return {
@@ -120,5 +197,11 @@ export const annotationK8sClient = {
     const url = `/apis/${ANNOTATION_API_GROUP}/${ANNOTATION_API_VERSION}/namespaces/${getAPINamespace()}/${TAGS_RESOURCE}`;
     const response = await getBackendSrv().get<AnnotationTagList>(url, { limit });
     return response.tags ?? [];
+  },
+
+  async search(params: Record<string, unknown>, requestId?: string): Promise<AnnotationEvent[]> {
+    const url = `/apis/${ANNOTATION_API_GROUP}/${ANNOTATION_API_VERSION}/namespaces/${getAPINamespace()}/${SEARCH_RESOURCE}`;
+    const response = await getBackendSrv().get<AnnotationList>(url, toSearchQueryParams(params), requestId);
+    return (response.items ?? []).map(annotationToEvent);
   },
 };

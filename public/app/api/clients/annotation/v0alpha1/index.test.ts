@@ -4,6 +4,7 @@ import { config, type BackendSrv, setBackendSrv } from '@grafana/runtime';
 import {
   annotationEventToSpec,
   annotationK8sClient,
+  annotationToEvent,
   buildCreatePayload,
   resetAnnotationK8sClientForTests,
 } from './index';
@@ -193,5 +194,93 @@ describe('annotationK8sClient', () => {
     getFn.mockResolvedValue({});
     const tags = await annotationK8sClient.tags();
     expect(tags).toEqual([]);
+  });
+
+  it('search hits /search, translates params, and unwraps items into AnnotationEvents', async () => {
+    getFn.mockResolvedValue({
+      kind: 'AnnotationList',
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      metadata: {},
+      items: [
+        {
+          apiVersion: 'annotation.grafana.app/v0alpha1',
+          kind: 'Annotation',
+          metadata: { name: 'a-7', resourceVersion: '1', creationTimestamp: '' },
+          spec: { text: 'hi', time: 100, timeEnd: 200, dashboardUID: 'd', panelID: 4, tags: ['t'] },
+        },
+        {
+          apiVersion: 'annotation.grafana.app/v0alpha1',
+          kind: 'Annotation',
+          metadata: { name: 'a-8', resourceVersion: '1', creationTimestamp: '' },
+          spec: { text: 'hello', time: 50 },
+        },
+      ],
+    });
+
+    const events = await annotationK8sClient.search(
+      {
+        from: 1,
+        to: 2,
+        limit: 50,
+        dashboardUID: 'd',
+        panelId: 4,
+        tags: ['a', 'b'],
+        matchAny: true,
+      },
+      'req-1'
+    );
+
+    expect(getFn).toHaveBeenCalledWith(
+      `${baseURL}/search`,
+      {
+        from: 1,
+        to: 2,
+        limit: 50,
+        dashboardUID: 'd',
+        panelID: 4,
+        tag: ['a', 'b'],
+        tagsMatchAny: true,
+      },
+      'req-1'
+    );
+
+    expect(events).toEqual([
+      { id: '7', time: 100, text: 'hi', timeEnd: 200, tags: ['t'], dashboardUID: 'd', panelId: 4 },
+      { id: '8', time: 50, text: 'hello' },
+    ]);
+  });
+
+  it('search omits empty tags/scopes and undefined params from the query string', async () => {
+    getFn.mockResolvedValue({ items: [] });
+    await annotationK8sClient.search({ from: 1, tags: [], scopes: [] });
+    const [, params] = getFn.mock.calls[0];
+    expect(params).toEqual({ from: 1 });
+  });
+
+  it('search returns [] when items is missing', async () => {
+    getFn.mockResolvedValue({});
+    expect(await annotationK8sClient.search({})).toEqual([]);
+  });
+});
+
+describe('annotationToEvent', () => {
+  it('strips the a- prefix and returns id as a string', () => {
+    const event = annotationToEvent({
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      kind: 'Annotation',
+      metadata: { name: 'a-42', resourceVersion: '1', creationTimestamp: '' },
+      spec: { text: 'x', time: 1 },
+    });
+    expect(event.id).toBe('42');
+  });
+
+  it('keeps the original name when the prefix is absent', () => {
+    const event = annotationToEvent({
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      kind: 'Annotation',
+      metadata: { name: 'foo', resourceVersion: '1', creationTimestamp: '' },
+      spec: { text: 'x', time: 1 },
+    });
+    expect(event.id).toBe('foo');
   });
 });

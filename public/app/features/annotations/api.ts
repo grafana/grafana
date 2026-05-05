@@ -48,13 +48,15 @@ class LegacyAnnotationServer implements AnnotationServer {
   }
 }
 
-// When kubernetesAnnotations is enabled, CRUD/tags go to annotation.grafana.app.
-// query/forAlert stay on legacy until a /search sub-resource is available.
+// When kubernetesAnnotations is enabled, CRUD/tags/query (dashboard annotations) go
+// to annotation.grafana.app. forAlert stays on legacy because the new /search
+// endpoint cannot filter by alertUID/type=alert (ListOptions has no Type/AlertUID).
 class K8sAnnotationServer implements AnnotationServer {
   private legacy = new LegacyAnnotationServer();
 
-  query(params: Record<string, unknown>, requestId: string): Promise<DataFrame> {
-    return this.legacy.query(params, requestId);
+  async query(params: Record<string, unknown>, requestId: string): Promise<DataFrame> {
+    const events = await annotationK8sClient.search(params, requestId);
+    return toDataFrame(events);
   }
 
   forAlert(alertUID: string): Promise<StateHistoryItem[]> {
