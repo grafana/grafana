@@ -41,6 +41,7 @@ export interface ModeOption {
 
 export const RepoTypeDisplay: { [key in RepoType]: string } = {
   github: 'GitHub',
+  github_enterprise: 'GitHub Enterprise',
   gitlab: 'GitLab',
   bitbucket: 'Bitbucket',
   git: 'Git',

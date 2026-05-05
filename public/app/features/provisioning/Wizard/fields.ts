@@ -278,6 +278,53 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         },
       },
     },
+    github_enterprise: {
+      token: {
+        label: t('provisioning.github-enterprise.token-label', 'Personal Access Token'),
+        description: t(
+          'provisioning.github-enterprise.token-description',
+          'GitHub Enterprise Personal Access Token with repository permissions'
+        ),
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        placeholder: 'ghp_xxxxxxxxxxxxxxxxxxxx',
+        required: true,
+        validation: {
+          required: t('provisioning.github-enterprise.token-required', 'GitHub Enterprise token is required'),
+        },
+      },
+      url: {
+        ...shared.url,
+        description: t(
+          'provisioning.github-enterprise.url-description',
+          'The GitHub Enterprise Server repository URL'
+        ),
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        placeholder: 'https://ghes.example.com/owner/repository',
+        required: true,
+        validation: {
+          ...shared.url.validation,
+          required: t('provisioning.github-enterprise.url-required', 'Repository URL is required'),
+        },
+      },
+      branch: {
+        ...shared.branch,
+        required: true,
+        validation: {
+          required: t('provisioning.github-enterprise.branch-required', 'Branch is required'),
+        },
+      },
+      path: {
+        ...shared.path,
+        required: false,
+      },
+      prWorkflow: {
+        label: t('provisioning.github-enterprise.pr-workflow-label', 'Enable pull request option when saving'),
+        description: t(
+          'provisioning.github-enterprise.pr-workflow-description', // trufflehog:ignore
+          'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
+        ),
+      },
+    },
   };
 };
 
