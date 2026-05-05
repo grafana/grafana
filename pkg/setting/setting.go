@@ -757,10 +757,10 @@ type InstallPlugin struct {
 }
 
 // ResolveGrafanaComProxyAPIToken must be called after OpenFeature is initialized.
-// It sets GrafanaComProxyAPIToken to the dedicated token when the dedicatedGrafanaComProxyAPIToken
+// It sets GrafanaComProxyAPIToken to the dedicated token when the grafana.dedicatedGrafanaComProxyAPIToken
 // flag is enabled and proxy_token is configured; otherwise falls back to sso_api_token.
 func (cfg *Cfg) ResolveGrafanaComProxyAPIToken() {
-	if openfeature.NewDefaultClient().Boolean(context.Background(), "dedicatedGrafanaComProxyAPIToken", false, openfeature.EvaluationContext{}) && cfg.GrafanaComProxyAPIToken != "" {
+	if openfeature.NewDefaultClient().Boolean(context.Background(), "grafana.dedicatedGrafanaComProxyAPIToken", false, openfeature.EvaluationContext{}) && cfg.GrafanaComProxyAPIToken != "" {
 		return
 	}
 	cfg.GrafanaComProxyAPIToken = cfg.GrafanaComSSOAPIToken

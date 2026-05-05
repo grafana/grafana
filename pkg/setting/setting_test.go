@@ -394,7 +394,7 @@ func TestResolveGrafanaComProxyAPIToken(t *testing.T) {
 			variant = "enabled"
 		}
 		p := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-			"dedicatedGrafanaComProxyAPIToken": {
+			"grafana.dedicatedGrafanaComProxyAPIToken": {
 				State:          memprovider.Enabled,
 				DefaultVariant: variant,
 				Variants:       map[string]any{"enabled": true, "disabled": false},

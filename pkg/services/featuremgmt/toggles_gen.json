@@ -2058,7 +2058,8 @@
       "metadata": {
         "name": "dedicatedGrafanaComProxyAPIToken",
         "resourceVersion": "1777425647409",
-        "creationTimestamp": "2026-04-29T01:20:47Z"
+        "creationTimestamp": "2026-04-29T01:20:47Z",
+        "deletionTimestamp": "2026-05-05T12:28:16Z"
       },
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
@@ -2619,6 +2620,19 @@
         "description": "Route any calls to legacy correlations endpoints to call through to app platform",
         "stage": "experimental",
         "codeowner": "@grafana/datapro",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.dedicatedGrafanaComProxyAPIToken",
+        "resourceVersion": "1777984096821",
+        "creationTimestamp": "2026-05-05T12:28:16Z"
+      },
+      "spec": {
+        "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
         "expression": "false"
       }
     },
