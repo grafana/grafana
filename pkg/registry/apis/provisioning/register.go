@@ -243,7 +243,8 @@ func NewAPIBuilder(
 		folderAPIVersion:                    folderAPIVersion,
 		incrementalPolicy:                   incrementalPolicy,
 		// Default cap for the files API. Callers (e.g. RegisterAPIService)
-		// may overwrite b.maxFileSize after construction; 0 disables the cap.
+		// may overwrite b.maxFileSize after construction; any non-positive
+		// value (<=0) disables the cap.
 		maxFileSize: 5 * 1024 * 1024,
 	}
 

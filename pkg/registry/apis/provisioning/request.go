@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -33,7 +35,9 @@ func readBody(r *http.Request, maxSize int64) ([]byte, error) {
 	if err != nil {
 		var maxBytesError *http.MaxBytesError
 		if errors.As(err, &maxBytesError) {
-			return nil, fmt.Errorf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize)
+			return nil, apierrors.NewRequestEntityTooLargeError(
+				fmt.Sprintf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize),
+			)
 		}
 		return nil, fmt.Errorf("error reading request body: %w", err)
 	}

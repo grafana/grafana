@@ -49,6 +49,19 @@ func TestIntegrationProvisioning_MaxFileSize_RawRead(t *testing.T) {
 		defer resp.Body.Close()
 
 		require.Equal(t, http.StatusOK, resp.StatusCode, "small README should be served")
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var wrapper struct {
+			Resource struct {
+				File struct {
+					Content string `json:"content"`
+				} `json:"file"`
+			} `json:"resource"`
+		}
+		require.NoError(t, json.Unmarshal(body, &wrapper))
+		require.Equal(t, string(smallReadme), wrapper.Resource.File.Content,
+			"under-limit raw file should be served verbatim")
 	})
 
 	t.Run("GET raw file over limit returns 413", func(t *testing.T) {
@@ -107,6 +120,8 @@ func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 		Do(ctx).StatusCode(&statusCode)
 
 	require.Error(t, result.Error(), "oversized POST should be rejected")
+	require.Equal(t, http.StatusRequestEntityTooLarge, statusCode,
+		"oversized POST should return HTTP 413; got %v", result.Error())
 	require.Contains(t, result.Error().Error(), "request body too large",
 		"error should advertise the size cap; got %v", result.Error())
 }

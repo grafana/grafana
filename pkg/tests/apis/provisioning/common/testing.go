@@ -1217,9 +1217,9 @@ func WithProvisioningMaxIncrementalChanges(n int) GrafanaOption {
 
 // WithProvisioningMaxFileSize overrides the per-file size cap enforced by the
 // files API on both reads and writes. A small value (e.g. 1024) keeps the
-// fixture cheap to generate; 0 disables the check entirely. Pass an int64 —
-// the helper takes its address so GrafanaOpts can distinguish "not set" (nil)
-// from an explicit 0.
+// fixture cheap to generate; any non-positive value (<=0) disables the check
+// entirely. Pass an int64 — the helper takes its address so GrafanaOpts can
+// distinguish "not set" (nil) from an explicit 0.
 func WithProvisioningMaxFileSize(n int64) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningMaxFileSize = &n
