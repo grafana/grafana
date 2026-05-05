@@ -22,7 +22,8 @@ import (
 )
 
 type uploadTestStore struct {
-	lockErr error
+	lockErr          error
+	lockBuildVersion string
 
 	uploadErr   error
 	uploadCalls atomic.Int32
@@ -39,7 +40,8 @@ type uploadTestStore struct {
 	probeGetCalls atomic.Int32
 }
 
-func (s *uploadTestStore) LockBuildIndex(context.Context, resource.NamespacedResource) (IndexStoreLock, error) {
+func (s *uploadTestStore) LockBuildIndex(_ context.Context, _ resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	s.lockBuildVersion = buildVersion
 	if s.lockErr != nil {
 		return nil, s.lockErr
 	}
@@ -192,6 +194,7 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	assert.Equal(t, int32(1), store.uploadCalls.Load())
 	assert.Equal(t, int64(42), store.uploadMeta.LatestResourceVersion)
 	assert.Equal(t, be.opts.BuildVersion, store.uploadMeta.BuildVersion)
+	assert.Equal(t, be.opts.BuildVersion, store.lockBuildVersion)
 	// BuildTime must be populated from the index's internal build
 	// info (set by newBleveIndex), not left zero. Compare with second-level
 	// granularity since buildInfo persists Unix seconds.

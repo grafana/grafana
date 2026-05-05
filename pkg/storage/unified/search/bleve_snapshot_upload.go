@@ -83,7 +83,7 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 
 	lockAttrs := append([]attribute.KeyValue{attribute.String("lock_scope", "build")}, commonSpanAttrs...)
 	span.AddEvent("snapshot.lock.acquire.started", oteltrace.WithAttributes(lockAttrs...))
-	lock, err := b.opts.Snapshot.Store.LockBuildIndex(ctx, key)
+	lock, err := b.opts.Snapshot.Store.LockBuildIndex(ctx, key, b.opts.BuildVersion)
 	if err != nil {
 		span.AddEvent("snapshot.lock.acquire.failed", oteltrace.WithAttributes(lockAttrs...))
 		return fmt.Errorf("acquiring snapshot upload lock: %w", err)

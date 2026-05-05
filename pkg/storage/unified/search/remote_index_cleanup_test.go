@@ -519,8 +519,8 @@ func (s *recordingStore) CleanupIncompleteUploads(ctx context.Context, r resourc
 	s.mu.Unlock()
 	return s.inner.CleanupIncompleteUploads(ctx, r, minAge)
 }
-func (s *recordingStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource) (IndexStoreLock, error) {
-	return s.inner.LockBuildIndex(ctx, r)
+func (s *recordingStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
 func (s *recordingStore) UploadIndex(ctx context.Context, r resource.NamespacedResource, dir string, m IndexMeta) (ulid.ULID, error) {
 	return s.inner.UploadIndex(ctx, r, dir, m)
@@ -644,8 +644,8 @@ func (s *controllableLockStore) CleanupIncompleteUploads(ctx context.Context, r 
 	}
 	return out, err
 }
-func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource) (IndexStoreLock, error) {
-	return s.inner.LockBuildIndex(ctx, r)
+func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
 func (s *controllableLockStore) UploadIndex(ctx context.Context, r resource.NamespacedResource, dir string, m IndexMeta) (ulid.ULID, error) {
 	return s.inner.UploadIndex(ctx, r, dir, m)

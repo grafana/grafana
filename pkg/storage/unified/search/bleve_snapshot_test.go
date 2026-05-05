@@ -103,7 +103,7 @@ func (f *fakeRemoteIndexStore) DownloadIndex(_ context.Context, _ resource.Names
 	return meta, writeFakeSnapshot(destDir, meta)
 }
 
-func (f *fakeRemoteIndexStore) LockBuildIndex(context.Context, resource.NamespacedResource) (IndexStoreLock, error) {
+func (f *fakeRemoteIndexStore) LockBuildIndex(context.Context, resource.NamespacedResource, string) (IndexStoreLock, error) {
 	return &noopIndexStoreLock{lost: make(chan struct{})}, nil
 }
 
