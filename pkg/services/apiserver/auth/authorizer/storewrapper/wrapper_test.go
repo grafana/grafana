@@ -479,7 +479,7 @@ func TestWrapper_Watch(t *testing.T) {
 		// The denied event must not appear; close the inner watcher and drain
 		// the result channel in extra to confirm no other events were forwarded.
 		fakeWatcher.Stop()
-		var extra []watch.Event
+		extra := make([]watch.Event, 0, len(w.ResultChan()))
 		for e := range w.ResultChan() {
 			extra = append(extra, e)
 		}
