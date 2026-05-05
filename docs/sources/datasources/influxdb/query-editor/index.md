@@ -209,7 +209,7 @@ ORDER BY c.time
 **Filtering with WHERE clauses:**
 
 ```sql
-SELECT $__dateBin(time), mean(usage_system) AS avg_system
+SELECT $__dateBin(time) AS time, mean(usage_system) AS avg_system
 FROM cpu
 WHERE $__timeFilter(time)
   AND host = 'server01'
