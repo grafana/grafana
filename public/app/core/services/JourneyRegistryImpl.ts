@@ -2,13 +2,17 @@ import {
   type JourneyHandle,
   type JourneyMeta,
   type JourneyRegistry,
+  type JourneyTracker,
   type JourneyTriggersFn,
   type JourneyInstanceFn,
   getJourneyTracker,
 } from '@grafana/runtime';
+import { type JourneyStartOptions } from '@grafana/runtime/internal';
 import { createDebugLog } from 'app/core/utils/debugLog';
 
 const debugLog = createDebugLog('journeyTracker', 'JourneyRegistry');
+
+const JOURNEY_TYPE_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 /**
  * Implementation of JourneyRegistry (hybrid: metadata registry + split triggers).
@@ -36,6 +40,14 @@ export class JourneyRegistryImpl implements JourneyRegistry {
 
   init(metadataList: JourneyMeta[]): void {
     for (const meta of metadataList) {
+      // Match cuj-new.ts scaffolder: snake_case only. Other characters (notably ':')
+      // collide with Tempo span-name namespacing (`journey:<type>`, `step:<name>`)
+      // and break TraceQL filters.
+      if (!JOURNEY_TYPE_PATTERN.test(meta.type)) {
+        throw new Error(
+          `[JourneyRegistry] invalid journey type "${meta.type}". Must match ${JOURNEY_TYPE_PATTERN} (snake_case).`
+        );
+      }
       this.metadata.set(meta.type, meta);
     }
   }
@@ -149,16 +161,18 @@ export class JourneyRegistryImpl implements JourneyRegistry {
   /**
    * Create a wrapped tracker that intercepts startJourney to apply registry
    * metadata (timeoutMs, cancelOnRestart) and automatically attach end handlers.
+   *
+   * The wrapper accepts the public {@link JourneyOptions} from feature callers and
+   * produces a {@link JourneyStartOptions} (registry-only fields included) for the
+   * underlying impl. This split makes it impossible for a feature caller to set
+   * `cancelOnRestart` or `parents` directly - those are registry territory.
    */
-  private createWrappedTracker(
-    tracker: ReturnType<typeof getJourneyTracker>,
-    meta: JourneyMeta
-  ): ReturnType<typeof getJourneyTracker> {
+  private createWrappedTracker(tracker: JourneyTracker, meta: JourneyMeta): JourneyTracker {
     return {
       startJourney: (journeyType, options) => {
         // Merge registry metadata with caller options (caller wins on conflict).
         // Filter out explicit undefined values from options to prevent overriding registry defaults.
-        const mergedOptions = {
+        const mergedOptions: JourneyStartOptions & { timeoutMs: number } = {
           timeoutMs: meta.timeoutMs,
           cancelOnRestart: meta.cancelOnRestart ?? true,
           parents: meta.parents,

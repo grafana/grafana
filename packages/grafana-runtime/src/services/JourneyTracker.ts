@@ -58,7 +58,7 @@ export interface JourneyStartOptions extends JourneyOptions {
   /** Parent journey types from {@link JourneyMeta.parents}. */
   /** @internal - set by registry, not by callers */
   cancelOnRestart?: boolean;
-  /** @internal - set by registry from JourneyMeta.parents, not by callers */
+  /** Parent journey types from {@link JourneyMeta.parents}. */
   parents?: string[];
 }
 

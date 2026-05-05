@@ -2,13 +2,13 @@ import { type Span, type Tracer, context, trace, SpanStatusCode, type Link } fro
 
 import {
   type JourneyHandle,
-  type JourneyOptions,
   type JourneyOutcome,
   type JourneyTracker,
   type StepHandle,
   config,
   logMeasurement,
 } from '@grafana/runtime';
+import { type JourneyStartOptions } from '@grafana/runtime/internal';
 import { createDebugLog } from 'app/core/utils/debugLog';
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
@@ -55,7 +55,7 @@ export class JourneyTrackerImpl implements JourneyTracker {
     this.setupBeforeUnload();
   }
 
-  startJourney(journeyType: string, options?: JourneyOptions): JourneyHandle {
+  startJourney(journeyType: string, options?: JourneyStartOptions): JourneyHandle {
     const cancelOnRestart = options?.cancelOnRestart ?? true;
 
     // Cancel existing journey of the same type when cancelOnRestart is true
@@ -89,7 +89,12 @@ export class JourneyTrackerImpl implements JourneyTracker {
     let concurrentIdx = 0;
     let totalConcurrent = 0;
 
-    for (const handle of this.activeJourneys.values()) {
+    // Snapshot the active journeys: any future logic that ends a journey inside
+    // this loop would mutate activeJourneys (via the cleanup callback) while
+    // iterating. Today nothing in this loop ends a journey, but the snapshot
+    // makes it safe for the next maintainer to add such logic.
+    const activeSnapshot = [...this.activeJourneys.values()];
+    for (const handle of activeSnapshot) {
       if (handle === parentHandle) {
         continue;
       }

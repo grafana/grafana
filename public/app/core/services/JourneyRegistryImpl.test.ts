@@ -1,4 +1,5 @@
-import { type JourneyHandle, type JourneyMeta, type JourneyTracker, setJourneyTracker } from '@grafana/runtime';
+import { type JourneyHandle, type JourneyMeta, type JourneyTracker } from '@grafana/runtime';
+import { setJourneyTracker } from '@grafana/runtime/internal';
 
 import { JourneyRegistryImpl } from './JourneyRegistryImpl';
 
@@ -76,6 +77,18 @@ describe('JourneyRegistryImpl', () => {
   // -------------------------------------------------------------------------
   // init and metadata
   // -------------------------------------------------------------------------
+
+  it.each([
+    ['Foo'], // uppercase
+    ['foo:bar'], // colon collides with span-name namespacing
+    ['foo-bar'], // hyphen
+    ['1foo'], // leading digit
+    [''], // empty
+    ['foo bar'], // space
+  ])('should reject invalid journey type %p in init()', (type) => {
+    const fresh = new JourneyRegistryImpl();
+    expect(() => fresh.init([{ type, description: 'd', owner: 'o', timeoutMs: 1000 }])).toThrow(/invalid journey type/);
+  });
 
   // -------------------------------------------------------------------------
   // registerTriggers - validation
