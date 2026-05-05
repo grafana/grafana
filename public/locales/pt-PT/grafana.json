@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Editar YAML",
         "save": "Guardar"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Eliminar todas as regras"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Eliminar",
       "delete-modal-delete-button": "Eliminar",
@@ -1573,8 +1575,14 @@
         "update-error": "Falha ao atualizar o grupo de regras",
         "update-success": "Grupo de regras atualizado com sucesso"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "O grupo selecionado não pode ser editado",
       "group-not-editable-description": "Este grupo pertence a uma origem de dados que não suporta edição.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Editar grupo de regras",
       "rule-group-error": "Erro ao carregar grupo de regras"
     },
@@ -4314,6 +4322,7 @@
         "repository-not-found-message": "Não foi possível encontrar o repositório para a pasta selecionada. Certifique-se de que a pasta está aprovisionada corretamente.",
         "repository-not-found-title": "Repositório não encontrado"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Erro ao mover recursos",
       "error-no-target-folder-path": "O caminho da pasta de destino é inválido ou está vazio, selecione novamente.",
       "move-total": "No total, isto afetará:",
@@ -7305,6 +7314,7 @@
       "terraform": "Gerido por: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Não foi possível mover o painel de controlo",
       "cancel-action": "Cancelar",
       "current-file-not-found": "Não foi possível encontrar o ficheiro do painel de controlo atual",
@@ -8136,6 +8146,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Adicionar aos favoritos",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Explorar dados",
       "open-in-explore": "Abrir na vista Explorar",
       "remove-favorite": "Remover dos favoritos"
@@ -13826,7 +13842,8 @@
       "make-sure": "Criar um token com estas permissões"
     },
     "validation": {
-      "hidden-characters": "Este campo contém caracteres ocultos que podem ter sido introduzidos ao copiar e colar. Introduza o valor novamente ou limpe-o e tente novamente."
+      "hidden-characters": "Este campo contém caracteres ocultos que podem ter sido introduzidos ao copiar e colar. Introduza o valor novamente ou limpe-o e tente novamente.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Aviso",
     "watch-stream": {
@@ -14234,6 +14251,8 @@
       "alerts-loading": "Alertas",
       "card-click": "Selecionar cartão {{id}}",
       "data": "Dados",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Novo {{type}}",
       "queries-expressions": "Consultas e expressões",
       "toggle-size": "Alternar tamanho da barra lateral",
@@ -14950,10 +14969,13 @@
       "title": "Crie painéis de controlo rapidamente com sugestões e modelos"
     },
     "nav": {
+      "counter": "",
       "go-to": "Ir para o diapositivo {{number}}",
-      "next": "Seguinte",
-      "prev": "Anterior"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Explicar a consulta",
@@ -15433,7 +15455,6 @@
       "forwards-time-aria-label": "Mover o intervalo de tempo para a frente",
       "to": "para",
       "zoom-out-button": "Diminuir o zoom do intervalo de tempo",
-      "zoom-out-tooltip": "Diminuir o zoom do intervalo de tempo <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Diminuir o zoom do intervalo de tempo <br/> t -"
     },
     "time-range": {

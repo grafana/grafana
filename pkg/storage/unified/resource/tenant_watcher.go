@@ -282,7 +282,7 @@ func (tw *TenantWatcher) startPolling(ctx context.Context) {
 	}
 }
 
-// runPollCycle does one poll cycle: paginated LIST of pending-delete tenants,
+// runPollCycle does one poll cycle: paginated LIST of all tenants,
 // reconcile each, then clear KV records for tenants that dropped out of the
 // filtered view. Memory is bounded to one page plus the liveNames set.
 func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
@@ -309,9 +309,8 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 		}
 
 		page, err := tw.client.Resource(tenantGVR).List(listCtx, metav1.ListOptions{
-			Limit:         pollPageSize,
-			Continue:      continueToken,
-			LabelSelector: labelPendingDelete + "=true",
+			Limit:    pollPageSize,
+			Continue: continueToken,
 		})
 		if err != nil {
 			tw.log.Error("tenant watcher poll cycle: list failed, skipping clear phase",
@@ -326,6 +325,9 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 		pageCount++
 		for i := range page.Items {
 			item := &page.Items[i]
+			if item.GetLabels()[labelPendingDelete] != "true" {
+				continue
+			}
 			liveNames[item.GetName()] = struct{}{}
 			tw.handleTenant(listCtx, item)
 		}
@@ -359,7 +361,7 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 	// Go through all pending delete records and reconcile against the pending-delete tenants from the List above
 	clearCtx, clearSpan := tracer.Start(ctx, "resource.TenantWatcher.runPollCycle.clear")
 	clearStart := time.Now()
-	var cleared, leftForDeleter, scanned, raced, orphanedSkipped, markedOrphaned int
+	var cleared, leftForDeleter, scanned, raced, orphanedSkipped, markedOrphaned, deletedSkipped int
 	for name, err := range tw.pendingDeleteStore.Names(clearCtx) {
 		if err != nil {
 			tw.log.Error("tenant watcher poll cycle: failed to list kv records", "error", err)
@@ -398,6 +400,10 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 			orphanedSkipped++
 			continue
 		}
+		if record.DeletedAt != "" {
+			deletedSkipped++
+			continue
+		}
 		got, err := tw.client.Resource(tenantGVR).Get(ctx, name, metav1.GetOptions{})
 		// if not found then the tenant was deleted in the tenant api - so keep the record
 		if apierrors.IsNotFound(err) {
@@ -433,6 +439,7 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 		attribute.Int("cleared", cleared),
 		attribute.Int("left_for_deleter", leftForDeleter),
 		attribute.Int("marked_orphaned", markedOrphaned),
+		attribute.Int("deleted_skipped", deletedSkipped),
 		attribute.Int("raced", raced),
 		attribute.Int("orphaned_skipped", orphanedSkipped),
 		attribute.Int64("duration_ms", clearDuration.Milliseconds()),
@@ -446,6 +453,7 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 		"cleared", cleared,
 		"left_for_deleter", leftForDeleter,
 		"marked_orphaned", markedOrphaned,
+		"deleted_skipped", deletedSkipped,
 		"raced", raced,
 		"orphaned_skipped", orphanedSkipped,
 		"list_duration", listDuration,

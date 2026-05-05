@@ -477,6 +477,26 @@ describe('linkSrv', () => {
       });
     });
 
+    describe('when called with a DataFrame that contains a nestedFrames field', () => {
+      it('then it should skip the nestedFrames field and return suggestions for other fields', () => {
+        const frame = toDataFrame({
+          name: 'events',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'nested', type: FieldType.nestedFrames, values: [] },
+            { name: 'value', type: FieldType.number, values: [10, 11, 12] },
+          ],
+        });
+
+        const suggestions = getDataFrameVars([frame]);
+
+        const labels = suggestions.map((s) => s.label);
+        expect(labels).not.toContain('nested');
+        expect(labels).toContain('time');
+        expect(labels).toContain('value');
+      });
+    });
+
     describe('when called with multiple DataFrames', () => {
       it('it should not return any suggestions', () => {
         const frame1 = toDataFrame({

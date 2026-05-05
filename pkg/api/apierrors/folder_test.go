@@ -1,4 +1,4 @@
-package apierrors
+package apierrors_test
 
 import (
 	"errors"
@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -32,6 +34,11 @@ func TestToFolderErrorResponse(t *testing.T) {
 			name:  "maximum depth reached",
 			input: folder.ErrMaximumDepthReached.Errorf("Maximum nested folder depth reached"),
 			want:  response.Error(http.StatusBadRequest, "[folder.maximum-depth-reached] Maximum nested folder depth reached", nil),
+		},
+		{
+			name:  "maximum depth reached (validate.go call site)",
+			input: folder.ErrMaximumDepthReached.Errorf("folder max depth exceeded, max depth is %d", 4),
+			want:  response.Error(http.StatusBadRequest, "[folder.maximum-depth-reached] folder max depth exceeded, max depth is 4", nil),
 		},
 		{
 			name:  "bad request errors",
@@ -75,9 +82,19 @@ func TestToFolderErrorResponse(t *testing.T) {
 			want:  response.Error(http.StatusBadRequest, "uid contains illegal characters", dashboards.ErrDashboardInvalidUid),
 		},
 		{
+			name:  "dashboard invalid uid (apiserver wrapped)",
+			input: folders.ErrAPIInvalidUID,
+			want:  response.Error(http.StatusBadRequest, "uid contains illegal characters", folders.ErrAPIInvalidUID),
+		},
+		{
 			name:  "dashboard uid too long",
 			input: dashboards.ErrDashboardUidTooLong,
 			want:  response.Error(http.StatusBadRequest, "uid too long, max 40 characters", dashboards.ErrDashboardUidTooLong),
+		},
+		{
+			name:  "dashboard uid too long (apiserver wrapped)",
+			input: folders.ErrAPIUIDTooLong,
+			want:  response.Error(http.StatusBadRequest, "uid too long, max 40 characters", folders.ErrAPIUIDTooLong),
 		},
 		{
 			name:  "folder cannot be parent of itself",
@@ -229,7 +246,7 @@ func TestToFolderErrorResponse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resp := ToFolderErrorResponse(tt.input)
+			resp := apierrors.ToFolderErrorResponse(tt.input)
 			require.Equal(t, tt.want, resp)
 		})
 	}

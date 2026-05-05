@@ -59,6 +59,7 @@ export function toMatchUPlotSnapshot(
     const testName = this.currentTestName ?? '';
     const payload: UPlotComparePayload = {
       testName,
+      testPath: this.testPath,
       expected: parsedExpected,
       actual: received,
       uPlotCanvasEvents: uPlotCanvasEvents,

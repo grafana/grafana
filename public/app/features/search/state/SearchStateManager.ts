@@ -6,7 +6,12 @@ import { locationService } from '@grafana/runtime';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
-import { SEARCH_PANELS_LOCAL_STORAGE_KEY, SEARCH_SELECTED_LAYOUT, SEARCH_SELECTED_SORT } from '../constants';
+import {
+  RECENTLY_DELETED_SORT_VALUES,
+  SEARCH_PANELS_LOCAL_STORAGE_KEY,
+  SEARCH_SELECTED_LAYOUT,
+  SEARCH_SELECTED_SORT,
+} from '../constants';
 import {
   reportDashboardListViewed,
   reportSearchFailedQueryInteraction,
@@ -41,13 +46,8 @@ export const defaultQueryParams: SearchQueryParams = {
   createdBy: null,
 };
 
-const getLocalStorageLayout = () => {
-  const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT);
-  if (selectedLayout === SearchLayout.List) {
-    return SearchLayout.List;
-  } else {
-    return SearchLayout.Folders;
-  }
+const getLayoutFromStore = (key: string) => {
+  return store.get(key) === SearchLayout.List ? SearchLayout.List : SearchLayout.Folders;
 };
 
 type SearchReportInfo = Parameters<typeof reportSearchQueryInteraction>[1];
@@ -70,6 +70,9 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   lastSearchTimestamp = 0;
 
+  protected sortStorageKey = SEARCH_SELECTED_SORT;
+  protected layoutStorageKey = SEARCH_SELECTED_LAYOUT;
+
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
@@ -78,8 +81,19 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       stateFromUrl.layout = SearchLayout.List;
     }
 
-    const layout = getLocalStorageLayout();
-    const prevSort = localStorage.getItem(SEARCH_SELECTED_SORT) ?? undefined;
+    const layout = getLayoutFromStore(this.layoutStorageKey);
+    let prevSort: string | undefined = store.get(this.sortStorageKey) || undefined;
+
+    // Guard against stale recently-deleted sort values persisted to the main sort key
+    // before this fix was introduced. Clear them so the main page renders correctly.
+    if (this.sortStorageKey === SEARCH_SELECTED_SORT && prevSort !== undefined) {
+      const recentlyDeletedValues: string[] = [...RECENTLY_DELETED_SORT_VALUES];
+      if (recentlyDeletedValues.includes(prevSort)) {
+        store.delete(SEARCH_SELECTED_SORT);
+        prevSort = undefined;
+      }
+    }
+
     const sort = layout === SearchLayout.List ? stateFromUrl.sort || prevSort : null;
 
     this.setState({
@@ -102,7 +116,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
    * Updates internal and url state, then triggers a new search
    */
   setStateAndDoSearch(state: Partial<SearchState>) {
-    const sort = state.sort || this.state.sort || localStorage.getItem(SEARCH_SELECTED_SORT) || undefined;
+    const sort = state.sort || this.state.sort || store.get(this.sortStorageKey) || undefined;
 
     // Set internal state
     this.setState({ sort, ...state });
@@ -200,11 +214,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   onSortChange = (sort: string | undefined) => {
     if (sort) {
-      localStorage.setItem(SEARCH_SELECTED_SORT, sort);
+      store.set(this.sortStorageKey, sort);
       // Switch to list view if sort is set to preserve sort order when navigating back
-      localStorage.setItem(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
+      store.set(this.layoutStorageKey, SearchLayout.List);
     } else {
-      localStorage.removeItem(SEARCH_SELECTED_SORT);
+      store.delete(this.sortStorageKey);
     }
 
     if (this.state.layout === SearchLayout.Folders) {
@@ -215,7 +229,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   onLayoutChange = (layout: SearchLayout) => {
-    localStorage.setItem(SEARCH_SELECTED_LAYOUT, layout);
+    store.set(this.layoutStorageKey, layout);
 
     if (this.state.sort && layout === SearchLayout.Folders) {
       this.setStateAndDoSearch({ layout, prevSort: this.state.sort, sort: undefined });
@@ -342,8 +356,7 @@ let stateManager: SearchStateManager;
 
 export function getSearchStateManager() {
   if (!stateManager) {
-    const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
-    const layout = selectedLayout ?? initialState.layout;
+    const layout = getLayoutFromStore(SEARCH_SELECTED_LAYOUT);
 
     let includePanels = store.getBool(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
     if (includePanels) {

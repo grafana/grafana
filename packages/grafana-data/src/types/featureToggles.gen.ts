@@ -1131,11 +1131,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
-  * Enables restore deleted dashboards feature
-  * @default true
-  */
-  restoreDashboards?: boolean;
-  /**
   * Enables recently viewed dashboards section in the browsing dashboard page
   * @default false
   */
@@ -1476,6 +1471,11 @@ export interface FeatureToggles {
   * @default false
   */
   queryEditorNext?: boolean;
+  /**
+  * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
+  * @default false
+  */
+  queryEditorNextMultiSelect?: boolean;
   /**
   * Enables search for team bindings in the app platform API
   * @default false

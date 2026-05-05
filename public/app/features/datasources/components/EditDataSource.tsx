@@ -1,9 +1,10 @@
 import { type AnyAction } from '@reduxjs/toolkit';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import * as React from 'react';
 
 import {
   DataSourcePluginContextProvider,
+  type DataSourceConfigValidationAPI,
   type DataSourcePluginMeta,
   type DataSourceSettings as DataSourceSettingsType,
   PluginExtensionPoints,
@@ -28,7 +29,7 @@ import {
   useTestDataSource,
   useUpdateDatasource,
 } from '../state/hooks';
-import { setIsDefault, setDataSourceName, dataSourceLoaded } from '../state/reducers';
+import { setIsDefault, setDataSourceName, dataSourceLoaded, testDataSourceFailed } from '../state/reducers';
 import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { type DataSourceRights } from '../types';
 
@@ -113,10 +114,50 @@ export function EditDataSourceView({
   onTest,
   onUpdate,
 }: ViewProps) {
+  const dispatch = useDispatch();
   const { plugin, loadError, testingStatus, loading } = dataSourceSettings;
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0 && dataSource.uid;
   const { components, isLoading } = useDataSourceConfigPluginExtensions();
+
+  // Validation API passed to the config editor. validate() is called in onSubmit
+  // — if it returns false the save and health check are both skipped.
+  // Errors are stored in a ref so the validation object stays stable (same
+  // reference across renders). Inline error display in the plugin uses its own
+  // local useState — it does not depend on this store for re-renders.
+  const validators = useRef(new Set<() => Promise<boolean> | boolean>());
+  const validationErrorsRef = useRef<Record<string, string>>({});
+
+  const validationRef = useRef<DataSourceConfigValidationAPI | null>(null);
+  if (!validationRef.current) {
+    validationRef.current = {
+      registerValidation(validator) {
+        validators.current.add(validator);
+        return () => validators.current.delete(validator);
+      },
+      async validate() {
+        const results = await Promise.all(Array.from(validators.current).map((v) => Promise.resolve(v())));
+        return results.every(Boolean);
+      },
+      isValid() {
+        return Object.keys(validationErrorsRef.current).length === 0;
+      },
+      getErrors() {
+        return validationErrorsRef.current;
+      },
+      setError(field, message) {
+        validationErrorsRef.current = { ...validationErrorsRef.current, [field]: message };
+      },
+      clearError(field) {
+        if (field in validationErrorsRef.current) {
+          const next = { ...validationErrorsRef.current };
+          delete next[field];
+          validationErrorsRef.current = next;
+        }
+      },
+    };
+  }
+  const validation = validationRef.current;
   const retryAdvisorCheck = useRetryDatasourceAdvisorCheck();
   // This is a workaround to avoid race-conditions between the `setSecureJsonData()` and `setJsonData()` calls instantiated by the extension components.
   // Both those exposed functions are calling `onOptionsChange()` with the new jsonData and secureJsonData, and if they are called in the same tick, the Redux store
@@ -136,24 +177,37 @@ export function EditDataSourceView({
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
-  const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    trackDsConfigClicked('save_and_test');
+  const onSubmit = useCallback(
+    async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      trackDsConfigClicked('save_and_test');
 
-    try {
-      await onUpdate({ ...dataSource });
-      trackDsConfigUpdated({ item: 'success' });
-      appEvents.publish(new DataSourceUpdatedSuccessfully());
-    } catch (error) {
-      trackDsConfigUpdated({ item: 'fail' });
-      return;
-    }
+      const valid = await validation.validate();
+      if (!valid) {
+        // Inline errors are already shown via validation.setError calls inside the
+        // registered validators. Also surface a summary in the standard testing-status
+        // slot so the user knows why save was blocked.
+        const errors = validation.getErrors();
+        const message = Object.values(errors).join(' · ') || 'Please fill in all required fields.';
+        dispatch(testDataSourceFailed({ message, status: 'error' }));
+        return;
+      }
 
-    retryAdvisorCheck(dataSource.uid).catch((error) => {
-      console.warn('Error retrying datasource advisor check', error);
-    });
-    onTest();
-  };
+      try {
+        await onUpdate({ ...dataSource });
+        trackDsConfigUpdated({ item: 'success' });
+        appEvents.publish(new DataSourceUpdatedSuccessfully());
+      } catch (error) {
+        trackDsConfigUpdated({ item: 'fail' });
+        return;
+      }
+      retryAdvisorCheck(dataSource.uid).catch((error) => {
+        console.warn('Error retrying datasource advisor check', error);
+      });
+      onTest();
+    },
+    [validation, onUpdate, dataSource, onTest, dispatch, retryAdvisorCheck]
+  );
 
   if (loading || isLoading) {
     return <PageLoader />;
@@ -203,6 +257,7 @@ export function EditDataSourceView({
             dataSource={dataSourceWithIsPDCInjected}
             dataSourceMeta={dataSourceMeta}
             onModelChange={onOptionsChange}
+            validation={validation}
           />
         </DataSourcePluginContextProvider>
       )}

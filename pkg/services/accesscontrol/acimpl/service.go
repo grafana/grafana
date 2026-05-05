@@ -72,7 +72,7 @@ func ProvideService(
 	)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features, zanzanaClient).RegisterAPIEndpoints()
-	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
+	if err := accesscontrol.DeclareFixedRoles(service); err != nil {
 		return nil, err
 	}
 
