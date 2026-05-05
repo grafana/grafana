@@ -2,7 +2,6 @@ package pluginproxy
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -23,9 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// Get access to the decrypted secure values after other checks have passed
-type SecureJsonData = func(context.Context) (map[string]string, error)
-
 type PluginProxy struct {
 	accessControl    ac.AccessControl
 	ps               *pluginsettings.DTO
@@ -37,7 +33,7 @@ type PluginProxy struct {
 	matchedRoute     *plugins.Route
 	dataProxyLogging bool // from cfg
 	sendUserHeader   bool // from cfg
-	secureJsonData   SecureJsonData
+	secureJsonData   pluginsettings.SecureJsonGetter
 	tracer           tracing.Tracer
 	transport        *http.Transport
 	features         featuremgmt.FeatureToggles
@@ -48,7 +44,7 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route,
 	r *http.Request, w http.ResponseWriter, signedInUser identity.Requester,
 	proxyPath string,
 	dataProxyLogging bool, sendUserHeader bool,
-	secureJsonData SecureJsonData, tracer tracing.Tracer,
+	secureJsonData pluginsettings.SecureJsonGetter, tracer tracing.Tracer,
 	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles) (*PluginProxy, error) {
 	return &PluginProxy{
 		accessControl:    accessControl,
@@ -239,6 +235,7 @@ func (proxy PluginProxy) logRequest() {
 }
 
 // Equivalent to c.JsonApiErr in /pkg/services/contexthandler/model/model.go#L70
+// This is duplicated, we we can use the same code in both macron and apiserver subresources
 func writeJSONErr(w http.ResponseWriter, r *http.Request, status int, message string, err error) {
 	resp := make(map[string]any)
 	if err != nil {
