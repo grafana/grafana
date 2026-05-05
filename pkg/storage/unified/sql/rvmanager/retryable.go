@@ -12,8 +12,10 @@ import (
 
 // MySQL error numbers for transactional conflicts that the engine has already
 // rolled back, so the whole WithTx body is safe to retry from the start.
-//   1213: ER_LOCK_DEADLOCK
-//   1205: ER_LOCK_WAIT_TIMEOUT
+//
+//	1213: ER_LOCK_DEADLOCK
+//	1205: ER_LOCK_WAIT_TIMEOUT
+//
 // https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html
 const (
 	mysqlErrLockDeadlock    uint16 = 1213
@@ -21,8 +23,10 @@ const (
 )
 
 // PostgreSQL SQLSTATE codes for transient, retryable transaction failures.
-//   40P01: deadlock_detected
-//   40001: serialization_failure
+//
+//	40P01: deadlock_detected
+//	40001: serialization_failure
+//
 // https://www.postgresql.org/docs/current/errcodes-appendix.html
 const (
 	postgresErrDeadlockDetected     = "40P01"
