@@ -9,13 +9,10 @@ permissions:
   contents: read
 
 jobs:
-  detect-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      frontend-strict: ${{ steps.changed-files.outputs.frontend_strict_any_changed }}
-      backend-strict: ${{ steps.changed-files.outputs.backend_strict_any_changed }}
-      frontend-strict-files: ${{ steps.changed-files.outputs.frontend_strict_all_changed_files }}
-      backend-strict-files: ${{ steps.changed-files.outputs.backend_strict_all_changed_files }}
+  check-separation:
+    runs-on: ubuntu-arm64-small
+    permissions:
+      pull-requests: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -60,15 +57,8 @@ jobs:
               - '!pkg/services/featuremgmt/toggles_gen.go'
               - '!pkg/services/featuremgmt/toggles_gen.json'
 
-
-  check-separation:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.frontend-strict == 'true' && needs.detect-changes.outputs.backend-strict == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    steps:
       - name: Check for exception label
+        if: steps.changed-files.outputs.frontend_strict_any_changed == 'true' && steps.changed-files.outputs.backend_strict_any_changed == 'true'
         run: |
           LABELS=$(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json labels --jq '.labels[].name')
           if echo "$LABELS" | grep -q "no-check-mt-service-compatibility"; then
@@ -96,10 +86,10 @@ jobs:
             echo "If you need help or have feedback, reach us in #proj-mt-frontend"
             echo ""
             echo "Frontend changed files:"
-            echo "${{ needs.detect-changes.outputs.frontend-strict-files }}" | tr ' ' '\n' | sed 's/^/- /'
+            echo "${{ steps.changed-files.outputs.frontend_strict_all_changed_files }}" | tr ' ' '\n' | sed 's/^/- /'
             echo ""
             echo "Backend changed files:"
-            echo "${{ needs.detect-changes.outputs.backend-strict-files }}" | tr ' ' '\n' | sed 's/^/- /'
+            echo "${{ steps.changed-files.outputs.backend_strict_all_changed_files }}" | tr ' ' '\n' | sed 's/^/- /'
             exit 1
           fi
         env:
