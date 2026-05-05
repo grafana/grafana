@@ -339,6 +339,10 @@ const getDenseHeatmapData = (
   let yBinIncr = ys[1] - ys[0];
   let xBinIncr = xs[yBinQty] - xs[0];
 
+  if (xBinIncr <= 0) {
+    return { warning: 'X values do not increase sequentially', heatmap: frame };
+  }
+
   let [minValue, maxValue] = boundedMinMax(
     valueField.values,
     options.color.min,
