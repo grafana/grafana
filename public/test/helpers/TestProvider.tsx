@@ -12,6 +12,8 @@ import { GrafanaContext, type GrafanaContextType } from 'app/core/context/Grafan
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';
 import { type StoreState } from 'app/types/store';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 
 export interface Props {
   storeState?: Partial<StoreState>;
@@ -37,10 +39,12 @@ export function TestProvider(props: Props) {
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
         <ModalsContextProvider>
-          <CompatRouter>
-            <GrafanaContext.Provider value={context}>{children}</GrafanaContext.Provider>
-            <ModalRoot />
-          </CompatRouter>
+          <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+            <CompatRouter>
+              <GrafanaContext.Provider value={context}>{children}</GrafanaContext.Provider>
+              <ModalRoot />
+            </CompatRouter>
+          </OpenFeatureProvider>
         </ModalsContextProvider>
       </Router>
     </Provider>
