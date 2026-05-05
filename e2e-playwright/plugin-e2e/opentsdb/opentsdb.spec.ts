@@ -8,7 +8,7 @@ test(
   async ({ createDataSourceConfigPage, page }) => {
     await createDataSourceConfigPage({ type: 'opentsdb' });
 
-    await expect(await page.getByText('Type: OpenTSDB', { exact: true })).toBeVisible();
+    await expect(await page.getByText(/^Type\s*OpenTSDB$/, { exact: true })).toBeVisible();
     await expect(await page.getByRole('heading', { name: 'HTTP', exact: true })).toBeVisible();
   }
 );

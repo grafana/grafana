@@ -604,7 +604,6 @@ approval_rules:
           - ^emails\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.citools\/(?:(?:[^/]*(?:/|$))*)$
           - ^kinds\/(?:(?:[^/]*(?:/|$))*)$
-          - ^kindsv2\/(?:(?:[^/]*(?:/|$))*)$
           - ^embed\.go$
           - ^packaging\/docker\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.github\/workflows\/pr-test-docker\.yml$

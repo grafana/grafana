@@ -545,15 +545,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "datasourcesQuerierRawOutput",
-			Description:     "use raw output mode for the data source querier",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDatasourcesCoreServicesSquad,
-			RequiresRestart: false,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStageGeneralAvailability,
@@ -994,7 +985,7 @@ var (
 		{
 			Name:         "dashboardUnifiedDrilldownControls",
 			Description:  "Renders ad hoc filters and group by in a single unified control",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			Generate:     Generate{LegacyFrontend: true},
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
@@ -1970,14 +1961,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "restoreDashboards",
-			Description: "Enables restore deleted dashboards feature",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "recentlyViewedDashboards",
 			Description: "Enables recently viewed dashboards section in the browsing dashboard page",
 			Stage:       FeatureStageExperimental,
@@ -2267,6 +2250,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.dedicatedGrafanaComProxyAPIToken",
+			Description: "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "newVizSuggestions",
 			Description: "Enable new visualization suggestions",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2503,10 +2494,10 @@ var (
 		{
 			Name:        "dashboardSectionVariables",
 			Description: "Enables support for section level variables (rows and tabs)",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "smoothingTransformation",
@@ -2556,6 +2547,14 @@ var (
 			Description: "Enables next generation query editor experience",
 			Stage:       FeatureStagePrivatePreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryEditorNextMultiSelect",
+			Description: "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
@@ -2874,7 +2873,7 @@ var (
 			Description:  "Enables plugins setting from new apis",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true},
 			Expression:   "false",
 			HideFromDocs: true,
 		},
@@ -3076,6 +3075,23 @@ var (
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: false, Go: true, LegacyGo: true, LegacyFrontend: false},
 			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:         "grafana.meticulousAIRecorder",
+			Description:  "Enable Meticulous AI session recorder for automated UI test generation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "datasources.useNewStackInfoToSettingsCache",
+			Description: "Use the new cache for datasource.StackInfoToSettings, backend flag",
+			Stage:       FeatureStageGeneralAvailability,
+			Generate:    Generate{Go: true},
+			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

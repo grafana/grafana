@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { PluginExtensionTypes, type IconName } from '@grafana/data';
 import { setPluginLinksHook, config, getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useDispatch } from 'app/types/store';
 
 import { getMockDataSource } from '../mocks/dataSourcesMocks';
 
@@ -10,6 +11,10 @@ import { EditDataSourceActions } from './EditDataSourceActions';
 
 // Mock dependencies
 jest.mock('app/core/services/context_srv');
+jest.mock('app/types/store', () => ({
+  ...jest.requireActual('app/types/store'),
+  useDispatch: jest.fn(),
+}));
 jest.mock('../utils', () => ({
   constructDataSourceExploreUrl: jest.fn(
     () => '/explore?left=%7B%22datasource%22:%22Test%20Prometheus%22,%22context%22:%22explore%22%7D'
@@ -52,6 +57,7 @@ const mockContextSrv = jest.mocked(contextSrv);
 // Mock getDataSourceSrv and favorite hooks
 const mockGetDataSourceSrv = jest.mocked(getDataSourceSrv);
 const mockUseFavoriteDatasources = jest.mocked(require('@grafana/runtime').useFavoriteDatasources);
+const mockUseDispatch = jest.mocked(useDispatch);
 
 // Create mock datasource instance
 const mockDataSourceInstance = {
@@ -103,10 +109,19 @@ const mockDataSource = getMockDataSource({
   typeName: 'Prometheus',
 });
 
+const mockDataSourceRights = {
+  hasWriteRights: true,
+  readOnly: false,
+};
+
 // Mock useDataSource hook
 jest.mock('../state/hooks', () => ({
-  useDataSource: (uid: string) => (uid === 'not-found' ? {} : mockDataSource),
+  useDataSource: jest.fn((uid: string) => (uid === 'not-found' ? {} : mockDataSource)),
+  useDataSourceRights: jest.fn((uid: string) => (uid === 'not-found' ? {} : mockDataSourceRights)),
 }));
+
+const mockUseDataSource = jest.mocked(require('../state/hooks').useDataSource);
+const mockUseDataSourceRights = jest.mocked(require('../state/hooks').useDataSourceRights);
 
 describe('EditDataSourceActions', () => {
   beforeEach(() => {
@@ -133,6 +148,11 @@ describe('EditDataSourceActions', () => {
     // Default: feature toggle disabled, so no favorite hook
     mockUseFavoriteDatasources.mockReturnValue({ ...mockFavoriteHook, enabled: false });
     config.featureToggles.favoriteDatasources = false;
+
+    // Reset default hook mocks
+    mockUseDispatch.mockReturnValue(jest.fn());
+    mockUseDataSource.mockImplementation((uid: string) => (uid === 'not-found' ? {} : mockDataSource));
+    mockUseDataSourceRights.mockImplementation((uid: string) => (uid === 'not-found' ? {} : mockDataSourceRights));
   });
 
   describe('Core Actions', () => {
@@ -513,6 +533,53 @@ describe('EditDataSourceActions', () => {
 
       const favoriteButton = screen.getByTestId('favorite-button');
       expect(favoriteButton).toBeDisabled();
+    });
+  });
+
+  describe('Default Actions', () => {
+    it('should render make default button when data source is not default and editable', () => {
+      mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: false });
+
+      render(<EditDataSourceActions uid="test-uid" />);
+
+      expect(screen.getByText('Make default')).toBeInTheDocument();
+      expect(screen.queryByText('Remove default')).not.toBeInTheDocument();
+    });
+
+    it('should render remove default button when data source is default and editable', () => {
+      mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: true });
+
+      render(<EditDataSourceActions uid="test-uid" />);
+
+      expect(screen.getByText('Remove default')).toBeInTheDocument();
+      expect(screen.queryByText('Make default')).not.toBeInTheDocument();
+    });
+
+    it('should not render make default button when data source is not default but not editable', () => {
+      mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: false });
+      mockUseDataSourceRights.mockReturnValue({ hasWriteRights: false, readOnly: true });
+
+      render(<EditDataSourceActions uid="test-uid" />);
+
+      expect(screen.queryByLabelText('Make default')).not.toBeInTheDocument();
+    });
+
+    it('should not render remove default button when data source is default but not editable', () => {
+      mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: true });
+      mockUseDataSourceRights.mockReturnValue({ hasWriteRights: false, readOnly: true });
+
+      render(<EditDataSourceActions uid="test-uid" />);
+
+      expect(screen.queryByLabelText('Remove default')).not.toBeInTheDocument();
+    });
+
+    it('should render default badge when data source is default but not editable', () => {
+      mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: true });
+      mockUseDataSourceRights.mockReturnValue({ hasWriteRights: true, readOnly: true });
+
+      render(<EditDataSourceActions uid="test-uid" />);
+
+      expect(screen.getByText('Default')).toBeInTheDocument();
     });
   });
 });

@@ -51,6 +51,7 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
+  AnnoKeyFolderTitle,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
@@ -160,6 +161,7 @@ export function transformSaveModelSchemaV2ToScene(
     updated: metadata.annotations?.[AnnoKeyUpdatedTimestamp],
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
+    folderTitle: metadata.annotations?.[AnnoKeyFolderTitle],
     isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
     publicDashboardEnabled: dto.access.isPublic,
@@ -561,8 +563,8 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKin
     return intervals[0];
   }
 
-  // If the interval is the old auto format, return the new auto interval from scenes.
-  if (selectedInterval.startsWith('$__auto_interval_')) {
+  // If auto is eanbled and value is $__auto or older format $__auto_interval_
+  if (variable.spec.auto && selectedInterval.startsWith('$__auto')) {
     return '$__auto';
   }
 
