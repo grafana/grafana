@@ -8,7 +8,7 @@ import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { useDataSourcePlugin, useFindInstanceSettings, useInstanceSettings } from './hooks';
 import { _resetForTests as resetInstanceSettings, init } from './instanceSettings';
-import { _resetForTests as resetPlugin, setGetDataSourcePlugin } from './plugin';
+import { _resetForTests as resetPlugin, setDataSourceImporter } from './plugin';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
   return {
@@ -109,8 +109,10 @@ describe('useFindInstanceSettings', () => {
 
 describe('useDataSourcePlugin', () => {
   it('starts loading then resolves to a plugin instance', async () => {
-    const mockDs = { name: 'mock-ds' };
-    setGetDataSourcePlugin(jest.fn().mockResolvedValue(mockDs));
+    const instance = { name: 'mock-ds' };
+    setDataSourceImporter(
+      jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
+    );
 
     const { result } = renderHook(() => useDataSourcePlugin('uid-alpha'));
     expect(result.current.isLoading).toBe(true);
@@ -120,8 +122,6 @@ describe('useDataSourcePlugin', () => {
   });
 
   it('reports errors when lookup fails', async () => {
-    setGetDataSourcePlugin(jest.fn().mockRejectedValue(new Error('boom')));
-
     const { result } = renderHook(() => useDataSourcePlugin('missing'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.error).toBeInstanceOf(Error);

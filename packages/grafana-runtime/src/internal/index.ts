@@ -73,4 +73,4 @@ export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginS
 export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
 
 export { init as initDataSources, upsertRuntimeDataSource } from '../services/dataSource/instanceSettings';
-export { setGetDataSourcePlugin, getRuntimeDataSourcePlugin } from '../services/dataSource/plugin';
+export { setDataSourceImporter } from '../services/dataSource/plugin';
