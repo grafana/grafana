@@ -1099,7 +1099,7 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "dashboard.orgTemplates",
+			Name:        "grafana.orgDashboardTemplates",
 			Description: "Enables org-defined dashboard templates for enterprise",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,

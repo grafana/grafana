@@ -1479,20 +1479,6 @@
     },
     {
       "metadata": {
-        "name": "dashboard.orgTemplates",
-        "resourceVersion": "1777579788909",
-        "creationTimestamp": "2026-04-30T20:09:48Z"
-      },
-      "spec": {
-        "description": "Enables org-defined dashboard templates for enterprise",
-        "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "dashboardAssistantPopover",
         "resourceVersion": "1773181791824",
         "creationTimestamp": "2026-03-10T22:29:51Z"
@@ -2622,6 +2608,20 @@
         "description": "Whether to use the new SharedPreferences functional component",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.orgDashboardTemplates",
+        "resourceVersion": "1777989950811",
+        "creationTimestamp": "2026-05-05T14:05:50Z"
+      },
+      "spec": {
+        "description": "Enables org-defined dashboard templates for enterprise",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
         "frontend": true,
         "expression": "false"
       }
