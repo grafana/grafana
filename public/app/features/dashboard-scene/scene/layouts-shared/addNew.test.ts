@@ -8,7 +8,7 @@ import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
-import { addNewRowTo, addNewTabTo } from './addNew';
+import { addNewRowTo, addNewTabTo, pasteRowTo, pasteTabTo } from './addNew';
 
 jest.mock('../../edit-pane/shared', () => ({
   dashboardEditActions: {
@@ -23,6 +23,11 @@ jest.mock('../../edit-pane/shared', () => ({
     }),
   },
   NewObjectAddedToCanvasEvent: jest.fn().mockImplementation(() => ({})),
+}));
+
+jest.mock('./paste', () => ({
+  getRowFromClipboard: jest.fn(() => new RowItem({ title: 'Pasted Row' })),
+  getTabFromClipboard: jest.fn(() => new TabItem({ title: 'Pasted Tab' })),
 }));
 
 function buildScene(body: DashboardScene['state']['body']) {
@@ -176,5 +181,90 @@ describe('addNewRowTo', () => {
       expect(innerRows.state.rows[0].state.title).toBe('Row A');
       expect(innerRows.state.rows[1].getLayout().getVizPanels()).toHaveLength(0);
     });
+  });
+});
+
+describe('pasteRowTo', () => {
+  let originalDashboardNewLayouts: boolean | undefined;
+
+  beforeAll(() => {
+    originalDashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
+    config.featureToggles.dashboardNewLayouts = true;
+  });
+
+  afterAll(() => {
+    config.featureToggles.dashboardNewLayouts = originalDashboardNewLayouts;
+  });
+
+  it('should call pasteRow when layout is already a RowsLayoutManager', () => {
+    const rowsLayout = new RowsLayoutManager({
+      rows: [new RowItem({ title: 'Existing Row' })],
+    });
+    buildScene(rowsLayout);
+
+    rowsLayout.pasteRow = jest.fn();
+    pasteRowTo(rowsLayout);
+
+    expect(rowsLayout.pasteRow).toHaveBeenCalled();
+  });
+
+  it('should replace layout with a RowsLayoutManager containing only the pasted row when layout is a plain grid', () => {
+    const grid = DefaultGridLayoutManager.fromVizPanels([]);
+    buildScene(grid);
+
+    pasteRowTo(grid);
+
+    const newBody = (grid.parent as DashboardScene).state.body;
+    expect(newBody).toBeInstanceOf(RowsLayoutManager);
+
+    const rows = (newBody as RowsLayoutManager).state.rows;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].state.title).toBe('Pasted Row');
+  });
+
+  it('should recurse into the current tab when layout is a TabsLayoutManager', () => {
+    const innerGrid = DefaultGridLayoutManager.fromVizPanels([]);
+    const tab = new TabItem({ title: 'Tab 1', layout: innerGrid });
+    const tabsLayout = new TabsLayoutManager({ tabs: [tab] });
+    tabsLayout.setState({ currentTabSlug: tab.getSlug() });
+    buildScene(tabsLayout);
+
+    pasteRowTo(tabsLayout);
+
+    // The tab's inner layout should have been replaced with a RowsLayoutManager
+    const tabLayout = tab.getLayout();
+    expect(tabLayout).toBeInstanceOf(RowsLayoutManager);
+
+    const rows = (tabLayout as RowsLayoutManager).state.rows;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].state.title).toBe('Pasted Row');
+  });
+});
+
+describe('pasteTabTo', () => {
+  it('should call pasteTab when layout is already a TabsLayoutManager', () => {
+    const tabsLayout = new TabsLayoutManager({
+      tabs: [new TabItem({ title: 'Existing Tab' })],
+    });
+    buildScene(tabsLayout);
+
+    tabsLayout.pasteTab = jest.fn();
+    pasteTabTo(tabsLayout);
+
+    expect(tabsLayout.pasteTab).toHaveBeenCalled();
+  });
+
+  it('should replace layout with a TabsLayoutManager containing only the pasted tab when layout is a plain grid', () => {
+    const grid = DefaultGridLayoutManager.fromVizPanels([]);
+    buildScene(grid);
+
+    pasteTabTo(grid);
+
+    const newBody = (grid.parent as DashboardScene).state.body;
+    expect(newBody).toBeInstanceOf(TabsLayoutManager);
+
+    const tabs = (newBody as TabsLayoutManager).state.tabs;
+    expect(tabs).toHaveLength(1);
+    expect(tabs[0].state.title).toBe('Pasted Tab');
   });
 });

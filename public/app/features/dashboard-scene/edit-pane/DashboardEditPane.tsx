@@ -9,6 +9,7 @@ import {
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { TabItem } from '../scene/layout-tabs/TabItem';
+import { pasteRowTo, pasteTabTo } from '../scene/layouts-shared/addNew';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
@@ -449,6 +450,18 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
 
     DashboardInteractions.trackPastePanelClick(source, getLayoutType(target), 'click');
+  }
+
+  public pasteRow(targetElement?: SceneObject) {
+    const dashboard = getDashboardSceneFor(this);
+    const layout = targetElement ? (getLayoutForObject(targetElement) ?? dashboard.getLayout()) : dashboard.getLayout();
+    pasteRowTo(layout);
+  }
+
+  public pasteTab(targetElement?: SceneObject) {
+    const dashboard = getDashboardSceneFor(this);
+    const layout = targetElement ? (getLayoutForObject(targetElement) ?? dashboard.getLayout()) : dashboard.getLayout();
+    pasteTabTo(layout);
   }
 }
 
