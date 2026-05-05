@@ -131,7 +131,7 @@ func TestSecureLifecycle(t *testing.T) {
 		})
 		t.Run("create and remove", func(t *testing.T) {
 			obj := resourceWithSecureValues(common.InlineSecureValues{
-				"a": common.InlineSecureValue{Name: "xxx", Remove: true},
+				"a": common.InlineSecureValue{Create: "xxx", Remove: true},
 			})
 
 			info := &objectForStorage{}
