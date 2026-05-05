@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/util/retry"
 
@@ -18,6 +20,21 @@ import (
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 )
+
+// membersRetry is the backoff used by the addmember/removemember handlers.
+// retry.DefaultRetry (5 attempts, ~50ms total) is too small under sustained
+// cross-instance team-sync load: each call races against peer instances
+// rewriting Spec.Members on the same team, and an exhausted retry surfaces as
+// silent membership loss because the synchronizer logs at warn but the outer
+// sync HTTP handler still returns 200. ~5–8s of jittered budget gives the
+// retry loop enough room to converge against fresh state in practice.
+var membersRetry = wait.Backoff{
+	Steps:    15,
+	Duration: 50 * time.Millisecond,
+	Factor:   1.5,
+	Jitter:   0.2,
+	Cap:      2 * time.Second,
+}
 
 // TeamAddMemberREST exposes POST /teams/{name}/addmember as a server-side
 // helper that turns a single-user request into a Spec.Members write. The
@@ -127,7 +144,7 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 		nsCtx := common.WithSubresourceNamespace(ctx)
 
 		var alreadyMember bool
-		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		err := retry.RetryOnConflict(membersRetry, func() error {
 			obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
 			if err != nil {
 				return err

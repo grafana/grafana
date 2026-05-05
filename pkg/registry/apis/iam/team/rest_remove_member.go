@@ -107,7 +107,7 @@ func (s *TeamRemoveMemberREST) Connect(ctx context.Context, name string, _ runti
 		nsCtx := common.WithSubresourceNamespace(ctx)
 
 		var removed bool
-		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		err := retry.RetryOnConflict(membersRetry, func() error {
 			obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
 			if err != nil {
 				return err
