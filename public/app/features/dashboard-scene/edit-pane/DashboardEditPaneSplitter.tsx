@@ -78,7 +78,9 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
    */
   useUpdateAppChromeActions(dashboard);
 
-  const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selectionContext, openPane, previousState } = useSceneObjectState(editPane, {
+    shouldActivateOrKeepAlive: true,
+  });
 
   const { isEnabled: isAssistantEnabled } = useDashboardAssistantViewMode({
     dashboard,
@@ -145,6 +147,8 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     persistanceKey: isEditing ? 'dashboard' : 'dashboard-view',
     defaultToDocked: isEditing ? true : false,
     onClosePane: () => editPane.closePane(),
+    onGoBack: () => editPane.goBackToPrevious(),
+    canGoBack: previousState !== undefined,
     defaultIsHidden: isEditing ? false : isMobile,
   });
 

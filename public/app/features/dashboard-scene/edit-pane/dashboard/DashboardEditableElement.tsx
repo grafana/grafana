@@ -113,17 +113,16 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.dashboard);
 
-  public renderActions(): ReactNode {
+  public renderTopButton(): ReactNode {
     return (
       <Button
         variant="secondary"
-        size="sm"
         onClick={() => this.dashboard.onOpenSettings()}
         tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
         icon="sliders-v-alt"
-        iconPlacement="right"
+        fullWidth
       >
-        <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
+        <Trans i18nKey="dashboard.actions.open-settings">View all settings</Trans>
       </Button>
     );
   }

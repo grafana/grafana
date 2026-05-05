@@ -52,17 +52,30 @@ export const Example: StoryFn<StoryProps> = (args) => {
   const togglePane = (pane: string) => {
     if (openPane === pane) {
       setOpenPane('');
+      setPreviousPane(null);
     } else {
       setOpenPane(pane);
+      setPreviousPane(openPane);
     }
   };
+
+  const [previousPane, setPreviousPane] = useState<string | null>(null);
 
   const contextValue = useSidebar({
     hasOpenPane: !!openPane,
     position: args.position,
     bottomMargin: 0,
     edgeMargin: 0,
-    onClosePane: () => setOpenPane(''),
+    onClosePane: () => {
+      setOpenPane('');
+      setPreviousPane(null);
+    },
+    onGoBack: previousPane
+      ? () => {
+          setOpenPane(previousPane);
+          setPreviousPane(null);
+        }
+      : undefined,
   });
 
   return (

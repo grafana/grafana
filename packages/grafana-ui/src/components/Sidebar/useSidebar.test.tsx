@@ -189,7 +189,7 @@ describe('useSidebar', () => {
 
       expect(result.current.isDocked).toBe(true);
 
-      act(() => result.current.onToggleDock());
+      act(() => result.current.onToggleDock?.());
 
       expect(result.current.isDocked).toBe(true);
     });

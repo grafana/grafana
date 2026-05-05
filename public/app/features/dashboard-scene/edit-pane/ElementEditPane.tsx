@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
-import { ScrollContainer, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, useStyles2, Box } from '@grafana/ui';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { EditPaneHeader } from './EditPaneHeader';
@@ -37,7 +37,14 @@ export function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEd
     <div className={styles.wrapper}>
       <EditPaneHeader element={element} editPane={editPane} />
       <ScrollContainer showScrollIndicators={true}>
-        <div className={styles.categories}>{categories.map((cat) => cat.renderElement())}</div>
+        <div className={styles.categories}>
+          {element.renderTopButton && (
+            <Box display="flex" alignItems={'center'} paddingTop={2} paddingLeft={2} paddingRight={2}>
+              {element.renderTopButton()}
+            </Box>
+          )}
+          {categories.map((cat) => cat.renderElement())}
+        </div>
       </ScrollContainer>
     </div>
   );
