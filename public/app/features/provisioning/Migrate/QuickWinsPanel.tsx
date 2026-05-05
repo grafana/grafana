@@ -138,17 +138,22 @@ export function QuickWinsPanel({
       <div className={styles.cards}>
         {topFolders.map((folder) => {
           const isSelected = selected.has(folder.uid);
-          // <label> wrapping the checkbox: clicking anywhere on the card
-          // toggles the checkbox via native label-control association, keyboard
-          // focus lands on the checkbox itself, and there are no nested
-          // interactives (which would be invalid markup and cause double-fire).
+          // The card is a plain visual wrapper — Checkbox already renders its
+          // own <label>, so wrapping the card in another label or button would
+          // either nest interactives (invalid markup, double-fire) or nest
+          // labels (browser-dependent click/focus behavior). The user toggles
+          // by clicking the Checkbox or its associated text via Checkbox's
+          // built-in label prop.
           return (
-            // The nested Checkbox renders an <input>, which the label associates with
-            // via its DOM tree. The rule can't see through the @grafana/ui component.
-            // eslint-disable-next-line jsx-a11y/label-has-associated-control
-            <label key={folder.uid} className={styles.card} data-selected={isSelected || undefined}>
+            <div key={folder.uid} className={styles.card} data-selected={isSelected || undefined}>
               <Stack direction="row" gap={1} alignItems="center">
-                <Checkbox value={isSelected} onChange={() => onToggle(folder.uid)} aria-label={folder.title} />
+                <Checkbox
+                  value={isSelected}
+                  onChange={() => onToggle(folder.uid)}
+                  aria-label={t('provisioning.stats.quick-wins-card-aria', 'Select {{folder}}', {
+                    folder: folder.title,
+                  })}
+                />
                 <Icon name="folder" />
                 <Stack direction="column" gap={0}>
                   <Text variant="body" weight="medium">
@@ -161,7 +166,7 @@ export function QuickWinsPanel({
                   </Text>
                 </Stack>
               </Stack>
-            </label>
+            </div>
           );
         })}
       </div>
@@ -202,19 +207,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: '1 1 220px',
     minWidth: 220,
     maxWidth: 320,
-    textAlign: 'left',
     padding: theme.spacing(1.5),
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
     background: theme.colors.background.primary,
     color: theme.colors.text.primary,
-    cursor: 'pointer',
     [theme.transitions.handleMotion('no-preference')]: {
       transition: 'border-color 120ms ease, background 120ms ease',
-    },
-    '&:hover, &:focus-visible': {
-      borderColor: theme.colors.border.medium,
-      background: theme.colors.background.secondary,
     },
     '&[data-selected="true"]': {
       borderColor: theme.colors.primary.border,

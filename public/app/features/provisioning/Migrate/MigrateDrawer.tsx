@@ -4,7 +4,19 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, Checkbox, Combobox, Drawer, Field, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Combobox,
+  Drawer,
+  Field,
+  Stack,
+  Text,
+  TextArea,
+  TextLink,
+  useStyles2,
+} from '@grafana/ui';
 import { type Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
@@ -227,46 +239,69 @@ export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDash
                       </Trans>
                     </li>
                   </ul>
-                  <Text weight="medium">
-                    <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-workflow-title">
-                      How the workflow you pick below changes things:
-                    </Trans>
-                  </Text>
-                  <ul className={styles.explainerList}>
-                    <li>
-                      <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-workflow-write">
-                        <strong>
-                          Push directly to <code>main</code>
-                        </strong>
-                        : the job writes a single commit to the default branch. Dashboards become managed as soon as the
-                        commit lands — smoothest experience, but it does mean the change skips review.
+                  {!deleteOriginals && (
+                    <>
+                      <Text weight="medium">
+                        <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-workflow-title">
+                          How the workflow you pick below changes things:
+                        </Trans>
+                      </Text>
+                      <ul className={styles.explainerList}>
+                        <li>
+                          <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-workflow-write">
+                            <strong>
+                              Push directly to <code>main</code>
+                            </strong>
+                            : the job writes a single commit to the default branch. Dashboards become managed as soon as
+                            the commit lands — smoothest experience, but it does mean the change skips review.
+                          </Trans>
+                        </li>
+                        <li>
+                          <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-workflow-branch">
+                            <strong>Push to a branch and open a pull request</strong>: the job pushes to the branch you
+                            pick and opens a PR. Dashboards stay unmanaged until the PR is merged into <code>main</code>
+                            . Pick this when you need review, but expect to manage the PR before migration completes.
+                          </Trans>
+                        </li>
+                      </ul>
+                    </>
+                  )}
+                  {deleteOriginals && (
+                    <Text>
+                      <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-migrate-note">
+                        Migration runs against the configured branch and doesn&apos;t support a PR workflow — to review
+                        before merging, disable <em>Delete original dashboards</em> below to switch to an export-only
+                        push that you can target at a branch.
                       </Trans>
-                    </li>
-                    <li>
-                      <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-workflow-branch">
-                        <strong>Push to a branch and open a pull request</strong>: the job pushes to the branch you pick
-                        and opens a PR. Dashboards stay unmanaged until the PR is merged into <code>main</code>. Pick
-                        this when you need review, but expect to manage the PR before migration completes.
-                      </Trans>
-                    </li>
-                  </ul>
+                    </Text>
+                  )}
                 </Stack>
               </Alert>
 
               <div className={styles.summary}>
                 <Text variant="bodySmall" color="secondary">
                   {deleteOriginals ? (
-                    <Trans
-                      i18nKey="provisioning.stats.migrate-drawer-summary-migrate"
-                      values={{ folders: folderCount, dashboards: dashboardCount }}
-                      defaults="With “Delete original dashboards” enabled, the job migrates every unmanaged folder and dashboard on this instance — your {{folders}} folder / {{dashboards}} dashboard selection isn't used to scope it. Disable the option below to push only what you picked."
-                    />
+                    <Trans i18nKey="provisioning.stats.migrate-drawer-summary-migrate">
+                      With <em>Delete original dashboards</em> enabled, the job migrates every unmanaged folder and
+                      dashboard on this instance — your selection isn&apos;t used to scope it. Disable the option below
+                      to push only what you picked.
+                    </Trans>
                   ) : (
-                    <Trans
-                      i18nKey="provisioning.stats.migrate-drawer-summary-push"
-                      values={{ folders: folderCount, dashboards: dashboardCount }}
-                      defaults="You picked {{folders}} folders and {{dashboards}} dashboards. Folder selections include every dashboard inside them."
-                    />
+                    // Build the two count phrases via t() with `count` so
+                    // i18next picks the correct singular/plural variant for
+                    // each, then drop them into the surrounding sentence.
+                    t(
+                      'provisioning.stats.migrate-drawer-summary-push',
+                      'You picked {{folders}} and {{dashboards}}. Folder selections include every dashboard inside them.',
+                      {
+                        folders: t('provisioning.stats.migrate-drawer-summary-folders', '{{count}} folder', {
+                          count: folderCount,
+                        }),
+                        dashboards: t('provisioning.stats.migrate-drawer-summary-dashboards', '{{count}} dashboard', {
+                          count: dashboardCount,
+                        }),
+                      }
+                    )
                   )}
                 </Text>
               </div>
@@ -306,7 +341,11 @@ export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDash
                   )}
                 </Alert>
               )}
-              {!isReadOnlyRepo && (
+              {/* The workflow/branch fields only matter for the push (export)
+                  action — the migrate action doesn't accept a ref and runs
+                  against the configured branch regardless. Hide them when
+                  delete=on so we don't promise a PR workflow we can't honor. */}
+              {!isReadOnlyRepo && !deleteOriginals && (
                 <ResourceEditFormSharedFields
                   resourceType="dashboard"
                   isNew={false}
@@ -314,6 +353,26 @@ export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDash
                   repository={repository}
                   hiddenFields={['path']}
                 />
+              )}
+              {!isReadOnlyRepo && deleteOriginals && (
+                <Field
+                  noMargin
+                  label={t('provisioning.stats.migrate-drawer-message-label', 'Commit message')}
+                  description={t(
+                    'provisioning.stats.migrate-drawer-message-description',
+                    'A short note that lands on the migration commit. The job pushes directly to {{branch}} — picking a workflow doesn’t apply to migration jobs.',
+                    { branch: repository?.branch ?? 'the configured branch' }
+                  )}
+                >
+                  <TextArea
+                    rows={2}
+                    placeholder={t(
+                      'provisioning.stats.migrate-drawer-message-placeholder',
+                      'Migrate dashboards into Git Sync'
+                    )}
+                    {...methods.register('comment')}
+                  />
+                </Field>
               )}
 
               <Field

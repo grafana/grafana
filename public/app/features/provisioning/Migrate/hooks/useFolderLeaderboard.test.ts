@@ -210,6 +210,33 @@ describe('useFolderLeaderboard', () => {
     expect(general?.managedBy).toBeUndefined();
   });
 
+  it('excludes already-managed dashboards from a folder’s migratable counts and lists', async () => {
+    // The parent folder is unmanaged, but two of its descendants are already
+    // managed by Git Sync. The page would push the folder's allDashboards
+    // verbatim to the migrate API — including the managed ones triggers a
+    // backend rejection, so the hook strips them here.
+    mockSearcherWith({
+      folders: [
+        { uid: 'parent', name: 'Parent', location: '' },
+        { uid: 'managed-sub', name: 'Managed sub', location: 'parent' },
+      ],
+      dashboards: [
+        { uid: 'd1', name: 'D1', url: '/d/d1', location: 'parent' },
+        // Two managed dashboards inside the parent's subtree.
+        { uid: 'm1', name: 'M1', url: '/d/m1', location: 'parent', managedBy: ManagerKind.Repo },
+        { uid: 'm2', name: 'M2', url: '/d/m2', location: 'managed-sub', managedBy: ManagerKind.Repo },
+      ],
+    });
+
+    const { result } = renderHook(() => useFolderLeaderboard());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const parent = result.current.data.find((f) => f.uid === 'parent');
+    expect(parent?.dashboardCount).toBe(1);
+    expect(parent?.directDashboards.map((d) => d.uid)).toEqual(['d1']);
+    expect(parent?.allDashboards.map((d) => d.uid)).toEqual(['d1']);
+  });
+
   it('does not flag truncation when the searcher returned every row', async () => {
     mockSearcherWith({
       folders: [{ uid: 'a', name: 'A', location: '' }],

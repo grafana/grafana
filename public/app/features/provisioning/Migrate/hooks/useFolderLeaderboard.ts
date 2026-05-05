@@ -188,7 +188,13 @@ function aggregate(
   const directDashboardsByFolder = new Map<string, FolderPeekDashboard[]>();
   const allDashboardsByFolder = new Map<string, FolderPeekDashboard[]>();
   const rootDirectDashboards: FolderPeekDashboard[] = [];
+  // rootDashboardCount and rootDirectDashboards only track *migratable* root
+  // dashboards (i.e. unmanaged) — they feed the FoldersToMigrate UI which is
+  // scoped to migration targets. rootTotalDashboards tracks every root
+  // dashboard so the General row still appears (with the right managedBy)
+  // when every root dashboard is already provisioned.
   let rootDashboardCount = 0;
+  let rootTotalDashboards = 0;
   const rootManagerKinds = new Set<string>();
   let rootHasUnmanaged = false;
 
@@ -204,14 +210,29 @@ function aggregate(
   for (const dash of dashboards) {
     const dashItem: FolderPeekDashboard = { uid: dash.uid, title: dash.title, url: dash.url };
     const ancestors = ancestorsOf(dash.parentUid);
+    // Track whether each root has any unmanaged dashboard / which manager
+    // kinds appear there, regardless of whether the dashboard itself is
+    // migratable. This lets the synthetic General row report a single
+    // managedBy when every root dashboard agrees, without skipping past
+    // managed dashboards.
     if (ancestors.length === 0) {
-      rootDashboardCount += 1;
-      rootDirectDashboards.push(dashItem);
+      rootTotalDashboards += 1;
       if (dash.managedBy) {
         rootManagerKinds.add(dash.managedBy);
       } else {
         rootHasUnmanaged = true;
       }
+    }
+    // Already-managed dashboards aren't migration targets — the push/migrate
+    // backend rejects them when they're sent in a job, and the UI counts
+    // shouldn't surface them as work to do. Skip them for everything that
+    // feeds the migration flow (subtree counts, expand view, push payload).
+    if (dash.managedBy) {
+      continue;
+    }
+    if (ancestors.length === 0) {
+      rootDashboardCount += 1;
+      rootDirectDashboards.push(dashItem);
       continue;
     }
     for (const ancestorUid of ancestors) {
@@ -248,7 +269,7 @@ function aggregate(
     allDashboards: allDashboardsByFolder.get(folder.uid) ?? [],
   }));
 
-  if (rootDashboardCount > 0 || (subfoldersByParent.get(GENERAL_FOLDER_UID)?.length ?? 0) > 0) {
+  if (rootTotalDashboards > 0 || (subfoldersByParent.get(GENERAL_FOLDER_UID)?.length ?? 0) > 0) {
     // The General "folder" doesn't have its own managedBy on the backend.
     // Mirror the single-managed assumption from real folders: only treat the
     // General row as managed when every root dashboard agrees on the *same*
@@ -256,7 +277,7 @@ function aggregate(
     // any unmanaged dashboard, falls through to undefined so the row still
     // appears as a migration target.
     const generalManagedBy =
-      !rootHasUnmanaged && rootDashboardCount > 0 && rootManagerKinds.size === 1
+      !rootHasUnmanaged && rootTotalDashboards > 0 && rootManagerKinds.size === 1
         ? rootManagerKinds.values().next().value
         : undefined;
     rows.push({
