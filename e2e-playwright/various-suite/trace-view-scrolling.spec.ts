@@ -24,6 +24,8 @@ test.describe(
       // Select the Jaeger data source
       const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
       await dataSourcePicker.click();
+      // Type to search — the virtualized list only renders visible items
+      await page.getByTestId(selectors.components.DataSourcePicker.inputV2).fill('gdev-jaeger');
       const datasourceList = page.getByTestId(selectors.components.DataSourcePicker.dataSourceList);
       await datasourceList.getByText('gdev-jaeger').click();
 

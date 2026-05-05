@@ -34,8 +34,11 @@ test.describe(
       const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
       await dataSourcePicker.click();
 
+      // Type to search — the virtualized list only renders visible items
+      const pickerInput = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
+      await pickerInput.fill('gdev-tempo');
+
       const tempoOption = page.getByText('gdev-tempo');
-      await tempoOption.scrollIntoViewIfNeeded();
       await expect(tempoOption).toBeVisible();
       await tempoOption.click();
 
@@ -80,8 +83,11 @@ test.describe(
       await expect(dataSourcePicker).toBeVisible();
       await dataSourcePicker.click();
 
+      // Type to search — the virtualized list only renders visible items
+      const pickerSearch = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
+      await pickerSearch.fill(dataSourceName);
+
       const dataSourceOption = page.getByText(dataSourceName);
-      await dataSourceOption.scrollIntoViewIfNeeded();
       await expect(dataSourceOption).toBeVisible();
       await dataSourceOption.click();
 

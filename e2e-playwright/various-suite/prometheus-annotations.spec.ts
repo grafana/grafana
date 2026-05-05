@@ -128,8 +128,11 @@ test.describe(
       await expect(dataSourcePicker).toBeVisible();
       await dataSourcePicker.click();
 
+      // Type to search — the virtualized list only renders visible items
+      const pickerInput = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
+      await pickerInput.fill(DATASOURCE_NAME);
+
       const dataSourceOption = page.getByText(DATASOURCE_NAME);
-      await dataSourceOption.scrollIntoViewIfNeeded();
       await expect(dataSourceOption).toBeVisible();
       await dataSourceOption.click();
     }

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type MetricFindValue, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { GroupByVariable } from '@grafana/scenes';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
@@ -46,18 +47,7 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('GroupByVariableEditor', () => {
   beforeAll(() => {
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: jest.fn(() => ({
-        width: 1000,
-        height: 1000,
-        x: 0,
-        y: 0,
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0,
-      })),
-    });
+    mockBoundingClientRect();
   });
 
   it('renders GroupByVariableForm with correct props', async () => {

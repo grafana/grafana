@@ -68,8 +68,11 @@ test.describe(
       await expect(dataSourcePicker).toBeVisible();
       await dataSourcePicker.click();
 
+      // Type to search — the virtualized list only renders visible items
+      const searchInput = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
+      await searchInput.fill(name);
+
       const dataSourceOption = page.getByRole('button', { name: `${name} ${DATASOURCE_ID}`, exact: true });
-      await dataSourceOption.scrollIntoViewIfNeeded();
       await expect(dataSourceOption).toBeVisible();
       await dataSourceOption.click();
     }

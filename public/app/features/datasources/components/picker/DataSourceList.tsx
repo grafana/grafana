@@ -17,15 +17,8 @@ import { useStyles2 } from '@grafana/ui';
 import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
-import { StaticList } from './StaticList';
 import { VirtualizedList } from './VirtualizedList';
 import { getDataSourceCompareFn } from './utils';
-
-// Only virtualize when the list is large enough to benefit from it.
-// Small lists render all items directly, which avoids issues with scroll
-// container measurement in test environments and ensures all items are
-// in the DOM for E2E test interactions.
-const VIRTUALIZATION_THRESHOLD = 100;
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -76,7 +69,6 @@ export function DataSourceList(props: DataSourceListProps) {
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const sortedDataSources = useSortedDataSources(props, current, recentlyUsedDataSources, favoriteDataSources);
-  const shouldVirtualize = sortedDataSources.length >= VIRTUALIZATION_THRESHOLD;
 
   const sharedProps = {
     sortedDataSources,
@@ -92,8 +84,7 @@ export function DataSourceList(props: DataSourceListProps) {
   return (
     <div className={cx(className, styles.container)} data-testid={selectors.components.DataSourcePicker.dataSourceList}>
       {sortedDataSources.length === 0 && <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />}
-      {sortedDataSources.length > 0 && shouldVirtualize && <VirtualizedList {...sharedProps} />}
-      {sortedDataSources.length > 0 && !shouldVirtualize && <StaticList {...sharedProps} />}
+      {sortedDataSources.length > 0 && <VirtualizedList {...sharedProps} />}
     </div>
   );
 }

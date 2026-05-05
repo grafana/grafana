@@ -49,8 +49,11 @@ test.describe(
       await expect(dataSourcePicker).toBeVisible();
       await dataSourcePicker.click();
 
+      // Type to search — the virtualized list only renders visible items
+      const dataSourcePickerSearch = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
+      await dataSourcePickerSearch.fill(datasourceName);
+
       const dataSourceOption = page.getByText(datasourceName);
-      await dataSourceOption.scrollIntoViewIfNeeded();
       await expect(dataSourceOption).toBeVisible();
       await dataSourceOption.click();
 
