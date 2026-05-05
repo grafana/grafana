@@ -196,7 +196,7 @@ Grafana v13.0 tightens RBAC enforcement for custom roles, Terraform-managed role
 
 #### You are affected if
 
-You maintain custom RBAC roles — via Terraform, the API, or provisioning — that contain any of the following:
+You manage custom RBAC roles through Terraform, the API, or provisioning, and those roles contain any of the following:
 
 - Data source UID-scoped permissions (`datasources:uid:<uid>`) on a global role
 - `fixed:annotations.dashboard:writer` or `fixed:annotations.dashboard:reader`
