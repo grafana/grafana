@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
-import { getPanelPluginMeta } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
   SceneDataTransformer,
   sceneGraph,
@@ -215,10 +215,6 @@ export interface DashboardSceneState extends SceneObjectState {
   /** True while default links from datasources are being loaded */
   defaultLinksLoading?: boolean;
 }
-
-//if (config.featureToggles.scenesNoFlickering) {
-SceneObjectBase.RENDER_BEFORE_ACTIVATION_DEFAULT = true;
-//}
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
   static Component = DashboardSceneRenderer;
