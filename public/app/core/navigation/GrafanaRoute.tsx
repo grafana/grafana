@@ -9,12 +9,11 @@ import { isFrontendService } from 'app/core/utils/isFrontendService';
 import { useGrafana } from '../context/GrafanaContext';
 import { contextSrv } from '../services/context_srv';
 
-
 import { GrafanaRouteError } from './GrafanaRouteError';
 import { GrafanaRouteLoading } from './GrafanaRouteLoading';
 import { type GrafanaRouteComponentProps, type RouteDescriptor } from './types';
 
-export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'location'> { }
+export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'location'> {}
 
 export function GrafanaRoute(props: Props) {
   const { chrome, keybindings } = useGrafana();
