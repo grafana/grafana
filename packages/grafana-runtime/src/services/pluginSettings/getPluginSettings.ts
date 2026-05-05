@@ -52,7 +52,6 @@ export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean)
  * @param pluginId - The id of the plugin.
  * @param showErrorAlert - Whether to show a UI error alert if the request fails.
  * @returns The plugin's `PluginMeta`.
- * @throws If there is no installed plugin that matches `pluginId`.
  */
 export async function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {

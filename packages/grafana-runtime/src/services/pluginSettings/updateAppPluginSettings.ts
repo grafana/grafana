@@ -50,10 +50,9 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
  * Update the settings for an app plugin.
  * @param pluginId - The id of the plugin.
  * @param data - The partial `PluginMeta` to apply to the stored settings.
- * @returns The updated plugin's `PluginMeta`, or `null` if no settings are available.
- * @throws If there is no installed plugin that matches `pluginId`.
+ * @returns The updated plugin's `PluginMeta`.
  */
-export async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta | null> {
+export async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
     await updateLegacySettings(pluginId, data);
     return refetchCachedLegacySettings(pluginId, false);
@@ -71,9 +70,8 @@ export async function updateAppPluginSettings(pluginId: string, data: Partial<Pl
   }
 
   const updatedSettings = await internalUpdateAppPluginSettings(pluginId, data);
-  replaceCachedPromise(() => internalUpdateAppPluginSettings(pluginId, data), updatedSettings, {
-    cacheKey: getCacheKey(pluginId),
-  });
+  const cacheKey = getCacheKey(pluginId);
+  replaceCachedPromise(cacheKey, updatedSettings); // add updated settings to cache
   const mapper = getSettingsMapper();
   return mapper(meta.spec, updatedSettings);
 }
