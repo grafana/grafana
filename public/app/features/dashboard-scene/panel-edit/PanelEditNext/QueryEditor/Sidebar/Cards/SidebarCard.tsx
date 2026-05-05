@@ -8,7 +8,7 @@ import { Checkbox, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { type ActionItem, Actions } from '../../../Actions';
 import { QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
-import { useQueryEditorTypeConfig } from '../../QueryEditorContext';
+import { useQueryEditorTypeConfig, useQueryEditorUIContext } from '../../QueryEditorContext';
 import { getEditorBorderColor } from '../../utils';
 import { AddCardButton } from '../AddCardButton';
 import { getGhostCardVisuals } from '../SidebarCardGhostStyles';
@@ -56,6 +56,7 @@ export const SidebarCard = ({
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
   const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
+  const { multiSelectMode } = useQueryEditorUIContext();
 
   const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
 
@@ -123,14 +124,15 @@ export const SidebarCard = ({
         aria-pressed={isSelected || isPartOfSelection}
       >
         <div className={styles.cardContent}>
-          {isMultiSelectEnabled && (
-            // TODO: wire onChange and stop click from bubbling to the card.
-            <Checkbox
-              className={styles.roundedCheckbox}
-              value={isSelected || isPartOfSelection}
-              onChange={() => {}}
-              aria-label={t('query-editor-next.sidebar.card-select-multi', 'Toggle selection of card {{id}}', { id })}
-            />
+          {isMultiSelectEnabled && multiSelectMode && (
+            <div aria-hidden className={styles.checkboxWrapper}>
+              <Checkbox
+                className={styles.roundedCheckbox}
+                tabIndex={-1}
+                value={isSelected || isPartOfSelection}
+                onChange={() => {}}
+              />
+            </div>
           )}
           {children}
         </div>
@@ -368,7 +370,12 @@ function getStyles(
       },
     }),
 
-    // local Checkbox styles override
+    // Local Checkbox styles override for PanelEditorNext UI/UX experimentation.
+    // The checkbox is purely presentational — clicks/focus go to the card itself.
+    checkboxWrapper: css({
+      display: 'flex',
+      pointerEvents: 'none',
+    }),
     roundedCheckbox: css({
       '& span': {
         borderRadius: theme.shape.radius.circle,
