@@ -56,8 +56,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
-	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -135,10 +133,10 @@ var wireExtsBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	pluginsintegration.WireExtensionSet,
-	publicdashboardsApi.ProvideMiddleware,
-	wire.Bind(new(publicdashboards.Middleware), new(*publicdashboardsApi.Middleware)),
-	publicdashboardsService.ProvideServiceWrapper,
-	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
+	publicdashboards.ProvideMiddleware,
+	wire.Bind(new(publicdashboards.Middleware), new(*publicdashboards.Middleware)),
+	publicdashboards.ProvideServiceWrapper,
+	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboards.PublicDashboardServiceWrapperImpl)),
 	caching.ProvideCachingService,
 	wire.Bind(new(caching.CachingService), new(*caching.OSSCachingService)),
 	secretsMigrator.ProvideSecretsMigrator,
