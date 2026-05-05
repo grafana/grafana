@@ -60,6 +60,22 @@ root_url = https://<PUBLIC_DOMAIN>
 
 To check the configured webhooks, go to **Administration > General > Provisioning** and click the **View** link for your GitHub repository.
 
+{{< admonition type="note" >}}
+
+If your `[server] root_url` must point at an internal address (for example, when Grafana runs behind a private ingress in a Kubernetes cluster), set the publicly-reachable URL with `[provisioning] public_root_url` instead. This URL is used both to register webhook callbacks with the Git provider and as the base for screenshot images embedded in pull-request comments, which the Git provider's servers fetch from the public internet.
+
+```ini
+[server]
+root_url = http://internal.cluster.local
+
+[provisioning]
+public_root_url = https://<PUBLIC_DOMAIN>
+```
+
+The per-repository `spec.webhook.baseUrl` field still overrides `public_root_url` for webhook registration; screenshot URLs always use `public_root_url` (or `root_url` when unset).
+
+{{< /admonition >}}
+
 ### Expose necessary paths only
 
 If your security setup doesn't permit publicly exposing the Grafana instance, you can either choose to allowlist the GitHub IP addresses, or expose only the necessary paths.
