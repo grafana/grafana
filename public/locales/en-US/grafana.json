@@ -515,6 +515,7 @@
         "edit-yaml": "Edit YAML",
         "save": "Save"
       },
+      "error-missing-uid": "Server response missing rule UID",
       "error-title": "Failed to save alert rule",
       "no-group-success": "Rule added successfully"
     },
@@ -1568,7 +1569,6 @@
         "group-name-label": "Evaluation group name",
         "group-name-required": "Group name is required",
         "interval-description": "How often is the group evaluated",
-        "interval-invalid-none": "Evaluation interval cannot be None and must be a valid duration.",
         "interval-label": "Evaluation interval",
         "namespace-label": "Namespace",
         "namespace-required": "Namespace is required",
