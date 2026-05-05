@@ -34,6 +34,7 @@ const (
 type (
 	FakePublicDashboardService        = publicdashboards.FakePublicDashboardService
 	Api                               = api.Api
+	MiddlewareImpl                    = api.Middleware
 	Service                           = publicdashboards.Service
 	PublicDashboard                   = models.PublicDashboard
 	SavePublicDashboardCommand        = models.SavePublicDashboardCommand
@@ -70,6 +71,10 @@ func CountPublicDashboardRequest() func(c *contextmodel.ReqContext) {
 	return api.CountPublicDashboardRequest()
 }
 
+func ProvideMiddleware() *MiddlewareImpl {
+	return api.ProvideMiddleware()
+}
+
 func ProvideApi(publicDashboardService publicdashboards.Service, rr routing.RouteRegister, ac accesscontrol.AccessControl, features featuremgmt.FeatureToggles, md publicdashboards.Middleware, cfg *setting.Cfg, license licensing.Licensing) *api.Api {
 	return api.ProvideApi(publicDashboardService, rr, ac, features, md, cfg, license)
 }
@@ -82,7 +87,7 @@ func RequiresExistingAccessToken(publicDashboardService publicdashboards.Service
 	return api.RequiresExistingAccessToken(publicDashboardService)
 }
 
-func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) publicdashboards.Store {
+func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *PublicDashboardStoreImpl {
 	return database.ProvideStore(db, cfg, features)
 }
 
@@ -106,11 +111,11 @@ func NewFakePublicDashboardServiceWrapper(t *testing.T) *publicdashboards.FakePu
 	return publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, store publicdashboards.Store, qds query.Service, anno annotations.Repository, ac accesscontrol.AccessControl, serviceWrapper publicdashboards.ServiceWrapper, dashboardService dashboards.DashboardService, license licensing.Licensing) publicdashboards.Service {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, store publicdashboards.Store, qds query.Service, anno annotations.Repository, ac accesscontrol.AccessControl, serviceWrapper publicdashboards.ServiceWrapper, dashboardService dashboards.DashboardService, license licensing.Licensing) *PublicDashboardServiceImpl {
 	return service.ProvideService(cfg, features, store, qds, anno, ac, serviceWrapper, dashboardService, license)
 }
 
-func ProvideServiceWrapper(store publicdashboards.Store) publicdashboards.ServiceWrapper {
+func ProvideServiceWrapper(store publicdashboards.Store) *PublicDashboardServiceWrapperImpl {
 	return service.ProvideServiceWrapper(store)
 }
 

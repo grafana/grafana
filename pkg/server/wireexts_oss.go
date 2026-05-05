@@ -134,7 +134,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	pluginsintegration.WireExtensionSet,
 	publicdashboards.ProvideMiddleware,
-	wire.Bind(new(publicdashboards.Middleware), new(*publicdashboards.Middleware)),
+	wire.Bind(new(publicdashboards.Middleware), new(*publicdashboards.MiddlewareImpl)),
 	publicdashboards.ProvideServiceWrapper,
 	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboards.PublicDashboardServiceWrapperImpl)),
 	caching.ProvideCachingService,
