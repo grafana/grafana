@@ -665,10 +665,10 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				expectError: provisioningAPIServer.ErrRepositoryDuplicatePath,
 			},
 			{
-				name:        "fourth repo with branch develop and child path should succeed",
+				name:        "fourth repo with branch develop and child path should fail",
 				branch:      "develop",
 				path:        "grafana/dashboards/",
-				expectError: nil,
+				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
 			},
 			{
 				name:        "fifth repo with branch main and child path should fail",
