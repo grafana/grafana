@@ -57,6 +57,7 @@ func newProxy(b *AppPluginAPIBuilder) *subProxyREST {
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: b.opts.PluginsAppsSkipVerifyTLS,
 				Renegotiation:      tls.RenegotiateFreelyAsClient,
+				MinVersion:         tls.VersionTLS13,
 			},
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
