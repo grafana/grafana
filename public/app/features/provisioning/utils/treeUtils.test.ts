@@ -403,6 +403,10 @@ describe('buildTree', () => {
     const mergedItems = [
       { path: 'folder', file: { path: 'folder', hash: '' }, resource: mockFolderResource },
       {
+        path: 'folder/_folder.json',
+        file: { path: 'folder/_folder.json', size: '200', hash: mockFolderResource.hash },
+      },
+      {
         path: 'folder/dashboard1.json',
         file: { path: 'folder/dashboard1.json', size: '100', hash: 'matching-hash' },
         resource: syncedResource,
@@ -517,10 +521,15 @@ describe('buildTree', () => {
   });
 
   it('should set synced status for folder inferred from files with matching resource', () => {
-    // Folder inferred from file paths AND exists in resources → synced
+    // Folder inferred from file paths AND exists in resources with its metadata file
+    // matching the resource hash → synced.
     const syncedResource = { ...mockResource, hash: 'matching-hash' };
     const mergedItems = [
       { path: 'folder', file: { path: 'folder', hash: '' }, resource: mockFolderResource },
+      {
+        path: 'folder/_folder.json',
+        file: { path: 'folder/_folder.json', size: '200', hash: mockFolderResource.hash },
+      },
       {
         path: 'folder/dashboard.json',
         file: { path: 'folder/dashboard.json', size: '100', hash: 'matching-hash' },
@@ -642,17 +651,63 @@ describe('buildTree', () => {
     expect(metadataNode?.status).toBe('pending');
   });
 
+  it('should mark parent folder pending when _folder.json was removed locally but folder resource still has metadata hash', () => {
+    // File missing from repo but folder resource still has a non-empty hash → metadata
+    // was previously synced and the file was deleted. The folder must reflect pending.
+    const syncedDashboard = { ...mockResource, hash: 'matching-hash' };
+    const mergedItems = [
+      { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: mockFolderResource },
+      {
+        path: 'dashboards/my-dashboard.json',
+        file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'matching-hash' },
+        resource: syncedDashboard,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Folder');
+    expect(result[0].missingFolderMetadata).toBe(true);
+    expect(result[0].status).toBe('pending');
+  });
+
+  it('should keep parent folder synced when _folder.json is missing and folder has no metadata hash (never had metadata)', () => {
+    // Folder resource hash empty → never had metadata. Missing _folder.json is the
+    // expected state; folder should not be flagged pending on this account.
+    const folderWithoutMetadataHash = { ...mockFolderResource, hash: '' };
+    const syncedDashboard = { ...mockResource, hash: 'matching-hash' };
+    const mergedItems = [
+      { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: folderWithoutMetadataHash },
+      {
+        path: 'dashboards/my-dashboard.json',
+        file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'matching-hash' },
+        resource: syncedDashboard,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Folder');
+    expect(result[0].missingFolderMetadata).toBe(true);
+    expect(result[0].status).toBe('synced');
+  });
+
   it('should compare root-level _folder.json against repository state (no parent resource)', () => {
     // Root-level _folder.json has no parent folder resource, so we cannot determine a
     // matching resource hash — it falls back to pending until the backend reports otherwise.
     const rootFolderResource: ResourceListItem = {
       ...mockFolderResource,
       path: 'dashboards',
+      hash: 'meta-dashboards',
     };
     const syncedResource = { ...mockResource, hash: 'matching-hash' };
     const mergedItems = [
       { path: '_folder.json', file: { path: '_folder.json', size: '200', hash: 'meta-root' } },
       { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: rootFolderResource },
+      {
+        path: 'dashboards/_folder.json',
+        file: { path: 'dashboards/_folder.json', size: '200', hash: rootFolderResource.hash },
+      },
       {
         path: 'dashboards/my-dashboard.json',
         file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'matching-hash' },
