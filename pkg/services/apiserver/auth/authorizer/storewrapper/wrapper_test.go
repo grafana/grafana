@@ -616,7 +616,15 @@ func TestWrapper_Watch(t *testing.T) {
 		fakeWatcher.Add(obj)
 
 		// First event must be a watch.Error carrying the filter's error message.
-		event := <-w.ResultChan()
+		// Bound the receive so a regression hangs at most 1s instead of the suite timeout.
+		var event watch.Event
+		select {
+		case e, open := <-w.ResultChan():
+			require.True(t, open, "result channel closed before watch.Error event was forwarded")
+			event = e
+		case <-time.After(time.Second):
+			t.Fatal("did not receive watch.Error event within timeout")
+		}
 		require.Equal(t, watch.Error, event.Type)
 		status, ok := event.Object.(*metaV1.Status)
 		require.True(t, ok, "expected Status object on watch.Error event, got %T", event.Object)

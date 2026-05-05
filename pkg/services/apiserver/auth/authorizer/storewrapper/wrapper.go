@@ -57,7 +57,7 @@ type ResourceStorageAuthorizer interface {
 	// WatchFilter is called once when a Watch begins. It may pre-compile authorization
 	// state (e.g. fetch permissions, capture auth info) and must return a WatchEventFilter
 	// that will be invoked for each flush of buffered events. Bookmark and Error events
-	// always bypass the filter. Use AllowAllWatchFilter for resources with no per-event
+	// always bypass the filter. Use PassThroughWatchFilter for resources with no per-event
 	// read restrictions, and RejectAllWatchFilter as a safe placeholder.
 	// The Wrapper's WatchFlushInterval controls how often the buffer is flushed:
 	// 0 (default) flushes after every event; >0 amortizes RPC cost across bursts.
