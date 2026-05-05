@@ -18,8 +18,16 @@ const (
 	errMsgRequestTooLarge = "request body too large"
 )
 
-// readBody reads the request body and limits the size
+// readBody reads the request body and limits the size. A non-positive
+// maxSize disables the limit.
 func readBody(r *http.Request, maxSize int64) ([]byte, error) {
+	if maxSize <= 0 {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return nil, fmt.Errorf("error reading request body: %w", err)
+		}
+		return body, nil
+	}
 	limitedBody := http.MaxBytesReader(nil, r.Body, maxSize)
 	body, err := io.ReadAll(limitedBody)
 	if err != nil {

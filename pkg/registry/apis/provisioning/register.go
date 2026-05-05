@@ -140,6 +140,7 @@ type APIBuilder struct {
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
 	maxIncrementalChanges         int
+	maxFileSize                   int64
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
 }
@@ -241,6 +242,9 @@ func NewAPIBuilder(
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
 		maxIncrementalChanges:               maxIncrementalChanges,
+		// Default cap for the files API. Callers (e.g. RegisterAPIService)
+		// may overwrite b.maxFileSize after construction; 0 disables the cap.
+		maxFileSize: 5 * 1024 * 1024,
 	}
 
 	for _, builder := range extraBuilders {
@@ -316,6 +320,7 @@ func RegisterAPIService(
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
 	maxIncrementalChanges := cfg.ProvisioningMaxIncrementalChanges
+	maxFileSize := cfg.ProvisioningMaxFileSize
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -353,6 +358,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	builder.maxFileSize = maxFileSize
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -391,6 +397,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	v1beta1Builder.maxFileSize = maxFileSize
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -802,7 +809,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
