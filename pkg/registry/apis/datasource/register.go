@@ -15,6 +15,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -32,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
@@ -255,17 +256,15 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			resourceInfo:                    &ds,
 			dsConfigHandlerRequestsDuration: b.dataSourceCRUDMetric,
 		}
+		// NOTE! there is currently NO PATH that is using unified storage to read!
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {
 			return err
 		}
-		dualStore, err := opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
 		if err != nil {
 			return err
 		}
-		// generatedNameStorage assigns a server-generated name when the client
-		// sends none, which is the normal datasource create flow.
-		storage[ds.StoragePath()] = &generatedNameStorage{Storage: dualStore}
 		storage[ds.StoragePath("access")] = &subAccessREST{
 			builder: b,
 			getter:  legacyStore,
