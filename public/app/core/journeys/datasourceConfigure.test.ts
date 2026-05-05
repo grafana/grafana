@@ -261,6 +261,15 @@ describe('datasourceConfigure journey wiring', () => {
     expect(mockHandle.end).toHaveBeenCalledWith('abandoned');
   });
 
+  it('should end journey with abandoned when the user leaves the catalog page without picking a plugin', () => {
+    loadWiring();
+
+    simulateInteraction('connections_new_datasource_page_view', {});
+    simulateInteraction('connections_new_datasource_page_left', {});
+
+    expect(mockHandle.end).toHaveBeenCalledWith('abandoned');
+  });
+
   it('should ignore unrelated interactions', () => {
     loadWiring();
 

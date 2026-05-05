@@ -21,6 +21,33 @@ export function jitter(n: number): number {
   return Math.random() * n;
 }
 
+/**
+ * Navigate to the home page via SPA route (React Router) rather than a full
+ * page navigation. Required for journey-end signals that depend on
+ * locationService observers or React component unmount: `page.goto()` is a hard
+ * nav that destroys the JS context, so abandon-on-route-change handlers and
+ * page-leave unmount handlers don't get a chance to fire and flush.
+ *
+ * Strategy: click an in-app `<a href="/">` (Grafana logo / home link) which
+ * React Router intercepts. Falls back to history+popstate if the anchor isn't
+ * mounted - some routes hide the global nav.
+ */
+export async function spaNavigateHome(page: Page): Promise<void> {
+  const homeLink = page.locator('a[href="/"]').first();
+  if ((await homeLink.count()) > 0) {
+    try {
+      await homeLink.click({ timeout: 3_000 });
+      return;
+    } catch {
+      // fall through to popstate
+    }
+  }
+  await page.evaluate(() => {
+    window.history.pushState({}, '', '/');
+    window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+  });
+}
+
 export function pickTypingPattern(): TypingPattern {
   const r = Math.random();
   if (r < 0.3) {

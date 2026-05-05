@@ -1,6 +1,6 @@
 import { type Page } from '@playwright/test';
 
-import { jitter } from './__smoke__/playwright-utils.ts';
+import { jitter, spaNavigateHome } from './__smoke__/playwright-utils.ts';
 import { type JourneyDriver } from './__smoke__/types.ts';
 
 const DATASOURCE_CONFIGURE_SCENARIOS = ['cancel-flow', 'navigate-away'] as const;
@@ -9,38 +9,30 @@ const NEW_DATASOURCE_PATH = '/datasources/new';
 
 /**
  * Land on /datasources/new (start fires via connections_new_datasource_page_view),
- * then navigate back home to trigger the Cancel / leave path.
+ * then navigate home via SPA route to trigger the page-leave handler.
  *
- * `connections_new_datasource_cancelled` is documented but is only emitted when
- * a user clicks Cancel inside the catalog UI. Without a stable Cancel selector
- * we go via plain back-navigation; the page-leave handler ends the journey as
- * `abandoned` (config_page_left). Same effective signal: an end event reaches
- * the tracker for every iteration.
+ * `connections_new_datasource_cancelled` is documented but only fires when a
+ * user clicks Cancel inside the catalog UI. Without a stable Cancel selector
+ * we go via in-app navigation; NewDataSourcePage's unmount emits
+ * `connections_new_datasource_page_left` which ends the journey as `abandoned`.
  */
 async function cancelFlow(page: Page): Promise<void> {
   await page.goto(NEW_DATASOURCE_PATH);
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(400 + jitter(600));
-
-  // Try to use the browser back button — closest analogue to a "cancel" click
-  // on the catalog page that doesn't depend on knowing the exact button label.
-  try {
-    await page.goBack({ timeout: 5_000 });
-  } catch {
-    await page.goto('/');
-  }
+  await spaNavigateHome(page);
   await page.waitForTimeout(500);
 }
 
 /**
- * Land on /datasources/new (start fires), navigate to / without finishing.
- * End: abandoned (config_page_left fires on unmount).
+ * Land on /datasources/new (start fires), SPA-navigate home without finishing.
+ * End: abandoned via NewDataSourcePage unmount -> connections_new_datasource_page_left.
  */
 async function navigateAway(page: Page): Promise<void> {
   await page.goto(NEW_DATASOURCE_PATH);
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(300 + jitter(700));
-  await page.goto('/');
+  await spaNavigateHome(page);
   await page.waitForTimeout(500);
 }
 

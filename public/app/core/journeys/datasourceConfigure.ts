@@ -22,12 +22,14 @@ import { collectUnsubs, str } from './utils';
  *   - discarded: connections_new_datasource_cancelled — user clicks Cancel on the new datasource page
  *   - discarded: connections_datasource_deleted — user deletes the datasource before completing setup
  *   - abandoned: connections_datasource_config_page_left — user navigates away from the config page without testing
+ *   - abandoned: connections_new_datasource_page_left — user navigates away from the catalog page without picking a plugin
  *   - timeout: 1 hour — no end condition fires (generous to account for reading docs mid-setup)
  *
  * Silent interactions added by this journey:
  *   - connections_new_datasource_cancelled — emitted in NewDataSource.tsx on Cancel click
  *   - connections_datasource_deleted — emitted in datasources/state/hooks.ts on delete confirm
  *   - connections_datasource_config_page_left — emitted in EditDataSource.tsx on component unmount
+ *   - connections_new_datasource_page_left — emitted in NewDataSourcePage.tsx on component unmount
  */
 
 registerJourneyTriggers('datasource_configure', (tracker) => {
@@ -118,6 +120,13 @@ onJourneyInstance('datasource_configure', (handle) => {
   // User navigated away from config page without completing test
   add(
     onInteraction('connections_datasource_config_page_left', () => {
+      handle.end('abandoned');
+    })
+  );
+
+  // User navigated away from the catalog page without picking a plugin
+  add(
+    onInteraction('connections_new_datasource_page_left', () => {
       handle.end('abandoned');
     })
   );
