@@ -312,7 +312,7 @@ func TestRunCleanup_ReplicaVersionAgnostic(t *testing.T) {
 
 // seedSnapshot writes a minimal but valid snapshot at indexKey under ns,
 // matching the layout BucketRemoteIndexStore expects: a single placeholder file
-// plus meta.json declaring it. Bypasses store.UploadIndex so tests can pin
+// plus a snapshot manifest declaring it. Bypasses store.UploadIndex so tests can pin
 // arbitrary UploadTimestamps without being tied to wall-clock or ULID.Time().
 // Takes *IndexMeta so callers can use mkMeta directly.
 func seedSnapshot(t *testing.T, ctx context.Context, bucket *blob.Bucket, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
@@ -324,7 +324,7 @@ func seedSnapshot(t *testing.T, ctx context.Context, bucket *blob.Bucket, ns res
 	}
 	metaBytes, err := json.Marshal(meta)
 	require.NoError(t, err)
-	require.NoError(t, bucket.WriteAll(ctx, pfx+metaJSONFile, metaBytes, nil))
+	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
 }
 
 // listSeededIndexKeys returns the index keys still present at ns in the bucket.
@@ -412,7 +412,7 @@ func TestRunCleanup_IncompleteUploadsCounted(t *testing.T) {
 	ns := newTestNsResource()
 	old := makeULID(t, time.Now().Add(-48*time.Hour))
 	pfx := indexPrefix(ns, old.String())
-	// Stale prefix without meta.json — older than CleanupIncompleteUploads' minAge.
+	// Stale prefix without a snapshot manifest — older than CleanupIncompleteUploads' minAge.
 	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/data.bin", []byte("partial"), nil))
 
 	be, metrics := newCleanupTestBackend(t, store, nil)
@@ -500,6 +500,12 @@ func (s *recordingStore) ListIndexes(ctx context.Context, r resource.NamespacedR
 	s.listIndexes[r.Namespace]++
 	s.mu.Unlock()
 	return s.inner.ListIndexes(ctx, r)
+}
+func (s *recordingStore) ListIndexKeys(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.inner.ListIndexKeys(ctx, r)
+}
+func (s *recordingStore) GetIndexMeta(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	return s.inner.GetIndexMeta(ctx, r, k)
 }
 func (s *recordingStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
 	s.mu.Lock()
@@ -621,6 +627,12 @@ func (s *controllableLockStore) LockNamespaceForCleanup(_ context.Context, ns st
 }
 func (s *controllableLockStore) ListIndexes(ctx context.Context, r resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
 	return s.inner.ListIndexes(ctx, r)
+}
+func (s *controllableLockStore) ListIndexKeys(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.inner.ListIndexKeys(ctx, r)
+}
+func (s *controllableLockStore) GetIndexMeta(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	return s.inner.GetIndexMeta(ctx, r, k)
 }
 func (s *controllableLockStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
 	return s.inner.DeleteIndex(ctx, r, k)

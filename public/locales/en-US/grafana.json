@@ -6270,10 +6270,8 @@
       "title-provisioned": "Provisioned dashboard"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "A dashboard with the same name in selected folder already exists.<br/><2>Would you still like to save this dashboard?</2>",
       "body-version-mismatch": "Someone else has updated this dashboard<br/><2>Would you still like to save this dashboard?</2>",
       "confirmText-save-and-overwrite": "Save and overwrite",
-      "title-name-exists": "Conflict",
       "title-version-mismatch": "Conflict"
     },
     "save-dashboard-form": {
@@ -7327,10 +7325,6 @@
       "success-message": "Dashboard moved successfully",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
-      "title-name-already-exists": "Name already exists"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -15455,7 +15449,6 @@
       "forwards-time-aria-label": "Move time range forwards",
       "to": "to",
       "zoom-out-button": "Zoom out time range",
-      "zoom-out-tooltip": "Time range zoom out <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
     },
     "time-range": {

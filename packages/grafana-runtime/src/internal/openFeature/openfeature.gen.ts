@@ -67,6 +67,8 @@ export const FlagKeys = {
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
+  /** Enables plugins setting from new apis */
+  UseMTPluginSettings: "useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   UseMTPlugins: "useMTPlugins",
 } as const;
@@ -366,6 +368,17 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
+};
+
+/**
+ * Enables plugins setting from new apis
+ *
+ * **Details:**
+ * - flag key: `useMTPluginSettings`
+ * - default value: `false`
+ */
+export const useFlagUseMTPluginSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("useMTPluginSettings", false, options).value;
 };
 
 /**
