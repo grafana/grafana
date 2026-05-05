@@ -919,6 +919,8 @@ func newPumpedWatcher(buffer int) *pumpedWatcher {
 	return &pumpedWatcher{ch: make(chan watch.Event, buffer)}
 }
 
+// Events will be written to the channel without blocking.
+// If the buffer is full, the event will be dropped.
 func (p *pumpedWatcher) push(e watch.Event) {
 	select {
 	case p.ch <- e:
