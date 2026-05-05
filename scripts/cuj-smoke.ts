@@ -5,6 +5,9 @@
  * outcome histogram. Each run produces real Faro/OTel telemetry against
  * whatever collector the local Grafana is wired to (see conf/custom.ini).
  *
+ * Without --journeys, runs across ALL registered journeys (each run picks one
+ * randomly). Pass --journeys to restrict to a subset.
+ *
  * Usage:
  *   node --experimental-strip-types scripts/cuj-smoke.ts --runs 20
  *   node --experimental-strip-types scripts/cuj-smoke.ts --runs 5 --headed
@@ -88,7 +91,8 @@ function parseArgs(): Args {
   let runs = 10;
   let headless = true;
   let scenario: string | undefined;
-  let journeys: string[] = ['search_to_resource'];
+  // null = not specified, fall back to all registered journeys at validation time
+  let journeysOverride: string[] | null = null;
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
@@ -105,7 +109,7 @@ function parseArgs(): Args {
       }
       case '--journeys': {
         const raw = args[++i] ?? '';
-        journeys = raw
+        journeysOverride = raw
           .split(',')
           .map((s) => s.trim())
           .filter((s) => s.length > 0);
@@ -122,9 +126,11 @@ function parseArgs(): Args {
     throw new Error(`--runs must be a positive integer, got "${runs}"`);
   }
 
-  if (journeys.length === 0) {
+  // Explicit empty `--journeys ""` is a user error; omitted flag defaults to all.
+  if (journeysOverride !== null && journeysOverride.length === 0) {
     throw new Error(`--journeys must list at least one journey type`);
   }
+  const journeys = journeysOverride ?? Object.keys(DRIVERS);
   const registered = Object.keys(DRIVERS);
   for (const j of journeys) {
     if (!DRIVERS[j]) {
@@ -160,7 +166,7 @@ function printHelp(): void {
       'Options:',
       '  --runs, -n <N>         number of runs (default 10)',
       '  --headed               run with visible browser',
-      '  --journeys <list>      comma-separated journey types (default: search_to_resource)',
+      '  --journeys <list>      comma-separated journey types (default: all registered)',
       '  --scenario <name>      pin a single scenario across selected journeys',
       '                         (must be supported by at least one selected journey)',
       '  -h, --help             show this help',
