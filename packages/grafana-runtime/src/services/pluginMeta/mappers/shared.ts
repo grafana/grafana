@@ -1,12 +1,16 @@
 import {
   type AngularMeta,
-  type PluginMetaInfo,
+  type PluginDependencies,
+  type PluginExtensions,
   PluginLoadingStrategy,
   type PluginMeta,
+  type PluginMetaInfo,
   PluginSignatureStatus,
   PluginState,
+  type PluginType,
 } from '@grafana/data';
 
+import { logPluginSettingsWarning } from '../../pluginSettings/logging';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
 export function angularMapper(spec: v0alpha1Spec): AngularMeta {
@@ -55,7 +59,11 @@ export function logosMapper(spec: v0alpha1Spec): PluginMetaInfo['logos'] {
 
 export function infoMapper(spec: v0alpha1Spec): PluginMetaInfo {
   const { updated, version, description = '', keywords } = spec.pluginJson.info;
-  const author = { ...spec.pluginJson.info.author, name: spec.pluginJson.info.author?.name ?? '' };
+  const author = {
+    ...spec.pluginJson.info.author,
+    name: spec.pluginJson.info.author?.name ?? '',
+    url: spec.pluginJson.info.author?.url ?? '',
+  };
   const links = (spec.pluginJson.info.links || []).map((l) => ({ ...l, name: l.name ?? '', url: l.url ?? '' }));
   const screenshots = screenshotsMapper(spec);
   const build = {};
@@ -74,51 +82,98 @@ export function infoMapper(spec: v0alpha1Spec): PluginMetaInfo {
   };
 }
 
-export function stateMapper(spec: v0alpha1Spec): PluginState | undefined {
-  const state = spec.pluginJson.state;
-
-  if (state === PluginState.alpha) {
-    return PluginState.alpha;
+export function stateMapper(spec: v0alpha1Spec): PluginState {
+  if (!spec.pluginJson.state) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return (spec.pluginJson.state ?? '') as PluginState;
   }
 
-  if (state === PluginState.beta) {
-    return PluginState.beta;
+  switch (spec.pluginJson.state) {
+    case 'alpha':
+      return PluginState.alpha;
+    case 'beta':
+      return PluginState.beta;
+    case 'deprecated':
+      return PluginState.deprecated;
+    case 'stable':
+      return PluginState.stable;
+    default:
+      logPluginSettingsWarning(`stateMapper: unknown PluginState ${spec.pluginJson.state}`, spec.pluginJson.id);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return '' as PluginState;
   }
-
-  if (state === PluginState.deprecated) {
-    return PluginState.deprecated;
-  }
-
-  if (state === PluginState.stable) {
-    return PluginState.stable;
-  }
-
-  return;
 }
 
-export function signatureMapper(spec: v0alpha1Spec): PluginSignatureStatus | undefined {
-  const signature = spec.signature?.status;
-  if (!signature) {
-    return;
+export function signatureStatusMapper(spec: v0alpha1Spec): PluginSignatureStatus {
+  if (!spec.signature.status) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return 'unsigned' as PluginSignatureStatus;
   }
 
-  if (signature === PluginSignatureStatus.internal) {
-    return PluginSignatureStatus.internal;
+  switch (spec.signature.status) {
+    case 'internal':
+      return PluginSignatureStatus.internal;
+    case 'invalid':
+      return PluginSignatureStatus.invalid;
+    case 'modified':
+      return PluginSignatureStatus.modified;
+    case 'valid':
+      return PluginSignatureStatus.valid;
+    default:
+      logPluginSettingsWarning(
+        `signatureStatusMapper: unknown PluginSignatureStatus ${spec.signature.status}`,
+        spec.pluginJson.id
+      );
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return 'unsigned' as PluginSignatureStatus;
   }
+}
 
-  if (signature === PluginSignatureStatus.invalid) {
-    return PluginSignatureStatus.invalid;
-  }
+export function dependenciesMapper(spec: v0alpha1Spec): PluginDependencies {
+  const plugins = (spec.pluginJson.dependencies?.plugins ?? []).map((v) => ({
+    ...v,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    type: v.type as PluginType,
+    version: '',
+  }));
 
-  if (signature === PluginSignatureStatus.modified) {
-    return PluginSignatureStatus.modified;
-  }
+  const dependencies: PluginDependencies = {
+    ...spec.pluginJson.dependencies,
+    extensions: {
+      exposedComponents: spec.pluginJson.dependencies.extensions?.exposedComponents ?? [],
+    },
+    grafanaDependency: spec.pluginJson.dependencies.grafanaDependency,
+    grafanaVersion: spec.pluginJson.dependencies.grafanaVersion ?? '',
+    plugins,
+  };
 
-  if (signature === PluginSignatureStatus.valid) {
-    return PluginSignatureStatus.valid;
-  }
+  return dependencies;
+}
 
-  return;
+export function extensionsMapper(spec: v0alpha1Spec): PluginExtensions {
+  const addedComponents = spec.pluginJson.extensions?.addedComponents ?? [];
+  const addedFunctions = spec.pluginJson.extensions?.addedFunctions ?? [];
+  const addedLinks = spec.pluginJson.extensions?.addedLinks ?? [];
+  const exposedComponents = (spec.pluginJson.extensions?.exposedComponents ?? []).map((v) => ({
+    ...v,
+    description: v.description ?? '',
+    title: v.title ?? '',
+  }));
+  const extensionPoints = (spec.pluginJson.extensions?.extensionPoints ?? []).map((v) => ({
+    ...v,
+    description: v.description ?? '',
+    title: v.title ?? '',
+  }));
+
+  const extensions: PluginExtensions = {
+    addedComponents,
+    addedFunctions,
+    addedLinks,
+    exposedComponents,
+    extensionPoints,
+  };
+
+  return extensions;
 }
 
 export function isCorePlugin(spec: v0alpha1Spec): boolean {

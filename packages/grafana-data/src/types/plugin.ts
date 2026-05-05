@@ -180,6 +180,8 @@ export interface PluginInclude {
 
   // Angular app pages
   component?: string;
+
+  slug?: string;
 }
 
 interface PluginMetaInfoLink {

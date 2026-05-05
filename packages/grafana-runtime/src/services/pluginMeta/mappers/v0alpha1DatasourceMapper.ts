@@ -7,7 +7,7 @@ import {
   angularMapper,
   infoMapper,
   loadingStrategyMapper,
-  signatureMapper,
+  signatureStatusMapper,
   stateMapper,
   prependPublicPathToCorePlugins,
   isCorePlugin,
@@ -40,7 +40,7 @@ function specMapper(spec: v0alpha1Spec): DataSourcePluginMeta {
   const type = PluginType.datasource;
   const module = spec.module.path;
   const baseUrl = spec.baseURL;
-  const signature = signatureMapper(spec);
+  const signature = signatureStatusMapper(spec);
   const angular = angularMapper(spec);
   const translations = spec.translations;
   const moduleHash = spec.module.hash;

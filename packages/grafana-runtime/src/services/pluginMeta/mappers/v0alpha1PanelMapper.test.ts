@@ -1,4 +1,5 @@
 /* eslint-disable @grafana/no-restricted-img-srcs */
+import { setLogger } from '../../logging/registry';
 import { clockPanelConfigCDN, clockPanelConfigOnPrem, panels } from '../test-fixtures/config.panels';
 import { clockPanelMetaCDN, clockPanelMetaOnPrem, v0alpha1Response } from '../test-fixtures/v0alpha1Response';
 
@@ -13,6 +14,15 @@ describe('v0alpha1PanelMapper', () => {
     (window as unknown as Record<string, unknown>).__grafana_public_path__ = '';
   });
 
+  beforeAll(() => {
+    setLogger('grafana/runtime.plugins.settings', {
+      logDebug: jest.fn(),
+      logError: jest.fn(),
+      logInfo: jest.fn(),
+      logMeasurement: jest.fn(),
+      logWarning: jest.fn(),
+    });
+  });
   describe.each(PLUGIN_IDS)('when called for pluginId:$pluginId', ({ pluginId }) => {
     it('should map id property correctly', () => {
       const result = v0alpha1PanelMapper(v0alpha1Response);
@@ -63,7 +73,7 @@ describe('v0alpha1PanelMapper', () => {
     it('should map state property correctly', () => {
       const result = v0alpha1PanelMapper(v0alpha1Response);
 
-      expect(result[pluginId].state).toEqual(panels[pluginId].state);
+      expect(result[pluginId].state).toEqual(panels[pluginId].state ?? '');
     });
 
     it('should map baseUrl property correctly', () => {

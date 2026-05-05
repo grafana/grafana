@@ -11,3 +11,5 @@
 
 export { clearLoggerRegistry, getLogger, initializeLoggersRegistry, setLogger } from './services/logging/registry';
 export { type LoggerSource } from './services/logging/loggers';
+export { getPluginSettings } from './services/pluginSettings/getPluginSettings';
+export { updateAppPluginSettings } from './services/pluginSettings/updateAppPluginSettings';

@@ -9,7 +9,7 @@ import {
   loadingStrategyMapper,
   stateMapper,
   infoMapper,
-  signatureMapper,
+  signatureStatusMapper,
   prependPublicPathToCorePlugins,
 } from './shared';
 
@@ -46,7 +46,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   const type = PluginType.panel;
   const module = spec.module.path;
   const baseUrl = spec.baseURL;
-  const signature = signatureMapper(spec);
+  const signature = signatureStatusMapper(spec);
   const angular = angularMapper(spec);
   const translations = spec.translations;
   const moduleHash = spec.module.hash;
