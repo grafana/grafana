@@ -294,10 +294,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       },
       url: {
         ...shared.url,
-        description: t(
-          'provisioning.github-enterprise.url-description',
-          'The GitHub Enterprise Server repository URL'
-        ),
+        description: t('provisioning.github-enterprise.url-description', 'The GitHub Enterprise Server repository URL'),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder: 'https://ghes.example.com/owner/repository',
         required: true,
