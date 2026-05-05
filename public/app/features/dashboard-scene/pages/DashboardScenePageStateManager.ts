@@ -263,6 +263,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       this.setState({ dashboard: dashboard, isLoading: false });
     } catch (err) {
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
+
       const status = getStatusFromError(err);
       const message = getMessageFromError(err);
       const messageId = getMessageIdFromError(err);
@@ -275,11 +279,6 @@ abstract class DashboardScenePageStateManagerBase<T>
           messageId,
         },
       });
-      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
-      // This enables us to switch to the correct version of the dashboard
-      if (err instanceof DashboardVersionError) {
-        throw err;
-      }
     }
   }
 
@@ -474,6 +473,12 @@ abstract class DashboardScenePageStateManagerBase<T>
         });
       }
     } catch (err) {
+      // DashboardVersionError signals a schema version mismatch — the caller retries
+      // with the correct version. Don't set loadError here or it persists after retry.
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
+
       const status = getStatusFromError(err);
       const message = getMessageFromError(err);
       const messageId = getMessageIdFromError(err);
@@ -489,12 +494,6 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       if (!isFetchError(err)) {
         console.error('Error loading dashboard:', err);
-      }
-
-      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
-      // This enables us to switch to the correct version of the dashboard
-      if (err instanceof DashboardVersionError) {
-        throw err;
       }
     }
   }
@@ -955,6 +954,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       const status = getStatusFromError(err);
       const message = getMessageFromError(err);
 
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
+
       this.setState({
         isLoading: false,
         loadError: {
@@ -962,10 +965,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           status,
         },
       });
-
-      if (err instanceof DashboardVersionError) {
-        throw err;
-      }
     }
   }
 }
