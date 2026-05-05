@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/util"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type ExternalGroupMappingAuthorizer struct {
