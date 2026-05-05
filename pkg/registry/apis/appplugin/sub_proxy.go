@@ -115,7 +115,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		defer m.Record()
 
 		ps := &pluginsettings.DTO{
-			OrgID:         pluginCtx.OrgID, // Or from the namespace
+			OrgID:         pluginCtx.OrgID, // nolint:staticcheck
 			PluginID:      r.pluginID,
 			PluginVersion: pluginCtx.PluginVersion,
 			Enabled:       true,
@@ -148,7 +148,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 }
 
 func proxyRequest(ctx context.Context, req *http.Request) (*http.Request, string, error) {
-	idx := strings.LastIndex(req.URL.Path, "/proxy")
+	idx := strings.Index(req.URL.Path, "/proxy")
 	if idx < 0 {
 		return nil, "", fmt.Errorf("expected proxy path") // 400?
 	}
