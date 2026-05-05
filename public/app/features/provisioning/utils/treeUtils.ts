@@ -1,9 +1,14 @@
 import { type IconName } from '@grafana/ui';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
+import { FOLDER_METADATA_FILE } from '../constants';
 import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath } from './folderMetadata';
+
+function isFolderMetadataPath(path: string): boolean {
+  return path === FOLDER_METADATA_FILE || path.endsWith(`/${FOLDER_METADATA_FILE}`);
+}
 
 const collator = new Intl.Collator();
 
@@ -103,8 +108,12 @@ function calculateFolderStatus(node: TreeItem): SyncStatus | undefined {
     return node.status;
   }
 
-  // If any child is pending, folder is pending
+  // If any child is pending, folder is pending. _folder.json is folder metadata,
+  // not an independently synced resource, so it is excluded from this aggregation.
   for (const child of node.children) {
+    if (isFolderMetadataPath(child.path)) {
+      continue;
+    }
     const childStatus = child.type === 'Folder' ? calculateFolderStatus(child) : child.status;
     if (childStatus === 'pending') {
       return 'pending';
@@ -121,7 +130,8 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   // Create all nodes (files, dashboards, folders)
   for (const item of mergedItems) {
     const type = getItemType(item.path, item.resource);
-    const showStatus = type === 'Dashboard' || type === 'Folder' || item.path.endsWith('.json');
+    const showStatus =
+      !isFolderMetadataPath(item.path) && (type === 'Dashboard' || type === 'Folder' || item.path.endsWith('.json'));
 
     nodeMap.set(item.path, {
       path: item.path,
