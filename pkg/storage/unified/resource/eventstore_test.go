@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 			db.CleanupTestDB()
 			os.Exit(exitCode)
 		}),
-		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
+		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.newEventExecutor.(*eventExecutor).startEventListener.func1.1"),
 		goleak.IgnoreTopFunction("github.com/patrickmn/go-cache.(*janitor).Run"),                          // go-cache janitor stops via GC finalizer, not an explicit close.
 		goleak.IgnoreTopFunction("go.opentelemetry.io/otel/sdk/trace.(*batchSpanProcessor).processQueue"), // OTel span processor from test infra.
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),                                   // database/sql background goroutines from test DB setup.

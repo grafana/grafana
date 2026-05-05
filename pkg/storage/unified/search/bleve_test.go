@@ -39,7 +39,7 @@ import (
 // (Except for goroutines running specific functions. If possible we should fix this, esp. our own updateIndexSizeMetric.)
 func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m,
-		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
+		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.newEventExecutor.(*eventExecutor).startEventListener.func1.1"),
 		goleak.IgnoreTopFunction("github.com/blevesearch/bleve_index_api.AnalysisWorker"), // These don't stop when index is closed.
 		goleak.IgnoreAnyFunction("net/http.(*http2clientConnReadLoop).run"),               // HTTP/2 keep-alive from cloud provider SDKs in integration tests.
 	)
