@@ -14,7 +14,6 @@ import (
 	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	api "github.com/grafana/grafana/pkg/services/publicdashboards/internal/api"
 	database "github.com/grafana/grafana/pkg/services/publicdashboards/internal/database"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/metric"
 	metrics "github.com/grafana/grafana/pkg/services/publicdashboards/internal/metric"
 	models "github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	service "github.com/grafana/grafana/pkg/services/publicdashboards/internal/service"
@@ -119,6 +118,6 @@ func ProvideServiceWrapper(store publicdashboards.Store) *PublicDashboardService
 	return service.ProvideServiceWrapper(store)
 }
 
-func ProvideMetricsService(store publicdashboards.Store, prom prometheus.Registerer) (*metric.Service, error) {
-	return metric.ProvideService(store, prom)
+func ProvideMetricsService(store publicdashboards.Store, prom prometheus.Registerer) (*metrics.Service, error) {
+	return metrics.ProvideService(store, prom)
 }
