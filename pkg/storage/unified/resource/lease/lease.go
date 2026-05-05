@@ -55,6 +55,7 @@ type Lease struct {
 	generation int64
 	lostCh     chan struct{}
 	lostOnce   sync.Once
+	timerMu    sync.Mutex
 	lostTimer  *time.Timer
 }
 
@@ -232,6 +233,8 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
 	}
 
+	lease.timerMu.Lock()
+	defer lease.timerMu.Unlock()
 	lease.lostTimer.Stop()
 	lease.notifyLoss()
 	return nil
@@ -267,6 +270,8 @@ func (m *Manager) Extend(ctx context.Context, lease *Lease, opts ...AcquireOptio
 		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
 	}
 
+	lease.timerMu.Lock()
+	defer lease.timerMu.Unlock()
 	lease.lostTimer.Stop()
 	lease.lostTimer = time.AfterFunc(time.Until(expires), lease.notifyLoss)
 	return nil

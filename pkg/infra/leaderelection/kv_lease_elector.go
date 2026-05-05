@@ -167,7 +167,7 @@ func (k *KVLeaseElector) runAsLeader(
 	leaderCancel()
 	o.onStoppedLeading()
 
-	if o.releaseOnCancel {
+	if o.releaseOnCancel && ctx.Err() != nil {
 		if releaseErr := mgr.Release(context.Background(), l); releaseErr != nil {
 			k.logger.Debug("Failed to release lease on shutdown", "error", releaseErr)
 		}
