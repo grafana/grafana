@@ -29,7 +29,7 @@ export interface DataSourceInstanceSettingsPage {
 /**
  * @public
  */
-export interface GetInstanceSettingsListOptions {
+export interface FindInstanceSettingsOptions {
   filters?: GetDataSourceListFilters;
   /** Cursor returned by a previous call; omit to fetch the first page. */
   cursor?: string;
@@ -136,14 +136,14 @@ export async function getInstanceSettings(
 }
 
 /**
- * Asynchronously list data source instance settings, optionally filtered.
+ * Asynchronously search and filter data source instance settings.
  * Returns a paginated response; the initial implementation always returns
  * every matching item in a single page.
  *
  * @public
  */
-export async function getInstanceSettingsList(
-  options?: GetInstanceSettingsListOptions
+export async function findInstanceSettings(
+  options?: FindInstanceSettingsOptions
 ): Promise<DataSourceInstanceSettingsPage> {
   await ensureFetched();
   const items = applyFilters(options?.filters);

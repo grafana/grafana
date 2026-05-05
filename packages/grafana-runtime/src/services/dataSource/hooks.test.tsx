@@ -2,13 +2,13 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 
-import { invalidateCache } from '../../utils/getCachedPromise';
+import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
-import { useDataSourcePlugin, useInstanceSettings, useInstanceSettingsList } from './hooks';
+import { useDataSourcePlugin, useFindInstanceSettings, useInstanceSettings } from './hooks';
 import { _resetForTests as resetInstanceSettings, init } from './instanceSettings';
-import { _resetForTests as resetPlugin, setDataSourcePluginImporter } from './plugin';
+import { _resetForTests as resetPlugin, setGetDataSourcePlugin } from './plugin';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
   return {
@@ -61,7 +61,7 @@ beforeAll(() => {
 beforeEach(() => {
   resetInstanceSettings();
   resetPlugin();
-  invalidateCache();
+  invalidateCachedPromisesCache();
   init(fixtures, 'Bravo');
 });
 
@@ -87,9 +87,9 @@ describe('useInstanceSettings', () => {
   });
 });
 
-describe('useInstanceSettingsList', () => {
+describe('useFindInstanceSettings', () => {
   it('populates items and reports hasMore=false for the initial page', async () => {
-    const { result } = renderHook(() => useInstanceSettingsList());
+    const { result } = renderHook(() => useFindInstanceSettings());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.items.length).toBeGreaterThan(0);
@@ -97,7 +97,7 @@ describe('useInstanceSettingsList', () => {
   });
 
   it('is safe to call fetchMore when there are no more pages', async () => {
-    const { result } = renderHook(() => useInstanceSettingsList());
+    const { result } = renderHook(() => useFindInstanceSettings());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
@@ -108,16 +108,9 @@ describe('useInstanceSettingsList', () => {
 });
 
 describe('useDataSourcePlugin', () => {
-  class TestDs {
-    constructor(public instanceSettings: DataSourceInstanceSettings) {}
-  }
-
   it('starts loading then resolves to a plugin instance', async () => {
-    const { DataSourcePlugin } = jest.requireActual('@grafana/data');
-    setDataSourcePluginImporter({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      importDataSource: () => Promise.resolve(new DataSourcePlugin(TestDs as any)),
-    });
+    const mockDs = { name: 'mock-ds' };
+    setGetDataSourcePlugin(jest.fn().mockResolvedValue(mockDs));
 
     const { result } = renderHook(() => useDataSourcePlugin('uid-alpha'));
     expect(result.current.isLoading).toBe(true);
@@ -127,9 +120,7 @@ describe('useDataSourcePlugin', () => {
   });
 
   it('reports errors when lookup fails', async () => {
-    setDataSourcePluginImporter({
-      importDataSource: () => Promise.reject(new Error('boom')),
-    });
+    setGetDataSourcePlugin(jest.fn().mockRejectedValue(new Error('boom')));
 
     const { result } = renderHook(() => useDataSourcePlugin('missing'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
