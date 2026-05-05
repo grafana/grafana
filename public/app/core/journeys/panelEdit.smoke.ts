@@ -1,9 +1,9 @@
 import { type Page } from '@playwright/test';
 
-import { jitter } from './__smoke__/playwright-utils.ts';
+import { jitter, spaNavigateHome } from './__smoke__/playwright-utils.ts';
 import { type JourneyDriver } from './__smoke__/types.ts';
 
-const PANEL_EDIT_SCENARIOS = ['open-panel-edit', 'cancel-panel-edit'] as const;
+const PANEL_EDIT_SCENARIOS = ['open-panel-edit', 'navigate-away'] as const;
 
 const FIXTURE_PATH = '/d/cuj-smoke-fixture';
 // The fixture dashboard ships a single text panel titled "CUJ Smoke Panel"
@@ -15,7 +15,6 @@ const PANEL_MENU = `data-testid Panel menu ${FIXTURE_PANEL_TITLE}`;
 const PANEL_MENU_ITEM_EDIT = 'data-testid Panel menu item Edit';
 const PANEL_EDITOR_CONTENT = 'data-testid Panel editor content';
 const BACK_TO_DASHBOARD_BUTTON = 'data-testid Back to dashboard button';
-const DISCARD_CHANGES_BUTTON = 'data-testid Discard changes button';
 
 /**
  * Open the fixture dashboard, hover the fixture panel, click its menu, then Edit.
@@ -76,31 +75,17 @@ async function openPanelEdit(page: Page): Promise<void> {
 }
 
 /**
- * Open panel edit, then attempt to discard. If no Discard button surfaces
- * (no diff to discard), exit via Back to dashboard which still ends as
- * `success` — acceptable signal for smoke.
+ * Open panel edit, then SPA-navigate home. Pathname leaves the dashboard so
+ * abandonOnRouteChange ends the journey as `abandoned`. Distinct outcome from
+ * open-panel-edit which ends as `success` via Back-to-dashboard click (no
+ * pathname change).
  */
-async function cancelPanelEdit(page: Page): Promise<void> {
+async function navigateAway(page: Page): Promise<void> {
   if (!(await enterPanelEdit(page))) {
     return;
   }
-
   await page.waitForTimeout(200 + jitter(400));
-
-  try {
-    await page.getByTestId(DISCARD_CHANGES_BUTTON).waitFor({ state: 'visible', timeout: 3_000 });
-    await page.getByTestId(DISCARD_CHANGES_BUTTON).click();
-    await page.waitForTimeout(500);
-    return;
-  } catch {
-    // Fall through to plain exit.
-  }
-
-  try {
-    await page.getByTestId(BACK_TO_DASHBOARD_BUTTON).click({ timeout: 5_000 });
-  } catch {
-    await page.keyboard.press('Escape');
-  }
+  await spaNavigateHome(page);
   await page.waitForTimeout(500);
 }
 
@@ -111,8 +96,8 @@ export const panelEditDriver: JourneyDriver = {
     switch (scenario) {
       case 'open-panel-edit':
         return openPanelEdit(page);
-      case 'cancel-panel-edit':
-        return cancelPanelEdit(page);
+      case 'navigate-away':
+        return navigateAway(page);
       default:
         throw new Error(`panel_edit: unknown scenario "${scenario}"`);
     }
