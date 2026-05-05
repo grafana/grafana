@@ -69,6 +69,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcekv "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -167,6 +168,7 @@ var wireExtsBasicSet = wire.NewSet(
 	advisor.ProvideAppInstaller,
 	zStore.ProvideDefaultStoreProvider,
 	authz.ProvideReconcileCRDs,
+	resourcekv.ProvideEventualKVStore,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -217,6 +219,8 @@ var wireExtsModuleServerSet = wire.NewSet(
 	zStore.ProvideDefaultStoreProvider,
 	// Zanzana MT reconciler CRD list
 	authz.ProvideReconcileCRDs,
+	// KV store provider for lease-based leader election
+	resourcekv.ProvideEventualKVStore,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(
