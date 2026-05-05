@@ -702,6 +702,8 @@ func TestWrapper_Watch(t *testing.T) {
 		w1.Stop()
 		assert.True(t, fakeWatcher1.IsStopped(), "first inner watcher should be stopped")
 
+		assert.False(t, fakeWatcher2.IsStopped(), "stopping w1 must not affect w2")
+
 		w2.Stop()
 		assert.True(t, fakeWatcher2.IsStopped(),
 			"second inner watcher should also be stopped (regression: package-level sync.Once)")
