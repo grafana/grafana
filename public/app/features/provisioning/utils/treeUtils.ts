@@ -1,14 +1,9 @@
 import { type IconName } from '@grafana/ui';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FOLDER_METADATA_FILE } from '../constants';
 import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';
 
-import { getFolderMetadataPath } from './folderMetadata';
-
-function isFolderMetadataPath(path: string): boolean {
-  return path === FOLDER_METADATA_FILE || path.endsWith(`/${FOLDER_METADATA_FILE}`);
-}
+import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
 
 const collator = new Intl.Collator();
 
@@ -119,25 +114,11 @@ function calculateFolderStatus(node: TreeItem): SyncStatus | undefined {
   return node.status;
 }
 
-// _folder.json is folder metadata: its sync state is determined by comparing the
-// file hash against the parent folder's resource hash (which is the metadata hash).
-// Returns undefined for root-level _folder.json (no parent folder resource exists).
-function getFolderMetadataResourceHash(
-  metadataPath: string,
-  mergedByPath: Map<string, MergedItem>
-): string | undefined {
-  const lastSlash = metadataPath.lastIndexOf('/');
-  if (lastSlash === -1) {
-    return undefined;
-  }
-  const parentPath = metadataPath.substring(0, lastSlash);
-  return mergedByPath.get(parentPath)?.resource?.hash;
-}
-
 export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   const nodeMap = new Map<string, TreeItem>();
   const roots: TreeItem[] = [];
   const mergedByPath = new Map(mergedItems.map((item) => [item.path, item]));
+  const lookupResourceHash = (path: string) => mergedByPath.get(path)?.resource?.hash;
 
   // Create all nodes (files, dashboards, folders)
   for (const item of mergedItems) {
@@ -145,7 +126,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
     const isFolderMetadata = isFolderMetadataPath(item.path);
     const showStatus = type === 'Dashboard' || type === 'Folder' || item.path.endsWith('.json');
     const resourceHash = isFolderMetadata
-      ? getFolderMetadataResourceHash(item.path, mergedByPath)
+      ? getParentFolderResourceHash(item.path, lookupResourceHash)
       : item.resource?.hash;
 
     nodeMap.set(item.path, {
