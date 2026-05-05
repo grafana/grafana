@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "Lagringsplatsen för den valda mappen kunde inte hittas. Verifiera att mappen är korrekt tilldelad.",
         "repository-not-found-title": "Lagringsplatsen hittades inte"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Fel vid flyttning av resurser",
       "error-no-target-folder-path": "Sökvägen till målmappen är ogiltig eller tom. Välj på nytt.",
       "move-total": "Totalt kommer detta att påverka:",
@@ -7313,6 +7314,7 @@
       "terraform": "Hanteras av: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Det gick inte att flytta kontrollpanelen",
       "cancel-action": "Avbryt",
       "current-file-not-found": "Den aktuella kontrollpanelfilen kunde inte hittas",
@@ -15453,7 +15455,6 @@
       "forwards-time-aria-label": "Flytta tidsintervallet framåt",
       "to": "till",
       "zoom-out-button": "Zooma ut tidsintervall",
-      "zoom-out-tooltip": "Zooma ut tidsintervall <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Zooma ut tidsintervall <br/> t -"
     },
     "time-range": {

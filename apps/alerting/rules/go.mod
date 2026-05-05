@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/alerting/rules
 go 1.26.2
 
 require (
-	github.com/grafana/grafana-app-sdk v0.54.0
+	github.com/grafana/grafana-app-sdk v0.54.1
 	github.com/grafana/grafana-app-sdk/logging v0.54.0
 	github.com/prometheus/common v0.67.5
 	github.com/stretchr/testify v1.11.1
