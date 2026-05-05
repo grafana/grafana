@@ -11,12 +11,14 @@ on:
       - "public/app/plugins/datasource/influxdb/**"
       - "public/app/plugins/datasource/zipkin/**"
       - "public/app/plugins/datasource/opentsdb/**"
+      - "public/app/plugins/datasource/tempo/**"
       - "pkg/tsdb/cloudwatch/**"
       - "pkg/tsdb/cloud-monitoring/**"
       - "pkg/tsdb/graphite/**"
       - "pkg/tsdb/influxdb/**"
       - "pkg/tsdb/zipkin/**"
       - "pkg/tsdb/opentsdb/**"
+      - "pkg/tsdb/tempo/**"
 
 jobs:
   add-comment:
