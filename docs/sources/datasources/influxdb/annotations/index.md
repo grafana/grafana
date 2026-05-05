@@ -53,10 +53,10 @@ For InfluxQL-configured data sources, write an InfluxQL query in the **InfluxQL 
 
 Field mappings tell Grafana which InfluxDB columns contain the annotation data. If your query returns only one column, you don't need to enter anything in the field mapping fields.
 
-| Field | Description |
-| ----- | ----------- |
-| **Text** | The column containing the annotation description displayed when you hover over the annotation. |
-| **Tags** | The column containing tags for the annotation. The value can be a comma-separated string. Tags help categorize and filter annotations. |
+| Field       | Description                                                                                                                                           |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Text**    | The column containing the annotation description displayed when you hover over the annotation.                                                        |
+| **Tags**    | The column containing tags for the annotation. The value can be a comma-separated string. Tags help categorize and filter annotations.                |
 | **TimeEnd** | The column containing an end time for range annotations. Range annotations display as a shaded region on the graph instead of a single vertical line. |
 
 ### InfluxQL annotation query example

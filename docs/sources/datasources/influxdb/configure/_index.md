@@ -34,14 +34,14 @@ This document explains how to configure the InfluxDB data source and describes t
 
 If you're new to InfluxDB, these terms are used throughout the configuration:
 
-| Term | Description |
-| ---- | ----------- |
-| **Bucket** | A named location in InfluxDB 2.x and 3.x where time-series data is stored, equivalent to a database in 1.x. |
-| **Organization** | An InfluxDB 2.x workspace that groups users, buckets, and dashboards. |
-| **DBRP mapping** | Database and Retention Policy mapping that lets InfluxQL queries work against InfluxDB 2.x buckets. |
-| **Measurement** | A logical grouping of fields, tags, and timestamps in InfluxDB, similar to a table in a relational database. |
-| **Retention policy** | An InfluxDB 1.x setting that defines how long data is kept before automatic deletion. |
-| **Token** | An authentication credential used to access the InfluxDB API in 2.x and 3.x. |
+| Term                 | Description                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Bucket**           | A named location in InfluxDB 2.x and 3.x where time-series data is stored, equivalent to a database in 1.x.  |
+| **Organization**     | An InfluxDB 2.x workspace that groups users, buckets, and dashboards.                                        |
+| **DBRP mapping**     | Database and Retention Policy mapping that lets InfluxQL queries work against InfluxDB 2.x buckets.          |
+| **Measurement**      | A logical grouping of fields, tags, and timestamps in InfluxDB, similar to a table in a relational database. |
+| **Retention policy** | An InfluxDB 1.x setting that defines how long data is kept before automatic deletion.                        |
+| **Token**            | An authentication credential used to access the InfluxDB API in 2.x and 3.x.                                 |
 
 ## Before you begin
 

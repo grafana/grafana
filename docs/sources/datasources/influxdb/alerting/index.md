@@ -39,10 +39,10 @@ InfluxDB alerting supports all three query languages: InfluxQL, SQL, and Flux. Q
 
 ### Query language compatibility
 
-| Query language | Alerting support | Notes |
-| -------------- | ---------------- | ----- |
-| InfluxQL       | Yes              | Use aggregation functions with GROUP BY time. |
-| Flux           | Yes              | Use `aggregateWindow()` for time-based aggregation. |
+| Query language | Alerting support | Notes                                                           |
+| -------------- | ---------------- | --------------------------------------------------------------- |
+| InfluxQL       | Yes              | Use aggregation functions with GROUP BY time.                   |
+| Flux           | Yes              | Use `aggregateWindow()` for time-based aggregation.             |
 | SQL            | Yes              | Use `$__timeFilter` and `$__dateBin` macros for time filtering. |
 
 ## Create an alert rule

@@ -35,11 +35,11 @@ For general information about variables, refer to [Variables](https://grafana.co
 
 ## Supported variable types
 
-| Variable type | Supported |
-| ------------- | --------- |
-| Query         | Yes       |
-| Custom        | Yes       |
-| Data source   | Yes       |
+| Variable type | Supported           |
+| ------------- | ------------------- |
+| Query         | Yes                 |
+| Custom        | Yes                 |
+| Data source   | Yes                 |
 | Ad-hoc filter | Yes (InfluxQL only) |
 
 ## Create a query variable
@@ -129,7 +129,9 @@ To add **Ad hoc filters**:
 1. Select your InfluxDB data source.
 
 <!-- vale Grafana.Spelling = NO -->
+
 For more information, refer to [Add free-form filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+
 <!-- vale Grafana.Spelling = YES -->
 
 ## Choose a variable syntax

@@ -39,13 +39,13 @@ For general information about Grafana query editors, refer to [Query and transfo
 
 If you're new to InfluxDB, these terms are used throughout the query editor:
 
-| Term | Description |
-| ---- | ----------- |
-| **Measurement** | A logical grouping of fields, tags, and timestamps, similar to a table in a relational database. |
-| **Field** | A column in a measurement that stores the actual data values (numbers, strings, Boolean values). |
-| **Tag** | A column used for metadata and indexing. Tags are indexed and optimized for filtering. |
-| **Retention policy** | An InfluxDB 1.x setting that controls how long data is stored before automatic deletion. |
-| **Bucket** | An InfluxDB 2.x and 3.x storage location that combines a database and retention policy. |
+| Term                 | Description                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| **Measurement**      | A logical grouping of fields, tags, and timestamps, similar to a table in a relational database. |
+| **Field**            | A column in a measurement that stores the actual data values (numbers, strings, Boolean values). |
+| **Tag**              | A column used for metadata and indexing. Tags are indexed and optimized for filtering.           |
+| **Retention policy** | An InfluxDB 1.x setting that controls how long data is stored before automatic deletion.         |
+| **Bucket**           | An InfluxDB 2.x and 3.x storage location that combines a database and retention policy.          |
 
 ## Choose a query editor
 
@@ -119,12 +119,12 @@ To remove a GROUP BY option click the **X icon** next to the option.
 
 ### Alias patterns
 
-| Alias pattern     | Replaced with |
-| ----------------- | ------------- |
-| `$m`              | Measurement name. |
-| `$measurement`    | Measurement name. |
-| `$1` - `$9`       | Part of measurement name (if you separate your measurement name with dots). |
-| `$col`            | Column name. |
+| Alias pattern     | Replaced with                                                                                                                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$m`              | Measurement name.                                                                                                                                                                                  |
+| `$measurement`    | Measurement name.                                                                                                                                                                                  |
+| `$1` - `$9`       | Part of measurement name (if you separate your measurement name with dots).                                                                                                                        |
+| `$col`            | Column name.                                                                                                                                                                                       |
 | `$tag_exampletag` | The value of the `exampletag` tag. The syntax is `$tag_yourTagName` and must start with `$tag_`. To use your tag as an alias in the ALIAS BY field, you must use the tag to group by in the query. |
 
 You can also use the `[[tag_hostname]]` pattern replacement syntax.
@@ -157,16 +157,16 @@ Select the format from the **Format** drop-down in the query editor.
 
 You can use macros in your query to automatically substitute them with values from the Grafana context.
 
-| Macro example               | Replaced with |
-| --------------------------- | ------------- |
-| `$__timeFrom`               | The start of the currently active time selection, such as `cast('2020-06-11T13:31:00Z' as timestamp)`. |
-| `$__timeTo`                 | The end of the currently active time selection, such as `cast('2020-06-11T14:31:00Z' as timestamp)`. |
-| `$__timeFilter(<column>)`   | A time range filter applied to the specified column. Expands to `<column> >= $__timeFrom AND <column> <= $__timeTo`. |
-| `$__interval`               | An interval string that corresponds to the Grafana calculated interval based on the time range of the active time selection, such as `interval '5 second'`. |
-| `$__dateBin(<column>)`      | Applies the [`date_bin`](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function using `$__interval`. Column must be a timestamp. |
-| `$__dateBinAlias(<column>)` | Applies the [`date_bin`](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function with a `_binned` suffix alias. Column must be a timestamp. |
-| `$__timeGroup(<column>)`    | Groups results by a time interval using `date_bin()` with `$__interval`. Column must be a timestamp. |
-| `$__timeGroupAlias(<column>)` | Groups results by a time interval using `date_bin()` with `$__interval` and adds a `_binned` suffix alias. Column must be a timestamp. |
+| Macro example                 | Replaced with                                                                                                                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$__timeFrom`                 | The start of the currently active time selection, such as `cast('2020-06-11T13:31:00Z' as timestamp)`.                                                                                              |
+| `$__timeTo`                   | The end of the currently active time selection, such as `cast('2020-06-11T14:31:00Z' as timestamp)`.                                                                                                |
+| `$__timeFilter(<column>)`     | A time range filter applied to the specified column. Expands to `<column> >= $__timeFrom AND <column> <= $__timeTo`.                                                                                |
+| `$__interval`                 | An interval string that corresponds to the Grafana calculated interval based on the time range of the active time selection, such as `interval '5 second'`.                                         |
+| `$__dateBin(<column>)`        | Applies the [`date_bin`](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function using `$__interval`. Column must be a timestamp.           |
+| `$__dateBinAlias(<column>)`   | Applies the [`date_bin`](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/functions/time-and-date/#date_bin) function with a `_binned` suffix alias. Column must be a timestamp. |
+| `$__timeGroup(<column>)`      | Groups results by a time interval using `date_bin()` with `$__interval`. Column must be a timestamp.                                                                                                |
+| `$__timeGroupAlias(<column>)` | Groups results by a time interval using `date_bin()` with `$__interval` and adds a `_binned` suffix alias. Column must be a timestamp.                                                              |
 
 ### SQL query examples
 
@@ -234,17 +234,20 @@ to [InfluxDB 1.8 API compatibility](https://github.com/influxdata/influxdb-clien
 ### Use macros
 
 You can enter macros in the query to replace them with values from the Grafana context.
+
 <!-- vale Grafana.Spelling = NO -->
+
 Macros support copying and pasting from [InfluxData Chronograf](https://www.influxdata.com/time-series-platform/chronograf/).
+
 <!-- vale Grafana.Spelling = YES -->
 
-| Macro example      | Replaced with |
-| ------------------ | ------------- |
-| `v.timeRangeStart` | The start of the currently active time selection, such as `2020-06-11T13:31:00Z`. |
-| `v.timeRangeStop`  | The end of the currently active time selection, such as `2020-06-11T14:31:00Z`. |
+| Macro example      | Replaced with                                                                                                                                                   |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `v.timeRangeStart` | The start of the currently active time selection, such as `2020-06-11T13:31:00Z`.                                                                               |
+| `v.timeRangeStop`  | The end of the currently active time selection, such as `2020-06-11T14:31:00Z`.                                                                                 |
 | `v.windowPeriod`   | An interval string compatible with Flux that corresponds to the Grafana calculated interval based on the time range of the active time selection, such as `5s`. |
-| `v.defaultBucket`  | The **Default Bucket** value from the data source configuration. |
-| `v.organization`   | The data source configuration's **Organization** setting. |
+| `v.defaultBucket`  | The **Default Bucket** value from the data source configuration.                                                                                                |
+| `v.organization`   | The data source configuration's **Organization** setting.                                                                                                       |
 
 For example, consider the following Flux query:
 

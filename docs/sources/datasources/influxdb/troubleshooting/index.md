@@ -39,11 +39,11 @@ The following errors occur when Grafana can't establish or maintain a connection
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Platform outage | If all InfluxDB panels fail at the same time, check the [Grafana Cloud status page](https://status.grafana.com/) for active incidents before investigating your own configuration. The issue may be a transient platform problem that resolves without customer-side action. |
-| Authentication failure | Check the Grafana server logs for auth-related errors. Verify your credentials haven't expired or been rotated. |
-| Transient network issue | The error may self-resolve. Wait a few minutes and retry **Save & test**. If the issue persists, check network connectivity between Grafana and InfluxDB. |
+| Cause                   | Solution                                                                                                                                                                                                                                                                     |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Platform outage         | If all InfluxDB panels fail at the same time, check the [Grafana Cloud status page](https://status.grafana.com/) for active incidents before investigating your own configuration. The issue may be a transient platform problem that resolves without customer-side action. |
+| Authentication failure  | Check the Grafana server logs for auth-related errors. Verify your credentials haven't expired or been rotated.                                                                                                                                                              |
+| Transient network issue | The error may self-resolve. Wait a few minutes and retry **Save & test**. If the issue persists, check network connectivity between Grafana and InfluxDB.                                                                                                                    |
 
 ### Failed to connect to InfluxDB
 
@@ -147,11 +147,11 @@ The following errors occur when the data source is not configured correctly.
 1. Verify that a valid query language is selected: **Flux**, **InfluxQL**, or **SQL**.
 1. Match the query language to your InfluxDB version:
 
-| InfluxDB version | Recommended query language | Notes |
-| ---------------- | ------------------------- | ----- |
-| 1.x              | InfluxQL                  | Flux is available from 1.8+ but InfluxQL is the primary language. |
-| 2.x (OSS/Cloud)  | Flux                      | InfluxQL is also available via the v1 compatibility API, but requires [DBRP mapping](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/). |
-| 3.x / Cloud Dedicated / Cloud Serverless | SQL or InfluxQL | Flux is not supported on InfluxDB 3.x. |
+| InfluxDB version                         | Recommended query language | Notes                                                                                                                                                       |
+| ---------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.x                                      | InfluxQL                   | Flux is available from 1.8+ but InfluxQL is the primary language.                                                                                           |
+| 2.x (OSS/Cloud)                          | Flux                       | InfluxQL is also available via the v1 compatibility API, but requires [DBRP mapping](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/). |
+| 3.x / Cloud Dedicated / Cloud Serverless | SQL or InfluxQL            | Flux is not supported on InfluxDB 3.x.                                                                                                                      |
 
 Each query language uses a different API endpoint. If you select the wrong language for your InfluxDB version, health checks and queries fail.
 
@@ -360,13 +360,13 @@ The following errors occur when there are issues with query syntax or execution.
 
 **Possible causes and solutions:**
 
-| Error code | Cause | Solution |
-| ---------- | ----- | -------- |
-| `InvalidArgument` | The SQL query syntax is invalid. | Check your SQL query for syntax errors. |
-| `PermissionDenied` | The token doesn't have access to the requested resource. | Verify the token has read access to the database. |
-| `NotFound` | The requested table or database doesn't exist. | Check the database name and table name in your query. |
-| `Unavailable` | The InfluxDB server is unreachable. | Verify InfluxDB is running and the URL is correct. |
-| `Unauthenticated` | The token is missing, invalid, or expired. | Update the token in the data source configuration. |
+| Error code         | Cause                                                    | Solution                                              |
+| ------------------ | -------------------------------------------------------- | ----------------------------------------------------- |
+| `InvalidArgument`  | The SQL query syntax is invalid.                         | Check your SQL query for syntax errors.               |
+| `PermissionDenied` | The token doesn't have access to the requested resource. | Verify the token has read access to the database.     |
+| `NotFound`         | The requested table or database doesn't exist.           | Check the database name and table name in your query. |
+| `Unavailable`      | The InfluxDB server is unreachable.                      | Verify InfluxDB is running and the URL is correct.    |
+| `Unauthenticated`  | The token is missing, invalid, or expired.               | Update the token in the data source configuration.    |
 
 ### No time column found
 
