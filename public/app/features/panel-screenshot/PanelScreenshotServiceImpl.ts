@@ -10,7 +10,7 @@ type PluginSource = 'html-to-image' | 'override';
 type ErrorKind = 'panel_not_in_dom' | 'html_to_image_failed' | 'unknown';
 
 export class PanelScreenshotServiceImpl implements PanelScreenshotService {
-  async capture(panelKey: string, options: PanelScreenshotOptions = {}): Promise<Blob> {
+  async capture(panelPathId: string, options: PanelScreenshotOptions = {}): Promise<Blob> {
     const format: Format = options.format ?? 'png';
     const start = performance.now();
 
@@ -18,9 +18,9 @@ export class PanelScreenshotServiceImpl implements PanelScreenshotService {
     let plugin: PluginSource = 'html-to-image';
 
     try {
-      const element = resolvePanelElement(panelKey);
+      const element = resolvePanelElement(panelPathId);
 
-      const panelPlugin = resolvePanelPlugin(panelKey);
+      const panelPlugin = resolvePanelPlugin(panelPathId);
       if (panelPlugin) {
         panelType = panelPlugin.meta.id;
       }
@@ -45,28 +45,27 @@ export class PanelScreenshotServiceImpl implements PanelScreenshotService {
   }
 }
 
-function resolvePanelElement(panelKey: string): HTMLElement {
-  const selector = `[data-viz-panel-key="${CSS.escape(panelKey)}"]`;
+function resolvePanelElement(panelPathId: string): HTMLElement {
+  const selector = `[data-viz-panel-id="${CSS.escape(panelPathId)}"]`;
   const element = document.querySelector<HTMLElement>(selector);
   if (!element) {
     throw new Error(
-      `Panel not in DOM (panelKey="${panelKey}"). Panel may be off-screen or virtualised. Scroll the panel into view before calling capture, or use the panel-menu extension point which fires only when the panel is visible.`
+      `Panel not in DOM (panelPathId="${panelPathId}"). Panel may be off-screen or virtualised. Scroll the panel into view before calling capture, or use the panel-menu extension point which fires only when the panel is visible.`
     );
   }
   return element;
 }
 
-function resolvePanelPlugin(panelKey: string): PanelPlugin | undefined {
-  // The active scene is the only DOM-agnostic way to resolve panelKey -> pluginId
-  // without baking a registry into VizPanel itself. When the user is in a scene-based
-  // dashboard, the global context is set; otherwise (legacy panels, embedded contexts)
-  // we fall through to the default html-to-image path.
+function resolvePanelPlugin(panelPathId: string): PanelPlugin | undefined {
+  // Walk the active scene to map panelPathId -> pluginId. When the user is in
+  // a scene-based dashboard, the global context is set; otherwise (embedded /
+  // non-scene contexts) we fall through to the default html-to-image path.
   const sceneContext = typeof window !== 'undefined' ? window.__grafanaSceneContext : undefined;
   if (!sceneContext) {
     return undefined;
   }
 
-  const pluginId = findPluginIdByKey(sceneContext, panelKey);
+  const pluginId = findPluginIdByPathId(sceneContext, panelPathId);
   if (!pluginId) {
     return undefined;
   }
@@ -77,10 +76,10 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function findPluginIdByKey(root: unknown, panelKey: string): string | undefined {
-  // Lightweight tree walk over the active scene to find a VizPanel-like node whose
-  // state.key matches panelKey. Avoid importing @grafana/scenes here to keep the
-  // module cheap; rely on the duck-typed state shape (key + pluginId).
+function findPluginIdByPathId(root: unknown, panelPathId: string): string | undefined {
+  // Walk the scene to find a VizPanel whose getPathId() matches. Calling the
+  // method (vs recomputing the path id here) keeps us off the duck-typing
+  // treadmill of mirroring scenes' internal path-id construction.
   const visited = new Set<unknown>();
   const stack: unknown[] = [root];
   while (stack.length > 0) {
@@ -94,8 +93,14 @@ function findPluginIdByKey(root: unknown, panelKey: string): string | undefined 
     if (!isObject(state)) {
       continue;
     }
-    if (state.key === panelKey && typeof state.pluginId === 'string') {
-      return state.pluginId;
+    if (typeof node.getPathId === 'function' && typeof state.pluginId === 'string') {
+      try {
+        if ((node.getPathId as () => string)() === panelPathId) {
+          return state.pluginId;
+        }
+      } catch {
+        // Partially-initialised panel; skip and keep walking.
+      }
     }
     for (const value of Object.values(state)) {
       if (Array.isArray(value)) {

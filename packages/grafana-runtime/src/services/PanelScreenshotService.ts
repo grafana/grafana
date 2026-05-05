@@ -22,22 +22,23 @@ export interface PanelScreenshotOptions {
  */
 export interface PanelScreenshotService {
   /**
-   * Capture the panel identified by `panelKey`.
+   * Capture the panel identified by `panelPathId`.
    *
-   * Obtain `panelKey` from `PluginExtensionPanelContext.panelKey` when
+   * Obtain `panelPathId` from `PluginExtensionPanelContext.panelPathId` when
    * consuming this service from a panel-menu extension. The value is opaque -
-   * pass it through unchanged.
+   * pass it through unchanged. Unique per rendered panel instance, including
+   * across repeated panels.
    *
    * Override hooks registered via `PanelPlugin.setScreenshotImage()` are only
    * consulted in scenes-based dashboards. In legacy dashboards, capture()
    * always uses the default html-to-image path.
    *
-   * @param panelKey opaque panel identifier (see `PluginExtensionPanelContext.panelKey`)
+   * @param panelPathId opaque panel identifier (see `PluginExtensionPanelContext.panelPathId`)
    * @param options output format options
    * @returns a Blob containing the rendered image bytes
    * @throws if the panel is not currently visible, or if the capture fails
    */
-  capture(panelKey: string, options?: PanelScreenshotOptions): Promise<Blob>;
+  capture(panelPathId: string, options?: PanelScreenshotOptions): Promise<Blob>;
 }
 
 let singletonInstance: PanelScreenshotService;

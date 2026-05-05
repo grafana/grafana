@@ -24,18 +24,18 @@ jest.mock(
 
 const syncGetPanelPluginMock = jest.mocked(syncGetPanelPlugin);
 
-const PANEL_KEY = 'panel-1';
+const PANEL_PATH_ID = 'eu$panel-1';
 const PLUGIN_ID = 'my-canvas-panel';
 
-function setSceneContextWithPanel(panelKey: string, pluginId: string) {
-  // Minimal duck-typed shape that PanelScreenshotServiceImpl's findPluginIdByKey
-  // walks: a state with key + pluginId.
+function setSceneContextWithPanel(panelPathId: string, pluginId: string) {
+  // Minimal duck-typed shape that PanelScreenshotServiceImpl's
+  // findPluginIdByPathId walks: a node exposing getPathId() + state.pluginId.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).__grafanaSceneContext = {
     state: {
       body: {
+        getPathId: () => panelPathId,
         state: {
-          key: panelKey,
           pluginId,
         },
       },
@@ -43,9 +43,9 @@ function setSceneContextWithPanel(panelKey: string, pluginId: string) {
   };
 }
 
-function mountPanelElement(panelKey: string): HTMLElement {
+function mountPanelElement(panelPathId: string): HTMLElement {
   const el = document.createElement('div');
-  el.setAttribute('data-viz-panel-key', panelKey);
+  el.setAttribute('data-viz-panel-id', panelPathId);
   document.body.appendChild(el);
   return el;
 }
@@ -73,14 +73,14 @@ describe('PanelScreenshotServiceImpl', () => {
   });
 
   it('returns the override Blob without invoking html-to-image when the plugin handler resolves to a Blob', async () => {
-    mountPanelElement(PANEL_KEY);
-    setSceneContextWithPanel(PANEL_KEY, PLUGIN_ID);
+    mountPanelElement(PANEL_PATH_ID);
+    setSceneContextWithPanel(PANEL_PATH_ID, PLUGIN_ID);
 
     const overrideBlob = new Blob(['override'], { type: 'image/png' });
     const onScreenshot = jest.fn().mockResolvedValue(overrideBlob);
     syncGetPanelPluginMock.mockReturnValue(makePluginWithOnScreenshot(onScreenshot));
 
-    const result = await service.capture(PANEL_KEY);
+    const result = await service.capture(PANEL_PATH_ID);
 
     expect(result).toBe(overrideBlob);
     expect(onScreenshot).toHaveBeenCalledTimes(1);
@@ -94,8 +94,8 @@ describe('PanelScreenshotServiceImpl', () => {
   });
 
   it('falls through to the html-to-image path when the plugin handler resolves to null', async () => {
-    mountPanelElement(PANEL_KEY);
-    setSceneContextWithPanel(PANEL_KEY, PLUGIN_ID);
+    mountPanelElement(PANEL_PATH_ID);
+    setSceneContextWithPanel(PANEL_PATH_ID, PLUGIN_ID);
 
     const onScreenshot = jest.fn().mockResolvedValue(null);
     syncGetPanelPluginMock.mockReturnValue(makePluginWithOnScreenshot(onScreenshot));
@@ -103,17 +103,17 @@ describe('PanelScreenshotServiceImpl', () => {
     const fallbackBlob = new Blob(['fallback'], { type: 'image/png' });
     htmlToImageToBlobMock.mockResolvedValue(fallbackBlob);
 
-    const result = await service.capture(PANEL_KEY);
+    const result = await service.capture(PANEL_PATH_ID);
 
     expect(onScreenshot).toHaveBeenCalledTimes(1);
     expect(htmlToImageToBlobMock).toHaveBeenCalledTimes(1);
     expect(result).toBe(fallbackBlob);
   });
 
-  it('throws "Panel not in DOM" when no element matches the panelKey', async () => {
+  it('throws "Panel not in DOM" when no element matches the panelPathId', async () => {
     // Intentionally do NOT mount a panel element.
 
-    await expect(service.capture('missing-panel-key')).rejects.toThrow(/^Panel not in DOM/);
+    await expect(service.capture('missing-panel-path-id')).rejects.toThrow(/^Panel not in DOM/);
     expect(htmlToImageToBlobMock).not.toHaveBeenCalled();
   });
 });
