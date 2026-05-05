@@ -594,6 +594,42 @@ func TestWrapper_Watch(t *testing.T) {
 		require.ErrorIs(t, err, ErrUnauthorized)
 	})
 
+	t.Run("PassThroughWatchFilter bypasses wrapping: returns inner watcher and Stop reaches it", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(PassThroughWatchFilter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+
+		// Pointer identity is the canonical bypass guarantee: the wrapper
+		// returns the inner watch.Interface unchanged. This implies no
+		// filteredWatcher goroutine was spawned and the filter is never invoked
+		// (any later Stop() / event flow is inner's, not the wrapper's).
+		require.Same(t, fakeWatcher, w, "PassThroughWatchFilter must return the inner watch.Interface unchanged")
+
+		// Smoke check: events flow and Stop reaches the inner.
+		go func() {
+			defer func() { _ = recover() }()
+			fakeWatcher.Add(&fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "ok"}})
+		}()
+
+		select {
+		case event, open := <-w.ResultChan():
+			require.True(t, open, "result channel closed before bypassed event was forwarded")
+			assert.Equal(t, watch.Added, event.Type)
+		case <-time.After(time.Second):
+			t.Fatal("did not receive bypassed event within timeout")
+		}
+
+		w.Stop()
+		assert.True(t, fakeWatcher.IsStopped(), "Stop on the bypassed watcher must reach the inner")
+	})
+
 	t.Run("emits watch.Error event when filter returns an error and then closes", func(t *testing.T) {
 		setup := newTestSetup(t)
 
