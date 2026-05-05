@@ -5270,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Settings"
+      "open-settings": "View all settings"
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5672,7 @@
         "title": "Variables"
       },
       "variable": {
-        "change-type": "Change",
+        "change-type": "Change type",
         "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
@@ -5989,7 +5989,7 @@
       "cancel": "Cancel",
       "common": {
         "copy": "Copy",
-        "copy-or-duplicate": "Copy/paste or duplicate",
+        "copy-tooltip": "Copy",
         "delete": "Delete",
         "duplicate": "Duplicate",
         "layout": "Layout",
@@ -6028,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Unconfigured panel. Tab to see configuration options.",
-      "configure-button": "Configure",
+      "configure-button": "Edit visualization",
       "configure-button-menu": "Toggle menu",
       "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",

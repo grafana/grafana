@@ -146,7 +146,7 @@ describe('VariableEditableElement', () => {
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
     expect(dashboard.state.editPane.state.openPane).toBeInstanceOf(VariableTypeChangePane);
-    expect(screen.getByText('Choose variable type')).toBeInTheDocument();
+    expect(screen.getByText('Change variable type')).toBeInTheDocument();
   });
 });
 
