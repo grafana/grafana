@@ -24,7 +24,7 @@ import {
   settingsSpecMapper,
   signatureTypeMapper,
   slugMapper,
-  typeMapper,
+  pluginTypeMapper,
   v0alpha1SettingsMapper,
 } from './v0alpha1SettingsMapper';
 
@@ -384,7 +384,7 @@ describe('signatureTypeMapper', () => {
     { type: 'community', expected: PluginSignatureType.community },
     { type: 'grafana', expected: PluginSignatureType.grafana },
     { type: 'private', expected: PluginSignatureType.private },
-    { type: 'private-glob', expected: 'private-glob' },
+    { type: 'private-glob', expected: '' },
     { type: '', expected: '' },
     { type: null, expected: '' },
     { type: undefined, expected: '' },
@@ -406,7 +406,7 @@ describe('signatureStatusMapper', () => {
     { status: undefined, expected: 'unsigned' },
   ])(`when called with $status then it should map to $expected`, ({ expected, status }) => {
     myOrgTestAppMeta.spec.signature.status = status as v0alpha1Spec['signature']['status'];
-    expect(signatureStatusMapper(myOrgTestAppMeta.spec)).toStrictEqual(expected);
+    expect(signatureStatusMapper(myOrgTestAppMeta.spec, () => {})).toStrictEqual(expected);
   });
 });
 
@@ -522,7 +522,7 @@ describe('typeMapper', () => {
     { type: undefined, expected: '' },
   ])(`when called with $type then it should map to $expected`, ({ expected, type }) => {
     myOrgTestAppMeta.spec.pluginJson.type = type as v0alpha1Spec['pluginJson']['type'];
-    expect(typeMapper(myOrgTestAppMeta.spec)).toStrictEqual(expected);
+    expect(pluginTypeMapper(myOrgTestAppMeta.spec)).toStrictEqual(expected);
   });
 });
 

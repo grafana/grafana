@@ -9,7 +9,7 @@ import { getAppPluginSettings, getLegacySettings } from './getPluginSettings';
 import { getSettingsMapper } from './mappers/mappers';
 import { getCacheKey, getLegacyCacheKey } from './utils';
 
-export async function refetchPluginSettings(pluginId: string): Promise<PluginMeta | null> {
+export async function refetchPluginSettings(pluginId: string): Promise<PluginMeta> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
     return refetchCachedLegacySettings(pluginId, false);
   }

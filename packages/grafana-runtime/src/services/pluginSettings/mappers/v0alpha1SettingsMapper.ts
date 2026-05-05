@@ -101,7 +101,7 @@ export function secureJsonFieldsMapper(settings: v0alpha1Settings): KeyValue<boo
   return secureJsonFields;
 }
 
-export function typeMapper(spec: v0alpha1Spec): PluginType {
+export function pluginTypeMapper(spec: v0alpha1Spec): PluginType {
   if (!spec.pluginJson.type) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return '' as PluginType;
@@ -116,10 +116,14 @@ export function typeMapper(spec: v0alpha1Spec): PluginType {
       return PluginType.panel;
     case 'renderer':
       return PluginType.renderer;
+    default:
+      logPluginSettingsWarning(`pluginTypeMapper: unknown PluginType ${spec.pluginJson.type}`, spec.pluginJson.id);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return '' as PluginType;
   }
 }
 
-export function includeTypeMapper(include: v0alpha1Include): PluginIncludeType {
+export function includeTypeMapper(include: v0alpha1Include, spec: v0alpha1Spec): PluginIncludeType {
   if (!include.type) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return '' as PluginIncludeType;
@@ -134,6 +138,10 @@ export function includeTypeMapper(include: v0alpha1Include): PluginIncludeType {
       return PluginIncludeType.panel;
     case 'datasource':
       return PluginIncludeType.datasource;
+    default:
+      logPluginSettingsWarning(`includeTypeMapper: unknown PluginIncludeType ${include.type}`, spec.pluginJson.id);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return '' as PluginIncludeType;
   }
 }
 
@@ -150,7 +158,7 @@ export function includesMapper(spec: v0alpha1Spec): PluginInclude[] {
   return includes.map((i) => ({
     ...i,
     name: i.name ?? '',
-    type: includeTypeMapper(i),
+    type: includeTypeMapper(i, spec),
     addToNav: i.addToNav ?? false,
     component: i.component ?? '',
     defaultNav: i.defaultNav ?? false,
@@ -163,6 +171,11 @@ export function includesMapper(spec: v0alpha1Spec): PluginInclude[] {
 }
 
 export function signatureTypeMapper(spec: v0alpha1Spec): PluginSignatureType {
+  if (!spec.signature.type) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return (spec.signature.type ?? '') as PluginSignatureType;
+  }
+
   switch (spec.signature.type) {
     case 'commercial':
       return PluginSignatureType.commercial;
@@ -178,7 +191,7 @@ export function signatureTypeMapper(spec: v0alpha1Spec): PluginSignatureType {
         spec.pluginJson.id
       );
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return (spec.signature.type ?? '') as PluginSignatureType;
+      return '' as PluginSignatureType;
   }
 }
 
@@ -216,7 +229,7 @@ function v0alpha1SpecMapper(spec: v0alpha1Spec) {
   const autoEnabled = spec.pluginJson.autoEnabled ?? false;
   const hasUpdate = false;
   const latestVersion = '';
-  const type = typeMapper(spec);
+  const type = pluginTypeMapper(spec);
   const info = infoMapper(spec);
   const angular = angularMapper(spec);
   const angularDetected = false;
@@ -224,9 +237,9 @@ function v0alpha1SpecMapper(spec: v0alpha1Spec) {
   const extensions = extensionsMapper(spec);
   const includes = includesMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);
-  const signature = signatureStatusMapper(spec);
+  const signature = signatureStatusMapper(spec, logPluginSettingsWarning);
   const signatureType = signatureTypeMapper(spec);
-  const state = stateMapper(spec);
+  const state = stateMapper(spec, logPluginSettingsWarning);
   const defaultNavUrl = defaultNavUrlMapper(spec);
 
   return {

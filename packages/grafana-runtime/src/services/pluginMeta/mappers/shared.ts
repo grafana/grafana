@@ -10,7 +10,6 @@ import {
   type PluginType,
 } from '@grafana/data';
 
-import { logPluginSettingsWarning } from '../../pluginSettings/logging';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
 export function angularMapper(spec: v0alpha1Spec): AngularMeta {
@@ -82,7 +81,7 @@ export function infoMapper(spec: v0alpha1Spec): PluginMetaInfo {
   };
 }
 
-export function stateMapper(spec: v0alpha1Spec): PluginState {
+export function stateMapper(spec: v0alpha1Spec, logFn: (message: string, type: string) => void): PluginState {
   if (!spec.pluginJson.state) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return (spec.pluginJson.state ?? '') as PluginState;
@@ -98,13 +97,16 @@ export function stateMapper(spec: v0alpha1Spec): PluginState {
     case 'stable':
       return PluginState.stable;
     default:
-      logPluginSettingsWarning(`stateMapper: unknown PluginState ${spec.pluginJson.state}`, spec.pluginJson.id);
+      logFn(`stateMapper: unknown PluginState ${spec.pluginJson.state}`, spec.pluginJson.id);
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return '' as PluginState;
   }
 }
 
-export function signatureStatusMapper(spec: v0alpha1Spec): PluginSignatureStatus {
+export function signatureStatusMapper(
+  spec: v0alpha1Spec,
+  logFn: (message: string, type: string) => void
+): PluginSignatureStatus {
   if (!spec.signature.status) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return 'unsigned' as PluginSignatureStatus;
@@ -120,10 +122,7 @@ export function signatureStatusMapper(spec: v0alpha1Spec): PluginSignatureStatus
     case 'valid':
       return PluginSignatureStatus.valid;
     default:
-      logPluginSettingsWarning(
-        `signatureStatusMapper: unknown PluginSignatureStatus ${spec.signature.status}`,
-        spec.pluginJson.id
-      );
+      logFn(`signatureStatusMapper: unknown PluginSignatureStatus ${spec.signature.status}`, spec.pluginJson.id);
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return 'unsigned' as PluginSignatureStatus;
   }
