@@ -847,12 +847,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		// in its CRD list, so without a license the reconciler can never complete a
 		// namespace. Wire a test license if one is present in the merged enterprise tree.
 		if extensions.IsEnterprise && opts.LicensePath == "" {
-			if licensePath := findTestLicense(); licensePath != "" {
-				enterpriseSect, err := cfg.NewSection("enterprise")
-				require.NoError(t, err)
-				_, err = enterpriseSect.NewKey("license_path", licensePath)
-				require.NoError(t, err)
-			}
+			licensePath := findTestLicense()
+			require.NotEmpty(t, licensePath, "MT-mode Zanzana tests on enterprise builds require the bundled test license at pkg/extensions/apiserver/testdata/valid/license.jwt; without it the enterprise RBAC backends short-circuit and every reconcile fails")
+			enterpriseSect, err := cfg.NewSection("enterprise")
+			require.NoError(t, err)
+			_, err = enterpriseSect.NewKey("license_path", licensePath)
+			require.NoError(t, err)
 		}
 	}
 

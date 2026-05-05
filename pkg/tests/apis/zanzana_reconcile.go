@@ -20,7 +20,9 @@ import (
 const (
 	zanzanaReconcileLastSuccessMetric = "grafana_zanzana_reconcile_last_success_timestamp_seconds"
 	zanzanaMTReconcileDurationMetric  = "iam_authz_zanzana_reconciler_namespace_reconcile_duration_seconds"
+	zanzanaMTReconcileErrorsMetric    = "iam_authz_zanzana_reconciler_errors_total"
 	zanzanaMTReconcileSuccessLabel    = "success"
+	zanzanaMTReconcileErrorLabel      = "error"
 )
 
 // ZanzanaMTReconcilerFeatureToggles bundles the IAM API feature flags required
@@ -83,12 +85,21 @@ func awaitZanzanaMTReconcileNext(t *testing.T, helper *K8sTestHelper) {
 	t.Helper()
 
 	baseline := getZanzanaMTReconcileSuccessCount(t, helper)
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
+	ok := assert.EventuallyWithT(t, func(c *assert.CollectT) {
 		count := getZanzanaMTReconcileSuccessCount(t, helper)
 		assert.Greater(c, count, baseline,
 			"expected %s{status=%s} (%v) > baseline (%v)",
 			zanzanaMTReconcileDurationMetric, zanzanaMTReconcileSuccessLabel, count, baseline)
 	}, 30*time.Second, 250*time.Millisecond)
+	if !ok {
+		errCount := getZanzanaMTReconcileErrorCount(t, helper)
+		phaseErrors := getZanzanaMTReconcilePhaseErrors(t, helper)
+		require.FailNowf(t, "MT reconciler never reported a successful cycle",
+			"baseline success=%v, %s{status=%s}=%v, %s by phase=%v",
+			baseline,
+			zanzanaMTReconcileDurationMetric, zanzanaMTReconcileErrorLabel, errCount,
+			zanzanaMTReconcileErrorsMetric, phaseErrors)
+	}
 }
 
 // fetchMetricFamilies scrapes the test server's /metrics endpoint and returns
@@ -113,7 +124,15 @@ func fetchMetricFamilies(helper *K8sTestHelper) map[string]*dto.MetricFamily {
 
 func getZanzanaMTReconcileSuccessCount(t *testing.T, helper *K8sTestHelper) float64 {
 	t.Helper()
+	return zanzanaMTReconcileCountByStatus(helper, zanzanaMTReconcileSuccessLabel)
+}
 
+func getZanzanaMTReconcileErrorCount(t *testing.T, helper *K8sTestHelper) float64 {
+	t.Helper()
+	return zanzanaMTReconcileCountByStatus(helper, zanzanaMTReconcileErrorLabel)
+}
+
+func zanzanaMTReconcileCountByStatus(helper *K8sTestHelper, status string) float64 {
 	family := fetchMetricFamilies(helper)[zanzanaMTReconcileDurationMetric]
 	if family == nil {
 		return 0
@@ -122,7 +141,7 @@ func getZanzanaMTReconcileSuccessCount(t *testing.T, helper *K8sTestHelper) floa
 	var total float64
 	for _, m := range family.Metric {
 		for _, l := range m.GetLabel() {
-			if l.GetName() == "status" && l.GetValue() == zanzanaMTReconcileSuccessLabel {
+			if l.GetName() == "status" && l.GetValue() == status {
 				if h := m.GetHistogram(); h != nil {
 					total += float64(h.GetSampleCount())
 				}
@@ -131,6 +150,32 @@ func getZanzanaMTReconcileSuccessCount(t *testing.T, helper *K8sTestHelper) floa
 		}
 	}
 	return total
+}
+
+// getZanzanaMTReconcilePhaseErrors returns iam_authz_zanzana_reconciler_errors_total
+// summed by phase label. Empty map means no errors recorded (or /metrics unreachable).
+func getZanzanaMTReconcilePhaseErrors(t *testing.T, helper *K8sTestHelper) map[string]float64 {
+	t.Helper()
+
+	family := fetchMetricFamilies(helper)[zanzanaMTReconcileErrorsMetric]
+	if family == nil {
+		return nil
+	}
+
+	out := map[string]float64{}
+	for _, m := range family.Metric {
+		var phase string
+		for _, l := range m.GetLabel() {
+			if l.GetName() == "phase" {
+				phase = l.GetValue()
+				break
+			}
+		}
+		if c := m.GetCounter(); c != nil {
+			out[phase] += c.GetValue()
+		}
+	}
+	return out
 }
 
 func getZanzanaReconcileLastSuccessTimestampSeconds(t *testing.T, helper *K8sTestHelper) (float64, bool) {
