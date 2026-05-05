@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
@@ -88,14 +89,85 @@ func (o MergeOpts) Validate() error {
 
 // MergeResult represents the result of merging two Alertmanager configurations.
 // It contains the unified configuration and maps of renamed receivers and time intervals.
+//
+// Identifier, ExtraRoute and ExtraInhibitRules are populated by GetMergedAlertmanagerConfig
+// when the merge consumed an imported (Mimir-format) configuration; they expose the
+// imported route subtree and inhibit rules separately so callers can register them as
+// managed routes / managed inhibit rules. Plain calls to Merge leave these fields zero.
 type MergeResult struct {
 	Config definition.PostableApiAlertingConfig
 	RenameResources
+	Identifier        string
+	ExtraRoute        *definition.Route
+	ExtraInhibitRules []config.InhibitRule
 }
 
 type RenameResources struct {
 	Receivers     map[string]string
 	TimeIntervals map[string]string
+}
+
+// LogContext returns key-value pairs describing any receiver or time-interval renames the
+// merge produced, suitable for structured logging. Returns nil when nothing was renamed.
+func (m MergeResult) LogContext() []any {
+	if len(m.Receivers) == 0 && len(m.TimeIntervals) == 0 {
+		return nil
+	}
+	logCtx := make([]any, 0, 4)
+	if len(m.Receivers) > 0 {
+		rcvBuilder := strings.Builder{}
+		for from, to := range m.Receivers {
+			fmt.Fprintf(&rcvBuilder, "'%s'->'%s',", from, to)
+		}
+		logCtx = append(logCtx, "renamedReceivers", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
+	}
+	if len(m.TimeIntervals) > 0 {
+		intervalBuilder := strings.Builder{}
+		for from, to := range m.TimeIntervals {
+			fmt.Fprintf(&intervalBuilder, "'%s'->'%s',", from, to)
+		}
+		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", intervalBuilder.String()[0:intervalBuilder.Len()-1]))
+	}
+	return logCtx
+}
+
+// GetMergedAlertmanagerConfig merges the given imported alertmanager configuration into
+// the base Grafana configuration. The imported route is also returned separately on
+// MergeResult.ExtraRoute (after rename application) so callers can register it as a
+// managed route. The imported inhibit rules are returned on MergeResult.ExtraInhibitRules.
+//
+// The given identifier is used as the dedup suffix for receiver / time-interval name
+// collisions and as the MergeResult.Identifier. The given matchers are used as the subtree
+// matchers for the merge.
+func GetMergedAlertmanagerConfig(
+	base definition.PostableApiAlertingConfig,
+	imported definition.PostableApiAlertingConfig,
+	identifier string,
+	matchers config.Matchers,
+) (MergeResult, error) {
+	opts := MergeOpts{
+		DedupSuffix:     identifier,
+		SubtreeMatchers: matchers,
+	}
+	if err := opts.Validate(); err != nil {
+		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
+	}
+
+	m, err := Merge(base, imported, opts)
+	if err != nil {
+		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
+	}
+
+	route := imported.Route
+	RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
+
+	return MergeResult{
+		Config:            m.Config,
+		RenameResources:   m.RenameResources,
+		Identifier:        identifier,
+		ExtraRoute:        route,
+		ExtraInhibitRules: imported.InhibitRules,
+	}, nil
 }
 
 // Merge combines two Alertmanager configurations into a single unified configuration.
