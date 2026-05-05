@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import type { PanelPlugin } from '@grafana/data';
 
 import { syncGetPanelPlugin } from '../plugins/importPanelPlugin';
 
