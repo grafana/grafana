@@ -5193,6 +5193,7 @@
         "name": "restoreDashboards",
         "resourceVersion": "1774951865910",
         "creationTimestamp": "2025-05-23T14:35:54Z",
+        "deletionTimestamp": "2026-05-02T07:12:49Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-03-31 10:11:05.910542 +0000 UTC"
         }

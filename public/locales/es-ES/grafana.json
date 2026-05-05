@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "No se ha podido encontrar el repositorio de la carpeta seleccionada. Asegúrate de que la carpeta esté aprovisionada correctamente.",
         "repository-not-found-title": "Repositorio no encontrado"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Error al mover los recursos",
       "error-no-target-folder-path": "La ruta de la carpeta de destino no es válida o está vacía. Selecciona otra.",
       "move-total": "En total, esto afectará a:",
@@ -7313,6 +7314,7 @@
       "terraform": "Administrado por: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "No se ha podido mover el dashboard",
       "cancel-action": "Cancelar",
       "current-file-not-found": "No se ha podido encontrar el archivo del dashboard actual",
@@ -15453,7 +15455,6 @@
       "forwards-time-aria-label": "Adelantar el intervalo de tiempo",
       "to": "hasta",
       "zoom-out-button": "Reducir el intervalo de tiempo",
-      "zoom-out-tooltip": "Alejar rango de tiempo <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Alejar rango de tiempo <br/> t -"
     },
     "time-range": {

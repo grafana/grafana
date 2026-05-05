@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "A kiválasztott mappához tartozó adattár nem található. Kérjük, ellenőrizze, hogy a mappa megfelelően van-e konfigurálva.",
         "repository-not-found-title": "Nem található adattár"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Hiba történt az erőforrások áthelyezésekor",
       "error-no-target-folder-path": "A célmappa elérési útvonala érvénytelen vagy üres. Kérjük, válassza ki újra.",
       "move-total": "Összességében ez a következőket érinti:",
@@ -7313,6 +7314,7 @@
       "terraform": "Felügyeli: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Nem sikerült áthelyezni az irányítópultot",
       "cancel-action": "Mégse",
       "current-file-not-found": "A jelenlegi irányítópultfájl nem található",
@@ -15453,7 +15455,6 @@
       "forwards-time-aria-label": "Időtartomány mozgatása előre",
       "to": "vége",
       "zoom-out-button": "Időtartomány kicsinyítése",
-      "zoom-out-tooltip": "Időtartomány kicsinyítése <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Időtartomány kicsinyítése <br/> t -"
     },
     "time-range": {

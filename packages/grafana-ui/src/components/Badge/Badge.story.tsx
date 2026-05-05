@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 
 import { iconOptions } from '../../utils/storybook/icons';
 import { Stack } from '../Layout/Stack/Stack';

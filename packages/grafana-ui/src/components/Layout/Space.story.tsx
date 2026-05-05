@@ -1,4 +1,4 @@
-import { type StoryFn, type Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 
 import { SpacingTokenControl } from '../../utils/storybook/themeStorybookControls';
 

@@ -22,7 +22,7 @@ var (
 					return "", errors.New("provided object must be of type *AlertRule")
 				}
 
-				return cast.Spec.Title, nil
+				return string(cast.Spec.Title), nil
 			},
 		},
 			{
@@ -50,7 +50,7 @@ var (
 						return "", nil
 					}
 
-					return cast.Spec.PanelRef.DashboardUID, nil
+					return string(cast.Spec.PanelRef.DashboardUID), nil
 				},
 			},
 			{

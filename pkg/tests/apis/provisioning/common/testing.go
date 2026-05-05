@@ -59,12 +59,21 @@ const (
 	WaitTimeoutDefault  = 60 * time.Second
 	WaitIntervalDefault = 100 * time.Millisecond
 
-	// waitTimeoutCleanup is the per-step budget for CleanupAllResources. Folder
-	// admission validates "folder is empty" against the resource search index,
-	// which is eventually consistent with respect to dashboard deletes. Under
-	// SQLite write contention that lag has been observed to exceed 60s, so
-	// cleanup gets a larger budget than the default per-operation wait.
+	// waitTimeoutCleanup is the per-step budget for non-folder steps in
+	// CleanupAllResources (repositories, connections, dashboards). It is
+	// larger than the default per-operation wait because finalizers and
+	// controller reconciliation can briefly hold these resources past the
+	// initial delete call.
 	waitTimeoutCleanup = 2 * WaitTimeoutDefault
+
+	// waitTimeoutFolderCleanup is the budget for the folders step in
+	// CleanupAllResources. Folder admission validates "folder is empty"
+	// against the resource search index, which is eventually consistent
+	// with respect to dashboard deletes. Under SQLite write contention that
+	// lag has been observed to exceed waitTimeoutCleanup, so folders alone
+	// get a larger budget — bumping every step would slow the common case
+	// for no benefit.
+	waitTimeoutFolderCleanup = 4 * WaitTimeoutDefault
 )
 
 //nolint:gosec // Test RSA private key (generated for testing purposes only, never used in production)
@@ -250,7 +259,21 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobs(t, repo)
+
+	// Wait for the specific job we just queued via its UID rather than a
+	// list-based scan. AwaitJobs lists active jobs and, if it observes none
+	// for this repo, queues a failsafe pull and only checks that
+	// successCount >= len(waitUntilComplete); when our job has already moved
+	// to the historic subresource that check trivially passes (0 >= 0) and
+	// SyncAndWait returns without having waited for the sync to complete,
+	// causing flakes in callers that immediately list provisioned resources.
+	job := h.AwaitJob(t, t.Context(), unstruct)
+	state := MustNestedString(job.Object, "status", "state")
+	if state == string(provisioning.JobStateError) {
+		h.DebugState(t, repo, fmt.Sprintf("SYNC FAILED: %s", name))
+		errs := MustNestedStringSlice(job.Object, "status", "errors")
+		t.Fatalf("sync job %q for repo %q ended in error state; errors: %v", name, repo, errs)
+	}
 }
 
 func (h *ProvisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo string, spec provisioning.JobSpec) {
@@ -1354,12 +1377,10 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 		return nil
 	}
 
-	var firstErr error
+	var lastErr error
 	for _, item := range list.Items {
 		if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-			if firstErr == nil {
-				firstErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
-			}
+			lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
 		}
 	}
 
@@ -1378,20 +1399,18 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 		}
 		for _, item := range remaining.Items {
 			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-				if firstErr == nil {
-					firstErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
-				}
+				lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
 			}
 		}
 		select {
 		case <-ctx.Done():
-			if firstErr != nil {
-				return fmt.Errorf("deleteAndWait: context cancelled (first delete error: %v): %w", firstErr, ctx.Err())
+			if lastErr != nil {
+				return fmt.Errorf("deleteAndWait: context cancelled (last delete error: %v): %w", lastErr, ctx.Err())
 			}
 			return fmt.Errorf("deleteAndWait: context cancelled: %w", ctx.Err())
 		case <-timer.C:
-			if firstErr != nil {
-				return fmt.Errorf("deleteAndWait: timed out with %d items remaining (first delete error: %v)", len(remaining.Items), firstErr)
+			if lastErr != nil {
+				return fmt.Errorf("deleteAndWait: timed out with %d items remaining (last delete error: %v)", len(remaining.Items), lastErr)
 			}
 			return fmt.Errorf("deleteAndWait: timed out with %d items remaining", len(remaining.Items))
 		case <-ticker.C:
@@ -1413,15 +1432,16 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
 	t.Helper()
 	for _, c := range []struct {
-		name   string
-		client dynamic.ResourceInterface
+		name    string
+		client  dynamic.ResourceInterface
+		timeout time.Duration
 	}{
-		{"repositories", h.Repositories.Resource},
-		{"connections", h.Connections.Resource},
-		{"dashboards", h.DashboardsV1.Resource},
-		{"folders", h.Folders.Resource},
+		{"repositories", h.Repositories.Resource, waitTimeoutCleanup},
+		{"connections", h.Connections.Resource, waitTimeoutCleanup},
+		{"dashboards", h.DashboardsV1.Resource, waitTimeoutCleanup},
+		{"folders", h.Folders.Resource, waitTimeoutFolderCleanup},
 	} {
-		if err := deleteAndWait(ctx, c.client, waitTimeoutCleanup); err != nil {
+		if err := deleteAndWait(ctx, c.client, c.timeout); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
