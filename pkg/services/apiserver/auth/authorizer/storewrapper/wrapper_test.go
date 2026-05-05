@@ -3,6 +3,7 @@ package storewrapper
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -18,6 +19,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 )
+
+var allowAllWatchFilter WatchEventFilter = func(events []watch.Event) ([]bool, error) {
+	allowed := make([]bool, len(events))
+	for i := range allowed {
+		allowed[i] = true
+	}
+	return allowed, nil
+}
 
 type testSetup struct {
 	mockStore *rest.MockStorage
@@ -429,7 +438,7 @@ func TestWrapper_Watch(t *testing.T) {
 	t.Run("returns error when inner store does not support Watch", func(t *testing.T) {
 		setup := newTestSetup(t)
 		// MockStorage does not implement k8srest.Watcher, so Watch should fail.
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(PassThroughWatchFilter, nil)
 		_, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.Error(t, err)
 	})
@@ -490,32 +499,6 @@ func TestWrapper_Watch(t *testing.T) {
 		_, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.Error(t, err)
 		assert.True(t, k8serrors.IsUnauthorized(err), "expected Unauthorized, got %v", err)
-	})
-
-	t.Run("AllowAllWatchFilter forwards all events", func(t *testing.T) {
-		setup := newTestSetup(t)
-
-		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}
-
-		fakeWatcher := watch.NewFake()
-		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
-		setup.wrapper.inner = watcherStore
-
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
-
-		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
-		require.NoError(t, err)
-		defer w.Stop()
-
-		fakeWatcher.Add(obj)
-		fakeWatcher.Stop()
-
-		events := make([]watch.Event, 0, len(w.ResultChan()))
-		for e := range w.ResultChan() {
-			events = append(events, e)
-		}
-		require.Len(t, events, 1)
-		assert.Equal(t, watch.Added, events[0].Type)
 	})
 
 	t.Run("always forwards Bookmark events without filtering", func(t *testing.T) {
@@ -590,7 +573,7 @@ func TestWrapper_Watch(t *testing.T) {
 		}
 		setup.wrapper.inner = watcherStore
 
-		setup.mockAuth.On("WatchFilter", mock.MatchedBy(matchesOriginalUser())).Return(AllowAllWatchFilter, nil)
+		setup.mockAuth.On("WatchFilter", mock.MatchedBy(matchesOriginalUser())).Return(PassThroughWatchFilter, nil)
 
 		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
@@ -605,7 +588,7 @@ func TestWrapper_Watch(t *testing.T) {
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
 		setup.wrapper.inner = watcherStore
 
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, ErrUnauthorized)
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(PassThroughWatchFilter, ErrUnauthorized)
 
 		_, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.ErrorIs(t, err, ErrUnauthorized)
@@ -658,7 +641,7 @@ func TestWrapper_Watch(t *testing.T) {
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
 		setup.wrapper.inner = watcherStore
 
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
 
 		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
@@ -673,7 +656,7 @@ func TestWrapper_Watch(t *testing.T) {
 	t.Run("each filtered watcher Stops its own inner (no shared sync.Once)", func(t *testing.T) {
 		setup := newTestSetup(t)
 
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
 
 		// First watcher.
 		fakeWatcher1 := watch.NewFake()
@@ -702,7 +685,7 @@ func TestWrapper_Watch(t *testing.T) {
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
 		setup.wrapper.inner = watcherStore
 
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
 
 		ctx, cancel := context.WithCancel(setup.ctx)
 		w, err := setup.wrapper.Watch(ctx, &internalversion.ListOptions{})
@@ -723,32 +706,26 @@ func TestWrapper_Watch(t *testing.T) {
 	t.Run("blocked consumer plus Stop does not deadlock the goroutine", func(t *testing.T) {
 		setup := newTestSetup(t)
 
-		fakeWatcher := watch.NewFake()
-		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		// watch.FakeWatcher's Add and Stop are not concurrency-safe, so use a
+		// minimal custom watcher whose channel we own and close exactly once.
+		inner := newPumpedWatcher(int(watch.DefaultChanSize) * 4)
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: inner}
 		setup.wrapper.inner = watcherStore
 
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
 
 		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
 
-		// Push more events than the result channel can buffer, without ever reading.
-		// fakeWatcher.Add blocks on its own internal channel, so do it in a goroutine.
-		// After Stop closes the inner watcher, further Adds panic on a closed
-		// channel — that's fine, we just want to keep events in flight while we
-		// race Stop against a blocked send in the filter goroutine.
-		go func() {
-			defer func() { _ = recover() }()
-			for i := int32(0); i < watch.DefaultChanSize*3; i++ {
-				fakeWatcher.Add(&fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}})
-			}
-		}()
+		// Fill the inner channel buffer without ever reading from w.ResultChan().
+		// The filteredWatcher's run goroutine will start to forward events, then
+		// block on a send to its result channel once that buffer also fills up.
+		for i := int32(0); i < watch.DefaultChanSize*2; i++ {
+			inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}})
+		}
 
-		// Give the producer a moment to fill the inner and result channels.
-		time.Sleep(50 * time.Millisecond)
-
-		// Stop must return promptly even though the goroutine is blocked on a send
-		// and we never drained the result channel.
+		// Stop must return promptly even though the goroutine is blocked on a
+		// send to result and we never drained it.
 		stopped := make(chan struct{})
 		go func() {
 			w.Stop()
@@ -770,7 +747,7 @@ func TestWrapper_Watch(t *testing.T) {
 		// Re-create the wrapper with a short flush interval so the ticker case fires.
 		setup.wrapper = New(watcherStore, setup.mockAuth, WithWatchFlushInterval(10*time.Millisecond))
 
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
 
 		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
@@ -887,7 +864,7 @@ func (f *fakeUpdatedObjectInfo) UpdatedObject(ctx context.Context, oldObj runtim
 // fakeWatcherStorage wraps K8sStorage and adds Watch support for testing.
 type fakeWatcherStorage struct {
 	K8sStorage
-	watcher   *watch.FakeWatcher
+	watcher   watch.Interface
 	assertCtx func(context.Context) bool
 	ctxOk     bool
 }
@@ -897,4 +874,32 @@ func (f *fakeWatcherStorage) Watch(ctx context.Context, _ *internalversion.ListO
 		f.ctxOk = f.assertCtx(ctx)
 	}
 	return f.watcher, nil
+}
+
+// pumpedWatcher is a minimal concurrency-safe watch.Interface used by tests that
+// need to push events without racing on Stop (watch.FakeWatcher's Add/Stop are
+// not safe to call concurrently).
+type pumpedWatcher struct {
+	ch       chan watch.Event
+	stopOnce sync.Once
+}
+
+func newPumpedWatcher(buffer int) *pumpedWatcher {
+	return &pumpedWatcher{ch: make(chan watch.Event, buffer)}
+}
+
+func (p *pumpedWatcher) push(e watch.Event) {
+	select {
+	case p.ch <- e:
+	default:
+		// Buffer full — drop. Tests using this just want to fill the pipeline.
+	}
+}
+
+func (p *pumpedWatcher) Stop() {
+	p.stopOnce.Do(func() { close(p.ch) })
+}
+
+func (p *pumpedWatcher) ResultChan() <-chan watch.Event {
+	return p.ch
 }

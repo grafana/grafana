@@ -3,6 +3,7 @@ package storewrapper
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -33,14 +34,17 @@ type WatchEventFilter func(events []watch.Event) ([]bool, error)
 // RejectAllWatchFilter is a nil WatchEventFilter that will make watch return an error.
 var RejectAllWatchFilter WatchEventFilter = nil
 
-// AllowAllWatchFilter is a WatchEventFilter that forwards every event unconditionally.
-// Use this only for resources that impose no per-event read restrictions.
-var AllowAllWatchFilter WatchEventFilter = func(events []watch.Event) ([]bool, error) {
-	allowed := make([]bool, len(events))
-	for i := range allowed {
-		allowed[i] = true
+// PassThroughWatchFilter is used to bypass the filter and forward the inner watch.Interface directly to the caller.
+var PassThroughWatchFilter WatchEventFilter = func(_ []watch.Event) ([]bool, error) {
+	return make([]bool, 0), nil
+}
+
+// isPassThroughWatchFilter returns true if the filter is the PassThroughWatchFilter.
+func isPassThroughWatchFilter(filter WatchEventFilter) bool {
+	if filter == nil {
+		return false
 	}
-	return allowed, nil
+	return reflect.ValueOf(filter).Pointer() == reflect.ValueOf(PassThroughWatchFilter).Pointer()
 }
 
 // ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
@@ -287,6 +291,11 @@ func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOption
 	if err != nil {
 		return nil, err
 	}
+
+	if isPassThroughWatchFilter(filter) {
+		return inner, nil
+	}
+
 	// Return a new filtered watcher that runs the filter over the buffered events
 	// and forwards the events to the caller.
 	return newFilteredWatcher(ctx, inner, filter, w.watchFlushInterval), nil
@@ -449,7 +458,7 @@ func (b *NoopAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 }
 
 func (b *NoopAuthorizer) WatchFilter(_ context.Context) (WatchEventFilter, error) {
-	return AllowAllWatchFilter, nil
+	return PassThroughWatchFilter, nil
 }
 
 // DenyAuthorizer denies all storage operations.
