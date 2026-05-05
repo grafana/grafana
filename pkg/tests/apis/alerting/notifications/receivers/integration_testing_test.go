@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -577,5 +578,58 @@ func TestIntegrationTesting(t *testing.T) {
 			})
 			assertError(t, errors.IsNotFound, result, err)
 		})
+	})
+}
+
+func TestIntegrationTestingEmailValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		UnifiedAlertingEmailsToOrgOnly: true,
+	})
+
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	const emailAddress = "orgmember@example.com"
+
+	req := v1beta1.CreateReceiverIntegrationTestRequest{
+		Body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+			Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
+				Type:    "email",
+				Version: "v1",
+				Settings: map[string]interface{}{
+					"addresses": emailAddress,
+				},
+			},
+			Alert: v1beta1.CreateReceiverIntegrationTestRequestAlert{
+				Labels: map[string]string{"alertname": "test-alert"},
+			},
+		},
+	}
+
+	t.Run("test fails when email address is not an org member", func(t *testing.T) {
+		_, err := adminClient.CreateReceiverIntegrationTest(ctx, NoReceiverIdentifier, req)
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got: %v", err)
+	})
+
+	helper.CreateUser("orgmember", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{})
+
+	t.Run("test succeeds when email address belongs to an org member", func(t *testing.T) {
+		_, err := adminClient.CreateReceiverIntegrationTest(ctx, NoReceiverIdentifier, req)
+		require.NoError(t, err)
+	})
+
+	t.Run("test fails when email address belongs to a user in a different org", func(t *testing.T) {
+		otherOrgUser := helper.CreateUser("otherorguser", apis.Org2, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{})
+		otherOrgEmail := otherOrgUser.Identity.GetEmail()
+		require.NotEmpty(t, otherOrgEmail, "expected Org2 user to have a non-empty email")
+
+		otherOrgReq := req
+		otherOrgReq.Body.Integration.Settings = map[string]interface{}{"addresses": otherOrgEmail}
+
+		_, err := adminClient.CreateReceiverIntegrationTest(ctx, NoReceiverIdentifier, otherOrgReq)
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got: %v", err)
 	})
 }

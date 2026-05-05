@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
-
-	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -18,6 +17,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -50,16 +50,20 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	pluginJSONs, err := getAppPlugins(ctx, pluginSources)
+	pluginInfos, err := pluginspec.LoadPlugins(context.Background(), pluginSources,
+		func(jsonData plugins.JSONData) bool {
+			return jsonData.Type == plugins.TypeApp
+		}, true)
+
 	if err != nil {
-		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
+		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
 	}
 
 	var last *AppPluginAPIBuilder
-	for _, pluginJSON := range pluginJSONs {
-		groupName := pluginJSON.ID + ".grafana.app"
+	for _, plugin := range pluginInfos {
+		groupName := plugin.JSONData.ID + ".grafana.app"
 		b := &AppPluginAPIBuilder{
-			pluginID: pluginJSON.ID,
+			pluginID: plugin.JSONData.ID,
 			groupVersion: schema.GroupVersion{
 				Group:   groupName,
 				Version: apppluginv0alpha1.VERSION,

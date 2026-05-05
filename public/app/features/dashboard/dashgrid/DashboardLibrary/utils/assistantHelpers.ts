@@ -1,7 +1,7 @@
 import { firstValueFrom, map } from 'rxjs';
 
 import { isAssistantAvailable } from '@grafana/assistant';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type PluginDashboard } from 'app/types/plugins';
 
 import { type GnetDashboard } from '../types';
@@ -133,7 +133,10 @@ export function isSuggestedDashboardAssistantEnabled(): Promise<boolean> {
   return firstValueFrom(
     isAssistantAvailable().pipe(
       map((assistantAvailable) => {
-        const buttonEnabled = getFeatureFlagClient().getBooleanValue('suggestedDashboardsAssistantButton', false);
+        const buttonEnabled = getFeatureFlagClient().getBooleanValue(
+          FlagKeys.SuggestedDashboardsAssistantButton,
+          false
+        );
         return buttonEnabled && assistantAvailable;
       })
     )
@@ -149,7 +152,10 @@ export function isTemplateDashboardAssistantEnabled(): Promise<boolean> {
   return firstValueFrom(
     isAssistantAvailable().pipe(
       map((assistantAvailable) => {
-        const buttonEnabled = getFeatureFlagClient().getBooleanValue('dashboardTemplatesAssistantButton', false);
+        const buttonEnabled = getFeatureFlagClient().getBooleanValue(
+          FlagKeys.SuggestedDashboardsAssistantButton,
+          false
+        );
         const toolEnabled = getFeatureFlagClient().getBooleanValue(
           'assistant.frontend.tools.dashboardTemplates',
           false

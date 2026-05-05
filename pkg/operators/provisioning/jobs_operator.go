@@ -14,22 +14,8 @@ import (
 	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/configprovider"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
-	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
-	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
-	jobsync "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
@@ -41,23 +27,14 @@ func RunJobController(deps server.OperatorDependencies) error {
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
-	cfgProvider, err := configprovider.ProvideService(deps.Config)
-	if err != nil {
-		return fmt.Errorf("failed to provide config: %w", err)
-	}
-	tracingConfig, err := tracing.ProvideTracingConfig(cfgProvider)
-	if err != nil {
-		return fmt.Errorf("failed to provide tracing config: %w", err)
-	}
-
-	tracer, err := tracing.ProvideService(tracingConfig)
-	if err != nil {
-		return fmt.Errorf("failed to provide tracing service: %w", err)
-	}
-
 	controllerCfg, err := setupJobsControllerFromConfig(deps.Config, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
+	}
+
+	tracer, err := controllerCfg.Tracer()
+	if err != nil {
+		return fmt.Errorf("failed to provide tracing service: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -67,7 +44,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigChan
-		fmt.Println("Received shutdown signal, stopping controllers")
+		logger.Info("Received shutdown signal, stopping controllers")
 		cancel()
 	}()
 
@@ -82,10 +59,6 @@ func RunJobController(deps server.OperatorDependencies) error {
 		controllerCfg.ResyncInterval(),
 	)
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
-	jobController, err := controller.NewJobController(jobInformer)
-	if err != nil {
-		return fmt.Errorf("failed to create job controller: %w", err)
-	}
 
 	var startHistoryInformers func()
 	if controllerCfg.historyExpiration > 0 {
@@ -124,49 +97,47 @@ func RunJobController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	workers, metrics, err := setupWorkers(deps.Config, controllerCfg, deps.Registerer, tracer)
-	if err != nil {
-		return fmt.Errorf("setup workers: %w", err)
-	}
-
-	repoFactory, err := controllerCfg.RepositoryFactory()
-	if err != nil {
-		return fmt.Errorf("failed to get repository factory: %w", err)
-	}
-
-	repoGetter := resources.NewRepositoryGetter(
-		repoFactory,
-		provisioningClient.ProvisioningV0alpha1(),
-	)
-	// This is basically our own JobQueue system
-	driver, err := jobs.NewConcurrentJobDriver(
-		controllerCfg.concurrentDrivers,
-		controllerCfg.maxJobTimeout,
-		controllerCfg.jobInterval,
-		controllerCfg.leaseRenewalInterval,
-		jobStore,
-		repoGetter,
-		jobHistoryWriter,
-		jobController.InsertNotifications(),
-		deps.Registerer,
-		metrics,
-		workers...,
-	)
-	if err != nil {
-		return fmt.Errorf("create concurrent job driver: %w", err)
-	}
-
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		logger.Info("jobs controller started")
-		if err := driver.Run(ctx); err != nil {
-			logger.Error("job driver failed", "error", err)
+	if controllerCfg.jobProcessingEnabled {
+		jobController, err := controller.NewJobController(jobInformer)
+		if err != nil {
+			return fmt.Errorf("failed to create job controller: %w", err)
 		}
-		logger.Info("job driver stopped")
-	}()
+
+		driver, err := buildDriver(
+			deps.Config,
+			&controllerCfg.ControllerConfig,
+			deps.Registerer,
+			tracer,
+			driverConfig{
+				concurrentDrivers:    controllerCfg.concurrentDrivers,
+				maxJobTimeout:        controllerCfg.maxJobTimeout,
+				jobInterval:          controllerCfg.jobInterval,
+				leaseRenewalInterval: controllerCfg.leaseRenewalInterval,
+				maxSyncWorkers:       controllerCfg.maxSyncWorkers,
+				folderAPIVersion:     controllerCfg.folderAPIVersion,
+			},
+			jobStore,
+			jobHistoryWriter,
+			jobController.InsertNotifications(),
+		)
+		if err != nil {
+			return fmt.Errorf("build driver: %w", err)
+		}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			logger.Info("jobs controller started")
+			if err := driver.Run(ctx); err != nil {
+				logger.Error("job driver failed", "error", err)
+			}
+			logger.Info("job driver stopped")
+		}()
+	} else {
+		logger.Info("job driver disabled via operator config (jobs_processing_enabled=false)")
+	}
 
 	wg.Add(1)
 	go func() {
@@ -217,9 +188,10 @@ func RunJobController(deps server.OperatorDependencies) error {
 
 type jobsControllerConfig struct {
 	ControllerConfig
+	jobProcessingEnabled bool
 	historyExpiration    time.Duration
-	maxJobTimeout        time.Duration
 	cleanupInterval      time.Duration
+	maxJobTimeout        time.Duration
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
 	concurrentDrivers    int
@@ -238,6 +210,7 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 
 	return &jobsControllerConfig{
 		ControllerConfig:     *controllerCfg,
+		jobProcessingEnabled: operatorSec.Key("jobs_processing_enabled").MustBool(true),
 		historyExpiration:    operatorSec.Key("history_expiration").MustDuration(0),
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
@@ -247,124 +220,4 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(30 * time.Second),
 		folderAPIVersion:     folderAPIVersion,
 	}, nil
-}
-
-func setupWorkers(
-	cfg *setting.Cfg, controllerCfg *jobsControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer,
-) ([]jobs.Worker, *jobs.JobMetrics, error) {
-	// Initialize feature toggles from config
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to provide feature manager: %w", err)
-	}
-	features := featuremgmt.ProvideToggles(featureManager)
-	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
-	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
-	folderAPIVersion := controllerCfg.folderAPIVersion
-
-	clients, err := controllerCfg.Clients()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
-	}
-	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
-
-	unified, err := controllerCfg.UnifiedStorageClient()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get unified storage client: %w", err)
-	}
-	resourceLister := resources.NewResourceLister(unified)
-
-	provisioningClient, err := controllerCfg.ProvisioningClient()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
-	}
-
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled, folderAPIVersion)
-	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
-
-	workers := make([]jobs.Worker, 0)
-
-	metrics := jobs.RegisterJobMetrics(registry)
-
-	// Sync
-	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics, folderMetadataEnabled)
-	syncWorker := jobsync.NewSyncWorker(
-		clients,
-		repositoryResources,
-		statusPatcher.Patch,
-		syncer,
-		metrics,
-		tracer,
-		controllerCfg.maxSyncWorkers,
-	)
-	workers = append(workers, syncWorker)
-
-	// Export — standalone export generates new UIDs so exported files
-	// don't reference existing resource identifiers.
-	stageIfPossible := repository.WrapWithStageAndPushIfPossible
-	exportWorker := export.NewExportWorker(
-		clients,
-		repositoryResources,
-		resourceLister,
-		export.ExportAllWithNewUIDs,
-		stageIfPossible,
-		metrics,
-		exportEnabled,
-		folderAPIVersion,
-	)
-	workers = append(workers, exportWorker)
-
-	// Migrate — export preserves original names so the takeover
-	// allowlist can correlate resources during the sync phase.
-	migrateExportWorker := export.NewExportWorker(
-		clients,
-		repositoryResources,
-		resourceLister,
-		export.ExportAll,
-		stageIfPossible,
-		metrics,
-		exportEnabled,
-		folderAPIVersion,
-	)
-	cleaner := migrate.NewNamespaceCleaner(clients)
-	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
-		cleaner,
-		migrateExportWorker,
-		syncWorker,
-	)
-	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, exportEnabled)
-	workers = append(workers, migrationWorker)
-
-	// Delete
-	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
-	workers = append(workers, deleteWorker)
-
-	// Move
-	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
-	workers = append(workers, moveWorker)
-
-	// Fix Metadata
-	fixMetadataWorker := fixfoldermetadata.NewWorker(resources.FolderGVKForVersion(folderAPIVersion))
-	workers = append(workers, fixMetadataWorker)
-
-	// Release Resources (orphan cleanup — removes ownership annotations)
-	releaseResourcesWorker := releaseresourcespkg.NewWorker(resourceLister, clients, 10)
-	workers = append(workers, releaseResourcesWorker)
-
-	// Delete Resources (orphan cleanup — deletes managed resources)
-	deleteResourcesWorker := deleteresourcespkg.NewWorker(resourceLister, clients, 10)
-	workers = append(workers, deleteResourcesWorker)
-
-	// PullRequest
-	urlProvider, err := controllerCfg.URLProvider()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get URL provider: %w", err)
-	}
-	renderer := pullrequest.NewNoOpRenderer()
-	evaluator := pullrequest.NewEvaluator(renderer, parsers, urlProvider, registry)
-	commenter := pullrequest.NewCommenter(false)
-	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
-	workers = append(workers, prWorker)
-
-	return workers, &metrics, nil
 }

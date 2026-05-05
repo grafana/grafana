@@ -67,7 +67,7 @@ type API struct {
 	DataProxy             *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager  *notifier.MultiOrgAlertmanager
 	StateManager          state.AlertInstanceManager
-	RuleStatusReader      apiprometheus.StatusReader
+	RuleMutator           apiprometheus.RuleMutator
 	AccessControl         ac.AccessControl
 	ReceiverService       *notifier.ReceiverService
 	ReceiverTestService   *notifier.ReceiverTestingService
@@ -133,7 +133,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.RuleStatusReader, api.RuleStore, ruleAuthzService, api.ProvenanceStore),
+		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.RuleMutator, api.RuleStore, ruleAuthzService, api.ProvenanceStore),
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(

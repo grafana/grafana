@@ -388,6 +388,11 @@
                     "targetBlank": true,
                     "title": "Grafana",
                     "url": "https://grafana.com"
+                  },
+                  {
+                    "targetBlank": true,
+                    "title": "Min param",
+                    "url": "https://example.com?min=${__data.fields.Min.numeric}"
                   }
                 ]
               },

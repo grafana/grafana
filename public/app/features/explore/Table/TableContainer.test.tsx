@@ -37,6 +37,7 @@ const dataFrame = toDataFrame({
 const defaultProps = {
   exploreId: 'left',
   loading: false,
+  queryStreaming: false,
   width: 800,
   onCellFilterAdded: jest.fn(),
   tableResult: [dataFrame],

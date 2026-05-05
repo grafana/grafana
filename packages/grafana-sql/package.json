@@ -77,7 +77,7 @@
     "@types/uuid": "10.0.0",
     "i18next-cli": "^1.48.0",
     "jest": "^29.6.4",
-    "rollup": "4.59.0",
+    "rollup": "^4.60.1",
     "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
     "typescript": "6.0.2"

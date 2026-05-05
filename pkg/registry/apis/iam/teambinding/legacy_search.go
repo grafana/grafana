@@ -54,11 +54,11 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 		OrgID: signedInUser.GetOrgID(),
 	}
 
-	if req.Limit > 100 {
-		req.Limit = 100
+	if req.Limit > common.MaxListLimit {
+		return nil, fmt.Errorf("limit cannot be greater than %d", common.MaxListLimit)
 	}
-	if req.Limit <= 0 {
-		req.Limit = 50
+	if req.Limit < 1 {
+		req.Limit = common.DefaultListLimit
 	}
 	if req.Page < 1 {
 		req.Page = 1

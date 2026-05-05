@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/query_history/ # /docs/grafana/next/http_api/query_history/
-  - ../../../developers/http_api/query_history/ # /docs/grafana/next/developers/http_api/query_history/
+  - ../../../../http_api/query_history/ # /docs/grafana/next/http_api/query_history/
+  - ../../../../developers/http_api/query_history/ # /docs/grafana/next/developers/http_api/query_history/
   - ../../../../developer-resources/api-reference/http-api/query_history/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/query_history/
 description: Grafana Query History HTTP API
@@ -21,13 +21,7 @@ title: 'Query History HTTP API '
 
 # Query history API
 
-{{< admonition type="caution" >}}
-
-Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
-
-To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
-
-{{< /admonition >}}
+{{< docs/shared lookup="developers/deprecated-apis-nonmigrated.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 This API can be used to add queries to Query history. It requires that the user is logged in and that Query history feature is enabled in config file.
 

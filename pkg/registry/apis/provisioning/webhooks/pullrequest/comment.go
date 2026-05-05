@@ -17,6 +17,7 @@ type commenter struct {
 	templateRenderInfo       *template.Template
 	templateFooter           *template.Template
 	templateValidationErrors *template.Template
+	templateMetadataNotice   *template.Template
 	showImageRendererNote    bool
 }
 
@@ -27,6 +28,7 @@ func NewCommenter(showImageRendererNote bool) Commenter {
 		templateRenderInfo:       template.Must(template.New("setup").Parse(commentTemplateMissingImageRenderer)),
 		templateFooter:           template.Must(template.New("footer").Parse(commentTemplateFooter)),
 		templateValidationErrors: template.Must(template.New("errors").Parse(commentTemplateValidationErrors)),
+		templateMetadataNotice:   template.Must(template.New("metadata").Parse(commentTemplateMetadataNotice)),
 		showImageRendererNote:    showImageRendererNote,
 	}
 }
@@ -62,6 +64,12 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 			if err := c.templateValidationErrors.Execute(&buf, &info); err != nil {
 				return "", fmt.Errorf("unable to execute validation errors template: %w", err)
 			}
+		}
+	}
+
+	if info.HasRemovedMetadataChanges() {
+		if err := c.templateMetadataNotice.Execute(&buf, &info); err != nil {
+			return "", fmt.Errorf("unable to execute metadata notice template: %w", err)
 		}
 	}
 
@@ -146,6 +154,11 @@ const commentTemplateValidationErrors = `
 {{- end}}{{ end}}
 `
 
+// TODO(ferruvich): let's discuss this text with the team
+const commentTemplateMetadataNotice = `
+
+> **Note:** Some metadata fields (such as ` + "`namespace`" + `, ` + "`labels`" + `, or ` + "`annotations`" + `) were removed from the resource files. Git Sync normalizes resources to a minimal format. This is expected behavior and does not affect your dashboards in Grafana.`
+
 const commentTemplateMissingImageRenderer = `
 
 NOTE: To enable dashboard previews in pull requests, refer to the [image rendering setup documentation](https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering).`
@@ -204,6 +217,15 @@ func (f *fileChangeInfo) TruncatedError() string {
 func (c *changeInfo) HasErrors() bool {
 	for i := range c.Changes {
 		if c.Changes[i].Error != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *changeInfo) HasRemovedMetadataChanges() bool {
+	for i := range c.Changes {
+		if c.Changes[i].HasRemovedMetadata {
 			return true
 		}
 	}

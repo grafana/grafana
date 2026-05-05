@@ -632,7 +632,7 @@ func TestGithubClient_ListInstallationRepositories(t *testing.T) {
 
 						// Create 100 repos per page to simulate going over 1000 limit
 						repos := make([]*github.Repository, 100)
-						for i := 0; i < 100; i++ {
+						for i := range 100 {
 							repoNum := (pageNum-1)*100 + i + 1
 							repos[i] = &github.Repository{
 								Name: github.Ptr(fmt.Sprintf("repo%d", repoNum)),

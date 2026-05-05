@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/org/ # /docs/grafana/next/http_api/org/
-  - ../../../http_api/organization/ # /docs/grafana/next/http_api/organization/
-  - ../../../developers/http_api/org/ # /docs/grafana/next/developers/http_api/org/
+  - ../../../../http_api/org/ # /docs/grafana/next/http_api/org/
+  - ../../../../http_api/organization/ # /docs/grafana/next/http_api/organization/
+  - ../../../../developers/http_api/org/ # /docs/grafana/next/developers/http_api/org/
   - ../../../../developer-resources/api-reference/http-api/org/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/org/
 description: Grafana Organization HTTP API
@@ -21,13 +21,7 @@ title: Organization HTTP API
 
 # Organization API
 
-{{< admonition type="caution" >}}
-
-Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
-
-To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
-
-{{< /admonition >}}
+{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 The Organization HTTP API is divided in two resources, `/api/org` (current organization)
 and `/api/orgs` (admin organizations). One big difference between these are that

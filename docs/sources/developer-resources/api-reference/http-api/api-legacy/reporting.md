@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/reporting/ # /docs/grafana/next/http_api/reporting/
-  - ../../../developers/http_api/reporting/ # /docs/grafana/next/developers/http_api/reporting/
+  - ../../../../http_api/reporting/ # /docs/grafana/next/http_api/reporting/
+  - ../../../../developers/http_api/reporting/ # /docs/grafana/next/developers/http_api/reporting/
   - ../../../../developer-resources/api-reference/http-api/reporting/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/reporting/
 description: Grafana Enterprise APIs
@@ -20,13 +20,7 @@ title: Reporting API
 
 # Reporting API
 
-{{< admonition type="caution" >}}
-
-Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
-
-To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
-
-{{< /admonition >}}
+{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 This API allows you to interact programmatically with the [Reporting](/docs/grafana/latest/dashboards/create-reports/) feature.
 

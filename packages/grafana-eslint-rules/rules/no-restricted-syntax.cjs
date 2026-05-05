@@ -48,5 +48,10 @@ module.exports = createNoRestrictedSyntax(
     selector: 'MemberExpression[object.name="config"][property.name="panels"]',
     message:
       'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
+  },
+  {
+    name: 'no-direct-date-fns',
+    selector: 'ImportDeclaration[source.value="date-fns"][importKind!="type"]',
+    message: 'Use deep imports instead (e.g. date-fns/format) to avoid pulling in the entire library.',
   }
 );

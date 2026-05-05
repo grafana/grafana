@@ -282,7 +282,8 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 			name: "fail if interval is not aligned with base interval",
 			group: func() *apimodels.PostableRuleGroupConfig {
 				g := validGroup(cfg)
-				g.Interval = model.Duration(cfg.BaseInterval + time.Duration(rand.IntN(10)+1)*time.Second)
+				// Offset must be in [1, BaseInterval-1) seconds to guarantee misalignment with BaseInterval.
+				g.Interval = model.Duration(cfg.BaseInterval + time.Duration(rand.Int64N(int64(cfg.BaseInterval.Seconds())-2)+1)*time.Second)
 				return &g
 			},
 		},

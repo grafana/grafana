@@ -30,7 +30,12 @@ import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
 import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
-import { type BulkActionFormData, type BulkActionProvisionResourceProps, getTargetFolderPathInRepo } from './utils';
+import {
+  type BulkActionFormData,
+  type BulkActionProvisionResourceProps,
+  getTargetFolderPathInRepo,
+  isSameFolderPath,
+} from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
@@ -39,7 +44,14 @@ interface FormProps extends BulkActionProvisionResourceProps {
   folderPath?: string;
 }
 
-function FormContent({ initialValues, selectedItems, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
+function FormContent({
+  initialValues,
+  selectedItems,
+  repository,
+  canPushToConfiguredBranch,
+  folderPath,
+  onDismiss,
+}: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
   const [jobError, setJobError] = useState<string | StatusInfo>();
@@ -82,6 +94,18 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
         message: t(
           'browse-dashboards.bulk-move-resources-form.error-no-target-folder-path',
           'Target folder path is invalid or empty, please select again.'
+        ),
+      });
+      setHasSubmitted(false);
+      return;
+    }
+
+    if (isSameFolderPath(folderPath, targetFolderPathInRepo)) {
+      setError('targetFolderUID', {
+        type: 'manual',
+        message: t(
+          'browse-dashboards.bulk-move-resources-form.error-already-in-target-folder',
+          'Selected resources are already in the target folder.'
         ),
       });
       setHasSubmitted(false);

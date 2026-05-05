@@ -8,13 +8,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 
-	authlib "github.com/grafana/authlib/types"
 	correlationsV0 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
 )
 
 func TestConversion(t *testing.T) {
-	namespacer := authlib.OrgNamespaceFormatter
-
 	tests := []struct {
 		name   string
 		input  Correlation
@@ -94,7 +91,7 @@ func TestConversion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := ToResource(tt.input, namespacer)
+			res, err := ToResource(tt.input)
 			require.NoError(t, err)
 			require.Equal(t, &tt.expect, res, "conversion")
 

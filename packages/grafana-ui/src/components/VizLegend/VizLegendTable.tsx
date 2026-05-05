@@ -148,6 +148,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   header: css({
+    position: 'sticky',
+    top: 0,
+    backgroundColor: theme.colors.background.primary,
+    zIndex: 1,
     color: theme.colors.primary.text,
     fontWeight: theme.typography.fontWeightMedium,
     borderBottom: `1px solid ${theme.colors.border.weak}`,

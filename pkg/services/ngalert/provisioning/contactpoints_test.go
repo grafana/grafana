@@ -444,6 +444,32 @@ func TestIntegrationContactPointService(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("email contact point create succeeds when validator passes", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, nil)
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("email contact point create fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.Error(t, err)
+	})
+
+	t.Run("email contact point update fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+	})
 }
 
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
@@ -896,6 +922,8 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		tracing.InitializeTracerForTest(),
 		validation.ValidateProvenanceRelaxed,
 		false,
+		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 
 	return NewContactPointService(
@@ -908,6 +936,8 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		log.NewNopLogger(),
 		&fakeAlertRuleNotificationStore{},
 		fakes.NewFakeReceiverPermissionsService(),
+		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 }
 
@@ -916,6 +946,15 @@ func createTestContactPoint() definitions.EmbeddedContactPoint {
 	return definitions.EmbeddedContactPoint{
 		Name:     "test-contact-point",
 		Type:     "slack",
+		Settings: settings,
+	}
+}
+
+func createTestEmailContactPoint() definitions.EmbeddedContactPoint {
+	settings, _ := simplejson.NewJson([]byte(`{"addresses":"test@example.com"}`))
+	return definitions.EmbeddedContactPoint{
+		Name:     "test-email-contact-point",
+		Type:     "email",
 		Settings: settings,
 	}
 }
@@ -1817,5 +1856,65 @@ func createInconsistentTestConfigWithReceivers() *definitions.PostableUserConfig
 				},
 			},
 		},
+	}
+}
+
+func TestValidateContactPointAllowedIntegrations(t *testing.T) {
+	decryptFn := func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+		return fallback
+	}
+	newCP := func(integrationType string) *definitions.EmbeddedContactPoint {
+		settings, _ := simplejson.NewJson([]byte(`{"recipient":"value_recipient","token":"value_token"}`))
+		return &definitions.EmbeddedContactPoint{
+			Name:     "test-cp",
+			Type:     integrationType,
+			Settings: settings,
+		}
+	}
+
+	testCases := []struct {
+		name            string
+		allowed         map[schema.IntegrationType]struct{}
+		integrationType string
+		wantErr         string
+	}{
+		{
+			name:            "nil allowlist permits any valid type",
+			integrationType: "slack",
+		},
+		{
+			name:            "type in allowlist is permitted",
+			allowed:         map[schema.IntegrationType]struct{}{"slack": {}},
+			integrationType: "slack",
+		},
+		{
+			name:            "type not in allowlist is rejected",
+			allowed:         map[schema.IntegrationType]struct{}{"email": {}},
+			integrationType: "slack",
+			wantErr:         "integration type slack is not allowed",
+		},
+		{
+			name:            "empty non-nil allowlist rejects all types",
+			allowed:         map[schema.IntegrationType]struct{}{},
+			integrationType: "slack",
+			wantErr:         "integration type slack is not allowed",
+		},
+		{
+			name:            "allowlist match is case-insensitive via canonical resolution",
+			allowed:         map[schema.IntegrationType]struct{}{"slack": {}},
+			integrationType: "SLACK",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateContactPoint(context.Background(), newCP(tc.integrationType), decryptFn, tc.allowed)
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Equal(t, err.Error(), tc.wantErr)
+			}
+		})
 	}
 }

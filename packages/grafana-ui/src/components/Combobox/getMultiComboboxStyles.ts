@@ -48,6 +48,7 @@ export const getMultiComboboxStyles = (
       outline: 'none',
       background: 'transparent',
       flexGrow: 1,
+      height: '100%',
       maxWidth: '100%',
       minWidth: 20, // This is a bit arbitrary, but is used to leave some space for clicking. This will override the minWidth property
       '&::placeholder': {
@@ -62,6 +63,7 @@ export const getMultiComboboxStyles = (
 
     pillWrapper: css({
       display: 'inline-flex',
+      alignItems: 'center',
       flexWrap: isOpen ? 'wrap' : 'nowrap',
       flexGrow: 1,
       minWidth: '50px',

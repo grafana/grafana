@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { memo, type ChangeEvent } from 'react';
+import { memo, useId, type ChangeEvent } from 'react';
 
 import { type VariableSuggestion, type GrafanaTheme2, type DataLink } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Field } from '../Forms/Field';
+import { getLabelStyles } from '../Forms/Label';
 import { Input } from '../Input/Input';
 import { Switch } from '../Switch/Switch';
 
@@ -23,6 +24,8 @@ interface DataLinkEditorProps {
 export const DataLinkEditor = memo(
   ({ index, value, onChange, suggestions, isLast, showOneClick = false }: DataLinkEditorProps) => {
     const styles = useStyles2(getStyles);
+    const labelStyles = useStyles2(getLabelStyles);
+    const id = useId();
 
     const onUrlChange = (url: string, callback?: () => void) => {
       onChange(index, { ...value, url }, callback);
@@ -51,8 +54,14 @@ export const DataLinkEditor = memo(
           />
         </Field>
 
-        <Field label={t('grafana-ui.data-link-editor.url-label', 'URL')}>
-          <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
+        <Field
+          label={
+            <div className={labelStyles.label} id={id}>
+              <Trans i18nKey="grafana-ui.data-link-editor.url-label">URL</Trans>
+            </div>
+          }
+        >
+          <DataLinkInput aria-labelledby={id} value={value.url} onChange={onUrlChange} suggestions={suggestions} />
         </Field>
 
         <Field label={t('grafana-ui.data-link-editor.new-tab-label', 'Open in new tab')}>

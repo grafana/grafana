@@ -35,6 +35,9 @@ type LegacyIdentityStore interface {
 	DeleteServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error
 
 	ListServiceAccountTokens(ctx context.Context, ns claims.NamespaceInfo, query ListServiceAccountTokenQuery) (*ListServiceAccountTokenResult, error)
+	GetServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, query GetServiceAccountTokenQuery) (*ServiceAccountToken, error)
+	DeleteServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteServiceAccountTokenCommand) (int64, error)
+	CreateServiceAccountTokenWithHash(ctx context.Context, ns claims.NamespaceInfo, cmd CreateServiceAccountTokenWithHashCommand) error
 
 	GetTeamInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetTeamInternalIDQuery) (*GetTeamInternalIDResult, error)
 	GetTeamUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetTeamUIDByIDQuery) (*GetTeamUIDByIDResult, error)
@@ -50,7 +53,9 @@ type LegacyIdentityStore interface {
 	DeleteTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteTeamMemberCommand) error
 }
 
-var _ LegacyIdentityStore = (*legacySQLStore)(nil)
+var (
+	_ LegacyIdentityStore = (*legacySQLStore)(nil)
+)
 
 func NewLegacySQLStores(sql legacysql.LegacyDatabaseProvider) LegacyIdentityStore {
 	return &legacySQLStore{

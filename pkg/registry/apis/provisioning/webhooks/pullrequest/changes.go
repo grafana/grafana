@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -61,6 +63,10 @@ type fileChangeInfo struct {
 	// URL where we can see a preview of this particular change
 	PreviewURL           string
 	PreviewScreenshotURL string
+
+	// HasRemovedMetadata is true when the original file contains metadata
+	// fields (namespace, labels, annotations) that will be removed when parsing the resource.
+	HasRemovedMetadata bool
 }
 
 type evaluator struct {
@@ -135,6 +141,19 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	if err != nil {
 		info.Error = err.Error()
 		return info
+	}
+
+	if change.Action == repository.FileActionUpdated {
+		// Detect metadata stripped by resource parser.
+		// Read the file from the default branch (empty ref) and compare its
+		// metadata against the PR-branch parsed version.
+		baseFileInfo, baseErr := repo.Read(ctx, change.Path, "")
+		if baseErr == nil && baseFileInfo != nil {
+			baseObj, _, _, parseErr := resources.ParseFileResource(ctx, baseFileInfo)
+			if parseErr == nil && baseObj != nil {
+				info.HasRemovedMetadata = hasRemovedMetadata(baseObj, info.Parsed.Obj)
+			}
+		}
 	}
 
 	// Find a name within the file
@@ -258,4 +277,30 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 	}
 	outcome = utils.SuccessOutcome
 	return base.JoinPath(snap).String(), nil
+}
+
+// hasRemovedMetadata returns true if the original object (from the file)
+// contains metadata fields (namespace, labels, annotations) that are absent
+// or different in the parsed object (post-Parse).
+func hasRemovedMetadata(original, parsed *unstructured.Unstructured) bool {
+	if original.GetNamespace() != "" && parsed.GetNamespace() != original.GetNamespace() {
+		return true
+	}
+	if len(original.GetLabels()) > 0 && hasMissingKeys(original.GetLabels(), parsed.GetLabels()) {
+		return true
+	}
+	if len(original.GetAnnotations()) > 0 && hasMissingKeys(original.GetAnnotations(), parsed.GetAnnotations()) {
+		return true
+	}
+	return false
+}
+
+// hasMissingKeys returns true if any key in original is absent from parsed.
+func hasMissingKeys(original, parsed map[string]string) bool {
+	for k := range original {
+		if _, exists := parsed[k]; !exists {
+			return true
+		}
+	}
+	return false
 }

@@ -18,6 +18,7 @@ export interface DashboardCodePaneProps {
 
 export class DashboardCodePane extends SceneObjectBase {
   public static Component = DashboardCodePaneRenderer;
+  public minWidth = 700;
 
   public getId() {
     return 'code' as const;

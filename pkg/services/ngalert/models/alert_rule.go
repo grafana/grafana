@@ -1060,6 +1060,13 @@ type ListAlertRulesQuery struct {
 	DashboardUID string
 	PanelID      int64
 
+	// IsPaused filters rules by their paused state.
+	// nil means no filter; true means only paused rules; false means only non-paused rules.
+	IsPaused *bool
+	// TitleExact filters rules to those with an exact title match (case-sensitive).
+	// Empty string means no filter.
+	TitleExact string
+
 	ReceiverName     string
 	TimeIntervalName string
 

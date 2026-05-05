@@ -49,9 +49,16 @@ func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider, mappers 
 		schema.GroupResource{Group: "iam.grafana.app", Resource: "users"},
 		NewIDScopedMapper("users", defaultLevels), nil,
 	)
+	// BasicRole is excluded: built-in roles already cover all service accounts globally,
+	// so granting a ResourcePermission to a BasicRole on a specific SA is not permitted.
 	mappers.RegisterMapper(
 		schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"},
-		NewIDScopedMapper("serviceaccounts", []string{"Edit", "Admin"}), nil,
+		NewMapperWithAttribute("serviceaccounts", []string{"Edit", "Admin"}, ScopeAttributeID,
+			[]v0alpha1.ResourcePermissionSpecPermissionKind{
+				v0alpha1.ResourcePermissionSpecPermissionKindUser,
+				v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount,
+				v0alpha1.ResourcePermissionSpecPermissionKindTeam,
+			}), nil,
 	)
 	return &ResourcePermSqlBackend{
 		dbProvider:    dbProvider,

@@ -1,6 +1,7 @@
 import { useAsync } from 'react-use';
 
 import { getAppPluginMeta, getAppPluginMetas, getAppPluginVersion, isAppPluginInstalled } from './apps';
+import { getDatasourcePluginMeta, getDatasourcePluginMetas } from './datasources';
 import {
   getListedPanelPluginIds,
   getListedPanelPluginMetas,
@@ -91,5 +92,15 @@ export function usePanelPluginVersion(pluginId: string) {
  */
 export function useListedPanelPluginIds() {
   const { loading, error, value } = useAsync(async () => getListedPanelPluginIds());
+  return { loading, error, value };
+}
+
+export function useDatasourcePluginMetas() {
+  const { loading, error, value } = useAsync(async () => getDatasourcePluginMetas());
+  return { loading, error, value };
+}
+
+export function useDatasourcePluginMeta(pluginId: string) {
+  const { loading, error, value } = useAsync(async () => getDatasourcePluginMeta(pluginId), [pluginId]);
   return { loading, error, value };
 }

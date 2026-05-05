@@ -15,6 +15,7 @@ import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButt
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
 import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 import { type ToolbarActionProps } from '../scene/new-toolbar/types';
+import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardCodePane } from './DashboardCodePane';
@@ -57,7 +58,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
    */
   useEffect(() => {
     if (!selectedObject && selectionContext.selected.length > 0) {
-      editPane.clearSelection();
+      editPane.fixSelectionOfRemovedObject();
       return;
     }
   }, [selectedObject, selectionContext.selected, editPane]);
@@ -84,7 +85,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
-              active={selectedObject === dashboard ? true : false}
+              active={selectedObject === dashboard && openPane?.getId() === 'element' ? true : false}
             />
             {config.featureToggles.feedbackButton && (
               <Sidebar.Button
@@ -126,7 +127,10 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
           <Sidebar.Button
             icon="list-ui-alt"
-            onClick={() => editPane.openPane(new DashboardOutline({}))}
+            onClick={() => {
+              DashboardInteractions.dashboardOutlineClicked();
+              editPane.openPane(new DashboardOutline({}));
+            }}
             title={t('dashboard.sidebar.outline.title', 'Outline')}
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}

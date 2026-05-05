@@ -84,6 +84,7 @@ function getDefaultImageForVariant(variant: Props['variant']) {
       return <GrotNotFound width={300} />;
     }
     case 'completed': {
+      // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
       return <SVG src={GrotCompleted} width={300} />;
     }
     default: {

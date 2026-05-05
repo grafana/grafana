@@ -92,8 +92,9 @@ export function useCombinedRuleNamespaces(
 
           // We need to set the namespace_uid for grafana rules as it's required to obtain the rule's groups
           // All rules from all groups have the same namespace_uid so we're taking the first one.
-          if (rulerRuleType.grafana.rule(groups[0].rules[0])) {
-            namespace.uid = groups[0].rules[0].grafana_alert.namespace_uid;
+          const firstRule = groups.at(0)?.rules.at(0);
+          if (firstRule && rulerRuleType.grafana.rule(firstRule)) {
+            namespace.uid = firstRule.grafana_alert.namespace_uid;
           }
 
           namespaces[namespaceName] = namespace;
@@ -563,8 +564,9 @@ export function useCombinedRules(
 
       // We need to set the namespace_uid for grafana rules as it's required to obtain the rule's groups
       // All rules from all groups have the same namespace_uid so we're taking the first one.
-      if (rulerRuleType.grafana.rule(groups[0].rules[0])) {
-        namespace.uid = groups[0].rules[0].grafana_alert.namespace_uid;
+      const firstRule = groups.at(0)?.rules.at(0);
+      if (firstRule && rulerRuleType.grafana.rule(firstRule)) {
+        namespace.uid = firstRule.grafana_alert.namespace_uid;
       }
 
       namespaces[namespaceName] = namespace;

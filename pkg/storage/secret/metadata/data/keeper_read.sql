@@ -10,7 +10,8 @@ SELECT
   {{ .Ident "updated_by" }},
   {{ .Ident "description" }},
   {{ .Ident "type" }},
-  {{ .Ident "payload" }}
+  {{ .Ident "payload" }},
+  {{ .Ident "active" }}
 FROM
   {{ .Ident "secret_keeper" }}
 WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND

@@ -25,6 +25,7 @@ func newPermissiveMockQuotaTracker(t *testing.T) quotas.QuotaTracker {
 	qt := quotas.NewMockQuotaTracker(t)
 	qt.On("TryAcquire").Return(true).Maybe()
 	qt.On("Release").Maybe()
+	qt.On("AllowOverLimit", mock.Anything).Maybe()
 	return qt
 }
 

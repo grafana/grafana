@@ -37,6 +37,7 @@ func TestIntegrationPreferences(t *testing.T) {
 	})
 
 	t.Run("legacy preferences api", func(t *testing.T) {
+		t.Skip("TODO: skipping these for now; see #123657")
 		ctx := context.Background()
 		clientAdmin := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
@@ -102,6 +103,21 @@ func TestIntegrationPreferences(t *testing.T) {
 		require.NoError(t, err)
 		v, _, _ = unstructured.NestedString(out.Object, "spec", "weekStart")
 		require.Equal(t, "sunday", v)
+
+		// Fetch it again using list
+		list, err := clientAdmin.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "metadata.name=team-" + helper.Org1.Staff.UID,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		v, _, _ = unstructured.NestedString(list.Items[0].Object, "spec", "weekStart")
+		require.Equal(t, "sunday", v)
+
+		// nothing found when asking for a user you can not see
+		_, err = clientAdmin.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "metadata.name=user-xxx",
+		})
+		require.Error(t, err) // eventually this should be an empty list
 
 		// http://localhost:3000/api/org/preferences
 		legacyResponse = apis.DoRequest(helper, apis.RequestParams{

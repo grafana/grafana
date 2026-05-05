@@ -21,6 +21,20 @@ weight: 495
 
 ## Technical notes
 
+{{< admonition type="warning" >}}
+**Git Sync early adopters:** A migration bug in Grafana v13.0.0 might cause dashboards and folders to be lost or reverted when upgrading from Grafana v12.x.x with Git Sync enabled. Upgrading from v13.0.0 to v13.0.1 does **not** recover lost data, and if you already upgraded, you must restore your database first, then upgrade to v13.0.1.
+
+The bug only affects self-managed instances with Git Sync feature flags (`provisioning`, `kubernetesClientDashboardsFolders`, `kubernetesDashboards`, and `grafanaAPIServerEnsureKubectlAccess`) enabled on Grafana v12.x.x.
+
+Grafana v13.0.0 has been removed from distribution and the fix has shipped in Grafana v13.0.1.
+
+If you're affected, use the following recovery paths:
+
+- **If your instance used mixed local and Git Sync content:** restore from the database backup you took before upgrading, then upgrade to Grafana v13.0.1.
+- **If your instance used full-instance Git Sync:** upgrade to Grafana v13.0.1 and resync from your Git repository.
+- **If unsure:** restore from your database backup before upgrading to v13.0.1.
+  {{< /admonition >}}
+
 ### React 19 related updates
 
 As part of [the migration to React 19 in Grafana 13](https://grafana.com/blog/react-19-is-coming-to-grafana-what-plugin-developers-need-to-know/#next-steps-and-how-to-learn-more), make the following updates to ensure that your plugins are working properly and you don't experience any disruptions during the Grafana 13 upgrade.
@@ -38,6 +52,14 @@ Update all of your installed plugins and check if they are still working properl
 #### Upgrade to Grafana 13
 
 Finally you can continue your upgrade to Grafana 13.
+
+### Legacy `/api` endpoints are now deprecated
+
+Grafana is migrating existing APIs to the new `/apis` model, a Kubernetes-style API layer which follows a standardized API structure alongside consistent API versioning. Refer to the [New API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis) documentation for more details.
+
+**Legacy APIs are not being disabled for the moment**. Removal of legacy APIs is planned for a future major release, and any breaking changes will be announced well in advance to avoid disruptions.
+
+For more information and migration guidance, refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration).
 
 ### Deprecated data source APIs disabled
 

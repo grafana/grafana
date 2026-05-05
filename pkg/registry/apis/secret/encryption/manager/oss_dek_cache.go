@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,8 +21,6 @@ type ossDataKeyCache struct {
 	byId     map[namespacedKey]encryption.DataKeyCacheEntry
 	byLabel  map[namespacedKey]encryption.DataKeyCacheEntry
 	cacheTTL time.Duration
-
-	log log.Logger
 }
 
 func ProvideOSSDataKeyCache(cfg *setting.Cfg) encryption.DataKeyCache {
@@ -31,11 +28,10 @@ func ProvideOSSDataKeyCache(cfg *setting.Cfg) encryption.DataKeyCache {
 		byId:     make(map[namespacedKey]encryption.DataKeyCacheEntry),
 		byLabel:  make(map[namespacedKey]encryption.DataKeyCacheEntry),
 		cacheTTL: cfg.SecretsManagement.DataKeysCacheTTL,
-		log:      log.New("oss_dek_cache"),
 	}
 }
 
-func (c *ossDataKeyCache) GetById(_ context.Context, namespace, id string) (_ encryption.DataKeyCacheEntry, exists bool) {
+func (c *ossDataKeyCache) GetById(_ context.Context, namespace, id string) (_ encryption.DataKeyCacheEntry, exists bool, err error) {
 	defer func() {
 		cacheReadsCounter.With(prometheus.Labels{
 			"hit":    strconv.FormatBool(exists),
@@ -50,20 +46,19 @@ func (c *ossDataKeyCache) GetById(_ context.Context, namespace, id string) (_ en
 
 	entry, exists = c.byId[namespacedKey{namespace, id}]
 	if !exists {
-		return entry, false
+		return entry, false, nil
 	}
-	if entry.Namespace != namespace {
-		c.log.Error("Broken invariant!!! Expected %s but got %s. ID: %s", namespace, entry.Namespace, id)
-		return encryption.DataKeyCacheEntry{}, false
+	if validateErr := encryption.ValidateDataKeyCacheEntryNamespace(namespace, entry); validateErr != nil {
+		return encryption.DataKeyCacheEntry{}, false, validateErr
 	}
 	if entry.IsExpired() {
-		return entry, false
+		return entry, false, nil
 	}
 
-	return entry, true
+	return entry, true, nil
 }
 
-func (c *ossDataKeyCache) GetByLabel(_ context.Context, namespace, label string) (_ encryption.DataKeyCacheEntry, exists bool) {
+func (c *ossDataKeyCache) GetByLabel(_ context.Context, namespace, label string) (_ encryption.DataKeyCacheEntry, exists bool, err error) {
 	defer func() {
 		cacheReadsCounter.With(prometheus.Labels{
 			"hit":    strconv.FormatBool(exists),
@@ -78,27 +73,30 @@ func (c *ossDataKeyCache) GetByLabel(_ context.Context, namespace, label string)
 
 	entry, exists = c.byLabel[namespacedKey{namespace, label}]
 	if !exists {
-		return entry, false
+		return entry, false, nil
 	}
-	if entry.Namespace != namespace {
-		c.log.Error("Broken invariant!!! Expected %s but got %s. Label: %s", namespace, entry.Namespace, label)
-		return encryption.DataKeyCacheEntry{}, false
+	if validateErr := encryption.ValidateDataKeyCacheEntryNamespace(namespace, entry); validateErr != nil {
+		return encryption.DataKeyCacheEntry{}, false, validateErr
 	}
 	if entry.IsExpired() {
-		return entry, false
+		return entry, false, nil
 	}
-	return entry, true
+	return entry, true, nil
 }
 
-func (c *ossDataKeyCache) Set(_ context.Context, namespace string, entry encryption.DataKeyCacheEntry) {
+func (c *ossDataKeyCache) Set(_ context.Context, namespace string, entry encryption.DataKeyCacheEntry) error {
+	if err := encryption.ValidateDataKeyCacheEntryNamespace(namespace, entry); err != nil {
+		return err
+	}
+
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
 	entry.Expiration = time.Now().Add(c.cacheTTL)
-	entry.Namespace = namespace
 
 	c.byId[namespacedKey{namespace, entry.Id}] = entry
 	c.byLabel[namespacedKey{namespace, entry.Label}] = entry
+	return nil
 }
 
 func (c *ossDataKeyCache) RemoveExpired(_ context.Context) {

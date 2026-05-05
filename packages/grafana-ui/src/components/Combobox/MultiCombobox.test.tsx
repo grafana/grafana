@@ -31,6 +31,28 @@ describe('MultiCombobox', () => {
     user = userEvent.setup();
   });
 
+  it('keeps the caret position when typing in the middle of the input', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
+    const input = screen.getByRole<HTMLInputElement>('combobox');
+
+    await user.click(input);
+    await user.type(input, 'hello');
+
+    input.setSelectionRange(3, 3);
+
+    await user.keyboard('X');
+
+    expect(input).toHaveValue('helXlo');
+    expect(input.selectionStart).toBe(4);
+    expect(input.selectionEnd).toBe(4);
+  });
+
   it('should render with options', async () => {
     const options = [
       { label: 'A', value: 'a' },
@@ -251,10 +273,29 @@ describe('MultiCombobox', () => {
       render(<MultiCombobox width={200} options={options} value={['a']} onChange={jest.fn()} enableAllOption />);
       const input = screen.getByRole('combobox');
       await user.click(input);
-      expect(await screen.findByRole('option', { name: 'All' })).toBeInTheDocument();
+      expect(await screen.findByRole('option', { name: 'Deselect all' })).toBeInTheDocument();
     });
 
-    it('should select all option', async () => {
+    it('should select all when no items are selected', async () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      const onChange = jest.fn();
+      render(<MultiCombobox width={200} options={options} value={[]} onChange={onChange} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.click(await screen.findByRole('option', { name: 'Select all' }));
+
+      expect(onChange).toHaveBeenCalledWith([
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ]);
+    });
+
+    it('should deselect all when any items are selected', async () => {
       const options = [
         { label: 'A', value: 'a' },
         { label: 'B', value: 'b' },
@@ -264,16 +305,11 @@ describe('MultiCombobox', () => {
       render(<MultiCombobox width={200} options={options} value={['a']} onChange={onChange} enableAllOption />);
       const input = screen.getByRole('combobox');
       await user.click(input);
-      await user.click(await screen.findByText('All'));
-
-      expect(onChange).toHaveBeenCalledWith([
-        { label: 'A', value: 'a' },
-        { label: 'B', value: 'b' },
-        { label: 'C', value: 'c' },
-      ]);
+      await user.click(await screen.findByRole('option', { name: 'Deselect all' }));
+      expect(onChange).toHaveBeenCalledWith([]);
     });
 
-    it('should deselect all option', async () => {
+    it('should deselect all when all items are selected', async () => {
       const options = [
         { label: 'A', value: 'a' },
         { label: 'B', value: 'b' },
@@ -285,8 +321,45 @@ describe('MultiCombobox', () => {
       );
       const input = screen.getByRole('combobox');
       await user.click(input);
-      await user.click(await screen.findByRole('option', { name: 'All' }));
+      await user.click(await screen.findByRole('option', { name: 'Deselect all' }));
       expect(onChange).toHaveBeenCalledWith([]);
+    });
+
+    it('should select all filtered items when no filtered items are selected', async () => {
+      const options = [
+        { label: 'Apple', value: 'apple' },
+        { label: 'Apricot', value: 'apricot' },
+        { label: 'Banana', value: 'banana' },
+      ];
+      const onChange = jest.fn();
+      render(<MultiCombobox width={200} options={options} value={[]} onChange={onChange} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'ap');
+      await user.click(await screen.findByRole('option', { name: 'Select all (filtered)' }));
+      expect(onChange).toHaveBeenCalledWith([
+        { label: 'Apple', value: 'apple' },
+        { label: 'Apricot', value: 'apricot' },
+      ]);
+    });
+
+    it('should deselect all filtered items when any filtered items are selected', async () => {
+      const options = [
+        { label: 'Apple', value: 'apple' },
+        { label: 'Apricot', value: 'apricot' },
+        { label: 'Banana', value: 'banana' },
+      ];
+      const onChange = jest.fn();
+      render(
+        <MultiCombobox width={200} options={options} value={['apple', 'banana']} onChange={onChange} enableAllOption />
+      );
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'ap');
+      await user.click(await screen.findByRole('option', { name: 'Deselect all (filtered)' }));
+      // 'apple' and 'apricot' match the filter; only 'apple' was selected so both are deselected,
+      // leaving 'banana' (which was selected but not in the filter) intact
+      expect(onChange).toHaveBeenCalledWith([{ label: 'Banana', value: 'banana' }]);
     });
 
     it('should keep label names on selected items when searching', async () => {
@@ -307,7 +380,7 @@ describe('MultiCombobox', () => {
       render(<MultiCombobox width={200} options={options} onChange={jest.fn()} enableAllOption />);
       const input = screen.getByRole('combobox');
       await user.click(input);
-      expect(screen.queryByRole('option', { name: 'All' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'Select all' })).not.toBeInTheDocument();
     });
 
     it('should not select option when only one option is available and enableAll is true', async () => {

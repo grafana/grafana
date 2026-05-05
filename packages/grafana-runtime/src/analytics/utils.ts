@@ -22,6 +22,9 @@ export const reportMetaAnalytics = (payload: MetaAnalyticsEventPayload) => {
   });
 };
 
+export const MAX_PAGE_URL_LENGTH = 2048;
+export const TRUNCATION_MARKER = '[url too long]';
+
 /**
  * Helper function to report pageview events to the {@link EchoSrv}.
  *
@@ -29,7 +32,11 @@ export const reportMetaAnalytics = (payload: MetaAnalyticsEventPayload) => {
  */
 export const reportPageview = () => {
   const location = locationService.getLocation();
-  const page = `${config.appSubUrl ?? ''}${location.pathname}${location.search}${location.hash}`;
+  const fullPage = `${config.appSubUrl ?? ''}${location.pathname}${location.search}${location.hash}`;
+  const page =
+    fullPage.length > MAX_PAGE_URL_LENGTH
+      ? `${fullPage.substring(0, MAX_PAGE_URL_LENGTH - TRUNCATION_MARKER.length)}${TRUNCATION_MARKER}`
+      : fullPage;
   getEchoSrv().addEvent<PageviewEchoEvent>({
     type: EchoEventType.Pageview,
     payload: {

@@ -8,6 +8,7 @@ import (
 	"io"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -15,12 +16,17 @@ import (
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // DataSourceMigrator handles migrating datasources from legacy SQL storage.
 type DataSourceMigrator interface {
 	MigrateDataSources(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
+	// PluginGroups resolves the distinct per-plugin GroupResources for the given
+	// namespace, including stale groups from unified storage, for bulk stream
+	// pre-authorization.
+	PluginGroups(ctx context.Context, namespace string, client resource.SearchClient) ([]schema.GroupResource, error)
 }
 
 type dataSourceMigrator struct {
@@ -184,6 +190,50 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 
 	opts.Progress(-2, fmt.Sprintf("finished datasources... (%d)", len(dsList)))
 	return nil
+}
+
+func (m *dataSourceMigrator) PluginGroups(ctx context.Context, namespace string, client resource.SearchClient) ([]schema.GroupResource, error) {
+	dsList, err := m.getter(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[string]bool, len(dsList))
+	legacy := make([]schema.GroupResource, 0, len(dsList))
+	for _, ds := range dsList {
+		group := ds.GroupVersionKind().Group
+		if group == "" || seen[group] {
+			continue
+		}
+		seen[group] = true
+		legacy = append(legacy, schema.GroupResource{Group: group, Resource: "datasources"})
+	}
+
+	existing, err := storageGroupsForDatasources(ctx, namespace, client)
+	if err != nil {
+		return nil, err
+	}
+	return migrations.MergeGroupResources(legacy, existing), nil
+}
+
+// storageGroupsForDatasources queries unified storage for distinct API groups
+// that currently hold datasource data in the given namespace. This ensures
+// stale groups (migrated previously but since deleted from legacy) are included
+// in the bulk collection so their data is cleaned up on re-migration.
+func storageGroupsForDatasources(ctx context.Context, namespace string, client resource.SearchClient) ([]schema.GroupResource, error) {
+	resp, err := client.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: namespace})
+	if err != nil {
+		return nil, fmt.Errorf("getting storage stats: %w", err)
+	}
+	if resp.Error != nil {
+		return nil, fmt.Errorf("getting storage stats: %s", resp.Error.Message)
+	}
+	var result []schema.GroupResource
+	for _, s := range resp.Stats {
+		if s.Resource == "datasources" {
+			result = append(result, schema.GroupResource{Group: s.Group, Resource: s.Resource})
+		}
+	}
+	return result, nil
 }
 
 func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets common.InlineSecureValues, objRef common.ObjectReference) (common.InlineSecureValues, error) {

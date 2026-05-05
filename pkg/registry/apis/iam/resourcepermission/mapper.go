@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/authlib/types"
+	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -33,21 +34,54 @@ type Mapper interface {
 	// Used in list queries with SQL LIKE to match all permissions for this resource type.
 	// Example: "folders:uid:%" matches "folders:uid:abc", "folders:uid:xyz", etc.
 	ScopePattern() string
+
+	// AllowsKind reports whether the resource type permits assignments to the given permission kind.
+	// Returns true when no kind restriction is configured (all kinds allowed).
+	AllowsKind(kind v0alpha1.ResourcePermissionSpecPermissionKind) bool
 }
+
+// ScopeAttribute defines how a resource is identified in RBAC scope strings.
+// It is the middle segment of a scope, e.g. "uid" in "folders:uid:abc".
+type ScopeAttribute string
+
+const (
+	// ScopeAttributeUID identifies resources by their UID (e.g. "folders:uid:abc").
+	ScopeAttributeUID ScopeAttribute = "uid"
+	// ScopeAttributeID identifies resources by their numeric database ID (e.g. "serviceaccounts:id:123").
+	ScopeAttributeID ScopeAttribute = "id"
+)
 
 type mapper struct {
-	resource   string
-	actionSets []string
+	resource       string
+	scopeAttribute ScopeAttribute
+	actionSets     []string
+	allowedKinds   []v0alpha1.ResourcePermissionSpecPermissionKind // nil = all kinds allowed
 }
 
+// NewMapper creates a Mapper for uid-scoped resources (folders, dashboards).
+// All permission kinds are allowed.
 func NewMapper(resource string, levels []string) Mapper {
+	return NewMapperWithAttribute(resource, levels, ScopeAttributeUID, nil)
+}
+
+// NewIDScopedMapper creates a Mapper for id-scoped resources (teams, users).
+// All permission kinds are allowed.
+func NewIDScopedMapper(resource string, levels []string) Mapper {
+	return NewMapperWithAttribute(resource, levels, ScopeAttributeID, nil)
+}
+
+// NewMapperWithAttribute creates a Mapper with an explicit scope attribute and optional kind restrictions.
+// When allowedKinds is nil, all permission kinds are permitted.
+func NewMapperWithAttribute(resource string, levels []string, attr ScopeAttribute, allowedKinds []v0alpha1.ResourcePermissionSpecPermissionKind) Mapper {
 	sets := make([]string, 0, len(levels))
 	for _, level := range levels {
 		sets = append(sets, resource+":"+strings.ToLower(level))
 	}
 	return mapper{
-		resource:   resource,
-		actionSets: sets,
+		resource:       resource,
+		scopeAttribute: attr,
+		actionSets:     sets,
+		allowedKinds:   allowedKinds,
 	}
 }
 
@@ -56,7 +90,7 @@ func (m mapper) ActionSets() []string {
 }
 
 func (m mapper) Scope(name string) string {
-	return m.resource + ":uid:" + name
+	return m.resource + ":" + string(m.scopeAttribute) + ":" + name
 }
 
 func (m mapper) ActionSet(level string) (string, error) {
@@ -68,7 +102,14 @@ func (m mapper) ActionSet(level string) (string, error) {
 }
 
 func (m mapper) ScopePattern() string {
-	return m.resource + ":uid:%"
+	return m.resource + ":" + string(m.scopeAttribute) + ":%"
+}
+
+func (m mapper) AllowsKind(kind v0alpha1.ResourcePermissionSpecPermissionKind) bool {
+	if m.allowedKinds == nil {
+		return true
+	}
+	return slices.Contains(m.allowedKinds, kind)
 }
 
 type mapperEntry struct {
@@ -229,44 +270,6 @@ func (m *MappersRegistry) EnabledScopePatterns() []string {
 		out = append(out, e.mapper.ScopePattern())
 	}
 	return out
-}
-
-// NewIDScopedMapper creates a Mapper for resources stored with id-based scopes
-// in the legacy permission table (teams, users, service accounts).
-// Unlike the default uid-scoped mapper, its ScopePattern returns ":id:%".
-// The actual uid↔id resolution is handled by scope_resolver functions via the
-// MappersRegistry's identity store, not by the mapper itself.
-func NewIDScopedMapper(resource string, levels []string) Mapper {
-	sets := make([]string, 0, len(levels))
-	for _, level := range levels {
-		sets = append(sets, resource+":"+strings.ToLower(level))
-	}
-	return idMapper{resource: resource, actionSets: sets}
-}
-
-// idMapper implements Mapper for id-scoped resources. It differs from the default
-// mapper only in ScopePattern (returns ":id:%" for DB queries).
-type idMapper struct {
-	resource   string
-	actionSets []string
-}
-
-func (m idMapper) ActionSets() []string { return m.actionSets }
-
-func (m idMapper) ActionSet(level string) (string, error) {
-	actionSet := m.resource + ":" + strings.ToLower(level)
-	if !slices.Contains(m.actionSets, actionSet) {
-		return "", fmt.Errorf("invalid level (%s): %w", level, errInvalidSpec)
-	}
-	return actionSet, nil
-}
-
-func (m idMapper) Scope(name string) string {
-	return m.resource + ":uid:" + name
-}
-
-func (m idMapper) ScopePattern() string {
-	return m.resource + ":id:%"
 }
 
 // ParseScopeCtx parses an RBAC scope string into a groupResourceName, resolving id to uid for

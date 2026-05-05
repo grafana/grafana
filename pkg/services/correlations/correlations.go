@@ -54,7 +54,6 @@ type Service interface {
 	GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error)
 	CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error)
 	UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error)
-	CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error
 	DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error
 	DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error
 	DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error
@@ -80,10 +79,6 @@ func (s CorrelationsService) CreateCorrelation(ctx context.Context, cmd CreateCo
 	}
 
 	return s.createCorrelation(ctx, cmd)
-}
-
-func (s CorrelationsService) CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error {
-	return s.createOrUpdateCorrelation(ctx, cmd)
 }
 
 func (s CorrelationsService) DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
