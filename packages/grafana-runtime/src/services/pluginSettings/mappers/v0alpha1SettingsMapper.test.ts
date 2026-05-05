@@ -477,7 +477,7 @@ describe('stateMapper', () => {
     { state: undefined, expected: '' },
   ])(`when called with $state then it should map to $expected`, ({ expected, state }) => {
     myOrgTestAppMeta.spec.pluginJson.state = state as v0alpha1Spec['pluginJson']['state'];
-    expect(stateMapper(myOrgTestAppMeta.spec)).toStrictEqual(expected);
+    expect(stateMapper(myOrgTestAppMeta.spec, () => {})).toStrictEqual(expected);
   });
 });
 
@@ -492,7 +492,7 @@ describe('includeTypeMapper', () => {
     { include: { type: null }, expected: '' },
     { include: { type: undefined }, expected: '' },
   ])(`when called with $include then it should map to $expected`, ({ expected, include }) => {
-    expect(includeTypeMapper(include as v0alpha1Include)).toStrictEqual(expected);
+    expect(includeTypeMapper(include as v0alpha1Include, myOrgTestAppMeta.spec)).toStrictEqual(expected);
   });
 });
 
