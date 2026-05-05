@@ -187,7 +187,7 @@ func TestGCDoesNotDeleteInFlightVersion(t *testing.T) {
 	require.NoError(t, err)
 
 	// Advance time to wait for grace period
-	sut.Clock.AdvanceBy(10 * time.Minute)
+	sut.Clock.AdvanceBy(15 * time.Minute)
 
 	// Create from metadata storage directly to insert v2 as *inactive*
 	// Here we do not call SetVersionToActive explicitly to simulate the in-flight window

@@ -167,7 +167,7 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
 		require.NoError(t, err)
 		// Advance clock to handle grace period
-		sut.Clock.AdvanceBy(10 * time.Minute)
+		sut.Clock.AdvanceBy(15 * time.Minute)
 		// Acquire a lease on inactive secure values
 		values1, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 10)
 		require.NoError(t, err)
@@ -179,7 +179,7 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 		// There's only one inactive secure value and it is already leased
 		require.Empty(t, values2)
 		// Advance clock to expire lease
-		sut.Clock.AdvanceBy(10 * time.Minute)
+		sut.Clock.AdvanceBy(15 * time.Minute)
 		values3, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 10)
 		require.NoError(t, err)
 		// Should acquire a new lease since the previous one expired
@@ -281,7 +281,7 @@ func TestPropertyDelete(t *testing.T) {
 					// Set new version to active since it'll be read later on
 					require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version))
 
-					// Secure value is not in the slice
+					// Secure value is not in the slice, add it
 					if i == -1 {
 						secureValues = append(secureValues, createdSv)
 					} else {
