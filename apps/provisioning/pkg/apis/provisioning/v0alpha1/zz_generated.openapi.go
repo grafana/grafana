@@ -383,11 +383,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
+							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "github", "gitlab"},
+							Enum:        []interface{}{"bitbucket", "github", "github_enterprise", "gitlab"},
 						},
 					},
 					"url": {
@@ -399,7 +399,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					},
 					"github": {
 						SchemaProps: spec.SchemaProps{
-							Description: "GitHub connection configuration Only applicable when provider is \"github\"",
+							Description: "GitHub connection configuration Applicable when provider is \"github\" or \"github_enterprise\"",
 							Ref:         ref(GitHubConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
@@ -2126,11 +2126,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "git", "github", "github_enterprise", "gitlab", "local"},
 						},
 					},
 					"webhook": {
@@ -2375,11 +2375,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "git", "github", "github_enterprise", "gitlab", "local"},
 						},
 					},
 					"target": {
@@ -2506,7 +2506,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 										Default: "",
 										Type:    []string{"string"},
 										Format:  "",
-										Enum:    []interface{}{"bitbucket", "git", "github", "gitlab", "local"},
+										Enum:    []interface{}{"bitbucket", "git", "github", "github_enterprise", "gitlab", "local"},
 									},
 								},
 							},
@@ -2789,11 +2789,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref common.Ref
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "git", "github", "github_enterprise", "gitlab", "local"},
 						},
 					},
 					"title": {

@@ -1623,7 +1623,7 @@ export type ConnectionSpec = {
   bitbucket?: BitbucketConnectionConfig;
   /** The connection description */
   description?: string;
-  /** GitHub connection configuration Only applicable when provider is "github" */
+  /** GitHub connection configuration Applicable when provider is "github" or "github_enterprise" */
   github?: GitHubConnectionConfig;
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
   gitlab?: GitlabConnectionConfig;
@@ -1634,8 +1634,9 @@ export type ConnectionSpec = {
     Possible enum values:
      - `"bitbucket"`
      - `"github"`
+     - `"github_enterprise"`
      - `"gitlab"` */
-  type: 'bitbucket' | 'github' | 'gitlab';
+  type: 'bitbucket' | 'github' | 'github_enterprise' | 'gitlab';
   /** The connection URL */
   url?: string;
 };
@@ -2032,9 +2033,10 @@ export type RepositorySpec = {
      - `"bitbucket"`
      - `"git"`
      - `"github"`
+     - `"github_enterprise"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'github_enterprise' | 'gitlab' | 'local';
   /** Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider. */
   webhook?: WebhookConfig;
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
@@ -2140,9 +2142,10 @@ export type ResourceRepositoryInfo = {
      - `"bitbucket"`
      - `"git"`
      - `"github"`
+     - `"github_enterprise"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'github_enterprise' | 'gitlab' | 'local';
 };
 export type Unstructured = {
   [key: string]: any;
@@ -2269,9 +2272,10 @@ export type RepositoryView = {
      - `"bitbucket"`
      - `"git"`
      - `"github"`
+     - `"github_enterprise"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'github_enterprise' | 'gitlab' | 'local';
   /** For git, this is the target URL */
   url?: string;
   /** The supported workflows */
@@ -2285,7 +2289,7 @@ export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
-  availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'gitlab' | 'local')[];
+  availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'github_enterprise' | 'gitlab' | 'local')[];
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;

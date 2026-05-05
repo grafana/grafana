@@ -20,7 +20,7 @@ type ConnectionSpecApplyConfiguration struct {
 	// The connection URL
 	URL *string `json:"url,omitempty"`
 	// GitHub connection configuration
-	// Only applicable when provider is "github"
+	// Applicable when provider is "github" or "github_enterprise"
 	GitHub *GitHubConnectionConfigApplyConfiguration `json:"github,omitempty"`
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucket"

@@ -4028,7 +4028,7 @@
             "type": "string"
           },
           "github": {
-            "description": "GitHub connection configuration Only applicable when provider is \"github\"",
+            "description": "GitHub connection configuration Applicable when provider is \"github\" or \"github_enterprise\"",
             "allOf": [
               {
                 "$ref": "#/components/schemas/GitHubConnectionConfig"
@@ -4049,10 +4049,10 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`",
             "type": "string",
             "default": "",
-            "enum": ["bitbucket", "github", "gitlab"]
+            "enum": ["bitbucket", "github", "github_enterprise", "gitlab"]
           },
           "url": {
             "description": "The connection URL",
@@ -5223,10 +5223,10 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
-            "enum": ["bitbucket", "git", "github", "gitlab", "local"]
+            "enum": ["bitbucket", "git", "github", "github_enterprise", "gitlab", "local"]
           },
           "webhook": {
             "description": "Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider.",
@@ -5408,10 +5408,10 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
-            "enum": ["bitbucket", "git", "github", "gitlab", "local"]
+            "enum": ["bitbucket", "git", "github", "github_enterprise", "gitlab", "local"]
           },
           "url": {
             "description": "For git, this is the target URL",
@@ -5457,7 +5457,7 @@
             "items": {
               "type": "string",
               "default": "",
-              "enum": ["bitbucket", "git", "github", "gitlab", "local"]
+              "enum": ["bitbucket", "git", "github", "github_enterprise", "gitlab", "local"]
             }
           },
           "items": {
@@ -5670,10 +5670,10 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
-            "enum": ["bitbucket", "git", "github", "gitlab", "local"]
+            "enum": ["bitbucket", "git", "github", "github_enterprise", "gitlab", "local"]
           }
         }
       },

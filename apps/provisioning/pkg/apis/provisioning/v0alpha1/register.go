@@ -39,7 +39,7 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			switch m.Spec.Type {
 			case LocalRepositoryType:
 				target = m.Spec.Local.Path
-			case GitHubRepositoryType:
+			case GitHubRepositoryType, GitHubEnterpriseRepositoryType:
 				target = m.Spec.GitHub.URL
 			case GitRepositoryType:
 				target = m.Spec.Git.URL
@@ -136,7 +136,7 @@ var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 
 			var appID, installationID, clientID string
 			switch m.Spec.Type {
-			case GithubConnectionType:
+			case GithubConnectionType, GithubEnterpriseConnectionType:
 				appID = m.Spec.GitHub.AppID
 				installationID = m.Spec.GitHub.InstallationID
 			case BitbucketConnectionType:

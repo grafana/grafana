@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"strconv"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -36,12 +37,23 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 		return list
 	}
 
+	list = append(list, ValidateGitHubAppCredentials(conn, "GitHub")...)
+	return list
+}
+
+// ValidateGitHubAppCredentials performs structural validation of the GitHub App credential
+// fields shared by github and github_enterprise connections. The caller must guarantee
+// conn.Spec.GitHub != nil. label is interpolated into error messages (e.g. "GitHub",
+// "github_enterprise") so the source of the violation is clear.
+func ValidateGitHubAppCredentials(conn *provisioning.Connection, label string) field.ErrorList {
+	var list field.ErrorList
+
 	// Check if required secure values are present (without decryption)
 	if conn.Secure.PrivateKey.IsZero() {
-		list = append(list, field.Required(field.NewPath("secure", "privateKey"), "privateKey must be specified for GitHub connection"))
+		list = append(list, field.Required(field.NewPath("secure", "privateKey"), fmt.Sprintf("privateKey must be specified for %s connection", label)))
 	}
 	if !conn.Secure.ClientSecret.IsZero() {
-		list = append(list, field.Forbidden(field.NewPath("secure", "clientSecret"), "clientSecret is forbidden in GitHub connection"))
+		list = append(list, field.Forbidden(field.NewPath("secure", "clientSecret"), fmt.Sprintf("clientSecret is forbidden in %s connection", label)))
 	}
 
 	// Validate private key content if new is provided
@@ -61,10 +73,10 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 
 	// Validate the existence of GitHub configuration fields
 	if conn.Spec.GitHub.AppID == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "appID"), "appID must be specified for GitHub connection"))
+		list = append(list, field.Required(field.NewPath("spec", "github", "appID"), fmt.Sprintf("appID must be specified for %s connection", label)))
 	}
 	if conn.Spec.GitHub.InstallationID == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "installationID"), "installationID must be specified for GitHub connection"))
+		list = append(list, field.Required(field.NewPath("spec", "github", "installationID"), fmt.Sprintf("installationID must be specified for %s connection", label)))
 	}
 
 	// Validating the correctness of Github config fields

@@ -87,9 +87,10 @@ func (ConnectionType) OpenAPIModelName() string {
 
 // ConnectionType values.
 const (
-	GithubConnectionType    ConnectionType = "github"
-	GitlabConnectionType    ConnectionType = "gitlab"
-	BitbucketConnectionType ConnectionType = "bitbucket"
+	GithubConnectionType           ConnectionType = "github"
+	GithubEnterpriseConnectionType ConnectionType = "github_enterprise"
+	GitlabConnectionType           ConnectionType = "gitlab"
+	BitbucketConnectionType        ConnectionType = "bitbucket"
 )
 
 type ConnectionSpec struct {
@@ -103,7 +104,7 @@ type ConnectionSpec struct {
 	URL string `json:"url,omitempty"`
 
 	// GitHub connection configuration
-	// Only applicable when provider is "github"
+	// Applicable when provider is "github" or "github_enterprise"
 	GitHub *GitHubConnectionConfig `json:"github,omitempty"`
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucket"

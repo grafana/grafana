@@ -45,11 +45,12 @@ connection: {
 				}
 				spec: {
 					// The connection provider type
-					type: "github" | "bitbucket" | "gitlab"
-					// The connection URL
+					type: "github" | "github_enterprise" | "bitbucket" | "gitlab"
+					// The connection URL.
+					// Required for github_enterprise (on-prem GHES server URL).
 					url: *"" | string
 					// GitHub connection configuration
-					// Only applicable when provider is "github"
+					// Used for both github and github_enterprise providers
 					github?: #GitHubConnectionConfig
 					// Bitbucket connection configuration
 					// Only applicable when provider is "bitbucket"

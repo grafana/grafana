@@ -156,13 +156,14 @@ repository: {
 					// Sync settings -- how values are pulled from the repository into grafana
 					sync: #SyncOptions
 					// The repository type. When selected oneOf the values below should be non-nil
-					type: "local" | "github" | "git" | "bitbucket" | "gitlab"
+					type: "local" | "github" | "github_enterprise" | "git" | "bitbucket" | "gitlab"
 					// Webhook settings for the repository.
 					webhook?: #WebhookConfig
 					// The repository on the local file system.
 					// Mutually exclusive with local | github.
 					local?: #LocalRepositoryConfig
 					// The repository on GitHub.
+					// Used for both github and github_enterprise types. For github_enterprise, the URL points to the on-prem GHES server.
 					// Mutually exclusive with local | github | git.
 					github?: #GitHubRepositoryConfig
 					// The repository on Git.

@@ -4309,7 +4309,7 @@
             "type": "string"
           },
           "github": {
-            "description": "GitHub connection configuration Only applicable when provider is \"github\""
+            "description": "GitHub connection configuration Applicable when provider is \"github\" or \"github_enterprise\""
           },
           "gitlab": {
             "description": "Gitlab connection configuration Only applicable when provider is \"gitlab\""
@@ -4320,12 +4320,13 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucket",
               "github",
+              "github_enterprise",
               "gitlab"
             ]
           },
@@ -5308,13 +5309,14 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucket",
               "git",
               "github",
+              "github_enterprise",
               "gitlab",
               "local"
             ]
@@ -5473,13 +5475,14 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucket",
               "git",
               "github",
+              "github_enterprise",
               "gitlab",
               "local"
             ]
@@ -5542,6 +5545,7 @@
                 "bitbucket",
                 "git",
                 "github",
+                "github_enterprise",
                 "gitlab",
                 "local"
               ]
@@ -5739,13 +5743,14 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"github_enterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucket",
               "git",
               "github",
+              "github_enterprise",
               "gitlab",
               "local"
             ]

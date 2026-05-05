@@ -151,16 +151,17 @@ func (RepositoryType) OpenAPIModelName() string {
 
 // RepositoryType values
 const (
-	LocalRepositoryType     RepositoryType = "local"
-	GitHubRepositoryType    RepositoryType = "github"
-	GitRepositoryType       RepositoryType = "git"
-	BitbucketRepositoryType RepositoryType = "bitbucket"
-	GitLabRepositoryType    RepositoryType = "gitlab"
+	LocalRepositoryType            RepositoryType = "local"
+	GitHubRepositoryType           RepositoryType = "github"
+	GitHubEnterpriseRepositoryType RepositoryType = "github_enterprise"
+	GitRepositoryType              RepositoryType = "git"
+	BitbucketRepositoryType        RepositoryType = "bitbucket"
+	GitLabRepositoryType           RepositoryType = "gitlab"
 )
 
 // IsGit returns true if the repository type is git or github
 func (r RepositoryType) IsGit() bool {
-	return r == GitRepositoryType || r == GitHubRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
+	return r == GitRepositoryType || r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
 }
 
 // Branch returns the branch for git-based repositories
@@ -171,7 +172,7 @@ func (r *Repository) Branch() string {
 	}
 
 	switch r.Spec.Type {
-	case GitHubRepositoryType:
+	case GitHubRepositoryType, GitHubEnterpriseRepositoryType:
 		if r.Spec.GitHub != nil {
 			return r.Spec.GitHub.Branch
 		}
@@ -202,7 +203,7 @@ func (r *Repository) URL() string {
 	}
 
 	switch r.Spec.Type {
-	case GitHubRepositoryType:
+	case GitHubRepositoryType, GitHubEnterpriseRepositoryType:
 		if r.Spec.GitHub != nil {
 			return r.Spec.GitHub.URL
 		}
@@ -227,7 +228,7 @@ func (r *Repository) URL() string {
 
 func (r *Repository) Path() string {
 	switch r.Spec.Type {
-	case GitHubRepositoryType:
+	case GitHubRepositoryType, GitHubEnterpriseRepositoryType:
 		if r.Spec.GitHub != nil {
 			return r.Spec.GitHub.Path
 		}
