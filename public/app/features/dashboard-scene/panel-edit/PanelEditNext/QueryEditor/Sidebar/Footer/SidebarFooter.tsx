@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -13,6 +13,7 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../../QueryEditorContext';
+import { BulkActionsBar } from '../BulkActionsBar';
 
 export function SidebarFooter() {
   const { queries } = useQueryRunnerContext();
@@ -73,17 +74,25 @@ export function SidebarFooter() {
           </Stack>
         </Stack>
       )}
+      {!isAlertView && <BulkActionsBar className={styles.bulkActionsOverlay} />}
     </div>
   );
 }
 
+// Keep the keyframes outside getStyles so the same animation name is reused across renders.
+const slideInFromRight = keyframes({
+  from: { transform: 'translateX(8px)', opacity: 0 },
+  to: { transform: 'translateX(0)', opacity: 1 },
+});
+
 function getStyles(theme: GrafanaTheme2) {
   return {
     footer: css({
+      position: 'relative',
       marginTop: 'auto',
       background: theme.colors.background.primary,
       padding: theme.spacing(0, 1.5),
-      height: FOOTER_HEIGHT,
+      minHeight: FOOTER_HEIGHT,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -92,6 +101,16 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     icon: css({
       color: theme.colors.text.secondary,
+    }),
+    // Overlay the bulk actions bar on top of the footer counts so we can swap
+    // between the two without any layout shift, with a subtle right-to-left
+    // slide-in animation.
+    bulkActionsOverlay: css({
+      position: 'absolute',
+      inset: 0,
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${slideInFromRight} ${theme.transitions.duration.shorter}ms ${theme.transitions.easing.easeOut} both`,
+      },
     }),
   };
 }

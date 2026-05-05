@@ -14154,6 +14154,7 @@
       "delete-transformations-confirm-title_other": "Delete {{count}} transformations?",
       "disable-all": "Disable all",
       "disable-all-tooltip": "Disable all selected",
+      "empty-hint": "Select items to perform bulk actions",
       "enable-all": "Enable all",
       "enable-all-tooltip": "Enable all selected",
       "hide": "Hide",
