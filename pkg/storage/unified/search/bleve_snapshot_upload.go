@@ -139,7 +139,7 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	}
 
 	meta := IndexMeta{
-		BuildVersion:   bi.BuildVersion,
+		BuildVersion:          bi.BuildVersion,
 		LatestResourceVersion: rv,
 	}
 	// bi.BuildTime is the original index creation time; it survives reopens and

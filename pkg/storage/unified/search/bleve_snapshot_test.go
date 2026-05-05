@@ -201,7 +201,7 @@ func TestPickBestSnapshot(t *testing.T) {
 
 	snap := func(ver string, rv int64, age time.Duration) *IndexMeta {
 		return &IndexMeta{
-			BuildVersion:   ver,
+			BuildVersion:          ver,
 			LatestResourceVersion: rv,
 			UploadTimestamp:       now.Add(-age),
 		}
@@ -352,7 +352,7 @@ func TestTryDownloadRemoteSnapshot_ListError(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_DownloadError(t *testing.T) {
 	store := &fakeRemoteIndexStore{downloadErr: errors.New("network dropped")}
 	store.put(makeULID(t, time.Now()), &IndexMeta{
-		BuildVersion:   "11.5.0",
+		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now(),
 	})
@@ -370,7 +370,7 @@ func TestTryDownloadRemoteSnapshot_DownloadError(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_ValidationError(t *testing.T) {
 	store := &fakeRemoteIndexStore{}
 	store.put(makeULID(t, time.Now()), &IndexMeta{
-		BuildVersion:   "11.5.0",
+		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 0, // invalid (<=0)
 		UploadTimestamp:       time.Now(),
 	})
@@ -388,7 +388,7 @@ func TestTryDownloadRemoteSnapshot_ValidationError(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_Success(t *testing.T) {
 	store := &fakeRemoteIndexStore{}
 	store.put(makeULID(t, time.Now()), &IndexMeta{
-		BuildVersion:   "11.5.0",
+		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now(),
 	})
@@ -408,7 +408,7 @@ func TestTryDownloadRemoteSnapshot_Success(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_AllFilteredOut(t *testing.T) {
 	store := &fakeRemoteIndexStore{}
 	store.put(makeULID(t, time.Now().Add(-2*time.Hour)), &IndexMeta{
-		BuildVersion:   "11.5.0",
+		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now().Add(-2 * time.Hour),
 	})
@@ -683,7 +683,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	})
 	key := newTestNsResource()
 	meta := IndexMeta{
-		BuildVersion:   "11.5.0",
+		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 123,
 		UploadTimestamp:       time.Now(),
 	}

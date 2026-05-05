@@ -98,9 +98,9 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 	srcDir := createTestBleveIndex(t)
 	buildStart := time.Now().Add(-2 * time.Hour).UTC().Truncate(time.Second)
 	meta := IndexMeta{
-		BuildVersion:   "11.0.0",
+		BuildVersion:          "11.0.0",
 		LatestResourceVersion: 99,
-		BuildTime:   buildStart,
+		BuildTime:             buildStart,
 	}
 
 	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
@@ -339,7 +339,7 @@ func TestRemoteIndexStore_DownloadRejectsOversizedFile(t *testing.T) {
 	const advertised = 10
 	meta := IndexMeta{
 		BuildVersion: "11.0.0",
-		Files:               map[string]int64{"store/root.bolt": advertised},
+		Files:        map[string]int64{"store/root.bolt": advertised},
 	}
 	metaBytes, err := json.Marshal(meta)
 	require.NoError(t, err)
