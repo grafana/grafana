@@ -23,7 +23,7 @@ func (ds *DataSource) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/ebs-volume-ids", ds.handleResourceReq(ds.handleGetEbsVolumeIds))
 	mux.HandleFunc("/ec2-instance-attribute", ds.handleResourceReq(ds.handleGetEc2InstanceAttribute))
 	mux.HandleFunc("/resource-arns", ds.handleResourceReq(ds.handleGetResourceArns))
-	mux.HandleFunc("/log-groups", ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+	mux.HandleFunc("/log-groups", ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 	mux.HandleFunc("/metrics", ds.resourceRequestMiddleware(ds.MetricsHandler))
 	mux.HandleFunc("/dimension-values", ds.resourceRequestMiddleware(ds.DimensionValuesHandler))
 	mux.HandleFunc("/dimension-keys", ds.resourceRequestMiddleware(ds.DimensionKeysHandler))
@@ -77,28 +77,28 @@ func writeResponse(rw http.ResponseWriter, code int, msg string, logger log.Logg
 	}
 }
 
-func (ds *DataSource) LogGroupsHandler(ctx context.Context, parameters url.Values) ([]byte, *models.HttpError) {
+func (ds *DataSource) LogGroupsHandler(ctx context.Context, parameters url.Values) ([]byte, *string, *models.HttpError) {
 	request, err := resources.ParseLogGroupsRequest(parameters)
 	if err != nil {
-		return nil, models.NewHttpError("cannot set both log group name prefix and pattern", http.StatusBadRequest, err)
+		return nil, nil, models.NewHttpError("cannot set both log group name prefix and pattern", http.StatusBadRequest, err)
 	}
 
 	service, err := ds.GetLogGroupsService(ctx, request.Region)
 	if err != nil {
-		return nil, models.NewHttpError("GetLogGroupsService error", http.StatusInternalServerError, err)
+		return nil, nil, models.NewHttpError("GetLogGroupsService error", http.StatusInternalServerError, err)
 	}
 
-	logGroups, err := service.GetLogGroups(ctx, request)
+	logGroups, cursor, err := service.GetLogGroups(ctx, request)
 	if err != nil {
-		return nil, models.NewHttpError("GetLogGroups error", http.StatusInternalServerError, err)
+		return nil, nil, models.NewHttpError("GetLogGroups error", http.StatusInternalServerError, err)
 	}
 
 	logGroupsResponse, err := json.Marshal(logGroups)
 	if err != nil {
-		return nil, models.NewHttpError("LogGroupsHandler json error", http.StatusInternalServerError, err)
+		return nil, nil, models.NewHttpError("LogGroupsHandler json error", http.StatusInternalServerError, err)
 	}
 
-	return logGroupsResponse, nil
+	return logGroupsResponse, cursor, nil
 }
 func (ds *DataSource) MetricsHandler(ctx context.Context, parameters url.Values) ([]byte, *models.HttpError) {
 	metricsRequest, err := resources.GetMetricsRequest(parameters)
@@ -327,8 +327,19 @@ func (ds *DataSource) GetRegionsService(ctx context.Context, region string) (mod
 	return services.NewRegionsService(NewEC2API(awsCfg), ds.logger), nil
 }
 
-// TODO: merge this and handleResourceReq
+func adaptRouteHandler(fn models.RouteHandlerFunc) models.CursorHandlerFunc {
+	return func(ctx context.Context, parameters url.Values) ([]byte, *string, *models.HttpError) {
+		b, httpErr := fn(ctx, parameters)
+		return b, nil, httpErr
+	}
+}
+
 func (ds *DataSource) resourceRequestMiddleware(handleFunc models.RouteHandlerFunc) func(rw http.ResponseWriter, req *http.Request) {
+	return ds.cursorPagenationMiddleware(adaptRouteHandler(handleFunc))
+}
+
+// TODO: merge this and handleResourceReq
+func (ds *DataSource) cursorPagenationMiddleware(handleFunc models.CursorHandlerFunc) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		if req.Method != "GET" {
 			respondWithError(rw, models.NewHttpError("Invalid method", http.StatusMethodNotAllowed, nil))
@@ -336,11 +347,19 @@ func (ds *DataSource) resourceRequestMiddleware(handleFunc models.RouteHandlerFu
 		}
 
 		ctx := req.Context()
-		jsonResponse, httpError := handleFunc(ctx, req.URL.Query())
+		parameters := req.URL.Query()
+		if cursorHeader := req.Header.Get("cursor-next"); cursorHeader != "" {
+			parameters.Set("cursorNext", cursorHeader)
+		}
+		jsonResponse, cursor, httpError := handleFunc(ctx, parameters)
 		if httpError != nil {
 			ds.logger.FromContext(ctx).Error("Error handling resource request", "error", httpError.Message)
 			respondWithError(rw, httpError)
 			return
+		}
+
+		if cursor != nil {
+			rw.Header().Set("cursor-next", *cursor)
 		}
 
 		rw.Header().Set("Content-Type", "application/json")

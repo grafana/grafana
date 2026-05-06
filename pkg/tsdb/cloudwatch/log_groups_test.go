@@ -29,55 +29,51 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("successfully returns 1 log group with account id", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{
-			Results: []resources.ResourceResponse[resources.LogGroup]{{
-				Value: resources.LogGroup{
-					Arn:  "some arn",
-					Name: "some name",
-				},
-				AccountId: utils.Pointer("111"),
-			}},
-		}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{{
+			Value: resources.LogGroup{
+				Arn:  "some arn",
+				Name: "some name",
+			},
+			AccountId: utils.Pointer("111"),
+		}}, (*string)(nil), nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
 		ds := newTestDatasource()
-		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.JSONEq(t, `{"results":[{"value":{"name":"some name", "arn":"some arn"},"accountId":"111"}]}`, rr.Body.String())
+		assert.JSONEq(t, `[{"value":{"name":"some name", "arn":"some arn"},"accountId":"111"}]`, rr.Body.String())
 	})
 
 	t.Run("successfully returns multiple log groups with account id", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).Return(
-			resources.LogGroupsResponse{
-				Results: []resources.ResourceResponse[resources.LogGroup]{
-					{
-						Value: resources.LogGroup{
-							Arn:  "arn 1",
-							Name: "name 1",
-						},
-						AccountId: utils.Pointer("111"),
-					}, {
-						Value: resources.LogGroup{
-							Arn:  "arn 2",
-							Name: "name 2",
-						},
-						AccountId: utils.Pointer("222"),
+			[]resources.ResourceResponse[resources.LogGroup]{
+				{
+					Value: resources.LogGroup{
+						Arn:  "arn 1",
+						Name: "name 1",
 					},
+					AccountId: utils.Pointer("111"),
+				}, {
+					Value: resources.LogGroup{
+						Arn:  "arn 2",
+						Name: "name 2",
+					},
+					AccountId: utils.Pointer("222"),
 				},
-			}, nil)
+			}, (*string)(nil), nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
 		ds := newTestDatasource()
-		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.JSONEq(t, `{"results":[
+		assert.JSONEq(t, `[
 		   {
 			  "value":{
 				 "name":"name 1",
@@ -92,17 +88,17 @@ func TestLogGroupsRoute(t *testing.T) {
 			  },
 			  "accountId":"222"
 		   }
-		]}`, rr.Body.String())
+		]`, rr.Body.String())
 	})
 
 	t.Run("returns error when both logGroupPrefix and logGroup Pattern are provided", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, (*string)(nil), nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?logGroupNamePrefix=some-prefix&logGroupPattern=some-pattern", nil)
 		ds := newTestDatasource()
-		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
@@ -111,12 +107,12 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes default log group limit and nil for logGroupNamePrefix, accountId, and logGroupPattern", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, (*string)(nil), nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
 		ds := newTestDatasource()
-		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
@@ -129,12 +125,12 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes default log group limit and nil for logGroupNamePrefix when both are absent", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, (*string)(nil), nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
 		ds := newTestDatasource()
-		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
@@ -145,12 +141,12 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes log group limit from query parameter", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, (*string)(nil), nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?limit=2", nil)
 		ds := newTestDatasource()
-		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
@@ -160,12 +156,12 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes logGroupPrefix from query parameter", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, (*string)(nil), nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?logGroupNamePrefix=some-prefix", nil)
 		ds := newTestDatasource()
-		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
@@ -176,12 +172,12 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes logGroupPattern from query parameter", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, (*string)(nil), nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?logGroupPattern=some-pattern", nil)
 		ds := newTestDatasource()
-		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
@@ -192,12 +188,12 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes logGroupPattern from query parameter", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, (*string)(nil), nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?accountId=some-account-id", nil)
 		ds := newTestDatasource()
-		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
@@ -209,38 +205,36 @@ func TestLogGroupsRoute(t *testing.T) {
 	t.Run("returns error if service returns error", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).
-			Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, fmt.Errorf("some error"))
+			Return([]resources.ResourceResponse[resources.LogGroup]{}, (*string)(nil), fmt.Errorf("some error"))
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
 		ds := newTestDatasource()
-		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 		assert.JSONEq(t, `{"Error":"some error","Message":"GetLogGroups error: some error","StatusCode":500}`, rr.Body.String())
 	})
 
-	t.Run("successfully returns log groups with nextToken", func(t *testing.T) {
+	t.Run("successfully returns log groups with nextToken in cursor-next header", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{
-			Results: []resources.ResourceResponse[resources.LogGroup]{{
-				Value: resources.LogGroup{
-					Arn:  "some arn",
-					Name: "some name",
-				},
-				AccountId: utils.Pointer("111"),
-			}},
-			NextToken: utils.Pointer("next_page_token"),
-		}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{{
+			Value: resources.LogGroup{
+				Arn:  "some arn",
+				Name: "some name",
+			},
+			AccountId: utils.Pointer("111"),
+		}}, utils.Pointer("next_page_token"), nil)
 
 		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/log-groups", nil)
+		req := httptest.NewRequest("GET", "/log-groups?region=us-east-1", nil)
 		ds := newTestDatasource()
-		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.JSONEq(t, `{"results":[{"value":{"name":"some name","arn":"some arn"},"accountId":"111"}],"nextToken":"next_page_token"}`, rr.Body.String())
+		assert.Equal(t, "next_page_token", rr.Header().Get("cursor-next"))
+		assert.JSONEq(t, `[{"value":{"name":"some name","arn":"some arn"},"accountId":"111"}]`, rr.Body.String())
 	})
 }

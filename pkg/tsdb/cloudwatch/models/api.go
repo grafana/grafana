@@ -17,6 +17,8 @@ type RequestContextFactoryFunc func(ctx context.Context, region string) (reqCtx 
 
 type RouteHandlerFunc func(ctx context.Context, parameters url.Values) ([]byte, *HttpError)
 
+type CursorHandlerFunc func(ctx context.Context, parameters url.Values) ([]byte, *string, *HttpError)
+
 type RequestContext struct {
 	MetricsClientProvider  MetricsClientProvider
 	ListMetricsAPIProvider cloudwatch.ListMetricsAPIClient
@@ -34,7 +36,7 @@ type ListMetricsProvider interface {
 }
 
 type LogGroupsProvider interface {
-	GetLogGroups(ctx context.Context, request resources.LogGroupsRequest) (resources.LogGroupsResponse, error)
+	GetLogGroups(ctx context.Context, request resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], *string, error)
 	GetLogGroupFields(ctx context.Context, request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error)
 }
 

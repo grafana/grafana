@@ -36,4 +36,19 @@ func Test_Middleware(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
 		assert.Equal(t, `{"Message":"error: error from handler","Error":"error from handler","StatusCode":400}`, rr.Body.String())
 	})
+
+	t.Run("should pass cursor-next header to handler as cursorNext parameter", func(t *testing.T) {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/log-groups", nil)
+		req.Header.Set("cursor-next", "some-token")
+		ds := newTestDatasource()
+		var receivedCursor string
+		handler := http.HandlerFunc(ds.cursorPagenationMiddleware(func(_ context.Context, parameters url.Values) ([]byte, *string, *models.HttpError) {
+			receivedCursor = parameters.Get("cursorNext")
+			return []byte(`[]`), nil, nil
+		}))
+		handler.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, "some-token", receivedCursor)
+	})
 }
