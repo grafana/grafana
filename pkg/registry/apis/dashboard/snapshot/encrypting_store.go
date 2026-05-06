@@ -69,16 +69,12 @@ func (s *encryptingStore) Create(ctx context.Context, obj runtime.Object, create
 	return out, nil
 }
 
+// Update is rejected: snapshots are immutable. Matching SnapshotLegacyStore.Update,
+// which returns the same error. Failing fast here keeps the wrapper self-consistent
+// regardless of dual-writer mode (in modes that skip legacy, this is the last line
+// of defense).
 func (s *encryptingStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	wrapped := &encryptingObjectInfo{inner: objInfo, store: s}
-	out, created, err := s.inner.Update(ctx, name, wrapped, createValidation, updateValidation, forceAllowCreate, options)
-	if err != nil {
-		return nil, created, err
-	}
-	if err := s.decryptInPlace(ctx, out); err != nil {
-		return nil, created, err
-	}
-	return out, created, nil
+	return nil, false, fmt.Errorf("snapshots are immutable and cannot be updated")
 }
 
 func (s *encryptingStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -92,19 +88,11 @@ func (s *encryptingStore) Get(ctx context.Context, name string, options *metav1.
 	return out, nil
 }
 
+// List does not decrypt because the snapshot list endpoint never returns the
+// dashboard payload (legacy returns SnapshotDTOs without it; unified strips it
+// in stripSensitiveFieldsFromList). Decrypting here would be wasted KMS work.
 func (s *encryptingStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	out, err := s.inner.List(ctx, options)
-	if err != nil {
-		return nil, err
-	}
-	if list, ok := out.(*dashv0.SnapshotList); ok {
-		for i := range list.Items {
-			if err := s.decryptSpec(ctx, &list.Items[i].Spec); err != nil {
-				return nil, err
-			}
-		}
-	}
-	return out, nil
+	return s.inner.List(ctx, options)
 }
 
 func (s *encryptingStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
@@ -161,31 +149,3 @@ func (s *encryptingStore) decryptSpec(ctx context.Context, spec *dashv0.Snapshot
 	return nil
 }
 
-// encryptingObjectInfo decrypts the old object before the inner transform sees
-// it (so user-provided transforms get plaintext) and encrypts the produced new
-// object before the inner storage persists it.
-type encryptingObjectInfo struct {
-	inner rest.UpdatedObjectInfo
-	store *encryptingStore
-}
-
-func (e *encryptingObjectInfo) Preconditions() *metav1.Preconditions {
-	return e.inner.Preconditions()
-}
-
-func (e *encryptingObjectInfo) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
-	if oldObj != nil {
-		oldObj = oldObj.DeepCopyObject()
-		if err := e.store.decryptInPlace(ctx, oldObj); err != nil {
-			return nil, err
-		}
-	}
-	obj, err := e.inner.UpdatedObject(ctx, oldObj)
-	if err != nil {
-		return nil, err
-	}
-	if err := e.store.encryptInPlace(ctx, obj); err != nil {
-		return nil, err
-	}
-	return obj, nil
-}

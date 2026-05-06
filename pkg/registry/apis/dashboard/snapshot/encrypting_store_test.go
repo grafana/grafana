@@ -3,6 +3,7 @@ package snapshot
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -58,26 +59,36 @@ func TestEncryptingStore_Get_DecryptsCiphertext(t *testing.T) {
 	assert.Empty(t, snap.Spec.DashboardEncrypted, "ciphertext field should be cleared after decrypt")
 }
 
-func TestEncryptingStore_List_DecryptsItems(t *testing.T) {
+func TestEncryptingStore_List_DoesNotDecrypt(t *testing.T) {
+	// Snapshots List never returns the dashboard blob (legacy returns DTOs without
+	// it; unified strips it in stripSensitiveFieldsFromList). The wrapper must not
+	// waste KMS round-trips decrypting items whose payloads will be discarded.
 	first := encryptForTest(t, map[string]interface{}{"title": "first"})
-	second := encryptForTest(t, map[string]interface{}{"title": "second"})
-
 	inner := &fakeInnerStore{
 		listResult: &dashv0.SnapshotList{Items: []dashv0.Snapshot{
 			{Spec: dashv0.SnapshotSpec{DashboardEncrypted: first}},
-			{Spec: dashv0.SnapshotSpec{DashboardEncrypted: second}},
 		}},
 	}
-	store := NewEncryptingStore(inner, &transformingSecretsService{})
+	secretsSvc := &countingSecretsService{}
+	store := NewEncryptingStore(inner, secretsSvc)
 
-	out, err := store.List(context.Background(), &internalversion.ListOptions{})
+	_, err := store.List(context.Background(), &internalversion.ListOptions{})
 	require.NoError(t, err)
-	list := out.(*dashv0.SnapshotList)
-	require.Len(t, list.Items, 2)
-	assert.Equal(t, "first", list.Items[0].Spec.Dashboard["title"])
-	assert.Equal(t, "second", list.Items[1].Spec.Dashboard["title"])
-	assert.Empty(t, list.Items[0].Spec.DashboardEncrypted)
-	assert.Empty(t, list.Items[1].Spec.DashboardEncrypted)
+	assert.Equal(t, 0, secretsSvc.decryptCalls, "List must not call Decrypt")
+}
+
+func TestEncryptingStore_Update_Rejected(t *testing.T) {
+	// Snapshots are immutable; the wrapper must reject Update without touching
+	// the inner store, matching SnapshotLegacyStore.Update.
+	inner := &fakeInnerStore{}
+	secretsSvc := &countingSecretsService{}
+	store := NewEncryptingStore(inner, secretsSvc)
+
+	_, _, err := store.Update(context.Background(), "name", nil, nil, nil, false, &metav1.UpdateOptions{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "immutable")
+	assert.Equal(t, 0, secretsSvc.encryptCalls)
+	assert.Equal(t, 0, secretsSvc.decryptCalls)
 }
 
 func TestEncryptingStore_Create_NilDashboardIsNoOp(t *testing.T) {
@@ -193,12 +204,8 @@ func (f *fakeInnerStore) Create(_ context.Context, obj runtime.Object, _ rest.Va
 	f.lastCreated = obj.DeepCopyObject()
 	return obj, nil
 }
-func (f *fakeInnerStore) Update(ctx context.Context, _ string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	obj, err := objInfo.UpdatedObject(ctx, f.getResult)
-	if err != nil {
-		return nil, false, err
-	}
-	return obj, false, nil
+func (f *fakeInnerStore) Update(_ context.Context, _ string, _ rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, fmt.Errorf("fakeInnerStore.Update should not be called: wrapper rejects Update upstream")
 }
 func (f *fakeInnerStore) Get(_ context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
 	return f.getResult, nil
