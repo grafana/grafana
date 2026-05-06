@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isExpressionReference } from '@grafana/runtime';
-import { Button, ConfirmModal, type IconName, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, type IconName, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 
 import {
@@ -205,30 +205,60 @@ interface BulkActionsBarProps {
   className?: string;
 }
 
+interface BulkActionsVisibilityOptions {
+  selectedQueryCount: number;
+  selectedTransformationCount: number;
+  multiSelectMode: boolean;
+}
+
+interface BulkActionsVisibility {
+  hasQueryActions: boolean;
+  hasTransformationActions: boolean;
+  shouldRender: boolean;
+}
+
+// In explicit multi-select mode any selection is actionable. Outside of it
+// (keyboard-shortcut path: Cmd/Ctrl+click, Shift+click) the bar opens at 2+
+// to avoid noise on every plain single-card click.
+function hasActionableSelection(selectionCount: number, multiSelectMode: boolean): boolean {
+  return multiSelectMode ? selectionCount >= 1 : selectionCount >= 2;
+}
+
+function getBulkActionsVisibility({
+  selectedQueryCount,
+  selectedTransformationCount,
+  multiSelectMode,
+}: BulkActionsVisibilityOptions): BulkActionsVisibility {
+  const hasQueryActions = hasActionableSelection(selectedQueryCount, multiSelectMode);
+  const hasTransformationActions = hasActionableSelection(selectedTransformationCount, multiSelectMode);
+
+  return {
+    hasQueryActions,
+    hasTransformationActions,
+    // Stay visible while the user is in multi-select mode so they always have
+    // an affordance to exit (the close button) — even if they've toggled off
+    // every selection via Cmd+click.
+    shouldRender: multiSelectMode || hasQueryActions || hasTransformationActions,
+  };
+}
+
 export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
   const styles = useStyles2(getStyles);
   const [barRef, { width: barWidth }] = useMeasure<HTMLDivElement>();
   const { selectedQueryRefIds, selectedTransformationIds, clearSelection, multiSelectMode, setMultiSelectMode } =
     useQueryEditorUIContext();
 
-  const hasMultiQueriesSelected = selectedQueryRefIds.length >= 2;
-  const hasMultiTransformationsSelected = selectedTransformationIds.length >= 2;
-  const hasAnySelection = selectedQueryRefIds.length > 0 || selectedTransformationIds.length > 0;
+  const { hasQueryActions, hasTransformationActions, shouldRender } = getBulkActionsVisibility({
+    selectedQueryCount: selectedQueryRefIds.length,
+    selectedTransformationCount: selectedTransformationIds.length,
+    multiSelectMode,
+  });
 
-  // In explicit multi-select mode, even a single selection is actionable.
-  // Outside of it (keyboard-shortcut path: Cmd/Ctrl+click, Shift+click) the
-  // bar opens at 2+ to avoid noise on every plain single-card click.
-  const minSelection = multiSelectMode ? 1 : 2;
-  const hasQueryActions = selectedQueryRefIds.length >= minSelection;
-  const hasTransformationActions = selectedTransformationIds.length >= minSelection;
-
-  // Stay visible whenever the user is in multi-select mode so the bar acts as
-  // a clear "I'm in selection mode" affordance, OR when the keyboard-shortcut
-  // path has accumulated a 2+ selection.
-  const shouldRender = multiSelectMode || hasMultiQueriesSelected || hasMultiTransformationsSelected;
   if (!shouldRender) {
     return null;
   }
+
+  const hasAnySelection = selectedQueryRefIds.length > 0 || selectedTransformationIds.length > 0;
 
   // When multi-select mode is active, closing the bar should also leave the
   // mode so the sidebar returns to its default (single-selection) presentation.
@@ -250,14 +280,6 @@ export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
     >
       {hasQueryActions && <BulkQueryActions barWidth={barWidth} />}
       {hasTransformationActions && <BulkTransformationActions barWidth={barWidth} />}
-      {/* Without this hint the bar can look broken when the user enters
-          multi-select mode without an active selection (e.g. after closing the
-          bar from a keyboard-shortcut selection and then clicking Select…). */}
-      {multiSelectMode && !hasQueryActions && !hasTransformationActions && (
-        <Text variant="bodySmall" color="secondary">
-          {t('query-editor-next.bulk-actions.empty-hint', 'Select items to perform bulk actions')}
-        </Text>
-      )}
       <Button
         size="sm"
         variant="secondary"

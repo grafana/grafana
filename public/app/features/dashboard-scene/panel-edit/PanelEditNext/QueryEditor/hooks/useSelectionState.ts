@@ -182,7 +182,8 @@ export function useSelectionState({
   );
 
   const clearSelection = useCallback(() => {
-    setSelectedQueryRefIds([]);
+    const firstQueryRefId = queriesRef.current[0]?.refId;
+    setSelectedQueryRefIds(firstQueryRefId ? [firstQueryRefId] : []);
     setSelectedTransformationIds([]);
     onClearSideEffectsRef.current?.();
   }, []);

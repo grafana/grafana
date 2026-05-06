@@ -84,24 +84,22 @@ describe('BulkActionsBar', () => {
   });
 
   describe('visibility (multi-select mode on)', () => {
-    it('renders the toolbar with an empty-state hint as soon as multi-select mode is on with no selection', () => {
+    it('renders the toolbar with no action buttons when multi-select mode is on with no selection', () => {
       renderBar({
         uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: [], selectedTransformationIds: [] },
       });
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
       // No bulk action buttons until at least 1 item is selected.
       expect(screen.queryByRole('button', { name: /^delete$/i })).not.toBeInTheDocument();
-      expect(screen.getByText(/select items to perform bulk actions/i)).toBeInTheDocument();
     });
 
-    it('shows query action buttons (and hides the empty-state hint) as soon as 1 query is selected', () => {
+    it('shows query action buttons as soon as 1 query is selected', () => {
       renderBar({
         uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A'] },
       });
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /hide/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /data source/i })).toBeInTheDocument();
-      expect(screen.queryByText(/select items to perform bulk actions/i)).not.toBeInTheDocument();
     });
 
     it('shows transformation action buttons as soon as 1 transformation is selected', () => {
