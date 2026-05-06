@@ -231,7 +231,7 @@ func TestSelectSnapshotsToDelete_NeverDeletesDownloadPick(t *testing.T) {
 				}},
 				runningBuildVersion: running,
 			}
-			picked, ok := be.pickBestSnapshot(metas, now)
+			picked, ok := be.pickBestSnapshot(metas, now, be.log)
 			require.Truef(t, ok, "test case must yield a pickable snapshot — if a no-pick scenario is needed, add a dedicated test case rather than letting this one short-circuit")
 
 			deleted := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
