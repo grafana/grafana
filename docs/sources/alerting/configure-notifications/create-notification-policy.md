@@ -154,9 +154,9 @@ Multiple notification policies require the `alertingMultiplePolicies` feature fl
 
 By default, Grafana uses a single notification policy tree for all alert routing. As organizations grow in size and complexity, managing a single global tree can become difficult. Multiple notification policies allow you to split routing logic into separate, independently managed routing trees.
 
-Each named routing tree is a self-contained policy tree with its own name, root policy, and child policies which function similar to the default policy. You can create additional named routing trees to organize routing logic by team, service, or domain.
+Each notification policy contains a routing tree with its own name, root policy, and child policies which function similar to the default policy. You can create additional routing trees to organize routing logic by team, service, or domain.
 
-The Default Policy can't be deleted.
+The Default Policy can't be deleted. You can, however, reset the policy to clear it.
 
 ## Example
 
