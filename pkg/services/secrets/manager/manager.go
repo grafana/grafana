@@ -35,6 +35,11 @@ var (
 	now = time.Now
 )
 
+// SecretsService implements secrets.Service using envelope encryption backed by the legacy secrets store.
+//
+// Deprecated: Multi-tenant APIs should not use imports from pkg/services/secrets/, as it creates a dependency on the legacy database.
+//
+// If you need to encrypt data in a multi-tenant API, use Grafana Secrets Manager (GSM) instead.
 type SecretsService struct {
 	tracer     tracing.Tracer
 	store      secrets.Store
@@ -55,6 +60,11 @@ type SecretsService struct {
 	log log.Logger
 }
 
+// ProvideSecretsService wires the legacy envelope encryption secrets service.
+//
+// Deprecated: Multi-tenant APIs should not use imports from pkg/services/secrets/, as it creates a dependency on the legacy database.
+//
+// If you need to encrypt data in a multi-tenant API, use Grafana Secrets Manager (GSM) instead.
 func ProvideSecretsService(
 	tracer tracing.Tracer,
 	store secrets.Store,
