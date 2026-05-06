@@ -12,6 +12,7 @@ type StorageMetrics struct {
 	WatchEventLatency      *prometheus.HistogramVec
 	PollerLatency          prometheus.Histogram
 	ListWithFieldSelectors *prometheus.CounterVec
+	RequestDuration        *prometheus.HistogramVec
 	Broadcaster            *BroadcasterMetrics
 }
 
@@ -39,6 +40,15 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			Name: "storage_server_field_selector_search_count",
 			Help: "number of times List was served by field selector search",
 		}, []string{"resource", "served_by"}),
+		RequestDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       "storage_server",
+			Name:                            "grpc_request_duration_seconds",
+			Help:                            "Time (in seconds) spent serving unified storage gRPC requests, labeled by group and resource.",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"method", "group", "resource", "status_code"}),
 		Broadcaster: newBroadcasterMetrics(reg),
 	}
 }

@@ -4323,6 +4323,7 @@
         "repository-not-found-message": "The repository for the selected folder could not be found. Please ensure that the folder is provisioned correctly.",
         "repository-not-found-title": "Repository not found"
       },
+      "error-already-in-target-folder": "Selected resources are already in the target folder.",
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
       "move-total": "In total, this will affect:",
@@ -4461,6 +4462,14 @@
       "request-extension": "Request quota extension",
       "resource-detail-dashboards": "You've created {{usage}} of {{limit}} dashboards ({{percentage}}%).",
       "resource-detail-folders": "You've created {{usage}} of {{limit}} folders ({{percentage}}%)."
+    },
+    "readme": {
+      "add-readme": "Add README",
+      "edit-tooltip": "Edit README",
+      "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
+      "load-error-retry": "Try again",
+      "load-error-title": "Couldn't load README",
+      "parse-error": "Unable to display README content."
     },
     "recently-viewed": {
       "clear": "Clear history",
@@ -5270,7 +5279,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Settings"
+      "open-settings": "View all settings"
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5681,7 @@
         "title": "Variables"
       },
       "variable": {
-        "change-type": "Change",
+        "change-type": "Change type",
         "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
@@ -5989,7 +5998,7 @@
       "cancel": "Cancel",
       "common": {
         "copy": "Copy",
-        "copy-or-duplicate": "Copy/paste or duplicate",
+        "copy-tooltip": "Copy",
         "delete": "Delete",
         "duplicate": "Duplicate",
         "layout": "Layout",
@@ -6028,7 +6037,7 @@
     },
     "new-panel": {
       "aria-label": "Unconfigured panel. Tab to see configuration options.",
-      "configure-button": "Configure",
+      "configure-button": "Edit visualization",
       "configure-button-menu": "Toggle menu",
       "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
@@ -6270,10 +6279,8 @@
       "title-provisioned": "Provisioned dashboard"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "A dashboard with the same name in selected folder already exists.<br/><2>Would you still like to save this dashboard?</2>",
       "body-version-mismatch": "Someone else has updated this dashboard<br/><2>Would you still like to save this dashboard?</2>",
       "confirmText-save-and-overwrite": "Save and overwrite",
-      "title-name-exists": "Conflict",
       "title-version-mismatch": "Conflict"
     },
     "save-dashboard-form": {
@@ -7314,6 +7321,7 @@
       "terraform": "Managed by: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
       "current-file-not-found": "Current dashboard file could not be found",
@@ -7326,10 +7334,6 @@
       "success-message": "Dashboard moved successfully",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
-      "title-name-already-exists": "Name already exists"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8145,6 +8149,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
+      "default-active": "This data source is currently set as the default.",
+      "default-error": "Failed to update default data source",
+      "default-label": "Default",
+      "default-make-button": "Make default",
+      "default-remove-button": "Remove default",
+      "default-tooltip": "The default data source is preselected in new panels.",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
@@ -14250,6 +14260,8 @@
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
+      "footer-select": "Select...",
+      "footer-select-label": "Select multiple items",
       "new-type": "New {{type}}",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
@@ -14960,10 +14972,13 @@
       "title": "Kickstart dashboards with suggestions and templates"
     },
     "nav": {
+      "counter": "Slide {{current}} of {{total}}",
       "go-to": "Go to slide {{number}}",
-      "next": "Next",
-      "prev": "Previous"
-    }
+      "label": "Slide navigation",
+      "next": "Next slide",
+      "prev": "Previous slide"
+    },
+    "slide-announcement": "Slide {{current}} of {{total}}: {{title}}"
   },
   "sql-expressions": {
     "explain-query": "Explain query",
@@ -15443,7 +15458,6 @@
       "forwards-time-aria-label": "Move time range forwards",
       "to": "to",
       "zoom-out-button": "Zoom out time range",
-      "zoom-out-tooltip": "Time range zoom out <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
     },
     "time-range": {

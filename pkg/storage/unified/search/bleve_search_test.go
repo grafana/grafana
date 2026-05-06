@@ -631,7 +631,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, info.Fields, "test", writer, nil, false, time.Time{})
+	}, size, info.Fields, "test", writer, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	return index
@@ -651,7 +651,7 @@ func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, colum
 	fields, err := resource.NewSearchableDocumentFields(columns)
 	require.NoError(t, err)
 
-	index, err := backend.BuildIndex(ctx, key, 2, fields, "test", noop, nil, false, time.Time{})
+	index, err := backend.BuildIndex(ctx, key, 2, fields, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
 }
@@ -721,7 +721,7 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 10, nil, "test", noop, nil, false, time.Time{})
+	}, 10, nil, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	err = index.BulkIndex(&resource.BulkIndexRequest{

@@ -15,6 +15,7 @@ declare module "@openfeature/core" {
     | "provisioningFolderMetadata"
     | "stateTimeline.nameAboveBars"
     | "newSavedQueriesExperience"
+    | "grafana.orgDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "newLogsPanel"
@@ -29,16 +30,18 @@ declare module "@openfeature/core" {
     | "queryEditorNextMultiSelect"
     | "managedPluginsV2"
     | "analyticsFramework"
+    | "grafana.scenesFlickeringFix"
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
     | "inlineLogDetailsNoScrolls"
+    | "useMTPluginSettings"
     | "splashScreen"
     | "grafana.newPreferencesPage"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
     | "assistant.frontend.tools.dashboardTemplates"
-    | "grafana.meticulousAIRecorder";
+    | "grafana.unifiedHomepage";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
