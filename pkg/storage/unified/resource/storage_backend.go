@@ -12,6 +12,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -44,6 +45,22 @@ const (
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 )
+
+// IsResourceNameMixedCase reports whether a successful read returned a
+// resource whose stored name matches the requested name case-insensitively but
+// differs in case. This indicates a case-mismatched lookup, which can occur
+// when the underlying database collation is case-insensitive (for example,
+// MySQL's default collation): the row is found despite the case difference,
+// and the stored name retains its original casing.
+func IsResourceNameMixedCase(req *resourcepb.ReadRequest, res *BackendReadResponse) bool {
+	if req == nil || req.Key == nil || res == nil || res.Error != nil || res.Key == nil {
+		return false
+	}
+	if req.Key.Name == res.Key.Name {
+		return false
+	}
+	return strings.EqualFold(req.Key.Name, res.Key.Name)
+}
 
 type GarbageCollectionConfig struct {
 	Enabled          bool
@@ -510,6 +527,8 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 	totalDeleted := int64(0)
 	totalDryRun := int64(0)
+	deletedPerNamespace := map[string]int64{}
+	dryRunPerNamespace := map[string]int64{}
 
 	// get the start and end keys for the list operation based on the resource prefix
 	// for example, for dashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
@@ -620,6 +639,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				if b.garbageCollection.DryRun {
 					// if in dry run mode, just count the keys to delete
 					totalDryRun += int64(len(keysToDelete))
+					dryRunPerNamespace[dk.Namespace] += int64(len(keysToDelete))
 					continue
 				}
 
@@ -631,6 +651,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 				// update the total number of keys deleted
 				keysDeleted = keysDeleted + int64(len(keysToDelete))
+				deletedPerNamespace[dk.Namespace] += int64(len(keysToDelete))
 			}
 		}
 
@@ -655,6 +676,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			"rows", totalDeleted,
 			"seconds", time.Since(start).Seconds(),
 		)
+		for ns, count := range deletedPerNamespace {
+			b.log.Info("garbage collection deleted history per namespace",
+				"group", group,
+				"resource", resourceName,
+				"namespace", ns,
+				"rows", count,
+			)
+		}
 	}
 
 	if totalDryRun > 0 {
@@ -664,6 +693,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			"rows", totalDryRun,
 			"seconds", time.Since(start).Seconds(),
 		)
+		for ns, count := range dryRunPerNamespace {
+			b.log.Info("garbage collection dry run per namespace",
+				"group", group,
+				"resource", resourceName,
+				"namespace", ns,
+				"rows", count,
+			)
+		}
 	}
 
 	return nil
@@ -829,6 +866,18 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			}
 
 			if err := k.dataStore.applyBackwardsCompatibleChanges(txnCtx, tx, event, dataKey); err != nil {
+				if apierrors.IsConflict(err) {
+					// Log conflict errors when applying compatibility changes to monitor potential
+					// case mismatches between the resource_history's `key_path` column and
+					// the resource table's `name` column.
+					k.log.Warn("conflict when applying compatibility changes",
+						"namespace", event.Key.Namespace,
+						"group", event.Key.Group,
+						"resource", event.Key.Resource,
+						"name", event.Key.Name,
+						"action", action,
+					)
+				}
 				return "", fmt.Errorf("failed to apply backwards compatible updates: %w", err)
 			}
 
