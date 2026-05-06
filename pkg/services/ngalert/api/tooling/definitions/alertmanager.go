@@ -18,6 +18,7 @@ import (
 	alertingmodels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 )
 
 // swagger:route POST /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -262,7 +263,7 @@ type (
 )
 
 type MergeResult struct {
-	definition.MergeResult
+	merge.MergeResult
 	Identifier        string
 	ExtraRoute        *Route
 	ExtraInhibitRules []config.InhibitRule
@@ -756,7 +757,7 @@ type PostableUserConfig struct {
 func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) {
 	if len(c.ExtraConfigs) == 0 {
 		return MergeResult{
-			MergeResult: definition.MergeResult{
+			MergeResult: merge.MergeResult{
 				Config: c.AlertmanagerConfig,
 			},
 		}, nil
@@ -766,7 +767,7 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 	if err := mimirCfg.Validate(); err != nil {
 		return MergeResult{}, fmt.Errorf("invalid extra configuration: %w", err)
 	}
-	opts := definition.MergeOpts{
+	opts := merge.MergeOpts{
 		DedupSuffix:     mimirCfg.Identifier,
 		SubtreeMatchers: mimirCfg.MergeMatchers,
 	}
@@ -779,13 +780,13 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
 
-	m, err := definition.Merge(c.AlertmanagerConfig, mcfg, opts)
+	m, err := merge.Merge(c.AlertmanagerConfig, mcfg, opts)
 	if err != nil {
 		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
 	}
 
 	route := mcfg.Route
-	definition.RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
+	merge.RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
 
 	return MergeResult{
 		MergeResult:       m,

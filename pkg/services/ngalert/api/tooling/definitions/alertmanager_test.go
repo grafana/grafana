@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -277,7 +278,7 @@ func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
 				AlertmanagerConfig: alertmanagerCfg,
 			},
 			expected: MergeResult{
-				MergeResult: definition.MergeResult{
+				MergeResult: merge.MergeResult{
 					Config: definition.PostableApiAlertingConfig{
 						Config: Config{
 							Route: &Route{
@@ -292,7 +293,7 @@ func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
 							},
 						},
 					},
-					RenameResources: definition.RenameResources{},
+					RenameResources: merge.RenameResources{},
 				},
 			},
 		},
@@ -324,7 +325,7 @@ receivers:
 				},
 			},
 			expected: MergeResult{
-				MergeResult: definition.MergeResult{
+				MergeResult: merge.MergeResult{
 					Config: definition.PostableApiAlertingConfig{
 						Config: Config{
 							Route: &Route{
@@ -382,7 +383,7 @@ receivers:
 							},
 						},
 					},
-					RenameResources: definition.RenameResources{
+					RenameResources: merge.RenameResources{
 						Receivers: map[string]string{
 							"default": "defaultmimir-1",
 						},
@@ -431,7 +432,7 @@ receivers:
 				},
 			},
 			expected: MergeResult{
-				MergeResult: definition.MergeResult{
+				MergeResult: merge.MergeResult{
 					Config: definition.PostableApiAlertingConfig{
 						Config: Config{
 							Route: &Route{
@@ -457,7 +458,7 @@ receivers:
 							},
 						},
 					},
-					RenameResources: definition.RenameResources{
+					RenameResources: merge.RenameResources{
 						Receivers: map[string]string{
 							"default": "defaultmimir-1",
 						},
