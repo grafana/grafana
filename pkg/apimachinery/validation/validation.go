@@ -9,7 +9,7 @@ import (
 const maxNameLength = 253
 const maxNamespaceLength = 40
 const minNamespaceLength = 3
-const maxGroupLength = 60
+const maxGroupLength = 253
 const minGroupLength = 3
 const maxResourceLength = 40
 const minResourceLength = 3
