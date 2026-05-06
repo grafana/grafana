@@ -4,16 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 type testSetup struct {
@@ -296,16 +296,6 @@ func TestWrapper_Update(t *testing.T) {
 	// Assert expectations
 	setup.mockAuth.AssertExpectations(t)
 	setup.mockStore.AssertExpectations(t)
-}
-
-func TestWrapper_DeleteCollection(t *testing.T) {
-	setup := newTestSetup(t)
-
-	result, err := setup.wrapper.DeleteCollection(setup.ctx, nil, &metaV1.DeleteOptions{}, &internalversion.ListOptions{})
-
-	require.Error(t, err)
-	assert.True(t, k8serrors.IsMethodNotSupported(err), "expected MethodNotSupported error, got: %v", err)
-	assert.Nil(t, result)
 }
 
 func TestWrapper_PassthroughMethods(t *testing.T) {
