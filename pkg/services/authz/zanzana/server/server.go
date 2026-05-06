@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -241,20 +240,6 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	s.mtReconciler = mtReconciler
 
 	return s, nil
-}
-
-func resolveIdentity(cfg *setting.Cfg) string {
-	if id := cfg.ZanzanaReconciler.LeaderElection.Identity; id != "" {
-		return id
-	}
-	if id := cfg.InstanceID; id != "" {
-		return id
-	}
-	hostname, err := os.Hostname()
-	if err != nil {
-		hostname = "unknown"
-	}
-	return fmt.Sprintf("%s:%d", hostname, os.Getpid())
 }
 
 func (s *Server) RunReconciler(ctx context.Context) error {
