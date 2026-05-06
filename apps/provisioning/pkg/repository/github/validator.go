@@ -32,15 +32,15 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 
 	var list field.ErrorList
 
-	urlPath := field.NewPath("spec", "github", "url")
 	if gh.URL == "" {
-		list = append(list, field.Required(urlPath, "a github url is required"))
+		list = append(list, field.Required(field.NewPath("spec", "github", "url"), "a github url is required"))
 	} else {
-		if _, _, err := ParseOwnerRepoGithub(gh.URL); err != nil {
-			list = append(list, field.Invalid(urlPath, gh.URL, err.Error()))
+		_, _, err := ParseOwnerRepoGithub(gh.URL)
+		if err != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, err.Error()))
 		}
 		if !strings.HasPrefix(gh.URL, "https://github.com/") && !strings.HasPrefix(gh.URL, "http://github.com/") {
-			list = append(list, field.Invalid(urlPath, gh.URL,
+			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL,
 				fmt.Sprintf("URL must point to github.com; use type %q for self-managed GitHub Enterprise Server", provisioning.GitHubEnterpriseRepositoryType)))
 		}
 	}
