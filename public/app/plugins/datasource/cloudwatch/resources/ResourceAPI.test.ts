@@ -13,7 +13,7 @@ describe('ResourcesAPI', () => {
       expect(fetchMock.mock.calls[1][0].params.region).toBe('eu-east');
     });
 
-    it('extracts results and nextToken from new backend format (bare array + Link header)', async () => {
+    it('extracts results and nextToken from bare array response with Link header', async () => {
       const results = [
         {
           value: {
@@ -36,27 +36,6 @@ describe('ResourcesAPI', () => {
 
       expect(logGroups.results).toHaveLength(2);
       expect(logGroups.nextToken).toBe('some_token');
-    });
-
-    it('extracts results and nextToken from legacy backend format (object with results)', async () => {
-      const response = {
-        results: [
-          {
-            value: {
-              arn: 'arn:aws:logs:us-west-1:123456789:log-group:/aws/containerinsights/dev303-workshop/application',
-              name: '/aws/containerinsights/dev303-workshop/application',
-            },
-          },
-        ],
-        nextToken: 'legacy_token',
-      };
-      const fetchMock = jest.fn().mockReturnValue(of({ data: response, headers: new Headers() }));
-      const { api } = setupMockedResourcesAPI({ fetchMock });
-
-      const logGroups = await api.getLogGroups({ region: 'default' });
-
-      expect(logGroups.results).toHaveLength(1);
-      expect(logGroups.nextToken).toBe('legacy_token');
     });
   });
 
