@@ -89,6 +89,11 @@ type FolderManager struct {
 	beforeCreate          FolderCreationInterceptor
 	folderMetadataEnabled bool
 	folderGVK             schema.GroupVersionKind
+	// folderUIDByPath, when non-nil, is consulted to resolve the real UID of
+	// a folder that already exists in unified storage at a given source path
+	// before falling back to the deterministic hash. See FolderUIDByPath and
+	// GetFolderID for the resolution order.
+	folderUIDByPath FolderUIDByPath
 }
 
 func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderGVK schema.GroupVersionKind, opts ...FolderManagerOption) *FolderManager {
@@ -120,6 +125,14 @@ func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOptio
 func WithFolderMetadataEnabled(folderMetadataEnabled bool) FolderManagerOption {
 	return func(fm *FolderManager) {
 		fm.folderMetadataEnabled = folderMetadataEnabled
+	}
+}
+
+// WithFolderUIDByPath configures the FolderManager to resolve folder UIDs
+// against unified storage when no _folder.json manifest is present at a path.
+func WithFolderUIDByPath(lookup FolderUIDByPath) FolderManagerOption {
+	return func(fm *FolderManager) {
+		fm.folderUIDByPath = lookup
 	}
 }
 
@@ -218,7 +231,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 // invalid, it falls back to the current folder already known at that path. When
 // no folder exists yet, it falls back to the hash/path-derived folder identity.
 func (fm *FolderManager) resolveFolderForPath(ctx context.Context, path, ref string) (Folder, error) {
-	f, err := ParseFolderWithMetadata(ctx, fm.repo, path, ref, fm.folderMetadataEnabled)
+	f, err := ParseFolderWithMetadata(ctx, fm.repo, path, ref, fm.folderMetadataEnabled, fm.folderUIDByPath)
 	if err == nil {
 		return f, nil
 	}
@@ -463,7 +476,7 @@ func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 // path-derived UID. That gives delete+recreate semantics instead of preserving
 // a metadata-backed identity we can no longer trust.
 func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string, opts ...EnsurePathOption) (string, error) {
-	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef, fm.folderMetadataEnabled)
+	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef, fm.folderMetadataEnabled, fm.folderUIDByPath)
 	if err != nil {
 		var invalidErr *InvalidFolderMetadata
 		if !errors.As(err, &invalidErr) {
@@ -488,7 +501,7 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 		return "", fmt.Errorf("ensure new folder path: %w", err)
 	}
 
-	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef, fm.folderMetadataEnabled)
+	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef, fm.folderMetadataEnabled, fm.folderUIDByPath)
 	if err != nil {
 		var invalidErr *InvalidFolderMetadata
 		if !errors.As(err, &invalidErr) {

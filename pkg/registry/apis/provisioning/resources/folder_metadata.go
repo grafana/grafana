@@ -250,47 +250,75 @@ func WriteFolderMetadataUpdate(ctx context.Context, repo repository.ReaderWriter
 }
 
 // GetFolderID returns the folder ID for the given path.
-// When folderMetadataEnabled is true, it attempts to read the stable UID from _folder.json.
-// If metadata file doesn't exist or metadata is disabled, it falls back to the hash-based ID.
-// Returns an error if reading the metadata file fails for reasons other than not existing.
-func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (string, error) {
-	folder, err := ParseFolderWithMetadata(ctx, reader, path, ref, folderMetadataEnabled)
+// Resolution order:
+//  1. _folder.json (when folderMetadataEnabled): stable UID from metadata.name.
+//  2. lookup (when non-nil): real UID of an existing managed folder at this
+//     path in unified storage. This handles folders created in the UI before
+//     being pushed to git (no _folder.json) so that the parent annotation set
+//     on resources matches the folder's real UID and RBAC inheritance walks
+//     reach the repository's root folder.
+//  3. Path-derived hash from ParseFolder.
+//
+// Returns an error if reading the metadata file fails for reasons other than
+// not existing, or if the lookup itself errors.
+func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool, lookup FolderUIDByPath) (string, error) {
+	folder, err := ParseFolderWithMetadata(ctx, reader, path, ref, folderMetadataEnabled, lookup)
 	if err != nil {
 		return "", err
 	}
 	return folder.ID, nil
 }
 
-// ParseFolderWithMetadata parses a Folder at the given path and applies stable UID, title, and checksum from folder metadata if it exists.
-// In case folderMetadataEnabled is false, it returns the parsed folder without applying metadata.
-func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (Folder, error) {
+// ParseFolderWithMetadata parses a Folder at the given path and applies a
+// stable UID using the same resolution order documented on GetFolderID:
+// _folder.json → unified-storage lookup → path-derived hash.
+//
+// When folderMetadataEnabled is false the metadata file is not read, but the
+// lookup is still consulted. lookup may be nil to skip the unified-storage
+// step.
+func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool, lookup FolderUIDByPath) (Folder, error) {
 	f := ParseFolder(path, reader.Config().Name)
-	if !folderMetadataEnabled {
-		return f, nil
-	}
 
-	meta, hash, err := ReadFolderMetadata(ctx, reader, path, ref)
-	if err != nil {
-		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+	if folderMetadataEnabled {
+		meta, hash, err := ReadFolderMetadata(ctx, reader, path, ref)
+		switch {
+		case err == nil:
+			if meta.Name != "" {
+				f.ID = meta.Name
+			}
+			if meta.Spec.Title != "" {
+				f.Title = meta.Spec.Title
+			}
+			f.MetadataHash = hash
 			return f, nil
+		case errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err):
+			// fall through to unified-storage lookup
+		default:
+			return Folder{}, fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
 		}
-		return Folder{}, fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
 	}
 
-	if meta.Name != "" {
-		f.ID = meta.Name
+	if lookup != nil {
+		uid, ok, err := lookup.LookupFolderUID(ctx, path)
+		if err != nil {
+			return Folder{}, fmt.Errorf("lookup existing folder for %s: %w", f.Path, err)
+		}
+		if ok && uid != "" {
+			f.ID = uid
+		}
 	}
-	if meta.Spec.Title != "" {
-		f.Title = meta.Spec.Title
-	}
-	f.MetadataHash = hash
+
 	return f, nil
 }
 
 // ParseFolderResource constructs a ParsedResource for a folder at the given path.
 // This allows folders to be authorized using the same AuthorizeResource flow as other resources.
 // folderGVK determines the GVK/GVR set on the returned ParsedResource.
-func ParseFolderResource(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool, folderGVK schema.GroupVersionKind) (*ParsedResource, error) {
+//
+// lookup may be nil; when provided it is consulted to resolve real UIDs of
+// folders that exist in unified storage but lack a _folder.json manifest (see
+// GetFolderID for the resolution order).
+func ParseFolderResource(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool, folderGVK schema.GroupVersionKind, lookup FolderUIDByPath) (*ParsedResource, error) {
 	config := reader.Config()
 
 	// Try to read existing folder metadata (single read for both metadata and ID)
@@ -330,9 +358,20 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 		// If err is ErrFileNotFound, folder doesn't exist (folderExists remains false)
 	}
 
-	// If no metadata exists or metadata is disabled, use hash-based ID
+	// If no metadata exists or metadata is disabled, fall back through the
+	// unified-storage lookup before the path-derived hash.
 	if folderID == "" {
 		folderID = ParseFolder(path, config.Name).ID
+		if lookup != nil {
+			uid, ok, err := lookup.LookupFolderUID(ctx, path)
+			if err != nil {
+				return nil, fmt.Errorf("lookup existing folder for %s: %w", path, err)
+			}
+			if ok && uid != "" {
+				folderID = uid
+				folderExists = true
+			}
+		}
 	}
 	// If no metadata exists or metadata is disabled, use the path-based title
 	if folderTitle == "" {
@@ -369,7 +408,7 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 		parentFolderID = ""
 	} else {
 		// Get the parent folder's ID
-		parentFolderID, err = GetFolderID(ctx, reader, parentPath, ref, folderMetadataEnabled)
+		parentFolderID, err = GetFolderID(ctx, reader, parentPath, ref, folderMetadataEnabled, lookup)
 		if err != nil {
 			return nil, fmt.Errorf("get parent folder ID: %w", err)
 		}

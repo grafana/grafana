@@ -46,11 +46,23 @@ type RepositoryResources interface {
 }
 
 type repositoryResourcesFactory struct {
-	parsers               ParserFactory
-	clients               ClientFactory
-	lister                ResourceLister
-	folderMetadataEnabled bool
-	folderAPIVersion      string
+	parsers                ParserFactory
+	clients                ClientFactory
+	lister                 ResourceLister
+	folderMetadataEnabled  bool
+	folderAPIVersion       string
+	folderUIDByPathFactory FolderUIDByPathFactory
+}
+
+// RepositoryResourcesFactoryOption configures optional behaviour on the
+// resources factory.
+type RepositoryResourcesFactoryOption func(*repositoryResourcesFactory)
+
+// WithFolderUIDByPathFactoryForResources threads a folder UID lookup through
+// every FolderManager produced by the factory so per-file write paths resolve
+// real folder UIDs even when the in-memory tree is empty.
+func WithFolderUIDByPathFactoryForResources(factory FolderUIDByPathFactory) RepositoryResourcesFactoryOption {
+	return func(rf *repositoryResourcesFactory) { rf.folderUIDByPathFactory = factory }
 }
 
 type RepositoryResourcesOption func(*repositoryResourcesOptions)
@@ -117,14 +129,18 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	return sourcePath, nil
 }
 
-func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool, folderAPIVersion string) RepositoryResourcesFactory {
-	return &repositoryResourcesFactory{
+func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool, folderAPIVersion string, opts ...RepositoryResourcesFactoryOption) RepositoryResourcesFactory {
+	rf := &repositoryResourcesFactory{
 		parsers:               parsers,
 		clients:               clients,
 		lister:                lister,
 		folderMetadataEnabled: folderMetadataEnabled,
 		folderAPIVersion:      folderAPIVersion,
 	}
+	for _, opt := range opts {
+		opt(rf)
+	}
+	return rf
 }
 
 func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository.ReaderWriter, opts ...RepositoryResourcesOption) (RepositoryResources, error) {
@@ -148,6 +164,10 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 	}
 
 	folderManagerOpts := append(cfg.folderManagerOptions, WithFolderMetadataEnabled(r.folderMetadataEnabled))
+	if r.folderUIDByPathFactory != nil {
+		lookup := r.folderUIDByPathFactory.ForRepository(repo.Config().Namespace, repo.Config().Name)
+		folderManagerOpts = append(folderManagerOpts, WithFolderUIDByPath(lookup))
+	}
 	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderGVK, folderManagerOpts...)
 	resources := NewResourcesManager(repo, folders, parser, clients)
 

@@ -159,12 +159,3 @@ func RootFolder(repository *provisioning.Repository) string {
 
 	return ""
 }
-
-func ParentFolder(filePath string, repository *provisioning.Repository) string {
-	parent := safepath.Dir(filePath)
-	if parent == "" {
-		return RootFolder(repository)
-	}
-
-	return ParseFolder(parent, repository.GetName()).ID
-}

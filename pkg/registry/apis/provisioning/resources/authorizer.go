@@ -135,16 +135,36 @@ type ProvisioningAuthorizer struct {
 	reader                repository.Reader
 	access                auth.AccessChecker
 	folderMetadataEnabled bool
+	// folderUIDByPath, when non-nil, lets folder ID resolution find the real
+	// UID of a managed folder that exists in unified storage but lacks a
+	// _folder.json manifest (e.g. a folder created in the UI before being
+	// pushed to git). Without this lookup, RBAC inheritance walks would run
+	// against a phantom path-derived UID and fail to match granular
+	// folders:uid:<x> grants.
+	folderUIDByPath FolderUIDByPath
+}
+
+// AuthorizerOption configures optional ProvisioningAuthorizer behaviour.
+type AuthorizerOption func(*ProvisioningAuthorizer)
+
+// WithAuthorizerFolderUIDByPath threads a folder UID lookup through every
+// folder-ID resolution the authorizer performs.
+func WithAuthorizerFolderUIDByPath(lookup FolderUIDByPath) AuthorizerOption {
+	return func(a *ProvisioningAuthorizer) { a.folderUIDByPath = lookup }
 }
 
 // NewAuthorizer creates a new ProvisioningAuthorizer.
-func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, folderMetadataEnabled bool) Authorizer {
-	return &ProvisioningAuthorizer{
+func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, folderMetadataEnabled bool, opts ...AuthorizerOption) Authorizer {
+	a := &ProvisioningAuthorizer{
 		repo:                  repo,
 		reader:                reader,
 		access:                access,
 		folderMetadataEnabled: folderMetadataEnabled,
 	}
+	for _, opt := range opts {
+		opt(a)
+	}
+	return a
 }
 
 // AuthorizeResource checks if the current user has permission to perform the specified
@@ -199,7 +219,7 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 // from the configured branch (ref=""). See the Authorizer doc comment
 // for why we never use a caller-supplied ref here.
 func (a *ProvisioningAuthorizer) getFolderID(ctx context.Context, path string) (string, error) {
-	return GetFolderID(ctx, a.reader, path, "", a.folderMetadataEnabled)
+	return GetFolderID(ctx, a.reader, path, "", a.folderMetadataEnabled, a.folderUIDByPath)
 }
 
 // resolveFileGVR reads the file at path from the configured branch and parses it

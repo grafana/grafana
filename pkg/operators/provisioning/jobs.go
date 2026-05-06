@@ -92,20 +92,21 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
 	}
-	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
 
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get unified storage client: %w", err)
 	}
 	resourceLister := resources.NewResourceLister(unified)
+	folderUIDByPathFactory := resources.NewListerFolderUIDByPathFactory(resourceLister)
+	parsers := resources.NewParserFactory(clients, folderMetadataEnabled, resources.WithFolderUIDByPathFactory(folderUIDByPathFactory))
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled, folderAPIVersion)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled, folderAPIVersion, resources.WithFolderUIDByPathFactoryForResources(folderUIDByPathFactory))
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	urlProvider, err := controllerCfg.URLProvider()

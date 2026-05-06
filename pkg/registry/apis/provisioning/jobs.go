@@ -30,13 +30,14 @@ type JobQueueGetter interface {
 }
 
 type jobsConnector struct {
-	repoGetter            RepoGetter
-	statusPatcherProvider StatusPatcherProvider
-	jobs                  JobQueueGetter
-	historic              jobs.HistoryReader
-	access                auth.AccessChecker
-	clients               resources.ClientFactory
-	folderMetadataEnabled bool
+	repoGetter             RepoGetter
+	statusPatcherProvider  StatusPatcherProvider
+	jobs                   JobQueueGetter
+	historic               jobs.HistoryReader
+	access                 auth.AccessChecker
+	clients                resources.ClientFactory
+	folderMetadataEnabled  bool
+	folderUIDByPathFactory resources.FolderUIDByPathFactory
 }
 
 func NewJobsConnector(
@@ -47,15 +48,17 @@ func NewJobsConnector(
 	access auth.AccessChecker,
 	clients resources.ClientFactory,
 	folderMetadataEnabled bool,
+	folderUIDByPathFactory resources.FolderUIDByPathFactory,
 ) *jobsConnector {
 	return &jobsConnector{
-		repoGetter:            repoGetter,
-		statusPatcherProvider: statusPatcherProvider,
-		jobs:                  jobs,
-		historic:              historic,
-		access:                access,
-		clients:               clients,
-		folderMetadataEnabled: folderMetadataEnabled,
+		repoGetter:             repoGetter,
+		statusPatcherProvider:  statusPatcherProvider,
+		jobs:                   jobs,
+		historic:               historic,
+		access:                 access,
+		clients:                clients,
+		folderMetadataEnabled:  folderMetadataEnabled,
+		folderUIDByPathFactory: folderUIDByPathFactory,
 	}
 }
 
@@ -329,7 +332,11 @@ func (c *jobsConnector) newJobAuthorizer(repo repository.Repository, cfg *provis
 	if !ok {
 		return nil, apierrors.NewBadRequest("repository does not support reading")
 	}
-	return resources.NewAuthorizer(cfg, reader, c.access, c.folderMetadataEnabled), nil
+	var opts []resources.AuthorizerOption
+	if c.folderUIDByPathFactory != nil {
+		opts = append(opts, resources.WithAuthorizerFolderUIDByPath(c.folderUIDByPathFactory.ForRepository(cfg.Namespace, cfg.Name)))
+	}
+	return resources.NewAuthorizer(cfg, reader, c.access, c.folderMetadataEnabled, opts...), nil
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user

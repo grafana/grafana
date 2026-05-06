@@ -94,7 +94,7 @@ func TestParseFolderWithMetadata_MetadataHash(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(&repository.FileInfo{Data: validData, Hash: "metadata-hash-123"}, nil)
 
-		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "", true)
+		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "", true, nil)
 		require.NoError(t, err)
 		assert.Equal(t, stableUID, f.ID)
 		assert.Equal(t, "My Folder", f.Title)
@@ -105,7 +105,7 @@ func TestParseFolderWithMetadata_MetadataHash(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(cfg)
 
-		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "", false)
+		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "", false, nil)
 		require.NoError(t, err)
 		assert.Empty(t, f.MetadataHash)
 	})
@@ -116,7 +116,7 @@ func TestParseFolderWithMetadata_MetadataHash(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(nil, repository.ErrFileNotFound)
 
-		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "", true)
+		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "", true, nil)
 		require.NoError(t, err)
 		assert.Empty(t, f.MetadataHash)
 	})
@@ -606,7 +606,7 @@ func TestParseFolderResource(t *testing.T) {
 			reader := repository.NewMockReader(t)
 			tt.setupMock(reader)
 
-			result, err := ParseFolderResource(ctx, reader, tt.path, testRef, tt.folderMetadataEnabled, FolderKind)
+			result, err := ParseFolderResource(ctx, reader, tt.path, testRef, tt.folderMetadataEnabled, FolderKind, nil)
 
 			if tt.expectedErr {
 				assert.Error(t, err, tt.description)
@@ -962,7 +962,7 @@ func TestGetFolderID(t *testing.T) {
 			reader := repository.NewMockReader(t)
 			tt.setupMock(reader)
 
-			result, err := GetFolderID(ctx, reader, testPath, testRef, tt.folderMetadataEnabled)
+			result, err := GetFolderID(ctx, reader, testPath, testRef, tt.folderMetadataEnabled, nil)
 
 			if tt.expectedErr {
 				assert.Error(t, err, tt.description)
@@ -972,4 +972,102 @@ func TestGetFolderID(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestGetFolderID_UnifiedStorageLookup covers the bridge between provisioning
+// and folders that exist in unified storage but lack a _folder.json manifest
+// (e.g. created in the UI before being pushed to git). Without the lookup,
+// resources saved into such a folder get a phantom path-derived UID stamped
+// on grafana.app/folder, breaking RBAC inheritance for granular
+// folders:uid:<x> grants.
+func TestGetFolderID_UnifiedStorageLookup(t *testing.T) {
+	const (
+		repoName        = "repo-a"
+		dirPath         = "team-a/"
+		realFolderUID   = "bfl5v8qxfilfkb"
+		testRef         = ""
+		folderMetadata  = true
+		notFoundMessage = "consult lookup when _folder.json is missing"
+	)
+
+	ctx := context.Background()
+
+	cfg := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: "default"},
+	}
+
+	t.Run("uses lookup UID when _folder.json missing", func(t *testing.T) {
+		reader := repository.NewMockReader(t)
+		reader.On("Config").Return(cfg)
+		reader.On("Read", mock.Anything, dirPath+folderMetadataFileName, testRef).
+			Return(nil, repository.ErrFileNotFound)
+
+		lookup := NewMockFolderUIDByPath(t)
+		lookup.On("LookupFolderUID", mock.Anything, dirPath).Return(realFolderUID, true, nil)
+
+		got, err := GetFolderID(ctx, reader, dirPath, testRef, folderMetadata, lookup)
+		require.NoError(t, err, notFoundMessage)
+		assert.Equal(t, realFolderUID, got, notFoundMessage)
+	})
+
+	t.Run("falls back to path-derived hash when lookup returns not-found", func(t *testing.T) {
+		reader := repository.NewMockReader(t)
+		reader.On("Config").Return(cfg)
+		reader.On("Read", mock.Anything, dirPath+folderMetadataFileName, testRef).
+			Return(nil, repository.ErrFileNotFound)
+
+		lookup := NewMockFolderUIDByPath(t)
+		lookup.On("LookupFolderUID", mock.Anything, dirPath).Return("", false, nil)
+
+		got, err := GetFolderID(ctx, reader, dirPath, testRef, folderMetadata, lookup)
+		require.NoError(t, err)
+		assert.Equal(t, ParseFolder(dirPath, repoName).ID, got, "miss falls through to deterministic hash")
+	})
+
+	t.Run("_folder.json wins over lookup", func(t *testing.T) {
+		const stableUID = "stable-from-manifest"
+		manifest := NewFolderManifest(stableUID, "Team A", FolderKind)
+		manifestData, err := json.Marshal(manifest)
+		require.NoError(t, err)
+
+		reader := repository.NewMockReader(t)
+		reader.On("Config").Return(cfg)
+		reader.On("Read", mock.Anything, dirPath+folderMetadataFileName, testRef).
+			Return(&repository.FileInfo{Data: manifestData, Hash: "hash"}, nil)
+
+		// Lookup must not be consulted when metadata is present.
+		lookup := NewMockFolderUIDByPath(t)
+
+		got, err := GetFolderID(ctx, reader, dirPath, testRef, folderMetadata, lookup)
+		require.NoError(t, err)
+		assert.Equal(t, stableUID, got)
+		lookup.AssertNotCalled(t, "LookupFolderUID", mock.Anything, mock.Anything)
+	})
+
+	t.Run("propagates lookup error", func(t *testing.T) {
+		reader := repository.NewMockReader(t)
+		reader.On("Config").Return(cfg)
+		reader.On("Read", mock.Anything, dirPath+folderMetadataFileName, testRef).
+			Return(nil, repository.ErrFileNotFound)
+
+		lookupErr := errors.New("upstream resource lister failed")
+		lookup := NewMockFolderUIDByPath(t)
+		lookup.On("LookupFolderUID", mock.Anything, dirPath).Return("", false, lookupErr)
+
+		_, err := GetFolderID(ctx, reader, dirPath, testRef, folderMetadata, lookup)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, lookupErr)
+	})
+
+	t.Run("consults lookup when folderMetadataEnabled is false", func(t *testing.T) {
+		reader := repository.NewMockReader(t)
+		reader.On("Config").Return(cfg)
+
+		lookup := NewMockFolderUIDByPath(t)
+		lookup.On("LookupFolderUID", mock.Anything, dirPath).Return(realFolderUID, true, nil)
+
+		got, err := GetFolderID(ctx, reader, dirPath, testRef, false, lookup)
+		require.NoError(t, err)
+		assert.Equal(t, realFolderUID, got, "lookup runs even when metadata flag is off")
+	})
 }

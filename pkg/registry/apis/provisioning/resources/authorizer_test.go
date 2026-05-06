@@ -520,6 +520,65 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 	}
 }
 
+// TestAuthorizeCreateFolder_UnifiedStorageLookup covers the fix for the bug
+// where a granular folders:uid:<x> grant fails to authorize folder creation
+// inside a UI-created subfolder (no _folder.json) because the authorizer
+// resolves the parent UID from the path-derived hash instead of the real one
+// in unified storage.
+func TestAuthorizeCreateFolder_UnifiedStorageLookup(t *testing.T) {
+	const (
+		repoName    = "test-repo"
+		realUID     = "bfl5v8qxfilfkb"
+		parentPath  = "parent/"
+		childPath   = "parent/child/"
+		metadataRef = ""
+	)
+
+	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: repoName}}
+
+	t.Run("uses real UID from unified storage when _folder.json missing", func(t *testing.T) {
+		reader := repository.NewMockReaderWriter(t)
+		reader.On("Config").Return(repo).Maybe()
+		reader.On("Read", mock.Anything, "parent/_folder.json", metadataRef).
+			Return(nil, repository.ErrFileNotFound)
+
+		lookup := NewMockFolderUIDByPath(t)
+		lookup.On("LookupFolderUID", mock.Anything, parentPath).Return(realUID, true, nil)
+
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbCreate &&
+				req.Group == FolderResource.Group &&
+				req.Resource == FolderResource.Resource
+		}), realUID).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, reader, mockAccess, true, WithAuthorizerFolderUIDByPath(lookup))
+		err := authorizer.AuthorizeCreateFolder(context.Background(), childPath)
+		assert.NoError(t, err)
+	})
+
+	t.Run("falls back to hash UID when lookup is empty and _folder.json missing", func(t *testing.T) {
+		reader := repository.NewMockReaderWriter(t)
+		reader.On("Config").Return(repo).Maybe()
+		reader.On("Read", mock.Anything, "parent/_folder.json", metadataRef).
+			Return(nil, repository.ErrFileNotFound)
+
+		lookup := NewMockFolderUIDByPath(t)
+		lookup.On("LookupFolderUID", mock.Anything, parentPath).Return("", false, nil)
+
+		expectedUID := ParseFolder(parentPath, repoName).ID
+
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbCreate
+		}), expectedUID).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, reader, mockAccess, true, WithAuthorizerFolderUIDByPath(lookup))
+		err := authorizer.AuthorizeCreateFolder(context.Background(), childPath)
+		assert.NoError(t, err)
+	})
+}
+
 // TestAuthorizeMoveByPathWithMetadata tests folder move authorization with metadata
 func TestAuthorizeMoveByPathWithMetadata(t *testing.T) {
 	t.Run("both source and target use stable UIDs from metadata", func(t *testing.T) {

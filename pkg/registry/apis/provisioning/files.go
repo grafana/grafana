@@ -29,22 +29,24 @@ const (
 )
 
 type filesConnector struct {
-	getter                RepoGetter
-	access                auth.AccessChecker
-	parsers               resources.ParserFactory
-	clients               resources.ClientFactory
-	folderMetadataEnabled bool
-	folderAPIVersion      string
+	getter                 RepoGetter
+	access                 auth.AccessChecker
+	parsers                resources.ParserFactory
+	clients                resources.ClientFactory
+	folderMetadataEnabled  bool
+	folderAPIVersion       string
+	folderUIDByPathFactory resources.FolderUIDByPathFactory
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, folderUIDByPathFactory resources.FolderUIDByPathFactory) *filesConnector {
 	return &filesConnector{
-		getter:                getter,
-		parsers:               parsers,
-		clients:               clients,
-		access:                access,
-		folderMetadataEnabled: folderMetadataEnabled,
-		folderAPIVersion:      folderAPIVersion,
+		getter:                 getter,
+		parsers:                parsers,
+		clients:                clients,
+		access:                 access,
+		folderMetadataEnabled:  folderMetadataEnabled,
+		folderAPIVersion:       folderAPIVersion,
+		folderUIDByPathFactory: folderUIDByPathFactory,
 	}
 }
 
@@ -178,8 +180,16 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 		return nil, nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 
-	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
-	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, c.folderMetadataEnabled)
+	cfg := repo.Config()
+	folderManagerOpts := []resources.FolderManagerOption{resources.WithFolderMetadataEnabled(c.folderMetadataEnabled)}
+	authorizerOpts := []resources.AuthorizerOption{}
+	if c.folderUIDByPathFactory != nil {
+		lookup := c.folderUIDByPathFactory.ForRepository(cfg.Namespace, cfg.Name)
+		folderManagerOpts = append(folderManagerOpts, resources.WithFolderUIDByPath(lookup))
+		authorizerOpts = append(authorizerOpts, resources.WithAuthorizerFolderUIDByPath(lookup))
+	}
+	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, folderManagerOpts...)
+	authorizer := resources.NewAuthorizer(cfg, readWriter, c.access, c.folderMetadataEnabled, authorizerOpts...)
 	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), authorizer, nil
 }
 

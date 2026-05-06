@@ -92,7 +92,11 @@ func ProvideWebhooksWithImages(
 		urlProvider: urls.Public,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			clients := resources.NewClientFactory(configProvider)
-			parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
+			var parserOpts []resources.ParserFactoryOption
+			if factory := b.GetFolderUIDByPathFactory(); factory != nil {
+				parserOpts = append(parserOpts, resources.WithFolderUIDByPathFactory(factory))
+			}
+			parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg), parserOpts...)
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
 			render := NewRenderConnector(blobstore, b)

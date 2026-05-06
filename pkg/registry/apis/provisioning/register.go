@@ -117,10 +117,11 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
-	jobHistoryConfig  *JobHistoryConfig
-	jobHistoryLoki    *jobs.LokiJobHistory
-	resourceLister    resources.ResourceLister
-	unified           resource.ResourceClient
+	jobHistoryConfig       *JobHistoryConfig
+	jobHistoryLoki         *jobs.LokiJobHistory
+	resourceLister         resources.ResourceLister
+	folderUIDByPathFactory resources.FolderUIDByPathFactory
+	unified                resource.ResourceClient
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
 	client            client.ProvisioningV0alpha1Interface
@@ -200,8 +201,9 @@ func NewAPIBuilder(
 		return nil, fmt.Errorf("invalid provisioning group/version")
 	}
 
-	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
 	resourceLister := resources.NewResourceListerForMigrations(unified)
+	folderUIDByPathFactory := resources.NewListerFolderUIDByPathFactory(resourceLister)
+	parsers := resources.NewParserFactory(clients, folderMetadataEnabled, resources.WithFolderUIDByPathFactory(folderUIDByPathFactory))
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
@@ -223,8 +225,9 @@ func NewAPIBuilder(
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
 		parsers:                             parsers,
-		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), folderAPIVersion), //nolint:staticcheck
+		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), folderAPIVersion, resources.WithFolderUIDByPathFactoryForResources(folderUIDByPathFactory)), //nolint:staticcheck
 		resourceLister:                      resourceLister,
+		folderUIDByPathFactory:              folderUIDByPathFactory,
 		unified:                             unified,
 		access:                              accessChecker,
 		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
@@ -802,7 +805,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.folderUIDByPathFactory)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
@@ -811,7 +814,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, b.folderUIDByPathFactory)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -1542,6 +1545,14 @@ func (b *APIBuilder) GetConnection(ctx context.Context, name string) (connection
 		return nil, err
 	}
 	return b.asConnection(ctx, obj, nil)
+}
+
+// GetFolderUIDByPathFactory returns the per-repository folder lookup used to
+// resolve real folder UIDs from unified storage. Extras (e.g. webhooks) reuse
+// this factory so their parsers stamp resources with the same folder UID
+// resolution that the main API server does.
+func (b *APIBuilder) GetFolderUIDByPathFactory() resources.FolderUIDByPathFactory {
+	return b.folderUIDByPathFactory
 }
 
 func (b *APIBuilder) GetRepoFactory() repository.Factory {

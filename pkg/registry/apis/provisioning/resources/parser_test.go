@@ -154,6 +154,108 @@ spec:
 	})
 }
 
+// TestParser_FolderUIDByPath verifies that when a folder exists in unified
+// storage at a given source path (e.g. created in the UI before being pushed
+// to git), the parser stamps the dashboard's grafana.app/folder annotation
+// with that folder's real UID instead of the path-derived hash. Without this,
+// granular folders:uid:<x> grants fail to match during the RBAC ancestor
+// walk and the save 403s.
+func TestParser_FolderUIDByPath(t *testing.T) {
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", mock.Anything, dashboardV0.DashboardResourceInfo.GroupVersionKind()).
+		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+
+	cfg := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.LocalRepositoryType,
+			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+		},
+	}
+
+	dashboardYAML := []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: dash-in-subfolder
+spec:
+  title: A dashboard
+`)
+
+	t.Run("uses real UID when folder exists in unified storage", func(t *testing.T) {
+		const realUID = "bfl5v8qxfilfkb"
+		lookup := NewMockFolderUIDByPath(t)
+		lookup.On("LookupFolderUID", mock.Anything, "team-a/").Return(realUID, true, nil)
+
+		p := &parser{
+			repo:            provisioning.ResourceRepositoryInfo{Type: provisioning.LocalRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients:         clients,
+			config:          cfg,
+			folderUIDByPath: lookup,
+		}
+
+		dash, err := p.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/dash.json",
+			Data: dashboardYAML,
+		})
+		require.NoError(t, err)
+		require.Equal(t, realUID, dash.Meta.GetFolder(),
+			"parser must stamp the folder's real UID, not the path-derived hash")
+	})
+
+	t.Run("falls back to path-derived hash when lookup returns not-found", func(t *testing.T) {
+		lookup := NewMockFolderUIDByPath(t)
+		lookup.On("LookupFolderUID", mock.Anything, "team-a/").Return("", false, nil)
+
+		p := &parser{
+			repo:            provisioning.ResourceRepositoryInfo{Type: provisioning.LocalRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients:         clients,
+			config:          cfg,
+			folderUIDByPath: lookup,
+		}
+
+		dash, err := p.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/dash.json",
+			Data: dashboardYAML,
+		})
+		require.NoError(t, err)
+		require.Equal(t, ParseFolder("team-a/", "repo").ID, dash.Meta.GetFolder())
+	})
+
+	t.Run("nil lookup keeps legacy hash behaviour", func(t *testing.T) {
+		p := &parser{
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.LocalRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients: clients,
+			config:  cfg,
+		}
+
+		dash, err := p.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/dash.json",
+			Data: dashboardYAML,
+		})
+		require.NoError(t, err)
+		require.Equal(t, ParseFolder("team-a/", "repo").ID, dash.Meta.GetFolder())
+	})
+
+	t.Run("propagates lookup error", func(t *testing.T) {
+		lookupErr := fmt.Errorf("lister down")
+		lookup := NewMockFolderUIDByPath(t)
+		lookup.On("LookupFolderUID", mock.Anything, "team-a/").Return("", false, lookupErr)
+
+		p := &parser{
+			repo:            provisioning.ResourceRepositoryInfo{Type: provisioning.LocalRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients:         clients,
+			config:          cfg,
+			folderUIDByPath: lookup,
+		}
+
+		_, err := p.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/dash.json",
+			Data: dashboardYAML,
+		})
+		require.ErrorIs(t, err, lookupErr)
+	})
+}
+
 func TestSameIdentity(t *testing.T) {
 	makeParsed := func(name, group, kind string) *ParsedResource {
 		return &ParsedResource{

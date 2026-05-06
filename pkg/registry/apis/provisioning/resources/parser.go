@@ -42,12 +42,31 @@ type Parser interface {
 }
 
 type parserFactory struct {
-	ClientFactory         ClientFactory
-	folderMetadataEnabled bool
+	ClientFactory          ClientFactory
+	folderMetadataEnabled  bool
+	folderUIDByPathFactory FolderUIDByPathFactory
 }
 
-func NewParserFactory(clientFactory ClientFactory, folderMetadataEnabled bool) ParserFactory {
-	return &parserFactory{clientFactory, folderMetadataEnabled}
+// ParserFactoryOption configures optional parserFactory behaviour.
+type ParserFactoryOption func(*parserFactory)
+
+// WithFolderUIDByPathFactory threads a unified-storage folder lookup through
+// every parser produced by the factory, so resources saved into a folder
+// created in the UI (and pushed to git without _folder.json) get the folder's
+// real UID stamped on their grafana.app/folder annotation.
+func WithFolderUIDByPathFactory(factory FolderUIDByPathFactory) ParserFactoryOption {
+	return func(pf *parserFactory) { pf.folderUIDByPathFactory = factory }
+}
+
+func NewParserFactory(clientFactory ClientFactory, folderMetadataEnabled bool, opts ...ParserFactoryOption) ParserFactory {
+	pf := &parserFactory{
+		ClientFactory:         clientFactory,
+		folderMetadataEnabled: folderMetadataEnabled,
+	}
+	for _, opt := range opts {
+		opt(pf)
+	}
+	return pf
 }
 
 func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (Parser, error) {
@@ -59,6 +78,12 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 	}
 
 	urls, _ := repo.(repository.RepositoryWithURLs)
+
+	var lookup FolderUIDByPath
+	if f.folderUIDByPathFactory != nil {
+		lookup = f.folderUIDByPathFactory.ForRepository(config.Namespace, config.Name)
+	}
+
 	return &parser{
 		repo: provisioning.ResourceRepositoryInfo{
 			Type:      config.Spec.Type,
@@ -71,6 +96,7 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 		clients:               clients,
 		config:                config,
 		folderMetadataEnabled: f.folderMetadataEnabled,
+		folderUIDByPath:       lookup,
 	}, nil
 }
 
@@ -90,6 +116,12 @@ type parser struct {
 	clients ResourceClients
 
 	folderMetadataEnabled bool
+
+	// folderUIDByPath, when non-nil, is consulted before the path-derived hash
+	// fallback so the parent annotation set on a parsed resource matches the
+	// real UID of an existing managed folder at that path. See
+	// folder_lookup.go and GetFolderID for the resolution order.
+	folderUIDByPath FolderUIDByPath
 }
 
 type ParsedResource struct {
@@ -204,7 +236,14 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
 	}
 
-	// Calculate folder identifier from the file path
+	// Calculate folder identifier from the file path.
+	// Resolution order matches GetFolderID:
+	//   1. _folder.json on the configured ref (when folder metadata is enabled)
+	//   2. Existing managed folder UID in unified storage at this path
+	//   3. Path-derived hash via ParseFolder
+	// Step 2 is what makes saves into UI-created subfolders (which lack
+	// _folder.json) authorize correctly: without it the parent annotation is
+	// a phantom hash UID that RBAC inheritance walks can't reach.
 	if info.Path != "" {
 		dirPath := safepath.Dir(info.Path)
 		// _folder.json represents the directory it lives in, so its parent is one level above.
@@ -213,11 +252,20 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		}
 		if dirPath != "" {
 			folderID := ParseFolder(dirPath, r.repo.Name).ID
-			// When folder metadata is enabled and the parent folder has a _folder.json,
-			// use the stable UID from that file instead of the hash-derived one.
+			resolved := false
 			if r.folderMetadataEnabled && r.reader != nil {
 				if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
 					folderID = meta.Name
+					resolved = true
+				}
+			}
+			if !resolved && r.folderUIDByPath != nil {
+				uid, ok, err := r.folderUIDByPath.LookupFolderUID(ctx, dirPath)
+				if err != nil {
+					return nil, fmt.Errorf("lookup existing folder for %s: %w", dirPath, err)
+				}
+				if ok && uid != "" {
+					folderID = uid
 				}
 			}
 			parsed.Meta.SetFolder(folderID)
