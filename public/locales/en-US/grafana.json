@@ -13482,6 +13482,16 @@
       "url-description": "The GitHub repository URL",
       "url-required": "Repository URL is required"
     },
+    "github-enterprise": {
+      "branch-required": "Branch is required",
+      "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "pr-workflow-label": "Enable pull request option when saving",
+      "token-description": "GitHub Enterprise Personal Access Token with repository permissions",
+      "token-label": "Personal Access Token",
+      "token-required": "GitHub Enterprise token is required",
+      "url-description": "The GitHub Enterprise Server repository URL",
+      "url-required": "Repository URL is required"
+    },
     "gitlab": {
       "branch-required": "Branch is required",
       "permissions": {
