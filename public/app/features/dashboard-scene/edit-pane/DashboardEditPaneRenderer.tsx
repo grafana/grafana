@@ -67,7 +67,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
     <>
       {openPane && (
         <Sidebar.OpenPane>
-          {openPane && <openPane.Component key={openPane.state.key} model={openPane} />}
+          <openPane.Component key={openPane.state.key} model={openPane} />
         </Sidebar.OpenPane>
       )}
       <Sidebar.Toolbar>
