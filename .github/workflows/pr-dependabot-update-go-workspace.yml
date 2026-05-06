@@ -34,6 +34,7 @@ jobs:
       uses: actions/create-github-app-token@v1
       with:
         app-id: ${{ env.APP_ID }}
+        installation-id: ${{ env.APP_INSTALLATION_ID }}
         private-key: ${{ env.PRIVATE_KEY }}
 
     - name: Checkout repository
@@ -53,17 +54,17 @@ jobs:
       run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git config --local --add --bool push.autoSetupRemote true
 
     - name: Update workspace
       run: make update-workspace
 
     - name: Commit and push workspace changes
       env:
-        BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+        BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       run: |
         if ! git diff --exit-code --quiet; then
           echo "Committing and pushing workspace changes"
           git commit -a -m "update workspace"
-          git push origin "$BRANCH_NAME"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana.git" "HEAD:${BRANCH_NAME}"
         fi
