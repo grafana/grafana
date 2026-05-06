@@ -521,7 +521,7 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			})
 
 			for _, tc := range []struct {
-				sortParam string
+				sortParam  string
 				alphaFirst bool
 			}{
 				{"login-asc", true},
