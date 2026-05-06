@@ -14,6 +14,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -104,6 +107,57 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 	require.Equal(t, beforeSnapshots["teamC/dashboard.json"].UID,
 		afterSnapshots["teamA/teamC/dashboard.json"].UID,
 		"moved dashboard (teamC -> teamA/teamC) should preserve UID")
+}
+
+func TestIntegrationProvisioning_FullSync_DuplicateFolderPathReparentsChildBeforeCleanup(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := t.Context()
+
+	const (
+		repo         = "folder-duplicate-path-cleanup"
+		currentUID   = "duplicate-current-uid"
+		orphanUID    = "duplicate-orphan-uid"
+		dashboardUID = "duplicate-folder-dashboard"
+	)
+
+	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON(currentUID, "My Folder"))
+	writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON(dashboardUID, "Dashboard in Duplicate Folder", 1))
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		SyncTarget:             "folder",
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dashboard.json": currentUID,
+	})
+	before := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{"myfolder/dashboard.json"})
+
+	injectManagedFolder(t, helper, repo, orphanUID, "Orphan Folder", "myfolder", repo, "stale-folder-checksum")
+	common.RequireFolderState(t, helper.Folders, orphanUID, "Orphan Folder", "myfolder", repo)
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 2)
+
+	moveManagedDashboardToFolder(t, helper, dashboardUID, orphanUID)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dashboard.json": orphanUID,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	assertNoFolderByUID(t, helper, orphanUID)
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 1)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dashboard.json": currentUID,
+	})
+	after := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{"myfolder/dashboard.json"})
+	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{"myfolder/dashboard.json"})
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t *testing.T) {
@@ -860,6 +914,104 @@ func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, fo
 			"expected NotFound error for folder %q, got: %v", folderUID, err)
 	}, 30*time.Second, 100*time.Millisecond,
 		"folder %q should be deleted", folderUID)
+}
+
+func requireFolderSourcePathCount(t *testing.T, helper *common.ProvisioningTestHelper, repoName, sourcePath string, expected int) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		count := 0
+		for _, f := range list.Items {
+			annotations := f.GetAnnotations()
+			if annotations[utils.AnnoKeyManagerIdentity] == repoName && annotations[utils.AnnoKeySourcePath] == sourcePath {
+				count++
+			}
+		}
+		assert.Equal(c, expected, count, "folder count for sourcePath %q", sourcePath)
+	}, 30*time.Second, 100*time.Millisecond,
+		"expected %d folders with sourcePath %q for repo %q", expected, sourcePath, repoName)
+}
+
+func injectManagedFolder(t *testing.T, helper *common.ProvisioningTestHelper, repoName, folderUID, title, sourcePath, parentUID, checksum string) {
+	t.Helper()
+
+	folderObj := map[string]any{
+		"apiVersion": "folder.grafana.app/v1",
+		"kind":       "Folder",
+		"metadata": map[string]any{
+			"name":      folderUID,
+			"namespace": helper.Namespace,
+			"annotations": map[string]any{
+				utils.AnnoKeyFolder:          parentUID,
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: repoName,
+				utils.AnnoKeySourcePath:      sourcePath,
+				utils.AnnoKeySourceChecksum:  checksum,
+			},
+		},
+		"spec": map[string]any{
+			"title": title,
+		},
+	}
+	data, err := json.Marshal(folderObj)
+	require.NoError(t, err)
+
+	provCtx, _, err := identity.WithProvisioningIdentity(t.Context(), helper.Namespace)
+	require.NoError(t, err)
+
+	rsp, err := helper.GetEnv().ResourceClient.Create(provCtx, &resourcepb.CreateRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: helper.Namespace,
+			Group:     "folder.grafana.app",
+			Resource:  "folders",
+			Name:      folderUID,
+		},
+		Value: data,
+	})
+	require.NoError(t, err)
+	require.Nil(t, rsp.GetError(), "resource create should not return error: %v", rsp.GetError())
+}
+
+func moveManagedDashboardToFolder(t *testing.T, helper *common.ProvisioningTestHelper, dashboardUID, folderUID string) {
+	t.Helper()
+
+	key := &resourcepb.ResourceKey{
+		Namespace: helper.Namespace,
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+		Name:      dashboardUID,
+	}
+	provCtx, _, err := identity.WithProvisioningIdentity(t.Context(), helper.Namespace)
+	require.NoError(t, err)
+
+	read, err := helper.GetEnv().ResourceClient.Read(provCtx, &resourcepb.ReadRequest{Key: key})
+	require.NoError(t, err)
+	require.Nil(t, read.GetError(), "resource read should not return error: %v", read.GetError())
+
+	var dashboard map[string]any
+	require.NoError(t, json.Unmarshal(read.GetValue(), &dashboard))
+	metadata, ok := dashboard["metadata"].(map[string]any)
+	require.True(t, ok, "dashboard metadata should be present")
+	annotations, ok := metadata["annotations"].(map[string]any)
+	if !ok {
+		annotations = make(map[string]any)
+		metadata["annotations"] = annotations
+	}
+	annotations[utils.AnnoKeyFolder] = folderUID
+
+	data, err := json.Marshal(dashboard)
+	require.NoError(t, err)
+
+	update, err := helper.GetEnv().ResourceClient.Update(provCtx, &resourcepb.UpdateRequest{
+		Key:             key,
+		ResourceVersion: read.GetResourceVersion(),
+		Value:           data,
+	})
+	require.NoError(t, err)
+	require.Nil(t, update.GetError(), "resource update should not return error: %v", update.GetError())
 }
 
 // TestIntegrationProvisioning_FullSync_DashboardMoveInPlace verifies that

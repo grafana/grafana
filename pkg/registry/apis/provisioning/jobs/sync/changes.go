@@ -207,12 +207,9 @@ func Changes(
 				}
 				// If the parent directory already exists in Grafana and the hash changed,
 				// record an update to reconcile metadata (e.g. folder title).
-				// When multiple managed folders share the path (orphans), pick the
-				// one whose metadata hash matches the new _folder.json content so
-				// we target the correct UID, and delete the rest as orphans.
-				// This is the correct place for folder orphan cleanup because
-				// file.Hash (_folder.json blob hash) is directly comparable to
-				// managed folder hashes (sourceChecksum derived from MetadataHash).
+				// When multiple managed folders share the path, keep the folder whose
+				// metadata hash matches _folder.json and route the rest through the
+				// folder replacement flow so their children are re-parented before cleanup.
 				parentDir := safepath.Dir(file.Path)
 				if !strings.HasSuffix(parentDir, "/") {
 					parentDir += "/"
@@ -229,12 +226,17 @@ func Changes(
 						if p == best {
 							continue
 						}
-						logger.Warn("deleting orphan folder at duplicate path", "path", p.Path, "name", p.Name)
+						logger.Warn("replacing orphan folder at duplicate path", "path", p.Path, "name", p.Name)
+						reason := provisioning.ReasonFolderMetadataUpdated
+						if p.Hash == "" {
+							reason = provisioning.ReasonFolderMetadataCreated
+						}
 						changes = append(changes, ResourceFileChange{
-							Action:        repository.FileActionDeleted,
+							Action:        repository.FileActionUpdated,
 							Path:          parentDir,
 							Existing:      p,
-							OrphanCleanup: true,
+							FolderRenamed: true,
+							Reason:        reason,
 						})
 					}
 					if best.Hash != file.Hash {
@@ -342,6 +344,11 @@ func augmentChangesForFolderMetadata(
 	}
 
 	affectedFolders := make(map[string]bool)
+	for _, change := range changes {
+		if change.IsUpdatedFolder() && change.FolderRenamed {
+			affectedFolders[safepath.EnsureTrailingSlash(change.Path)] = true
+		}
+	}
 
 	// Detect folders whose _folder.json was deleted.
 	deletedChanges, deletedAffected := detectDeletedFolderMetadata(target, sourceFolders, foldersWithMetadata, pathsWithChanges)
@@ -673,9 +680,17 @@ func emitDirectChildrenChanges(
 	// since Name is only unique within a (Group, Resource) and different
 	// resource kinds can share the same name.
 	deletedItems := make(map[*provisioning.ResourceListItem]bool, len(changes))
+	replacedFolderUIDsByPath := make(map[string]map[string]bool)
 	for _, c := range changes {
 		if c.Action == repository.FileActionDeleted && c.Existing != nil {
 			deletedItems[c.Existing] = true
+		}
+		if c.IsUpdatedFolder() && c.FolderRenamed && c.Existing != nil {
+			path := safepath.EnsureTrailingSlash(c.Path)
+			if replacedFolderUIDsByPath[path] == nil {
+				replacedFolderUIDsByPath[path] = make(map[string]bool)
+			}
+			replacedFolderUIDsByPath[path][c.Existing.Name] = true
 		}
 	}
 
@@ -708,9 +723,14 @@ func emitDirectChildrenChanges(
 			continue
 		}
 		best := items[0]
+		replacedFolderUIDs := replacedFolderUIDsByPath[parentDir]
 		for _, it := range items {
 			if deletedItems[it] {
 				continue
+			}
+			if replacedFolderUIDs[it.Folder] {
+				best = it
+				break
 			}
 			if it.Hash == file.Hash {
 				best = it
