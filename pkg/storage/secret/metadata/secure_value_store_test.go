@@ -229,6 +229,7 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 			var duration int
 			require.NoError(t, rows.Scan(&duration))
 			require.Equal(t, pair.expectedLeaseDuration, duration)
+			require.NoError(t, rows.Close())
 		}
 	})
 }
