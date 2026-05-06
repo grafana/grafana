@@ -312,8 +312,8 @@ jobs:
           ")
           echo "slug=${SLUG}" >> "$GITHUB_OUTPUT"
           PATH=$(node -e "
-            const {createCodeownerDirectory} = require('./pr/scripts/codeowners-manifest/utils.js');
-            console.log(createCodeownerDirectory('${{ matrix.codeowner }}'));
+            const {buildCodeownerDirectoryPath} = require('./pr/scripts/codeowners-manifest/utils.js');
+            console.log(buildCodeownerDirectoryPath('${{ matrix.codeowner }}'));
           ")
           echo "path=${PATH}" >> "$GITHUB_OUTPUT"
 
