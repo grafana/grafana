@@ -4366,6 +4366,7 @@
         "repository-not-found-message": "Úložiště pro vybranou složku se nepodařilo najít. Ujistěte se, že je složka správně nastavena.",
         "repository-not-found-title": "Úložiště nebylo nalezeno"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Chyba při přesouvání zdrojů",
       "error-no-target-folder-path": "Cesta k cílové složce je neplatná nebo prázdná, vyberte ji znovu.",
       "move-total": "Celkově to ovlivní:",
@@ -5329,7 +5330,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Nastavení"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5731,7 +5732,7 @@
         "title": "Proměnné"
       },
       "variable": {
-        "change-type": "Změnit",
+        "change-type": "",
         "change-type-aria-label": "Změnit typ proměnné",
         "custom-options": {
           "apply": "Použít",
@@ -6048,7 +6049,7 @@
       "cancel": "Zrušit",
       "common": {
         "copy": "Kopírovat",
-        "copy-or-duplicate": "Kopírovat/vložit nebo duplikovat",
+        "copy-tooltip": "",
         "delete": "Odstranit",
         "duplicate": "Duplikovat",
         "layout": "Rozvržení",
@@ -6087,7 +6088,7 @@
     },
     "new-panel": {
       "aria-label": "Nekonfigurovaný panel. Stisknutím klávesy Tab zobrazíte možnosti konfigurace.",
-      "configure-button": "Konfigurovat",
+      "configure-button": "",
       "configure-button-menu": "Přepnout nabídku",
       "configure-visualization": "Konfigurovat vizualizaci",
       "empty-state-message": "Spusťte dotaz a vizualizujte jej zde nebo přejděte na všechny vizualizace a přidejte další typy panelů",
@@ -6331,10 +6332,8 @@
       "title-provisioned": "Zajištěná nástěnka"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem.<br/><2>Chcete přesto nástěnku uložit?</2>",
       "body-version-mismatch": "Tuto nástěnku aktualizoval jiný uživatel<br/><2>Chcete přesto nástěnku uložit?</2>",
       "confirmText-save-and-overwrite": "Uložit a přepsat",
-      "title-name-exists": "Konflikt",
       "title-version-mismatch": "Konflikt"
     },
     "save-dashboard-form": {
@@ -7395,6 +7394,7 @@
       "terraform": "Spravuje: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Nástěnku se nepodařilo přesunout",
       "cancel-action": "Zrušit",
       "current-file-not-found": "Aktuální soubor nástěnky se nepodařilo najít",
@@ -7407,10 +7407,6 @@
       "success-message": "Nástěnka byla úspěšně přesunuta",
       "target-path-label": "Cílová cesta",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem. Chcete přesto tuto nástěnku uložit?",
-      "title-name-already-exists": "Název již existuje"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8236,6 +8232,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Přidat do oblíbených",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Prozkoumat data",
       "open-in-explore": "Otevřít v zobrazení Prozkoumat",
       "remove-favorite": "Odebrat z oblíbených"
@@ -15633,7 +15635,6 @@
       "forwards-time-aria-label": "Přesunout časový rozsah dopředu",
       "to": "do",
       "zoom-out-button": "Oddálit časový rozsah",
-      "zoom-out-tooltip": "Oddálení časového rozsahu <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Oddálení časového rozsahu <br/> t -"
     },
     "time-range": {

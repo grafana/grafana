@@ -1069,6 +1069,12 @@ func schema_pkg_apis_iam_v0alpha1_GetUserTeamsResponse(ref common.ReferenceCallb
 							Format:      "",
 						},
 					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(metav1.ListMeta{}.OpenAPIModelName()),
+						},
+					},
 					"items": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -1083,11 +1089,11 @@ func schema_pkg_apis_iam_v0alpha1_GetUserTeamsResponse(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"items"},
+				Required: []string{"metadata", "items"},
 			},
 		},
 		Dependencies: []string{
-			GetUserTeamsUserTeam{}.OpenAPIModelName()},
+			GetUserTeamsUserTeam{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 

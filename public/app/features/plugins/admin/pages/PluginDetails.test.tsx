@@ -168,7 +168,7 @@ describe('Plugin details page', () => {
 
       const { findByText, queryByText } = renderPluginDetails({ id, details });
       expect(await findByText('4.2.2')).toBeInTheDocument();
-      expect(queryByText(/>=8.0.0/i)).toBeInTheDocument();
+      expect(queryByText(/8.0.0 or later/i)).toBeInTheDocument();
     });
 
     it('should display description in the header', async () => {
@@ -364,7 +364,7 @@ describe('Plugin details page', () => {
       });
 
       // Wait for the dependencies part to be loaded
-      expect(await queryByText('Grafana >=8.0.0')).toBeInTheDocument();
+      expect(await queryByText('Grafana 8.0.0 or later')).toBeInTheDocument();
     });
 
     it('should show a confirm modal when trying to uninstall a plugin', async () => {
