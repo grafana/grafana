@@ -11,20 +11,23 @@ go test --tags "pro" -timeout 30s -run ^TestIntegrationOpenAPIs$ github.com/graf
 ```
 
 This should generate a diff in the Enterprise repo. Make sure to open a PR there too.
-  
+
 ## OSS vs Enterprise split
 
 The scope API is split across two repos:
 
 **OSS (`apps/scope/pkg/apis/scope/v0alpha1/`)**
+
 - `types.go` — canonical Go types
 - `zz_generated.openapi.go` — generated OpenAPI schema functions (run `./hack/update-codegen.sh scope` to regenerate)
 
 **Enterprise (`pkg/extensions/apiserver/registry/scope/`)**
+
 - `register.go` — API server registration and `PostProcessOpenAPI()` (path rewrites, parameter overrides)
 - - OpenAPI JSON snapshot — produced by running a real Enterprise server, so it can't live in OSS
 
 **OSS (`public/app/api/clients/scope/v0alpha1/`)**
+
 - `endpoints.gen.ts` — RTK Query client, generated from the OpenAPI spec and synced from Enterprise
 
 ## Query-parameter-only types
