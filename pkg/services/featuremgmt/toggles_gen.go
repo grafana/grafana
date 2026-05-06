@@ -973,4 +973,8 @@ const (
 	// FlagAlertingDisableV0ReceiverConversion
 	// Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model
 	FlagAlertingDisableV0ReceiverConversion = "alerting.disableV0ReceiverConversion"
+
+	// FlagPluginsMarketplaceLicensing
+	// Enables marketplace plugin licensing
+	FlagPluginsMarketplaceLicensing = "plugins.marketplaceLicensing"
 )
