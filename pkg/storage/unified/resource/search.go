@@ -542,6 +542,13 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		}, nil
 	}
 
+	// TODO decide on appropriate max query length. Using 1k for now.
+	if len(req.Query) > 1000 {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("query exceeds maximum length of 1000 characters"),
+		}, nil
+	}
+
 	limit := int(req.Limit)
 	switch {
 	case limit <= 0:
