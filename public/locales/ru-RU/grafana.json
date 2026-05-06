@@ -5330,7 +5330,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Параметры"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5732,7 +5732,7 @@
         "title": "Переменные"
       },
       "variable": {
-        "change-type": "Изменить",
+        "change-type": "",
         "change-type-aria-label": "Изменить тип переменной",
         "custom-options": {
           "apply": "Применить",
@@ -6049,7 +6049,7 @@
       "cancel": "Отмена",
       "common": {
         "copy": "Копировать",
-        "copy-or-duplicate": "Копировать/вставить или дублировать",
+        "copy-tooltip": "",
         "delete": "Удалить",
         "duplicate": "Дублировать",
         "layout": "Расположение",
@@ -6088,7 +6088,7 @@
     },
     "new-panel": {
       "aria-label": "Панель без конфигурации. Нажмите Tab, чтобы просмотреть доступные параметры.",
-      "configure-button": "Настроить",
+      "configure-button": "",
       "configure-button-menu": "Переключить меню",
       "configure-visualization": "Настроить визуализацию",
       "empty-state-message": "Выполните запрос, чтобы запустить визуализацию здесь, или перейдите ко всем визуализациям, чтобы добавить другие типы панелей",
@@ -6332,10 +6332,8 @@
       "title-provisioned": "Подготовленный дашборд"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Дашборд с таким именем уже существует в выбранной папке.<br/><2>Все равно сохранить дашборд?</2>",
       "body-version-mismatch": "Дашборд обновлен другим пользователем.<br/><2>Все равно сохранить дашборд?</2>",
       "confirmText-save-and-overwrite": "Сохранить и перезаписать",
-      "title-name-exists": "Конфликт",
       "title-version-mismatch": "Конфликт"
     },
     "save-dashboard-form": {
@@ -7409,10 +7407,6 @@
       "success-message": "Дашборд перемещен",
       "target-path-label": "Целевой путь",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Дашборд с таким названием уже существует в выбранной папке. Все равно сохранить дашборд?",
-      "title-name-already-exists": "Название уже существует"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

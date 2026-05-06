@@ -5240,7 +5240,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Pengaturan"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5642,7 +5642,7 @@
         "title": "Variabel"
       },
       "variable": {
-        "change-type": "Ubah",
+        "change-type": "",
         "change-type-aria-label": "Ubah jenis variabel",
         "custom-options": {
           "apply": "Terapkan",
@@ -5959,7 +5959,7 @@
       "cancel": "Batalkan",
       "common": {
         "copy": "Salin",
-        "copy-or-duplicate": "Salin/tempel atau duplikasikan",
+        "copy-tooltip": "",
         "delete": "Hapus",
         "duplicate": "Duplikasikan",
         "layout": "Tata Letak",
@@ -5998,7 +5998,7 @@
     },
     "new-panel": {
       "aria-label": "Panel yang tidak dikonfigurasi. Tekan tab untuk melihat opsi konfigurasi.",
-      "configure-button": "Konfigurasikan",
+      "configure-button": "",
       "configure-button-menu": "Alihkan tombol menu",
       "configure-visualization": "Konfigurasikan visualisasi",
       "empty-state-message": "Jalankan kueri untuk memvisualisasikannya di sini atau buka semua visualisasi untuk menambahkan jenis panel lainnya",
@@ -6239,10 +6239,8 @@
       "title-provisioned": "Dasbor yang disediakan"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Dasbor dengan nama yang sama di folder yang dipilih sudah ada.<br/><2>Anda masih ingin menyimpan dasbor ini?</2>",
       "body-version-mismatch": "Orang lain telah memperbarui dasbor ini<br/><2>Anda masih ingin menyimpan dasbor ini?</2>",
       "confirmText-save-and-overwrite": "Simpan dan timpa",
-      "title-name-exists": "Konflik",
       "title-version-mismatch": "Konflik"
     },
     "save-dashboard-form": {
@@ -7286,10 +7284,6 @@
       "success-message": "Dasbor berhasil dipindahkan",
       "target-path-label": "Jalur target",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Dasbor dengan nama yang sama di folder yang dipilih sudah ada. Ingin tetap menyimpan dasbor ini?",
-      "title-name-already-exists": "Nama sudah ada"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

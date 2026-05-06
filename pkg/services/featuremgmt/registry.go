@@ -1099,6 +1099,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.orgDashboardTemplates",
+			Description: "Enables org-defined dashboard templates for enterprise",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardTemplatesAssistantButton",
 			Description: "Enables the Assistant button in the dashboard templates card",
 			Stage:       FeatureStageExperimental,
@@ -2250,6 +2258,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.dedicatedGrafanaComProxyAPIToken",
+			Description: "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "newVizSuggestions",
 			Description: "Enable new visualization suggestions",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2486,10 +2502,10 @@ var (
 		{
 			Name:        "dashboardSectionVariables",
 			Description: "Enables support for section level variables (rows and tabs)",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "smoothingTransformation",
@@ -3084,6 +3100,14 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{Go: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "alerting.disableV0ReceiverConversion",
+			Description: "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true},
+			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

@@ -722,6 +722,10 @@ const (
 	// Enable syncing plugin installations to the installs API
 	FlagPluginInstallAPISync = "pluginInstallAPISync"
 
+	// FlagGrafanaDedicatedGrafanaComProxyAPIToken
+	// Use a dedicated auth token for Grafana.com proxy requests and plugin installs
+	FlagGrafanaDedicatedGrafanaComProxyAPIToken = "grafana.dedicatedGrafanaComProxyAPIToken"
+
 	// FlagJaegerEnableGrpcEndpoint
 	// Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
 	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"
@@ -965,4 +969,8 @@ const (
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
+
+	// FlagAlertingDisableV0ReceiverConversion
+	// Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model
+	FlagAlertingDisableV0ReceiverConversion = "alerting.disableV0ReceiverConversion"
 )
