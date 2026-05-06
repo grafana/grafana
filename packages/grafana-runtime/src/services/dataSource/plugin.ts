@@ -12,6 +12,7 @@ import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
 import { getInstanceSettings, upsertRuntimeDataSource } from './instanceSettings';
+import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
 
 type GenericDataSourcePlugin = DataSourcePlugin<
   DataSourceApi<DataQuery, DataSourceJsonData>,
@@ -22,8 +23,6 @@ type GenericDataSourcePlugin = DataSourcePlugin<
 type ImportDataSourceFn = (meta: DataSourcePluginMeta) => Promise<GenericDataSourcePlugin>;
 
 let importDataSource: ImportDataSourceFn | undefined;
-const instances: Record<string, DataSourceApi> = {};
-const runtimeByUid: Record<string, DataSourceApi> = {};
 
 /**
  * Register the data source plugin importer. Called once from application boot.
@@ -52,14 +51,9 @@ export async function getDataSourcePlugin(
     throw new Error(`Datasource ${describeRef(ref)} was not found`);
   }
 
-  if (instances[settings.uid]) {
-    return instances[settings.uid];
-  }
-
-  const runtime = runtimeByUid[settings.uid];
-  if (runtime) {
-    instances[settings.uid] = runtime;
-    return runtime;
+  const cached = getCachedPlugin(settings.uid);
+  if (cached) {
+    return cached;
   }
 
   if (!importDataSource) {
@@ -69,8 +63,9 @@ export async function getDataSourcePlugin(
   const dsPlugin = await importDataSource(settings.meta);
 
   // Another caller may have populated the cache while we were awaiting.
-  if (instances[settings.uid]) {
-    return instances[settings.uid];
+  const racedCache = getCachedPlugin(settings.uid);
+  if (racedCache) {
+    return racedCache;
   }
 
   const instance = new dsPlugin.DataSourceClass(settings);
@@ -92,7 +87,7 @@ export async function getDataSourcePlugin(
     anyInstance.getRef = DataSourceApi.prototype.getRef;
   }
 
-  instances[settings.uid] = instance;
+  setCachedPlugin(settings.uid, instance);
   return instance;
 }
 
@@ -109,13 +104,12 @@ export async function getDataSourcePlugin(
 export function registerRuntimeDataSource(entry: RuntimeDataSourceRegistration): void {
   const { dataSource } = entry;
 
-  if (runtimeByUid[dataSource.uid] || instances[dataSource.uid]) {
+  if (getCachedPlugin(dataSource.uid)) {
     throw new Error(`A runtime data source with uid ${dataSource.uid} has already been registered`);
   }
 
   upsertRuntimeDataSource(dataSource.instanceSettings);
-  runtimeByUid[dataSource.uid] = dataSource;
-  instances[dataSource.uid] = dataSource;
+  setRuntimePlugin(dataSource.uid, dataSource);
 }
 
 function describeRef(ref: DataSourceRef | string | null | undefined): string {
@@ -129,16 +123,10 @@ function describeRef(ref: DataSourceRef | string | null | undefined): string {
 }
 
 /**
- * Test helper — resets all module state. Should only be called from tests.
+ * Test helper — resets module-local state. Should only be called from tests.
  *
  * @internal
  */
 export function _resetForTests(): void {
   importDataSource = undefined;
-  for (const key of Object.keys(instances)) {
-    delete instances[key];
-  }
-  for (const key of Object.keys(runtimeByUid)) {
-    delete runtimeByUid[key];
-  }
 }
