@@ -17,7 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
 )
+
+var ofClient = openfeature.NewDefaultClient()
 
 // swagger:route POST /teams teams createTeam
 //
@@ -279,8 +282,8 @@ func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if tapi.features.IsEnabledGlobally(featuremgmt.FlagPreferencesRerouteLegacyAPIs) {
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
 		uid, errResp := tapi.resolveTeamUID(c, teamId)
 		if errResp != nil {
 			return errResp
@@ -311,8 +314,8 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if tapi.features.IsEnabledGlobally(featuremgmt.FlagPreferencesRerouteLegacyAPIs) {
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
 		uid, errResp := tapi.resolveTeamUID(c, teamId)
 		if errResp != nil {
 			return errResp
