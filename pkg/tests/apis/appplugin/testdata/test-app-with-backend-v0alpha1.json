@@ -2,13 +2,13 @@
   "openapi": "3.0.0",
   "info": {
     "description": "Test App with backend resource routes",
-    "title": "test-app-with-backend-app/v0alpha1",
+    "title": "test-app-with-backend/v0alpha1",
     "x-grafana-plugin": {
-      "id": "test-app-with-backend-app"
+      "id": "test-app-with-backend"
     }
   },
   "paths": {
-    "/apis/test-app-with-backend-app/v0alpha1/": {
+    "/apis/test-app-with-backend/v0alpha1/": {
       "get": {
         "tags": [
           "API Discovery"
@@ -34,7 +34,7 @@
         }
       }
     },
-    "/apis/test-app-with-backend-app/v0alpha1/namespaces/{namespace}/app/instance": {
+    "/apis/test-app-with-backend/v0alpha1/namespaces/{namespace}/app/instance": {
       "get": {
         "tags": [
           "Settings"
@@ -60,7 +60,7 @@
         },
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
-          "group": "test-app-with-backend-app",
+          "group": "test-app-with-backend",
           "kind": "Settings",
           "version": "v0alpha1"
         }
@@ -149,7 +149,7 @@
         },
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
-          "group": "test-app-with-backend-app",
+          "group": "test-app-with-backend",
           "kind": "Settings",
           "version": "v0alpha1"
         }
@@ -241,7 +241,7 @@
         },
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
-          "group": "test-app-with-backend-app",
+          "group": "test-app-with-backend",
           "kind": "Settings",
           "version": "v0alpha1"
         }
@@ -349,7 +349,7 @@
         },
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
-          "group": "test-app-with-backend-app",
+          "group": "test-app-with-backend",
           "kind": "Settings",
           "version": "v0alpha1"
         }
@@ -376,7 +376,7 @@
         }
       ]
     },
-    "/apis/test-app-with-backend-app/v0alpha1/namespaces/{namespace}/app/instance/health": {
+    "/apis/test-app-with-backend/v0alpha1/namespaces/{namespace}/app/instance/health": {
       "get": {
         "tags": [
           "Settings"
@@ -397,7 +397,7 @@
         },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
-          "group": "test-app-with-backend-app",
+          "group": "test-app-with-backend",
           "kind": "HealthCheckResult",
           "version": "v0alpha1"
         }
@@ -415,7 +415,7 @@
         }
       ]
     },
-    "/apis/test-app-with-backend-app/v0alpha1/namespaces/{namespace}/app/instance/resources": {
+    "/apis/test-app-with-backend/v0alpha1/namespaces/{namespace}/app/instance/resources": {
       "get": {
         "tags": [
           "Settings"
@@ -436,7 +436,7 @@
         },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
-          "group": "test-app-with-backend-app",
+          "group": "test-app-with-backend",
           "kind": "Status",
           "version": "v0alpha1"
         }
@@ -557,7 +557,7 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "test-app-with-backend-app",
+            "group": "test-app-with-backend",
             "kind": "HealthCheckResult",
             "version": "v0alpha1"
           }
@@ -569,7 +569,7 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "test-app-with-backend-app/v0alpha1"
+              "test-app-with-backend/v0alpha1"
             ]
           },
           "kind": {
@@ -613,7 +613,7 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "test-app-with-backend-app",
+            "group": "test-app-with-backend",
             "kind": "Settings",
             "version": "v0alpha1"
           }
@@ -655,7 +655,7 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "test-app-with-backend-app",
+            "group": "test-app-with-backend",
             "kind": "SettingsList",
             "version": "v0alpha1"
           }

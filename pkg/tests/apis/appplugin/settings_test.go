@@ -306,6 +306,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 
 			t.Run("check health", func(t *testing.T) {
 				t.Skip("backend plugin not loading yet")
+
 				health, err := client.Resource.Get(ctx, instanceName, metav1.GetOptions{}, "health")
 				require.NoError(t, err)
 
@@ -324,7 +325,6 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 			// so editors and viewers can read and write plugin settings just like admins.
 			t.Run("editor and viewer can get settings", func(t *testing.T) {
 				writeSettings(t)
-
 				for _, user := range []apis.User{helper.Org1.Editor, helper.Org1.Viewer} {
 					t.Run(string(user.Identity.GetOrgRole()), func(t *testing.T) {
 						c := helper.GetResourceClient(apis.ResourceClientArgs{
