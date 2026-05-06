@@ -37,9 +37,17 @@ interface BrowseViewProps {
   folderUID: string | undefined;
   permissions: BrowseDashboardsPermissions;
   isReadOnlyRepo?: boolean;
+  isProvisionedFolder?: boolean;
 }
 
-export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRepo }: BrowseViewProps) {
+export function BrowseView({
+  folderUID,
+  width,
+  height,
+  permissions,
+  isReadOnlyRepo,
+  isProvisionedFolder,
+}: BrowseViewProps) {
   const status = useBrowseLoadingStatus(folderUID);
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
@@ -139,18 +147,31 @@ export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRe
     [selectedItems, childrenByParentUID]
   );
 
+  const flatTreeWithReadme = useMemo(() => {
+    if (!config.featureToggles.provisioningReadmes || !isProvisionedFolder || !folderUID || flatTree.length === 0) {
+      return flatTree;
+    }
+
+    return [
+      ...flatTree,
+      {
+        item: { kind: 'ui' as const, uiKind: 'readme' as const, uid: `folder-readme-${folderUID}` },
+        level: 0,
+        isOpen: false,
+      },
+    ];
+  }, [flatTree, isProvisionedFolder, folderUID]);
+
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
-      const treeItem = flatTree[itemIndex];
+      const treeItem = flatTreeWithReadme[itemIndex];
       if (!treeItem) {
         return false;
       }
       const item = treeItem.item;
-      const result = !(item.kind === 'ui' && item.uiKind === 'pagination-placeholder');
-
-      return result;
+      return !(item.kind === 'ui' && item.uiKind === 'pagination-placeholder');
     },
-    [flatTree]
+    [flatTreeWithReadme]
   );
 
   const handleLoadMore = useLoadNextChildrenPage();
@@ -202,7 +223,8 @@ export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRe
   return (
     <DashboardsTree
       permissions={permissions}
-      items={flatTree}
+      items={flatTreeWithReadme}
+      folderUID={folderUID}
       width={width}
       height={height}
       isSelected={isSelected}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -33,7 +34,13 @@ import (
 // fakeRemoteIndexStore is an in-memory RemoteIndexStore for unit tests.
 // DownloadIndex writes a minimal bleve index populated from the stored meta
 // so validateDownloadedIndex sees consistent data.
+//
+// All data access is mutex-guarded so cold-start tests can mutate the
+// snapshot set from a goroutine while coordinateColdStartBuild is
+// probing on the main goroutine. The mutex is uncontended in single-
+// threaded tests.
 type fakeRemoteIndexStore struct {
+	mu            sync.Mutex
 	data          map[ulid.ULID]*IndexMeta
 	listErr       error
 	downloadErr   error
@@ -54,6 +61,8 @@ func (l *noopIndexStoreLock) Lost() <-chan struct{} {
 }
 
 func (f *fakeRemoteIndexStore) put(key ulid.ULID, meta *IndexMeta) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.data == nil {
 		f.data = map[ulid.ULID]*IndexMeta{}
 	}
@@ -62,6 +71,8 @@ func (f *fakeRemoteIndexStore) put(key ulid.ULID, meta *IndexMeta) {
 
 func (f *fakeRemoteIndexStore) ListIndexes(context.Context, resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
 	f.listCalls.Add(1)
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
@@ -73,6 +84,8 @@ func (f *fakeRemoteIndexStore) ListIndexes(context.Context, resource.NamespacedR
 }
 
 func (f *fakeRemoteIndexStore) ListIndexKeys(context.Context, resource.NamespacedResource) ([]ulid.ULID, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
@@ -84,6 +97,8 @@ func (f *fakeRemoteIndexStore) ListIndexKeys(context.Context, resource.Namespace
 }
 
 func (f *fakeRemoteIndexStore) GetIndexMeta(_ context.Context, _ resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	meta, ok := f.data[k]
 	if !ok {
 		return nil, ErrSnapshotNotFound
@@ -93,10 +108,13 @@ func (f *fakeRemoteIndexStore) GetIndexMeta(_ context.Context, _ resource.Namesp
 
 func (f *fakeRemoteIndexStore) DownloadIndex(_ context.Context, _ resource.NamespacedResource, k ulid.ULID, destDir string) (*IndexMeta, error) {
 	f.downloadCalls.Add(1)
-	if f.downloadErr != nil {
-		return nil, f.downloadErr
-	}
+	f.mu.Lock()
 	meta, ok := f.data[k]
+	downloadErr := f.downloadErr
+	f.mu.Unlock()
+	if downloadErr != nil {
+		return nil, downloadErr
+	}
 	if !ok {
 		return nil, fmt.Errorf("not found")
 	}
@@ -422,7 +440,8 @@ func TestTryDownloadRemoteSnapshot_AllFilteredOut(t *testing.T) {
 	assert.Zero(t, dt.store.downloadCalls.Load(), "DownloadIndex should not be called when all candidates are filtered out")
 }
 
-// freshDownloadTest bundles the shared setup used by tryDownloadFreshSnapshot tests.
+// freshDownloadTest bundles the shared setup used by
+// tryDownloadFreshSameVersionSnapshot tests on the rebuild policy.
 type freshDownloadTest struct {
 	be          *bleveBackend
 	metrics     *resource.BleveIndexMetrics
@@ -450,7 +469,11 @@ func newFreshDownloadTest(t *testing.T, store *fakeRemoteIndexStore) freshDownlo
 
 func (dt freshDownloadTest) run(t *testing.T, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (bleve.Index, int64, error) {
 	t.Helper()
-	idx, _, rv, err := dt.be.tryDownloadFreshSnapshot(context.Background(), dt.ns, dt.resourceDir, lastImportTime, maxFreshSnapshotAge, dt.be.log)
+	idx, _, rv, err := dt.be.tryDownloadFreshSameVersionSnapshot(
+		context.Background(), dt.ns, dt.resourceDir, lastImportTime, maxFreshSnapshotAge,
+		snapshotPolicySameVersion, "search.remote_index_snapshot.download_fresh",
+		dt.be.log,
+	)
 	if idx != nil {
 		t.Cleanup(func() { _ = idx.Close() })
 	}
@@ -1205,4 +1228,440 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 			wantErr: "transport boom",
 		},
 	})
+}
+
+// coldStartFakeStore extends fakeRemoteIndexStore with controllable lock
+// behaviour and an UploadIndex stub so we can exercise cold-start
+// coordination paths (acquired-lock, downloaded-after-wait, wait-timed-
+// out, lock backend error). Snapshot data and its mutex come from the
+// embedded base store; this struct's own mu guards only lock-state
+// fields.
+type coldStartFakeStore struct {
+	*fakeRemoteIndexStore
+
+	mu                sync.Mutex // guards lockHeld, lockBackendErr, currentLock
+	lockHeld          bool
+	lockBackendErr    error // returned (instead of errLockHeld) when set
+	currentLock       *coldStartFakeLock
+	lockAcquireCalls  atomic.Int32
+	lockReleasedCalls atomic.Int32
+
+	uploadCalls atomic.Int32
+}
+
+func newColdStartFakeStore() *coldStartFakeStore {
+	return &coldStartFakeStore{fakeRemoteIndexStore: &fakeRemoteIndexStore{}}
+}
+
+func (s *coldStartFakeStore) setLockHeld(held bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.lockHeld = held
+}
+
+func (s *coldStartFakeStore) LockBuildIndex(context.Context, resource.NamespacedResource, string) (IndexStoreLock, error) {
+	s.lockAcquireCalls.Add(1)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.lockBackendErr != nil {
+		return nil, s.lockBackendErr
+	}
+	if s.lockHeld {
+		return nil, errLockHeld
+	}
+	s.lockHeld = true
+	s.currentLock = &coldStartFakeLock{store: s, lost: make(chan struct{})}
+	return s.currentLock, nil
+}
+
+// signalLockLost simulates a heartbeat-detected lease loss on the most
+// recently acquired lock. Tests use this to drive the leader's pre-upload
+// checkSnapshotLock branch.
+func (s *coldStartFakeStore) signalLockLost() {
+	s.mu.Lock()
+	lock := s.currentLock
+	s.mu.Unlock()
+	if lock != nil {
+		lock.markLost()
+	}
+}
+
+func (s *coldStartFakeStore) UploadIndex(context.Context, resource.NamespacedResource, string, IndexMeta) (ulid.ULID, error) {
+	s.uploadCalls.Add(1)
+	return ulid.Make(), nil
+}
+
+type coldStartFakeLock struct {
+	store       *coldStartFakeStore
+	lost        chan struct{}
+	releaseOnce sync.Once
+	lostOnce    sync.Once
+}
+
+func (l *coldStartFakeLock) Release() error {
+	l.releaseOnce.Do(func() {
+		l.store.mu.Lock()
+		l.store.lockHeld = false
+		l.store.mu.Unlock()
+		l.store.lockReleasedCalls.Add(1)
+	})
+	return nil
+}
+
+func (l *coldStartFakeLock) Lost() <-chan struct{} { return l.lost }
+
+func (l *coldStartFakeLock) markLost() {
+	l.lostOnce.Do(func() { close(l.lost) })
+}
+
+// withColdStartTimings overrides the package-level wait-loop timings for the
+// duration of the test. Restored via t.Cleanup.
+func withColdStartTimings(t *testing.T, poll, total time.Duration) {
+	t.Helper()
+	prevPoll, prevTotal := coldStartPollInterval, coldStartTotalWait
+	coldStartPollInterval = poll
+	coldStartTotalWait = total
+	t.Cleanup(func() {
+		coldStartPollInterval = prevPoll
+		coldStartTotalWait = prevTotal
+	})
+}
+
+// coldStartTest bundles common setup for coordinateColdStartBuild tests.
+type coldStartTest struct {
+	be          *bleveBackend
+	metrics     *resource.BleveIndexMetrics
+	store       *coldStartFakeStore
+	ns          resource.NamespacedResource
+	resourceDir string
+}
+
+func newColdStartTest(t *testing.T, store *coldStartFakeStore) coldStartTest {
+	t.Helper()
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+	ns := newTestNsResource()
+	return coldStartTest{
+		be:          be,
+		metrics:     metrics,
+		store:       store,
+		ns:          ns,
+		resourceDir: filepath.Join(be.opts.Root, ns.Namespace, ns.Resource+"."+ns.Group),
+	}
+}
+
+func (ct coldStartTest) coordinate(ctx context.Context, lastImportTime time.Time) (string, IndexStoreLock, error) {
+	idx, _, _, lock, err := ct.be.coordinateColdStartBuild(ctx, ct.ns, ct.resourceDir, lastImportTime, ct.be.log)
+	role := "build_alone"
+	switch {
+	case err != nil:
+		role = "error"
+	case idx != nil:
+		role = "downloaded"
+		_ = idx.Close()
+	case lock != nil:
+		role = "leader"
+	}
+	return role, lock, err
+}
+
+func (ct coldStartTest) coldStartCounter(outcome string) float64 {
+	return testutil.ToFloat64(ct.metrics.IndexSnapshotColdStarts.WithLabelValues(outcome))
+}
+
+func TestColdStart_BecameLeader(t *testing.T) {
+	store := newColdStartFakeStore()
+	ct := newColdStartTest(t, store)
+
+	role, lock, err := ct.coordinate(context.Background(), time.Time{})
+	require.NoError(t, err)
+	assert.Equal(t, "leader", role)
+	require.NotNil(t, lock)
+	assert.Equal(t, int32(1), store.lockAcquireCalls.Load())
+	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeAcquiredLock))
+
+	// Releasing the leader's lock must unwind the fake's lockHeld state so
+	// other replicas can acquire next.
+	require.NoError(t, lock.Release())
+	store.mu.Lock()
+	assert.False(t, store.lockHeld)
+	store.mu.Unlock()
+}
+
+func TestColdStart_WaitedForLeader(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.setLockHeld(true) // another instance is the leader
+	ct := newColdStartTest(t, store)
+	withColdStartTimings(t, 10*time.Millisecond, time.Second)
+
+	// While coordinateColdStartBuild is in its wait loop, simulate the
+	// leader publishing a snapshot. The next probe tick should pick it up.
+	go func() {
+		time.Sleep(25 * time.Millisecond)
+		store.put(makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	}()
+
+	role, lock, err := ct.coordinate(context.Background(), time.Time{})
+	require.NoError(t, err)
+	assert.Equal(t, "downloaded", role)
+	assert.Nil(t, lock)
+	// The waiter must not steal the leader's lock.
+	assert.True(t, store.lockHeldNow())
+	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeDownloadedAfterWait))
+}
+
+func TestColdStart_WaitTimeout(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.setLockHeld(true)
+	ct := newColdStartTest(t, store)
+	withColdStartTimings(t, 5*time.Millisecond, 30*time.Millisecond)
+
+	role, lock, err := ct.coordinate(context.Background(), time.Time{})
+	require.NoError(t, err)
+	assert.Equal(t, "build_alone", role)
+	assert.Nil(t, lock)
+	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeWaitTimedOut))
+	// We retried the lock at least a couple times before giving up.
+	assert.GreaterOrEqual(t, store.lockAcquireCalls.Load(), int32(2))
+}
+
+func TestColdStart_AcquiresLockAfterLeaderRelease(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.setLockHeld(true)
+	ct := newColdStartTest(t, store)
+	withColdStartTimings(t, 10*time.Millisecond, time.Second)
+
+	// Simulate the leader releasing the lock without uploading a snapshot
+	// (e.g. its build failed). The next tryAcquire in the wait loop should
+	// promote us.
+	go func() {
+		time.Sleep(25 * time.Millisecond)
+		store.setLockHeld(false)
+	}()
+
+	role, lock, err := ct.coordinate(context.Background(), time.Time{})
+	require.NoError(t, err)
+	assert.Equal(t, "leader", role)
+	require.NotNil(t, lock)
+	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeAcquiredLock))
+}
+
+func TestColdStart_LockBackendErrorBuildsAlone(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.lockBackendErr = errors.New("backend down")
+	ct := newColdStartTest(t, store)
+
+	role, lock, err := ct.coordinate(context.Background(), time.Time{})
+	require.NoError(t, err)
+	assert.Equal(t, "build_alone", role)
+	assert.Nil(t, lock)
+	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeLockError))
+}
+
+// TestColdStart_LockBackendContextErrorPropagates verifies that a context
+// error returned by LockBuildIndex itself (e.g. cancellation arriving
+// mid-acquire) is propagated, not swallowed as a build-alone fallback.
+func TestColdStart_LockBackendContextErrorPropagates(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.lockBackendErr = context.Canceled
+	ct := newColdStartTest(t, store)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // ctx is already canceled before the call
+
+	_, _, err := ct.coordinate(ctx, time.Time{})
+	require.ErrorIs(t, err, context.Canceled)
+	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeLockError), "context cancel must not be recorded as lock_error")
+	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
+	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeContextCanceled))
+}
+
+func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.setLockHeld(true)
+	ct := newColdStartTest(t, store)
+	withColdStartTimings(t, 10*time.Millisecond, time.Second)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(20 * time.Millisecond)
+		cancel()
+	}()
+
+	_, _, err := ct.coordinate(ctx, time.Time{})
+	require.ErrorIs(t, err, context.Canceled)
+	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
+	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeContextCanceled))
+}
+
+// runBuildIndexColdStart wires a bleveBackend around store and calls
+// BuildIndex on the cachedIndex==nil / !rebuild path with a stock builder
+// that records its invocation count. builderExtra (optional) runs inside
+// the build closure for tests that need to perturb store state
+// mid-build. MinDocCount=1, MaxIndexAge=24h, lastImportTime is zero,
+// rebuild=false, maxFreshSnapshotAge=0 (rebuild-path knob doesn't affect
+// cold-start).
+func runBuildIndexColdStart(t *testing.T, store RemoteIndexStore, builderExtra func()) (
+	*resource.BleveIndexMetrics, *atomic.Int32, resource.ResourceIndex, error,
+) {
+	t.Helper()
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+	builderCalled := &atomic.Int32{}
+	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, nil, "startup",
+		func(resource.ResourceIndex) (int64, error) {
+			builderCalled.Add(1)
+			if builderExtra != nil {
+				builderExtra()
+			}
+			return 1, nil
+		},
+		nil, false, time.Time{}, 0)
+	return metrics, builderCalled, idx, err
+}
+
+// TestBuildIndex_ColdStartFastPathDownloads verifies that on the
+// initial-startup path (cachedIndex == nil, !rebuild) BuildIndex picks up
+// a same-version snapshot from the remote store and skips the builder.
+// With a fresh snapshot present, the tiered selection runs first and
+// downloads it before the cold-start path is even considered.
+func TestBuildIndex_ColdStartFastPathDownloads(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.put(makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	// The tiered remote-snapshot selection runs first and downloads —
+	// that's enough to skip the builder. The cold-start path only runs if
+	// the tiered selection misses; here it finds the snapshot first.
+	assert.Zero(t, builderCalled.Load(), "builder must not run when a snapshot is available")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloads.WithLabelValues(snapshotPolicyTiered, snapshotStatusSuccess)))
+}
+
+// TestBuildIndex_ColdStartLeaderUploads exercises the leader path: empty
+// store, leader builds from scratch, and the leader's freshly-built snapshot
+// is uploaded immediately under the held lock.
+func TestBuildIndex_ColdStartLeaderUploads(t *testing.T) {
+	store := newColdStartFakeStore()
+	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
+	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
+	assert.Equal(t, int32(1), store.lockReleasedCalls.Load(), "leader must release the build lock")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+}
+
+// TestBuildIndex_ColdStartLeaderLockLostDuringBuild verifies that if the
+// leader's lock is lost while the builder is running, the immediate upload
+// is skipped (recorded as skip_lock_lost) but the build itself still
+// completes — lock-lost is coordination, not a fatal error.
+func TestBuildIndex_ColdStartLeaderLockLostDuringBuild(t *testing.T) {
+	store := newColdStartFakeStore()
+	// Simulate heartbeat-detected lease loss while we're in the middle of
+	// the from-scratch build.
+	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, store.signalLockLost)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
+	assert.Zero(t, store.uploadCalls.Load(), "leader must skip immediate upload after lock loss")
+	assert.Equal(t, int32(1), store.lockReleasedCalls.Load(), "leader still releases the lock object")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSkipLockLost)))
+	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+}
+
+// TestBuildIndex_ColdStartTimeoutBuildsAlone verifies that when the lock is
+// permanently held by another instance and no snapshot ever appears, the
+// timeout path runs the builder anyway (no upload).
+func TestBuildIndex_ColdStartTimeoutBuildsAlone(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.setLockHeld(true)
+	withColdStartTimings(t, 5*time.Millisecond, 30*time.Millisecond)
+	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	assert.Equal(t, int32(1), builderCalled.Load(), "build alone after timeout")
+	assert.Zero(t, store.uploadCalls.Load(), "no leader upload on timeout path")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeWaitTimedOut)))
+}
+
+// TestBuildIndex_ColdStartSkippedWhenMaxIndexAgeZero verifies that
+// BuildIndex skips cold-start coordination entirely when MaxIndexAge=0:
+// the probe would be a no-op (all freshness filters reject) so the
+// lock+wait would only serialise duplicate from-scratch builds without
+// any snapshot-reuse upside. With the gate, the builder runs in parallel
+// across replicas (today's behaviour without this PR's coordination).
+func TestBuildIndex_ColdStartSkippedWhenMaxIndexAgeZero(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.setLockHeld(true) // would force the wait loop if cold-start ran
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		// MaxIndexAge intentionally zero.
+	})
+
+	builderCalled := atomic.Int32{}
+	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, nil, "startup",
+		func(resource.ResourceIndex) (int64, error) {
+			builderCalled.Add(1)
+			return 1, nil
+		},
+		nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run (cold-start coordination is skipped)")
+	assert.Zero(t, store.lockAcquireCalls.Load(), "cold-start must not attempt the lock when MaxIndexAge=0")
+	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
+	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeWaitTimedOut)))
+}
+
+// TestBuildIndex_ColdStartContextCancelPropagates verifies that a context
+// cancellation during cold-start coordination aborts BuildIndex with the
+// context error rather than falling back to a full from-scratch build.
+func TestBuildIndex_ColdStartContextCancelPropagates(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.setLockHeld(true) // force entry to the wait loop
+	withColdStartTimings(t, 5*time.Millisecond, time.Second)
+	be, _ := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(20 * time.Millisecond)
+		cancel()
+	}()
+
+	builderCalled := atomic.Int32{}
+	idx, err := be.BuildIndex(ctx, newTestNsResource(), 10, nil, "startup",
+		func(resource.ResourceIndex) (int64, error) {
+			builderCalled.Add(1)
+			return 1, nil
+		},
+		nil, false, time.Time{}, 0)
+	require.ErrorIs(t, err, context.Canceled)
+	assert.Nil(t, idx)
+	assert.Zero(t, builderCalled.Load(), "builder must not run after context cancel")
+}
+
+// lockHeldNow exposes the fake's lockHeld state for tests that assert the
+// leader's lock survived a download by a waiter.
+func (s *coldStartFakeStore) lockHeldNow() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.lockHeld
 }
