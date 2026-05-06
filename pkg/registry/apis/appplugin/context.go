@@ -24,7 +24,7 @@ func withShimDTO(ctx context.Context) context.Context {
 	return context.WithValue(ctx, ctxAppDTO{}, &shimDTO{})
 }
 
-func shimFromContext(ctx context.Context) *shimDTO {
+func legacyShimFromContext(ctx context.Context) *shimDTO {
 	shim, ok := ctx.Value(ctxAppDTO{}).(*shimDTO)
 	if !ok {
 		return nil
@@ -32,21 +32,67 @@ func shimFromContext(ctx context.Context) *shimDTO {
 	return shim
 }
 
-// Gets plugin context with decrypted secure values
-func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Context, backend.PluginContext, error) {
+func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Settings, pluginsettings.SecureJsonGetter, error) {
 	ctx = withShimDTO(ctx)
 	raw, err := b.getter.Get(ctx, apppluginV0.INSTANCE_NAME, &v1.GetOptions{})
 	if err != nil {
-		return ctx, backend.PluginContext{}, err
+		return nil, nil, err
 	}
 	settings, ok := raw.(*apppluginV0.Settings)
 	if !ok {
-		return ctx, backend.PluginContext{}, fmt.Errorf("unexpected type %T when getting plugin settings", raw)
+		return nil, nil, fmt.Errorf("unexpected type %T when getting plugin settings", raw)
 	}
 	if !settings.Spec.Enabled {
-		return ctx, backend.PluginContext{}, k8serrors.NewBadRequest("plugin is not enabled")
+		return nil, nil, k8serrors.NewBadRequest("plugin is not enabled")
 	}
 
+	if len(settings.Secure) < 1 {
+		return settings, func(ctx context.Context) (map[string]string, error) { return map[string]string{}, nil }, nil
+	}
+
+	shim := legacyShimFromContext(ctx)
+	if shim != nil && shim.getDecryptedSecureJSONData != nil {
+		return settings, shim.getDecryptedSecureJSONData, nil
+	}
+
+	// Returns settings and a function to get decrypted secure values
+	return settings, func(ctx context.Context) (map[string]string, error) {
+		names := make([]string, 0, len(settings.Secure))
+		for k, v := range settings.Secure {
+			if v.Name == "" {
+				return nil, fmt.Errorf("invalid secure value name: %s:", k)
+			}
+			names = append(names, v.Name)
+		}
+		lookup, err := b.decrypter.Decrypt(ctx, b.groupVersion.Group, settings.Namespace, names...)
+		if err != nil {
+			return nil, fmt.Errorf("error decrypting secure values: %w", err)
+		}
+
+		decrypted := make(map[string]string)
+		for k, sv := range settings.Secure {
+			v, ok := lookup[sv.Name]
+			if !ok {
+				continue // or error?
+			}
+			if v.Error() != nil {
+				return nil, fmt.Errorf("error decrypting secure value: %s / %w", k, v.Error())
+			}
+			val := v.Value()
+			if val != nil {
+				decrypted[k] = val.DangerouslyExposeAndConsumeValue()
+			}
+		}
+		return decrypted, nil
+	}, nil
+}
+
+// Gets plugin context with decrypted secure values
+func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Context, backend.PluginContext, error) {
+	settings, secure, err := b.getSettings(ctx)
+	if err != nil {
+		return ctx, backend.PluginContext{}, err
+	}
 	instance := &backend.AppInstanceSettings{
 		APIVersion: b.groupVersion.Version,
 	}
@@ -54,44 +100,9 @@ func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Con
 	if err != nil {
 		return ctx, backend.PluginContext{}, fmt.Errorf("error marshalling JsonData: %w", err)
 	}
-
-	if len(settings.Secure) > 0 {
-		shim := shimFromContext(ctx)
-		if shim != nil && shim.getDecryptedSecureJSONData != nil {
-			// Odd this does not have an error???!!
-			instance.DecryptedSecureJSONData, err = shim.getDecryptedSecureJSONData(ctx)
-			if err != nil {
-				return ctx, backend.PluginContext{}, k8serrors.NewBadRequest("error getting decrypted secure values")
-			}
-		} else {
-			names := make([]string, 0, len(settings.Secure))
-			for k, v := range settings.Secure {
-				if v.Name == "" {
-					return ctx, backend.PluginContext{}, fmt.Errorf("invalid secure value name: %s: %w", k, err)
-				}
-				names = append(names, v.Name)
-			}
-			lookup, err := b.decrypter.Decrypt(ctx, b.groupVersion.Group, settings.Namespace, names...)
-			if err != nil {
-				return ctx, backend.PluginContext{}, fmt.Errorf("error decrypting secure values: %w", err)
-			}
-
-			instance.DecryptedSecureJSONData = make(map[string]string)
-			for k, sv := range settings.Secure {
-				v, ok := lookup[sv.Name]
-				if !ok {
-					continue // or error?
-				}
-				if v.Error() != nil {
-					return ctx, backend.PluginContext{}, fmt.Errorf("error decrypting secure value: %s / %w", k, v.Error())
-				}
-				val := v.Value()
-				if val != nil {
-					instance.DecryptedSecureJSONData[k] = string(*val)
-				}
-			}
-		}
+	instance.DecryptedSecureJSONData, err = secure(ctx)
+	if err != nil {
+		return ctx, backend.PluginContext{}, fmt.Errorf("error decrypting secure values: %w", err)
 	}
-
 	return b.contextProvider.PluginContextForApp(ctx, b.pluginJSON.ID, instance)
 }

@@ -3,7 +3,6 @@ package appplugin
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -17,13 +16,13 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	gaprequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
@@ -31,7 +30,7 @@ import (
 type subProxyREST struct {
 	pluginID             string
 	routes               []*plugins.Route
-	contextProvider      func(ctx context.Context) (context.Context, backend.PluginContext, error)
+	settingsProvider     func(ctx context.Context) (*apppluginV0.Settings, pluginsettings.SecureJsonGetter, error)
 	accessControl        ac.AccessControl
 	tracer               tracing.Tracer
 	features             featuremgmt.FeatureToggles
@@ -45,7 +44,7 @@ func newProxy(b *AppPluginAPIBuilder) *subProxyREST {
 	return &subProxyREST{
 		pluginID:         b.pluginJSON.ID,
 		routes:           b.pluginJSON.Routes,
-		contextProvider:  b.getPluginContext,
+		settingsProvider: b.getSettings,
 		accessControl:    b.opts.AccessControl,
 		DataProxyLogging: b.opts.DataProxyLogging,
 		SendUserHeader:   b.opts.SendUserHeader,
@@ -96,8 +95,9 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	if name != apppluginV0.INSTANCE_NAME {
 		return nil, k8serrors.NewBadRequest("name can only be: " + apppluginV0.INSTANCE_NAME)
 	}
-	ns := request.NamespaceValue(ctx)
-	if ns == "" {
+
+	ns, err := gaprequest.NamespaceInfoFrom(ctx, true)
+	if err != nil {
 		return nil, k8serrors.NewBadRequest("missing namespace in connect context")
 	}
 	user, err := identity.GetRequester(ctx)
@@ -106,7 +106,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		ctx, pluginCtx, err := r.contextProvider(request.WithNamespace(req.Context(), ns))
+		settings, secure, err := r.settingsProvider(request.WithNamespace(req.Context(), ns.Value))
 		if err != nil {
 			responder.Error(err)
 			return
@@ -115,14 +115,10 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		defer m.Record()
 
 		ps := &pluginsettings.DTO{
-			OrgID:         pluginCtx.OrgID, // nolint:staticcheck
-			PluginID:      r.pluginID,
-			PluginVersion: pluginCtx.PluginVersion,
-			Enabled:       true,
-		}
-		if err = json.Unmarshal(pluginCtx.AppInstanceSettings.JSONData, &ps.JSONData); err != nil {
-			responder.Error(err)
-			return
+			OrgID:    ns.OrgID, // will be 1 in cloud
+			PluginID: r.pluginID,
+			Enabled:  true,
+			JSONData: settings.Spec.JsonData.Object,
 		}
 
 		proxyReq, proxyPath, err := proxyRequest(ctx, req)
@@ -131,14 +127,10 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		secureJsonData := func(ctx context.Context) (map[string]string, error) {
-			return pluginCtx.AppInstanceSettings.DecryptedSecureJSONData, nil
-		}
-
 		p, err := pluginproxy.NewPluginProxy(ps, r.routes,
 			proxyReq, w, user,
 			proxyPath, r.DataProxyLogging, r.SendUserHeader,
-			secureJsonData, r.tracer, r.pluginProxyTransport, r.accessControl, r.features)
+			secure, r.tracer, r.pluginProxyTransport, r.accessControl, r.features)
 		if err != nil {
 			responder.Error(fmt.Errorf("failed to create plugin proxy: %w", err))
 			return

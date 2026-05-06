@@ -151,7 +151,7 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 	if ps != nil {
-		shim := shimFromContext(ctx)
+		shim := legacyShimFromContext(ctx)
 		if shim != nil {
 			shim.getDecryptedSecureJSONData = func(ctx context.Context) (map[string]string, error) {
 				v := s.pluginSettings.DecryptedValues(ps)
