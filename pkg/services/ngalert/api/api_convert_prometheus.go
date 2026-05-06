@@ -16,7 +16,6 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/alerting/definition"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -32,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
@@ -147,7 +147,7 @@ type ConvertPrometheusSrv struct {
 
 type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, identifier string) error
-	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (definition.RenameResources, error)
+	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error)
 	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error)
 }
 
@@ -646,7 +646,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		return errorToResponse(fmt.Errorf("failed to save alertmanager configuration: %w", err))
 	}
 
-	// Convert definition.RenameResources to API RenameResources type
+	// Convert merge.RenameResources to API RenameResources type
 	var apiRenamed *apimodels.RenameResources
 	if len(renamed.Receivers) > 0 || len(renamed.TimeIntervals) > 0 {
 		apiRenamed = &apimodels.RenameResources{

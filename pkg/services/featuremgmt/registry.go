@@ -2168,10 +2168,10 @@ var (
 		{
 			Name:        "newClickhouseConfigPageDesign",
 			Description: "Enables new design for the Clickhouse data source configuration page",
-			Stage:       FeatureStagePrivatePreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "teamFolders",

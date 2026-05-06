@@ -555,7 +555,10 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			if provisioningAppURL != "" {
 				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, resources.IsFolderMetadataEnabled(c.Settings)))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, repository.NewIncrementalSyncPolicy(
+				resources.IsFolderMetadataEnabled(c.Settings),
+				provisioningSec.Key("max_incremental_changes").MustInt(100),
+			)))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
