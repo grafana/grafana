@@ -99,7 +99,7 @@ export type QueryLibraryContextType = {
   /** Template variable overrides keyed by unresolved variable string (for example `${var}`) */
   templateVariableOverrides: Record<string, string>;
   setTemplateVariableOverrides: (overrides: Record<string, string>) => void;
-  /** True when the modal was opened from outside (e.g. "Save query" from panel editor/Explore) to save a new query, as opposed to being opened directly or via Duplicate */
+  /** True when the modal was opened from outside (e.g. "Save query" from panel editor/Explore) to save a new query */
   openedToSaveQuery: boolean;
 };
 
