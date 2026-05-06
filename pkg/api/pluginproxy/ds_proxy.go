@@ -240,9 +240,9 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	if proxy.cfg.DataProxyForwardUserAgent {
 		if originalUA := req.Header.Get("User-Agent"); originalUA != "" {
 			if ua != "" {
-			   ua = ua + " " + originalUA
+				ua = ua + " " + originalUA
 			} else {
-			   ua = originalUA
+				ua = originalUA
 			}
 		}
 	}
