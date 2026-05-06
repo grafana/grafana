@@ -4145,15 +4145,18 @@
     {
       "metadata": {
         "name": "newClickhouseConfigPageDesign",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1777998437814",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-05 16:27:17.814691 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables new design for the Clickhouse data source configuration page",
-        "stage": "privatePreview",
+        "stage": "GA",
         "codeowner": "@grafana/data-sources-plugins",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

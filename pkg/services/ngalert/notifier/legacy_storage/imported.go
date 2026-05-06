@@ -9,13 +9,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 type ImportedConfigRevision struct {
 	identifier     string
 	rev            *ConfigRevision
-	opts           definition.MergeOpts
+	opts           merge.MergeOpts
 	importedConfig *definition.PostableApiAlertingConfig
 }
 
@@ -29,7 +30,7 @@ func (rev *ConfigRevision) Imported() (ImportedConfigRevision, error) {
 	// support only one config for now
 	mimirCfg := rev.Config.ExtraConfigs[0]
 	result.identifier = mimirCfg.Identifier
-	opts := definition.MergeOpts{
+	opts := merge.MergeOpts{
 		DedupSuffix:     mimirCfg.Identifier,
 		SubtreeMatchers: mimirCfg.MergeMatchers,
 	}
@@ -51,7 +52,7 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 		return nil, nil
 	}
 	original := e.rev.Config.AlertmanagerConfig.GetReceivers()
-	merged, _ := definition.MergeReceivers(original, e.importedConfig.GetReceivers(), e.opts.DedupSuffix)
+	merged, _ := merge.MergeReceivers(original, e.importedConfig.GetReceivers(), e.opts.DedupSuffix)
 
 	capacity := len(uids)
 	if capacity == 0 {
@@ -91,7 +92,7 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTime
 	grafanaTime := e.rev.Config.AlertmanagerConfig.TimeIntervals
 
 	// Merge to get the renames map (only renamed if name collision occurs)
-	_, renames := definition.MergeTimeIntervals(
+	_, renames := merge.MergeTimeIntervals(
 		grafanaMute,
 		grafanaTime,
 		importedMute,
@@ -127,7 +128,7 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 	}
 	m := make(map[string]int)
 	receiverUseCounts([]*definitions.Route{e.importedConfig.Route}, m)
-	_, renames := definition.MergeReceivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.opts.DedupSuffix)
+	_, renames := merge.MergeReceivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.opts.DedupSuffix)
 	for original, renamed := range renames {
 		if cnt, ok := m[original]; ok {
 			delete(m, original)
@@ -142,12 +143,12 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 		return nil, nil
 	}
 
-	renamed, err := definition.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.opts)
+	renamed, err := merge.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deduplicate imported config resources: %w", err)
 	}
 
-	definition.RenameResourceUsagesInRoutes([]*definition.Route{e.importedConfig.Route}, renamed)
+	merge.RenameResourceUsagesInRoutes([]*definition.Route{e.importedConfig.Route}, renamed)
 
 	mr := NewManagedRoute(e.identifier, e.importedConfig.Route)
 	mr.Provenance = models.ProvenanceConvertedPrometheus
