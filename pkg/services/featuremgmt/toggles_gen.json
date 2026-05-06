@@ -2713,6 +2713,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.unifiedHomepage",
+        "resourceVersion": "1778051143810",
+        "creationTimestamp": "2026-05-06T07:05:43Z"
+      },
+      "spec": {
+        "description": "Replaces the bundled home dashboard with the unified homepage React page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-12-06T20:21:21Z"

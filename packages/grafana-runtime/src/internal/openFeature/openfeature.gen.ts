@@ -39,6 +39,8 @@ export const FlagKeys = {
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
   GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
+  /** Replaces the bundled home dashboard with the unified homepage React page */
+  GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -216,6 +218,17 @@ export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.orgDashboardTemplates", false, options).value;
+};
+
+/**
+ * Replaces the bundled home dashboard with the unified homepage React page
+ *
+ * **Details:**
+ * - flag key: `grafana.unifiedHomepage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.unifiedHomepage", false, options).value;
 };
 
 /**
