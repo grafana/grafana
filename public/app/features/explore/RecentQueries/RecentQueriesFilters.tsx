@@ -2,18 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  Button,
-  Divider,
-  FilterInput,
-  InlineSwitch,
-  Label,
-  MultiCombobox,
-  RadioButtonGroup,
-  Stack,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, Divider, FilterInput, InlineSwitch, Label, MultiCombobox, Stack, Text, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 
 import { getRecentQueriesSortOptions } from './recentQueriesSortOptions';
@@ -41,11 +30,6 @@ export function RecentQueriesFilters({
 }: Props) {
   const styles = useStyles2(getStyles);
 
-  const starredOptions = [
-    { value: false, label: t('recent-queries.filters.all-queries', 'All queries') },
-    { value: true, label: t('recent-queries.filters.starred', 'Starred queries') },
-  ];
-
   return (
     <div className={styles.filters} role="region" aria-label={t('recent-queries.filters.panel-label', 'Filters')}>
       <fieldset disabled={Boolean(disabled)} className={styles.fieldset}>
@@ -62,22 +46,8 @@ export function RecentQueriesFilters({
 
           <Divider spacing={0} />
 
-          {/* Group 1: Starred toggle + Search */}
+          {/* Group 1: Search */}
           <Stack direction="column" gap={1}>
-            <Stack direction="column" gap={0}>
-              <Label>{t('recent-queries.filters.starred-label', 'Starred queries')}</Label>
-              <RadioButtonGroup
-                options={starredOptions}
-                value={filters.showStarredOnly}
-                onChange={(value) => {
-                  onAnalyticsEvent?.('starredFilterChanged', { showStarredOnly: value });
-                  setFilters({ showStarredOnly: value });
-                }}
-                aria-label={t('recent-queries.filters.starred-label', 'Starred queries')}
-                fullWidth
-                disabled={disabled}
-              />
-            </Stack>
             <Stack direction="column" gap={0}>
               <Label htmlFor={SEARCH_ID}>{t('recent-queries.filters.search-label', 'Search')}</Label>
               <FilterInput

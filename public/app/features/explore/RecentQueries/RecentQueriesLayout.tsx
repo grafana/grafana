@@ -53,7 +53,6 @@ export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, o
 
   const handleClear = useCallback(() => {
     setFilters({
-      showStarredOnly: false,
       searchQuery: '',
       datasourceFilters: [],
       sortingOption: {

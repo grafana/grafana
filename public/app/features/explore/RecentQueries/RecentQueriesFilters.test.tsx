@@ -25,7 +25,6 @@ const mockSetFilters = jest.fn();
 const mockOnClear = jest.fn();
 
 const defaultFilters: RecentQueriesFilterState = {
-  showStarredOnly: false,
   searchQuery: '',
   datasourceFilters: [],
   sortingOption: {},
@@ -60,7 +59,6 @@ describe('RecentQueriesFilters', () => {
   it('renders all section labels (no Author or Tags)', () => {
     render(<RecentQueriesFilters {...defaultProps} />);
     const filtersRegion = screen.getByRole('region', { name: 'Filters' });
-    expect(within(filtersRegion).getAllByText('Starred queries').length).toBeGreaterThan(0);
     expect(within(filtersRegion).getByText('Search')).toBeInTheDocument();
     expect(within(filtersRegion).getByText('Data source name')).toBeInTheDocument();
     expect(within(filtersRegion).getByText('Sort')).toBeInTheDocument();
@@ -75,20 +73,6 @@ describe('RecentQueriesFilters', () => {
     const { user } = render(<RecentQueriesFilters {...defaultProps} />);
     await user.click(screen.getByRole('button', { name: 'Clear' }));
     expect(mockOnClear).toHaveBeenCalledTimes(1);
-  });
-
-  it('calls setFilters with showStarredOnly true when Starred option is selected', async () => {
-    const { user } = render(<RecentQueriesFilters {...defaultProps} />);
-    await user.click(screen.getByRole('radio', { name: 'Starred queries' }));
-    expect(mockSetFilters).toHaveBeenCalledWith({ showStarredOnly: true });
-  });
-
-  it('calls setFilters with showStarredOnly false when All queries option is selected', async () => {
-    const { user } = render(
-      <RecentQueriesFilters {...defaultProps} filters={{ ...defaultFilters, showStarredOnly: true }} />
-    );
-    await user.click(screen.getByRole('radio', { name: 'All queries' }));
-    expect(mockSetFilters).toHaveBeenCalledWith({ showStarredOnly: false });
   });
 
   it('calls setFilters with searchQuery when search input changes', async () => {
@@ -123,13 +107,6 @@ describe('RecentQueriesFilters', () => {
     expect(mockSetFilters).toHaveBeenCalledWith({ rememberFilters: true });
   });
 
-  it('disables radio buttons when disabled prop is true', () => {
-    render(<RecentQueriesFilters {...defaultProps} disabled />);
-    screen.getAllByRole('radio').forEach((radio) => {
-      expect(radio).toBeDisabled();
-    });
-  });
-
   it('disables the search input when disabled prop is true', () => {
     render(<RecentQueriesFilters {...defaultProps} disabled />);
     expect(screen.getByPlaceholderText('Search by...')).toBeDisabled();
@@ -143,12 +120,6 @@ describe('RecentQueriesFilters', () => {
   it('disables the Clear button when disabled prop is true', () => {
     render(<RecentQueriesFilters {...defaultProps} disabled />);
     expect(screen.getByRole('button', { name: 'Clear' })).toBeDisabled();
-  });
-
-  it('fires analytics event when starred filter changes', async () => {
-    const { user } = render(<RecentQueriesFilters {...defaultProps} />);
-    await user.click(screen.getByRole('radio', { name: 'Starred queries' }));
-    expect(mockOnAnalyticsEvent).toHaveBeenCalledWith('starredFilterChanged', { showStarredOnly: true });
   });
 
   it('fires analytics event when search bar is focused', async () => {
@@ -177,7 +148,7 @@ describe('RecentQueriesFilters', () => {
 
   it('does not crash when onAnalyticsEvent is not provided', async () => {
     const { user } = render(<RecentQueriesFilters {...defaultProps} onAnalyticsEvent={undefined} />);
-    await user.click(screen.getByRole('radio', { name: 'Starred queries' }));
+    await user.type(screen.getByPlaceholderText('Search by...'), 'x');
     expect(mockSetFilters).toHaveBeenCalled();
   });
 });

@@ -32,7 +32,6 @@ const mockRichHistoryQuery: RichHistoryQuery = {
 };
 
 const defaultFilters: RecentQueriesFilterState = {
-  showStarredOnly: false,
   searchQuery: '',
   datasourceFilters: [],
   sortingOption: { value: SortOrder.Descending, label: 'Newest first' },

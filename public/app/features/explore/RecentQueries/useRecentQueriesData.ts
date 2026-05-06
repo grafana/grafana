@@ -10,7 +10,6 @@ import { type RichHistoryQuery } from 'app/types/explore';
 import { getStoredFilterDefaults, storeFilterDefaults } from './filterDefaults';
 
 export type RecentQueriesFilterState = {
-  showStarredOnly: boolean;
   searchQuery: string;
   datasourceFilters: string[];
   sortingOption: SelectableValue<SortOrder>;
@@ -42,7 +41,6 @@ export function useRecentQueriesData(activeDatasources: string[] = []): UseRecen
 
   const [filters, setFiltersState] = useState<RecentQueriesFilterState>(() => {
     const base: RecentQueriesFilterState = {
-      showStarredOnly: false,
       searchQuery: '',
       datasourceFilters: activeDatasources,
       sortingOption: defaultSortingOption(),
@@ -99,7 +97,6 @@ export function useRecentQueriesData(activeDatasources: string[] = []): UseRecen
   const retentionPeriod = settings?.retentionPeriod;
   const search = filters.searchQuery;
   const sortOrder = filters.sortingOption.value ?? SortOrder.Descending;
-  const starred = filters.showStarredOnly;
 
   const fetchPageRef = useRef(page);
 
@@ -116,12 +113,12 @@ export function useRecentQueriesData(activeDatasources: string[] = []): UseRecen
       search,
       sortOrder,
       datasourceFilters: filters.datasourceFilters,
-      starred,
+      starred: false,
       from: 0,
       to: retentionPeriod,
       page,
     });
-  }, [search, sortOrder, datasourceFiltersKey, starred, retentionPeriod, page]);
+  }, [search, sortOrder, datasourceFiltersKey, retentionPeriod, page]);
 
   useEffect(() => {
     if (!fetchResult) {

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { dateTimeFormat, type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Icon, IconButton, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { type RichHistoryQuery } from 'app/types/explore';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
@@ -39,8 +39,7 @@ export function RecentQueryRow({
     }
   }, [query.starred, query.id, onStarQuery]);
 
-  const handleSaveClick = useCallback(() => {
-    setShowStarTooltip(false);
+  const handleSave = useCallback(() => {
     onSaveQuery?.(query);
   }, [onSaveQuery, query]);
 
@@ -77,25 +76,22 @@ export function RecentQueryRow({
     />
   );
 
-  const tooltipContent = onSaveQuery ? (
-    <span>
-      <Trans
-        i18nKey="recent-queries.row.star-tooltip-with-save"
-        defaults="Query starred! You can also <0>save this query</0> for reuse later"
-        components={[
-          <button className={styles.saveLink} onClick={handleSaveClick} type="button" key="save">
-            save this query
-          </button>,
-        ]}
-      />
-    </span>
+  const tooltipContent = <span>{t('recent-queries.row.star-tooltip', 'Query starred!')}</span>;
+
+  const actionButton = onSaveQuery ? (
+    <Button variant="secondary" size="sm" onClick={handleSave}>
+      {t('recent-queries.row.save', 'Save query')}
+    </Button>
+  ) : showStarTooltip ? (
+    <Tooltip content={tooltipContent} show={true} interactive placement="top">
+      {starButton}
+    </Tooltip>
   ) : (
-    <span>{t('recent-queries.row.star-tooltip', 'Query starred!')}</span>
+    starButton
   );
 
   return (
     <div ref={cardRef} className={styles.card} data-testid="recent-query-row">
-      {/* Meta row: datasource icon + name, calendar icon + date */}
       <div className={styles.metaRow}>
         <img className={styles.dsIcon} src={logoSrc} alt={query.datasourceName} />
         <Text variant="bodySmall" color="secondary" truncate>
@@ -107,19 +103,12 @@ export function RecentQueryRow({
         </Text>
       </div>
 
-      {/* Content row: query text + star + select button */}
       <div className={styles.contentRow}>
         <div className={styles.queryText}>
           <Text truncate>{queryDisplayText}</Text>
         </div>
         <div className={styles.actions}>
-          {showStarTooltip ? (
-            <Tooltip content={tooltipContent} show={true} interactive placement="top">
-              {starButton}
-            </Tooltip>
-          ) : (
-            starButton
-          )}
+          {actionButton}
           <Button variant="primary" size="sm" onClick={handleSelect}>
             {t('recent-queries.row.select-query', 'Select query')}
           </Button>
@@ -171,22 +160,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   actions: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(0.5),
+    gap: theme.spacing(1),
     flexShrink: 0,
-  }),
-  saveLink: css({
-    background: 'none',
-    border: 'none',
-    padding: 0,
-    margin: 0,
-    color: theme.colors.text.link,
-    textDecoration: 'underline',
-    cursor: 'pointer',
-    font: 'inherit',
-    '&:focus-visible': {
-      outline: `2px solid ${theme.colors.primary.main}`,
-      outlineOffset: '2px',
-      borderRadius: theme.shape.radius.default,
-    },
   }),
 });

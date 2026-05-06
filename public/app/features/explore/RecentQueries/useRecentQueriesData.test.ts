@@ -47,7 +47,6 @@ describe('useRecentQueriesData', () => {
 
   it('returns default filter state on first render', async () => {
     const { result } = await renderAndSettle();
-    expect(result.current.filters.showStarredOnly).toBe(false);
     expect(result.current.filters.searchQuery).toBe('');
     expect(result.current.filters.datasourceFilters).toEqual([]);
     expect(result.current.filters.sortingOption.value).toBe(SortOrder.Descending);
@@ -122,7 +121,6 @@ describe('useRecentQueriesData', () => {
     const { result } = await renderAndSettle();
     await act(async () => result.current.setFilters({ searchQuery: 'hello' }));
     expect(result.current.filters.searchQuery).toBe('hello');
-    expect(result.current.filters.showStarredOnly).toBe(false);
   });
 
   it('filter change resets page and replaces results', async () => {

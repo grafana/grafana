@@ -1,4 +1,4 @@
-import { render, screen, within } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { type RichHistoryQuery } from 'app/types/explore';
 
@@ -112,63 +112,46 @@ describe('RecentQueryRow', () => {
     });
   });
 
-  describe('star tooltip', () => {
-    it('shows tooltip with save link when starring a query', async () => {
+  describe('save button (Cloud+Enterprise)', () => {
+    it('shows save icon instead of star when onSaveQuery is provided', () => {
+      render(<RecentQueryRow {...defaultProps} onSaveQuery={jest.fn()} />);
+      expect(screen.getByRole('button', { name: /save query/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^star$/i })).not.toBeInTheDocument();
+    });
+
+    it('calls onSaveQuery when clicking the save button', async () => {
       const onSaveQuery = jest.fn();
       const { user } = render(<RecentQueryRow {...defaultProps} onSaveQuery={onSaveQuery} />);
+      await user.click(screen.getByRole('button', { name: /save query/i }));
+      expect(onSaveQuery).toHaveBeenCalledWith(mockQuery);
+    });
+  });
 
+  describe('star tooltip (OSS)', () => {
+    it('shows star button when onSaveQuery is not provided', () => {
+      render(<RecentQueryRow {...defaultProps} />);
+      expect(screen.getByRole('button', { name: /^star$/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save query/i })).not.toBeInTheDocument();
+    });
+
+    it('shows tooltip when starring a query', async () => {
+      const { user } = render(<RecentQueryRow {...defaultProps} />);
       await user.click(screen.getByRole('button', { name: /^star$/i }));
 
       expect(screen.getByRole('tooltip')).toBeInTheDocument();
       expect(screen.getByText(/query starred/i)).toBeInTheDocument();
-      expect(screen.getByText(/save this query/i)).toBeInTheDocument();
     });
 
     it('does not show tooltip when unstarring a query', async () => {
-      const onSaveQuery = jest.fn();
-      const { user } = render(<RecentQueryRow {...defaultProps} query={starredQuery} onSaveQuery={onSaveQuery} />);
-
+      const { user } = render(<RecentQueryRow {...defaultProps} query={starredQuery} />);
       await user.click(screen.getByRole('button', { name: /^unstar$/i }));
 
       expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
     });
 
     it('does not show tooltip on initial render for already-starred query', () => {
-      render(<RecentQueryRow {...defaultProps} query={starredQuery} onSaveQuery={jest.fn()} />);
+      render(<RecentQueryRow {...defaultProps} query={starredQuery} />);
       expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
-    });
-
-    it('calls onSaveQuery when clicking the save link in tooltip', async () => {
-      const onSaveQuery = jest.fn();
-      const { user } = render(<RecentQueryRow {...defaultProps} onSaveQuery={onSaveQuery} />);
-
-      await user.click(screen.getByRole('button', { name: /^star$/i }));
-
-      const tooltip = screen.getByRole('tooltip');
-      const saveLink = within(tooltip).getByText(/save this query/i);
-      await user.click(saveLink);
-
-      expect(onSaveQuery).toHaveBeenCalledWith(mockQuery);
-    });
-
-    it('hides tooltip after clicking the save link', async () => {
-      const onSaveQuery = jest.fn();
-      const { user } = render(<RecentQueryRow {...defaultProps} onSaveQuery={onSaveQuery} />);
-
-      await user.click(screen.getByRole('button', { name: /^star$/i }));
-      const tooltip = screen.getByRole('tooltip');
-      const saveLink = within(tooltip).getByText(/save this query/i);
-      await user.click(saveLink);
-
-      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
-    });
-
-    it('does not render save link when onSaveQuery is not provided', async () => {
-      const { user } = render(<RecentQueryRow {...defaultProps} />);
-      await user.click(screen.getByRole('button', { name: /^star$/i }));
-
-      expect(screen.getByRole('tooltip')).toBeInTheDocument();
-      expect(screen.queryByText(/save this query/i)).not.toBeInTheDocument();
     });
   });
 });
