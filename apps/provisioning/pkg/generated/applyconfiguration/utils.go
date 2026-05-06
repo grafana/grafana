@@ -44,6 +44,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.FixFolderMetadataJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubConnectionConfig"):
 		return &provisioningv0alpha1.GitHubConnectionConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("GitHubEnterpriseConnectionConfig"):
+		return &provisioningv0alpha1.GitHubEnterpriseConnectionConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("GitHubEnterpriseRepositoryConfig"):
+		return &provisioningv0alpha1.GitHubEnterpriseRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitlabConnectionConfig"):

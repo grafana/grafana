@@ -37,15 +37,16 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 		return list
 	}
 
-	list = append(list, ValidateGitHubAppCredentials(conn, "GitHub")...)
+	list = append(list, ValidateGitHubAppCredentials(conn, "GitHub", conn.Spec.GitHub.AppID, conn.Spec.GitHub.InstallationID, field.NewPath("spec", "github"))...)
 	return list
 }
 
 // ValidateGitHubAppCredentials performs structural validation of the GitHub App credential
-// fields shared by github and github_enterprise connections. The caller must guarantee
-// conn.Spec.GitHub != nil. label is interpolated into error messages (e.g. "GitHub",
-// "github_enterprise") so the source of the violation is clear.
-func ValidateGitHubAppCredentials(conn *provisioning.Connection, label string) field.ErrorList {
+// fields shared by github and githubEnterprise connections. label is interpolated into
+// error messages (e.g. "GitHub", "GitHub Enterprise") so the source of the violation is
+// clear. basePath is the field path of the spec section holding the credentials
+// (e.g. spec.github or spec.githubEnterprise).
+func ValidateGitHubAppCredentials(conn *provisioning.Connection, label, appID, installationID string, basePath *field.Path) field.ErrorList {
 	var list field.ErrorList
 
 	// Check if required secure values are present (without decryption)
@@ -71,22 +72,16 @@ func ValidateGitHubAppCredentials(conn *provisioning.Connection, label string) f
 		}
 	}
 
-	// Validate the existence of GitHub configuration fields
-	if conn.Spec.GitHub.AppID == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "appID"), fmt.Sprintf("appID must be specified for %s connection", label)))
-	}
-	if conn.Spec.GitHub.InstallationID == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "installationID"), fmt.Sprintf("installationID must be specified for %s connection", label)))
+	if appID == "" {
+		list = append(list, field.Required(basePath.Child("appID"), fmt.Sprintf("appID must be specified for %s connection", label)))
+	} else if _, err := strconv.Atoi(appID); err != nil {
+		list = append(list, field.Invalid(basePath.Child("appID"), appID, "appID must be a numeric value"))
 	}
 
-	// Validating the correctness of Github config fields
-	_, err := strconv.Atoi(conn.Spec.GitHub.AppID)
-	if err != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "github", "appID"), conn.Spec.GitHub.AppID, "appID must be a numeric value"))
-	}
-	_, err = strconv.Atoi(conn.Spec.GitHub.InstallationID)
-	if err != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "github", "installationID"), conn.Spec.GitHub.InstallationID, "installationID must be a numeric value"))
+	if installationID == "" {
+		list = append(list, field.Required(basePath.Child("installationID"), fmt.Sprintf("installationID must be specified for %s connection", label)))
+	} else if _, err := strconv.Atoi(installationID); err != nil {
+		list = append(list, field.Invalid(basePath.Child("installationID"), installationID, "installationID must be a numeric value"))
 	}
 
 	return list

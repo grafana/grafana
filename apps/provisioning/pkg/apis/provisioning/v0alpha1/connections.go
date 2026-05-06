@@ -59,6 +59,23 @@ func (GitHubConnectionConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitHubConnectionConfig"
 }
 
+// GitHubEnterpriseConnectionConfig describes a GitHub App installation against a
+// self-managed GitHub Enterprise Server (GHES) instance.
+type GitHubEnterpriseConnectionConfig struct {
+	// GitHub App ID
+	AppID string `json:"appID"`
+
+	// GitHub App installation ID
+	InstallationID string `json:"installationID"`
+
+	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
+	ServerURL string `json:"serverUrl"`
+}
+
+func (GitHubEnterpriseConnectionConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "GitHubEnterpriseConnectionConfig"
+}
+
 type BitbucketConnectionConfig struct {
 	// App client ID
 	ClientID string `json:"clientID"`
@@ -88,7 +105,7 @@ func (ConnectionType) OpenAPIModelName() string {
 // ConnectionType values.
 const (
 	GithubConnectionType           ConnectionType = "github"
-	GithubEnterpriseConnectionType ConnectionType = "github_enterprise"
+	GithubEnterpriseConnectionType ConnectionType = "githubEnterprise"
 	GitlabConnectionType           ConnectionType = "gitlab"
 	BitbucketConnectionType        ConnectionType = "bitbucket"
 )
@@ -103,9 +120,12 @@ type ConnectionSpec struct {
 	// The connection URL
 	URL string `json:"url,omitempty"`
 
-	// GitHub connection configuration
-	// Applicable when provider is "github" or "github_enterprise"
+	// GitHub connection configuration.
+	// Only applicable when provider is "github".
 	GitHub *GitHubConnectionConfig `json:"github,omitempty"`
+	// GitHub Enterprise Server connection configuration.
+	// Only applicable when provider is "githubEnterprise".
+	GitHubEnterprise *GitHubEnterpriseConnectionConfig `json:"githubEnterprise,omitempty"`
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucket"
 	Bitbucket *BitbucketConnectionConfig `json:"bitbucket,omitempty"`

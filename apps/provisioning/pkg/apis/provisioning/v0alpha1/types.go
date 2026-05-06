@@ -86,6 +86,29 @@ func (GitHubRepositoryConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitHubRepositoryConfig"
 }
 
+// GitHubEnterpriseRepositoryConfig describes a repository hosted on a self-managed
+// GitHub Enterprise Server (GHES) instance.
+type GitHubEnterpriseRepositoryConfig struct {
+	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
+	ServerURL string `json:"serverUrl,omitempty"`
+
+	// The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).
+	URL string `json:"url,omitempty"`
+
+	// The branch to use in the repository.
+	Branch string `json:"branch"`
+
+	// Whether we should show dashboard previews for pull requests.
+	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
+
+	// Path is the subdirectory for the Grafana data inside the repository.
+	Path string `json:"path,omitempty"`
+}
+
+func (GitHubEnterpriseRepositoryConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "GitHubEnterpriseRepositoryConfig"
+}
+
 type GitRepositoryConfig struct {
 	// The repository URL (e.g. `https://github.com/example/test`).
 	URL string `json:"url,omitempty"`
@@ -149,11 +172,15 @@ func (RepositoryType) OpenAPIModelName() string {
 	return OpenAPIPrefix + "RepositoryType"
 }
 
+func (r RepositoryType) String() string {
+	return string(r)
+}
+
 // RepositoryType values
 const (
 	LocalRepositoryType            RepositoryType = "local"
 	GitHubRepositoryType           RepositoryType = "github"
-	GitHubEnterpriseRepositoryType RepositoryType = "github_enterprise"
+	GitHubEnterpriseRepositoryType RepositoryType = "githubEnterprise"
 	GitRepositoryType              RepositoryType = "git"
 	BitbucketRepositoryType        RepositoryType = "bitbucket"
 	GitLabRepositoryType           RepositoryType = "gitlab"
@@ -172,9 +199,13 @@ func (r *Repository) Branch() string {
 	}
 
 	switch r.Spec.Type {
-	case GitHubRepositoryType, GitHubEnterpriseRepositoryType:
+	case GitHubRepositoryType:
 		if r.Spec.GitHub != nil {
 			return r.Spec.GitHub.Branch
+		}
+	case GitHubEnterpriseRepositoryType:
+		if r.Spec.GitHubEnterprise != nil {
+			return r.Spec.GitHubEnterprise.Branch
 		}
 	case GitRepositoryType:
 		if r.Spec.Git != nil {
@@ -203,9 +234,13 @@ func (r *Repository) URL() string {
 	}
 
 	switch r.Spec.Type {
-	case GitHubRepositoryType, GitHubEnterpriseRepositoryType:
+	case GitHubRepositoryType:
 		if r.Spec.GitHub != nil {
 			return r.Spec.GitHub.URL
+		}
+	case GitHubEnterpriseRepositoryType:
+		if r.Spec.GitHubEnterprise != nil {
+			return r.Spec.GitHubEnterprise.URL
 		}
 	case GitRepositoryType:
 		if r.Spec.Git != nil {
@@ -228,9 +263,13 @@ func (r *Repository) URL() string {
 
 func (r *Repository) Path() string {
 	switch r.Spec.Type {
-	case GitHubRepositoryType, GitHubEnterpriseRepositoryType:
+	case GitHubRepositoryType:
 		if r.Spec.GitHub != nil {
 			return r.Spec.GitHub.Path
+		}
+	case GitHubEnterpriseRepositoryType:
+		if r.Spec.GitHubEnterprise != nil {
+			return r.Spec.GitHubEnterprise.Path
 		}
 	case GitRepositoryType:
 		if r.Spec.Git != nil {
@@ -319,6 +358,10 @@ type RepositorySpec struct {
 	// The repository on GitHub.
 	// Mutually exclusive with local | github | git.
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
+
+	// The repository on a self-managed GitHub Enterprise Server (GHES).
+	// Mutually exclusive with the other repository configs.
+	GitHubEnterprise *GitHubEnterpriseRepositoryConfig `json:"githubEnterprise,omitempty"`
 
 	// The repository on Git.
 	// Mutually exclusive with local | github | git.

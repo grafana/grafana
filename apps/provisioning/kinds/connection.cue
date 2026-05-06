@@ -26,6 +26,18 @@ connection: {
 					// GitHub App installation ID
 					installationID: int
 				}
+				#GitHubEnterpriseConnectionConfig: {
+					// App-level information
+					// GitHub App ID
+					appID: int
+
+					// Installation-level information
+					// GitHub App installation ID
+					installationID: int
+
+					// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
+					serverUrl: string
+				}
 				#BitbucketConnectionConfig: {
 					// The app clientID
 					clientID: string
@@ -45,13 +57,15 @@ connection: {
 				}
 				spec: {
 					// The connection provider type
-					type: "github" | "github_enterprise" | "bitbucket" | "gitlab"
+					type: "github" | "githubEnterprise" | "bitbucket" | "gitlab"
 					// The connection URL.
-					// Required for github_enterprise (on-prem GHES server URL).
 					url: *"" | string
-					// GitHub connection configuration
-					// Used for both github and github_enterprise providers
+					// GitHub connection configuration.
+					// Only applicable when provider is "github".
 					github?: #GitHubConnectionConfig
+					// GitHub Enterprise Server connection configuration.
+					// Only applicable when provider is "githubEnterprise".
+					githubEnterprise?: #GitHubEnterpriseConnectionConfig
 					// Bitbucket connection configuration
 					// Only applicable when provider is "bitbucket"
 					bitbucket?: #BitbucketConnectionConfig

@@ -39,8 +39,12 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			switch m.Spec.Type {
 			case LocalRepositoryType:
 				target = m.Spec.Local.Path
-			case GitHubRepositoryType, GitHubEnterpriseRepositoryType:
+			case GitHubRepositoryType:
 				target = m.Spec.GitHub.URL
+			case GitHubEnterpriseRepositoryType:
+				if m.Spec.GitHubEnterprise != nil {
+					target = m.Spec.GitHubEnterprise.URL
+				}
 			case GitRepositoryType:
 				target = m.Spec.Git.URL
 			case BitbucketRepositoryType:
@@ -136,9 +140,14 @@ var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 
 			var appID, installationID, clientID string
 			switch m.Spec.Type {
-			case GithubConnectionType, GithubEnterpriseConnectionType:
+			case GithubConnectionType:
 				appID = m.Spec.GitHub.AppID
 				installationID = m.Spec.GitHub.InstallationID
+			case GithubEnterpriseConnectionType:
+				if m.Spec.GitHubEnterprise != nil {
+					appID = m.Spec.GitHubEnterprise.AppID
+					installationID = m.Spec.GitHubEnterprise.InstallationID
+				}
 			case BitbucketConnectionType:
 				clientID = m.Spec.Bitbucket.ClientID
 			case GitlabConnectionType:

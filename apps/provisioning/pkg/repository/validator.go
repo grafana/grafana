@@ -71,9 +71,14 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			cfg.Spec.GitHub, "Local config only valid when type is local"))
 	}
 
-	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.Type != provisioning.GitHubEnterpriseRepositoryType && cfg.Spec.GitHub != nil {
+	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "github"),
-			cfg.Spec.GitHub, "Github config only valid when type is github or github_enterprise"))
+			cfg.Spec.GitHub, "Github config only valid when type is github"))
+	}
+
+	if cfg.Spec.Type != provisioning.GitHubEnterpriseRepositoryType && cfg.Spec.GitHubEnterprise != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "githubEnterprise"),
+			cfg.Spec.GitHubEnterprise, "GitHub Enterprise config only valid when type is githubEnterprise"))
 	}
 
 	if cfg.Spec.Type != provisioning.GitRepositoryType && cfg.Spec.Git != nil {
@@ -133,6 +138,13 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 		list = append(list,
 			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
 				cfg.Spec.GitHub.GenerateDashboardPreviews,
+				"image rendering is not enabled"))
+	}
+
+	if !v.allowImageRendering && cfg.Spec.GitHubEnterprise != nil && cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews {
+		list = append(list,
+			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
+				cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews,
 				"image rendering is not enabled"))
 	}
 

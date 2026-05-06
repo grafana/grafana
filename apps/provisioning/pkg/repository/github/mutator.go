@@ -25,7 +25,7 @@ func Mutate(_ context.Context, obj runtime.Object) error {
 }
 
 // NormalizeGitHubURL trims any trailing ".git" and surrounding slashes from a GitHub URL.
-// Shared with the github_enterprise mutator since both target Spec.GitHub.URL with the same shape.
+// Shared with the GitHub Enterprise Server mutator since both target a repository URL of the same shape.
 func NormalizeGitHubURL(url string) string {
 	if url == "" {
 		return url
