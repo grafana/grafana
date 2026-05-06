@@ -795,6 +795,70 @@ func TestRuleRoutine(t *testing.T) {
 			require.Empty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 			sender.AssertExpectations(t)
 		})
+
+		t.Run("and passes a non-cancelled context to sender.Send when errRuleDeleted", func(t *testing.T) {
+			// Regression test: expireAndSend must receive the fresh timeout context (ctx),
+			// not the already-cancelled grafanaCtx. If the wrong context is passed, any
+			// context-aware sender will silently drop the resolved notifications.
+			//
+			// We capture ctx.Err() inside the Send callback because the deferred cancelFunc
+			// in Run() fires when Run() returns — after that point the context is cancelled.
+			// What matters is whether the context was valid at the moment Send was called.
+			stoppedChan := make(chan error)
+
+			sendCalled := false
+			var ctxErrAtSendTime error
+			sender := NewSyncAlertsSenderMock()
+			sender.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).
+				Run(func(ctx context.Context, _ models.AlertRuleKey, _ definitions.PostableAlerts) {
+					sendCalled = true
+					ctxErrAtSendTime = ctx.Err()
+				}).
+				Times(1)
+
+			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
+
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
+			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
+
+			factory := ruleFactoryFromScheduler(sch)
+			ruleInfo := factory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+			go func() {
+				err := ruleInfo.Run()
+				stoppedChan <- err
+			}()
+
+			ruleInfo.Stop(errRuleDeleted)
+			err := waitForErrChannel(t, stoppedChan)
+			require.NoError(t, err)
+
+			require.True(t, sendCalled, "sender.Send was not called")
+			require.NoError(t, ctxErrAtSendTime, "sender.Send received a cancelled context; resolved notifications would be dropped")
+		})
+
+		t.Run("and does not call sender.Send when errRuleDeleted but no firing instances exist", func(t *testing.T) {
+			// Edge case: if there are no firing instances at deletion time, expireAndSend
+			// should not call sender.Send at all.
+			stoppedChan := make(chan error)
+			sender := NewSyncAlertsSenderMock()
+			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
+
+			// Do not seed any state — the rule has no firing instances.
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
+
+			factory := ruleFactoryFromScheduler(sch)
+			ruleInfo := factory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+			go func() {
+				err := ruleInfo.Run()
+				stoppedChan <- err
+			}()
+
+			ruleInfo.Stop(errRuleDeleted)
+			err := waitForErrChannel(t, stoppedChan)
+			require.NoError(t, err)
+
+			sender.AssertNotCalled(t, "Send")
+		})
 	})
 
 	t.Run("when a message is sent to update channel", func(t *testing.T) {
