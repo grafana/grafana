@@ -52,8 +52,9 @@ func (f FakeSecretsService) CurrentProviderID() string {
 	return "fakeProvider"
 }
 
-func (f FakeSecretsService) GetProviders() map[string]secrets.Provider {
-	return make(map[string]secrets.Provider)
+func (f FakeSecretsService) GetProviders() map[string]secrets.Provider { //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	return make(map[string]secrets.Provider) //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
 }
 
-func (f FakeSecretsService) RegisterProvider(_ string, _ secrets.Provider) {}
+func (f FakeSecretsService) RegisterProvider(_ string, _ secrets.Provider) { //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+}

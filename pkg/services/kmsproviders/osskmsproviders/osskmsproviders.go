@@ -23,8 +23,8 @@ func ProvideService(enc encryption.Internal, cfg *setting.Cfg, features featurem
 	}
 }
 
-func (s Service) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
-	return map[secrets.ProviderID]secrets.Provider{
+func (s Service) Provide() (map[secrets.ProviderID]secrets.Provider, error) { //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	return map[secrets.ProviderID]secrets.Provider{ //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
 		kmsproviders.Default: grafana.New(s.cfg, s.enc),
 	}, nil
 }

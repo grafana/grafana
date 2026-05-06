@@ -72,7 +72,7 @@ type Service struct {
 	pluginStore            pluginstore.Store
 	accessControl          accesscontrol.AccessControl
 	pluginSettingsService  pluginsettings.Service
-	secretsService         secrets.Service
+	secretsService         secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
 	kvStore                *kvstore.NamespacedKVStore
 	libraryElementsService libraryelements.Service
 	ngAlert                *ngalert.AlertNG
@@ -104,7 +104,7 @@ func ProvideService(
 	db db.DB,
 	dsService datasources.DataSourceService,
 	secretsStore secretskv.SecretsKVStore,
-	secretsService secrets.Service,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
 	routeRegister routing.RouteRegister,
 	prom prometheus.Registerer,
 	tracer tracing.Tracer,
