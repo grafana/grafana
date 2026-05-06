@@ -1834,26 +1834,11 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/SubMenu/AnnotationPicker.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/SubMenu/DashboardLinksDashboard.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/SubMenu/SubMenu.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/SubMenu/SubMenuItems.tsx": {
-    "@grafana/no-gf-form": {
       "count": 1
     }
   },
