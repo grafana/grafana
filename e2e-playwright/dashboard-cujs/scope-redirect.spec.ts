@@ -8,7 +8,6 @@ test.use({
     scopeFilters: true,
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
-    useScopesNavigationEndpoint: true,
     dashboardNewLayouts: false,
   },
 });
