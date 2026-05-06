@@ -252,7 +252,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,restrictedPluginApis,GA,@grafana/plugins-platform-backend,false,false,true
 2025-07-31,favoriteDatasources,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-07-31,newLogContext,experimental,@grafana/observability-logs,false,false,true
-2025-07-31,newClickhouseConfigPageDesign,privatePreview,@grafana/data-sources-plugins,false,false,false
+2025-07-31,newClickhouseConfigPageDesign,GA,@grafana/data-sources-plugins,false,false,false
 2025-07-31,teamFolders,preview,@grafana/grafana-frontend-navigation,false,false,false
 2025-10-22,interactiveLearning,preview,@grafana/pathfinder,false,false,false
 2025-07-31,alertingTriage,experimental,@grafana/alerting-squad,false,false,false
