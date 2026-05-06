@@ -1614,14 +1614,6 @@ export type GitHubConnectionConfig = {
   /** GitHub App installation ID */
   installationID: string;
 };
-export type GitHubEnterpriseConnectionConfig = {
-  /** GitHub App ID */
-  appID: string;
-  /** GitHub App installation ID */
-  installationID: string;
-  /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
-  serverUrl: string;
-};
 export type GitlabConnectionConfig = {
   /** App client ID */
   clientID: string;
@@ -1631,10 +1623,8 @@ export type ConnectionSpec = {
   bitbucket?: BitbucketConnectionConfig;
   /** The connection description */
   description?: string;
-  /** GitHub connection configuration. Only applicable when provider is "github". */
+  /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
-  /** GitHub Enterprise Server connection configuration. Only applicable when provider is "githubEnterprise". */
-  githubEnterprise?: GitHubEnterpriseConnectionConfig;
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
   gitlab?: GitlabConnectionConfig;
   /** The connection display name (shown in the UI) */
@@ -1644,9 +1634,8 @@ export type ConnectionSpec = {
     Possible enum values:
      - `"bitbucket"`
      - `"github"`
-     - `"githubEnterprise"`
      - `"gitlab"` */
-  type: 'bitbucket' | 'github' | 'githubEnterprise' | 'gitlab';
+  type: 'bitbucket' | 'github' | 'gitlab';
   /** The connection URL */
   url?: string;
 };
@@ -1987,18 +1976,6 @@ export type GitHubRepositoryConfig = {
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };
-export type GitHubEnterpriseRepositoryConfig = {
-  /** The branch to use in the repository. */
-  branch: string;
-  /** Whether we should show dashboard previews for pull requests. */
-  generateDashboardPreviews?: boolean;
-  /** Path is the subdirectory for the Grafana data inside the repository. */
-  path?: string;
-  /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
-  serverUrl?: string;
-  /** The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`). */
-  url?: string;
-};
 export type GitLabRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
@@ -2041,8 +2018,6 @@ export type RepositorySpec = {
   git?: GitRepositoryConfig;
   /** The repository on GitHub. Mutually exclusive with local | github | git. */
   github?: GitHubRepositoryConfig;
-  /** The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with the other repository configs. */
-  githubEnterprise?: GitHubEnterpriseRepositoryConfig;
   /** The repository on GitLab. Mutually exclusive with local | github | git. */
   gitlab?: GitLabRepositoryConfig;
   /** The repository on the local file system. Mutually exclusive with local | github. */
@@ -2057,10 +2032,9 @@ export type RepositorySpec = {
      - `"bitbucket"`
      - `"git"`
      - `"github"`
-     - `"githubEnterprise"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
   /** Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider. */
   webhook?: WebhookConfig;
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
@@ -2166,10 +2140,9 @@ export type ResourceRepositoryInfo = {
      - `"bitbucket"`
      - `"git"`
      - `"github"`
-     - `"githubEnterprise"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
 };
 export type Unstructured = {
   [key: string]: any;
@@ -2296,10 +2269,9 @@ export type RepositoryView = {
      - `"bitbucket"`
      - `"git"`
      - `"github"`
-     - `"githubEnterprise"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
   /** For git, this is the target URL */
   url?: string;
   /** The supported workflows */
@@ -2313,7 +2285,7 @@ export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
-  availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local')[];
+  availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'gitlab' | 'local')[];
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
