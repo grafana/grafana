@@ -5270,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Inställningar"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5672,7 @@
         "title": "Variabler"
       },
       "variable": {
-        "change-type": "Ändra",
+        "change-type": "",
         "change-type-aria-label": "Ändra variabeltyp",
         "custom-options": {
           "apply": "Tillämpa",
@@ -5989,7 +5989,7 @@
       "cancel": "Avbryt",
       "common": {
         "copy": "Kopiera",
-        "copy-or-duplicate": "Kopiera/klistra in eller duplicera",
+        "copy-tooltip": "",
         "delete": "Ta bort",
         "duplicate": "Dubblett",
         "layout": "Layout",
@@ -6028,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Okonfigurerad panel. Tryck på Tabb för att se konfigurationsalternativ.",
-      "configure-button": "Konfigurera",
+      "configure-button": "",
       "configure-button-menu": "Växla meny",
       "configure-visualization": "Konfigurera visualisering",
       "empty-state-message": "Kör en fråga för att visualisera den här eller gå till alla visualiseringar för att lägga till andra paneltyper",
@@ -6270,10 +6270,8 @@
       "title-provisioned": "Tilldelad instrumentpanel"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "En instrumentpanel med samma namn finns redan i den valda mappen.<br/><2>Vill du fortfarande spara denna instrumentpanel?</2>",
       "body-version-mismatch": "Någon annan har uppdaterat denna instrumentpanel<br/><2>Vill du fortfarande spara denna instrumentpanel?</2>",
       "confirmText-save-and-overwrite": "Spara och skriv över",
-      "title-name-exists": "Konflikt",
       "title-version-mismatch": "Konflikt"
     },
     "save-dashboard-form": {
@@ -7327,10 +7325,6 @@
       "success-message": "Kontrollpanelen har flyttats",
       "target-path-label": "Målsökväg",
       "title-this-repository-is-read-only": "Den här lagringsplatsen är skrivskyddad"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "En instrumentpanel med samma namn finns redan i den valda mappen. Vill du fortfarande spara denna instrumentpanel?",
-      "title-name-already-exists": "Namnet finns redan"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
