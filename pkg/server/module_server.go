@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -33,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"go.opentelemetry.io/otel"
 )
@@ -53,8 +55,9 @@ func NewModule(opts Options,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
+	reconcileCRDs []schema.GroupVersionResource,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, storeProvider)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, storeProvider, reconcileCRDs)
 	if err != nil {
 		return nil, err
 	}
@@ -79,6 +82,7 @@ func newModuleServer(opts Options,
 	storageBackend resource.StorageBackend,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
+	reconcileCRDs []schema.GroupVersionResource,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -112,6 +116,7 @@ func newModuleServer(opts Options,
 		searchClient:     searchClient,
 		healthNotifier:   NewHealthNotifier(),
 		storeProvider:    storeProvider,
+		reconcileCRDs:    reconcileCRDs,
 	}
 
 	return s, nil
@@ -134,6 +139,7 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
+	vectorBackend    vector.VectorBackend
 	searchClient     resourcepb.ResourceIndexClient
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
@@ -161,6 +167,10 @@ type ModuleServer struct {
 
 	// storeProvider creates OpenFGA datastores for the Zanzana server.
 	storeProvider zStore.StoreProvider
+
+	// reconcileCRDs is the list of namespaced CRDs the MT reconciler translates
+	// into Zanzana tuples when running as a standalone zanzana-server module.
+	reconcileCRDs []schema.GroupVersionResource
 
 	// healthNotifier is shared between the InstrumentationServer and the OperatorServer
 	// so that operators can signal readiness to the /readyz endpoint.
@@ -212,7 +222,7 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterInvisibleModule(modules.GRPCServer, func() (services.Service, error) {
 		var err error
-		s.grpcService, err = grpcserver.ProvideDSKitService(s.cfg, s.features, otel.Tracer("grpc-server"), s.registerer, modules.GRPCServer)
+		s.grpcService, err = grpcserver.ProvideDSKitService(s.cfg, otel.Tracer("grpc-server"), s.registerer, modules.GRPCServer)
 		if err != nil {
 			return nil, err
 		}
@@ -224,7 +234,7 @@ func (s *ModuleServer) Run() error {
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
 			disableStorageServices := !m.IsModuleEnabled(modules.StorageServer)
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, otel.Tracer("unified-backend"), disableStorageServices)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, disableStorageServices)
 			if err != nil {
 				return nil, err
 			}
@@ -233,6 +243,24 @@ func (s *ModuleServer) Run() error {
 			return backendService, nil
 		}
 		return services.NewIdleService(nil, nil).WithName(modules.UnifiedBackend), nil
+	})
+
+	m.RegisterInvisibleModule(modules.UnifiedVectorBackend, func() (services.Service, error) {
+		// StorageServer owns the schema and runs the promoter; other targets
+		// get a read-only backend.
+		ownsSchema := m.IsModuleEnabled(modules.StorageServer)
+		if s.vectorBackend == nil {
+			var err error
+			s.vectorBackend, err = vector.InitVectorBackend(context.Background(), s.cfg, ownsSchema)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if s.vectorBackend != nil && ownsSchema {
+			runFn := func(ctx context.Context) error { return s.vectorBackend.Run(ctx) }
+			return services.NewBasicService(nil, runFn, nil).WithName(modules.UnifiedVectorBackend), nil
+		}
+		return services.NewIdleService(nil, nil).WithName(modules.UnifiedVectorBackend), nil
 	})
 
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
@@ -278,7 +306,7 @@ func (s *ModuleServer) Run() error {
 			}
 			indexMetrics = s.indexMetrics
 		}
-		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService, s.StorageServiceOptions...)
+		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.searchClient, s.grpcService, s.StorageServiceOptions...)
 		if err != nil {
 			return nil, err
 		}
@@ -309,7 +337,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService, s.StorageServiceOptions...)
+		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.grpcService, s.StorageServiceOptions...)
 		if err != nil {
 			return nil, err
 		}
@@ -331,7 +359,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider)
+		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider, s.reconcileCRDs)
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {

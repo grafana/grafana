@@ -643,6 +643,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 
 		logLevelGenerator := newRandomStringProvider([]string{
 			"emerg",
+			"emergency",
 			"alert",
 			"crit",
 			"critical",

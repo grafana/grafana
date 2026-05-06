@@ -122,6 +122,28 @@ describe('useSelectionState', () => {
       expect(result.current.selectedTransformationIds).toEqual([]);
     });
 
+    it('uses queries[0] as implicit anchor after clearSelection', () => {
+      const { result } = setup();
+      act(() => result.current.clearSelection());
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+
+      act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
+    });
+
+    it('uses queries[0] as implicit anchor when queries load after mount', () => {
+      const emptyProps: UseSelectionStateOptions = { queries: [], transformations: mockTransformations };
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: emptyProps,
+      });
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+
+      rerender({ queries: mockQueries, transformations: mockTransformations });
+
+      act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
+    });
+
     it('does not range-select when shift-clicking a query after selecting a transformation', () => {
       const { result } = setup();
       // Select a transformation (this clears query selection)

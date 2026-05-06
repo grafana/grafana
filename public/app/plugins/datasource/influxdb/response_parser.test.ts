@@ -9,14 +9,16 @@ import {
   FieldType,
   MutableDataFrame,
 } from '@grafana/data';
-import { type FetchResponse } from '@grafana/runtime';
-import config from 'app/core/config';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { config, type FetchResponse } from '@grafana/runtime';
 
 import InfluxQueryModel from './influx_query_model';
 import { getMockDSInstanceSettings, getMockInfluxDS } from './mocks/datasource';
 import ResponseParser, { getSelectedParams } from './response_parser';
 import { type InfluxQuery } from './types';
+
+const backendSrv = {
+  fetch: jest.fn(),
+};
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

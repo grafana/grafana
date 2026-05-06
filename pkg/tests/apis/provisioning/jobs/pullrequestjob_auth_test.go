@@ -19,12 +19,12 @@ func TestIntegrationProvisioning_PullRequestJobRejected(t *testing.T) {
 	const repo = "pr-job-rejected-test"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	body := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionPullRequest,

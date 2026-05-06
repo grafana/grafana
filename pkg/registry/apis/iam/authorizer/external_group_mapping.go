@@ -10,6 +10,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
+	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -64,6 +65,17 @@ func (r *ExternalGroupMappingAuthorizer) AfterGet(ctx context.Context, obj runti
 
 // BeforeCreate implements ResourceStorageAuthorizer.
 func (r *ExternalGroupMappingAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+	// FIXME: Remove this when the namegenerator can be configured for the API
+	concreteObj, ok := obj.(*iamv0.ExternalGroupMapping)
+	if !ok {
+		return apierrors.NewInternalError(fmt.Errorf("expected ExternalGroupMapping, got %T: %w", obj, storewrapper.ErrUnexpectedType))
+	}
+
+	if concreteObj.GenerateName != "" {
+		concreteObj.Name = concreteObj.GenerateName + util.GenerateShortUID()
+		concreteObj.GenerateName = ""
+	}
+
 	return r.beforeWrite(ctx, obj)
 }
 

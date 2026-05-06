@@ -21,6 +21,7 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { dispatch } from 'app/store/store';
 import { type PermissionLevel } from 'app/types/acl';
 import { type ImportDashboardResponseDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
@@ -35,8 +36,15 @@ import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/D
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { refetchChildren, refreshParents } from '../state/actions';
 
+import { PAGE_SIZE } from './constants';
 import { isProvisionedDashboard } from './isProvisioned';
-import { PAGE_SIZE } from './services';
+
+async function refreshTeamFolders() {
+  if (!config.featureToggles.teamFolders) {
+    return;
+  }
+  dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+}
 
 export interface DeleteFoldersArgs {
   folderUIDs: string[];
@@ -78,6 +86,15 @@ interface ImportOptions {
 interface RestoreDashboardArgs {
   dashboard: Resource<Dashboard | DashboardV2Spec>;
 }
+
+// We need to do this as the API will return different responses depending on the type of storage used and existing
+// resource types, even when we are using the old api/ endpoint.
+const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): DescendantCount => ({
+  folders: folderCounts.folders ?? folderCounts.folder ?? 0,
+  dashboards: folderCounts.dashboards ?? folderCounts.dashboard ?? 0,
+  library_elements: folderCounts.library_elements ?? folderCounts.librarypanel ?? 0,
+  alertrules: folderCounts.alertrules ?? folderCounts.alertrule ?? 0,
+});
 
 export interface ListFolderQueryArgs {
   page: number;
@@ -148,6 +165,7 @@ export const browseDashboardsAPI = createApi({
             pageSize: PAGE_SIZE,
           })
         );
+        refreshTeamFolders();
         // Refetch quota usage after mutations that change the total number of dashboards or folders
         invalidateQuotaUsage(dispatch);
       },
@@ -175,6 +193,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          refreshTeamFolders();
         });
       },
     }),
@@ -196,6 +215,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          refreshTeamFolders();
         });
       },
     }),
@@ -212,6 +232,7 @@ export const browseDashboardsAPI = createApi({
         try {
           await queryFulfilled;
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
+          refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
         } catch {
           // Error handled by mutation caller
@@ -238,10 +259,11 @@ export const browseDashboardsAPI = createApi({
           };
 
           for (const folderCounts of results) {
-            totalCounts.folders += folderCounts.folder;
-            totalCounts.dashboards += folderCounts.dashboard;
-            totalCounts.alertrules += folderCounts.alertrule;
-            totalCounts.library_elements += folderCounts.librarypanel;
+            const normalizedCounts = normalizeDescendantCounts(folderCounts);
+            totalCounts.folders += normalizedCounts.folders;
+            totalCounts.dashboards += normalizedCounts.dashboards;
+            totalCounts.alertrules += normalizedCounts.alertrules;
+            totalCounts.library_elements += normalizedCounts.library_elements;
           }
 
           return { data: totalCounts };
@@ -331,6 +353,7 @@ export const browseDashboardsAPI = createApi({
             })
           );
           dispatch(refreshParents(folderUIDs));
+          refreshTeamFolders();
         });
       },
     }),
@@ -358,6 +381,7 @@ export const browseDashboardsAPI = createApi({
       onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents(folderUIDs));
+          refreshTeamFolders();
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
           invalidateQuotaUsage(dispatch);
@@ -370,7 +394,6 @@ export const browseDashboardsAPI = createApi({
       invalidatesTags: invalidateFolderListOnSuccess,
       queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
-        const restoreDashboardsEnabled = config.featureToggles.restoreDashboards;
         let deletedCount = 0;
         const deletedDashboardUIDs: string[] = [];
         // Delete all the dashboards sequentially
@@ -392,7 +415,7 @@ export const browseDashboardsAPI = createApi({
                 continue;
               }
             }
-            await api.deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
+            await api.deleteDashboard(dashboardUID, false);
 
             deletedCount++;
             deletedDashboardUIDs.push(dashboardUID);
@@ -405,27 +428,18 @@ export const browseDashboardsAPI = createApi({
               pageStateManager.removeSceneCache(uid);
             }
 
-            // Show success notification after all deletions
-            if (restoreDashboardsEnabled) {
-              // Show notification with button to Recently Deleted
-              const title =
-                deletedCount === 1
-                  ? t('browse-dashboards.delete.success-single', 'Dashboard deleted')
-                  : t('browse-dashboards.delete.success-multiple', 'Dashboards deleted');
-              const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View deleted dashboards');
-              const component = buildNotificationButton({
-                title,
-                buttonLabel: buttonText,
-                href: config.appSubUrl + '/dashboard/recently-deleted',
-              });
-              dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
-            } else if (config.featureToggles.kubernetesDashboards) {
-              // Legacy notification for kubernetes dashboards
-              appEvents.publish({
-                type: AppEvents.alertSuccess.name,
-                payload: ['Dashboard deleted'],
-              });
-            }
+            // Show notification with button to Recently Deleted
+            const title =
+              deletedCount === 1
+                ? t('browse-dashboards.delete.success-single', 'Dashboard deleted')
+                : t('browse-dashboards.delete.success-multiple', 'Dashboards deleted');
+            const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View deleted dashboards');
+            const component = buildNotificationButton({
+              title,
+              buttonLabel: buttonText,
+              href: config.appSubUrl + '/dashboard/recently-deleted',
+            });
+            dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
           }
         }
 

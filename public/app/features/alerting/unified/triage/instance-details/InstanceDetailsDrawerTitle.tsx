@@ -49,6 +49,8 @@ interface InstanceDetailsDrawerTitleProps {
   rule?: GrafanaRuleDefinition;
   onOpenSilence?: () => void;
   titleText?: string;
+  /** Overrides the muted label above the title (defaults to Alert Instance). */
+  sectionLabel?: ReactNode;
   hideActions?: boolean;
   titleSection?: ReactNode;
   showAlertState?: boolean;
@@ -61,6 +63,7 @@ export function InstanceDetailsDrawerTitle({
   rule,
   onOpenSilence,
   titleText,
+  sectionLabel,
   hideActions = false,
   titleSection,
   showAlertState = true,
@@ -100,7 +103,9 @@ export function InstanceDetailsDrawerTitle({
       )}
       <Stack direction="column" gap={0.5}>
         <Text variant="bodySmall" color="secondary">
-          <Trans i18nKey="alerting.triage.instance-details-drawer.alert-instance-label">Alert Instance</Trans>
+          {sectionLabel ?? (
+            <Trans i18nKey="alerting.triage.instance-details-drawer.alert-instance-label">Alert Instance</Trans>
+          )}
         </Text>
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
           <Stack direction="row" alignItems="center" gap={1} minWidth={0}>

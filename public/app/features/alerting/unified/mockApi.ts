@@ -1,7 +1,9 @@
 import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import {
@@ -30,7 +32,7 @@ import {
   type MatcherOperator,
   type Route,
 } from '../../../plugins/datasource/alertmanager/types';
-import { type DashboardSearchItem } from '../../search/types';
+import { type DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
 import { type RulerGroupUpdatedResponse } from './api/alertRuleModel';
 
@@ -235,7 +237,48 @@ export function mockFolderApi(server: SetupServer) {
 export function mockDashboardApi(server: SetupServer) {
   return {
     search: (results: DashboardSearchItem[]) => {
-      server.use(http.get(`/api/search`, () => HttpResponse.json(results)));
+      const dashboards: DashboardHit[] = results
+        .filter((item) => item.type !== DashboardSearchItemType.DashFolder)
+        .map((item) => ({
+          resource: 'dashboards',
+          name: item.uid || item.title,
+          title: item.title,
+          folder: item.folderUid,
+          field: {},
+        }));
+
+      const explicitFolders: DashboardHit[] = results
+        .filter((item) => item.type === DashboardSearchItemType.DashFolder)
+        .map((item) => ({
+          resource: 'folders',
+          name: item.uid || item.title,
+          title: item.title,
+          field: {},
+        }));
+
+      // We have to make sure we have the parent folders for the dashboards that have folderUid.
+      const derivedFolders = new Map<string, DashboardHit>();
+      for (const item of results) {
+        if (!item.folderUid || !item.folderTitle) {
+          continue;
+        }
+
+        derivedFolders.set(item.folderUid, {
+          resource: 'folders',
+          name: item.folderUid,
+          title: item.folderTitle,
+          field: {},
+        });
+      }
+
+      const folderHits = [...explicitFolders, ...derivedFolders.values()].filter(
+        (hit, index, hits) => hits.findIndex((candidate) => candidate.name === hit.name) === index
+      );
+
+      server.use(
+        http.get(`/api/search`, () => HttpResponse.json(results)),
+        getCustomSearchHandler([...folderHits, ...dashboards])
+      );
     },
     dashboard: (response: DashboardDTO) => {
       server.use(http.get(`/api/dashboards/uid/${response.dashboard.uid}`, () => HttpResponse.json(response)));

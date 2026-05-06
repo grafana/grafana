@@ -443,7 +443,7 @@ func TestAccessControlAPI_searchUsersPermissions_MergesLegacyAndZanzana(t *testi
 	zClient := &fakeZanzanaClient{
 		listResp: &authzv1.ListResponse{Items: []string{"zanzana"}},
 	}
-	features := featuremgmt.WithFeatures(featuremgmt.FlagZanzanaSearchUsersPermissions)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions)
 	api := NewAccessControlAPI(routing.NewRouteRegister(), accessControl, acSvc, mockUserSvc, features, zClient)
 	api.RegisterAPIEndpoints()
 
@@ -478,7 +478,7 @@ func TestAccessControlAPI_searchUsersPermissions_UsesLegacyWhenZanzanaFails(t *t
 	zClient := &fakeZanzanaClient{
 		listErr: errors.New("zanzana unavailable"),
 	}
-	features := featuremgmt.WithFeatures(featuremgmt.FlagZanzanaSearchUsersPermissions)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions)
 	api := NewAccessControlAPI(routing.NewRouteRegister(), accessControl, acSvc, mockUserSvc, features, zClient)
 	api.RegisterAPIEndpoints()
 
@@ -498,4 +498,142 @@ func TestAccessControlAPI_searchUsersPermissions_UsesLegacyWhenZanzanaFails(t *t
 	require.Equal(t, map[int64]map[string][]string{
 		2: {"dashboards:read": {"dashboards:uid:legacy"}},
 	}, output)
+}
+
+func TestMergeUserPermissions(t *testing.T) {
+	tests := []struct {
+		name     string
+		legacy   []ac.Permission
+		zanzana  []ac.Permission
+		expected []ac.Permission
+	}{
+		{
+			name:     "dedup identical action and scope",
+			legacy:   []ac.Permission{{Action: "a", Scope: "s"}},
+			zanzana:  []ac.Permission{{Action: "a", Scope: "s"}},
+			expected: []ac.Permission{{Action: "a", Scope: "s"}},
+		},
+		{
+			name:     "union different scopes for same action",
+			legacy:   []ac.Permission{{Action: "a", Scope: "s1"}},
+			zanzana:  []ac.Permission{{Action: "a", Scope: "s2"}},
+			expected: []ac.Permission{{Action: "a", Scope: "s1"}, {Action: "a", Scope: "s2"}},
+		},
+		{
+			name:     "zanzana only adds new permissions",
+			legacy:   []ac.Permission{{Action: "teams:read", Scope: "teams:*"}},
+			zanzana:  []ac.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:x"}},
+			expected: []ac.Permission{{Action: "teams:read", Scope: "teams:*"}, {Action: "dashboards:read", Scope: "dashboards:uid:x"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			legacy := append([]ac.Permission(nil), tt.legacy...)
+			got := mergeUserPermissions(legacy, tt.zanzana)
+			sortPermissions(got)
+			expected := append([]ac.Permission(nil), tt.expected...)
+			sortPermissions(expected)
+			require.Equal(t, expected, got)
+		})
+	}
+}
+
+func TestAPI_getUserActions_MergesLegacyAndZanzana(t *testing.T) {
+	acSvc := actest.FakeService{
+		ExpectedPermissions: []ac.Permission{
+			{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
+		},
+	}
+	zClient := &fakeZanzanaClient{
+		listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
+	}
+	features := featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions)
+	api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, &usertest.FakeUserService{}, features, zClient)
+	api.RegisterAPIEndpoints()
+
+	server := webtest.NewServer(t, api.RouteRegister)
+	req := server.NewGetRequest("/api/access-control/user/actions")
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID:       1,
+		UserID:      1,
+		UserUID:     "user_test_uid",
+		Permissions: map[int64]map[string][]string{},
+	})
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, res.StatusCode)
+
+	var output util.DynMap
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&output))
+	require.True(t, output[datasources.ActionRead].(bool))
+	require.Contains(t, output, "dashboards:read")
+}
+
+func TestAPI_getUserActions_UsesLegacyWhenZanzanaFails(t *testing.T) {
+	acSvc := actest.FakeService{
+		ExpectedPermissions: []ac.Permission{
+			{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
+		},
+	}
+	zClient := &fakeZanzanaClient{
+		listErr: errors.New("zanzana unavailable"),
+	}
+	features := featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions)
+	api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, &usertest.FakeUserService{}, features, zClient)
+	api.RegisterAPIEndpoints()
+
+	server := webtest.NewServer(t, api.RouteRegister)
+	req := server.NewGetRequest("/api/access-control/user/actions")
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID:       1,
+		UserID:      1,
+		UserUID:     "user_test_uid",
+		Permissions: map[int64]map[string][]string{},
+	})
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, res.StatusCode)
+
+	var output util.DynMap
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&output))
+	require.Equal(t, util.DynMap{datasources.ActionRead: true}, output)
+}
+
+func TestAPI_getUserPermissions_MergesLegacyAndZanzana(t *testing.T) {
+	acSvc := actest.FakeService{
+		ExpectedPermissions: []ac.Permission{
+			{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
+		},
+	}
+	zClient := &fakeZanzanaClient{
+		listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
+	}
+	features := featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions)
+	api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, &usertest.FakeUserService{}, features, zClient)
+	api.RegisterAPIEndpoints()
+
+	server := webtest.NewServer(t, api.RouteRegister)
+	req := server.NewGetRequest("/api/access-control/user/permissions")
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID:       1,
+		UserID:      1,
+		UserUID:     "user_test_uid",
+		Permissions: map[int64]map[string][]string{},
+	})
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, res.StatusCode)
+
+	var output util.DynMap
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&output))
+	require.Contains(t, output, datasources.ActionRead)
+	require.Contains(t, output, "dashboards:read")
+
+	dsScopes, ok := output[datasources.ActionRead].([]any)
+	require.True(t, ok)
+	require.Contains(t, dsScopes, datasources.ScopeAll)
 }

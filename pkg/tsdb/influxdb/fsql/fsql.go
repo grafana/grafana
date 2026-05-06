@@ -11,12 +11,11 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 var (
-	glog = log.New("tsdb.influx_flightsql")
+	glog = backend.NewLoggerWith("logger", "tsdb.influx_flightsql")
 )
 
 type SQLOptions struct {

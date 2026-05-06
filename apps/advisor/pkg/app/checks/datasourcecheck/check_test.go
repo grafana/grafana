@@ -137,6 +137,34 @@ func TestCheck_Run(t *testing.T) {
 		assert.Contains(t, *failures[0].MoreInfo, "test message")
 	})
 
+	t.Run("should skip health check when datasource plugin is frontend-only", func(t *testing.T) {
+		datasources := []*datasources.DataSource{
+			{UID: "valid-uid-1", Type: "prometheus", Name: "Prometheus"},
+		}
+
+		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
+		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
+		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: "should not run"}}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
+		mockPluginStore := &MockPluginStore{exists: true, frontendOnly: true}
+
+		check := &check{
+			DatasourceSvc: mockDatasourceSvc,
+			PluginRepo:    mockPluginRepo,
+			PluginStore:   mockPluginStore,
+			healthChecker: &checks.HealthCheckerImpl{
+				PluginContextProvider: mockPluginContextProvider,
+				PluginClient:          mockPluginClient,
+			},
+		}
+
+		failures, err := runChecks(check)
+		assert.NoError(t, err)
+		assert.Empty(t, failures)
+	})
+
 	t.Run("should skip health check when plugin does not support backend health checks", func(t *testing.T) {
 		datasources := []*datasources.DataSource{
 			{UID: "valid-uid-1", Type: "prometheus", Name: "Prometheus"},
@@ -460,11 +488,20 @@ func (m *MockPluginClient) CheckHealth(context.Context, *backend.CheckHealthRequ
 type MockPluginStore struct {
 	pluginstore.Store
 
-	exists bool
+	exists       bool
+	frontendOnly bool
 }
 
 func (m *MockPluginStore) Plugin(context.Context, string) (pluginstore.Plugin, bool) {
-	return pluginstore.Plugin{}, m.exists
+	if !m.exists {
+		return pluginstore.Plugin{}, false
+	}
+
+	return pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			Backend: !m.frontendOnly,
+		},
+	}, true
 }
 
 type MockPluginRepo struct {

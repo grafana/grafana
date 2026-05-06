@@ -29,6 +29,7 @@
   "devDependencies": {
     "@grafana/e2e-selectors": "13.1.0-pre",
     "@grafana/plugin-configs": "13.1.0-pre",
+    "@grafana/test-utils": "workspace:*",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "6.6.4",
     "@testing-library/react": "16.3.0",
@@ -43,7 +44,7 @@
     "jest": "29.7.0",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
-    "typescript": "5.9.2",
+    "typescript": "6.0.2",
     "webpack": "^5.105.0"
   },
   "peerDependencies": {

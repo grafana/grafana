@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/web"
@@ -80,7 +81,7 @@ func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *htt
 		return nil, err
 	}
 
-	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	raw, err := json.Marshal(dqr)
 	if err != nil {
 		return nil, fmt.Errorf("marshal: %w", err)

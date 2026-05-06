@@ -9,11 +9,12 @@ import (
 	"sync/atomic"
 
 	"github.com/Masterminds/semver/v3"
-	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -116,6 +117,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 		log:                       log.New("user.sync"),
 		tracer:                    tracer,
 		features:                  features,
+		openFeatureClient:         openfeature.NewDefaultClient(),
 		lastSeenSF:                &singleflight.Group{},
 		scimUtil:                  scimutil.NewSCIMUtil(k8sClient),
 		staticConfig:              staticConfig,
@@ -132,6 +134,7 @@ type UserSync struct {
 	log                       log.Logger
 	tracer                    tracing.Tracer
 	features                  featuremgmt.FeatureToggles
+	openFeatureClient         *openfeature.Client
 	lastSeenSF                *singleflight.Group
 	scimUtil                  *scimutil.SCIMUtil
 	staticConfig              *StaticSCIMConfig
@@ -376,7 +379,8 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 	}
 
 	if id.ClientParams.AllowGlobalOrg && id.OrgID == authn.GlobalOrgID {
-		usr.Teams = nil
+		usr.TeamIDs = nil // nolint:staticcheck
+		usr.TeamUIDs = nil
 		usr.OrgName = ""
 		usr.OrgRole = org.RoleNone
 		usr.OrgID = authn.GlobalOrgID
@@ -445,6 +449,13 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, usr *user.User, ide
 	defer span.End()
 
 	if identity.AuthenticatedBy == "" {
+		return nil
+	}
+
+	// When the Kubernetes user service is active, auth proxy user lookup relies on email/login rather than
+	// the user_auth table, so persisting an auth connection serves no purpose.
+	if s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) &&
+		identity.AuthenticatedBy == login.AuthProxyAuthModule {
 		return nil
 	}
 
@@ -644,8 +655,13 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	ctx, span := s.tracer.Start(ctx, "user.sync.getUser")
 	defer span.End()
 
+	// Skip auth info for auth proxy when the Kubernetes user service is active since
+	// user lookup falls back to email/login and the user_auth table is not used.
+	skipAuthInfo := s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) &&
+		identity.AuthenticatedBy == login.AuthProxyAuthModule
+
 	// Check auth info first
-	if identity.AuthID != "" && identity.AuthenticatedBy != "" {
+	if identity.AuthID != "" && identity.AuthenticatedBy != "" && !skipAuthInfo {
 		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthenticatedBy}
 		authInfo, errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)
 
@@ -743,6 +759,8 @@ func syncUserToIdentity(ctx context.Context, usr *user.User, id *authn.Identity)
 }
 
 // syncSignedInUserToIdentity syncs a user to an identity.
+// id.Groups must not be overridden as part of this function as it is used to store group information from the auth module
+// which is needed for role mapping in the case of SAML or for team sync.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.UID = usr.UserUID
 	id.Name = usr.Name
@@ -752,7 +770,7 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.OrgName = usr.OrgName
 	id.OrgRoles = map[int64]org.RoleType{id.OrgID: usr.OrgRole}
 	id.HelpFlags1 = usr.HelpFlags1
-	id.Teams = usr.Teams
+	id.TeamIDs = usr.TeamIDs // nolint:staticcheck
 	id.LastSeenAt = usr.LastSeenAt
 	id.IsDisabled = usr.IsDisabled
 	id.IsGrafanaAdmin = &usr.IsGrafanaAdmin

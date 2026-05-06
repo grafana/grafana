@@ -284,6 +284,50 @@ func TestStoreWrapper_SettingService_Error(t *testing.T) {
 	})
 }
 
+func TestStoreWrapper_ServiceIdentityBypass(t *testing.T) {
+	sw := NewStoreWrapper(nil, &fakeSettingService{
+		settings: []*settingsvc.Setting{
+			{Section: "users", Key: "hidden_users", Value: "admin"},
+		},
+	})
+
+	// Create a service identity context — should bypass all hidden user filtering.
+	svcCtx, _ := identity.WithServiceIdentity(context.Background(), 1)
+	hiddenUser := &iamv0.User{
+		ObjectMeta: metav1.ObjectMeta{Name: "admin"},
+		Spec:       iamv0.UserSpec{Login: "admin"},
+	}
+
+	t.Run("AfterGet allows hidden user", func(t *testing.T) {
+		require.NoError(t, sw.AfterGet(svcCtx, hiddenUser))
+	})
+
+	t.Run("FilterList returns all users", func(t *testing.T) {
+		list := &iamv0.UserList{
+			Items: []iamv0.User{
+				{Spec: iamv0.UserSpec{Login: "visible"}},
+				{Spec: iamv0.UserSpec{Login: "admin"}},
+			},
+		}
+		result, err := sw.FilterList(svcCtx, list)
+		require.NoError(t, err)
+		assert.Len(t, result.(*iamv0.UserList).Items, 2)
+	})
+
+	t.Run("BeforeCreate allows hidden login", func(t *testing.T) {
+		require.NoError(t, sw.BeforeCreate(svcCtx, hiddenUser))
+	})
+
+	t.Run("BeforeUpdate allows hidden user", func(t *testing.T) {
+		newObj := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "admin"}, Spec: iamv0.UserSpec{Login: "newlogin"}}
+		require.NoError(t, sw.BeforeUpdate(svcCtx, hiddenUser, newObj))
+	})
+
+	t.Run("BeforeDelete allows hidden user", func(t *testing.T) {
+		require.NoError(t, sw.BeforeDelete(svcCtx, hiddenUser))
+	})
+}
+
 // withAuthInfo adds a StaticRequester to the context so claims.AuthInfoFrom succeeds.
 func withAuthInfo(ctx context.Context, login string) context.Context {
 	return claims.WithAuthInfo(ctx, &identity.StaticRequester{

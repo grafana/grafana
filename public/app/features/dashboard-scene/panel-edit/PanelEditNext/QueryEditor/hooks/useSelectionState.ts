@@ -71,7 +71,9 @@ export function useSelectionState({
   transformations,
   onClearSideEffects,
 }: UseSelectionStateOptions): UseSelectionStateResult {
-  // Initialize with first query selected so Shift+Click works immediately on load.
+  // Eagerly select the first query when available at mount time so the sidebar
+  // highlights it without waiting for a user click. Range-select has its own
+  // fallback in toggleQuerySelection for the late-loading case.
   const [selectedQueryRefIds, setSelectedQueryRefIds] = useState<string[]>(() =>
     queries[0]?.refId ? [queries[0].refId] : []
   );
@@ -112,9 +114,12 @@ export function useSelectionState({
     setSelectedTransformationIds([]);
 
     const currentSelection = selectedQueryRefIdsRef.current;
-    if (modifiers?.range && currentSelection.length > 0) {
-      // Shift+Click: range-select from the anchor to this query (inclusive).
-      const anchorRefId = currentSelection.at(-1)!;
+    // useSelectedCard visually selects queries[0] when nothing is explicitly selected
+    // (no transformation either), so fall back to it as the range-select anchor.
+    const hasTransformationSelected = selectedTransformationIdsRef.current.length > 0;
+    const anchorRefId =
+      currentSelection.at(-1) ?? (hasTransformationSelected ? undefined : queriesRef.current[0]?.refId);
+    if (modifiers?.range && anchorRefId) {
       const rangeSelection = computeRangeSelection(
         queriesRef.current.map(({ refId }) => refId),
         currentSelection,

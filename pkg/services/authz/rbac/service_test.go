@@ -3000,4 +3000,96 @@ func TestService_BatchCheck(t *testing.T) {
 		// Should have made additional calls because one item required fresh data
 		assert.Greater(t, fStore.calls, initialCalls, "Should skip cache for entire group if any item requires fresh data")
 	})
+
+	// setupBatchCheckWithTracking creates a service with noop folder cache (TTL=0)
+	// to match production configs where CacheTTL=0, and a trackingFolderStore.
+	setupBatchCheckWithTracking := func(t *testing.T) (*Service, *trackingFolderStore, context.Context) {
+		t.Helper()
+		s := setupService()
+		// Override folder cache to noop to match production with CacheTTL=0.
+		s.folderCache = newCacheWrap[folderTree](nil, log.New("test"), tracing.NewNoopTracerService(), 0)
+		fStore := &fakeStore{
+			disableNsCheck: true,
+			userID:         &store.UserIdentifiers{UID: "test-uid"},
+			basicRole:      &store.BasicRole{Role: "Viewer", IsAdmin: false},
+			userPermissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "folders:uid:fold1"},
+				{Action: "dashboards:write", Scope: "folders:uid:fold1"},
+				{Action: "dashboards:delete", Scope: "folders:uid:fold1"},
+				{Action: "annotations:create", Scope: "folders:uid:fold1"},
+			},
+			folders: []store.Folder{{UID: "fold1"}},
+		}
+		s.store = fStore
+		s.permissionStore = fStore
+		ts := &trackingFolderStore{inner: fStore}
+		s.folderStore = ts
+		s.identityStore = &fakeIdentityStore{disableNsCheck: true}
+		return s, ts, types.WithAuthInfo(context.Background(), callingService)
+	}
+
+	dashCheck := func(id, verb string) *authzv1.BatchCheckItem {
+		return &authzv1.BatchCheckItem{
+			CorrelationId: id, Group: "dashboard.grafana.app",
+			Resource: "dashboards", Verb: verb, Name: "dash1", Folder: "fold1",
+		}
+	}
+
+	t.Run("should share folder tree across groups including subresources", func(t *testing.T) {
+		s, ts, ctx := setupBatchCheckWithTracking(t)
+
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "org-12", Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				dashCheck("dash_read", "get"),
+				dashCheck("dash_write", "update"),
+				dashCheck("dash_delete", "delete"),
+				{
+					CorrelationId: "annot_create", Group: "dashboard.grafana.app",
+					Resource: "dashboards", Subresource: "annotations",
+					Verb: "create", Name: "dash1", Folder: "fold1",
+				},
+			},
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, 4, len(resp.Results))
+		assert.Equal(t, 1, ts.listFoldersCalls,
+			"ListFolders should be called once across all BatchCheck groups")
+	})
+
+	t.Run("mixed batch: fresh and non-fresh groups share getters", func(t *testing.T) {
+		s, ts, ctx := setupBatchCheckWithTracking(t)
+
+		freshTs := time.Now().Add(30 * time.Second).UnixMilli()
+		freshWrite := dashCheck("dash_write", "update")
+		freshWrite.FreshnessTimestamp = freshTs
+		freshDelete := dashCheck("dash_delete_fresh", "delete")
+		freshDelete.FreshnessTimestamp = freshTs
+
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "org-12", Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				dashCheck("dash_read", "get"),
+				freshWrite,
+				freshDelete,
+			},
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, 3, len(resp.Results))
+		assert.Equal(t, 1, ts.listFoldersCalls,
+			"ListFolders should be called once (single shared getter), not once per group")
+	})
+}
+
+// trackingFolderStore wraps a folder store and counts ListFolders calls.
+type trackingFolderStore struct {
+	inner            store.FolderStore
+	listFoldersCalls int
+}
+
+func (t *trackingFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]store.Folder, error) {
+	t.listFoldersCalls++
+	return t.inner.ListFolders(ctx, ns)
 }

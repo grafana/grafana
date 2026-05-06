@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   ControlsLabel,
   type ControlsLayout,
@@ -13,7 +13,6 @@ import {
   type SceneVariables,
   SceneVariableSet,
   type SceneVariableState,
-  SceneVariableValueChangedEvent,
   useSceneObjectState,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
@@ -30,17 +29,6 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
-
-  // Subscribe to variable value changes to track interactions
-  useEffect(() => {
-    const subscription = dashboard.subscribeToEvent(SceneVariableValueChangedEvent, () => {
-      reportInteraction('grafana_dashboards_variable_changed');
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [dashboard]);
 
   const visibleVariables = variables.filter(
     (v: SceneVariable) =>

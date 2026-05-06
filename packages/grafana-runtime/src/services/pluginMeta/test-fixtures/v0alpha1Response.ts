@@ -344,8 +344,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/alertlist/img/icn-singlestat-panel.svg',
-              large: 'public/plugins/alertlist/img/icn-singlestat-panel.svg',
+              small: 'app/plugins/panel/alertlist/img/icn-singlestat-panel.svg',
+              large: 'app/plugins/panel/alertlist/img/icn-singlestat-panel.svg',
             },
             updated: '',
             version: '',
@@ -376,7 +376,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/alertlist',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/alertlist',
+        baseURL: 'app/plugins/panel/alertlist',
         signature: {
           status: 'internal',
         },
@@ -401,8 +401,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['alerts', 'alerting', 'prometheus', 'alertmanager', 'mimir', 'cortex'],
             logos: {
-              small: 'public/plugins/alertmanager/img/logo.svg',
-              large: 'public/plugins/alertmanager/img/logo.svg',
+              small: 'app/plugins/datasource/alertmanager/dist/img/logo.svg',
+              large: 'app/plugins/datasource/alertmanager/dist/img/logo.svg',
             },
             updated: '',
             version: '',
@@ -581,7 +581,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/alertmanager',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/alertmanager',
+        baseURL: 'app/plugins/datasource/alertmanager',
         signature: {
           status: 'internal',
         },
@@ -606,8 +606,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/annolist/img/icn-annolist-panel.svg',
-              large: 'public/plugins/annolist/img/icn-annolist-panel.svg',
+              small: 'app/plugins/panel/annolist/img/icn-annolist-panel.svg',
+              large: 'app/plugins/panel/annolist/img/icn-annolist-panel.svg',
             },
             updated: '',
             version: '',
@@ -638,7 +638,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/annolist',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/annolist',
+        baseURL: 'app/plugins/panel/annolist',
         signature: {
           status: 'internal',
         },
@@ -663,8 +663,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/barchart/img/barchart.svg',
-              large: 'public/plugins/barchart/img/barchart.svg',
+              small: 'app/plugins/panel/barchart/img/barchart.svg',
+              large: 'app/plugins/panel/barchart/img/barchart.svg',
             },
             updated: '',
             version: '',
@@ -694,7 +694,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/barchart',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/barchart',
+        baseURL: 'app/plugins/panel/barchart',
         signature: {
           status: 'internal',
         },
@@ -719,8 +719,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/bargauge/img/icon_bar_gauge.svg',
-              large: 'public/plugins/bargauge/img/icon_bar_gauge.svg',
+              small: 'app/plugins/panel/bargauge/img/icon_bar_gauge.svg',
+              large: 'app/plugins/panel/bargauge/img/icon_bar_gauge.svg',
             },
             updated: '',
             version: '',
@@ -750,7 +750,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/bargauge',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/bargauge',
+        baseURL: 'app/plugins/panel/bargauge',
         signature: {
           status: 'internal',
         },
@@ -775,8 +775,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['financial', 'price', 'currency', 'k-line'],
             logos: {
-              small: 'public/plugins/candlestick/img/candlestick.svg',
-              large: 'public/plugins/candlestick/img/candlestick.svg',
+              small: 'app/plugins/panel/candlestick/img/candlestick.svg',
+              large: 'app/plugins/panel/candlestick/img/candlestick.svg',
             },
             updated: '',
             version: '',
@@ -806,7 +806,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/candlestick',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/candlestick',
+        baseURL: 'app/plugins/panel/candlestick',
         signature: {
           status: 'internal',
         },
@@ -831,8 +831,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/canvas/img/icn-canvas.svg',
-              large: 'public/plugins/canvas/img/icn-canvas.svg',
+              small: 'app/plugins/panel/canvas/img/icn-canvas.svg',
+              large: 'app/plugins/panel/canvas/img/icn-canvas.svg',
             },
             updated: '',
             version: '',
@@ -862,7 +862,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/canvas',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/canvas',
+        baseURL: 'app/plugins/panel/canvas',
         signature: {
           status: 'internal',
         },
@@ -887,8 +887,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['aws', 'amazon'],
             logos: {
-              small: 'public/plugins/cloudwatch/img/amazon-web-services.png',
-              large: 'public/plugins/cloudwatch/img/amazon-web-services.png',
+              small: 'app/plugins/datasource/cloudwatch/dist/img/amazon-web-services.png',
+              large: 'app/plugins/datasource/cloudwatch/dist/img/amazon-web-services.png',
             },
             updated: '',
             version: '',
@@ -959,7 +959,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/cloudwatch',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/cloudwatch',
+        baseURL: 'app/plugins/datasource/cloudwatch',
         signature: {
           status: 'internal',
         },
@@ -984,8 +984,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/dashboard/img/icn-reusequeries.svg',
-              large: 'public/plugins/dashboard/img/icn-reusequeries.svg',
+              small: 'app/plugins/datasource/dashboard/dist/img/icn-reusequeries.svg',
+              large: 'app/plugins/datasource/dashboard/dist/img/icn-reusequeries.svg',
             },
             updated: '',
             version: '',
@@ -1013,7 +1013,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/dashboard',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/dashboard',
+        baseURL: 'app/plugins/datasource/dashboard',
         signature: {
           status: 'internal',
         },
@@ -1038,8 +1038,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/dashlist/img/icn-dashlist-panel.svg',
-              large: 'public/plugins/dashlist/img/icn-dashlist-panel.svg',
+              small: 'app/plugins/panel/dashlist/img/icn-dashlist-panel.svg',
+              large: 'app/plugins/panel/dashlist/img/icn-dashlist-panel.svg',
             },
             updated: '',
             version: '',
@@ -1070,7 +1070,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/dashlist',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/dashlist',
+        baseURL: 'app/plugins/panel/dashlist',
         signature: {
           status: 'internal',
         },
@@ -1096,8 +1096,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/debug/img/icn-debug.svg',
-              large: 'public/plugins/debug/img/icn-debug.svg',
+              small: 'app/plugins/panel/debug/img/icn-debug.svg',
+              large: 'app/plugins/panel/debug/img/icn-debug.svg',
             },
             updated: '',
             version: '',
@@ -1124,7 +1124,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/debug',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/debug',
+        baseURL: 'app/plugins/panel/debug',
         signature: {
           status: 'internal',
         },
@@ -1146,8 +1146,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['elasticsearch', 'datasource', 'database', 'logs', 'nosql', 'traces'],
             logos: {
-              small: 'public/plugins/elasticsearch/img/elasticsearch.svg',
-              large: 'public/plugins/elasticsearch/img/elasticsearch.svg',
+              small: 'app/plugins/datasource/elasticsearch/dist/img/elasticsearch.svg',
+              large: 'app/plugins/datasource/elasticsearch/dist/img/elasticsearch.svg',
             },
             updated: '',
             version: '',
@@ -1190,7 +1190,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/elasticsearch',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/elasticsearch',
+        baseURL: 'app/plugins/datasource/elasticsearch',
         signature: {
           status: 'internal',
         },
@@ -1215,8 +1215,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/flamegraph/img/icn-flamegraph.svg',
-              large: 'public/plugins/flamegraph/img/icn-flamegraph.svg',
+              small: 'app/plugins/panel/flamegraph/img/icn-flamegraph.svg',
+              large: 'app/plugins/panel/flamegraph/img/icn-flamegraph.svg',
             },
             updated: '',
             version: '',
@@ -1245,7 +1245,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/flamegraph',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/flamegraph',
+        baseURL: 'app/plugins/panel/flamegraph',
         signature: {
           status: 'internal',
         },
@@ -1270,8 +1270,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/gauge/img/icon_gauge.svg',
-              large: 'public/plugins/gauge/img/icon_gauge.svg',
+              small: 'app/plugins/panel/gauge/img/icon_gauge.svg',
+              large: 'app/plugins/panel/gauge/img/icon_gauge.svg',
             },
             updated: '',
             version: '',
@@ -1301,7 +1301,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/gauge',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/gauge',
+        baseURL: 'app/plugins/panel/gauge',
         signature: {
           status: 'internal',
         },
@@ -1326,8 +1326,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/geomap/img/icn-geomap.svg',
-              large: 'public/plugins/geomap/img/icn-geomap.svg',
+              small: 'app/plugins/panel/geomap/img/icn-geomap.svg',
+              large: 'app/plugins/panel/geomap/img/icn-geomap.svg',
             },
             updated: '',
             version: '',
@@ -1357,7 +1357,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/geomap',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/geomap',
+        baseURL: 'app/plugins/panel/geomap',
         signature: {
           status: 'internal',
         },
@@ -1382,8 +1382,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/gettingstarted/img/icn-dashlist-panel.svg',
-              large: 'public/plugins/gettingstarted/img/icn-dashlist-panel.svg',
+              small: 'app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg',
+              large: 'app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg',
             },
             updated: '',
             version: '',
@@ -1410,7 +1410,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/gettingstarted',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/gettingstarted',
+        baseURL: 'app/plugins/panel/gettingstarted',
         signature: {
           status: 'internal',
         },
@@ -1435,8 +1435,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/grafana/img/icn-grafanadb.svg',
-              large: 'public/plugins/grafana/img/icn-grafanadb.svg',
+              small: 'app/plugins/datasource/grafana/dist/img/icn-grafanadb.svg',
+              large: 'app/plugins/datasource/grafana/dist/img/icn-grafanadb.svg',
             },
             updated: '',
             version: '',
@@ -1467,7 +1467,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/grafana',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/grafana',
+        baseURL: 'app/plugins/datasource/grafana',
         signature: {
           status: 'internal',
         },
@@ -1492,8 +1492,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['azure', 'monitor', 'Application Insights', 'Log Analytics', 'App Insights'],
             logos: {
-              small: 'public/plugins/grafana-azure-monitor-datasource/img/logo.jpg',
-              large: 'public/plugins/grafana-azure-monitor-datasource/img/logo.jpg',
+              small: 'app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/logo.jpg',
+              large: 'app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/logo.jpg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -1523,15 +1523,15 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
             screenshots: [
               {
                 name: 'Azure Contoso Loans',
-                path: 'public/plugins/grafana-azure-monitor-datasource/img/contoso_loans_grafana_dashboard.png',
+                path: 'app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/contoso_loans_grafana_dashboard.png',
               },
               {
                 name: 'Azure Monitor Network',
-                path: 'public/plugins/grafana-azure-monitor-datasource/img/azure_monitor_network.png',
+                path: 'app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/azure_monitor_network.png',
               },
               {
                 name: 'Azure Monitor CPU',
-                path: 'public/plugins/grafana-azure-monitor-datasource/img/azure_monitor_cpu.png',
+                path: 'app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/azure_monitor_cpu.png',
               },
             ],
           },
@@ -1696,10 +1696,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/grafana-azure-monitor-datasource/module.js',
+          path: 'app/plugins/datasource/grafana-azure-monitor-datasource/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/grafana-azure-monitor-datasource',
+        baseURL: 'app/plugins/datasource/grafana-azure-monitor-datasource/dist',
         signature: {
           status: 'internal',
         },
@@ -1708,43 +1708,43 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         translations: {
           'cs-CZ':
-            'public/plugins/grafana-azure-monitor-datasource/locales/cs-CZ/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/cs-CZ/grafana-azure-monitor-datasource.json',
           'de-DE':
-            'public/plugins/grafana-azure-monitor-datasource/locales/de-DE/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/de-DE/grafana-azure-monitor-datasource.json',
           'en-US':
-            'public/plugins/grafana-azure-monitor-datasource/locales/en-US/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/en-US/grafana-azure-monitor-datasource.json',
           'es-ES':
-            'public/plugins/grafana-azure-monitor-datasource/locales/es-ES/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/es-ES/grafana-azure-monitor-datasource.json',
           'fr-FR':
-            'public/plugins/grafana-azure-monitor-datasource/locales/fr-FR/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/fr-FR/grafana-azure-monitor-datasource.json',
           'hu-HU':
-            'public/plugins/grafana-azure-monitor-datasource/locales/hu-HU/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/hu-HU/grafana-azure-monitor-datasource.json',
           'id-ID':
-            'public/plugins/grafana-azure-monitor-datasource/locales/id-ID/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/id-ID/grafana-azure-monitor-datasource.json',
           'it-IT':
-            'public/plugins/grafana-azure-monitor-datasource/locales/it-IT/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/it-IT/grafana-azure-monitor-datasource.json',
           'ja-JP':
-            'public/plugins/grafana-azure-monitor-datasource/locales/ja-JP/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/ja-JP/grafana-azure-monitor-datasource.json',
           'ko-KR':
-            'public/plugins/grafana-azure-monitor-datasource/locales/ko-KR/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/ko-KR/grafana-azure-monitor-datasource.json',
           'nl-NL':
-            'public/plugins/grafana-azure-monitor-datasource/locales/nl-NL/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/nl-NL/grafana-azure-monitor-datasource.json',
           'pl-PL':
-            'public/plugins/grafana-azure-monitor-datasource/locales/pl-PL/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/pl-PL/grafana-azure-monitor-datasource.json',
           'pt-BR':
-            'public/plugins/grafana-azure-monitor-datasource/locales/pt-BR/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/pt-BR/grafana-azure-monitor-datasource.json',
           'pt-PT':
-            'public/plugins/grafana-azure-monitor-datasource/locales/pt-PT/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/pt-PT/grafana-azure-monitor-datasource.json',
           'ru-RU':
-            'public/plugins/grafana-azure-monitor-datasource/locales/ru-RU/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/ru-RU/grafana-azure-monitor-datasource.json',
           'sv-SE':
-            'public/plugins/grafana-azure-monitor-datasource/locales/sv-SE/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/sv-SE/grafana-azure-monitor-datasource.json',
           'tr-TR':
-            'public/plugins/grafana-azure-monitor-datasource/locales/tr-TR/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/tr-TR/grafana-azure-monitor-datasource.json',
           'zh-Hans':
-            'public/plugins/grafana-azure-monitor-datasource/locales/zh-Hans/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/zh-Hans/grafana-azure-monitor-datasource.json',
           'zh-Hant':
-            'public/plugins/grafana-azure-monitor-datasource/locales/zh-Hant/grafana-azure-monitor-datasource.json',
+            'app/plugins/datasource/grafana-azure-monitor-datasource/locales/zh-Hant/grafana-azure-monitor-datasource.json',
         },
       },
       status: {},
@@ -1764,8 +1764,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['app', 'tempo', 'traces', 'explore'],
             logos: {
-              small: 'public/plugins/grafana-exploretraces-app/img/logo.svg',
-              large: 'public/plugins/grafana-exploretraces-app/img/logo.svg',
+              small: 'app/plugins/panel/grafana-exploretraces-app/img/logo.svg',
+              large: 'app/plugins/panel/grafana-exploretraces-app/img/logo.svg',
             },
             updated: '2025-12-04',
             version: '1.2.2',
@@ -1787,15 +1787,15 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
             screenshots: [
               {
                 name: 'histogram-breakdown',
-                path: 'public/plugins/grafana-exploretraces-app/img/histogram-breakdown.png',
+                path: 'app/plugins/panel/grafana-exploretraces-app/img/histogram-breakdown.png',
               },
               {
                 name: 'errors-metric-flow',
-                path: 'public/plugins/grafana-exploretraces-app/img/errors-metric-flow.png',
+                path: 'app/plugins/panel/grafana-exploretraces-app/img/errors-metric-flow.png',
               },
               {
                 name: 'errors-root-cause',
-                path: 'public/plugins/grafana-exploretraces-app/img/errors-root-cause.png',
+                path: 'app/plugins/panel/grafana-exploretraces-app/img/errors-root-cause.png',
               },
             ],
           },
@@ -1875,7 +1875,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'public/plugins/grafana-exploretraces-app/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/grafana-exploretraces-app',
+        baseURL: 'app/plugins/panel/grafana-exploretraces-app',
         signature: {
           status: 'valid',
           type: 'grafana',
@@ -1902,8 +1902,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['app', 'loki', 'explore', 'logs', 'drilldown', 'drill', 'down', 'drill-down'],
             logos: {
-              small: 'public/plugins/grafana-lokiexplore-app/img/logo.svg',
-              large: 'public/plugins/grafana-lokiexplore-app/img/logo.svg',
+              small: 'app/plugins/panel/grafana-lokiexplore-app/img/logo.svg',
+              large: 'app/plugins/panel/grafana-lokiexplore-app/img/logo.svg',
             },
             updated: '2025-12-09',
             version: '1.0.32',
@@ -1925,15 +1925,15 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
             screenshots: [
               {
                 name: 'patterns',
-                path: 'public/plugins/grafana-lokiexplore-app/img/patterns.png',
+                path: 'app/plugins/panel/grafana-lokiexplore-app/img/patterns.png',
               },
               {
                 name: 'fields',
-                path: 'public/plugins/grafana-lokiexplore-app/img/fields.png',
+                path: 'app/plugins/panel/grafana-lokiexplore-app/img/fields.png',
               },
               {
                 name: 'table',
-                path: 'public/plugins/grafana-lokiexplore-app/img/table.png',
+                path: 'app/plugins/panel/grafana-lokiexplore-app/img/table.png',
               },
             ],
           },
@@ -2014,7 +2014,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'public/plugins/grafana-lokiexplore-app/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/grafana-lokiexplore-app',
+        baseURL: 'app/plugins/panel/grafana-lokiexplore-app',
         signature: {
           status: 'valid',
           type: 'grafana',
@@ -2041,8 +2041,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['drilldown', 'metrics', 'app', 'prometheus', 'mimir'],
             logos: {
-              small: 'public/plugins/grafana-metricsdrilldown-app/img/logo.svg',
-              large: 'public/plugins/grafana-metricsdrilldown-app/img/logo.svg',
+              small: 'app/plugins/panel/grafana-metricsdrilldown-app/img/logo.svg',
+              large: 'app/plugins/panel/grafana-metricsdrilldown-app/img/logo.svg',
             },
             updated: '2025-12-17',
             version: '1.0.26',
@@ -2064,11 +2064,11 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
             screenshots: [
               {
                 name: 'metricselect',
-                path: 'public/plugins/grafana-metricsdrilldown-app/img/metrics-drilldown.png',
+                path: 'app/plugins/panel/grafana-metricsdrilldown-app/img/metrics-drilldown.png',
               },
               {
                 name: 'breakdown',
-                path: 'public/plugins/grafana-metricsdrilldown-app/img/breakdown.png',
+                path: 'app/plugins/panel/grafana-metricsdrilldown-app/img/breakdown.png',
               },
             ],
           },
@@ -2142,7 +2142,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'public/plugins/grafana-metricsdrilldown-app/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/grafana-metricsdrilldown-app',
+        baseURL: 'app/plugins/panel/grafana-metricsdrilldown-app',
         signature: {
           status: 'valid',
           type: 'grafana',
@@ -2169,8 +2169,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/grafana-postgresql-datasource/img/postgresql_logo.svg',
-              large: 'public/plugins/grafana-postgresql-datasource/img/postgresql_logo.svg',
+              small: 'app/plugins/datasource/grafana-postgresql-datasource/dist/img/postgresql_logo.svg',
+              large: 'app/plugins/datasource/grafana-postgresql-datasource/dist/img/postgresql_logo.svg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -2207,10 +2207,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/grafana-postgresql-datasource/module.js',
+          path: 'app/plugins/datasource/grafana-postgresql-datasource/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/grafana-postgresql-datasource',
+        baseURL: 'app/plugins/datasource/grafana-postgresql-datasource/dist',
         signature: {
           status: 'internal',
         },
@@ -2235,8 +2235,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['app', 'pyroscope', 'profiling', 'explore', 'profiles', 'performance', 'drilldown'],
             logos: {
-              small: 'public/plugins/grafana-pyroscope-app/img/logo.svg',
-              large: 'public/plugins/grafana-pyroscope-app/img/logo.svg',
+              small: 'app/plugins/panel/grafana-pyroscope-app/img/logo.svg',
+              large: 'app/plugins/panel/grafana-pyroscope-app/img/logo.svg',
             },
             updated: '2025-12-18',
             version: '1.14.2',
@@ -2258,7 +2258,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
             screenshots: [
               {
                 name: 'Hero Image',
-                path: 'public/plugins/grafana-pyroscope-app/img/hero-image.png',
+                path: 'app/plugins/panel/grafana-pyroscope-app/img/hero-image.png',
               },
             ],
           },
@@ -2320,7 +2320,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'public/plugins/grafana-pyroscope-app/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/grafana-pyroscope-app',
+        baseURL: 'app/plugins/panel/grafana-pyroscope-app',
         signature: {
           status: 'valid',
           type: 'grafana',
@@ -2355,8 +2355,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
               'pyroscope',
             ],
             logos: {
-              small: 'public/plugins/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg',
-              large: 'public/plugins/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg',
+              small: 'app/plugins/datasource/grafana-pyroscope-datasource/dist/img/grafana_pyroscope_icon.svg',
+              large: 'app/plugins/datasource/grafana-pyroscope-datasource/dist/img/grafana_pyroscope_icon.svg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -2392,10 +2392,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/grafana-pyroscope-datasource/module.js',
+          path: 'app/plugins/datasource/grafana-pyroscope-datasource/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/grafana-pyroscope-datasource',
+        baseURL: 'app/plugins/datasource/grafana-pyroscope-datasource/dist',
         signature: {
           status: 'internal',
         },
@@ -2420,8 +2420,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/grafana-testdata-datasource/img/testdata.svg',
-              large: 'public/plugins/grafana-testdata-datasource/img/testdata.svg',
+              small: 'app/plugins/datasource/grafana-testdata-datasource/dist/img/testdata.svg',
+              large: 'app/plugins/datasource/grafana-testdata-datasource/dist/img/testdata.svg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -2466,10 +2466,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/grafana-testdata-datasource/module.js',
+          path: 'app/plugins/datasource/grafana-testdata-datasource/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/grafana-testdata-datasource',
+        baseURL: 'app/plugins/datasource/grafana-testdata-datasource/dist',
         signature: {
           status: 'internal',
         },
@@ -2494,8 +2494,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/graphite/img/graphite_logo.png',
-              large: 'public/plugins/graphite/img/graphite_logo.png',
+              small: 'app/plugins/datasource/graphite/dist/img/graphite_logo.png',
+              large: 'app/plugins/datasource/graphite/dist/img/graphite_logo.png',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -2554,10 +2554,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/graphite/module.js',
+          path: 'app/plugins/datasource/graphite/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/graphite',
+        baseURL: 'app/plugins/datasource/graphite/dist',
         signature: {
           status: 'internal',
         },
@@ -2582,8 +2582,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/heatmap/img/icn-heatmap-panel.svg',
-              large: 'public/plugins/heatmap/img/icn-heatmap-panel.svg',
+              small: 'app/plugins/panel/heatmap/img/icn-heatmap-panel.svg',
+              large: 'app/plugins/panel/heatmap/img/icn-heatmap-panel.svg',
             },
             updated: '',
             version: '',
@@ -2613,7 +2613,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/heatmap',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/heatmap',
+        baseURL: 'app/plugins/panel/heatmap',
         signature: {
           status: 'internal',
         },
@@ -2638,8 +2638,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['distribution', 'bar chart', 'frequency', 'proportional'],
             logos: {
-              small: 'public/plugins/histogram/img/histogram.svg',
-              large: 'public/plugins/histogram/img/histogram.svg',
+              small: 'app/plugins/panel/histogram/img/histogram.svg',
+              large: 'app/plugins/panel/histogram/img/histogram.svg',
             },
             updated: '',
             version: '',
@@ -2669,7 +2669,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/histogram',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/histogram',
+        baseURL: 'app/plugins/panel/histogram',
         signature: {
           status: 'internal',
         },
@@ -2694,8 +2694,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/influxdb/img/influxdb_logo.svg',
-              large: 'public/plugins/influxdb/img/influxdb_logo.svg',
+              small: 'app/plugins/datasource/influxdb/dist/img/influxdb_logo.svg',
+              large: 'app/plugins/datasource/influxdb/dist/img/influxdb_logo.svg',
             },
             updated: '',
             version: '',
@@ -2734,7 +2734,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/influxdb',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/influxdb',
+        baseURL: 'app/plugins/datasource/influxdb',
         signature: {
           status: 'internal',
         },
@@ -2759,8 +2759,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/jaeger/img/jaeger_logo.svg',
-              large: 'public/plugins/jaeger/img/jaeger_logo.svg',
+              small: 'app/plugins/datasource/jaeger/dist/img/jaeger_logo.svg',
+              large: 'app/plugins/datasource/jaeger/dist/img/jaeger_logo.svg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -2804,10 +2804,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/jaeger/module.js',
+          path: 'app/plugins/datasource/jaeger/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/jaeger',
+        baseURL: 'app/plugins/datasource/jaeger/dist',
         signature: {
           status: 'internal',
         },
@@ -2832,8 +2832,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/logs/img/icn-logs-panel.svg',
-              large: 'public/plugins/logs/img/icn-logs-panel.svg',
+              small: 'app/plugins/panel/logs/img/icn-logs-panel.svg',
+              large: 'app/plugins/panel/logs/img/icn-logs-panel.svg',
             },
             updated: '',
             version: '',
@@ -2862,7 +2862,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/logs',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/logs',
+        baseURL: 'app/plugins/panel/logs',
         signature: {
           status: 'internal',
         },
@@ -2887,8 +2887,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/loki/img/loki_icon.svg',
-              large: 'public/plugins/loki/img/loki_icon.svg',
+              small: 'app/plugins/datasource/loki/dist/img/loki_icon.svg',
+              large: 'app/plugins/datasource/loki/dist/img/loki_icon.svg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -2934,10 +2934,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/loki/module.js',
+          path: 'app/plugins/datasource/loki/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/loki',
+        baseURL: 'app/plugins/datasource/loki/dist',
         signature: {
           status: 'internal',
         },
@@ -2962,8 +2962,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/mixed/img/icn-mixeddatasources.svg',
-              large: 'public/plugins/mixed/img/icn-mixeddatasources.svg',
+              small: 'app/plugins/datasource/mixed/dist/img/icn-mixeddatasources.svg',
+              large: 'app/plugins/datasource/mixed/dist/img/icn-mixeddatasources.svg',
             },
             updated: '',
             version: '',
@@ -2998,7 +2998,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/mixed',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/mixed',
+        baseURL: 'app/plugins/datasource/mixed',
         signature: {
           status: 'internal',
         },
@@ -3023,8 +3023,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/mssql/img/sql_server_logo.svg',
-              large: 'public/plugins/mssql/img/sql_server_logo.svg',
+              small: 'app/plugins/datasource/mssql/dist/img/sql_server_logo.svg',
+              large: 'app/plugins/datasource/mssql/dist/img/sql_server_logo.svg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -3060,10 +3060,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/mssql/module.js',
+          path: 'app/plugins/datasource/mssql/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/mssql',
+        baseURL: 'app/plugins/datasource/mssql/dist',
         signature: {
           status: 'internal',
         },
@@ -3071,25 +3071,25 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           detected: false,
         },
         translations: {
-          'cs-CZ': 'public/plugins/mssql/locales/cs-CZ/mssql.json',
-          'de-DE': 'public/plugins/mssql/locales/de-DE/mssql.json',
-          'en-US': 'public/plugins/mssql/locales/en-US/mssql.json',
-          'es-ES': 'public/plugins/mssql/locales/es-ES/mssql.json',
-          'fr-FR': 'public/plugins/mssql/locales/fr-FR/mssql.json',
-          'hu-HU': 'public/plugins/mssql/locales/hu-HU/mssql.json',
-          'id-ID': 'public/plugins/mssql/locales/id-ID/mssql.json',
-          'it-IT': 'public/plugins/mssql/locales/it-IT/mssql.json',
-          'ja-JP': 'public/plugins/mssql/locales/ja-JP/mssql.json',
-          'ko-KR': 'public/plugins/mssql/locales/ko-KR/mssql.json',
-          'nl-NL': 'public/plugins/mssql/locales/nl-NL/mssql.json',
-          'pl-PL': 'public/plugins/mssql/locales/pl-PL/mssql.json',
-          'pt-BR': 'public/plugins/mssql/locales/pt-BR/mssql.json',
-          'pt-PT': 'public/plugins/mssql/locales/pt-PT/mssql.json',
-          'ru-RU': 'public/plugins/mssql/locales/ru-RU/mssql.json',
-          'sv-SE': 'public/plugins/mssql/locales/sv-SE/mssql.json',
-          'tr-TR': 'public/plugins/mssql/locales/tr-TR/mssql.json',
-          'zh-Hans': 'public/plugins/mssql/locales/zh-Hans/mssql.json',
-          'zh-Hant': 'public/plugins/mssql/locales/zh-Hant/mssql.json',
+          'cs-CZ': 'app/plugins/datasource/mssql/dist/locales/cs-CZ/mssql.json',
+          'de-DE': 'app/plugins/datasource/mssql/dist/locales/de-DE/mssql.json',
+          'en-US': 'app/plugins/datasource/mssql/dist/locales/en-US/mssql.json',
+          'es-ES': 'app/plugins/datasource/mssql/dist/locales/es-ES/mssql.json',
+          'fr-FR': 'app/plugins/datasource/mssql/dist/locales/fr-FR/mssql.json',
+          'hu-HU': 'app/plugins/datasource/mssql/dist/locales/hu-HU/mssql.json',
+          'id-ID': 'app/plugins/datasource/mssql/dist/locales/id-ID/mssql.json',
+          'it-IT': 'app/plugins/datasource/mssql/dist/locales/it-IT/mssql.json',
+          'ja-JP': 'app/plugins/datasource/mssql/dist/locales/ja-JP/mssql.json',
+          'ko-KR': 'app/plugins/datasource/mssql/dist/locales/ko-KR/mssql.json',
+          'nl-NL': 'app/plugins/datasource/mssql/dist/locales/nl-NL/mssql.json',
+          'pl-PL': 'app/plugins/datasource/mssql/dist/locales/pl-PL/mssql.json',
+          'pt-BR': 'app/plugins/datasource/mssql/dist/locales/pt-BR/mssql.json',
+          'pt-PT': 'app/plugins/datasource/mssql/dist/locales/pt-PT/mssql.json',
+          'ru-RU': 'app/plugins/datasource/mssql/dist/locales/ru-RU/mssql.json',
+          'sv-SE': 'app/plugins/datasource/mssql/dist/locales/sv-SE/mssql.json',
+          'tr-TR': 'app/plugins/datasource/mssql/dist/locales/tr-TR/mssql.json',
+          'zh-Hans': 'app/plugins/datasource/mssql/dist/locales/zh-Hans/mssql.json',
+          'zh-Hant': 'app/plugins/datasource/mssql/dist/locales/zh-Hant/mssql.json',
         },
       },
       status: {},
@@ -3109,8 +3109,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/mysql/img/mysql_logo.svg',
-              large: 'public/plugins/mysql/img/mysql_logo.svg',
+              small: 'app/plugins/datasource/mysql/dist/img/mysql_logo.svg',
+              large: 'app/plugins/datasource/mysql/dist/img/mysql_logo.svg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -3146,10 +3146,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/mysql/module.js',
+          path: 'app/plugins/datasource/mysql/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/mysql',
+        baseURL: 'app/plugins/datasource/mysql/dist',
         signature: {
           status: 'internal',
         },
@@ -3174,8 +3174,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/news/img/news.svg',
-              large: 'public/plugins/news/img/news.svg',
+              small: 'app/plugins/panel/news/img/news.svg',
+              large: 'app/plugins/panel/news/img/news.svg',
             },
             updated: '',
             version: '',
@@ -3207,7 +3207,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/news',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/news',
+        baseURL: 'app/plugins/panel/news',
         signature: {
           status: 'internal',
         },
@@ -3232,8 +3232,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/nodeGraph/img/icn-node-graph.svg',
-              large: 'public/plugins/nodeGraph/img/icn-node-graph.svg',
+              small: 'app/plugins/panel/nodeGraph/img/icn-node-graph.svg',
+              large: 'app/plugins/panel/nodeGraph/img/icn-node-graph.svg',
             },
             updated: '',
             version: '',
@@ -3262,7 +3262,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/nodeGraph',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/nodeGraph',
+        baseURL: 'app/plugins/panel/nodeGraph',
         signature: {
           status: 'internal',
         },
@@ -3287,8 +3287,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/opentsdb/img/opentsdb_logo.png',
-              large: 'public/plugins/opentsdb/img/opentsdb_logo.png',
+              small: 'app/plugins/datasource/opentsdb/dist/img/opentsdb_logo.png',
+              large: 'app/plugins/datasource/opentsdb/dist/img/opentsdb_logo.png',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -3321,10 +3321,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/opentsdb/module.js',
+          path: 'app/plugins/datasource/opentsdb/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/opentsdb',
+        baseURL: 'app/plugins/datasource/opentsdb/dist',
         signature: {
           status: 'internal',
         },
@@ -3349,8 +3349,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['grafana', 'datasource', 'parca', 'profiling'],
             logos: {
-              small: 'public/plugins/parca/img/logo-small.svg',
-              large: 'public/plugins/parca/img/logo-small.svg',
+              small: 'app/plugins/datasource/parca/dist/img/logo-small.svg',
+              large: 'app/plugins/datasource/parca/dist/img/logo-small.svg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -3386,10 +3386,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/parca/module.js',
+          path: 'app/plugins/datasource/parca/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/parca',
+        baseURL: 'app/plugins/datasource/parca/dist',
         signature: {
           status: 'internal',
         },
@@ -3414,8 +3414,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/piechart/img/icon_piechart.svg',
-              large: 'public/plugins/piechart/img/icon_piechart.svg',
+              small: 'app/plugins/panel/piechart/img/icon_piechart.svg',
+              large: 'app/plugins/panel/piechart/img/icon_piechart.svg',
             },
             updated: '',
             version: '',
@@ -3445,7 +3445,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/piechart',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/piechart',
+        baseURL: 'app/plugins/panel/piechart',
         signature: {
           status: 'internal',
         },
@@ -3470,8 +3470,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/prometheus/img/prometheus_logo.svg',
-              large: 'public/plugins/prometheus/img/prometheus_logo.svg',
+              small: 'app/plugins/datasource/prometheus/img/prometheus_logo.svg',
+              large: 'app/plugins/datasource/prometheus/img/prometheus_logo.svg',
             },
             updated: '',
             version: '',
@@ -3596,7 +3596,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/prometheus',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/prometheus',
+        baseURL: 'app/plugins/datasource/prometheus',
         signature: {
           status: 'internal',
         },
@@ -3621,8 +3621,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/stackdriver/img/cloud_monitoring_logo.svg',
-              large: 'public/plugins/stackdriver/img/cloud_monitoring_logo.svg',
+              small: 'app/plugins/datasource/stackdriver/dist/img/cloud_monitoring_logo.svg',
+              large: 'app/plugins/datasource/stackdriver/dist/img/cloud_monitoring_logo.svg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -3740,10 +3740,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/stackdriver/module.js',
+          path: 'app/plugins/datasource/stackdriver/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/stackdriver',
+        baseURL: 'app/plugins/datasource/stackdriver/dist',
         signature: {
           status: 'internal',
         },
@@ -3768,8 +3768,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/stat/img/icn-singlestat-panel.svg',
-              large: 'public/plugins/stat/img/icn-singlestat-panel.svg',
+              small: 'app/plugins/panel/stat/img/icn-singlestat-panel.svg',
+              large: 'app/plugins/panel/stat/img/icn-singlestat-panel.svg',
             },
             updated: '',
             version: '',
@@ -3799,7 +3799,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/stat',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/stat',
+        baseURL: 'app/plugins/panel/stat',
         signature: {
           status: 'internal',
         },
@@ -3824,8 +3824,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/state-timeline/img/timeline.svg',
-              large: 'public/plugins/state-timeline/img/timeline.svg',
+              small: 'app/plugins/panel/state-timeline/img/timeline.svg',
+              large: 'app/plugins/panel/state-timeline/img/timeline.svg',
             },
             updated: '',
             version: '',
@@ -3855,7 +3855,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/state-timeline',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/state-timeline',
+        baseURL: 'app/plugins/panel/state-timeline',
         signature: {
           status: 'internal',
         },
@@ -3880,8 +3880,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/status-history/img/status.svg',
-              large: 'public/plugins/status-history/img/status.svg',
+              small: 'app/plugins/panel/status-history/img/status.svg',
+              large: 'app/plugins/panel/status-history/img/status.svg',
             },
             updated: '',
             version: '',
@@ -3911,7 +3911,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/status-history',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/status-history',
+        baseURL: 'app/plugins/panel/status-history',
         signature: {
           status: 'internal',
         },
@@ -3936,8 +3936,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/table/img/icn-table-panel.svg',
-              large: 'public/plugins/table/img/icn-table-panel.svg',
+              small: 'app/plugins/panel/table/img/icn-table-panel.svg',
+              large: 'app/plugins/panel/table/img/icn-table-panel.svg',
             },
             updated: '',
             version: '',
@@ -3967,7 +3967,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/table',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/table',
+        baseURL: 'app/plugins/panel/table',
         signature: {
           status: 'internal',
         },
@@ -3992,8 +3992,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/tempo/img/tempo_logo.svg',
-              large: 'public/plugins/tempo/img/tempo_logo.svg',
+              small: 'app/plugins/datasource/tempo/dist/img/tempo_logo.svg',
+              large: 'app/plugins/datasource/tempo/dist/img/tempo_logo.svg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -4029,10 +4029,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/tempo/module.js',
+          path: 'app/plugins/datasource/tempo/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/tempo',
+        baseURL: 'app/plugins/datasource/tempo/dist',
         signature: {
           status: 'internal',
         },
@@ -4057,8 +4057,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/text/img/icn-text-panel.svg',
-              large: 'public/plugins/text/img/icn-text-panel.svg',
+              small: 'app/plugins/panel/text/img/icn-text-panel.svg',
+              large: 'app/plugins/panel/text/img/icn-text-panel.svg',
             },
             updated: '',
             version: '',
@@ -4089,7 +4089,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/text',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/text',
+        baseURL: 'app/plugins/panel/text',
         signature: {
           status: 'internal',
         },
@@ -4114,8 +4114,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/timeseries/img/icn-timeseries-panel.svg',
-              large: 'public/plugins/timeseries/img/icn-timeseries-panel.svg',
+              small: 'app/plugins/panel/timeseries/img/icn-timeseries-panel.svg',
+              large: 'app/plugins/panel/timeseries/img/icn-timeseries-panel.svg',
             },
             updated: '',
             version: '',
@@ -4145,7 +4145,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/timeseries',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/timeseries',
+        baseURL: 'app/plugins/panel/timeseries',
         signature: {
           status: 'internal',
         },
@@ -4170,8 +4170,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/traces/img/traces-panel.svg',
-              large: 'public/plugins/traces/img/traces-panel.svg',
+              small: 'app/plugins/panel/traces/img/traces-panel.svg',
+              large: 'app/plugins/panel/traces/img/traces-panel.svg',
             },
             updated: '',
             version: '',
@@ -4200,7 +4200,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/traces',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/traces',
+        baseURL: 'app/plugins/panel/traces',
         signature: {
           status: 'internal',
         },
@@ -4225,8 +4225,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/trend/img/trend.svg',
-              large: 'public/plugins/trend/img/trend.svg',
+              small: 'app/plugins/panel/trend/img/trend.svg',
+              large: 'app/plugins/panel/trend/img/trend.svg',
             },
             updated: '',
             version: '',
@@ -4257,7 +4257,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/trend',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/trend',
+        baseURL: 'app/plugins/panel/trend',
         signature: {
           status: 'internal',
         },
@@ -4282,8 +4282,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/welcome/img/icn-dashlist-panel.svg',
-              large: 'public/plugins/welcome/img/icn-dashlist-panel.svg',
+              small: 'app/plugins/panel/welcome/img/icn-dashlist-panel.svg',
+              large: 'app/plugins/panel/welcome/img/icn-dashlist-panel.svg',
             },
             updated: '',
             version: '',
@@ -4310,7 +4310,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/welcome',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/welcome',
+        baseURL: 'app/plugins/panel/welcome',
         signature: {
           status: 'internal',
         },
@@ -4335,8 +4335,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: ['scatter', 'plot'],
             logos: {
-              small: 'public/plugins/xychart/img/icn-xychart.svg',
-              large: 'public/plugins/xychart/img/icn-xychart.svg',
+              small: 'app/plugins/panel/xychart/img/icn-xychart.svg',
+              large: 'app/plugins/panel/xychart/img/icn-xychart.svg',
             },
             updated: '',
             version: '',
@@ -4366,7 +4366,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           path: 'core:plugin/xychart',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/xychart',
+        baseURL: 'app/plugins/panel/xychart',
         signature: {
           status: 'internal',
         },
@@ -4391,8 +4391,8 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           info: {
             keywords: [],
             logos: {
-              small: 'public/plugins/zipkin/img/zipkin-logo.svg',
-              large: 'public/plugins/zipkin/img/zipkin-logo.svg',
+              small: 'app/plugins/datasource/zipkin/dist/img/zipkin-logo.svg',
+              large: 'app/plugins/datasource/zipkin/dist/img/zipkin-logo.svg',
             },
             updated: '',
             version: '12.4.0-pre',
@@ -4428,10 +4428,10 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         class: 'core',
         module: {
-          path: 'public/plugins/zipkin/module.js',
+          path: 'app/plugins/datasource/zipkin/dist/module.js',
           loadingStrategy: 'script',
         },
-        baseURL: 'public/plugins/zipkin',
+        baseURL: 'app/plugins/datasource/zipkin/dist',
         signature: {
           status: 'internal',
         },

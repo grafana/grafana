@@ -10,6 +10,7 @@ import {
   type SceneObject,
   type SceneVariable,
   SceneVariableSet,
+  sceneUtils,
   useSceneObjectState,
 } from '@grafana/scenes';
 import { Input, TextArea, Button, Field, Box, Stack, Alert } from '@grafana/ui';
@@ -116,6 +117,15 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
     const variableEditorDef = getEditableVariableDefinition(this.variable.state.type);
 
+    if (sceneUtils.isAdHocVariable(this.variable)) {
+      return {
+        typeName: t('dashboard.edit-pane.elements.filter', 'Filter'),
+        icon: 'filter',
+        instanceName: this.variable.state.name,
+        isHidden: this.variable.state.hide === VariableHide.hideVariable,
+      };
+    }
+
     return {
       typeName: t('dashboard.edit-pane.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
       icon: 'dollar-alt',
@@ -127,11 +137,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
   public renderActions() {
-    return (
-      <Stack grow={1}>
-        <ChangeVariableTypeButton variable={this.variable} />
-      </Stack>
-    );
+    return <ChangeVariableTypeButton variable={this.variable} />;
   }
 
   public onDuplicate() {
@@ -216,12 +222,12 @@ function ChangeVariableTypeButton({ variable }: { variable: SceneVariable }) {
   return (
     <Button
       size="sm"
-      fill="text"
       onClick={() => openChangeVariableTypePane(variable)}
       data-testid={selectors.components.PanelEditor.ElementEditPane.changeVariableType}
       aria-label={t('dashboard.edit-pane.variable.change-type-aria-label', 'Change variable type')}
+      variant="secondary"
     >
-      <Trans i18nKey="dashboard.edit-pane.variable.change-type">Change</Trans>
+      <Trans i18nKey="dashboard.edit-pane.variable.change-type">Change type</Trans>
     </Button>
   );
 }

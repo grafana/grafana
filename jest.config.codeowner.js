@@ -54,7 +54,8 @@ const sourceFiles = teamFiles.filter((file) => {
     // and scripts directory
     !file.startsWith('scripts/') &&
     // and jest config files
-    !path.matchesGlob(file, '**/jest.config*.js')
+    !path.matchesGlob(file, '**/jest.config*.js') &&
+    !file.endsWith('/module.tsx')
   );
 });
 
@@ -99,7 +100,7 @@ module.exports = {
         },
         cleanCache: true,
         onEnd: (coverageResults) => {
-          const reportURL = `file://${path.resolve(outputDir)}/index.html`;
+          const reportURL = `file://${path.resolve(outputDir)}/html/index.html`;
           console.log(`📄 Coverage report saved to ${reportURL}`);
 
           if (process.env.SHOULD_OPEN_COVERAGE_REPORT === 'true') {

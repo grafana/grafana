@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -270,7 +271,7 @@ func registerStorageOptions(
 			}
 			gr := schema.GroupResource{
 				Group:    md.Group,
-				Resource: k.Plural,
+				Resource: strings.ToLower(k.Plural),
 			}
 			if _, done := registered[gr.String()]; done {
 				continue

@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useState } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
@@ -25,6 +26,18 @@ interface SidebarCardProps {
   variant?: 'default' | 'ghost';
 }
 
+const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  if (e.shiftKey) {
+    // Shift+Click is used for range-selection of cards, not text.
+    e.preventDefault();
+  }
+  // @hello-pangea/dnd's capture-phase mousedown listener calls preventDefault, so browser focus
+  // transfer never fires and Monaco never sees a natural blur. Force it imperatively.
+  if (document.activeElement instanceof HTMLElement && document.activeElement !== e.currentTarget) {
+    document.activeElement.blur();
+  }
+};
+
 export const SidebarCard = ({
   children,
   id,
@@ -42,6 +55,7 @@ export const SidebarCard = ({
   const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
+  const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
 
   const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
 
@@ -59,6 +73,10 @@ export const SidebarCard = ({
   const handleResetFocus = useCallback(() => {
     setHasFocusWithin(false);
   }, []);
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    onSelect({ multi: e.metaKey || e.ctrlKey, range: e.shiftKey });
+  };
 
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
   // so we manually handle Enter and Space key activation.
@@ -93,14 +111,8 @@ export const SidebarCard = ({
     <div className={styles.wrapper}>
       <div
         className={styles.card}
-        onClick={(e) => onSelect({ multi: e.metaKey || e.ctrlKey, range: e.shiftKey })}
-        onMouseDown={(e) => {
-          // Prevent the browser's native text-selection behaviour when Shift is held
-          // (Shift+Click is used for range-selection of cards, not text).
-          if (e.shiftKey) {
-            e.preventDefault();
-          }
-        }}
+        onClick={handleClick}
+        onMouseDown={handleMouseDown}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         onBlur={handleBlur}
@@ -110,7 +122,13 @@ export const SidebarCard = ({
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected || isPartOfSelection}
       >
-        <div className={styles.cardContent}>{children}</div>
+        <div className={styles.cardContent}>
+          {isMultiSelectEnabled && (
+            // TODO(queryEditorNextMultiSelect): checkbox goes here
+            <></>
+          )}
+          {children}
+        </div>
         {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
         {/** hasActions is indicating if this is an alert card or a query/transformation card. */}
         {hasActions && (

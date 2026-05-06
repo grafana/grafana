@@ -1,4 +1,5 @@
-import { Point } from 'ol/geom';
+import WKT from 'ol/format/WKT';
+import { type Geometry, Point } from 'ol/geom';
 import { type SortColumn } from 'react-data-grid';
 
 import {
@@ -26,6 +27,7 @@ import {
   buildCellHeightMeasurers,
   buildHeaderHeightMeasurers,
   buildInspectValue,
+  buildNestedColumnWidthsMap,
   calculateFooterHeight,
   compileFrameToRecords,
   computeColWidths,
@@ -1535,6 +1537,43 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('buildNestedColumnWidthsMap', () => {
+    it('maps field display names to ColumnWidth entries', () => {
+      const fields: Field[] = [
+        { name: 'Time', type: FieldType.time, values: [], config: {}, state: { displayName: 'Time' } },
+        { name: 'Value', type: FieldType.number, values: [], config: {}, state: { displayName: 'Value' } },
+      ];
+      const widths = [120, 200];
+
+      const result = buildNestedColumnWidthsMap(fields, widths);
+
+      expect(result.get('Time')).toEqual({ type: 'resized', width: 120 });
+      expect(result.get('Value')).toEqual({ type: 'resized', width: 200 });
+      expect(result.size).toBe(2);
+    });
+
+    it('uses the field display name (from state.displayName) as the map key', () => {
+      const fields: Field[] = [
+        {
+          name: 'raw_name',
+          type: FieldType.string,
+          values: [],
+          config: {},
+          state: { displayName: 'Pretty Name' },
+        },
+      ];
+
+      const result = buildNestedColumnWidthsMap(fields, [150]);
+
+      expect(result.has('Pretty Name')).toBe(true);
+      expect(result.has('raw_name')).toBe(false);
+    });
+
+    it('returns an empty map for empty inputs', () => {
+      expect(buildNestedColumnWidthsMap([], []).size).toBe(0);
+    });
+  });
+
   describe('displayJsonValue', () => {
     let field: Field;
     beforeEach(() => {
@@ -2304,6 +2343,19 @@ describe('TableNG utils', () => {
       values: [new Point([0, -74.1])],
       config: {},
     };
+    const geoFieldInvalid: Field = {
+      name: 'geo-field',
+      type: FieldType.geo,
+      values: ['6y4h9b'],
+      config: {},
+    };
+
+    const formatGeometry = (val: Geometry) =>
+      new WKT().writeGeometry(val, {
+        featureProjection: 'EPSG:3857',
+        dataProjection: 'EPSG:4326',
+      });
+
     it.each([
       { name: 'numbers', input: { valueIdx: 0, field: numberFieldWithNulls } },
       { name: 'string', input: { valueIdx: 0, field: stringField } },
@@ -2318,9 +2370,11 @@ describe('TableNG utils', () => {
       { name: 'sparkline (no x)', input: { valueIdx: 0, field: sparklineFieldNoX } },
       { name: 'array', input: { valueIdx: 0, field: arrayField } },
       { name: 'object', input: { valueIdx: 0, field: objectField } },
-      { name: 'geo', input: { valueIdx: 0, field: geoField } },
-    ])('should handle $name', ({ input: { field, valueIdx = 0 } }) => {
-      expect(buildInspectValue(field.values[valueIdx], field)).toMatchSnapshot();
+      { name: 'geo', input: { valueIdx: 0, field: geoField, formatGeometry } },
+      { name: 'geo w/out formatGeometry', input: { valueIdx: 0, field: geoField } },
+      { name: 'geo w/ invalid format', input: { valueIdx: 0, field: geoFieldInvalid, formatGeometry } },
+    ])('should handle $name', ({ input: { field, valueIdx = 0, formatGeometry } }) => {
+      expect(buildInspectValue(field.values[valueIdx], field, formatGeometry)).toMatchSnapshot();
     });
   });
 });

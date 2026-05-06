@@ -154,6 +154,24 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, rest.DualWriterMode(2), value.DualWriterMode)
 	})
 
+	t.Run("env vars populate bare [unified_storage] section keys", func(t *testing.T) {
+		// These env vars target keys in the bare [unified_storage] section
+		// that are not pre-defined in defaults.ini.
+		t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_CACHE_SIZE_KB", "2000000")
+		t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_PARQUET_BUFFER", "true")
+		t.Setenv("GF_UNIFIED_STORAGE_INDEX_WORKERS", "3")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, 2000000, cfg.MigrationCacheSizeKB)
+		assert.True(t, cfg.MigrationParquetBuffer)
+		assert.Equal(t, 3, cfg.IndexWorkers)
+	})
+
 	t.Run("read unified_storage configs with defaults", func(t *testing.T) {
 		cfg := NewCfg()
 		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
