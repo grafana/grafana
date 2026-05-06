@@ -34,30 +34,30 @@ type GithubWebhookRepository interface {
 
 type githubWebhookRepository struct {
 	GithubRepository
-	config                *provisioning.Repository
-	owner                 string
-	repo                  string
-	secret                common.RawSecureValue
-	gh                    Client
-	webhookURL            string
-	folderMetadataEnabled bool
+	config            *provisioning.Repository
+	owner             string
+	repo              string
+	secret            common.RawSecureValue
+	gh                Client
+	webhookURL        string
+	incrementalPolicy repository.IncrementalSyncPolicy
 }
 
 func NewGithubWebhookRepository(
 	basic GithubRepository,
 	webhookURL string,
 	secret common.RawSecureValue,
-	folderMetadataEnabled bool,
+	incrementalPolicy repository.IncrementalSyncPolicy,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
-		GithubRepository:      basic,
-		config:                basic.Config(),
-		owner:                 basic.Owner(),
-		repo:                  basic.Repo(),
-		gh:                    basic.Client(),
-		webhookURL:            webhookURL,
-		secret:                secret,
-		folderMetadataEnabled: folderMetadataEnabled,
+		GithubRepository:  basic,
+		config:            basic.Config(),
+		owner:             basic.Owner(),
+		repo:              basic.Repo(),
+		gh:                basic.Client(),
+		webhookURL:        webhookURL,
+		secret:            secret,
+		incrementalPolicy: incrementalPolicy,
 	}
 }
 
@@ -123,16 +123,14 @@ func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*prov
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
-	// whenever possible, we want to do incremental syncs to keep things performant.
-	// however, if we get an event where just a .keep file is being deleted, and no other files in the folder
-	// are being deleted, the folder could be gone from git, but not from grafana and we do not have a way
-	// to get the grafana uid to delete the folder. so, instead, we will queue a full sync to clean things up.
 	var deletedPaths []string
+	var totalChanges int
 	for _, change := range event.GetCommits() {
+		totalChanges += len(change.Added) + len(change.Modified) + len(change.Removed)
 		deletedPaths = append(deletedPaths, change.Removed...)
 	}
 
-	incremental := repository.CanUseIncrementalSyncInWebhook(deletedPaths, r.folderMetadataEnabled)
+	incremental := r.incrementalPolicy.CanUseIncrementalSync(deletedPaths, totalChanges)
 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,

@@ -5240,7 +5240,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "設定"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5642,7 +5642,7 @@
         "title": "變數"
       },
       "variable": {
-        "change-type": "變更",
+        "change-type": "",
         "change-type-aria-label": "變更變數類型",
         "custom-options": {
           "apply": "套用",
@@ -5959,7 +5959,7 @@
       "cancel": "取消",
       "common": {
         "copy": "複製",
-        "copy-or-duplicate": "複製/貼上或重複",
+        "copy-tooltip": "",
         "delete": "刪除",
         "duplicate": "重複",
         "layout": "版面配置",
@@ -5998,7 +5998,7 @@
     },
     "new-panel": {
       "aria-label": "未設定的面板。按 Tab 鍵可查看設定選項。",
-      "configure-button": "設定",
+      "configure-button": "",
       "configure-button-menu": "切換選單",
       "configure-visualization": "設定視覺效果",
       "empty-state-message": "執行查詢以便在此處視覺化呈現，或前往所有視覺化呈現以新增其他面板類型",
@@ -6239,10 +6239,8 @@
       "title-provisioned": "已佈建儀表板"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "所選資料夾中已存在名稱相同的儀表板。<br/><2>仍要儲存此儀表板嗎？</2>",
       "body-version-mismatch": "其他人已更新此儀表板<br/><2>仍要儲存此儀表板嗎？</2>",
       "confirmText-save-and-overwrite": "儲存並覆寫",
-      "title-name-exists": "衝突",
       "title-version-mismatch": "衝突"
     },
     "save-dashboard-form": {
@@ -7286,10 +7284,6 @@
       "success-message": "儀表板已成功移動",
       "target-path-label": "目標路徑",
       "title-this-repository-is-read-only": "此儲存庫為唯讀"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "所選資料夾中已存在名稱相同的儀表板。仍要儲存此儀表板嗎？",
-      "title-name-already-exists": "名稱已存在"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

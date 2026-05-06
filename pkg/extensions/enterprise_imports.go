@@ -548,7 +548,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/parca"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 	_ "github.com/grafana/grafana/pkg/tsdb/tempo"
-	_ "github.com/grafana/grafana/pkg/tsdb/zipkin"
 	_ "github.com/grafana/grafana/pkg/util"
 	_ "github.com/grafana/grafana/pkg/util/errhttp"
 	_ "github.com/grafana/grafana/pkg/util/retryer"
