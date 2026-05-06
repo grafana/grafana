@@ -125,7 +125,7 @@ func TestBasic(t *testing.T) {
 		require.NoError(t, sut.GarbageCollectionWorker.Cleanup(t.Context(), sv))
 	})
 
-	t.Run("worker deletes secure value after N failed attempts to delete", func(t *testing.T) {
+	t.Run("worker deletes secure value metadata after N failed attempts to clean it up", func(t *testing.T) {
 		sut := testutils.Setup(t, testutils.WithMutateCfg(func(cfg *testutils.SetupConfig) {
 			cfg.SystemKeeperWrapperFunc = func(k contracts.Keeper) contracts.Keeper {
 				return &fakeKeeper{inner: k}
