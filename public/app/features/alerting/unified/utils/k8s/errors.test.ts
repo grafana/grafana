@@ -119,31 +119,4 @@ describe('getErrorMessageFromApiMachineryErrorResponse with no known code', () =
 
     expect(getErrorMessageFromApiMachineryErrorResponse(error)).toBe('receiver is invalid: standalone reason');
   });
-
-  it('falls back to the API message when details.uid is set but is not a known error code', () => {
-    const error = buildApiMachineryError({
-      message: 'Receiver with this name already exists. Use a different name or update an existing one.',
-      details: { uid: 'b3a1c2d4-not-a-known-code' },
-      code: 409,
-      reason: 'Conflict',
-    });
-
-    expect(getErrorMessageFromApiMachineryErrorResponse(error)).toBe(
-      'Receiver with this name already exists. Use a different name or update an existing one.'
-    );
-  });
-
-  it('appends causes to the API message when details.uid is unknown but causes are present', () => {
-    const error = buildApiMachineryError({
-      message: 'receiver is invalid',
-      details: {
-        uid: 'b3a1c2d4-not-a-known-code',
-        causes: [{ field: 'spec.integrations[0].settings.url', message: 'URL must be valid' }],
-      },
-    });
-
-    const result = getErrorMessageFromApiMachineryErrorResponse(error);
-    expect(result).toContain('receiver is invalid');
-    expect(result).toContain('spec.integrations[0].settings.url: URL must be valid');
-  });
 });

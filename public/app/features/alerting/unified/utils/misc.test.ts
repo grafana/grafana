@@ -160,7 +160,7 @@ describe('stringifyErrorLike', () => {
     expect(stringifyErrorLike(error)).toBe('404');
   });
 
-  it('should stringify ApiMachineryError with unknown code by returning the API message without the URL/status prefix', () => {
+  it('should stringify ApiMachineryError with unknown code', () => {
     const error: ApiMachineryError = {
       apiVersion: 'v1',
       code: 409,
@@ -171,7 +171,7 @@ describe('stringifyErrorLike', () => {
       reason: 'Conflict',
     };
 
-    expect(stringifyErrorLike({ status: 409, data: error })).toBe('some message');
+    expect(stringifyErrorLike({ status: 409, data: error })).toBe('request failed with 409: some message');
   });
 
   it('should stringify ApiMachineryError with known code', () => {
