@@ -126,6 +126,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     [selectedItems]
   );
 
+  const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    // Synchronously update inputValue so it is batched with downshift's dispatch
+    // in a single React render. See onStateChange InputChange case for details.
+    setInputValue(event.target.value);
+  }, []);
+
   const { getSelectedItemProps, getDropdownProps, setSelectedItems, addSelectedItem, removeSelectedItem, reset } =
     useMultipleSelection({
       selectedItems, // initially selected items,
@@ -253,9 +259,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           }
           break;
         case useCombobox.stateChangeTypes.InputChange:
-          setInputValue(newInputValue ?? '');
+          // setInputValue is intentionally NOT called here. It is called synchronously in the
+          // input's onChange handler instead, so that it is batched with downshift's dispatch
+          // in a single React render.
           updateOptions(newInputValue ?? '');
-
           break;
         default:
           break;
@@ -332,6 +339,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               'aria-describedby': ariaDescribedBy, // Description should be handled with the Field component
               'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
               'data-testid': dataTestId,
+              onChange: handleInputChange,
               onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
                 // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
                 // so that only the dropdown menu closes, not the parent.
