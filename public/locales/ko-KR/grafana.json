@@ -4300,6 +4300,7 @@
         "repository-not-found-message": "선택한 폴더의 리포지토리를 찾을 수 없습니다. 폴더가 올바르게 프로비저닝되었는지 확인하세요.",
         "repository-not-found-title": "리포지토리를 찾을 수 없습니다"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "리소스 이동 도중 오류 발생",
       "error-no-target-folder-path": "대상 폴더 경로가 잘못되었거나 비어 있습니다. 다시 선택해 주세요.",
       "move-total": "영향을 미칠 항목:",
@@ -5239,7 +5240,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "설정"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5641,7 +5642,7 @@
         "title": "변수"
       },
       "variable": {
-        "change-type": "변경",
+        "change-type": "",
         "change-type-aria-label": "변수 유형 변경",
         "custom-options": {
           "apply": "적용",
@@ -5958,7 +5959,7 @@
       "cancel": "취소",
       "common": {
         "copy": "복사",
-        "copy-or-duplicate": "복사/붙여넣기 또는 복제",
+        "copy-tooltip": "",
         "delete": "삭제",
         "duplicate": "복제",
         "layout": "레이아웃",
@@ -5997,7 +5998,7 @@
     },
     "new-panel": {
       "aria-label": "구성되지 않은 패널. 구성 옵션을 보려면 탭을 누르세요.",
-      "configure-button": "구성",
+      "configure-button": "",
       "configure-button-menu": "토글 메뉴",
       "configure-visualization": "시각화 구성",
       "empty-state-message": "쿼리를 실행해 여기에서 시각화하거나 모든 시각화로 이동해 다른 패널 유형을 추가하세요",
@@ -6238,10 +6239,8 @@
       "title-provisioned": "프로비저닝된 대시보드"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "선택한 폴더에 동일한 이름의 대시보드가 이미 존재합니다.<br/><2>그래도 이 대시보드를 저장하시겠어요?</2>",
       "body-version-mismatch": "다른 사람이 이 대시보드를 업데이트했습니다<br/><2>그래도 이 대시보드를 저장하시겠어요?</2>",
       "confirmText-save-and-overwrite": "저장 및 덮어쓰기",
-      "title-name-exists": "충돌",
       "title-version-mismatch": "충돌"
     },
     "save-dashboard-form": {
@@ -7272,6 +7271,7 @@
       "terraform": "관리자: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "대시보드를 이동하지 못했습니다",
       "cancel-action": "취소",
       "current-file-not-found": "현재 대시보드 파일을 찾을 수 없습니다",
@@ -7284,10 +7284,6 @@
       "success-message": "대시보드가 성공적으로 이동되었습니다",
       "target-path-label": "대상 경로",
       "title-this-repository-is-read-only": "이 리포지토리는 읽기 전용입니다"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "선택한 폴더에 동일한 이름의 대시보드가 이미 존재합니다. 그래도 이 대시보드를 저장하시겠어요?",
-      "title-name-already-exists": "이미 존재하는 이름입니다"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8098,6 +8094,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "즐겨찾기에 추가",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "데이터 탐색",
       "open-in-explore": "탐색 보기에서 열기",
       "remove-favorite": "즐겨찾기에서 제거 "
@@ -15354,7 +15356,6 @@
       "forwards-time-aria-label": "시간 범위를 이후로 변경",
       "to": "종료",
       "zoom-out-button": "시간 범위 확대",
-      "zoom-out-tooltip": "시간 범위 축소 <br/> CTRL+Z",
       "zoom-out-tooltip-new": "시간 범위 축소 <br/> t -"
     },
     "time-range": {

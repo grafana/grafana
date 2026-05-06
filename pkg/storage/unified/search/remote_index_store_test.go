@@ -96,9 +96,11 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
+	buildStart := time.Now().Add(-2 * time.Hour).UTC().Truncate(time.Second)
 	meta := IndexMeta{
-		GrafanaBuildVersion:   "11.0.0",
+		BuildVersion:          "11.0.0",
 		LatestResourceVersion: 99,
+		BuildTime:             buildStart,
 	}
 
 	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
@@ -108,8 +110,18 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 	destDir := filepath.Join(t.TempDir(), "downloaded")
 	gotMeta, err := store.DownloadIndex(ctx, ns, indexKey, destDir)
 	require.NoError(t, err)
-	assert.Equal(t, meta.GrafanaBuildVersion, gotMeta.GrafanaBuildVersion)
+	assert.Equal(t, meta.BuildVersion, gotMeta.BuildVersion)
 	assert.Equal(t, meta.LatestResourceVersion, gotMeta.LatestResourceVersion)
+	assert.True(t, gotMeta.BuildTime.Equal(buildStart),
+		"BuildTime should round-trip: got %s, want %s", gotMeta.BuildTime, buildStart)
+
+	// ListIndexes must surface the same value.
+	listed, err := store.ListIndexes(ctx, ns)
+	require.NoError(t, err)
+	require.Contains(t, listed, indexKey)
+	assert.True(t, listed[indexKey].BuildTime.Equal(buildStart),
+		"BuildTime should round-trip via ListIndexes: got %s, want %s",
+		listed[indexKey].BuildTime, buildStart)
 
 	// Open and query the downloaded index
 	idx, err := bleve.Open(destDir)
@@ -131,6 +143,39 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 	require.NoError(t, idx.Close())
 }
 
+// TestRemoteIndexStore_ListIndexes_LegacyMetaWithoutBuildStartTime verifies
+// that a snapshot manifest produced before the BuildTime field was
+// introduced is still accepted by ListIndexes and surfaces a zero-value
+// BuildTime. Readers must treat zero as "unknown".
+func TestRemoteIndexStore_ListIndexes_LegacyMetaWithoutBuildStartTime(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	t.Cleanup(func() { _ = bucket.Close() })
+	store := newTestRemoteIndexStore(t, bucket)
+	ns := newTestNsResource()
+	indexKey := ulid.Make()
+
+	// Hand-crafted manifest with no build_time field at all,
+	// mirroring the on-disk shape of legacy snapshots.
+	legacyManifest := []byte(`{
+		"build_version": "11.0.0",
+		"upload_timestamp": "2024-01-01T00:00:00Z",
+		"latest_resource_version": 42,
+		"files": {"store/root.bolt": 1}
+	}`)
+	pfx := indexPrefix(ns, indexKey.String())
+	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, legacyManifest, nil))
+
+	listed, err := store.ListIndexes(ctx, ns)
+	require.NoError(t, err)
+	require.Contains(t, listed, indexKey)
+	assert.True(t, listed[indexKey].BuildTime.IsZero(),
+		"legacy manifest should decode to zero-valued BuildTime, got %s",
+		listed[indexKey].BuildTime)
+	assert.Equal(t, "11.0.0", listed[indexKey].BuildVersion)
+	assert.Equal(t, int64(42), listed[indexKey].LatestResourceVersion)
+}
+
 func TestRemoteIndexStore_ListAndDeleteIndexes(t *testing.T) {
 	store := newTestRemoteIndexStore(t, testBucket(t))
 	ctx := context.Background()
@@ -139,7 +184,7 @@ func TestRemoteIndexStore_ListAndDeleteIndexes(t *testing.T) {
 	keys := make([]ulid.ULID, 0, 3)
 	for range 3 {
 		srcDir := createTestBleveIndex(t)
-		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
+		meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
 		key, err := store.UploadIndex(ctx, ns, srcDir, meta)
 		require.NoError(t, err)
 		keys = append(keys, key)
@@ -209,7 +254,7 @@ func TestRemoteIndexStore_UploadRejectsNonRegularFiles(t *testing.T) {
 	require.NoError(t, os.WriteFile(externalFile, []byte("secret"), 0600))
 	require.NoError(t, os.Symlink(externalFile, filepath.Join(srcDir, "sneaky.zap")))
 
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
+	meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
 	_, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.Error(t, err)
 	require.ErrorIs(t, err, ErrNonRegularFile)
@@ -224,56 +269,55 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 	key := ulid.Make()
 	pfx := indexPrefix(ns, key.String())
 
-	t.Run("missing meta.json", func(t *testing.T) {
+	t.Run("missing snapshot manifest", func(t *testing.T) {
 		_, err := store.DownloadIndex(ctx, ns, key, t.TempDir())
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "reading meta.json")
+		require.ErrorIs(t, err, ErrSnapshotNotFound)
 	})
 
 	t.Run("invalid JSON", func(t *testing.T) {
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", []byte("{not json"), nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, []byte("{not json"), nil))
 		_, err := store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "parsing meta.json")
+		require.Contains(t, err.Error(), "parsing snapshot manifest")
 	})
 
 	t.Run("empty file manifest", func(t *testing.T) {
-		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{}}
+		meta := IndexMeta{BuildVersion: "11.0.0", Files: map[string]int64{}}
 		metaBytes, err := json.Marshal(meta)
 		require.NoError(t, err)
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
 		_, err = store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "empty file manifest")
 	})
 
 	t.Run("non-canonical path", func(t *testing.T) {
-		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{"store/../store/root.bolt": 100}}
+		meta := IndexMeta{BuildVersion: "11.0.0", Files: map[string]int64{"store/../store/root.bolt": 100}}
 		metaBytes, err := json.Marshal(meta)
 		require.NoError(t, err)
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
 		_, err = store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "non-canonical")
 	})
 
 	t.Run("absolute path", func(t *testing.T) {
-		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{"/etc/passwd": 100}}
+		meta := IndexMeta{BuildVersion: "11.0.0", Files: map[string]int64{"/etc/passwd": 100}}
 		metaBytes, err := json.Marshal(meta)
 		require.NoError(t, err)
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
 		_, err = store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid")
 	})
 
-	t.Run("oversized meta.json", func(t *testing.T) {
-		// Write a meta.json that exceeds the 1 MiB limit
-		oversized := make([]byte, maxMetaJSONSize+1)
+	t.Run("oversized snapshot manifest", func(t *testing.T) {
+		// Write a manifest that exceeds the 1 MiB limit
+		oversized := make([]byte, maxSnapshotManifestSize+1)
 		for i := range oversized {
 			oversized[i] = 'x'
 		}
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", oversized, nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, oversized, nil))
 		_, err := store.DownloadIndex(ctx, ns, key, filepath.Join(t.TempDir(), "dl"))
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "write limit exceeded")
@@ -281,8 +325,9 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 }
 
 func TestRemoteIndexStore_DownloadRejectsOversizedFile(t *testing.T) {
-	// A bucket object that exceeds the size advertised in meta.json must fail
-	// fast — we should not transfer unbounded bytes to disk before noticing.
+	// A bucket object that exceeds the size advertised in the snapshot manifest
+	// must fail fast — we should not transfer unbounded bytes to disk before
+	// noticing.
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
@@ -293,14 +338,14 @@ func TestRemoteIndexStore_DownloadRejectsOversizedFile(t *testing.T) {
 
 	const advertised = 10
 	meta := IndexMeta{
-		GrafanaBuildVersion: "11.0.0",
-		Files:               map[string]int64{"store/root.bolt": advertised},
+		BuildVersion: "11.0.0",
+		Files:        map[string]int64{"store/root.bolt": advertised},
 	}
 	metaBytes, err := json.Marshal(meta)
 	require.NoError(t, err)
-	require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
 
-	// Plant a file far larger than what meta.json claims.
+	// Plant a file far larger than what the snapshot manifest claims.
 	oversized := bytes.Repeat([]byte("x"), advertised*1000)
 	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", oversized, nil))
 
@@ -317,13 +362,13 @@ func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
+	meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
 	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
 	// Delete one file from the bucket to simulate partial upload
 	pfx := indexPrefix(ns, indexKey.String())
-	metaRaw, err := bucket.ReadAll(ctx, pfx+"meta.json")
+	metaRaw, err := bucket.ReadAll(ctx, pfx+snapshotManifestFile)
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(metaRaw, &meta))
 	for relPath := range meta.Files {
@@ -344,7 +389,7 @@ func TestRemoteIndexStore_UploadRejectsEmptyDirectory(t *testing.T) {
 	ns := newTestNsResource()
 
 	emptyDir := t.TempDir()
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
+	meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
 	_, err := store.UploadIndex(ctx, ns, emptyDir, meta)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "no files to upload")
@@ -358,19 +403,19 @@ func TestRemoteIndexStore_UploadExcludesMetaJSON(t *testing.T) {
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
-	// Plant a stale meta.json in the source directory
-	require.NoError(t, os.WriteFile(filepath.Join(srcDir, "meta.json"), []byte(`{"stale":"data"}`), 0600))
+	// Plant a stale snapshot manifest in the source directory
+	require.NoError(t, os.WriteFile(filepath.Join(srcDir, snapshotManifestFile), []byte(`{"stale":"data"}`), 0600))
 
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
+	meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
 	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
 	pfx := indexPrefix(ns, indexKey.String())
-	metaBytes, err := bucket.ReadAll(ctx, pfx+"meta.json")
+	metaBytes, err := bucket.ReadAll(ctx, pfx+snapshotManifestFile)
 	require.NoError(t, err)
 	var uploaded IndexMeta
 	require.NoError(t, json.Unmarshal(metaBytes, &uploaded))
-	require.NotContains(t, uploaded.Files, "meta.json")
+	require.NotContains(t, uploaded.Files, snapshotManifestFile)
 }
 
 // --- Error injection tests (memblob + errorBucket) ---
@@ -432,7 +477,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		t.Helper()
 		store := newTestRemoteIndexStore(t, bucket)
 		srcDir := createTestBleveIndex(t)
-		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
+		meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
 		key, err := store.UploadIndex(ctx, ns, srcDir, meta)
 		require.NoError(t, err)
 		return key
@@ -444,29 +489,29 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		store := newTestRemoteIndexStore(t, &errorBucket{CDKBucket: real, uploadErr: fmt.Errorf("upload network timeout")})
 
 		_, err := store.UploadIndex(ctx, ns, createTestBleveIndex(t),
-			IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10})
+			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "upload network timeout")
 	})
 
-	t.Run("meta.json write error", func(t *testing.T) {
+	t.Run("snapshot manifest write error", func(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
 		store := newTestRemoteIndexStore(t, &errorBucket{CDKBucket: real, writeAllErr: fmt.Errorf("write quota exceeded")})
 
 		_, err := store.UploadIndex(ctx, ns, createTestBleveIndex(t),
-			IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10})
+			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "write quota exceeded")
 	})
 
-	t.Run("meta.json download error", func(t *testing.T) {
+	t.Run("snapshot manifest download error", func(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
 		store := newTestRemoteIndexStore(t, &errorBucket{
 			CDKBucket: real,
 			downloadFn: func(key string) error {
-				if strings.HasSuffix(key, "/meta.json") {
+				if strings.HasSuffix(key, "/"+snapshotManifestFile) {
 					return fmt.Errorf("access denied")
 				}
 				return nil
@@ -531,13 +576,13 @@ func TestRemoteIndexStore_CleanupIncompleteUploads(t *testing.T) {
 	store := newTestRemoteIndexStore(t, bucket)
 	ns := newTestNsResource()
 
-	// Upload a complete index (has meta.json)
+	// Upload a complete index (has a snapshot manifest)
 	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
+	meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
 	completeKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
-	// Simulate an incomplete upload: write objects under a ULID prefix without meta.json
+	// Simulate an incomplete upload: write objects under a ULID prefix without a snapshot manifest
 	incompleteKey := ulid.Make()
 	incompletePfx := indexPrefix(ns, incompleteKey.String())
 	require.NoError(t, bucket.WriteAll(ctx, incompletePfx+"store/root.bolt", []byte("orphaned"), nil))
@@ -569,7 +614,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_NoneFound(t *testing.T) {
 
 	// Upload a complete index
 	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
+	meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
 	_, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
@@ -588,7 +633,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_CorruptManifest(t *testing.T)
 
 	// Upload a valid complete index
 	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
+	meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
 	completeKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
@@ -596,7 +641,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_CorruptManifest(t *testing.T)
 		key := ulid.Make()
 		pfx := indexPrefix(ns, key.String())
 		require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", []byte("data"), nil))
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", []byte("{corrupt"), nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, []byte("{corrupt"), nil))
 
 		cleaned, err := store.CleanupIncompleteUploads(ctx, ns, 0)
 		require.NoError(t, err)
@@ -607,8 +652,8 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_CorruptManifest(t *testing.T)
 		key := ulid.Make()
 		pfx := indexPrefix(ns, key.String())
 		require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", []byte("data"), nil))
-		emptyMeta, _ := json.Marshal(IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{}})
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", emptyMeta, nil))
+		emptyMeta, _ := json.Marshal(IndexMeta{BuildVersion: "11.0.0", Files: map[string]int64{}})
+		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, emptyMeta, nil))
 
 		cleaned, err := store.CleanupIncompleteUploads(ctx, ns, 0)
 		require.NoError(t, err)
@@ -665,7 +710,7 @@ func TestRemoteIndexStore_LockBuildIndex_AcquireRelease(t *testing.T) {
 	defer func() { _ = bucket.Close() }()
 	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
 
-	lock, err := store.LockBuildIndex(ctx, ns)
+	lock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 
 	select {
@@ -687,17 +732,59 @@ func TestRemoteIndexStore_LockBuildIndex_Contention(t *testing.T) {
 	store1 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
 	store2 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-2")
 
-	lock1, err := store1.LockBuildIndex(ctx, ns)
+	lock1, err := store1.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = lock1.Release() })
 
-	_, err = store2.LockBuildIndex(ctx, ns)
+	_, err = store2.LockBuildIndex(ctx, ns, "11.5.0")
 	require.ErrorIs(t, err, errLockHeld)
 
 	require.NoError(t, lock1.Release())
-	lock2, err := store2.LockBuildIndex(ctx, ns)
+	lock2, err := store2.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 	require.NoError(t, lock2.Release())
+}
+
+func TestRemoteIndexStore_LockBuildIndex_VersionScoped(t *testing.T) {
+	ctx := context.Background()
+	ns := newTestNsResource()
+	backend := newFakeBackend(newConditionalBucket())
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+
+	store1 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
+	store2 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-2")
+
+	lock1, err := store1.LockBuildIndex(ctx, ns, "11.5.0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = lock1.Release() })
+
+	lock2, err := store2.LockBuildIndex(ctx, ns, "11.6.0")
+	require.NoError(t, err)
+	require.NoError(t, lock2.Release())
+}
+
+func TestRemoteIndexStore_LockBuildIndex_RequiresBuildVersion(t *testing.T) {
+	ctx := context.Background()
+	ns := newTestNsResource()
+	backend := newFakeBackend(newConditionalBucket())
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
+
+	lock, err := store.LockBuildIndex(ctx, ns, "")
+	require.Error(t, err)
+	assert.Nil(t, lock)
+}
+
+func TestRemoteIndexStore_LockBuildIndex_KeyEncodesBuildVersion(t *testing.T) {
+	ns := newTestNsResource()
+	key := buildIndexLockKey(ns, "v11.5.0+security/branch")
+	segment := strings.TrimPrefix(key, resourceSubPath(ns)+"/locks/build-")
+
+	require.NoError(t, validateObjectKey(key))
+	assert.NotEmpty(t, segment)
+	assert.NotContains(t, segment, "/")
 }
 
 func TestRemoteIndexStore_LockBuildIndex_LostAndReleaseAfterLoss(t *testing.T) {
@@ -708,10 +795,10 @@ func TestRemoteIndexStore_LockBuildIndex_LostAndReleaseAfterLoss(t *testing.T) {
 	defer func() { _ = bucket.Close() }()
 	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
 
-	lock, err := store.LockBuildIndex(ctx, ns)
+	lock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 
-	require.NoError(t, backend.Delete(ctx, buildIndexLockKey(ns), "instance-1"))
+	require.NoError(t, backend.Delete(ctx, buildIndexLockKey(ns, "11.5.0"), "instance-1"))
 
 	select {
 	case <-lock.Lost():
@@ -747,7 +834,7 @@ func TestRemoteIndexStore_ListNamespaces(t *testing.T) {
 	for _, ns := range []string{"stack-1", "stack-2", "stack-3"} {
 		nsRes := resource.NamespacedResource{Namespace: ns, Group: "dashboard.grafana.app", Resource: "dashboards"}
 		_, err := store.UploadIndex(ctx, nsRes, createTestBleveIndex(t),
-			IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
+			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1})
 		require.NoError(t, err)
 	}
 
@@ -767,7 +854,7 @@ func TestRemoteIndexStore_ListNamespaces_IgnoresStrayObjects(t *testing.T) {
 
 	nsRes := resource.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	_, err := store.UploadIndex(ctx, nsRes, createTestBleveIndex(t),
-		IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
+		IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1})
 	require.NoError(t, err)
 
 	got, err := store.ListNamespaces(ctx)
@@ -788,7 +875,7 @@ func TestRemoteIndexStore_ListNamespaceIndexes(t *testing.T) {
 	}
 	for _, r := range resources {
 		_, err := store.UploadIndex(ctx, r, createTestBleveIndex(t),
-			IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
+			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1})
 		require.NoError(t, err)
 	}
 
@@ -825,13 +912,13 @@ func TestRemoteIndexStore_ListIndexes_SkipsLockSibling(t *testing.T) {
 	ns := newTestNsResource()
 
 	indexKey, err := store.UploadIndex(ctx, ns, createTestBleveIndex(t),
-		IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
+		IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1})
 	require.NoError(t, err)
 
-	// Plant a `<resource-group>/locks/build` object directly in the data bucket.
+	// Plant a `<resource-group>/locks/build-<version>` object directly in the data bucket.
 	// In production the lock backend shares the snapshot bucket, so this prefix
 	// is observable alongside index-key directories. ListIndexes must skip it.
-	require.NoError(t, bucket.WriteAll(ctx, buildIndexLockKey(ns), []byte("{}"), nil))
+	require.NoError(t, bucket.WriteAll(ctx, buildIndexLockKey(ns, "11.0.0"), []byte("{}"), nil))
 
 	indexes, err := store.ListIndexes(ctx, ns)
 	require.NoError(t, err)
@@ -847,7 +934,7 @@ func TestRemoteIndexStore_ListNamespaceIndexes_SkipsLockSibling(t *testing.T) {
 
 	nsRes := resource.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	_, err := store.UploadIndex(ctx, nsRes, createTestBleveIndex(t),
-		IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
+		IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1})
 	require.NoError(t, err)
 
 	// Plant a `stack-1/locks/...` object directly in the data bucket. In production
@@ -915,11 +1002,11 @@ func TestRemoteIndexStore_LockNamespaceForCleanup_DistinctFromBuildLock(t *testi
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = cleanupLock.Release() })
 
-	buildLock, err := store.LockBuildIndex(ctx, ns)
+	buildLock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 	require.NoError(t, buildLock.Release())
 
-	require.NotEqual(t, cleanupLockKey(ns.Namespace), buildIndexLockKey(ns))
+	require.NotEqual(t, cleanupLockKey(ns.Namespace), buildIndexLockKey(ns, "11.5.0"))
 }
 
 // Smoke-tests the LockOptions plumbing. Only TTL is observable in lockInfo;
@@ -941,11 +1028,11 @@ func TestRemoteIndexStore_BuildAndCleanupLockTTLsWiredIndependently(t *testing.T
 	})
 	ns := newTestNsResource()
 
-	buildLock, err := store.LockBuildIndex(ctx, ns)
+	buildLock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = buildLock.Release() })
 
-	info, err := backend.Read(ctx, buildIndexLockKey(ns))
+	info, err := backend.Read(ctx, buildIndexLockKey(ns, "11.5.0"))
 	require.NoError(t, err)
 	require.Equal(t, buildTTL, info.TTL)
 

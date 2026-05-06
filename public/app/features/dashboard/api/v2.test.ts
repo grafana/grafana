@@ -246,6 +246,7 @@ describe('v2 dashboard API', () => {
             name: 'existing-dash',
             annotations: {
               [AnnoKeyFolder]: 'folderUidXyz',
+              [AnnoKeyGrantPermissions]: 'default',
               [AnnoKeySavedFromUI]: '10.0.0',
             },
           },
@@ -284,6 +285,7 @@ describe('v2 dashboard API', () => {
             name: 'existing-dash',
             annotations: {
               [AnnoKeyFolder]: '',
+              [AnnoKeyGrantPermissions]: 'default',
               [AnnoKeyMessage]: 'Move to root folder',
               [AnnoKeySavedFromUI]: '10.0.0',
             },
@@ -316,6 +318,20 @@ describe('v2 dashboard API', () => {
       const requestBody = callArgs[1];
       expect(requestBody.metadata.annotations).not.toHaveProperty(AnnoKeyFolder);
       expect(requestBody.metadata.annotations[AnnoKeyMessage]).toBe('Save without folder');
+    });
+
+    it.each([
+      ['update path (metadata.name set)', { name: 'imported-dash' }, mockPut],
+      ['create path (metadata.name unset)', {}, mockPost],
+    ])('should set grant-permissions annotation on the %s', async (_name, k8s, requestMock) => {
+      const api = new K8sDashboardV2API();
+      await api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s });
+
+      expect(requestMock).toHaveBeenCalledTimes(1);
+      const requestBody = requestMock.mock.calls[0][1];
+      expect(requestBody.metadata.annotations).toEqual(
+        expect.objectContaining({ [AnnoKeyGrantPermissions]: 'default' })
+      );
     });
   });
 

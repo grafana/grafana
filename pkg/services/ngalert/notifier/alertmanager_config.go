@@ -14,12 +14,20 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
+
+// ExtraConfigAuthz is the authorization interface for alertmanager import operations.
+type ExtraConfigAuthz interface {
+	AuthorizeCreate(ctx context.Context, user identity.Requester) error
+	AuthorizeUpdate(ctx context.Context, user identity.Requester, identifier string) error
+	AuthorizeDelete(ctx context.Context, user identity.Requester, identifier string) error
+}
 
 var (
 	// ErrAlertmanagerReceiverInUse is primarily meant for when a receiver is used by a rule and is being deleted.
@@ -88,6 +96,28 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		moa.logger.Info("Configurations merged successfully but some resources were renamed", logInfo...)
 	}
 	preparedConfig := mergeResult.Config
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingDisableV0ReceiverConversion) {
+		moa.logger.Info("Skipping converting Mimir receivers to Grafana receivers", "identifier", mergeResult.Identifier)
+	} else {
+		converted, failed := 0, 0
+		for idx, recv := range preparedConfig.Receivers {
+			if !recv.HasMimirIntegrations() {
+				continue
+			}
+			grafana, err := legacy_storage.PostableMimirReceiverToPostableGrafanaReceiver(recv)
+			if err != nil {
+				moa.logger.Warn("Failed to convert Mimir receiver to Grafana receiver. Using receiver as is", "identifier", mergeResult.Identifier, "receiver", recv.Name, "err", err)
+				failed++
+				continue
+			}
+			preparedConfig.Receivers[idx] = grafana
+			converted++
+		}
+		if converted > 0 || failed > 0 {
+			moa.logger.Info("Converted Mimir receivers to Grafana receivers", "identifier", mergeResult.Identifier, "converted", converted, "failed", failed)
+		}
+	}
 
 	// Add managed routes and extra route as managed route to the configuration.
 	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
@@ -449,9 +479,18 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 }
 
 // SaveAndApplyExtraConfiguration adds or replaces an ExtraConfiguration while preserving the main AlertmanagerConfig.
-func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig definitions.ExtraConfiguration, replace bool, dryRun bool) (definition.RenameResources, error) {
+func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, extraConfig definitions.ExtraConfiguration, replace bool, dryRun bool) (definition.RenameResources, error) {
 	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
-		if !replace {
+		if replace {
+			// When replacing all configs, authorize deletion for each config with a different identifier.
+			for _, c := range configs {
+				if c.Identifier != extraConfig.Identifier {
+					if err := authz.AuthorizeDelete(ctx, user, c.Identifier); err != nil {
+						return nil, err
+					}
+				}
+			}
+		} else {
 			// for now we validate that after the update there will be just one extra config.
 			for _, c := range configs {
 				if c.Identifier != extraConfig.Identifier {
@@ -459,6 +498,24 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 				}
 			}
 		}
+
+		isNew := true
+		for _, c := range configs {
+			if c.Identifier == extraConfig.Identifier {
+				isNew = false
+				break
+			}
+		}
+		if isNew {
+			if err := authz.AuthorizeCreate(ctx, user); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := authz.AuthorizeUpdate(ctx, user, extraConfig.Identifier); err != nil {
+				return nil, err
+			}
+		}
+
 		return []definitions.ExtraConfiguration{extraConfig}, nil
 	}
 
@@ -476,8 +533,11 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 }
 
 // DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
-func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error {
+func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, identifier string) error {
 	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
+		if err := authz.AuthorizeDelete(ctx, user, identifier); err != nil {
+			return nil, err
+		}
 		filtered := make([]definitions.ExtraConfiguration, 0, len(configs))
 		for _, ec := range configs {
 			if ec.Identifier != identifier {
