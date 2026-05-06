@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -24,15 +26,7 @@ import (
 const AnnoKeyLastSeenAt = "iam.grafana.app/lastSeenAt"
 
 var (
-	_ rest.Scoper               = (*LegacyStore)(nil)
-	_ rest.SingularNameProvider = (*LegacyStore)(nil)
-	_ rest.Getter               = (*LegacyStore)(nil)
-	_ rest.Lister               = (*LegacyStore)(nil)
-	_ rest.Storage              = (*LegacyStore)(nil)
-	_ rest.CreaterUpdater       = (*LegacyStore)(nil)
-	_ rest.GracefulDeleter      = (*LegacyStore)(nil)
-	_ rest.CollectionDeleter    = (*LegacyStore)(nil)
-	_ rest.TableConvertor       = (*LegacyStore)(nil)
+	_ grafanarest.Storage = (*LegacyStore)(nil)
 )
 
 var userResource = iamv0alpha1.UserResourceInfo
