@@ -1461,6 +1461,22 @@ func TestColdStart_LockBackendErrorBuildsAlone(t *testing.T) {
 	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeLockError))
 }
 
+// TestColdStart_LockBackendContextErrorPropagates verifies that a context
+// error returned by LockBuildIndex itself (e.g. cancellation arriving
+// mid-acquire) is propagated, not swallowed as a build-alone fallback.
+func TestColdStart_LockBackendContextErrorPropagates(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.lockBackendErr = context.Canceled
+	ct := newColdStartTest(t, store)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // ctx is already canceled before the call
+
+	_, _, err := ct.coordinate(ctx, time.Time{})
+	require.ErrorIs(t, err, context.Canceled)
+	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeLockError), "context cancel must not be recorded as lock_error")
+}
+
 func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
 	store := newColdStartFakeStore()
 	store.setLockHeld(true)

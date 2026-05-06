@@ -612,6 +612,11 @@ func (b *bleveBackend) coordinateColdStartBuild(
 		case errors.Is(err, errLockHeld):
 			// keep waiting
 		default:
+			// Propagate context cancellation so callers can abort cleanly
+			// instead of falling through to a from-scratch build.
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, "", 0, nil, ctxErr
+			}
 			logger.Warn("Cold-start lock acquire failed; will build alone", "err", err)
 			outcome = coldStartOutcomeLockError
 			return nil, "", 0, nil, nil
