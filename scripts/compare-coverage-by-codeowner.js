@@ -122,14 +122,15 @@ function getFilesWithDecreasedCoverage(mainCoverage, prCoverage) {
  * @returns {string} Markdown section
  */
 function generateFailureDetailsSection(decreasedFiles, artifactUrl, prSha, repo) {
-  const lines = ['\n### Files with decreased coverage\n'];
+  const lines = [];
+  if (decreasedFiles.length === 0) {
+    return lines.join('\n');
+  }
+
+  lines.push(`### Files with Decreased Coverage\n`);
 
   if (artifactUrl) {
     lines.push(`📊 [View full HTML coverage report](${artifactUrl})\n`);
-  }
-
-  if (decreasedFiles.length === 0) {
-    return lines.join('\n');
   }
 
   const MAX_FILES = 20;
