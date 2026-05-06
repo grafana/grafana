@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -300,8 +301,16 @@ func (f *fakeAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authli
 	return authlib.CheckResponse{Allowed: true}, nil
 }
 
-func (f *fakeAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-	return authlib.BatchCheckResponse{}, nil
+func (f *fakeAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, c := range req.Checks {
+		allowed := true
+		if f.allow != nil {
+			allowed = f.allow(c.Name, c.Folder)
+		}
+		results[c.CorrelationID] = authlib.BatchCheckResult{Allowed: allowed}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
 }
 
 func (f *fakeAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
@@ -337,19 +346,11 @@ func TestVectorSearch_AuthzFiltersUnauthorizedRows(t *testing.T) {
 	assert.Equal(t, "u3", resp.Results[1].Name)
 }
 
-func TestVectorSearch_AuthzNilCheckerReturnsEmpty(t *testing.T) {
-	// A nil checker from Compile means "no access to anything" — handler
-	// should return an empty result set (not an error).
-	type denyAll struct{ *fakeAccessClient }
-	denyAccess := &denyAll{
-		fakeAccessClient: &fakeAccessClient{
-			allow: func(string, string) bool { return false },
-		},
+func TestVectorSearch_AuthzDenyAllReturnsEmpty(t *testing.T) {
+	// When BatchCheck denies every row, the handler returns an empty result set.
+	access := &fakeAccessClient{
+		allow: func(string, string) bool { return false },
 	}
-	// Override Compile to return nil checker to exercise that branch.
-	access := &nilCheckerClient{}
-	_ = denyAccess
-
 	backend := &fakeVectorBackend{
 		results: []vector.VectorSearchResult{{UID: "u1", Title: "T1", Score: 0.1}},
 	}
@@ -360,14 +361,6 @@ func TestVectorSearch_AuthzNilCheckerReturnsEmpty(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, resp.Results)
-}
-
-// nilCheckerClient.Compile returns (nil, nil, nil) to exercise the
-// "no access to anything" branch in VectorSearch.
-type nilCheckerClient struct{ fakeAccessClient }
-
-func (n *nilCheckerClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
-	return nil, nil, nil
 }
 
 func TestVectorSearch_NoUserInContextReturnsUnauthenticated(t *testing.T) {
@@ -384,7 +377,7 @@ func TestVectorSearch_NoUserInContextReturnsUnauthenticated(t *testing.T) {
 	assert.Equal(t, codes.Unauthenticated, status.Code(err))
 }
 
-func TestVectorSearch_AuthzCompileErrorReturnsInternal(t *testing.T) {
+func TestVectorSearch_AuthzBatchCheckErrorReturnsInternal(t *testing.T) {
 	access := &erroringAccessClient{err: errors.New("authz service is down")}
 	backend := &fakeVectorBackend{
 		results: []vector.VectorSearchResult{{UID: "u1", Score: 0.1}},
@@ -402,38 +395,42 @@ type erroringAccessClient struct {
 	err error
 }
 
-func (e *erroringAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
-	return nil, nil, e.err
+func (e *erroringAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, e.err
 }
 
-// countingAccessClient wraps an allow function and counts how many times
-// the checker is invoked. Used to verify the per-UID memoization actually
-// reduces calls for sub-resource workloads (panels of the same dashboard).
+// countingAccessClient records the BatchCheck items it received so tests
+// can assert on dedup behavior (sub-resources of the same parent should
+// share a single batch entry).
 type countingAccessClient struct {
-	calls int
-	allow func(name, folder string) bool
+	gotItems   []authlib.BatchCheckItem
+	batchCalls int
+	allow      func(name, folder string) bool
 }
 
 func (c *countingAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
 	return authlib.CheckResponse{Allowed: true}, nil
 }
-func (c *countingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-	return authlib.BatchCheckResponse{}, nil
+func (c *countingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	c.batchCalls++
+	c.gotItems = append(c.gotItems, req.Checks...)
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, item := range req.Checks {
+		allowed := true
+		if c.allow != nil {
+			allowed = c.allow(item.Name, item.Folder)
+		}
+		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: allowed}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
 }
 func (c *countingAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
-	return func(name, folder string) bool {
-		c.calls++
-		if c.allow == nil {
-			return true
-		}
-		return c.allow(name, folder)
-	}, nil, nil
+	return func(string, string) bool { return true }, nil, nil
 }
 
-func TestVectorSearch_AuthzMemoizationForSubresources(t *testing.T) {
-	// 5 panels across 2 dashboards. With sub-resource memoization the
-	// checker should be called once per unique (UID, Folder) — i.e. twice,
-	// not five times.
+func TestVectorSearch_AuthzDedupForSubresources(t *testing.T) {
+	// 5 panels across 2 dashboards. The handler should dedup by (UID, Folder)
+	// before sending the BatchCheck request — so 2 entries, not 5.
 	backend := &fakeVectorBackend{
 		results: []vector.VectorSearchResult{
 			{UID: "dash-1", Title: "T1", Subresource: "panel/1", Folder: "f1", Score: 0.05},
@@ -451,14 +448,38 @@ func TestVectorSearch_AuthzMemoizationForSubresources(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Len(t, resp.Results, 5, "all 5 panels should pass authz")
-	assert.Equal(t, 2, access.calls, "checker should be called once per unique (UID, Folder)")
+	assert.Len(t, access.gotItems, 2, "BatchCheck should receive one item per unique (UID, Folder)")
 }
 
-func TestVectorSearch_AuthzWholeResourcesOneCheckerCallEach(t *testing.T) {
-	// Each result is a whole resource with a distinct UID. The cache
-	// degenerates to "one miss per row" — same number of checker calls
-	// as if the cache weren't there at all. The invariant holds:
-	// checker calls = unique (UID, Folder) tuples.
+func TestVectorSearch_AuthzBatchCheckChunked(t *testing.T) {
+	// More unique results than batchCheckChunkSize — handler must split the
+	// BatchCheck into multiple requests so we don't blow the per-request cap.
+	total := batchCheckChunkSize*2 + 7 // 107 with chunk size 50 — 3 chunks
+	results := make([]vector.VectorSearchResult, total)
+	for i := range results {
+		results[i] = vector.VectorSearchResult{
+			UID:    fmt.Sprintf("u%d", i),
+			Title:  fmt.Sprintf("T%d", i),
+			Folder: "f1",
+			Score:  float64(i) / 1000,
+		}
+	}
+	backend := &fakeVectorBackend{results: results}
+	access := &countingAccessClient{}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
+
+	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q", Limit: int64(total),
+	})
+	require.NoError(t, err)
+	assert.Len(t, resp.Results, total, "all rows should pass authz")
+	assert.Len(t, access.gotItems, total, "every unique resource must be checked exactly once")
+	assert.Equal(t, 3, access.batchCalls, "expect ceil(107/50) = 3 BatchCheck requests")
+}
+
+func TestVectorSearch_AuthzWholeResourcesOneItemEach(t *testing.T) {
+	// Each result is a whole resource with a distinct UID. Dedup degenerates
+	// to one BatchCheck item per row.
 	backend := &fakeVectorBackend{
 		results: []vector.VectorSearchResult{
 			{UID: "u1", Title: "T1", Folder: "f1", Score: 0.05},
@@ -474,5 +495,5 @@ func TestVectorSearch_AuthzWholeResourcesOneCheckerCallEach(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Len(t, resp.Results, 3)
-	assert.Equal(t, 3, access.calls, "checker should be called once per row when no subresource")
+	assert.Len(t, access.gotItems, 3)
 }

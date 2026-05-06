@@ -41,6 +41,9 @@ const maxBatchSize = 1000
 const (
 	defaultVectorSearchLimit = 50
 	maxVectorSearchLimit     = 200
+
+	// authz BatchCheck enforces a per-request cap; chunk to stay under it.
+	batchCheckChunkSize = 50
 )
 
 type NamespacedResource struct {
@@ -598,38 +601,53 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	if !ok || user == nil {
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
-	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented (matches existing usage in server.go)
-	checker, _, err := s.access.Compile(ctx, user, types.ListRequest{
-		Group:     req.Key.Group,
-		Resource:  req.Key.Resource,
-		Namespace: req.Key.Namespace,
-		Verb:      utils.VerbGet,
-	})
-	if err != nil {
-		s.log.Error("vector search: authz compile", "err", err)
-		return nil, status.Error(codes.Internal, "authz compile")
-	}
-	if checker == nil {
-		// No access to anything — return an empty result set rather than an
-		// error, mirroring how a regular search would surface "no hits."
-		return &resourcepb.VectorSearchResponse{}, nil
+
+	// Dedupe per-(UID, Folder) so sub-resources of the same parent (e.g. dashboard panels) share a single batch-check entry.
+	type checkKey struct{ uid, folder string }
+	correlationIDs := make(map[checkKey]string, len(results))
+	checks := make([]types.BatchCheckItem, 0, len(results))
+	for _, r := range results {
+		key := checkKey{r.UID, r.Folder}
+		if _, ok := correlationIDs[key]; ok {
+			continue
+		}
+		id := fmt.Sprintf("%d", len(checks))
+		correlationIDs[key] = id
+		checks = append(checks, types.BatchCheckItem{
+			CorrelationID: id,
+			Verb:          utils.VerbGet,
+			Group:         req.Key.Group,
+			Resource:      req.Key.Resource,
+			Name:          r.UID,
+			Folder:        r.Folder,
+		})
 	}
 
-	// Memoize per-(UID, Folder) so sub-resources of the same parent (e.g. dashboard panels) reuse a single checker call.
-	type checkKey struct{ uid, folder string }
-	checked := make(map[checkKey]bool, len(results))
+	checkResults := make(map[string]types.BatchCheckResult, len(checks))
+	for start := 0; start < len(checks); start += batchCheckChunkSize {
+		end := min(start+batchCheckChunkSize, len(checks))
+		batchResp, err := s.access.BatchCheck(ctx, user, types.BatchCheckRequest{
+			Namespace: req.Key.Namespace,
+			Checks:    checks[start:end],
+		})
+		if err != nil {
+			s.log.Error("vector search: authz batch check", "err", err)
+			return nil, status.Error(codes.Internal, "authz batch check")
+		}
+		for id, result := range batchResp.Results {
+			checkResults[id] = result
+		}
+	}
 
 	resp := &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
-		key := checkKey{r.UID, r.Folder}
-		allowed, ok := checked[key]
+		id, ok := correlationIDs[checkKey{r.UID, r.Folder}]
 		if !ok {
-			allowed = checker(r.UID, r.Folder)
-			checked[key] = allowed
+			continue
 		}
-		if !allowed {
+		if !checkResults[id].Allowed {
 			continue
 		}
 		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
