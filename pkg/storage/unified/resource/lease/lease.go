@@ -120,15 +120,15 @@ func WithInternalMinTTL(d time.Duration) ManagerOption {
 	}
 }
 
-// AcquireOption configures a single Acquire call.
-type AcquireOption func(*acquireOptions)
+// Option configures a single Acquire or Extend call.
+type Option func(*acquireOptions)
 
 type acquireOptions struct {
 	ttl time.Duration
 }
 
 // WithTTL overrides the default lease TTL for this acquisition.
-func WithTTL(d time.Duration) AcquireOption {
+func WithTTL(d time.Duration) Option {
 	return func(o *acquireOptions) { o.ttl = d }
 }
 
@@ -138,7 +138,7 @@ func WithTTL(d time.Duration) AcquireOption {
 // On failure, Acquire returns an error. ErrLeaseAlreadyHeld indicates that
 // an unexpired lease for name is currently owned by some holder (including
 // possibly the caller).
-func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOption) (*Lease, error) {
+func (m *Manager) Acquire(ctx context.Context, name string, opts ...Option) (*Lease, error) {
 	if err := validateLeaseName(name); err != nil {
 		return nil, err
 	}
@@ -243,7 +243,7 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 // Extend extends an active lease's TTL in-place. The lease must still be valid
 // and held by this manager's holder. Returns ErrLeaseLost if the lease has
 // expired, been released, or is held by a different holder.
-func (m *Manager) Extend(ctx context.Context, lease *Lease, opts ...AcquireOption) error {
+func (m *Manager) Extend(ctx context.Context, lease *Lease, opts ...Option) error {
 	cfg := acquireOptions{ttl: defaultTTL}
 	for _, opt := range opts {
 		opt(&cfg)
@@ -253,17 +253,25 @@ func (m *Manager) Extend(ctx context.Context, lease *Lease, opts ...AcquireOptio
 		return fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, m.minTTL)
 	}
 
+	_, latestGeneration, err := m.latest(ctx, lease.name)
+	if err != nil {
+		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
+	}
+	if latestGeneration != lease.generation {
+		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+	}
+
 	key := leaseKey(lease.name, lease.generation)
 	meta, err := m.read(ctx, key)
 	if err != nil {
 		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
 	}
 
-	if meta.Holder != m.holder || !meta.ValidAsOf(time.Now()) {
+	now := time.Now()
+	if meta.Holder != m.holder || !meta.ValidAsOf(now) {
 		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
 	}
 
-	now := time.Now()
 	expires := now.Add(cfg.ttl)
 	meta.Expires = expires.UnixNano()
 	if err := m.save(ctx, key, meta); err != nil {
