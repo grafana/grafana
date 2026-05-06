@@ -258,13 +258,6 @@ jobs:
           path: './main'
           persist-credentials: false
 
-      - name: "TEMP: copy script from PR to main for coverage comparison"
-        if: steps.check-affected.outputs.affected == 'true'
-        run: |
-          cp ./pr/scripts/compare-coverage-by-codeowner.js ./main/scripts/compare-coverage-by-codeowner.js
-          cp ./pr/scripts/codeowners-manifest/utils.js ./main/scripts/codeowners-manifest/utils.js
-          cp ./pr/jest.config.codeowner.js ./main/jest.config.codeowner.js
-
       - name: Setup Node.js for main branch
         if: steps.check-affected.outputs.affected == 'true'
         uses: ./pr/.github/actions/setup-node
