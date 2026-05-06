@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -739,7 +740,7 @@ func TestWrapper_Watch(t *testing.T) {
 
 		// watch.FakeWatcher's Add and Stop are not concurrency-safe, so use a
 		// minimal custom watcher whose channel we own and close exactly once.
-		inner := newPumpedWatcher(int(watch.DefaultChanSize) * 4)
+		inner := newPumpedWatcher(int(watch.DefaultChanSize) * 3)
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: inner}
 		setup.wrapper.inner = watcherStore
 
@@ -768,6 +769,39 @@ func TestWrapper_Watch(t *testing.T) {
 		case <-time.After(2 * time.Second):
 			t.Fatal("Stop() blocked while a slow consumer was holding the result channel")
 		}
+	})
+
+	t.Run("blocked consumer automatically shuts down the watch", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		defaultSendTimeout = 10 * time.Millisecond
+		defer func() {
+			defaultSendTimeout = 1 * time.Second
+		}()
+
+		// Inner watcher has enough room to buffer the events without blocking.
+		inner := newPumpedWatcher(int(watch.DefaultChanSize) * 3)
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: inner}
+		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+
+		// Fill the inner channel buffer without ever reading from w.ResultChan().
+		// Wrapper watcher result channel will be blocked at DefaultChanSize.
+		for i := int32(0); i < watch.DefaultChanSize*2; i++ {
+			inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}})
+		}
+
+		// Wait for the send timeout to trigger.
+		assert.Eventually(t, inner.IsStopped, 2*defaultSendTimeout, 10*time.Millisecond,
+			"inner watcher should be stopped after send timeout")
+		for range w.ResultChan() {
+		}
+		_, open := <-w.ResultChan()
+		assert.False(t, open, "wrapper watcher should be stopped after send timeout")
 	})
 
 	t.Run("ticker-driven flush does not terminate the watcher", func(t *testing.T) {
@@ -913,6 +947,7 @@ func (f *fakeWatcherStorage) Watch(ctx context.Context, _ *internalversion.ListO
 type pumpedWatcher struct {
 	ch       chan watch.Event
 	stopOnce sync.Once
+	done     atomic.Bool
 }
 
 func newPumpedWatcher(buffer int) *pumpedWatcher {
@@ -930,9 +965,9 @@ func (p *pumpedWatcher) push(e watch.Event) {
 }
 
 func (p *pumpedWatcher) Stop() {
-	p.stopOnce.Do(func() { close(p.ch) })
+	p.stopOnce.Do(func() { close(p.ch); p.done.Store(true) })
 }
 
-func (p *pumpedWatcher) ResultChan() <-chan watch.Event {
-	return p.ch
-}
+func (p *pumpedWatcher) ResultChan() <-chan watch.Event { return p.ch }
+
+func (p *pumpedWatcher) IsStopped() bool { return p.done.Load() }

@@ -324,6 +324,9 @@ type filteredWatcher struct {
 // Matches watch.DefaultChanSize so the batch can never exceed the inner channel capacity.
 const watchBatchSize = 100
 
+// defaultSendTimeout is the timeout for sending an event to the caller.
+var defaultSendTimeout = 1 * time.Second
+
 func newFilteredWatcher(ctx context.Context, inner watch.Interface, filter WatchEventFilter, flushInterval time.Duration) *filteredWatcher {
 	fw := &filteredWatcher{
 		inner:         inner,
@@ -338,19 +341,36 @@ func newFilteredWatcher(ctx context.Context, inner watch.Interface, filter Watch
 
 // sendEvent forwards an event to the caller.
 // It returns if the user context is done or the watcher is stopped.
-func (fw *filteredWatcher) sendEvent(ctx context.Context, event watch.Event) {
+func (fw *filteredWatcher) sendEvent(ctx context.Context, event watch.Event) bool {
+	// If we could not send the event on time, emit an Error
+	// and shut down to release backpressure on the inner storage.
+	timer := time.NewTimer(defaultSendTimeout)
 	select {
 	case <-ctx.Done(): // User context is done.
-		return
+		return false
 	case <-fw.done: // Closed when the watcher Stop() method is called.
-		return
+		return false
 	case fw.result <- event: // Forward the event to the caller.
-		return
+		return true
+	case <-timer.C: // Consumer is too slow, emit Timeout Error and tear down watch.
+		select {
+		case fw.result <- watch.Event{Type: watch.Error, Object: &metaV1.Status{
+			Status: metaV1.StatusFailure, Reason: metaV1.StatusReasonTimeout,
+			Message: "watch consumer too slow",
+		}}:
+		default:
+		}
+		// A bit redundant with run's defer, but it explicits the intent.
+		fw.Stop()
+		return false
 	}
 }
 
 func (fw *filteredWatcher) run(ctx context.Context) {
-	defer close(fw.result)
+	defer func() {
+		fw.Stop()
+		close(fw.result)
+	}()
 
 	// A nil channel blocks forever in select, disabling the ticker case when
 	// flushInterval is 0 (each event is flushed inline immediately instead).
@@ -367,10 +387,12 @@ func (fw *filteredWatcher) run(ctx context.Context) {
 		if len(pending) == 0 {
 			return true
 		}
+		// Apply the filter to the buffered events.
+		// No need to time out here, if we are too slow, the upstream storage will close the inner watch anyway.
 		allowed, err := fw.filter(pending)
 		if err != nil {
 			errEvent := watch.Event{Type: watch.Error, Object: &metaV1.Status{Status: metaV1.StatusFailure, Message: err.Error()}}
-			fw.sendEvent(ctx, errEvent)
+			_ = fw.sendEvent(ctx, errEvent)
 
 			fw.inner.Stop()
 			pending = pending[:0]
@@ -378,7 +400,9 @@ func (fw *filteredWatcher) run(ctx context.Context) {
 		}
 		for i, event := range pending {
 			if i < len(allowed) && allowed[i] {
-				fw.sendEvent(ctx, event)
+				if !fw.sendEvent(ctx, event) {
+					return false // Send failed
+				}
 			}
 		}
 		pending = pending[:0]
@@ -399,24 +423,23 @@ func (fw *filteredWatcher) run(ctx context.Context) {
 			if event.Type == watch.Bookmark || event.Type == watch.Error {
 				// Drain pending first to preserve ordering.
 				if flushed := flush(); !flushed {
-					// Flush failed, stop the watcher.
-					return
+					return // Flush failed
 				}
-				fw.sendEvent(ctx, event)
+				if !fw.sendEvent(ctx, event) {
+					return // Send failed
+				}
 				continue
 			}
 			pending = append(pending, event)
 			// Flush if the buffer is full or we have no flush interval.
 			if fw.flushInterval == 0 || len(pending) >= watchBatchSize {
 				if flushed := flush(); !flushed {
-					// Flush failed, stop the watcher.
-					return
+					return // Flush failed
 				}
 			}
 		case <-tickerC:
 			if flushed := flush(); !flushed {
-				// Flush failed, stop the watcher.
-				return
+				return // Flush failed
 			}
 		}
 	}
