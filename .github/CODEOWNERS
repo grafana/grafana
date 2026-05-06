@@ -661,6 +661,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 /packages/grafana-runtime/src/analytics @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/analytics/plugins @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/analyticsFramework @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/DataSourcePicker* @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/EmbeddedDashboard.tsx @grafana/dashboards-squad
 /packages/grafana-runtime/src/components/FolderPicker.tsx @grafana/grafana-frontend-platform
