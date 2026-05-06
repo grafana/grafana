@@ -1466,7 +1466,7 @@ func TestSetTeamMember(t *testing.T) {
 			},
 		},
 		{
-			name:       "does not update external members",
+			name:       "rejects updates to external members",
 			permission: "Admin",
 			userID:     1,
 			userSvc: func() *usertest.MockService {
@@ -1481,12 +1481,13 @@ func TestSetTeamMember(t *testing.T) {
 					},
 				}
 			},
+			expectedErrMsg: "externally-synced",
 			validateCalls: func(t *testing.T, _, updateCalls int) {
 				assert.Equal(t, 0, updateCalls, "should not Update when target member is External")
 			},
 		},
 		{
-			name:       "does not delete external members",
+			name:       "rejects deletes of external members",
 			permission: "",
 			userID:     1,
 			userSvc: func() *usertest.MockService {
@@ -1501,6 +1502,7 @@ func TestSetTeamMember(t *testing.T) {
 					},
 				}
 			},
+			expectedErrMsg: "externally-synced",
 			validateCalls: func(t *testing.T, _, updateCalls int) {
 				assert.Equal(t, 0, updateCalls, "should not Update when deleting an External member")
 			},

@@ -5,6 +5,7 @@ import { render, screen, testWithFeatureToggles, userEvent, within } from 'test/
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -179,20 +180,9 @@ describe.each([
   { testName: 'PolicyPage', renderPage: renderPolicyPage(ROOT_ROUTE_NAME), routeName: ROOT_ROUTE_NAME },
   { testName: 'PolicyPage', renderPage: renderPolicyPage(OtherPolicyName), routeName: OtherPolicyName },
 ])('$testName - Policy: $routeName', ({ testName, renderPage, routeName }) => {
-  // combobox hack :/
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    // combobox hack :/
+    mockComboboxRect();
   });
 
   beforeEach(() => {

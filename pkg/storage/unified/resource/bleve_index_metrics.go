@@ -104,8 +104,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}),
 		IndexSnapshotDownloads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_downloads_total",
-			Help: "Number of remote index snapshot download attempts at index build time, by outcome.",
-		}, []string{"status"}), // status: success, empty, download_error, validate_error
+			Help: "Number of remote index snapshot download attempts at index build time, by selection policy and outcome.",
+		}, []string{"policy", "status"}), // policy: tiered, same_version. status: success, empty, download_error, validate_error
 		IndexSnapshotDownloadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:                            "index_server_snapshot_download_duration_seconds",
 			Help:                            "Duration of successful remote index snapshot downloads, including open and validation.",
@@ -117,7 +117,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		IndexSnapshotUploads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_uploads_total",
 			Help: "Number of remote index snapshot upload attempts, by outcome.",
-		}, []string{"status"}), // status: success, skip_no_changes, skip_lock_contention, error
+		}, []string{"status"}), // status: success, skip_no_changes, skip_lock_contention, skip_recent_remote, skip_not_owner, error
 		IndexSnapshotUploadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:                            "index_server_snapshot_upload_duration_seconds",
 			Help:                            "Duration of successful remote index snapshot uploads, including snapshot creation.",
@@ -157,13 +157,17 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 	if m == nil {
 		return
 	}
-	m.IndexSnapshotDownloads.WithLabelValues("success").Add(0)
-	m.IndexSnapshotDownloads.WithLabelValues("empty").Add(0)
-	m.IndexSnapshotDownloads.WithLabelValues("download_error").Add(0)
-	m.IndexSnapshotDownloads.WithLabelValues("validate_error").Add(0)
+	for _, policy := range []string{"tiered", "same_version"} {
+		m.IndexSnapshotDownloads.WithLabelValues(policy, "success").Add(0)
+		m.IndexSnapshotDownloads.WithLabelValues(policy, "empty").Add(0)
+		m.IndexSnapshotDownloads.WithLabelValues(policy, "download_error").Add(0)
+		m.IndexSnapshotDownloads.WithLabelValues(policy, "validate_error").Add(0)
+	}
 	m.IndexSnapshotUploads.WithLabelValues("success").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_no_changes").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_lock_contention").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_recent_remote").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_not_owner").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("error").Add(0)
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("success").Add(0)
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("error").Add(0)

@@ -332,7 +332,6 @@
 /devenv/docker/blocks/smtp/ @bergquist
 /devenv/docker/blocks/tempo/ @grafana/data-sources-plugins
 /devenv/docker/blocks/traefik/ @mckn
-/devenv/docker/blocks/zipkin/ @grafana/data-sources-plugins
 /devenv/docker/blocks/webdav/ @grafana/alerting-backend
 /devenv/docker/buildcontainer/ @bergquist
 /devenv/docker/compose_header.yml @grafana/grafana-backend-services-squad
@@ -380,7 +379,6 @@
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/data-sources-plugins
 /pkg/tsdb/grafana-postgresql-datasource/ @grafana/data-sources-plugins
-/pkg/tsdb/zipkin/ @grafana/data-sources-plugins
 /pkg/tsdb/jaeger/ @grafana/data-sources-plugins
 
 # Partner Datasources backend code
@@ -1139,7 +1137,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/zipkin/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/tempo/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/parca/ @grafana/data-sources-plugins

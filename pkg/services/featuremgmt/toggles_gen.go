@@ -722,6 +722,10 @@ const (
 	// Enable syncing plugin installations to the installs API
 	FlagPluginInstallAPISync = "pluginInstallAPISync"
 
+	// FlagGrafanaDedicatedGrafanaComProxyAPIToken
+	// Use a dedicated auth token for Grafana.com proxy requests and plugin installs
+	FlagGrafanaDedicatedGrafanaComProxyAPIToken = "grafana.dedicatedGrafanaComProxyAPIToken"
+
 	// FlagJaegerEnableGrpcEndpoint
 	// Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
 	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"
@@ -826,9 +830,13 @@ const (
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
-	// FlagAppPluginAPIServer
+	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
-	FlagAppPluginAPIServer = "appPluginAPIServer"
+	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
+
+	// FlagApppluginsHandleProxyRequests
+	// Register the proxy endpoints
+	FlagApppluginsHandleProxyRequests = "appplugins.handleProxyRequests"
 
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without 'pending' stage
@@ -965,4 +973,12 @@ const (
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
+
+	// FlagAlertingDisableV0ReceiverConversion
+	// Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model
+	FlagAlertingDisableV0ReceiverConversion = "alerting.disableV0ReceiverConversion"
+
+	// FlagPreferencesRerouteLegacyAPIs
+	// Use K8s client implementation for legacy preferences API
+	FlagPreferencesRerouteLegacyAPIs = "preferences.rerouteLegacyAPIs"
 )
