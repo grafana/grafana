@@ -196,15 +196,6 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 		var le leaderelection.Elector
 		if cfg.ZanzanaReconciler.LeaderElection.Enabled {
 			switch mode {
-			case LeaderElectionModeKV:
-				if kvProvider == nil {
-					return nil, fmt.Errorf("KV lease leader election requires unified storage KV backend")
-				}
-				var leErr error
-				le, leErr = leaderelection.NewKVLeaseElector(kvProvider, cfg.ZanzanaReconciler.LeaderElection, reconcilerLogger)
-				if leErr != nil {
-					return nil, fmt.Errorf("failed to create KV lease elector: %w", leErr)
-				}
 			case LeaderElectionModeKubernetes:
 				restCfg, err := clientrest.InClusterConfig()
 				if err != nil {
@@ -217,6 +208,15 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				)
 				if err != nil {
 					return nil, fmt.Errorf("failed to create leader elector: %w", err)
+				}
+			case LeaderElectionModeKV:
+				if kvProvider == nil {
+					return nil, fmt.Errorf("KV lease leader election requires unified storage KV backend")
+				}
+				var leErr error
+				le, leErr = leaderelection.NewKVLeaseElector(kvProvider, cfg.ZanzanaReconciler.LeaderElection, reconcilerLogger)
+				if leErr != nil {
+					return nil, fmt.Errorf("failed to create KV lease elector: %w", leErr)
 				}
 			}
 		} else {
