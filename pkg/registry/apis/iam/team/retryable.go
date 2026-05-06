@@ -53,12 +53,13 @@ func isRetryableTxnError(err error) bool {
 	}
 	// String-match fallback: unified-storage's AsErrorResult stringifies
 	// the error into a proto Message field, so errors.As can't reach the
-	// driver type — match the canonical driver signatures instead.
+	// driver type — match what each driver's Error() actually emits.
+	// Coverage is enforced by TestIsRetryableTxnError_StringFallback.
 	msg := err.Error()
 	return strings.Contains(msg, "Error 1213") || // MySQL ER_LOCK_DEADLOCK
 		strings.Contains(msg, "Error 1205") || // MySQL ER_LOCK_WAIT_TIMEOUT
-		strings.Contains(msg, "deadlock_detected") || // Postgres 40P01
-		strings.Contains(msg, "serialization_failure") || // Postgres 40001
-		strings.Contains(msg, "SQLSTATE 40P01") ||
-		strings.Contains(msg, "SQLSTATE 40001")
+		strings.Contains(msg, "SQLSTATE 40P01") || // pgx v5 deadlock_detected
+		strings.Contains(msg, "SQLSTATE 40001") || // pgx v5 serialization_failure
+		strings.Contains(msg, "deadlock detected") || // lib/pq deadlock_detected
+		strings.Contains(msg, "could not serialize") // lib/pq serialization_failure
 }

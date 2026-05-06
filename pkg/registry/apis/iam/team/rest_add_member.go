@@ -39,9 +39,17 @@ var (
 
 // NewTeamAddMemberREST takes the team resource's dual-writer storage so
 // reads and writes hit the right backing store for the configured mode.
+// Panics at registration time if the storage doesn't implement Getter or
+// Updater — that's a wiring bug, not a runtime condition.
 func NewTeamAddMemberREST(storage rest.Storage, tracer trace.Tracer) *TeamAddMemberREST {
-	getter, _ := storage.(rest.Getter)
-	updater, _ := storage.(rest.Updater)
+	getter, ok := storage.(rest.Getter)
+	if !ok {
+		panic(fmt.Sprintf("team storage %T does not implement rest.Getter", storage))
+	}
+	updater, ok := storage.(rest.Updater)
+	if !ok {
+		panic(fmt.Sprintf("team storage %T does not implement rest.Updater", storage))
+	}
 	return &TeamAddMemberREST{getter: getter, updater: updater, tracer: tracer}
 }
 
@@ -75,11 +83,6 @@ func (s *TeamAddMemberREST) NewConnectOptions() (runtime.Object, bool, string) {
 // Connect implements rest.Connecter.
 func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if s.getter == nil || s.updater == nil {
-			responder.Error(apierrors.NewServiceUnavailable("team storage does not implement Get/Update"))
-			return
-		}
-
 		ctx, span := s.tracer.Start(r.Context(), "team.addMember")
 		defer span.End()
 		span.SetAttributes(attribute.String("team.name", name))
@@ -113,7 +116,7 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 		}
 		t, ok := obj.(*iamv0alpha1.Team)
 		if !ok {
-			responder.Error(fmt.Errorf("team store returned unexpected type %T", obj))
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("team store returned unexpected type %T", obj)))
 			return
 		}
 		var (
@@ -183,11 +186,10 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 }
 
 // decodeJSONBody returns a 400 BadRequest on parse errors instead of a
-// generic 500 from the responder.
+// generic 500 from the responder. Unknown fields are tolerated to match
+// the apiserver's permissive behaviour for forward-compatibility.
 func decodeJSONBody(r *http.Request, dst any) error {
-	dec := json.NewDecoder(r.Body)
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(dst); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid request body: %v", err))
 	}
 	return nil

@@ -38,9 +38,17 @@ var (
 )
 
 // NewTeamRemoveMemberREST takes the team resource's dual-writer storage.
+// Panics at registration time if the storage doesn't implement Getter or
+// Updater — that's a wiring bug, not a runtime condition.
 func NewTeamRemoveMemberREST(storage rest.Storage, tracer trace.Tracer) *TeamRemoveMemberREST {
-	getter, _ := storage.(rest.Getter)
-	updater, _ := storage.(rest.Updater)
+	getter, ok := storage.(rest.Getter)
+	if !ok {
+		panic(fmt.Sprintf("team storage %T does not implement rest.Getter", storage))
+	}
+	updater, ok := storage.(rest.Updater)
+	if !ok {
+		panic(fmt.Sprintf("team storage %T does not implement rest.Updater", storage))
+	}
 	return &TeamRemoveMemberREST{getter: getter, updater: updater, tracer: tracer}
 }
 
@@ -74,11 +82,6 @@ func (s *TeamRemoveMemberREST) NewConnectOptions() (runtime.Object, bool, string
 // Connect implements rest.Connecter.
 func (s *TeamRemoveMemberREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if s.getter == nil || s.updater == nil {
-			responder.Error(apierrors.NewServiceUnavailable("team storage does not implement Get/Update"))
-			return
-		}
-
 		ctx, span := s.tracer.Start(r.Context(), "team.removeMember")
 		defer span.End()
 		span.SetAttributes(attribute.String("team.name", name))
@@ -103,7 +106,7 @@ func (s *TeamRemoveMemberREST) Connect(ctx context.Context, name string, _ runti
 		}
 		t, ok := obj.(*iamv0alpha1.Team)
 		if !ok {
-			responder.Error(fmt.Errorf("team store returned unexpected type %T", obj))
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("team store returned unexpected type %T", obj)))
 			return
 		}
 		filtered := make([]iamv0alpha1.TeamTeamMember, 0, len(t.Spec.Members))

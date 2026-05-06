@@ -183,6 +183,11 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 		if errors.Is(err, team.ErrTeamUpdateConflict) {
 			return oldObj, false, apierrors.NewConflict(teamResource.GroupResource(), name, err)
 		}
+		// Transient SQL deadlock / serialization failure → 409 so callers
+		// retry instead of leaking a 500.
+		if isRetryableTxnError(err) {
+			return oldObj, false, apierrors.NewConflict(teamResource.GroupResource(), name, err)
+		}
 		return oldObj, false, err
 	}
 
