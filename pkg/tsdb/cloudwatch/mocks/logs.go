@@ -29,10 +29,11 @@ type LogsService struct {
 	mock.Mock
 }
 
-func (l *LogsService) GetLogGroups(_ context.Context, request resources.LogGroupsRequest) (resources.LogGroupsResponse, error) {
+func (l *LogsService) GetLogGroups(_ context.Context, request resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], *string, error) {
 	args := l.Called(request)
 
-	return args.Get(0).(resources.LogGroupsResponse), args.Error(1)
+	cursor, _ := args.Get(1).(*string)
+	return args.Get(0).([]resources.ResourceResponse[resources.LogGroup]), cursor, args.Error(2)
 }
 
 func (l *LogsService) GetLogGroupFields(_ context.Context, request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error) {

@@ -88,17 +88,17 @@ func (ds *DataSource) LogGroupsHandler(ctx context.Context, parameters url.Value
 		return nil, nil, models.NewHttpError("GetLogGroupsService error", http.StatusInternalServerError, err)
 	}
 
-	logGroups, err := service.GetLogGroups(ctx, request)
+	logGroups, cursor, err := service.GetLogGroups(ctx, request)
 	if err != nil {
 		return nil, nil, models.NewHttpError("GetLogGroups error", http.StatusInternalServerError, err)
 	}
 
-	logGroupsResponse, err := json.Marshal(logGroups.Results)
+	logGroupsResponse, err := json.Marshal(logGroups)
 	if err != nil {
 		return nil, nil, models.NewHttpError("LogGroupsHandler json error", http.StatusInternalServerError, err)
 	}
 
-	return logGroupsResponse, logGroups.CursorNext, nil
+	return logGroupsResponse, cursor, nil
 }
 func (ds *DataSource) MetricsHandler(ctx context.Context, parameters url.Values) ([]byte, *models.HttpError) {
 	metricsRequest, err := resources.GetMetricsRequest(parameters)
