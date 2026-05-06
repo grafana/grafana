@@ -1,0 +1,3 @@
+{{- define "args" -}}
+{{- range $i, $arg := . }}, {{ $arg.Name|formatIdentifier }}: {{ $arg.Type | formatTypeNotNullable }}{{ end }}
+{{- end -}}

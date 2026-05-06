@@ -1,0 +1,129 @@
+{{- $json := importStdPkg "encoding/json" -}}
+// UnmarshalJSONStrict implements a custom JSON unmarshalling logic to decode `{{ .def.Name|formatObjectName }}` from JSON.
+// Note: the unmarshalling done by this function is strict. It will fail over required fields being absent from the input, fields having an incorrect type, unexpected fields being present, …
+func (resource *{{ .def.Name|formatObjectName }}) UnmarshalJSONStrict(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	{{- $cog := importPkg "cog" }}
+	var errs cog.BuildErrors
+
+	fields := make(map[string]json.RawMessage)
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+	{{- range $field := .def.Type.Struct.Fields }}
+	{{- $customFieldBlockName := print "object_" $.def.SelfRef.ReferredPkg "_" $.def.Name "_field_" $field.Name "_custom_strict_unmarshal" }}
+	// Field "{{ $field.Name }}"
+	if fields[{{ $field.Name|formatScalar }}] != nil {
+		if string(fields[{{ $field.Name|formatScalar }}]) != "null" {
+	{{- if blockExists $customFieldBlockName }}
+		{{ include $customFieldBlockName (dict "Object" $.def "Field" $field) }}
+	{{- else }}
+	{{- $inputRef := print "fields[" ($field.Name|formatScalar) "]" }}
+	{{- $unmarshalInto := print "resource." ($field.Name|formatFieldName) }}
+			{{ template "strict_unmarshal_field_type" (dict "RawInputRef" $inputRef "InputType" $field.Type "UnmarshalInto" $unmarshalInto "ErrorBreadcrumb" $field.Name "Depth" 1) }}
+	{{- end }}
+		{{ if and $field.Required (not $field.Type.Nullable) -}} } else {
+			{{- $errors := importStdPkg "errors" -}}
+			errs = append(errs, cog.MakeBuildErrors({{ $field.Name|formatScalar }}, errors.New("required field is null"))...)
+		{{ end }}
+		}
+		delete(fields, {{ $field.Name|formatScalar }})
+	{{ if and $field.Required (eq $field.Type.Default nil) -}} } else {
+		{{- $errors := importStdPkg "errors" -}}
+		errs = append(errs, cog.MakeBuildErrors({{ $field.Name|formatScalar }}, errors.New("required field is missing from input"))...)
+	{{- end }}
+	}
+	{{- end }}
+
+	{{ $fmt := importStdPkg "fmt" -}}
+	for field := range fields {
+		errs = append(errs, cog.MakeBuildErrors("{{ .def.Name|formatObjectName }}", fmt.Errorf("unexpected field '%s'", field))...)
+	}
+
+	if len(errs) == 0 {
+		return nil
+	}
+
+	return errs
+}
+
+{{/* arguments: RawInputRef, InputType, UnmarshalInto, ErrorBreadcrumb, Depth */}}
+{{- define "strict_unmarshal_field_type" -}}
+	{{- if or (resolvesToScalar .InputType) (resolvesToEnum .InputType) .InputType.IsConstantRef -}}
+			if err := json.Unmarshal({{ .RawInputRef }}, &{{ .UnmarshalInto }}); err != nil {
+				errs = append(errs, cog.MakeBuildErrors("{{ .ErrorBreadcrumb }}", err)...)
+			}
+	{{- else if resolvesToArray .InputType }}
+			{{- if resolvesToArrayOfScalars .InputType }}
+			if err := json.Unmarshal({{ .RawInputRef }}, &{{ .UnmarshalInto }}); err != nil {
+				errs = append(errs, cog.MakeBuildErrors("{{ .ErrorBreadcrumb }}", err)...)
+			}
+			{{- else }}
+			{{- $arrayType := (resolveRefs .InputType).Array }}
+			partialArray := []json.RawMessage{}
+			if err := json.Unmarshal({{ .RawInputRef }}, &partialArray); err != nil {
+				return err
+			}
+
+			for i{{ .Depth }} := range partialArray {
+				{{- $strconv := importStdPkg "strconv" }}
+				{{- $breadcrumb := print .ErrorBreadcrumb "[\"+strconv.Itoa(i" .Depth ")+\"]" }}
+				{{- $rawInputRef := print "partialArray[i" .Depth "]" }}
+				{{- $result := print "result" .Depth }}
+				var {{ $result }} {{ $arrayType.ValueType|formatType }}
+				{{ template "strict_unmarshal_field_type" (dict "RawInputRef" $rawInputRef "InputType" $arrayType.ValueType "UnmarshalInto" $result "ErrorBreadcrumb" $breadcrumb "Depth" (add1 .Depth)) }}
+				{{ .UnmarshalInto }} = {{ if and .InputType.Nullable .InputType.IsRef }}cog.ToPtr({{ end }}append({{ if and .InputType.Nullable .InputType.IsRef }}*{{ end }}{{ .UnmarshalInto }}, {{ $result }}){{ if and .InputType.Nullable .InputType.IsRef }}){{ end }}
+			}
+			{{- end}}
+	{{- else if resolvesToMap .InputType }}
+			{{- if resolvesToMapOfScalars .InputType }}
+			if err := json.Unmarshal({{ .RawInputRef }}, &{{ .UnmarshalInto }}); err != nil {
+				errs = append(errs, cog.MakeBuildErrors("{{ .ErrorBreadcrumb }}", err)...)
+			}
+			{{- else }}
+			{{- $mapType := (resolveRefs .InputType).Map }}
+			partialMap := make(map[string]json.RawMessage)
+			if err := json.Unmarshal({{ .RawInputRef }}, &partialMap); err != nil {
+				return err
+			}
+
+			{{- if .InputType.IsRef }}
+			{{- $resolvedType := resolveRefs .InputType }}
+			parsedMap{{ .Depth }} := make({{ $resolvedType|formatType }}, len(partialMap))
+			{{- else }}
+			parsedMap{{ .Depth }} := make({{ .InputType|formatType }}, len(partialMap))
+			{{- end }}
+			for key{{ .Depth }} := range partialMap {
+				{{- $strconv := importStdPkg "strconv" }}
+				{{- $breadcrumb := print .ErrorBreadcrumb "[\"+key" .Depth "+\"]" }}
+				{{- $rawInputRef := print "partialMap[key" .Depth "]" }}
+				{{- $result := print "result" .Depth }}
+				var {{ $result }} {{ $mapType.ValueType|formatType }}
+				{{ template "strict_unmarshal_field_type" (dict "RawInputRef" $rawInputRef "InputType" $mapType.ValueType "UnmarshalInto" $result "ErrorBreadcrumb" $breadcrumb "Depth" (add1 .Depth)) }}
+				parsedMap{{ .Depth }}[key{{ .Depth }}] = {{ $result }}
+			}
+			{{- if .InputType.IsRef }}
+			{{ .UnmarshalInto }} = {{ if .InputType.Nullable }}cog.ToPtr({{ end }}{{ formatRawRef .InputType.Ref.ReferredPkg .InputType.Ref.ReferredType }}(parsedMap{{ .Depth }}){{ if .InputType.Nullable }}){{ end }}
+			{{- else }}
+			{{ .UnmarshalInto }} = parsedMap{{ .Depth }}
+			{{- end }}
+			{{- end }}
+	{{- else if .InputType.IsDataqueryComposableSlot }}
+			dataquery, err := cog.StrictUnmarshalDataquery({{ .RawInputRef }}, "")
+			if err != nil {
+				errs = append(errs, cog.MakeBuildErrors("{{ .ErrorBreadcrumb }}", err)...)
+			} else {
+				{{ .UnmarshalInto }} = dataquery
+			}
+	{{- else if and .InputType.IsRef (resolvesToStruct .InputType) }}
+			{{ .UnmarshalInto }} = {{ if .InputType.Nullable}}&{{ end }}{{ formatRawRef .InputType.Ref.ReferredPkg .InputType.Ref.ReferredType }}{}
+			if err := {{ .UnmarshalInto }}.UnmarshalJSONStrict({{ .RawInputRef }}); err != nil {
+				errs = append(errs, cog.MakeBuildErrors("{{ .ErrorBreadcrumb }}", err)...)
+			}
+	{{- else -}}
+			found an unimplemented unmarshal case → {{ .InputType.Kind }} // intentionally left uncommented, to trigger a failure during codegen
+	{{- end -}}
+{{- end -}}

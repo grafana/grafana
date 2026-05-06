@@ -1,0 +1,135 @@
+[
+  {
+    "Name": "Int64",
+    "name": "int64",
+    "Type": "int64",
+    "Default": "0",
+    "Size": "8",
+    "Opt": {
+      "BufferBuilder": true
+    }
+  },
+  {
+    "Name": "Uint64",
+    "name": "uint64",
+    "Type": "uint64",
+    "Default": "0",
+    "Size": "8"
+  },
+  {
+    "Name": "Float64",
+    "name": "float64",
+    "Type": "float64",
+    "Default": "0",
+    "Size": "8"
+  },
+  {
+    "Name": "Int32",
+    "name": "int32",
+    "Type": "int32",
+    "Default": "0",
+    "Size": "4",
+    "Opt": {
+      "BufferBuilder": true
+    }
+  },
+  {
+    "Name": "Uint32",
+    "name": "uint32",
+    "Type": "uint32",
+    "Default": "0",
+    "Size": "4"
+  },
+  {
+    "Name": "Float32",
+    "name": "float32",
+    "Type": "float32",
+    "Default": "0",
+    "Size": "4"
+  },
+  {
+    "Name": "Int16",
+    "name": "int16",
+    "Type": "int16",
+    "Default": "0",
+    "Size": "2"
+  },
+  {
+    "Name": "Uint16",
+    "name": "uint16",
+    "Type": "uint16",
+    "Default": "0",
+    "Size": "2"
+  },
+  {
+    "Name": "Int8",
+    "name": "int8",
+    "Type": "int8",
+    "Default": "0",
+    "Size": "1",
+    "Opt": {
+      "BufferBuilder": true
+    }
+  },
+  {
+    "Name": "Uint8",
+    "name": "uint8",
+    "Type": "uint8",
+    "Default": "0",
+    "Size": "1"
+  },
+  {
+    "Name": "Time32",
+    "name": "time32",
+    "Type": "Time32",
+    "QualifiedType": "arrow.Time32",
+    "InternalType": "int32",
+    "Default": "0",
+    "Size": "4",
+    "Opt": {
+      "Parametric": true
+    }
+  },
+  {
+    "Name": "Time64",
+    "name": "time64",
+    "Type": "Time64",
+    "QualifiedType": "arrow.Time64",
+    "InternalType": "int64",
+    "Default": "0",
+    "Size": "8",
+    "Opt": {
+      "Parametric": true
+    }
+  },
+  {
+    "Name": "Date32",
+    "name": "date32",
+    "Type": "Date32",
+    "QualifiedType": "arrow.Date32",
+    "InternalType": "int32",
+    "Default": "0",
+    "Size": "4"
+  },
+  {
+    "Name": "Date64",
+    "name": "date64",
+    "Type": "Date64",
+    "QualifiedType": "arrow.Date64",
+    "InternalType": "int64",
+    "Default": "0",
+    "Size": "8"
+  },
+  {
+    "Name": "Duration",
+    "name": "duration",
+    "Type": "Duration",
+    "QualifiedType": "arrow.Duration",
+    "InternalType": "int64",
+    "Default": "0",
+    "Size": "8",
+    "Opt": {
+      "Parametric": true
+    }
+  }
+]

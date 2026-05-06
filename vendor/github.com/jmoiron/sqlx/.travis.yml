@@ -1,0 +1,26 @@
+# vim: ft=yaml sw=2 ts=2
+
+language: go
+
+# enable database services
+services:
+  - mysql
+  - postgresql
+
+# create test database
+before_install:
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS sqlxtest;'
+  - psql -c 'create database sqlxtest;' -U postgres
+  - go get github.com/mattn/goveralls
+  - export SQLX_MYSQL_DSN="travis:@/sqlxtest?parseTime=true"
+  - export SQLX_POSTGRES_DSN="postgres://postgres:@localhost/sqlxtest?sslmode=disable"
+  - export SQLX_SQLITE_DSN="$HOME/sqlxtest.db"
+
+# go versions to test
+go:
+  - "1.15.x"
+  - "1.16.x"
+
+# run tests w/ coverage
+script:
+  - travis_retry $GOPATH/bin/goveralls -service=travis-ci

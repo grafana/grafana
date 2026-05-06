@@ -1,0 +1,71 @@
+---
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - contextcheck
+    - errcheck
+    - errorlint
+    - fatcontext
+    - gocritic
+    - govet
+    - misspell
+    - promlinter
+    - testifylint
+    - usestdlibvars
+    - usetesting
+
+  settings:
+    errcheck:
+      exclude-functions:
+        - (github.com/go-kit/log.Logger).Log
+
+    gocritic:
+      disabled-checks:
+        - appendAssign
+        - builtinShadow
+        - deferInLoop
+        - exitAfterDefer
+        - importShadow
+        - unnamedResult
+      enable-all: true
+
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+
+    promlinter:
+      strict: true
+
+    testifylint:
+      disable:
+        - go-require
+      enable-all: true
+      suite-extra-assert-call:
+        mode: "require"
+
+  exclusions:
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+
+  settings:
+    gofumpt:
+      extra-rules: true
+
+issues:
+  # Maximum issues count per one linter.
+  max-issues-per-linter: 0
+  # Maximum count of issues with the same text.
+  max-same-issues: 0

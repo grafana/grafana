@@ -1,0 +1,538 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package metadata
+
+import (
+  "fmt"
+
+  "github.com/apache/arrow-go/v18/arrow"
+  "github.com/apache/arrow-go/v18/parquet"
+  "github.com/apache/arrow-go/v18/parquet/schema"
+  "github.com/apache/arrow-go/v18/parquet/internal/utils"
+  shared_utils "github.com/apache/arrow-go/v18/internal/utils"
+  "github.com/apache/arrow-go/v18/parquet/internal/encoding"
+  "github.com/apache/arrow-go/v18/internal/bitutils"
+)
+
+{{range .In}}
+type minmaxPair{{.Name}} [2]{{.name}}
+
+// {{.Name}}Statistics is the typed interface for managing stats for a column
+// of {{.Name}} type.
+type {{.Name}}Statistics struct {
+  statistics
+  min {{.name}}
+  max {{.name}}
+
+  bitSetReader bitutils.SetBitRunReader
+}
+
+// New{{.Name}}Statistics constructs an appropriate stat object type using the
+// given column descriptor and allocator.
+//
+// Panics if the physical type of descr is not parquet.Type.{{if .physical}}{{.physical}}{{else}}{{.Name}}{{end}}
+{{- if eq .Name "Float16"}}
+// Panics if the logical type of descr is not schema.Float16LogicalType
+{{- end}}
+func New{{.Name}}Statistics(descr *schema.Column, mem memory.Allocator) *{{.Name}}Statistics {
+  if descr.PhysicalType() != parquet.Types.{{if .physical}}{{.physical}}{{else}}{{.Name}}{{end}} {
+    panic(fmt.Errorf("parquet: invalid type %s for constructing a {{.Name}} stat object", descr.PhysicalType()))
+  }
+{{- if eq .Name "Float16"}}
+  if !descr.LogicalType().Equals(schema.Float16LogicalType{}) {
+    panic(fmt.Errorf("parquet: invalid logical type %s for constructing a {{.Name}} stat object", descr.LogicalType().String()))
+  }
+{{- end}}
+
+  return &{{.Name}}Statistics{
+    statistics: statistics{
+      descr: descr,
+      hasNullCount: true,
+      hasDistinctCount: true,
+      order: descr.SortOrder(),
+      encoder: encoding.NewEncoder(descr.PhysicalType(), parquet.Encodings.Plain, false, descr, mem),
+      mem: mem,
+    },
+    {{if eq .Name "ByteArray"}}
+    min: make([]byte, 0),
+    max: make([]byte, 0),
+    {{end}}
+  }
+}
+
+// New{{.Name}}StatisticsFromEncoded will construct a properly typed statistics object
+// initializing it with the provided information.
+func New{{.Name}}StatisticsFromEncoded(descr *schema.Column, mem memory.Allocator, nvalues int64, encoded StatProvider) *{{.Name}}Statistics {
+  ret := New{{.Name}}Statistics(descr, mem)
+  ret.nvalues += nvalues
+  if encoded.IsSetNullCount() {
+    ret.IncNulls(encoded.GetNullCount())
+  }
+  if encoded.IsSetDistinctCount() {
+    ret.IncDistinct(encoded.GetDistinctCount())
+  }
+
+  encodedMin := encoded.GetMin()
+  if encodedMin != nil && len(encodedMin) > 0 {
+    ret.min = ret.plainDecode(encodedMin)
+  }
+  encodedMax := encoded.GetMax()
+  if encodedMax != nil && len(encodedMax) > 0 {
+    ret.max = ret.plainDecode(encodedMax)
+  }
+  ret.hasMinMax = encoded.IsSetMax() || encoded.IsSetMin()
+  return ret
+}
+
+func (s *{{.Name}}Statistics) plainEncode(src {{.name}}) []byte {
+{{- if eq .Name "ByteArray"}}
+  out := make([]byte, len(src))
+  copy(out, src)
+  return out
+{{- else}}
+  s.encoder.(encoding.{{if .logical}}{{.physical}}{{else}}{{.Name}}{{end}}Encoder).Put([]{{.name}}{src})
+  buf, err := s.encoder.FlushValues()
+  if err != nil {
+    panic(err) // recovered by Encode
+  }
+  defer buf.Release()
+
+  out := make([]byte, buf.Len())
+  copy(out, buf.Bytes())
+  return out
+{{- end}}
+}
+
+func (s *{{.Name}}Statistics) plainDecode(src []byte) {{.name}} {
+{{- if eq .Name "ByteArray"}}
+  return src
+{{- else}}
+  var buf [1]{{.name}}
+
+  decoder := encoding.NewDecoder(s.descr.PhysicalType(), parquet.Encodings.Plain, s.descr, s.mem)
+  decoder.SetData(1, src)
+  decoder.(encoding.{{if .logical}}{{.physical}}{{else}}{{.Name}}{{end}}Decoder).Decode(buf[:])
+  return buf[0]
+{{- end}}
+}
+
+{{if and (ne .Name "ByteArray") (ne .Name "FixedLenByteArray") (ne .Name "Float16")}}
+func (s *{{.Name}}Statistics) minval(a, b {{.name}}) {{.name}} {
+  if s.less(a, b) {
+    return a
+  }
+  return b
+}
+
+func (s *{{.Name}}Statistics) maxval(a, b {{.name}}) {{.name}} {
+  if s.less(a, b) {
+    return b
+  }
+  return a
+}
+{{else}}
+func (s *{{.Name}}Statistics) minval(a, b {{.name}}) {{.name}} {
+  switch {
+  case a == nil:
+    return b
+  case b == nil:
+    return a
+  case s.less(a, b):
+    return a
+  default:
+    return b
+  }
+}
+
+func (s *{{.Name}}Statistics) maxval(a, b {{.name}}) {{.name}} {
+  switch {
+  case a == nil:
+    return b
+  case b == nil:
+    return a
+  case s.less(a, b):
+    return b
+  default:
+    return a
+  }
+}
+{{end}}
+
+// MinMaxEqual returns true if both stat objects have the same Min and Max values
+func (s *{{.Name}}Statistics) MinMaxEqual(rhs *{{.Name}}Statistics) bool {
+  return s.equal(s.min, rhs.min) && s.equal(s.max, rhs.max)
+}
+
+// Equals returns true only if both objects are the same type, have the same min and
+// max values, null count, distinct count and number of values.
+func (s *{{.Name}}Statistics) Equals(other TypedStatistics) bool {
+{{- if .logical}}
+  if s.Type() != other.Type() || !s.descr.LogicalType().Equals(other.Descr().LogicalType()) {
+{{- else}}
+  if s.Type() != other.Type() {
+{{- end}}
+    return false
+  }
+  rhs, ok := other.(*{{.Name}}Statistics)
+  if !ok {
+    return false
+  }
+
+  if s.HasMinMax() != rhs.HasMinMax() { return false }
+  return (s.hasMinMax && s.MinMaxEqual(rhs)) &&
+    s.NullCount() == rhs.NullCount() &&
+    s.DistinctCount() == rhs.DistinctCount() &&
+    s.NumValues() == rhs.NumValues()
+}
+
+{{if or (eq .name "float32") (eq .name "float64")}}
+func (s *{{.Name}}Statistics) coalesce(val, fallback {{.name}}) {{.name}} {
+  if math.IsNaN(float64(val)) {
+    return fallback
+  }
+  return val
+}
+{{else if eq .Name "Float16"}}
+func (s *{{.Name}}Statistics) coalesce(val, fallback {{.name}}) {{.name}} {
+  if float16.FromLEBytes(val).IsNaN() {
+    return fallback
+  }
+  return val
+}
+{{end}}
+
+func (s *{{.Name}}Statistics) getMinMax(values []{{.name}}) (min, max {{.name}}) {
+{{- if or (eq .name "int32") (eq .name "int64")}}
+  if s.order == schema.SortSIGNED {
+    min, max = shared_utils.GetMinMax{{.Name}}(values)
+  } else {
+    umin, umax := shared_utils.GetMinMaxU{{.name}}(arrow.U{{.name}}Traits.CastFromBytes(arrow.{{.Name}}Traits.CastToBytes(values)))
+    min, max = {{.name}}(umin), {{.name}}(umax)
+  }
+{{- else}}
+  defMin := s.defaultMin()
+  defMax := s.defaultMax()
+
+  min = defMin
+  max = defMax
+
+  for _, v := range values {
+{{- if or (eq .name "float32") (eq .name "float64") (eq .Name "Float16") }}
+    min = s.minval(min, s.coalesce(v, defMin))
+    max = s.maxval(max, s.coalesce(v, defMax))
+{{- else}}
+    min = s.minval(min, v)
+    max = s.maxval(max, v)
+{{- end }}
+  }
+{{- end}}
+  return
+}
+
+func (s *{{.Name}}Statistics) getMinMaxSpaced(values []{{.name}}, validBits []byte, validBitsOffset int64) (min, max {{.name}}) {
+  min = s.defaultMin()
+  max = s.defaultMax()
+
+{{- if or (eq .name "int32") (eq .name "int64")}}
+  var fn func([]{{.name}})
+  if s.order == schema.SortSIGNED {
+    fn = func(v []{{.name}}) {
+      localMin, localMax := shared_utils.GetMinMax{{.Name}}(v)
+      if min > localMin { 
+        min = localMin
+      }
+      if max < localMax {
+        max = localMax
+      }
+    }
+  } else {
+    fn = func(v []{{.name}}) {
+      umin, umax := shared_utils.GetMinMaxU{{.name}}(arrow.U{{.name}}Traits.CastFromBytes(arrow.{{.Name}}Traits.CastToBytes(v)))
+      if u{{.name}}(min) > umin {
+        min = {{.name}}(umin)
+      }
+      if u{{.name}}(max) < umax {
+        max = {{.name}}(umax)
+      }      
+    }
+  }
+{{- end}}
+
+  if s.bitSetReader == nil {
+    s.bitSetReader = bitutils.NewSetBitRunReader(validBits, validBitsOffset, int64(len(values)))
+  } else {
+    s.bitSetReader.Reset(validBits, validBitsOffset, int64(len(values)))
+  }
+
+  for {
+    run := s.bitSetReader.NextRun()
+    if run.Length == 0 {
+      break
+    }
+{{- if or (eq .name "int32") (eq .name "int64")}}
+    fn(values[int(run.Pos):int(run.Pos+run.Length)])    
+{{- else}}
+    for _, v := range values[int(run.Pos):int(run.Pos+run.Length)] {
+{{- if or (eq .name "float32") (eq .name "float64") (eq .Name "Float16") }}
+      min = s.minval(min, coalesce(v, s.defaultMin()).({{.name}}))
+      max = s.maxval(max, coalesce(v, s.defaultMax()).({{.name}}))
+{{- else}}
+      min = s.minval(min, v)
+      max = s.maxval(max, v)
+{{- end }}
+    }
+{{- end}}
+  }
+  return
+}
+
+func (s *{{.Name}}Statistics) Min() {{.name}} { return s.min }
+func (s *{{.Name}}Statistics) Max() {{.name}} { return s.max }
+
+// Merge merges the stats from other into this stat object, updating
+// the null count, distinct count, number of values and the min/max if
+// appropriate.
+func (s *{{.Name}}Statistics) Merge(other TypedStatistics) {
+  rhs, ok := other.(*{{.Name}}Statistics)
+  if !ok {
+    panic("incompatible stat type merge")
+  }
+
+  s.statistics.merge(rhs)
+  if rhs.HasMinMax() {
+    s.SetMinMax(rhs.Min(), rhs.Max())
+  }
+}
+
+// Update is used to add more values to the current stat object, finding the
+// min and max values etc.
+func (s *{{.Name}}Statistics) Update(values []{{.name}}, numNull int64) {
+  s.IncNulls(numNull)
+  s.nvalues += int64(len(values))
+
+  if len(values) == 0 {
+    return
+  }
+
+  s.SetMinMax(s.getMinMax(values))
+}
+
+// UpdateSpaced is just like Update, but for spaced values using validBits to determine
+// and skip null values.
+func (s *{{.Name}}Statistics) UpdateSpaced(values []{{.name}}, validBits []byte, validBitsOffset, numNull int64) {
+  s.IncNulls(numNull)
+  notnull := int64(len(values)) - numNull
+  s.nvalues += notnull
+
+  if notnull == 0 {
+    return
+  }
+
+  s.SetMinMax(s.getMinMaxSpaced(values, validBits, validBitsOffset))
+}
+
+func (s *{{.Name}}Statistics) UpdateFromArrow(values arrow.Array, updateCounts bool) error {
+  if updateCounts {
+    s.IncNulls(int64(values.NullN()))
+    s.nvalues += int64(values.Len() - values.NullN())
+  }
+
+  if values.NullN() == values.Len() {
+    return nil
+  }
+{{if eq .Name "FixedLenByteArray"}}
+  dt := values.DataType()
+  if dt.ID() != arrow.FIXED_SIZE_BINARY && dt.ID() != arrow.DECIMAL {
+    return fmt.Errorf("%w: only fixed size binary and decimal128 arrays are supported to update stats from arrow", 
+      arrow.ErrInvalid)
+  }
+
+  var (
+    width = dt.(arrow.FixedWidthDataType).Bytes()
+    data = values.Data().Buffers()[1].Bytes()[values.Data().Offset()*width:]
+    min = s.defaultMin()
+    max = s.defaultMax()
+  )
+
+  for i := 0; i < values.Len(); i++ {
+    v := data[i * width : (i+1) * width]
+    min = s.minval(min, v)
+    max = s.maxval(min, v)
+  }
+
+  s.SetMinMax(min, max)
+  return nil
+{{else if eq .Name "Int96"}}
+  return fmt.Errorf("%w: update int96 stats from Arrow", arrow.ErrNotImplemented)
+{{else if eq .Name "ByteArray"}}
+  if !arrow.IsBaseBinary(values.DataType().ID()) {
+    return fmt.Errorf("%w: can only update ByteArray stats from binary or string array", arrow.ErrInvalid)
+  }
+
+  var (
+    min = s.defaultMin()
+    max = s.defaultMax()
+    arr = values.(array.BinaryLike)
+    data = arr.ValueBytes()
+    curOffset = int64(0)
+  )
+
+  for i := 0; i < arr.Len(); i++ {
+    nextOffset := curOffset + int64(arr.ValueLen(i))
+    v := data[curOffset:nextOffset]
+    curOffset = nextOffset
+
+    if len(v) == 0 {
+      continue
+    }
+    
+    min = s.minval(min, v)
+    max = s.maxval(max, v)
+  }
+
+  s.SetMinMax(min, max)
+  return nil
+{{else if eq .Name "Boolean"}}
+  return fmt.Errorf("%w: update boolean stats from Arrow", arrow.ErrNotImplemented)
+{{else if eq .Name "Float16"}}
+  return fmt.Errorf("%w: update float16 stats from Arrow", arrow.ErrNotImplemented)
+{{else}}
+  if values.DataType().(arrow.FixedWidthDataType).Bytes() != arrow.{{.Name}}SizeBytes {
+    return fmt.Errorf("%w: cannot update {{.name}} stats with %s arrow array", 
+      arrow.ErrInvalid, values.DataType())
+  }
+
+  rawBytes := values.Data().Buffers()[1].Bytes()[values.Data().Offset()*arrow.{{.Name}}SizeBytes:]
+  s.SetMinMax(s.getMinMax(arrow.{{.Name}}Traits.CastFromBytes(rawBytes)))
+  return nil
+{{end -}}
+}
+
+// SetMinMax updates the min and max values only if they are not currently set
+// or if argMin is less than the current min / argMax is greater than the current max
+func (s *{{.Name}}Statistics) SetMinMax(argMin, argMax {{.name}}) {
+  maybeMinMax := s.cleanStat([2]{{.name}}{argMin, argMax})
+  if maybeMinMax == nil {
+    return
+  }
+
+  min := (*maybeMinMax)[0]
+  max := (*maybeMinMax)[1]
+
+  if !s.hasMinMax {
+    s.hasMinMax = true
+    s.min = min
+    s.max = max
+  } else {
+    if !s.less(s.min, min) {
+      s.min = min
+    }
+    if s.less(s.max, max) {
+      s.max = max
+    }
+  }
+}
+
+// EncodeMin returns the encoded min value with plain encoding.
+//
+// ByteArray stats do not include the length in the encoding.
+func (s *{{.Name}}Statistics) EncodeMin() []byte {
+  if s.HasMinMax() {
+    return s.plainEncode(s.min)
+  }
+  return nil
+}
+
+// EncodeMax returns the current encoded max value with plain encoding
+//
+// ByteArray stats do not include the length in the encoding
+func (s *{{.Name}}Statistics) EncodeMax() []byte{
+  if s.HasMinMax() {
+    return s.plainEncode(s.max)
+  }
+  return nil
+}
+
+// Encode returns a populated EncodedStatistics object
+func (s *{{.Name}}Statistics) Encode() (enc EncodedStatistics, err error) {
+  defer func() {
+    if r := recover(); r != nil {
+      err = shared_utils.FormatRecoveredError("unknown error type thrown from panic", r)
+    }
+  }()
+  if s.HasMinMax() {
+    enc.SetMax(s.EncodeMax())
+    enc.SetMin(s.EncodeMin())
+  }
+  if s.HasNullCount() {
+    enc.SetNullCount(s.NullCount())
+    enc.AllNullValue = s.NumValues() == 0
+  }
+  if s.HasDistinctCount() {
+    enc.SetDistinctCount(s.DistinctCount())
+  }
+  return
+}
+{{end}}
+
+// NewStatistics uses the type in the column descriptor to construct the appropriate
+// typed stats object. If mem is nil, then memory.DefaultAllocator will be used.
+func NewStatistics(descr *schema.Column, mem memory.Allocator) TypedStatistics {
+  if mem == nil {
+    mem = memory.DefaultAllocator
+  }
+  switch descr.PhysicalType() {
+{{- range .In}}
+  {{- if not .logical}}
+  case parquet.Types.{{if .physical}}{{.physical}}{{else}}{{.Name}}{{end}}:
+    {{- if eq .Name "FixedLenByteArray"}}
+    if descr.LogicalType().Equals(schema.Float16LogicalType{}) {
+      return NewFloat16Statistics(descr, mem)
+    }
+    {{- end}}
+    return New{{.Name}}Statistics(descr, mem)
+  {{- end}}
+{{- end}}
+  default:
+    panic("not implemented")
+  }
+}
+
+// NewStatisticsFromEncoded uses the provided information to initialize a typed stat object
+// by checking the type of the provided column descriptor.
+//
+// If mem is nil, then memory.DefaultAllocator is used.
+func NewStatisticsFromEncoded(descr *schema.Column, mem memory.Allocator, nvalues int64, encoded StatProvider) TypedStatistics {
+  if mem == nil {
+    mem = memory.DefaultAllocator
+  }
+  switch descr.PhysicalType() {
+{{- range .In}}
+  {{- if not .logical}}
+  case parquet.Types.{{if .physical}}{{.physical}}{{else}}{{.Name}}{{end}}:
+    {{- if eq .Name "FixedLenByteArray"}}
+    if descr.LogicalType().Equals(schema.Float16LogicalType{}) {
+      return NewFloat16StatisticsFromEncoded(descr, mem, nvalues, encoded)
+    }
+    {{- end}}
+    return New{{.Name}}StatisticsFromEncoded(descr, mem, nvalues, encoded)
+  {{- end}}
+{{- end}}
+  default:
+    panic("not implemented")
+  }
+}

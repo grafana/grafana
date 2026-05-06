@@ -1,0 +1,52 @@
+[
+  {
+    "Name": "Int32",
+    "name": "int32",
+    "lower": "int32",
+    "prefix": "arrow"
+  },
+  {
+    "Name": "Int64",
+    "name": "int64",
+    "lower": "int64",
+    "prefix": "arrow"
+  },
+  {
+    "Name": "Int96",
+    "name": "parquet.Int96",
+    "lower": "int96",
+    "prefix": "parquet"
+  },
+  {
+    "Name": "Float32",
+    "name": "float32",
+    "lower": "float32",
+    "prefix": "arrow",
+    "physical": "Float"
+  },
+  {
+    "Name": "Float64",
+    "name": "float64",
+    "lower": "float64",
+    "prefix": "arrow",
+    "physical": "Double"
+  },
+  {
+    "Name": "Boolean",
+    "name": "bool",
+    "lower": "bool",
+    "prefix": "arrow"
+  },
+  {
+    "Name": "ByteArray",
+    "name": "parquet.ByteArray",
+    "lower": "byteArray",
+    "prefix": "parquet"
+  },
+  {
+    "Name": "FixedLenByteArray",
+    "name": "parquet.FixedLenByteArray",
+    "lower": "fixedLenByteArray",
+    "prefix": "parquet"
+  }
+]

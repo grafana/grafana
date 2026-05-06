@@ -1,0 +1,5 @@
+mkdocs-git-revision-date-localized-plugin~=1.2
+mkdocs-material~=9.5
+mkdocs~=1.6
+mkdocs-redirects~=1.2
+pygments~=2.18

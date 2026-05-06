@@ -1,0 +1,12 @@
+language: go
+dist: xenial
+go:
+  - '1.10'
+  - '1.11'
+  - '1.12'
+  - '1.13'
+  - 'tip'
+
+script:
+     - go test -coverpkg=./... -coverprofile=coverage.info -timeout=5s
+     - bash <(curl -s https://codecov.io/bash)

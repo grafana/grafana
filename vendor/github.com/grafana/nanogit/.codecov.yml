@@ -1,0 +1,25 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+        threshold: 1%
+
+comment:
+  require_changes: false
+  layout: "reach, diff, flags, files"
+  behavior: default
+  after_n_builds: 1
+
+ignore:
+  - "mocks/"
+  - "**/mocks/"
+  - "log/mocks/"
+  - "log/noop.go"
+  - "storage/noop.go"
+  - "perf/"
+

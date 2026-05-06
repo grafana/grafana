@@ -1,0 +1,6 @@
+{{- define "nil_check" }}
+if ($this->internal->{{ .Path|formatPath }} === null) {
+    $this->internal->{{ .Path|formatPath }} = {{ .EmptyValueType|defaultForType }};
+}
+{{ if .EmptyValueType.IsRef }}assert($this->internal->{{ .Path|formatPath }} instanceof {{ .EmptyValueType|formatRawTypeNotNullable }});{{ end }}
+{{- end }}

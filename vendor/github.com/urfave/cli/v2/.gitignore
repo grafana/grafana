@@ -1,0 +1,14 @@
+*.coverprofile
+*.exe
+*.orig
+.*envrc
+.envrc
+.idea
+# goimports is installed here if not available
+/.local/
+/site/
+coverage.txt
+internal/*/built-example
+vendor
+/cmd/urfave-cli-genflags/urfave-cli-genflags
+*.exe

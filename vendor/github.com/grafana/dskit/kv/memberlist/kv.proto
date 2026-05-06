@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package memberlist;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// KV Store is just a series of key-value pairs.
+message KeyValueStore {
+    repeated KeyValuePair pairs = 1;
+}
+
+// Single Key-Value pair. Key must be non-empty.
+message KeyValuePair {
+    string key = 1;
+    bytes value = 2;
+
+    // ID of the codec used to write the value
+    string codec = 3;
+
+    // Is this Key marked for deletion?
+    bool deleted = 4;
+    // When was the key last updated?
+    int64 update_time_millis = 5;
+}

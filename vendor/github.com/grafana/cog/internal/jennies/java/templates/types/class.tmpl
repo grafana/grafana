@@ -1,0 +1,75 @@
+package {{ .Package }};
+{{- $class := include "class" . }}
+
+{{ .Imports }}
+
+{{- $class }}
+
+{{- define "class" }}
+{{- range .Comments }}
+// {{ . }}
+{{- end }}
+
+{{- if .ShouldAddDeserializer }}
+@JsonDeserialize(using = {{ .Name }}Deserializer.class)
+{{- end }}
+{{- if .ShouldAddSerializer }}
+@JsonSerialize(using = {{ .Name }}Serializer.class)
+{{- end }}
+public class {{ .Name }}{{ if .Extends }} extends {{ range $i, $e := .Extends }}{{ if gt $i 0 }}, {{ end }}{{ $e }}{{ end }}{{ end }}{{ if .Variant }} implements {{ .Variant }}{{ end }} {
+    {{- template "types" dict "Fields" .Fields "Annotation" .Annotation "HasFactoryMethods" .ShouldAddFactoryMethods }}
+    
+    {{- if .ShouldAddFactoryMethods }}
+    protected {{ .Name }}() {}
+    {{- range .Fields }}
+    public static {{ $.Name }} create{{ .Name }}({{ .Type | formatType }} {{ .Name | lowerCamelCase | escapeVar }}) {
+        {{ $.Name }} {{ $.Name | lowerCamelCase }} = new {{ $.Name }}();
+        {{ $.Name | lowerCamelCase }}.{{ .Name | lowerCamelCase | escapeVar }} = {{ .Name | lowerCamelCase | escapeVar }};
+        return {{ $.Name | lowerCamelCase }};
+    }
+    {{- end }}
+    {{- else }}
+    {{- range .Constructors }}
+    public {{ $.Name }}({{- template "args" dict "Arguments" .Args "IsBuilder" false }}) {
+        {{- range .Assignments }}
+        {{- if .ValueFromArg }}
+        this.{{ .Name }} = {{ .ValueFromArg }};
+        {{- else }}
+        this.{{ .Name }} = {{ .Value }};
+        {{- end }}
+        {{- end }}
+    }
+    {{- end }}
+    {{- end }}
+    
+    {{- if .Variant }}
+    public String dataqueryName() {
+        return "{{ .Identifier | lower }}";
+    }
+    {{- end }}
+    
+    {{- .ExtraFunctionsBlock }}
+
+    {{- if and (ne .ToJSONFunction "") (not .Extends) }}
+    {{ .ToJSONFunction }}
+    {{- end }}
+
+{{- $customMethodsTmpl := print "object_" .RawPackage "_" .Name "_custom_methods" }}
+{{- includeIfExists $customMethodsTmpl (dict)|indent 4 }}
+}
+{{- end }}
+
+{{- define "types" }}
+    {{- range .Fields }}
+    {{- range .Comments }}
+    // {{ . }}
+    {{- end }}
+    {{- if ne $.Annotation "" }}
+    {{- if fillNullableAnnotationPattern .Type }}
+    {{ fillNullableAnnotationPattern .Type }}
+    {{- end }}
+    {{ fillAnnotationPattern $.Annotation .Name }}
+    {{- end }}
+    {{ if $.HasFactoryMethods }}protected{{ else }}public{{ end }} {{ .Type | formatType }} {{ .Name | lowerCamelCase | escapeVar }};
+    {{- end }}
+{{- end }}

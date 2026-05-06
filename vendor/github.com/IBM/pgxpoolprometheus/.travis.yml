@@ -1,0 +1,28 @@
+language: go
+
+env:
+  - GO_VERSION="module" # The oldest version we claim to support
+  - GO_VERSION="stable" # The latest version
+
+dist: jammy
+
+notifications:
+  email: true
+
+before_install:
+  - sudo apt-get update
+
+install:
+  # Travis's docs claim to use gimme to install the go version but they in fact use go install. This does not support
+  # the 1.18.x syntax or any equivalent. Travis's version of gimme is also unmaintained and broken. Use a maintained
+  # version from the urfave org in its place.
+  - curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/urfave/gimme/main/gimme
+  - chmod +x ~/bin/gimme
+  - gimme version
+  - eval "$(gimme "$GO_VERSION")"
+  - go env
+  - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.64.6
+
+script:
+  - ./scripts/travis_checks.sh
+

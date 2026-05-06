@@ -1,0 +1,139 @@
+# NOTE: the mkdocs dependencies will need to be installed out of
+# band until this whole thing gets more automated:
+#
+#     pip install -r mkdocs-reqs.txt
+#
+
+site_name: urfave/cli
+site_url: https://cli.urfave.org/
+repo_url: https://github.com/urfave/cli
+edit_uri: edit/main/docs/
+nav:
+  - Home:
+      - Welcome: index.md
+      - Contributing: CONTRIBUTING.md
+      - Code of Conduct: CODE_OF_CONDUCT.md
+      - Releasing: RELEASING.md
+      - Security: SECURITY.md
+      - Migrate v2 to v3: migrate-v2-to-v3.md
+      - Migrate v1 to v2: migrate-v1-to-v2.md
+  - v3 Manual:
+      - Getting Started: v3/getting-started.md
+      - Migrating From Older Releases: v3/migrating-from-older-releases.md
+      - Examples:
+          - Greet: v3/examples/greet.md
+          - Flags: 
+              - Basics: v3/examples/flags/basics.md
+              - Value Sources: v3/examples/flags/value-sources.md
+              - Short Options: v3/examples/flags/short-options.md
+              - Advanced: v3/examples/flags/advanced.md
+          - Arguments: 
+              - Basics: v3/examples/arguments/basics.md
+              - Advanced: v3/examples/arguments/advanced.md
+          - Subcommands: 
+              - Basics: v3/examples/subcommands/basics.md
+              - Categories: v3/examples/subcommands/categories.md
+          - Completions:
+              - Shell Completions: v3/examples/completions/shell-completions.md
+              - Customizations: v3/examples/completions/customizations.md
+          - Help Text:
+              - Generated Help Text: v3/examples/help/generated-help-text.md
+              - Suggestions: v3/examples/help/suggestions.md
+          - Error Handling:
+              - Exit Codes: v3/examples/exit-codes.md          
+          - Full API Example: v3/examples/full-api-example.md
+  - v2 Manual:
+      - Getting Started: v2/getting-started.md
+      - Migrating to v3: v2/migrating-to-v3.md
+      - Migrating From Older Releases: v2/migrating-from-older-releases.md
+      - Examples:
+          - Greet: v2/examples/greet.md
+          - Arguments: v2/examples/arguments.md
+          - Flags: v2/examples/flags.md
+          - Subcommands: v2/examples/subcommands.md
+          - Subcommands Categories: v2/examples/subcommands-categories.md
+          - Exit Codes: v2/examples/exit-codes.md
+          - Combining Short Options: v2/examples/combining-short-options.md
+          - Bash Completions: v2/examples/bash-completions.md
+          - Generated Help Text: v2/examples/generated-help-text.md
+          - Version Flag: v2/examples/version-flag.md
+          - Timestamp Flag: v2/examples/timestamp-flag.md
+          - Suggestions: v2/examples/suggestions.md
+          - Full API Example: v2/examples/full-api-example.md
+  - v1 Manual:
+      - Getting Started: v1/getting-started.md
+      - Migrating to v2: v1/migrating-to-v2.md
+      - Examples:
+          - Greet: v1/examples/greet.md
+          - Arguments: v1/examples/arguments.md
+          - Flags: v1/examples/flags.md
+          - Subcommands: v1/examples/subcommands.md
+          - Subcommands (Categories): v1/examples/subcommands-categories.md
+          - Exit Codes: v1/examples/exit-codes.md
+          - Combining Short Options: v1/examples/combining-short-options.md
+          - Bash Completions: v1/examples/bash-completions.md
+          - Generated Help Text: v1/examples/generated-help-text.md
+          - Version Flag: v1/examples/version-flag.md
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-4
+        name: dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-7
+        name: light mode
+  features:
+    - content.code.annotate
+    - navigation.top
+    - navigation.instant
+    - navigation.expand
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+
+plugins:
+  - git-revision-date-localized
+  - search
+  - redirects:
+      redirect_maps:
+        'v3/examples/bash-completions.md': 'v3/examples/completions/shell-completions.md'
+  - tags
+
+# NOTE: this is the recommended configuration from
+# https://squidfunk.github.io/mkdocs-material/setup/extensions/#recommended-configuration
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - meta
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde

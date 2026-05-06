@@ -1,0 +1,6 @@
+{{- define "args" }}
+    {{- range $i, $arg := . }}
+        {{- if gt $i 0 }}, {{- end }}
+        {{- $arg.Name|formatIdentifier }}: {{ $arg.Type | formatType }}
+    {{- end }}
+{{- end }}

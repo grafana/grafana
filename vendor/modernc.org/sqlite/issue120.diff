@@ -1,0 +1,78 @@
+--- /home/jnml/tmp/test_syscall.c	2023-04-21 16:26:44.302689709 +0200
++++ testdata/sqlite-src-3410200/src/test_syscall.c	2023-04-21 16:29:28.000869993 +0200
+@@ -110,15 +110,15 @@
+ static int ts_fstat(int fd, struct stat *p);
+ static int ts_ftruncate(int fd, off_t n);
+ static int ts_fcntl(int fd, int cmd, ... );
+-static int ts_read(int fd, void *aBuf, size_t nBuf);
+-static int ts_pread(int fd, void *aBuf, size_t nBuf, off_t off);
++static ssize_t ts_read(int fd, void *aBuf, size_t nBuf);
++static ssize_t ts_pread(int fd, void *aBuf, size_t nBuf, off_t off);
+ /* Note:  pread64() and pwrite64() actually use off64_t as the type on their
+ ** last parameter.  But that datatype is not defined on many systems 
+ ** (ex: Mac, OpenBSD).  So substitute a likely equivalent: sqlite3_uint64 */
+-static int ts_pread64(int fd, void *aBuf, size_t nBuf, sqlite3_uint64 off);
+-static int ts_write(int fd, const void *aBuf, size_t nBuf);
+-static int ts_pwrite(int fd, const void *aBuf, size_t nBuf, off_t off);
+-static int ts_pwrite64(int fd, const void *aBuf, size_t nBuf, sqlite3_uint64 off);
++static ssize_t ts_pread64(int fd, void *aBuf, size_t nBuf, sqlite3_uint64 off);
++static ssize_t ts_write(int fd, const void *aBuf, size_t nBuf);
++static ssize_t ts_pwrite(int fd, const void *aBuf, size_t nBuf, off_t off);
++static ssize_t ts_pwrite64(int fd, const void *aBuf, size_t nBuf, sqlite3_uint64 off);
+ static int ts_fchmod(int fd, mode_t mode);
+ static int ts_fallocate(int fd, off_t off, off_t len);
+ static void *ts_mmap(void *, size_t, int, int, int, off_t);
+@@ -313,7 +313,7 @@
+ /*
+ ** A wrapper around read().
+ */
+-static int ts_read(int fd, void *aBuf, size_t nBuf){
++static ssize_t ts_read(int fd, void *aBuf, size_t nBuf){
+   if( tsIsFailErrno("read") ){
+     return -1;
+   }
+@@ -323,7 +323,7 @@
+ /*
+ ** A wrapper around pread().
+ */
+-static int ts_pread(int fd, void *aBuf, size_t nBuf, off_t off){
++static ssize_t ts_pread(int fd, void *aBuf, size_t nBuf, off_t off){
+   if( tsIsFailErrno("pread") ){
+     return -1;
+   }
+@@ -333,7 +333,7 @@
+ /*
+ ** A wrapper around pread64().
+ */
+-static int ts_pread64(int fd, void *aBuf, size_t nBuf, sqlite3_uint64 off){
++static ssize_t ts_pread64(int fd, void *aBuf, size_t nBuf, sqlite3_uint64 off){
+   if( tsIsFailErrno("pread64") ){
+     return -1;
+   }
+@@ -343,7 +343,7 @@
+ /*
+ ** A wrapper around write().
+ */
+-static int ts_write(int fd, const void *aBuf, size_t nBuf){
++static ssize_t ts_write(int fd, const void *aBuf, size_t nBuf){
+   if( tsIsFailErrno("write") ){
+     if( tsErrno("write")==EINTR ) orig_write(fd, aBuf, nBuf/2);
+     return -1;
+@@ -354,7 +354,7 @@
+ /*
+ ** A wrapper around pwrite().
+ */
+-static int ts_pwrite(int fd, const void *aBuf, size_t nBuf, off_t off){
++static ssize_t ts_pwrite(int fd, const void *aBuf, size_t nBuf, off_t off){
+   if( tsIsFailErrno("pwrite") ){
+     return -1;
+   }
+@@ -364,7 +364,7 @@
+ /*
+ ** A wrapper around pwrite64().
+ */
+-static int ts_pwrite64(int fd, const void *aBuf, size_t nBuf, sqlite3_uint64 off){
++static ssize_t ts_pwrite64(int fd, const void *aBuf, size_t nBuf, sqlite3_uint64 off){
+   if( tsIsFailErrno("pwrite64") ){
+     return -1;
+   }

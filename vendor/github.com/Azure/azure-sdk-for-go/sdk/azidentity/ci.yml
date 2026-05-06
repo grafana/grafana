@@ -1,0 +1,46 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - hotfix/*
+      - release/*
+  paths:
+    include:
+      - sdk/azidentity/
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - hotfix/*
+      - release/*
+  paths:
+    include:
+      - sdk/azidentity/
+
+extends:
+    template: /eng/pipelines/templates/jobs/archetype-sdk-client.yml
+    parameters:
+      CloudConfig:
+        Public:
+          SubscriptionConfigurations:
+            - $(sub-config-identity-test-resources)
+      EnableRaceDetector: true
+      Location: westus2
+      RunLiveTests: true
+      ServiceDirectory: azidentity
+      UsePipelineProxy: false
+
+      ${{ if endsWith(variables['Build.DefinitionName'], 'weekly') }}:
+        PersistOidcToken: true
+        MatrixConfigs:
+          - Name: managed_identity_matrix
+            GenerateVMJobs: true
+            Path: sdk/azidentity/managed-identity-matrix.json
+            Selection: sparse
+        MatrixReplace:
+          - Pool=.*LINUXPOOL.*/azsdk-pool-mms-ubuntu-2204-identitymsi
+          - OSVmImage=.*LINUXNEXTVMIMAGE.*/azsdk-pool-mms-ubuntu-2204-1espt

@@ -1,0 +1,22 @@
+language: go
+
+go:
+    - 1.7.x
+    - tip
+
+matrix:
+    allow_failures:
+        - go: tip
+
+install:
+  - rm -rf $GOPATH/src/gopkg.in/src-d
+  - mkdir -p $GOPATH/src/gopkg.in/src-d
+  - ln -s $PWD $GOPATH/src/gopkg.in/src-d/go-errors.v0
+  - cd $GOPATH/src/gopkg.in/src-d/go-errors.v0
+  - go get -v -t ./...
+
+script:
+  - make test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

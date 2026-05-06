@@ -1,0 +1,16 @@
+language: go
+os:
+  - linux
+  - osx
+  - windows
+go:
+  - 1.11.4
+env:
+  global:
+    - GO111MODULE=on
+install:
+  - go mod download
+  - go get github.com/mattn/goveralls
+script:
+  - go test -v -covermode=count -coverprofile=coverage.out -bench . -cpu 1,4
+  - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN || true'

@@ -1,0 +1,25 @@
+language: go
+
+go:
+  - 1.2
+  - 1.3
+  - 1.4
+  - 1.5
+  - 1.6
+  - 1.7
+  - 1.8
+  - 1.9
+  - master
+
+# safelist
+branches:
+  only:
+  - master
+  - v2
+
+notifications:
+  email: false
+
+before_install:
+  - mkdir -p $GOPATH/src/gopkg.in &&
+    ln -s ../github.com/go-mail/mail $GOPATH/src/gopkg.in/mail.v2

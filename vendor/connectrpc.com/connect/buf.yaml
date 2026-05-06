@@ -1,0 +1,14 @@
+version: v2
+modules:
+  - path: internal/proto
+lint:
+  use:
+    - DEFAULT
+  ignore:
+    - internal/proto/connectext/grpc/health/v1/health.proto
+    - internal/proto/connectext/grpc/reflection/v1alpha/reflection.proto
+    - internal/proto/connectext/grpc/status/v1/status.proto
+  disallow_comment_ignores: true
+breaking:
+  use:
+    - WIRE_JSON

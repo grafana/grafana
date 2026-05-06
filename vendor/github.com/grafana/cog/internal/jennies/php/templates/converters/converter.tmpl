@@ -1,0 +1,156 @@
+<?php
+
+namespace {{ .NamespaceRoot }}\{{ .Converter.Package | formatPackageName }};
+
+{{ template "converter" . }}
+
+{{- define "guard" }}
+{{- $operator := .Op -}}
+{{- $value := formatValue .Path.Last.Type .Value -}}
+{{- if .Path.Last.Type.IsRef -}}{{ $value = print (.Path.Last.Type | formatRawTypeNotNullable) "::fromValue(" (.Value | formatScalar) ")" }}{{- end -}}
+{{- if eq $operator "==" -}}{{ $operator = "===" }}{{- end -}}
+{{- if eq $operator "!=" -}}{{ $operator = "!==" }}{{- end -}}
+{{- if eq $operator "!=" -}}{{ $operator = "!==" }}{{- end -}}
+
+    {{- if and (eq $operator "!==") (eq .Value nil) -}}
+        ${{ .Path | formatPath }} !== null
+        {{- if ne .Path.Last.TypeHint nil }} && ${{ .Path | formatPath }} instanceof {{ formatRawRef .Path.Last.TypeHint.Ref.ReferredPkg .Path.Last.TypeHint.Ref.ReferredType }}{{ end }}
+    {{- else -}}
+        {{- $leftOperand := print "$" (.Path | formatPath) -}}
+        {{- if eq .Op "minLength" -}}
+            {{- $leftOperand = print "count(" $leftOperand ")" -}}
+            {{- $operator = ">=" -}}
+        {{- end -}}
+        {{- if eq .Op "maxLength" -}}
+            {{- $leftOperand = print "count(" $leftOperand ")" -}}
+            {{- $operator = "<=" -}}
+        {{- end -}}
+        {{- $leftOperand }} {{ $operator}} {{ $value -}}
+    {{- end -}}
+{{- end }}
+
+{{- define "value_formatter" -}}
+    {{- if and (.Type.IsRef) (resolvesToEnum .Type) -}}
+    '{{ formatRawRef .Type.Ref.ReferredPkg .Type.Ref.ReferredType }}::fromValue("'.${{ .Path | formatPath }}.'")'
+    {{- else if and (.Type.IsRef) (resolvesToStruct .Type) -}}
+    {{- $structDef := (resolveRefs .Type).Struct -}}
+    '(new {{ formatRawRef .Type.Ref.ReferredPkg .Type.Ref.ReferredType }}(
+        {{- range $field := $structDef.Fields -}}
+        {{- $valuePath := $.Path.AppendStructField $field -}}
+        {{- if $field.Type.Nullable -}}
+        '.((${{ $valuePath | formatPath }} !== null) ? '{{ $field.Name }}: '.{{- template "value_formatter" (dict "Type" $field.Type "Path" $valuePath) -}}.', ' : '').'
+        {{- else -}}
+        {{ $field.Name }}: '.{{- template "value_formatter" (dict "Type" $field.Type "Path" $valuePath) -}}.',
+        {{- end -}}
+        {{- end -}}
+    ))'
+    {{- else -}}
+    \var_export(${{ .Path | formatPath }}, true)
+    {{- end -}}
+{{- end }}
+
+{{- define "guards" }}
+    {{- $guardsCount := sub1 (len .) -}}
+    {{- range $i, $guard := . }}{{- template "guard" $guard }}{{ if ne $i $guardsCount }} && {{ end }}{{ end }}
+{{- end }}
+
+{{- define "prepare_arg" -}}
+    {{- with .Arg.Builder -}}
+        ${{ $.IntoVar }} = {{ formatRawRef .BuilderPkg (print .BuilderName "Converter") }}::convert(${{ .ValuePath | formatPath }});
+    {{- end -}}
+    {{- with .Arg.BuilderDisjunction -}}
+        ${{ $.IntoVar }} = '';
+        {{ range $builderChoice := . }}
+        if ({{ template "guards" $builderChoice.Guards }}) {
+            ${{ $.IntoVar }} = {{ formatRawRef $builderChoice.Builder.BuilderPkg (print $builderChoice.Builder.BuilderName "Converter") }}::convert(${{ $builderChoice.Builder.ValuePath | formatPath }});
+        }
+        {{ end }}
+    {{- end -}}
+    {{- with .Arg.Array -}}
+        $tmp{{ $.IntoVar }} = [];
+        foreach (${{ .For | formatPath }} as ${{ .ValueAs | formatPath }}) {
+        {{- $subIntoVar := print "tmp" .For.Last.Identifier (.ValueAs | formatPath) }}
+        {{ template "prepare_arg" (dict "IntoVar" $subIntoVar "Arg" .ForArg) }}
+        $tmp{{ $.IntoVar }}[] = ${{ $subIntoVar }};
+        }
+        ${{ $.IntoVar }} = "[" . implode(", \n", $tmp{{ $.IntoVar }}) . "]";
+    {{- end -}}
+    {{- with .Arg.Map -}}
+        ${{ $.IntoVar }} = "[";
+        foreach (${{ .For | formatPath }} as $key => ${{ .ValueAs | formatPath }}) {
+        {{- $subIntoVar := print "tmp" .For.Last.Identifier (.ValueAs | formatPath) }}
+            {{ template "prepare_arg" (dict "IntoVar" $subIntoVar "Arg" .ForArg) }}
+            ${{ $.IntoVar }} .= "\t".var_export($key, true)." => ${{ $subIntoVar }},";
+        }
+        ${{ $.IntoVar }} .= "]";
+    {{- end -}}
+    {{- with .Arg.Runtime -}}
+        ${{ $.IntoVar }} = {{ "Cog\\Runtime" | fullNamespaceRef }}::get()->{{ .FuncName|formatOptionName }}({{ range $i, $runtimeArg := .Args }}{{ if eq $i 0}}${{ $runtimeArg.ValuePath | formatPath }}{{ else }}${{ $runtimeArg.ValuePath | formatPath }}{{ end }}, {{ end }});
+    {{- end -}}
+    {{- with .Arg.Direct -}}
+        ${{ $.IntoVar }} = {{- template "value_formatter" (dict "Type" .ValueType "Path" .ValuePath) -}};
+    {{- end -}}
+    {{- with .Arg.Disjunction -}}
+        switch (true) {
+            {{- range $branch := .Branches }}
+            case {{ disjunctionCaseForType (print "$" (formatPath .Of.ValuePath)) $branch.Type }}:
+                {{- $subIntoVar := print "disjunction" .Of.ValuePath.Last.Identifier }}
+                {{ template "prepare_arg" (dict "IntoVar" $subIntoVar "Arg" $branch.Arg) }}
+                ${{ $.IntoVar }} = ${{ $subIntoVar }};
+                break;
+            {{- end }}
+            default:
+                throw new \ValueError('disjunction branch not handled');
+        }
+    {{- end -}}
+{{- end }}
+
+{{- define "option_mapping" -}}
+    {{- $argsCount := sub1 (len .Args) -}}
+    {{- with .ArgumentGuards -}}if ({{ template "guards" . }}) { {{- end }}
+    {{- if and (eq (len .Guards) 0) (eq (len .ArgumentGuards) 0) -}} { {{- end }}
+    $buffer = '{{ .Option.Name | formatOptionName }}(';
+    {{- range $i, $arg := .Args }}
+        {{- $intoVar := print "arg" $i }}
+        {{ template "prepare_arg" (dict "IntoVar" $intoVar "Arg" $arg) }}
+        $buffer .= ${{ $intoVar }};
+        {{ if ne $i $argsCount }}$buffer .= ', ';{{- end }}
+    {{- end }}
+    $buffer .= ')';
+
+    $calls[] = $buffer;
+    {{ with .ArgumentGuards -}} } {{- end }}
+    {{- if and (eq (len .Guards) 0) (eq (len .ArgumentGuards) 0) -}} } {{- end }}
+{{- end }}
+
+{{- define "conversion_mapping" -}}
+    {{- $firstOpt := .Options | first }}
+    {{- with $firstOpt.Guards -}}if ({{ template "guards" . }}) { {{- end }}
+    {{ if ne .RepeatFor nil -}}foreach (${{ .RepeatFor | formatPath }} as {{if ne .RepeatIndex "" }}${{ .RepeatIndex }} => {{ end }}${{ .RepeatAs }}) { {{- end }}
+    {{- range $optMapping := .Options }}
+        {{ template "option_mapping" $optMapping }}
+    {{- end }}
+    {{ if ne .RepeatFor nil -}} } {{- end }}
+    {{ with $firstOpt.Guards -}} } {{- end }}
+{{- end }}
+
+{{- define "converter" -}}
+final class {{ .Converter.BuilderName | upperCamelCase }}Converter
+{
+    public static function convert({{ if .InputIsDataquery }}{{ "Cog\\Dataquery" | fullNamespaceRef }}{{ else }}{{ formatRawRef .Converter.Input.TypeRef.ReferredPkg .Converter.Input.TypeRef.ReferredType }}{{ end }} $input): string
+    {
+        {{ if .InputIsDataquery }}assert($input instanceof {{ formatRawRef .Converter.Input.TypeRef.ReferredPkg .Converter.Input.TypeRef.ReferredType }});{{ end }}
+        {{- $constructorArgsCount := sub1 (len .Converter.ConstructorArgs) }}
+        $calls = [
+            '(new {{ formatRawRef .Converter.Package .Converter.BuilderName }}Builder({{ with .Converter.ConstructorArgs}}'.{{ range $i, $arg := . }}{{- template "value_formatter" (dict "Type" $arg.ValueType "Path" $arg.ValuePath ) -}}{{- if ne $i $constructorArgsCount }} . ", " .{{ end }}{{ end }}.'{{ end }}))',
+        ];
+
+        {{- range .Converter.Mappings }}
+            {{ template "conversion_mapping" . }}
+        {{- end }}
+
+        return \implode("\n\t->", $calls);
+    }
+}
+{{- end }}
+

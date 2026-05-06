@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "go-yoshi",
+  "include-component-in-tag": true,
+  "separate-pull-requests": true,
+  "tag-separator": "/",
+  "packages": {
+    "auth": {
+      "component": "auth"
+    },
+    "auth/oauth2adapt": {
+      "component": "auth/oauth2adapt"
+    },
+    "bigquery": {
+      "component": "bigquery"
+    },
+    "bigtable": {
+      "component": "bigtable"
+    },
+    "datastore": {
+      "component": "datastore"
+    },
+    "errorreporting": {
+      "component": "errorreporting"
+    },
+    "firestore": {
+      "component": "firestore"
+    },
+    "logging": {
+      "component": "logging"
+    },
+    "profiler": {
+      "component": "profiler"
+    },
+    "pubsub": {
+      "component": "pubsub"
+    },
+    "pubsublite": {
+      "component": "pubsublite"
+    },
+    "spanner": {
+      "component": "spanner"
+    },
+    "storage": {
+      "component": "storage"
+    },
+    "vertexai": {
+      "component": "vertexai"
+    }
+  },
+  "plugins": [
+    "sentence-case"
+  ]
+}

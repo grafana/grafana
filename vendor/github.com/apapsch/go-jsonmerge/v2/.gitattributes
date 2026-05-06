@@ -1,0 +1,175 @@
+## AUTO-DETECT - Handle line endings automatically for files detected
+## as text and leave all files detected as binary untouched.
+## This will handle all files NOT defined below.
+* text=auto
+
+# Custom for Visual Studio
+*.sln       text eol=crlf
+*.csproj    text eol=crlf
+*.vbproj    text eol=crlf
+*.fsproj    text eol=crlf
+*.dbproj    text eol=crlf
+
+*.vcxproj   text eol=crlf
+*.vcxitems  text eol=crlf
+*.props     text eol=crlf
+*.filters   text eol=crlf
+
+# Documents
+*.doc       diff=astextplain
+*.DOC       diff=astextplain
+*.docx      diff=astextplain
+*.DOCX      diff=astextplain
+*.dot       diff=astextplain
+*.DOT       diff=astextplain
+*.pdf       diff=astextplain
+*.PDF       diff=astextplain
+*.rtf       diff=astextplain
+*.RTF       diff=astextplain
+*.csv       text
+*.sql       text
+*.ini       text
+
+## SOURCE CODE
+*.go        text eol=lf
+*.c         text eol=lf
+*.h         text eol=lf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.coffee    text eol=lf
+
+*.htm       text diff=html
+*.html      text diff=html
+*.xml       text diff=html
+*.xhtml     text diff=html
+
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.json      text eol=lf
+*.ts        text eol=lf
+
+*.css       text diff=css eol=lf
+*.scss      text diff=css eol=lf
+*.less      text diff=css eol=lf
+*.sass      text eol=lf
+
+*.sh        text eol=lf
+
+## DOCUMENTATION
+*.md        text  eol=lf
+*.txt       text
+AUTHORS     text eol=lf
+CHANGELOG   text eol=lf
+CHANGES     text eol=lf
+CONTRIBUTING    text eol=lf
+COPYING     text eol=lf
+INSTALL     text eol=lf
+license     text eol=lf
+LICENSE     text eol=lf
+NEWS        text eol=lf
+readme      text eol=lf
+*README*    text eol=lf
+TODO        text eol=lf
+
+## TEMPLATES
+*.dot       text
+*.ejs       text
+*.haml      text
+*.handlebars text
+*.hbs        text
+*.hbt        text
+*.jade       text
+*.latte      text
+*.mustache   text
+*.tmpl       text
+
+## LINTERS
+.csslintrc      text eol=lf
+.eslintrc       text eol=lf
+.jscsrc         text eol=lf
+.jshintrc       text eol=lf
+.jshintignore   text eol=lf
+.stylelintrc    text eol=lf
+
+## CONFIGS
+*.bowerrc       text eol=lf
+*.cnf          text
+*.conf         text
+*.config       text
+.editorconfig   text eol=lf
+.gitattributes  text eol=lf
+.gitconfig      text eol=lf
+.gitignore      text eol=lf
+*.npmignore     text eol=lf
+*.yaml          text eol=lf
+*.yml           text eol=lf
+Makefile        text eol=lf
+makefile        text eol=lf
+
+## GRAPHICS
+*.ai   binary
+*.bmp  binary
+*.eps  binary
+*.gif  binary
+*.ico  binary
+*.jng  binary
+*.jp2  binary
+*.jpg  binary
+*.jpeg binary
+*.jpx  binary
+*.jxr  binary
+*.pdf  binary
+*.png  binary
+*.psb  binary
+*.psd  binary
+*.svg  text
+*.svgz binary
+*.tif  binary
+*.tiff binary
+*.wbmp binary
+*.webp binary
+
+## AUDIO
+*.kar  binary
+*.m4a  binary
+*.mid  binary
+*.midi binary
+*.mp3  binary
+*.ogg  binary
+*.ra   binary
+
+## VIDEO
+*.3gpp binary
+*.3gp  binary
+*.as   binary
+*.asf  binary
+*.asx  binary
+*.fla  binary
+*.flv  binary
+*.m4v  binary
+*.mng  binary
+*.mov  binary
+*.mp4  binary
+*.mpeg binary
+*.mpg  binary
+*.swc  binary
+*.swf  binary
+*.webm binary
+
+## ARCHIVES
+*.7z  binary
+*.gz  binary
+*.rar binary
+*.tar binary
+*.zip binary
+
+## FONTS
+*.ttf   binary
+*.eot   binary
+*.otf   binary
+*.woff  binary
+*.woff2 binary
+
+## EXECUTABLES
+*.exe binary
+*.dll binary

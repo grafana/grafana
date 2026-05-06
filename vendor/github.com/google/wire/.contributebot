@@ -1,0 +1,4 @@
+{
+  "issue_title_pattern": "^.*$",
+  "pull_request_title_response": "Please edit the title of this pull request with the name of the affected component, or \"all\", followed by a colon, followed by a short summary of the change."
+}

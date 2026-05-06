@@ -1,0 +1,51 @@
+package {{ .Builder.Package | formatPackageName }}
+{{ $options := include "options" . }}
+{{ .Imports }}
+
+var _ cog.Builder[{{ .BuilderSignatureType }}] = (*{{ .Builder.Name|formatObjectName }}Builder)(nil)
+{{ range .Builder.For.Comments }}
+// {{ . }}
+{{- end }}
+type {{ .Builder.Name|formatObjectName }}Builder struct {
+    internal *{{ .ObjectName }}
+    errors cog.BuildErrors
+
+    {{- range .Builder.Properties }}
+    {{ .Name }} {{ .Type | formatType }}
+    {{- end }}
+}
+
+func New{{ .Builder.Name|formatObjectName }}Builder({{- template "args" .Builder.Constructor.Args }}) *{{ .Builder.Name|formatObjectName }}Builder {
+	resource := {{ .ConstructorName }}()
+	builder := &{{ .Builder.Name|formatObjectName }}Builder{
+		internal: resource,
+		errors: make(cog.BuildErrors, 0),
+	}
+
+    {{- range .Builder.Constructor.Assignments }}
+        {{- template "assignment" (dict "Assignment" . "Builder" $.Builder "Option" (dict "Name" "")) }}
+    {{- end }}
+
+	return builder
+}
+
+{{ range .Builder.Factories }}
+	{{ template "factory" (dict "Builder" $.Builder "Factory" .) }}
+{{- end }}
+
+func (builder *{{ .Builder.Name|formatObjectName }}Builder) Build() ({{ .BuilderSignatureType }}, error) {
+	if err := builder.internal.Validate(); err != nil {
+		return {{ .ObjectName }}{}, err
+	}
+	
+	if len(builder.errors) > 0 {
+	    return {{ .ObjectName }}{}, cog.MakeBuildErrors("{{ .Builder.Package | formatPackageName }}.{{ .Builder.Name | lowerCamelCase }}", builder.errors)
+	}
+
+	return *builder.internal, nil
+}
+
+{{- $customMethodsTmpl := print "builder_" .Builder.Package "_" (.Builder.Name|formatObjectName) "_custom_methods" }}
+{{- includeIfExists $customMethodsTmpl (dict) -}}
+
+{{- $options }}

@@ -1,0 +1,75 @@
+/*
+ * SPDX-FileCopyrightText: © Hypermode Inc. <hello@hypermode.com>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+// Use protos/gen.sh to generate .pb.go files.
+syntax = "proto3";
+
+package badgerpb4;
+
+option go_package = "github.com/dgraph-io/badger/v4/pb";
+
+message KV {
+  bytes key = 1;
+  bytes value = 2;
+  bytes user_meta = 3;
+  uint64 version = 4;
+  uint64 expires_at = 5;
+  bytes meta = 6;
+
+  // Stream id is used to identify which stream the KV came from.
+  uint32 stream_id = 10;
+  // Stream done is used to indicate end of stream.
+  bool stream_done = 11;
+}
+
+message KVList {
+  repeated KV kv = 1;
+
+  // alloc_ref used internally for memory management.
+  uint64 alloc_ref = 10;
+}
+
+message ManifestChangeSet {
+  // A set of changes that are applied atomically.
+  repeated ManifestChange changes = 1;
+}
+
+enum EncryptionAlgo {
+  aes = 0;
+}
+
+message ManifestChange {
+  uint64 Id = 1;            // Table ID.
+  enum Operation {
+    CREATE = 0;
+    DELETE = 1;
+  }
+  Operation Op   = 2;
+  uint32 Level   = 3;       // Only used for CREATE.
+  uint64 key_id  = 4;
+  EncryptionAlgo encryption_algo = 5;
+  uint32 compression = 6;   // Only used for CREATE Op.
+}
+
+message Checksum {
+  enum Algorithm {
+    CRC32C = 0;
+    XXHash64 = 1;
+  }
+  Algorithm algo = 1; // For storing type of Checksum algorithm used
+  uint64 sum = 2;
+}
+
+message DataKey {
+  uint64 key_id      = 1;
+  bytes  data       = 2;
+  bytes  iv         = 3;
+  int64  created_at = 4;
+}
+
+message Match {
+    bytes prefix = 1;
+    string ignore_bytes = 2; // Comma separated with dash to represent ranges "1, 2-3, 4-7, 9"
+}

@@ -1,0 +1,6 @@
+MetroHash
+
+This package is a mechanical translation of the reference C++ code for
+MetroHash, available at https://github.com/jandrewrogers/MetroHash 
+
+I claim no additional copyright over the original implementation.

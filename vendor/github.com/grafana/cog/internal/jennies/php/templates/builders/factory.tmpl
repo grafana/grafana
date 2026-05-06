@@ -1,0 +1,23 @@
+{{- define "factory" }}
+{{- .Factory.Comments|formatDocsBlock -}}
+public static function {{ .Factory.Name|formatOptionName}}({{- template "args" .Factory.Args }}): {{ .Builder.Name|formatObjectName }}Builder
+{
+	$builder = new {{ .Builder.Name|formatObjectName }}Builder();
+{{- range $call := .Factory.OptionCalls }}
+    $builder->{{ $call.Name|formatOptionName }}({{- range $i, $param := $call.Parameters }}{{ if gt $i 0 }}, {{ end }}{{ template "factory_parameter_value" (dict "Value" $param) }}{{- end }});
+{{- end }}
+	return $builder;
+}
+{{- end }}
+
+{{- define "factory_parameter_value" }}
+	{{- if not (eq .Value.Constant nil) -}}
+		{{- formatValue .Value.Constant.Type .Value.Constant.Value }}
+	{{- end }}
+	{{- with .Value.Argument -}}
+		${{- .Name|formatArgName -}}
+	{{- end -}}
+	{{- with .Value.Factory -}}
+		{{ formatRawRef .Ref.Package (.Ref.Package|factoryClassForPkg)}}::{{ .Ref.Factory|formatOptionName }}({{ range $i, $arg := .Parameters }}{{- if gt $i 0 }}, {{ end }}{{ template "factory_parameter_value" (dict "Value" $arg)}}{{ end }})
+	{{- end -}}
+{{- end }}

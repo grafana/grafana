@@ -1,0 +1,40 @@
+{{- $json := importStdPkg "encoding/json" -}}
+{{- $errors := importStdPkg "errors" -}}
+{{- $struct := .def.Type.Struct -}}
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `{{ .def.Name|formatObjectName }}` from JSON.
+func (resource *{{ .def.Name|formatObjectName }}) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]{{ formatAny }})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["{{ .hint.Discriminator }}"]
+	if !found {
+		return nil
+	}
+
+	switch discriminator {
+{{- range $discriminatorValue, $typeName := .hint.DiscriminatorMapping }}
+    {{- if eq $discriminatorValue "cog_discriminator_catch_all" }}
+    default:
+    {{- else }}
+	case "{{ $discriminatorValue }}":
+	{{- end }}
+		var {{ $typeName|formatVarName }} {{ $typeName|formatObjectName }}
+		if err := json.Unmarshal(raw, &{{ $typeName|formatVarName }}); err != nil {
+			return err
+		}
+
+		resource.{{ ($struct.FieldByRefName $typeName).Name|formatFieldName }} = &{{ $typeName|formatVarName }}
+		return nil
+{{- end }}
+	}
+
+	return nil
+}
+

@@ -1,0 +1,85 @@
+{{- /*gotype: github.com/grafana/dskit/ring.httpResponse */ -}}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ring Status</title>
+</head>
+<body>
+<h1>Ring Status</h1>
+<p>Current time: {{ .Now }}</p>
+<form action="" method="POST">
+    <input type="hidden" name="csrf_token" value="$__CSRF_TOKEN_PLACEHOLDER__">
+    <table width="100%" border="1">
+        <thead>
+        <tr>
+            <th>Instance ID</th>
+            <th>Availability Zone</th>
+            <th>State</th>
+            <th>Address</th>
+            <th>Registered At</th>
+            <th>Read-Only</th>
+            <th>Read-Only Updated</th>
+            <th>Last Heartbeat</th>
+            {{ if not .DisableTokens }}
+            <th>Tokens</th>
+            <th>Ownership</th>
+            {{ end }}
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{ range $i, $ing := .Ingesters }}
+            {{ if mod $i 2 }}
+                <tr>
+            {{ else }}
+                <tr bgcolor="#BEBEBE">
+            {{ end }}
+            <td>{{ .ID }}</td>
+            <td>{{ .Zone }}</td>
+            <td>{{ .State }}</td>
+            <td>{{ .Address }}</td>
+            <td>{{ .RegisteredTimestamp | timeOrEmptyString }}</td>
+            {{ if .ReadOnly }}
+            <td>{{ .ReadOnly }}</td>
+            <td>{{ .ReadOnlyUpdatedTimestamp | durationSince }} ago ({{ .ReadOnlyUpdatedTimestamp.Format "15:04:05.999" }})</td>
+            {{ else }}
+            <td></td>
+            <td>{{ .ReadOnlyUpdatedTimestamp | timeOrEmptyString }}</td>
+            {{ end }}
+            <td>{{ .HeartbeatTimestamp | durationSince }} ago ({{ .HeartbeatTimestamp.Format "15:04:05.999" }})</td>
+            {{ if not $.DisableTokens }}
+            <td>{{ .NumTokens }}</td>
+            <td>{{ .Ownership | humanFloat }}%</td>
+            {{ end }}
+            <td>
+                <button name="forget" value="{{ .ID }}" type="submit">Forget</button>
+            </td>
+            </tr>
+        {{ end }}
+        </tbody>
+    </table>
+    <br>
+
+    {{ if not .DisableTokens}}
+        {{ if .ShowTokens }}
+            <input type="button" value="Hide Tokens" onclick="window.location.href = '?tokens=false' "/>
+        {{ else }}
+            <input type="button" value="Show Tokens" onclick="window.location.href = '?tokens=true'"/>
+        {{ end }}
+
+        {{ if .ShowTokens }}
+            {{ range $i, $ing := .Ingesters }}
+                <h2>Instance: {{ .ID }}</h2>
+                <p>
+                    Tokens:<br/>
+                    {{ range $token := .Tokens }}
+                        {{ $token }}
+                    {{ end }}
+                </p>
+            {{ end }}
+        {{ end }}
+    {{ end }}
+</form>
+</body>
+</html>

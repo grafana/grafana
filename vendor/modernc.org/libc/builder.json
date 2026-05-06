@@ -1,0 +1,9 @@
+{
+	"autogen": "linux/(amd64|arm64|loong64|ppc64le|s390x|riscv64|386|arm)",
+	"autotag": "darwin/(amd64|arm64)|freebsd/(amd64|arm64)|linux/(386|amd64|arm|arm64|loong64|ppc64le|riscv64|s390x)|windows/(amd64|arm64|386)",
+	"autoupdate": "linux/amd64",
+	"download": [
+		{"re": "linux/(amd64|arm64|loong64|ppc64le|s390x|riscv64|386|arm)", "files": ["https://git.musl-libc.org/cgit/musl/snapshot/musl-7ada6dde6f9dc6a2836c3d92c2f762d35fd229e0.tar.gz"]}
+	],
+	"test": "darwin/(amd64|arm64)|freebsd/(amd64|arm64)|linux/(386|amd64|arm|arm64|loong64|ppc64le|riscv64|s390x)|openbsd/(386|amd64|arm64)|windows/(amd64|arm64|386)"
+}

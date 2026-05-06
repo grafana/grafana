@@ -1,0 +1,324 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package array_test
+
+import (
+	"testing"
+
+	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/apache/arrow-go/v18/arrow/array"
+	"github.com/apache/arrow-go/v18/arrow/memory"
+	"github.com/stretchr/testify/assert"
+)
+
+{{range .In}}
+func Test{{.Name}}StringRoundTrip(t *testing.T) {
+	// 1. create array
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	defer mem.AssertSize(t, 0)
+
+{{if .Opt.Parametric -}}
+{{ if or (eq .Name "Time64") -}}
+	dt := &arrow.{{.Name}}Type{Unit: arrow.Microsecond}
+{{else -}}
+	dt := &arrow.{{.Name}}Type{Unit: arrow.Second}
+{{end -}}
+	b := array.New{{.Name}}Builder(mem, dt)
+{{else -}}
+	b := array.New{{.Name}}Builder(mem)
+{{end -}}
+	defer b.Release()
+
+	b.Append(1)
+	b.Append(2)
+	b.Append(3)
+	b.AppendNull()
+	b.Append(5)
+	b.Append(6)
+	b.AppendNull()
+	b.Append(8)
+	b.Append(9)
+	b.Append(10)
+
+	arr := b.NewArray().(*array.{{.Name}})
+	defer arr.Release()
+
+	// 2. create array via AppendValueFromString
+{{if .Opt.Parametric -}}
+	b1 := array.New{{.Name}}Builder(mem, dt)
+{{else -}}
+	b1 := array.New{{.Name}}Builder(mem)
+{{end -}}
+	defer b1.Release()
+
+	for i := 0; i < arr.Len(); i++ {
+		assert.NoError(t, b1.AppendValueFromString(arr.ValueStr(i)))
+	}
+
+	arr1 := b1.NewArray().(*array.{{.Name}})
+	defer arr1.Release()
+
+{{ if or (eq .Name "Date64") -}}
+	assert.Exactly(t, arr.Len(), arr1.Len())
+	for i := 0; i < arr.Len(); i++ {
+		assert.Exactly(t, arr.IsValid(i), arr1.IsValid(i))
+		assert.Exactly(t, arr.ValueStr(i), arr1.ValueStr(i))
+		if arr.IsValid(i) {
+			assert.Exactly(t, arr.Value(i).ToTime(), arr1.Value(i).ToTime())
+		}
+	}
+{{else -}}
+	assert.True(t, array.Equal(arr, arr1))
+{{end -}}
+}
+
+func TestNew{{.Name}}Builder(t *testing.T) {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	defer mem.AssertSize(t, 0)
+
+{{if .Opt.Parametric -}}
+	dtype := &arrow.{{.Name}}Type{Unit: arrow.Second}
+	ab := array.New{{.Name}}Builder(mem, dtype)
+{{else}}
+	ab := array.New{{.Name}}Builder(mem)
+{{end -}}
+	defer ab.Release()
+
+	ab.Retain()
+	ab.Release()
+
+	ab.Append(1)
+	ab.Append(2)
+	ab.Append(3)
+	ab.AppendNull()
+	ab.Append(5)
+	ab.Append(6)
+	ab.AppendNull()
+	ab.Append(8)
+	ab.Append(9)
+	ab.Append(10)
+
+	// check state of builder before New{{.Name}}Array
+	assert.Equal(t, 10, ab.Len(), "unexpected Len()")
+	assert.Equal(t, 2, ab.NullN(), "unexpected NullN()")
+
+	a := ab.New{{.Name}}Array()
+
+	// check state of builder after New{{.Name}}Array
+	assert.Zero(t, ab.Len(), "unexpected ArrayBuilder.Len(), New{{.Name}}Array did not reset state")
+	assert.Zero(t, ab.Cap(), "unexpected ArrayBuilder.Cap(), New{{.Name}}Array did not reset state")
+	assert.Zero(t, ab.NullN(), "unexpected ArrayBuilder.NullN(), New{{.Name}}Array did not reset state")
+
+	// check state of array
+	assert.Equal(t, 2, a.NullN(), "unexpected null count")
+	assert.Equal(t, []{{or .QualifiedType .Type}}{1, 2, 3, 0, 5, 6, 0, 8, 9, 10}, a.{{.Name}}Values(), "unexpected {{.Name}}Values")
+	assert.Equal(t, []byte{0xb7}, a.NullBitmapBytes()[:1]) // 4 bytes due to minBuilderCapacity
+	assert.Len(t, a.{{.Name}}Values(), 10, "unexpected length of {{.Name}}Values")
+
+	a.Release()
+
+	ab.Append(7)
+	ab.Append(8)
+
+	a = ab.New{{.Name}}Array()
+
+	assert.Equal(t, 0, a.NullN())
+	assert.Equal(t, []{{or .QualifiedType .Type}}{7, 8}, a.{{.Name}}Values())
+	assert.Len(t, a.{{.Name}}Values(), 2)
+
+	a.Release()
+
+	var (
+		want   = []{{or .QualifiedType .Type}}{1, 2, 3, 4}
+		valids = []bool{true, true, false, true}
+	)
+
+	ab.AppendValues(want, valids)
+	a = ab.New{{.Name}}Array()
+
+	sub := array.MakeFromData(a.Data())
+	defer sub.Release()
+
+	if got, want := sub.DataType().ID(), a.DataType().ID(); got != want {
+		t.Fatalf("invalid type: got=%q, want=%q", got, want)
+	}
+
+	if _, ok := sub.(*array.{{.Name}}); !ok {
+		t.Fatalf("could not type-assert to array.{{.Name}}")
+	}
+
+	if got, want := a.String(), `[1 2 (null) 4]`; got != want {
+		t.Fatalf("got=%q, want=%q", got, want)
+	}
+
+	slice := array.NewSliceData(a.Data(), 2, 4)
+	defer slice.Release()
+
+	sub1 := array.MakeFromData(slice)
+	defer sub1.Release()
+
+	v, ok := sub1.(*array.{{.Name}})
+	if !ok {
+		t.Fatalf("could not type-assert to array.{{.Name}}")
+	}
+
+	if got, want := v.String(), `[(null) 4]`; got != want {
+		t.Fatalf("got=%q, want=%q", got, want)
+	}
+
+	a.Release()
+}
+
+func Test{{.Name}}Builder_AppendValues(t *testing.T) {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	defer mem.AssertSize(t, 0)
+
+{{if .Opt.Parametric -}}
+	dtype := &arrow.{{.Name}}Type{Unit: arrow.Second}
+	ab := array.New{{.Name}}Builder(mem, dtype)
+{{else}}
+	ab := array.New{{.Name}}Builder(mem)
+{{end -}}
+	defer ab.Release()
+
+	exp := []{{or .QualifiedType .Type}}{0, 1, 2, 3}
+	ab.AppendValues(exp, nil)
+	a := ab.New{{.Name}}Array()
+	assert.Equal(t, exp, a.{{.Name}}Values())
+
+	a.Release()
+}
+
+func Test{{.Name}}Builder_Empty(t *testing.T) {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	defer mem.AssertSize(t, 0)
+
+{{if .Opt.Parametric -}}
+	dtype := &arrow.{{.Name}}Type{Unit: arrow.Second}
+	ab := array.New{{.Name}}Builder(mem, dtype)
+{{else}}
+	ab := array.New{{.Name}}Builder(mem)
+{{end -}}
+	defer ab.Release()
+
+	exp := []{{or .QualifiedType .Type}}{0, 1, 2, 3}
+
+	ab.AppendValues([]{{or .QualifiedType .Type}}{}, nil)
+	a := ab.New{{.Name}}Array()
+	assert.Zero(t, a.Len())
+	a.Release()
+
+	ab.AppendValues(nil, nil)
+	a = ab.New{{.Name}}Array()
+	assert.Zero(t, a.Len())
+	a.Release()
+
+	ab.AppendValues([]{{or .QualifiedType .Type}}{}, nil)
+	ab.AppendValues(exp, nil)
+	a = ab.New{{.Name}}Array()
+	assert.Equal(t, exp, a.{{.Name}}Values())
+	a.Release()
+
+	ab.AppendValues(exp, nil)
+	ab.AppendValues([]{{or .QualifiedType .Type}}{}, nil)
+	a = ab.New{{.Name}}Array()
+	assert.Equal(t, exp, a.{{.Name}}Values())
+	a.Release()
+}
+
+func Test{{.Name}}Builder_Resize(t *testing.T) {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	defer mem.AssertSize(t, 0)
+
+{{if .Opt.Parametric -}}
+	dtype := &arrow.{{.Name}}Type{Unit: arrow.Second}
+	ab := array.New{{.Name}}Builder(mem, dtype)
+{{else}}
+	ab := array.New{{.Name}}Builder(mem)
+{{end -}}
+	defer ab.Release()
+
+	assert.Equal(t, 0, ab.Cap())
+	assert.Equal(t, 0, ab.Len())
+
+	ab.Reserve(63)
+	assert.Equal(t, 64, ab.Cap())
+	assert.Equal(t, 0, ab.Len())
+
+	for i := 0; i < 63; i++ {
+		ab.Append(0)
+	}
+	assert.Equal(t, 64, ab.Cap())
+	assert.Equal(t, 63, ab.Len())
+
+	ab.Resize(5)
+	assert.Equal(t, 5, ab.Len())
+
+	ab.Resize(32)
+	assert.Equal(t, 5, ab.Len())
+}
+
+func Test{{.Name}}BuilderUnmarshalJSON(t *testing.T) {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	defer mem.AssertSize(t, 0)
+
+{{if .Opt.Parametric -}}
+	dtype := &arrow.{{.Name}}Type{Unit: arrow.Second}
+	bldr := array.New{{.Name}}Builder(mem, dtype)
+{{else}}
+	bldr := array.New{{.Name}}Builder(mem)
+{{end -}}
+
+	defer bldr.Release()
+
+
+{{ if or (eq .Name "Float64") (eq .Name "Float32") -}}
+	jsonstr := `[0, 1, "+Inf", 2, 3, "NaN", "NaN", 4, 5, "-Inf"]`
+
+	err := bldr.UnmarshalJSON([]byte(jsonstr))
+	assert.NoError(t, err)
+
+	arr := bldr.New{{.Name}}Array()
+	defer arr.Release()
+
+	assert.NotNil(t, arr)
+
+	assert.False(t, math.IsInf(float64(arr.Value(0)), 0), arr.Value(0))
+	assert.True(t, math.IsInf(float64(arr.Value(2)), 1), arr.Value(2))
+	assert.True(t, math.IsNaN(float64(arr.Value(5))), arr.Value(5))
+{{else}}
+	jsonstr := `[0, 1, null, 2.3, -11]`
+
+	err := bldr.UnmarshalJSON([]byte(jsonstr))
+	assert.NoError(t, err)
+
+	arr := bldr.New{{.Name}}Array()
+	defer arr.Release()
+
+	assert.NotNil(t, arr)
+
+	assert.Equal(t, int64(0),  int64(arr.Value(0)))
+	assert.Equal(t, int64(1),  int64(arr.Value(1)))
+	assert.True(t, arr.IsNull(2))
+	assert.Equal(t, int64(2),  int64(arr.Value(3)))
+	assert.Equal(t, int64(5),  int64(arr.Len()))
+{{end -}}
+}
+
+{{end}}
+
+

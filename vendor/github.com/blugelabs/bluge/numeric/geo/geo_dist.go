@@ -1,0 +1,102 @@
+//  Copyright (c) 2020 Couchbase, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 		http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package geo
+
+import (
+	"fmt"
+	"math"
+	"strconv"
+	"strings"
+)
+
+type DistanceUnit struct {
+	conv     float64
+	suffixes []string
+}
+
+var Inch = DistanceUnit{0.0254, []string{"in", "inches"}}
+var Yard = DistanceUnit{0.9144, []string{"yd", "yards"}}
+var Feet = DistanceUnit{0.3048, []string{"ft", "feet"}}
+var Kilometer = DistanceUnit{1000, []string{"km", "kilometers"}}
+var NauticalMile = DistanceUnit{1852.0, []string{"nm", "nauticalmiles"}}
+var Millimeter = DistanceUnit{0.001, []string{"mm", "millimeters"}}
+var Centimeter = DistanceUnit{0.01, []string{"cm", "centimeters"}}
+var Mile = DistanceUnit{1609.344, []string{"mi", "mile"}}
+var Meter = DistanceUnit{1, []string{"m", "meters"}}
+
+var distanceUnits = []*DistanceUnit{
+	&Inch, &Yard, &Feet, &Kilometer, &NauticalMile, &Millimeter, &Centimeter, &Mile, &Meter,
+}
+
+// ParseDistance attempts to parse a distance string and return distance in
+// meters.  Example formats supported:
+// "5in" "5inches" "7yd" "7yards" "9ft" "9feet" "11km" "11kilometers"
+// "3nm" "3nauticalmiles" "13mm" "13millimeters" "15cm" "15centimeters"
+// "17mi" "17miles" "19m" "19meters"
+// If the unit cannot be determined, the entire string is parsed and the
+// unit of meters is assumed.
+// If the number portion cannot be parsed, 0 and the parse error are returned.
+func ParseDistance(d string) (float64, error) {
+	for _, unit := range distanceUnits {
+		for _, unitSuffix := range unit.suffixes {
+			if strings.HasSuffix(d, unitSuffix) {
+				parsedNum, err := strconv.ParseFloat(d[0:len(d)-len(unitSuffix)], 64)
+				if err != nil {
+					return 0, err
+				}
+				return parsedNum * unit.conv, nil
+			}
+		}
+	}
+	// no unit matched, try assuming Meter?
+	parsedNum, err := strconv.ParseFloat(d, 64)
+	if err != nil {
+		return 0, err
+	}
+	return parsedNum, nil
+}
+
+func Convert(value float64, source, dest DistanceUnit) float64 {
+	return value * source.conv / dest.conv
+}
+
+// ParseDistanceUnit attempts to parse a distance unit and return the
+// multiplier for converting this to meters.  If the unit cannot be parsed
+// then 0 and the error message is returned.
+func ParseDistanceUnit(u string) (float64, error) {
+	for _, unit := range distanceUnits {
+		for _, unitSuffix := range unit.suffixes {
+			if u == unitSuffix {
+				return unit.conv, nil
+			}
+		}
+	}
+	return 0, fmt.Errorf("unknown distance unit: %s", u)
+}
+
+// Haversin computes the distance between two points.
+// This implemenation uses the sloppy math implemenations which trade off
+// accuracy for performance.  The distance returned is in kilometers.
+func Haversin(lon1, lat1, lon2, lat2 float64) float64 {
+	x1 := lat1 * degreesToRadian
+	x2 := lat2 * degreesToRadian
+	h1 := 1 - cos(x1-x2)
+	h2 := 1 - cos((lon1-lon2)*degreesToRadian)
+	h := (h1 + cos(x1)*cos(x2)*h2) / 2
+	avgLat := (x1 + x2) / 2
+	diameter := earthDiameter(avgLat)
+
+	return diameter * asin(math.Min(1, math.Sqrt(h)))
+}

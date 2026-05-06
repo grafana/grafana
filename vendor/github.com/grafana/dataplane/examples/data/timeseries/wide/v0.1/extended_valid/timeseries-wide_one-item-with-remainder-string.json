@@ -1,0 +1,52 @@
+[
+  {
+    "schema": {
+      "meta": {
+        "type": "timeseries-wide",
+        "typeVersion": [0, 1],
+        "custom": {
+          "exampleInfo": {
+            "summary": "TimeseriesWide with 1 item and a remainder string field. There is 1 item name (slothCount) and 1 dimension (city).",
+            "itemCount": 1,
+            "collectionVersion": 1,
+            "valid": true,
+            "noData": false
+          }
+        }
+      },
+      "fields": [
+        {
+          "name": "t",
+          "type": "time",
+          "typeInfo": {
+            "frame": "time.Time"
+          }
+        },
+        {
+          "type": "number",
+          "name": "slothCount",
+          "typeInfo": {
+            "frame": "float64"
+          },
+          "labels": {
+            "city": "LGA"
+          }
+        },
+        {
+          "type": "string",
+          "name": "remainder string field",
+          "typeInfo": {
+            "frame": "string"
+          }
+        }
+      ]
+    },
+    "data": {
+      "values": [
+        [1664901845976, 1664902845976],
+        [3, 5],
+        ["remainder", "data"]
+      ]
+    }
+  }
+]

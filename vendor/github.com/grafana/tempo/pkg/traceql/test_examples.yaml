@@ -1,0 +1,360 @@
+# valid queries parse successfully and return nil when calling .validate()
+valid:
+  # spanset filters
+  - '{ true }'
+  - '{ !true }'
+  - '{ true && false }'
+  - '{ true || false }'
+  - '{ 1 = 2 }'
+  - '{ 1 != 2 }'
+  - '{ 1 > 2 }'
+  - '{ 1 >= 2 }'
+  - '{ 1 < 2 }'
+  - '{ 1 <= 2 }'
+  - '{ -1 = 2 }'
+  - '{ "test" =~ "test" }'
+  - '{ "test" !~ "test" }'
+  - '{ "test" = "test" }'
+  - '{ "test" != "test" }'
+  - '{ .a }'
+  - '{ !.a }'
+  - '{ .a && false }'
+  - '{ .a || true }'
+  - '{ .a = 2 }'
+  - '{ .a != 2 }'
+  - '{ .a > 2 }'
+  - '{ .a >= 2 }'
+  - '{ .a < 2 }'
+  - '{ .a <= 2 }'
+  - '{ -.a = 2 }'
+  - '{ .a =~ "test" }'
+  - '{ .a !~ "test" }'
+  - '{ .a = "test" }'
+  - '{ .a != "test" }'
+  - '{ resource.a != 3 }'
+  - '{ span.a != 3 }'
+  - '{ !("test" != .c || ((true && .b) || 3 < .a)) }'
+  - '{ status = ok }'
+  - '{ status = unset }'
+  - '{ status = error }'
+  - '{ status != error }'
+  - '{ statusMessage = "status message" }'
+  - '{ statusMessage = "" }'
+  - '{ statusMessage =~ ".*" }'
+  - '{ statusMessage != "" }'
+  - '{ kind = internal }'
+  - '{ kind = client }'
+  - '{ kind = consumer }'
+  - '{ traceDuration > 1s }'
+  - '{ rootServiceName = "foo" }'
+  - '{ rootName != "foo" }'
+  - '{ duration > 1s }'
+  - '{ 1 < 1h }'
+  - '{ 1 <= 1.1 }'
+  - '{ event.foo = "bar" }'
+  - '{ link.foo = "bar" }'
+  - '{ instrumentation.foo = "bar" }'
+  - '{ span.foo != 3.0 }'
+  # scoped intrinsics
+  - '{ trace:duration > 2s }'
+  - '{ trace:rootName = "a" }'
+  - '{ trace:rootService = "a" }'
+  - '{ trace:id = "aasdf4ergf" }'
+  - '{ span:duration > 2s }'
+  - '{ span:status = error }'
+  - '{ span:kind = client }'
+  - '{ span:statusMessage = "status message" }'
+  - '{ span:id = "61626364656667" }'
+  - '{ span:parentID = "84737586494" }'
+  - '{ event:name = "exception" }'
+  - '{ event:timeSinceStart > 1s }'
+  - '{ link:traceID = "f1f1f1f1f1f1ff1f1f1f1f1f1f1f1f1" }'
+  - '{ link:spanID = "f1f1f1f1f1f1f1f1" }'
+  - '{ instrumentation:name = "grpc" }'
+  - '{ instrumentation:version = "v3.34" }'
+  # binary operations
+  - '{ 1 + 1 = 2 }'
+  - '{ 1 - 1 = 2 }'
+  - '{ 1 * 1 = 2 }'
+  - '{ 1 / 1 = 2 }'
+  - '{ 1 ^ 1 = 2 }'
+  - '{ .a + 1 = 2 }'
+  - '{ .a - 1 = 2 }'
+  - '{ .a * 1 = 2 }'
+  - '{ .a / 1 = 2 }'
+  - '{ .a ^ 1 = 2 }'
+  - '{ duration > 1s * 2s }' 
+  - '{ 1 * 1h = 1 }'     # combining float, int and duration can make sense, but can also be weird. we just accept it all
+  - '{ 1 / 1.1 = 1 }'
+  - '{ .http.status >= "200" }'
+  # spanset expressions
+  - '{ true } && { true }'
+  - '{ true } || { true }'
+  - '{ true } >> { true }'
+  - '{ true } << { true }'
+  - '{ true } > { true }'
+  - '{ true } < { true }'
+  - '{ true } ~ { true }'
+  - '{ true } !> { true }'
+  - '{ true } !< { true }'
+  - '{ true } !~ { true }'
+  - '{ true } !>> { true }'
+  - '{ true } !<< { true }'
+  - '{ true } &> { true }'
+  - '{ true } &< { true }'
+  - '{ true } &~ { true }'
+  - '{ true } &>> { true }'
+  - '{ true } &<< { true }'
+  - '({ true } | count() > 1 | { false }) >> ({ true } | count() > 1 | { false })'
+  - '({ true } | count() > 1 | { false }) > ({ true } | count() > 1 | { false })'
+  - '({ true } | count() > 1 | { false }) ~ ({ true } | count() > 1 | { false })'
+  # scalar filters
+  - 'avg(.field) > 1'
+  - 'max(duration) >= 1s'
+  - 'max(duration) > 1'            # same note as above for int, float and duration
+  - '{ true } | max(duration) = 1h'
+  - '{ true } | min(duration) = 1h'
+  - '{ true } | sum(duration) = 1h'
+  - '{ true } | max(.a) = 1'
+  - '{ true } | max(span.a) = 1'
+  - '{ true } | max(resource.a) = 1'
+  - '{ true } | max(1 + .a) = 1'
+  - '{ true } | max((1 + .a) * 2) = 1'
+  - 'max(duration) > 3s | { status = error || .http.status = 500 }'
+  # select
+  - 'select(.a)'
+  - '{} | select(.a,.b,.c)'
+  # pipelines
+  - '{ true } | { .a }'
+  - '{ true } | count() = 1'
+  - '{ true } | avg(duration) = 1h'
+  - 'count() = 1 | { true }'
+  - '{ true } | count() = 1 | { true }'
+  # pipeline expressions
+  - '({ true } | count() > 1 | { false }) && ({ true } | count() > 1 | { false })'
+  - '({ true } | count() > 1 | { false }) || ({ true } | count() > 1 | { false })'
+  # coalesce - will be valid when supported
+  - '{ true } | coalesce()'
+  - '{ true } | by(1 + .a) | coalesce()'
+  # by - will be valid when supported
+  - '{ true } | by(.a)'
+  - '{ true } | by(1 + .a)'
+  - 'by(.a) | { true }'
+  - '{ true } | by(name) | count() > 2'
+  - '{ true } | by(.field) | avg(.b) = 2'
+  - '{ true } | by(3 * .field - 2) | max(duration) < 1s'
+  # metrics
+  - '{} | rate()'
+  - '{} | count_over_time() by (name) with(sample=0.1)'
+  - '{} | min_over_time(duration) by (span.http.path)'
+  - '{} | max_over_time(duration) by (span.http.path)'
+  - '{} | avg_over_time(duration) by (span.http.path)'
+  - '{} | sum_over_time(duration) by (span.http.path)'
+  - '{} | quantile_over_time(duration, 0, 0.9, 1) by (span.http.path)'
+  # second stage on metrics
+  - '{} | rate() | topk(10)'
+  - '{} | rate() by (span.client_ip) | topk(10)'
+  - '{} | count_over_time() by (name) | topk(10) with(sample=0.1)'
+  - '{} | quantile_over_time(duration, 0, 0.9, 1) by (span.http.path) | topk(10)'
+  - '{} | avg_over_time(duration) by (span:name) | topk(10)'
+  - '{} | rate() by (span.client_ip) | bottomk(10)'
+  - '{} | rate() | bottomk(10)'
+  - '{} | count_over_time() by (name) | bottomk(10) with(sample=0.1)'
+  - '{} | quantile_over_time(duration, 0, 0.9, 1) by (span.http.path) | bottomk(10)'
+  - '{} | avg_over_time(duration) by (span:name) | bottomk(10)'
+  # undocumented - nested set
+  - '{ nestedSetLeft > 3 }'
+  - '{ } >> { kind = server } | select(nestedSetLeft, nestedSetRight, nestedSetParent)'
+  # nil comparisons
+  - '{ nil != nil }'
+  - '{ nil = nil }'
+  - '{ .foo != nil }'
+
+# parse_fails throw an error when parsing
+parse_fails:
+  - 'true'
+  - '[ true ]'
+  - '( true )'
+  # spanset filters
+  - '{ . }'
+  - '{ < }'
+  - '{ .a < }'
+  - '{ .a < 3'
+  - '{ (.a < 3 }'
+  - '{ attribute = 4 }'           # custom attribute not prefixed with ., span., resource. or parent.
+  - '{ .attribute == 4 }'         # invalid operator
+  - '{ span. }'
+  # spanset expressions
+  - '{ true } + { true }'
+  - '{ true } - { true }'
+  - '{ true } * { true }'
+  - '{ true } / { true }'
+  - '{ true } ^ { true }'
+  - '{ true } = { true }'         # an interesting operator. possible future addition
+  - '{ true } <= { true }'
+  - '{ true } >= { true }'
+  # scalar expressions must evaluate to a number
+  - 'max(name) = "foo"'
+  - 'avg("foo") = "bar"'
+  - 'max(status) = ok'
+  - 'max(kind) = consumer'
+  - 'max(duration) < ok'
+  - 'min(1) = "foo"'
+  - 'min(parent) = nil'
+  - 'avg(childCount) > "foo"'
+  # scalar filters
+  - 'avg(.field) + 1'             # scalar filters must resolve to boolean
+  - 'sum(3) - 2'
+  - 'min(childCount) && 2'
+  # select
+  - 'select(.a'
+  - 'select()'
+  - 'select(1 + "string")'        # Don't support arbitrary field expressions  
+  # pipelines
+  - 'coalesce() | { true }'       # pipelines can't start with coalesce
+  - 'count() > 3 && { true }'     # scalar filters have to be in pipeline
+  - '{ true } | count()'          # naked scalar pipelines not allowed
+  - '{ true } | notAnAggregate() = 1'
+  - '{ true } | count = 1'
+  - '{ true } | max() = 1'
+  - '{ true } | by()'
+  # pipeline expressions
+  - '({ true }) + (count()) = 1'
+  - '({ true }) && (count())'
+  - '({ true } | count()) && ({ true } | count()) = 1'
+  - '({ true }) + ({ true }) = 1'
+  - '({ true } | count()) + ({ true } | count())'
+  # todo: improve the following
+  - '(by(namespace) | count()) > 2 * 2' # scalar expressions are currently not allowed in scalar pipelines
+  - '(by(namespace) | count()) * 2 > 2'
+  - '2 < (by(namespace) | count())'     # static value needs to be on the RHS to remove conflicts with scalar expressions
+  # mismatched scoped intrinsics
+  - '{ trace:status = error }'
+  - '{ trace:kind = server }'
+  - '{ trace:name = "a" }'
+  - '{ trace:rootServiceName = "a" }' # should be trace:rootService only 
+  - '{ span:rootName = "bar" }'
+  # invalid metrics second stage functions
+  - '{} | topk(10)'
+  - '{} | topk(10) with(sample=0.1)'
+  - '{} | bottomk(10)'
+  - '{} | bottomk(10) with(sample=0.1)'
+  - '{} | rate() | topk(-1)'
+  - '{} | rate() | bottomk(-1)'
+  - '{ parent = nil }'
+  - '{ -parent = nil }'
+  - '{ !parent = nil }'
+    # nil - will be valid when supported
+  - '{ .foo = nil }'
+
+# validate_fails parse correctly and return an error **besides unsupported** when calling .validate()
+validate_fails:
+  # span expressions must evaluate to a boolean
+  - '{ status }'
+  - '{ kind }'
+  - '{ ok }'
+  - '{ 1.1 }'
+  - '{ 1h }'
+  - '{ "foo" }'
+  - '{ 1 + 1 }'       
+  # binary operators - incorrect types
+  - '{ 1 + "foo" = 1 }'
+  - '{ 1 - true = 1 }'
+  - '{ 1 / ok = 1 }'
+  - '{ 1 ^ name = 1 }'
+  - '{ 1 = "foo" }'
+  - '{ 1 != true }'
+  - '{ 1 > ok }'
+  - '{ 1 = name }'
+  - '{ 1 =~ 2}'
+  - '{ 1 !~ 2}'
+  - '{ 1 && "foo" }'
+  - '{ 1 || ok }'
+  - '{ true || 1.1 }'
+  - '{ status > ok }'
+  - '{ kind < consumer }'
+  - '{ traceDuration > "test" }'
+  - '{ rootServiceName = 1 }'
+  - '{ rootName != 3.2 }'
+  # invalid regexes
+  - '{ span.foo =~ "[" }'
+  - '{ span.foo !~ "[" }'
+  # unary operators - incorrect types
+  - '{ -true }'
+  - '{ -"foo" = "bar" }'
+  - '{ -ok = status }'
+  - '{ -name = "foo" }'
+  - '{ !"foo" = "bar" }'
+  - '{ !ok = status }'
+  - '{ !consumer = kind }'
+  - '{ !name = "foo" }'
+  - '{ !1 = 1 }'
+  - '{ !1h = 1 }'
+  - '{ !1.1 = 1.1 }'
+  # scalar expressions must evaluate to a number
+  - 'min(1 = 3) = 1'
+  # scalar expressions must reference the span
+  - 'sum(3) = 2'
+  - 'sum(3) = min(14)'
+  - 'min(2h) < max(duration)'
+  - 'min(3) = max(duration)'
+  - 'min(1) = max(2) + 3'
+  - 'min(1.1 - 3) > 1'
+  - 'max(1h + 2h) > 1'
+  # by - will *not* be valid when supported - group expressions must reference the span
+  - '{ true } | by(1)'
+  - '{ true } | by("foo")'
+  # nested set params are ints
+  - '{ nestedSetLeft = "foo" }'
+  - '{ nestedSetRight = false }'
+  - '{ nestedSetParent > "foo" }'
+  # invalid metrics second stage functions
+  - '{} | rate() | topk(0)'
+  - '{} | rate() | topk(0) with(sample=0.1)'
+  - '{} | rate() | bottomk(0)'
+  - '{} | rate() | bottomk(0) with(sample=0.1)'
+  # compare function with second stage functions is not valid
+  - '{} | compare({status=error}) | topk(10)'
+  - '{} | compare({status=error}) | bottomk(10)'
+
+# unsupported parse correctly and return an unsupported error when calling .validate()
+unsupported:
+  # complex scalar filters - will be valid when supported
+  - 'min(.field) < max(duration)'
+  - 'sum(.field) = min(.field)'
+  - 'min(.field) + max(.field) > 1'
+  - 'min(.field) + max(childCount) > max(duration) - min(.field)'
+  - 'min(childCount) < 2 / 6'
+  - 'max(1 - (2 + .field)) < avg(3 * duration ^ 2)'
+  # aggregates - will be valid when supported
+  - 'min(childCount) < 2'
+  - '{ true } | max(parent.a) = 1'
+  - '{ .http.status = 200 } | max(.field) - min(.field) > 3'
+  # parent - will be valid when supported
+  - '{ parent.a != 3 }'
+  - '{ parent.resource.a && true }'
+  - '{ parent.span.a > 3 }'
+  - '{ parent.duration = 1h }'
+  - '{ (-(3 / 2) * .test - parent.blerg + .other)^3 = 2 }'
+  # parent - will not be valid when supported
+  - '{ parent }'
+  - '{ 1 % parent = 1 }'
+  - '{ 1 >= parent }'
+  # childCount - will be valid when supported
+  - '{ 1 = childCount }'
+  # childCount - will be invalid when supported
+  - '{ "foo" = childCount }'
+  # spanset pipelines + scalar filters - will be valid when supported
+  - '{ true } | count() + count() = 1' 
+  - '({ true } | count()) + ({ true } | count()) = 1'
+  - '({ true } | count()) - ({ true } | count()) <= 1'
+  - '({ true } | count()) / ({ true } | count()) > ({ true } | count()) / ({ true } | count())'
+  - '({ true } | count()) * ({ true } | count()) < ({ true } | count()) / ({ true } | count())'
+  - '({ .http.status = 200 } | count()) + ({ name = `foo` } | avg(duration)) = 2'
+  - '({ .a } | count()) > ({ .b } | count())'
+  # other scalar filters. no idea if these should be supported
+  - '3 = 2'                       # naked scalar filter, technically allowed
+  - 'avg(.field) > 1 - 3'         # scalar expressions in scalar filters are currently not allowed. possible future addition
+
+# parsed and the ast is dumped to stdout. this is a debugging tool
+dump:

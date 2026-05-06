@@ -1,0 +1,16 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MIT
+
+language: go
+
+go:
+  - "1.x"
+
+env:
+  - GO111MODULE=on
+
+install:
+  - go get ./...
+
+script:
+  - go test ./...

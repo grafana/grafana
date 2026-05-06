@@ -1,0 +1,16 @@
+{
+  "auth": "0.16.1",
+  "auth/oauth2adapt": "0.2.8",
+  "bigquery": "1.68.0",
+  "bigtable": "1.37.0",
+  "datastore": "1.20.0",
+  "errorreporting": "0.3.2",
+  "firestore": "1.18.0",
+  "logging": "1.13.0",
+  "profiler": "0.4.2",
+  "pubsub": "1.49.0",
+  "pubsublite": "1.8.2",
+  "spanner": "1.81.0",
+  "storage": "1.54.0",
+  "vertexai": "0.13.3"
+}

@@ -1,0 +1,18 @@
+// Package tool defines stateful operation types for cue commands.
+//
+// This package is only visible in cue files with a _tool.cue or _tool_test.cue
+// ending.
+//
+// CUE configuration files are not influenced by and do not influence anything
+// outside the configuration itself: they are hermetic. Tools solve
+// two problems: allow outside values such as environment variables,
+// file or web contents, random generators etc. to influence configuration,
+// and allow configuration to be actionable from within the tooling itself.
+// Separating these concerns makes it clear to user when outside influences are
+// in play and the tool definition can be strict about what is allowed.
+//
+// Tools are defined in files ending with _tool.cue. These files have a
+// top-level map, "command", which defines all the tools made available through
+// the cue command.
+//
+// The following definitions are for defining commands in tool files:

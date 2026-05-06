@@ -1,0 +1,15 @@
+syntax = "proto2";
+package influxql;
+option go_package = "github.com/influxdata/influxql";
+
+message Measurements {
+    repeated Measurement Items = 1;
+}
+
+message Measurement {
+    optional string Database        = 1;
+    optional string RetentionPolicy = 2;
+    optional string Name            = 3;
+    optional string Regex           = 4;
+    optional bool   IsTarget        = 5;
+}

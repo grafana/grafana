@@ -1,0 +1,85 @@
+{{- /*gotype: github.com/grafana/dskit/ring.partitionRingPageData */ -}}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Partitions Ring Status</title>
+</head>
+<body>
+    <h1>Partitions Ring Status</h1>
+
+    <table width="100%" border="1">
+        <thead>
+            <tr>
+                <th>Partition ID</th>
+                <th>State</th>
+                <th>State updated at</th>
+                <th>Owners</th>
+                <th>Tokens</th>
+                <th>Ownership</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{ $stateChanges := .PartitionStateChanges }}
+        {{ range $partition := .Partitions }}
+            <tr {{ if .Corrupted }}bgcolor="#FFDEDE"{{ else if mod $partition.ID 2 }}bgcolor="#BEBEBE"{{ end }}>
+                <td>{{ .ID }}</td>
+                <td>
+                    {{ if .Corrupted }}
+                        Corrupt
+                    {{ else }}
+                        {{ .State.CleanName }}
+                    {{ end }}
+                </td>
+                <td>
+                    {{ if not .StateTimestamp.IsZero }}
+                        {{ .StateTimestamp | formatTimestamp }}
+                    {{ else }}
+                        N/A
+                    {{ end }}
+                </td>
+                <td>
+                    {{ range $ownerID := $partition.OwnerIDs }}
+                        {{$ownerID}} <br />
+                    {{ end }}
+                </td>
+                <td>{{ .NumTokens }}</td>
+                <td>{{ .Ownership | humanFloat }}%</td>
+                <td>
+                    <!-- Allow to force a state change -->
+                    {{ if and (not .Corrupted) (ne (index $stateChanges .State) 0) }}
+                        {{ $toState := index $stateChanges .State }}
+                        <form action="" method="POST" onsubmit="return confirm('Do you confirm you want to change the state to {{ $toState.CleanName }}?');">
+                            <input type="hidden" name="csrf_token" value="$__CSRF_TOKEN_PLACEHOLDER__">
+                            <input type="hidden" name="partition_id" value="{{ .ID }}">
+                            <input type="hidden" name="partition_state" value="{{ $toState.String }}">
+
+                            <button name="action" value="change_state" type="submit">Change state to {{ $toState.CleanName }}</button>
+                        </form>
+                    {{ end }}
+                </td>
+            </tr>
+        {{ end }}
+        </tbody>
+    </table>
+    <br>
+    {{ if .ShowTokens }}
+        <input type="button" value="Hide Tokens" onclick="window.location.href = '?tokens=false'"/>
+    {{ else }}
+        <input type="button" value="Show Tokens" onclick="window.location.href = '?tokens=true'"/>
+    {{ end }}
+
+    {{ if .ShowTokens }}
+        {{ range $i, $partition := .Partitions }}
+            <h2>Partition: {{ .ID }}</h2>
+            <p>
+                Tokens:<br/>
+                {{ range $token := .Tokens }}
+                    {{ $token }}
+                {{ end }}
+            </p>
+        {{ end }}
+    {{ end }}
+</body>
+</html>

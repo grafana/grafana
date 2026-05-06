@@ -1,0 +1,22 @@
+.idea
+.vscode
+.DS_Store
+*.swp
+*.test
+
+# Files output by tests
+/bin
+
+# Coverage files
+coverage.out
+coverage.html
+
+# Local testing
+.envrc
+*.FAIL
+
+dist/
+release_notes.txt
+
+go.work
+go.work.sum

@@ -1,0 +1,111 @@
+// Install protoc compiler https://github.com/google/protobuf/releases 
+// Install gogofaster program:
+// go get -u github.com/gogo/protobuf/protoc-gen-gogofaster
+// protoc --proto_path=../../vendor:. --gogofaster_out=. control.proto
+// Note that we use vendored gogoprotobuf path in example above.
+syntax = "proto3";
+
+package controlpb;
+
+option go_package = "./;controlpb";
+
+message Command {
+    string uid = 1;
+    // 2,3 removed.
+    Node node = 4;
+    Unsubscribe unsubscribe = 5;
+    Disconnect disconnect = 6;
+    Shutdown shutdown = 7;
+    SurveyRequest survey_request = 8;
+    SurveyResponse survey_response = 9;
+    Subscribe subscribe = 10;
+    Notification notification = 11;
+    Refresh refresh = 12;
+}
+
+message Shutdown {}
+
+message Node {
+    string uid = 1;
+    string name = 2;
+    string version = 3;
+    uint32 num_clients = 4;
+    uint32 num_users = 5;
+    uint32 num_channels = 6;
+    uint32 uptime = 7;
+    Metrics metrics = 8;
+    bytes data = 9;
+    uint32 num_subs = 10;
+}
+
+message Metrics {
+    double interval = 1;
+    map<string, double> items = 2;
+}
+
+message Subscribe {
+    string user = 1;
+    string channel = 2;
+    bool emit_presence = 3;
+    bool emit_join_leave = 4;
+    int64 expire_at = 5;
+    bool position = 6;
+    bool recover = 7;
+    bytes channel_info = 8;
+    string client = 9;
+    bytes data = 10;
+    StreamPosition recover_since = 11;
+    string session = 12;
+    bool push_join_leave = 13;
+    uint32 source = 14;
+}
+
+message StreamPosition {
+    uint64 offset = 1;
+    string epoch = 2;
+}
+
+message Unsubscribe {
+    string channel = 1;
+    string user = 2;
+    string client = 3;
+    string session = 4;
+    uint32 code = 5;
+    string reason = 6;
+}
+
+message Disconnect {
+    string user = 1;
+    repeated string whitelist = 2;
+    uint32 code = 3;
+    string reason = 4;
+    bool reconnect = 5;
+    string client = 6;
+    string session = 7;
+}
+
+message SurveyRequest {
+    uint64 id = 1;
+    string op = 2;
+    bytes data = 3;
+}
+
+message SurveyResponse {
+    uint64 id = 1;
+    uint32 code = 2;
+    bytes data = 3;
+}
+
+message Notification {
+    string op = 1;
+    bytes data = 2;
+}
+
+message Refresh {
+    string user = 1;
+    string client = 2;
+    bool expired = 3;
+    int64 expire_at = 4;
+    bytes info = 5;
+    string session = 6;
+}

@@ -1,0 +1,70 @@
+linters:
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - containedctx
+    - contextcheck
+    # - cyclop
+    # - deadcode
+    - decorder
+    - depguard
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    # - errorlint
+    - execinquery
+    # - exhaustive
+    # - exhaustivestruct
+    # - exhaustruct
+    - exportloopref
+    # - forbidigo
+    # - forcetypeassert
+    # - funlen
+    - gci
+    # - gochecknoglobals
+    - gochecknoinits
+    # - gocognit
+    - goconst
+    # - gocritic
+    # - gocyclo
+    - godot
+    # - godox
+    # - goerr113
+    - gofmt
+    - gofumpt
+
+
+    - prealloc
+    # - predeclared
+    - promlinter
+    - reassign
+    # - revive
+    - rowserrcheck
+    # - scopelint
+    - sqlclosecheck
+    - staticcheck
+    # - structcheck
+    - stylecheck
+    - tagliatelle
+    - tenv
+    - testableexamples
+    # - testpackage
+    - thelper
+    - tparallel
+    - typecheck
+    - unconvert
+    # - unparam
+    - unused
+    - usestdlibvars
+    # - varcheck
+    # - varnamelen
+    - wastedassign
+    - whitespace
+    # - wrapcheck
+    # - wsl

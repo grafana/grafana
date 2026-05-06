@@ -1,0 +1,358 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package hashing
+
+import (
+  "github.com/apache/arrow-go/v18/arrow/bitutil"
+  "github.com/apache/arrow-go/v18/internal/utils"
+)
+
+{{range .In}}
+type payload{{.Name}} struct {
+	val     {{.name}}
+	memoIdx int32
+}
+
+type entry{{.Name}} struct {
+	h       uint64
+	payload payload{{.Name}}
+}
+
+func (e entry{{.Name}}) Valid() bool { return e.h != sentinel }
+
+// {{.Name}}HashTable is a hashtable specifically for {{.name}} that
+// is utilized with the MemoTable to generalize interactions for easier
+// implementation of dictionaries without losing performance.
+type {{.Name}}HashTable struct {
+	cap     uint64
+	capMask uint64
+	size    uint64
+
+	entries []entry{{.Name}}
+}
+
+// New{{.Name}}HashTable returns a new hash table for {{.name}} values
+// initialized with the passed in capacity or 32 whichever is larger.
+func New{{.Name}}HashTable(cap uint64) *{{.Name}}HashTable {
+	initCap := uint64(bitutil.NextPowerOf2(int(max(cap, 32))))
+	ret := &{{.Name}}HashTable{cap: initCap, capMask: initCap - 1, size: 0}
+	ret.entries = make([]entry{{.Name}}, initCap)
+	return ret
+}
+
+// Reset drops all of the values in this hash table and re-initializes it
+// with the specified initial capacity as if by calling New, but without having
+// to reallocate the object.
+func (h *{{.Name}}HashTable) Reset(cap uint64) {
+	h.cap = uint64(bitutil.NextPowerOf2(int(max(cap, 32))))
+	h.capMask = h.cap - 1
+	h.size = 0
+	h.entries = make([]entry{{.Name}}, h.cap)
+}
+
+// CopyValues is used for copying the values out of the hash table into the
+// passed in slice, in the order that they were first inserted
+func (h *{{.Name}}HashTable) CopyValues(out []{{.name}}) {
+  h.CopyValuesSubset(0, out)
+}
+
+// CopyValuesSubset copies a subset of the values in the hashtable out, starting
+// with the value at start, in the order that they were inserted.
+func (h *{{.Name}}HashTable) CopyValuesSubset(start int, out []{{.name}}) {
+  h.VisitEntries(func(e *entry{{.Name}}) {
+    idx := e.payload.memoIdx - int32(start)
+    if idx >= 0 {
+      out[idx] = e.payload.val
+    }
+  })
+}
+
+func (h *{{.Name}}HashTable) WriteOut(out []byte) {
+  h.WriteOutSubset(0, out)
+}
+
+func (h *{{.Name}}HashTable) WriteOutSubset(start int, out []byte) {
+  data := arrow.{{.Name}}Traits.CastFromBytes(out)
+  h.VisitEntries(func(e *entry{{.Name}}) {
+    idx := e.payload.memoIdx - int32(start)
+    if idx >= 0 {
+{{if and (ne .Name "Int8") (ne .Name "Uint8") -}}    
+      data[idx] = utils.ToLE{{.Name}}(e.payload.val)
+{{else -}}
+      data[idx] = e.payload.val
+{{end -}}
+    }
+  })
+}
+
+func (h *{{.Name}}HashTable) needUpsize() bool { return h.size*uint64(loadFactor) >= h.cap }
+
+func ({{.Name}}HashTable) fixHash(v uint64) uint64 {
+	if v == sentinel {
+		return 42
+	}
+	return v
+}
+
+// Lookup retrieves the entry for a given hash value assuming it's payload value returns
+// true when passed to the cmp func. Returns a pointer to the entry for the given hash value,
+// and a boolean as to whether it was found. It is not safe to use the pointer if the bool is false.
+func (h *{{.Name}}HashTable) Lookup(v uint64, cmp func({{.name}}) bool) (*entry{{.Name}}, bool) {
+	idx, ok := h.lookup(v, h.capMask, cmp)
+	return &h.entries[idx], ok
+}
+
+func (h *{{.Name}}HashTable) lookup(v uint64, szMask uint64, cmp func({{.name}}) bool) (uint64, bool) {
+	const perturbShift uint8 = 5
+
+	var (
+		idx     uint64
+		perturb uint64
+		e       *entry{{.Name}}
+	)
+
+	v = h.fixHash(v)
+	idx = v & szMask
+	perturb = (v >> uint64(perturbShift)) + 1
+
+	for {
+		e = &h.entries[idx]
+		if e.h == v && cmp(e.payload.val) {
+			return idx, true
+		}
+
+		if e.h == sentinel {
+			return idx, false
+		}
+
+		// perturbation logic inspired from CPython's set/dict object
+		// the goal is that all 64 bits of unmasked hash value eventually
+		// participate int he probing sequence, to minimize clustering
+		idx = (idx + perturb) & szMask
+		perturb = (perturb >> uint64(perturbShift)) + 1
+	}
+}
+
+func (h *{{.Name}}HashTable) upsize(newcap uint64) error {
+	newMask := newcap - 1
+
+	oldEntries := h.entries
+	h.entries = make([]entry{{.Name}}, newcap)
+	for _, e := range oldEntries {
+		if e.Valid() {
+			idx, _ := h.lookup(e.h, newMask, func({{.name}}) bool { return false })
+			h.entries[idx] = e
+		}
+	}
+	h.cap = newcap
+	h.capMask = newMask
+	return nil
+}
+
+// Insert updates the given entry with the provided hash value, payload value and memo index.
+// The entry pointer must have been retrieved via lookup in order to actually insert properly.
+func (h *{{.Name}}HashTable) Insert(e *entry{{.Name}}, v uint64, val {{.name}}, memoIdx int32) error {
+	e.h = h.fixHash(v)
+	e.payload.val = val
+	e.payload.memoIdx = memoIdx
+	h.size++
+
+	if h.needUpsize() {
+		h.upsize(h.cap * uint64(loadFactor) * 2)
+	}
+	return nil
+}
+
+// VisitEntries will call the passed in function on each *valid* entry in the hash table,
+// a valid entry being one which has had a value inserted into it.
+func (h *{{.Name}}HashTable) VisitEntries(visit func(*entry{{.Name}})) {
+	for _, e := range h.entries {
+		if e.Valid() {
+			visit(&e)
+		}
+	}
+}
+
+// {{.Name}}MemoTable is a wrapper over the appropriate hashtable to provide an interface
+// conforming to the MemoTable interface defined in the encoding package for general interactions
+// regarding dictionaries.
+type {{.Name}}MemoTable struct {
+  tbl *{{.Name}}HashTable
+  nullIdx int32
+}
+
+// New{{.Name}}MemoTable returns a new memotable with num entries pre-allocated to reduce further
+// allocations when inserting.
+func New{{.Name}}MemoTable(num int64) *{{.Name}}MemoTable {
+  return &{{.Name}}MemoTable{tbl: New{{.Name}}HashTable(uint64(num)), nullIdx: KeyNotFound}
+}
+
+func ({{.Name}}MemoTable) TypeTraits() TypeTraits {
+  return arrow.{{.Name}}Traits
+}
+
+// Reset allows this table to be re-used by dumping all the data currently in the table.
+func (s *{{.Name}}MemoTable) Reset() {
+  s.tbl.Reset(32)
+  s.nullIdx = KeyNotFound
+}
+
+// Size returns the current number of inserted elements into the table including if a null
+// has been inserted.
+func (s *{{.Name}}MemoTable) Size() int {
+  sz := int(s.tbl.size)
+  if _, ok := s.GetNull(); ok {
+    sz++
+  }
+  return sz
+}
+
+// GetNull returns the index of an inserted null or KeyNotFound along with a bool
+// that will be true if found and false if not.
+func (s *{{.Name}}MemoTable) GetNull() (int, bool) {
+  return int(s.nullIdx), s.nullIdx != KeyNotFound
+}
+
+// GetOrInsertNull will return the index of the null entry or insert a null entry
+// if one currently doesn't exist. The found value will be true if there was already
+// a null in the table, and false if it inserted one.
+func (s *{{.Name}}MemoTable) GetOrInsertNull() (idx int, found bool) {
+  idx, found = s.GetNull()
+  if !found {
+    idx = s.Size()
+    s.nullIdx = int32(idx)
+  }
+  return
+}
+
+// CopyValues will copy the values from the memo table out into the passed in slice
+// which must be of the appropriate type.
+func (s *{{.Name}}MemoTable) CopyValues(out interface{}) {
+  s.CopyValuesSubset(0, out)
+}
+
+// CopyValuesSubset is like CopyValues but only copies a subset of values starting
+// at the provided start index
+func (s *{{.Name}}MemoTable) CopyValuesSubset(start int, out interface{}) {
+  s.tbl.CopyValuesSubset(start, out.([]{{.name}}))
+}
+
+func (s *{{.Name}}MemoTable) WriteOut(out []byte) {
+  s.tbl.CopyValues(arrow.{{.Name}}Traits.CastFromBytes(out))
+}
+
+func (s *{{.Name}}MemoTable) WriteOutSubset(start int, out []byte) {
+  s.tbl.CopyValuesSubset(start, arrow.{{.Name}}Traits.CastFromBytes(out))
+}
+
+func (s *{{.Name}}MemoTable) WriteOutLE(out []byte) {
+  s.tbl.WriteOut(out)
+}
+
+func (s *{{.Name}}MemoTable) WriteOutSubsetLE(start int, out []byte) {
+  s.tbl.WriteOutSubset(start, out)
+}
+
+func (s *{{.Name}}MemoTable) Exists(val {{.name}}) bool {
+  _, ok := s.Get(val)
+  return ok
+}
+
+// Get returns the index of the requested value in the hash table or KeyNotFound
+// along with a boolean indicating if it was found or not.
+func (s *{{.Name}}MemoTable) Get(val interface{}) (int, bool) {
+{{if and (ne .Name "Float32") (ne .Name "Float64") }}
+  h := hashInt(uint64(val.({{.name}})), 0)
+  if e, ok := s.tbl.Lookup(h, func(v {{.name}}) bool { return val.({{.name}}) == v }); ok {
+{{ else -}}
+  var cmp func({{.name}}) bool
+  {{if eq .Name "Float32"}}
+  if math.IsNaN(float64(val.(float32))) {
+    cmp = isNan32Cmp
+    // use consistent internal bit pattern for NaN regardless of the pattern
+    // that is passed to us. NaN is NaN is NaN
+    val = float32(math.NaN())
+  {{ else -}}
+  if math.IsNaN(val.(float64)) {
+    cmp = math.IsNaN
+    // use consistent internal bit pattern for NaN regardless of the pattern
+    // that is passed to us. NaN is NaN is NaN
+    val = math.NaN()
+  {{end -}}
+  } else {
+    cmp = func(v {{.name}}) bool { return val.({{.name}}) == v }
+  }
+
+  h := hash{{.Name}}(val.({{.name}}), 0)  
+  if e, ok := s.tbl.Lookup(h, cmp); ok {
+{{ end -}}
+    return int(e.payload.memoIdx), ok
+  }
+  return KeyNotFound, false
+}
+
+// GetOrInsert will return the index of the specified value in the table, or insert the
+// value into the table and return the new index. found indicates whether or not it already
+// existed in the table (true) or was inserted by this call (false).
+func (s *{{.Name}}MemoTable) GetOrInsert(val interface{}) (idx int, found bool, err error) {
+  return s.InsertOrGet(val.({{.name}}))
+}
+
+func (s *{{.Name}}MemoTable) InsertOrGet(val {{.name}}) (idx int, found bool, err error) {
+  {{if and (ne .Name "Float32") (ne .Name "Float64") -}}
+  h := hashInt(uint64(val), 0)
+  e, ok := s.tbl.Lookup(h, func(v {{.name}}) bool {
+    return val == v
+  })
+{{ else }}  
+  var cmp func({{.name}}) bool
+  {{if eq .Name "Float32"}}
+  if math.IsNaN(float64(val)) {
+    cmp = isNan32Cmp
+    // use consistent internal bit pattern for NaN regardless of the pattern
+    // that is passed to us. NaN is NaN is NaN
+    val = float32(math.NaN()) 
+  {{ else -}}
+  if math.IsNaN(val) {  
+    cmp = math.IsNaN
+    // use consistent internal bit pattern for NaN regardless of the pattern
+    // that is passed to us. NaN is NaN is NaN
+    val = math.NaN()
+  {{end -}}
+  } else {
+    cmp = func(v {{.name}}) bool { return val == v }
+  }
+  
+  h := hash{{.Name}}(val, 0)
+  e, ok := s.tbl.Lookup(h, cmp)
+{{ end }}
+  if ok {
+    idx = int(e.payload.memoIdx)
+    found = true
+  } else {
+    idx = s.Size()
+    s.tbl.Insert(e, h, val, int32(idx))
+  }
+  return
+}
+
+
+// GetOrInsertBytes is unimplemented
+func (s *{{.Name}}MemoTable) GetOrInsertBytes(val []byte) (idx int, found bool, err error) {
+    panic("unimplemented")
+}
+{{end}}

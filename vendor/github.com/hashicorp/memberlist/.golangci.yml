@@ -1,0 +1,83 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+linters:
+  disable-all: true
+  enable:
+    # (TODO) uncomment after fixing the lint issues
+    # - gofmt
+    - govet
+    # - unconvert
+    # - staticcheck
+    # - ineffassign
+    # - unparam
+    - forbidigo
+
+issues:
+  # Disable the default exclude list so that all excludes are explicitly
+  # defined in this file.
+  exclude-use-default: false
+
+  exclude-rules:
+    # Temp Ignore SA9004: only the first constant in this group has an explicit type
+    # https://staticcheck.io/docs/checks#SA9004
+    - linters: [staticcheck]
+      text: 'SA9004:'
+
+    - linters: [staticcheck]
+      text: 'SA1019: Package github.com/golang/protobuf/jsonpb is deprecated'
+
+    - linters: [staticcheck]
+      text: 'SA1019: Package github.com/golang/protobuf/proto is deprecated'
+
+    - linters: [staticcheck]
+      text: 'SA1019: ptypes.MarshalAny is deprecated'
+
+    - linters: [staticcheck]
+      text: 'SA1019: ptypes.UnmarshalAny is deprecated'
+
+    - linters: [staticcheck]
+      text: 'SA1019: package github.com/golang/protobuf/ptypes is deprecated'  
+
+    # An argument that always receives the same value is often not a problem.
+    - linters: [unparam]
+      text: 'always receives'
+
+    # Often functions will implement an interface that returns an error without
+    # needing to return an error. Sometimes the error return value is unnecessary
+    # but a linter can not tell the difference.
+    - linters: [unparam]
+      text: 'result \d+ \(error\) is always nil'
+
+    # Allow unused parameters to start with an underscore. Arguments with a name
+    # of '_' are already ignored.
+    # Ignoring longer names that start with underscore allow for better
+    # self-documentation than a single underscore by itself.  Underscore arguments
+    # should generally only be used when a function is implementing an interface.
+    - linters: [unparam]
+      text: '`_[^`]*` is unused'
+
+    # Temp ignore some common unused parameters so that unparam can be added
+    # incrementally.
+    - linters: [unparam]
+      text: '`(t|resp|req|entMeta)` is unused'
+
+linters-settings:
+  gofmt:
+    simplify: true
+  forbidigo:
+    # Forbid the following identifiers (list of regexp).
+    forbid:
+      - '\brequire\.New\b(# Use package-level functions with explicit TestingT)?'
+      - '\bassert\.New\b(# Use package-level functions with explicit TestingT)?'
+      - '\bmetrics\.IncrCounter\b(# Use labeled metrics)?'
+      - '\bmetrics\.AddSample\b(# Use labeled metrics)?'
+      - '\bmetrics\.MeasureSince\b(# Use labeled metrics)?'
+      - '\bmetrics\.SetGauge\b(# Use labeled metrics)?'
+    # Exclude godoc examples from forbidigo checks.
+    # Default: true
+    exclude_godoc_examples: false
+
+run:
+  timeout: 10m
+  concurrency: 4

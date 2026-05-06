@@ -1,0 +1,8 @@
+{
+  "name": "redis",
+  "version": "8.11.5",
+  "main": "index.js",
+  "repository": "git@github.com:go-redis/redis.git",
+  "author": "Vladimir Mihailenco <vladimir.webdev@gmail.com>",
+  "license": "BSD-2-clause"
+}

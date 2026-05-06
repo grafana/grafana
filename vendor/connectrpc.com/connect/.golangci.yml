@@ -1,0 +1,124 @@
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+  exhaustruct:
+    include:
+      # No zero values for param structs.
+      - 'connectrpc\.com/connect\..*[pP]arams'
+  forbidigo:
+    forbid:
+      - '^fmt\.Print'
+      - '^log\.'
+      - '^print$'
+      - '^println$'
+      - '^panic$'
+  godox:
+    # TODO, OPT, etc. comments are fine to commit. Use FIXME comments for
+    # temporary hacks, and use godox to prevent committing them.
+    keywords: [FIXME]
+  importas:
+    no-unaliased: true
+    alias:
+      - pkg: connectrpc.com/connect/internal/gen/connect/ping/v1
+        alias: pingv1
+  varnamelen:
+    ignore-decls:
+      - T any
+      - i int
+      - wg sync.WaitGroup
+linters:
+  enable-all: true
+  disable:
+    - cyclop            # covered by gocyclo
+    - depguard          # unnecessary for small libraries
+    - execinquery       # deprecated since golangci v1.58
+    - funlen            # rely on code review to limit function length
+    - gocognit          # dubious "cognitive overhead" quantification
+    - gofumpt           # prefer standard gofmt
+    - goimports         # rely on gci instead
+    - gomnd             # some unnamed constants are okay
+    - inamedparam       # convention is not followed
+    - ireturn           # "accept interfaces, return structs" isn't ironclad
+    - lll               # don't want hard limits for line length
+    - maintidx          # covered by gocyclo
+    - mnd               # status codes are clearer than constants
+    - nlreturn          # generous whitespace violates house style
+    - nonamedreturns    # named returns are fine; it's *bare* returns that are bad
+    - protogetter       # too many false positives
+    - testpackage       # internal tests are fine
+    - wrapcheck         # don't _always_ need to wrap errors
+    - wsl               # generous whitespace violates house style
+issues:
+  exclude-dirs-use-default: false
+
+  exclude:
+    # Don't ban use of fmt.Errorf to create new errors, but the remaining
+    # checks from err113 are useful.
+    - "do not define dynamic errors, use wrapped static errors instead: .*"
+
+  exclude-rules:
+    # If future reflect.Kinds are nil-able, we'll find out when a test fails.
+    - linters: [exhaustive]
+      path: internal/assert/assert.go
+    # We need our duplex HTTP call to have access to the context.
+    - linters: [containedctx]
+      path: duplex_http_call.go
+    # We need to init a global in-mem HTTP server for testable examples.
+    - linters: [gochecknoinits, gochecknoglobals]
+      path: example_init_test.go
+    # We purposefully do an ineffectual assignment for an example.
+    - linters: [ineffassign]
+      path: client_example_test.go
+    # The generated file is effectively a global receiver.
+    - linters: [varnamelen]
+      path: cmd/protoc-gen-connect-go
+      text: "parameter name 'g' is too short"
+    # Thorough error logging and timeout config make this example unreadably long.
+    - linters: [errcheck, gosec]
+      path: error_writer_example_test.go
+    # It should be crystal clear that Connect uses plain *http.Clients.
+    - linters: [revive, stylecheck]
+      path: client_example_test.go
+    # Don't complain about timeout management or lack of output assertions in examples.
+    - linters: [gosec, testableexamples]
+      path: handler_example_test.go
+    # No output assertions needed for these examples.
+    - linters: [testableexamples]
+      path: error_writer_example_test.go
+    - linters: [testableexamples]
+      path: error_not_modified_example_test.go
+    - linters: [testableexamples]
+      path: error_example_test.go
+    # In examples, it's okay to use http.ListenAndServe.
+    - linters: [gosec]
+      path: error_not_modified_example_test.go
+    # There are many instances where we want to keep unused parameters
+    # as a matter of style or convention, for example when a context.Context
+    # is the first parameter, we choose to just globally ignore this.
+    - linters: [revive]
+      text: "^unused-parameter: "
+    # We want to return explicit nils in protocol_grpc.go
+    - linters: [revive]
+      text: "^if-return: "
+      path: protocol_grpc.go
+    # We want to return explicit nils in protocol_connect.go
+    - linters: [revive]
+      text: "^if-return: "
+      path: protocol_connect.go
+    # We want to return explicit nils in error_writer.go
+    - linters: [revive]
+      text: "^if-return: "
+      path: error_writer.go
+    # We want to set http.Server's logger
+    - linters: [forbidigo]
+      path: internal/memhttp
+      text: "use of `log.(New|Logger|Lshortfile)` forbidden by pattern .*"
+    # We want to show examples with http.Get
+    - linters: [noctx]
+      path: internal/memhttp/memhttp_test.go
+    # Allow fmt.Sprintf for cmd/protoc-gen-connect-go for consistency
+    - linters: [perfsprint]
+      path: cmd/protoc-gen-connect-go/main.go
+    # Allow non-canonical headers in tests
+    - linters: [canonicalheader]
+      path: '.*_test.go'

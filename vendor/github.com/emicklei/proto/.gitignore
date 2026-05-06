@@ -1,0 +1,7 @@
+/.idea/
+/.tmp/
+/.vscode/
+/bin/
+debug.test
+.DS_Store
+coverage.txt

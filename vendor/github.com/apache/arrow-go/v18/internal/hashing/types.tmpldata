@@ -1,0 +1,42 @@
+[
+  {
+    "Name": "Int8",
+    "name": "int8"
+  },
+  {
+    "Name": "Uint8",
+    "name": "uint8"
+  },
+  {
+    "Name": "Int16",
+    "name": "int16"
+  },
+  {
+    "Name": "Uint16",
+    "name": "uint16"
+  },
+  {
+    "Name": "Int32",
+    "name": "int32"
+  },
+  {
+    "Name": "Int64",
+    "name": "int64"
+  },
+  {
+    "Name": "Uint32",
+    "name": "uint32"
+  },
+  {
+    "Name": "Uint64",
+    "name": "uint64"
+  },
+  {
+    "Name": "Float32",
+    "name": "float32"
+  },
+  {
+    "Name": "Float64",
+    "name": "float64"
+  }
+]

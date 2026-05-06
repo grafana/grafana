@@ -1,0 +1,25 @@
+class {{ .Builder.Name|formatObjectName }}(cogbuilder.Builder[{{ .BuilderSignatureType }}]):
+    {{- include "comments" (dict "Comments" .Builder.For.Comments) | indent 4 }}
+    _internal: {{ .BuilderSignatureType }}
+    {{- range .Builder.Properties }}
+    __{{ .Name|formatIdentifier }}: {{ .Type | formatType }} = {{ defaultForType .Type }}
+    {{- end }}
+
+    def __init__(self{{- template "args" .Builder.Constructor.Args }}):
+        self._internal = {{ .ObjectName }}()
+{{- range .Builder.Constructor.Assignments }}
+{{- include "assignment" (dict "Assignment" . "Builder" $.Builder "Option" (dict "Name" ""))|indent 8 }}
+{{- end }}
+
+    def build(self) -> {{ .ObjectName }}:
+        """
+        Builds the object.
+        """
+        return self._internal
+
+{{- $customMethodsTmpl := print "builder_" .Builder.Package "_" (.Builder.Name|formatObjectName) "_custom_methods" }}
+{{- includeIfExists $customMethodsTmpl (dict)|indent 4 -}}
+
+{{- include "options" . | indent 4 -}}
+
+{{- include "factories" . -}}

@@ -1,0 +1,27 @@
+language: go
+services:
+  - mysql
+  - postgresql
+
+go:
+    - 1.12
+    - 1.13
+    - tip
+
+env:
+  global:
+    - GO111MODULE=on
+    - SQLHOOKS_MYSQL_DSN="travis@/sqlhooks?interpolateParams=true"
+    - SQLHOOKS_POSTGRES_DSN="postgres://postgres@localhost/sqlhooks?sslmode=disable"
+
+before_install:
+  - go get github.com/axw/gocov/gocov
+  - go get github.com/mattn/goveralls
+  - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+
+  - mysql -e 'create database sqlhooks;'
+  - psql -c 'create database sqlhooks;' -U postgres
+
+script:
+    - go test -v -covermode=count -coverprofile=coverage.out
+    - $HOME/gopath/bin/goveralls -service=travis-ci -coverprofile=coverage.out

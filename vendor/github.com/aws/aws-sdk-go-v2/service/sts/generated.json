@@ -1,0 +1,43 @@
+{
+    "dependencies": {
+        "github.com/aws/aws-sdk-go-v2": "v1.4.0",
+        "github.com/aws/aws-sdk-go-v2/internal/configsources": "v0.0.0-00010101000000-000000000000",
+        "github.com/aws/aws-sdk-go-v2/internal/endpoints/v2": "v2.0.0-00010101000000-000000000000",
+        "github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding": "v1.0.5",
+        "github.com/aws/aws-sdk-go-v2/service/internal/presigned-url": "v1.0.7",
+        "github.com/aws/smithy-go": "v1.4.0"
+    },
+    "files": [
+        "api_client.go",
+        "api_client_test.go",
+        "api_op_AssumeRole.go",
+        "api_op_AssumeRoleWithSAML.go",
+        "api_op_AssumeRoleWithWebIdentity.go",
+        "api_op_AssumeRoot.go",
+        "api_op_DecodeAuthorizationMessage.go",
+        "api_op_GetAccessKeyInfo.go",
+        "api_op_GetCallerIdentity.go",
+        "api_op_GetFederationToken.go",
+        "api_op_GetSessionToken.go",
+        "auth.go",
+        "deserializers.go",
+        "doc.go",
+        "endpoints.go",
+        "endpoints_config_test.go",
+        "endpoints_test.go",
+        "generated.json",
+        "internal/endpoints/endpoints.go",
+        "internal/endpoints/endpoints_test.go",
+        "options.go",
+        "protocol_test.go",
+        "serializers.go",
+        "snapshot_test.go",
+        "sra_operation_order_test.go",
+        "types/errors.go",
+        "types/types.go",
+        "validators.go"
+    ],
+    "go": "1.22",
+    "module": "github.com/aws/aws-sdk-go-v2/service/sts",
+    "unstable": false
+}

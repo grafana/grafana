@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package server;
+
+import "google/protobuf/empty.proto";
+
+service FakeServer {
+    rpc Succeed(google.protobuf.Empty) returns (google.protobuf.Empty) {};
+    rpc FailWithError(google.protobuf.Empty) returns (google.protobuf.Empty) {};
+    rpc FailWithHTTPError(FailWithHTTPErrorRequest) returns (google.protobuf.Empty) {};
+    rpc Sleep(google.protobuf.Empty) returns (google.protobuf.Empty) {};
+    rpc StreamSleep(google.protobuf.Empty) returns (stream google.protobuf.Empty) {};
+    rpc ReturnProxyProtoCallerIP(google.protobuf.Empty) returns (ProxyProtoIPResponse) {};
+}
+
+message ProxyProtoIPResponse {
+    string IP = 1;
+}
+
+message FailWithHTTPErrorRequest {
+  int32 Code = 1;
+}

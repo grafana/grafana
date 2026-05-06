@@ -1,0 +1,14 @@
+# To run locally:
+#   npx @techdocs/cli serve -v -c ./mkdocs.yml
+
+site_name: 'Cog Internal Documentation'
+repo_url: https://github.com/grafana/cog
+edit_uri: edit/main/docs
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+
+plugins:
+  - techdocs-core

@@ -1,0 +1,55 @@
+[
+  {
+    "schema": {
+      "meta": {
+        "type": "numeric-long",
+        "typeVersion": [0, 1],
+        "custom": {
+          "exampleInfo": {
+            "summary": "NumericLong with 4 items with 2 different item names (avgSlothCount, avgSleepHoursPerSlothPerDay) and 1 dimension (city).",
+            "itemCount": 4,
+            "collectionVersion": 1,
+            "valid": true,
+            "noData": false
+          }
+        }
+      },
+      "fields": [
+        {
+          "type": "string",
+          "name": "city",
+          "typeInfo": {
+            "frame": "string"
+          },
+          "labels": {},
+          "config": {}
+        },
+        {
+          "type": "number",
+          "name": "avgSlothCount",
+          "typeInfo": {
+            "frame": "float64"
+          },
+          "labels": {},
+          "config": {}
+        },
+        {
+          "type": "number",
+          "name": "avgSleepHoursPerSlothPerDay",
+          "typeInfo": {
+            "frame": "float64"
+          },
+          "labels": {},
+          "config": {}
+        }
+      ]
+    },
+    "data": {
+      "values": [
+        ["LGA", "MIA"],
+        [1, 7.5],
+        [23.5, 23.2]
+      ]
+    }
+  }
+]

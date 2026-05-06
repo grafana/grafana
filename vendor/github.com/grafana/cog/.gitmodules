@@ -1,0 +1,3 @@
+[submodule "config/foundation-sdk"]
+	path = config/foundation-sdk
+	url = https://github.com/grafana/grafana-foundation-sdk.git

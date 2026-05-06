@@ -1,0 +1,11 @@
+*.out
+*.5
+*.6
+*.8
+*.swp
+_obj
+_test
+testdata
+/.idea
+*.iml
+/notes.txt

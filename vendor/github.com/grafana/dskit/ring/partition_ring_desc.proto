@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package ring;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// PartitionRingDesc holds the state of the partitions ring.
+message PartitionRingDesc {
+  // Mapping between partition ID and partition info.
+  map<int32, PartitionDesc> partitions = 1 [(gogoproto.nullable) = false];
+
+  // Mapping between instance ID and partition ownership info.
+  map<string, OwnerDesc> owners = 2 [(gogoproto.nullable) = false];
+}
+
+// PartitionDesc holds the state of a single partition.
+message PartitionDesc {
+  // The partition ID. This value is the same as the key in the partitions map in PartitionRingDesc.
+  int32 id = 4;
+
+  // Unique tokens, generated with deterministic token generator. Tokens MUST be immutable:
+  // if tokens get changed, the change will not be propagated via memberlist.
+  repeated uint32 tokens = 1;
+
+  // The state of the partition.
+  PartitionState state = 2;
+
+  // Unix timestamp (with seconds precision) of when has the state changed last time for this partition.
+  int64 stateTimestamp = 3;
+}
+
+enum PartitionState {
+  PartitionUnknown = 0;
+
+  // Pending partition is a partition that is about to be switched to ACTIVE. This state is used
+  // to let owners to attach to the partition and get ready to handle the partition.
+  //
+  // When a partition is in this state, it must not be used for writing or reading.
+  PartitionPending = 1;
+
+  // Active partition in read-write mode.
+  PartitionActive = 2;
+
+  // Inactive partition in read-only mode. This partition will be deleted after a grace period,
+  // unless its state changes to Active again.
+  PartitionInactive = 3;
+
+  // Deleted partition. This state is not visible to ring clients: it's only used to propagate
+  // via memberlist the information that a partition has been deleted.
+  PartitionDeleted = 4;
+}
+
+// OwnerDesc holds the information of a partition owner.
+message OwnerDesc {
+  // Partition that belongs to this owner. A owner can own only 1 partition, but 1 partition can be
+  // owned by multiple owners.
+  int32 ownedPartition = 1;
+
+  // The owner state. This field is used to propagate deletions via memberlist.
+  OwnerState state = 2;
+
+  // Unix timestamp (with seconds precision) of when the data for the owner has been updated the last time.
+  // This timestamp is used to resolve conflicts when merging updates via memberlist (the most recent
+  // update wins).
+  int64 updatedTimestamp = 3;
+}
+
+enum OwnerState {
+  OwnerUnknown = 0;
+
+  // Active owner.
+  OwnerActive = 1;
+
+  // Deleted owner. This state is not visible to ring clients: it's only used to propagate
+  // via memberlist the information that a owner has been deleted. Owners in this state
+  // are removed before client can see them.
+  OwnerDeleted = 2;
+}

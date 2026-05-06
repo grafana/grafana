@@ -1,0 +1,14 @@
+message BackIndexTermsEntry {
+  required uint32 field = 1;
+	repeated string terms = 2;
+}
+
+message BackIndexStoreEntry {
+	required uint32 field = 1;
+	repeated uint64 arrayPositions = 2;
+}
+
+message BackIndexRowValue {
+	repeated BackIndexTermsEntry termsEntries = 1;
+	repeated BackIndexStoreEntry storedEntries = 2;
+}

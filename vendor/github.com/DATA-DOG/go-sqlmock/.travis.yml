@@ -1,0 +1,29 @@
+language: go
+
+go_import_path: github.com/DATA-DOG/go-sqlmock
+
+go:
+  - 1.2.x
+  - 1.3.x
+  - 1.4 # has no cover tool for latest releases
+  - 1.5.x
+  - 1.6.x
+  - 1.7.x
+  - 1.8.x
+  - 1.9.x
+  - 1.10.x
+  - 1.11.x
+  - 1.12.x
+  - 1.13.x
+  - 1.14.x
+  - 1.15.x
+  - 1.16.x
+  - 1.17.x
+
+script:
+  - go vet
+  - test -z "$(go fmt ./...)" # fail if not formatted properly
+  - go test -race -coverprofile=coverage.txt -covermode=atomic
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

@@ -1,0 +1,6 @@
+/integration/redis_src/
+/integration/dump.rdb
+*.swp
+/integration/nodes.conf
+.idea/
+miniredis.iml

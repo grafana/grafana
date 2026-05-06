@@ -1,0 +1,92 @@
+// Copyright (c) 2012-2018 Ugorji Nwoke. All rights reserved.
+// Use of this source code is governed by a MIT license found in the LICENSE file.
+
+// Code generated from mammoth2-test.go.tmpl - DO NOT EDIT.
+
+package codec
+
+// Increase codecoverage by covering all the codecgen paths, in fast-path and gen-helper.go....
+//
+// Add:
+// - test file for creating a mammoth generated file as _mammoth_generated.go
+//   - generate a second mammoth files in a different file: mammoth2_generated_test.go
+//     - mammoth-test.go.tmpl will do this
+//   - run codecgen on it, into mammoth2_codecgen_generated_test.go (no build tags)
+//   - as part of TestMammoth, run it also
+//   - this will cover all the codecgen, gen-helper, etc in one full run
+//   - check in mammoth* files into github also
+// - then
+//
+// Now, add some types:
+//  - some that implement BinaryMarshal, TextMarshal, JSONMarshal, and one that implements none of it
+//  - create a wrapper type that includes TestMammoth2, with it in slices, and maps, and the custom types
+//  - this wrapper object is what we work encode/decode (so that the codecgen methods are called)
+
+
+// import "encoding/binary"
+import "fmt"
+
+type TestMammoth2 struct {
+
+{{range .Values }}{{if .Primitive }}{{/*
+*/}}{{ .MethodNamePfx "F" true }} {{ .Primitive }}
+{{ .MethodNamePfx "Fptr" true }} *{{ .Primitive }}
+{{end}}{{end}}
+
+{{range .Values }}{{if not .Primitive }}{{if not .MapKey }}{{/*
+*/}}{{ .MethodNamePfx "F" false }} []{{ .Elem }}
+{{ .MethodNamePfx "Fptr" false }} *[]{{ .Elem }}
+{{end}}{{end}}{{end}}
+
+{{range .Values }}{{if not .Primitive }}{{if .MapKey }}{{/*
+*/}}{{ .MethodNamePfx "F" false }} map[{{ .MapKey }}]{{ .Elem }}
+{{ .MethodNamePfx "Fptr" false }} *map[{{ .MapKey }}]{{ .Elem }}
+{{end}}{{end}}{{end}}
+
+}
+
+// -----------
+
+type testMammoth2Binary uint64
+func (x testMammoth2Binary) MarshalBinary() (data []byte, err error) {
+data = make([]byte, 8)
+bigen.PutUint64(data, uint64(x))
+return
+}
+func (x *testMammoth2Binary) UnmarshalBinary(data []byte) (err error) {
+*x = testMammoth2Binary(bigen.Uint64(data))
+return
+}
+
+type testMammoth2Text uint64
+func (x testMammoth2Text) MarshalText() (data []byte, err error) {
+data = []byte(fmt.Sprintf("%b", uint64(x)))
+return
+}
+func (x *testMammoth2Text) UnmarshalText(data []byte) (err error) {
+_, err = fmt.Sscanf(string(data), "%b", (*uint64)(x))
+return
+}
+
+type testMammoth2Json uint64
+func (x testMammoth2Json) MarshalJSON() (data []byte, err error) {
+data = []byte(fmt.Sprintf("%v", uint64(x)))
+return
+}
+func (x *testMammoth2Json) UnmarshalJSON(data []byte) (err error) {
+_, err = fmt.Sscanf(string(data), "%v", (*uint64)(x))
+return
+}
+
+type testMammoth2Basic [4]uint64
+
+type TestMammoth2Wrapper struct {
+  V TestMammoth2
+  T testMammoth2Text
+  B testMammoth2Binary
+  J testMammoth2Json
+  C testMammoth2Basic
+  M map[testMammoth2Basic]TestMammoth2
+  L []TestMammoth2
+  A [4]int64
+}

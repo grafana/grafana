@@ -1,0 +1,23 @@
+sudo: false
+language: go
+go:
+  - 1.9.x
+  - 1.10.x
+  - 1.11.x
+  - 1.12.x
+  - master
+
+env:
+- GO111MODULE=on
+
+install:
+# With Go modules (eg Go >= 1.11), it isn't necessary anymore to 'go get' the dependencies before running the tests.
+- if [[ $TRAVIS_GO_VERSION =~ ^1\.(7|8|9|10)\. ]]; then go get github.com/prometheus/client_golang/prometheus; fi
+- if [[ $TRAVIS_GO_VERSION =~ ^1\.(7|8|9|10)\. ]]; then go get google.golang.org/grpc; fi
+- if [[ $TRAVIS_GO_VERSION =~ ^1\.(7|8|9|10)\. ]]; then go get github.com/stretchr/testify; fi
+
+script:
+- make test
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)

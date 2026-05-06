@@ -1,0 +1,5 @@
+{{- define "nil_check" -}}
+if self._internal.{{ .Path|formatPath }} is None:
+    self._internal.{{ .Path|formatPath }} = {{ .EmptyValueType|defaultForType }}
+{{ if not (or .EmptyValueType.IsArray .EmptyValueType.IsMap) }}assert isinstance(self._internal.{{ .Path|formatPath }}, {{.EmptyValueType|formatRawTypeNotNullable}}){{ end }}
+{{- end }}

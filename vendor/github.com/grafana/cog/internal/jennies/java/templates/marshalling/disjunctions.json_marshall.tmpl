@@ -1,0 +1,11 @@
+
+    public String toJSON() throws JsonProcessingException {
+        {{- range .Fields }}
+        if ({{ .Name|lowerCamelCase }} != null) {
+            ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+            return ow.writeValueAsString({{ .Name|lowerCamelCase }});
+        }
+        {{- end }}
+        
+        return null;
+    }

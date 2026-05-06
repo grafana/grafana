@@ -1,0 +1,105 @@
+run:
+    timeout: 5m
+
+linters-settings:
+    gci:
+        sections:
+            - standard
+            - default
+            - prefix(github.com/spf13/viper)
+    gocritic:
+        # Enable multiple checks by tags. See "Tags" section in https://github.com/go-critic/go-critic#usage.
+        enabled-tags:
+            - diagnostic
+            - experimental
+            - opinionated
+            - style
+        disabled-checks:
+            - importShadow
+            - unnamedResult
+    goimports:
+        local-prefixes: github.com/spf13/viper
+
+linters:
+    disable-all: true
+    enable:
+        - bodyclose
+        - dogsled
+        - dupl
+        - durationcheck
+        - exhaustive
+        - gci
+        - gocritic
+        - godot
+        - gofmt
+        - gofumpt
+        - goimports
+        - gomoddirectives
+        - goprintffuncname
+        - govet
+        - importas
+        - ineffassign
+        - makezero
+        - misspell
+        - nakedret
+        - nilerr
+        - noctx
+        - nolintlint
+        - prealloc
+        - predeclared
+        - revive
+        - rowserrcheck
+        - sqlclosecheck
+        - staticcheck
+        - stylecheck
+        - tparallel
+        - typecheck
+        - unconvert
+        - unparam
+        - unused
+        - wastedassign
+        - whitespace
+
+        # fixme
+        # - cyclop
+        # - errcheck
+        # - errorlint
+        # - exhaustivestruct
+        # - forbidigo
+        # - forcetypeassert
+        # - gochecknoglobals
+        # - gochecknoinits
+        # - gocognit
+        # - goconst
+        # - gocyclo
+        # - gosec
+        # - gosimple
+        # - ifshort
+        # - lll
+        # - nlreturn
+        # - paralleltest
+        # - scopelint
+        # - thelper
+        # - wrapcheck
+
+        # unused
+        # - depguard
+        # - goheader
+        # - gomodguard
+
+        # deprecated
+        # - deadcode
+        # - structcheck
+        # - varcheck
+
+        # don't enable:
+        # - asciicheck
+        # - funlen
+        # - godox
+        # - goerr113
+        # - gomnd
+        # - interfacer
+        # - maligned
+        # - nestif
+        # - testpackage
+        # - wsl

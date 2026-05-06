@@ -1,0 +1,43 @@
+package {{ .Package }};
+
+{{- $class := include "builder" . }}
+
+{{ .Imports }}
+
+{{- $class }}
+
+{{- define "builder" }}
+public class {{ .BuilderName }}Builder{{ if .IsGenericPanel }}<T extends {{ .BuilderName }}Builder<T>>{{ end }} implements {{ if not (eq .ImportAlias "") }}{{ .ImportAlias }}.{{ end }}cog.Builder<{{ .BuilderSignatureType }}> {
+    protected final {{ .ObjectName }} internal;
+    
+    {{- range .Properties }}
+    private {{ .Type | formatBuilderFieldType }} {{ .Name | escapeVar }};
+    {{- end }}
+    
+    public {{ .BuilderName }}Builder({{- template "args" (dict "Arguments" .Constructor.Args "IsBuilder" true) }}) {
+        this.internal = new {{ .ObjectName }}();
+    {{- range .Constructor.Assignments }}
+        {{- template "assignment" (dict "Assignment" . "BuilderName" $.BuilderName "OptionName" "") }}
+    {{- end }}
+    
+    {{- range .Properties }}
+    this.{{ .Name | escapeVar }} = {{ .Type | emptyValueForType }};
+    {{- end }}
+    }
+    
+    {{- range $opt := .Options }}
+    public {{ if $.IsGenericPanel }}T {{ else }}{{ $.BuilderName }}Builder {{ end }}{{ .Name | lowerCamelCase | escapeVar }}({{- template "args" (dict "Arguments" .Args "IsBuilder" true) }}) {
+        {{- range .Assignments }}
+            {{- template "assignment" (dict "Assignment" . "BuilderName" $.BuilderName "OptionName" $opt.Name) }}
+        {{- end }}
+        return {{ if $.IsGenericPanel }}(T) {{ end }}this;
+    }
+    {{ end -}}
+    
+    public {{ .ObjectName }} build() {
+        return this.internal;
+    }
+{{- $customMethodsTmpl := print "builder_" .RawPackage "_" .BuilderName "_custom_methods" }}
+{{- includeIfExists $customMethodsTmpl (dict)|indent 4 }}
+}
+{{- end }}

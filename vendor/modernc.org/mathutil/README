@@ -1,0 +1,10 @@
+This is a goinstall-able mirror of modified code already published at:
+http://git.nic.cz/redmine/projects/gornd/repository
+
+Packages in this repository:
+
+Install: $ go get modernc.org/mathutil
+Godocs:  http://godoc.org/modernc.org/mathutil
+
+Install: $ go get modernc.org/mathutil/mersenne
+Godocs:  http://godoc.org/modernc.org/mathutil/mersenne

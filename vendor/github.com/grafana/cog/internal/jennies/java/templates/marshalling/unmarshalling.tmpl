@@ -1,0 +1,114 @@
+package {{ .Package }};
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grafana.foundation.cog.variants.UnknownDataquery;
+import com.grafana.foundation.cog.variants.Registry;
+
+{{ .Imports }}
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Iterator;
+import java.util.Map;
+
+public class {{ .Name }}Deserializer extends JsonDeserializer<{{ .Name }}> {
+    
+    @Override
+    public {{ .Name }} deserialize(JsonParser jp, DeserializationContext cxt) throws IOException, JsonProcessingException {
+        ObjectMapper mapper = (ObjectMapper) jp.getCodec();
+        JsonNode root = mapper.readTree(jp);
+        
+        // Deserialise all the fields
+        {{ .Name }} {{ .Name | lowerCamelCase }} = new {{ .Name }}();
+        
+        {{- range .Fields }}
+        {{- if or (not $.ShouldUnmarshallingPanels) (not (containsValue .Name $.DataqueryUnmarshalling)) }}
+        if (root.has("{{ .Name }}")) {
+            {{ $.Name | lowerCamelCase }}.{{ .Name | lowerCamelCase }} = mapper.convertValue(root.get("{{ .Name }}"), new TypeReference<>() {});
+        }
+        {{- end }}
+        {{- end }}
+        {{- /* TODO(kgz): this shouldn't be done by cog */ -}}
+        {{- if .ShouldUnmarshallingPanels }}
+        // Deserialise panels
+        PanelConfig config = Registry.getPanel(panel.type);
+        if (config != null) {
+            panel.options = mapper.treeToValue(root.get("options"), config.getOptionsClass());
+            
+            FieldConfigSource fieldConfigSource = mapper.treeToValue(root.get("fieldConfig"), FieldConfigSource.class);
+            if (fieldConfigSource != null) {
+                FieldConfig fieldConfig = fieldConfigSource.defaults;
+                if (fieldConfig != null) {
+                    JsonNode customNode = root.get("fieldConfig").get("defaults").get("custom");
+                    if (customNode != null) {
+                        Class<?> customClass = config.getFieldConfigClass();
+                        if (customClass != null) {
+                            fieldConfig.custom = mapper.treeToValue(customNode, customClass);
+                        }
+                    }
+                    panel.fieldConfig = fieldConfigSource;
+                }
+            }
+        } else {
+            throw new IllegalArgumentException("Unknown panel type: " + panel.type);
+        }
+        {{- end }}
+       
+       
+       // Dataquery stuff
+       String datasourceType = "";
+       {{- /* TODO(kgz): this shouldn't be done by cog */ -}}
+       {{- range .DataqueryUnmarshalling }}
+       {{- if ne .DatasourceField "" }}
+       {{ $.Name | lowerCamelCase }}.{{ .DatasourceField }} = mapper.treeToValue(root.get({{ printf "%#v" .DatasourceField }}), DataSourceRef.class);
+       if ({{ $.Name | lowerCamelCase }}.{{ .DatasourceField }} != null) {
+            datasourceType = {{ .DataqueryHint }};
+       } 
+       {{- end }}
+       
+       {{- if .IsArray }}
+       List<Dataquery> targets = new ArrayList<>();
+       if (root.has({{ printf "%#v" .FieldName }})) {
+           for (JsonNode node : root.get({{ printf "%#v" .FieldName }})) {
+                Class<? extends Dataquery> clazz = Registry.getDataquery(datasourceType);
+                if (clazz != null) {
+                    Dataquery dataquery = mapper.treeToValue(node, clazz);
+                    {{ .FieldName | lowerCamelCase}}.add(dataquery);
+                } else {
+                  UnknownDataquery unknownDataquery = new UnknownDataquery();
+                  Iterator<Map.Entry<String, JsonNode>> fieldsIterator = node.fields();
+                  while (fieldsIterator.hasNext()) {
+                      Map.Entry<String, JsonNode> field = fieldsIterator.next();
+                      unknownDataquery.genericFields.put(field.getKey(), mapper.treeToValue(field.getValue(), Object.class));
+                  }
+                  {{ .FieldName | lowerCamelCase}}.add(unknownDataquery);
+                }
+          }
+      }
+      {{ $.Name | lowerCamelCase }}.{{ .FieldName }} = targets;
+      {{- else }}
+      Class<? extends Dataquery> clazz = Registry.getDataquery(datasourceType);
+      if (clazz != null) {
+          {{ $.Name | lowerCamelCase }}.{{ .FieldName }} = mapper.treeToValue(root.get({{ printf "%#v" .FieldName }}), clazz);
+      } else {
+          UnknownDataquery unknownDataquery = new UnknownDataquery();
+          Iterator<Map.Entry<String, JsonNode>> fieldsIterator = root.get({{ printf "%#v" .FieldName }}).fields();
+          while (fieldsIterator.hasNext()) {
+              Map.Entry<String, JsonNode> field = fieldsIterator.next();
+              unknownDataquery.genericFields.put(field.getKey(), mapper.treeToValue(field.getValue(), Object.class));
+          }
+          {{ $.Name | lowerCamelCase }}.{{ .FieldName | lowerCamelCase }} = unknownDataquery;
+      }
+      {{- end }}
+      {{- end }}
+        
+       return {{ .Name | lowerCamelCase }};
+    }
+}

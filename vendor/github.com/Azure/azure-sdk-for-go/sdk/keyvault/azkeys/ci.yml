@@ -1,0 +1,34 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - hotfix/*
+      - release/*
+  paths:
+    include:
+    - sdk/keyvault/azkeys
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - hotfix/*
+      - release/*
+  paths:
+    include:
+    - sdk/keyvault/azkeys
+
+stages:
+- template: /eng/pipelines/templates/jobs/archetype-sdk-client.yml
+  parameters:
+    TimeoutInMinutes: 120
+    ServiceDirectory: 'keyvault/azkeys'
+    RunLiveTests: true
+    AdditionalMatrixConfigs:
+      - Name: keyvault_test_matrix_addons
+        Path: sdk/keyvault/azkeys/platform-matrix.json
+        Selection: sparse
+        GenerateVMJobs: true

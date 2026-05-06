@@ -1,0 +1,14 @@
+version: '2'
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.18
+    ports:
+      - 1883:1883
+      - 8883:8883
+      - 9001:9001
+      - 9443:9443
+    volumes:
+      - ./integration/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./integration/test.crt:/test.crt:ro
+      - ./integration/test.key:/test.key:ro
+      - ./integration/ca.crt:/ca.crt:ro

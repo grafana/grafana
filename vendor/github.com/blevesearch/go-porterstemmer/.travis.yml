@@ -1,0 +1,16 @@
+language: go
+
+go:
+ - 1.4
+
+script:
+  - go get golang.org/x/tools/cmd/vet
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
+  - go test -v -covermode=count -coverprofile=profile.out
+  - go vet 
+  - goveralls -service drone.io -coverprofile=profile.out -repotoken $COVERALLS
+
+notifications:
+  email:
+    - marty.schoch@gmail.com

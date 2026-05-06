@@ -1,0 +1,243 @@
+linters-settings:
+  depguard:
+    list-type: blacklist
+    packages:
+      # logging is allowed only by logutils.Log, logrus
+      # is allowed to use only in logutils package
+      - github.com/sirupsen/logrus
+    packages-with-error-message:
+      - github.com/sirupsen/logrus: "logging is allowed only by logutils.Log"
+  dupl:
+    threshold: 100
+  funlen:
+    lines: 100
+    statements: 50
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport # https://github.com/go-critic/go-critic/issues/845
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+      - wrapperFunc
+  gocyclo:
+    min-complexity: 20 # increased from 15 to get us going, but not make things worse
+  goimports:
+    local-prefixes: github.com/golangci/golangci-lint
+  gomnd:
+    settings:
+      mnd:
+        # don't include the "operation" and "assign"
+        checks: argument,case,condition,return
+  govet:
+    check-shadowing: true
+    settings:
+      printf:
+        funcs:
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+  lll:
+    line-length: 140
+  maligned:
+    suggest-new: true
+  misspell:
+    locale: US
+  nolintlint:
+    allow-leading-space: true # don't require machine-readable nolint directives (i.e. with no leading space)
+    allow-unused: false # report any unused nolint directives
+    require-explanation: false # don't require an explanation for nolint directives
+    require-specific: false # don't require nolint directives to be specific about which linter is being skipped
+
+linters:
+  # please, do not use `enable-all`: it's deprecated and will be removed soon.
+  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - dupl
+    - errcheck
+    - exportloopref
+    - funlen
+    - gochecknoinits
+    - goconst
+    - gocyclo
+    - gofmt
+    - goimports
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - nolintlint
+    - rowserrcheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - whitespace
+
+  # don't enable:
+  # - asciicheck
+  # - gochecknoglobals
+  # - gocognit
+  # - godot
+  # - godox
+  # - goerr113
+  # - maligned
+  # - nestif
+  # - prealloc
+  # - testpackage
+  # - wsl
+
+issues:
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gomnd
+        - lll
+        - funlen
+        - goconst
+        - gocyclo
+        - dupl
+        - gochecknoinits
+        - gocritic
+    - path: cmd/bluge/cmd
+      linters:
+        - gochecknoinits
+    - path: sizes.go
+      linters:
+        - gochecknoinits
+
+    # we don't need secure random in test
+    - path: _test\.go
+      linters:
+        - gosec
+      text: G404
+
+    # allow lock test to invoke itself
+    - path: index/lock/lock_test.go
+      linters:
+        - gosec
+      text: G204
+
+    # cannot safely refactor until optimization tests are in place again
+    - path: index/optimize.go
+      linters:
+        - funlen
+
+   # FIXME refactor persister
+    - path: index/persister.go
+      linters:
+        - funlen
+      text: persisterLoop
+
+    # many analysis tests have non-english words
+    # lots of false alarms on duplicate code
+    - path: ^analysis/.*_test\.go$
+      linters:
+        - misspell
+        - dupl
+
+    # used in some analyzers
+    - path: analysis/lang/
+      linters:
+        - stylecheck
+      text: ST1018
+
+    # many language specific analyzers have
+    # non-english words or non-word substrings
+    # lots of false alrams on duplicate code
+    - path: ^analysis/lang/.*\.go$
+      linters:
+        - misspell
+        - dupl
+        - gomnd
+#        - stylecheck
+        - gocyclo
+        - funlen
+
+    # allow init here
+    - path: analysis/lang/in/scripts.go
+      linters:
+        - gochecknoinits
+
+    # and allow init here
+    - path: analysis/freq.go
+      linters:
+        - gochecknoinits
+
+    - path: search/searcher/search_fuzzy.go
+      linters:
+        - gochecknoinits
+
+    # has long regexp
+    - path: analysis/tokenizer/web.go
+      linters:
+        - lll
+
+    # needs rewrite to avoid fallthrough
+    # skipping funlen,gocyclo since ported
+    - path: analysis/char/asciifolding.go
+      linters:
+        - gocritic
+        - funlen
+        - gocyclo
+
+    # many hard-coded values
+    - path: numeric/geo/sloppy.go
+      linters:
+        - gomnd
+        - gochecknoinits
+    - path: numeric/prefix_coded.go
+      linters:
+        - gomnd
+
+    # allow init methods for our size calculations
+    - path: size.go
+      linters:
+        - gochecknoinits
+
+    # https://github.com/go-critic/go-critic/issues/926
+    - linters:
+        - gocritic
+      text: "unnecessaryDefer:"
+
+    # until we make final decision on config
+    - linters:
+        - gocritic
+      text: "config is heavy"
+
+run:
+  skip-dirs:
+    - test/testdata_etc
+    - internal/cache
+    - internal/renameio
+    - internal/robustio
+
+# golangci.com configuration
+# https://github.com/golangci/golangci/wiki/Configuration
+service:
+  golangci-lint-version: 1.23.x # use the fixed version to not introduce new linters unexpectedly
+  prepare:
+    - echo "here I can run custom commands, but no preparation needed for this repo"

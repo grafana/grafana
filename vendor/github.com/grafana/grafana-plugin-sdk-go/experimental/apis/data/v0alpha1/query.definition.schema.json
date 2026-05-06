@@ -1,0 +1,71 @@
+{
+  "properties": {
+    "discriminators": {
+      "items": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "DiscriminatorField is the field used to link behavior to this specific\nquery type.  It is typically \"queryType\", but can be another field if necessary"
+          },
+          "value": {
+            "type": "string",
+            "description": "The discriminator value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "field",
+          "value"
+        ]
+      },
+      "type": "array",
+      "description": "Multiple schemas can be defined using discriminators"
+    },
+    "description": {
+      "type": "string",
+      "description": "Describe whe the query type is for"
+    },
+    "schema": {
+      "$ref": "https://json-schema.org/draft-04/schema#",
+      "type": "object",
+      "description": "The query schema represents the properties that can be sent to the API\nIn many cases, this may be the same properties that are saved in a dashboard\nIn the case where the save model is different, we must also specify a save model"
+    },
+    "examples": {
+      "items": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Version identifier or empty if only one exists"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optionally explain why the example is interesting"
+          },
+          "saveModel": {
+            "additionalProperties": true,
+            "type": "object",
+            "description": "An example value saved that can be saved in a dashboard"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object"
+      },
+      "type": "array",
+      "description": "Examples (include a wrapper) ideally a template!"
+    },
+    "changelog": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "description": "Changelog defines the changed from the previous version\nAll changes in the same version *must* be backwards compatible\nOnly notable changes will be shown here, for the full version history see git!"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "schema",
+    "examples"
+  ]
+}
