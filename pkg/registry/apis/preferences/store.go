@@ -58,6 +58,9 @@ func (s *preferencesStorage) List(ctx context.Context, options *internalversion.
 
 	// Append user+team preferences
 	groups := user.GetGroups()
+	if len(groups) != len(user.GetTeams()) {
+		return nil, fmt.Errorf("teams not resolved!!!!!")
+	}
 	append := func(name string) error {
 		info, _ := utils.ParseOwnerFromName(name)
 		switch info.Owner {
