@@ -25,11 +25,12 @@ import (
 //
 // TableHintValues (keys are uppercase per schemads):
 //
-//	Log stream selectors always use Loki's range API (/query_range); the instant API does not support log queries.
+//	INSTANT          — use Loki instant query API (optional; default is range)
 //	STEP('30s')      — range query step / resolution (must parse as a Grafana duration; invalid values fail the query)
+//	LIMIT('5000')    — max log lines (digits only); alternatively use schemas.Query.limit on the query payload
 //	DIRECTION('forward'|'backward')
 //
-// Row count uses schemas.Query.limit (SQL LIMIT pushdown), not a table hint.
+// Row count prefers schemas.Query.limit when set; LIMIT hint is used when the query limit is absent.
 func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataRequest, map[string]struct{}, map[string]error) {
 	if req == nil || len(req.Queries) == 0 {
 		return req, nil, nil
@@ -45,7 +46,6 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 	sqlErrors := make(map[string]error)
 
 	var tableLabel string
-
 	for _, q := range req.Queries {
 		var sq schemas.Query
 		if err := json.Unmarshal(q.JSON, &sq); err != nil {
@@ -85,17 +85,19 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 			continue
 		}
 
+		isInstant := hintHasFlag(hints, "INSTANT")
 		stepStr := hintGet(hints, "STEP")
+		limitStr := hintGet(hints, "LIMIT")
 		dirStr := strings.ToLower(hintGet(hints, "DIRECTION"))
 
 		qt := "range"
-
-		maxLines := int64(0)
-		if sq.Limit != nil && *sq.Limit > 0 {
-			maxLines = *sq.Limit
+		if isInstant {
+			qt = "instant"
 		}
 
+		maxLines := pickMaxLines(sq.Limit, limitStr)
 		stepForModel := ""
+
 		var stepDur time.Duration
 		if stepStr != "" {
 			var err error
@@ -165,6 +167,20 @@ func directionPtr(dir string) *string {
 	}
 }
 
+func pickMaxLines(limit *int64, hintLimit string) int64 {
+	if limit != nil && *limit > 0 {
+		return *limit
+	}
+	if hintLimit == "" {
+		return 0
+	}
+	n, err := strconv.ParseInt(strings.TrimSpace(hintLimit), 10, 64)
+	if err != nil || n < 1 {
+		return 0
+	}
+	return n
+}
+
 func hintGet(hints map[string]string, upperKey string) string {
 	if hints == nil {
 		return ""
@@ -178,6 +194,21 @@ func hintGet(hints map[string]string, upperKey string) string {
 		}
 	}
 	return ""
+}
+
+func hintHasFlag(hints map[string]string, upperKey string) bool {
+	if hints == nil {
+		return false
+	}
+	if _, ok := hints[upperKey]; ok {
+		return true
+	}
+	for k := range hints {
+		if strings.EqualFold(k, upperKey) {
+			return true
+		}
+	}
+	return false
 }
 
 // buildLogQLExpr builds a LogQL stream selector for the table row plus label filters.
