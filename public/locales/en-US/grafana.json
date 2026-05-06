@@ -5280,10 +5280,6 @@
       },
       "pane-header": "Add"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Close 'Add Panel' widget",
-      "tooltip-close-widget": "Close widget"
-    },
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",
@@ -5293,34 +5289,6 @@
     "alert-rules-drawer": {
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
-    },
-    "annotation-settings-edit": {
-      "apply": "Apply",
-      "delete": "Delete",
-      "description-color-annotation-event-markers": "Color to use for the annotation event markers",
-      "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
-      "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
-      "error-loading-panels": "Failed to load panel plugins",
-      "label-color": "Color",
-      "label-data-source": "Data source",
-      "label-enabled": "Enabled",
-      "label-hidden": "Hidden",
-      "label-name": "Name",
-      "label-show-in": "Show in",
-      "placeholder-choose-panels": "Choose panels",
-      "preview-in-dashboard": "Preview in dashboard",
-      "query": "Query",
-      "title-annotation-support-source": "No annotation support for this data source"
-    },
-    "annotation-settings-list": {
-      "aria-label-delete": "Delete query with title \"{{title}}\"",
-      "built-in": "{{name}} (Built-in)",
-      "data-source": "Data source",
-      "disabled": "(Disabled) {{name}}",
-      "new-query": "New query",
-      "query-name": "Query name",
-      "tooltip-move-down": "Move down",
-      "tooltip-move-up": "Move up"
     },
     "auto-grid": {
       "description": "Panels resize to fit and form uniform grids",
@@ -5829,18 +5797,6 @@
         "transform-data": "Transform data"
       }
     },
-    "get-panel-filters": {
-      "description": {
-        "annotation-following-panels": "Do not send annotation data to the following panels",
-        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
-        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
-      },
-      "label": {
-        "all-panels": "All panels",
-        "all-panels-except": "All panels except",
-        "selected-panels": "Selected panels"
-      }
-    },
     "get-panel-frame-category": {
       "descriptor": {
         "title": {
@@ -6087,24 +6043,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Raw data"
-    },
-    "panel-editor-unconnected": {
-      "editor-actions": {
-        "apply": "Apply",
-        "discard": "Discard",
-        "save": "Save",
-        "save-library-panel": "Save library panel",
-        "title-apply-changes-and-save-dashboard": "Apply changes and save dashboard",
-        "title-apply-changes-and-save-library-panel": "Apply changes and save library panel",
-        "title-apply-changes-dashboard": "Apply changes and go back to dashboard",
-        "title-undo-all-changes": "Undo all changes"
-      },
-      "table-view-label-table-view": "Table view",
-      "title-unlink": "Disconnects this panel from the library panel so that you can edit it regularly.",
-      "unlink": "Unlink"
-    },
     "panel-links": {
       "aria-label-panel-links": "Panel links"
     },
@@ -6140,18 +6078,6 @@
           "no-template-variables-found": "No template variables found"
         }
       }
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Row options"
-    },
-    "row-options-form": {
-      "cancel": "Cancel",
-      "label-repeat-for": "Repeat for",
-      "label-title": "Title",
-      "update": "Update"
-    },
-    "row-options-modal": {
-      "title-row-options": "Row options"
     },
     "rows-layout": {
       "cancel": "Cancel",
@@ -6307,9 +6233,6 @@
     "source-link": {
       "title": "Source ({{provider}})",
       "tooltip": "View source file in repository"
-    },
-    "sub-menu-un-connected": {
-      "aria-label-template-variables": "Template variables"
     },
     "support-snapshot-service": {
       "description": {
@@ -6526,16 +6449,6 @@
       "discard": "Discard",
       "title-unsaved-changes": "Unsaved changes"
     },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Delete row",
-      "learn-more": "Learn more",
-      "title": {
-        "delete-row": "Delete row"
-      }
-    },
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
       "invalid-json": "Not valid JSON",
@@ -6566,28 +6479,6 @@
     },
     "view-panel": {
       "not-found": "Panel not found"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Change visualization",
-      "aria-label-close": "Close options pane",
-      "aria-label-show": "Show options pane",
-      "tooltip-click-to-change-visualization": "Click to change visualization",
-      "tooltip-close": "Close options pane",
-      "tooltip-show": "Show options pane"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Search for...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Reusable panels you can share between multiple dashboards."
-        },
-        "label": {
-          "library-panels": "Library panels",
-          "suggestions": "Suggestions",
-          "visualizations": "Visualizations"
-        }
-      },
-      "title-close": "Close"
     },
     "viz-panel": {
       "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
@@ -16489,32 +16380,7 @@
       "usage-title": "Showing usages for: {{variableId}}"
     }
   },
-  "variable": {
-    "adhoc": {
-      "placeholder": "Select value"
-    },
-    "dropdown": {
-      "placeholder": "Enter variable value"
-    },
-    "picker": {
-      "link-all": "All",
-      "option-all": "All",
-      "option-selected-values": "Selected ({{numSelected}})",
-      "option-tooltip": "Clear selections"
-    },
-    "textbox": {
-      "placeholder": "Enter variable value"
-    }
-  },
   "variables": {
-    "ad-hoc-filter": {
-      "label-and": "AND"
-    },
-    "ad-hoc-filter-key": {
-      "plus-segment": {
-        "aria-label-add-filter": "Add Filter"
-      }
-    },
     "create-ad-hoc-variable-adapter": {
       "description": {
         "add-keyvalue-filters-on-the-fly": "Add key/value filters on the fly."
@@ -16556,9 +16422,6 @@
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "No renamed or missing variables found."
     },
-    "picker-renderer": {
-      "couldnt-load-variable": "Couldn't load variable"
-    },
     "query-variable-refresh-select": {
       "description-update-values-variable": "When to update the values of this variable",
       "label-refresh": "Refresh"
@@ -16595,11 +16458,6 @@
       "value-header": "Value",
       "value-placeholder": "Value"
     },
-    "text-box-variable-editor": {
-      "name-default-value": "Default value",
-      "placeholder-default-value-if-any": "default value, if any",
-      "text-options": "Text options"
-    },
     "transform-usages-to-network": {
       "result": {
         "label": {
@@ -16613,9 +16471,6 @@
       "renamed-or-missing-variables": "Renamed or missing variables",
       "tooltip-renamed-or-missing-variables": "Click to expand a list with all variable references that have been renamed or are missing from the dashboard.",
       "variable": "Variable"
-    },
-    "variable-options": {
-      "aria-label-toggle-all-values": "Toggle all values"
     },
     "variable-usages-button": {
       "tooltip-show-usages": "Show usages"
