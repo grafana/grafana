@@ -49,10 +49,10 @@ func ValidateSubtreeMatchers(matchers config.Matchers) error {
 // MergeResult represents the result of merging two Alertmanager configurations.
 // It contains the unified configuration and maps of renamed receivers and time intervals.
 //
-// Identifier, ExtraRoute and ExtraInhibitRules are populated by GetMergedAlertmanagerConfig
+// Identifier, ExtraRoute and ExtraInhibitRules are populated by MergeExtraConfig
 // when the merge consumed an imported (Mimir-format) configuration; they expose the
 // imported route subtree and inhibit rules separately so callers can register them as
-// managed routes / managed inhibit rules. Plain calls to Merge leave these fields zero.
+// managed routes / managed inhibit rules.
 type MergeResult struct {
 	Config definitions.PostableUserConfig
 	RenameResources
@@ -160,10 +160,12 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 		TimeIntervals: renamedTimeIntervals,
 	}
 
+	extraRoute := mcfg.Route
+	RenameResourceUsagesInRoutes([]*definition.Route{extraRoute}, renamed)
+
 	route := cfg.AlertmanagerConfig.Route
 	inhibitRules := cfg.AlertmanagerConfig.InhibitRules
 	if len(mimirCfg.MergeMatchers) > 0 {
-		RenameResourceUsagesInRoutes([]*definition.Route{mcfg.Route}, renamed)
 		if route == nil {
 			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: cannot merge into undefined routing tree")
 		}
@@ -191,8 +193,6 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 		ManagedInhibitionRules: cfg.ManagedInhibitionRules,
 	}
 
-	extraRoute := mcfg.Route
-	RenameResourceUsagesInRoutes([]*definition.Route{extraRoute}, renamed)
 	return MergeResult{
 		Config:            mergedConfig,
 		RenameResources:   renamed,
@@ -203,7 +203,7 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 }
 
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by applying suffixes. Returns renamed resources for tracking adjustments made.
-func DeduplicateResources(a, b definition.PostableApiAlertingConfig, suffix string) (RenameResources, error) {
+func DeduplicateResources(a, b definition.PostableApiAlertingConfig, suffix string) RenameResources {
 	_, renamedReceivers := MergeReceivers(a.Receivers, b.Receivers, suffix)
 
 	_, renamedTimeIntervals := MergeTimeIntervals(
@@ -216,7 +216,7 @@ func DeduplicateResources(a, b definition.PostableApiAlertingConfig, suffix stri
 	return RenameResources{
 		Receivers:     renamedReceivers,
 		TimeIntervals: renamedTimeIntervals,
-	}, nil
+	}
 }
 
 // MergeTimeIntervals merges existing and incoming time intervals and mute intervals, ensuring unique names by applying suffixes.

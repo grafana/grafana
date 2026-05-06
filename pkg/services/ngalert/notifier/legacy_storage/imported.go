@@ -133,10 +133,7 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 		return nil, nil
 	}
 
-	renamed, err := merge.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.identifier)
-	if err != nil {
-		return nil, fmt.Errorf("failed to deduplicate imported config resources: %w", err)
-	}
+	renamed := merge.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.identifier)
 
 	merge.RenameResourceUsagesInRoutes([]*definition.Route{e.importedConfig.Route}, renamed)
 
