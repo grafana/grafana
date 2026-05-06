@@ -18,6 +18,8 @@ import {
   CREDENTIALS_AUTHENTICATION_WARNING_MESSAGE,
 } from './ConfigEditor';
 
+jest.mock('app/core/copy/appNotification');
+
 const datasource = new CloudWatchDatasource(CloudWatchSettings, setupMockedTemplateService());
 const loadDataSourceMock = jest.fn();
 

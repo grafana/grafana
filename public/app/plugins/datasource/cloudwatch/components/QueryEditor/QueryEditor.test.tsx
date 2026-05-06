@@ -18,6 +18,8 @@ import {
 } from '../../mocks/queries';
 import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 
+jest.mock('app/core/copy/appNotification');
+
 import { QueryEditor } from './QueryEditor';
 
 // the following three fields are added to legacy queries in the dashboard migrator
