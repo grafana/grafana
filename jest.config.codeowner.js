@@ -147,6 +147,19 @@ function writeCoverageSummaryArtifact(coverageResults) {
     return;
   }
 
+  const files = {};
+  if (coverageResults.files) {
+    for (const file of coverageResults.files) {
+      const relativePath = file.sourcePath.replace(process.cwd() + '/', '');
+      files[relativePath] = {
+        lines: { pct: file.summary.lines.pct },
+        statements: { pct: file.summary.statements.pct },
+        functions: { pct: file.summary.functions.pct },
+        branches: { pct: file.summary.branches.pct },
+      };
+    }
+  }
+
   const summary = {
     team: codeownerName,
     commit: process.env.GITHUB_SHA || 'unknown',
@@ -157,6 +170,7 @@ function writeCoverageSummaryArtifact(coverageResults) {
       functions: { pct: coverageResults.summary.functions.pct },
       branches: { pct: coverageResults.summary.branches.pct },
     },
+    files,
   };
 
   try {
