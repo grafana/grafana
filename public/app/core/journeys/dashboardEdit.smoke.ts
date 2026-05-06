@@ -14,6 +14,8 @@ const EDIT_BUTTON = 'data-testid Edit dashboard button';
 const SAVE_BUTTON = 'data-testid Save dashboard button';
 const EXIT_BUTTON = 'data-testid Exit edit mode button';
 const DASHBOARD_SAVE_DRAWER_BUTTON = 'data-testid Save dashboard drawer button';
+const TIME_PICKER_OPEN_BUTTON = 'data-testid TimePicker Open Button';
+const SAVE_TIMERANGE_CHECKBOX = 'data-testid Dashboard settings Save Dashboard Modal Save timerange checkbox';
 
 async function openFixtureAndEdit(page: Page): Promise<boolean> {
   await page.goto(FIXTURE_PATH);
@@ -29,10 +31,41 @@ async function openFixtureAndEdit(page: Page): Promise<boolean> {
 }
 
 /**
- * Enter edit mode, click Save, then submit the save drawer. End: success.
+ * Enter edit mode, dirty the dashboard via a time-range change, click Save,
+ * then submit the save drawer. End: success.
+ *
+ * The fixture has no panel changes to commit, so the save drawer's primary
+ * button stays disabled on a no-diff dashboard. Picking a time-range preset
+ * + ticking "Save current time range" creates a real diff so the drawer's
+ * submit enables and `grafana_dashboard_saved` fires.
  */
 async function saveEdit(page: Page): Promise<void> {
   if (!(await openFixtureAndEdit(page))) {
+    return;
+  }
+
+  // Dirty the dashboard. Time range alone doesn't dirty the model; the
+  // drawer's "Save current time range" checkbox creates the diff. Pick a
+  // preset that differs from the dashboard's currently-saved range (the URL
+  // reflects whatever was persisted last) so back-to-back runs don't all
+  // pick the same range and hit a no-diff state.
+  const TIME_PRESETS: Array<{ label: string; from: string }> = [
+    { label: 'Last 30 minutes', from: 'now-30m' },
+    { label: 'Last 1 hour', from: 'now-1h' },
+    { label: 'Last 3 hours', from: 'now-3h' },
+    { label: 'Last 6 hours', from: 'now-6h' },
+    { label: 'Last 12 hours', from: 'now-12h' },
+    { label: 'Last 24 hours', from: 'now-24h' },
+  ];
+  const currentFrom = new URL(page.url()).searchParams.get('from') ?? '';
+  const candidates = TIME_PRESETS.filter((p) => p.from !== currentFrom);
+  const preset = candidates[Math.floor(Math.random() * candidates.length)];
+  try {
+    await page.getByTestId(TIME_PICKER_OPEN_BUTTON).click({ timeout: 3_000 });
+    await page.getByText(preset.label, { exact: true }).first().click({ timeout: 3_000 });
+    await page.waitForTimeout(300 + jitter(300));
+  } catch {
+    // Time picker change failed; bail and let the journey time out.
     return;
   }
 
@@ -40,12 +73,22 @@ async function saveEdit(page: Page): Promise<void> {
     await page.getByTestId(SAVE_BUTTON).waitFor({ state: 'visible', timeout: 5_000 });
     await page.getByTestId(SAVE_BUTTON).click();
   } catch {
-    // No save button surfaced; bail and let the journey time out.
     return;
   }
 
-  // Confirm save via the drawer's primary button. If the drawer doesn't open
-  // (no diff), the journey will instead time out — acceptable for smoke.
+  // Toggle via dispatchEvent: a real `.click()` is intercepted by the
+  // label-description span and a force click can land outside the headless
+  // viewport. Dispatching `click` directly on the input element fires the
+  // change handler reliably.
+  try {
+    const cb = page.getByTestId(SAVE_TIMERANGE_CHECKBOX);
+    await cb.waitFor({ state: 'attached', timeout: 5_000 });
+    await cb.dispatchEvent('click');
+    await page.waitForTimeout(200);
+  } catch {
+    return;
+  }
+
   try {
     await page.getByTestId(DASHBOARD_SAVE_DRAWER_BUTTON).waitFor({ state: 'visible', timeout: 5_000 });
     await page.getByTestId(DASHBOARD_SAVE_DRAWER_BUTTON).click();
