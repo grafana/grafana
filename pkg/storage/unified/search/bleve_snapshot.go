@@ -522,6 +522,7 @@ const (
 	coldStartOutcomeDownloadedAfterWait = "downloaded_after_wait"
 	coldStartOutcomeWaitTimedOut        = "wait_timed_out"
 	coldStartOutcomeLockError           = "lock_error"
+	coldStartOutcomeContextCanceled     = "context_canceled"
 )
 
 // Wait-for-leader timing. Package-level vars so tests can shrink them.
@@ -538,7 +539,7 @@ var (
 //   - (idx, name, rv, nil, nil) -- another replica's snapshot was downloaded; caller skips build.
 //   - (nil, "", 0, lock, nil)   -- caller is the leader; build, upload immediately, then release lock.
 //   - (nil, "", 0, nil, nil)    --  no snapshot and no leader slot in time; caller builds alone.
-//   - (nil, "", 0, nil, err)    -- context cancelled mid-coordination.
+//   - (nil, "", 0, nil, err)    -- context canceled mid-coordination.
 //
 // Each iteration, up to coldStartTotalWait:
 //  1. Probe for a usable same-version snapshot. If found, download it.
@@ -597,6 +598,7 @@ func (b *bleveBackend) coordinateColdStartBuild(
 	for {
 		idx, name, rv, err := b.tryDownloadColdStartSnapshot(ctx, key, resourceDir, lastImportTime, probeMaxAge, logger)
 		if err != nil {
+			outcome = coldStartOutcomeContextCanceled
 			return nil, "", 0, nil, err
 		}
 		if idx != nil {
@@ -615,6 +617,7 @@ func (b *bleveBackend) coordinateColdStartBuild(
 			// Propagate context cancellation so callers can abort cleanly
 			// instead of falling through to a from-scratch build.
 			if ctxErr := ctx.Err(); ctxErr != nil {
+				outcome = coldStartOutcomeContextCanceled
 				return nil, "", 0, nil, ctxErr
 			}
 			logger.Warn("Cold-start lock acquire failed; will build alone", "err", err)
@@ -624,6 +627,7 @@ func (b *bleveBackend) coordinateColdStartBuild(
 
 		select {
 		case <-ctx.Done():
+			outcome = coldStartOutcomeContextCanceled
 			return nil, "", 0, nil, ctx.Err()
 		case <-deadline.C:
 			outcome = coldStartOutcomeWaitTimedOut

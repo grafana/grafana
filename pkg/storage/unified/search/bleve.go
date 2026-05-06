@@ -722,7 +722,13 @@ func (b *bleveBackend) BuildIndex(
 					index, fileIndexName, indexRV = dlIdx, dlName, dlRV
 				}
 
-				if index == nil {
+				// Cold-start coordination only runs when MaxIndexAge>0; with
+				// MaxIndexAge=0 the probe is a no-op (all freshness filters
+				// reject), so the lock+wait would only serialise N replicas'
+				// from-scratch builds without any snapshot-reuse upside. The
+				// MaxIndexAge=0 semantics deserve a wider revisit (covered by
+				// the follow-up issue), at which point this gate can be removed.
+				if index == nil && b.opts.Snapshot.MaxIndexAge > 0 {
 					dlIdx, dlName, dlRV, lock, coordErr := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logWithDetails)
 					if coordErr != nil {
 						if ctxErr := ctx.Err(); ctxErr != nil {
@@ -845,9 +851,7 @@ func (b *bleveBackend) BuildIndex(
 				// Lock lost during the build. Another replica may already
 				// be uploading; skip and let the periodic tick reconcile.
 				logWithDetails.Warn("Cold-start leader lock lost during build; skipping immediate upload")
-				if b.indexMetrics != nil {
-					b.indexMetrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSkipLockLost).Inc()
-				}
+				b.recordSnapshotUploadStatus(snapshotUploadStatusSkipLockLost)
 			default:
 				baselineMutations, mErr := idx.getSnapshotMutationCount()
 				if mErr != nil {
@@ -856,9 +860,7 @@ func (b *bleveBackend) BuildIndex(
 				uploadKey, uploadRV, upErr := b.snapshotCopyAndUpload(ctx, key, idx, coldStartLeaderLock)
 				if upErr != nil {
 					logWithDetails.Warn("Cold-start leader immediate snapshot upload failed", "err", upErr)
-					if b.indexMetrics != nil {
-						b.indexMetrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusError).Inc()
-					}
+					b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 				} else {
 					if mErr == nil {
 						if subErr := idx.subtractSnapshotMutationCount(baselineMutations); subErr != nil {
@@ -866,9 +868,7 @@ func (b *bleveBackend) BuildIndex(
 						}
 					}
 					b.setUploadTracking(key, time.Now())
-					if b.indexMetrics != nil {
-						b.indexMetrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess).Inc()
-					}
+					b.recordSnapshotUploadStatus(snapshotUploadStatusSuccess)
 					logWithDetails.Info("Cold-start leader uploaded freshly-built snapshot", "snapshot_key", uploadKey.String(), "snapshot_rv", uploadRV)
 				}
 			}

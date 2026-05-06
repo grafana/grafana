@@ -1475,6 +1475,8 @@ func TestColdStart_LockBackendContextErrorPropagates(t *testing.T) {
 	_, _, err := ct.coordinate(ctx, time.Time{})
 	require.ErrorIs(t, err, context.Canceled)
 	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeLockError), "context cancel must not be recorded as lock_error")
+	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
+	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeContextCanceled))
 }
 
 func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
@@ -1491,6 +1493,8 @@ func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
 
 	_, _, err := ct.coordinate(ctx, time.Time{})
 	require.ErrorIs(t, err, context.Canceled)
+	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
+	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeContextCanceled))
 }
 
 // runBuildIndexColdStart wires a bleveBackend around store and calls
@@ -1557,38 +1561,6 @@ func TestBuildIndex_ColdStartLeaderUploads(t *testing.T) {
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 
-// TestColdStart_NoProbeWindowSkipsWaitLoopProbe verifies that when
-// MaxIndexAge is zero the wait-loop probe is skipped (no list/get against
-// the store) and coordination relies on the lock alone.
-func TestColdStart_NoProbeWindowSkipsWaitLoopProbe(t *testing.T) {
-	store := newColdStartFakeStore()
-	store.setLockHeld(true)
-	be, metrics := newTestBleveBackend(t, SnapshotOptions{
-		Store:       store,
-		MinDocCount: 1,
-		// MaxIndexAge intentionally zero.
-	})
-	ns := newTestNsResource()
-	resourceDir := filepath.Join(be.opts.Root, ns.Namespace, ns.Resource+"."+ns.Group)
-	withColdStartTimings(t, 5*time.Millisecond, time.Second)
-
-	// Release the lock during the wait; we should acquire on the next
-	// iteration without ever probing.
-	go func() {
-		time.Sleep(15 * time.Millisecond)
-		store.setLockHeld(false)
-	}()
-
-	idx, _, _, lock, err := be.coordinateColdStartBuild(context.Background(), ns, resourceDir, time.Time{}, be.log)
-	require.NoError(t, err)
-	assert.Nil(t, idx)
-	require.NotNil(t, lock)
-	t.Cleanup(func() { _ = lock.Release() })
-
-	assert.Zero(t, store.listCalls.Load(), "wait-loop probe must not list when no freshness window is configured")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
-}
-
 // TestBuildIndex_ColdStartLeaderLockLostDuringBuild verifies that if the
 // leader's lock is lost while the builder is running, the immediate upload
 // is skipped (recorded as skip_lock_lost) but the build itself still
@@ -1622,6 +1594,37 @@ func TestBuildIndex_ColdStartTimeoutBuildsAlone(t *testing.T) {
 	assert.Equal(t, int32(1), builderCalled.Load(), "build alone after timeout")
 	assert.Zero(t, store.uploadCalls.Load(), "no leader upload on timeout path")
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeWaitTimedOut)))
+}
+
+// TestBuildIndex_ColdStartSkippedWhenMaxIndexAgeZero verifies that
+// BuildIndex skips cold-start coordination entirely when MaxIndexAge=0:
+// the probe would be a no-op (all freshness filters reject) so the
+// lock+wait would only serialise duplicate from-scratch builds without
+// any snapshot-reuse upside. With the gate, the builder runs in parallel
+// across replicas (today's behaviour without this PR's coordination).
+func TestBuildIndex_ColdStartSkippedWhenMaxIndexAgeZero(t *testing.T) {
+	store := newColdStartFakeStore()
+	store.setLockHeld(true) // would force the wait loop if cold-start ran
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		// MaxIndexAge intentionally zero.
+	})
+
+	builderCalled := atomic.Int32{}
+	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, nil, "startup",
+		func(resource.ResourceIndex) (int64, error) {
+			builderCalled.Add(1)
+			return 1, nil
+		},
+		nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run (cold-start coordination is skipped)")
+	assert.Zero(t, store.lockAcquireCalls.Load(), "cold-start must not attempt the lock when MaxIndexAge=0")
+	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
+	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeWaitTimedOut)))
 }
 
 // TestBuildIndex_ColdStartContextCancelPropagates verifies that a context
