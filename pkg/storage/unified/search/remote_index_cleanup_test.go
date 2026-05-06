@@ -37,7 +37,7 @@ const (
 
 func mkMeta(version string, rv int64, uploadedAt time.Time) *IndexMeta {
 	return &IndexMeta{
-		GrafanaBuildVersion:   version,
+		BuildVersion:          version,
 		LatestResourceVersion: rv,
 		UploadTimestamp:       uploadedAt,
 	}
@@ -231,7 +231,7 @@ func TestSelectSnapshotsToDelete_NeverDeletesDownloadPick(t *testing.T) {
 				}},
 				runningBuildVersion: running,
 			}
-			picked, ok := be.pickBestSnapshot(metas, now)
+			picked, ok := be.pickBestSnapshot(metas, now, be.log)
 			require.Truef(t, ok, "test case must yield a pickable snapshot — if a no-pick scenario is needed, add a dedicated test case rather than letting this one short-circuit")
 
 			deleted := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
@@ -501,6 +501,12 @@ func (s *recordingStore) ListIndexes(ctx context.Context, r resource.NamespacedR
 	s.mu.Unlock()
 	return s.inner.ListIndexes(ctx, r)
 }
+func (s *recordingStore) ListIndexKeys(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.inner.ListIndexKeys(ctx, r)
+}
+func (s *recordingStore) GetIndexMeta(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	return s.inner.GetIndexMeta(ctx, r, k)
+}
 func (s *recordingStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
 	s.mu.Lock()
 	s.deleteIndex[r.Namespace]++
@@ -513,8 +519,8 @@ func (s *recordingStore) CleanupIncompleteUploads(ctx context.Context, r resourc
 	s.mu.Unlock()
 	return s.inner.CleanupIncompleteUploads(ctx, r, minAge)
 }
-func (s *recordingStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource) (IndexStoreLock, error) {
-	return s.inner.LockBuildIndex(ctx, r)
+func (s *recordingStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
 func (s *recordingStore) UploadIndex(ctx context.Context, r resource.NamespacedResource, dir string, m IndexMeta) (ulid.ULID, error) {
 	return s.inner.UploadIndex(ctx, r, dir, m)
@@ -622,6 +628,12 @@ func (s *controllableLockStore) LockNamespaceForCleanup(_ context.Context, ns st
 func (s *controllableLockStore) ListIndexes(ctx context.Context, r resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
 	return s.inner.ListIndexes(ctx, r)
 }
+func (s *controllableLockStore) ListIndexKeys(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.inner.ListIndexKeys(ctx, r)
+}
+func (s *controllableLockStore) GetIndexMeta(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	return s.inner.GetIndexMeta(ctx, r, k)
+}
 func (s *controllableLockStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
 	return s.inner.DeleteIndex(ctx, r, k)
 }
@@ -632,8 +644,8 @@ func (s *controllableLockStore) CleanupIncompleteUploads(ctx context.Context, r 
 	}
 	return out, err
 }
-func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource) (IndexStoreLock, error) {
-	return s.inner.LockBuildIndex(ctx, r)
+func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
 func (s *controllableLockStore) UploadIndex(ctx context.Context, r resource.NamespacedResource, dir string, m IndexMeta) (ulid.ULID, error) {
 	return s.inner.UploadIndex(ctx, r, dir, m)

@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "A kiválasztott mappához tartozó adattár nem található. Kérjük, ellenőrizze, hogy a mappa megfelelően van-e konfigurálva.",
         "repository-not-found-title": "Nem található adattár"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Hiba történt az erőforrások áthelyezésekor",
       "error-no-target-folder-path": "A célmappa elérési útvonala érvénytelen vagy üres. Kérjük, válassza ki újra.",
       "move-total": "Összességében ez a következőket érinti:",
@@ -5269,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Beállítások"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5671,7 +5672,7 @@
         "title": "Változók"
       },
       "variable": {
-        "change-type": "Módosítás",
+        "change-type": "",
         "change-type-aria-label": "Változótípus módosítása",
         "custom-options": {
           "apply": "Alkalmaz",
@@ -5988,7 +5989,7 @@
       "cancel": "Mégse",
       "common": {
         "copy": "Másolás",
-        "copy-or-duplicate": "Másolás/beillesztés vagy duplikálás",
+        "copy-tooltip": "",
         "delete": "Törlés",
         "duplicate": "Duplikálás",
         "layout": "Elrendezés",
@@ -6027,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Nem konfigurált panel. A konfigurációs beállítások megtekintéséhez nyissa meg a lapot.",
-      "configure-button": "Konfigurálás",
+      "configure-button": "",
       "configure-button-menu": "Menü átkapcsolása",
       "configure-visualization": "Vizualizáció konfigurálása",
       "empty-state-message": "Futtasson egy lekérdezést, hogy itt megjelenítse, vagy lépjen az összes megjelenítéshez, hogy hozzáadjon más paneltípusokat",
@@ -6269,10 +6270,8 @@
       "title-provisioned": "Kiépített irányítópult"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Egy irányítópult már létezik ugyanazzal a névvel a kijelölt mappában.<br/><2>Biztosan menti ezt az irányítópultot?</2>",
       "body-version-mismatch": "Valaki más frissítette ezt az irányítópultot<br/><2>Biztosan menti ezt az irányítópultot?</2>",
       "confirmText-save-and-overwrite": "Mentés és felülírás",
-      "title-name-exists": "Ütközés",
       "title-version-mismatch": "Ütközés"
     },
     "save-dashboard-form": {
@@ -7313,6 +7312,7 @@
       "terraform": "Felügyeli: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Nem sikerült áthelyezni az irányítópultot",
       "cancel-action": "Mégse",
       "current-file-not-found": "A jelenlegi irányítópultfájl nem található",
@@ -7325,10 +7325,6 @@
       "success-message": "Irányítópult sikeresen áthelyezve",
       "target-path-label": "Célútvonal",
       "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Egy irányítópult már létezik ugyanazzal a névvel a kijelölt mappában. Biztosan menti ezt az irányítópultot?",
-      "title-name-already-exists": "A név már létezik"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -15453,7 +15449,6 @@
       "forwards-time-aria-label": "Időtartomány mozgatása előre",
       "to": "vége",
       "zoom-out-button": "Időtartomány kicsinyítése",
-      "zoom-out-tooltip": "Időtartomány kicsinyítése <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Időtartomány kicsinyítése <br/> t -"
     },
     "time-range": {

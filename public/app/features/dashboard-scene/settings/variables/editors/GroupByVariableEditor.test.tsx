@@ -47,7 +47,16 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('GroupByVariableEditor', () => {
   beforeAll(() => {
-    mockBoundingClientRect();
+    mockBoundingClientRect({
+      width: 1000,
+      height: 1000,
+      x: 0,
+      y: 0,
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    });
   });
 
   it('renders GroupByVariableForm with correct props', async () => {

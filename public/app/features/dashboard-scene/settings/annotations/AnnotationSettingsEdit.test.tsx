@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
-import { mockBoundingClientRect } from '@grafana/test-utils';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -90,7 +90,8 @@ describe('AnnotationSettingsEdit', () => {
   }
 
   beforeAll(() => {
-    mockBoundingClientRect();
+    // For testing combobox
+    mockComboboxRect();
   });
 
   afterEach(() => {

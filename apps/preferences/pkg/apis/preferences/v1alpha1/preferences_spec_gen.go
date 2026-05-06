@@ -40,15 +40,15 @@ type PreferencesSpec struct {
 	// UID for the home dashboard
 	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 	// The timezone selection
-	// TODO: this should use the timezone defined in common
 	Timezone *string `json:"timezone,omitempty"`
 	// day of the week (sunday, monday, etc)
 	WeekStart *string `json:"weekStart,omitempty"`
-	// light, dark, empty is default
+	// user interface theme
 	Theme *string `json:"theme,omitempty"`
-	// Selected language (beta)
+	// Selected language
 	Language *string `json:"language,omitempty"`
 	// Selected locale (beta)
+	// TODO: Will be removed
 	RegionalFormat *string `json:"regionalFormat,omitempty"`
 	// Explore query history preferences
 	QueryHistory *PreferencesQueryHistoryPreference `json:"queryHistory,omitempty"`
