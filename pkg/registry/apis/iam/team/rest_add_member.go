@@ -19,17 +19,11 @@ import (
 )
 
 // TeamAddMemberREST exposes POST /teams/{name}/addmember as a server-side
-// helper that turns a single-user request into a Spec.Members write. The
-// handler routes through the team resource's dual-writer storage, so the
-// dual-writer mode (legacy primary, unified primary, or both) decides
-// where the row physically lands — addmember works in every mode without
-// any change at the call site.
+// helper that turns a single-user request into a Spec.Members write,
+// routed through the team resource's dual-writer storage.
 //
-// Concurrency: the apiserver's Update runs through unified storage's
-// optimistic-concurrency check (resourceVersion). When two writers race
-// the second one gets 409 Conflict and the handler returns it to the
-// caller as-is (single Get + Update, no in-handler retry). Callers are
-// expected to retry against fresh state.
+// Concurrency: single Get + Update, no in-handler retry. RV mismatch
+// surfaces as 409; callers refresh and retry.
 type TeamAddMemberREST struct {
 	getter  rest.Getter
 	updater rest.Updater
@@ -169,10 +163,14 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 			needUpdate = true
 		}
 		if needUpdate {
-			// Update returns 409 Conflict on RV mismatch; the handler
-			// surfaces it unchanged so the caller can refresh and retry.
+			// 409 surfaces unchanged; SQL deadlocks (which arrive as 500
+			// from unified storage) are converted so RetryOnConflict catches them.
 			if _, _, err := s.updater.Update(nsCtx, name, rest.DefaultUpdatedObjectInfo(t),
 				nil, nil, false, &metav1.UpdateOptions{}); err != nil {
+				if isRetryableTxnError(err) {
+					responder.Error(apierrors.NewConflict(teamResource.GroupResource(), name, err))
+					return
+				}
 				responder.Error(err)
 				return
 			}

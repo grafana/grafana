@@ -145,20 +145,11 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 		}
 	}
 
-	// TOCTOU note: the current-members read still happens outside the write
-	// tx (closed in a follow-up commit). The remaining hazard — two writers
-	// who Get at the same RV and then submit different Spec.Members lists,
-	// silently dropping each other's just-added members — is closed by the
-	// PreviousUpdated precondition plumbed through to legacy.UpdateTeam:
-	// the second writer's stale RV no longer matches, the SQL UPDATE
-	// matches 0 rows, and the store surfaces ErrTeamUpdateConflict, which
-	// the synchronizer's retry.RetryOnConflict converts into a fresh
-	// Get + recompute.
-	//
-	// The same-user-add race still relies on the UNIQUE(org_id, team_id,
-	// user_id) constraint surfacing as ErrTeamMemberAlreadyAdded → 409.
-	// A writer deleting a member that is already gone is a no-op DELETE —
-	// harmless.
+	// Concurrent writers are gated by the PreviousUpdated RV precondition
+	// in legacy.UpdateTeam: stale RV → ErrTeamUpdateConflict → 409, caller
+	// retries against fresh state. Same-user-add races still rely on the
+	// UNIQUE(org_id, team_id, user_id) constraint → ErrTeamMemberAlreadyAdded
+	// → 409. A delete of an already-gone member is a no-op DELETE.
 	currentMembers, err := s.listAllTeamMembers(ctx, ns, teamObj.Name)
 	if err != nil {
 		return oldObj, false, err
@@ -172,11 +163,8 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	if err != nil {
 		return oldObj, false, err
 	}
-	// Plumb the caller's resourceVersion through so legacy.UpdateTeam can
-	// gate the SQL UPDATE on it. RV format: ms-precision unix timestamp,
-	// produced by toTeamObject below; round-trips through DBTime cleanly
-	// (asymmetric ms/second wire format keeps it matching rows that older
-	// builds wrote at second precision).
+	// Plumb caller's RV (ms-precision unix timestamp) so UpdateTeam can
+	// gate the SQL UPDATE on it.
 	if rv := teamObj.GetResourceVersion(); rv != "" {
 		ms, parseErr := strconv.ParseInt(rv, 10, 64)
 		if parseErr != nil {
@@ -187,15 +175,11 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 
 	result, err := s.store.UpdateTeam(ctx, ns, updateCmd)
 	if err != nil {
-		// Race with another writer adding the same member first — surface as
-		// 409 so retry.RetryOnConflict (or the client) can re-read and recompute.
+		// Same-user-add race → 409.
 		if errors.Is(err, team.ErrTeamMemberAlreadyAdded) {
 			return oldObj, false, apierrors.NewConflict(teamResource.GroupResource(), name, err)
 		}
-		// Stale resourceVersion: another writer (often a peer Grafana
-		// instance running the same team-sync) committed since our Get.
-		// 409 lets the caller's retry.RetryOnConflict re-read and rebuild
-		// the desired Spec.Members against fresh state.
+		// Stale RV → 409 so the caller re-reads against fresh state.
 		if errors.Is(err, team.ErrTeamUpdateConflict) {
 			return oldObj, false, apierrors.NewConflict(teamResource.GroupResource(), name, err)
 		}

@@ -17,19 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 )
 
-// TeamRemoveMemberREST exposes POST /teams/{name}/removemember as the
-// inverse of TeamAddMemberREST: a server-side helper that filters one
-// user out of Spec.Members and writes the team back through the dual-
-// writer storage. Like add, it works in any dual-writer mode because it
-// goes through the same Get + Update path the apiserver uses for full
-// PUTs.
+// TeamRemoveMemberREST exposes POST /teams/{name}/removemember: the inverse
+// of TeamAddMemberREST. Filters one user out of Spec.Members and writes
+// the team back through the dual-writer storage.
 //
-// Idempotency: removing a user that's already absent returns 200 OK,
-// not an error.
-//
-// Concurrency: the underlying Update is RV-checked; on a race the
-// handler returns 409 Conflict to the caller (no in-handler retry) so
-// the caller can refresh and re-issue.
+// Idempotency: removing an already-absent user returns 200 OK.
+// Concurrency: single Get + Update, RV-checked; 409 on race, caller
+// refreshes and re-issues.
 type TeamRemoveMemberREST struct {
 	getter  rest.Getter
 	updater rest.Updater
@@ -128,10 +122,14 @@ func (s *TeamRemoveMemberREST) Connect(ctx context.Context, name string, _ runti
 		}
 		if removed {
 			t.Spec.Members = filtered
-			// Update returns 409 Conflict on RV mismatch; the handler
-			// surfaces it unchanged so the caller can refresh and retry.
+			// 409 surfaces unchanged; SQL deadlocks (which arrive as 500
+			// from unified storage) are converted so RetryOnConflict catches them.
 			if _, _, err := s.updater.Update(nsCtx, name, rest.DefaultUpdatedObjectInfo(t),
 				nil, nil, false, &metav1.UpdateOptions{}); err != nil {
+				if isRetryableTxnError(err) {
+					responder.Error(apierrors.NewConflict(teamResource.GroupResource(), name, err))
+					return
+				}
 				responder.Error(err)
 				return
 			}
