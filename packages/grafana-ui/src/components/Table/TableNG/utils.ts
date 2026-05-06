@@ -1,12 +1,10 @@
 import memoize from 'micro-memoize';
-import { type CSSProperties, type Key, type ReactNode } from 'react';
-import { type ColumnWidth, type ColumnWidths, type RenderRowProps, Row, type SortColumn } from 'react-data-grid';
+import { type CSSProperties } from 'react';
+import { type ColumnWidth, type ColumnWidths, type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { type Count, varPreLine } from 'uwrap';
 
 import {
-  DataHoverClearEvent,
-  DataHoverEvent,
   FieldType,
   type Field,
   formattedValueToString,
@@ -29,7 +27,6 @@ import {
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
-import { type PanelContext } from '../../PanelChrome';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
@@ -39,7 +36,6 @@ import { COLUMN, TABLE } from './constants';
 import { type TextAlign } from './styles';
 import {
   type TableRow,
-  type TableSummaryRow,
   type TableCellValue,
   type ColumnTypes,
   type FrameToRowsConverter,
@@ -1217,51 +1213,3 @@ export function parseStyleJson(rawValue: unknown): CSSProperties | void {
     }
   }
 }
-
-/**
- * @internal
- * Factory for the `renderRow` prop on DataGrid. Applies aria attributes and shared-crosshair event handlers.
- */
-export const renderRowFactory =
-  (
-    fields: Field[],
-    panelContext: PanelContext,
-    expandedRows: Set<string>,
-    enableSharedCrosshair: boolean,
-    getStableKey: (rowIdx: number) => string
-  ) =>
-  // eslint-disable-next-line react/display-name
-  (key: Key, props: RenderRowProps<TableRow, TableSummaryRow>): ReactNode => {
-    const { row } = props;
-    const rowIdx = row.__index;
-    const isExpanded = expandedRows.has(getStableKey(rowIdx));
-
-    // Don't render non-expanded child rows
-    if (row.__depth === 1) {
-      if (!isExpanded) {
-        return null;
-      }
-      return <Row key={key} aria-level={row.__index + 1} aria-expanded={isExpanded} {...props} />;
-    }
-
-    const handlers: Partial<typeof props> = {};
-    if (enableSharedCrosshair) {
-      const timeField = fields.find((f) => f.type === FieldType.time);
-      if (timeField) {
-        handlers.onMouseEnter = () => {
-          panelContext.eventBus.publish(
-            new DataHoverEvent({
-              point: {
-                time: timeField?.values[rowIdx],
-              },
-            })
-          );
-        };
-        handlers.onMouseLeave = () => {
-          panelContext.eventBus.publish(new DataHoverClearEvent());
-        };
-      }
-    }
-
-    return <Row key={key} {...props} {...handlers} />;
-  };

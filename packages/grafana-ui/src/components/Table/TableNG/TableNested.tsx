@@ -1,5 +1,3 @@
-import 'react-data-grid/lib/styles.css';
-
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
@@ -21,7 +19,7 @@ import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../utils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { buildColumnsFromFields } from './columnBuilder';
+import { buildColumnsFromFields, type ColumnBuildConfig } from './columnBuilder';
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
 import { RowExpander } from './components/RowExpander';
 import { COLUMN, TABLE } from './constants';
@@ -38,6 +36,7 @@ import {
   useScrollbarWidth,
   useSortedRows,
 } from './hooks';
+import { renderRowFactory } from './rowBuilder';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,
@@ -59,7 +58,6 @@ import {
   getDefaultRowHeight,
   getDisplayName,
   getVisibleFields,
-  renderRowFactory,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';

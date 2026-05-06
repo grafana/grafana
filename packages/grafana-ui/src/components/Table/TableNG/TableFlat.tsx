@@ -23,6 +23,7 @@ import {
   useScrollbarWidth,
   useSortedRows,
 } from './hooks';
+import { renderRowFactory } from './rowBuilder';
 import {
   type CellRootRenderer,
   type FromFieldsResult,
@@ -42,7 +43,6 @@ import {
   getCellLinks,
   getDefaultRowHeight,
   getVisibleFields,
-  renderRowFactory,
 } from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
