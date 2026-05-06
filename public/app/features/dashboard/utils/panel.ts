@@ -1,16 +1,5 @@
-import { isString as _isString } from 'lodash';
-
-import {
-  type TimeRange,
-  AppEvents,
-  rangeUtil,
-  dateMath,
-  type PanelModel as IPanelModel,
-  dateTimeAsMoment,
-  store,
-} from '@grafana/data';
+import { type TimeRange, AppEvents, type PanelModel as IPanelModel, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getTemplateSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
@@ -107,66 +96,6 @@ export const toggleLegend = (panel: PanelModel) => {
 export interface TimeOverrideResult {
   timeRange: TimeRange;
   timeInfo: string;
-}
-
-export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange): TimeOverrideResult {
-  const newTimeData = {
-    timeInfo: '',
-    timeRange: timeRange,
-  };
-
-  if (panel.timeFrom) {
-    const timeFromInterpolated = getTemplateSrv().replace(panel.timeFrom, panel.scopedVars);
-    const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
-    if (timeFromInfo.invalid) {
-      newTimeData.timeInfo = 'invalid time override';
-      return newTimeData;
-    }
-
-    if (_isString(timeRange.raw.from)) {
-      const fromTimezone = dateTimeAsMoment(timeRange.from).tz();
-      const toTimezone = dateTimeAsMoment(timeRange.to).tz();
-      const timeFromDate = dateMath.parse(timeFromInfo.from, undefined, fromTimezone)!;
-      newTimeData.timeInfo = timeFromInfo.display;
-      newTimeData.timeRange = {
-        from: timeFromDate,
-        to: dateMath.parse(timeFromInfo.to, undefined, toTimezone)!,
-        raw: {
-          from: timeFromInfo.from,
-          to: timeFromInfo.to,
-        },
-      };
-    }
-  }
-
-  if (panel.timeShift) {
-    const timeShiftInterpolated = getTemplateSrv().replace(panel.timeShift, panel.scopedVars);
-    const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
-    if (timeShiftInfo.invalid) {
-      newTimeData.timeInfo = 'invalid timeshift';
-      return newTimeData;
-    }
-
-    const timeShift = '-' + timeShiftInterpolated;
-    newTimeData.timeInfo += ' timeshift ' + timeShift;
-    const from = dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false)!;
-    const to = dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true)!;
-
-    newTimeData.timeRange = {
-      from,
-      to,
-      raw: {
-        from,
-        to,
-      },
-    };
-  }
-
-  if (panel.hideTimeOverride) {
-    newTimeData.timeInfo = '';
-  }
-
-  return newTimeData;
 }
 
 export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: number): number {
