@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { QuickAdd } from './QuickAdd';
@@ -12,16 +12,10 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
-    useInstanceSettingsList: jest.fn().mockReturnValue({
-      items: [{ name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' }],
-      isLoading: false,
-      hasMore: false,
-      fetchMore: jest.fn(),
-    }),
   };
 });
 
-const setup = () => {
+const setup = ({ hasTestDataSource }: { hasTestDataSource?: boolean } = {}) => {
   const navBarTree: NavModelItem[] = [
     {
       text: 'Dashboards',
@@ -48,7 +42,7 @@ const setup = () => {
     },
   ];
   const store = configureStore({ navBarTree });
-  return render(<QuickAdd />, { store });
+  return render(<QuickAdd hasTestDataSource={hasTestDataSource} />, { store });
 };
 
 describe('QuickAdd', () => {
@@ -118,25 +112,20 @@ describe('QuickAdd', () => {
   });
 
   describe('Use template button', () => {
-    beforeEach(() => {
-      config.featureToggles.dashboardTemplates = true;
-    });
-
-    it('shows a `Use template` button when the feature flag is enabled', async () => {
-      setup();
+    it('shows a `Use template` button when hasTestDataSource is true', async () => {
+      setup({ hasTestDataSource: true });
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
       expect(screen.getByRole('menuitem', { name: 'Use template' })).toBeInTheDocument();
     });
 
-    it('does not show a `Use template` button when the feature flag is disabled', async () => {
-      config.featureToggles.dashboardTemplates = false;
-      setup();
+    it('does not show a `Use template` button when hasTestDataSource is false', async () => {
+      setup({ hasTestDataSource: false });
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
       expect(screen.queryByRole('menuitem', { name: 'Use template' })).not.toBeInTheDocument();
     });
 
     it('redirects the user to the dashboard from template page when the button is clicked', async () => {
-      setup();
+      setup({ hasTestDataSource: true });
 
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
       const link = screen.getByRole('menuitem', { name: 'Use template' });
