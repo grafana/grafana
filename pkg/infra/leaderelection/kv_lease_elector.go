@@ -124,8 +124,10 @@ func (k *KVLeaseElector) tryAcquire(ctx context.Context, mgr *lease.Manager) (*l
 	}
 
 	if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+		t := time.NewTimer(k.retryPeriod)
+		defer t.Stop()
 		select {
-		case <-time.After(k.retryPeriod):
+		case <-t.C:
 			return nil, nil
 		case <-ctx.Done():
 			return nil, ctx.Err()
