@@ -323,6 +323,8 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     return;
   }
 
+  // TODO: follow-up PR — once useScopesNavigationEndpoint is fully rolled out, remove the
+  // scope_dashboard_bindings mock and the dashboardBindingsUrl path below.
   const dashboardBindingsUrl: string =
     '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings?' +
     scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
@@ -387,7 +389,9 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     });
   });
 
-  // Mock scope_navigations endpoint with scope-specific URL pattern
+  // Mock scope_navigations endpoint with scope-specific URL pattern.
+  // Returns multiple items (matching the volume of scope_dashboard_bindings) so that
+  // tests relying on count/search behaviour work regardless of which endpoint is active.
   await page.route(scopeNavigationsUrl, async (route) => {
     await route.fulfill({
       status: 200,
@@ -400,28 +404,49 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
             apiVersion: string;
             metadata: { name: string; resourceVersion: string; creationTimestamp: string };
             spec: { url: string; scope: string };
-            status: { title: string };
+            status: { title: string; groups?: string[] };
           }> = [];
 
-          // Create a scope navigation if dashboardUid is provided
-          if (scope.dashboardUid && scope.addLinks) {
+          const dashboardUrl = `/d/${scope.dashboardUid ?? 'edediimbjhdz4b'}`;
+
+          for (let i = 0; i < 10; i++) {
+            const selectedGroup = groups[Math.floor(Math.random() * groups.length)];
             navigations.push({
               kind: 'ScopeNavigation',
               apiVersion: 'scope.grafana.app/v0alpha1',
               metadata: {
-                name: `scope-${scope.name}-nav`,
+                name: `scope-${scope.name}-nav-${i}`,
                 resourceVersion: '1',
                 creationTimestamp: 'stamp',
               },
               spec: {
-                url: `/d/${scope.dashboardUid}`,
+                url: dashboardUrl + '/' + Math.random().toString(),
                 scope: `scope-${scope.name}`,
               },
               status: {
-                title: scope.dashboardTitle ?? scope.title,
+                title: (scope.dashboardTitle ?? 'A tall dashboard') + (selectedGroup[0] ?? 'U') + i,
+                ...(selectedGroup !== '' && { groups: [selectedGroup] }),
               },
             });
           }
+
+          // make sure there is always a navigation with no group
+          navigations.push({
+            kind: 'ScopeNavigation',
+            apiVersion: 'scope.grafana.app/v0alpha1',
+            metadata: {
+              name: `scope-${scope.name}-nav-last`,
+              resourceVersion: '1',
+              creationTimestamp: 'stamp',
+            },
+            spec: {
+              url: dashboardUrl + '/' + Math.random().toString(),
+              scope: `scope-${scope.name}`,
+            },
+            status: {
+              title: (scope.dashboardTitle ?? 'A tall dashboard') + 'U123',
+            },
+          });
 
           return navigations;
         }),
