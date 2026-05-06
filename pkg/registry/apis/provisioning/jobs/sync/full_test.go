@@ -1419,6 +1419,8 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	progress.On("SetTotal", mock.Anything, 2).Return()
 	progress.On("TooManyErrors").Return(nil)
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+	progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+	progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
 	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 	// Folder phase: updated folder passes ForceWalk + relocating UID via variadic opts
@@ -1499,6 +1501,8 @@ func TestApplyChanges_DefersOrphanFolderDeletion(t *testing.T) {
 	progress.On("SetTotal", mock.Anything, 2).Return()
 	progress.On("TooManyErrors").Return(nil)
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+	progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+	progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
 	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 	repoResources.On("ReplaceResourceFromFile", mock.Anything, "myfolder/dashboard.json", "test-ref", "dash-uid", schema.GroupVersionResource{
@@ -1534,6 +1538,44 @@ func TestApplyChanges_DefersOrphanFolderDeletion(t *testing.T) {
 		"ReplaceResourceFromFile",
 		"RemoveFolder",
 	}, callOrder)
+}
+
+func TestApplyChanges_SkipsDeferredFolderDeletionWhenChildDeletionFailed(t *testing.T) {
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	tracer := tracing.NewNoopTracerService()
+	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
+
+	changes := []ResourceFileChange{
+		{
+			Action:        repository.FileActionDeleted,
+			Path:          "myfolder/",
+			Existing:      &provisioning.ResourceListItem{Name: "orphan-uid"},
+			OrphanCleanup: true,
+		},
+	}
+
+	progress.On("SetTotal", mock.Anything, 1).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", "myfolder/").Return(false)
+	progress.On("HasDirPathFailedDeletion", "myfolder/").Return(true)
+	progress.On("HasChildPathFailedCreation", mock.Anything).Return(false).Maybe()
+	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false).Maybe()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "myfolder/" &&
+			r.Action() == repository.FileActionIgnored &&
+			r.Name() == "orphan-uid" &&
+			r.Warning() != nil &&
+			r.Warning().Error() == "folder was not deleted because dependent path changes failed"
+	})).Return()
+
+	err := applyChanges(
+		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
+		quotas.NewInMemoryQuotaTracker(0, 0), true,
+	)
+	require.NoError(t, err)
+	repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, "orphan-uid")
 }
 
 func TestApplyChanges_SortsFolderUpdatesShallowestFirst(t *testing.T) {
@@ -1617,6 +1659,8 @@ func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 	progress.On("SetTotal", mock.Anything, 2).Return()
 	progress.On("TooManyErrors").Return(nil)
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+	progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+	progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
 	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 	// Folder phase mocks (ForceWalk + relocating UID passed via variadic opts)
@@ -1667,6 +1711,8 @@ func TestApplyChanges_OldFolderDeletion_ErrorContinues(t *testing.T) {
 	progress.On("SetTotal", mock.Anything, 1).Return()
 	progress.On("TooManyErrors").Return(nil)
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+	progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+	progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
 	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 	// Folder phase (ForceWalk + relocating UID passed via variadic opts)

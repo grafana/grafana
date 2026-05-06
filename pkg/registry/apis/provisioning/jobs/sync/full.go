@@ -514,10 +514,15 @@ func cleanupDeferredFolders(
 				return err
 			}
 
-			if progress.HasDirPathFailedCreation(folder.Path) || progress.HasChildPathFailedUpdate(folder.Path) {
+			if progress.HasDirPathFailedCreation(folder.Path) ||
+				progress.HasDirPathFailedDeletion(folder.Path) ||
+				progress.HasChildPathFailedCreation(folder.Path) ||
+				progress.HasChildPathFailedUpdate(folder.Path) {
 				skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_deferred_folder_deletion")
-				progress.Record(skipCtx, jobs.NewPathOnlyResult(folder.Path).
-					WithError(fmt.Errorf("folder was not deleted because dependent path updates failed")).
+				progress.Record(skipCtx, jobs.NewFolderResult(folder.Path).
+					WithName(folder.UID).
+					WithReason(folder.Reason).
+					WithError(fmt.Errorf("folder was not deleted because dependent path changes failed")).
 					AsSkipped().
 					Build())
 				skipSpan.End()
