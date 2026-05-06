@@ -101,21 +101,30 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		span.AddEvent("snapshot.lock.release.completed", oteltrace.WithAttributes(lockAttrs...))
 	}()
 
+	uploadKey, rv, err = b.snapshotCopyAndUpload(ctx, key, idx, lock)
+	return err
+}
+
+// snapshotCopyAndUpload copies idx to a staging dir, reads its metadata,
+// and uploads it to the remote index store. The caller acquires and
+// releases the build lock; this helper only re-checks it between steps.
+// Returns the uploaded snapshot key and the RV read from the staged copy.
+func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex, lock IndexStoreLock) (ulid.ULID, int64, error) {
 	stagingDir, err := b.newSnapshotStagingDir(key)
 	if err != nil {
-		return fmt.Errorf("creating snapshot staging dir: %w", err)
+		return ulid.ULID{}, 0, fmt.Errorf("creating snapshot staging dir: %w", err)
 	}
 	defer func() { _ = os.RemoveAll(stagingDir) }()
 
 	if err := b.snapshotIndex(idx.index, stagingDir); err != nil {
-		return err
+		return ulid.ULID{}, 0, err
 	}
 	// Lock loss is checked only at step boundaries. The main value of the
 	// distributed lock is preventing duplicate snapshot/upload work up front, and
 	// the upload path is safe to retry because remote snapshots are immutable and
 	// keyed by unique ULIDs.
 	if err := checkSnapshotLock(lock); err != nil {
-		return err
+		return ulid.ULID{}, 0, err
 	}
 
 	// Read RV/build info from the staged snapshot instead of the live index so
@@ -123,19 +132,19 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	// index advanced while CopyTo was running.
 	snapshotIdx, err := bleve.OpenUsing(stagingDir, map[string]interface{}{"bolt_timeout": boltTimeout})
 	if err != nil {
-		return fmt.Errorf("opening staged snapshot: %w", err)
+		return ulid.ULID{}, 0, fmt.Errorf("opening staged snapshot: %w", err)
 	}
 
-	rv, err = getRV(snapshotIdx)
+	rv, err := getRV(snapshotIdx)
 	bi, biErr := getBuildInfo(snapshotIdx)
 	if closeErr := snapshotIdx.Close(); closeErr != nil {
-		return fmt.Errorf("closing staged snapshot: %w", closeErr)
+		return ulid.ULID{}, 0, fmt.Errorf("closing staged snapshot: %w", closeErr)
 	}
 	if err != nil {
-		return fmt.Errorf("reading snapshot rv: %w", err)
+		return ulid.ULID{}, 0, fmt.Errorf("reading snapshot rv: %w", err)
 	}
 	if biErr != nil {
-		return fmt.Errorf("reading snapshot build info: %w", biErr)
+		return ulid.ULID{}, 0, fmt.Errorf("reading snapshot build info: %w", biErr)
 	}
 
 	meta := IndexMeta{
@@ -149,12 +158,12 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		meta.BuildTime = time.Unix(bi.BuildTime, 0).UTC()
 	}
 
-	uploadKey, err = b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, meta)
+	uploadKey, err := b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, meta)
 	if err != nil {
-		return fmt.Errorf("uploading snapshot: %w", err)
+		return ulid.ULID{}, 0, fmt.Errorf("uploading snapshot: %w", err)
 	}
 
-	return nil
+	return uploadKey, rv, nil
 }
 
 func (b *bleveBackend) snapshotIndex(idx bleve.Index, destDir string) error {

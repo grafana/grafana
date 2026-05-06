@@ -139,7 +139,6 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
       flexGrow: 1,
       gap: theme.spacing(0.25),
       width: '100%',
-      overflow: 'hidden',
     }),
     button: css({
       label: 'content-outline-item-button',
