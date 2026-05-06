@@ -1,11 +1,11 @@
 export {
   init,
   getInstanceSettings,
-  findInstanceSettings,
+  getInstanceSettingsList,
   reload,
   upsertRuntimeDataSource,
   type DataSourceInstanceSettingsPage,
-  type FindInstanceSettingsOptions,
+  type GetInstanceSettingsListOptions,
 } from './instanceSettings';
 
 export { getDataSourcePlugin, registerRuntimeDataSource } from './plugin';

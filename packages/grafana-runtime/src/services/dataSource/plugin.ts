@@ -99,7 +99,7 @@ export async function getDataSourcePlugin(
 /**
  * Register a runtime data source. Writes to both the instance-settings cache
  * and the plugin-instance cache so the data source is available to
- * {@link getInstanceSettings}, {@link findInstanceSettings} and
+ * {@link getInstanceSettings}, {@link getInstanceSettingsList} and
  * {@link getDataSourcePlugin}.
  *
  * @public
