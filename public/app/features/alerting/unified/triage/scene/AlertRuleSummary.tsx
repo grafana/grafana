@@ -16,6 +16,8 @@ import { Box } from '@grafana/ui';
 import { overrideToFixedColor } from '../../home/Insights';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
+import { sortByAlertState } from './dataFrameUtils';
+
 /**
  * Viz config for the alert rule summary chart - used by the React component
  */
@@ -24,9 +26,9 @@ export const alertRuleSummaryVizConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('barWidthFactor', 1)
   .setCustomFieldConfig('barAlignment', BarAlignment.After)
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
-  .setCustomFieldConfig('fillOpacity', 60)
+  .setCustomFieldConfig('fillOpacity', 80)
   .setCustomFieldConfig('lineWidth', 0)
-  .setCustomFieldConfig('stacking', { mode: StackingMode.None })
+  .setCustomFieldConfig('stacking', { mode: StackingMode.Normal })
   .setCustomFieldConfig('axisPlacement', AxisPlacement.Hidden)
   .setCustomFieldConfig('axisGridShow', false)
   .setMin(0)
@@ -97,6 +99,7 @@ function AlertRuleSummaryViz({ ruleUID }: { ruleUID: string }) {
           },
         },
       },
+      sortByAlertState,
     ],
   });
 
