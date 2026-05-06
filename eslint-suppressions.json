@@ -1748,16 +1748,12 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/DashboardSettings/GeneralSettings.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 6
-    }
-  },
   "public/app/features/dashboard/components/DashboardSettings/TimePickerSettings.tsx": {
     "@grafana/require-no-margin": {
       "count": 5
     }
   },
+<<<<<<< HEAD
   "public/app/features/dashboard/components/DashboardSettings/VersionsSettings.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -1768,6 +1764,8 @@
       "count": 2
     }
   },
+=======
+>>>>>>> 0e0acb79514 (remove orphaned old dashboards arch components)
   "public/app/features/dashboard/components/HelpWizard/HelpWizard.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
@@ -1866,11 +1864,16 @@
       "count": 1
     }
   },
+<<<<<<< HEAD
   "public/app/features/dashboard/components/VersionHistory/useDashboardRestore.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
+=======
+  "public/app/features/dashboard/dashgrid/DashboardGrid.tsx": {
+    "react-prefer-function-component/react-prefer-function-component": {
+>>>>>>> 0e0acb79514 (remove orphaned old dashboards arch components)
       "count": 1
     }
   },
@@ -2644,11 +2647,14 @@
       "count": 1
     }
   },
+<<<<<<< HEAD
   "public/app/features/variables/editor/VariableEditorContainer.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     }
   },
+=======
+>>>>>>> 0e0acb79514 (remove orphaned old dashboards arch components)
   "public/app/features/variables/editor/getVariableQueryEditor.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
