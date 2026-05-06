@@ -409,8 +409,17 @@ function parseWithFormats(value: string, format: MomentFormat, options?: MomentO
       fmt === ISO_8601
         ? DateTime.fromISO(value, options)
         : DateTime.fromFormat(value, convertMomentToLuxonWithOrdinal(fmt as string), options);
+
     if (parsed.isValid) {
       return parsed;
+    } else {
+      // try to handle partial parse 'yyyy' from '2017-07-19 00:00:00.000'
+      const fallbackParsed = parseWithFallbacks(value, options);
+      if (fallbackParsed.isValid) {
+        const formatted = fallbackParsed.toFormat(convertMomentToLuxonWithOrdinal(fmt as string), options);
+        // re-parse with only requested tokens
+        return DateTime.fromFormat(formatted, convertMomentToLuxonWithOrdinal(fmt as string), options);
+      }
     }
   }
 
@@ -858,6 +867,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       const relative = dt.toRelative({
         style: 'long',
         locale: dt.locale ?? undefined,
+        rounding: 'round',
       });
 
       if (!withoutSuffix || relative == null) {
@@ -872,6 +882,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
         base: dt,
         style: 'long',
         locale: dt.locale ?? undefined,
+        rounding: 'round',
       });
 
       if (!withoutSuffix || relative == null) {
@@ -887,6 +898,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
         base,
         style: 'long',
         locale: dt.locale ?? undefined,
+        rounding: 'round',
       });
 
       if (!withoutSuffix || relative == null) {
