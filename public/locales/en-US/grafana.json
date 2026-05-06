@@ -11257,7 +11257,7 @@
     "description-order": "Show newest or oldest logs first. When Oldest first is selected, the view automatically scrolls to the newest logs at the bottom.",
     "description-prettify-json": "Format JSON log entries with indentation and line breaks.",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level.",
-    "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
+    "description-show-log-attributes": "Experimental. When OTel logs are displayed, and there are no displayed fields selected, the panel automatically sets displayed fields with relevant key-value pairs from labels and metadata.",
     "description-unwrapped-columns": "Align values using columns when using displayed fields.",
     "description-wrap-lines": "Display logs as a single line or wrap long log entries to fit the panel.",
     "field-selector": {
@@ -11583,7 +11583,7 @@
       "line-contains-not": "Add as line does not contain filter",
       "search-text": "Search in results"
     },
-    "show-log-attributes": "Display log attributes for OTel logs",
+    "show-log-attributes": "Enable log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",

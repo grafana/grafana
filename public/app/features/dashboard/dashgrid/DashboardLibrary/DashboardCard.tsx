@@ -6,7 +6,7 @@ import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Box, Button, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -102,13 +102,13 @@ function DashboardCardComponent({
   const hasCompatActions = isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck;
 
   return (
-    <Card className={styles.card} noMargin>
-      <Card.Heading className={styles.title}>
+    <article className={styles.card}>
+      <h3 className={styles.title}>
         <span className={styles.titleWithInfo} role="group" aria-label={title}>
           <span className={styles.titleText}>{title}</span>
           {detailsButton}
         </span>
-      </Card.Heading>
+      </h3>
       <div className={isLogo ? styles.logoContainer : styles.thumbnailContainer}>
         {imageUrl ? (
           <img
@@ -178,12 +178,12 @@ function DashboardCardComponent({
       </div>
       <div className={styles.bottomSection}>
         <div title={dashboard.description}>
-          <Card.Description
+          <p
             data-testid="dashboard-card-description"
             className={cx(styles.description, { [styles.noDescription]: !dashboard.description })}
           >
             {dashboard.description || t('dashboard-library.dashboard-card.no-description', 'No description available')}
-          </Card.Description>
+          </p>
         </div>
         {hasCompatActions && (
           <div className={styles.actionsContainer}>
@@ -197,7 +197,7 @@ function DashboardCardComponent({
           </div>
         )}
       </div>
-    </Card>
+    </article>
   );
 }
 
@@ -264,25 +264,24 @@ function getStyles(theme: GrafanaTheme2) {
 
   return {
     card: css({
-      gridTemplateAreas: `
-          "Thumbnail Thumbnail"
-          "Heading Heading"
-          "Bottom Bottom"`,
-      gridTemplateRows: 'auto auto 1fr',
-      // Card.Heading from @grafana/ui sets `gridColumnEnd: 'Tags'`; without a `Tags` line here,
-      // CSS Grid creates an implicit column and shrinks Thumbnail/Bottom to ~half width.
-      gridTemplateColumns: '1fr auto [Tags]',
+      display: 'flex',
+      flexDirection: 'column',
       width: '350px',
       height: '100%',
       background: 'transparent',
       border: `1px solid ${theme.colors.border.strong}`,
       borderRadius: theme.shape.radius.default,
       overflow: 'hidden',
-      gridGap: 0,
       padding: theme.spacing(1),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'border-color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
     }),
     thumbnailContainer: css({
-      gridArea: 'Thumbnail',
+      // Render visually above the heading while keeping heading first in source order for tab/keyboard order.
+      order: -1,
       marginBottom: theme.spacing(1),
       overflow: 'hidden',
       display: 'flex',
@@ -324,7 +323,7 @@ function getStyles(theme: GrafanaTheme2) {
       objectFit: 'contain',
     }),
     logoContainer: css({
-      gridArea: 'Thumbnail',
+      order: -1,
       marginBottom: theme.spacing(1),
       overflow: 'hidden',
       display: 'flex',
@@ -363,13 +362,17 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
     }),
     bottomSection: css({
-      gridArea: 'Bottom',
       display: 'flex',
       flexDirection: 'column',
       wordBreak: 'break-word',
       paddingTop: '2px',
     }),
     title: css({
+      margin: 0,
+      fontSize: theme.typography.h6.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.h6.lineHeight,
+      letterSpacing: 'inherit',
       display: '-webkit-box',
       WebkitLineClamp: 1,
       WebkitBoxOrient: 'vertical',
@@ -397,6 +400,7 @@ function getStyles(theme: GrafanaTheme2) {
       textOverflow: 'ellipsis',
       margin: 0,
       fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
     }),
     noDescription: css({
       fontStyle: 'italic',
