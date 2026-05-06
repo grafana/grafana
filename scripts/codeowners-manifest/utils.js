@@ -1,4 +1,5 @@
 const { readFile } = require('node:fs/promises');
+const path = require('node:path');
 
 const { CODEOWNERS_JSON_PATH: CODEOWNERS_MANIFEST_CODEOWNERS_PATH } = require('./constants.js');
 
