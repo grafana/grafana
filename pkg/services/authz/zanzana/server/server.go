@@ -197,7 +197,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				return nil, fmt.Errorf("failed to create leader elector: %w", err)
 			}
 		} else {
-			le = leaderelection.NewNoopElector()
+			le = leaderelection.NewDefaultElector()
 		}
 
 		mtReconciler = reconciler.NewReconciler(

@@ -63,6 +63,7 @@
   },
   "devDependencies": {
     "@grafana/runtime": "workspace:*",
+    "@grafana/uplot-compare": "workspace:*",
     "@swc/core": "1.13.3",
     "@swc/jest": "^0.2.26",
     "@types/chance": "^1.1.7",
@@ -70,6 +71,8 @@
     "@types/lodash": "4.17.20",
     "@types/node": "24.10.1",
     "jest": "29.7.0",
+    "jest-canvas-mock": "^2.5.2",
+    "jest-snapshot": "^30.3.0",
     "typescript": "6.0.2"
   }
 }

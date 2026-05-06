@@ -2,7 +2,7 @@ import { memo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
+import { Button, LoadingPlaceholder, ScrollContainer, Text } from '@grafana/ui';
 import { type UserDTO, type UserOrg } from 'app/types/user';
 
 export interface Props {
@@ -27,9 +27,11 @@ export const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOr
 
   return (
     <div>
-      <h3 className="page-sub-heading">
-        <Trans i18nKey="user-orgs.title">Organizations</Trans>
-      </h3>
+      <div className="page-sub-heading">
+        <Text variant="h3" element="h2">
+          <Trans i18nKey="user-orgs.title">Organizations</Trans>
+        </Text>
+      </div>
 
       <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
         <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.orgsTable}>

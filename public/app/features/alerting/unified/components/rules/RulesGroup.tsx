@@ -13,7 +13,13 @@ import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
-import { isFederatedRuleGroup, isPluginProvidedRule, isUngroupedRuleGroup, rulerRuleType } from '../../utils/rules';
+import {
+  getPromGroupReadOnlyStatus,
+  getRulerGroupReadOnlyStatus,
+  isFederatedRuleGroup,
+  isUngroupedRuleGroup,
+  rulerRuleType,
+} from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -60,13 +66,19 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const isDeleting = hasRuler && rulerRulesLoaded && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
 
-  // check if group has provisioned items
+  // check if group has provisioned items (badge-only — edit gating uses the status helper below)
   const isProvisioned = group.rules.some((rule) => {
     return rulerRuleType.grafana.rule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
   });
-  const isPluginProvided = group.rules.some((rule) => isPluginProvidedRule(rule.rulerRule ?? rule.promRule));
 
-  const canEditGroup = hasRuler && !isProvisioned && !isFederated && !isPluginProvided && canEditRules(rulesSourceName);
+  // CombinedRule wraps both API views of the same logical rule. Check each side with its own
+  // typed helper and OR the booleans — the consumer only needs the boolean for edit gating.
+  const rulerRules = group.rules.flatMap((r) => (r.rulerRule ? [r.rulerRule] : []));
+  const promRules = group.rules.flatMap((r) => (r.promRule ? [r.promRule] : []));
+  const groupReadOnly =
+    getRulerGroupReadOnlyStatus({ rules: rulerRules, source_tenants: group.source_tenants }).readOnly ||
+    getPromGroupReadOnlyStatus({ rules: promRules }).readOnly;
+  const canEditGroup = hasRuler && !groupReadOnly && canEditRules(rulesSourceName);
 
   // check what view mode we are in
   const isListView = viewMode === 'list';

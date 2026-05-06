@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML bewerken",
         "save": "Opslaan"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "naam",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Alle regels verwijderen"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Verwijderen",
       "delete-modal-delete-button": "Verwijderen",
@@ -1573,8 +1575,14 @@
         "update-error": "Kan regelgroep niet bijwerken",
         "update-success": "Regelgroep is bijgewerkt"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Geselecteerde groep kan niet worden bewerkt",
       "group-not-editable-description": "Deze groep behoort tot een gegevensbron die geen bewerking ondersteunt.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Regelgroep bewerken",
       "rule-group-error": "Er is een fout opgetreden bij het laden van de regelgroep"
     },
@@ -4314,6 +4322,7 @@
         "repository-not-found-message": "De repository van de geselecteerde map kon niet worden gevonden. Controleer of de map juist is geconfigureerd.",
         "repository-not-found-title": "Repository niet gevonden"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Fout bij verplaatsen van bronnen",
       "error-no-target-folder-path": "Pad naar doelmap is ongeldig of leeg, selecteer opnieuw.",
       "move-total": "In totaal heeft dit invloed op:",
@@ -4491,6 +4500,8 @@
       "label": {
         "alphabetically-az": "Alfabetisch (a-z)",
         "alphabetically-za": "Alfabetisch (z-a)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Verwijderd (nieuwste eerst)",
         "deleted-oldest": "Verwijderd (oudste eerst)"
       }
@@ -5259,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Instellingen"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5661,7 +5672,7 @@
         "title": "Variabelen"
       },
       "variable": {
-        "change-type": "Wijzigen",
+        "change-type": "",
         "change-type-aria-label": "Type variabele wijzigen",
         "custom-options": {
           "apply": "Toepassen",
@@ -5978,7 +5989,7 @@
       "cancel": "Annuleren",
       "common": {
         "copy": "Kopiëren",
-        "copy-or-duplicate": "Kopiëren/plakken of dupliceren",
+        "copy-tooltip": "",
         "delete": "Verwijderen",
         "duplicate": "Dupliceren",
         "layout": "Indeling",
@@ -6017,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Niet-geconfigureerd paneel. Gebruik Tab om de configuratieopties te bekijken.",
-      "configure-button": "Configureren",
+      "configure-button": "",
       "configure-button-menu": "Navigatiemenu",
       "configure-visualization": "Visualisatie configureren",
       "empty-state-message": "Voer een query uit om deze hier te visualiseren of ga naar alle visualisaties om andere paneeltypen toe te voegen",
@@ -6259,10 +6270,8 @@
       "title-provisioned": "Geprovisioneerd dashboard"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Er bestaat al een dashboard met dezelfde naam in de geselecteerde map.<br/> <2>Wil je dit dashboard nog steeds opslaan?</2>",
       "body-version-mismatch": "Iemand anders heeft dit dashboard bijgewerkt<br/> <2>Wil je dit dashboard nog steeds opslaan?</2>",
       "confirmText-save-and-overwrite": "Opslaan en overschrijven",
-      "title-name-exists": "Conflict",
       "title-version-mismatch": "Conflict"
     },
     "save-dashboard-form": {
@@ -6488,6 +6497,7 @@
     },
     "transformation-editor": {
       "input-data": "Data invoer",
+      "loading": "",
       "output-data": "Uitvoergegevens",
       "title-debug-transformation": "Debugtransformatie"
     },
@@ -7302,6 +7312,7 @@
       "terraform": "Beheerd door: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Kan dashboard niet verplaatsen",
       "cancel-action": "Annuleren",
       "current-file-not-found": "Huidig dashboardbestand kon niet worden gevonden",
@@ -7314,10 +7325,6 @@
       "success-message": "Dashboard is verplaatst",
       "target-path-label": "Doelpad",
       "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Er bestaat al een dashboard met dezelfde naam in de geselecteerde map. Wil je dit dashboard nog steeds opslaan?",
-      "title-name-already-exists": "Naam bestaat al"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8133,6 +8140,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aan favorieten toevoegen",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Gegevens verkennen",
       "open-in-explore": "In Verkennen-weergave openen",
       "remove-favorite": "Uit favorieten verwijderen"
@@ -8269,6 +8282,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Zoeken"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10134,12 @@
     "cascader": {
       "clear-button": "Selectie wissen"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA-waarde"
     },
@@ -10465,6 +10485,7 @@
     "sidebar": {
       "close": "Sluiten",
       "dock": "Vastzetten",
+      "go-back": "",
       "hide": "Verbergen",
       "show": "Tonen",
       "undock": "Losmaken"
@@ -11908,8 +11929,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Alle",
-      "title-filtered": "Alle (gefilterd)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Alles wissen"
@@ -13566,6 +13589,7 @@
       "contact-admin": "Neem contact op met je Grafana-beheerder om deze bron naar lokaal om te zetten of om alle bronnen uit de ontbrekende repository te verwijderen.",
       "convert-to-local-button": "Converteren naar lokaal",
       "delete-button": "Verwijderen",
+      "go-to-dashboards": "",
       "job-error": "Er is een fout opgetreden bij het verwerken van verweesde bronnen",
       "job-success": "Verweesde bronnen zijn succesvol verwerkt",
       "job-warning": "Sommige bronnen zijn verwerkt met waarschuwingen. Controleer de resultaten.",
@@ -13812,7 +13836,8 @@
       "make-sure": "Een token aanmaken met deze toestemmingen"
     },
     "validation": {
-      "hidden-characters": "Dit veld bevat verborgen tekens die mogelijk zijn ingevoerd door kopiëren en plakken. Typ de waarde opnieuw of verwijder de verborgen tekens en probeer het opnieuw."
+      "hidden-characters": "Dit veld bevat verborgen tekens die mogelijk zijn ingevoerd door kopiëren en plakken. Typ de waarde opnieuw of verwijder de verborgen tekens en probeer het opnieuw.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Waarschuwing",
     "watch-stream": {
@@ -14220,6 +14245,8 @@
       "alerts-loading": "Waarschuwingen",
       "card-click": "Kaart {{id}} selecteren",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nieuw {{type}}",
       "queries-expressions": "Queries en expressies",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
@@ -14273,6 +14300,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Herstellen"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Je hebt onlangs geen dashboards verwijderd.",
@@ -14435,6 +14466,10 @@
     },
     "results-table": {
       "datasource-header": "Gegevensbron",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Resterende tijd",
       "location-header": "Locatie",
@@ -14928,10 +14963,13 @@
       "title": "Maak snel dashboards aan met suggesties en sjablonen"
     },
     "nav": {
+      "counter": "",
       "go-to": "Naar slide {{number}}",
-      "next": "Volgende",
-      "prev": "Vorige"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Query uitleggen",
@@ -15411,7 +15449,6 @@
       "forwards-time-aria-label": "Tijdsbereik vooruitzetten",
       "to": "tot",
       "zoom-out-button": "Tijdsbereik uitzoomen",
-      "zoom-out-tooltip": "Tijdsbereik uitzoomen <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Tijdsbereik uitzoomen <br/> t -"
     },
     "time-range": {
@@ -16008,6 +16045,9 @@
         "grouping-to-matrix": "Groeperen naar matrix"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Bereken een histogram op basis van invoergegevens."
@@ -16342,6 +16382,9 @@
       "label-time-field": "Tijdveld",
       "tooltip-statistic-should-calculated-series": "De statistiek die voor deze tijdreeks moet worden berekend.",
       "tooltip-time-field": "Het tijdveld dat zal worden gebruikt voor de tijdreeks. Indien niet geselecteerd, zal de eerst gevonden worden gebruikt."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Naam eerste veld",

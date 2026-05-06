@@ -865,6 +865,64 @@
       ],
       "title": "Stacking 100% unique legend field label when duplicate field names are present",
       "type": "barchart"
+    },
+    {
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineWidth": 1
+          },
+          "links": [
+            {
+              "title": "Example Data Link",
+              "url": "https://grafana.com/docs"
+            }
+          ],
+          "actions": [
+            {
+              "fetch": {
+                "body": "{}",
+                "headers": [["Content-Type", "application/json"]],
+                "method": "GET",
+                "queryParams": [],
+                "url": "https://grafana.com"
+              },
+              "title": "Example Action",
+              "type": "fetch"
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 23 },
+      "id": 12,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": { "mode": "single", "sort": "none" },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "csvContent": "month,sales\nJan,10\nFeb,20\nMar,15\nApr,25\nMay,18",
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "With Data Link",
+      "type": "barchart"
     }
   ],
   "refresh": "",
