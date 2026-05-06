@@ -2113,6 +2113,34 @@ func TestListAlertRules(t *testing.T) {
 				require.Equal(t, matchTitle, r.Title)
 			}
 		})
+
+		t.Run("Exclude should return only rules whose title differs", func(t *testing.T) {
+			service, _ := initWithTitleData(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				TitleFilter: ListRuleStringFilter{Exclude: []string{matchTitle}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 3)
+			for _, r := range rules {
+				require.NotEqual(t, matchTitle, r.Title)
+			}
+		})
+
+		t.Run("multiple Include values returns an error", func(t *testing.T) {
+			service, _ := initWithTitleData(t)
+			_, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				TitleFilter: ListRuleStringFilter{Include: []string{matchTitle, "another"}},
+			})
+			require.Error(t, err)
+		})
+
+		t.Run("multiple Exclude values returns an error", func(t *testing.T) {
+			service, _ := initWithTitleData(t)
+			_, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				TitleFilter: ListRuleStringFilter{Exclude: []string{matchTitle, "another"}},
+			})
+			require.Error(t, err)
+		})
 	})
 
 	t.Run("PausedFilter", func(t *testing.T) {
@@ -2183,6 +2211,18 @@ func TestListAlertRules(t *testing.T) {
 				require.Equal(t, dashUID, r.GetDashboardUID())
 			}
 		})
+
+		t.Run("Exclude should return only rules whose dashboardUID differs", func(t *testing.T) {
+			service, _ := initWithDashData(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				DashboardFilter: ListRuleStringFilter{Exclude: []string{dashUID}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 3)
+			for _, r := range rules {
+				require.NotEqual(t, dashUID, r.GetDashboardUID())
+			}
+		})
 	})
 
 	t.Run("PanelIDFilter", func(t *testing.T) {
@@ -2212,6 +2252,283 @@ func TestListAlertRules(t *testing.T) {
 			require.Len(t, rules, 2)
 			for _, r := range rules {
 				require.Equal(t, panelID, r.GetPanelID())
+			}
+		})
+
+		t.Run("Exclude should return only rules whose panelID differs", func(t *testing.T) {
+			service, _ := initWithPanelData(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				PanelIDFilter: ListRuleStringFilter{Exclude: []string{panelIDStr}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 3)
+			for _, r := range rules {
+				require.NotEqual(t, panelID, r.GetPanelID())
+			}
+		})
+	})
+
+	t.Run("NotificationTypeFilter", func(t *testing.T) {
+		simplifiedRules := gen.With(
+			gen.WithGroupKey(groupKey1),
+			gen.WithUniqueGroupIndex(),
+			gen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-a")),
+		).GenerateManyRef(2)
+		policyRules := gen.With(
+			gen.WithGroupKey(groupKey1),
+			gen.WithUniqueGroupIndex(),
+			gen.WithPolicyRouting(models.PolicyRouting{Policy: "policy-a"}),
+		).GenerateManyRef(3)
+		noNotifRules := gen.With(
+			gen.WithGroupKey(groupKey2),
+			gen.WithUniqueGroupIndex(),
+			gen.WithNoNotificationSettings(),
+		).GenerateManyRef(4)
+
+		setup := func(t *testing.T) *AlertRuleService {
+			service, ruleStore, _, ac := initService(t)
+			service.folderService = fs
+			combined := append(append(simplifiedRules, policyRules...), noNotifRules...)
+			ruleStore.Rules = map[int64][]*models.AlertRule{orgID: combined}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+			return service
+		}
+
+		t.Run("Include SimplifiedRouting returns only rules with contact point routing", func(t *testing.T) {
+			service := setup(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				NotificationTypeFilter: ListRuleStringFilter{Include: []string{string(models.NotificationSettingsTypeSimplifiedRouting)}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				require.NotNil(t, r.ContactPointRouting())
+			}
+		})
+
+		t.Run("Include NamedRoutingTree returns only rules with policy routing", func(t *testing.T) {
+			service := setup(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				NotificationTypeFilter: ListRuleStringFilter{Include: []string{string(models.NotificationSettingsTypeNamedRoutingTree)}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 3)
+			for _, r := range rules {
+				require.Nil(t, r.ContactPointRouting())
+				require.NotNil(t, r.PolicyRouting())
+			}
+		})
+
+		t.Run("Exclude SimplifiedRouting returns rules without contact point routing", func(t *testing.T) {
+			service := setup(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				NotificationTypeFilter: ListRuleStringFilter{Exclude: []string{string(models.NotificationSettingsTypeSimplifiedRouting)}},
+			})
+			require.NoError(t, err)
+			// 3 policy + 4 no-settings = 7
+			require.Len(t, rules, 7)
+			for _, r := range rules {
+				require.Nil(t, r.ContactPointRouting())
+			}
+		})
+	})
+
+	t.Run("ReceiverFilter", func(t *testing.T) {
+		matchReceiver := "match-receiver"
+		matchRules := gen.With(
+			gen.WithGroupKey(groupKey1),
+			gen.WithUniqueGroupIndex(),
+			gen.WithContactPointRouting(models.NewDefaultContactPointRouting(matchReceiver)),
+		).GenerateManyRef(2)
+		otherRules := gen.With(
+			gen.WithGroupKey(groupKey2),
+			gen.WithUniqueGroupIndex(),
+			gen.WithContactPointRouting(models.NewDefaultContactPointRouting("other-receiver")),
+		).GenerateManyRef(3)
+
+		service, ruleStore, _, ac := initService(t)
+		service.folderService = fs
+		ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(matchRules, otherRules...)}
+		ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		t.Run("Include should return only rules with the exact receiver", func(t *testing.T) {
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				ReceiverFilter: ListRuleStringFilter{Include: []string{matchReceiver}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				cpr := r.ContactPointRouting()
+				require.NotNil(t, cpr)
+				require.Equal(t, matchReceiver, cpr.Receiver)
+			}
+		})
+
+		t.Run("Exclude should return rules whose receiver differs", func(t *testing.T) {
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				ReceiverFilter: ListRuleStringFilter{Exclude: []string{matchReceiver}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 3)
+			for _, r := range rules {
+				cpr := r.ContactPointRouting()
+				if cpr != nil {
+					require.NotEqual(t, matchReceiver, cpr.Receiver)
+				}
+			}
+		})
+	})
+
+	t.Run("RoutingTreeFilter", func(t *testing.T) {
+		matchPolicy := "match-policy"
+		matchRules := gen.With(
+			gen.WithGroupKey(groupKey1),
+			gen.WithUniqueGroupIndex(),
+			gen.WithPolicyRouting(models.PolicyRouting{Policy: matchPolicy}),
+		).GenerateManyRef(2)
+		otherRules := gen.With(
+			gen.WithGroupKey(groupKey2),
+			gen.WithUniqueGroupIndex(),
+			gen.WithPolicyRouting(models.PolicyRouting{Policy: "other-policy"}),
+		).GenerateManyRef(3)
+
+		service, ruleStore, _, ac := initService(t)
+		service.folderService = fs
+		ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(matchRules, otherRules...)}
+		ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		t.Run("Include should return only rules with the exact routing policy", func(t *testing.T) {
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				RoutingTreeFilter: ListRuleStringFilter{Include: []string{matchPolicy}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				pr := r.PolicyRouting()
+				require.NotNil(t, pr)
+				require.Equal(t, matchPolicy, pr.Policy)
+			}
+		})
+
+		t.Run("Exclude should return rules whose routing policy differs", func(t *testing.T) {
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				RoutingTreeFilter: ListRuleStringFilter{Exclude: []string{matchPolicy}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 3)
+			for _, r := range rules {
+				pr := r.PolicyRouting()
+				if pr != nil {
+					require.NotEqual(t, matchPolicy, pr.Policy)
+				}
+			}
+		})
+	})
+
+	t.Run("MetricFilter", func(t *testing.T) {
+		matchMetric := "match_metric"
+		matchRules := gen.With(
+			gen.WithGroupKey(groupKey1),
+			gen.WithUniqueGroupIndex(),
+			gen.WithAllRecordingRules(),
+			gen.WithMetric(matchMetric),
+		).GenerateManyRef(2)
+		otherRules := gen.With(
+			gen.WithGroupKey(groupKey2),
+			gen.WithUniqueGroupIndex(),
+			gen.WithAllRecordingRules(),
+			gen.WithMetric("other_metric"),
+		).GenerateManyRef(3)
+
+		service, ruleStore, _, ac := initService(t)
+		service.folderService = fs
+		ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(matchRules, otherRules...)}
+		ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		t.Run("Include should return only recording rules with the exact metric", func(t *testing.T) {
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				MetricFilter: ListRuleStringFilter{Include: []string{matchMetric}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				require.NotNil(t, r.Record)
+				require.Equal(t, matchMetric, r.Record.Metric)
+			}
+		})
+
+		t.Run("Exclude should return only recording rules whose metric differs", func(t *testing.T) {
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				MetricFilter: ListRuleStringFilter{Exclude: []string{matchMetric}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 3)
+			for _, r := range rules {
+				require.NotNil(t, r.Record)
+				require.NotEqual(t, matchMetric, r.Record.Metric)
+			}
+		})
+	})
+
+	t.Run("TargetDatasourceUIDFilter", func(t *testing.T) {
+		matchUID := "match-ds-uid"
+		setTargetUID := func(uid string) models.AlertRuleMutator {
+			return func(rule *models.AlertRule) {
+				if rule.Record == nil {
+					rule.Record = &models.Record{}
+				}
+				rule.Record.TargetDatasourceUID = uid
+			}
+		}
+		matchRules := gen.With(
+			gen.WithGroupKey(groupKey1),
+			gen.WithUniqueGroupIndex(),
+			gen.WithAllRecordingRules(),
+			setTargetUID(matchUID),
+		).GenerateManyRef(2)
+		otherRules := gen.With(
+			gen.WithGroupKey(groupKey2),
+			gen.WithUniqueGroupIndex(),
+			gen.WithAllRecordingRules(),
+			setTargetUID("other-ds-uid"),
+		).GenerateManyRef(3)
+
+		service, ruleStore, _, ac := initService(t)
+		service.folderService = fs
+		ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(matchRules, otherRules...)}
+		ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		t.Run("Include should return only recording rules with the exact target datasource UID", func(t *testing.T) {
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				TargetDatasourceUIDFilter: ListRuleStringFilter{Include: []string{matchUID}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				require.NotNil(t, r.Record)
+				require.Equal(t, matchUID, r.Record.TargetDatasourceUID)
+			}
+		})
+
+		t.Run("Exclude should return only recording rules whose target datasource UID differs", func(t *testing.T) {
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				TargetDatasourceUIDFilter: ListRuleStringFilter{Exclude: []string{matchUID}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 3)
+			for _, r := range rules {
+				require.NotNil(t, r.Record)
+				require.NotEqual(t, matchUID, r.Record.TargetDatasourceUID)
 			}
 		})
 	})

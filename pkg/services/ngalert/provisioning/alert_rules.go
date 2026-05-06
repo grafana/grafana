@@ -94,45 +94,134 @@ type ListRuleBoolFilter struct {
 }
 
 type ListAlertRulesOptions struct {
-	RuleType        models.RuleTypeFilter
-	Limit           int64
-	ContinueToken   string
-	GroupFilter     ListRuleStringFilter
-	FolderFilter    ListRuleStringFilter
-	TitleFilter     ListRuleStringFilter
-	PausedFilter    ListRuleBoolFilter
-	DashboardFilter ListRuleStringFilter
-	PanelIDFilter   ListRuleStringFilter
-	// TODO: add the following filters
-	// receiver filter - string
-	// metric filter - string
-	// targetDatasourceUID filter - string
+	RuleType                  models.RuleTypeFilter
+	Limit                     int64
+	ContinueToken             string
+	GroupFilter               ListRuleStringFilter
+	FolderFilter              ListRuleStringFilter
+	TitleFilter               ListRuleStringFilter
+	PausedFilter              ListRuleBoolFilter
+	DashboardFilter           ListRuleStringFilter
+	PanelIDFilter             ListRuleStringFilter
+	NotificationTypeFilter    ListRuleStringFilter
+	ReceiverFilter            ListRuleStringFilter
+	RoutingTreeFilter         ListRuleStringFilter
+	MetricFilter              ListRuleStringFilter
+	TargetDatasourceUIDFilter ListRuleStringFilter
+}
+
+// singleString returns the single value from a ListRuleStringFilter's Include or Exclude slice,
+// returning an error when the slice has more than one entry. Field selectors only support
+// equality and inequality, so multiple `=` or multiple `!=` requirements for the same field are
+// not meaningful for field-selector-derived filters. Empty slice returns an empty string.
+func singleString(values []string, field, side string) (string, error) {
+	switch len(values) {
+	case 0:
+		return "", nil
+	case 1:
+		return values[0], nil
+	default:
+		return "", fmt.Errorf("%s only accepts a single %s value, got %d", field, side, len(values))
+	}
 }
 
 func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {
-	titleExact := ""
-	if len(opts.TitleFilter.Include) > 0 {
-		titleExact = opts.TitleFilter.Include[0]
+	titleExact, err := singleString(opts.TitleFilter.Include, "spec.title", "include")
+	if err != nil {
+		return nil, nil, "", err
 	}
-	dashboardUID := ""
-	if len(opts.DashboardFilter.Include) > 0 {
-		dashboardUID = opts.DashboardFilter.Include[0]
+	excludeTitle, err := singleString(opts.TitleFilter.Exclude, "spec.title", "exclude")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	dashboardUID, err := singleString(opts.DashboardFilter.Include, "spec.panelRef.dashboardUID", "include")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	excludeDashboardUID, err := singleString(opts.DashboardFilter.Exclude, "spec.panelRef.dashboardUID", "exclude")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	panelIDStr, err := singleString(opts.PanelIDFilter.Include, "spec.panelRef.panelID", "include")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	excludePanelIDStr, err := singleString(opts.PanelIDFilter.Exclude, "spec.panelRef.panelID", "exclude")
+	if err != nil {
+		return nil, nil, "", err
 	}
 	panelID := int64(0)
-	if len(opts.PanelIDFilter.Include) > 0 {
-		panelID, _ = strconv.ParseInt(opts.PanelIDFilter.Include[0], 10, 64)
+	if panelIDStr != "" {
+		panelID, _ = strconv.ParseInt(panelIDStr, 10, 64)
+	}
+	excludePanelID := int64(0)
+	if excludePanelIDStr != "" {
+		excludePanelID, _ = strconv.ParseInt(excludePanelIDStr, 10, 64)
+	}
+	notifType, err := singleString(opts.NotificationTypeFilter.Include, "spec.notificationSettings.type", "include")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	excludeNotifType, err := singleString(opts.NotificationTypeFilter.Exclude, "spec.notificationSettings.type", "exclude")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	receiverName, err := singleString(opts.ReceiverFilter.Include, "spec.notificationSettings.receiver", "include")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	excludeReceiverName, err := singleString(opts.ReceiverFilter.Exclude, "spec.notificationSettings.receiver", "exclude")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	routingPolicy, err := singleString(opts.RoutingTreeFilter.Include, "spec.notificationSettings.routingTree", "include")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	excludeRoutingPolicy, err := singleString(opts.RoutingTreeFilter.Exclude, "spec.notificationSettings.routingTree", "exclude")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	metricExact, err := singleString(opts.MetricFilter.Include, "spec.metric", "include")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	excludeMetric, err := singleString(opts.MetricFilter.Exclude, "spec.metric", "exclude")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	targetUIDExact, err := singleString(opts.TargetDatasourceUIDFilter.Include, "spec.targetDatasourceUID", "include")
+	if err != nil {
+		return nil, nil, "", err
+	}
+	excludeTargetUID, err := singleString(opts.TargetDatasourceUIDFilter.Exclude, "spec.targetDatasourceUID", "exclude")
+	if err != nil {
+		return nil, nil, "", err
 	}
 	q := models.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: models.ListAlertRulesQuery{
-			OrgID:                user.GetOrgID(),
-			RuleGroups:           opts.GroupFilter.Include,
-			ExcludeRuleGroups:    opts.GroupFilter.Exclude,
-			RuleGroupExists:      opts.GroupFilter.Exists,
-			ExcludeNamespaceUIDs: opts.FolderFilter.Exclude,
-			TitleExact:           titleExact,
-			IsPaused:             opts.PausedFilter.Value,
-			DashboardUID:         dashboardUID,
-			PanelID:              panelID,
+			OrgID:                            user.GetOrgID(),
+			RuleGroups:                       opts.GroupFilter.Include,
+			ExcludeRuleGroups:                opts.GroupFilter.Exclude,
+			RuleGroupExists:                  opts.GroupFilter.Exists,
+			ExcludeNamespaceUIDs:             opts.FolderFilter.Exclude,
+			TitleExact:                       titleExact,
+			ExcludeTitle:                     excludeTitle,
+			IsPaused:                         opts.PausedFilter.Value,
+			DashboardUID:                     dashboardUID,
+			ExcludeDashboardUID:              excludeDashboardUID,
+			PanelID:                          panelID,
+			ExcludePanelID:                   excludePanelID,
+			NotificationSettingsType:         models.NotificationSettingsType(notifType),
+			ExcludeNotificationSettingsType:  models.NotificationSettingsType(excludeNotifType),
+			ReceiverName:                     receiverName,
+			ExcludeReceiverName:              excludeReceiverName,
+			RoutingPolicyExact:               routingPolicy,
+			ExcludeRoutingPolicy:             excludeRoutingPolicy,
+			RecordMetricExact:                metricExact,
+			ExcludeRecordMetric:              excludeMetric,
+			RecordTargetDatasourceUIDExact:   targetUIDExact,
+			ExcludeRecordTargetDatasourceUID: excludeTargetUID,
 		},
 		RuleType:      opts.RuleType,
 		Limit:         opts.Limit,
