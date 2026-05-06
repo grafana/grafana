@@ -13,7 +13,6 @@ import { createConstantVariableAdapter } from '../constant/adapter';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 import { createCustomVariableAdapter } from '../custom/adapter';
 import { createCustomOptionsFromQuery } from '../custom/reducer';
-import { cleanEditorState } from '../editor/reducer';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 import { createQueryVariableAdapter } from '../query/adapter';
@@ -624,7 +623,6 @@ describe('shared actions', () => {
           .whenActionIsDispatched(cleanUpVariables(key))
           .thenDispatchedActionsShouldEqual(
             toKeyedAction(key, cleanVariables()),
-            toKeyedAction(key, cleanEditorState()),
             toKeyedAction(key, cleanPickerState()),
             toKeyedAction(key, variablesClearTransaction())
           );
@@ -646,7 +644,6 @@ describe('shared actions', () => {
           .whenActionIsDispatched(cancelVariables(key, { getBackendSrv: () => backendSrvMock }))
           .thenDispatchedActionsShouldEqual(
             toKeyedAction(key, cleanVariables()),
-            toKeyedAction(key, cleanEditorState()),
             toKeyedAction(key, cleanPickerState()),
             toKeyedAction(key, variablesClearTransaction())
           );
