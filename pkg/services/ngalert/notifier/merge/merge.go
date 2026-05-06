@@ -134,45 +134,6 @@ func (m MergeResult) LogContext() []any {
 	return logCtx
 }
 
-// GetMergedAlertmanagerConfig merges the given imported alertmanager configuration into
-// the base Grafana configuration. The imported route is also returned separately on
-// MergeResult.ExtraRoute (after rename application) so callers can register it as a
-// managed route. The imported inhibit rules are returned on MergeResult.ExtraInhibitRules.
-//
-// The given identifier is used as the dedup suffix for receiver / time-interval name
-// collisions and as the MergeResult.Identifier. The given matchers are used as the subtree
-// matchers for the merge.
-func GetMergedAlertmanagerConfig(
-	base definitions.PostableUserConfig,
-	imported definition.PostableApiAlertingConfig,
-	identifier string,
-	matchers config.Matchers,
-) (MergeResult, error) {
-	opts := MergeOpts{
-		DedupSuffix:     identifier,
-		SubtreeMatchers: matchers,
-	}
-	if err := opts.Validate(); err != nil {
-		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
-	}
-
-	m, err := Merge(base, imported, opts)
-	if err != nil {
-		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
-	}
-
-	route := imported.Route
-	RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
-
-	return MergeResult{
-		Config:            m.Config,
-		RenameResources:   m.RenameResources,
-		Identifier:        identifier,
-		ExtraRoute:        route,
-		ExtraInhibitRules: imported.InhibitRules,
-	}, nil
-}
-
 // MergeExtraConfig merges extra configurations in cfg into the base Grafana configuration.
 // If no extra configurations are present, it returns the base configuration wrapped in a MergeResult.
 func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (MergeResult, error) {
@@ -188,9 +149,25 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 	if err != nil {
 		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
-	result, err := GetMergedAlertmanagerConfig(*cfg, mcfg, mimirCfg.Identifier, mimirCfg.MergeMatchers)
+	opts := MergeOpts{
+		DedupSuffix:     mimirCfg.Identifier,
+		SubtreeMatchers: mimirCfg.MergeMatchers,
+	}
+	if err := opts.Validate(); err != nil {
+		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
+	}
+	m, err := Merge(*cfg, mcfg, opts)
 	if err != nil {
-		return MergeResult{}, err
+		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
+	}
+	route := mcfg.Route
+	RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
+	result := MergeResult{
+		Config:            m.Config,
+		RenameResources:   m.RenameResources,
+		Identifier:        mimirCfg.Identifier,
+		ExtraRoute:        route,
+		ExtraInhibitRules: mcfg.InhibitRules,
 	}
 	return result, nil
 }
