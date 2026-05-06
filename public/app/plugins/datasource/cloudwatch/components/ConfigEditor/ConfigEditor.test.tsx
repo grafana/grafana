@@ -2,7 +2,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
-import { PluginContextProvider, type PluginMeta, type PluginMetaInfo, PluginType } from '@grafana/data';
+import {
+  type DataSourceApi,
+  PluginContextProvider,
+  type PluginMeta,
+  type PluginMetaInfo,
+  PluginType,
+} from '@grafana/data';
 import { getDataSourcePlugin } from '@grafana/runtime';
 
 import { CloudWatchDatasource } from '../../datasource';
@@ -116,7 +122,7 @@ describe('Render', () => {
     jest.resetAllMocks();
     putMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
     getMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
-    jest.mocked(getDataSourcePlugin).mockResolvedValue(datasource);
+    jest.mocked(getDataSourcePlugin).mockResolvedValue(datasource as unknown as DataSourceApi);
     datasource.resources.getRegions = jest.fn().mockResolvedValue([
       {
         label: 'ap-east-1',
