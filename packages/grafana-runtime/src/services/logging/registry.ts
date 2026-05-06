@@ -24,7 +24,11 @@ export function addLogger(source: LoggerSource, defaults?: LoggerDefaults): void
 export function getLogger(source: LoggerSource): MonitoringLogger {
   if (!loggersRegistry[source]) {
     const message = `LoggerRegistry: no logger '${source}' exists, are you calling getLogger before initializeLoggersRegistry function was called?`;
-    console.warn(message);
+
+    // avoid having to mock logger in tests because of the warning message
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn(message);
+    }
 
     if (process.env.NODE_ENV === 'development') {
       throw new Error(message);

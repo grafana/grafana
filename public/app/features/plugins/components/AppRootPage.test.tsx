@@ -6,7 +6,6 @@ import { render } from 'test/test-utils';
 import { AppPlugin, PluginType, type AppRootProps, type NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
 import { setEchoSrv } from '@grafana/runtime';
-import { mockLogger } from '@grafana/test-utils/unstable';
 import { GrafanaRouteWrapper } from 'app/core/navigation/GrafanaRoute';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
@@ -138,7 +137,6 @@ describe('AppRootPage', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     setEchoSrv(new Echo());
-    mockLogger('features.plugins');
   });
 
   const pluginMeta = getMockPlugin({

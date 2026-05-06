@@ -109,10 +109,10 @@ describe('logging registry', () => {
     });
 
     describe.each([
-      { env: 'test', throws: false },
-      { env: 'development', throws: true },
-      { env: 'production', throws: false },
-    ])('when called for environment:$env before initializeLoggersRegistry', ({ env, throws }) => {
+      { env: 'test', throws: false, warns: false },
+      { env: 'development', throws: true, warns: true },
+      { env: 'production', throws: false, warns: true },
+    ])('when called for environment:$env before initializeLoggersRegistry', ({ env, throws, warns }) => {
       beforeEach(() => {
         process.env.NODE_ENV = env;
       });
@@ -132,10 +132,16 @@ describe('logging registry', () => {
           getLogger('grafana/runtime.plugins.meta');
         }
 
-        expect(warnSpy).toHaveBeenCalledTimes(1);
-        expect(warnSpy).toHaveBeenCalledWith(
-          `LoggerRegistry: no logger 'grafana/runtime.plugins.meta' exists, are you calling getLogger before initializeLoggersRegistry function was called?`
-        );
+        if (!warns) {
+          expect(warnSpy).not.toHaveBeenCalled();
+        }
+
+        if (warns) {
+          expect(warnSpy).toHaveBeenCalledTimes(1);
+          expect(warnSpy).toHaveBeenCalledWith(
+            `LoggerRegistry: no logger 'grafana/runtime.plugins.meta' exists, are you calling getLogger before initializeLoggersRegistry function was called?`
+          );
+        }
       });
 
       it('should return a logger without default context and console output', () => {
@@ -162,10 +168,12 @@ describe('logging registry', () => {
         getLogger('grafana/runtime.plugins.meta');
         getLogger('grafana/runtime.plugins.meta');
 
-        expect(warnSpy).toHaveBeenCalledTimes(2);
-        expect(warnSpy).toHaveBeenCalledWith(
-          `LoggerRegistry: no logger 'grafana/runtime.plugins.meta' exists, are you calling getLogger before initializeLoggersRegistry function was called?`
-        );
+        if (warns) {
+          expect(warnSpy).toHaveBeenCalledTimes(2);
+          expect(warnSpy).toHaveBeenCalledWith(
+            `LoggerRegistry: no logger 'grafana/runtime.plugins.meta' exists, are you calling getLogger before initializeLoggersRegistry function was called?`
+          );
+        }
       });
     });
   });

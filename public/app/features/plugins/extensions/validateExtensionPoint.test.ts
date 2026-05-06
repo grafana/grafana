@@ -1,5 +1,4 @@
 import { type PluginContextType } from '@grafana/data';
-import { mockLogger } from '@grafana/test-utils/unstable';
 
 import * as errors from './errors';
 import { ExtensionsLog } from './logs/log';
@@ -40,7 +39,6 @@ const setup = ({
 describe('getExtensionValidationResults', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockLogger('ui-extension-logs');
   });
 
   describe('when calling in production mode', () => {
