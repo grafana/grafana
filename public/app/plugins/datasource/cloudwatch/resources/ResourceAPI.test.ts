@@ -1,17 +1,44 @@
+import { of } from 'rxjs';
+
 import { setupMockedResourcesAPI } from '../mocks/ResourcesAPI';
 
 describe('ResourcesAPI', () => {
-  describe('describeLogGroup', () => {
+  describe('getLogGroups', () => {
     it('replaces region correctly in the query', async () => {
-      const { api, resourceRequestMock } = setupMockedResourcesAPI();
+      const { api, fetchMock } = setupMockedResourcesAPI();
       await api.getLogGroups({ region: 'default' });
-      expect(resourceRequestMock.mock.calls[0][1].region).toBe('us-west-1');
+      expect(fetchMock.mock.calls[0][0].params.region).toBe('us-west-1');
 
       await api.getLogGroups({ region: 'eu-east' });
-      expect(resourceRequestMock.mock.calls[1][1].region).toBe('eu-east');
+      expect(fetchMock.mock.calls[1][0].params.region).toBe('eu-east');
     });
 
-    it('should return log groups response with results', async () => {
+    it('extracts results and nextToken from new backend format (bare array + Link header)', async () => {
+      const results = [
+        {
+          value: {
+            arn: 'arn:aws:logs:us-west-1:123456789:log-group:/aws/containerinsights/dev303-workshop/application',
+            name: '/aws/containerinsights/dev303-workshop/application',
+          },
+        },
+        {
+          value: {
+            arn: 'arn:aws:logs:us-west-1:123456789:log-group:/aws/containerinsights/dev303-workshop/flowlogs',
+            name: '/aws/containerinsights/dev303-workshop/flowlogs',
+          },
+        },
+      ];
+      const headers = new Headers({ Link: '<?nextToken=some_token>; rel="next"' });
+      const fetchMock = jest.fn().mockReturnValue(of({ data: results, headers }));
+      const { api } = setupMockedResourcesAPI({ fetchMock });
+
+      const logGroups = await api.getLogGroups({ region: 'default' });
+
+      expect(logGroups.results).toHaveLength(2);
+      expect(logGroups.nextToken).toBe('some_token');
+    });
+
+    it('extracts results and nextToken from legacy backend format (object with results)', async () => {
       const response = {
         results: [
           {
@@ -20,23 +47,16 @@ describe('ResourcesAPI', () => {
               name: '/aws/containerinsights/dev303-workshop/application',
             },
           },
-          {
-            value: {
-              arn: 'arn:aws:logs:us-west-1:123456789:log-group:/aws/containerinsights/dev303-workshop/flowlogs',
-              name: '/aws/containerinsights/dev303-workshop/flowlogs',
-            },
-          },
         ],
-        nextToken: 'some_token',
+        nextToken: 'legacy_token',
       };
-
-      const { api } = setupMockedResourcesAPI({ response });
+      const fetchMock = jest.fn().mockReturnValue(of({ data: response, headers: new Headers() }));
+      const { api } = setupMockedResourcesAPI({ fetchMock });
 
       const logGroups = await api.getLogGroups({ region: 'default' });
 
-      expect(logGroups).toEqual(response);
-      expect(logGroups.results).toHaveLength(2);
-      expect(logGroups.nextToken).toBe('some_token');
+      expect(logGroups.results).toHaveLength(1);
+      expect(logGroups.nextToken).toBe('legacy_token');
     });
   });
 
