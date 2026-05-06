@@ -32,7 +32,7 @@ func TestIntegrationPreferences_LegacyBridge(t *testing.T) {
 		flags []string
 	}{
 		{name: "legacy_path", flags: nil},
-		{name: "k8s_bridge", flags: []string{featuremgmt.FlagGrafanaKubernetesPreferences}},
+		{name: "k8s_bridge", flags: []string{featuremgmt.FlagPreferencesRerouteLegacyAPIs}},
 	}
 
 	for _, tc := range cases {
