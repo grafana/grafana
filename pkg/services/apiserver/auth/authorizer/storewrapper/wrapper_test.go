@@ -795,8 +795,10 @@ func TestWrapper_Watch(t *testing.T) {
 			inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}})
 		}
 
-		// Wait for the send timeout to trigger.
-		assert.Eventually(t, inner.IsStopped, 2*defaultSendTimeout, 10*time.Millisecond,
+		// Wait for the send timeout to trigger. Use a generous overall timeout
+		// because the run goroutine must first process ~100 events through the
+		// filter before the result channel fills and the send timeout fires.
+		assert.Eventually(t, inner.IsStopped, 5*time.Second, 10*time.Millisecond,
 			"inner watcher should be stopped after send timeout")
 		for range w.ResultChan() {
 		}
