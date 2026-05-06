@@ -1059,9 +1059,6 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		PreviousRV:      event.PreviousRV,
 	}
 	if err := k.eventStore.Save(ctx, eventData); err != nil {
-		// Clean up the data we wrote since event save failed.
-		// TODO: we should not delete the data after writing it.
-		_ = k.dataStore.Delete(ctx, dataKey)
 		return 0, fmt.Errorf("failed to save event: %w", err)
 	}
 
