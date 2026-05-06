@@ -12,8 +12,13 @@ import { config } from '@grafana/runtime';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
 
+const mockPanelRendererProps = jest.fn();
+
 jest.mock('../PanelRenderer', () => ({
-  PanelRenderer: () => <div data-testid="panel-renderer" />,
+  PanelRenderer: (props: object) => {
+    mockPanelRendererProps(props);
+    return <div data-testid="panel-renderer" />;
+  },
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -47,6 +52,10 @@ describe('VisualizationSuggestionCard', () => {
     hash: 'ts-hash',
     options: {},
   };
+
+  beforeEach(() => {
+    mockPanelRendererProps.mockClear();
+  });
 
   afterEach(() => {
     config.featureToggles.newVizSuggestions = true;
@@ -108,5 +117,57 @@ describe('VisualizationSuggestionCard', () => {
     );
 
     expect(withoutProp.innerHTML).toBe(withFalseProp.innerHTML);
+  });
+
+  describe('maxSeries series-slicing', () => {
+    let originalPanelSeriesLimit: number;
+    beforeEach(() => {
+      originalPanelSeriesLimit = config.panelSeriesLimit;
+    });
+
+    afterEach(() => {
+      config.panelSeriesLimit = originalPanelSeriesLimit;
+    });
+
+    const twoSeriesData: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2] },
+            { name: 'a', type: FieldType.number, values: [1, 2] },
+          ],
+        }),
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2] },
+            { name: 'b', type: FieldType.number, values: [3, 4] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    it('uses config.panelSeriesLimit when maxSeries is not set in cardOptions', () => {
+      config.panelSeriesLimit = 1;
+
+      render(<VisualizationSuggestionCard data={twoSeriesData} suggestion={baseSuggestion} width={100} />);
+      const { data } = mockPanelRendererProps.mock.calls[0][0] as { data: PanelData };
+      expect(data.series).toHaveLength(1);
+    });
+
+    it('uses cardOptions.maxSeries over config.panelSeriesLimit when explicitly set', () => {
+      config.panelSeriesLimit = 1;
+
+      const suggestion: PanelPluginVisualizationSuggestion = {
+        ...baseSuggestion,
+        cardOptions: { maxSeries: 2 },
+      };
+
+      render(<VisualizationSuggestionCard data={twoSeriesData} suggestion={suggestion} width={100} />);
+      const { data } = mockPanelRendererProps.mock.calls[0][0] as { data: PanelData };
+      expect(data.series).toHaveLength(2);
+    });
   });
 });
