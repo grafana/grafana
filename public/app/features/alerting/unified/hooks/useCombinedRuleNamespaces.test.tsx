@@ -10,7 +10,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { NO_GROUP_PREFIX } from '../utils/rules';
 
 import {
-  UNGROUPED_VIRTUAL_GROUP_NAME,
+  MERGED_UNGROUPED_GROUP_NAME,
   flattenGrafanaManagedRules,
   mergeUngroupedGrafanaRules,
   sortRulesByName,
@@ -174,7 +174,7 @@ describe('mergeUngroupedGrafanaRules', () => {
     expect(merged.groups).toHaveLength(2);
     expect(merged.groups[0]).toEqual(realGroup);
     expect(merged.groups[1]).toEqual({
-      name: UNGROUPED_VIRTUAL_GROUP_NAME,
+      name: MERGED_UNGROUPED_GROUP_NAME,
       interval: '30s',
       rules: sortRulesByName([...ungroupedFoo.rules, ...ungroupedBar.rules]),
       totals: { alerting: 1, inactive: 1 },
@@ -191,7 +191,7 @@ describe('mergeUngroupedGrafanaRules', () => {
     const [merged] = mergeUngroupedGrafanaRules([namespace]);
 
     expect(merged.groups).toHaveLength(1);
-    expect(merged.groups[0].name).toBe(UNGROUPED_VIRTUAL_GROUP_NAME);
+    expect(merged.groups[0].name).toBe(MERGED_UNGROUPED_GROUP_NAME);
     expect(merged.groups[0].rules).toEqual(sortRulesByName([...ungroupedFoo.rules, ...ungroupedBar.rules]));
   });
 
@@ -235,7 +235,7 @@ describe('mergeUngroupedGrafanaRules', () => {
     const [merged] = mergeUngroupedGrafanaRules([namespace]);
 
     expect(merged.groups[0]).toMatchObject({
-      name: UNGROUPED_VIRTUAL_GROUP_NAME,
+      name: MERGED_UNGROUPED_GROUP_NAME,
       interval: undefined,
     });
   });

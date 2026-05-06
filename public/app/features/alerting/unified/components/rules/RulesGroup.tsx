@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { type CombinedRuleGroup, type CombinedRuleNamespace, type RulesSource } from 'app/types/unified-alerting';
 
-import { isUngroupedVirtualGroup } from '../../hooks/useCombinedRuleNamespaces';
+import { isMergedUngroupedGroup } from '../../hooks/useCombinedRuleNamespaces';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
@@ -83,7 +83,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   // check what view mode we are in
   const isListView = viewMode === 'list';
   const isGroupView = viewMode === 'grouped';
-  const isVirtualUngroupedGroup = isUngroupedVirtualGroup(group);
+  const isVirtualUngroupedGroup = isMergedUngroupedGroup(group);
 
   const actionIcons: React.ReactNode[] = [];
 

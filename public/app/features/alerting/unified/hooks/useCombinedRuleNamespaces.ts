@@ -221,10 +221,10 @@ export function addCombinedPromAndRulerGroups(
 // Marker name for the virtual group built by mergeUngroupedGrafanaRules. Leading/trailing
 // double-underscores keep it from colliding with realistic user-supplied group names; the
 // value is purely UI-internal and never round-trips through any API.
-export const UNGROUPED_VIRTUAL_GROUP_NAME = '__ungrouped__';
+export const MERGED_UNGROUPED_GROUP_NAME = '__ungrouped__';
 
-export function isUngroupedVirtualGroup(group: Pick<CombinedRuleGroup, 'name'>): boolean {
-  return group.name === UNGROUPED_VIRTUAL_GROUP_NAME;
+export function isMergedUngroupedGroup(group: Pick<CombinedRuleGroup, 'name'>): boolean {
+  return group.name === MERGED_UNGROUPED_GROUP_NAME;
 }
 
 // Collapse the artificial no_group_for_rule_* groups in each Grafana namespace into a single
@@ -249,7 +249,7 @@ export function mergeUngroupedGrafanaRules(namespaces: CombinedRuleNamespace[]):
     const interval = firstInterval && ungrouped.every((g) => g.interval === firstInterval) ? firstInterval : undefined;
 
     const virtualGroup: CombinedRuleGroup = {
-      name: UNGROUPED_VIRTUAL_GROUP_NAME,
+      name: MERGED_UNGROUPED_GROUP_NAME,
       interval,
       rules: sortRulesByName(ungrouped.flatMap((group) => group.rules)),
       totals: calculateAllGroupsTotals(ungrouped),

@@ -13,7 +13,7 @@ import {
 
 import * as analytics from '../../Analytics';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
-import { UNGROUPED_VIRTUAL_GROUP_NAME } from '../../hooks/useCombinedRuleNamespaces';
+import { MERGED_UNGROUPED_GROUP_NAME } from '../../hooks/useCombinedRuleNamespaces';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { mockFolderApi, setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockCombinedRule, mockFolder, mockGrafanaRulerRule } from '../../mocks';
@@ -203,7 +203,7 @@ describe('Rules group tests', () => {
 
   describe('Ungrouped virtual group', () => {
     const virtualGroup: CombinedRuleGroup = {
-      name: UNGROUPED_VIRTUAL_GROUP_NAME,
+      name: MERGED_UNGROUPED_GROUP_NAME,
       rules: [
         mockCombinedRule({
           name: 'FirstRule',
