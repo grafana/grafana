@@ -13,6 +13,7 @@ import {
   type Account,
   type ResourceResponse,
   type DescribeLogGroupsRequest,
+  type LogGroupResponse,
   type LogGroupsResponse,
   type GetMetricsRequest,
   type GetDimensionKeysRequest,
@@ -89,9 +90,9 @@ export class ResourcesAPI extends CloudWatchRequest {
       requestParams.cursorNext = params.cursorNext;
     }
     return lastValueFrom(
-      this.fetchRequest<LogGroupsResponse>('log-groups', requestParams).pipe(
+      this.fetchRequest<Array<ResourceResponse<LogGroupResponse>>>('log-groups', requestParams).pipe(
         map((response) => ({
-          results: response.data.results,
+          results: response.data,
           cursorNext: response.headers.get('cursor-next') ?? undefined,
         }))
       )

@@ -4,6 +4,15 @@ import lodash from 'lodash';
 
 import { config } from '@grafana/runtime';
 
+jest.mock('app/core/copy/appNotification', () => ({
+  useAppNotification: () => ({
+    error: jest.fn(),
+    warning: jest.fn(),
+    info: jest.fn(),
+    success: jest.fn(),
+  }),
+}));
+
 import {
   logGroupNamesVariable,
   setupMockedDataSource,

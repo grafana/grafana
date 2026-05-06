@@ -93,7 +93,7 @@ func (ds *DataSource) LogGroupsHandler(ctx context.Context, parameters url.Value
 		return nil, nil, models.NewHttpError("GetLogGroups error", http.StatusInternalServerError, err)
 	}
 
-	logGroupsResponse, err := json.Marshal(logGroups)
+	logGroupsResponse, err := json.Marshal(logGroups.Results)
 	if err != nil {
 		return nil, nil, models.NewHttpError("LogGroupsHandler json error", http.StatusInternalServerError, err)
 	}

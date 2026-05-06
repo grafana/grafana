@@ -46,7 +46,7 @@ func TestLogGroupsRoute(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.JSONEq(t, `{"results":[{"value":{"name":"some name", "arn":"some arn"},"accountId":"111"}]}`, rr.Body.String())
+		assert.JSONEq(t, `[{"value":{"name":"some name", "arn":"some arn"},"accountId":"111"}]`, rr.Body.String())
 	})
 
 	t.Run("successfully returns multiple log groups with account id", func(t *testing.T) {
@@ -77,7 +77,7 @@ func TestLogGroupsRoute(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.JSONEq(t, `{"results":[
+		assert.JSONEq(t, `[
 		   {
 			  "value":{
 				 "name":"name 1",
@@ -92,7 +92,7 @@ func TestLogGroupsRoute(t *testing.T) {
 			  },
 			  "accountId":"222"
 		   }
-		]}`, rr.Body.String())
+		]`, rr.Body.String())
 	})
 
 	t.Run("returns error when both logGroupPrefix and logGroup Pattern are provided", func(t *testing.T) {
@@ -242,6 +242,6 @@ func TestLogGroupsRoute(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.Equal(t, "next_page_token", rr.Header().Get("cursor-next"))
-		assert.JSONEq(t, `{"results":[{"value":{"name":"some name","arn":"some arn"},"accountId":"111"}]}`, rr.Body.String())
+		assert.JSONEq(t, `[{"value":{"name":"some name","arn":"some arn"},"accountId":"111"}]`, rr.Body.String())
 	})
 }
