@@ -22,9 +22,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	schemas "github.com/grafana/schemads"
 	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
+	schemas "github.com/grafana/schemads"
 )
 
 const (
@@ -32,6 +32,7 @@ const (
 	flagLokiRunQueriesInParallel  = "lokiRunQueriesInParallel"
 	flagLogQLScope                = "logQLScope"
 	flagLokiExperimentalStreaming = "lokiExperimentalStreaming"
+	flagDsAbstractionApp          = "dsAbstractionApp"
 	fromAlertHeaderName           = "FromAlert"
 )
 
@@ -73,6 +74,7 @@ type datasourceInfo struct {
 	streamsMu sync.RWMutex
 
 	schemaDatasource *schemas.SchemaDatasource
+	schemaTableLabel string
 }
 
 type QueryJSONModel struct {
@@ -109,6 +111,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider, logger log.Log
 		}
 
 		schemaProvider := NewSchemaProvider(client, settings.URL, logger, tracer)
+		tblLabel := schemaProvider.ResolveSchemaTableLabel(ctx)
 		schemaDs := schemas.NewSchemaDatasource(
 			schemaProvider,
 			schemaProvider,
@@ -123,6 +126,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider, logger log.Log
 			URL:              settings.URL,
 			streams:          make(map[string]data.FrameJSONCache),
 			schemaDatasource: schemaDs,
+			schemaTableLabel: tblLabel,
 		}
 		return model, nil
 	}
@@ -217,6 +221,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer trace.Tracer, plog log.Logger, runInParallel bool, logQLScopes bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
+	req, schemadsRefIDs, sqlErrs := normalizeGrafanaSQLRequest(ctx, req, dsInfo)
+	for refID, e := range sqlErrs {
+		result.Responses[refID] = backend.DataResponse{
+			Error:       e,
+			ErrorSource: backend.ErrorSourceDownstream,
+		}
+	}
+	if len(req.Queries) == 0 {
+		if len(result.Responses) > 0 {
+			return result, nil
+		}
+		return result, fmt.Errorf("query contains no queries")
+	}
+
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
 
 	start := time.Now()
@@ -257,6 +275,17 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		}
 	}
 	plog.Debug("Executed queries", "duration", time.Since(start), "queriesLength", len(queries), "runInParallel", runInParallel)
+
+	if len(schemadsRefIDs) > 0 {
+		for refID, dr := range result.Responses {
+			if _, ok := schemadsRefIDs[refID]; !ok || dr.Error != nil {
+				continue
+			}
+			dr.Frames = flattenLogsToTabular(dr.Frames, responseOpts.logsDataplane)
+			result.Responses[refID] = dr
+		}
+	}
+
 	return result, err
 }
 

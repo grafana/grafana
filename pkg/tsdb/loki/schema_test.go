@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	apidata "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	schemas "github.com/grafana/schemads"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/stretchr/testify/require"
 )
 
 type mockSchemaTransport struct {
-	t *testing.T
+	t  *testing.T
 	fn func(*http.Request) (int, string, []byte)
 }
 
@@ -194,9 +194,11 @@ func TestSchemaProvider_Schema(t *testing.T) {
 func Test_appendTimeRangeParams(t *testing.T) {
 	v := url.Values{}
 	v.Set("query", `{service_name="x"}`)
+	from := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
+	to := time.Date(2024, 6, 1, 13, 0, 0, 0, time.UTC)
 	appendTimeRangeParams(v, apidata.TimeRange{
-		From: time.Now().Add(-time.Hour).UTC().Format(time.RFC3339Nano),
-		To:   time.Now().UTC().Format(time.RFC3339Nano),
+		From: from.Format(time.RFC3339Nano),
+		To:   to.Format(time.RFC3339Nano),
 	})
 	require.NotEmpty(t, v.Get("start"))
 	require.NotEmpty(t, v.Get("end"))

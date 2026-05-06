@@ -75,6 +75,13 @@ func NewSchemaProvider(httpClient *http.Client, url string, logger log.Logger, t
 	}
 }
 
+// ResolveSchemaTableLabel resolves the label used to partition SQL tables (e.g. service_name) and
+// caches it. Call once at datasource instance creation so the same value is available for
+// Grafana SQL query normalization without a second discovery round-trip.
+func (p *SchemaProvider) ResolveSchemaTableLabel(ctx context.Context) string {
+	return p.resolvedTableLabel(ctx)
+}
+
 // Schema implements schemas.SchemaHandler.
 func (p *SchemaProvider) Schema(ctx context.Context, _ *schemas.SchemaRequest) (*schemas.SchemaResponse, error) {
 	names, err := p.fetchTableNames(ctx)
