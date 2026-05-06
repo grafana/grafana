@@ -5396,6 +5396,7 @@
         "name": "sceneCsvExport",
         "resourceVersion": "1776334251375",
         "creationTimestamp": "2026-02-11T10:49:36Z",
+        "deletionTimestamp": "2026-05-06T12:14:02Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-04-16 10:10:51.375991 +0000 UTC"
         }
