@@ -35,7 +35,9 @@ describe('useAlertQueriesStatus', () => {
     // Never-resolving promise keeps the hook in loading state without leaking state updates into later tests.
     mockGetInstanceSettings.mockReturnValue(new Promise<DataSourceInstanceSettings>(() => {}));
 
-    const { result, unmount } = renderHook(() => useAlertQueriesStatus([makeQuery('ds-uid')]));
+    // Stable reference so useAsync doesn't re-fire on re-renders.
+    const queries = [makeQuery('ds-uid')];
+    const { result, unmount } = renderHook(() => useAlertQueriesStatus(queries));
 
     expect(result.current.isLoading).toBe(true);
     expect(result.current.allDataSourcesAvailable).toBe(false);
@@ -46,7 +48,8 @@ describe('useAlertQueriesStatus', () => {
   it('returns allDataSourcesAvailable=true when all datasources are found', async () => {
     mockGetInstanceSettings.mockResolvedValue({ uid: 'ds-uid', name: 'Test DS' } as DataSourceInstanceSettings);
 
-    const { result } = renderHook(() => useAlertQueriesStatus([makeQuery('ds-uid')]));
+    const queries = [makeQuery('ds-uid')];
+    const { result } = renderHook(() => useAlertQueriesStatus(queries));
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.allDataSourcesAvailable).toBe(true);
@@ -56,7 +59,8 @@ describe('useAlertQueriesStatus', () => {
   it('returns allDataSourcesAvailable=false when a datasource is not found', async () => {
     mockGetInstanceSettings.mockResolvedValue(undefined);
 
-    const { result } = renderHook(() => useAlertQueriesStatus([makeQuery('missing-uid')]));
+    const queries = [makeQuery('missing-uid')];
+    const { result } = renderHook(() => useAlertQueriesStatus(queries));
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.allDataSourcesAvailable).toBe(false);
@@ -65,7 +69,8 @@ describe('useAlertQueriesStatus', () => {
   it('skips expression datasources', async () => {
     mockIsExpressionReference.mockReturnValue(true);
 
-    const { result } = renderHook(() => useAlertQueriesStatus([makeQuery('__expr__')]));
+    const queries = [makeQuery('__expr__')];
+    const { result } = renderHook(() => useAlertQueriesStatus(queries));
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.allDataSourcesAvailable).toBe(true);
@@ -77,22 +82,21 @@ describe('useAlertQueriesStatus', () => {
       .mockResolvedValueOnce({ uid: 'ds-1', name: 'DS 1' } as DataSourceInstanceSettings)
       .mockResolvedValueOnce(undefined);
 
-    const { result } = renderHook(() => useAlertQueriesStatus([makeQuery('ds-1'), makeQuery('ds-missing')]));
+    const queries = [makeQuery('ds-1'), makeQuery('ds-missing')];
+    const { result } = renderHook(() => useAlertQueriesStatus(queries));
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.allDataSourcesAvailable).toBe(false);
   });
 
   it('exposes an error when getInstanceSettings rejects', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     mockGetInstanceSettings.mockRejectedValue(new Error('network failure'));
 
-    const { result } = renderHook(() => useAlertQueriesStatus([makeQuery('ds-uid')]));
+    const queries = [makeQuery('ds-uid')];
+    const { result } = renderHook(() => useAlertQueriesStatus(queries));
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.error).toBeInstanceOf(Error);
     expect(result.current.allDataSourcesAvailable).toBe(false);
-
-    consoleSpy.mockRestore();
   });
 });
