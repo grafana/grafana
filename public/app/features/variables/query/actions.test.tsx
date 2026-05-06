@@ -22,7 +22,6 @@ import {
   changeVariableEditorExtended,
   initialVariableEditorState,
   removeVariableEditorError,
-  variableEditorMounted,
 } from '../editor/reducer';
 import { updateOptions } from '../state/actions';
 import { getPreloadedState, getRootReducer, type RootReducerType } from '../state/helpers';
@@ -156,33 +155,6 @@ describe('query actions', () => {
       const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', updateVariableOptions(toVariablePayload(variable, update))),
-        toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
-      );
-    });
-  });
-
-  describe('when updateQueryVariableOptions is dispatched for variable open in editor', () => {
-    it('then correct actions are dispatched', async () => {
-      const variable = createVariable({ includeAll: true });
-      const optionsMetrics = [createMetric('A'), createMetric('B')];
-
-      mockDatasourceMetrics(variable, optionsMetrics);
-
-      const tester = await reduxTester<RootReducerType>()
-        .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(
-          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        )
-        .whenActionIsDispatched(toKeyedAction('key', variableEditorMounted({ name: variable.name, id: variable.id })))
-        .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable)), true);
-
-      const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
-      const update = { results: optionsMetrics, templatedRegex: '' };
-
-      tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', removeVariableEditorError({ errorProp: 'update' })),
         toKeyedAction('key', updateVariableOptions(toVariablePayload(variable, update))),
         toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );

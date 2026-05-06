@@ -2,7 +2,6 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import { type DataSourceApi } from '@grafana/data';
 
-import { type VariablePayload } from '../state/types';
 import { type VariableQueryEditorType } from '../types';
 
 export interface AdHocVariableEditorState {
@@ -40,29 +39,6 @@ const variableEditorReducerSlice = createSlice({
   name: 'templating/editor',
   initialState: initialVariableEditorState,
   reducers: {
-    variableEditorMounted: (state: VariableEditorState, action: PayloadAction<{ name: string; id: string }>) => {
-      state.name = action.payload.name;
-      state.id = action.payload.id;
-    },
-    variableEditorUnMounted: (state: VariableEditorState, action: PayloadAction<VariablePayload>) => {
-      return initialVariableEditorState;
-    },
-    changeVariableNameSucceeded: (
-      state: VariableEditorState,
-      action: PayloadAction<VariablePayload<{ newName: string }>>
-    ) => {
-      state.name = action.payload.data.newName;
-      delete state.errors['name'];
-      state.isValid = Object.keys(state.errors).length === 0;
-    },
-    changeVariableNameFailed: (
-      state: VariableEditorState,
-      action: PayloadAction<{ newName: string; errorText: string }>
-    ) => {
-      state.name = action.payload.newName;
-      state.errors.name = action.payload.errorText;
-      state.isValid = Object.keys(state.errors).length === 0;
-    },
     addVariableEditorError: (
       state: VariableEditorState,
       action: PayloadAction<{ errorProp: string; errorText: string }>
@@ -86,13 +62,5 @@ const variableEditorReducerSlice = createSlice({
 
 export const variableEditorReducer = variableEditorReducerSlice.reducer;
 
-export const {
-  changeVariableNameSucceeded,
-  changeVariableNameFailed,
-  variableEditorMounted,
-  variableEditorUnMounted,
-  changeVariableEditorExtended,
-  addVariableEditorError,
-  removeVariableEditorError,
-  cleanEditorState,
-} = variableEditorReducerSlice.actions;
+export const { changeVariableEditorExtended, addVariableEditorError, removeVariableEditorError, cleanEditorState } =
+  variableEditorReducerSlice.actions;
