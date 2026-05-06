@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
 import { PluginContextProvider, type PluginMeta, type PluginMetaInfo, PluginType } from '@grafana/data';
-import { useDataSourcePlugin } from '@grafana/runtime';
+import { getDataSourcePlugin } from '@grafana/runtime';
 
 import { CloudWatchDatasource } from '../../datasource';
 import {
@@ -36,7 +36,7 @@ jest.mock('@grafana/runtime', () => ({
     put: putMock,
     get: getMock,
   }),
-  useDataSourcePlugin: jest.fn(),
+  getDataSourcePlugin: jest.fn(),
   getAppEvents: () => mockAppEvents,
   config: {
     ...jest.requireActual('@grafana/runtime').config,
@@ -116,7 +116,7 @@ describe('Render', () => {
     jest.resetAllMocks();
     putMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
     getMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
-    jest.mocked(useDataSourcePlugin).mockReturnValue({ dataSource: datasource, isLoading: false, error: undefined });
+    jest.mocked(getDataSourcePlugin).mockResolvedValue(datasource);
     datasource.resources.getRegions = jest.fn().mockResolvedValue([
       {
         label: 'ap-east-1',
@@ -244,9 +244,9 @@ describe('Render', () => {
     });
   });
 
-  it('should load the data source via useDataSourcePlugin', async () => {
+  it('should load the data source when version is set', async () => {
     setup({ version: 2 });
-    await waitFor(() => expect(useDataSourcePlugin).toHaveBeenCalledWith('CloudWatch'));
+    await waitFor(() => expect(getDataSourcePlugin).toHaveBeenCalledWith('CloudWatch'));
   });
 
   it('should show error message if Select log group button is clicked when data source is never saved', async () => {
