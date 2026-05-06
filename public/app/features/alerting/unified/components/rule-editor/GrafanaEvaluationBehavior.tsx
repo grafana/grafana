@@ -185,7 +185,7 @@ export function GrafanaEvaluationBehaviorStep({
   // returned by the ruler API). Keystrokes in `evaluateEvery` while a known group is selected
   // short-circuit to the cached `baseGroupOptions`.
   const groupOptions = useMemo(() => {
-    if (isUngroupedRule || baseGroupOptions.some((option) => option.value === group)) {
+    if (isUngroupedRule || !group || baseGroupOptions.some((option) => option.value === group)) {
       return baseGroupOptions;
     }
     return namespaceToGroupOptions(rulerNamespace ?? {}, enableProvisionedGroups, {
