@@ -337,7 +337,7 @@ func TestMerge(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := Merge(definitions.PostableUserConfig{AlertmanagerConfig: *tc.grafana}, *tc.mimir, opts)
+			result, err := mergeConfigs(definitions.PostableUserConfig{AlertmanagerConfig: *tc.grafana}, *tc.mimir, opts)
 			if tc.expectedErr != nil {
 				if err == nil {
 					data, err := yaml.Marshal(result.Config)
@@ -371,7 +371,7 @@ func TestMerge(t *testing.T) {
 	t.Run("should not modify existing config", func(t *testing.T) {
 		g := load(t, fullGrafanaConfig)
 		m := load(t, fullMimirConfig)
-		_, err := Merge(definitions.PostableUserConfig{AlertmanagerConfig: *g}, *m, opts)
+		_, err := mergeConfigs(definitions.PostableUserConfig{AlertmanagerConfig: *g}, *m, opts)
 		require.NoError(t, err)
 		assert.Equal(t, load(t, fullGrafanaConfig), g)
 		assert.Equal(t, load(t, fullMimirConfig), m)
@@ -384,7 +384,7 @@ func TestMerge(t *testing.T) {
 			DedupSuffix:     "_mimir-12345",
 			SubtreeMatchers: config.Matchers{},
 		}
-		result, err := Merge(definitions.PostableUserConfig{AlertmanagerConfig: *g}, *m, opts)
+		result, err := mergeConfigs(definitions.PostableUserConfig{AlertmanagerConfig: *g}, *m, opts)
 		require.NoError(t, err)
 
 		full := load(t, fullMergedConfig)

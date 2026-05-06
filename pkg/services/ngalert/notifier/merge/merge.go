@@ -136,6 +136,31 @@ func (m MergeResult) LogContext() []any {
 
 // MergeExtraConfig merges extra configurations in cfg into the base Grafana configuration.
 // If no extra configurations are present, it returns the base configuration wrapped in a MergeResult.
+//
+// The merge combines two Alertmanager configurations into a single unified configuration,
+// handling three main aspects:
+//
+//  1. Resource Deduplication:
+//     When resources (receivers or time intervals) with identical names exist in both configurations,
+//     resources from the extra configuration are renamed according to these rules:
+//     - First, the extra configuration's Identifier is appended to the name
+//     - If the name is still not unique, a numbered suffix is added (e.g., "_01", "_02")
+//     - All references to renamed resources are automatically updated throughout the configuration
+//
+//  2. Route Merging:
+//     - The entire routing tree from the extra configuration is inserted as a sub-tree under
+//     the root route of the base configuration
+//     - The sub-tree is positioned as the first route in the list of routes
+//     - The extra configuration's MergeMatchers are added to the root of the imported routing tree
+//     - Default timing settings (GroupWait, GroupInterval, RepeatInterval) are explicitly set
+//     on the imported route to prevent inheriting potentially unwanted defaults from the parent
+//     - If any existing routes in the base configuration would match the MergeMatchers, the merge
+//     will fail with ErrSubtreeMatchersConflict to prevent breaking existing notification flows
+//
+//  3. Inhibit Rule Merging:
+//     - All inhibit rules from the extra configuration are copied to the result
+//     - MergeMatchers are added to both source and target matchers of each copied inhibit rule
+//     to maintain proper context separation
 func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (MergeResult, error) {
 	if len(cfg.ExtraConfigs) == 0 {
 		return MergeResult{Config: *cfg}, nil
@@ -156,7 +181,7 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 	if err := opts.Validate(); err != nil {
 		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
 	}
-	m, err := Merge(*cfg, mcfg, opts)
+	m, err := mergeConfigs(*cfg, mcfg, opts)
 	if err != nil {
 		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
 	}
@@ -172,48 +197,7 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 	return result, nil
 }
 
-// Merge combines two Alertmanager configurations into a single unified configuration.
-//
-// The function handles three main aspects of the merge process:
-//
-//  1. Resource Deduplication:
-//     When resources (receivers or time intervals) with identical names exist in both configurations,
-//     resources from configuration "b" are renamed according to these rules:
-//     - First, the MergeOpts.DedupSuffix is appended to the name
-//     - If the name is still not unique, a numbered suffix is added (e.g., "_01", "_02")
-//     - All references to renamed resources are automatically updated throughout the configuration
-//
-// 2. Route Merging:
-//   - The entire routing tree from "b" is inserted as a sub-tree under the root route of "a"
-//   - The sub-tree is positioned as the first route in the list of routes
-//   - The MergeOpts.SubtreeMatchers are added to the root of the "b" routing tree
-//   - Default timing settings (GroupWait, GroupInterval, RepeatInterval) are explicitly set
-//     on the "b" route to prevent inheriting potentially unwanted defaults from the parent configuration
-//   - If any existing routes in "a" would match the SubtreeMatchers, the merge will fail with
-//     ErrSubtreeMatchersConflict to prevent breaking existing routing behavior
-//
-// 3. Inhibit Rule Merging:
-//   - All inhibit rules from "b" are copied to the result
-//   - MergeOpts.SubtreeMatchers are added to both source and target matchers of each
-//     copied inhibit rule to maintain proper context separation
-//
-// Returns a MergeResult containing the merged configuration and maps of renamed resources
-// that can be used to track the renaming that occurred during the merge process.
-//
-// Example usage:
-//
-//	result, err := Merge(primaryConfig, secondaryConfig, MergeOpts{
-//	  DedupSuffix: "_secondary",
-//	  SubtreeMatchers: config.Matchers{
-//	    {Name: "source", Value: "external", Type: labels.MatchEqual},
-//	  },
-//	})
-//
-// If the merge fails with ErrSubtreeMatchersConflict, it indicates that the SubtreeMatchers
-// would conflict with existing routes, potentially disrupting alert notifications. In this
-// case, you should choose different SubtreeMatchers that don't overlap with existing route
-// matchers.
-func Merge(a definitions.PostableUserConfig, b definition.PostableApiAlertingConfig, opts MergeOpts) (MergeResult, error) {
+func mergeConfigs(a definitions.PostableUserConfig, b definition.PostableApiAlertingConfig, opts MergeOpts) (MergeResult, error) {
 	if err := opts.Validate(); err != nil {
 		return MergeResult{}, err
 	}
