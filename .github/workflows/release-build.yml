@@ -953,7 +953,7 @@ jobs:
           persist-credentials: false
 
       - name: Pull image from Dockerhub
-        run: docker pull ${{ env.IMAGE_TAG }}
+        run: docker pull "${{ env.IMAGE_TAG }}"
 
       - name: Get vault secrets
         id: vault-secrets

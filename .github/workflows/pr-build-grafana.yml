@@ -160,7 +160,7 @@ jobs:
           environment: 'dev'
 
       - name: Pull image from GAR
-        run: docker pull ${{ needs.push-docker-image.outputs.IMAGE }}
+        run: docker pull "${{ needs.push-docker-image.outputs.IMAGE }}"
 
       - name: Get vault secrets
         id: vault-secrets
