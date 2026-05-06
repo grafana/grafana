@@ -347,7 +347,11 @@ func (ds *DataSource) cursorPagenationMiddleware(handleFunc models.CursorHandler
 		}
 
 		ctx := req.Context()
-		jsonResponse, cursor, httpError := handleFunc(ctx, req.URL.Query())
+		parameters := req.URL.Query()
+		if cursorHeader := req.Header.Get("cursor-next"); cursorHeader != "" {
+			parameters.Set("cursorNext", cursorHeader)
+		}
+		jsonResponse, cursor, httpError := handleFunc(ctx, parameters)
 		if httpError != nil {
 			ds.logger.FromContext(ctx).Error("Error handling resource request", "error", httpError.Message)
 			respondWithError(rw, httpError)

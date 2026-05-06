@@ -11,6 +11,13 @@ describe('ResourcesAPI', () => {
       expect(fetchMock.mock.calls[1][0].params.region).toBe('eu-east');
     });
 
+    it('should not set cursor-next header when cursorNext is not provided', async () => {
+      const { api, fetchMock } = setupMockedResourcesAPI();
+      await api.getLogGroups({ region: 'default' });
+      const call = fetchMock.mock.calls[0][0];
+      expect(call.headers).toBeUndefined();
+    });
+
     it('should return log groups response with results', async () => {
       const logGroupsData = [
         {

@@ -37,10 +37,15 @@ export class ResourcesAPI extends CloudWatchRequest {
     return getBackendSrv().get(`/api/datasources/uid/${this.instanceSettings.uid}/resources/${subtype}`, parameters);
   }
 
-  private fetchRequest<T>(subtype: string, parameters?: Record<string, string | string[] | number>) {
+  private fetchRequest<T>(
+    subtype: string,
+    parameters?: Record<string, string | string[] | number>,
+    headers?: Record<string, string>
+  ) {
     return getBackendSrv().fetch<T>({
       url: `/api/datasources/uid/${this.instanceSettings.uid}/resources/${subtype}`,
       params: parameters,
+      headers,
     });
   }
 
@@ -80,17 +85,19 @@ export class ResourcesAPI extends CloudWatchRequest {
   }
 
   getLogGroups(params: DescribeLogGroupsRequest): Promise<LogGroupsResponse> {
+    const { cursorNext, ...restParams } = params;
     const requestParams: Record<string, string | string[] | number> = {
-      ...params,
+      ...restParams,
       region: this.templateSrv.replace(this.getActualRegion(params.region)),
       accountId: this.templateSrv.replace(params.accountId),
       listAllLogGroups: params.listAllLogGroups ? 'true' : 'false',
     };
-    if (params.cursorNext) {
-      requestParams.cursorNext = params.cursorNext;
-    }
     return lastValueFrom(
-      this.fetchRequest<Array<ResourceResponse<LogGroupResponse>>>('log-groups', requestParams).pipe(
+      this.fetchRequest<Array<ResourceResponse<LogGroupResponse>>>(
+        'log-groups',
+        requestParams,
+        cursorNext ? { 'cursor-next': cursorNext } : undefined
+      ).pipe(
         map((response) => ({
           results: response.data,
           cursorNext: response.headers.get('cursor-next') ?? undefined,
