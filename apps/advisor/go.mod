@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/advisor
 go 1.26.2
 
 require (
-	github.com/Masterminds/semver/v3 v3.4.0
+	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v82 v82.0.0
 	github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2
