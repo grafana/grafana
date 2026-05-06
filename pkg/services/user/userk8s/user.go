@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamuser "github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -476,6 +478,9 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 	}
 	params.Set("limit", strconv.Itoa(limit))
 	params.Set("page", strconv.Itoa(page))
+	for _, sortParam := range legacysort.ConvertToSortParams(cmd.SortOpts, iamuser.UserSortFieldMapping()) {
+		params.Add("sort", sortParam)
+	}
 
 	raw, err := routeClient.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
 		Path:  "/searchUsers",

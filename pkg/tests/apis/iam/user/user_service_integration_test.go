@@ -519,6 +519,44 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 				require.Contains(t, allLogins, "alpha-user")
 				require.Contains(t, allLogins, "beta-user")
 			})
+
+			for _, tc := range []struct {
+				sortParam string
+				alphaFirst bool
+			}{
+				{"login-asc", true},
+				{"login-desc", false},
+				{"name-asc", true},
+				{"name-desc", false},
+				{"email-asc", true},
+				{"email-desc", false},
+			} {
+				tc := tc
+				t.Run(fmt.Sprintf("should sort users by %s", tc.sortParam), func(t *testing.T) {
+					rsp := apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: "GET",
+						Path:   fmt.Sprintf("/api/users/search?sort=%s", tc.sortParam),
+					}, &searchUsersResponse{})
+					require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+
+					alphaIdx, betaIdx := -1, -1
+					for i, u := range rsp.Result.Users {
+						if u.Login == "alpha-user" {
+							alphaIdx = i
+						} else if u.Login == "beta-user" {
+							betaIdx = i
+						}
+					}
+					require.NotEqual(t, -1, alphaIdx, "alpha-user not found in results")
+					require.NotEqual(t, -1, betaIdx, "beta-user not found in results")
+					if tc.alphaFirst {
+						require.Less(t, alphaIdx, betaIdx, "alpha-user should come before beta-user")
+					} else {
+						require.Greater(t, alphaIdx, betaIdx, "beta-user should come before alpha-user")
+					}
+				})
+			}
 		})
 	}
 }
