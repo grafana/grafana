@@ -1,4 +1,4 @@
-import { EchoEventType, getEchoSrv } from '../../services/EchoSrv';
+import { EchoEventType, getEchoSrv } from '../services/EchoSrv';
 
 import { defineFeatureEvents } from './main';
 
