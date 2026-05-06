@@ -326,7 +326,7 @@ describe('LogGroupsSelector', () => {
     waitFor(() => expect(screen.queryByText('Account Name 123')).not.toBeInTheDocument());
   });
 
-  it('should show Load more button when nextToken is present and append results on click', async () => {
+  it('should show Load more button when cursorNext is present and append results on click', async () => {
     let callCount = 0;
     const fetchLogGroups = jest.fn(async () => {
       callCount++;
@@ -341,7 +341,7 @@ describe('LogGroupsSelector', () => {
               },
             },
           ],
-          nextToken: 'page2_token',
+          cursorNext: 'page2_token',
         } as LogGroupsResponse;
       }
       return {
@@ -372,11 +372,11 @@ describe('LogGroupsSelector', () => {
     expect(fetchLogGroups).toHaveBeenLastCalledWith({
       logGroupPattern: '',
       accountId: 'all',
-      nextToken: 'page2_token',
+      cursorNext: 'page2_token',
     });
   });
 
-  it('should not show Load more button when nextToken is not present', async () => {
+  it('should not show Load more button when cursorNext is not present', async () => {
     render(<LogGroupsSelector {...defaultProps} />);
     await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() => expect(screen.getByText('logGroup1')).toBeInTheDocument());
@@ -398,7 +398,7 @@ describe('LogGroupsSelector', () => {
               },
             },
           ],
-          nextToken: 'page2_token',
+          cursorNext: 'page2_token',
         } as LogGroupsResponse;
       }
       throw new Error('network error');

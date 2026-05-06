@@ -47,7 +47,7 @@ export const LogGroupsSelector = ({
   const [searchAccountId, setSearchAccountId] = useState(ALL_ACCOUNTS_OPTION.value);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [nextToken, setNextToken] = useState<string | undefined>();
+  const [cursorNext, setCursorNext] = useState<string | undefined>();
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
   const selectedLogGroupsCounter = useMemo(
@@ -89,7 +89,7 @@ export const LogGroupsSelector = ({
 
   const searchFn = async (searchTerm?: string, accountId?: string) => {
     setIsLoading(true);
-    setNextToken(undefined);
+    setCursorNext(undefined);
     try {
       const response = await fetchLogGroups({
         logGroupPattern: searchTerm,
@@ -103,7 +103,7 @@ export const LogGroupsSelector = ({
           accountLabel: lg.accountId ? accountNameById[lg.accountId] : undefined,
         }))
       );
-      setNextToken(response.nextToken);
+      setCursorNext(response.cursorNext);
     } catch (err) {
       setSelectableLogGroups([]);
     }
@@ -111,7 +111,7 @@ export const LogGroupsSelector = ({
   };
 
   const loadMore = async () => {
-    if (!nextToken) {
+    if (!cursorNext) {
       return;
     }
     setIsLoadingMore(true);
@@ -119,7 +119,7 @@ export const LogGroupsSelector = ({
       const response = await fetchLogGroups({
         logGroupPattern: searchPhrase,
         accountId: searchAccountId,
-        nextToken,
+        cursorNext,
       });
       setSelectableLogGroups((prev) => [
         ...prev,
@@ -130,7 +130,7 @@ export const LogGroupsSelector = ({
           accountLabel: lg.accountId ? accountNameById[lg.accountId] : undefined,
         })),
       ]);
-      setNextToken(response.nextToken);
+      setCursorNext(response.cursorNext);
     } catch (err) {
       notifyApp.error('Failed to load more log groups. Please try again.');
     }
@@ -182,7 +182,7 @@ export const LogGroupsSelector = ({
         </div>
         <Space layout="block" v={2} />
         <div>
-          {!isLoading && !nextToken && selectableLogGroups.length >= 25 && (
+          {!isLoading && !cursorNext && selectableLogGroups.length >= 25 && (
             <>
               <div className={styles.limitLabel}>
                 <Icon name="info-circle"></Icon>
@@ -246,7 +246,7 @@ export const LogGroupsSelector = ({
               </tbody>
             </table>
           </div>
-          {!isLoading && nextToken && (
+          {!isLoading && cursorNext && (
             <>
               <Space layout="block" v={1} />
               <Button variant="secondary" onClick={loadMore} disabled={isLoadingMore} type="button" fill="text">
