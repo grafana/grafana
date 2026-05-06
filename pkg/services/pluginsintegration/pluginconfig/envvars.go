@@ -11,11 +11,13 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
@@ -57,7 +59,8 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	// valid (active and non-expired) commercial license. On OSS builds, or
 	// when the license is missing/expired/invalid, HasValidLicense returns
 	// false and the per-plugin marketplace license path is not exposed.
-	if p.license != nil && p.license.HasValidLicense() {
+	marketplaceLicensingEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsMarketplaceLicensing, false, openfeature.TransactionContext(ctx))
+	if marketplaceLicensingEnabled && p.license != nil && p.license.HasValidLicense() {
 		marketplaceLicenseFile, err := p.license.PluginLicensePath(plugin.ID)
 		if err != nil {
 			p.logger.Debug("Skipping marketplace license env var", "pluginID", plugin.ID, "error", err)
