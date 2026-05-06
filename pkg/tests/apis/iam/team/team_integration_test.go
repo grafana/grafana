@@ -677,9 +677,13 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		close(barrier)
 		wg.Wait()
 		for i, r := range results {
+			uid := ""
+			if i < len(members) {
+				uid = members[i]
+			}
 			require.Truef(t, r.finalCode == 200 || r.finalCode == 201,
 				"goroutine %d (uid=%s) addMember should converge to 200/201 after retries, got %d in %d attempts",
-				i, members[i], r.finalCode, r.attempts)
+				i, uid, r.finalCode, r.attempts)
 		}
 
 		fetched, err := teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
