@@ -3,7 +3,7 @@ import { type RefObject, useCallback } from 'react';
 import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 
-import { Actions } from '../../Actions';
+import { Actions, ConfirmationStyle } from '../../Actions';
 import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
@@ -67,7 +67,10 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
       <SaveButton parentRef={containerRef} />
       <PluginActions app={CoreApp.PanelEditor} />
       <Actions
+        // Remount on selection change so an open delete prompt doesn't follow the user.
+        key={`${item.type}:${item.name}`}
         contentHeader={true}
+        confirmStyle={ConfirmationStyle.full}
         item={item}
         onDelete={onDelete}
         onToggleHide={onToggleHide}

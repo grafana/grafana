@@ -145,9 +145,9 @@ export const SidebarCard = ({
                 onDuplicate={onDuplicate}
                 onToggleHide={onToggleHide}
                 order={{
-                  delete: 1,
+                  delete: 2,
                   duplicate: 0,
-                  hide: 2,
+                  hide: 1,
                 }}
               />
             </div>

@@ -162,13 +162,13 @@ export const mockTypeConfig: QueryEditorTypeConfigState = {
     icon: 'database',
     color: '#ff9800',
     getLabel: () => 'Query',
-    deleteConfirmation: false,
+    deleteConfirmation: true,
   },
   [QueryEditorType.Expression]: {
     icon: 'calculator-alt',
     color: '#9c27b0',
     getLabel: () => 'Expression',
-    deleteConfirmation: false,
+    deleteConfirmation: true,
   },
   [QueryEditorType.Transformation]: {
     icon: 'process',

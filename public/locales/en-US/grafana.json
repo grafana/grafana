@@ -14124,6 +14124,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Add filter",
+      "cancel-delete": "Cancel",
+      "confirm-delete": "Delete",
+      "confirm-delete-confirm": "Confirm",
+      "delete-confirmation-group": "Delete confirmation",
       "disable": "Disable {{type}}",
       "duplicate": "Duplicate {{type}}",
       "enable": "Enable {{type}}",
@@ -14163,12 +14167,6 @@
       "show": "Show",
       "show-all-tooltip": "Show all selected",
       "toolbar-label": "Bulk actions"
-    },
-    "delete-modal": {
-      "body-query": "Are you sure you want to delete this query?",
-      "body-transformation": "Removing one transformation may break others.",
-      "confirm": "Delete",
-      "title": "Delete {{name}}?"
     },
     "details-sidebar": {
       "cache-timeout": "Cache timeout",

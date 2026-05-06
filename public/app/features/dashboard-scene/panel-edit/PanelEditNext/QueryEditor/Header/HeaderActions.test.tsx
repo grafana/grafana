@@ -14,6 +14,7 @@ interface MockActionsProps {
 }
 
 jest.mock('../../Actions', () => ({
+  ...jest.requireActual('../../Actions'),
   Actions: ({ item, onDelete, onToggleHide }: MockActionsProps) => (
     <div
       data-testid="actions"
