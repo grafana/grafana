@@ -24,7 +24,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
 
   return (
     <Box width="50%">
-      <Space v={3} />
+      <Space v={2} />
       <Button
         data-testid="influxdb-v2-config-advanced-http-settings-toggle"
         icon={advancedHttpSettingsIsOpen ? 'angle-down' : 'angle-right'}
@@ -102,7 +102,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
           <CustomHeadersSettings dataSourceConfig={options} onChange={onOptionsChange} />
         </>
       )}
-      <Space v={3} />
+      {!advancedHttpSettingsIsOpen && <Space v={3} />}
     </Box>
   );
 };
