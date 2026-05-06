@@ -27,7 +27,7 @@ describe('ResourcesAPI', () => {
             },
           },
         ],
-        nextToken: 'some_token',
+        cursorNext: 'some_token',
       };
 
       const { api } = setupMockedResourcesAPI({ response });
@@ -36,7 +36,7 @@ describe('ResourcesAPI', () => {
 
       expect(logGroups).toEqual(response);
       expect(logGroups.results).toHaveLength(2);
-      expect(logGroups.nextToken).toBe('some_token');
+      expect(logGroups.cursorNext).toBe('some_token');
     });
   });
 

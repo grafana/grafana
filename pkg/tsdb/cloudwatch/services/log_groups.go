@@ -37,8 +37,8 @@ func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGr
 		}
 	}
 
-	if req.NextToken != nil {
-		input.NextToken = req.NextToken
+	if req.CursorNext != nil {
+		input.NextToken = req.CursorNext
 	}
 
 	result := []resources.ResourceResponse[resources.LogGroup]{}
@@ -61,8 +61,8 @@ func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGr
 
 		if !req.ListAllLogGroups || response.NextToken == nil {
 			return resources.LogGroupsResponse{
-				Results:   result,
-				NextToken: response.NextToken,
+				Results:    result,
+				CursorNext: response.NextToken,
 			}, nil
 		}
 		input.NextToken = response.NextToken

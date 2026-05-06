@@ -46,6 +46,6 @@ type LogGroupField struct {
 }
 
 type LogGroupsResponse struct {
-	Results   []ResourceResponse[LogGroup] `json:"results"`
-	NextToken *string                      `json:"nextToken,omitempty"`
+	Results    []ResourceResponse[LogGroup] `json:"results"`
+	CursorNext *string                      `json:"-"`
 }

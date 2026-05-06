@@ -1,4 +1,6 @@
 import { memoize } from 'lodash';
+import { lastValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { type DataSourceInstanceSettings, type SelectableValue } from '@grafana/data';
 import { getBackendSrv, type TemplateSrv } from '@grafana/runtime';
@@ -32,6 +34,13 @@ export class ResourcesAPI extends CloudWatchRequest {
 
   private getRequest<T>(subtype: string, parameters?: Record<string, string | string[] | number>): Promise<T> {
     return getBackendSrv().get(`/api/datasources/uid/${this.instanceSettings.uid}/resources/${subtype}`, parameters);
+  }
+
+  private fetchRequest<T>(subtype: string, parameters?: Record<string, string | string[] | number>) {
+    return getBackendSrv().fetch<T>({
+      url: `/api/datasources/uid/${this.instanceSettings.uid}/resources/${subtype}`,
+      params: parameters,
+    });
   }
 
   async getExternalId(): Promise<string> {
@@ -76,12 +85,17 @@ export class ResourcesAPI extends CloudWatchRequest {
       accountId: this.templateSrv.replace(params.accountId),
       listAllLogGroups: params.listAllLogGroups ? 'true' : 'false',
     };
-    // When nextToken is present, bypass memoized cache to avoid stale results
-    if (params.nextToken) {
-      requestParams.nextToken = params.nextToken;
-      return this.getRequest<LogGroupsResponse>('log-groups', requestParams);
+    if (params.cursorNext) {
+      requestParams.cursorNext = params.cursorNext;
     }
-    return this.memoizedGetRequest<LogGroupsResponse>('log-groups', requestParams);
+    return lastValueFrom(
+      this.fetchRequest<LogGroupsResponse>('log-groups', requestParams).pipe(
+        map((response) => ({
+          results: response.data.results,
+          cursorNext: response.headers.get('cursor-next') ?? undefined,
+        }))
+      )
+    );
   }
 
   getLogGroupFields(region: string, logGroupName: string): Promise<Array<ResourceResponse<LogGroupField>>> {

@@ -17,6 +17,8 @@ type RequestContextFactoryFunc func(ctx context.Context, region string) (reqCtx 
 
 type RouteHandlerFunc func(ctx context.Context, parameters url.Values) ([]byte, *HttpError)
 
+type CursorHandlerFunc func(ctx context.Context, parameters url.Values) ([]byte, *string, *HttpError)
+
 type RequestContext struct {
 	MetricsClientProvider  MetricsClientProvider
 	ListMetricsAPIProvider cloudwatch.ListMetricsAPIClient
