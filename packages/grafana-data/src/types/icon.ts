@@ -306,7 +306,7 @@ export const availableIconsIndex = {
   vial: true,
   'anthropic-logo': true,
   'cursor-logo': true,
-  'github-copilot': true,
+  'github-copilot-logo': true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;
