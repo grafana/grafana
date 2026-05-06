@@ -13,7 +13,6 @@ import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixt
 
 import { type Props, SoloPanelPage } from './SoloPanelPage';
 
-jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {
   const DashboardPanel = (props: DashboardPanelProps) => {
     // In this test we only check whether a new panel has arrived in the props
