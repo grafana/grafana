@@ -20,6 +20,11 @@ type SnapshotSpec struct {
 	DeleteKey *string `json:"deleteKey,omitempty"`
 	// The raw dashboard (unstructured for now)
 	Dashboard map[string]interface{} `json:"dashboard,omitempty"`
+	// The dashboard payload encrypted at rest. Persisted in unified storage
+	// in place of `dashboard`; the value is base64-encoded ciphertext
+	// produced by Grafana's secrets service. Clients should not set this
+	// directly; it is populated by the storage layer.
+	DashboardEncrypted []byte `json:"dashboardEncrypted,omitempty"`
 }
 
 // NewSnapshotSpec creates a new SnapshotSpec object.

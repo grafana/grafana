@@ -112,6 +112,7 @@ func stripSensitiveFields(obj runtime.Object) runtime.Object {
 	out := snap.DeepCopy()
 	out.Spec.DeleteKey = nil
 	out.Spec.Dashboard = nil
+	out.Spec.DashboardEncrypted = nil
 	return out
 }
 
@@ -126,6 +127,7 @@ func stripSensitiveFieldsFromList(obj runtime.Object) runtime.Object {
 	for i := range out.Items {
 		out.Items[i].Spec.DeleteKey = nil
 		out.Items[i].Spec.Dashboard = nil
+		out.Items[i].Spec.DashboardEncrypted = nil
 	}
 	return out
 }
