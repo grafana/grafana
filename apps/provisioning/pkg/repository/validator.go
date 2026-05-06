@@ -134,25 +134,28 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 		}
 	}
 
-	if !v.allowImageRendering && cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
-		list = append(list,
-			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
-				cfg.Spec.GitHub.GenerateDashboardPreviews,
-				"image rendering is not enabled"))
-	}
-
-	if !v.allowImageRendering && cfg.Spec.GitHubEnterprise != nil && cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews {
-		list = append(list,
-			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
-				cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews,
-				"image rendering is not enabled"))
-	}
+	list = append(list, v.validateDashboardPreviews(cfg)...)
 
 	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.BaseURL != "" {
 		list = append(list, validateWebhookBaseURL(cfg.Spec.Webhook.BaseURL)...)
 	}
 
 	return list
+}
+
+func (v *RepositoryValidator) validateDashboardPreviews(cfg *provisioning.Repository) field.ErrorList {
+	if v.allowImageRendering {
+		return nil
+	}
+	if cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
+		return field.ErrorList{field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
+			cfg.Spec.GitHub.GenerateDashboardPreviews, "image rendering is not enabled")}
+	}
+	if cfg.Spec.GitHubEnterprise != nil && cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews {
+		return field.ErrorList{field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
+			cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews, "image rendering is not enabled")}
+	}
+	return nil
 }
 
 func validateWebhookBaseURL(baseURL string) field.ErrorList {
