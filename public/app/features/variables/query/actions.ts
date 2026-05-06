@@ -34,9 +34,6 @@ export const updateQueryVariableOptions = (
         return;
       }
 
-      if (getVariablesState(rootStateKey, getState()).editor.id === variableInState.id) {
-        dispatch(toKeyedAction(rootStateKey, removeVariableEditorError({ errorProp: 'update' })));
-      }
       const datasource = await getDataSourceSrv().get(variableInState.datasource ?? '');
 
       // We need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
@@ -51,15 +48,7 @@ export const updateQueryVariableOptions = (
       });
     } catch (err) {
       if (err instanceof Error) {
-        const error = toDataQueryError(err);
-        const { rootStateKey } = identifier;
-        if (getVariablesState(rootStateKey, getState()).editor.id === identifier.id) {
-          dispatch(
-            toKeyedAction(rootStateKey, addVariableEditorError({ errorProp: 'update', errorText: error.message ?? '' }))
-          );
-        }
-
-        throw error;
+        throw toDataQueryError(err);
       }
     }
   };
