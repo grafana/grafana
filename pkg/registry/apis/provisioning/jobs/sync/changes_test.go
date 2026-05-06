@@ -703,7 +703,7 @@ func TestChanges_DuplicatePaths(t *testing.T) {
 		}
 	})
 
-	t.Run("_folder.json with multiple parent folders keeps best-match and replaces orphan", func(t *testing.T) {
+	t.Run("_folder.json with multiple parent folders keeps best-match and deletes orphan", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "myfolder", Hash: "tree-hash", Blob: false},
 			{Path: "myfolder/_folder.json", Hash: "new-meta-hash", Blob: true},
@@ -718,22 +718,20 @@ func TestChanges_DuplicatePaths(t *testing.T) {
 		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 
-		var replacements []string
 		var deleted []string
 		for _, c := range changes {
 			if c.Path == "myfolder/" && c.Action == repository.FileActionUpdated {
-				require.True(t, c.FolderRenamed)
-				replacements = append(replacements, c.Existing.Name)
+				t.Fatalf("should not emit folder update when best-match hash equals _folder.json hash, got Existing=%s", c.Existing.Name)
 			}
 			if c.Path == "myfolder/" && c.Action == repository.FileActionDeleted {
+				require.True(t, c.OrphanCleanup)
 				deleted = append(deleted, c.Existing.Name)
 			}
 		}
-		require.Equal(t, []string{"orphan-uid"}, replacements, "orphan folder should be replaced")
-		require.Empty(t, deleted, "orphan folder cleanup should be deferred")
+		require.Equal(t, []string{"orphan-uid"}, deleted, "orphan folder should be deleted")
 	})
 
-	t.Run("_folder.json with multiple parent folders emits primary update and replaces orphan", func(t *testing.T) {
+	t.Run("_folder.json with multiple parent folders emits primary update and deletes orphan", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "myfolder", Hash: "tree-hash", Blob: false},
 			{Path: "myfolder/_folder.json", Hash: "brand-new-hash", Blob: true},
@@ -749,24 +747,19 @@ func TestChanges_DuplicatePaths(t *testing.T) {
 		require.NoError(t, err)
 
 		var folderUpdate *ResourceFileChange
-		var replacements []string
 		var deletedNames []string
 		for i := range changes {
 			if changes[i].Path == "myfolder/" && changes[i].Action == repository.FileActionUpdated {
-				if changes[i].FolderRenamed {
-					replacements = append(replacements, changes[i].Existing.Name)
-				} else {
-					folderUpdate = &changes[i]
-				}
+				folderUpdate = &changes[i]
 			}
 			if changes[i].Path == "myfolder/" && changes[i].Action == repository.FileActionDeleted {
+				require.True(t, changes[i].OrphanCleanup)
 				deletedNames = append(deletedNames, changes[i].Existing.Name)
 			}
 		}
 		require.NotNil(t, folderUpdate, "should emit folder update when no parent hash matches")
 		require.Equal(t, "folder-a", folderUpdate.Existing.Name, "should fall back to first item when no hash matches")
-		require.Equal(t, []string{"folder-b"}, replacements, "non-primary folder should be replaced as orphan")
-		require.Empty(t, deletedNames, "orphan folder cleanup should be deferred")
+		require.Equal(t, []string{"folder-b"}, deletedNames, "non-primary folder should be deleted as orphan")
 	})
 }
 
@@ -807,12 +800,13 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 		buckets := categorizeChanges(DetectRenames(changes))
 		require.Empty(t, buckets.fileDeletions)
 		require.Empty(t, buckets.folderDeletions)
-		require.Len(t, buckets.folderCreations, 1)
-		require.Equal(t, repository.FileActionUpdated, buckets.folderCreations[0].Action)
-		require.True(t, buckets.folderCreations[0].FolderRenamed)
-		require.Equal(t, "myfolder/", buckets.folderCreations[0].Path)
-		require.Equal(t, "orphan-uid", buckets.folderCreations[0].Existing.Name)
-		require.Equal(t, 1, buckets.folderRenames)
+		require.Empty(t, buckets.folderCreations)
+		require.Len(t, buckets.deferredFolderDeletions, 1)
+		require.Equal(t, repository.FileActionDeleted, buckets.deferredFolderDeletions[0].Action)
+		require.True(t, buckets.deferredFolderDeletions[0].OrphanCleanup)
+		require.Equal(t, "myfolder/", buckets.deferredFolderDeletions[0].Path)
+		require.Equal(t, "orphan-uid", buckets.deferredFolderDeletions[0].Existing.Name)
+		require.Equal(t, 0, buckets.folderRenames)
 
 		require.Len(t, buckets.fileCreations, 1)
 		require.Equal(t, repository.FileActionUpdated, buckets.fileCreations[0].Action)
@@ -861,14 +855,46 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 		require.Equal(t, "myfolder/dashboard.json", buckets.fileDeletions[0].Path)
 		require.Equal(t, "orphan-dash", buckets.fileDeletions[0].Existing.Name)
 		require.Empty(t, buckets.folderDeletions)
-		require.Len(t, buckets.folderCreations, 1)
-		require.True(t, buckets.folderCreations[0].FolderRenamed)
-		require.Equal(t, "orphan-uid", buckets.folderCreations[0].Existing.Name)
+		require.Empty(t, buckets.folderCreations)
+		require.Len(t, buckets.deferredFolderDeletions, 1)
+		require.True(t, buckets.deferredFolderDeletions[0].OrphanCleanup)
+		require.Equal(t, "orphan-uid", buckets.deferredFolderDeletions[0].Existing.Name)
 
 		require.Len(t, buckets.fileCreations, 1)
 		require.Equal(t, repository.FileActionUpdated, buckets.fileCreations[0].Action)
 		require.Equal(t, "myfolder/dashboard.json", buckets.fileCreations[0].Path)
 		require.Equal(t, "current-dash", buckets.fileCreations[0].Existing.Name)
+	})
+
+	t.Run("invalid folder metadata suppresses duplicate folder orphan cleanup", func(t *testing.T) {
+		repo := repository.NewMockRepository(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+
+		source := []repository.FileTreeEntry{
+			{Path: "myfolder", Blob: false},
+			{Path: "myfolder/_folder.json", Hash: "current-meta-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "myfolder/", Hash: "old-meta-hash", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "orphan-uid"},
+				{Path: "myfolder/", Hash: "current-meta-hash", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "current-uid"},
+			},
+		}
+
+		repoResources.On("List", mock.Anything).Return(target, nil)
+		repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
+		repo.On("Read", mock.Anything, "myfolder/_folder.json", "current-ref").
+			Return(&repository.FileInfo{
+				Data: []byte(`{`),
+				Hash: "current-meta-hash",
+			}, nil)
+
+		changes, missing, invalid, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
+
+		require.NoError(t, err)
+		require.Empty(t, missing)
+		require.Len(t, invalid, 1)
+		require.Empty(t, changes)
 	})
 }
 

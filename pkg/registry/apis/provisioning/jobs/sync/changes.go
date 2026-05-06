@@ -33,18 +33,28 @@ type ResourceFileChange struct {
 	// have been re-parented.
 	FolderRenamed bool
 
-	// Reason provides an explicit reason for folder replacement changes
+	// Reason provides an explicit reason for folder replacement or cleanup changes
 	// (e.g. ReasonFolderMetadataUpdated, ReasonFolderMetadataDeleted).
 	Reason string
 
 	// OrphanCleanup marks deletions emitted to clean up duplicate-path orphans.
 	// DetectRenames must skip these so orphan removal is not consumed as a rename.
+	// Folder orphans are deleted late, after any children have been re-parented.
 	OrphanCleanup bool
 }
 
 // IsUpdatedFolder reports whether this change is an update to an existing folder.
 func (c *ResourceFileChange) IsUpdatedFolder() bool {
 	return c.Action == repository.FileActionUpdated &&
+		safepath.IsDir(c.Path) &&
+		c.Existing != nil
+}
+
+// IsOrphanFolderCleanup reports whether this change deletes a duplicate folder
+// after its children have been reconciled to the surviving folder at the path.
+func (c *ResourceFileChange) IsOrphanFolderCleanup() bool {
+	return c.Action == repository.FileActionDeleted &&
+		c.OrphanCleanup &&
 		safepath.IsDir(c.Path) &&
 		c.Existing != nil
 }
@@ -208,8 +218,8 @@ func Changes(
 				// If the parent directory already exists in Grafana and the hash changed,
 				// record an update to reconcile metadata (e.g. folder title).
 				// When multiple managed folders share the path, keep the folder whose
-				// metadata hash matches _folder.json and route the rest through the
-				// folder replacement flow so their children are re-parented before cleanup.
+				// metadata hash matches _folder.json and defer deletion of the rest
+				// until their children have been re-parented.
 				parentDir := safepath.Dir(file.Path)
 				if !strings.HasSuffix(parentDir, "/") {
 					parentDir += "/"
@@ -226,16 +236,16 @@ func Changes(
 						if p == best {
 							continue
 						}
-						logger.Warn("replacing orphan folder at duplicate path", "path", p.Path, "name", p.Name)
+						logger.Warn("deleting orphan folder at duplicate path", "path", p.Path, "name", p.Name)
 						reason := provisioning.ReasonFolderMetadataUpdated
 						if p.Hash == "" {
 							reason = provisioning.ReasonFolderMetadataCreated
 						}
 						changes = append(changes, ResourceFileChange{
-							Action:        repository.FileActionUpdated,
+							Action:        repository.FileActionDeleted,
 							Path:          parentDir,
 							Existing:      p,
-							FolderRenamed: true,
+							OrphanCleanup: true,
 							Reason:        reason,
 						})
 					}
@@ -348,6 +358,9 @@ func augmentChangesForFolderMetadata(
 		if change.IsUpdatedFolder() && change.FolderRenamed {
 			affectedFolders[safepath.EnsureTrailingSlash(change.Path)] = true
 		}
+		if change.IsOrphanFolderCleanup() {
+			affectedFolders[safepath.EnsureTrailingSlash(change.Path)] = true
+		}
 	}
 
 	// Detect folders whose _folder.json was deleted.
@@ -365,7 +378,7 @@ func augmentChangesForFolderMetadata(
 	}
 	affectedFolders = mergeAffectedFolders(affectedFolders, uidAffected)
 
-	// No folders will be renamed, so we can return the changes as is.
+	// No folders need child re-parenting, so we can return the changes as is.
 	if len(affectedFolders) == 0 {
 		return changes, invalidFolderMetadata, nil
 	}
@@ -377,10 +390,10 @@ func augmentChangesForFolderMetadata(
 }
 
 // processInvalidFolderMetadataChanges performs a single metadata read for each
-// created/updated folder path that currently has a _folder.json file. Invalid
-// metadata is surfaced as warnings. Existing-folder updates are suppressed so
-// the current folder UID is preserved; brand-new folders keep their created
-// change so apply can fall back to the hash-derived folder identity.
+// folder change that depends on _folder.json. Invalid metadata is surfaced as
+// warnings. Existing-folder updates and orphan cleanups are suppressed so the
+// current folder UID is preserved; brand-new folders keep their created change
+// so apply can fall back to the hash-derived folder identity.
 func processInvalidFolderMetadataChanges(
 	ctx context.Context,
 	repo repository.Reader,
@@ -395,7 +408,9 @@ func processInvalidFolderMetadataChanges(
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 
 	for _, change := range changes {
-		if !safepath.IsDir(change.Path) || (change.Action != repository.FileActionCreated && change.Action != repository.FileActionUpdated) {
+		isFolderMetadataChange := safepath.IsDir(change.Path) &&
+			(change.Action == repository.FileActionCreated || change.Action == repository.FileActionUpdated || change.IsOrphanFolderCleanup())
+		if !isFolderMetadataChange {
 			filtered = append(filtered, change)
 			continue
 		}
@@ -680,17 +695,17 @@ func emitDirectChildrenChanges(
 	// since Name is only unique within a (Group, Resource) and different
 	// resource kinds can share the same name.
 	deletedItems := make(map[*provisioning.ResourceListItem]bool, len(changes))
-	replacedFolderUIDsByPath := make(map[string]map[string]bool)
+	reparentFromFolderUIDsByPath := make(map[string]map[string]bool)
 	for _, c := range changes {
 		if c.Action == repository.FileActionDeleted && c.Existing != nil {
 			deletedItems[c.Existing] = true
 		}
-		if c.IsUpdatedFolder() && c.FolderRenamed && c.Existing != nil {
+		if (c.IsUpdatedFolder() && c.FolderRenamed) || c.IsOrphanFolderCleanup() {
 			path := safepath.EnsureTrailingSlash(c.Path)
-			if replacedFolderUIDsByPath[path] == nil {
-				replacedFolderUIDsByPath[path] = make(map[string]bool)
+			if reparentFromFolderUIDsByPath[path] == nil {
+				reparentFromFolderUIDsByPath[path] = make(map[string]bool)
 			}
-			replacedFolderUIDsByPath[path][c.Existing.Name] = true
+			reparentFromFolderUIDsByPath[path][c.Existing.Name] = true
 		}
 	}
 
@@ -723,12 +738,12 @@ func emitDirectChildrenChanges(
 			continue
 		}
 		best := items[0]
-		replacedFolderUIDs := replacedFolderUIDsByPath[parentDir]
+		reparentFromFolderUIDs := reparentFromFolderUIDsByPath[parentDir]
 		for _, it := range items {
 			if deletedItems[it] {
 				continue
 			}
-			if replacedFolderUIDs[it.Folder] {
+			if reparentFromFolderUIDs[it.Folder] {
 				best = it
 				break
 			}
