@@ -837,7 +837,11 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     },
 
     toString() {
-      return dt.toString();
+      if (!dt.isValid) {
+        return 'Invalid date';
+      }
+
+      return dt.setLocale('en').toFormat("ccc MMM dd yyyy HH:mm:ss 'GMT'ZZZ");
     },
 
     valueOf() {
