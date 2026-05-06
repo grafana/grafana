@@ -562,19 +562,28 @@ export function TableNG(props: TableNGProps) {
       let firstFooterReducers: string[] | undefined;
       for (const field of f) {
         const footer = field.config?.custom?.footer;
+        const reducers: string[] | undefined = footer?.reducers;
+
         fieldFooters.push(footer);
-        if (firstFooterReducers === undefined && (footer?.reducers?.length ?? 0) > 0) {
-          firstFooterReducers = footer?.reducers;
-        } else if (firstFooterReducers !== undefined) {
-          const reducers: string[] | undefined = footer?.reducers;
-          if (reducers?.length ?? 0 > 0) {
-            if (
-              reducers!.length !== firstFooterReducers!.length ||
-              reducers!.some((r, idx) => firstFooterReducers?.[idx] !== r)
-            ) {
-              isFieldUniformFooter = false;
-            }
-          }
+
+        // if reducers are undefined or empty on the footer, don't retain them for comparison.
+        if (reducers === undefined || reducers.length === 0) {
+          continue;
+        }
+
+        // first time we encounter a viable footer config, store it and move on.
+        if (firstFooterReducers === undefined) {
+          firstFooterReducers = reducers;
+          continue;
+        }
+
+        // for all other viable footer configs, check to see if the reducers match the first one we encountered.
+        if (
+          reducers.length !== firstFooterReducers.length ||
+          reducers.some((r, idx) => firstFooterReducers?.[idx] !== r)
+        ) {
+          isFieldUniformFooter = false;
+          break;
         }
       }
 
