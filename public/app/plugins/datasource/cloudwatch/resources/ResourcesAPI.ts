@@ -12,6 +12,7 @@ import {
   type Account,
   type ResourceResponse,
   type DescribeLogGroupsRequest,
+  type LogGroupResponse,
   type LogGroupsResponse,
   type GetMetricsRequest,
   type GetDimensionKeysRequest,
