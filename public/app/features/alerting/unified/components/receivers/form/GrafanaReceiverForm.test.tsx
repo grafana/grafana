@@ -3,11 +3,12 @@ import { type MemoryHistoryBuildOptions } from 'history';
 import { HttpResponse, delay, http } from 'msw';
 import { type ComponentProps, type ReactNode } from 'react';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import {
   setOnCallFeatures,
@@ -1075,6 +1076,56 @@ describe('GrafanaReceiverForm', () => {
 
       // Verify that options from the version are displayed
       expect(ui.slack.recipient.get()).toBeInTheDocument();
+    });
+  });
+
+  describe('error handling', () => {
+    it('surfaces the backend message and details.causes in the toast on save failure', async () => {
+      const capturedRequests = captureRequests(
+        (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
+      );
+
+      server.use(
+        http.post('/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers', () =>
+          HttpResponse.json(
+            {
+              kind: 'Status',
+              apiVersion: 'v1',
+              metadata: {},
+              status: 'Failure',
+              code: 400,
+              reason: 'BadRequest',
+              message: 'receiver is invalid',
+              details: {
+                causes: [{ field: 'spec.integrations[0].settings.url', message: 'URL must be valid' }],
+              },
+            },
+            { status: 400 }
+          )
+        )
+      );
+
+      const { user } = renderWithProvider(
+        <>
+          <AppNotificationList />
+          <GrafanaReceiverForm />
+        </>
+      );
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      await clickSelectOption(ui.typeSelector.get(), 'MQTT');
+      await user.type(screen.getByLabelText(/^name/i), 'broken-mqtt');
+      await user.type(screen.getByLabelText(/broker url/i), 'tcp://example.com:1883');
+      await user.type(screen.getByLabelText(/topic/i), 'alerts');
+      await user.click(ui.saveButton.get());
+
+      // Confirm the request actually fired so we know the form passed validation
+      await capturedRequests;
+
+      const toast = await screen.findByRole('alert', { name: /failed to save the contact point/i });
+      expect(within(toast).getByText(/receiver is invalid/i)).toBeInTheDocument();
+      expect(within(toast).getByText(/URL must be valid/i)).toBeInTheDocument();
     });
   });
 });

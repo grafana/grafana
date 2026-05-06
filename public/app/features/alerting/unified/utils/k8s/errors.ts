@@ -20,25 +20,42 @@ export type KnownMachineryErrorCodes = KnownErrorCodes | typeof ERROR_ROUTES_MAT
  */
 export function getErrorMessageFromApiMachineryErrorResponse(error: ApiMachineryErrorResponse): string | undefined {
   const code = getErrorCode(error);
-  if (!code) {
-    return error.data.message;
+
+  if (code) {
+    const errorMessageMap: Record<KnownMachineryErrorCodes, string | undefined> = {
+      [ERROR_NEWER_CONFIGURATION]: getErrorMessageFromCode(code),
+      [ERROR_ROUTES_MATCHER_CONFLICT]: t(
+        'alerting.policies.update-errors.routes.conflictingMatchers',
+        'Cannot add or update route: matchers conflict with an external routing tree if we merged matchers {{-matchers}}. This would make the route unreachable.',
+        {
+          matchers:
+            error.data.details?.causes?.map((cause) => cause.message).join(', ') ??
+            t('alerting.policies.update-errors.routes.unknownMatchers', '<unknown matchers>'),
+        }
+      ),
+    };
+
+    // @ts-expect-error this allows the typechecker to warn us about forgetting to handle some KnownMachineryErrors;
+    const mappedMessage: string | undefined = errorMessageMap[code];
+    if (mappedMessage) {
+      return mappedMessage;
+    }
   }
 
-  const errorMessageMap: Record<KnownMachineryErrorCodes, string | undefined> = {
-    [ERROR_NEWER_CONFIGURATION]: getErrorMessageFromCode(code),
-    [ERROR_ROUTES_MATCHER_CONFLICT]: t(
-      'alerting.policies.update-errors.routes.conflictingMatchers',
-      'Cannot add or update route: matchers conflict with an external routing tree if we merged matchers {{-matchers}}. This would make the route unreachable.',
-      {
-        matchers:
-          error.data.details?.causes?.map((cause) => cause.message).join(', ') ??
-          t('alerting.policies.update-errors.routes.unknownMatchers', '<unknown matchers>'),
-      }
-    ),
-  };
-
-  // @ts-expect-error this allows the typechecker to warn us about forgetting to handle some KnownMachineryErrors and still return "undefined" for unknown codes;
-  return errorMessageMap[code];
+  const baseMessage = error.data.message;
+  const causes = error.data.details?.causes?.flatMap((cause) => {
+    if (!cause.message) {
+      return [];
+    }
+    return [cause.field ? `${cause.field}: ${cause.message}` : cause.message];
+  });
+  if (causes && causes.length > 0) {
+    return t('alerting.errors.api-machinery.with-causes', '{{-baseMessage}}: {{-causes}}', {
+      baseMessage,
+      causes: causes.join(', '),
+    });
+  }
+  return baseMessage;
 }
 
 /**

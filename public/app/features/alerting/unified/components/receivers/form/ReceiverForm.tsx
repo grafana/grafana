@@ -11,7 +11,6 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { ManagePermissions } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 
-import { getMessageFromError } from '../../../../../../core/utils/errors';
 import { logError } from '../../../Analytics';
 import { isOnCallFetchError } from '../../../api/onCallApi';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
@@ -20,7 +19,7 @@ import {
   type CommonSettingsComponentType,
   type ReceiverFormValues,
 } from '../../../types/receiver-form';
-import { makeAMLink } from '../../../utils/misc';
+import { makeAMLink, stringifyErrorLike } from '../../../utils/misc';
 import { initialAsyncRequestState } from '../../../utils/redux';
 
 import { ChannelSubForm } from './ChannelSubForm';
@@ -262,10 +261,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-function getErrorMessage(error: unknown) {
+export function getErrorMessage(error: unknown) {
   if (isOnCallFetchError(error)) {
     return error.data.detail;
   }
 
-  return getMessageFromError(error);
+  return stringifyErrorLike(error);
 }
