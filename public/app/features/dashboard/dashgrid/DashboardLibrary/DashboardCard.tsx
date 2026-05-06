@@ -4,7 +4,6 @@ import Skeleton from 'react-loading-skeleton';
 
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Badge, Box, Button, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
@@ -104,12 +103,12 @@ function DashboardCardComponent({
 
   return (
     <article className={styles.card}>
-      <p className={styles.title} data-testid={selectors.components.Card.heading}>
+      <h3 className={styles.title}>
         <span className={styles.titleWithInfo} role="group" aria-label={title}>
           <span className={styles.titleText}>{title}</span>
           {detailsButton}
         </span>
-      </p>
+      </h3>
       <div className={isLogo ? styles.logoContainer : styles.thumbnailContainer}>
         {imageUrl ? (
           <img
@@ -373,6 +372,7 @@ function getStyles(theme: GrafanaTheme2) {
       fontSize: theme.typography.h6.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       lineHeight: theme.typography.h6.lineHeight,
+      letterSpacing: 'inherit',
       display: '-webkit-box',
       WebkitLineClamp: 1,
       WebkitBoxOrient: 'vertical',

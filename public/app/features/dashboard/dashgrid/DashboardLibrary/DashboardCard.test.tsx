@@ -2,7 +2,6 @@ import { screen } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
 import { type AssistantHook, useAssistant } from '@grafana/assistant';
-import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardCard } from './DashboardCard';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
@@ -44,9 +43,7 @@ describe('DashboardCard', () => {
       <DashboardCard title="My Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
-    const cardHeading = screen.getByTestId(selectors.components.Card.heading);
-    expect(cardHeading).toBeInTheDocument();
-    expect(cardHeading).toHaveTextContent('My Dashboard');
+    expect(screen.getByRole('heading', { name: 'My Dashboard' })).toBeInTheDocument();
   });
 
   it('should render image when imageUrl is provided', () => {
@@ -91,9 +88,7 @@ describe('DashboardCard', () => {
       <DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
-    const cardHeading = screen.getByTestId(selectors.components.Card.heading);
-    expect(cardHeading).toBeInTheDocument();
-    expect(cardHeading).toHaveTextContent('Test Dashboard');
+    expect(screen.getByRole('heading', { name: 'Test Dashboard' })).toBeInTheDocument();
     expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('No description available');
   });
 
@@ -359,9 +354,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      const cardHeading = screen.getByTestId(selectors.components.Card.heading);
-      expect(cardHeading).toBeInTheDocument();
-      expect(cardHeading).toHaveTextContent('Community Dashboard');
+      expect(screen.getByRole('heading', { name: 'Community Dashboard' })).toBeInTheDocument();
     });
   });
 
