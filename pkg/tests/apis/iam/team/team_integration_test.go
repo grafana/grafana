@@ -645,9 +645,9 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		var wg sync.WaitGroup
 		barrier := make(chan struct{})
 		results := make([]struct {
-			finalCode    int
-			sawConflict  bool
-			attempts     int
+			finalCode   int
+			sawConflict bool
+			attempts    int
 		}, len(members))
 		for i, uid := range members {
 			wg.Add(1)
