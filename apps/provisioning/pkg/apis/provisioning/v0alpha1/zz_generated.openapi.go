@@ -401,13 +401,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					},
 					"github": {
 						SchemaProps: spec.SchemaProps{
-							Description: "GitHub connection configuration. Only applicable when provider is \"github\".",
+							Description: "GitHub connection configuration Only applicable when provider is \"github\"",
 							Ref:         ref(GitHubConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
 					"githubEnterprise": {
 						SchemaProps: spec.SchemaProps{
-							Description: "GitHub Enterprise Server connection configuration. Only applicable when provider is \"githubEnterprise\".",
+							Description: "GitHub Enterprise Server connection configuration Only applicable when provider is \"githubEnterprise\"",
 							Ref:         ref(GitHubEnterpriseConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
@@ -2249,7 +2249,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 					},
 					"githubEnterprise": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with the other repository configs.",
+							Description: "The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with local | github | git.",
 							Ref:         ref(GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName()),
 						},
 					},

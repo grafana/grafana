@@ -37,7 +37,7 @@ type RepositorySpecApplyConfiguration struct {
 	// Mutually exclusive with local | github | git.
 	GitHub *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
 	// The repository on a self-managed GitHub Enterprise Server (GHES).
-	// Mutually exclusive with the other repository configs.
+	// Mutually exclusive with local | github | git.
 	GitHubEnterprise *GitHubEnterpriseRepositoryConfigApplyConfiguration `json:"githubEnterprise,omitempty"`
 	// The repository on Git.
 	// Mutually exclusive with local | github | git.

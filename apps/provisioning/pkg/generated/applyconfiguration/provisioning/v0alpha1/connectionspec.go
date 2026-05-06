@@ -19,11 +19,11 @@ type ConnectionSpecApplyConfiguration struct {
 	Type *provisioningv0alpha1.ConnectionType `json:"type,omitempty"`
 	// The connection URL
 	URL *string `json:"url,omitempty"`
-	// GitHub connection configuration.
-	// Only applicable when provider is "github".
+	// GitHub connection configuration
+	// Only applicable when provider is "github"
 	GitHub *GitHubConnectionConfigApplyConfiguration `json:"github,omitempty"`
-	// GitHub Enterprise Server connection configuration.
-	// Only applicable when provider is "githubEnterprise".
+	// GitHub Enterprise Server connection configuration
+	// Only applicable when provider is "githubEnterprise"
 	GitHubEnterprise *GitHubEnterpriseConnectionConfigApplyConfiguration `json:"githubEnterprise,omitempty"`
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucket"
