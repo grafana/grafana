@@ -104,12 +104,12 @@ function DashboardCardComponent({
 
   return (
     <article className={styles.card}>
-      <h3 className={styles.title} data-testid={selectors.components.Card.heading}>
+      <p className={styles.title} data-testid={selectors.components.Card.heading}>
         <span className={styles.titleWithInfo} role="group" aria-label={title}>
           <span className={styles.titleText}>{title}</span>
           {detailsButton}
         </span>
-      </h3>
+      </p>
       <div className={isLogo ? styles.logoContainer : styles.thumbnailContainer}>
         {imageUrl ? (
           <img
@@ -278,9 +278,6 @@ function getStyles(theme: GrafanaTheme2) {
         transition: theme.transitions.create(['background-color', 'border-color'], {
           duration: theme.transitions.duration.short,
         }),
-      },
-      '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
       },
     }),
     thumbnailContainer: css({
