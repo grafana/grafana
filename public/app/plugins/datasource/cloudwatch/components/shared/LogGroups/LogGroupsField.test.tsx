@@ -12,7 +12,14 @@ import {
 
 import { LogGroupsField } from './LogGroupsField';
 
-jest.mock('app/core/copy/appNotification');
+jest.mock('app/core/copy/appNotification', () => ({
+  useAppNotification: () => ({
+    error: jest.fn(),
+    warning: jest.fn(),
+    info: jest.fn(),
+    success: jest.fn(),
+  }),
+}));
 
 const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 const originalDebounce = lodash.debounce;

@@ -4,15 +4,19 @@ import userEvent from '@testing-library/user-event';
 import lodash from 'lodash';
 import selectEvent from 'react-select-event';
 
-import { useAppNotification } from 'app/core/copy/appNotification';
-
 import { type LogGroupsResponse } from '../../../resources/types';
 
 import { LogGroupsSelector } from './LogGroupsSelector';
 
-jest.mock('app/core/copy/appNotification');
-
 const mockNotifyError = jest.fn();
+jest.mock('app/core/copy/appNotification', () => ({
+  useAppNotification: () => ({
+    error: mockNotifyError,
+    warning: jest.fn(),
+    info: jest.fn(),
+    success: jest.fn(),
+  }),
+}));
 
 const defaultLogGroupsResponse: LogGroupsResponse = {
   results: [
@@ -71,12 +75,6 @@ describe('LogGroupsSelector', () => {
     lodash.debounce = jest.fn().mockImplementation((fn) => {
       fn.cancel = () => {};
       return fn;
-    });
-    jest.mocked(useAppNotification).mockReturnValue({
-      success: jest.fn(),
-      warning: jest.fn(),
-      error: mockNotifyError,
-      info: jest.fn(),
     });
   });
   afterEach(() => {

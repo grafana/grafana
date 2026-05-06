@@ -18,7 +18,14 @@ import {
 } from '../../mocks/queries';
 import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 
-jest.mock('app/core/copy/appNotification');
+jest.mock('app/core/copy/appNotification', () => ({
+  useAppNotification: () => ({
+    error: jest.fn(),
+    warning: jest.fn(),
+    info: jest.fn(),
+    success: jest.fn(),
+  }),
+}));
 
 import { QueryEditor } from './QueryEditor';
 
