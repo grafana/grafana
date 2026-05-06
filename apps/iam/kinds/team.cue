@@ -52,14 +52,14 @@ teamv0alpha1: teamKind & {
 				name: "createTeamMember"
 				request: {
 					body: {
-						name: string
+						name:       string
 						permission: string
 						external:   bool
 					}
 				}
 				response: {
-					team: string
-					user: string
+					team:       string
+					user:       string
 					permission: string
 					external:   bool
 				}

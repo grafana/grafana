@@ -114,14 +114,12 @@ func (s *iamAuthorizer) Authorize(ctx context.Context, attr authorizer.Attribute
 	return authz.Authorize(ctx, attr)
 }
 
-// newTeamAuthorizer creates an authorizer for teams that handles the
-// "members", "groups", "addmember" and "removemember" subresources.
+// newTeamAuthorizer authorizes the "members", "groups", "addmember" and
+// "removemember" subresources:
 //   - members / groups: read paths, gated on `get_permissions` on the
-//     parent team (same as before; the body of /members lists current
-//     bindings).
-//   - addmember / removemember: writes a single team_member row; gated
-//     on `update` on the parent team — same RBAC bar as a full PUT
-//     teams/{name}, since the effective change is the same shape.
+//     parent team.
+//   - addmember / removemember: single-member writes, gated on `update`
+//     on the parent team — same bar as a full PUT.
 func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
 	check := func(verb string, denyReason string) gfauthorizer.SubresourceCheck {
 		return func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {

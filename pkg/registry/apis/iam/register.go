@@ -480,12 +480,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 
 	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing, b.features)
 
-	// addmember / removemember target a single member of Spec.Members at
-	// a time. They route reads and writes through the same dual-writer
-	// storage as the main /teams/{name} path, so they keep working
-	// uniformly across legacy-primary and unified-primary modes —
-	// passing teamStorage (rather than the raw legacy store) is the
-	// reason this works for both backends.
+	// addmember / removemember mutate a single Spec.Members entry through
+	// the dual-writer storage, so they work uniformly across all modes.
 	storage[teamResource.StoragePath("addmember")] = team.NewTeamAddMemberREST(teamStorage, b.tracing)
 	storage[teamResource.StoragePath("removemember")] = team.NewTeamRemoveMemberREST(teamStorage, b.tracing)
 

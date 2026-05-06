@@ -37,25 +37,17 @@ var (
 	_ rest.Connecter       = (*TeamAddMemberREST)(nil)
 )
 
-// NewTeamAddMemberREST takes the team resource's storage. Pass the dual
-// writer (rest.Storage from opts.DualWriteBuilder) so reads and writes
-// hit the right backing store for the configured dual-writer mode.
-//
-// The handler isn't gated on a separate feature toggle: if the team API
-// is enabled (so this storage map entry is registered at all), addmember
-// is part of the contract and ships with it.
+// NewTeamAddMemberREST takes the team resource's dual-writer storage so
+// reads and writes hit the right backing store for the configured mode.
 func NewTeamAddMemberREST(storage rest.Storage, tracer trace.Tracer) *TeamAddMemberREST {
 	getter, _ := storage.(rest.Getter)
 	updater, _ := storage.(rest.Updater)
 	return &TeamAddMemberREST{getter: getter, updater: updater, tracer: tracer}
 }
 
-// New implements rest.Storage. CUE-generated CreateTeamMemberResponse
-// lives in the apps/iam scheme; the legacy iam scheme used by the
-// apiserver's REST registration only knows about iamv0.TeamMemberList,
-// so we hand back that registered type for OpenAPI/scheme discovery and
-// emit the richer generated response from the actual handler — same
-// pattern TeamMembersREST uses for /members GET.
+// New implements rest.Storage. Returns the iamv0 type the apiserver's
+// scheme knows about; the richer CUE-generated response is emitted from
+// the handler itself.
 func (s *TeamAddMemberREST) New() runtime.Object { return &iamv0.TeamMemberList{} }
 
 // Destroy implements rest.Storage.
@@ -110,9 +102,8 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 		external := body.External
 		span.SetAttributes(attribute.String("user.name", body.Name))
 
-		// Subresource handlers receive a ctx without the namespace value
-		// set — pull it from AuthInfo via WithSubresourceNamespace so the
-		// dual-writer Get/Update can resolve the namespace.
+		// Subresource ctx has no namespace; recover it from AuthInfo so
+		// dual-writer Get/Update can resolve it.
 		nsCtx := common.WithSubresourceNamespace(ctx)
 
 		obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
@@ -140,10 +131,9 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 			}
 		}
 		if found >= 0 {
-			// Re-add updates Permission to whatever the caller sent
-			// but leaves External untouched: External tracks how the
-			// membership was created (IdP sync vs manual) and isn't
-			// a state /addmember should flip.
+			// Re-add: update Permission, but leave External untouched —
+			// External records the membership origin (IdP sync vs manual)
+			// and isn't a state /addmember flips.
 			existing := t.Spec.Members[found]
 			resultingPerm = permStr
 			resultingExternal = existing.External
@@ -176,8 +166,7 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 			}
 		}
 
-		// 201 Created on a fresh insert, 200 OK otherwise — covers both
-		// the idempotent re-add and an in-place permission update.
+		// 201 on fresh insert, 200 on idempotent re-add or permission update.
 		status := http.StatusCreated
 		if alreadyMember {
 			status = http.StatusOK

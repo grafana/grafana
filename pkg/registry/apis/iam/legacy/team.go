@@ -399,11 +399,8 @@ type UpdateTeamCommand struct {
 
 	// PreviousUpdated is the team row's `updated` value the caller observed
 	// when it built this Update. When set, the SQL UPDATE is gated on
-	// `updated = ?` so a stale Update — for example one whose snapshot
-	// pre-dates a peer instance's full-replace Spec.Members write — is
-	// rejected with ErrTeamUpdateConflict instead of silently overwriting.
-	// Callers that don't pass an RV (legacy paths) leave this zero and the
-	// gate clause is omitted.
+	// `updated = ?`; a stale match returns ErrTeamUpdateConflict. Zero
+	// means no gating (legacy callers).
 	PreviousUpdated legacysql.DBTime
 
 	// MemberDeletes / MemberUpdates / MemberCreates reconcile the team's
@@ -416,8 +413,7 @@ type UpdateTeamCommand struct {
 }
 
 // HasPreviousUpdated drives the conditional `AND updated = ?` clause in
-// update_team.sql. Templates can't call IsZero on embedded fields directly,
-// so this method exposes the check.
+// update_team.sql.
 func (c UpdateTeamCommand) HasPreviousUpdated() bool {
 	return !c.PreviousUpdated.IsZero()
 }
@@ -478,10 +474,8 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("failed to update team: %w", err)
 		}
 		if cmd.HasPreviousUpdated() {
-			// 0 rows affected after a PreviousUpdated-gated UPDATE means the
-			// caller's resourceVersion is stale (the GetTeamInternalID
-			// pre-flight already verified the team exists). Surface as a
-			// dedicated error so the apiserver layer can map it to a 409.
+			// 0 rows after a gated UPDATE means the caller's RV is stale
+			// (team existence is verified by the GetTeamInternalID pre-flight).
 			n, rowsErr := res.RowsAffected()
 			if rowsErr != nil {
 				return fmt.Errorf("rows affected: %w", rowsErr)

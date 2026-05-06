@@ -37,21 +37,16 @@ var (
 	_ rest.Connecter       = (*TeamRemoveMemberREST)(nil)
 )
 
-// NewTeamRemoveMemberREST takes the team resource's storage. The handler
-// isn't gated on a separate feature toggle: registration of this entry
-// in the storage map is itself gated on the team API being enabled.
+// NewTeamRemoveMemberREST takes the team resource's dual-writer storage.
 func NewTeamRemoveMemberREST(storage rest.Storage, tracer trace.Tracer) *TeamRemoveMemberREST {
 	getter, _ := storage.(rest.Getter)
 	updater, _ := storage.(rest.Updater)
 	return &TeamRemoveMemberREST{getter: getter, updater: updater, tracer: tracer}
 }
 
-// New implements rest.Storage. CUE-generated DeleteTeamMemberResponse
-// lives in the apps/iam scheme; the legacy iam scheme used by the
-// apiserver's REST registration only knows about iamv0.TeamMemberList,
-// so we hand back that registered type for OpenAPI/scheme discovery and
-// emit the richer generated response from the actual handler — same
-// pattern TeamMembersREST uses for /members GET.
+// New implements rest.Storage. Returns the iamv0 type the apiserver's
+// scheme knows about; the richer CUE-generated response is emitted from
+// the handler itself.
 func (s *TeamRemoveMemberREST) New() runtime.Object { return &iamv0.TeamMemberList{} }
 
 // Destroy implements rest.Storage.
