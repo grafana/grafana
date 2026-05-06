@@ -44,8 +44,3 @@ type LogGroupField struct {
 	Percent int64  `json:"percent"`
 	Name    string `json:"name"`
 }
-
-type LogGroupsResponse struct {
-	Results   []ResourceResponse[LogGroup] `json:"results"`
-	NextToken *string                      `json:"nextToken,omitempty"`
-}
