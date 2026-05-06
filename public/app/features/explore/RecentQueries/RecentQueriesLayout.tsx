@@ -16,7 +16,7 @@ type Props = {
   onSelectQuery: (query: RichHistoryQuery) => void;
   onClose: () => void;
   onSaveToLibrary?: (query: RichHistoryQuery) => void;
-  onAnalyticsEvent?: (event: string, properties?: Record<string, unknown>) => void;
+  onAnalyticsEvent?: (event: string, properties?: Record<string, string | boolean | undefined>) => void;
 };
 
 export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, onAnalyticsEvent }: Props) {

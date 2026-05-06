@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { type DataSourceApi } from '@grafana/data';
+import { type DataQuery, type DataSourceApi } from '@grafana/data';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
 
@@ -9,7 +9,21 @@ import { RecentQueriesList } from './RecentQueriesList';
 // Mock RecentQueryRow so list tests focus on list-level behavior (grouping, loading, empty, load more).
 jest.mock('./RecentQueryRow', () => ({
   RecentQueryRow: jest.fn(
-    ({ query, queryDisplayText, datasourceLogo, onSelectQuery, onStarQuery, onSaveQuery }: Record<string, unknown>) => (
+    ({
+      query,
+      queryDisplayText,
+      datasourceLogo,
+      onSelectQuery,
+      onStarQuery,
+      onSaveQuery,
+    }: {
+      query: RichHistoryQuery;
+      queryDisplayText: string;
+      datasourceLogo?: string;
+      onSelectQuery: (q: RichHistoryQuery) => void;
+      onStarQuery: (id: string, starred: boolean) => void;
+      onSaveQuery?: (q: RichHistoryQuery) => void;
+    }) => (
       <div
         data-testid="recent-query-row"
         data-query-id={query.id}
@@ -68,7 +82,8 @@ function makeDsApi(uid: string, logoUrl: string): Partial<DataSourceApi> {
   return {
     uid,
     meta: { info: { logos: { small: logoUrl } } } as DataSourceApi['meta'],
-    getQueryDisplayText: (query: Record<string, unknown>) => (query.expr as string) ?? 'no-expr',
+    getQueryDisplayText: (query: DataQuery) =>
+      ((query as unknown as Record<string, unknown>).expr as string) ?? 'no-expr',
   } as Partial<DataSourceApi>;
 }
 

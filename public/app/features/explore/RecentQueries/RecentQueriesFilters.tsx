@@ -28,7 +28,7 @@ type Props = {
   availableDatasources: string[];
   onClear: () => void;
   disabled?: boolean;
-  onAnalyticsEvent?: (event: string, properties?: Record<string, unknown>) => void;
+  onAnalyticsEvent?: (event: string, properties?: Record<string, string | boolean | undefined>) => void;
 };
 
 export function RecentQueriesFilters({
