@@ -108,20 +108,18 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	prefs := preferences.PreferencesResourceInfo
 
-	// Support dual writing preferences
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, prefs, opts.OptsGetter)
+	var store grafanarest.Storage
+	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, prefs, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
 	if b.legacyPrefs != nil && opts.DualWriteBuilder != nil {
-		store, err := opts.DualWriteBuilder(prefs.GroupResource(), b.legacyPrefs, unified)
+		store, err = opts.DualWriteBuilder(prefs.GroupResource(), b.legacyPrefs, store)
 		if err != nil {
 			return err
 		}
-		storage[prefs.StoragePath()] = &preferencesStorage{store}
-	} else {
-		storage[prefs.StoragePath()] = &preferencesStorage{unified}
 	}
+	storage[prefs.StoragePath()] = &preferencesStorage{store}
 
 	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage
 	return nil
