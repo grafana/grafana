@@ -202,6 +202,17 @@ export function TableNG(props: TableNGProps) {
         : undefined,
     [data, nestedFramesFieldName, hasNestedFrames]
   );
+
+  // Returns a stable string key for a row based on the groupBy field values stored in the nested
+  // subframe's meta. Falls back to the string index when no stable key is available (non-grouped data).
+  const getRowStableKey = useCallback(
+    (rowIdx: number): string => {
+      const key = nestedData?.[rowIdx]?.meta?.custom?.stableRowKey;
+      return key != null ? String(key) : String(rowIdx);
+    },
+    [nestedData]
+  );
+
   const firstRowNestedData = useMemo(
     () => (hasNestedFrames && nestedData ? nestedData[0] : undefined),
     [nestedData, hasNestedFrames]
@@ -262,9 +273,15 @@ export function TableNG(props: TableNGProps) {
     },
     [getCellActions]
   );
-  const [expandedRows, setExpandedRows] = useState<Set<number>>(() => {
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(() => {
     if (data.meta?.custom?.expandAllRows) {
-      return new Set(Array.from({ length: data.length }, (_, i) => i));
+      const nestedField = data.fields.find((f) => f.type === FieldType.nestedFrames);
+      return new Set(
+        Array.from({ length: data.length }, (_, i) => {
+          const key = nestedField?.values[i]?.[0]?.meta?.custom?.stableRowKey;
+          return key != null ? String(key) : String(i);
+        })
+      );
     }
     return new Set();
   });
@@ -309,8 +326,8 @@ export function TableNG(props: TableNGProps) {
   // the minimum max row height we should honor is a single line of text.
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
   const visibleNestedRowCounts = useMemo(
-    () => nestedRows.map((row, idx) => (expandedRows.has(idx) ? row.final.length : null)),
-    [nestedRows, expandedRows]
+    () => nestedRows.map((row, idx) => (expandedRows.has(getRowStableKey(idx)) ? row.final.length : null)),
+    [nestedRows, expandedRows, getRowStableKey]
   );
 
   const { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange } = useNestedColWidths({
@@ -390,7 +407,7 @@ export function TableNG(props: TableNGProps) {
   // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
-      return (row: TableRow) => (expandedRows.has(row.__index) ? TABLE.MAX_CELL_HEIGHT : 0);
+      return (row: TableRow) => (expandedRows.has(getRowStableKey(row.__index)) ? TABLE.MAX_CELL_HEIGHT : 0);
     }
     if (typeof rowHeight === 'function') {
       // this is safe because we only return a (row: TableRow) => string function when defaultNestedRowHeight is a string.
@@ -401,11 +418,11 @@ export function TableNG(props: TableNGProps) {
       return () => TABLE.MAX_CELL_HEIGHT;
     }
     return () => rowHeight;
-  }, [rowHeight, defaultNestedRowHeight, expandedRows]);
+  }, [rowHeight, defaultNestedRowHeight, expandedRows, getRowStableKey]);
 
   const renderRow = useMemo(
-    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair),
-    [data.fields, panelContext, expandedRows, enableSharedCrosshair]
+    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair, getRowStableKey),
+    [data.fields, panelContext, expandedRows, enableSharedCrosshair, getRowStableKey]
   );
 
   const commonDataGridProps = useMemo(
@@ -481,17 +498,18 @@ export function TableNG(props: TableNGProps) {
 
         if (row.__depth === 0) {
           const rowIdx = row.__index;
+          const stableKey = getRowStableKey(rowIdx);
 
           return (
             <RowExpander
               rowId={rowId}
-              isExpanded={expandedRows.has(row.__index)}
+              isExpanded={expandedRows.has(stableKey)}
               onCellExpand={() => {
                 setExpandedRows((er) => {
-                  if (er.has(rowIdx)) {
-                    er.delete(rowIdx);
+                  if (er.has(stableKey)) {
+                    er.delete(stableKey);
                   } else {
-                    er.add(rowIdx);
+                    er.add(stableKey);
                   }
                   return new Set(er);
                 });
@@ -547,6 +565,7 @@ export function TableNG(props: TableNGProps) {
       data.fields.length,
       commonDataGridProps,
       expandedRows,
+      getRowStableKey,
       nestedRows,
       noValue,
       onCellClick,
@@ -958,7 +977,13 @@ export function TableNG(props: TableNGProps) {
     }
 
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
-    const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
+    const renderRow = renderRowFactory(
+      firstRowNestedData.fields,
+      panelContext,
+      expandedRows,
+      enableSharedCrosshair,
+      getRowStableKey
+    );
 
     const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
     result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
@@ -987,6 +1012,7 @@ export function TableNG(props: TableNGProps) {
     expandedRows,
     firstRowNestedData,
     fromFields,
+    getRowStableKey,
     hasNestedHeaders,
     nestedColumnsMatrix,
     nestedFooterHeight,
@@ -1111,12 +1137,18 @@ export function TableNG(props: TableNGProps) {
  * this is passed to the top-level `renderRow` prop on DataGrid. applies aria attributes and custom event handlers.
  */
 const renderRowFactory =
-  (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
+  (
+    fields: Field[],
+    panelContext: PanelContext,
+    expandedRows: Set<string>,
+    enableSharedCrosshair: boolean,
+    getStableKey: (rowIdx: number) => string
+  ) =>
   // eslint-disable-next-line react/display-name
   (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
     const rowIdx = row.__index;
-    const isExpanded = expandedRows.has(rowIdx);
+    const isExpanded = expandedRows.has(getStableKey(rowIdx));
 
     // Don't render non expanded child rows
     if (row.__depth === 1) {
