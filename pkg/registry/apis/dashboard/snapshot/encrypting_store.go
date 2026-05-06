@@ -148,4 +148,3 @@ func (s *encryptingStore) decryptSpec(ctx context.Context, spec *dashv0.Snapshot
 	spec.DashboardEncrypted = nil
 	return nil
 }
-
