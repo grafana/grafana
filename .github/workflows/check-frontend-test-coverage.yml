@@ -311,6 +311,11 @@ jobs:
             console.log(createCodeownerSlug('${{ matrix.codeowner }}'));
           ")
           echo "slug=${SLUG}" >> "$GITHUB_OUTPUT"
+          PATH=$(node -e "
+            const {createCodeownerDirectory} = require('./pr/scripts/codeowners-manifest/utils.js');
+            console.log(createCodeownerDirectory('${{ matrix.codeowner }}'));
+          ")
+          echo "path=${PATH}" >> "$GITHUB_OUTPUT"
 
       - name: Upload PR HTML coverage report
         if: steps.check-affected.outputs.affected == 'true'
@@ -318,7 +323,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage-${{ steps.coverage-dir.outputs.slug }}
-          path: ./pr/coverage/by-team/${{ steps.coverage-dir.outputs.slug }}/html
+          path: ./pr/coverage/by-team/${{ steps.coverage-dir.outputs.path }}/html
           retention-days: 7
 
       - name: Compare coverage
