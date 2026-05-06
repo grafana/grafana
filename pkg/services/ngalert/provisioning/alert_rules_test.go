@@ -626,6 +626,7 @@ func TestAlertRuleService(t *testing.T) {
 					require.NoError(t, err)
 				} else {
 					require.Error(t, err)
+					require.True(t, errProvenanceMismatch.Base.Is(err))
 				}
 			})
 		}
