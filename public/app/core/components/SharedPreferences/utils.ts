@@ -74,6 +74,24 @@ export const getLanguageOptions = (): ComboboxOption[] => {
   return options;
 };
 
+export const getRegionalFormatOptions = (): ComboboxOption[] => {
+  const localeOptions = LOCALES.map((v) => ({
+    value: v.code,
+    label: v.name,
+  })).sort((a, b) => {
+    return compareStrings(a.label, b.label);
+  });
+
+  const options = [
+    {
+      value: '',
+      label: t('common.locale.default', 'Default'),
+    },
+    ...localeOptions,
+  ];
+  return options;
+};
+
 export const getTranslatedThemeName = (theme: ThemeRegistryItem) => {
   switch (theme.id) {
     case 'dark':
