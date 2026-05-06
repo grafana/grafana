@@ -142,6 +142,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   heading: css({
     margin: theme.spacing(2, 0.25, 1, 0.25),
+    fontSize: theme.typography.body.fontSize,
   }),
   group: css({
     display: 'flex',
