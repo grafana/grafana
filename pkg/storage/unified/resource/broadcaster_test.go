@@ -101,7 +101,7 @@ func TestBroadcaster(t *testing.T) {
 		require.Equal(t, expected, v)
 	}
 	requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultOK), 1)
-	requireMetricValue(t, metrics.EventsReceivedTotal.WithLabelValues(""), float64(len(input)))
+	requireMetricValue(t, metrics.EventsReceivedTotal.WithLabelValues("unknown"), float64(len(input)))
 	requireMetricEventually(t, metrics.Subscribers.WithLabelValues("test"), 1)
 
 	// cancel the context should close the stream
@@ -153,7 +153,7 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 	require.Equal(t, 42, v)
 	requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultOK), 4)
 	requireMetricValue(t, metrics.UnsubscriptionsTotal.WithLabelValues("test", unsubscriptionReasonClient), 3)
-	requireMetricValue(t, metrics.EventsReceivedTotal.WithLabelValues(""), 1)
+	requireMetricValue(t, metrics.EventsReceivedTotal.WithLabelValues("unknown"), 1)
 	requireMetricEventually(t, metrics.Subscribers.WithLabelValues("test"), 1)
 }
 
@@ -270,7 +270,7 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 		case _, ok := <-sub:
 			if !ok {
 				requireMetricEventually(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultOK), 1)
-				requireMetricEventually(t, metrics.EventsReceivedTotal.WithLabelValues(""), float64(subBuf+ovfCap+10))
+				requireMetricEventually(t, metrics.EventsReceivedTotal.WithLabelValues("unknown"), float64(subBuf+ovfCap+10))
 				requireMetricEventually(t, metrics.OverflowEventsTotal.WithLabelValues("test"), float64(ovfCap+1))
 				requireMetricEventually(t, metrics.UnsubscriptionsTotal.WithLabelValues("test", unsubscriptionReasonOverflowCap), 1)
 				requireMetricEventually(t, metrics.Subscribers.WithLabelValues("test"), 0)
@@ -382,7 +382,7 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 	require.NotNil(t, s, "subscriber should still exist")
 	require.Nil(t, s.overflow, "overflow should be nil after subscriber caught up")
 	requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultOK), 1)
-	requireMetricValue(t, metrics.EventsReceivedTotal.WithLabelValues(""), float64(totalItems+1))
+	requireMetricValue(t, metrics.EventsReceivedTotal.WithLabelValues("unknown"), float64(totalItems+1))
 	requireMetricValue(t, metrics.UnsubscriptionsTotal.WithLabelValues("test", unsubscriptionReasonOverflowCap), 0)
 	requireMetricEventually(t, metrics.Subscribers.WithLabelValues("test"), 1)
 }
