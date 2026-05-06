@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -183,4 +184,34 @@ func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 		_, ok := reg.Get("example.grafana.app", "status", "")
 		assert.False(t, ok)
 	})
+}
+
+// TestMapper_AnnotationSubresource_ActionSets verifies that managed roles (dashboards:view etc.)
+// flow through to annotation verbs via the subresource action set mapping.
+func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
+	mapper := NewMapperRegistry()
+	mapping, ok := mapper.Get("dashboard.grafana.app", "dashboards", "annotations")
+	require.True(t, ok)
+
+	readActionSets := []string{"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"}
+	writeActionSets := []string{"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"}
+
+	tests := []struct {
+		verb     string
+		expected []string
+	}{
+		{utils.VerbGet, readActionSets},
+		{utils.VerbList, readActionSets},
+		{utils.VerbWatch, readActionSets},
+		{utils.VerbCreate, writeActionSets},
+		{utils.VerbUpdate, writeActionSets},
+		{utils.VerbPatch, writeActionSets},
+		{utils.VerbDelete, writeActionSets},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.verb, func(t *testing.T) {
+			assert.ElementsMatch(t, tt.expected, mapping.ActionSets(tt.verb))
+		})
+	}
 }

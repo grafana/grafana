@@ -67,6 +67,36 @@ func enableSettingsOverridesToggle(t *testing.T) {
 	})
 }
 
+func enableSettingsOverridesAndSourceFilterToggle(t *testing.T) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+
+	settingsFlag := memprovider.InMemoryFlag{
+		Key:            featuremgmt.FlagFrontendServiceUseSettingsService,
+		DefaultVariant: "on",
+		Variants:       map[string]any{"on": true, "off": false},
+	}
+	sourceFilterFlag := memprovider.InMemoryFlag{
+		Key:            featuremgmt.FlagFrontendServiceSettingsSourceFilter,
+		DefaultVariant: "on",
+		Variants:       map[string]any{"on": true, "off": false},
+	}
+
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagFrontendServiceUseSettingsService:   settingsFlag,
+		featuremgmt.FlagFrontendServiceSettingsSourceFilter: sourceFilterFlag,
+	})
+	require.NoError(t, err)
+
+	err = openfeature.SetProviderAndWait(provider)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+}
+
 func TestRequestConfigMiddleware(t *testing.T) {
 	t.Run("should store base config in request context", func(t *testing.T) {
 		license := &licensing.OSSLicensingService{}
@@ -308,17 +338,93 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.True(t, capturedConfig.CSPEnabled)
 		assert.Equal(t, "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS", capturedConfig.CSPTemplate)
 	})
+
+	t.Run("should include source filter in selector when source filter toggle is enabled", func(t *testing.T) {
+		enableSettingsOverridesAndSourceFilterToggle(t)
+
+		mockSettingsService := &mockSettingsService{
+			settings: []*settingservice.Setting{},
+		}
+
+		license := &licensing.OSSLicensingService{}
+		cfg := &setting.Cfg{
+			Raw:      ini.Empty(),
+			HTTPPort: "1234",
+			AppURL:   "https://grafana.example.com",
+		}
+
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := middleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req = setupTestContext(req, "stacks-123")
+		recorder := httptest.NewRecorder()
+
+		handler.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		assert.True(t, mockSettingsService.called)
+
+		// Verify the selector uses source=us filter (replacing the NotIn defaults filter)
+		require.Len(t, mockSettingsService.capturedSelector.MatchExpressions, 2)
+		sourceFilter := mockSettingsService.capturedSelector.MatchExpressions[1]
+		assert.Equal(t, "source", sourceFilter.Key)
+		assert.Equal(t, metav1.LabelSelectorOpIn, sourceFilter.Operator)
+		assert.Equal(t, []string{"us"}, sourceFilter.Values)
+	})
+
+	t.Run("should not include source filter in selector when source filter toggle is disabled", func(t *testing.T) {
+		enableSettingsOverridesToggle(t)
+
+		mockSettingsService := &mockSettingsService{
+			settings: []*settingservice.Setting{},
+		}
+
+		license := &licensing.OSSLicensingService{}
+		cfg := &setting.Cfg{
+			Raw:      ini.Empty(),
+			HTTPPort: "1234",
+			AppURL:   "https://grafana.example.com",
+		}
+
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := middleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req = setupTestContext(req, "stacks-123")
+		recorder := httptest.NewRecorder()
+
+		handler.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		assert.True(t, mockSettingsService.called)
+
+		// Verify the selector does NOT include a source=us filter (only 2 expressions)
+		require.Len(t, mockSettingsService.capturedSelector.MatchExpressions, 2)
+	})
 }
 
 // mockSettingsService is a simple mock for testing
 type mockSettingsService struct {
-	called   bool
-	settings []*settingservice.Setting
-	err      error
+	called           bool
+	capturedSelector metav1.LabelSelector
+	settings         []*settingservice.Setting
+	err              error
 }
 
 func (m *mockSettingsService) ListAsIni(ctx context.Context, selector metav1.LabelSelector) (*ini.File, error) {
 	m.called = true
+	m.capturedSelector = selector
 	if m.err != nil {
 		return nil, m.err
 	}

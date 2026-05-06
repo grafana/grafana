@@ -317,6 +317,72 @@ func TestTranslateUserToTuples(t *testing.T) {
 	}
 }
 
+func TestTranslateServiceAccountToTuples(t *testing.T) {
+	tests := []struct {
+		name           string
+		role           iamv0.ServiceAccountOrgRole
+		expectedTuples int
+		expectedUser   string
+		expectedObject string
+	}{
+		{
+			name:           "viewer role",
+			role:           iamv0.ServiceAccountOrgRoleViewer,
+			expectedTuples: 1,
+			expectedUser:   "service-account:sa-test",
+			expectedObject: "role:basic_viewer",
+		},
+		{
+			name:           "editor role",
+			role:           iamv0.ServiceAccountOrgRoleEditor,
+			expectedTuples: 1,
+			expectedUser:   "service-account:sa-test",
+			expectedObject: "role:basic_editor",
+		},
+		{
+			name:           "admin role",
+			role:           iamv0.ServiceAccountOrgRoleAdmin,
+			expectedTuples: 1,
+			expectedUser:   "service-account:sa-test",
+			expectedObject: "role:basic_admin",
+		},
+		{
+			name:           "none role maps to basic_none",
+			role:           iamv0.ServiceAccountOrgRoleNone,
+			expectedTuples: 1,
+			expectedUser:   "service-account:sa-test",
+			expectedObject: "role:basic_none",
+		},
+		{
+			name:           "empty role produces no tuples",
+			role:           "",
+			expectedTuples: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sa := &iamv0.ServiceAccount{
+				ObjectMeta: metav1.ObjectMeta{Name: "sa-test"},
+				Spec:       iamv0.ServiceAccountSpec{Role: tt.role},
+			}
+
+			tuples, err := TranslateServiceAccountToTuples(toUnstructured(t, sa))
+			require.NoError(t, err)
+
+			if tt.expectedTuples == 0 {
+				assert.Nil(t, tuples)
+				return
+			}
+
+			require.Len(t, tuples, tt.expectedTuples)
+			assert.Equal(t, tt.expectedUser, tuples[0].GetUser())
+			assert.Equal(t, common.RelationAssignee, tuples[0].GetRelation())
+			assert.Equal(t, tt.expectedObject, tuples[0].GetObject())
+		})
+	}
+}
+
 func TestTranslateFolderToTuples(t *testing.T) {
 	t.Run("folder with parent", func(t *testing.T) {
 		folder := &folderv1.Folder{
@@ -815,6 +881,29 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 				}
 
 				tuples, err := TranslateUserToTuples(toUnstructured(t, user))
+				require.NoError(t, err)
+
+				for _, tuple := range tuples {
+					validateTupleAgainstSchema(t, ts, tuple)
+				}
+			})
+		}
+	})
+
+	t.Run("service account basic role assignments", func(t *testing.T) {
+		for _, role := range []iamv0.ServiceAccountOrgRole{
+			iamv0.ServiceAccountOrgRoleViewer,
+			iamv0.ServiceAccountOrgRoleEditor,
+			iamv0.ServiceAccountOrgRoleAdmin,
+			iamv0.ServiceAccountOrgRoleNone,
+		} {
+			t.Run(string(role), func(t *testing.T) {
+				sa := &iamv0.ServiceAccount{
+					ObjectMeta: metav1.ObjectMeta{Name: "sa-schema-test"},
+					Spec:       iamv0.ServiceAccountSpec{Role: role},
+				}
+
+				tuples, err := TranslateServiceAccountToTuples(toUnstructured(t, sa))
 				require.NoError(t, err)
 
 				for _, tuple := range tuples {

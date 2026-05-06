@@ -1,4 +1,4 @@
-import { cloneDeep, omit, pickBy } from 'lodash';
+import { cloneDeep } from 'lodash';
 
 import {
   convertOldAngularValueMappings,
@@ -101,7 +101,7 @@ function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>>
       }
 
       if (legendConfig.values) {
-        const enabledLegendValues = pickBy(legendConfig, (v) => v);
+        const enabledLegendValues = Object.fromEntries(Object.entries(legendConfig).filter(([, v]) => v));
         options.legend.calcs = getReducersFromLegend(enabledLegendValues);
       }
 
@@ -373,7 +373,16 @@ export function migrateFromValueOptions(old: any) {
     fieldOptions,
   };
 
-  return omit(newOptions, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
+  const {
+    valueMappings: _vm,
+    thresholds: _th,
+    valueOptions: _vo,
+    minValue: _min,
+    maxValue: _mx,
+    ...cleanedOptions
+  } = newOptions;
+
+  return cleanedOptions;
 }
 
 export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefined {

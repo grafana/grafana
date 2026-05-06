@@ -22,7 +22,7 @@ var (
 					return "", errors.New("provided object must be of type *AlertRule")
 				}
 
-				return cast.Spec.Title, nil
+				return string(cast.Spec.Title), nil
 			},
 		},
 			{
@@ -50,7 +50,7 @@ var (
 						return "", nil
 					}
 
-					return cast.Spec.PanelRef.DashboardUID, nil
+					return string(cast.Spec.PanelRef.DashboardUID), nil
 				},
 			},
 			{
@@ -65,20 +65,6 @@ var (
 					}
 
 					return fmt.Sprintf("%d", cast.Spec.PanelRef.PanelID), nil
-				},
-			},
-			{
-				FieldSelector: "spec.notificationSettings.receiver",
-				FieldValueFunc: func(o resource.Object) (string, error) {
-					cast, ok := o.(*AlertRule)
-					if !ok {
-						return "", errors.New("provided object must be of type *AlertRule")
-					}
-					if cast.Spec.NotificationSettings == nil {
-						return "", nil
-					}
-
-					return cast.Spec.NotificationSettings.Receiver, nil
 				},
 			},
 		}))

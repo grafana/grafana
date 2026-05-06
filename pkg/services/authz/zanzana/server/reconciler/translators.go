@@ -216,6 +216,31 @@ func TranslateUserToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKe
 	return []*openfgav1.TupleKey{tuple}, nil
 }
 
+// TranslateServiceAccountToTuples converts a ServiceAccount CRD to basic role assignment tuples.
+func TranslateServiceAccountToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
+	var sa iamv0.ServiceAccount
+	if err := convertUnstructured(obj, &sa); err != nil {
+		return nil, err
+	}
+
+	role := string(sa.Spec.Role)
+	if sa.Spec.Role == "" {
+		return nil, nil
+	}
+
+	basicRole := common.TranslateBasicRole(role)
+	if basicRole == "" {
+		return nil, fmt.Errorf("invalid basic role: %s", role)
+	}
+
+	tuple := &openfgav1.TupleKey{
+		User:     common.NewTupleEntry(common.TypeServiceAccount, sa.Name, ""),
+		Relation: common.RelationAssignee,
+		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
+	}
+	return []*openfgav1.TupleKey{tuple}, nil
+}
+
 // convertUnstructured converts an unstructured object to a typed struct using the standard Kubernetes converter.
 func convertUnstructured(obj *unstructured.Unstructured, target any) error {
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, target); err != nil {

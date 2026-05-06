@@ -3872,6 +3872,12 @@
         },
         "subject": {
           "type": "string"
+        },
+        "urls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReportURLItem"
+          }
         }
       }
     },
@@ -4235,9 +4241,6 @@
           "type": "boolean"
         },
         "isSnapshot": {
-          "type": "boolean"
-        },
-        "isStarred": {
           "type": "boolean"
         },
         "provisioned": {
@@ -6944,6 +6947,12 @@
           "type": "string",
           "format": "date-time"
         },
+        "urls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReportURLItem"
+          }
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -7123,6 +7132,17 @@
           "type": "string"
         },
         "to": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportURLItem": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "url": {
           "type": "string"
         }
       }

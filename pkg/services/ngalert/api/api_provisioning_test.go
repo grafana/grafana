@@ -2245,7 +2245,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		OrgID: 1,
 		/*
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+				1: {folder.ActionFoldersCreate: {}, folder.ActionFoldersRead: {folder.ScopeFoldersAll}},
 			},
 		*/
 	}
@@ -2311,11 +2311,13 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		tracer,
 		validation.ValidateProvenanceRelaxed,
 		false,
+		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(rev),
-		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
+		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService(), nil, &notifier.NoopOrgEmailValidator{}),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, validation.ValidateProvenanceRelaxed),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs, validation.ValidateProvenanceRelaxed),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz),
@@ -2336,7 +2338,7 @@ func createTestRequestCtx() contextmodel.ReqContext {
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+				1: {folder.ActionFoldersRead: {folder.ScopeFoldersAll}},
 			},
 		},
 		Logger: &logtest.Fake{},

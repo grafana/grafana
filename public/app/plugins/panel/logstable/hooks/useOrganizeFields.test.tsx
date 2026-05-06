@@ -1,9 +1,10 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { type DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
+import { type DataFrame, DataFrameType, FieldType, standardEditorsRegistry, toDataFrame } from '@grafana/data';
 // Internal package imports, but not exposed to end users, how do we expect plugin developers to test anything that contains a transform?
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { TableCellDisplayMode } from '@grafana/ui';
+import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
@@ -36,6 +37,11 @@ const testLogsFrame = parseLogsFrame(testLogsDataFrame[0]);
 
 describe('useOrganizeFields', () => {
   beforeAll(() => {
+    try {
+      standardEditorsRegistry.setInit(getAllOptionEditors);
+    } catch {
+      // already initialized in this Jest worker
+    }
     mockTransformationsRegistry([organizeFieldsTransformer, extractFieldsTransformer]);
   });
 
@@ -111,7 +117,7 @@ describe('useOrganizeFields', () => {
     });
   });
   describe('custom cell renderer', () => {
-    test('only used on first column - showInspectLogLine', async () => {
+    test('only used on first column - enableLogDetails', async () => {
       const { result: organizedFields } = renderHook(() =>
         useOrganizeFields({
           extractedFrame,
@@ -120,7 +126,7 @@ describe('useOrganizeFields', () => {
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {
-            showInspectLogLine: true,
+            enableLogDetails: true,
           },
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
@@ -167,7 +173,7 @@ describe('useOrganizeFields', () => {
         expect(organizedFields.current.organizedFrame?.fields[2].config.custom.cellOptions).not.toBeDefined();
       });
     });
-    test('not used if showInspectLogLine or showCopyLogLink is not defined', async () => {
+    test('not used if enableLogDetails is false and showCopyLogLink is not set', async () => {
       const { result: organizedFields } = renderHook(() =>
         useOrganizeFields({
           extractedFrame,
@@ -175,7 +181,7 @@ describe('useOrganizeFields', () => {
           levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
-          options: {},
+          options: { enableLogDetails: false },
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
           fieldConfig: { defaults: {}, overrides: [] },
@@ -191,11 +197,11 @@ describe('useOrganizeFields', () => {
     test('log line body has no cellOptions when it is moved from the first position', async () => {
       const optionsBodyFirst = {
         displayedFields: [LOG_LINE_BODY_FIELD_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, 'level'],
-        showInspectLogLine: true,
+        enableLogDetails: true,
       };
       const optionsBodySecond = {
         displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOG_LINE_BODY_FIELD_NAME, 'level'],
-        showInspectLogLine: true,
+        enableLogDetails: true,
       };
 
       const { result, rerender } = renderHook(

@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,8 +16,8 @@ import (
 // dualWriter.Create that fire before any storage is touched.
 func TestDualWriter_Create_ValidationErrors(t *testing.T) {
 	t.Run("should error when object has a UID preset", func(t *testing.T) {
-		ls := storageMock{&mock.Mock{}, rest.Storage(nil)}
-		us := storageMock{&mock.Mock{}, rest.Storage(nil)}
+		ls := &fakeStorage{}
+		us := &fakeStorage{}
 
 		dw, err := newStorage(kind, rest.Mode1, ls, us)
 		require.NoError(t, err)
@@ -33,13 +32,13 @@ func TestDualWriter_Create_ValidationErrors(t *testing.T) {
 		require.Contains(t, err.Error(), "UID should not be")
 
 		// No storage call should have been made
-		ls.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
-		us.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		require.Empty(t, ls.createCalls)
+		require.Empty(t, us.createCalls)
 	})
 
 	t.Run("should error when object has neither name nor generateName", func(t *testing.T) {
-		ls := storageMock{&mock.Mock{}, rest.Storage(nil)}
-		us := storageMock{&mock.Mock{}, rest.Storage(nil)}
+		ls := &fakeStorage{}
+		us := &fakeStorage{}
 
 		dw, err := newStorage(kind, rest.Mode1, ls, us)
 		require.NoError(t, err)
@@ -55,7 +54,7 @@ func TestDualWriter_Create_ValidationErrors(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "name or generatename")
 
-		ls.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
-		us.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		require.Empty(t, ls.createCalls)
+		require.Empty(t, us.createCalls)
 	})
 }

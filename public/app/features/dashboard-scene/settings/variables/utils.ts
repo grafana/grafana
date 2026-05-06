@@ -182,6 +182,7 @@ export function getVariableEditor(type: EditableVariableType) {
 export interface CommonVariableProperties {
   name: string;
   label?: string;
+  key?: string;
 }
 
 function getDefaultDatasourceRef(): DataSourceRef | undefined {
@@ -210,7 +211,6 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'adhoc':
       return new AdHocFiltersVariable({
         ...initialState,
-        layout: 'combobox',
       });
     case 'groupby':
       return new GroupByVariable(initialState);
@@ -224,6 +224,10 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
 export function getVariableDefault(variables: Array<SceneVariable<SceneVariableState>>) {
   const nextVariableIdName = getNextAvailableId('query', variables);
   return getVariableScene('query', { name: nextVariableIdName });
+}
+
+export function getVariableNamePrefix(type: EditableVariableType): string {
+  return type === 'adhoc' ? 'filter' : type;
 }
 
 export function getNextAvailableId(

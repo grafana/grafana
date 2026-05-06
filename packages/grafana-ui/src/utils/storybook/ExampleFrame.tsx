@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Source } from '@storybook/blocks';
+import { Source } from '@storybook/addon-docs/blocks';
 import { Children, isValidElement, type ReactNode, useMemo, useState } from 'react';
 import reactElementToJSXString from 'react-element-to-jsx-string';
 

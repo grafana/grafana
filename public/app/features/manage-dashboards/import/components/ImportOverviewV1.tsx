@@ -11,7 +11,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { addLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { type DashboardInputs, DashboardSource, type ImportDashboardDTO, LibraryPanelInputState } from '../../types';
-import { applyV1Inputs, stripExportMetadata } from '../utils/inputs';
+import { applyV1Inputs, interpolateLibraryPanelDatasources, stripExportMetadata } from '../utils/inputs';
 
 import { GcomDashboardInfo } from './GcomDashboardInfo';
 import { ImportForm } from './ImportForm';
@@ -37,10 +37,13 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
     try {
       const dashboardWithDataSources = applyV1Inputs(dashboard, inputs, form);
 
-      // Import new library panels first
+      // Import new library panels first.
+      // Library panel models from __elements may contain ${DS_...} placeholders
+      // that need to be resolved before creating the library element.
       const newLibraryPanels = inputs.libraryPanels.filter((lp) => lp.state === LibraryPanelInputState.New);
       for (const lp of newLibraryPanels) {
-        const libPanelWithPanelModel = new PanelModel(lp.model.model);
+        const interpolatedModel = interpolateLibraryPanelDatasources(lp.model.model, inputs, form);
+        const libPanelWithPanelModel = new PanelModel(interpolatedModel);
         let { scopedVars, ...panelSaveModel } = libPanelWithPanelModel.getSaveModel();
         panelSaveModel = {
           libraryPanel: {
@@ -51,7 +54,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
         };
 
         try {
-          await addLibraryPanel(panelSaveModel, form.folder.uid);
+          await addLibraryPanel(panelSaveModel, form.folder.uid, lp.model.uid);
         } catch (error) {
           appEvents.emit(AppEvents.alertWarning, [
             'Library panel import failed',

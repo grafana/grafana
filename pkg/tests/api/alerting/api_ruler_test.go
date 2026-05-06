@@ -18,12 +18,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -4849,7 +4849,7 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 		require.NotEmptyf(t, response.Created, "Expected created to be set")
 
 		// create some versions of the rule
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			groups, status := adminClient.GetRulesGroup(t, "folder1", group1.Name)
 			require.Equal(t, http.StatusAccepted, status)
 			group1 = convertGettableRuleGroupToPostable(groups.GettableRuleGroupConfig)

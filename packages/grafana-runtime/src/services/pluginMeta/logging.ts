@@ -1,31 +1,11 @@
 import { type PluginType } from '@grafana/data';
 
-import { createMonitoringLogger, type MonitoringLogger } from '../../utils/logging';
-
-let logger: MonitoringLogger;
-
-function getLogger() {
-  if (!logger) {
-    logger = createMonitoringLogger('pluginMeta-logs');
-  }
-
-  return logger;
-}
+import { getLogger } from '../logging/registry';
 
 export function logPluginMetaWarning(message: string, type: PluginType): void {
-  getLogger().logWarning(message, { type });
-  console.warn(message);
+  getLogger('grafana/runtime.plugins.meta').logWarning(message, { type });
 }
 
 export function logPluginMetaError(message: string, error: unknown): void {
-  getLogger().logError(new Error(message, { cause: error }));
-  console.error(message, error);
-}
-
-export function setPluginMetaLogger(override: MonitoringLogger) {
-  if (process.env.NODE_ENV !== 'test') {
-    throw new Error('setLogger function can only be called from tests.');
-  }
-
-  logger = override;
+  getLogger('grafana/runtime.plugins.meta').logError(new Error(message, { cause: error }));
 }

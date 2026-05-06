@@ -3,23 +3,26 @@ package legacy
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	requestK8s "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
-
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	utilsOrig "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
@@ -78,10 +81,64 @@ func (s *preferenceStorage) List(ctx context.Context, options *internalversion.L
 		return nil, err
 	}
 	ns := requestK8s.NamespaceValue(ctx)
-	if user.GetIdentityType() == authlib.TypeAccessPolicy {
-		user = nil // nill user can see everything
+	if user.GetIdentityType() != authlib.TypeUser {
+		return nil, fmt.Errorf("only users may list preferences")
 	}
+	if user.GetIdentifier() == "" {
+		return nil, fmt.Errorf("user identifier is required")
+	}
+	if options.Continue != "" {
+		return nil, fmt.Errorf("continue token not supported")
+	}
+	if options.LabelSelector != nil && !options.LabelSelector.Empty() {
+		return nil, fmt.Errorf("labelSelector not supported")
+	}
+
+	if options.FieldSelector != nil && !options.FieldSelector.Empty() {
+		r := options.FieldSelector.Requirements()
+		if len(r) != 1 {
+			return nil, fmt.Errorf("only one fieldSelector is supported")
+		}
+		if r[0].Field != "metadata.name" {
+			return nil, fmt.Errorf("only the metadata.name fieldSelector is supported")
+		}
+		if r[0].Operator != selection.Equals {
+			return nil, fmt.Errorf("only the = operator is supported")
+		}
+		return s.doListWithName(ctx, user, r[0].Value)
+	}
+
 	return s.sql.ListPreferences(ctx, ns, user, true)
+}
+
+func (s *preferenceStorage) doListWithName(ctx context.Context, user identity.Requester, name string) (*preferences.PreferencesList, error) {
+	info, _ := utils.ParseOwnerFromName(name)
+	switch info.Owner {
+	case utils.NamespaceResourceOwner:
+		// OK
+	case utils.UserResourceOwner:
+		if user.GetIdentifier() != info.Identifier {
+			return &preferences.PreferencesList{}, nil
+		}
+	case utils.TeamResourceOwner:
+		if !slices.Contains(user.GetGroups(), info.Identifier) {
+			return &preferences.PreferencesList{}, nil
+		}
+	default:
+		return &preferences.PreferencesList{}, nil
+	}
+
+	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return &preferences.PreferencesList{}, nil
+	}
+	p, ok := obj.(*preferences.Preferences)
+	if !ok {
+		return &preferences.PreferencesList{}, nil
+	}
+	return &preferences.PreferencesList{
+		Items: []preferences.Preferences{*p},
+	}, nil
 }
 
 func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -104,12 +161,11 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 			req.TeamUID = owner.Identifier
 			return false, nil
 		case utils.NamespaceResourceOwner:
+			req.Namespace = true
 			return false, nil
 		default:
 			return false, fmt.Errorf("unsupported name")
 		}
-	}, func(p *preferenceModel) bool {
-		return true
 	})
 	if err != nil {
 		return nil, err
@@ -209,7 +265,23 @@ func (s *preferenceStorage) Create(ctx context.Context, obj runtime.Object, crea
 func (s *preferenceStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	old, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		return nil, false, err
+		// Allows upsert with PATCH
+		if k8serrors.IsNotFound(err) {
+			p := &preferences.Preferences{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Preferences",
+					APIVersion: preferences.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: requestK8s.NamespaceValue(ctx),
+				},
+			}
+			p.UID = gapiutil.CalculateClusterWideUID(p)
+			old = p
+		} else {
+			return nil, false, err
+		}
 	}
 
 	obj, err := objInfo.UpdatedObject(ctx, old)
@@ -315,6 +387,7 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 		}
 	}
 
+	obj.UID = gapiutil.CalculateClusterWideUID(&obj)
 	return obj
 }
 

@@ -6,6 +6,7 @@ import Highlighter from 'react-highlight-words';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Field, Label, useStyles2 } from '@grafana/ui';
+import { getLabelStyles } from '@grafana/ui/internal';
 
 import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';
@@ -18,6 +19,7 @@ export interface OptionsPaneItemInfo {
   popularRank?: number;
   render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement<Record<string, unknown>>;
   skipField?: boolean;
+  useFieldset?: boolean;
   showIf?: () => boolean;
   /** Hook for controlling visibility */
   useShowIf?: () => boolean;
@@ -61,7 +63,7 @@ interface OptionsPaneItemProps {
 }
 
 function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) {
-  const { title, description, id, render, skipField } = itemDescriptor.props;
+  const { title, description, id, render, skipField, useFieldset } = itemDescriptor.props;
   const key = `${itemDescriptor.parent.props.id} ${title}`;
   const showIf = itemDescriptor.useShowIf();
 
@@ -78,8 +80,9 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
       label={renderOptionLabel(itemDescriptor, searchQuery)}
       description={description}
       key={key}
-      aria-label={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
+      data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
       htmlFor={id}
+      useFieldset={useFieldset}
     >
       {render(itemDescriptor)}
     </Field>
@@ -87,7 +90,7 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
 }
 
 function renderOptionLabel(itemDescriptor: OptionsPaneItemDescriptor, searchQuery?: string): ReactNode {
-  const { title, description, overrides, id, addon } = itemDescriptor.props;
+  const { title, description, overrides, id, addon, useFieldset } = itemDescriptor.props;
 
   if (!title) {
     return null;
@@ -99,7 +102,16 @@ function renderOptionLabel(itemDescriptor: OptionsPaneItemDescriptor, searchQuer
       return null;
     }
 
-    return <OptionPaneLabel title={title} description={description} overrides={overrides} addon={addon} htmlFor={id} />;
+    return (
+      <OptionPaneLabel
+        title={title}
+        description={description}
+        overrides={overrides}
+        addon={addon}
+        htmlFor={id}
+        useFieldset={useFieldset}
+      />
+    );
   }
 
   const categories: React.ReactNode[] = [];
@@ -130,22 +142,34 @@ interface OptionPanelLabelProps {
   overrides?: OptionPaneItemOverrideInfo[];
   addon: ReactNode;
   htmlFor?: string;
+  useFieldset?: boolean;
 }
 
-function OptionPaneLabel({ title, description, overrides, addon, htmlFor }: OptionPanelLabelProps) {
-  const styles = useStyles2(getLabelStyles);
+function OptionPaneLabel({ title, description, overrides, addon, htmlFor, useFieldset }: OptionPanelLabelProps) {
+  const styles = useStyles2(getOptionPaneLabelStyles);
+  const labelStyles = useStyles2(getLabelStyles);
   return (
     <div className={styles.container}>
-      <Label description={description} htmlFor={htmlFor}>
-        {title}
-        {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
-      </Label>
+      {useFieldset ? (
+        <div className={labelStyles.label}>
+          <div className={labelStyles.labelContent}>
+            {title}
+            {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
+          </div>
+          {description && <span className={labelStyles.description}>{description}</span>}
+        </div>
+      ) : (
+        <Label description={description} htmlFor={htmlFor}>
+          {title}
+          {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
+        </Label>
+      )}
       {addon}
     </div>
   );
 }
 
-function getLabelStyles(theme: GrafanaTheme2) {
+function getOptionPaneLabelStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       display: 'flex',

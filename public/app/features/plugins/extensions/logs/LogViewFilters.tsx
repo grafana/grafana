@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import { type ReactElement, useMemo } from 'react';
+import { type ReactElement, useId, useMemo } from 'react';
 
 import { type DataFrame, type MatcherConfig, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -22,6 +22,9 @@ type LogViewFiltersProps = {
 
 export function LogViewFilters({ provider, filteredProvider, filter, onChange }: LogViewFiltersProps): ReactElement {
   const { pluginIds, extensionPointIds, severity } = useLogFilters(provider, filteredProvider, filter);
+  const pluginId = useId();
+  const extensionPointId = useId();
+  const severityId = useId();
 
   const onChangePluginIds = (values: Array<SelectableValue<string>>) => {
     const update = {
@@ -65,13 +68,13 @@ export function LogViewFilters({ provider, filteredProvider, filter, onChange }:
   return (
     <InlineFieldRow>
       <InlineField label={t('plugins.log-view-filters.label-plugin-id', 'Plugin Id')}>
-        <MultiSelect options={pluginIds} onChange={onChangePluginIds} />
+        <MultiSelect inputId={pluginId} options={pluginIds} onChange={onChangePluginIds} />
       </InlineField>
       <InlineField label={t('plugins.log-view-filters.label-extension', 'Extension')}>
-        <MultiSelect options={extensionPointIds} onChange={onChangeExtensionPointIds} />
+        <MultiSelect inputId={extensionPointId} options={extensionPointIds} onChange={onChangeExtensionPointIds} />
       </InlineField>
       <InlineField label={t('plugins.log-view-filters.label-severity', 'Severity')}>
-        <MultiSelect options={severity} onChange={onChangeSeverity} />
+        <MultiSelect inputId={severityId} options={severity} onChange={onChangeSeverity} />
       </InlineField>
     </InlineFieldRow>
   );

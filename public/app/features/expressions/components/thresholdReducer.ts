@@ -3,6 +3,7 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import { type ClassicCondition, ExpressionQueryType, type ThresholdExpressionQuery } from '../types';
+import { isRangeEvaluator } from '../utils/expressionTypes';
 
 export const updateRefId = createAction<string | undefined>('thresold/updateRefId');
 export const updateThresholdType = createAction<{
@@ -30,11 +31,24 @@ export const thresholdReducer = createReducer<ThresholdExpressionQuery>(
       const typeInPayload = action.payload.evalFunction;
       const onError = action.payload.onError;
 
+      // Determine arity change before overwriting the type.
+      // Only reset params when crossing the single ↔ range boundary:
+      //   single → range : reset to [0, 0]  (need two params)
+      //   range  → single: reset to [0]     (drop second param; fixes stale [from, to] array)
+      //   single → single: preserve existing value (fixes value silently resetting to 0)
+      //   range  → range : preserve existing values
+      const previouslyRange = isRangeEvaluator(state.conditions[0].evaluator.type);
+      const nowRange = isRangeEvaluator(typeInPayload);
+      if (previouslyRange !== nowRange) {
+        state.conditions[0].evaluator.params = nowRange ? [0, 0] : [0];
+      } else if (!nowRange) {
+        // Ensure single-value types always carry exactly one param element.
+        // Older rules may have been saved with a 2-element array from a prior range type.
+        state.conditions[0].evaluator.params = [state.conditions[0].evaluator.params[0] ?? 0];
+      }
+
       //set new type in evaluator
       state.conditions[0].evaluator.type = typeInPayload;
-
-      //reset params
-      state.conditions[0].evaluator.params = [0];
 
       // check if hysteresis is checked
       const hsyteresisIsChecked = Boolean(state.conditions[0].unloadEvaluator);

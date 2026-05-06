@@ -31,11 +31,12 @@ var (
 
 // wrapAsValidationErrorIfNeeded wraps certain errors as ResourceValidationError
 // to treat them as warnings rather than hard errors. This includes:
-// - Kubernetes field validation errors
-// - Kubernetes API BadRequest errors (which often wrap dashboard/resource validation errors)
-// - Dashboard validation errors (all DashboardErr types)
-// - Duplicate resource errors
-// - Resource already in repository errors
+//   - Kubernetes field validation errors
+//   - Kubernetes API BadRequest errors (which often wrap dashboard/resource validation errors)
+//   - Kubernetes API Invalid errors (StatusReasonInvalid, HTTP 422)
+//   - Dashboard validation errors (all DashboardErr types)
+//   - Duplicate resource errors
+//   - Resource already in repository errors
 func wrapAsValidationErrorIfNeeded(err error) error {
 	if err == nil {
 		return nil
@@ -53,9 +54,13 @@ func wrapAsValidationErrorIfNeeded(err error) error {
 		return NewResourceValidationError(err)
 	}
 
-	// Check if it's a Kubernetes API BadRequest error (these are usually validation errors)
-	// Dashboard validation errors are wrapped as BadRequest by the dashboard API
-	if apierrors.IsBadRequest(err) {
+	// Check if it's a Kubernetes API validation-shaped error:
+	//   - BadRequest (400): generic validation failure; the dashboard API
+	//     also wraps some of its validation errors as BadRequest.
+	//   - Invalid (422, StatusReasonInvalid): field.ErrorList-based
+	//     rejections, e.g. CUE schema mismatches and immutable-field
+	//     violations.
+	if apierrors.IsBadRequest(err) || apierrors.IsInvalid(err) {
 		return NewResourceValidationError(err)
 	}
 
@@ -235,7 +240,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	return r.writeResourceFromParsed(ctx, path, ref, parsed)
 }
 
-func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource) (string, schema.GroupVersionKind, error) {
+func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource, folderOpts ...EnsurePathOption) (string, schema.GroupVersionKind, error) {
 	if parsed.Obj.GetName() == "" {
 		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
@@ -263,7 +268,7 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 			folderPath = safepath.Dir(safepath.Dir(path))
 		}
 		folderCtx, folderSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.ensure_folder")
-		folder, err := r.folders.EnsureFolderPathExist(folderCtx, folderPath, ref)
+		folder, err := r.folders.EnsureFolderPathExist(folderCtx, folderPath, ref, folderOpts...)
 		if err != nil {
 			folderSpan.RecordError(err)
 			folderSpan.End()
@@ -377,7 +382,7 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 	return nil
 }
 
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, string, schema.GroupVersionKind, error) {
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, error) {
 	oldInfo, err := r.repo.Read(ctx, previousPath, previousRef)
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read previous file: %w", err)
@@ -414,7 +419,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 
 	oldFolderName := oldParsed.ExistingFolder()
 
-	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed)
+	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 	if err != nil {
 		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
 	}

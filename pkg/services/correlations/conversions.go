@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
@@ -11,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) (*correlationsV0.Correlation, error) {
+func ToResource(orig Correlation) (*correlationsV0.Correlation, error) {
 	cfg, err := ToSpecConfig(orig.Config)
 	if err != nil {
 		return nil, err
@@ -19,7 +20,8 @@ func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) (*corre
 	obj := &correlationsV0.Correlation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      orig.UID,
-			Namespace: namespacer(orig.OrgID),
+			UID:       types.UID(orig.UID), // required for PATCH to work in legacy storage
+			Namespace: authlib.OrgNamespaceFormatter(orig.OrgID),
 		},
 		Spec: correlationsV0.CorrelationSpec{
 			Label: orig.Label,

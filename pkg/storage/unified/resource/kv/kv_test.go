@@ -2,8 +2,11 @@ package kv
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"strings"
+	"sync"
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -257,6 +260,466 @@ func TestIsValidKey(t *testing.T) {
 				"IsValidKey(%q) = %v, expected %v", tt.key, result, tt.expected)
 		})
 	}
+}
+
+func TestBadgerKV_Batch(t *testing.T) {
+	kv := setupTestKV(t)
+	ctx := context.Background()
+	section := "test-section"
+
+	t.Run("put creates new keys", func(t *testing.T) {
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpPut, Key: "put-new-1", Value: []byte("value1")},
+			{Mode: BatchOpPut, Key: "put-new-2", Value: []byte("value2")},
+		})
+		require.NoError(t, err)
+
+		val, err := kv.Get(ctx, section, "put-new-1")
+		require.NoError(t, err)
+		b, _ := io.ReadAll(val)
+		require.Equal(t, "value1", string(b))
+
+		val, err = kv.Get(ctx, section, "put-new-2")
+		require.NoError(t, err)
+		b, _ = io.ReadAll(val)
+		require.Equal(t, "value2", string(b))
+	})
+
+	t.Run("put overwrites existing keys", func(t *testing.T) {
+		saveKVHelper(t, kv, ctx, section, "put-overwrite", strings.NewReader("original"))
+
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpPut, Key: "put-overwrite", Value: []byte("updated")},
+		})
+		require.NoError(t, err)
+
+		val, err := kv.Get(ctx, section, "put-overwrite")
+		require.NoError(t, err)
+		b, _ := io.ReadAll(val)
+		require.Equal(t, "updated", string(b))
+	})
+
+	t.Run("create succeeds for new key", func(t *testing.T) {
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpCreate, Key: "create-new", Value: []byte("created")},
+		})
+		require.NoError(t, err)
+
+		val, err := kv.Get(ctx, section, "create-new")
+		require.NoError(t, err)
+		b, _ := io.ReadAll(val)
+		require.Equal(t, "created", string(b))
+	})
+
+	t.Run("create fails if key exists", func(t *testing.T) {
+		saveKVHelper(t, kv, ctx, section, "create-exists", strings.NewReader("existing"))
+
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpCreate, Key: "create-exists", Value: []byte("new")},
+		})
+		require.Error(t, err)
+		var batchErr *BatchError
+		require.ErrorAs(t, err, &batchErr)
+		require.ErrorIs(t, batchErr.Err, ErrKeyAlreadyExists)
+		require.Equal(t, 0, batchErr.Index)
+	})
+
+	t.Run("update succeeds for existing key", func(t *testing.T) {
+		saveKVHelper(t, kv, ctx, section, "update-exists", strings.NewReader("original"))
+
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpUpdate, Key: "update-exists", Value: []byte("updated")},
+		})
+		require.NoError(t, err)
+
+		val, err := kv.Get(ctx, section, "update-exists")
+		require.NoError(t, err)
+		b, _ := io.ReadAll(val)
+		require.Equal(t, "updated", string(b))
+	})
+
+	t.Run("update fails if key does not exist", func(t *testing.T) {
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpUpdate, Key: "update-missing", Value: []byte("value")},
+		})
+		require.Error(t, err)
+		var batchErr *BatchError
+		require.ErrorAs(t, err, &batchErr)
+		require.ErrorIs(t, batchErr.Err, ErrNotFound)
+		require.Equal(t, 0, batchErr.Index)
+	})
+
+	t.Run("delete removes key", func(t *testing.T) {
+		saveKVHelper(t, kv, ctx, section, "delete-me", strings.NewReader("value"))
+
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpDelete, Key: "delete-me"},
+		})
+		require.NoError(t, err)
+
+		_, err = kv.Get(ctx, section, "delete-me")
+		require.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("delete is idempotent", func(t *testing.T) {
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpDelete, Key: "delete-nonexistent"},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("mixed operations in single batch", func(t *testing.T) {
+		saveKVHelper(t, kv, ctx, section, "mix-update", strings.NewReader("original"))
+		saveKVHelper(t, kv, ctx, section, "mix-delete", strings.NewReader("to-delete"))
+
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpCreate, Key: "mix-create", Value: []byte("created")},
+			{Mode: BatchOpUpdate, Key: "mix-update", Value: []byte("updated")},
+			{Mode: BatchOpDelete, Key: "mix-delete"},
+			{Mode: BatchOpPut, Key: "mix-put", Value: []byte("upserted")},
+		})
+		require.NoError(t, err)
+
+		val, err := kv.Get(ctx, section, "mix-create")
+		require.NoError(t, err)
+		b, _ := io.ReadAll(val)
+		require.Equal(t, "created", string(b))
+
+		val, err = kv.Get(ctx, section, "mix-update")
+		require.NoError(t, err)
+		b, _ = io.ReadAll(val)
+		require.Equal(t, "updated", string(b))
+
+		_, err = kv.Get(ctx, section, "mix-delete")
+		require.ErrorIs(t, err, ErrNotFound)
+
+		val, err = kv.Get(ctx, section, "mix-put")
+		require.NoError(t, err)
+		b, _ = io.ReadAll(val)
+		require.Equal(t, "upserted", string(b))
+	})
+
+	t.Run("atomicity - failure rolls back all operations", func(t *testing.T) {
+		saveKVHelper(t, kv, ctx, section, "atomic-existing", strings.NewReader("original"))
+
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpPut, Key: "atomic-new", Value: []byte("should-rollback")},
+			{Mode: BatchOpUpdate, Key: "atomic-existing", Value: []byte("should-rollback")},
+			{Mode: BatchOpCreate, Key: "atomic-existing", Value: []byte("fails-duplicate")}, // fails
+		})
+		require.Error(t, err)
+		var batchErr *BatchError
+		require.ErrorAs(t, err, &batchErr)
+		require.Equal(t, 2, batchErr.Index)
+		require.ErrorIs(t, batchErr.Err, ErrKeyAlreadyExists)
+
+		// Verify rollback: new key should not exist
+		_, err = kv.Get(ctx, section, "atomic-new")
+		require.ErrorIs(t, err, ErrNotFound)
+
+		// Verify rollback: existing key should retain original value
+		val, err := kv.Get(ctx, section, "atomic-existing")
+		require.NoError(t, err)
+		b, _ := io.ReadAll(val)
+		require.Equal(t, "original", string(b))
+	})
+
+	t.Run("MaxBatchOps limit enforced", func(t *testing.T) {
+		ops := make([]BatchOp, MaxBatchOps+1)
+		for i := range ops {
+			ops[i] = BatchOp{Mode: BatchOpPut, Key: "key", Value: []byte("v")}
+		}
+		err := kv.Batch(ctx, section, ops)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "too many operations")
+	})
+
+	t.Run("empty value rejected for write ops", func(t *testing.T) {
+		for _, mode := range []BatchOpMode{BatchOpPut, BatchOpCreate, BatchOpUpdate} {
+			err := kv.Batch(ctx, section, []BatchOp{
+				{Mode: mode, Key: "empty-val"},
+			})
+			require.Error(t, err)
+			var batchErr *BatchError
+			require.ErrorAs(t, err, &batchErr)
+			require.ErrorIs(t, batchErr.Err, ErrEmptyValue)
+		}
+	})
+
+	t.Run("empty batch is no-op", func(t *testing.T) {
+		err := kv.Batch(ctx, section, []BatchOp{})
+		require.NoError(t, err)
+	})
+
+	t.Run("create then update in same batch", func(t *testing.T) {
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpCreate, Key: "create-then-update", Value: []byte("v1")},
+			{Mode: BatchOpUpdate, Key: "create-then-update", Value: []byte("v2")},
+		})
+		require.NoError(t, err)
+
+		val, err := kv.Get(ctx, section, "create-then-update")
+		require.NoError(t, err)
+		b, _ := io.ReadAll(val)
+		require.Equal(t, "v2", string(b))
+	})
+
+	t.Run("concurrent create reports key exists instead of badger conflict", func(t *testing.T) {
+		const rounds = 5
+		const goroutines = 10
+
+		for round := range rounds {
+			key := "create-race-" + string(rune('a'+round))
+
+			var wg sync.WaitGroup
+			start := make(chan struct{})
+			errs := make(chan error, goroutines)
+
+			for range goroutines {
+				wg.Go(func() {
+					<-start
+					errs <- kv.Batch(ctx, section, []BatchOp{
+						{Mode: BatchOpCreate, Key: key, Value: []byte("created")},
+					})
+				})
+			}
+
+			close(start)
+			wg.Wait()
+			close(errs)
+
+			var successes int
+			for err := range errs {
+				switch {
+				case err == nil:
+					successes++
+				case errors.Is(err, ErrKeyAlreadyExists):
+					// expected
+				default:
+					require.NoError(t, err, "unexpected error from concurrent Batch")
+				}
+			}
+			require.Equal(t, 1, successes, "only one writer should succeed")
+		}
+	})
+}
+
+func TestBadgerKV_ContextCancellation(t *testing.T) {
+	const section = "test-section"
+
+	seed := func(t *testing.T, kv KV, n int) []string {
+		t.Helper()
+		keys := make([]string, n)
+		for i := range n {
+			k := fmt.Sprintf("key-%03d", i)
+			keys[i] = k
+			saveKVHelper(t, kv, context.Background(), section, k, strings.NewReader("value"))
+		}
+		return keys
+	}
+
+	t.Run("Keys: pre-cancelled ctx yields error before any keys", func(t *testing.T) {
+		kv := setupTestKV(t)
+		seed(t, kv, 5)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		var got []string
+		var gotErr error
+		for k, err := range kv.Keys(ctx, section, ListOptions{}) {
+			if err != nil {
+				gotErr = err
+				break
+			}
+			got = append(got, k)
+		}
+		require.ErrorIs(t, gotErr, context.Canceled)
+		require.Empty(t, got)
+	})
+
+	t.Run("Keys: cancellation mid-iteration stops scan", func(t *testing.T) {
+		kv := setupTestKV(t)
+		seed(t, kv, 100)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var got []string
+		var gotErr error
+		for k, err := range kv.Keys(ctx, section, ListOptions{}) {
+			if err != nil {
+				gotErr = err
+				break
+			}
+			got = append(got, k)
+			if len(got) == 3 {
+				cancel()
+			}
+		}
+		require.ErrorIs(t, gotErr, context.Canceled)
+		require.GreaterOrEqual(t, len(got), 3)
+		require.Less(t, len(got), 100, "iteration should have stopped before draining all keys")
+	})
+
+	t.Run("BatchGet: pre-cancelled ctx yields error before any keys", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 5)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		var got int
+		var gotErr error
+		for _, err := range kv.BatchGet(ctx, section, keys) {
+			if err != nil {
+				gotErr = err
+				break
+			}
+			got++
+		}
+		require.ErrorIs(t, gotErr, context.Canceled)
+		require.Equal(t, 0, got)
+	})
+
+	t.Run("BatchGet: cancellation mid-iteration stops scan", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 50)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var got int
+		var gotErr error
+		for entry, err := range kv.BatchGet(ctx, section, keys) {
+			if err != nil {
+				gotErr = err
+				break
+			}
+			require.NoError(t, entry.Value.Close())
+			got++
+			if got == 3 {
+				cancel()
+			}
+		}
+		require.ErrorIs(t, gotErr, context.Canceled)
+		require.GreaterOrEqual(t, got, 3)
+		require.Less(t, got, 50, "iteration should have stopped before draining all keys")
+	})
+
+	t.Run("BatchDelete: pre-cancelled ctx returns error and deletes nothing", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 5)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := kv.BatchDelete(ctx, section, keys)
+		require.ErrorIs(t, err, context.Canceled)
+
+		// Transaction should have been discarded; all keys still present.
+		for _, k := range keys {
+			_, err := kv.Get(context.Background(), section, k)
+			require.NoError(t, err, "key %q should still exist", k)
+		}
+	})
+
+	t.Run("BatchDelete: empty keys with cancelled ctx is a no-op", func(t *testing.T) {
+		// BatchDelete is eager and only checks ctx per-iteration, so an empty
+		// keys slice short-circuits to a successful empty Commit even when
+		// ctx is already cancelled. Documenting that behavior here.
+		kv := setupTestKV(t)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := kv.BatchDelete(ctx, section, nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("Get: pre-cancelled ctx returns error", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 1)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		_, err := kv.Get(ctx, section, keys[0])
+		require.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("Save: pre-cancelled ctx returns error", func(t *testing.T) {
+		kv := setupTestKV(t)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		writer, err := kv.Save(ctx, section, "save-cancelled")
+		require.ErrorIs(t, err, context.Canceled)
+		require.Nil(t, writer)
+	})
+
+	t.Run("Save writer: cancellation before close returns error and saves nothing", func(t *testing.T) {
+		kv := setupTestKV(t)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		writer, err := kv.Save(ctx, section, "save-writer-cancelled")
+		require.NoError(t, err)
+		_, err = writer.Write([]byte("value"))
+		require.NoError(t, err)
+
+		cancel()
+
+		err = writer.Close()
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = kv.Get(context.Background(), section, "save-writer-cancelled")
+		require.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("Delete: pre-cancelled ctx returns error and deletes nothing", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 1)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := kv.Delete(ctx, section, keys[0])
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = kv.Get(context.Background(), section, keys[0])
+		require.NoError(t, err)
+	})
+
+	t.Run("Batch: pre-cancelled ctx returns error and applies nothing", func(t *testing.T) {
+		kv := setupTestKV(t)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpPut, Key: "batch-cancelled", Value: []byte("value")},
+		})
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = kv.Get(context.Background(), section, "batch-cancelled")
+		require.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("sanity: errors.Is matches context.Canceled", func(t *testing.T) {
+		// Guards against a future change wrapping ctx.Err() into an opaque
+		// error type that breaks errors.Is for callers (e.g. retry logic).
+		kv := setupTestKV(t)
+		seed(t, kv, 1)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		for _, err := range kv.Keys(ctx, section, ListOptions{}) {
+			require.True(t, errors.Is(err, context.Canceled))
+			break
+		}
+	})
 }
 
 // saveKVHelper is a helper function to save data to KV store using the new WriteCloser interface

@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { PureComponent } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import {
   applyFieldOverrides,
@@ -272,7 +272,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const hasServiceGraph = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
 
     return (
-      <div className={styles.wrap} aria-label={selectors.components.PanelInspector.Data.content}>
+      <div className={styles.wrap} data-testid={selectors.components.PanelInspector.Data.content}>
         <div className={styles.toolbar}>
           <InspectDataOptions
             data={data}
@@ -291,7 +291,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
         </div>
         <div className={styles.content}>
           <AutoSizer>
-            {({ width, height }) => {
+            {({ width, height }: Size) => {
               if (width === 0) {
                 return null;
               }

@@ -32,41 +32,11 @@ func canAccessAnnotation(ctx context.Context, accessClient authtypes.AccessClien
 	if anno == nil {
 		return false, apierrors.NewBadRequest("annotation must not be nil")
 	}
-
-	authInfo, ok := authtypes.AuthInfoFrom(ctx)
-	if !ok {
-		return false, apierrors.NewUnauthorized("no identity found for request")
-	}
-
-	var checkReq authtypes.CheckRequest
-
-	if anno.Spec.DashboardUID == nil || *anno.Spec.DashboardUID == "" {
-		// Org-level annotation: scope is annotations:type:organization.
-		checkReq = authtypes.CheckRequest{
-			Verb:      verb,
-			Group:     "annotation.grafana.app",
-			Resource:  "annotations",
-			Namespace: namespace,
-			Name:      "organization",
-		}
-	} else {
-		// Dashboard annotation: use dashboard.grafana.app/annotations virtual resource,
-		// which maps to annotation actions scoped to dashboards:uid:<dashboardUID>.
-		checkReq = authtypes.CheckRequest{
-			Verb:      verb,
-			Group:     "dashboard.grafana.app",
-			Resource:  "annotations",
-			Namespace: namespace,
-			Name:      *anno.Spec.DashboardUID,
-		}
-	}
-
-	resp, err := accessClient.Check(ctx, authInfo, checkReq, "")
+	allowed, err := canAccessAnnotations(ctx, accessClient, namespace, []annotationV0.Annotation{*anno}, verb)
 	if err != nil {
-		return false, fmt.Errorf("authz check failed: %w", err)
+		return false, err
 	}
-
-	return resp.Allowed, nil
+	return allowed[0], nil
 }
 
 // canAccessAnnotations checks permissions for a batch of annotations,
@@ -93,7 +63,8 @@ func canAccessAnnotations(ctx context.Context, accessClient authtypes.AccessClie
 			item.Name = "organization"
 		} else {
 			item.Group = "dashboard.grafana.app"
-			item.Resource = "annotations"
+			item.Resource = "dashboards"
+			item.Subresource = "annotations"
 			item.Name = *anno.Spec.DashboardUID
 		}
 

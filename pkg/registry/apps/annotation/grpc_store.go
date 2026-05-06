@@ -2,8 +2,8 @@ package annotation
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -211,7 +211,7 @@ func mapGRPCError(err error) error {
 
 	switch st.Code() {
 	case codes.NotFound:
-		return fmt.Errorf("annotation not found")
+		return ErrNotFound
 	case codes.AlreadyExists:
 		return fmt.Errorf("annotation already exists")
 	case codes.InvalidArgument:
@@ -227,19 +227,11 @@ func mapToGRPCStatus(err error) error {
 		return nil
 	}
 
-	msg := err.Error()
-
-	if strings.Contains(msg, "not found") {
-		return status.Error(codes.NotFound, msg)
-	}
-	if strings.Contains(msg, "already exists") {
-		return status.Error(codes.AlreadyExists, msg)
-	}
-	if strings.Contains(msg, "invalid") {
-		return status.Error(codes.InvalidArgument, msg)
+	if errors.Is(err, ErrNotFound) {
+		return status.Error(codes.NotFound, err.Error())
 	}
 
-	return status.Error(codes.Internal, msg)
+	return status.Error(codes.Internal, err.Error())
 }
 
 // toProtoAnnotation converts a v0alpha1.Annotation to proto Annotation

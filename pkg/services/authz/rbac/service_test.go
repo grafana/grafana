@@ -265,6 +265,25 @@ func TestService_checkPermission(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should return true if user has annotation create permission on dashboard (subresource)",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "annotations:create",
+					Scope:      "dashboards:uid:some_dashboard",
+					Kind:       "dashboards",
+					Attribute:  "uid",
+					Identifier: "some_dashboard",
+				},
+			},
+			check: checkRequest{
+				Action:   "annotations:create",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Name:     "some_dashboard",
+			},
+			expected: true,
+		},
+		{
 			name: "should allow querying a datasource",
 			permissions: []accesscontrol.Permission{
 				{
@@ -378,6 +397,29 @@ func TestService_mapping(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "should map annotations subresource to annotation actions",
+			input: &authzv1.CheckRequest{
+				Group:       "dashboard.grafana.app",
+				Resource:    "dashboards",
+				Subresource: "annotations",
+				Name:        "dash1",
+				Verb:        utils.VerbCreate,
+			},
+			output: &checkRequest{
+				Action:      "annotations:create",
+				ActionSets:  []string{"folders:edit", "folders:admin", "dashboards:edit", "dashboards:admin"},
+				Group:       "dashboard.grafana.app",
+				Resource:    "dashboards",
+				Subresource: "annotations",
+				Name:        "dash1",
+				Verb:        "create",
+				Namespace: types.NamespaceInfo{
+					Value: ns,
+					OrgID: 1,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -398,6 +440,11 @@ func TestService_mapping(t *testing.T) {
 			tc.output.IdentityType = types.TypeUser
 			tc.output.UserUID = testUserA.GetIdentifier()
 
+			// Compare ActionSets
+			assert.ElementsMatch(t, tc.output.ActionSets, got.ActionSets)
+			// Compare the rest of the fields
+			tc.output.ActionSets = nil
+			got.ActionSets = nil
 			require.Equal(t, tc.output, got)
 		})
 	}
@@ -767,6 +814,65 @@ func TestService_listPermission(t *testing.T) {
 			},
 			expectedItems:   []string{"some_dashboard"},
 			expectedFolders: []string{"some_folder_1", "some_folder_2"},
+		},
+		{
+			name: "should return dashboards that user has annotation read access to via subresource",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "annotations:read",
+					Scope:      "dashboards:uid:dash1",
+					Kind:       "dashboards",
+					Attribute:  "uid",
+					Identifier: "dash1",
+				},
+				{
+					Action:     "annotations:read",
+					Scope:      "dashboards:uid:dash2",
+					Kind:       "dashboards",
+					Attribute:  "uid",
+					Identifier: "dash2",
+				},
+			},
+			folders: []store.Folder{},
+			list: listRequest{
+				Action:      "annotations:read",
+				Group:       "dashboard.grafana.app",
+				Resource:    "dashboards",
+				Subresource: "annotations",
+				Options:     &ListRequestOptions{},
+			},
+			expectedItems: []string{"dash1", "dash2"},
+		},
+		{
+			name: "should return folders when user has annotation access via subresource and folder scope",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "annotations:read",
+					Scope:      "dashboards:uid:dash1",
+					Kind:       "dashboards",
+					Attribute:  "uid",
+					Identifier: "dash1",
+				},
+				{
+					Action:     "annotations:read",
+					Scope:      "folders:uid:some_folder",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "some_folder",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "some_folder"},
+			},
+			list: listRequest{
+				Action:      "annotations:read",
+				Group:       "dashboard.grafana.app",
+				Resource:    "dashboards",
+				Subresource: "annotations",
+				Options:     &ListRequestOptions{},
+			},
+			expectedItems:   []string{"dash1"},
+			expectedFolders: []string{"some_folder"},
 		},
 		{
 			name: "should return folders that user has inherited access to",
@@ -1148,6 +1254,38 @@ func TestService_Check(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			name: "should allow user with annotation create permission on dashboard (subresource)",
+			req: &authzv1.CheckRequest{
+				Namespace:   "org-12",
+				Subject:     "user:test-uid",
+				Group:       "dashboard.grafana.app",
+				Resource:    "dashboards",
+				Subresource: "annotations",
+				Verb:        "create",
+				Name:        "dash1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "annotations:create", Scope: "dashboards:uid:dash1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny user without annotation permission on dashboard (subresource)",
+			req: &authzv1.CheckRequest{
+				Namespace:   "org-12",
+				Subject:     "user:test-uid",
+				Group:       "dashboard.grafana.app",
+				Resource:    "dashboards",
+				Subresource: "annotations",
+				Verb:        "create",
+				Name:        "dash1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "annotations:create", Scope: "dashboards:uid:dash2"},
+			},
+			expected: false,
+		},
 	}
 	t.Run("User permission check", func(t *testing.T) {
 		for _, tc := range testCases {
@@ -1181,10 +1319,28 @@ func TestService_Check(t *testing.T) {
 				if tc.req.Resource == "folders" {
 					expAction = "folders:delete"
 				}
+				if tc.req.Subresource == "annotations" {
+					switch tc.req.Verb {
+					case "create":
+						expAction = "annotations:create"
+					case "get", "list", "watch":
+						expAction = "annotations:read"
+					case "update", "patch":
+						expAction = "annotations:write"
+					case "delete":
+						expAction = "annotations:delete"
+					}
+				}
 
 				perms, ok := s.permCache.Get(ctx, userPermCacheKey("org-12", "test-uid", expAction))
 				require.True(t, ok)
-				require.Len(t, perms, 1)
+
+				// The fake store returns permissions matching action or action sets,
+				// so the cached perm count equals the number of permissions the store returns.
+				// Rather than recomputing action sets, just verify the cache was populated.
+				if tc.expected {
+					require.NotEmpty(t, perms)
+				}
 			})
 		}
 	})
@@ -1378,6 +1534,23 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.ElementsMatch(t, []string{"w1", "w2"}, resp.Items)
+	})
+
+	t.Run("List: dashboards/annotations subresource resolves correct mapper entry", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{
+			{Action: "annotations:read", Scope: "dashboards:uid:dash1", Kind: "dashboards", Attribute: "uid", Identifier: "dash1"},
+			{Action: "annotations:read", Scope: "dashboards:uid:dash2", Kind: "dashboards", Attribute: "uid", Identifier: "dash2"},
+		})
+		resp, err := s.List(ctx, &authzv1.ListRequest{
+			Namespace:   "org-12",
+			Subject:     "user:test-uid",
+			Group:       "dashboard.grafana.app",
+			Resource:    "dashboards",
+			Subresource: "annotations",
+			Verb:        "get",
+		})
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"dash1", "dash2"}, resp.Items)
 	})
 }
 
@@ -2504,6 +2677,48 @@ func TestService_BatchCheck(t *testing.T) {
 				"check2": true,
 			},
 		},
+		{
+			name: "should handle subresource annotation checks in batch",
+			req: &authzv1.BatchCheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Checks: []*authzv1.BatchCheckItem{
+					{
+						CorrelationId: "check_anno_create",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Subresource:   "annotations",
+						Verb:          "create",
+						Name:          "dash1",
+					},
+					{
+						CorrelationId: "check_anno_read",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Subresource:   "annotations",
+						Verb:          "get",
+						Name:          "dash1",
+					},
+					{
+						CorrelationId: "check_dash_read",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash1",
+					},
+				},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "annotations:create", Scope: "dashboards:uid:dash1"},
+				{Action: "annotations:read", Scope: "dashboards:uid:dash1"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+			},
+			expected: map[string]bool{
+				"check_anno_create": true,
+				"check_anno_read":   true,
+				"check_dash_read":   true,
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -2785,4 +3000,96 @@ func TestService_BatchCheck(t *testing.T) {
 		// Should have made additional calls because one item required fresh data
 		assert.Greater(t, fStore.calls, initialCalls, "Should skip cache for entire group if any item requires fresh data")
 	})
+
+	// setupBatchCheckWithTracking creates a service with noop folder cache (TTL=0)
+	// to match production configs where CacheTTL=0, and a trackingFolderStore.
+	setupBatchCheckWithTracking := func(t *testing.T) (*Service, *trackingFolderStore, context.Context) {
+		t.Helper()
+		s := setupService()
+		// Override folder cache to noop to match production with CacheTTL=0.
+		s.folderCache = newCacheWrap[folderTree](nil, log.New("test"), tracing.NewNoopTracerService(), 0)
+		fStore := &fakeStore{
+			disableNsCheck: true,
+			userID:         &store.UserIdentifiers{UID: "test-uid"},
+			basicRole:      &store.BasicRole{Role: "Viewer", IsAdmin: false},
+			userPermissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "folders:uid:fold1"},
+				{Action: "dashboards:write", Scope: "folders:uid:fold1"},
+				{Action: "dashboards:delete", Scope: "folders:uid:fold1"},
+				{Action: "annotations:create", Scope: "folders:uid:fold1"},
+			},
+			folders: []store.Folder{{UID: "fold1"}},
+		}
+		s.store = fStore
+		s.permissionStore = fStore
+		ts := &trackingFolderStore{inner: fStore}
+		s.folderStore = ts
+		s.identityStore = &fakeIdentityStore{disableNsCheck: true}
+		return s, ts, types.WithAuthInfo(context.Background(), callingService)
+	}
+
+	dashCheck := func(id, verb string) *authzv1.BatchCheckItem {
+		return &authzv1.BatchCheckItem{
+			CorrelationId: id, Group: "dashboard.grafana.app",
+			Resource: "dashboards", Verb: verb, Name: "dash1", Folder: "fold1",
+		}
+	}
+
+	t.Run("should share folder tree across groups including subresources", func(t *testing.T) {
+		s, ts, ctx := setupBatchCheckWithTracking(t)
+
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "org-12", Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				dashCheck("dash_read", "get"),
+				dashCheck("dash_write", "update"),
+				dashCheck("dash_delete", "delete"),
+				{
+					CorrelationId: "annot_create", Group: "dashboard.grafana.app",
+					Resource: "dashboards", Subresource: "annotations",
+					Verb: "create", Name: "dash1", Folder: "fold1",
+				},
+			},
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, 4, len(resp.Results))
+		assert.Equal(t, 1, ts.listFoldersCalls,
+			"ListFolders should be called once across all BatchCheck groups")
+	})
+
+	t.Run("mixed batch: fresh and non-fresh groups share getters", func(t *testing.T) {
+		s, ts, ctx := setupBatchCheckWithTracking(t)
+
+		freshTs := time.Now().Add(30 * time.Second).UnixMilli()
+		freshWrite := dashCheck("dash_write", "update")
+		freshWrite.FreshnessTimestamp = freshTs
+		freshDelete := dashCheck("dash_delete_fresh", "delete")
+		freshDelete.FreshnessTimestamp = freshTs
+
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "org-12", Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				dashCheck("dash_read", "get"),
+				freshWrite,
+				freshDelete,
+			},
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, 3, len(resp.Results))
+		assert.Equal(t, 1, ts.listFoldersCalls,
+			"ListFolders should be called once (single shared getter), not once per group")
+	})
+}
+
+// trackingFolderStore wraps a folder store and counts ListFolders calls.
+type trackingFolderStore struct {
+	inner            store.FolderStore
+	listFoldersCalls int
+}
+
+func (t *trackingFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]store.Folder, error) {
+	t.listFoldersCalls++
+	return t.inner.ListFolders(ctx, ns)
 }

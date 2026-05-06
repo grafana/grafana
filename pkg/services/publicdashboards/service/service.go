@@ -111,9 +111,12 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 		FolderUid:              dash.FolderUID,
 		PublicDashboardEnabled: pubdash.IsEnabled,
 	}
-	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
-
-	sanitizeData(dash.Data)
+	if isDashboardV2(dash) {
+		sanitizeDataV2(dash.Data)
+	} else {
+		dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
+		sanitizeData(dash.Data)
+	}
 
 	return &dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}, nil
 }

@@ -40,6 +40,9 @@ outputs:
   makefile:
     description: Whether any Makefile changed
     value: ${{ steps.changed-files.outputs.makefile_any_changed || 'true' }}
+  rpm-packaging:
+    description: Whether RPM/DEB packaging scripts or the Makefile changed
+    value: ${{ steps.changed-files.outputs.rpm_packaging_any_changed || 'true' }}
   devenv:
     description: Whether the devenv or self have changed in any way
     value: ${{ steps.changed-files.outputs.devenv_any_changed || 'true' }}
@@ -63,6 +66,13 @@ runs:
           makefile:
             - 'Makefile'
             - '**/Makefile'
+          rpm_packaging:
+            - 'scripts/build-rpm.sh'
+            - 'scripts/build-deb.sh'
+            - 'scripts/build-targz.sh'
+            - 'scripts/verify-pkg-stig.sh'
+            - 'Makefile'
+            - '${{ inputs.self }}'
           backend:
             - '!*.md'
             - '!docs/**'
@@ -87,7 +97,6 @@ runs:
             - '**.cue'
             - 'devenv/docker/blocks/*_tests/**'
             - 'scripts/ci/backend-tests/**'
-            - 'kindsv2/**'
             - '${{ inputs.self }}'
           frontend:
             - '.github/actions/setup-enterprise/**'
@@ -147,7 +156,6 @@ runs:
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/checkout/**'
             - '**.sh'
-            - '.trivyignore'
             - '.prettierrc.js'
             - '**/Makefile'
             - 'proto/**.yaml'
@@ -195,5 +203,7 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.dockerfile_all_changed_files }}"
         echo "Makefile: ${{ steps.changed-files.outputs.makefile_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.makefile_all_changed_files }}"
+        echo "RPM packaging: ${{ steps.changed-files.outputs.rpm_packaging_any_changed || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.rpm_packaging_all_changed_files }}"
         echo "devenv: ${{ steps.changed-files.outputs.devenv_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.devenv_all_changed_files }}"

@@ -237,7 +237,7 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     return (
       <div className={styles.wrap}>
-        <div aria-label={selectors.components.PanelInspector.Query.content}>
+        <div data-testid={selectors.components.PanelInspector.Query.content}>
           <h3 className={styles.heading}>
             <Trans i18nKey="inspector.query-inspector.query-inspector">Query inspector</Trans>
           </h3>
@@ -253,7 +253,7 @@ export class QueryInspector extends PureComponent<Props, State> {
           <Button
             icon="sync"
             onClick={onRefreshQuery}
-            aria-label={selectors.components.PanelInspector.Query.refreshButton}
+            data-testid={selectors.components.PanelInspector.Query.refreshButton}
           >
             <Trans i18nKey="inspector.query.refresh">Refresh</Trans>
           </Button>

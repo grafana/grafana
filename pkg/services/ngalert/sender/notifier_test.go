@@ -425,11 +425,12 @@ func TestExternalLabels(t *testing.T) {
 		ExternalLabels: labels.FromStrings("a", "b"),
 		RelabelConfigs: []*relabel.Config{
 			{
-				SourceLabels: model.LabelNames{"alertname"},
-				TargetLabel:  "a",
-				Action:       "replace",
-				Regex:        relabel.MustNewRegexp("externalrelabelthis"),
-				Replacement:  "c",
+				SourceLabels:         model.LabelNames{"alertname"},
+				TargetLabel:          "a",
+				Action:               "replace",
+				Regex:                relabel.MustNewRegexp("externalrelabelthis"),
+				Replacement:          "c",
+				NameValidationScheme: model.UTF8Validation,
 			},
 		},
 	}, nil)
@@ -464,11 +465,12 @@ func TestHandlerRelabel(t *testing.T) {
 				Regex:        relabel.MustNewRegexp("drop"),
 			},
 			{
-				SourceLabels: model.LabelNames{"alertname"},
-				TargetLabel:  "alertname",
-				Action:       "replace",
-				Regex:        relabel.MustNewRegexp("rename"),
-				Replacement:  "renamed",
+				SourceLabels:         model.LabelNames{"alertname"},
+				TargetLabel:          "alertname",
+				Action:               "replace",
+				Regex:                relabel.MustNewRegexp("rename"),
+				Replacement:          "renamed",
+				NameValidationScheme: model.UTF8Validation,
 			},
 		},
 	}, nil)
@@ -664,7 +666,7 @@ alerting:
 	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
-	err := n.ApplyConfig(cfg, nil)
+	err := n.ApplyConfig(cfg, nil, nil)
 	require.NoError(t, err, "Error applying the config.")
 
 	tgs := make(map[string][]*targetgroup.Group)
@@ -714,7 +716,7 @@ alerting:
 	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
-	err := n.ApplyConfig(cfg, nil)
+	err := n.ApplyConfig(cfg, nil, nil)
 	require.NoError(t, err, "Error applying the config.")
 
 	tgs := make(map[string][]*targetgroup.Group)
@@ -1094,14 +1096,14 @@ alerting:
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
 	// First, apply the config and reload.
-	require.NoError(t, n.ApplyConfig(cfg, nil))
+	require.NoError(t, n.ApplyConfig(cfg, nil, nil))
 	tgs := map[string][]*targetgroup.Group{"config-0": {targetGroup}}
 	n.reload(tgs)
 	require.Len(t, n.Alertmanagers(), 1)
 	require.Equal(t, alertmanagerURL, n.Alertmanagers()[0].String())
 
 	// Reapply the config.
-	require.NoError(t, n.ApplyConfig(cfg, nil))
+	require.NoError(t, n.ApplyConfig(cfg, nil, nil))
 	// Ensure the known alertmanagers are not dropped.
 	require.Len(t, n.Alertmanagers(), 1)
 	require.Equal(t, alertmanagerURL, n.Alertmanagers()[0].String())
@@ -1119,7 +1121,7 @@ alerting:
 	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
-	require.NoError(t, n.ApplyConfig(cfg, nil))
+	require.NoError(t, n.ApplyConfig(cfg, nil, nil))
 	require.Len(t, n.Alertmanagers(), 1)
 	// Ensure no unnecessary alertmanagers are injected.
 	require.Empty(t, n.alertmanagers["config-0"].ams)
@@ -1142,7 +1144,7 @@ alerting:
 	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
-	require.NoError(t, n.ApplyConfig(cfg, nil))
+	require.NoError(t, n.ApplyConfig(cfg, nil, nil))
 	require.Len(t, n.Alertmanagers(), 2)
 	for cfgIdx := range 2 {
 		ams := n.alertmanagers[fmt.Sprintf("config-%d", cfgIdx)].ams
@@ -1169,7 +1171,7 @@ alerting:
 	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
-	require.NoError(t, n.ApplyConfig(cfg, nil))
+	require.NoError(t, n.ApplyConfig(cfg, nil, nil))
 	require.Empty(t, n.Alertmanagers())
 }
 

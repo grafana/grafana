@@ -308,7 +308,7 @@ func (dr *DashboardServiceImpl) getLastResourceVersion(ctx context.Context, orgI
 	}
 
 	if !ok {
-		dr.log.Info("No last resource version found, starting from scratch", "orgID", orgID)
+		dr.log.Debug("No last deleted resource version found, skipping", "orgID", orgID)
 		return "0", nil
 	}
 
@@ -705,7 +705,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if dash.IsFolder && strings.EqualFold(dash.Title, dashboards.RootFolderName) {
-		return nil, dashboards.ErrDashboardFolderNameExists
+		return nil, folder.ErrNameExists
 	}
 
 	if err := dr.ValidateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dash.Data.Get("refresh").MustString("")); err != nil {
@@ -877,11 +877,11 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 func (dr *DashboardServiceImpl) canSaveDashboard(ctx context.Context, user identity.Requester, dash *dashboards.Dashboard) (bool, error) {
 	action := dashboards.ActionDashboardsWrite
 	if dash.IsFolder {
-		action = dashboards.ActionFoldersWrite
+		action = folder.ActionFoldersWrite
 	}
 	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID)
 	if dash.IsFolder {
-		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.UID)
+		scope = folder.ScopeFoldersProvider.GetResourceScopeUID(dash.UID)
 	}
 	return dr.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
 }
@@ -889,11 +889,11 @@ func (dr *DashboardServiceImpl) canSaveDashboard(ctx context.Context, user ident
 func (dr *DashboardServiceImpl) canCreateDashboard(ctx context.Context, user identity.Requester, dash *dashboards.Dashboard) (bool, error) {
 	action := dashboards.ActionDashboardsCreate
 	if dash.IsFolder {
-		action = dashboards.ActionFoldersCreate
+		action = folder.ActionFoldersCreate
 	}
-	scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.FolderUID)
+	scope := folder.ScopeFoldersProvider.GetResourceScopeUID(dash.FolderUID)
 	if dash.FolderUID == "" {
-		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
+		scope = folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 	}
 	return dr.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
 }
@@ -1728,6 +1728,10 @@ func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardU
 	ctx, span := tracer.Start(ctx, "dashboards.service.CleanUpDashboard")
 	defer span.End()
 
+	if dashboardUID == "" {
+		return dashboards.ErrDashboardIdentifierNotSet
+	}
+
 	// cleanup things related to dashboards that are not stored in unistore yet
 	var err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgId, []string{dashboardUID})
 	if err != nil {
@@ -1755,9 +1759,18 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 	}
 
 	out, err := dr.k8sclient.GetWithPreferredAPIVersion(ctx, query.UID, query.OrgID, v1.GetOptions{}, query.K8sGetAPIVersion, "")
+	// Temporary debug logging to diagnose unexpected dashboard lookup failures via the k8s API.
+	// Enable by setting log level for "dashboard-service" to debug.
+	// TODO: remove once the root cause is identified.
 	if err != nil && !apierrors.IsNotFound(err) {
+		if dr.log != nil {
+			dr.log.Debug("k8s returned non-404 error for dashboard", "uid", query.UID, "orgID", query.OrgID, "err", err)
+		}
 		return nil, err
 	} else if err != nil || out == nil {
+		if dr.log != nil {
+			dr.log.Debug("k8s returned 404 or nil for dashboard", "uid", query.UID, "orgID", query.OrgID, "k8sErr", err)
+		}
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
@@ -1839,7 +1852,7 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 }
 
 func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context, orgID int64) error {
-	return dr.k8sclient.DeleteCollection(ctx, orgID)
+	return dr.k8sclient.DeleteCollection(ctx, orgID, v1.ListOptions{})
 }
 
 func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, cmd *dashboards.DeleteDashboardCommand, validateProvisionedDashboard bool) error {
@@ -2371,14 +2384,23 @@ func getFolderUIDs(hits []dashboardv0.DashboardHit) []string {
 }
 
 func (dr *DashboardServiceImpl) cleanupAfterDelete(ctx context.Context, orgID int64, uid string, id int64) error {
+	if uid == "" {
+		return dashboards.ErrDashboardIdentifierNotSet
+	}
+
 	type statement struct {
 		SQL  string
 		args []any
 	}
 	sqlStatements := []statement{
 		{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{uid, orgID}},
-		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{id}},
-		{SQL: "DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", args: []any{id, orgID}},
+	}
+	// dashboard_id=0 is used for org/API annotations; never delete by id 0 or we wipe that whole class for the org.
+	if id != 0 {
+		sqlStatements = append(sqlStatements,
+			statement{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{id}},
+			statement{SQL: "DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", args: []any{id, orgID}},
+		)
 	}
 
 	return dr.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {

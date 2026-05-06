@@ -9,6 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
@@ -24,8 +25,8 @@ func (b *IdentityAccessManagementAPIBuilder) AfterUserCreate(obj runtime.Object,
 		return
 	}
 
-	// Skip if user has no role assigned
-	if user.Spec.Role == "" {
+	// Skip if user has no role assigned or role is None
+	if user.Spec.Role == "" || user.Spec.Role == string(identity.RoleNone) {
 		b.logger.Debug("user has no role assigned, skipping basic role sync",
 			"namespace", user.Namespace,
 			"name", user.Name,
@@ -107,6 +108,9 @@ func (b *IdentityAccessManagementAPIBuilder) BeginUserUpdate(ctx context.Context
 		return nil, nil
 	}
 
+	resourceType := "user"
+	operation := "update"
+
 	// Return a finish function that performs the zanzana write only on success
 	return func(ctx context.Context, success bool) {
 		if !success {
@@ -115,7 +119,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginUserUpdate(ctx context.Context
 
 		wait := time.Now()
 		b.zTickets <- true
-		HooksWaitHistogram.WithLabelValues("user", "update").Observe(time.Since(wait).Seconds())
+		HooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
 
 		go func(namespace, subjectName, oldRole, newRole string) {
 			start := time.Now()
@@ -123,8 +127,8 @@ func (b *IdentityAccessManagementAPIBuilder) BeginUserUpdate(ctx context.Context
 
 			defer func() {
 				<-b.zTickets
-				HooksDurationHistogram.WithLabelValues("user", "update", status).Observe(time.Since(start).Seconds())
-				HooksOperationCounter.WithLabelValues("user", "update", status).Inc()
+				HooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+				HooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 			}()
 
 			b.logger.Debug("updating user basic role in zanzana",
@@ -137,9 +141,17 @@ func (b *IdentityAccessManagementAPIBuilder) BeginUserUpdate(ctx context.Context
 			ctx, cancel := context.WithTimeout(context.Background(), DefaultWriteTimeout)
 			defer cancel()
 
-			err := b.zClient.Mutate(ctx, &v1.MutateRequest{
-				Namespace: namespace,
-				Operations: []*v1.MutateOperation{
+			var operations []*v1.MutateOperation
+			if newRole == "" || newRole == string(identity.RoleNone) {
+				operations = []*v1.MutateOperation{
+					{
+						Operation: &v1.MutateOperation_DeleteUserOrgRole{
+							DeleteUserOrgRole: &v1.DeleteUserOrgRoleOperation{User: subjectName, Role: oldRole},
+						},
+					},
+				}
+			} else {
+				operations = []*v1.MutateOperation{
 					{
 						Operation: &v1.MutateOperation_UpdateUserOrgRole{
 							UpdateUserOrgRole: &v1.UpdateUserOrgRoleOperation{User: subjectName, Role: newRole},
@@ -149,7 +161,12 @@ func (b *IdentityAccessManagementAPIBuilder) BeginUserUpdate(ctx context.Context
 							DeleteUserOrgRole: &v1.DeleteUserOrgRoleOperation{User: subjectName, Role: oldRole},
 						},
 					},
-				},
+				}
+			}
+
+			err := b.zClient.Mutate(ctx, &v1.MutateRequest{
+				Namespace:  namespace,
+				Operations: operations,
 			})
 			if err != nil {
 				status = "failure"
@@ -180,8 +197,8 @@ func (b *IdentityAccessManagementAPIBuilder) AfterUserDelete(obj runtime.Object,
 	resourceType := "user"
 	operation := "delete"
 
-	// Skip if user had no role assigned
-	if user.Spec.Role == "" {
+	// Skip if user had no role assigned or role is None
+	if user.Spec.Role == "" || user.Spec.Role == string(identity.RoleNone) {
 		b.logger.Debug("user had no role assigned, skipping basic role sync",
 			"namespace", user.Namespace,
 			"name", user.Name,

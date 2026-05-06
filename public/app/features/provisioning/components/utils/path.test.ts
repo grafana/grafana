@@ -1,4 +1,4 @@
-import { ensureFolderPathTrailingSlash, generatePath, joinPath, splitPath } from './path';
+import { ensureFolderPathTrailingSlash, generatePath, joinPath, slugifyForFilename, splitPath } from './path';
 
 describe('generatePath', () => {
   const timestamp = '2023-05-15-abcde';
@@ -129,6 +129,40 @@ describe('joinPath', () => {
 
   it('should handle both empty', () => {
     expect(joinPath('', '')).toBe('');
+  });
+});
+
+describe('slugifyForFilename', () => {
+  it('should convert a simple title to a slug', () => {
+    expect(slugifyForFilename('My Cool Dashboard')).toBe('my-cool-dashboard');
+  });
+
+  it('should handle special characters', () => {
+    expect(slugifyForFilename('CPU Usage (%) — Host')).toBe('cpu-usage-host');
+  });
+
+  it('should collapse multiple spaces into a single dash', () => {
+    expect(slugifyForFilename('a    b')).toBe('a-b');
+  });
+
+  it('should strip leading and trailing dashes', () => {
+    expect(slugifyForFilename('  hello  ')).toBe('hello');
+  });
+
+  it('should return empty string for title with only special characters', () => {
+    expect(slugifyForFilename('!!!')).toBe('');
+  });
+
+  it('should return empty string for empty title', () => {
+    expect(slugifyForFilename('')).toBe('');
+  });
+
+  it('should handle underscores (kept as word characters)', () => {
+    expect(slugifyForFilename('my_dashboard')).toBe('my_dashboard');
+  });
+
+  it('should handle numeric titles', () => {
+    expect(slugifyForFilename('123 Test')).toBe('123-test');
   });
 });
 

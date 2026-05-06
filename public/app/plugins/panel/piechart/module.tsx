@@ -21,9 +21,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
           byValueSupport: false,
           bySeriesSupport: true,
           preferThresholdsMode: false,
+          gradientSupport: true,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
+          // Seed fixedColor so switching to Single color, Shades, or Gradient
+          // on a fresh panel shows a meaningful color instead of an empty picker.
+          fixedColor: '#73BF69',
         },
       },
     },

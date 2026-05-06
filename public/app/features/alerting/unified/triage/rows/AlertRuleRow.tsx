@@ -19,15 +19,17 @@ interface AlertRuleRowProps {
   rowKey: React.Key;
   depth?: number;
   enableFolderMeta?: boolean;
+  groupLabels?: Record<string, string>;
 }
 
-export const AlertRuleRow = ({
+export function AlertRuleRow({
   row,
   leftColumnWidth,
   rowKey,
   depth = 0,
   enableFolderMeta = true,
-}: AlertRuleRowProps) => {
+  groupLabels,
+}: AlertRuleRowProps) {
   const { ruleUID, folder, title } = row.metadata;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -72,10 +74,10 @@ export const AlertRuleRow = ({
         showIndentBorder
         expandable={false}
       >
-        <AlertRuleInstances ruleUID={ruleUID} depth={depth} />
+        <AlertRuleInstances ruleUID={ruleUID} depth={depth} groupLabels={groupLabels} />
       </GenericRow>
 
       {isDrawerOpen && <RuleDetailsDrawer ruleUID={ruleUID} onClose={handleDrawerClose} />}
     </>
   );
-};
+}

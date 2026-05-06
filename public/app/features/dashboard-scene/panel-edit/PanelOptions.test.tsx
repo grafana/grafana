@@ -112,7 +112,7 @@ describe('PanelOptions', () => {
     it('Can edit title', async () => {
       const { panel } = setup();
 
-      expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
+      expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
       const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: 'New title' } });
@@ -123,7 +123,7 @@ describe('PanelOptions', () => {
     it('Clearing title should set hoverHeader to true', async () => {
       const { panel } = setup();
 
-      expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
+      expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
       const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: '' } });

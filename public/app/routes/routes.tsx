@@ -458,6 +458,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/playlists',
+      roles: config.featureToggles.playlistsRBAC
+        ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
+        : undefined,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistPage"*/ 'app/features/playlist/PlaylistPage')
       ),
@@ -541,7 +544,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "ThemePlayground"*/ 'app/features/theme-playground/ThemePlayground')
       ),
     },
-    config.featureToggles.restoreDashboards && {
+    {
       path: '/dashboard/recently-deleted',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')

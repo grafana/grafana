@@ -175,7 +175,7 @@ export class GraphiteDatasource
 
         matchers.every((matcher: GraphiteMetricLokiMatcher, index: number) => {
           if (matcher.labelName) {
-            let value = (targetNodes[index] as string)!;
+            let value = String(targetNodes[index]);
 
             if (value === '*') {
               return true;
@@ -423,6 +423,24 @@ export class GraphiteDatasource
         // refID should always be the last element
         refId = splitTarget.pop() || '';
         s.target = splitTarget.join(' ');
+
+        // When aliasSub wrapping is applied, Metrictank sets tags['name'] to the
+        // full internal series key (e.g. "BytesReceived;host=web01;cluster=md1b;...").
+        // Restore it to just the base metric name (the portion before the first ';'),
+        // which is what standard graphite-web returns and what transformations like
+        // joinByLabels(value:'name') expect. Also strip the refID suffix in case
+        // Metrictank reflected it into tags['name'].
+        if (typeof s.tags?.['name'] === 'string') {
+          let tagName = s.tags['name'];
+          if (tagName.endsWith(` ${refId}`)) {
+            tagName = tagName.slice(0, -(refId.length + 1));
+          }
+          const semicolonIdx = tagName.indexOf(';');
+          if (semicolonIdx !== -1) {
+            tagName = tagName.slice(0, semicolonIdx);
+          }
+          s.tags['name'] = tagName;
+        }
       }
       // Disables Grafana own series naming
       s.title = s.target;
@@ -514,12 +532,18 @@ export class GraphiteDatasource
     if (target.target) {
       // Graphite query as target as annotation
       const targetAnnotation = this.templateSrv.replace(target.target, {}, 'glob');
-      const graphiteQuery = {
+      const graphiteQuery: DataQueryRequest<GraphiteQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 0,
         range: range,
+        scopedVars: {},
         targets: [{ target: targetAnnotation, refId: target.refId }],
-        format: 'json',
+        timezone: 'browser',
+        app: 'graphite',
+        startTime: Date.now(),
         maxDataPoints: 100,
-      } as unknown as DataQueryRequest<GraphiteQuery>;
+      };
 
       return lastValueFrom(
         this.query(graphiteQuery).pipe(

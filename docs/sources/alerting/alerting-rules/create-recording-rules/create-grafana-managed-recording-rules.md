@@ -49,6 +49,8 @@ Grafana does not contain an embedded time-series database to store recording rul
 
 Grafana-managed recording rules offer the same Prometheus-like semantics but allow you to query [data sources supported by alerting](ref:alerting-data-sources). Additionally, you can use recording rules to import and map data from other data sources into Prometheus.
 
+In Grafana Cloud, recording rules support writing to Prometheus-compatible data sources configured with [Private Data Source Connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) (PDC). This allows you to write recording rule results to a Prometheus or Mimir instance in a private network without opening that network to inbound traffic from Grafana Cloud.
+
 {{< admonition type="note" >}}
 
 Grafana-managed recording rules are enabled by default in Grafana Cloud.

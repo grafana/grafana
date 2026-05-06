@@ -41,6 +41,8 @@ services:
       OTEL_SERVICE_NAME: grafana-api
       GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: 'alloy:4317'
       GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION: jaeger,w3c
+      GF_SMTP_ENABLED: true
+      GF_SMTP_HOST: maildev:1025
     # ports are set dynamically in the Tiltfile (derived from PORT)
     labels:
       - 'alloy.logs=true'
@@ -153,6 +155,11 @@ services:
     depends_on:
       tempo-init:
         condition: service_completed_successfully
+
+  maildev:
+    image: maildev/maildev:2.2.1@sha256:180ef51f65eefebb0e7122d8308813c1fd7bff164bc440ce5a3c2feee167a810
+    ports:
+      - '1080:1080'
 
 configs:
   goff_config:

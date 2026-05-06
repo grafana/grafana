@@ -8,7 +8,7 @@ export const mockTransformationsRegistry = (transformers: DataTransformerInfo[])
         id: t.id,
         aliasIds: t.aliasIds,
         name: t.name,
-        transformation: t,
+        transformation: () => Promise.resolve(t),
         description: t.description,
         editor: () => null,
         imageDark: `build/img/${t.id}-dark.abc123.svg`,

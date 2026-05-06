@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
 import { type DataSourceApi } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
@@ -90,6 +91,6 @@ describe('Explore QueryRows', () => {
     fireEvent.click(duplicateButton);
 
     // We should have another row with refId B
-    expect(await screen.findByLabelText('Query editor row title B')).toBeInTheDocument();
+    expect(await screen.findByTestId(selectors.components.QueryEditorRow.title('B'))).toBeInTheDocument();
   });
 });

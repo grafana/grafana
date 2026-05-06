@@ -544,6 +544,41 @@ describe('DashboardScenePageStateManager v1', () => {
         expect(loader.getSceneFromCache('fake-dash').state.title).toBe('Dashboard 2');
       });
 
+      it('public dashboard: should build scene from API and not reuse or keep stale scene cache', () => {
+        const loader = new DashboardScenePageStateManager({});
+        const accessToken = 'public-access-token';
+        const staleScene = new DashboardScene(
+          {
+            title: 'Stale cached title',
+            uid: 'underlying-dash-uid',
+            meta: { created: 'same-created' },
+            version: 2,
+          },
+          'v1'
+        );
+
+        loader.setSceneCache(accessToken, staleScene);
+
+        const rsp: DashboardDTO = {
+          meta: { created: 'same-created' },
+          dashboard: {
+            uid: 'underlying-dash-uid',
+            title: 'Fresh from API',
+            schemaVersion: 38,
+            version: 2,
+          } as DashboardDataDTO,
+        };
+
+        const scene = loader.transformResponseToScene(rsp, {
+          uid: accessToken,
+          route: DashboardRoutes.Public,
+        });
+
+        expect(rsp.dashboard?.title).toBe('Fresh from API');
+        expect(scene).not.toBe(staleScene);
+        expect(scene?.state.title).toBe('Fresh from API');
+      });
+
       it('should take scene from cache if it exists', async () => {
         setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', version: 10 }, meta: {} });
 
@@ -761,6 +796,45 @@ describe('DashboardScenePageStateManager v2', () => {
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(getDashSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('public dashboard: should build scene from API and not reuse or keep stale scene cache', () => {
+      const loader = new DashboardScenePageStateManagerV2({});
+      const accessToken = 'public-access-token';
+      const generation = 4;
+      const staleScene = new DashboardScene(
+        {
+          title: 'Stale cached title',
+          uid: 'dash-uid',
+          meta: {},
+          version: generation,
+        },
+        'v2'
+      );
+
+      loader.setSceneCache(accessToken, staleScene);
+
+      const rsp: DashboardWithAccessInfo<DashboardV2Spec> = {
+        access: {},
+        apiVersion: 'v2beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          name: 'dash',
+          creationTimestamp: '',
+          resourceVersion: '1',
+          generation,
+        },
+        spec: { ...defaultDashboardV2Spec(), title: 'Fresh from API' },
+      };
+
+      const scene = loader.transformResponseToScene(rsp, {
+        uid: accessToken,
+        route: DashboardRoutes.Public,
+      });
+
+      expect(rsp.spec?.title).toBe('Fresh from API');
+      expect(scene).not.toBe(staleScene);
+      expect(scene?.state.title).toBe('Fresh from API');
     });
 
     it('should register report render readiness observer for render-authenticated normal route', async () => {
@@ -2079,9 +2153,134 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual(customHomeDashboardV1Spec);
     });
 
-    it('should transform v2 custom home dashboard to v1', async () => {
+    it('should render v2 custom home dashboard natively via the v2 scene builder', async () => {
+      // Backend now returns the k8s resource verbatim with an injected access
+      // block when default_home_dashboard_path points at a
+      // dashboard.grafana.app/* manifest.
       setBackendSrv({
-        get: () => Promise.resolve({ dashboard: customHomeDashboardV2Spec, meta: {} }),
+        get: () =>
+          Promise.resolve({
+            kind: 'Dashboard',
+            apiVersion: 'dashboard.grafana.app/v2beta1',
+            metadata: {
+              name: 'custom-home-v2',
+              creationTimestamp: '',
+              resourceVersion: '0',
+              generation: 0,
+            },
+            spec: customHomeDashboardV2Spec,
+            access: {
+              canSave: false,
+              canShare: false,
+              canStar: false,
+              canEdit: false,
+              canDelete: false,
+              canAdmin: false,
+            },
+          }),
+      } as unknown as BackendSrv);
+
+      const loader = new UnifiedDashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+      expect(loader.state.dashboard).toBeDefined();
+      // When rendered natively as v2 the initial save model is the v2 spec, not
+      // a down-converted v1 payload.
+      expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual(customHomeDashboardV2Spec);
+      expect(loader.state.dashboard!.state.title).toBe(customHomeDashboardV2Spec.title);
+    });
+
+    it('should render v2 custom home dashboard with non-GridLayout layouts', async () => {
+      const v2WithRowsLayout = {
+        ...customHomeDashboardV2Spec,
+        layout: {
+          kind: 'RowsLayout',
+          spec: {
+            rows: [
+              {
+                kind: 'RowsLayoutRow',
+                spec: {
+                  title: 'Row 1',
+                  collapse: false,
+                  layout: {
+                    kind: 'GridLayout',
+                    spec: {
+                      items: [
+                        {
+                          kind: 'GridLayoutItem',
+                          spec: {
+                            x: 0,
+                            y: 0,
+                            width: 12,
+                            height: 6,
+                            element: { kind: 'ElementReference', name: 'text_panel' },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      };
+
+      setBackendSrv({
+        get: () =>
+          Promise.resolve({
+            kind: 'Dashboard',
+            apiVersion: 'dashboard.grafana.app/v2beta1',
+            metadata: {
+              name: 'custom-home-v2-rows',
+              creationTimestamp: '',
+              resourceVersion: '0',
+              generation: 0,
+            },
+            spec: v2WithRowsLayout,
+            access: {
+              canSave: false,
+              canShare: false,
+              canStar: false,
+              canEdit: false,
+              canDelete: false,
+              canAdmin: false,
+            },
+          }),
+      } as unknown as BackendSrv);
+
+      const loader = new UnifiedDashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+      // Previously this would throw "Cannot convert non-GridLayout layout to v1"
+      // because the home path force-converted v2 into v1. With native v2
+      // rendering it should succeed.
+      expect(loader.state.dashboard).toBeDefined();
+      expect(loader.state.loadError).toBeUndefined();
+    });
+
+    it('should render v1 k8s home dashboard by unwrapping spec to the classic path', async () => {
+      setBackendSrv({
+        get: () =>
+          Promise.resolve({
+            kind: 'Dashboard',
+            apiVersion: 'dashboard.grafana.app/v1beta1',
+            metadata: {
+              name: 'custom-home-v1',
+              creationTimestamp: '',
+              resourceVersion: '0',
+              generation: 0,
+            },
+            spec: customHomeDashboardV1Spec,
+            access: {
+              canSave: false,
+              canShare: false,
+              canStar: false,
+              canEdit: false,
+              canDelete: false,
+              canAdmin: false,
+            },
+          }),
       } as unknown as BackendSrv);
 
       const loader = new UnifiedDashboardScenePageStateManager({});
@@ -2215,17 +2414,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
           }
           return Promise.reject(new Error('Not found'));
         }),
-        post: jest.fn((url: string) => {
-          if (url === '/api/dashboards/interpolate') {
-            return Promise.resolve({
-              title: 'AWS ElastiCache Redis',
-              uid: '',
-              panels: [],
-              schemaVersion: 40,
-            });
-          }
-          return Promise.reject(new Error('Not found'));
-        }),
       } as unknown as BackendSrv);
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2258,17 +2446,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
                 panels: [],
                 schemaVersion: 40,
               },
-            });
-          }
-          return Promise.reject(new Error('Not found'));
-        }),
-        post: jest.fn((url: string) => {
-          if (url === '/api/dashboards/interpolate') {
-            return Promise.resolve({
-              title: 'Template Dashboard',
-              uid: '',
-              panels: [],
-              schemaVersion: 40,
             });
           }
           return Promise.reject(new Error('Not found'));

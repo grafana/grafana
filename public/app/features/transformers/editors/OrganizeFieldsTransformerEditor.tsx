@@ -2,14 +2,7 @@ import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
-import {
-  DataTransformerID,
-  type GrafanaTheme2,
-  standardTransformers,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
+import { type GrafanaTheme2, type TransformerUIProps } from '@grafana/data';
 import {
   createOrderFieldsComparer,
   Order,
@@ -33,8 +26,6 @@ import {
 } from '@grafana/ui';
 
 import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
-import darkImage from '../images/dark/organize.svg';
-import lightImage from '../images/light/organize.svg';
 import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
@@ -49,7 +40,7 @@ function move(arr: unknown[], from: number, to: number) {
   arr.splice(to, 0, arr.splice(from, 1)[0]);
 }
 
-const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
+export const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
   const { indexByName, excludeByName, renameByName, includeByName, orderBy, orderByMode } = options;
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
@@ -520,18 +511,3 @@ const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string
   const comparer = createOrderFieldsComparer(indexByName);
   return fieldNames.sort(comparer);
 };
-
-export const getOrganizeFieldsTransformRegistryItem: () => TransformerRegistryItem<OrganizeFieldsTransformerOptions> =
-  () => ({
-    id: DataTransformerID.organize,
-    editor: OrganizeFieldsTransformerEditor,
-    transformation: standardTransformers.organizeFieldsTransformer,
-    name: t('transformers.organize-fields-transformer-editor.name.organize-fields', 'Organize fields by name'),
-    description: t(
-      'transformers.organize-fields-transformer-editor.description.reorder-hide-or-rename-fields',
-      'Re-order, hide, or rename fields.'
-    ),
-    categories: new Set([TransformerCategory.ReorderAndRename]),
-    imageDark: darkImage,
-    imageLight: lightImage,
-  });

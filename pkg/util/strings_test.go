@@ -72,37 +72,37 @@ func TestSplitString(t *testing.T) {
 
 func BenchmarkSplitString(b *testing.B) {
 	b.Run("empty input", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("")
 		}
 	})
 	b.Run("single string", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test")
 		}
 	})
 	b.Run("space-separated", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test1 test2 test3")
 		}
 	})
 	b.Run("comma-separated", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test1,test2,test3")
 		}
 	})
 	b.Run("comma-separated with spaces", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test1 , test2 test3")
 		}
 	})
 	b.Run("mixed commas and spaces", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test1 , test2 test3,test4")
 		}
 	})
 	b.Run("very long mixed", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test1 , test2 test3,test4, test5 test6 test7,test8 test9 test10" +
 				" test11 test12 test13,test14 test15 test16,test17 test18 test19,test20 test21 test22" +
 				" test23,test24 test25 test26,test27 test28 test29,test30 test31 test32" +
@@ -352,4 +352,246 @@ func TestStripBOMFromInterface(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestStripBOMFromStruct(t *testing.T) {
+	type SimpleStruct struct {
+		Title       string
+		Description string
+	}
+
+	type NestedStruct struct {
+		Name  string
+		Inner SimpleStruct
+	}
+
+	type ComplexStruct struct {
+		Title       string
+		Description *string
+		Tags        []string
+		Metadata    map[string]string
+		Nested      *NestedStruct
+	}
+
+	tests := []struct {
+		name  string
+		input any
+		check func(t *testing.T, input any)
+	}{
+		{
+			name: "simple struct with BOMs",
+			input: &SimpleStruct{
+				Title:       "\ufeffHello",
+				Description: "World\ufeff",
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*SimpleStruct)
+				assert.Equal(t, "Hello", s.Title)
+				assert.Equal(t, "World", s.Description)
+			},
+		},
+		{
+			name: "struct with pointer string fields",
+			input: &ComplexStruct{
+				Title:       "\ufeffTitle",
+				Description: stringPtr("Description\ufeff"),
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*ComplexStruct)
+				assert.Equal(t, "Title", s.Title)
+				assert.NotNil(t, s.Description)
+				assert.Equal(t, "Description", *s.Description)
+			},
+		},
+		{
+			name: "struct with nil pointer string",
+			input: &ComplexStruct{
+				Title:       "\ufeffTitle",
+				Description: nil,
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*ComplexStruct)
+				assert.Equal(t, "Title", s.Title)
+				assert.Nil(t, s.Description)
+			},
+		},
+		{
+			name: "struct with string slice",
+			input: &ComplexStruct{
+				Title: "\ufeffTitle",
+				Tags:  []string{"\ufefftag1", "tag2\ufeff", "\ufefftag3\ufeff"},
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*ComplexStruct)
+				assert.Equal(t, "Title", s.Title)
+				assert.Equal(t, []string{"tag1", "tag2", "tag3"}, s.Tags)
+			},
+		},
+		{
+			name: "struct with map",
+			input: &ComplexStruct{
+				Title: "\ufeffTitle",
+				Metadata: map[string]string{
+					"key1": "\ufeffvalue1",
+					"key2": "value2\ufeff",
+				},
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*ComplexStruct)
+				assert.Equal(t, "Title", s.Title)
+				assert.Equal(t, "value1", s.Metadata["key1"])
+				assert.Equal(t, "value2", s.Metadata["key2"])
+			},
+		},
+		{
+			name: "nested struct",
+			input: &NestedStruct{
+				Name: "\ufeffOuter",
+				Inner: SimpleStruct{
+					Title:       "\ufeffInner Title",
+					Description: "Inner Description\ufeff",
+				},
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*NestedStruct)
+				assert.Equal(t, "Outer", s.Name)
+				assert.Equal(t, "Inner Title", s.Inner.Title)
+				assert.Equal(t, "Inner Description", s.Inner.Description)
+			},
+		},
+		{
+			name: "complex nested structure",
+			input: &ComplexStruct{
+				Title:       "\ufeffMain Title",
+				Description: stringPtr("Main Description\ufeff"),
+				Tags:        []string{"\ufefftag1", "tag2\ufeff"},
+				Metadata: map[string]string{
+					"author": "\ufeffJohn Doe",
+				},
+				Nested: &NestedStruct{
+					Name: "\ufeffNested",
+					Inner: SimpleStruct{
+						Title:       "\ufeffNested Inner",
+						Description: "Description\ufeff",
+					},
+				},
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*ComplexStruct)
+				assert.Equal(t, "Main Title", s.Title)
+				assert.Equal(t, "Main Description", *s.Description)
+				assert.Equal(t, []string{"tag1", "tag2"}, s.Tags)
+				assert.Equal(t, "John Doe", s.Metadata["author"])
+				assert.NotNil(t, s.Nested)
+				assert.Equal(t, "Nested", s.Nested.Name)
+				assert.Equal(t, "Nested Inner", s.Nested.Inner.Title)
+				assert.Equal(t, "Description", s.Nested.Inner.Description)
+			},
+		},
+		{
+			name: "struct without BOMs",
+			input: &SimpleStruct{
+				Title:       "Clean Title",
+				Description: "Clean Description",
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*SimpleStruct)
+				assert.Equal(t, "Clean Title", s.Title)
+				assert.Equal(t, "Clean Description", s.Description)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			StripBOMFromStruct(tt.input)
+			tt.check(t, tt.input)
+		})
+	}
+}
+
+// Helper function for tests
+func stringPtr(s string) *string {
+	return &s
+}
+
+// Benchmark StripBOMFromStruct performance
+func BenchmarkStripBOMFromStruct(b *testing.B) {
+	type SmallStruct struct {
+		Title       string
+		Description string
+	}
+
+	type MediumStruct struct {
+		Title       string
+		Description *string
+		Tags        []string
+		Metadata    map[string]string
+	}
+
+	type LargeStruct struct {
+		Title       string
+		Description *string
+		Tags        []string
+		Categories  []string
+		Metadata    map[string]string
+		Properties  map[string]string
+		Nested      *MediumStruct
+	}
+
+	b.Run("small struct", func(b *testing.B) {
+		s := &SmallStruct{
+			Title:       "\ufeffTitle",
+			Description: "Description\ufeff",
+		}
+		b.ResetTimer()
+		for range b.N {
+			StripBOMFromStruct(s)
+		}
+	})
+
+	b.Run("medium struct", func(b *testing.B) {
+		s := &MediumStruct{
+			Title:       "\ufeffTitle",
+			Description: stringPtr("Description\ufeff"),
+			Tags:        []string{"\ufefftag1", "tag2\ufeff", "tag3"},
+			Metadata: map[string]string{
+				"key1": "\ufeffvalue1",
+				"key2": "value2\ufeff",
+			},
+		}
+		b.ResetTimer()
+		for range b.N {
+			StripBOMFromStruct(s)
+		}
+	})
+
+	b.Run("large nested struct", func(b *testing.B) {
+		s := &LargeStruct{
+			Title:       "\ufeffTitle",
+			Description: stringPtr("Description\ufeff"),
+			Tags:        []string{"\ufefftag1", "tag2\ufeff", "tag3", "tag4", "tag5"},
+			Categories:  []string{"\ufeffcat1", "cat2\ufeff", "cat3", "cat4"},
+			Metadata: map[string]string{
+				"author": "\ufeffJohn Doe",
+				"status": "published\ufeff",
+			},
+			Properties: map[string]string{
+				"color": "\ufeffblue",
+				"size":  "large\ufeff",
+			},
+			Nested: &MediumStruct{
+				Title:       "\ufeffNested Title",
+				Description: stringPtr("Nested Description\ufeff"),
+				Tags:        []string{"\ufefftag1", "tag2\ufeff"},
+				Metadata: map[string]string{
+					"nested": "\ufeffvalue",
+				},
+			},
+		}
+		b.ResetTimer()
+		for range b.N {
+			StripBOMFromStruct(s)
+		}
+	})
 }

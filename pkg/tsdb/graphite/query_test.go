@@ -829,6 +829,13 @@ func TestAliasMatching(t *testing.T) {
 			fromAlert:         false,
 			expectedLabelName: "stats.alias.web.hits",
 		},
+		{
+			name:              "Metrictank tagged path strips to base metric name",
+			target:            "cpu.usage;env=prod;host=web01",
+			tagsName:          "cpu.usage;env=prod;host=web01",
+			fromAlert:         false,
+			expectedLabelName: "cpu.usage",
+		},
 	}
 
 	for _, tc := range testCases {

@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
 import { type ReactNode, useCallback, useState } from 'react';
 import {
   type Accept,
@@ -15,7 +14,9 @@ import { formattedValueToString, getValueFormat, type GrafanaTheme2 } from '@gra
 import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { uniqueId } from '../../utils/uniqueId';
 import { Alert } from '../Alert/Alert';
+import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 
 import { FileListItem } from './FileListItem';
@@ -83,10 +84,12 @@ export function FileDropzone({
   onLoad,
   fileListRenderer,
   onFileRemove,
-  id,
+  id: idProp,
 }: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
   const [fileErrors, setErrorMessages] = useState<FileError[]>([]);
+  const fieldContext = useFieldContext();
+  const id = idProp ?? fieldContext.id;
 
   const formattedSize = getValueFormat('decbytes')(options?.maxSize ? options?.maxSize : 0);
 

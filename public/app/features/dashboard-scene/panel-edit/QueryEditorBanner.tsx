@@ -4,7 +4,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, IconButton, useStyles2 } from '@grafana/ui';
 
-import { getQueryEditorBannerColors } from './PanelEditNext/constants';
 import { startIntercomSurvey, trackBannerDismiss, trackFeedbackClick } from './PanelEditNext/tracking';
 
 interface Props {
@@ -87,53 +86,49 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
-  const bannerColors = getQueryEditorBannerColors(theme);
-
-  return {
-    banner: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: theme.spacing(0, 2),
-      height: theme.spacing(5),
-      backgroundColor: bannerColors.background,
-      border: `1px solid ${bannerColors.border}`,
-      borderRadius: theme.shape.radius.default,
-      flexShrink: 0,
-    }),
-    left: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1.5),
-      minWidth: 0,
-    }),
-    accentIcon: css({
-      color: bannerColors.accent,
-    }),
-    title: css({
-      color: bannerColors.accent,
-      fontWeight: theme.typography.fontWeightMedium,
-      whiteSpace: 'nowrap',
-    }),
-    description: css({
-      color: theme.colors.text.secondary,
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-    }),
-    right: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      flexShrink: 0,
-      marginLeft: theme.spacing(2), // minimum gap when left content is wide
-    }),
-    closeButton: css({
-      color: theme.colors.text.secondary,
-      '&:hover': {
-        color: theme.colors.text.primary,
-      },
-    }),
-  };
-}
+const getStyles = (theme: GrafanaTheme2) => ({
+  banner: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing(0, 2),
+    height: theme.spacing(5),
+    backgroundColor: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    flexShrink: 0,
+  }),
+  left: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1.5),
+    minWidth: 0,
+  }),
+  accentIcon: css({
+    color: theme.colors.warning.text,
+  }),
+  title: css({
+    color: theme.colors.warning.text,
+    fontWeight: theme.typography.fontWeightMedium,
+    whiteSpace: 'nowrap',
+  }),
+  description: css({
+    color: theme.colors.text.primary,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
+  right: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    flexShrink: 0,
+    marginLeft: theme.spacing(2), // minimum gap when left content is wide
+  }),
+  closeButton: css({
+    color: theme.colors.text.secondary,
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
+  }),
+});

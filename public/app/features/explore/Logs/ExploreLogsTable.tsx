@@ -1,36 +1,36 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   type AbsoluteTimeRange,
+  CoreApp,
   type DataFrame,
   type EventBus,
-  EventBusSrv,
   type FieldConfigSource,
   type PanelData,
+  store,
   urlUtil,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { type AdHocFilterItem, PanelContextProvider } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { LogsTable } from 'app/plugins/panel/logstable/LogsTable';
+import { getDefaultLogDetailsWidth } from 'app/plugins/panel/logstable/LogsTableDetails';
 import { type Options } from 'app/plugins/panel/logstable/options/types';
 import { defaultOptions as logsTablePanelDefaultOptions } from 'app/plugins/panel/logstable/panelcfg.gen';
 import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 
-/**
- * New Logs Table panel
- * @param props
- * @constructor
- */
-export function ExploreLogsTable(props: {
+import { SETTING_KEY_ROOT } from './utils/logs';
+
+interface Props {
   eventBus: EventBus;
   data: PanelData;
+  isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   timeZone: 'utc' | 'browser' | string;
   buildLinkToLogLine: BuildLinkToLogLine;
   width: number;
   height: number;
   onOptionsChange: (options: Options) => void;
-  onFieldConfigChange: (config: FieldConfigSource) => void;
+  onFieldConfigChange?: (config: FieldConfigSource) => void;
   onChangeTimeRange: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
   onClickFilterOutLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
@@ -38,12 +38,19 @@ export function ExploreLogsTable(props: {
     Options,
     'sortBy' | 'sortOrder' | 'displayedFields' | 'permalinkedLogId' | 'frameIndex' | 'fieldSelectorWidth'
   >;
-}) {
+}
+
+/**
+ * New Logs Table panel
+ */
+export function ExploreLogsTable(props: Props) {
   const { onClickFilterLabel, onClickFilterOutLabel } = props;
   const frames = useMemo(() => props?.data.series ?? [], [props.data.series]);
   const frame = useMemo(() => frames[props.externalOptions.frameIndex], [frames, props.externalOptions.frameIndex]);
+  const [wrapText, setWrapText] = useState(store.getBool(`${SETTING_KEY_ROOT}.wrapText`, false));
+  const [columnWidths, setColumnWidths] = useState<ColumnWidth[]>(getColumnWidthsFromStorage());
 
-  const onCellFilterAdded = useCallback(
+  const handleAdHocFilter = useCallback(
     (filter: AdHocFilterItem) => {
       const { value, key, operator } = filter;
       if (!onClickFilterLabel || !onClickFilterOutLabel) {
@@ -76,16 +83,17 @@ export function ExploreLogsTable(props: {
     }
   }, []);
 
-  const fieldConfig = useMemo(
-    () => ({
-      defaults: {
-        custom: {
-          filterable: true,
-        },
-      },
-      overrides: [],
-    }),
-    []
+  const onOptionsChange = useCallback(
+    (options: Options) => {
+      if (options.wrapText !== undefined && options.wrapText !== wrapText) {
+        setWrapText(options.wrapText);
+        store.set(`${SETTING_KEY_ROOT}.wrapText`, options.wrapText);
+      } else if (options.logDetailsWidth !== undefined && options.logDetailsWidth > 0) {
+        store.set(`${SETTING_KEY_ROOT}.logDetailsWidth`, options.logDetailsWidth);
+      }
+      props.onOptionsChange(options);
+    },
+    [props, wrapText]
   );
 
   const options = useMemo(
@@ -96,17 +104,64 @@ export function ExploreLogsTable(props: {
       showControls: true,
       showCopyLogLink: true,
       ...props.externalOptions,
+      isLabelFilterActive: props.isLabelFilterActive,
       permalinkedLogId: props.externalOptions.permalinkedLogId ?? selectedLogInfo?.id,
+      logDetailsWidth: parseInt(store.get(`${SETTING_KEY_ROOT}.logDetailsWidth`) ?? getDefaultLogDetailsWidth(), 10),
+      wrapText,
     }),
-    [props.buildLinkToLogLine, props.externalOptions, selectedLogInfo?.id]
+    [props.buildLinkToLogLine, props.externalOptions, props.isLabelFilterActive, selectedLogInfo?.id, wrapText]
+  );
+
+  const handleFieldConfigChange = useCallback((config: FieldConfigSource) => {
+    const widthOverrides = config.overrides
+      .filter((override) => override.matcher.id === 'byName')
+      .filter((override) =>
+        override.properties.some((property) => property.id === 'custom.width' && property.value > 0)
+      )
+      .map((override) => {
+        const field = override.matcher.options;
+        const width = override.properties.find(
+          (property) => property.id === 'custom.width' && property.value > 0
+        )?.value;
+        return {
+          field,
+          width,
+        };
+      });
+    store.set(`${SETTING_KEY_ROOT}.explore.columnWidths`, JSON.stringify(widthOverrides));
+    setColumnWidths(getColumnWidthsFromStorage());
+  }, []);
+
+  const fieldConfig = useMemo(
+    () => ({
+      defaults: {
+        custom: {
+          filterable: true,
+        },
+      },
+      overrides: columnWidths.map((columnWidth) => ({
+        matcher: {
+          id: 'byName',
+          options: columnWidth.field,
+        },
+        properties: [
+          {
+            id: 'custom.width',
+            value: columnWidth.width,
+          },
+        ],
+      })),
+    }),
+    [columnWidths]
   );
 
   return (
     <PanelContextProvider
       value={{
         eventsScope: 'explore',
-        eventBus: props.eventBus ?? new EventBusSrv(),
-        onAddAdHocFilter: onCellFilterAdded,
+        eventBus: props.eventBus,
+        onAddAdHocFilter: handleAdHocFilter,
+        app: CoreApp.Explore,
       }}
     >
       <LogsTable
@@ -121,11 +176,31 @@ export function ExploreLogsTable(props: {
         renderCounter={0}
         title={''}
         eventBus={props.eventBus}
-        onOptionsChange={props.onOptionsChange}
-        onFieldConfigChange={props.onFieldConfigChange}
+        onOptionsChange={onOptionsChange}
+        onFieldConfigChange={handleFieldConfigChange}
         replaceVariables={getTemplateSrv().replace}
         onChangeTimeRange={props.onChangeTimeRange}
       />
     </PanelContextProvider>
   );
+}
+
+type ColumnWidth = { field: string; width: number };
+
+function getColumnWidthsFromStorage() {
+  const stored = store.getObject(`${SETTING_KEY_ROOT}.explore.columnWidths`);
+
+  let columnWidths = Array.isArray(stored)
+    ? stored.filter(
+        (columnWidth: unknown): columnWidth is ColumnWidth =>
+          typeof columnWidth === 'object' &&
+          columnWidth !== null &&
+          'field' in columnWidth &&
+          'width' in columnWidth &&
+          typeof columnWidth.width === 'number' &&
+          typeof columnWidth.field === 'string'
+      )
+    : [];
+
+  return columnWidths;
 }

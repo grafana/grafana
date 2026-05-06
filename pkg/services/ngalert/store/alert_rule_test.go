@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
@@ -578,12 +577,12 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	t.Run("should not be able to delete folder without permissions to delete rules", func(t *testing.T) {
 		store.AccessControl = acmock.New()
 		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
-		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
+		require.ErrorIs(t, err, folder.ErrAccessDenied)
 	})
 
 	t.Run("should be able to delete folder with permissions to delete rules", func(t *testing.T) {
 		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
-			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
+			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersAll},
 		})
 		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 		require.NoError(t, err)
@@ -2113,6 +2112,17 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		require.NotEmpty(t, continueToken, "continue token should not be empty when limit is set")
 	})
 
+	t.Run("should return all groups when group limit exceeds total groups", func(t *testing.T) {
+		groupLimit := int64(totalGroups + rand.IntN(10) + 1) // totalGroups + random number to ensure it exceeds totalGroups
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               groupLimit,
+		})
+		require.NoError(t, err)
+		require.Len(t, result, numRules, "should return all rules when group limit exceeds total groups")
+		require.Empty(t, continueToken, "continue token should be empty when all rules are fetched")
+	})
+
 	t.Run("pagination should all for continuation", func(t *testing.T) {
 		groupLimit := int64(2) // fixed group limit for this test
 		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
@@ -2287,6 +2297,23 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
 
 		ns := "test-ns-nogroup-paginated"
+		// Create a rule that we'll query via no-group
+		noGroupRule1 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName(""),
+			ruleGen.WithGroupIndex(0),
+		))
+		noGroupRule2 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName(""),
+			ruleGen.WithGroupIndex(0),
+		))
+
+		noGroup1, err := models.NewNoGroupRuleGroup(noGroupRule1.UID)
+		require.NoError(t, err)
+		noGroup2, err := models.NewNoGroupRuleGroup(noGroupRule2.UID)
+		require.NoError(t, err)
+
 		// Create rules in a normal group
 		groupedRule1 := createRule(t, store, ruleGen.With(
 			ruleGen.WithNamespaceUID(ns),
@@ -2296,20 +2323,12 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 			ruleGen.WithNamespaceUID(ns),
 			ruleGen.WithGroupName("group-a"),
 		))
-		// Create a rule that we'll query via no-group
-		noGroupRule := createRule(t, store, ruleGen.With(
-			ruleGen.WithNamespaceUID(ns),
-			ruleGen.WithGroupName(""),
-		))
-
-		noGroup, err := models.NewNoGroupRuleGroup(noGroupRule.UID)
-		require.NoError(t, err)
 
 		// Page 1: limit to 1 group
 		page1, token1, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
 				OrgID:      orgID,
-				RuleGroups: []string{groupedRule1.RuleGroup, noGroup.String()},
+				RuleGroups: []string{groupedRule1.RuleGroup, noGroup1.String(), noGroup2.String()},
 			},
 			Limit: 1,
 		})
@@ -2320,9 +2339,9 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		page2, token2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
 				OrgID:      orgID,
-				RuleGroups: []string{groupedRule1.RuleGroup, noGroup.String()},
+				RuleGroups: []string{groupedRule1.RuleGroup, noGroup1.String(), noGroup2.String()},
 			},
-			Limit:         1,
+			Limit:         2,
 			ContinueToken: token1,
 		})
 		require.NoError(t, err)
@@ -2332,7 +2351,7 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		for _, r := range allResults {
 			allUIDs = append(allUIDs, r.UID)
 		}
-		require.ElementsMatch(t, []string{groupedRule1.UID, groupedRule2.UID, noGroupRule.UID}, allUIDs)
+		require.ElementsMatch(t, []string{groupedRule1.UID, groupedRule2.UID, noGroupRule1.UID, noGroupRule2.UID}, allUIDs)
 		require.Empty(t, token2, "should have no more pages")
 	})
 
@@ -3125,6 +3144,280 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 
 			require.NotElementsMatch(t, result, result2, "should not have same rules in both pages")
 		})
+	})
+}
+
+func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second,
+	}
+	orgID := int64(1)
+	ruleGen := models.RuleGen.With(
+		models.RuleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		models.RuleGen.WithOrgID(orgID),
+	)
+	b := &fakeBus{}
+
+	t.Run("ExcludeNamespaceUIDs", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		nsAGen := ruleGen.With(ruleGen.WithNamespaceUID("ns-a"))
+		nsBGen := ruleGen.With(ruleGen.WithNamespaceUID("ns-b"))
+
+		createRule(t, store, nsAGen)
+		createRule(t, store, nsAGen)
+		nsBRule1 := createRule(t, store, nsBGen)
+		nsBRule2 := createRule(t, store, nsBGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                orgID,
+				ExcludeNamespaceUIDs: []string{"ns-a"},
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{nsBRule1.UID, nsBRule2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeRuleGroups", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		group1Gen := ruleGen.With(ruleGen.WithGroupName("group-1"))
+		group2Gen := ruleGen.With(ruleGen.WithGroupName("group-2"))
+
+		createRule(t, store, group1Gen)
+		createRule(t, store, group1Gen)
+		g2Rule1 := createRule(t, store, group2Gen)
+		g2Rule2 := createRule(t, store, group2Gen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:             orgID,
+				ExcludeRuleGroups: []string{"group-1"},
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{g2Rule1.UID, g2Rule2.UID}, gotUIDs)
+	})
+
+	t.Run("RuleGroupExists=true", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		withGroupGen := ruleGen.With(ruleGen.WithGroupName("some-group"))
+		noGroupGen := ruleGen.With(ruleGen.WithGroupName(""))
+
+		withGroupRule := createRule(t, store, withGroupGen)
+		createRule(t, store, noGroupGen)
+
+		trueVal := true
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:           orgID,
+				RuleGroupExists: &trueVal,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		require.Equal(t, withGroupRule.UID, result[0].UID)
+	})
+
+	t.Run("RuleGroupExists=false", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		withGroupGen := ruleGen.With(ruleGen.WithGroupName("some-group"))
+		noGroupGen := ruleGen.With(ruleGen.WithGroupName(""))
+
+		createRule(t, store, withGroupGen)
+		noGroupRule := createRule(t, store, noGroupGen)
+
+		falseVal := false
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:           orgID,
+				RuleGroupExists: &falseVal,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		require.Equal(t, noGroupRule.UID, result[0].UID)
+	})
+
+	t.Run("TitleExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchTitle := "exact-title-match"
+		matchGen := ruleGen.With(ruleGen.WithTitle(matchTitle))
+		otherGen := ruleGen.With(ruleGen.WithUniqueTitle())
+
+		match1 := createRule(t, store, matchGen)
+		match2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:      orgID,
+				TitleExact: matchTitle,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{match1.UID, match2.UID}, gotUIDs)
+	})
+
+	t.Run("IsPaused=true", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		pausedGen := ruleGen.With(ruleGen.WithIsPaused(true))
+		activeGen := ruleGen.With(ruleGen.WithIsPaused(false))
+
+		paused1 := createRule(t, store, pausedGen)
+		paused2 := createRule(t, store, pausedGen)
+		createRule(t, store, activeGen)
+		createRule(t, store, activeGen)
+
+		trueVal := true
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:    orgID,
+				IsPaused: &trueVal,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{paused1.UID, paused2.UID}, gotUIDs)
+	})
+
+	t.Run("IsPaused=false", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		pausedGen := ruleGen.With(ruleGen.WithIsPaused(true))
+		activeGen := ruleGen.With(ruleGen.WithIsPaused(false))
+
+		createRule(t, store, pausedGen)
+		createRule(t, store, pausedGen)
+		active1 := createRule(t, store, activeGen)
+		active2 := createRule(t, store, activeGen)
+
+		falseVal := false
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:    orgID,
+				IsPaused: &falseVal,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{active1.UID, active2.UID}, gotUIDs)
+	})
+
+	t.Run("DashboardUID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		dashUID := "my-dashboard"
+		otherDashUID := "other-dashboard"
+		dashGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, nil))
+		otherGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&otherDashUID, nil))
+
+		dash1 := createRule(t, store, dashGen)
+		dash2 := createRule(t, store, dashGen)
+		createRule(t, store, otherGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:        orgID,
+				DashboardUID: dashUID,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{dash1.UID, dash2.UID}, gotUIDs)
+	})
+
+	t.Run("PanelID independent of DashboardUID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		dashUID := "dash-for-panel"
+		panelID := int64(42)
+		otherPanelID := int64(99)
+		panelGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, &panelID))
+		otherGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, &otherPanelID))
+
+		panel1 := createRule(t, store, panelGen)
+		panel2 := createRule(t, store, panelGen)
+		createRule(t, store, otherGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:   orgID,
+				PanelID: panelID,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{panel1.UID, panel2.UID}, gotUIDs)
 	})
 }
 

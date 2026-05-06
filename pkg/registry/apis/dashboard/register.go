@@ -56,6 +56,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -163,10 +164,12 @@ func RegisterAPIService(
 	dashboardClient := client.NewK8sHandler(namespacer, dashv1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
-		SnapshotsEnabled:     cfg.SnapshotEnabled,
-		ExternalSnapshotURL:  cfg.ExternalSnapshotUrl,
-		ExternalSnapshotName: cfg.ExternalSnapshotName,
-		ExternalEnabled:      cfg.ExternalEnabled,
+		SnapshotsEnabled:      cfg.SnapshotEnabled,
+		ExternalSnapshotURL:   cfg.ExternalSnapshotUrl,
+		ExternalSnapshotName:  cfg.ExternalSnapshotName,
+		ExternalEnabled:       cfg.ExternalEnabled,
+		ExternalSnapshotToken: cfg.ExternalSnapshotToken,
+		PublicMode:            cfg.SnapshotPublicMode,
 	}
 
 	builder := &DashboardsAPIBuilder{
@@ -281,6 +284,21 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 
 	// Register the explicit conversions
 	if err := conversion.RegisterConversions(scheme, migration.GetDataSourceIndexProvider(), migration.GetLibraryElementIndexProvider()); err != nil {
+		return err
+	}
+
+	// Register field label conversion for Snapshot to enable spec.deleteKey field selector
+	if err := scheme.AddFieldLabelConversionFunc(
+		dashv0.SnapshotResourceInfo.GroupVersion().WithKind("Snapshot"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", "spec.deleteKey":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported for Snapshot: %s", label)
+			}
+		},
+	); err != nil {
 		return err
 	}
 
@@ -825,12 +843,18 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	// Snapshots - only v0alpha1
 	if snapshots != nil && dashboards.GroupVersion().Version == "v0alpha1" {
 		snapshotLegacyStore := &snapshot.SnapshotLegacyStore{
-			ResourceInfo: *snapshots,
-			Service:      b.snapshotService,
-			Namespacer:   b.namespacer,
+			ResourceInfo:          *snapshots,
+			Service:               b.snapshotService,
+			Namespacer:            b.namespacer,
+			ExternalSnapshotToken: b.snapshotOptions.ExternalSnapshotToken,
 		}
 
-		unifiedSnapshotStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *snapshots, opts.OptsGetter)
+		selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+			GetAttrs: snapshot.SnapshotGetAttrs,
+		}
+		unifiedSnapshotStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+			opts.Scheme, *snapshots, opts.OptsGetter, selectableFieldsOpts,
+		)
 		if err != nil {
 			return err
 		}
@@ -839,8 +863,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		if err != nil {
 			return err
 		}
-		storage[snapshots.StoragePath()] = snapshot.NewStorageWrapper(snapshotDualWrite)
-		b.snapshotStorage = snapshotDualWrite // store for use in routes (needs rest.Creater)
+		snapshotWrapper := snapshot.NewStorageWrapper(snapshotDualWrite, b.snapshotOptions)
+		storage[snapshots.StoragePath()] = snapshotWrapper
+		b.snapshotStorage = snapshotDualWrite // for use in routes (needs rest.Creater)
 		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(snapshotDualWrite)
 		if err != nil {
 			return err
@@ -1114,7 +1139,7 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 				return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderId)
 			}
 			if apierrors.IsForbidden(err) {
-				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, dashboards.ErrFolderAccessDenied)
+				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
 			}
 			return err
 		}
@@ -1126,7 +1151,7 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 		}
 
 		if !accessInfo.CanEdit {
-			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, dashboards.ErrFolderAccessDenied)
+			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
 		}
 	}
 

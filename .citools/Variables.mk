@@ -5,7 +5,7 @@ src_dir := $(tools_dir)/src
 # Due to a race condition, after initial call to `go tool` golang may report a wrong binary location pointing to the invalid `/tmp/go-buildXXX` directory
 define compile_tool
 $(shell \
-  (cd "$(src_dir)/$(1)" \
+  (cd $(src_dir)/$(1) \
   && GOWORK=off go tool -n $(2) > /dev/null \
   && GOWORK=off go tool -n $(2)) | sed 's/^[[:space:]]*//g'; \
 )
@@ -23,6 +23,9 @@ cue = "$(call compile_tool,cue,cuelang.org/go/cmd/cue)"
 
 # Tool: "golangci-lint"
 golangci-lint = "$(call compile_tool,golangci-lint,github.com/golangci/golangci-lint/v2/cmd/golangci-lint)"
+
+# Tool: "govulncheck"
+govulncheck = "$(call compile_tool,govulncheck,golang.org/x/vuln/cmd/govulncheck)"
 
 # Tool: "jb"
 jb = "$(call compile_tool,jb,github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb)"

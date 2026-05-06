@@ -294,6 +294,8 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
     });
 
     test.describe('wip annotations', () => {
+      test.use({ viewport: { width: 1280, height: 700 } });
+
       test('can edit locally created (wip) annotations from the clustered tooltip', async ({
         page,
         gotoDashboardPage,
@@ -405,7 +407,14 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         await expect(tooltip.getByText('tag2'), 'tag from anno 2 is visible').toBeVisible();
         await tooltip.getByRole('button', { name: 'Delete' }).first().click();
 
-        // Delete second anno
+        // assert that first anno was removed from API result before clicking again
+        await expect
+          .poll(async () => {
+            await markersLocator.hover();
+            return tooltip.getByText('tag1').count();
+          }, 'annotation is removed after annotation GET is returned')
+          .toEqual(0);
+
         await markersLocator.click();
         await expect(
           tooltip.getByText('description2 text goes here - EDITED'),
@@ -413,6 +422,72 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         ).toBeVisible();
         await expect(tooltip.getByText('tag2'), 'anno 2 tag is visible').toBeVisible();
         await tooltip.getByRole('button', { name: 'Delete' }).first().click();
+
+        await expect(markersLocator, 'should no longer be any annotations').toHaveCount(0);
+      });
+
+      // regression test for https://github.com/grafana/grafana/issues/122446
+      test('annotations that return after panel query are rendered in correct position on x-axis', async ({
+        page,
+        gotoDashboardPage,
+        selectors,
+      }) => {
+        // Mock annotation API to avoid shared DB state in parallel executions
+        await setupAnnotationApiMock(page);
+
+        const dashboardPage = await gotoDashboardPage({
+          uid: DASHBOARD_UID,
+          queryParams: new URLSearchParams({ viewPanel: 'panel-18' }),
+        });
+
+        const panel = dashboardPage.getByGrafanaSelector(
+          selectors.components.Panels.Panel.title('wip annotations panel')
+        );
+
+        await expect(panel, `Panel should be visible`).toBeVisible();
+
+        // Meta click to create a wip annotation
+        await panel.locator('.u-over').click({ position: { x: 100, y: 100 }, modifiers: ['Meta'] });
+
+        const descriptionTextarea = page.getByTestId('annotation-editor-description');
+        const markersLocator = page.getByTestId(selectors.pages.Dashboard.Annotations.marker);
+
+        // add description
+        await descriptionTextarea.fill('description text goes here');
+
+        // save
+        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        // Assert saving has closed the modal before we create another one
+        await expect(
+          page.getByText('Add annotation'),
+          'add annotation text is not rendered as the modal was removed after clicking save'
+        ).toHaveCount(0);
+
+        // assert annotation was created
+        await expect(markersLocator, 'annotation marker is visible').toBeVisible();
+
+        await expect(markersLocator, 'annotation marker has left offset of 100').toHaveAttribute(
+          'style',
+          /left: 100px/
+        );
+
+        // Move time range backwards, annotation should now be on right half of screen
+        await page.getByTestId(selectors.components.TimePicker.moveBackwardButton).click();
+
+        // Assert that the marker was re-rendered after the annotation was re-queried
+        // should greater than 100, is asserting the exact offset overstepping the bounds of this test?
+        await expect
+          .poll(() => {
+            return markersLocator.first().getAttribute('style');
+          })
+          .toMatch(/left: 547px/);
+
+        // Clean up annos
+        const tooltip = page.getByTestId(selectors.pages.Dashboard.Annotations.tooltip);
+        await markersLocator.click();
+        await expect(tooltip.getByText('description text goes here'), 'anno 2 edited text is visible').toBeVisible();
+        await tooltip.getByRole('button', { name: 'Delete' }).first().click();
+
         await expect(markersLocator, 'should no longer be any annotations').toHaveCount(0);
       });
     });

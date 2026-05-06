@@ -13,44 +13,6 @@ jest.mock('@grafana/plugin-ui', () => ({
   SQLEditor: () => <div data-testid="sql-editor">SQL Editor Mock</div>,
 }));
 
-// Mock lazy loaded GenAI components
-jest.mock('./GenAI/GenAISQLSuggestionsButton', () => ({
-  GenAISQLSuggestionsButton: ({ currentQuery, initialQuery }: { currentQuery: string; initialQuery: string }) => {
-    const text = !currentQuery || currentQuery === initialQuery ? 'Generate suggestion' : 'Improve query';
-    return <div data-testid="suggestions-button">{text}</div>;
-  },
-}));
-
-jest.mock('./GenAI/GenAISQLExplainButton', () => ({
-  GenAISQLExplainButton: () => <div data-testid="explain-button">Explain query</div>,
-}));
-
-// Mock custom hooks for GenAI features
-jest.mock('./GenAI/hooks/useSQLSuggestions', () => ({
-  useSQLSuggestions: jest.fn(() => ({
-    handleApplySuggestion: jest.fn(),
-    handleHistoryUpdate: jest.fn(),
-    handleCloseDrawer: jest.fn(),
-    handleOpenDrawer: jest.fn(),
-    isDrawerOpen: false,
-    suggestions: [],
-  })),
-}));
-
-jest.mock('./GenAI/hooks/useSQLExplanations', () => ({
-  useSQLExplanations: jest.fn((currentExpression: string) => ({
-    explanation: '',
-    handleCloseExplanation: jest.fn(),
-    handleOpenExplanation: jest.fn(),
-    handleExplain: jest.fn(),
-    isExplanationOpen: false,
-    shouldShowViewExplanation: false,
-    updatePrevExpression: jest.fn(),
-    prevExpression: currentExpression,
-  })),
-}));
-
-// Mock the backend API
 const mockBackendSrv = {
   post: jest.fn().mockResolvedValue({
     kind: 'SQLSchemaResponse',
@@ -72,8 +34,6 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => mockDataSourceSrv,
 }));
 
-// Note: Add more mocks if needed for other lazy components
-
 describe('SqlExpr', () => {
   it('initializes new expressions with default query', async () => {
     const onChange = jest.fn();
@@ -82,12 +42,10 @@ describe('SqlExpr', () => {
 
     render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
-    // Verify onChange was called
     await waitFor(() => {
       expect(onChange).toHaveBeenCalled();
     });
 
-    // Verify essential SQL structure without exact string matching
     const updatedQuery = onChange.mock.calls[0][0];
     expect(updatedQuery.expression.toUpperCase()).toContain('SELECT');
   });
@@ -100,7 +58,6 @@ describe('SqlExpr', () => {
 
     render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
-    // The SQLEditor should receive the existing expression
     await waitFor(() => {
       expect(query.expression).toBe(existingExpression);
     });
@@ -205,35 +162,5 @@ describe('Schema Inspector feature toggle', () => {
       expect(queryByText('Schema inspector')).not.toBeInTheDocument();
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
     });
-  });
-});
-
-describe('SqlExpr with GenAI features', () => {
-  const defaultProps: SqlExprProps = {
-    onChange: jest.fn(),
-    refIds: [{ value: 'A' }],
-    query: { refId: 'expression_1', type: ExpressionQueryType.sql, expression: `SELECT * FROM A LIMIT 10` },
-    queries: [],
-  };
-
-  it('renders suggestions drawer when isDrawerOpen is true', async () => {
-    // TODO this inline require breaks future tests - do it differently!
-    const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
-    useSQLSuggestions.mockImplementation(() => ({
-      isDrawerOpen: true,
-      suggestions: ['suggestion1', 'suggestion2'],
-    }));
-
-    const { findByTestId } = render(<SqlExpr {...defaultProps} />);
-    expect(await findByTestId('suggestions-drawer')).toBeInTheDocument();
-  });
-
-  it('renders explanation drawer when isExplanationOpen is true', async () => {
-    // TODO this inline require breaks future tests - do it differently!
-    const { useSQLExplanations } = require('./GenAI/hooks/useSQLExplanations');
-    useSQLExplanations.mockImplementation(() => ({ isExplanationOpen: true }));
-
-    const { findByTestId } = render(<SqlExpr {...defaultProps} />);
-    expect(await findByTestId('explanation-drawer')).toBeInTheDocument();
   });
 });

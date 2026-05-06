@@ -87,12 +87,28 @@ export class ScopesService implements ScopesContextValue {
       if (navScopePath && !navigationScope) {
         this.dashboardsService.setNavScopePath(deserializeFolderPath(navScopePath));
       }
+
+      // If scope_node wasn't in the URL, derive it from defaultPath and preload the path
+      // so the badge and tree display correctly on initial load.
+      if (!scopeNodeId) {
+        const firstApplied = this.selectorService.state.appliedScopes[0];
+        const scope = firstApplied ? this.selectorService.state.scopes[firstApplied.scopeId] : undefined;
+        const defaultPath = scope?.spec.defaultPath || [];
+        if (defaultPath.length > 0) {
+          const derivedNodeId = defaultPath[defaultPath.length - 1];
+          const tree = this.selectorService.state.tree;
+          if (derivedNodeId && tree) {
+            this.selectorService.resolvePathToRoot(derivedNodeId, tree, firstApplied.scopeId).catch((error) => {
+              console.error('Failed to pre-load node path from defaultPath', error);
+            });
+          }
+        }
+      }
     });
 
-    // Pre-load scope node (which loads parent too)
-    const nodeToPreload = scopeNodeId;
-    if (nodeToPreload) {
-      this.selectorService.resolvePathToRoot(nodeToPreload, this.selectorService.state.tree!).catch((error) => {
+    // Preload scope node (which loads parent too)
+    if (scopeNodeId) {
+      this.selectorService.resolvePathToRoot(scopeNodeId, this.selectorService.state.tree!).catch((error) => {
         console.error('Failed to pre-load node path', error);
       });
     }

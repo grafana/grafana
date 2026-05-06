@@ -20,7 +20,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagDisab
 	})
 
 	// Full sync.
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	// Add a dashboard inside a folder with no _folder.json.
 	require.NoError(t, local.CreateFile("myfolder/dashboard2.json", string(common.DashboardJSON("disabled-folder-dash", "Folder Dashboard", 1))))
