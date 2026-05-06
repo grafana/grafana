@@ -269,7 +269,9 @@ function getStyles(theme: GrafanaTheme2) {
           "Heading Heading"
           "Bottom Bottom"`,
       gridTemplateRows: 'auto auto 1fr',
-      gridTemplateColumns: '1fr auto',
+      // Card.Heading from @grafana/ui sets `gridColumnEnd: 'Tags'`; without a `Tags` line here,
+      // CSS Grid creates an implicit column and shrinks Thumbnail/Bottom to ~half width.
+      gridTemplateColumns: '1fr auto [Tags]',
       width: '350px',
       height: '100%',
       background: 'transparent',

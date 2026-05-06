@@ -637,6 +637,75 @@ func TestBadgerKV_ContextCancellation(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("Get: pre-cancelled ctx returns error", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 1)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		_, err := kv.Get(ctx, section, keys[0])
+		require.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("Save: pre-cancelled ctx returns error", func(t *testing.T) {
+		kv := setupTestKV(t)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		writer, err := kv.Save(ctx, section, "save-cancelled")
+		require.ErrorIs(t, err, context.Canceled)
+		require.Nil(t, writer)
+	})
+
+	t.Run("Save writer: cancellation before close returns error and saves nothing", func(t *testing.T) {
+		kv := setupTestKV(t)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		writer, err := kv.Save(ctx, section, "save-writer-cancelled")
+		require.NoError(t, err)
+		_, err = writer.Write([]byte("value"))
+		require.NoError(t, err)
+
+		cancel()
+
+		err = writer.Close()
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = kv.Get(context.Background(), section, "save-writer-cancelled")
+		require.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("Delete: pre-cancelled ctx returns error and deletes nothing", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 1)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := kv.Delete(ctx, section, keys[0])
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = kv.Get(context.Background(), section, keys[0])
+		require.NoError(t, err)
+	})
+
+	t.Run("Batch: pre-cancelled ctx returns error and applies nothing", func(t *testing.T) {
+		kv := setupTestKV(t)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpPut, Key: "batch-cancelled", Value: []byte("value")},
+		})
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = kv.Get(context.Background(), section, "batch-cancelled")
+		require.ErrorIs(t, err, ErrNotFound)
+	})
+
 	t.Run("sanity: errors.Is matches context.Canceled", func(t *testing.T) {
 		// Guards against a future change wrapping ctx.Err() into an opaque
 		// error type that breaks errors.Is for callers (e.g. retry logic).

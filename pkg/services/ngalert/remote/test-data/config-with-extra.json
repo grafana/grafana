@@ -18,6 +18,7 @@
             "uid": "",
             "name": "some other name",
             "type": "email",
+            "version": "v1",
             "disableResolveMessage": false,
             "settings": {
               "addresses": "<example@email.com>"

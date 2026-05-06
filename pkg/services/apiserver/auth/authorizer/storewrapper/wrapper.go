@@ -3,6 +3,9 @@ package storewrapper
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"sync"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -22,6 +25,30 @@ var (
 	ErrUnexpectedType  = errors.NewBadRequest("unexpected object type")
 )
 
+// WatchEventFilter is a batch filter for watch events. Given a slice of
+// data-carrying events (Added, Modified, Deleted) it returns a same-length bool
+// slice indicating which events to forward. Returning an error terminates the watch.
+// Implementations are called from a single goroutine and need not be concurrency-safe.
+type WatchEventFilter func(events []watch.Event) ([]bool, error)
+
+// RejectAllWatchFilter is a nil WatchEventFilter that will make watch return an error.
+var RejectAllWatchFilter WatchEventFilter = nil
+
+// PassThroughWatchFilter is used to bypass the filter and forward the inner watch.Interface directly to the caller.
+var PassThroughWatchFilter WatchEventFilter = func(_ []watch.Event) ([]bool, error) {
+	// The error is a safety net to prevent the filter from being used accidentally
+	// silently dropping all events without returning an error.
+	return nil, errors.NewUnauthorized("watch filter not implemented")
+}
+
+// isPassThroughWatchFilter returns true if the filter is the PassThroughWatchFilter.
+func isPassThroughWatchFilter(filter WatchEventFilter) bool {
+	if filter == nil {
+		return false
+	}
+	return reflect.ValueOf(filter).Pointer() == reflect.ValueOf(PassThroughWatchFilter).Pointer()
+}
+
 // ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
 type ResourceStorageAuthorizer interface {
 	BeforeCreate(ctx context.Context, obj runtime.Object) error
@@ -29,6 +56,14 @@ type ResourceStorageAuthorizer interface {
 	BeforeDelete(ctx context.Context, obj runtime.Object) error
 	AfterGet(ctx context.Context, obj runtime.Object) error
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
+	// WatchFilter is called once when a Watch begins. It may pre-compile authorization
+	// state (e.g. fetch permissions, capture auth info) and must return a WatchEventFilter
+	// that will be invoked for each flush of buffered events. Bookmark and Error events
+	// always bypass the filter. Use PassThroughWatchFilter for resources with no per-event
+	// read restrictions, and RejectAllWatchFilter as a safe placeholder.
+	// The Wrapper's WatchFlushInterval controls how often the buffer is flushed:
+	// 0 (default) flushes after every event; >0 amortizes RPC cost across bursts.
+	WatchFilter(ctx context.Context) (WatchEventFilter, error)
 }
 
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
@@ -38,9 +73,10 @@ type ResourceStorageAuthorizer interface {
 // The wrapper also supports an option to preserve the original caller's identity in the context for inner store calls instead of replacing it with a service identity.
 // Use this when the inner store does not perform its own RBAC checks and the caller's identity is needed downstream (e.g. for admission webhooks).
 type Wrapper struct {
-	inner            K8sStorage
-	authorizer       ResourceStorageAuthorizer
-	preserveIdentity bool
+	inner              K8sStorage
+	authorizer         ResourceStorageAuthorizer
+	preserveIdentity   bool
+	watchFlushInterval time.Duration
 }
 
 // Option configures a Wrapper.
@@ -53,6 +89,17 @@ type Option func(*Wrapper)
 func WithPreserveIdentity() Option {
 	return func(w *Wrapper) {
 		w.preserveIdentity = true
+	}
+}
+
+// WithWatchFlushInterval sets how long the filteredWatcher buffers events before
+// calling WatchFilter with a batch. The default (0) flushes after every individual
+// event, which is safe and correct but makes one filter call per event. Set a
+// positive duration (e.g. 50ms) to amortize RPC cost across bursts when the
+// authorizer's WatchFilter uses BatchCheck internally.
+func WithWatchFlushInterval(d time.Duration) Option {
+	return func(w *Wrapper) {
+		w.watchFlushInterval = d
 	}
 }
 
@@ -223,10 +270,190 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 }
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
-	if watcher, ok := w.inner.(k8srest.Watcher); ok {
-		return watcher.Watch(w.storeCtx(ctx), options)
+	// Check if the underlying storage supports Watch
+	watcher, ok := w.inner.(k8srest.Watcher)
+	if !ok {
+		return nil, fmt.Errorf("watch is not supported on the underlying storage")
 	}
-	return nil, fmt.Errorf("watch is not supported on the underlying storage")
+
+	// Build the filter once, before starting the watch, so callers get an immediate
+	// error if authorization state cannot be resolved (e.g. auth backend unavailable).
+	filter, err := w.authorizer.WatchFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Fail-closed: a nil filter is treated as RejectAllWatchFilter.
+	// Implementors should return PassThroughWatchFilter explicitly for unrestricted resources.
+	if filter == nil {
+		return nil, errors.NewUnauthorized("watch filter not implemented")
+	}
+
+	// Call the underlying storage's Watch method
+	inner, err := watcher.Watch(w.storeCtx(ctx), options)
+	if err != nil {
+		return nil, err
+	}
+
+	if isPassThroughWatchFilter(filter) {
+		return inner, nil
+	}
+
+	// Return a new filtered watcher that runs the filter over the buffered events
+	// and forwards the events to the caller.
+	return newFilteredWatcher(ctx, inner, filter, w.watchFlushInterval), nil
+}
+
+// filteredWatcher wraps a watch.Interface and runs the WatchEventFilter over
+// buffered batches of events before forwarding them to the caller.
+// Bookmark and Error events bypass the filter and are forwarded immediately.
+//
+// When flushInterval is 0 the buffer is flushed after every individual event
+// (synchronous, no added latency). When flushInterval > 0 events are accumulated
+// and flushed either when the buffer is full or the ticker fires, amortizing the
+// cost of expensive filter implementations (e.g. BatchCheck RPCs) across bursts.
+type filteredWatcher struct {
+	inner         watch.Interface  // The underlying watch.Interface.
+	filter        WatchEventFilter // Filter to apply to the buffered events.
+	flushInterval time.Duration    // The interval to flush the buffered events.
+	result        chan watch.Event // Forwarded events to the caller.
+	stopOnce      sync.Once        // Ensures Stop() is called only once to prevent race conditions.
+	done          chan struct{}    // Closed when the watcher Stop() method is called.
+}
+
+// watchBatchSize is the maximum number of events buffered before a forced flush.
+// Matches watch.DefaultChanSize so the batch can never exceed the inner channel capacity.
+const watchBatchSize = 100
+
+// defaultSendTimeout is the timeout for sending an event to the caller.
+var defaultSendTimeout = 1 * time.Second
+
+func newFilteredWatcher(ctx context.Context, inner watch.Interface, filter WatchEventFilter, flushInterval time.Duration) *filteredWatcher {
+	fw := &filteredWatcher{
+		inner:         inner,
+		filter:        filter,
+		flushInterval: flushInterval,
+		result:        make(chan watch.Event, watch.DefaultChanSize),
+		done:          make(chan struct{}),
+	}
+	go fw.run(ctx)
+	return fw
+}
+
+// sendEvent forwards an event to the caller.
+// It returns if the user context is done or the watcher is stopped.
+func (fw *filteredWatcher) sendEvent(ctx context.Context, event watch.Event) bool {
+	// If we could not send the event on time, emit an Error
+	// and shut down to release backpressure on the inner storage.
+	timer := time.NewTimer(defaultSendTimeout)
+	select {
+	case <-ctx.Done(): // User context is done.
+		return false
+	case <-fw.done: // Closed when the watcher Stop() method is called.
+		return false
+	case fw.result <- event: // Forward the event to the caller.
+		return true
+	case <-timer.C: // Consumer is too slow, emit Timeout Error and tear down watch.
+		select {
+		case fw.result <- watch.Event{Type: watch.Error, Object: &metaV1.Status{
+			Status: metaV1.StatusFailure, Reason: metaV1.StatusReasonTimeout,
+			Message: "watch consumer too slow",
+		}}:
+		default:
+		}
+		// A bit redundant with run's defer, but it explicits the intent.
+		fw.Stop()
+		return false
+	}
+}
+
+func (fw *filteredWatcher) run(ctx context.Context) {
+	defer func() {
+		fw.Stop()
+		close(fw.result)
+	}()
+
+	// A nil channel blocks forever in select, disabling the ticker case when
+	// flushInterval is 0 (each event is flushed inline immediately instead).
+	var tickerC <-chan time.Time
+	if fw.flushInterval > 0 {
+		t := time.NewTicker(fw.flushInterval)
+		defer t.Stop()
+		tickerC = t.C
+	}
+
+	var pending []watch.Event
+
+	flush := func() bool {
+		if len(pending) == 0 {
+			return true
+		}
+		// Apply the filter to the buffered events.
+		// No need to time out here, if we are too slow, the upstream storage will close the inner watch anyway.
+		allowed, err := fw.filter(pending)
+		if err != nil {
+			errEvent := watch.Event{Type: watch.Error, Object: &metaV1.Status{Status: metaV1.StatusFailure, Message: err.Error()}}
+			_ = fw.sendEvent(ctx, errEvent)
+
+			fw.inner.Stop()
+			pending = pending[:0]
+			return false
+		}
+		for i, event := range pending {
+			if i < len(allowed) && allowed[i] {
+				if !fw.sendEvent(ctx, event) {
+					return false // Send failed
+				}
+			}
+		}
+		pending = pending[:0]
+		return true
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-fw.done:
+			return
+		case event, ok := <-fw.inner.ResultChan():
+			if !ok {
+				return
+			}
+			// Protocol events carry no resource data and must never be delayed.
+			if event.Type == watch.Bookmark || event.Type == watch.Error {
+				// Drain pending first to preserve ordering.
+				if flushed := flush(); !flushed {
+					return // Flush failed
+				}
+				if !fw.sendEvent(ctx, event) {
+					return // Send failed
+				}
+				continue
+			}
+			pending = append(pending, event)
+			// Flush if the buffer is full or we have no flush interval.
+			if fw.flushInterval == 0 || len(pending) >= watchBatchSize {
+				if flushed := flush(); !flushed {
+					return // Flush failed
+				}
+			}
+		case <-tickerC:
+			if flushed := flush(); !flushed {
+				return // Flush failed
+			}
+		}
+	}
+}
+
+func (fw *filteredWatcher) Stop() {
+	fw.stopOnce.Do(func() {
+		close(fw.done)
+		fw.inner.Stop()
+	})
+}
+
+func (fw *filteredWatcher) ResultChan() <-chan watch.Event {
+	return fw.result
 }
 
 // NoopAuthorizer is a no-op implementation of ResourceStorageAuthorizer.
@@ -255,6 +482,10 @@ func (b *NoopAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return list, nil
 }
 
+func (b *NoopAuthorizer) WatchFilter(_ context.Context) (WatchEventFilter, error) {
+	return PassThroughWatchFilter, nil
+}
+
 // DenyAuthorizer denies all storage operations.
 // Use this as a safe default when no explicit authorizer is provided
 // for cluster-scoped resources. This ensures fail-closed behavior.
@@ -278,4 +509,8 @@ func (d *DenyAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error
 
 func (d *DenyAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
 	return nil, ErrUnauthorized
+}
+
+func (d *DenyAuthorizer) WatchFilter(_ context.Context) (WatchEventFilter, error) {
+	return RejectAllWatchFilter, nil
 }

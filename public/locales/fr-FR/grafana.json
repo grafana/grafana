@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "Le référentiel du dossier sélectionné est introuvable. Veuillez vérifier que le dossier est correctement provisionné.",
         "repository-not-found-title": "Référentiel introuvable"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Erreur lors du déplacement des ressources",
       "error-no-target-folder-path": "Le chemin du dossier cible est invalide ou vide ; veuillez sélectionner à nouveau.",
       "move-total": "Au total, cela affectera :",
@@ -5269,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Paramètres"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5671,7 +5672,7 @@
         "title": "Variables"
       },
       "variable": {
-        "change-type": "Modifier",
+        "change-type": "",
         "change-type-aria-label": "Modifier le type de variable",
         "custom-options": {
           "apply": "Appliquer",
@@ -5988,7 +5989,7 @@
       "cancel": "Annuler",
       "common": {
         "copy": "Copier",
-        "copy-or-duplicate": "Copier/coller ou dupliquer",
+        "copy-tooltip": "",
         "delete": "Supprimer",
         "duplicate": "Dupliquer",
         "layout": "Mise en page",
@@ -6027,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Panneau non configuré. Appuyez sur la touche Tab pour afficher les options de configuration.",
-      "configure-button": "Configurer",
+      "configure-button": "",
       "configure-button-menu": "Afficher/Masquer le menu",
       "configure-visualization": "Configurer la visualisation",
       "empty-state-message": "Exécutez une requête pour la visualiser ici ou accédez à toutes les visualisations, afin d’ajouter d’autres types de panneaux",
@@ -6269,10 +6270,8 @@
       "title-provisioned": "Tableau de bord provisionné"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Un tableau de bord portant le même nom existe déjà dans le dossier sélectionné.<br/><2>Souhaitez-vous quand même enregistrer ce tableau de bord ?</2>",
       "body-version-mismatch": "Quelqu’un d’autre a mis à jour ce tableau de bord<br/><2>Souhaitez-vous quand même enregistrer ce tableau de bord ?</2>",
       "confirmText-save-and-overwrite": "Enregistrer et écraser",
-      "title-name-exists": "Conflits",
       "title-version-mismatch": "Conflits"
     },
     "save-dashboard-form": {
@@ -7313,6 +7312,7 @@
       "terraform": "Géré par : Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Échec du déplacement du tableau de bord",
       "cancel-action": "Annuler",
       "current-file-not-found": "Le fichier du tableau de bord actuel est introuvable",
@@ -7325,10 +7325,6 @@
       "success-message": "Tableau de bord déplacé avec succès",
       "target-path-label": "Chemin de destination",
       "title-this-repository-is-read-only": "Ce dépôt est en lecture seule"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Un tableau de bord du même nom existe déjà dans le dossier sélectionné. Voulez-vous toujours enregistrer ce tableau de bord ?",
-      "title-name-already-exists": "Nom déjà existant"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8144,6 +8140,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Ajouter aux favoris",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Explorer les données",
       "open-in-explore": "Ouvrir dans l’Explorateur",
       "remove-favorite": "Retirer des favoris"
@@ -14243,6 +14245,8 @@
       "alerts-loading": "Alertes",
       "card-click": "Sélectionner la carte {{id}}",
       "data": "Données",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nouveau {{type}}",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
@@ -14959,10 +14963,13 @@
       "title": "Créez rapidement des tableaux de bord à l’aide de suggestions et de modèles"
     },
     "nav": {
+      "counter": "",
       "go-to": "Accéder à la diapositive {{number}}",
-      "next": "Suivant",
-      "prev": "Précédent"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Expliquer la requête",
@@ -15442,7 +15449,6 @@
       "forwards-time-aria-label": "Avancer la plage de temps",
       "to": "à",
       "zoom-out-button": "Dézoomer la plage de temps",
-      "zoom-out-tooltip": "Zoom arrière sur la plage de temps <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Zoom arrière sur la plage de temps <br/> t -"
     },
     "time-range": {

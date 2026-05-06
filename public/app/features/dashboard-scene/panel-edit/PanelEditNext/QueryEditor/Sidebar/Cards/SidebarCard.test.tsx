@@ -276,16 +276,22 @@ describe('SidebarCard', () => {
   });
 
   describe('multi-select checkbox', () => {
+    const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+    const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+
     it('does not render the checkbox when multi-select mode is off', () => {
-      renderSidebarCard({ id: 'A' });
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries }
+      );
+
       // aria-hidden wraps the checkbox, so query with { hidden: true }
       expect(screen.queryByRole('checkbox', { hidden: true })).not.toBeInTheDocument();
     });
 
     it('renders the checkbox when multi-select mode is on', () => {
-      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
-
       renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
           <span>Card content</span>
@@ -296,12 +302,20 @@ describe('SidebarCard', () => {
       expect(screen.getByRole('checkbox', { hidden: true })).toBeInTheDocument();
     });
 
-    it('reflects the selection state in the checkbox value', () => {
-      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
-
+    it('checks the checkbox when the card is selected', () => {
       renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { multiSelectMode: true } }
+      );
+
+      expect(screen.getByRole('checkbox', { hidden: true })).toBeChecked();
+    });
+
+    it('checks the checkbox when the card is part of a selection', () => {
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} isPartOfSelection={true} item={item} onSelect={jest.fn()}>
           <span>Card content</span>
         </SidebarCard>,
         { queries, uiStateOverrides: { multiSelectMode: true } }

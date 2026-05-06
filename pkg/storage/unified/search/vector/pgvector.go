@@ -43,6 +43,23 @@ func (b *pgvectorBackend) Run(ctx context.Context) error {
 // validateResource rejects resources that don't have a sub-tree attached.
 // Adding a resource means attaching an `embeddings_<R>` sub-tree.
 // TODO dynamically add new partition if for resource if one doesnt exist
+// fitEmbedding ensures a vector matches the column width. Shorter vectors
+// are zero-padded up to dim; longer ones are rejected (truncating would
+// silently destroy the embedding's geometry, while zero-padding is safe
+// under cosine).
+func fitEmbedding(v []float32, dim int) ([]float32, error) {
+	switch {
+	case len(v) == dim:
+		return v, nil
+	case len(v) < dim:
+		padded := make([]float32, dim)
+		copy(padded, v)
+		return padded, nil
+	default:
+		return nil, fmt.Errorf("embedding has %d dims, column accepts at most %d", len(v), dim)
+	}
+}
+
 func validateResource(resource string) error {
 	if resource != "dashboards" {
 		return fmt.Errorf("unsupported resource %q (no embeddings sub-tree provisioned)", resource)
@@ -74,11 +91,15 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
 			if err := validateResource(vectors[i].Resource); err != nil {
 				return fmt.Errorf("vector[%d]: %w", i, err)
 			}
+			emb, err := fitEmbedding(vectors[i].Embedding, EmbeddingDim)
+			if err != nil {
+				return fmt.Errorf("vector[%d]: %w", i, err)
+			}
 			req := &sqlVectorCollectionUpsertRequest{
 				SQLTemplate: sqltemplate.New(b.dialect),
 				Resource:    vectors[i].Resource,
 				Vector:      &vectors[i],
-				Embedding:   pgvector.NewHalfVector(vectors[i].Embedding),
+				Embedding:   pgvector.NewHalfVector(emb),
 			}
 			if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionUpsert, req); err != nil {
 				return fmt.Errorf("upsert vector %s/%s: %w", vectors[i].UID, vectors[i].Subresource, err)
@@ -169,6 +190,10 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 	if err := validateResource(resource); err != nil {
 		return nil, err
 	}
+	queryEmb, err := fitEmbedding(embedding, EmbeddingDim)
+	if err != nil {
+		return nil, fmt.Errorf("query embedding: %w", err)
+	}
 
 	// TODO Search is currently single resource but we will need to support cross-resource search eventually
 	req := &sqlVectorCollectionSearchRequest{
@@ -176,7 +201,7 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		Resource:       resource,
 		Namespace:      namespace,
 		Model:          model,
-		QueryEmbedding: pgvector.NewHalfVector(embedding),
+		QueryEmbedding: pgvector.NewHalfVector(queryEmb),
 		Limit:          int64(limit),
 		Response:       &sqlVectorCollectionSearchResponse{},
 	}
