@@ -5330,7 +5330,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Nastavení"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5732,7 +5732,7 @@
         "title": "Proměnné"
       },
       "variable": {
-        "change-type": "Změnit",
+        "change-type": "",
         "change-type-aria-label": "Změnit typ proměnné",
         "custom-options": {
           "apply": "Použít",
@@ -6049,7 +6049,7 @@
       "cancel": "Zrušit",
       "common": {
         "copy": "Kopírovat",
-        "copy-or-duplicate": "Kopírovat/vložit nebo duplikovat",
+        "copy-tooltip": "",
         "delete": "Odstranit",
         "duplicate": "Duplikovat",
         "layout": "Rozvržení",
@@ -6088,7 +6088,7 @@
     },
     "new-panel": {
       "aria-label": "Nekonfigurovaný panel. Stisknutím klávesy Tab zobrazíte možnosti konfigurace.",
-      "configure-button": "Konfigurovat",
+      "configure-button": "",
       "configure-button-menu": "Přepnout nabídku",
       "configure-visualization": "Konfigurovat vizualizaci",
       "empty-state-message": "Spusťte dotaz a vizualizujte jej zde nebo přejděte na všechny vizualizace a přidejte další typy panelů",
@@ -6332,10 +6332,8 @@
       "title-provisioned": "Zajištěná nástěnka"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem.<br/><2>Chcete přesto nástěnku uložit?</2>",
       "body-version-mismatch": "Tuto nástěnku aktualizoval jiný uživatel<br/><2>Chcete přesto nástěnku uložit?</2>",
       "confirmText-save-and-overwrite": "Uložit a přepsat",
-      "title-name-exists": "Konflikt",
       "title-version-mismatch": "Konflikt"
     },
     "save-dashboard-form": {
@@ -7409,10 +7407,6 @@
       "success-message": "Nástěnka byla úspěšně přesunuta",
       "target-path-label": "Cílová cesta",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem. Chcete přesto tuto nástěnku uložit?",
-      "title-name-already-exists": "Název již existuje"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

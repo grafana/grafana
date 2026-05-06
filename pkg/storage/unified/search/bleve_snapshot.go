@@ -75,7 +75,7 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 			if err != nil {
 				return ulid.ULID{}, nil, fmt.Errorf("listing remote snapshots: %w", err)
 			}
-			c, ok := b.pickBestSnapshot(all, time.Now())
+			c, ok := b.pickBestSnapshot(all, time.Now(), logger)
 			if !ok {
 				return ulid.ULID{}, nil, nil
 			}
@@ -275,7 +275,7 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 // Tier 2 (newer, last resort): v > runningVersion
 //
 // Within each tier, sort by version desc -> RV desc -> upload time desc.
-func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.Time) (snapshotCandidate, bool) {
+func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.Time, logger log.Logger) (snapshotCandidate, bool) {
 	maxAge := b.opts.Snapshot.MaxIndexAge
 	minVersion := b.opts.Snapshot.MinBuildVersion
 	running := b.runningBuildVersion
@@ -303,7 +303,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 			tier:    snapshotTier(v, minVersion, running),
 		}
 		candidates = append(candidates, c)
-		b.log.Debug("index snapshot candidate",
+		logger.Debug("index snapshot candidate",
 			"key", c.key.String(),
 			"tier", c.tier,
 			"version", c.version.String(),
@@ -313,7 +313,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 	}
 
 	if len(candidates) == 0 {
-		b.log.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable)
+		logger.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable)
 		return snapshotCandidate{}, false
 	}
 
@@ -330,7 +330,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 		return candidates[i].meta.UploadTimestamp.After(candidates[j].meta.UploadTimestamp)
 	})
 
-	b.log.Debug("selected index snapshot",
+	logger.Debug("selected index snapshot",
 		"key", candidates[0].key.String(),
 		"tier", candidates[0].tier,
 		"candidates", len(candidates),

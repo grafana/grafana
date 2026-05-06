@@ -16,8 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/alerting/definition"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -29,6 +27,8 @@ import (
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -1817,7 +1817,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager)
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil)
 
 	return srv, dsCache, ruleStore
 }
@@ -1964,9 +1964,9 @@ type mockAlertmanager struct {
 	mock.Mock
 }
 
-func (m *mockAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (definition.RenameResources, error) {
-	args := m.Called(ctx, org, extraConfig, replace, dryRun)
-	return args.Get(0).(definition.RenameResources), args.Error(1)
+func (m *mockAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error) {
+	args := m.Called(ctx, org, user, authz, extraConfig, replace, dryRun)
+	return args.Get(0).(merge.RenameResources), args.Error(1)
 }
 
 func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error) {
@@ -1974,8 +1974,8 @@ func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org
 	return args.Get(0).(apimodels.GettableUserConfig), args.Error(1)
 }
 
-func (m *mockAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error {
-	args := m.Called(ctx, org, identifier)
+func (m *mockAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, identifier string) error {
+	args := m.Called(ctx, org, user, authz, identifier)
 	return args.Error(0)
 }
 
@@ -1987,12 +1987,12 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 	t.Run("should parse headers and call SaveAndApplyExtraConfiguration", func(t *testing.T) {
-		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
 			return extraConfig.Identifier == identifier &&
 				len(extraConfig.MergeMatchers) == 2 &&
 				len(extraConfig.TemplateFiles) == 1 &&
 				extraConfig.TemplateFiles["test.tmpl"] == "{{ define \"test\" }}Hello{{ end }}"
-		}), false, false).Return(definition.RenameResources{}, nil).Once()
+		}), false, false).Return(merge.RenameResources{}, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -2024,9 +2024,9 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		rc := createRequestCtx()
 		rc.Req.Header.Set(mergeMatchersHeader, "test=value")
 		mockAM := &mockAlertmanager{}
-		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
 			return extraConfig.Identifier == defaultConfigIdentifier
-		}), false, false).Return(definition.RenameResources{}, nil)
+		}), false, false).Return(merge.RenameResources{}, nil)
 
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
@@ -2053,9 +2053,9 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configForceReplaceHeader, "true")
 		mockAM := &mockAlertmanager{}
-		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
 			return extraConfig.Identifier == defaultConfigIdentifier
-		}), true, false).Return(definition.RenameResources{}, nil)
+		}), true, false).Return(merge.RenameResources{}, nil)
 
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
@@ -2082,9 +2082,9 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		rc := createRequestCtx()
 		rc.Req.Header.Set(dryRunHeader, "true")
 		mockAM := &mockAlertmanager{}
-		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
 			return extraConfig.Identifier == defaultConfigIdentifier
-		}), false, true).Return(definition.RenameResources{}, nil)
+		}), false, true).Return(merge.RenameResources{}, nil)
 
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
@@ -2112,7 +2112,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
 		mockAM := &mockAlertmanager{}
 
-		expectedRenames := definition.RenameResources{
+		expectedRenames := merge.RenameResources{
 			Receivers: map[string]string{
 				"default": "default-test-config",
 			},
@@ -2121,7 +2121,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 			},
 		}
 
-		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
 			return extraConfig.Identifier == identifier
 		}), false, false).Return(expectedRenames, nil)
 
@@ -2535,7 +2535,7 @@ func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {
 	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 	t.Run("should parse identifier header and call DeleteExtraConfiguration", func(t *testing.T) {
-		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, identifier).Return(nil).Once()
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, mock.Anything, mock.Anything, identifier).Return(nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -2547,7 +2547,7 @@ func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("should use default identifier when header is missing", func(t *testing.T) {
-		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, defaultConfigIdentifier).Return(nil).Once()
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, mock.Anything, mock.Anything, defaultConfigIdentifier).Return(nil).Once()
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
@@ -2557,7 +2557,7 @@ func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("should return error when DeleteExtraConfiguration fails", func(t *testing.T) {
-		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, identifier).Return(errors.New("delete error")).Once()
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, mock.Anything, mock.Anything, identifier).Return(errors.New("delete error")).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -2581,7 +2581,7 @@ func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("should use default identifier for empty identifier header", func(t *testing.T) {
-		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, defaultConfigIdentifier).Return(nil).Once()
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, mock.Anything, mock.Anything, defaultConfigIdentifier).Return(nil).Once()
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, "")
 

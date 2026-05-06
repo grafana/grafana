@@ -5240,7 +5240,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "설정"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5642,7 +5642,7 @@
         "title": "변수"
       },
       "variable": {
-        "change-type": "변경",
+        "change-type": "",
         "change-type-aria-label": "변수 유형 변경",
         "custom-options": {
           "apply": "적용",
@@ -5959,7 +5959,7 @@
       "cancel": "취소",
       "common": {
         "copy": "복사",
-        "copy-or-duplicate": "복사/붙여넣기 또는 복제",
+        "copy-tooltip": "",
         "delete": "삭제",
         "duplicate": "복제",
         "layout": "레이아웃",
@@ -5998,7 +5998,7 @@
     },
     "new-panel": {
       "aria-label": "구성되지 않은 패널. 구성 옵션을 보려면 탭을 누르세요.",
-      "configure-button": "구성",
+      "configure-button": "",
       "configure-button-menu": "토글 메뉴",
       "configure-visualization": "시각화 구성",
       "empty-state-message": "쿼리를 실행해 여기에서 시각화하거나 모든 시각화로 이동해 다른 패널 유형을 추가하세요",
@@ -6239,10 +6239,8 @@
       "title-provisioned": "프로비저닝된 대시보드"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "선택한 폴더에 동일한 이름의 대시보드가 이미 존재합니다.<br/><2>그래도 이 대시보드를 저장하시겠어요?</2>",
       "body-version-mismatch": "다른 사람이 이 대시보드를 업데이트했습니다<br/><2>그래도 이 대시보드를 저장하시겠어요?</2>",
       "confirmText-save-and-overwrite": "저장 및 덮어쓰기",
-      "title-name-exists": "충돌",
       "title-version-mismatch": "충돌"
     },
     "save-dashboard-form": {
@@ -7286,10 +7284,6 @@
       "success-message": "대시보드가 성공적으로 이동되었습니다",
       "target-path-label": "대상 경로",
       "title-this-repository-is-read-only": "이 리포지토리는 읽기 전용입니다"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "선택한 폴더에 동일한 이름의 대시보드가 이미 존재합니다. 그래도 이 대시보드를 저장하시겠어요?",
-      "title-name-already-exists": "이미 존재하는 이름입니다"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

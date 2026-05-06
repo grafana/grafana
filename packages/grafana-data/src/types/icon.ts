@@ -304,6 +304,10 @@ export const availableIconsIndex = {
   'cmab-logo': true,
   'lightbulb-alt': true,
   vial: true,
+  'anthropic-logo': true,
+  'cursor-logo': true,
+  'github-copilot-logo': true,
+  robot: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;
