@@ -1709,14 +1709,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/AnnotationSettings/AnnotationSettingsEdit.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    },
-    "@grafana/require-no-margin": {
-      "count": 6
-    }
-  },
   "public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 6
@@ -1728,19 +1720,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 7
-    }
-  },
-  "public/app/features/dashboard/components/DashboardPrompt/DashboardPrompt.test.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/DashboardPrompt/DashboardPrompt.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 7
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
     }
   },
   "public/app/features/dashboard/components/DashboardSettings/AutoRefreshIntervals.tsx": {
