@@ -152,10 +152,7 @@ export function isTemplateDashboardAssistantEnabled(): Promise<boolean> {
   return firstValueFrom(
     isAssistantAvailable().pipe(
       map((assistantAvailable) => {
-        const buttonEnabled = getFeatureFlagClient().getBooleanValue(
-          FlagKeys.SuggestedDashboardsAssistantButton,
-          false
-        );
+        const buttonEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardTemplatesAssistantButton, false);
         const toolEnabled = getFeatureFlagClient().getBooleanValue(
           'assistant.frontend.tools.dashboardTemplates',
           false
