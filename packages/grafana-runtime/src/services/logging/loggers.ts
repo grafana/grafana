@@ -11,6 +11,7 @@ export const Loggers = {
   sandbox: {},
   'ui-extension-logs': {},
   'features.plugins': {},
+  'features.alerting': { context: { module: 'Alerting' } },
 } satisfies Record<string, LoggerDefaults>;
 
 export type LoggerSource = keyof typeof Loggers;
