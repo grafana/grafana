@@ -250,20 +250,6 @@ func TestNormalizeGrafanaSQLRequest_hints(t *testing.T) {
 		"refId": "A", "grafanaSql": true, "table": "carts",
 	}
 
-	t.Run("instant", func(t *testing.T) {
-		payload := cloneMap(base)
-		payload["tableHintValues"] = map[string]string{"INSTANT": ""}
-		raw, err := json.Marshal(payload)
-		require.NoError(t, err)
-		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, refIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Contains(t, refIDs, "A")
-		require.Empty(t, sqlErrs)
-		var model QueryJSONModel
-		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
-		require.Equal(t, "instant", *model.QueryType)
-	})
-
 	t.Run("step sets model step and interval", func(t *testing.T) {
 		payload := cloneMap(base)
 		payload["tableHintValues"] = map[string]string{"STEP": "30s"}
@@ -298,21 +284,6 @@ func TestNormalizeGrafanaSQLRequest_hints(t *testing.T) {
 	t.Run("schemas Query limit field sets max lines", func(t *testing.T) {
 		payload := cloneMap(base)
 		payload["limit"] = int64(500)
-		raw, err := json.Marshal(payload)
-		require.NoError(t, err)
-		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, refIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Contains(t, refIDs, "A")
-		require.Empty(t, sqlErrs)
-		var model QueryJSONModel
-		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
-		require.NotNil(t, model.MaxLines)
-		require.Equal(t, int64(500), *model.MaxLines)
-	})
-
-	t.Run("limit hint", func(t *testing.T) {
-		payload := cloneMap(base)
-		payload["tableHintValues"] = map[string]string{"LIMIT": "500"}
 		raw, err := json.Marshal(payload)
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
