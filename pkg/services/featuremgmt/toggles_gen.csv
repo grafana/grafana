@@ -366,3 +366,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-30,datasources.useNewStackInfoToSettingsCache,GA,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-04,alerting.disableV0ReceiverConversion,experimental,@grafana/alerting-squad,false,false,false
 2026-05-06,grafana.unifiedHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-05-06,preferences.rerouteLegacyAPIs,experimental,@grafana/grafana-frontend-platform,false,false,false

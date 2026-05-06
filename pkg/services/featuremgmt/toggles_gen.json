@@ -2729,8 +2729,11 @@
     {
       "metadata": {
         "name": "grafana.unifiedHomepage",
-        "resourceVersion": "1778051143810",
-        "creationTimestamp": "2026-05-06T07:05:43Z"
+        "resourceVersion": "1778065754369",
+        "creationTimestamp": "2026-05-06T07:05:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-06 11:09:14.369545 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Replaces the bundled home dashboard with the unified homepage React page",
@@ -4662,6 +4665,19 @@
         "description": "Prefer library panel title over viz panel title.",
         "stage": "privatePreview",
         "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "preferences.rerouteLegacyAPIs",
+        "resourceVersion": "1778065172575",
+        "creationTimestamp": "2026-05-06T10:59:32Z"
+      },
+      "spec": {
+        "description": "Use K8s client implementation for legacy preferences API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "false"
       }
     },

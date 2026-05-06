@@ -3135,6 +3135,14 @@ var (
 			Generate:    Generate{React: true},
 			Expression:  "false",
 		},
+		{
+			Name:        "preferences.rerouteLegacyAPIs",
+			Description: "Use K8s client implementation for legacy preferences API",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false",
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
