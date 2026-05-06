@@ -113,7 +113,7 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 			// Delete secure values that exceeed max retries
 			deleteInput := make([]contracts.DeleteInput, 0, len(secureValuesWithError))
 			for _, sv := range secureValuesWithError {
-				if counts[string(sv.UID)] > w.Cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue {
+				if counts[string(sv.UID)] >= w.Cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue {
 					deleteInput = append(deleteInput, contracts.DeleteInput{
 						Namespace: xkube.Namespace(sv.Namespace),
 						Name:      sv.Name,
