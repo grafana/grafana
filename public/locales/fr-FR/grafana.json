@@ -5270,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Paramètres"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5672,7 @@
         "title": "Variables"
       },
       "variable": {
-        "change-type": "Modifier",
+        "change-type": "",
         "change-type-aria-label": "Modifier le type de variable",
         "custom-options": {
           "apply": "Appliquer",
@@ -5989,7 +5989,7 @@
       "cancel": "Annuler",
       "common": {
         "copy": "Copier",
-        "copy-or-duplicate": "Copier/coller ou dupliquer",
+        "copy-tooltip": "",
         "delete": "Supprimer",
         "duplicate": "Dupliquer",
         "layout": "Mise en page",
@@ -6028,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Panneau non configuré. Appuyez sur la touche Tab pour afficher les options de configuration.",
-      "configure-button": "Configurer",
+      "configure-button": "",
       "configure-button-menu": "Afficher/Masquer le menu",
       "configure-visualization": "Configurer la visualisation",
       "empty-state-message": "Exécutez une requête pour la visualiser ici ou accédez à toutes les visualisations, afin d’ajouter d’autres types de panneaux",
@@ -6270,10 +6270,8 @@
       "title-provisioned": "Tableau de bord provisionné"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Un tableau de bord portant le même nom existe déjà dans le dossier sélectionné.<br/><2>Souhaitez-vous quand même enregistrer ce tableau de bord ?</2>",
       "body-version-mismatch": "Quelqu’un d’autre a mis à jour ce tableau de bord<br/><2>Souhaitez-vous quand même enregistrer ce tableau de bord ?</2>",
       "confirmText-save-and-overwrite": "Enregistrer et écraser",
-      "title-name-exists": "Conflits",
       "title-version-mismatch": "Conflits"
     },
     "save-dashboard-form": {
@@ -7327,10 +7325,6 @@
       "success-message": "Tableau de bord déplacé avec succès",
       "target-path-label": "Chemin de destination",
       "title-this-repository-is-read-only": "Ce dépôt est en lecture seule"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Un tableau de bord du même nom existe déjà dans le dossier sélectionné. Voulez-vous toujours enregistrer ce tableau de bord ?",
-      "title-name-already-exists": "Nom déjà existant"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
