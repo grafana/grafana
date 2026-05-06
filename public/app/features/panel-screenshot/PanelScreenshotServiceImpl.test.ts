@@ -164,6 +164,43 @@ describe('PanelScreenshotServiceImpl', () => {
     expect(result).toBe(fallbackBlob);
   });
 
+  it('warns when override blob MIME does not match requested format and still returns the blob', async () => {
+    mountPanelElement(PANEL_PATH_ID);
+    const sceneContext = makeSceneContext(PANEL_PATH_ID, PLUGIN_ID);
+
+    const wrongTypeBlob = new Blob(['override'], { type: 'image/png' });
+    const onScreenshot = jest.fn().mockResolvedValue(wrongTypeBlob);
+    syncGetPanelPluginMock.mockReturnValue(makePluginWithOnScreenshot(onScreenshot));
+
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const result = await service.capture(PANEL_PATH_ID, { sceneContext, format: 'jpeg' });
+      expect(result).toBe(wrongTypeBlob);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0][0]).toMatch(/returned image\/png but image\/jpeg was requested/);
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('does not warn when override blob has empty MIME', async () => {
+    mountPanelElement(PANEL_PATH_ID);
+    const sceneContext = makeSceneContext(PANEL_PATH_ID, PLUGIN_ID);
+
+    const emptyTypeBlob = new Blob(['override']);
+    const onScreenshot = jest.fn().mockResolvedValue(emptyTypeBlob);
+    syncGetPanelPluginMock.mockReturnValue(makePluginWithOnScreenshot(onScreenshot));
+
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const result = await service.capture(PANEL_PATH_ID, { sceneContext, format: 'jpeg' });
+      expect(result).toBe(emptyTypeBlob);
+      expect(warnSpy).not.toHaveBeenCalled();
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
   it.each([
     ['string', 'not a scene'],
     ['number', 42],

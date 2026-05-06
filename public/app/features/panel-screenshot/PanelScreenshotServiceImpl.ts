@@ -45,6 +45,7 @@ export class PanelScreenshotServiceImpl implements PanelScreenshotService {
           throw Object.assign(new Error(`override_failed: ${msg}`), { kind: 'override_failed' });
         }
         if (overrideBlob) {
+          warnOnMimeMismatch(overrideBlob, format, panelType);
           report(panelType, start, true, undefined, plugin);
           return overrideBlob;
         }
@@ -99,6 +100,25 @@ function resolvePanelPlugin(panelPathId: string, explicitSceneContext?: unknown)
  */
 function isValidSceneContext(value: unknown): boolean {
   return typeof value === 'object' && value !== null && isSceneObject(value);
+}
+
+/**
+ * Non-breaking signal for plugin authors during the @alpha period: warn when
+ * a plugin's onScreenshot returns a Blob with a MIME type that doesn't match
+ * the requested format. Skips the check when `Blob.type` is empty - some
+ * plugin implementations legitimately return that. Strict validation (throw
+ * on mismatch) is a follow-up once the @alpha tag relaxes.
+ */
+function warnOnMimeMismatch(blob: Blob, format: Format, panelType: string): void {
+  const expected = `image/${format}`;
+  const actual = blob.type;
+  if (!actual || actual === expected) {
+    return;
+  }
+  console.warn(
+    `[panel-screenshot] plugin "${panelType}" returned ${actual} but ${expected} was requested. ` +
+      'Update onScreenshot to honour the requested format, or return null to defer to the default renderer.'
+  );
 }
 
 function describeValue(value: unknown): string {
