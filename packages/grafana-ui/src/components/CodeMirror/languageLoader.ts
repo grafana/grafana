@@ -1,22 +1,20 @@
-import type { Extension } from '@uiw/react-codemirror';
+import { type CodeMirrorEditorLanguage, type CodeMirrorExtension } from './types';
 
-type LanguageLoader = () => Promise<Extension>;
+type LanguageLoader = () => Promise<CodeMirrorExtension>;
 
 const loadJson: LanguageLoader = async () =>
   (await import(/* webpackChunkName: "codemirror-lang-json" */ '@codemirror/lang-json')).json();
 const loadSql: LanguageLoader = async () =>
   (await import(/* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql')).sql();
 
-export type CodeEditorLanguage = 'json' | 'sql';
-
-const languageLoaders: Record<CodeEditorLanguage, LanguageLoader> = {
+const languageLoaders: Record<CodeMirrorEditorLanguage, LanguageLoader> = {
   json: loadJson,
   sql: loadSql,
 };
 
-const languagePromises = new Map<CodeEditorLanguage, Promise<Extension>>();
+const languagePromises = new Map<CodeMirrorEditorLanguage, Promise<CodeMirrorExtension>>();
 
-export async function loadLanguageExtension(language?: CodeEditorLanguage): Promise<Extension | null> {
+export async function loadLanguageExtension(language?: CodeMirrorEditorLanguage): Promise<CodeMirrorExtension | null> {
   if (!language) {
     return null;
   }

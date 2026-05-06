@@ -556,7 +556,7 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 		ctx := testutils.CreateServiceAuthContext(t.Context(), "", defaultNs, nil)
 
 		err = svc.DeleteWhenOwnedByResource(ctx, owner, sv1, "does-not-exist")
-		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+		require.ErrorIs(t, err, contracts.ErrInlineSecureValueNotFound)
 
 		// got deleted
 		sv, err := tu.SecureValueService.Read(ctx, xkube.Namespace(owner.Namespace), sv1)

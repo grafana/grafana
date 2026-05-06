@@ -37,6 +37,8 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
+  /** Enables org-defined dashboard templates for enterprise */
+  GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Enables an inline version of Log Details that creates no new scrolls */
@@ -69,6 +71,8 @@ export const FlagKeys = {
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
+  /** Enables plugins setting from new apis */
+  UseMTPluginSettings: "useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   UseMTPlugins: "useMTPlugins",
 } as const;
@@ -111,10 +115,10 @@ export const useFlagCreatedByMeSearchFilter = (options?: ReactFlagEvaluationOpti
  *
  * **Details:**
  * - flag key: `dashboardSectionVariables`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDashboardSectionVariables = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboardSectionVariables", false, options).value;
+  return useFlag("dashboardSectionVariables", true, options).value;
 };
 
 /**
@@ -203,6 +207,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", false, options).value;
+};
+
+/**
+ * Enables org-defined dashboard templates for enterprise
+ *
+ * **Details:**
+ * - flag key: `grafana.orgDashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.orgDashboardTemplates", false, options).value;
 };
 
 /**
@@ -379,6 +394,17 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
+};
+
+/**
+ * Enables plugins setting from new apis
+ *
+ * **Details:**
+ * - flag key: `useMTPluginSettings`
+ * - default value: `false`
+ */
+export const useFlagUseMTPluginSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("useMTPluginSettings", false, options).value;
 };
 
 /**
