@@ -88,7 +88,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
 	}
 
-	mergeResult, err := prepared.GetMergedAlertmanagerConfig()
+	mergeResult, err := merge.MergeExtraConfig(prepared)
 	if err != nil {
 		return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to get full alertmanager configuration: %w", err)
 	}
@@ -341,7 +341,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	var alertmanagerConfig definitions.PostableApiAlertingConfig
 	var templateFiles map[string]string
 	if withMergedExtraConfig && len(cfg.ExtraConfigs) > 0 {
-		mergeResult, err := cfg.GetMergedAlertmanagerConfig()
+		mergeResult, err := merge.MergeExtraConfig(cfg)
 		if err != nil {
 			return definitions.GettableUserConfig{}, fmt.Errorf("failed to merge configuration: %w", err)
 		}
@@ -447,7 +447,7 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		}
 	}
 
-	mergeResult, err := cfg.GetMergedAlertmanagerConfig()
+	mergeResult, err := merge.MergeExtraConfig(cfg)
 	if err != nil {
 		return merge.RenameResources{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
 	}

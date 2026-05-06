@@ -19,6 +19,8 @@ import (
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 var (
@@ -168,6 +170,24 @@ func GetMergedAlertmanagerConfig(
 		ExtraRoute:        route,
 		ExtraInhibitRules: imported.InhibitRules,
 	}, nil
+}
+
+// MergeUserConfig merges extra configurations in cfg into the base Grafana configuration.
+// If no extra configurations are present, it returns the base configuration wrapped in a MergeResult.
+func MergeExtraConfig(cfg *definitions.PostableUserConfig) (MergeResult, error) {
+	if len(cfg.ExtraConfigs) == 0 {
+		return MergeResult{Config: cfg.AlertmanagerConfig}, nil
+	}
+	// support only one config for now
+	mimirCfg := cfg.ExtraConfigs[0]
+	if err := mimirCfg.Validate(); err != nil {
+		return MergeResult{}, fmt.Errorf("invalid extra configuration: %w", err)
+	}
+	mcfg, err := mimirCfg.GetAlertmanagerConfig()
+	if err != nil {
+		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
+	}
+	return GetMergedAlertmanagerConfig(cfg.AlertmanagerConfig, mcfg, mimirCfg.Identifier, mimirCfg.MergeMatchers)
 }
 
 // Merge combines two Alertmanager configurations into a single unified configuration.
