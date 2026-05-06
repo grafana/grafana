@@ -85,7 +85,7 @@ describe('DashboardCard', () => {
     expect(screen.getByText('My custom description')).toBeInTheDocument();
   });
 
-  it('should not render description when empty', () => {
+  it('should render fallback text when description is empty', () => {
     const dashboard = createMockPluginDashboard({ description: '' });
     render(
       <DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
@@ -94,7 +94,7 @@ describe('DashboardCard', () => {
     const cardHeading = screen.getByTestId(selectors.components.Card.heading);
     expect(cardHeading).toBeInTheDocument();
     expect(cardHeading).toHaveTextContent('Test Dashboard');
-    expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
+    expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('No description available');
   });
 
   describe('Button interactions', () => {
