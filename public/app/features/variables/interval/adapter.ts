@@ -5,7 +5,6 @@ import { t } from '@grafana/i18n';
 
 import { dispatch } from '../../../store/store';
 import { type VariableAdapter } from '../adapters';
-import { optionPickerFactory } from '../pickers/OptionsPicker/OptionsPicker';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { toKeyedVariableIdentifier } from '../utils';
 
@@ -24,7 +23,6 @@ export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariabl
     name: 'Interval',
     initialState: initialIntervalVariableModelState,
     reducer: intervalVariableReducer,
-    picker: optionPickerFactory<IntervalVariableModel>(),
     editor: IntervalVariableEditor,
     dependsOn: () => {
       return false;

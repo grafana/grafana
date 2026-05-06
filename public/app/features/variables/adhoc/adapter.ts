@@ -9,7 +9,6 @@ import { toKeyedVariableIdentifier } from '../utils';
 
 import { AdHocVariableEditor } from './AdHocVariableEditor';
 import { setFiltersFromUrl } from './actions';
-import { AdHocPicker } from './picker/AdHocPicker';
 import { adHocVariableReducer, initialAdHocVariableModelState } from './reducer';
 import * as urlParser from './urlParser';
 
@@ -25,7 +24,6 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     name: 'Filter',
     initialState: initialAdHocVariableModelState,
     reducer: adHocVariableReducer,
-    picker: AdHocPicker,
     editor: AdHocVariableEditor,
     dependsOn: () => false,
     setValue: noop,

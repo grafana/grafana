@@ -10,7 +10,6 @@ import {
 } from '@grafana/data';
 
 import { type VariableEditorProps } from './editor/types';
-import { type VariablePickerProps } from './pickers/types';
 import { type VariablesState } from './state/types';
 
 export interface VariableAdapter<Model extends TypedVariableModel> {
@@ -24,7 +23,6 @@ export interface VariableAdapter<Model extends TypedVariableModel> {
   updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
   getSaveModel: (variable: Model, saveCurrentAsDefault?: boolean) => Partial<Model>;
   getValueForUrl: (variable: Model) => string | string[];
-  picker: ComponentType<VariablePickerProps<Model>>;
   editor: ComponentType<VariableEditorProps<Model>>;
   reducer: Reducer<VariablesState>;
   beforeAdding?: (model: any) => any;
