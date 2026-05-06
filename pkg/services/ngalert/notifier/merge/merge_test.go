@@ -767,4 +767,14 @@ func TestMergeExtraConfig(t *testing.T) {
 		_, err := MergeExtraConfig(context.Background(), &input)
 		require.ErrorContains(t, err, "only matchers with type equal are supported")
 	})
+
+	t.Run("should fail if base route is nil and matchers are set", func(t *testing.T) {
+		grafana := load(t, fullGrafanaConfig, func(p *definition.PostableApiAlertingConfig) {
+			p.Route = nil
+		})
+		input := withExtra(t, grafana, fullMimirConfig)
+		_, err := MergeExtraConfig(context.Background(), &input)
+		require.ErrorContains(t, err, "cannot merge into undefined routing tree")
+	})
+
 }

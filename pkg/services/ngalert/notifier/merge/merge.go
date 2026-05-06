@@ -136,6 +136,9 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 	}
 
 	if len(mimirCfg.MergeMatchers) > 0 {
+		if cfg.AlertmanagerConfig.Route == nil {
+			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: cannot merge into undefined routing tree")
+		}
 		match, err := checkIfMatchersUsed(mimirCfg.MergeMatchers, cfg.AlertmanagerConfig.Route.Routes)
 		if err != nil {
 			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
@@ -166,12 +169,6 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 	route := cfg.AlertmanagerConfig.Route
 	inhibitRules := cfg.AlertmanagerConfig.InhibitRules
 	if len(mimirCfg.MergeMatchers) > 0 {
-		if route == nil {
-			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: cannot merge into undefined routing tree")
-		}
-		if mcfg.Route == nil {
-			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: cannot merge undefined routing tree")
-		}
 		route = MergeRoutes(*route, *mcfg.Route, mimirCfg.MergeMatchers)
 		inhibitRules = MergeInhibitRules(inhibitRules, mcfg.InhibitRules, mimirCfg.MergeMatchers)
 	}
