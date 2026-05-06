@@ -23,7 +23,7 @@ func (ds *DataSource) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/ebs-volume-ids", ds.handleResourceReq(ds.handleGetEbsVolumeIds))
 	mux.HandleFunc("/ec2-instance-attribute", ds.handleResourceReq(ds.handleGetEc2InstanceAttribute))
 	mux.HandleFunc("/resource-arns", ds.handleResourceReq(ds.handleGetResourceArns))
-	mux.HandleFunc("/log-groups", ds.resourceRequestMiddlewareWithHeaders(ds.LogGroupsHandler))
+	mux.HandleFunc("/log-groups", ds.resourceRequestWithHeadersMiddleware(ds.LogGroupsHandler))
 	mux.HandleFunc("/metrics", ds.resourceRequestMiddleware(ds.MetricsHandler))
 	mux.HandleFunc("/dimension-values", ds.resourceRequestMiddleware(ds.DimensionValuesHandler))
 	mux.HandleFunc("/dimension-keys", ds.resourceRequestMiddleware(ds.DimensionKeysHandler))
@@ -113,8 +113,7 @@ func (ds *DataSource) LogGroupsHandler(ctx context.Context, parameters url.Value
 	return body, responseHeaders, nil
 }
 
-// TODO: merge this and resourceRequestMiddleware
-func (ds *DataSource) resourceRequestMiddlewareWithHeaders(handleFunc models.RouteHandlerWithHeadersFunc) func(rw http.ResponseWriter, req *http.Request) {
+func (ds *DataSource) resourceRequestWithHeadersMiddleware(handleFunc models.RouteHandlerWithHeadersFunc) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		if req.Method != "GET" {
 			respondWithError(rw, models.NewHttpError("Invalid method", http.StatusMethodNotAllowed, nil))
@@ -369,29 +368,15 @@ func (ds *DataSource) GetRegionsService(ctx context.Context, region string) (mod
 	return services.NewRegionsService(NewEC2API(awsCfg), ds.logger), nil
 }
 
-// TODO: merge this and handleResourceReq
-func (ds *DataSource) resourceRequestMiddleware(handleFunc models.RouteHandlerFunc) func(rw http.ResponseWriter, req *http.Request) {
-	return func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != "GET" {
-			respondWithError(rw, models.NewHttpError("Invalid method", http.StatusMethodNotAllowed, nil))
-			return
-		}
-
-		ctx := req.Context()
-		jsonResponse, httpError := handleFunc(ctx, req.URL.Query())
-		if httpError != nil {
-			ds.logger.FromContext(ctx).Error("Error handling resource request", "error", httpError.Message)
-			respondWithError(rw, httpError)
-			return
-		}
-
-		rw.Header().Set("Content-Type", "application/json")
-		_, err := rw.Write(jsonResponse)
-		if err != nil {
-			ds.logger.FromContext(ctx).Error("Error handling resource request", "error", err)
-			respondWithError(rw, models.NewHttpError("error writing response in resource request middleware", http.StatusInternalServerError, err))
-		}
+func adaptRouteHandler(fn models.RouteHandlerFunc) models.RouteHandlerWithHeadersFunc {
+	return func(ctx context.Context, parameters url.Values) ([]byte, http.Header, *models.HttpError) {
+		body, httpErr := fn(ctx, parameters)
+		return body, nil, httpErr
 	}
+}
+
+func (ds *DataSource) resourceRequestMiddleware(handleFunc models.RouteHandlerFunc) func(rw http.ResponseWriter, req *http.Request) {
+	return ds.resourceRequestWithHeadersMiddleware(adaptRouteHandler(handleFunc))
 }
 
 func respondWithError(rw http.ResponseWriter, httpError *models.HttpError) {
