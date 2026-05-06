@@ -179,7 +179,6 @@ export interface CurrentUserDTO {
   gravatarUrl: string;
   timezone: string;
   weekStart: string;
-  regionalFormat: string;
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;

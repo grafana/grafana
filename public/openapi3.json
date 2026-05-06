@@ -8291,9 +8291,6 @@
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
-          "regionalFormat": {
-            "type": "string"
-          },
           "theme": {
             "enum": [
               "light",
@@ -8958,10 +8955,6 @@
           },
           "queryHistory": {
             "$ref": "#/components/schemas/PreferencesQueryHistoryPreference"
-          },
-          "regionalFormat": {
-            "description": "Selected locale (beta)\nTODO: Will be removed",
-            "type": "string"
           },
           "theme": {
             "description": "user interface theme",
@@ -12516,9 +12509,6 @@
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "regionalFormat": {
-            "type": "string"
           },
           "theme": {
             "enum": [

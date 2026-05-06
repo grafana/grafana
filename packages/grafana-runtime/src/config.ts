@@ -263,11 +263,6 @@ export class GrafanaBootConfig {
    */
   language: string | undefined;
 
-  /**
-   * regionalFormat used in Grafana's UI. Default to 'es-US' in the backend and overwritten when the user select a different one in SharedPreferences.
-   * This is the regionalFormat that is used for date formatting and other locale-specific features.
-   */
-  regionalFormat: string;
   listDashboardScopesEndpoint = '';
   listScopesEndpoint = '';
 
@@ -296,7 +291,6 @@ export class GrafanaBootConfig {
     this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
-    this.regionalFormat = options.bootData.user.regionalFormat;
   }
 }
 
