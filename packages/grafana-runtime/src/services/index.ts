@@ -45,7 +45,7 @@ export { ScopesContext, type ScopesContextValueState, type ScopesContextValue, u
 
 export {
   getInstanceSettings,
-  findInstanceSettings,
+  getInstanceSettingsList,
   getDataSourcePlugin,
   registerRuntimeDataSource,
   reload as reloadDataSources,
@@ -53,7 +53,7 @@ export {
   useInstanceSettingsList,
   useDataSourcePlugin,
   type DataSourceInstanceSettingsPage,
-  type FindInstanceSettingsOptions,
+  type GetInstanceSettingsListOptions,
   type UseInstanceSettingsResult,
   type UseInstanceSettingsListResult,
   type UseDataSourcePluginResult,

@@ -255,7 +255,7 @@ export class GrafanaApp {
       document.addEventListener('click', interceptLinkClicks);
 
       // Init async data source services (populates cache from boot data so
-      // new `getInstanceSettings` / `findInstanceSettings` callers don't
+      // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
       // need to wait on a network round trip).
       initDataSources(config.datasources, config.defaultDatasource);
       setDataSourceImporter(pluginImporter.importDataSource.bind(pluginImporter));

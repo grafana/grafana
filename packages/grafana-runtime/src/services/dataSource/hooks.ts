@@ -5,7 +5,7 @@ import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef
 
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
-import { findInstanceSettings, getInstanceSettings } from './instanceSettings';
+import { getInstanceSettings, getInstanceSettingsList } from './instanceSettings';
 import { getDataSourcePlugin } from './plugin';
 
 /**
@@ -52,7 +52,7 @@ export function useInstanceSettings(ref?: DataSourceRef | string | null): UseIns
 }
 
 /**
- * React hook wrapping {@link findInstanceSettings}. Items are flattened
+ * React hook wrapping {@link getInstanceSettingsList}. Items are flattened
  * across pages; call `fetchMore` to load additional pages. Items reset when
  * `filters` changes (by reference — pass a stable object to avoid extra
  * fetches).
@@ -65,7 +65,7 @@ export function useInstanceSettingsList(filters?: GetDataSourceListFilters): Use
   const [hasMore, setHasMore] = useState(true);
 
   const [fetchState, fetchPage] = useAsyncFn(
-    (nextCursor?: string) => findInstanceSettings({ filters, cursor: nextCursor }),
+    (nextCursor?: string) => getInstanceSettingsList({ filters, cursor: nextCursor }),
     [filters], // object equality — pass a stable ref to avoid extra fetches
     { loading: true }
   );
