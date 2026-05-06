@@ -1,8 +1,13 @@
-import { type AnnotationQueryRequest, type DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import {
+  type AnnotationQueryRequest,
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
+  dateTime,
+} from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { GrafanaDatasource } from './datasource';
-import { type GrafanaAnnotationQuery, GrafanaAnnotationType, type GrafanaQuery } from './types';
+import { type GrafanaAnnotationQuery, GrafanaAnnotationType, type GrafanaQuery, GrafanaQueryType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -13,6 +18,45 @@ jest.mock('@grafana/runtime', () => ({
     },
   }),
 }));
+
+describe('RandomWalk query', () => {
+  it('each query emits a response with a distinct key matching its refId', (done) => {
+    const ds = new GrafanaDatasource({} as DataSourceInstanceSettings);
+    const request = {
+      targets: [
+        { refId: 'A', queryType: GrafanaQueryType.RandomWalk },
+        { refId: 'B', queryType: GrafanaQueryType.RandomWalk },
+      ],
+      range: {
+        from: dateTime('2024-01-01T00:00:00Z'),
+        to: dateTime('2024-01-01T01:00:00Z'),
+        raw: { from: 'now-1h', to: 'now' },
+      },
+      intervalMs: 60000,
+      maxDataPoints: 60,
+      requestId: 'test',
+      interval: '1m',
+      scopedVars: {},
+      timezone: 'browser',
+      app: 'dashboard',
+      startTime: 0,
+    } as unknown as DataQueryRequest<GrafanaQuery>;
+
+    const keys: string[] = [];
+    ds.query(request).subscribe({
+      next: (response) => {
+        expect(response.key).toBeDefined();
+        keys.push(response.key!);
+      },
+      complete: () => {
+        expect(keys).toHaveLength(2);
+        expect(keys).toContain('A');
+        expect(keys).toContain('B');
+        done();
+      },
+    });
+  });
+});
 
 describe('grafana data source', () => {
   const getMock = jest.spyOn(backendSrv, 'get');

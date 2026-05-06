@@ -86,7 +86,7 @@ export const ActionRow = ({
 
   return (
     <Stack justifyContent="space-between" alignItems="center" wrap={true}>
-      <Stack alignItems="center">
+      <Stack alignItems="center" wrap={true}>
         <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
         {config.featureToggles.teamFolders && onOwnerReferenceChange && (
           <OwnersFilter values={state.ownerReference ?? []} onChange={onOwnerReferenceChange} />

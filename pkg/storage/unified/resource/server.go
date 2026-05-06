@@ -274,10 +274,12 @@ type SearchOptions struct {
 	IndexSnapshotUploadInterval time.Duration
 	// IndexSnapshotLockTTL is the TTL for the distributed lock used to coordinate uploads/cleanup.
 	IndexSnapshotLockTTL time.Duration
-	// IndexSnapshotMinKeep is the minimum number of snapshots to retain regardless of age.
-	IndexSnapshotMinKeep int
 	// IndexSnapshotCleanupInterval is how often snapshot cleanup runs.
 	IndexSnapshotCleanupInterval time.Duration
+	// IndexSnapshotCleanupGracePeriod is the time a newly uploaded snapshot must
+	// have existed before its predecessor in the same Grafana-version group is
+	// considered eligible for cleanup.
+	IndexSnapshotCleanupGracePeriod time.Duration
 }
 
 type ResourceServerOptions struct {

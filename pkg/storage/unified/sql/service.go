@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/fullstorydev/grpchan"
 	"github.com/gorilla/mux"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
@@ -539,14 +540,16 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
 		handler = &resourceServerWithAuth{ResourceServer: server, ServiceWithAuth: sa}
 	}
-	// Register storage services
 	srv := provider.GetServer()
-	resourcepb.RegisterResourceStoreServer(srv, handler)
+	// Storage services. ResourceStore is wrapped with the request-duration interceptor
+	// so we get group/resource-labeled metrics for Read/Create/Update/Delete/List.
+	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
+	srv.RegisterService(grpchan.InterceptServer(&resourcepb.ResourceStore_ServiceDesc, metricsInt, nil), handler)
 	resourcepb.RegisterBulkStoreServer(srv, handler)
 	resourcepb.RegisterBlobStoreServer(srv, handler)
 	resourcepb.RegisterDiagnosticsServer(srv, handler)
 	resourcepb.RegisterQuotasServer(srv, handler)
-	// Register search services
+	// Search services
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)

@@ -185,7 +185,7 @@ export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> =
   const dsSrv = getDataSourceSrv();
   const sourceDs = await dsSrv.get(data.sourceUID);
   let targetDs;
-  if ('targetUID' in data) {
+  if ('targetUID' in data && data.targetUID !== undefined) {
     targetDs = await dsSrv.get(data.targetUID!);
   }
 

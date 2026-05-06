@@ -47,7 +47,6 @@ local_resource(
     '../../pkg',
     '../../apps',
     '../../kinds',
-    '../../kindsv2',
     '../../local',
     '../../scripts',
     '../../conf',
