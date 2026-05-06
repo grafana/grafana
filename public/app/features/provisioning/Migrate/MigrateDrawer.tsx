@@ -83,6 +83,19 @@ export function MigrateDrawer({ folders, repos, selectedFolderUids, selectedDash
     [repos]
   );
   const [selectedRepoName, setSelectedRepoName] = useState<string | undefined>(repoOptions[0]?.value);
+
+  // Keep the selection valid as `repos` changes after mount (repositories load
+  // async, the user removes the configured repo, etc). If our selection is
+  // gone from the options, reset to the first available; if there are no
+  // options at all, clear it so the drawer renders the no-repo state instead
+  // of getting stuck on a stale name.
+  useEffect(() => {
+    const stillValid = selectedRepoName && repoOptions.some((opt) => opt.value === selectedRepoName);
+    if (stillValid) {
+      return;
+    }
+    setSelectedRepoName(repoOptions[0]?.value);
+  }, [repoOptions, selectedRepoName]);
   const {
     repository,
     isReadOnlyRepo,

@@ -58,43 +58,55 @@ interface SupportedTool {
 /**
  * Tools that can manage folders or dashboards. Order is the order tiles
  * appear; Git Sync is intentionally first because it's the recommended
- * starting point.
+ * starting point. Built at render time so the labels and descriptions can
+ * be routed through the i18n catalogue (`t()` / `Trans`) — module-level
+ * constants would freeze the user-facing strings to en-US.
  */
-const SUPPORTED_TOOLS: SupportedTool[] = [
-  {
-    key: 'git-sync',
-    kind: ManagerKind.Repo,
-    label: 'Git Sync',
-    description:
-      'Two-way sync between Grafana and a Git repository. Edit folders and dashboards in either place, review every change through pull requests, and keep the full audit trail in your repo history.',
-    image: gitSvg,
-    recommended: true,
-  },
-  {
-    key: 'terraform',
-    kind: ManagerKind.Terraform,
-    label: 'Terraform',
-    description:
-      'Manage folders and dashboards as Terraform resources alongside the rest of your infrastructure. Best when Terraform already runs your platform and you want a single source of state, plans, and approvals.',
-    initial: 'T',
-  },
-  {
-    key: 'gcx',
-    kind: ManagerKind.Kubectl,
-    label: 'GCX',
-    description:
-      'Push manifests from the command line with grafanactl, gcx, or kubectl. Lightweight for scripts, CI jobs, and one-off migrations without standing up a full GitOps pipeline.',
-    icon: 'keyboard',
-  },
-  {
-    key: 'file-system',
-    kind: CLASSIC_FILE_PROVISIONING,
-    label: 'File System',
-    description:
-      'Read folders and dashboards from local YAML or JSON files on the Grafana host. The classic provisioning path — simple to set up, but one-way and host-bound.',
-    icon: 'file-alt',
-  },
-];
+function getSupportedTools(): SupportedTool[] {
+  return [
+    {
+      key: 'git-sync',
+      kind: ManagerKind.Repo,
+      label: t('provisioning.stats.tool-git-sync-label', 'Git Sync'),
+      description: t(
+        'provisioning.stats.tool-git-sync-description',
+        'Two-way sync between Grafana and a Git repository. Edit folders and dashboards in either place, review every change through pull requests, and keep the full audit trail in your repo history.'
+      ),
+      image: gitSvg,
+      recommended: true,
+    },
+    {
+      key: 'terraform',
+      kind: ManagerKind.Terraform,
+      label: t('provisioning.stats.tool-terraform-label', 'Terraform'),
+      description: t(
+        'provisioning.stats.tool-terraform-description',
+        'Manage folders and dashboards as Terraform resources alongside the rest of your infrastructure. Best when Terraform already runs your platform and you want a single source of state, plans, and approvals.'
+      ),
+      initial: 'T',
+    },
+    {
+      key: 'gcx',
+      kind: ManagerKind.Kubectl,
+      label: t('provisioning.stats.tool-gcx-label', 'GCX'),
+      description: t(
+        'provisioning.stats.tool-gcx-description',
+        'Push manifests from the command line with grafanactl, gcx, or kubectl. Lightweight for scripts, CI jobs, and one-off migrations without standing up a full GitOps pipeline.'
+      ),
+      icon: 'keyboard',
+    },
+    {
+      key: 'file-system',
+      kind: CLASSIC_FILE_PROVISIONING,
+      label: t('provisioning.stats.tool-file-system-label', 'File System'),
+      description: t(
+        'provisioning.stats.tool-file-system-description',
+        'Read folders and dashboards from local YAML or JSON files on the Grafana host. The classic provisioning path — simple to set up, but one-way and host-bound.'
+      ),
+      icon: 'file-alt',
+    },
+  ];
+}
 
 interface GroupBreakdown {
   group: string;
@@ -272,7 +284,11 @@ function SemicircleGauge({ pct }: { pct: number }) {
   const length = Math.PI * radius;
   const dashLen = Math.max(0, Math.min(1, pct)) * length;
   return (
-    <svg width="120" height="68" viewBox="0 0 100 60" className={styles.gauge} role="img" aria-hidden>
+    // The gauge is purely decorative — the surrounding card already exposes
+    // the same percentage and "managed / total" fraction in text, so we drop
+    // role="img" and mark the SVG as hidden so screen readers don't read the
+    // percentage twice.
+    <svg width="120" height="68" viewBox="0 0 100 60" className={styles.gauge} aria-hidden="true">
       <path
         d="M 10 50 A 40 40 0 0 1 90 50"
         fill="none"
@@ -552,6 +568,9 @@ function ToolTile({ tool, count }: { tool: SupportedTool; count: number }) {
 
 function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   const styles = useStyles2(getStyles);
+  // Built each render so t() resolves against the current locale; the array
+  // is 4 items so recreating it is cheap.
+  const tools = getSupportedTools();
   const counts = useMemo(() => {
     const result = new Map<string, number>();
     breakdowns.forEach((b) => {
@@ -574,7 +593,7 @@ function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
         </Trans>
       </Text>
       <div className={styles.toolingGrid}>
-        {SUPPORTED_TOOLS.map((tool) => (
+        {tools.map((tool) => (
           <ToolTile key={tool.key} tool={tool} count={counts.get(tool.kind) ?? 0} />
         ))}
       </div>
