@@ -777,23 +777,20 @@ func conflictError(event WriteEvent, message string) error {
 	)
 }
 
-// leasesActive reports whether per-resource leases are in use for writes.
-func (k *kvStorageBackend) leasesActive() bool {
-	return k.leaseManager != nil && k.rvManager == nil
-}
-
-// acquireWriteLease acquires the per-resource lease that serializes WriteEvent
-// for this resource. It returns:
+// maybeAcquireWriteLease acquires the per-resource lease that serializes WriteEvent
+// for this resource if leases are enabled. It returns:
 //
 //   - a context derived from ctx that is cancelled if the lease is lost
 //     (e.g. its TTL expires while the write is in flight);
+//   - a boolean indicating whether a lease was acquired;
 //   - a release closure to be deferred — it stops the watcher goroutine and
 //     releases the lease.
 //
 // When leases are not active, it returns ctx unchanged and a no-op release.
-func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, func(), error) {
-	if !k.leasesActive() {
-		return ctx, func() {}, nil
+func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, bool, func(), error) {
+	leasesActive := k.leaseManager != nil && k.rvManager == nil
+	if !leasesActive {
+		return ctx, false, func() {}, nil
 	}
 
 	name := event.Key.Group + "/" + event.Key.Resource + "/" +
@@ -806,9 +803,9 @@ func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEve
 	if err != nil {
 		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 			k.metrics.recordConflict(event)
-			return nil, nil, conflictError(event, "concurrent modification on the same resource, please retry")
+			return nil, false, nil, conflictError(event, "concurrent modification on the same resource, please retry")
 		}
-		return nil, nil, fmt.Errorf("acquiring write lease: %w", err)
+		return nil, false, nil, fmt.Errorf("acquiring write lease: %w", err)
 	}
 
 	leaseCtx, cancel := context.WithCancel(ctx)
@@ -831,7 +828,7 @@ func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEve
 		}
 	}
 
-	return leaseCtx, release, nil
+	return leaseCtx, true, release, nil
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
@@ -852,7 +849,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	))
 	defer span.End()
 
-	ctx, releaseLease, err := k.acquireWriteLease(ctx, event)
+	ctx, leasesActive, releaseLease, err := k.maybeAcquireWriteLease(ctx, event)
 	if err != nil {
 		return 0, err
 	}
@@ -903,7 +900,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 				return 0, ErrResourceAlreadyExists
 			}
 
-			if k.leasesActive() {
+			if leasesActive {
 				// Holding the lease guarantees no concurrent in-flight writes
 				// for this resource, so a non-deleted latest key is genuine.
 				return 0, ErrResourceAlreadyExists
@@ -989,7 +986,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 	// Optimistic concurrency control to verify our write is the latest version
 	// and that the resource still had the expected PreviousRV when we wrote it.
-	if !k.leasesActive() {
+	if !leasesActive {
 		if event.PreviousRV != 0 {
 			// Update operations: verify PreviousRV matches and our write is latest
 			// Get both the latest and predecessor
