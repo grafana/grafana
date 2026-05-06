@@ -253,6 +253,13 @@ func (m *Manager) Extend(ctx context.Context, lease *Lease, opts ...Option) erro
 		return fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, m.minTTL)
 	}
 
+	// Note: like Release, the sequence latest → read → validate → save is
+	// not atomic. A competing Acquire could create a newer generation
+	// between the latest-check and the save, leading to a brief split-brain
+	// where both the old and new holder believe they hold the lease.
+	// In practice this is mitigated by extending well before expiry so the lease
+	// is never close to lapsing when the save occurs.
+
 	_, latestGeneration, err := m.latest(ctx, lease.name)
 	if err != nil {
 		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
