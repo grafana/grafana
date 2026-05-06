@@ -16,6 +16,13 @@ type RBACSettings struct {
 	// PluginsCleanup lists plugin IDs whose RBAC data (roles, permissions, seed assignments)
 	// should be purged from the database at startup.
 	PluginsCleanup []string
+	// GrantOverrides maps a fixed role name (e.g. "fixed:plugins:maintainer")
+	// to the list of built-in roles ("Viewer", "Editor", "Admin", "Grafana Admin")
+	// that should be granted that role, overriding the defaults declared in code.
+	// This field is populated by enterprise/cloud code paths only; OSS does not
+	// parse [rbac.grants] from INI here. The legacy enterprise accesscontrol
+	// service parses it independently in pkg/extensions/accesscontrol/acimpl.
+	GrantOverrides map[string][]string
 	// set of resources that should generate managed permissions when created
 	resourcesWithPermissionsOnCreation map[string]struct{}
 
