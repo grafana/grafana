@@ -3,11 +3,11 @@ import { type ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
-import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { render as testRender, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -21,7 +21,7 @@ setupMockServer();
 
 const [_, { dashbdD, folderA, folderA_folderA }] = getFolderFixtures();
 
-comboboxTestSetup();
+mockComboboxRect();
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
