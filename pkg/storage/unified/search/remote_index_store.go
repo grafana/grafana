@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -77,8 +78,9 @@ type IndexStoreLock interface {
 // RemoteIndexStore manages index snapshots on remote storage.
 // Index keys are immutable: each snapshot uses a unique ULID key.
 type RemoteIndexStore interface {
-	// LockBuildIndex acquires a distributed build lock for namespace/group/resource.
-	LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource) (IndexStoreLock, error)
+	// LockBuildIndex acquires a distributed build/upload lock for namespace/group/resource.
+	// buildVersion scopes contention to replicas running the same exact Grafana version.
+	LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource, buildVersion string) (IndexStoreLock, error)
 
 	// LockNamespaceForCleanup acquires a distributed cleanup lock for a namespace.
 	// Uses a different lock key than LockBuildIndex so cleanup never blocks an
@@ -193,8 +195,12 @@ func nsPrefix(ns resource.NamespacedResource) string {
 	return fmt.Sprintf("%s/", resourceSubPath(ns))
 }
 
-func buildIndexLockKey(ns resource.NamespacedResource) string {
-	return fmt.Sprintf("%s/locks/build", resourceSubPath(ns))
+func buildIndexLockKey(ns resource.NamespacedResource, buildVersion string) string {
+	return fmt.Sprintf("%s/locks/build-%s", resourceSubPath(ns), versionLockSegment(buildVersion))
+}
+
+func versionLockSegment(buildVersion string) string {
+	return base64.RawURLEncoding.EncodeToString([]byte(buildVersion))
 }
 
 // cleanupLockKey returns the object-storage lock key used to serialise cleanup
@@ -204,8 +210,11 @@ func cleanupLockKey(namespace string) string {
 	return fmt.Sprintf("%s/locks/cleanup", cleanFileSegment(namespace))
 }
 
-func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource) (IndexStoreLock, error) {
-	l, err := newObjectStorageLock(s.lockConfig(buildIndexLockKey(nsResource), s.buildLockOpts))
+func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	if buildVersion == "" {
+		return nil, fmt.Errorf("build version must not be empty")
+	}
+	l, err := newObjectStorageLock(s.lockConfig(buildIndexLockKey(nsResource, buildVersion), s.buildLockOpts))
 	if err != nil {
 		return nil, fmt.Errorf("creating build lock: %w", err)
 	}

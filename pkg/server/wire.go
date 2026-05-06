@@ -207,7 +207,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 )
 
 func otelTracer() trace.Tracer {
@@ -322,7 +321,6 @@ var wireBasicSet = wire.NewSet(
 	prometheus.ProvideService,
 	pyroscope.ProvideService,
 	parca.ProvideService,
-	zipkin.ProvideService,
 	jaeger.ProvideService,
 	datasourceservice.ProvideCacheService,
 	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),

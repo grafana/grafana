@@ -710,7 +710,7 @@ func TestRemoteIndexStore_LockBuildIndex_AcquireRelease(t *testing.T) {
 	defer func() { _ = bucket.Close() }()
 	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
 
-	lock, err := store.LockBuildIndex(ctx, ns)
+	lock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 
 	select {
@@ -732,17 +732,59 @@ func TestRemoteIndexStore_LockBuildIndex_Contention(t *testing.T) {
 	store1 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
 	store2 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-2")
 
-	lock1, err := store1.LockBuildIndex(ctx, ns)
+	lock1, err := store1.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = lock1.Release() })
 
-	_, err = store2.LockBuildIndex(ctx, ns)
+	_, err = store2.LockBuildIndex(ctx, ns, "11.5.0")
 	require.ErrorIs(t, err, errLockHeld)
 
 	require.NoError(t, lock1.Release())
-	lock2, err := store2.LockBuildIndex(ctx, ns)
+	lock2, err := store2.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 	require.NoError(t, lock2.Release())
+}
+
+func TestRemoteIndexStore_LockBuildIndex_VersionScoped(t *testing.T) {
+	ctx := context.Background()
+	ns := newTestNsResource()
+	backend := newFakeBackend(newConditionalBucket())
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+
+	store1 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
+	store2 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-2")
+
+	lock1, err := store1.LockBuildIndex(ctx, ns, "11.5.0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = lock1.Release() })
+
+	lock2, err := store2.LockBuildIndex(ctx, ns, "11.6.0")
+	require.NoError(t, err)
+	require.NoError(t, lock2.Release())
+}
+
+func TestRemoteIndexStore_LockBuildIndex_RequiresBuildVersion(t *testing.T) {
+	ctx := context.Background()
+	ns := newTestNsResource()
+	backend := newFakeBackend(newConditionalBucket())
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
+
+	lock, err := store.LockBuildIndex(ctx, ns, "")
+	require.Error(t, err)
+	assert.Nil(t, lock)
+}
+
+func TestRemoteIndexStore_LockBuildIndex_KeyEncodesBuildVersion(t *testing.T) {
+	ns := newTestNsResource()
+	key := buildIndexLockKey(ns, "v11.5.0+security/branch")
+	segment := strings.TrimPrefix(key, resourceSubPath(ns)+"/locks/build-")
+
+	require.NoError(t, validateObjectKey(key))
+	assert.NotEmpty(t, segment)
+	assert.NotContains(t, segment, "/")
 }
 
 func TestRemoteIndexStore_LockBuildIndex_LostAndReleaseAfterLoss(t *testing.T) {
@@ -753,10 +795,10 @@ func TestRemoteIndexStore_LockBuildIndex_LostAndReleaseAfterLoss(t *testing.T) {
 	defer func() { _ = bucket.Close() }()
 	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
 
-	lock, err := store.LockBuildIndex(ctx, ns)
+	lock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 
-	require.NoError(t, backend.Delete(ctx, buildIndexLockKey(ns), "instance-1"))
+	require.NoError(t, backend.Delete(ctx, buildIndexLockKey(ns, "11.5.0"), "instance-1"))
 
 	select {
 	case <-lock.Lost():
@@ -873,10 +915,10 @@ func TestRemoteIndexStore_ListIndexes_SkipsLockSibling(t *testing.T) {
 		IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1})
 	require.NoError(t, err)
 
-	// Plant a `<resource-group>/locks/build` object directly in the data bucket.
+	// Plant a `<resource-group>/locks/build-<version>` object directly in the data bucket.
 	// In production the lock backend shares the snapshot bucket, so this prefix
 	// is observable alongside index-key directories. ListIndexes must skip it.
-	require.NoError(t, bucket.WriteAll(ctx, buildIndexLockKey(ns), []byte("{}"), nil))
+	require.NoError(t, bucket.WriteAll(ctx, buildIndexLockKey(ns, "11.0.0"), []byte("{}"), nil))
 
 	indexes, err := store.ListIndexes(ctx, ns)
 	require.NoError(t, err)
@@ -960,11 +1002,11 @@ func TestRemoteIndexStore_LockNamespaceForCleanup_DistinctFromBuildLock(t *testi
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = cleanupLock.Release() })
 
-	buildLock, err := store.LockBuildIndex(ctx, ns)
+	buildLock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 	require.NoError(t, buildLock.Release())
 
-	require.NotEqual(t, cleanupLockKey(ns.Namespace), buildIndexLockKey(ns))
+	require.NotEqual(t, cleanupLockKey(ns.Namespace), buildIndexLockKey(ns, "11.5.0"))
 }
 
 // Smoke-tests the LockOptions plumbing. Only TTL is observable in lockInfo;
@@ -986,11 +1028,11 @@ func TestRemoteIndexStore_BuildAndCleanupLockTTLsWiredIndependently(t *testing.T
 	})
 	ns := newTestNsResource()
 
-	buildLock, err := store.LockBuildIndex(ctx, ns)
+	buildLock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = buildLock.Release() })
 
-	info, err := backend.Read(ctx, buildIndexLockKey(ns))
+	info, err := backend.Read(ctx, buildIndexLockKey(ns, "11.5.0"))
 	require.NoError(t, err)
 	require.Equal(t, buildTTL, info.TTL)
 
