@@ -5270,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Configuración"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5672,7 @@
         "title": "Variables"
       },
       "variable": {
-        "change-type": "Cambiar",
+        "change-type": "",
         "change-type-aria-label": "Cambiar tipo de variable",
         "custom-options": {
           "apply": "Aplicar",
@@ -5989,7 +5989,7 @@
       "cancel": "Cancelar",
       "common": {
         "copy": "Copiar",
-        "copy-or-duplicate": "Copiar/pegar o duplicar",
+        "copy-tooltip": "",
         "delete": "Eliminar",
         "duplicate": "Duplicar",
         "layout": "Diseño",
@@ -6028,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Panel sin configurar. Pulsa la tecla Tab para ver las opciones de configuración.",
-      "configure-button": "Configurar",
+      "configure-button": "",
       "configure-button-menu": "Activar o desactivar menú",
       "configure-visualization": "Configurar visualización",
       "empty-state-message": "Ejecuta una consulta para visualizarla aquí o ve a todas las visualizaciones para añadir otros tipos de panel",
@@ -6270,10 +6270,8 @@
       "title-provisioned": "Dashboard aprovisionado"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Ya existe un dashboard con el mismo nombre en la carpeta seleccionada.<br/><2>¿Seguro que quieres guardar este dashboard?</2>",
       "body-version-mismatch": "Otra persona ha actualizado este dashboard.<br/><2>¿Seguro que quieres guardar este dashboard?</2>",
       "confirmText-save-and-overwrite": "Guardar y sobrescribir",
-      "title-name-exists": "Conflicto",
       "title-version-mismatch": "Conflicto"
     },
     "save-dashboard-form": {
@@ -7327,10 +7325,6 @@
       "success-message": "Dashboard movido correctamente",
       "target-path-label": "Ruta de destino",
       "title-this-repository-is-read-only": "Este repositorio es de solo lectura"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Ya existe un dashboard con el mismo nombre en la carpeta seleccionada. ¿Seguro que quieres guardar este dashboard?",
-      "title-name-already-exists": "Este nombre ya existe"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

@@ -5270,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Instellingen"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5672,7 @@
         "title": "Variabelen"
       },
       "variable": {
-        "change-type": "Wijzigen",
+        "change-type": "",
         "change-type-aria-label": "Type variabele wijzigen",
         "custom-options": {
           "apply": "Toepassen",
@@ -5989,7 +5989,7 @@
       "cancel": "Annuleren",
       "common": {
         "copy": "Kopiëren",
-        "copy-or-duplicate": "Kopiëren/plakken of dupliceren",
+        "copy-tooltip": "",
         "delete": "Verwijderen",
         "duplicate": "Dupliceren",
         "layout": "Indeling",
@@ -6028,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Niet-geconfigureerd paneel. Gebruik Tab om de configuratieopties te bekijken.",
-      "configure-button": "Configureren",
+      "configure-button": "",
       "configure-button-menu": "Navigatiemenu",
       "configure-visualization": "Visualisatie configureren",
       "empty-state-message": "Voer een query uit om deze hier te visualiseren of ga naar alle visualisaties om andere paneeltypen toe te voegen",
@@ -6270,10 +6270,8 @@
       "title-provisioned": "Geprovisioneerd dashboard"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Er bestaat al een dashboard met dezelfde naam in de geselecteerde map.<br/> <2>Wil je dit dashboard nog steeds opslaan?</2>",
       "body-version-mismatch": "Iemand anders heeft dit dashboard bijgewerkt<br/> <2>Wil je dit dashboard nog steeds opslaan?</2>",
       "confirmText-save-and-overwrite": "Opslaan en overschrijven",
-      "title-name-exists": "Conflict",
       "title-version-mismatch": "Conflict"
     },
     "save-dashboard-form": {
@@ -7327,10 +7325,6 @@
       "success-message": "Dashboard is verplaatst",
       "target-path-label": "Doelpad",
       "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Er bestaat al een dashboard met dezelfde naam in de geselecteerde map. Wil je dit dashboard nog steeds opslaan?",
-      "title-name-already-exists": "Naam bestaat al"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

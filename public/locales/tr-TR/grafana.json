@@ -5270,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Ayarlar"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5672,7 @@
         "title": "Değişkenler"
       },
       "variable": {
-        "change-type": "Değiştir",
+        "change-type": "",
         "change-type-aria-label": "Değişken türünü değiştir",
         "custom-options": {
           "apply": "Uygula",
@@ -5989,7 +5989,7 @@
       "cancel": "İptal et",
       "common": {
         "copy": "Kopyala",
-        "copy-or-duplicate": "Kopyala/yapıştır veya çoğalt",
+        "copy-tooltip": "",
         "delete": "Sil",
         "duplicate": "Çoğalt",
         "layout": "Düzen",
@@ -6028,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Yapılandırılmamış panel. Yapılandırma seçeneklerini görmek için sekmeye gidin.",
-      "configure-button": "Yapılandır",
+      "configure-button": "",
       "configure-button-menu": "Menüyü aç/kapat",
       "configure-visualization": "Görselleştirmeyi yapılandır",
       "empty-state-message": "Burada görselleştirmek için bir sorgu çalıştırın ya da diğer panel türlerini eklemek için tüm görselleştirmelere gidin.",
@@ -6270,10 +6270,8 @@
       "title-provisioned": "Sağlanan pano"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Seçilen klasörde aynı adı taşıyan bir pano zaten var.<br/><2>Bu panoyu yine de kaydetmek istiyor musunuz?</2>",
       "body-version-mismatch": "Bir başkası bu panoyu güncelledi.<br/><2>Bu panoyu yine de kaydetmek istiyor musunuz?</2>",
       "confirmText-save-and-overwrite": "Kaydet ve üzerine yaz",
-      "title-name-exists": "Çakışma",
       "title-version-mismatch": "Çakışma"
     },
     "save-dashboard-form": {
@@ -7327,10 +7325,6 @@
       "success-message": "Pano başarıyla taşındı",
       "target-path-label": "Hedef yol",
       "title-this-repository-is-read-only": "Bu depo salt okunur"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Seçilen klasörde aynı isimde bir pano zaten mevcut. Yine de bu panoyu kaydetmek istiyor musunuz?",
-      "title-name-already-exists": "Bu ad zaten mevcut"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

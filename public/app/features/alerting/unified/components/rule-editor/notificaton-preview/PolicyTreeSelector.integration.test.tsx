@@ -7,6 +7,7 @@ import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils
 import { byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
@@ -80,18 +81,7 @@ const selectFolderAndGroup = async (user: UserEvent) => {
 const server = setupMswServer();
 
 beforeEach(() => {
-  const mockGetBoundingClientRect = jest.fn(() => ({
-    width: 120,
-    height: 120,
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  }));
-
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: mockGetBoundingClientRect,
-  });
+  mockComboboxRect();
 
   mockPreviewApiResponse(server, []);
 });

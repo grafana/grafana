@@ -124,7 +124,7 @@ describe('v0alpha1PanelMapper', () => {
   it('should only map specs with type panel', () => {
     const result = v0alpha1PanelMapper(v0alpha1Response);
 
-    expect(v0alpha1Response.items).toHaveLength(54);
+    expect(v0alpha1Response.items).toHaveLength(53);
     expect(Object.keys(result)).toHaveLength(28);
     expect(Object.keys(result)).toEqual(Object.keys(panels));
   });
