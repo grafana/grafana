@@ -116,6 +116,9 @@ type SearchBackend interface {
 	// Updater function is used to update the index before performing the search.
 	// rebuild forces a full rebuild of the index, regardless of state.
 	// lastImportTime is used to determine if an existing file-based index needs to be rebuilt before opening.
+	// maxFreshSnapshotAge is the freshness window (by snapshot BuildTime) within
+	// which a same-version remote snapshot is preferred over rebuilding from
+	// scratch on the rebuild path. Zero disables that fast path.
 	BuildIndex(
 		ctx context.Context,
 		key NamespacedResource,
@@ -126,6 +129,7 @@ type SearchBackend interface {
 		updater UpdateFn,
 		rebuild bool,
 		lastImportTime time.Time,
+		maxFreshSnapshotAge time.Duration,
 	) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
@@ -169,6 +173,16 @@ type searchServer struct {
 	indexModificationCacheTTL time.Duration
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
+}
+
+// getIndexMaxAge returns the configured rebuild interval for the given
+// resource: dashboards use IndexRebuildInterval (cfg.IndexRebuildInterval),
+// other resources use MaxFileIndexAge. Zero means "no age-based rebuild".
+func (s *searchServer) getIndexMaxAge(key NamespacedResource) time.Duration {
+	if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
+		return s.dashboardIndexMaxAge
+	}
+	return s.maxIndexAge
 }
 
 // maybeInjectFailure returns an error for a configured percentage of calls.
@@ -678,8 +692,7 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 
 			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			reason := "init"
-			// Use WithIndexBuildRetryBudget so it can retry based on number of keys.
-			_, err := s.build(WithIndexBuildRetryBudget(ctx), info.NamespacedResource, info.Count, reason, false, time.Time{})
+			_, err := s.build(ctx, info.NamespacedResource, info.Count, reason, false, time.Time{})
 			return err
 		})
 	}
@@ -804,10 +817,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			continue
 		}
 
-		maxAge := s.maxIndexAge
-		if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
-			maxAge = s.dashboardIndexMaxAge
-		}
+		maxAge := s.getIndexMaxAge(key)
 
 		var minBuildTime time.Time
 		if maxAge > 0 {
@@ -935,8 +945,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
-	// Use WithIndexBuildRetryBudget so it can retry based on number of keys.
-	_, err = s.build(WithIndexBuildRetryBudget(ctx), req.NamespacedResource, size, "rebuild", true, time.Time{})
+	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, time.Time{})
 	if err != nil {
 		span.RecordError(err)
 		l.Error("failed to rebuild index", "error", err)
@@ -1352,7 +1361,12 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		s.builders.clearNamespacedCache(nsr)
 	}
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime)
+	// On the rebuild path, prefer downloading a fresh same-version remote
+	// snapshot over rebuilding from scratch when one exists with BuildTime
+	// within ~10% of the per-resource rebuild interval.
+	maxFreshSnapshotAge := s.getIndexMaxAge(nsr) / 10
+
+	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime, maxFreshSnapshotAge)
 
 	if err != nil {
 		return nil, err

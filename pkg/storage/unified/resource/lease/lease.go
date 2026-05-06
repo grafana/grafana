@@ -2,14 +2,40 @@ package lease
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"strconv"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
-// defaultTTL is the TTL applied when an Acquire call does not pass WithTTL.
-const defaultTTL = 10 * time.Second
+const (
+	// TTL applied when an Acquire call does not pass WithTTL.
+	defaultTTL = 10 * time.Second
+
+	// minimum TTL accepted. Returns an error if the caller passes a lower duration.
+	defaultMinTTL = 10 * time.Second
+
+	// maximum tolerated clock skew across hosts when deciding whether an
+	// existing lease is still held by another process.
+	defaultMaxClockSkew = 500 * time.Millisecond
+
+	// maximum number of times an Acquire() call will loop to ensure a lease
+	// is already acquired when it cannot create a unique key.
+	maxAcquireAttempts = 3
+
+	// generationSeparator joins a lease's name and its generation in the
+	// persisted KV key (e.g. "my/lease~00000000000000000001"). This separator
+	// is not allowed in lease names and ensures that we are able to do
+	// range queries for the particular lease being requested without risk
+	// of conflicting with other leases names that share the same prefix.
+	generationSeparator = "~"
+)
 
 var (
 	// ErrLeaseAlreadyHeld is returned by Acquire when an unexpired lease for
@@ -24,10 +50,12 @@ var (
 )
 
 type Lease struct {
-	name       string        //nolint:unused
-	holder     string        //nolint:unused
-	generation int64         //nolint:unused
-	lostCh     chan struct{} //nolint:unused
+	name       string
+	holder     string
+	generation int64
+	lostCh     chan struct{}
+	lostOnce   sync.Once
+	lostTimer  *time.Timer
 }
 
 // Lost returns a channel that is closed when this lease ends, i.e., when its TTL
@@ -38,16 +66,57 @@ func (l *Lease) Lost() <-chan struct{} {
 	return l.lostCh
 }
 
+func (l *Lease) notifyLoss() {
+	l.lostOnce.Do(func() {
+		close(l.lostCh)
+	})
+}
+
+// leaseMetadata is the data saved in the KV store for each lease.
+type leaseMetadata struct {
+	Holder  string `json:"holder"`
+	Expires int64  `json:"expires"`
+	Deleted bool   `json:"deleted"`
+}
+
+func (meta *leaseMetadata) ValidAsOf(ts time.Time) bool {
+	return !meta.Deleted && ts.Before(time.Unix(0, meta.Expires))
+}
+
 // Manager acquires and releases leases backed by a KV store.
 type Manager struct {
-	store  kv.KV
-	holder string
+	store        kv.KV
+	holder       string
+	minTTL       time.Duration
+	maxClockSkew time.Duration
 }
 
 // NewManager returns a Manager that uses store for persistence and identifies
 // itself as holder.
-func NewManager(store kv.KV, holder string) *Manager {
-	return &Manager{store: store, holder: holder}
+func NewManager(store kv.KV, holder string, opts ...ManagerOption) *Manager {
+	m := &Manager{
+		store:        store,
+		holder:       holder,
+		minTTL:       defaultMinTTL,
+		maxClockSkew: defaultMaxClockSkew,
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// ManagerOption configures a lease Manager.
+type ManagerOption func(*Manager)
+
+// WithInternalMinTTL overrides the minimum TTL accepted by a Manager and
+// disables clock-skew compensation. This is intended only for tests that need
+// short lease durations.
+func WithInternalMinTTL(d time.Duration) ManagerOption {
+	return func(m *Manager) {
+		m.minTTL = d
+		m.maxClockSkew = 0
+	}
 }
 
 // AcquireOption configures a single Acquire call.
@@ -69,16 +138,196 @@ func WithTTL(d time.Duration) AcquireOption {
 // an unexpired lease for name is currently owned by some holder (including
 // possibly the caller).
 func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOption) (*Lease, error) {
+	if err := validateLeaseName(name); err != nil {
+		return nil, err
+	}
+
 	cfg := acquireOptions{ttl: defaultTTL}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
-	_ = cfg
-	return nil, errors.New("not implemented")
+
+	if cfg.ttl < m.minTTL {
+		return nil, fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, m.minTTL)
+	}
+
+	for attempt := 0; ; attempt++ {
+		latestKey, latestGeneration, err := m.latest(ctx, name)
+		if err != nil {
+			return nil, fmt.Errorf("acquiring %s: %w", name, err)
+		}
+
+		now := time.Now()
+		if latestKey != "" {
+			latest, err := m.read(ctx, latestKey)
+			if err != nil {
+				return nil, err
+			}
+			// Bias acquisition toward treating a remote lease as still held
+			// to tolerate clock skew between hosts.
+			if latest.ValidAsOf(now.Add(-m.maxClockSkew)) {
+				return nil, ErrLeaseAlreadyHeld
+			}
+		}
+
+		generation := latestGeneration + 1
+		expires := now.Add(cfg.ttl)
+		state := leaseMetadata{
+			Holder:  m.holder,
+			Expires: expires.UnixNano(),
+		}
+		value, err := json.Marshal(state)
+		if err != nil {
+			return nil, err
+		}
+
+		key := leaseKey(name, generation)
+		err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{{
+			Mode:  kv.BatchOpCreate,
+			Key:   key,
+			Value: value,
+		}})
+		if errors.Is(err, kv.ErrKeyAlreadyExists) {
+			if attempt >= maxAcquireAttempts-1 {
+				return nil, fmt.Errorf("%w: exhausted retries acquiring %s", ErrLeaseAlreadyHeld, name)
+			}
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("acquiring %s: %w", name, err)
+		}
+
+		l := &Lease{
+			name:       name,
+			holder:     m.holder,
+			generation: generation,
+			lostCh:     make(chan struct{}),
+		}
+		l.lostTimer = time.AfterFunc(time.Until(expires), l.notifyLoss)
+		return l, nil
+	}
 }
 
 // Release releases lease. It is not idempotent: releasing a lease that has
 // already been released — or one that has expired — returns ErrLeaseLost.
 func (m *Manager) Release(ctx context.Context, lease *Lease) error {
-	return errors.New("not implemented")
+	key := leaseKey(lease.name, lease.generation)
+	meta, err := m.read(ctx, key)
+	if err != nil {
+		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
+	}
+
+	// Note that we're not guaranteed to return ErrLeaseLost if two managers for
+	// the same holder attempt to release the same lease concurrently due to
+	// the lack of a conditional update primitive in the KV interface.
+	//
+	// Given that this use-case is quite contrived, this is an acceptable tradeoff
+	// at this time.
+	if meta.Holder != m.holder || !meta.ValidAsOf(time.Now()) {
+		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+	}
+
+	meta.Deleted = true
+	if err := m.save(ctx, key, meta); err != nil {
+		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
+	}
+
+	lease.lostTimer.Stop()
+	lease.notifyLoss()
+	return nil
+}
+
+func (m *Manager) latest(ctx context.Context, name string) (string, int64, error) {
+	prefix := name + generationSeparator
+	opts := kv.ListOptions{
+		Sort:     kv.SortOrderDesc,
+		StartKey: prefix,
+		EndKey:   kv.PrefixRangeEnd(prefix),
+		Limit:    1,
+	}
+
+	for key, err := range m.store.Keys(ctx, kv.LeasesSection, opts) {
+		if err != nil {
+			return "", 0, err
+		}
+		generation, err := parseGeneration(name, key)
+		if err != nil {
+			return "", 0, err
+		}
+		return key, generation, nil
+	}
+
+	return "", 0, nil
+}
+
+func (m *Manager) read(ctx context.Context, key string) (leaseMetadata, error) {
+	r, err := m.store.Get(ctx, kv.LeasesSection, key)
+	if err != nil {
+		return leaseMetadata{}, fmt.Errorf("fetching lease key: %w", err)
+	}
+	defer func() { _ = r.Close() }()
+
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return leaseMetadata{}, fmt.Errorf("reading lease key: %w", err)
+	}
+
+	var state leaseMetadata
+	if err := json.Unmarshal(data, &state); err != nil {
+		return leaseMetadata{}, fmt.Errorf("unmarshaling lease metadata: %w", err)
+	}
+	return state, nil
+}
+
+func (m *Manager) save(ctx context.Context, key string, state leaseMetadata) error {
+	data, err := json.Marshal(state)
+	if err != nil {
+		return err
+	}
+
+	w, err := m.store.Save(ctx, kv.LeasesSection, key)
+	if err != nil {
+		return err
+	}
+	if _, err := w.Write(data); err != nil {
+		if closeErr := w.Close(); closeErr != nil {
+			return fmt.Errorf("%w (close error: %w)", err, closeErr)
+		}
+		return err
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("closing writer: %w", err)
+	}
+
+	return nil
+}
+
+// leaseKey generates a 20-digit generation suffix so leases sort
+// lexicographically in generation order.
+func leaseKey(name string, generation int64) string {
+	return fmt.Sprintf("%s%s%020d", name, generationSeparator, generation)
+}
+
+func validateLeaseName(name string) error {
+	if !kv.IsValidKey(name) {
+		return fmt.Errorf("invalid lease name %q", name)
+	}
+	if strings.Contains(name, generationSeparator) {
+		return fmt.Errorf("invalid lease name %q: %q is reserved", name, generationSeparator)
+	}
+	return nil
+}
+
+func parseGeneration(name, key string) (int64, error) {
+	suffix, ok := strings.CutPrefix(key, name+generationSeparator)
+	if !ok {
+		// Should not happen in practice unless we get an invalid key from
+		// the underlying KV store.
+		return 0, fmt.Errorf("lease key %q does not match lease name %q", key, name)
+	}
+	generation, err := strconv.ParseInt(suffix, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parse lease generation from %q: %w", key, err)
+	}
+	return generation, nil
 }

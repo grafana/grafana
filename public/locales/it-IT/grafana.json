@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "Impossibile trovare il repository per la cartella selezionata. Assicurati che la cartella sia stata fornita correttamente.",
         "repository-not-found-title": "Repository non trovato"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Errore durante lo spostamento delle risorse",
       "error-no-target-folder-path": "Il percorso della cartella di destinazione non è valido o è vuoto, prova a selezionarlo di nuovo.",
       "move-total": "In totale, questo influenzerà:",
@@ -5269,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Impostazioni"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5671,7 +5672,7 @@
         "title": "Variabili"
       },
       "variable": {
-        "change-type": "Modifica",
+        "change-type": "",
         "change-type-aria-label": "Modifica il tipo di variabile",
         "custom-options": {
           "apply": "Applica",
@@ -5988,7 +5989,7 @@
       "cancel": "Annulla",
       "common": {
         "copy": "Copia",
-        "copy-or-duplicate": "Copia/incolla o duplica",
+        "copy-tooltip": "",
         "delete": "Elimina",
         "duplicate": "Duplica",
         "layout": "Layout",
@@ -6027,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Pannello non configurato. Premi il tasto Tab per visualizzare le opzioni di configurazione.",
-      "configure-button": "Configura",
+      "configure-button": "",
       "configure-button-menu": "Attiva/disattiva menu",
       "configure-visualization": "Configura la visualizzazione",
       "empty-state-message": "Esegui una query per visualizzarlo qui o vai a tutte le visualizzazioni per aggiungere altri tipi di pannello",
@@ -6269,10 +6270,8 @@
       "title-provisioned": "Dashboard configurata"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata.<br/><2>Salvare comunque questa dashboard?</2>",
       "body-version-mismatch": "Qualcun altro ha aggiornato questa dashboard<br/><2>Salvare comunque questa dashboard?</2>",
       "confirmText-save-and-overwrite": "Salva e sovrascrivi",
-      "title-name-exists": "Conflitto",
       "title-version-mismatch": "Conflitto"
     },
     "save-dashboard-form": {
@@ -7313,6 +7312,7 @@
       "terraform": "Gestito da: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Impossibile spostare la dashboard",
       "cancel-action": "Annulla",
       "current-file-not-found": "Impossibile trovare il file della dashboard corrente",
@@ -7325,10 +7325,6 @@
       "success-message": "Dashboard spostata correttamente",
       "target-path-label": "Percorso di destinazione",
       "title-this-repository-is-read-only": "Questo repository è di sola lettura"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata. Desideri comunque salvare questa dashboard?",
-      "title-name-already-exists": "Nome già in uso"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8144,6 +8140,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aggiungi a Preferiti",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Esplora i dati",
       "open-in-explore": "Apri nella visualizzazione Esplora",
       "remove-favorite": "Rimuovi da Preferiti"
@@ -15447,7 +15449,6 @@
       "forwards-time-aria-label": "Usa un intervallo di tempo successivo",
       "to": "a",
       "zoom-out-button": "Riduci l'intervallo di tempo",
-      "zoom-out-tooltip": "Riduci l'intervallo di tempo <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Riduci l'intervallo di tempo <br/> t -"
     },
     "time-range": {

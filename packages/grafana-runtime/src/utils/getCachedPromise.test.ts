@@ -907,7 +907,7 @@ describe('cached promises', () => {
       const replacement = { ok: true, status: 201, statusText: 'replaced' };
 
       await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
-      replaceCachedPromise(simulateOkRequest, replacement, { cacheKey: 'the-key' });
+      replaceCachedPromise('the-key', replacement);
       const actual = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
 
       expect(actual).toBe(replacement);
@@ -941,23 +941,23 @@ describe('cached promises', () => {
       expect(b1).toBe(b2);
     });
 
-    test('should throw when called with an anonymous function and no cacheKey', () => {
+    test('should throw when called with an anonymous function', () => {
       expect(() => replaceCachedPromise(async () => 2, 99)).toThrow(
         'replaceCachedPromise function must be invoked with a named function or cacheKey'
       );
     });
 
-    test('should not throw when called with an anonymous function and a cacheKey', () => {
-      expect(() => replaceCachedPromise(async () => 2, 99, { cacheKey: 'a-cache-key' })).not.toThrow();
+    test('should not throw when called with a cacheKey', () => {
+      expect(() => replaceCachedPromise('a-cache-key', 99)).not.toThrow();
     });
 
-    test('should prefer cacheKey over the key derived from the function', async () => {
+    test('cacheKey overload only affects entries under that key', async () => {
       const replacement = { ok: false, status: 500, statusText: 'replaced' };
 
       const a1 = await getCachedPromise(simulateOkRequest);
       const b1 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
 
-      replaceCachedPromise(simulateOkRequest, replacement, { cacheKey: 'explicit-key' });
+      replaceCachedPromise('explicit-key', replacement);
 
       const a2 = await getCachedPromise(simulateOkRequest);
       const b2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });

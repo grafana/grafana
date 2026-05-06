@@ -66,6 +66,7 @@ export function randomWalk(query: GrafanaQuery, request: DataQueryRequest<Grafan
         { name: seriesName, type: FieldType.number, values: floatValues, config: {} },
       ],
       length: timeValues.length,
+      refId: query.refId,
       meta: { type: DataFrameType.TimeSeriesMulti },
     });
   }

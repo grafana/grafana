@@ -407,11 +407,14 @@ func (b *bleveBackend) clearUploadTracking(key resource.NamespacedResource) {
 }
 
 const (
-	snapshotUploadCheckInterval       = 5 * time.Minute
-	snapshotUploadStatusSuccess       = "success"
-	snapshotUploadStatusSkipNoChanges = "skip_no_changes"
-	snapshotUploadStatusSkipLockHeld  = "skip_lock_contention"
-	snapshotUploadStatusError         = "error"
+	snapshotUploadCheckInterval          = 5 * time.Minute
+	snapshotUploadStatusSuccess          = "success"
+	snapshotUploadStatusSkipNoChanges    = "skip_no_changes"
+	snapshotUploadStatusSkipLockHeld     = "skip_lock_contention"
+	snapshotUploadStatusSkipLockLost     = "skip_lock_lost"
+	snapshotUploadStatusSkipRecentRemote = "skip_recent_remote"
+	snapshotUploadStatusSkipNotOwner     = "skip_not_owner"
+	snapshotUploadStatusError            = "error"
 )
 
 func (b *bleveBackend) uploadSnapshotsPeriodically(ctx context.Context) {
@@ -437,6 +440,17 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 			continue
 		}
 
+		owned, err := b.ownsIndexFn(key)
+		if err != nil {
+			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
+			b.log.Warn("failed to check if index belongs to this instance", "key", key, "err", err)
+			continue
+		}
+		if !owned {
+			b.recordSnapshotUploadStatus(snapshotUploadStatusSkipNotOwner)
+			continue
+		}
+
 		shouldUpload, err := b.shouldUpload(key, idx, time.Now())
 		if err != nil {
 			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
@@ -457,9 +471,17 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 
 		start := time.Now()
 		if err := b.uploadSnapshot(ctx, key, idx); err != nil {
-			if errors.Is(err, errLockHeld) {
+			switch {
+			case errors.Is(err, errLockHeld):
 				b.recordSnapshotUploadStatus(snapshotUploadStatusSkipLockHeld)
-			} else {
+			case errors.Is(err, errSkipRecentRemote):
+				// A recent remote upload covers this resource for the cross-instance
+				// dedup window. Update lastUploadTime so this replica's local probe
+				// also rate-limits to once per UploadInterval, and don't reset the
+				// mutation baseline — we didn't actually take a snapshot.
+				b.setUploadTracking(key, time.Now())
+				b.recordSnapshotUploadStatus(snapshotUploadStatusSkipRecentRemote)
+			default:
 				b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 				b.log.Warn("snapshot upload failed", "key", key, "err", err)
 			}
@@ -568,7 +590,13 @@ type buildInfo struct {
 // If built successfully, the new index replaces the old index in the cache (if there was any).
 // Existing index in the file system is reused, if it exists, and if size indicates that we should use file-based index,
 // and lastImportTime check passes (if the index was built before lastImportTime, it will be rebuilt).
-// The return value of "builder" should be the RV returned from List. This will be stored as the index RV
+// The return value of "builder" should be the RV returned from List. This will be stored as the index RV.
+//
+// maxFreshSnapshotAge is the maximum age (by BuildTime) of a remote snapshot
+// that BuildIndex will download instead of rebuilding from scratch on the
+// rebuild path. Zero disables the strict same-version fast path; the snapshot
+// store, if configured, is still consulted on the initial-startup path via
+// pickBestSnapshot.
 //
 //nolint:gocyclo
 func (b *bleveBackend) BuildIndex(
@@ -581,6 +609,7 @@ func (b *bleveBackend) BuildIndex(
 	updater resource.UpdateFn,
 	rebuild bool,
 	lastImportTime time.Time,
+	maxFreshSnapshotAge time.Duration,
 ) (resource.ResourceIndex, error) {
 	_, span := tracer.Start(ctx, "search.bleveBackend.BuildIndex")
 	defer span.End()
@@ -636,6 +665,14 @@ func (b *bleveBackend) BuildIndex(
 	fileIndexName := "" // Name of the file-based index, or empty for in-memory indexes.
 	newIndexType := indexStorageMemory
 	build := true
+	// Held across a leader's from-scratch build + immediate upload.
+	// Released by a defer set up when the lock is acquired.
+	var coldStartLeaderLock IndexStoreLock
+
+	// True when remote-snapshot interactions (download, cold-start, upload)
+	// are eligible: a snapshot store is configured and the index is large
+	// enough to justify a round-trip.
+	snapshotEnabled := b.opts.Snapshot.Store != nil && size >= b.opts.Snapshot.MinDocCount
 
 	if size >= b.opts.FileThreshold {
 		newIndexType = indexStorageFile
@@ -669,15 +706,68 @@ func (b *bleveBackend) BuildIndex(
 				}
 			}
 
-			// No valid local index — if a remote snapshot store is configured and the
-			// index is large enough to justify a round-trip, try downloading one.
-			if index == nil && b.opts.Snapshot.Store != nil && size >= b.opts.Snapshot.MinDocCount {
+			// No valid local index — if a remote snapshot store is configured
+			// and the index is large enough to justify a round-trip, try
+			// downloading one. First the tiered selection (any usable
+			// snapshot); on miss, cold-start coordination (same-version,
+			// leader builds + uploads while replicas wait to download).
+			if index == nil && snapshotEnabled {
 				dlIdx, dlName, dlRV, dlErr := b.tryDownloadRemoteSnapshot(ctx, key, resourceDir, logWithDetails)
 				if dlErr != nil {
+					if ctxErr := ctx.Err(); ctxErr != nil {
+						return nil, ctxErr
+					}
 					logWithDetails.Warn("Failed to download remote snapshot, will build from scratch", "err", dlErr)
 				} else if dlIdx != nil {
 					index, fileIndexName, indexRV = dlIdx, dlName, dlRV
 				}
+
+				// Cold-start coordination only runs when MaxIndexAge>0; with
+				// MaxIndexAge=0 the probe is a no-op (all freshness filters
+				// reject), so the lock+wait would only serialise N replicas'
+				// from-scratch builds without any snapshot-reuse upside. The
+				// MaxIndexAge=0 semantics deserve a wider revisit (covered by
+				// the follow-up issue), at which point this gate can be removed.
+				if index == nil && b.opts.Snapshot.MaxIndexAge > 0 {
+					dlIdx, dlName, dlRV, lock, coordErr := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logWithDetails)
+					if coordErr != nil {
+						if ctxErr := ctx.Err(); ctxErr != nil {
+							return nil, ctxErr
+						}
+						logWithDetails.Warn("Cold-start coordination failed, will build alone", "err", coordErr)
+					} else if dlIdx != nil {
+						index, fileIndexName, indexRV = dlIdx, dlName, dlRV
+					} else if lock != nil {
+						coldStartLeaderLock = lock
+						defer func() {
+							if coldStartLeaderLock != nil {
+								if releaseErr := coldStartLeaderLock.Release(); releaseErr != nil {
+									logWithDetails.Warn("Releasing cold-start build lock", "err", releaseErr)
+								}
+							}
+						}()
+					}
+				}
+			}
+		} else if rebuild && snapshotEnabled && maxFreshSnapshotAge > 0 {
+			// Rebuild path: before paying the cost of a from-scratch
+			// rebuild, check whether the remote index store holds a same-version snapshot
+			// fresh enough to serve as a drop-in replacement. Strict policy:
+			// exact BuildVersion match, BuildTime within maxFreshSnapshotAge
+			// AND strictly after lastImportTime. On miss, fall through to
+			// rebuild — no tiered fallback (we already have a working index).
+			dlIdx, dlName, dlRV, dlErr := b.tryDownloadFreshSameVersionSnapshot(
+				ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge,
+				snapshotPolicySameVersion, "search.remote_index_snapshot.download_fresh",
+				logWithDetails,
+			)
+			if dlErr != nil {
+				if ctxErr := ctx.Err(); ctxErr != nil {
+					return nil, ctxErr
+				}
+				logWithDetails.Warn("Failed to download fresh remote snapshot, will rebuild from scratch", "err", dlErr)
+			} else if dlIdx != nil {
+				index, fileIndexName, indexRV = dlIdx, dlName, dlRV
 			}
 		}
 
@@ -749,6 +839,39 @@ func (b *bleveBackend) BuildIndex(
 
 		if b.indexMetrics != nil {
 			b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
+		}
+
+		// Leader path: upload the freshly-built snapshot now so waiting
+		// replicas can download it. Skip the periodic upload's probe (we
+		// just built it) and reuse the held lock. On failure the next
+		// periodic tick retries.
+		if coldStartLeaderLock != nil {
+			switch {
+			case checkSnapshotLock(coldStartLeaderLock) != nil:
+				// Lock lost during the build. Another replica may already
+				// be uploading; skip and let the periodic tick reconcile.
+				logWithDetails.Warn("Cold-start leader lock lost during build; skipping immediate upload")
+				b.recordSnapshotUploadStatus(snapshotUploadStatusSkipLockLost)
+			default:
+				baselineMutations, mErr := idx.getSnapshotMutationCount()
+				if mErr != nil {
+					logWithDetails.Warn("Failed to read snapshot mutation baseline for leader upload", "err", mErr)
+				}
+				uploadKey, uploadRV, upErr := b.snapshotCopyAndUpload(ctx, key, idx, coldStartLeaderLock)
+				if upErr != nil {
+					logWithDetails.Warn("Cold-start leader immediate snapshot upload failed", "err", upErr)
+					b.recordSnapshotUploadStatus(snapshotUploadStatusError)
+				} else {
+					if mErr == nil {
+						if subErr := idx.subtractSnapshotMutationCount(baselineMutations); subErr != nil {
+							logWithDetails.Warn("Failed to advance snapshot mutation baseline after leader upload", "err", subErr)
+						}
+					}
+					b.setUploadTracking(key, time.Now())
+					b.recordSnapshotUploadStatus(snapshotUploadStatusSuccess)
+					logWithDetails.Info("Cold-start leader uploaded freshly-built snapshot", "snapshot_key", uploadKey.String(), "snapshot_rv", uploadRV)
+				}
+			}
 		}
 	} else {
 		logWithDetails.Info("Skipping index build, using existing index")

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/alerting/definition"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -276,7 +276,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 
 	_, err = revision.Config.GetMergedAlertmanagerConfig()
 	if err != nil {
-		if errors.Is(err, definition.ErrSubtreeMatchersConflict) {
+		if errors.Is(err, merge.ErrSubtreeMatchersConflict) {
 			// TODO temporarily get the conflicting matchers
 			return nil, models.MakeErrRouteConflictingMatchers(fmt.Sprintf("%s", revision.Config.ExtraConfigs[0].MergeMatchers))
 		}
