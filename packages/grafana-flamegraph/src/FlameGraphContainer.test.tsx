@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useRef, useCallback } from 'react';
 
 import { createDataFrame, createTheme } from '@grafana/data';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
@@ -29,13 +30,7 @@ jest.mock('react-use', () => ({
 
 describe('FlameGraphContainer', () => {
   // Needed for AutoSizer to work in test
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: jest.fn(() => ({
-      width: 500,
-      height: 500,
-      left: 0,
-    })),
-  });
+  mockBoundingClientRect({ width: 500, height: 500 });
 
   const FlameGraphContainerWithProps = () => {
     const flameGraphData = createDataFrame(data);
