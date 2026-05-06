@@ -39,6 +39,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
           >
             <div
               class="css-1q0c0d5-grafana-select-value-container"
+              data-testid="data-testid Select container"
             >
               <div
                 class="css-8nwx1l-singleValue css-0"
@@ -58,6 +59,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
                   autocomplete="off"
                   autocorrect="off"
                   class=""
+                  data-testid="data-testid Select container-input"
                   id=":r0:"
                   role="combobox"
                   spellcheck="false"
