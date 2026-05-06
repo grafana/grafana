@@ -240,12 +240,22 @@ export function NestedFolderPicker({
       }
 
       // Add "Team folders" at the top of the tree list.
-      return filterExcludedItems([...teamFolderTreeItems, ...flatTree], excludeUIDs);
+      // Only show team folders when browsing the full tree (no rootFolderUID scope)
+      const treeWithTeamFolders = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...flatTree];
+      return filterExcludedItems(treeWithTeamFolders, excludeUIDs);
     } else {
       flatTree = searchResultsToTreeItems(searchResults?.items || []);
       return filterExcludedItems(flatTree, excludeUIDs);
     }
-  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder, teamFolderTreeItems]);
+  }, [
+    browseFlatTree,
+    excludeUIDs,
+    isBrowsing,
+    searchResults?.items,
+    showRootFolder,
+    teamFolderTreeItems,
+    rootFolderUID,
+  ]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
