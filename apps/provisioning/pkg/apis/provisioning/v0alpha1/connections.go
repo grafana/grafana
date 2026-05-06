@@ -120,11 +120,11 @@ type ConnectionSpec struct {
 	// The connection URL
 	URL string `json:"url,omitempty"`
 
-	// GitHub connection configuration.
-	// Only applicable when provider is "github".
+	// GitHub connection configuration
+	// Only applicable when provider is "github"
 	GitHub *GitHubConnectionConfig `json:"github,omitempty"`
-	// GitHub Enterprise Server connection configuration.
-	// Only applicable when provider is "githubEnterprise".
+	// GitHub Enterprise Server connection configuration
+	// Only applicable when provider is "githubEnterprise"
 	GitHubEnterprise *GitHubEnterpriseConnectionConfig `json:"githubEnterprise,omitempty"`
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucket"

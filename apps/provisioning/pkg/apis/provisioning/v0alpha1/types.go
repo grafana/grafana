@@ -360,7 +360,7 @@ type RepositorySpec struct {
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 
 	// The repository on a self-managed GitHub Enterprise Server (GHES).
-	// Mutually exclusive with the other repository configs.
+	// Mutually exclusive with local | github | git.
 	GitHubEnterprise *GitHubEnterpriseRepositoryConfig `json:"githubEnterprise,omitempty"`
 
 	// The repository on Git.
