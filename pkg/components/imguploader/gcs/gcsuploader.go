@@ -84,14 +84,8 @@ func (u *Uploader) Upload(ctx context.Context, imageDiskPath string) (string, er
 
 	var client gcsifaces.StorageClient
 	if u.KeyFile != "" {
-		u.log.Debug("Creating Google credentials from JSON")
-		creds, err := google.CredentialsFromJSON(ctx, keyData, scope)
-		if err != nil {
-			return "", err
-		}
-
 		u.log.Debug("Creating GCS client")
-		client, err = newClient(ctx, option.WithCredentials(creds))
+		client, err = newClient(ctx, option.WithCredentialsJSON(keyData), option.WithScopes(scope))
 		if err != nil {
 			return "", err
 		}
