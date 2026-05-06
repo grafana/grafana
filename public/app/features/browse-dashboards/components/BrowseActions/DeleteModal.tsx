@@ -1,14 +1,13 @@
 import { useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Alert, ConfirmModal, Space, Text } from '@grafana/ui';
-import { useGetAffectedItems, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { Alert, ConfirmModal, Space } from '@grafana/ui';
+import { useGetAffectedItems } from 'app/api/clients/folder/v1beta1/hooks';
 
 import { type DashboardTreeSelection } from '../../types';
 import { DeletedDashboardsInfo } from '../DeletedDashboardsInfo';
-
-import { DescendantCount } from './DescendantCount';
 
 export interface Props {
   isOpen: boolean;
@@ -18,19 +17,32 @@ export interface Props {
 }
 
 export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
-  const { data } = useGetAffectedItems(selectedItems);
-  const deleteIsInvalid = Boolean(data && (data.alertrules || data.library_elements));
+  const { data, isLoading } = useGetAffectedItems(selectedItems);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const selectedFolders = Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
   const selectedDashboards = Object.keys(selectedItems.dashboard || {}).filter((uid) => selectedItems.dashboard[uid]);
-  const selectedPanels = Object.keys(selectedItems.panel || {}).filter((uid) => selectedItems.panel[uid]);
-  const { data: folderData } = useGetFolderQueryFacade(selectedFolders.length === 1 ? selectedFolders[0] : undefined);
 
-  // If we are only moving one folder, we can show a different message
-  // (we might be in the "Folder actions" version of the modal)
-  const onlyOneFolderSelected =
-    selectedFolders.length === 1 && selectedDashboards.length === 0 && selectedPanels.length === 0;
+  let folderIsEmpty: boolean | undefined = undefined;
+
+  if (data) {
+    // We only want count of folders children but the useGetAffectedItems returns also the items user selected to
+    // delete so we substract those here.
+    const finalChildrenCounts = {
+      folders: data.folders - selectedFolders.length,
+      dashboards: data.dashboards - selectedDashboards.length,
+      library_elements: data.library_elements,
+      alertrules: data.alertrules,
+    };
+
+    // This should give os count of item that are children of any selected folder.
+    folderIsEmpty =
+      finalChildrenCounts.folders +
+        finalChildrenCounts.alertrules +
+        finalChildrenCounts.library_elements +
+        finalChildrenCounts.dashboards ===
+      0;
+  }
 
   const onDelete = async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {
@@ -61,40 +73,32 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
               <Space v={2} />
             </>
           )}
-          <Text element="p">
-            {onlyOneFolderSelected ? (
-              <Trans
-                i18nKey="browse-dashboards.action.delete-modal-text-one-folder"
-                values={{ folderName: folderData?.title }}
-              >
-                This action will delete the folder &quot;
-                <Text variant="code" weight="bold">
-                  {'{{ folderName }}'}
-                </Text>
-                &quot; and the following content:
-              </Trans>
+
+          {!!selectedFolders?.length &&
+            // Only show this if we have any folders selected. If user selected one or more specific resources, there
+            // are no children that could be deleted by accident.
+            (isLoading ? (
+              <Skeleton width={200} />
+            ) : selectedFolders?.length && folderIsEmpty ? (
+              <Alert
+                title={t('browse-dashboards.action.delete-modal-folder-empty', 'Selected folder is empty', {
+                  count: selectedFolders.length,
+                })}
+                severity={'success'}
+              />
             ) : (
-              <Trans i18nKey="browse-dashboards.action.delete-modal-text">
-                This action will delete the following content:
-              </Trans>
-            )}
-          </Text>
-          <DescendantCount selectedItems={selectedItems} />
+              <Alert
+                title={t(
+                  'browse-dashboards.action.delete-modal-folder-not-empty',
+                  'Selected folder contains other resources that will be deleted',
+                  {
+                    count: selectedFolders.length,
+                  }
+                )}
+                severity={'warning'}
+              />
+            ))}
           <Space v={2} />
-        </>
-      }
-      description={
-        <>
-          {deleteIsInvalid ? (
-            <Alert
-              severity="warning"
-              title={t('browse-dashboards.action.delete-modal-invalid-title', 'Cannot delete folder')}
-            >
-              <Trans i18nKey="browse-dashboards.action.delete-modal-invalid-text">
-                One or more folders contain library panels or alert rules. Delete these first in order to proceed.
-              </Trans>
-            </Alert>
-          ) : null}
         </>
       }
       confirmationText={t('browse-dashboards.action.confirmation-text', 'Delete')}
@@ -107,7 +111,6 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
       onConfirm={onDelete}
       title={t('browse-dashboards.action.delete-modal-title', 'Delete')}
       {...props}
-      disabled={deleteIsInvalid}
     />
   );
 };

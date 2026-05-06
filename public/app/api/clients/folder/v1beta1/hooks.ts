@@ -539,7 +539,7 @@ export function useGetAffectedItems({ folder, dashboard }: Pick<DashboardTreeSel
 
   // TODO: Remove constant condition here once we have a solution for the app platform counts
   // As of now, the counts are not calculated recursively, so we need to use the legacy API
-  const shouldUseAppPlatformAPI = false && Boolean(config.featureToggles.foldersAppPlatformAPI);
+  const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
   const hookParams:
     | Parameters<typeof useLegacyGetAffectedItemsQuery>[0]
     | Parameters<typeof useGetAffectedItemsQuery>[0] = {
