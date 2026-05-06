@@ -38,8 +38,15 @@ export function RecentQueriesModal({ isOpen, onClose, onSelectQuery }: Props) {
             active={false}
             onChangeTab={() => {}}
             disabled={true}
-            suffix={() => (
-              <Badge text={t('recent-queries.modal.tabs.saved-badge', 'Cloud')} color="blue" icon="grafana" />
+            suffix={({ className }) => (
+              <span className={className}>
+                <Badge
+                  text={t('recent-queries.modal.tabs.saved-badge', 'Cloud')}
+                  color="blue"
+                  icon="info-circle"
+                  className={styles.cloudBadge}
+                />
+              </span>
             )}
           />
         </Tooltip>
@@ -89,5 +96,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tabsBar: css({
     borderBottom: 'none',
     marginBottom: 0,
+  }),
+  cloudBadge: css({
+    '& svg': {
+      marginRight: 0,
+    },
   }),
 });
