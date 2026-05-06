@@ -113,7 +113,7 @@ type broadcaster[T any] struct {
 
 func (b *broadcaster[T]) eventResource(item T) string {
 	if b.eventResourceFn == nil {
-		return ""
+		return "unknown"
 	}
 	return b.eventResourceFn(item)
 }
