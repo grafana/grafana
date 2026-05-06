@@ -125,8 +125,7 @@ describe('useSelectionState', () => {
     it('uses queries[0] as implicit anchor after clearSelection', () => {
       const { result } = setup();
       act(() => result.current.clearSelection());
-      // clearSelection restores the default selection (first query).
-      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+      expect(result.current.selectedQueryRefIds).toEqual([]);
 
       act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
       expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
@@ -220,19 +219,10 @@ describe('useSelectionState', () => {
   });
 
   describe('clearSelection', () => {
-    it('restores the default selection (first query) and clears transformations', () => {
+    it('resets all selections to empty', () => {
       const { result } = setup();
       act(() => result.current.toggleQuerySelection({ refId: 'A' }));
       act(() => result.current.toggleQuerySelection({ refId: 'B' }, { multi: true }));
-      act(() => result.current.clearSelection());
-      // First query is the implicit default (matches the mount-time setup and
-      // the visual fallback in useSelectedCard).
-      expect(result.current.selectedQueryRefIds).toEqual(['A']);
-      expect(result.current.selectedTransformationIds).toEqual([]);
-    });
-
-    it('clears to empty when there are no queries to default to', () => {
-      const { result } = setup({ ...defaultProps, queries: [] });
       act(() => result.current.clearSelection());
       expect(result.current.selectedQueryRefIds).toEqual([]);
       expect(result.current.selectedTransformationIds).toEqual([]);

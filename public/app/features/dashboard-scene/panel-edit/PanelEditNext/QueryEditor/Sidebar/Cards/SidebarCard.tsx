@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useState } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
@@ -55,7 +54,6 @@ export const SidebarCard = ({
   const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
-  const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
   const { multiSelectMode } = useQueryEditorUIContext();
 
   const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
@@ -124,7 +122,7 @@ export const SidebarCard = ({
         aria-pressed={isSelected || isPartOfSelection}
       >
         <div className={styles.cardContent}>
-          {isMultiSelectEnabled && multiSelectMode && (
+          {multiSelectMode && (
             <div aria-hidden className={styles.checkboxWrapper}>
               <Checkbox
                 className={styles.roundedCheckbox}

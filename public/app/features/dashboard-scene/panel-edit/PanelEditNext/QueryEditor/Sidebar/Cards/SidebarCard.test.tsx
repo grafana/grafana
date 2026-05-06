@@ -275,6 +275,42 @@ describe('SidebarCard', () => {
     });
   });
 
+  describe('multi-select checkbox', () => {
+    it('does not render the checkbox when multi-select mode is off', () => {
+      renderSidebarCard({ id: 'A' });
+      // aria-hidden wraps the checkbox, so query with { hidden: true }
+      expect(screen.queryByRole('checkbox', { hidden: true })).not.toBeInTheDocument();
+    });
+
+    it('renders the checkbox when multi-select mode is on', () => {
+      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { multiSelectMode: true } }
+      );
+
+      expect(screen.getByRole('checkbox', { hidden: true })).toBeInTheDocument();
+    });
+
+    it('reflects the selection state in the checkbox value', () => {
+      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { multiSelectMode: true } }
+      );
+
+      expect(screen.getByRole('checkbox', { hidden: true })).toBeChecked();
+    });
+  });
+
   describe('hover actions and hidden icon', () => {
     it('renders the hidden icon when the card is hidden', () => {
       renderSidebarCard({ id: 'A', isHidden: true });

@@ -181,14 +181,8 @@ export function useSelectionState({
     []
   );
 
-  // Restore the default state (first query selected, no transformation) rather
-  // than going fully empty. This keeps `selectedQueryRefIds` aligned with the
-  // visual fallback in `useSelectedCard` (which defaults to queries[0]) and
-  // avoids surprising consumers that gate behavior on selection length, e.g.
-  // the bulk actions bar appearing empty after closing it from a multi-select.
   const clearSelection = useCallback(() => {
-    const firstQueryRefId = queriesRef.current[0]?.refId;
-    setSelectedQueryRefIds(firstQueryRefId ? [firstQueryRefId] : []);
+    setSelectedQueryRefIds([]);
     setSelectedTransformationIds([]);
     onClearSideEffectsRef.current?.();
   }, []);
