@@ -301,7 +301,20 @@ export async function selectScope(page: Page, scopeName: string, selectedScope?:
   const responsePromise = scopeSelectRequest(page, selectedScope);
 
   await click();
-  await responsePromise;
+
+  // Wait for either a network response (first fetch) or the checkbox/radio becoming checked.
+  // When scope data is already in the RTK Query cache from a previous selection in the same
+  // session, no HTTP request is made and waitForResponse would time out. Racing against the
+  // UI update handles both cases correctly.
+  const uiSelected = page
+    .locator(
+      `[data-testid="scopes-tree-${scopeName}-checkbox"][aria-checked="true"], ` +
+        `[data-testid="scopes-tree-${scopeName}-radio"][aria-checked="true"]`
+    )
+    .waitFor({ timeout: 5000 })
+    .catch(() => null);
+
+  await Promise.race([responsePromise, uiSelected]);
 }
 
 /**
