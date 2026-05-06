@@ -98,7 +98,8 @@ export class AppChromeService {
     Object.assign(newState, update);
 
     // KioskMode overrides chromeless state
-    newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
+    newState.chromeless =
+      newState.kioskMode === KioskMode.Full || newState.kioskMode === KioskMode.Embed || this.currentRoute?.chromeless;
 
     if (!this.ignoreStateUpdate(newState, current)) {
       config.featureToggles.unifiedHistory &&
@@ -239,6 +240,10 @@ export class AppChromeService {
       case '1':
       case true:
         newKioskMode = KioskMode.Full;
+        break;
+      case 'embed':
+        newKioskMode = KioskMode.Embed;
+        break;
     }
 
     if (newKioskMode && newKioskMode !== this.state.getValue().kioskMode) {
@@ -250,6 +255,8 @@ export class AppChromeService {
     switch (mode) {
       case KioskMode.Full:
         return true;
+      case KioskMode.Embed:
+        return 'embed';
       default:
         return null;
     }

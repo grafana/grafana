@@ -23,7 +23,7 @@ import { GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction, KioskMode } from 'app/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
@@ -559,6 +559,60 @@ describe('panelMenuBehavior', () => {
 
       expect(menu.state.items?.length).toBe(1);
       expect(menu.state.items?.[0].text).toBe('Explore');
+    });
+
+    it('should have empty menu items in embed kiosk mode', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+
+      scene.setState({ kioskMode: KioskMode.Embed });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.length).toBe(0);
+    });
+
+    it('should have menu items when NOT in embed kiosk mode', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+
+      // Explicitly no kiosk mode
+      scene.setState({ kioskMode: undefined });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.length).toBeGreaterThan(0);
+      expect(menu.state.items?.[0].text).toBe('View');
+    });
+
+    it('should have menu items in Full kiosk mode (only chrome hidden, not menus)', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+
+      scene.setState({ kioskMode: KioskMode.Full });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.length).toBeGreaterThan(0);
+      expect(menu.state.items?.[0].text).toBe('View');
     });
   });
 

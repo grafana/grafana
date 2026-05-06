@@ -17,6 +17,7 @@ import {
   CancelActivationHandler,
 } from '@grafana/scenes';
 import { Box, Stack, useStyles2 } from '@grafana/ui';
+import { KioskMode } from 'app/types';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -122,11 +123,14 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const { variableControls, refreshPicker, timePicker, hideTimeControls, hideVariableControls, hideLinksControls } =
     model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const { links, editPanel } = dashboard.useState();
+  const { links, editPanel, kioskMode } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = location.search.includes('scene-debugger');
 
-  if (!model.hasControls()) {
+  const isKioskEmbed = kioskMode === KioskMode.Embed;
+  const shouldHideVariables = hideVariableControls || isKioskEmbed;
+
+  if (!model.hasControls() && !isKioskEmbed) {
     // To still have spacing when no controls are rendered
     return <Box padding={1} />;
   }
@@ -137,9 +141,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
     >
       <Stack grow={1} wrap={'wrap'}>
-        {!hideVariableControls && variableControls.map((c) => <c.Component model={c} key={c.state.key} />)}
+        {!shouldHideVariables && variableControls.map((c) => <c.Component model={c} key={c.state.key} />)}
         <Box grow={1} />
-        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+        {!hideLinksControls && !editPanel && !isKioskEmbed && <DashboardLinksControls links={links} dashboard={dashboard} />}
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
       {!hideTimeControls && (
