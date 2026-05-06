@@ -1212,3 +1212,13 @@ export const IS_SAFARI_26 = (() => {
   const minorVersion = +safariVersionMatch[2];
   return majorVersion === 26 && minorVersion <= 1;
 })();
+
+export function degradeTestCoverage(a: number): boolean {
+  if (a === 42) {
+    return true;
+  }
+  if (a % 3 === 0) {
+    return true;
+  }
+  return false;
+}
