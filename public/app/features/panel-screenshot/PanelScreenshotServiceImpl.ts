@@ -1,5 +1,6 @@
 import { type PanelPlugin, type PanelScreenshotContext } from '@grafana/data';
 import { type PanelScreenshotOptions, type PanelScreenshotService, reportInteraction } from '@grafana/runtime';
+import { isSceneObject } from '@grafana/scenes';
 
 import { syncGetPanelPlugin } from '../plugins/importPanelPlugin';
 
@@ -11,6 +12,14 @@ type ErrorKind = 'panel_not_in_dom' | 'html_to_image_failed' | 'override_failed'
 
 export class PanelScreenshotServiceImpl implements PanelScreenshotService {
   async capture(panelPathId: string, options: PanelScreenshotOptions = {}): Promise<Blob> {
+    if (options.sceneContext !== undefined && !isValidSceneContext(options.sceneContext)) {
+      throw new Error(
+        `sceneContext must be a SceneObject (got ${describeValue(options.sceneContext)}). ` +
+          'Pass `this` from a SceneObject method, a scene reference held by your component, ' +
+          'or omit the option to fall back to window.__grafanaSceneContext.'
+      );
+    }
+
     const format: Format = options.format ?? 'png';
     const start = performance.now();
 
@@ -20,7 +29,7 @@ export class PanelScreenshotServiceImpl implements PanelScreenshotService {
     try {
       const element = resolvePanelElement(panelPathId);
 
-      const panelPlugin = resolvePanelPlugin(panelPathId);
+      const panelPlugin = resolvePanelPlugin(panelPathId, options.sceneContext);
       if (panelPlugin) {
         panelType = panelPlugin.meta.id;
       }
@@ -64,11 +73,12 @@ function resolvePanelElement(panelPathId: string): HTMLElement {
   return element;
 }
 
-function resolvePanelPlugin(panelPathId: string): PanelPlugin | undefined {
-  // Walk the active scene to map panelPathId -> pluginId. When the user is in
-  // a scene-based dashboard, the global context is set; otherwise (embedded /
-  // non-scene contexts) we fall through to the default html-to-image path.
-  const sceneContext = typeof window !== 'undefined' ? window.__grafanaSceneContext : undefined;
+function resolvePanelPlugin(panelPathId: string, explicitSceneContext?: unknown): PanelPlugin | undefined {
+  // Walk the active scene to map panelPathId -> pluginId. Explicit context
+  // takes priority; falls back to the global set by the dashboard scene on
+  // mount. Non-scene contexts fall through to the default html-to-image path.
+  const sceneContext =
+    explicitSceneContext ?? (typeof window !== 'undefined' ? window.__grafanaSceneContext : undefined);
   if (!sceneContext) {
     return undefined;
   }
@@ -78,6 +88,27 @@ function resolvePanelPlugin(panelPathId: string): PanelPlugin | undefined {
     return undefined;
   }
   return syncGetPanelPlugin(pluginId);
+}
+
+/**
+ * Validates the public-API `sceneContext` option against scenes' own type
+ * guard. Adds a null/non-object guard since `isSceneObject` will throw on
+ * primitive or null input. The walker downstream still operates on `unknown`;
+ * this gate only exists so misuses of the public API fail fast with a clear
+ * message instead of silently falling through to the html-to-image renderer.
+ */
+function isValidSceneContext(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && isSceneObject(value);
+}
+
+function describeValue(value: unknown): string {
+  if (value === null) {
+    return 'null';
+  }
+  if (Array.isArray(value)) {
+    return 'array';
+  }
+  return typeof value;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

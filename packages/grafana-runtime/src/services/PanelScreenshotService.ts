@@ -1,5 +1,5 @@
 /**
- * Image format options for the panel screenshot service.
+ * Options for the panel screenshot service.
  *
  * @alpha
  */
@@ -8,6 +8,24 @@ export interface PanelScreenshotOptions {
    * Output image format. Defaults to `'png'`.
    */
   format?: 'png' | 'jpeg' | 'webp';
+
+  /**
+   * Scene root used to resolve `panelPathId` to a `pluginId` for plugin
+   * overrides via `PanelPlugin.onScreenshot`. Pass `this` from a `SceneObject`,
+   * a scene reference held by your component, or omit to fall back to the
+   * global `window.__grafanaSceneContext`.
+   *
+   * Typed as `unknown` so `@grafana/runtime` does not depend on
+   * `@grafana/scenes`; scene-aware callers should pass a concrete `SceneObject`
+   * (the implementation duck-types it). A scenes-side typed wrapper can be
+   * layered on top without changing this surface.
+   *
+   * If the scene context cannot be resolved to a `pluginId`, capture falls
+   * through to the default html-to-image renderer.
+   *
+   * @alpha
+   */
+  sceneContext?: unknown;
 }
 
 /**

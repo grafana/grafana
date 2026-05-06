@@ -27,11 +27,12 @@ const syncGetPanelPluginMock = jest.mocked(syncGetPanelPlugin);
 const PANEL_PATH_ID = 'eu$panel-1';
 const PLUGIN_ID = 'my-canvas-panel';
 
-function setSceneContextWithPanel(panelPathId: string, pluginId: string) {
-  // Minimal duck-typed shape that PanelScreenshotServiceImpl's
-  // findPluginIdByPathId walks: a node exposing getPathId() + state.pluginId.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).__grafanaSceneContext = {
+function makeSceneContext(panelPathId: string, pluginId: string) {
+  // Minimal duck-typed shape that satisfies @grafana/scenes' `isSceneObject`
+  // (presence of `useState`) AND the walker downstream (a child node with
+  // `getPathId()` + `state.pluginId`).
+  return {
+    useState: () => ({}),
     state: {
       body: {
         getPathId: () => panelPathId,
@@ -72,15 +73,15 @@ describe('PanelScreenshotServiceImpl', () => {
     delete (window as any).__grafanaSceneContext;
   });
 
-  it('returns the override Blob without invoking html-to-image when the plugin handler resolves to a Blob', async () => {
+  it('returns the override Blob without invoking html-to-image when plugin handler resolves to a Blob (explicit sceneContext)', async () => {
     mountPanelElement(PANEL_PATH_ID);
-    setSceneContextWithPanel(PANEL_PATH_ID, PLUGIN_ID);
+    const sceneContext = makeSceneContext(PANEL_PATH_ID, PLUGIN_ID);
 
     const overrideBlob = new Blob(['override'], { type: 'image/png' });
     const onScreenshot = jest.fn().mockResolvedValue(overrideBlob);
     syncGetPanelPluginMock.mockReturnValue(makePluginWithOnScreenshot(onScreenshot));
 
-    const result = await service.capture(PANEL_PATH_ID);
+    const result = await service.capture(PANEL_PATH_ID, { sceneContext });
 
     expect(result).toBe(overrideBlob);
     expect(onScreenshot).toHaveBeenCalledTimes(1);
@@ -93,9 +94,9 @@ describe('PanelScreenshotServiceImpl', () => {
     expect(htmlToImageToBlobMock).not.toHaveBeenCalled();
   });
 
-  it('falls through to the html-to-image path when the plugin handler resolves to null', async () => {
+  it('falls through to the html-to-image path when the plugin handler resolves to null (explicit sceneContext)', async () => {
     mountPanelElement(PANEL_PATH_ID);
-    setSceneContextWithPanel(PANEL_PATH_ID, PLUGIN_ID);
+    const sceneContext = makeSceneContext(PANEL_PATH_ID, PLUGIN_ID);
 
     const onScreenshot = jest.fn().mockResolvedValue(null);
     syncGetPanelPluginMock.mockReturnValue(makePluginWithOnScreenshot(onScreenshot));
@@ -103,7 +104,7 @@ describe('PanelScreenshotServiceImpl', () => {
     const fallbackBlob = new Blob(['fallback'], { type: 'image/png' });
     htmlToImageToBlobMock.mockResolvedValue(fallbackBlob);
 
-    const result = await service.capture(PANEL_PATH_ID);
+    const result = await service.capture(PANEL_PATH_ID, { sceneContext });
 
     expect(onScreenshot).toHaveBeenCalledTimes(1);
     expect(htmlToImageToBlobMock).toHaveBeenCalledTimes(1);
@@ -112,8 +113,73 @@ describe('PanelScreenshotServiceImpl', () => {
 
   it('throws "Panel not in DOM" when no element matches the panelPathId', async () => {
     // Intentionally do NOT mount a panel element.
-
     await expect(service.capture('missing-panel-path-id')).rejects.toThrow(/^Panel not in DOM/);
+    expect(htmlToImageToBlobMock).not.toHaveBeenCalled();
+  });
+
+  it('uses global window.__grafanaSceneContext as fallback when sceneContext is not in options', async () => {
+    mountPanelElement(PANEL_PATH_ID);
+    // Set the global — this is the back-compat path exercised by callers that
+    // don't pass sceneContext explicitly.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__grafanaSceneContext = makeSceneContext(PANEL_PATH_ID, PLUGIN_ID);
+
+    const overrideBlob = new Blob(['global-fallback'], { type: 'image/png' });
+    const onScreenshot = jest.fn().mockResolvedValue(overrideBlob);
+    syncGetPanelPluginMock.mockReturnValue(makePluginWithOnScreenshot(onScreenshot));
+
+    const result = await service.capture(PANEL_PATH_ID);
+
+    expect(result).toBe(overrideBlob);
+    expect(onScreenshot).toHaveBeenCalledTimes(1);
+  });
+
+  it('explicit sceneContext takes priority over window.__grafanaSceneContext', async () => {
+    mountPanelElement(PANEL_PATH_ID);
+    // Set a global with a different panel — it should be ignored.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__grafanaSceneContext = makeSceneContext('other-panel', 'other-plugin');
+
+    const explicitContext = makeSceneContext(PANEL_PATH_ID, PLUGIN_ID);
+    const overrideBlob = new Blob(['explicit'], { type: 'image/png' });
+    const onScreenshot = jest.fn().mockResolvedValue(overrideBlob);
+    syncGetPanelPluginMock.mockReturnValue(makePluginWithOnScreenshot(onScreenshot));
+
+    const result = await service.capture(PANEL_PATH_ID, { sceneContext: explicitContext });
+
+    expect(result).toBe(overrideBlob);
+    expect(onScreenshot).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to html-to-image when neither sceneContext option nor global is set', async () => {
+    mountPanelElement(PANEL_PATH_ID);
+
+    const fallbackBlob = new Blob(['no-scene'], { type: 'image/png' });
+    htmlToImageToBlobMock.mockResolvedValue(fallbackBlob);
+
+    const result = await service.capture(PANEL_PATH_ID);
+
+    expect(syncGetPanelPluginMock).not.toHaveBeenCalled();
+    expect(htmlToImageToBlobMock).toHaveBeenCalledTimes(1);
+    expect(result).toBe(fallbackBlob);
+  });
+
+  it.each([
+    ['string', 'not a scene'],
+    ['number', 42],
+    ['plain object without state', { foo: 'bar' }],
+    ['object with non-object state', { state: 'not-an-object' }],
+    ['null', null],
+    ['array', [1, 2, 3]],
+  ])('throws when sceneContext is %s', async (_label, badValue) => {
+    mountPanelElement(PANEL_PATH_ID);
+
+    await expect(
+      // biome-ignore lint/suspicious/noExplicitAny: deliberately exercising bad input
+      service.capture(PANEL_PATH_ID, { sceneContext: badValue as any })
+    ).rejects.toThrow(/sceneContext must be a SceneObject/);
+
+    expect(syncGetPanelPluginMock).not.toHaveBeenCalled();
     expect(htmlToImageToBlobMock).not.toHaveBeenCalled();
   });
 });
