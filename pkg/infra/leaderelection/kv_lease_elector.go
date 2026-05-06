@@ -87,11 +87,6 @@ func (k *KVLeaseElector) Run(ctx context.Context, fn func(ctx context.Context), 
 				"identity", k.identity,
 			)
 		},
-		onNewLeader: func(identity string) {
-			if identity != k.identity {
-				k.logger.Info("New leader elected", "leader", identity)
-			}
-		},
 	}
 	for _, opt := range opts {
 		opt(o)
@@ -113,11 +108,9 @@ func (k *KVLeaseElector) Run(ctx context.Context, fn func(ctx context.Context), 
 		if err != nil {
 			return err
 		}
-		if l == nil {
-			continue
+		if l != nil {
+			k.runAsLeader(ctx, l, mgr, fn, o)
 		}
-
-		k.runAsLeader(ctx, l, mgr, fn, o)
 	}
 }
 
@@ -168,9 +161,11 @@ func (k *KVLeaseElector) runAsLeader(
 	o.onStoppedLeading()
 
 	if o.releaseOnCancel && ctx.Err() != nil {
-		if releaseErr := mgr.Release(context.Background(), l); releaseErr != nil {
+		releaseCtx, releaseCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		if releaseErr := mgr.Release(releaseCtx, l); releaseErr != nil {
 			k.logger.Debug("Failed to release lease on shutdown", "error", releaseErr)
 		}
+		releaseCancel()
 	}
 
 	<-done
