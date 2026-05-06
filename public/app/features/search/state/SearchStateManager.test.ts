@@ -213,4 +213,58 @@ describe('SearchStateManager', () => {
       await waitFor(() => expect(stm.state.result?.totalRows).toEqual(10));
     });
   });
+
+  describe('onLayoutChange', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('does not resurrect a cleared sort when switching to Folders', () => {
+      store.set(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
+      store.set(SEARCH_SELECTED_SORT, 'name_sort');
+      const stm = createSearchStateManager();
+      stm.initStateFromUrl(undefined, false);
+      expect(stm.state.sort).toBe('name_sort');
+      expect(stm.state.prevSort).toBe('name_sort');
+
+      // User clears the sort picker
+      stm.onSortChange(undefined);
+      expect(stm.state.sort).toBeUndefined();
+
+      // User switches to Folders — sort must stay cleared
+      stm.onLayoutChange(SearchLayout.Folders);
+      expect(stm.state.layout).toBe(SearchLayout.Folders);
+      expect(stm.state.sort).toBeUndefined();
+      expect(stm.state.prevSort).toBeUndefined();
+    });
+
+    it('round-trips sort through List → Folders → List via prevSort', () => {
+      const stm = createSearchStateManager();
+      stm.setState({ layout: SearchLayout.List, sort: 'name_sort' });
+
+      stm.onLayoutChange(SearchLayout.Folders);
+      expect(stm.state.sort).toBeUndefined();
+      expect(stm.state.prevSort).toBe('name_sort');
+
+      stm.onLayoutChange(SearchLayout.List);
+      expect(stm.state.sort).toBe('name_sort');
+    });
+
+    it('restores prevSort when switching to List with no current sort', () => {
+      const stm = createSearchStateManager();
+      stm.setState({ layout: SearchLayout.Folders, sort: undefined, prevSort: 'name_sort' });
+
+      stm.onLayoutChange(SearchLayout.List);
+      expect(stm.state.sort).toBe('name_sort');
+      expect(stm.state.layout).toBe(SearchLayout.List);
+    });
+
+    it('keeps current sort when switching to List if sort is already set', () => {
+      const stm = createSearchStateManager();
+      stm.setState({ layout: SearchLayout.Folders, sort: '-name_sort', prevSort: 'name_sort' });
+
+      stm.onLayoutChange(SearchLayout.List);
+      expect(stm.state.sort).toBe('-name_sort');
+    });
+  });
 });

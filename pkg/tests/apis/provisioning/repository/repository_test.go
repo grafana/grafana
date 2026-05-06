@@ -637,6 +637,175 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryParentFolderConflict.Error())
 	})
 
+	t.Run("Git repository branch-scoped path validation with sync enabled", func(t *testing.T) {
+		baseURL := "https://github.com/grafana/test-repo-branch-validation"
+
+		branchTests := []struct {
+			name        string
+			branch      string
+			path        string
+			expectError error
+		}{
+			{
+				name:        "first repo with branch main and path grafana should succeed",
+				branch:      "main",
+				path:        "grafana/",
+				expectError: nil,
+			},
+			{
+				name:        "second repo with branch develop and same path grafana should succeed",
+				branch:      "develop",
+				path:        "grafana/",
+				expectError: nil,
+			},
+			{
+				name:        "third repo with branch main and duplicate path grafana should fail",
+				branch:      "main",
+				path:        "grafana/",
+				expectError: provisioningAPIServer.ErrRepositoryDuplicatePath,
+			},
+			{
+				name:        "fourth repo with branch develop and child path should fail",
+				branch:      "develop",
+				path:        "grafana/dashboards/",
+				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
+			},
+			{
+				name:        "fifth repo with branch main and child path should fail",
+				branch:      "main",
+				path:        "grafana/dashboards/",
+				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
+			},
+		}
+
+		for i, test := range branchTests {
+			t.Run(test.name, func(t *testing.T) {
+				repoName := fmt.Sprintf("git-branch-test-%d", i+1)
+				gitRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+					"Name":          repoName,
+					"URL":           baseURL,
+					"Branch":        test.branch,
+					"Path":          test.path,
+					"SyncEnabled":   true,
+					"SyncTarget":    "folder",
+					"WorkflowsJSON": `[]`,
+				})
+
+				_, err := helper.Repositories.Resource.Create(ctx, gitRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+
+				if test.expectError != nil {
+					require.Error(t, err, "Expected error for repo branch=%s path=%s", test.branch, test.path)
+					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for branch=%s path=%s", test.branch, test.path)
+					var statusError *apierrors.StatusError
+					if errors.As(err, &statusError) {
+						require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
+						require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
+					}
+				} else {
+					require.NoError(t, err, "Expected success for repo branch=%s path=%s", test.branch, test.path)
+				}
+			})
+		}
+	})
+
+	t.Run("Git repository rejects duplicate empty paths on same branch when sync is enabled", func(t *testing.T) {
+		baseURL := "https://github.com/grafana/test-repo-empty-path-branch"
+
+		firstRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-empty-branch-1",
+			"URL":           baseURL,
+			"Branch":        "main",
+			"Path":          "",
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "First repository with empty path should succeed")
+
+		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-empty-branch-2",
+			"URL":           baseURL,
+			"Branch":        "main",
+			"Path":          "",
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
+		var statusError *apierrors.StatusError
+		if errors.As(err, &statusError) {
+			require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
+			require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
+		}
+
+		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-empty-branch-3",
+			"URL":           baseURL,
+			"Branch":        "develop",
+			"Path":          "",
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Third repository with different branch and empty path should succeed")
+	})
+
+	t.Run("Git repository allows conflicting paths when sync is disabled", func(t *testing.T) {
+		baseURL := "https://github.com/grafana/test-repo-branch-sync-disabled"
+
+		firstRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-branch-disabled-1",
+			"URL":           baseURL,
+			"Branch":        "main",
+			"Path":          "demo/",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "First repository with sync disabled should succeed")
+
+		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-branch-disabled-2",
+			"URL":           baseURL,
+			"Branch":        "main",
+			"Path":          "demo/",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Second repository with duplicate path should succeed when sync is disabled")
+
+		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-branch-disabled-3",
+			"URL":           baseURL,
+			"Branch":        "develop",
+			"Path":          "demo/",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Third repository with different branch should succeed when sync is disabled")
+
+		fourthRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-branch-disabled-4",
+			"URL":           baseURL,
+			"Branch":        "main",
+			"Path":          "demo/dashboards/",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, fourthRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Fourth repository with parent-child path should succeed when sync is disabled")
+	})
+
 	t.Run("should update sync interval", func(t *testing.T) {
 		r := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
 			"Name":                "valid-repo-testinterval",
@@ -1782,9 +1951,10 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		// Clean up
 		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 		require.NoError(t, err)
+		helper.WaitForRepositoryDeleted(t, ctx, repo)
 	})
 
-	t.Run("multiple repositories with empty path - creation succeeds but sync warns on ownership conflicts", func(t *testing.T) {
+	t.Run("multiple repositories with empty path - duplicate sync-enabled root path is rejected", func(t *testing.T) {
 		const repo1 = "empty-path-repo-1"
 		const repo2 = "empty-path-repo-2"
 
@@ -1799,57 +1969,28 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		}
 		helper.CreateLocalRepo(t, testRepo1)
 
-		// Step 2: Create second repository with same empty path
-		// Creation should succeed (no duplicate path validation error)
-		// but sync should warn because dashboards are owned by repo1
-		testRepo2 := common.TestRepo{
-			Name:                   repo2,
-			Template:               common.TestdataPath("github.json.tmpl"),
-			SyncTarget:             "folder",
-			Workflows:              []string{},
-			SkipResourceAssertions: true, // Skip because we can't easily count per-repo resources
-		}
-		helper.CreateLocalRepo(t, testRepo2)
+		// Step 2: Create second repository with same URL, branch, and empty path.
+		// Empty path represents the repository root, so this is a duplicate path.
+		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          repo2,
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{})
+		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
 
-		// Verify both repositories have empty paths
+		// Verify first repository has empty path
 		repo1Obj, err := helper.Repositories.Resource.Get(ctx, repo1, metav1.GetOptions{})
 		require.NoError(t, err)
 		path1, _, _ := unstructured.NestedString(repo1Obj.Object, "spec", "github", "path")
 		require.Equal(t, "", path1, "repo1 should have empty path")
 
-		repo2Obj, err := helper.Repositories.Resource.Get(ctx, repo2, metav1.GetOptions{})
-		require.NoError(t, err)
-		path2, _, _ := unstructured.NestedString(repo2Obj.Object, "spec", "github", "path")
-		require.Equal(t, "", path2, "repo2 should have empty path")
-
-		// Verify repo2 sync completed with warning state (ownership conflicts)
-		syncState, _, _ := unstructured.NestedString(repo2Obj.Object, "status", "sync", "state")
-		require.Equal(t, "warning", syncState, "repo2 sync should complete with warning state due to ownership conflicts")
-
-		// Verify global resource counts:
-		// - Folders: 12 total (6 from repo1 + 6 from repo2) - folders are duplicated per repository
-		// - Dashboards: 3 total (only from repo1) - repo2's dashboards fail with ownership conflicts
-		// Poll because repo2's sync job can return before the folder/dashboard
-		// list endpoints have observed all of the newly-created resources.
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-			assert.Len(collect, dashboards.Items, 3, "should have 3 dashboards (only from repo1)")
-
-			folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-			assert.Len(collect, folders.Items, 12, "should have 12 folders (6 from repo1 + 6 from repo2)")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should observe all dashboards and folders after both repos sync")
-
 		// Clean up
 		err = helper.Repositories.Resource.Delete(ctx, repo1, metav1.DeleteOptions{})
 		require.NoError(t, err)
-		err = helper.Repositories.Resource.Delete(ctx, repo2, metav1.DeleteOptions{})
-		require.NoError(t, err)
+		helper.WaitForRepositoryDeleted(t, ctx, repo1)
 	})
 }
 

@@ -1,5 +1,5 @@
 import { GrafanaTheme2 } from '@grafana/data';
-import { create } from '@storybook/theming';
+import { create } from 'storybook/theming';
 
 export const createStorybookTheme = (theme: GrafanaTheme2) => {
   return create({

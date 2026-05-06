@@ -21,13 +21,13 @@
   },
   "dependencies": {
     "json-diff-kit": "1.0.35",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
     "@grafana/eslint-plugin": "workspace:packages/grafana-eslint-rules",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
+    "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5",
     "@vitejs/plugin-react": "^4.4.1",
     "eslint": "9.32.0",
     "jest-canvas-mock": "^2.5.2",
