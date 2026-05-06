@@ -18,6 +18,8 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
@@ -35,7 +37,7 @@ var (
 
 type APIBuilder struct {
 	authorizer  authorizer.Authorizer
-	legacyPrefs rest.Storage
+	legacyPrefs grafanarest.Storage
 
 	merger *merger // joins all preferences
 }
@@ -105,7 +107,21 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage := map[string]rest.Storage{}
 
 	prefs := preferences.PreferencesResourceInfo
-	storage[prefs.StoragePath()] = b.legacyPrefs
+
+	// Support dual writing preferences
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, prefs, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	if b.legacyPrefs != nil && opts.DualWriteBuilder != nil {
+		store, err := opts.DualWriteBuilder(prefs.GroupResource(), b.legacyPrefs, unified)
+		if err != nil {
+			return err
+		}
+		storage[prefs.StoragePath()] = &preferencesStorage{store}
+	} else {
+		storage[prefs.StoragePath()] = &preferencesStorage{unified}
+	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage
 	return nil
