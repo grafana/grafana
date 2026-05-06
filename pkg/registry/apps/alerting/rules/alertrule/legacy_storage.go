@@ -122,6 +122,8 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 			return nil, err
 		}
 		return convertDeletedToK8sResources(info.OrgID, onlyAlertingRules(deleted), s.namespacer)
+	case common.ListModeNormal:
+		// fall through to the normal list pipeline below.
 	}
 
 	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.GroupLabelKey)

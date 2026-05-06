@@ -32,7 +32,7 @@ func onlyRecordingVersions(versions []*ngmodels.AlertRuleVersion) []*ngmodels.Al
 		if v == nil {
 			continue
 		}
-		if v.AlertRule.Type() != ngmodels.RuleTypeRecording {
+		if v.Type() != ngmodels.RuleTypeRecording {
 			continue
 		}
 		out = append(out, v)
@@ -118,6 +118,8 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 			return nil, err
 		}
 		return convertDeletedToK8sResources(info.OrgID, onlyRecordingRules(deleted), s.namespacer)
+	case common.ListModeNormal:
+		// fall through to the normal list pipeline below.
 	}
 
 	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.GroupLabelKey)
