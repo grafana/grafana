@@ -65,7 +65,7 @@ require (
 	github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2 // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
-	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.10 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect

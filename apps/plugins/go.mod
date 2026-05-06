@@ -134,7 +134,7 @@ require (
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
-	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.10 // indirect
 	github.com/grafana/sqlds/v5 v5.1.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // indirect
