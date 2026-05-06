@@ -338,6 +338,7 @@ func (ds *DataSource) resourceRequestMiddleware(handleFunc models.RouteHandlerFu
 	return ds.cursorPagenationMiddleware(adaptRouteHandler(handleFunc))
 }
 
+// TODO: merge this and handleResourceReq
 func (ds *DataSource) cursorPagenationMiddleware(handleFunc models.CursorHandlerFunc) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		if req.Method != "GET" {
