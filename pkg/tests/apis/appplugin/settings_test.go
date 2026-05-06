@@ -27,7 +27,7 @@ import (
 )
 
 const instanceName = "instance" // the name is always "instance"
-const testAppID = "test-app-with-backend-app"
+const testAppID = "test-app-with-backend"
 
 var gvrSettings = schema.GroupVersionResource{
 	Group:    testAppID,

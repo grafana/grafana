@@ -11,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -132,10 +133,10 @@ func RegisterAPIService(
 	pluginInfos, err := pluginspec.LoadPlugins(ctx, pluginSources,
 		func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
-				// Enforce that the plugin ID ends with -app so it is OK to live as a root api group
-				// Alternatively, we could fail or append -app to the name
-				if !strings.HasSuffix(jsonData.ID, "-app") {
-					backend.Logger.Warn("app plugin with invalid suffix: %s", jsonData.ID)
+				// TODO? should we fail more loudly
+				if !strings.Contains(jsonData.ID, "-") || strings.Contains(jsonData.ID, ".") || jsonData.ID == "v1" {
+					logging.FromContext(ctx).Warn("invalid app plugin id: %s", jsonData.ID)
+					return false
 				}
 				return true
 			}
