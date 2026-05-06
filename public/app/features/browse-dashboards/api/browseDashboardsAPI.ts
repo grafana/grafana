@@ -394,7 +394,6 @@ export const browseDashboardsAPI = createApi({
       invalidatesTags: invalidateFolderListOnSuccess,
       queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
-        const restoreDashboardsEnabled = config.featureToggles.restoreDashboards;
         let deletedCount = 0;
         const deletedDashboardUIDs: string[] = [];
         // Delete all the dashboards sequentially
@@ -416,7 +415,7 @@ export const browseDashboardsAPI = createApi({
                 continue;
               }
             }
-            await api.deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
+            await api.deleteDashboard(dashboardUID, false);
 
             deletedCount++;
             deletedDashboardUIDs.push(dashboardUID);
@@ -429,27 +428,18 @@ export const browseDashboardsAPI = createApi({
               pageStateManager.removeSceneCache(uid);
             }
 
-            // Show success notification after all deletions
-            if (restoreDashboardsEnabled) {
-              // Show notification with button to Recently Deleted
-              const title =
-                deletedCount === 1
-                  ? t('browse-dashboards.delete.success-single', 'Dashboard deleted')
-                  : t('browse-dashboards.delete.success-multiple', 'Dashboards deleted');
-              const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View deleted dashboards');
-              const component = buildNotificationButton({
-                title,
-                buttonLabel: buttonText,
-                href: config.appSubUrl + '/dashboard/recently-deleted',
-              });
-              dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
-            } else if (config.featureToggles.kubernetesDashboards) {
-              // Legacy notification for kubernetes dashboards
-              appEvents.publish({
-                type: AppEvents.alertSuccess.name,
-                payload: ['Dashboard deleted'],
-              });
-            }
+            // Show notification with button to Recently Deleted
+            const title =
+              deletedCount === 1
+                ? t('browse-dashboards.delete.success-single', 'Dashboard deleted')
+                : t('browse-dashboards.delete.success-multiple', 'Dashboards deleted');
+            const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View deleted dashboards');
+            const component = buildNotificationButton({
+              title,
+              buttonLabel: buttonText,
+              href: config.appSubUrl + '/dashboard/recently-deleted',
+            });
+            dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
           }
         }
 

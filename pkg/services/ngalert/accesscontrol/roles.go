@@ -492,6 +492,22 @@ var (
 	}
 )
 
+var alertmanagerImportsAdminRole = accesscontrol.RoleRegistration{
+	Role: accesscontrol.RoleDTO{
+		Name:        accesscontrol.FixedRolePrefix + "alerting.alertmanager-imports:writer",
+		DisplayName: "Alerting alertmanager imports writer",
+		Description: "Read, write, and delete Prometheus/Mimir-compatible alertmanager configurations imported via the convert API.",
+		Group:       models.AlertRolesGroup,
+		Permissions: []accesscontrol.Permission{
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsCreate, Scope: models.ScopeAlertmanagerImportsAll},
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsRead, Scope: models.ScopeAlertmanagerImportsAll},
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsWrite, Scope: models.ScopeAlertmanagerImportsAll},
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsDelete, Scope: models.ScopeAlertmanagerImportsAll},
+		},
+	},
+	Grants: []string{string(org.RoleAdmin)},
+}
+
 // FixedRoleRegistrations returns all alerting role registrations declared by this package.
 func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	return []accesscontrol.RoleRegistration{
@@ -506,6 +522,7 @@ func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 		timeIntervalsReaderRole, timeIntervalsWriterRole,
 		routesCreatorRole, routesReaderRole, routesWriterRole,
 		inhibitionRulesReaderRole, inhibitionRulesWriterRole,
+		alertmanagerImportsAdminRole,
 	}
 }
 

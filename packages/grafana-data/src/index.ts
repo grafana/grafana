@@ -668,6 +668,7 @@ export {
   VizOrientation,
 } from './types/panel';
 export {
+  type DataSourceConfigValidationAPI,
   type DataSourcePluginOptionsEditorProps,
   type DataSourceQueryType,
   type DataSourceOptionsType,
