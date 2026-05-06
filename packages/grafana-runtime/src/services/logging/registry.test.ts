@@ -1,6 +1,6 @@
-import { type MonitoringLogger } from 'src/utils/logging';
-
 import { LogLevel } from '@grafana/faro-web-sdk';
+
+import { type MonitoringLogger, logWarning } from '../../utils/logging';
 
 import { type LoggerDefaults } from './loggers';
 import { addLogger, clearLoggerRegistry, getLogger, initializeLoggersRegistry, setLogger } from './registry';
@@ -26,6 +26,13 @@ jest.mock('../../config', () => ({
   },
 }));
 
+jest.mock('../../utils/logging', () => ({
+  ...jest.requireActual('../../utils/logging'),
+  logWarning: jest.fn(),
+}));
+
+const logWarningMock = jest.mocked(logWarning);
+
 describe('logging registry', () => {
   let debugSpy: jest.SpyInstance;
   let logSpy: jest.SpyInstance;
@@ -39,6 +46,7 @@ describe('logging registry', () => {
     logSpy = jest.spyOn(console, 'log').mockImplementation();
     errorSpy = jest.spyOn(console, 'error').mockImplementation();
     warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    logWarningMock.mockReturnValue();
   });
 
   afterEach(() => {
@@ -172,6 +180,23 @@ describe('logging registry', () => {
           expect(warnSpy).toHaveBeenCalledTimes(2);
           expect(warnSpy).toHaveBeenCalledWith(
             `LoggerRegistry: no logger 'grafana/runtime.plugins.meta' exists, are you calling getLogger before initializeLoggersRegistry function was called?`
+          );
+        }
+      });
+
+      it('should use logWarning to log warning message', () => {
+        if (throws) {
+          expect(true).toBe(true);
+          return;
+        }
+
+        getLogger('grafana/runtime.plugins.meta');
+
+        if (warns) {
+          expect(logWarning).toHaveBeenCalledTimes(1);
+          expect(logWarning).toHaveBeenCalledWith(
+            `LoggerRegistry: no logger 'grafana/runtime.plugins.meta' exists, are you calling getLogger before initializeLoggersRegistry function was called?`,
+            { logger: 'grafana/runtime.plugins.meta', source: 'grafana/runtime.logging.registry' }
           );
         }
       });

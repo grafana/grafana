@@ -1,4 +1,4 @@
-import { createMonitoringLogger, type MonitoringLogger } from '../../utils/logging';
+import { createMonitoringLogger, logWarning, type MonitoringLogger } from '../../utils/logging';
 
 import { Loggers, type LoggerDefaults, type LoggerSource } from './loggers';
 
@@ -28,6 +28,7 @@ export function getLogger(source: LoggerSource): MonitoringLogger {
     // avoid having to mock logger in tests because of the warning message
     if (process.env.NODE_ENV !== 'test') {
       console.warn(message);
+      logWarning(message, { source: 'grafana/runtime.logging.registry', logger: source });
     }
 
     if (process.env.NODE_ENV === 'development') {
