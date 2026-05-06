@@ -15,6 +15,7 @@ use (
 	./pkg/build
 	./pkg/build/wire // skip:golangci-lint
 	./pkg/codegen
+	./pkg/infra/log
 	./pkg/plugins/codegen
 	./pkg/promlib
 	./pkg/semconv
@@ -26,6 +27,8 @@ use (
 // when we release xorm we would like to release it like github.com/grafana/grafana/pkg/util/xorm
 // but we don't want to change all the imports. so we use replace to handle this situation
 replace xorm.io/xorm => ./pkg/util/xorm
+
+replace github.com/grafana/grafana/pkg/infra/log v0.0.0-00010101000000-000000000000 => ./pkg/infra/log
 
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260206185757-70751e6fafe0
 
