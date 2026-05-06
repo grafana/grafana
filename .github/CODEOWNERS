@@ -1277,7 +1277,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/create-next-release-branch.yml @grafana/grafana-backend-services-squad
 /.github/workflows/create-security-branch.yml @grafana/grafana-backend-services-squad
 /.github/workflows/codeowners-validator.yml @tolzhabayev
-/.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/community-release.yml @grafana/grafana-backend-services-squad
 /.github/workflows/detect-breaking-changes-* @grafana/grafana-frontend-platform
