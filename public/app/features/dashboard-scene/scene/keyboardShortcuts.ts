@@ -136,36 +136,27 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: () => sceneGraph.getTimeRange(scene).onRefresh(),
   });
 
-  if (config.featureToggles.newTimeRangeZoomShortcuts) {
-    keybindings.addBinding({
-      key: 't +',
-      onTrigger: () => {
-        handleZoom(scene, 0.5);
-      },
-    });
+  keybindings.addBinding({
+    key: 't +',
+    onTrigger: () => {
+      handleZoom(scene, 0.5);
+    },
+  });
 
-    keybindings.addBinding({
-      key: 't =',
-      onTrigger: () => {
-        handleZoom(scene, 0.5);
-      },
-    });
+  keybindings.addBinding({
+    key: 't =',
+    onTrigger: () => {
+      handleZoom(scene, 0.5);
+    },
+  });
 
-    keybindings.addBinding({
-      key: 't -',
-      type: 'keypress', // NOTE: Because some browsers/OS identify minus symbol differently.
-      onTrigger: () => {
-        handleZoomOut(scene);
-      },
-    });
-  } else {
-    keybindings.addBinding({
-      key: 't z',
-      onTrigger: () => {
-        handleZoomOut(scene);
-      },
-    });
-  }
+  keybindings.addBinding({
+    key: 't -',
+    type: 'keypress', // NOTE: Because some browsers/OS identify minus symbol differently.
+    onTrigger: () => {
+      handleZoomOut(scene);
+    },
+  });
 
   keybindings.addBinding({
     key: 'ctrl+z',

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -42,6 +43,21 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+// findTestLicense returns the absolute path to the enterprise test license
+// fixture bundled in the enterprise tree, or "" if it is not present (OSS build).
+// Used when wiring MT-mode Zanzana tests that need FeatureAccessControl enabled.
+func findTestLicense() string {
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return ""
+	}
+	candidate := filepath.Join(filepath.Dir(thisFile), "..", "..", "extensions", "apiserver", "testdata", "valid", "license.jwt")
+	if exists, err := fs.Exists(candidate); err != nil || !exists {
+		return ""
+	}
+	return candidate
+}
 
 // StartGrafana starts a Grafana server.
 // The server address is returned.
@@ -165,7 +181,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
 
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
-			env.Cfg.Logger, registerer, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, grpcService)
+			env.Cfg.Logger, registerer, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, grpcService)
 		require.NoError(t, err)
 		err = grpcService.StartAsync(ctx)
 		require.NoError(t, err)
@@ -802,11 +818,42 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
-	if opts.ZanzanaReconciliationInterval != 0 {
+	if opts.ZanzanaReconciliationInterval != 0 || opts.ZanzanaReconcilerMode != "" {
 		reconcilerSect, err := getOrCreateSection("zanzana.reconciler")
 		require.NoError(t, err)
-		_, err = reconcilerSect.NewKey("interval", opts.ZanzanaReconciliationInterval.String())
+		if opts.ZanzanaReconciliationInterval != 0 {
+			_, err = reconcilerSect.NewKey("interval", opts.ZanzanaReconciliationInterval.String())
+			require.NoError(t, err)
+		}
+		if opts.ZanzanaReconcilerMode != "" {
+			_, err = reconcilerSect.NewKey("mode", string(opts.ZanzanaReconcilerMode))
+			require.NoError(t, err)
+		}
+	}
+
+	// The MT reconciler's background loop calls server.Read without an auth
+	// identity on the context; Zanzana's authorizer rejects that unless
+	// allow_insecure is set. Enable it for the embedded test server so the
+	// reconciler can make progress.
+	if opts.ZanzanaReconcilerMode == setting.ZanzanaReconcilerModeMT {
+		zanzanaServerSect, err := getOrCreateSection("zanzana.server")
 		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("allow_insecure", "true")
+		require.NoError(t, err)
+
+		// Enterprise RBAC storage backends (Role, RoleBinding, GlobalRole) short-circuit
+		// to a noop "unavailable functionality" error unless the license token enables
+		// FeatureAccessControl. The enterprise MT reconciler includes Roles+RoleBindings
+		// in its CRD list, so without a license the reconciler can never complete a
+		// namespace. Wire a test license if one is present in the merged enterprise tree.
+		if extensions.IsEnterprise && opts.LicensePath == "" {
+			if licensePath := findTestLicense(); licensePath != "" {
+				enterpriseSect, err := cfg.NewSection("enterprise")
+				require.NoError(t, err)
+				_, err = enterpriseSect.NewKey("license_path", licensePath)
+				require.NoError(t, err)
+			}
+		}
 	}
 
 	if opts.DisableZanzanaCache {
@@ -924,6 +971,7 @@ type GrafanaOpts struct {
 	OpenFeatureAPIEnabled                                bool
 	DisableAuthZClientCache                              bool
 	ZanzanaReconciliationInterval                        time.Duration
+	ZanzanaReconcilerMode                                setting.ZanzanaReconcilerMode
 	DisableZanzanaCache                                  bool
 	DisableZanzanaServerCheckQueryCache                  bool
 

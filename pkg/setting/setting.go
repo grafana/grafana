@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/common/model"
 	"gopkg.in/ini.v1"
 
@@ -405,10 +407,11 @@ type Cfg struct {
 	SqlDatasourceMaxConnLifetimeDefault int
 
 	// Snapshots
-	SnapshotEnabled      bool
-	ExternalSnapshotUrl  string
-	ExternalSnapshotName string
-	ExternalEnabled      bool
+	SnapshotEnabled       bool
+	ExternalSnapshotUrl   string
+	ExternalSnapshotName  string
+	ExternalEnabled       bool
+	ExternalSnapshotToken string
 
 	// Only used in https://snapshots.raintank.io/
 	SnapshotPublicMode bool
@@ -444,6 +447,7 @@ type Cfg struct {
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
 	FrontendAnalyticsConsoleReporting   bool
+	MeticulousAIRecordingToken          string
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -532,6 +536,9 @@ type Cfg struct {
 
 	// Grafana.com SSO API token used for Unified SSO between instances and Grafana.com.
 	GrafanaComSSOAPIToken string
+
+	// GrafanaComProxyAPIToken is the dedicated auth token for Grafana.com proxy requests and plugin installs.
+	GrafanaComProxyAPIToken string
 
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]any
@@ -662,6 +669,7 @@ type Cfg struct {
 	IndexSnapshotBucketURL                     string        // Go CDK bucket URL for snapshot storage (s3://, gs://, azblob://, mem://, file:///)
 	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
 	IndexSnapshotMaxAge                        time.Duration // Max snapshot age before deletion (must be >= MaxFileIndexAge, default: 7d)
+	IndexSnapshotCleanupGracePeriod            time.Duration // Time a new snapshot must exist before its predecessor in the same Grafana-version group is eligible for cleanup (default: 30m)
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
@@ -682,19 +690,29 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
-	OverridesFilePath                          string
-	OverridesReloadInterval                    time.Duration
-	EnforcedQuotaResources                     []string
-	QuotasErrorMessageSupportInfo              string
-	EnableSQLKVBackend                         bool
-	EnableSQLKVCompatibilityMode               bool
-	EnableGarbageCollection                    bool
-	GarbageCollectionDryRun                    bool
-	GarbageCollectionInterval                  time.Duration
-	GarbageCollectionBatchSize                 int
-	GarbageCollectionBatchWait                 time.Duration
-	GarbageCollectionMaxAge                    time.Duration
-	DashboardsGarbageCollectionMaxAge          time.Duration
+	// Vector storage (separate pgvector database)
+	EnableVectorBackend               bool
+	VectorDBHost                      string
+	VectorDBPort                      string
+	VectorDBName                      string
+	VectorDBUser                      string
+	VectorDBPassword                  string
+	VectorDBSSLMode                   string
+	VectorPromotionThreshold          int           // row count per tenant to trigger leaf promotion
+	VectorPromoterInterval            time.Duration // promoter tick interval; 0 disables
+	OverridesFilePath                 string
+	OverridesReloadInterval           time.Duration
+	EnforcedQuotaResources            []string
+	QuotasErrorMessageSupportInfo     string
+	EnableSQLKVBackend                bool
+	EnableSQLKVCompatibilityMode      bool
+	EnableGarbageCollection           bool
+	GarbageCollectionDryRun           bool
+	GarbageCollectionInterval         time.Duration
+	GarbageCollectionBatchSize        int
+	GarbageCollectionBatchWait        time.Duration
+	GarbageCollectionMaxAge           time.Duration
+	DashboardsGarbageCollectionMaxAge time.Duration
 	// StorageModeCacheTTL is the TTL for caching statusReader results in the dynamic dualwrite service.
 	// Default: 5 seconds, 0 or negative means no expiration.
 	StorageModeCacheTTL time.Duration
@@ -736,6 +754,16 @@ type InstallPlugin struct {
 	ID      string `json:"id"`
 	Version string `json:"version"`
 	URL     string `json:"url,omitempty"`
+}
+
+// ResolveGrafanaComProxyAPIToken must be called after OpenFeature is initialized.
+// It sets GrafanaComProxyAPIToken to the dedicated token when the grafana.dedicatedGrafanaComProxyAPIToken
+// flag is enabled and proxy_token is configured; otherwise falls back to sso_api_token.
+func (cfg *Cfg) ResolveGrafanaComProxyAPIToken() {
+	if openfeature.NewDefaultClient().Boolean(context.Background(), "grafana.dedicatedGrafanaComProxyAPIToken", false, openfeature.EvaluationContext{}) && cfg.GrafanaComProxyAPIToken != "" {
+		return
+	}
+	cfg.GrafanaComProxyAPIToken = cfg.GrafanaComSSOAPIToken
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -800,6 +828,7 @@ func RedactedValue(key, value string) string {
 		"API_TOKEN$",
 		"WEBHOOK_TOKEN$",
 		"INSTALL_TOKEN$",
+		"PROXY_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1508,6 +1537,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
+	cfg.MeticulousAIRecordingToken = analytics.Key("meticulous_ai_recording_token").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -1644,6 +1674,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
 	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
+	cfg.GrafanaComProxyAPIToken = valueAsString(iniFile.Section("grafana_com"), "proxy_token", "")
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 
@@ -2165,6 +2196,7 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
 
 	cfg.ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	cfg.ExternalSnapshotToken = valueAsString(snapshots, "external_snapshot_token", "")
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	return nil
