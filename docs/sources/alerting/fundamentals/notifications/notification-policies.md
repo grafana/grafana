@@ -96,7 +96,7 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
   | `!~`     | Select labels that do not regex-match the value.   |
 
 {{< admonition type="note" >}}
-If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match in order to link a rule to a policy.
+If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match to link a rule to a policy.
 {{< /admonition >}}
 
 By default, Grafana uses a single notification policy tree for all alert routing. There is also the option to set up and configure multiple notification policies with the [multiple policy feature](ref:multi-notification-policies), which allows you to split routing logic into separate, independently managed routing trees.
