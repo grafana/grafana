@@ -13,12 +13,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	dsconverter "github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -83,8 +85,15 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 
 		dto := hs.convertModelToDtos(c.Req.Context(), legacyDS)
 
-		// TODO get access control from the new api endpoint too.
-		dto.AccessControl = getAccessControlMetadata(c, datasources.ScopePrefix, dto.UID)
+		if c.QueryBool("accesscontrol") {
+			accessMetadata, err := hs.getK8sDataSourceAccess(c, conn.APIGroup, conn.APIVersion, conn.Name)
+			if err != nil {
+				// Fallback to the existing local metadata path so the datasource read itself still succeeds.
+				dto.AccessControl = getAccessControlMetadata(c, datasources.ScopePrefix, dto.UID)
+			} else {
+				dto.AccessControl = accessMetadata
+			}
+		}
 
 		return response.JSON(http.StatusOK, &dto)
 	})
@@ -120,6 +129,36 @@ func (hs *HTTPServer) getK8sDataSource(c *contextmodel.ReqContext, group, versio
 	}
 
 	return &ds, nil
+}
+
+func (hs *HTTPServer) getK8sDataSourceAccess(c *contextmodel.ReqContext, group, version, uid string) (accesscontrol.Metadata, error) {
+	cfg := dynamic.ConfigFor(hs.clientConfigProvider.GetDirectRestConfig(c))
+	cfg.GroupVersion = &schema.GroupVersion{Group: group, Version: version}
+
+	client, err := rest.RESTClientFor(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rest client: %w", err)
+	}
+
+	namespace := hs.namespacer(c.GetOrgID())
+	result := client.Get().
+		AbsPath("apis", group, version, "namespaces", namespace, "datasources", uid, "access").
+		Do(c.Req.Context())
+	if err := result.Error(); err != nil {
+		return nil, fmt.Errorf("failed to get datasource access metadata: %w", err)
+	}
+
+	body, err := result.Raw()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read datasource access metadata response: %w", err)
+	}
+
+	var accessInfo datasourceV0.DatasourceAccessInfo
+	if err := json.Unmarshal(body, &accessInfo); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal datasource access metadata: %w", err)
+	}
+
+	return accessInfo.Permissions, nil
 }
 
 // callK8sDataSourceResourceHandler returns a handler that proxies

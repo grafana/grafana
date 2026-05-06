@@ -54,9 +54,9 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*datasourceV0alpha1.DatasourceAccessInfo, error) {
 	reqContext := contexthandler.FromContext(ctx)
-	resourceIDs := map[string]bool{datasources.ScopePrefix: true}
+	resourceIDs := map[string]bool{name: true}
 	access := accesscontrol.GetResourcesMetadata(reqContext.Req.Context(), reqContext.GetPermissions(), datasources.ScopePrefix, resourceIDs)
 	return &datasourceV0alpha1.DatasourceAccessInfo{
-		Permissions: access[datasources.ScopePrefix],
+		Permissions: access[name],
 	}, nil
 }
