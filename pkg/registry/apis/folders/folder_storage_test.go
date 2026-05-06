@@ -16,7 +16,6 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -53,7 +52,6 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 				folderPermissionsSvc: folderPermService,
 				store:                store,
 				permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-				features:             featuremgmt.WithFeatures(),
 			}
 			obj := &folders.Folder{}
 

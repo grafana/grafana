@@ -180,7 +180,6 @@ func (b *FolderAPIBuilder) storageForVersion(
 			resourceInfo:         folders,
 			tableConverter:       folders.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
-			features:             b.features,
 			permissionsOnCreate:  b.permissionsOnCreate,
 			store:                unified,
 		}
