@@ -8,6 +8,7 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/klog/v2"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 )
@@ -50,6 +51,11 @@ func canAccessAnnotations(ctx context.Context, accessClient authtypes.AccessClie
 	if !ok {
 		return nil, apierrors.NewUnauthorized("no identity found for request")
 	}
+
+	// TEMP DEBUG
+	klog.Infof("canAccessAnnotations: subject=%s, type=%s, tokenPerms=%v, delegatedPerms=%v",
+		authInfo.GetSubject(), authInfo.GetIdentityType(),
+		authInfo.GetTokenPermissions(), authInfo.GetTokenDelegatedPermissions())
 
 	checks := make([]authtypes.BatchCheckItem, 0, len(items))
 	for i, anno := range items {
