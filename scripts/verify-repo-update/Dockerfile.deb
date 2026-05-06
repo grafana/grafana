@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 ARG REPO_CONFIG=grafana.list.oss
 ARG PACKAGE=grafana
