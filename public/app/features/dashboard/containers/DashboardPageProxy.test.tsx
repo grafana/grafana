@@ -52,43 +52,29 @@ function setup(props: Partial<DashboardPageProxyProps> & { uid?: string }) {
 }
 
 describe('DashboardPageProxy', () => {
-  describe('when dashboardScene feature toggle is enabled (default)', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-      config.featureToggles.kubernetesDashboards = false;
+  beforeEach(() => {
+    jest.clearAllMocks();
+    config.featureToggles.kubernetesDashboards = false;
+  });
+
+  it('should render DashboardScenePage for home route', async () => {
+    setup({
+      route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
     });
 
-    it('should render DashboardScenePage for home route', async () => {
-      setup({
-        route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-      });
+    await waitFor(() => {
+      expect(screen.queryAllByTestId('dashboard-scene-page')).toHaveLength(1);
+    });
+  });
 
-      await waitFor(() => {
-        expect(screen.queryAllByTestId('dashboard-scene-page')).toHaveLength(1);
-      });
+  it('should render DashboardScenePage for normal route with uid', async () => {
+    setup({
+      route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
+      uid: 'abc-def',
     });
 
-    it('should render DashboardScenePage for normal route with uid', async () => {
-      setup({
-        route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-        uid: 'abc-def',
-      });
-
-      await waitFor(() => {
-        expect(screen.queryAllByTestId('dashboard-scene-page')).toHaveLength(1);
-      });
-    });
-
-    it('should render legacy DashboardPage when forceOld query param is set', async () => {
-      setup({
-        route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-        uid: 'abc-def',
-        queryParams: { scenes: false },
-      });
-
-      await waitFor(() => {
-        expect(screen.queryAllByTestId('dashboard-scene-page')).toHaveLength(0);
-      });
+    await waitFor(() => {
+      expect(screen.queryAllByTestId('dashboard-scene-page')).toHaveLength(1);
     });
   });
 });

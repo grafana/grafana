@@ -31,12 +31,7 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import {
-  activateSceneObjectAndParentTree,
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-} from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { type PanelDataPane } from './PanelDataPane/PanelDataPane';
@@ -118,16 +113,19 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       })
     );
 
-    const deactivateParents = activateSceneObjectAndParentTree(panel);
+    // Listen for panel plugin changes
+    this._subs.add(
+      panel.subscribeToState((n, p) => {
+        if (n.pluginId !== p.pluginId) {
+          this.waitForPlugin();
+        }
+      })
+    );
 
     this.waitForPlugin();
 
     return () => {
       this.commitChanges();
-
-      if (deactivateParents) {
-        deactivateParents();
-      }
     };
   }
 
@@ -167,7 +165,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     dashboard.state.editPane.setPanelEditAction(editAction);
   }
 
-  private waitForPlugin(retry = 0) {
+  public waitForPlugin(retry = 0) {
     const panel = this.getPanel();
     const plugin = panel.getPlugin();
 
@@ -231,15 +229,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       this._setupChangeDetection();
       this._updateDataPane(plugin);
 
-      // Listen for panel plugin changes
-      this._subs.add(
-        panel.subscribeToState((n, p) => {
-          if (n.pluginId !== p.pluginId) {
-            this.waitForPlugin();
-          }
-        })
-      );
-
       // Setup options pane
       const optionsPane = new PanelOptionsPane({
         panelRef: this.state.panelRef,
@@ -249,14 +238,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         isNewPanel: this.state.isNewPanel,
       });
 
-      this.setState({
-        optionsPane,
-        isInitializing: false,
-      });
+      this.setState({ optionsPane, isInitializing: false });
     } else {
       // plugin changed after first time initialization
       // Just update data pane
       this._updateDataPane(plugin);
+    }
+
+    // If switching plugin when tableView is enabled, then disable it
+    if (this.state.tableView) {
+      this.setState({ tableView: undefined });
     }
   }
 

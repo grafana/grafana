@@ -4300,6 +4300,7 @@
         "repository-not-found-message": "選択したフォルダのリポジトリが見つかりませんでした。フォルダが正しくプロビジョニングされていることを確認してください。",
         "repository-not-found-title": "リポジトリが見つかりません"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "リソースの移動中にエラーが発生しました",
       "error-no-target-folder-path": "ターゲットフォルダパスが無効または空です。もう一度選択してください。",
       "move-total": "全体で次に影響します：",
@@ -5239,7 +5240,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "設定"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5641,7 +5642,7 @@
         "title": "変数"
       },
       "variable": {
-        "change-type": "変更",
+        "change-type": "",
         "change-type-aria-label": "変数タイプを変更",
         "custom-options": {
           "apply": "適用",
@@ -5958,7 +5959,7 @@
       "cancel": "キャンセル",
       "common": {
         "copy": "コピー",
-        "copy-or-duplicate": "コピー/貼り付けまたは複製",
+        "copy-tooltip": "",
         "delete": "削除",
         "duplicate": "複製",
         "layout": "レイアウト",
@@ -5997,7 +5998,7 @@
     },
     "new-panel": {
       "aria-label": "未構成のパネル。タブを使用して構成オプションを表示します。",
-      "configure-button": "構成",
+      "configure-button": "",
       "configure-button-menu": "メニューの切り替え",
       "configure-visualization": "可視化を設定",
       "empty-state-message": "クエリを実行してここで可視化するか、すべての視覚化に移動して他のパネルタイプを追加します",
@@ -6238,10 +6239,8 @@
       "title-provisioned": "プロビジョニング済みダッシュボード"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "選択したフォルダに同じ名前のダッシュボードがすでに存在します。<br/><2>このダッシュボードの保存を続行しますか？</2>",
       "body-version-mismatch": "他のユーザーがこのダッシュボードを更新しました<br/><2>このダッシュボードを保存しますか？</2>",
       "confirmText-save-and-overwrite": "保存して上書き",
-      "title-name-exists": "競合",
       "title-version-mismatch": "競合"
     },
     "save-dashboard-form": {
@@ -7272,6 +7271,7 @@
       "terraform": "管理者：Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "ダッシュボードの移動に失敗しました",
       "cancel-action": "キャンセル",
       "current-file-not-found": "現在のダッシュボードファイルが見つかりませんでした",
@@ -7284,10 +7284,6 @@
       "success-message": "ダッシュボードが正常に移動しました",
       "target-path-label": "ターゲットパス",
       "title-this-repository-is-read-only": "このリポジトリは読み取り専用です"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "選択したフォルダに同じ名前のダッシュボードがすでに存在します。このダッシュボードの保存を続行しますか？",
-      "title-name-already-exists": "名前はすでに存在します"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -15360,7 +15356,6 @@
       "forwards-time-aria-label": "時間範囲を前に移動",
       "to": "へ",
       "zoom-out-button": "時間範囲をズームアウト",
-      "zoom-out-tooltip": "時間範囲ズームアウト <br/> CTRL+Z",
       "zoom-out-tooltip-new": "時間範囲ズームアウト <br/> t -"
     },
     "time-range": {

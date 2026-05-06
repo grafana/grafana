@@ -1,11 +1,12 @@
 import { getByLabelText, render, screen, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolderReadme';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -163,6 +164,119 @@ describe('browse-dashboards BrowseView', () => {
         />
       );
       expect(await screen.findByText('This folder is empty')).toBeInTheDocument();
+    });
+  });
+
+  describe('inline README row', () => {
+    function mockReadme(markdownContent = '# README\n\nbody') {
+      jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
+        repository: {
+          name: 'r',
+          target: 'folder',
+          title: 'r',
+          type: 'github',
+          url: 'https://github.com/o/r',
+          branch: 'main',
+          workflows: [],
+        } as never,
+        folder: undefined,
+        readmePath: 'README.md',
+        status: 'ok',
+        markdownContent,
+        refetch: jest.fn(),
+      });
+    }
+
+    let originalFlag: boolean | undefined;
+
+    beforeEach(() => {
+      originalFlag = config.featureToggles.provisioningReadmes;
+    });
+
+    afterEach(() => {
+      config.featureToggles.provisioningReadmes = originalFlag;
+      jest.restoreAllMocks();
+    });
+
+    it('appends the README panel as the last row when the folder is provisioned and has children', async () => {
+      config.featureToggles.provisioningReadmes = true;
+      mockReadme();
+
+      render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderA.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+
+      expect(await screen.findByText('README.md')).toBeInTheDocument();
+    });
+
+    it('does not append the README row when the toggle is off', async () => {
+      config.featureToggles.provisioningReadmes = false;
+      mockReadme();
+
+      render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderA.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+      await screen.findByText(folderA_folderA.item.title);
+
+      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+    });
+
+    it('does not append the README row when the folder is not provisioned', async () => {
+      config.featureToggles.provisioningReadmes = true;
+      mockReadme();
+
+      render(<BrowseView permissions={mockPermissions} folderUID={folderA.item.uid} width={WIDTH} height={HEIGHT} />);
+      await screen.findByText(folderA_folderA.item.title);
+
+      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+    });
+
+    it('does not append the README row when there is no folderUID (root)', async () => {
+      config.featureToggles.provisioningReadmes = true;
+      mockReadme();
+
+      render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={undefined}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+      await screen.findByText(folderA.item.title);
+
+      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+    });
+
+    it('does not append the README row for empty folders', async () => {
+      config.featureToggles.provisioningReadmes = true;
+      mockReadme();
+
+      render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderB_empty.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+
+      expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
+      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
     });
   });
 });

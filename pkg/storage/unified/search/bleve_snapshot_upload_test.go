@@ -22,24 +22,20 @@ import (
 )
 
 type uploadTestStore struct {
-	lockErr error
+	fakeRemoteIndexStore
+
+	lockErr          error
+	lockBuildVersion string
 
 	uploadErr   error
 	uploadCalls atomic.Int32
 	uploadMeta  IndexMeta
 	uploaded    []string
 	onUpload    func() error
-
-	// Probe support: keys returned from ListIndexKeys, manifest fetched by
-	// GetIndexMeta. probeListErr forces a transport error from ListIndexKeys.
-	probeKeys     []ulid.ULID
-	probeMetas    map[ulid.ULID]*IndexMeta
-	probeListErr  error
-	probeListCall atomic.Int32
-	probeGetCalls atomic.Int32
 }
 
-func (s *uploadTestStore) LockBuildIndex(context.Context, resource.NamespacedResource) (IndexStoreLock, error) {
+func (s *uploadTestStore) LockBuildIndex(_ context.Context, _ resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	s.lockBuildVersion = buildVersion
 	if s.lockErr != nil {
 		return nil, s.lockErr
 	}
@@ -84,23 +80,6 @@ func (s *uploadTestStore) DownloadIndex(context.Context, resource.NamespacedReso
 
 func (s *uploadTestStore) ListIndexes(context.Context, resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
 	panic("ListIndexes not implemented for uploadTestStore")
-}
-
-func (s *uploadTestStore) ListIndexKeys(context.Context, resource.NamespacedResource) ([]ulid.ULID, error) {
-	s.probeListCall.Add(1)
-	if s.probeListErr != nil {
-		return nil, s.probeListErr
-	}
-	return append([]ulid.ULID(nil), s.probeKeys...), nil
-}
-
-func (s *uploadTestStore) GetIndexMeta(_ context.Context, _ resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
-	s.probeGetCalls.Add(1)
-	m, ok := s.probeMetas[k]
-	if !ok {
-		return nil, ErrSnapshotNotFound
-	}
-	return m, nil
 }
 
 func (s *uploadTestStore) DeleteIndex(context.Context, resource.NamespacedResource, ulid.ULID) error {
@@ -191,13 +170,14 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	require.NoError(t, be.uploadSnapshot(context.Background(), key, idx))
 	assert.Equal(t, int32(1), store.uploadCalls.Load())
 	assert.Equal(t, int64(42), store.uploadMeta.LatestResourceVersion)
-	assert.Equal(t, be.opts.BuildVersion, store.uploadMeta.GrafanaBuildVersion)
-	// BuildStartTimestamp must be populated from the index's internal build
+	assert.Equal(t, be.opts.BuildVersion, store.uploadMeta.BuildVersion)
+	assert.Equal(t, be.opts.BuildVersion, store.lockBuildVersion)
+	// BuildTime must be populated from the index's internal build
 	// info (set by newBleveIndex), not left zero. Compare with second-level
 	// granularity since buildInfo persists Unix seconds.
-	assert.False(t, store.uploadMeta.BuildStartTimestamp.IsZero(), "BuildStartTimestamp should be set")
-	assert.False(t, store.uploadMeta.BuildStartTimestamp.Before(beforeBuild),
-		"BuildStartTimestamp %s should be at or after %s", store.uploadMeta.BuildStartTimestamp, beforeBuild)
+	assert.False(t, store.uploadMeta.BuildTime.IsZero(), "BuildTime should be set")
+	assert.False(t, store.uploadMeta.BuildTime.Before(beforeBuild),
+		"BuildTime %s should be at or after %s", store.uploadMeta.BuildTime, beforeBuild)
 	assert.NotEmpty(t, store.uploaded)
 
 	snapshotParent := filepath.Join(be.opts.Root, "snapshots", resourceSubPath(key))
@@ -235,7 +215,7 @@ func TestUploadSnapshot_PreservesOriginalBuildStartTime(t *testing.T) {
 
 	require.NoError(t, be.uploadSnapshot(context.Background(), key, wrapped))
 	require.Equal(t, int32(1), store.uploadCalls.Load())
-	assert.Equal(t, originalBuildTime.UTC(), store.uploadMeta.BuildStartTimestamp,
+	assert.Equal(t, originalBuildTime.UTC(), store.uploadMeta.BuildTime,
 		"periodic re-upload should preserve the original build-start time")
 }
 
@@ -303,6 +283,45 @@ func TestRunUploadSnapshots_SkipNoChanges(t *testing.T) {
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSkipNoChanges)))
 }
 
+func TestRunUploadSnapshots_OwnershipCheck(t *testing.T) {
+	tests := []struct {
+		name         string
+		ownsIndexFn  func(resource.NamespacedResource) (bool, error)
+		wantStatus   string
+		probeMessage string
+	}{
+		{
+			name:         "skip not owner",
+			ownsIndexFn:  func(resource.NamespacedResource) (bool, error) { return false, nil },
+			wantStatus:   snapshotUploadStatusSkipNotOwner,
+			probeMessage: "remote probe must not run for non-owned indexes",
+		},
+		{
+			name:         "ownership check error",
+			ownsIndexFn:  func(resource.NamespacedResource) (bool, error) { return false, errors.New("ring unavailable") },
+			wantStatus:   snapshotUploadStatusError,
+			probeMessage: "remote probe must not run when ownership check fails",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &uploadTestStore{}
+			be, metrics := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1})
+			key := newTestNsResource()
+			idx := newCachedUploadTestIndex(t, be, key, 42)
+			require.NoError(t, writeSnapshotMutationCount(idx.index, 5))
+			be.ownsIndexFn = tt.ownsIndexFn
+
+			be.runUploadSnapshots(t.Context())
+
+			assert.Zero(t, store.uploadCalls.Load())
+			assert.Zero(t, store.listKeyCalls.Load(), tt.probeMessage)
+			assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(tt.wantStatus)))
+		})
+	}
+}
+
 func TestRunUploadSnapshots_SkipLockContention(t *testing.T) {
 	store := &uploadTestStore{lockErr: errLockHeld}
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1})
@@ -353,12 +372,9 @@ func TestRunUploadSnapshots_PreservesConcurrentMutations(t *testing.T) {
 // snapshot exists within UploadInterval. The lock must not be acquired and no
 // upload must happen.
 func TestUploadSnapshot_SkipsWhenRecentSameVersionRemoteExists(t *testing.T) {
-	store := &uploadTestStore{
-		probeMetas: map[ulid.ULID]*IndexMeta{},
-	}
+	store := &uploadTestStore{}
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
-	store.probeKeys = []ulid.ULID{recent}
-	store.probeMetas[recent] = &IndexMeta{GrafanaBuildVersion: "11.5.0"}
+	store.put(recent, &IndexMeta{BuildVersion: "11.5.0"})
 
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
 	key := newTestNsResource()
@@ -370,19 +386,16 @@ func TestUploadSnapshot_SkipsWhenRecentSameVersionRemoteExists(t *testing.T) {
 	// The probe must run, and the lock must NOT be acquired (lockErr is unset
 	// here, so we can only assert via uploadCalls; LockBuildIndex is implicitly
 	// not exercised because no upload path runs).
-	assert.Equal(t, int32(1), store.probeListCall.Load())
-	assert.Equal(t, int32(1), store.probeGetCalls.Load())
+	assert.Equal(t, int32(1), store.listKeyCalls.Load())
+	assert.Equal(t, int32(1), store.getMetaCalls.Load())
 }
 
 // TestUploadSnapshot_ProceedsWhenRemoteIsDifferentVersion verifies that the
 // probe does not skip when only different-version snapshots are present.
 func TestUploadSnapshot_ProceedsWhenRemoteIsDifferentVersion(t *testing.T) {
-	store := &uploadTestStore{
-		probeMetas: map[ulid.ULID]*IndexMeta{},
-	}
+	store := &uploadTestStore{}
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
-	store.probeKeys = []ulid.ULID{recent}
-	store.probeMetas[recent] = &IndexMeta{GrafanaBuildVersion: "11.4.0"}
+	store.put(recent, &IndexMeta{BuildVersion: "11.4.0"})
 
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
 	key := newTestNsResource()
@@ -396,7 +409,8 @@ func TestUploadSnapshot_ProceedsWhenRemoteIsDifferentVersion(t *testing.T) {
 // optimisation, not a correctness check: a probe failure must not block the
 // upload path.
 func TestUploadSnapshot_ProceedsWhenProbeErrors(t *testing.T) {
-	store := &uploadTestStore{probeListErr: errors.New("transport boom")}
+	store := &uploadTestStore{}
+	store.listErr = errors.New("transport boom")
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
 	key := newTestNsResource()
 	idx := newUploadTestIndex(t, be, key, 42)
@@ -414,7 +428,7 @@ func TestUploadSnapshot_SkipsProbeWhenUploadIntervalZero(t *testing.T) {
 	idx := newUploadTestIndex(t, be, key, 42)
 
 	require.NoError(t, be.uploadSnapshot(t.Context(), key, idx))
-	assert.Zero(t, store.probeListCall.Load(), "probe must not be called when UploadInterval == 0")
+	assert.Zero(t, store.listKeyCalls.Load(), "probe must not be called when UploadInterval == 0")
 	assert.Equal(t, int32(1), store.uploadCalls.Load())
 }
 
@@ -423,12 +437,9 @@ func TestUploadSnapshot_SkipsProbeWhenUploadIntervalZero(t *testing.T) {
 // skip_recent_remote metric is incremented, and the mutation baseline is
 // preserved (no snapshot was actually taken).
 func TestRunUploadSnapshots_SkipRecentRemote(t *testing.T) {
-	store := &uploadTestStore{
-		probeMetas: map[ulid.ULID]*IndexMeta{},
-	}
+	store := &uploadTestStore{}
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
-	store.probeKeys = []ulid.ULID{recent}
-	store.probeMetas[recent] = &IndexMeta{GrafanaBuildVersion: "11.5.0"}
+	store.put(recent, &IndexMeta{BuildVersion: "11.5.0"})
 
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1})
 	key := newTestNsResource()
