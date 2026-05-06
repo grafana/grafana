@@ -22,7 +22,7 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
   const spec = settingsSpecMapper(data);
   const secure = inlineSecureValuesMapper(data);
   const update = {
-    apiVersion: `${pluginId}.grafana.app/${getApiVersion()}`,
+    apiVersion: `${pluginId}/${getApiVersion()}`,
     kind: 'Settings',
     spec,
     secure,
@@ -33,7 +33,7 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
   const patch = [test, ...compare(stored, update)];
 
   const updated = await getBackendSrv().patch<v0alpha1Settings>(
-    `/apis/${pluginId}.grafana.app/${getApiVersion()}/namespaces/${getNamespace()}/settings/${pluginId}`,
+    `/apis/${pluginId}/${getApiVersion()}/namespaces/${getNamespace()}/app/instance`,
     patch,
     {
       validatePath: true,

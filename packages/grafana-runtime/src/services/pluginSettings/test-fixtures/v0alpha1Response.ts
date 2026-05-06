@@ -2,7 +2,7 @@ import { type Settings } from '../types';
 
 export const myOrgTestAppSettings: Settings = structuredClone({
   kind: 'Settings',
-  apiVersion: 'myorg-test-app.grafana.app/v0alpha1',
+  apiVersion: 'myorg-test-app/v0alpha1',
   metadata: {
     name: 'myorg-test-app',
     namespace: 'default',

@@ -85,7 +85,7 @@ describe('settings', () => {
         expect(resp3).toMatchObject(legacyMyOrgTestAppSettings);
         expect(backendSrv.get).toHaveBeenCalledTimes(3);
         expect(backendSrv.get).toHaveBeenCalledWith(
-          '/apis/myorg-test-app.grafana.app/v0alpha1/namespaces/default/settings/myorg-test-app',
+          '/apis/myorg-test-app/v0alpha1/namespaces/default/app/instance',
           undefined,
           undefined,
           {

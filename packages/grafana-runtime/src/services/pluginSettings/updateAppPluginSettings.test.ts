@@ -115,7 +115,7 @@ describe('settings', () => {
         expect(refetchPluginMetaMock).toHaveBeenCalledTimes(1);
         expect(backendSrv.patch).toHaveBeenCalledTimes(1);
         expect(backendSrv.patch).toHaveBeenCalledWith(
-          '/apis/myorg-test-app.grafana.app/v0alpha1/namespaces/default/settings/myorg-test-app',
+          '/apis/myorg-test-app/v0alpha1/namespaces/default/app/instance',
           [
             { op: 'test', path: '/metadata/resourceVersion', value: '' },
             { op: 'remove', path: '/secure/password/name' },
@@ -156,7 +156,7 @@ describe('settings', () => {
         );
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith(
-          '/apis/myorg-test-app.grafana.app/v0alpha1/namespaces/default/settings/myorg-test-app',
+          '/apis/myorg-test-app/v0alpha1/namespaces/default/app/instance',
           undefined,
           undefined,
           { showErrorAlert: false, validatePath: true }

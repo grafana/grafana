@@ -75,7 +75,7 @@ describe('settings', () => {
         expect(enabled).toEqual(true);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith(
-          '/apis/myorg-test-app.grafana.app/v0alpha1/namespaces/default/settings/myorg-test-app',
+          '/apis/myorg-test-app/v0alpha1/namespaces/default/app/instance',
           undefined,
           undefined,
           {
@@ -95,7 +95,7 @@ describe('settings', () => {
         expect(enabled).toEqual(false);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith(
-          '/apis/myorg-test-app.grafana.app/v0alpha1/namespaces/default/settings/myorg-test-app',
+          '/apis/myorg-test-app/v0alpha1/namespaces/default/app/instance',
           undefined,
           undefined,
           {

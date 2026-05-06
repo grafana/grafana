@@ -31,7 +31,7 @@ export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean)
 
   return getBackendSrv()
     .get<v0alpha1Settings>(
-      `/apis/${pluginId}.grafana.app/${getApiVersion()}/namespaces/${getNamespace()}/settings/${pluginId}`,
+      `/apis/${pluginId}/${getApiVersion()}/namespaces/${getNamespace()}/app/instance`,
       undefined,
       undefined,
       options
