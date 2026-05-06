@@ -221,7 +221,9 @@ function generateMarkdown(mainCoverage, prCoverage) {
 | Metric | Main | PR | Change | Status |
 |--------|------|----|----|--------|
 ${tableRows}
+
 ${failureDetails}
+
 **Run locally:** 💻 \`yarn test:coverage:by-codeowner ${teamName}\`
 
 **Break glass:** 🚨 In case of emergency, adding the \`no-check-frontend-test-coverage\` label to this PR will skip checks.
