@@ -141,8 +141,8 @@ function generateFailureDetailsSection(decreasedFiles, artifactUrl, prSha, repo)
 
   const shown = decreasedFiles.slice(0, MAX_FILES);
   for (const { path, main, pr } of shown) {
-    const fileUrl = prSha && repo ? `https://github.com/${repo}/blob/${prSha}/${path}` : null;
-    const fileCell = fileUrl ? `[${path}](${fileUrl})` : path;
+    const fileUrl = prSha && repo ? `${artifactUrl}/${path}` : null;
+    const fileCell = fileUrl ? `[${path}](${fileUrl})` : path; // TODO maybe want to render some kind of abbreviated path if the filename is very long?
 
     const metricCells = metrics.map((metric) => {
       const prPct = Math.round(pr[metric].pct * 100) / 100;

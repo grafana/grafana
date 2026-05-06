@@ -301,10 +301,8 @@ jobs:
         id: coverage-dir
         run: |
           SLUG=$(node -e "
-            const {createCodeownerSlug, getCodeownerKind} = require('./pr/scripts/codeowners-manifest/utils.js');
-            const kind = getCodeownerKind('${{ matrix.codeowner }}');
-            const slug = createCodeownerSlug('${{ matrix.codeowner }}');
-            console.log(kind + 's/' + slug);
+            const {createCodeownerSlug} = require('./pr/scripts/codeowners-manifest/utils.js');
+            console.log(createCodeownerSlug('${{ matrix.codeowner }}'));
           ")
           echo "slug=${SLUG}" >> "$GITHUB_OUTPUT"
 
