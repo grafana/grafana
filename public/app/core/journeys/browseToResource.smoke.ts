@@ -24,7 +24,10 @@ const BROWSE_DASHBOARDS_ROW = `data-testid browse dashboards row ${FIXTURE_TITLE
 async function openFixture(page: Page): Promise<void> {
   await page.goto('/dashboards');
   try {
-    await page.getByTestId(BROWSE_DASHBOARDS_TABLE).waitFor({ state: 'visible', timeout: 10_000 });
+    // `attached` rather than `visible`: the table wrapper has role="rowgroup"
+    // and Playwright treats it as hidden (zero bbox while virtualised rows
+    // mount), so a `visible` wait times out even when rows render fine.
+    await page.getByTestId(BROWSE_DASHBOARDS_TABLE).waitFor({ state: 'attached', timeout: 10_000 });
   } catch {
     return;
   }
@@ -63,7 +66,7 @@ async function openFixture(page: Page): Promise<void> {
 async function abandon(page: Page): Promise<void> {
   await page.goto('/dashboards');
   try {
-    await page.getByTestId(BROWSE_DASHBOARDS_TABLE).waitFor({ state: 'visible', timeout: 10_000 });
+    await page.getByTestId(BROWSE_DASHBOARDS_TABLE).waitFor({ state: 'attached', timeout: 10_000 });
   } catch {
     // Even the table didn't show — the page_view interaction may still have fired.
   }
