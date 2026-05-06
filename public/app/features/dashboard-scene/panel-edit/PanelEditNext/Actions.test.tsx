@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 
-import { Actions, type ActionItem, ConfirmationStyle } from './Actions';
+import { Actions, type ActionItem } from './Actions';
+import { ConfirmationStyle } from './DeleteConfirm';
 import { renderWithQueryEditorProvider } from './QueryEditor/testUtils';
 import { QueryEditorType } from './constants';
 import { trackCardAction } from './tracking';

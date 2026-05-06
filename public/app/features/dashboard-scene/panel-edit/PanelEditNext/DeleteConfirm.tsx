@@ -5,7 +5,10 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { ConfirmationStyle } from './Actions';
+export enum ConfirmationStyle {
+  compact = 'compact',
+  full = 'full',
+}
 
 interface DeleteConfirmProps {
   confirmStyle: ConfirmationStyle;

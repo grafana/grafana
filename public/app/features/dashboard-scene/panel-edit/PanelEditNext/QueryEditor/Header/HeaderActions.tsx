@@ -3,7 +3,8 @@ import { type RefObject, useCallback } from 'react';
 import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 
-import { Actions, ConfirmationStyle } from '../../Actions';
+import { Actions } from '../../Actions';
+import { ConfirmationStyle } from '../../DeleteConfirm';
 import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 

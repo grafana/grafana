@@ -5,7 +5,7 @@ import { type AlertState, type GrafanaTheme2, type IconName } from '@grafana/dat
 import { t } from '@grafana/i18n';
 import { Button, Icon, Stack, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { DeleteConfirm } from './DeleteConfirm';
+import { ConfirmationStyle, DeleteConfirm } from './DeleteConfirm';
 import { useQueryEditorTypeConfig } from './QueryEditor/QueryEditorContext';
 import { QueryEditorType } from './constants';
 import { trackCardAction, type CardActionSource } from './tracking';
@@ -30,11 +30,6 @@ interface ActionButtonConfig {
   icon: IconName;
   label: string;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
-}
-
-export enum ConfirmationStyle {
-  compact = 'compact',
-  full = 'full',
 }
 
 interface ActionsProps {
