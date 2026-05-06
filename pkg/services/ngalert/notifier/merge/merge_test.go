@@ -776,5 +776,4 @@ func TestMergeExtraConfig(t *testing.T) {
 		_, err := MergeExtraConfig(context.Background(), &input)
 		require.ErrorContains(t, err, "cannot merge into undefined routing tree")
 	})
-
 }
