@@ -331,16 +331,8 @@ function PieSlice({
   );
 
   const onBlur = useCallback(() => {
-    eventBus?.publish({
-      type: DataHoverClearEvent.type,
-      payload: {
-        x: 0,
-        y: 0,
-        dataId: arc.data.display.title,
-      },
-    });
     tooltip.hideTooltip();
-  }, [eventBus, arc, tooltip]);
+  }, [tooltip]);
 
   const pieStyle = getSvgStyle(highlightState, styles);
 
