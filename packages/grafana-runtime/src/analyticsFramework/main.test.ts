@@ -1,9 +1,9 @@
-import { EchoEventType, getEchoSrv } from '../../services/EchoSrv';
+import { EchoEventType, getEchoSrv } from '../services/EchoSrv';
 
 import { defineFeatureEvents } from './main';
 
-jest.mock('../../services/EchoSrv');
-jest.mock('../../config', () => ({
+jest.mock('../services/EchoSrv');
+jest.mock('../config', () => ({
   config: {},
 }));
 
