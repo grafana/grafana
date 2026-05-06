@@ -1,6 +1,7 @@
 package merge
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -1337,7 +1338,7 @@ receivers:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := MergeExtraConfig(&tc.config)
+			result, err := MergeExtraConfig(context.Background(), &tc.config)
 			if tc.expectedError != "" {
 				require.Error(t, err)
 				require.ErrorContains(t, err, tc.expectedError)

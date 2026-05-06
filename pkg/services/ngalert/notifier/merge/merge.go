@@ -9,6 +9,7 @@
 package merge
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -172,9 +173,9 @@ func GetMergedAlertmanagerConfig(
 	}, nil
 }
 
-// MergeUserConfig merges extra configurations in cfg into the base Grafana configuration.
+// MergeExtraConfig merges extra configurations in cfg into the base Grafana configuration.
 // If no extra configurations are present, it returns the base configuration wrapped in a MergeResult.
-func MergeExtraConfig(cfg *definitions.PostableUserConfig) (MergeResult, error) {
+func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (MergeResult, error) {
 	if len(cfg.ExtraConfigs) == 0 {
 		return MergeResult{Config: cfg.AlertmanagerConfig}, nil
 	}
