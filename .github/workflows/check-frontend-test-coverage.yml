@@ -262,7 +262,7 @@ jobs:
         if: steps.check-affected.outputs.affected == 'true'
         run: |
           cp ./pr/scripts/compare-coverage-by-codeowner.js ./main/scripts/compare-coverage-by-codeowner.js
-          cp ./pr/jest.config.codeowners.js ./main/jest.config.codeowners.js
+          cp ./pr/jest.config.codeowner.js ./main/jest.config.codeowner.js
 
       - name: Setup Node.js for main branch
         if: steps.check-affected.outputs.affected == 'true'
