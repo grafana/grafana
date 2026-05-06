@@ -11,6 +11,8 @@ import { getBackendSrv } from '../backendSrv';
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
+import { clearPluginCache } from './pluginCache';
+
 /**
  * Paginated response shape. The initial implementation always returns
  * every item in a single page — `hasMore` is false and `nextCursor` undefined.
@@ -108,6 +110,10 @@ async function ensureFetched(): Promise<void> {
  */
 export async function reload(): Promise<void> {
   fetchedAt = 0;
+  // Clear non-runtime plugin instances so they are reconstructed from fresh
+  // settings after reload — matching the behaviour of the legacy DatasourceSrv
+  // which reset `this.datasources` inside `init()`.
+  clearPluginCache();
   await getCachedPromise(fetchAndPopulate, {
     cacheKey: FETCH_CACHE_KEY,
     invalidate: true,
