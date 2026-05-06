@@ -1785,6 +1785,8 @@ export type FixFolderMetadataJobOptions = {
 export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit */
   message?: string;
+  /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
+  resources?: ResourceRef[];
 };
 export type MoveJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */

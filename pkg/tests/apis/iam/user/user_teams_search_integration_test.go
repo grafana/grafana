@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -19,6 +20,9 @@ import (
 )
 
 type userTeamsResponse struct {
+	Metadata struct {
+		Continue string `json:"continue"`
+	} `json:"metadata"`
 	Items []struct {
 		Team       string `json:"team"`
 		User       string `json:"user"`
@@ -178,68 +182,28 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.False(t, containsTeam(res, teams[0].GetName()), "did not expect response to contain team %q, got %#v", teams[0].GetName(), res.Items)
 	})
 
-	t.Run("paging with page and limit", func(t *testing.T) {
-		// Page 1, Limit 2
-		res1 := getUserTeamsWithPaging(t, helper, u1.GetName(), 1, 2)
-		require.Len(t, res1.Items, 2)
-
-		// Page 2, Limit 2
-		res2 := getUserTeamsWithPaging(t, helper, u1.GetName(), 2, 2)
-		require.Len(t, res2.Items, 2)
-
-		// Page 3, Limit 2
-		res3 := getUserTeamsWithPaging(t, helper, u1.GetName(), 3, 2)
-		require.Len(t, res3.Items, 1)
-
+	t.Run("paging with continue token", func(t *testing.T) {
+		// Walk all 5 teams in pages of 2 using metadata.continue. The token
+		// encodes the last team UID seen on the previous page so the next
+		// request resumes after it (keyset pagination — stable across
+		// concurrent insert/delete on the membership set).
 		seen := make(map[string]bool)
-		for _, item := range res1.Items {
-			teamName := item.Team
-			require.False(t, seen[teamName], "Team %s seen in page 1 twice", teamName)
-			seen[teamName] = true
+		cont := ""
+		pages := 0
+		for {
+			res := getUserTeamsWithContinue(t, helper, u1.GetName(), 2, cont)
+			pages++
+			for _, item := range res.Items {
+				require.False(t, seen[item.Team], "team %q seen on multiple pages", item.Team)
+				seen[item.Team] = true
+			}
+			if res.Metadata.Continue == "" {
+				break
+			}
+			cont = res.Metadata.Continue
+			require.LessOrEqual(t, pages, 10, "runaway pagination loop")
 		}
-		for _, item := range res2.Items {
-			teamName := item.Team
-			require.False(t, seen[teamName], "Team %s seen in page 1 and 2", teamName)
-			seen[teamName] = true
-		}
-		for _, item := range res3.Items {
-			teamName := item.Team
-			require.False(t, seen[teamName], "Team %s seen in previous pages", teamName)
-			seen[teamName] = true
-		}
-		require.Len(t, seen, 5, "Should have seen all 5 teams across pages")
-	})
-
-	t.Run("paging with offset and limit", func(t *testing.T) {
-		// Offset 0, Limit 2
-		res1 := getUserTeamsWithOffset(t, helper, u1.GetName(), 0, 2)
-		require.Len(t, res1.Items, 2)
-
-		// Offset 2, Limit 2
-		res2 := getUserTeamsWithOffset(t, helper, u1.GetName(), 2, 2)
-		require.Len(t, res2.Items, 2)
-
-		// Offset 4, Limit 2
-		res3 := getUserTeamsWithOffset(t, helper, u1.GetName(), 4, 2)
-		require.Len(t, res3.Items, 1)
-
-		seen := make(map[string]bool)
-		for _, item := range res1.Items {
-			teamName := item.Team
-			require.False(t, seen[teamName], "Team %s seen in offset 0 twice", teamName)
-			seen[teamName] = true
-		}
-		for _, item := range res2.Items {
-			teamName := item.Team
-			require.False(t, seen[teamName], "Team %s seen in offset 0 and 2", teamName)
-			seen[teamName] = true
-		}
-		for _, item := range res3.Items {
-			teamName := item.Team
-			require.False(t, seen[teamName], "Team %s seen in previous offsets", teamName)
-			seen[teamName] = true
-		}
-		require.Len(t, seen, 5, "Should have seen all 5 teams across offsets")
+		require.Len(t, seen, 5, "should have seen all 5 teams across pages")
 	})
 }
 
@@ -275,22 +239,13 @@ func findTeam(res userTeamsResponse, teamName string) (out struct {
 	return out
 }
 
-func getUserTeamsWithPaging(t *testing.T, helper *apis.K8sTestHelper, userName string, page, limit int) userTeamsResponse {
-	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams?page=%d&limit=%d", userName, page, limit)
-
-	var res userTeamsResponse
-	rsp := apis.DoRequest(helper, apis.RequestParams{
-		User:   helper.Org1.Admin,
-		Method: http.MethodGet,
-		Path:   path,
-	}, &res)
-
-	require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
-	return res
-}
-
-func getUserTeamsWithOffset(t *testing.T, helper *apis.K8sTestHelper, userName string, offset, limit int) userTeamsResponse {
-	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams?offset=%d&limit=%d", userName, offset, limit)
+func getUserTeamsWithContinue(t *testing.T, helper *apis.K8sTestHelper, userName string, limit int, cont string) userTeamsResponse {
+	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams?limit=%d", userName, limit)
+	if cont != "" {
+		// Continue tokens are base64 — escape so '+' / '/' / '=' survive
+		// the round-trip (otherwise '+' silently decodes to a space on the server).
+		path += "&continue=" + url.QueryEscape(cont)
+	}
 
 	var res userTeamsResponse
 	rsp := apis.DoRequest(helper, apis.RequestParams{

@@ -76,6 +76,7 @@
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
+/scripts/ci/generate-enterprise-imports @grafana/grafana-operator-experience-squad
 /scripts/catalog-plugins-defaults @grafana/grafana-datasources-core-services @kminehart
 /scripts/download-catalog-plugins.sh @grafana/grafana-datasources-core-services @kminehart
 /scripts/uplot-compare/ @grafana/dataviz-squad
@@ -1216,6 +1217,7 @@ embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
+/pkg/registry/apis/iam @grafana/access-squad @grafana/identity-squad
 /pkg/registry/apis/appplugin @grafana/plugins-platform-backend
 /pkg/registry/apis/folders @grafana/grafana-search-and-storage
 /pkg/registry/apis/datasource @grafana/grafana-datasources-core-services

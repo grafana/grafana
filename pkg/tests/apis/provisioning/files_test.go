@@ -14,6 +14,8 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -762,11 +764,13 @@ func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "editor should be able to GET README.md")
 	})
 
-	// Negative case for the folder-scoped check: the nested 'folder/' directory
-	// exists in the repo file tree but has not been synced into Grafana, so the
-	// viewer has no permission grant on its hash-based folder UID. Admins still
-	// pass thanks to wildcard access.
-	t.Run("viewer is denied for README in an unsynced subfolder", func(t *testing.T) {
+	// Raw file reads on the files subresource fall back to the Viewer role for
+	// GET-family verbs, so an org Viewer can read raw files anywhere in a repo
+	// they can see — including paths whose containing directory has not been
+	// synced into Grafana as a real folder resource. Without this, the
+	// folder-scoped check is unsatisfiable on hash-based folder UIDs and the
+	// endpoint is effectively Admin-only for non-synced subfolders.
+	t.Run("viewer can GET README in an unsynced subfolder", func(t *testing.T) {
 		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md", addr, repo)
 		req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -776,8 +780,8 @@ func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
 		// nolint:errcheck
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode,
-			"viewer without folders:get on the parent folder should be denied")
+		require.Equal(t, http.StatusOK, resp.StatusCode,
+			"viewer should be able to read README in an unsynced subfolder")
 	})
 
 	t.Run("admin can GET README in an unsynced subfolder", func(t *testing.T) {
@@ -791,6 +795,90 @@ func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
 		defer resp.Body.Close()
 
 		require.Equal(t, http.StatusOK, resp.StatusCode, "admin should be able to GET README in any folder")
+	})
+
+	// The "viewer can GET README" subtest above relies on the Viewer role
+	// fallback. The next three subtests use users with org role None and
+	// fine-grained folder permissions to verify that the inner authz check
+	// is still authoritative when no role fallback applies — i.e. the
+	// relaxed read semantic is paid for by either basic role membership or
+	// an explicit grant, not given freely to any authenticated user.
+	rootReader := helper.CreateUser("ProvisioningRootReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"folders:read"},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        "general",
+		},
+	})
+
+	wildcardReader := helper.CreateUser("ProvisioningFoldersReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"folders:read"},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	})
+
+	noGrants := helper.CreateUser("ProvisioningNoGrants", apis.Org1, org.RoleNone, nil)
+
+	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+
+	t.Run("RoleNone with folders:read on general can GET README at the repo root", func(t *testing.T) {
+		url := fmt.Sprintf("http://%s:%s@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md",
+			rootReader.Identity.GetLogin(), "ProvisioningRootReader", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode,
+			"explicit folders:read on general should permit reading README at repo root")
+	})
+
+	t.Run("RoleNone with folders:read on general is denied for README in unsynced subfolder", func(t *testing.T) {
+		url := fmt.Sprintf("http://%s:%s@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md",
+			rootReader.Identity.GetLogin(), "ProvisioningRootReader", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusForbidden, resp.StatusCode,
+			"folders:read on general should not extend to a hash-based UID for an unsynced subfolder, and there is no role fallback for org-None")
+	})
+
+	t.Run("RoleNone with folders:read wildcard can GET README in an unsynced subfolder", func(t *testing.T) {
+		url := fmt.Sprintf("http://%s:%s@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md",
+			wildcardReader.Identity.GetLogin(), "ProvisioningFoldersReader", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode,
+			"folders:read wildcard should permit reading README in any (including unsynced) subfolder without role fallback")
+	})
+
+	t.Run("RoleNone with no grants is denied for README at the repo root", func(t *testing.T) {
+		url := fmt.Sprintf("http://%s:%s@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md",
+			noGrants.Identity.GetLogin(), "ProvisioningNoGrants", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusForbidden, resp.StatusCode,
+			"a user without any folder grants and no basic role should be denied")
 	})
 
 	_ = ctx

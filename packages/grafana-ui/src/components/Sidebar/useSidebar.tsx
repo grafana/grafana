@@ -20,10 +20,13 @@ export interface SidebarContextValue {
   edgeMargin: number;
   contentMargin: number;
   isHidden: boolean;
-  onToggleDock: () => void;
+  canGoBack?: boolean;
+  onToggleDock?: () => void;
   onResize: (diff: number) => void;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  /** Open previous pane */
+  onGoBack?: () => void;
   onToggleIsHidden: () => void;
 }
 
@@ -49,6 +52,10 @@ export interface UseSideBarOptions {
   contentMargin?: number;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  /** Disables go back button */
+  canGoBack?: boolean;
+  /** Open previous pane */
+  onGoBack?: () => void;
   /**
    * Optional key to use for persisting sidebar state (docked / compact / size)
    * Can only be app name as the final local storag key will be `grafana.ui.sidebar.{persistanceKey}.{docked|compact|size}`
@@ -72,6 +79,8 @@ export function useSidebar({
   contentMargin = 2,
   persistanceKey,
   onClosePane,
+  onGoBack,
+  canGoBack,
   defaultIsHidden = false,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
@@ -87,10 +96,8 @@ export function useSidebar({
   const [_, setCompactDrag] = React.useState(0);
 
   const onToggleDock = useCallback(() => {
-    if (!isMobile) {
-      setIsDocked((prev) => !prev);
-    }
-  }, [isMobile, setIsDocked]);
+    setIsDocked((prev) => !prev);
+  }, [setIsDocked]);
 
   // Calculate how much space the outer wrapper needs to reserve for the sidebar toolbar + pane (if docked)
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
@@ -138,7 +145,7 @@ export function useSidebar({
 
   return {
     isDocked: effectiveIsDocked,
-    onToggleDock,
+    onToggleDock: isMobile ? undefined : onToggleDock,
     onResize,
     outerWrapperProps,
     position,
@@ -151,6 +158,8 @@ export function useSidebar({
     contentMargin,
     isHidden,
     onClosePane,
+    onGoBack,
+    canGoBack,
     onToggleIsHidden,
   };
 }
