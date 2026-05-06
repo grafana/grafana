@@ -271,12 +271,7 @@ describe('LogList', () => {
       const otelLogs = [createLogRow({ uid: '1', labels: { [OTEL_PROBE_FIELD]: '1' } })];
 
       const { rerender } = render(
-        <LogList
-          {...defaultProps}
-          logs={otelLogs}
-          setDisplayedFields={setDisplayedFields}
-          showLogAttributes={true}
-        />
+        <LogList {...defaultProps} logs={otelLogs} setDisplayedFields={setDisplayedFields} showLogAttributes={true} />
       );
 
       await waitFor(() => {
@@ -289,12 +284,7 @@ describe('LogList', () => {
       setDisplayedFields.mockClear();
 
       rerender(
-        <LogList
-          {...defaultProps}
-          logs={otelLogs}
-          setDisplayedFields={setDisplayedFields}
-          showLogAttributes={false}
-        />
+        <LogList {...defaultProps} logs={otelLogs} setDisplayedFields={setDisplayedFields} showLogAttributes={false} />
       );
 
       await waitFor(() => {
