@@ -53,7 +53,18 @@ import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MAX_GROUP_RESULTS = 1000;
-type EvaluationMode = 'new' | 'legacy';
+type EvaluationMode = 'rule-based' | 'group-based';
+
+const getEvaluationModeOptions = (): Array<SelectableValue<EvaluationMode>> => [
+  {
+    label: t('alerting.rule-form.evaluation.mode.new', 'Set interval'),
+    value: 'rule-based',
+  },
+  {
+    label: t('alerting.rule-form.evaluation.mode.legacy', 'Use groups (Legacy)'),
+    value: 'group-based',
+  },
+];
 
 const collator = new Intl.Collator();
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
@@ -151,7 +162,7 @@ export function GrafanaEvaluationBehaviorStep({
     register,
   } = useFormContext<RuleFormValues>();
 
-  const [group, type, isPaused, folder, evaluateEvery, isUngrouped] = watch([
+  const [group, type, isPaused, folder, evaluateEvery, isUngroupedRule] = watch([
     'group',
     'type',
     'isPaused',
@@ -174,14 +185,14 @@ export function GrafanaEvaluationBehaviorStep({
   // returned by the ruler API). Keystrokes in `evaluateEvery` while a known group is selected
   // short-circuit to the cached `baseGroupOptions`.
   const groupOptions = useMemo(() => {
-    if (!group || baseGroupOptions.some((option) => option.value === group)) {
+    if (isUngroupedRule || baseGroupOptions.some((option) => option.value === group)) {
       return baseGroupOptions;
     }
     return namespaceToGroupOptions(rulerNamespace ?? {}, enableProvisionedGroups, {
       name: group,
       interval: evaluateEvery,
     });
-  }, [baseGroupOptions, group, evaluateEvery, enableProvisionedGroups, rulerNamespace]);
+  }, [isUngroupedRule, baseGroupOptions, group, evaluateEvery, enableProvisionedGroups, rulerNamespace]);
 
   const existingGroup = Object.values(rulerNamespace ?? {})
     .flat()
@@ -198,19 +209,8 @@ export function GrafanaEvaluationBehaviorStep({
   const v2Enabled = shouldUseRulesAPIV2();
   const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
   const [lastSelectedGroup, setLastSelectedGroup] = useState(group);
-  const evaluationMode: EvaluationMode = isUngrouped ? 'new' : 'legacy';
-  const showGroupSelection = evaluationMode === 'legacy';
-
-  const evaluationModeOptions: Array<SelectableValue<EvaluationMode>> = [
-    {
-      label: t('alerting.rule-form.evaluation.mode.new', 'Set interval'),
-      value: 'new',
-    },
-    {
-      label: t('alerting.rule-form.evaluation.mode.legacy', 'Use groups (Legacy)'),
-      value: 'legacy',
-    },
-  ];
+  const evaluationMode: EvaluationMode = isUngroupedRule ? 'rule-based' : 'group-based';
+  const showGroupSelection = evaluationMode === 'group-based';
 
   useEffect(() => {
     // When a real group lands on the form (user picked one or the form mounted with one),
@@ -244,9 +244,9 @@ export function GrafanaEvaluationBehaviorStep({
 
   const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
   const onEvaluationModeChange = (value: EvaluationMode) => {
-    setValue('isUngroupedRuleGroup', value === 'new');
+    setValue('isUngroupedRuleGroup', value === 'rule-based');
 
-    if (value === 'new') {
+    if (value === 'rule-based') {
       if (group && !isUngroupedRuleGroup(group)) {
         setLastSelectedGroup(group);
       }
@@ -255,7 +255,7 @@ export function GrafanaEvaluationBehaviorStep({
       return;
     }
 
-    if (!getValues('group') && lastSelectedGroup) {
+    if (!group && lastSelectedGroup) {
       setValue('group', lastSelectedGroup);
     }
   };
@@ -281,7 +281,7 @@ export function GrafanaEvaluationBehaviorStep({
           <Field noMargin>
             <RadioButtonGroup
               value={evaluationMode}
-              options={evaluationModeOptions}
+              options={getEvaluationModeOptions()}
               onChange={onEvaluationModeChange}
               className={styles.modeField}
             />

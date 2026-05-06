@@ -3,12 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, type SubmitErrorHandler, type UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import {
-  useCreateAlertRuleMutation,
-  useCreateRecordingRuleMutation,
-  useReplaceAlertRuleMutation,
-  useReplaceRecordingRuleMutation,
-} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
@@ -51,6 +45,7 @@ import {
 import { alertingApi } from '../../../api/alertingApi';
 import { shouldUseRulesAPIV2 } from '../../../featureToggles';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { useSaveUngroupedGrafanaRule } from '../../../hooks/useSaveUngroupedGrafanaRule';
 import {
   defaultFormValuesForRuleType,
   formValuesFromExistingRule,
@@ -83,7 +78,7 @@ import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceA
 import { RuleInspector } from '../RuleInspector';
 import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
 
-import { legacyRuleCacheTagsForUid, saveUngroupedGrafanaRule } from './formValuesToAppPlatform';
+import { legacyRuleCacheTagsForUid } from './formValuesToAppPlatform';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -104,11 +99,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
-
-  const [createAlertRule] = useCreateAlertRuleMutation();
-  const [replaceAlertRule] = useReplaceAlertRuleMutation();
-  const [createRecordingRule] = useCreateRecordingRuleMutation();
-  const [replaceRecordingRule] = useReplaceRecordingRuleMutation();
+  const saveUngroupedGrafanaRule = useSaveUngroupedGrafanaRule();
 
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
@@ -187,7 +178,8 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
     const errorTitle = t('alerting.alert-rule-form.error-title', 'Failed to save alert rule');
 
     // TODO(alerting.rulesAPIV2): remove this branch once the flag is rolled out — the v2 path below covers the same flows.
-    if (!shouldUseRulesAPIV2()) {
+    const shouldUseLegacyGroupsApi = !shouldUseRulesAPIV2();
+    if (shouldUseLegacyGroupsApi) {
       try {
         let saveResult: RulerGroupUpdatedResponse;
         if (!existing) {
@@ -234,26 +226,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
         }
 
         const existingUid = existing ? getRuleUID(existing.rule) : undefined;
-        const savedUid = await saveUngroupedGrafanaRule({
-          values,
-          isRecordingRule,
-          existingUid,
-          createAlertRule,
-          replaceAlertRule,
-          createRecordingRule,
-          replaceRecordingRule,
-        });
-
-        if (!savedUid) {
-          // K8s contract guarantees metadata.name on a successful create, but the generated type
-          // is `string | undefined`. Surface a friendly error and skip the redirect rather than
-          // throwing — matches the pattern in useCreateSyncJob.
-          notifyApp.error(
-            errorTitle,
-            t('alerting.alert-rule-form.error-missing-uid', 'Server response missing rule UID')
-          );
-          return;
-        }
+        const savedUid = await saveUngroupedGrafanaRule({ values, isRecordingRule, existingUid });
 
         dispatch(alertingApi.util.invalidateTags(legacyRuleCacheTagsForUid(savedUid)));
         notifyApp.success(

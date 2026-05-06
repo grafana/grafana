@@ -7,10 +7,6 @@ import {
   type RecordingRule,
   type RecordingRuleExpression,
   type RecordingRuleSpec,
-  type useCreateAlertRuleMutation,
-  type useCreateRecordingRuleMutation,
-  type useReplaceAlertRuleMutation,
-  type useReplaceRecordingRuleMutation,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
@@ -196,47 +192,6 @@ function getNotificationSettings(values: RuleFormValues): AlertRuleSpec['notific
   };
 }
 
-export type UngroupedRuleSaveArgs = {
-  values: RuleFormValues;
-  isRecordingRule: boolean;
-  existingUid: string | undefined;
-  createAlertRule: ReturnType<typeof useCreateAlertRuleMutation>[0];
-  replaceAlertRule: ReturnType<typeof useReplaceAlertRuleMutation>[0];
-  createRecordingRule: ReturnType<typeof useCreateRecordingRuleMutation>[0];
-  replaceRecordingRule: ReturnType<typeof useReplaceRecordingRuleMutation>[0];
-};
-
-export async function saveUngroupedGrafanaRule({
-  values,
-  isRecordingRule,
-  existingUid,
-  createAlertRule,
-  replaceAlertRule,
-  createRecordingRule,
-  replaceRecordingRule,
-}: UngroupedRuleSaveArgs): Promise<string | null> {
-  if (existingUid) {
-    // Replace path: server echoes the same name we sent in the URL — no need to read it back.
-    if (isRecordingRule) {
-      const recordingRule = withMetadataName(buildRecordingRuleResource(values), existingUid);
-      await replaceRecordingRule({ name: existingUid, recordingRule }).unwrap();
-    } else {
-      const alertRule = withMetadataName(buildAlertRuleResource(values), existingUid);
-      await replaceAlertRule({ name: existingUid, alertRule }).unwrap();
-    }
-    return existingUid;
-  }
-
-  // Create path: server generates the name; pull it off the response. Mirrors the
-  // pattern in `useCreateSyncJob` — return null on missing name so the caller can
-  // surface a user-facing error and skip the redirect, rather than throwing.
-  const created = isRecordingRule
-    ? await createRecordingRule({ recordingRule: buildRecordingRuleResource(values) }).unwrap()
-    : await createAlertRule({ alertRule: buildAlertRuleResource(values) }).unwrap();
-
-  return created.metadata.name ?? null;
-}
-
-function withMetadataName<T extends { metadata: { name?: string } }>(resource: T, name: string): T {
+export function withMetadataName<T extends { metadata: { name?: string } }>(resource: T, name: string): T {
   return { ...resource, metadata: { ...resource.metadata, name } };
 }

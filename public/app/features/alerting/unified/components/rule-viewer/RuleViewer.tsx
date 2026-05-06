@@ -455,9 +455,7 @@ function usePageNav(rule: CombinedRule) {
 
   const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
   const groupName = rule.group.name;
-  const groupDisplayName = isUngroupedRuleGroup(groupName)
-    ? t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', { ruleName: rule.name })
-    : groupName;
+  const isUngrouped = isUngroupedRuleGroup(groupName);
 
   const isGrafanaAlertRule = rulerRuleType.grafana.alertingRule(rulerRule);
   const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rulerRule);
@@ -524,15 +522,20 @@ function usePageNav(rule: CombinedRule) {
         hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
       },
     ],
-    parentItem: {
-      text: groupDisplayName,
-      url: groupDetailsUrl,
-      // @TODO support nested folders here
-      parentItem: {
-        text: namespaceName,
-        url: createListFilterLink([['namespace', namespaceName]]),
-      },
-    },
+    // @TODO support nested folders here
+    parentItem: isUngrouped
+      ? {
+          text: namespaceName,
+          url: createListFilterLink([['namespace', namespaceName]]),
+        }
+      : {
+          text: groupName,
+          url: groupDetailsUrl,
+          parentItem: {
+            text: namespaceName,
+            url: createListFilterLink([['namespace', namespaceName]]),
+          },
+        },
   };
 
   return {
