@@ -112,11 +112,7 @@ export async function trackDashboardReloadRequests(page: Page): Promise<{
     await route.fulfill({ response });
   };
 
-  // Match DTO URLs with or without query params.
-  // The glob `?` is a single-char wildcard so `dto?**` only matches URLs with query params;
-  // we use a regex instead so we also capture the initial param-less DTO request that
-  // Grafana makes before the reloadDashboardsOnParamsChange reload with scope params.
-  await page.route(/\/dashboards\/[^/]+\/dto(\?.*)?$/, handler);
+  await page.route('**/dashboards/**/dto?**', handler);
 
   return {
     getRequests: () => dashboardRequests,
