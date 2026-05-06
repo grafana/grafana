@@ -4028,7 +4028,7 @@
             "type": "string"
           },
           "github": {
-            "description": "GitHub connection configuration. Only applicable when provider is \"github\".",
+            "description": "GitHub connection configuration Only applicable when provider is \"github\"",
             "allOf": [
               {
                 "$ref": "#/components/schemas/GitHubConnectionConfig"
@@ -4036,7 +4036,7 @@
             ]
           },
           "githubEnterprise": {
-            "description": "GitHub Enterprise Server connection configuration. Only applicable when provider is \"githubEnterprise\".",
+            "description": "GitHub Enterprise Server connection configuration Only applicable when provider is \"githubEnterprise\"",
             "allOf": [
               {
                 "$ref": "#/components/schemas/GitHubEnterpriseConnectionConfig"
@@ -5251,7 +5251,7 @@
             ]
           },
           "githubEnterprise": {
-            "description": "The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with the other repository configs.",
+            "description": "The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with local | github | git.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/GitHubEnterpriseRepositoryConfig"

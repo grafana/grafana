@@ -1631,9 +1631,9 @@ export type ConnectionSpec = {
   bitbucket?: BitbucketConnectionConfig;
   /** The connection description */
   description?: string;
-  /** GitHub connection configuration. Only applicable when provider is "github". */
+  /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
-  /** GitHub Enterprise Server connection configuration. Only applicable when provider is "githubEnterprise". */
+  /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
   githubEnterprise?: GitHubEnterpriseConnectionConfig;
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
   gitlab?: GitlabConnectionConfig;
@@ -2041,7 +2041,7 @@ export type RepositorySpec = {
   git?: GitRepositoryConfig;
   /** The repository on GitHub. Mutually exclusive with local | github | git. */
   github?: GitHubRepositoryConfig;
-  /** The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with the other repository configs. */
+  /** The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with local | github | git. */
   githubEnterprise?: GitHubEnterpriseRepositoryConfig;
   /** The repository on GitLab. Mutually exclusive with local | github | git. */
   gitlab?: GitLabRepositoryConfig;
