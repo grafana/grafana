@@ -10,9 +10,7 @@ const mockReadStoredRecentScopes = jest.fn<StoredRecentScopeSet[], []>().mockRet
 const mockWriteRecentScope = jest.fn();
 
 jest.mock('./recentScopesStorage', () => ({
-  RECENT_SCOPES_KEY: 'grafana.scopes.recent',
-  RECENT_SCOPES_CHANGED_EVENT: 'grafana.scopes.recent-changed',
-  RECENT_SCOPES_MAX: 4,
+  ...jest.requireActual('./recentScopesStorage'),
   readStoredRecentScopes: () => mockReadStoredRecentScopes(),
   writeRecentScope: () => mockWriteRecentScope(),
 }));
@@ -28,7 +26,7 @@ jest.mock('./useRecentScopesApi', () => ({
 
 // Mock dynamic import of validation module
 jest.mock('./recentScopesValidation', () => ({
-  validateStoredRecentScopes: jest.fn().mockResolvedValue([]),
+  validateStoredRecentScopes: jest.fn().mockReturnValue([]),
 }));
 
 // Mock @grafana/data store (used in useEffect for lazy validation)

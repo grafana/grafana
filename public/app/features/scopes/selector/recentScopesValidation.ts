@@ -8,6 +8,6 @@ const StoredRecentScopeSetSchema = z.object({
   version: z.string(),
 });
 
-export async function validateStoredRecentScopes(data: StoredRecentScopeSet[]): Promise<StoredRecentScopeSet[]> {
+export function validateStoredRecentScopes(data: StoredRecentScopeSet[]): StoredRecentScopeSet[] {
   return data.filter((entry) => StoredRecentScopeSetSchema.safeParse(entry).success);
 }

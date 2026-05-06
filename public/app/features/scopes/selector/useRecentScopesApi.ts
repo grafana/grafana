@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from 'app/types/store';
  */
 export function useScopesById(names: string[]): Record<string, Scope | undefined> {
   const dispatch = useDispatch();
-  const namesKey = names.join(',');
+  const namesKey = [...names].sort().join(',');
 
   useEffect(() => {
     if (names.length === 0) {
@@ -41,7 +41,7 @@ export function useScopesById(names: string[]): Record<string, Scope | undefined
  */
 export function useScopeNodesByName(names: string[]): Record<string, ScopeNode | undefined> {
   const dispatch = useDispatch();
-  const namesKey = names.join(',');
+  const namesKey = [...names].sort().join(',');
 
   useEffect(() => {
     if (names.length === 0) {
