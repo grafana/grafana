@@ -1806,11 +1806,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard/dashgrid/DashboardPanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/dashgrid/PanelStateWrapper.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -1875,17 +1870,7 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard/state/actions.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/state/initDashboard.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
