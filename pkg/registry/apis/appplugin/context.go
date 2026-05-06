@@ -60,7 +60,7 @@ func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Set
 		names := make([]string, 0, len(settings.Secure))
 		for k, v := range settings.Secure {
 			if v.Name == "" {
-				return nil, fmt.Errorf("invalid secure value name: %s:", k)
+				return nil, fmt.Errorf("missing secure value name for key: %s", k)
 			}
 			names = append(names, v.Name)
 		}
