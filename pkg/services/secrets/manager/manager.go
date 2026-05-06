@@ -432,7 +432,7 @@ func (s *SecretsService) dataKeyById(ctx context.Context, id string) ([]byte, er
 	return decrypted, nil
 }
 
-func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider {
+func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider { //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
 	return s.providers
 }
 
@@ -478,7 +478,7 @@ func (s *SecretsService) Run(ctx context.Context) error {
 	grp, gCtx := errgroup.WithContext(ctx)
 
 	for _, p := range s.providers {
-		if svc, ok := p.(secrets.BackgroundProvider); ok {
+		if svc, ok := p.(secrets.BackgroundProvider); ok { //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
 			grp.Go(func() error {
 				return svc.Run(gCtx)
 			})
