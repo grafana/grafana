@@ -1743,16 +1743,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/DashboardRow/DashboardRow.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/DashboardSettings/AutoRefreshIntervals.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -1807,11 +1797,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 3
-    }
-  },
-  "public/app/features/dashboard/components/RowOptions/RowOptionsForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
     }
   },
   "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.tsx": {
@@ -1886,11 +1871,6 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/dashgrid/DashboardGrid.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
