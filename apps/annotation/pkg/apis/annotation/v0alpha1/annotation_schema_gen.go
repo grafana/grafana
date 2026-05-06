@@ -50,7 +50,7 @@ var (
 						return "", nil
 					}
 
-					return *cast.Spec.DashboardUID, nil
+					return string(*cast.Spec.DashboardUID), nil
 				},
 			},
 			{

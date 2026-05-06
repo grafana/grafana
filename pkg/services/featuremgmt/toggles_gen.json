@@ -131,6 +131,19 @@
     },
     {
       "metadata": {
+        "name": "alerting.disableV0ReceiverConversion",
+        "resourceVersion": "1777923303116",
+        "creationTimestamp": "2026-05-04T19:35:03Z"
+      },
+      "spec": {
+        "description": "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.rulesAPIV2",
         "resourceVersion": "1776193652999",
         "creationTimestamp": "2026-04-14T19:07:32Z"
@@ -140,6 +153,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alerting.v0ReceiversAsLegacy",
+        "resourceVersion": "1777570728236",
+        "creationTimestamp": "2026-04-30T17:38:48Z",
+        "deletionTimestamp": "2026-05-04T19:35:03Z"
+      },
+      "spec": {
+        "description": "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
         "expression": "false"
       }
     },
@@ -1623,15 +1650,18 @@
     {
       "metadata": {
         "name": "dashboardSectionVariables",
-        "resourceVersion": "1772489275727",
-        "creationTimestamp": "2026-03-02T22:07:55Z"
+        "resourceVersion": "1777918122605",
+        "creationTimestamp": "2026-03-02T22:07:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-04 18:08:42.605463 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables support for section level variables (rows and tabs)",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1905,6 +1935,19 @@
     },
     {
       "metadata": {
+        "name": "datasources.useNewStackInfoToSettingsCache",
+        "resourceVersion": "1777558060067",
+        "creationTimestamp": "2026-04-30T14:07:40Z"
+      },
+      "spec": {
+        "description": "Use the new cache for datasource.StackInfoToSettings, backend flag",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableHealthEndpoint",
         "resourceVersion": "1772118749630",
         "creationTimestamp": "2026-02-26T15:12:29Z"
@@ -2024,6 +2067,48 @@
         "description": "Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dedicatedGnetProxyToken",
+        "resourceVersion": "1777400900377",
+        "creationTimestamp": "2026-04-28T18:28:20Z",
+        "deletionTimestamp": "2026-04-29T00:45:54Z"
+      },
+      "spec": {
+        "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dedicatedGrafanaComProxyAPIToken",
+        "resourceVersion": "1777425647409",
+        "creationTimestamp": "2026-04-29T01:20:47Z",
+        "deletionTimestamp": "2026-05-05T12:28:16Z"
+      },
+      "spec": {
+        "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dedicatedGrafanaComProxyToken",
+        "resourceVersion": "1777423554751",
+        "creationTimestamp": "2026-04-29T00:45:54Z",
+        "deletionTimestamp": "2026-04-29T01:20:47Z"
+      },
+      "spec": {
+        "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
         "expression": "false"
       }
     },
@@ -2570,6 +2655,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.dedicatedGrafanaComProxyAPIToken",
+        "resourceVersion": "1777984096821",
+        "creationTimestamp": "2026-05-05T12:28:16Z"
+      },
+      "spec": {
+        "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.meticulousAIRecorder",
         "resourceVersion": "1777401759422",
         "creationTimestamp": "2026-04-28T17:20:14Z",
@@ -2595,6 +2693,20 @@
         "description": "Whether to use the new SharedPreferences functional component",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.orgDashboardTemplates",
+        "resourceVersion": "1777989950811",
+        "creationTimestamp": "2026-05-05T14:05:50Z"
+      },
+      "spec": {
+        "description": "Enables org-defined dashboard templates for enterprise",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
         "frontend": true,
         "expression": "false"
       }
@@ -4486,6 +4598,20 @@
     },
     {
       "metadata": {
+        "name": "pluginsDedicatedInstallToken",
+        "resourceVersion": "1777390418301",
+        "creationTimestamp": "2026-04-28T15:33:38Z",
+        "deletionTimestamp": "2026-04-28T18:28:20Z"
+      },
+      "spec": {
+        "description": "Use a dedicated auth token for Grafana.com plugin API requests and plugin installs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsSriChecks",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-10-04T12:55:09Z"
@@ -5180,6 +5306,7 @@
         "name": "restoreDashboards",
         "resourceVersion": "1774951865910",
         "creationTimestamp": "2025-05-23T14:35:54Z",
+        "deletionTimestamp": "2026-05-02T07:12:49Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-03-31 10:11:05.910542 +0000 UTC"
         }

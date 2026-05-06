@@ -185,6 +185,32 @@ func NewFolderDepthExceededError(path string, err error) *FolderDepthExceededErr
 	return &FolderDepthExceededError{Path: path, Err: err}
 }
 
+// ErrFolderManagedByOther is a sentinel for the cross-manager ownership
+// conflict where the target folder is already managed by a different
+// manager (another provisioning repo, a plugin, etc.). Provisioning cannot
+// recover automatically and must not retry.
+var ErrFolderManagedByOther = errors.New("folder managed by a different manager")
+
+// FolderManagedByOtherError wraps the cross-manager ownership conflict so
+// callers can detect it via errors.As.
+type FolderManagedByOtherError struct {
+	FolderID       string
+	CurrentManager string
+}
+
+func (e *FolderManagedByOtherError) Error() string {
+	return fmt.Sprintf("folder %q is already managed by %q", e.FolderID, e.CurrentManager)
+}
+
+func (e *FolderManagedByOtherError) Unwrap() []error {
+	return []error{ErrFolderManagedByOther}
+}
+
+// NewFolderManagedByOtherError wraps a cross-manager folder-ownership conflict.
+func NewFolderManagedByOtherError(folderID, currentManager string) *FolderManagedByOtherError {
+	return &FolderManagedByOtherError{FolderID: folderID, CurrentManager: currentManager}
+}
+
 // IsFolderDepthExceededAPIError reports whether err originates from the
 // folder API rejecting a write because the maximum folder depth was
 // exceeded — either on Create (the new path is too deep) or on Update

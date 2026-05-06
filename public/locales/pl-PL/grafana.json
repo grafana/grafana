@@ -4366,6 +4366,7 @@
         "repository-not-found-message": "Nie znaleziono repozytorium dla wybranego folderu. Upewnij się, że folder jest prawidłowo przygotowany.",
         "repository-not-found-title": "Nie znaleziono repozytorium"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Błąd przenoszenia zasobów",
       "error-no-target-folder-path": "Ścieżka do folderu docelowego jest nieprawidłowa lub pusta. Wybierz ponownie.",
       "move-total": "Łącznie wpłynie to na następujące elementy:",
@@ -5329,7 +5330,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Ustawienia"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5731,7 +5732,7 @@
         "title": "Zmienne"
       },
       "variable": {
-        "change-type": "Zmień",
+        "change-type": "",
         "change-type-aria-label": "Zmień typ zmiennej",
         "custom-options": {
           "apply": "Zastosuj",
@@ -6048,7 +6049,7 @@
       "cancel": "Anuluj",
       "common": {
         "copy": "Kopiuj",
-        "copy-or-duplicate": "Kopiuj/wklej lub duplikuj",
+        "copy-tooltip": "",
         "delete": "Usuń",
         "duplicate": "Duplikuj",
         "layout": "Układ",
@@ -6087,7 +6088,7 @@
     },
     "new-panel": {
       "aria-label": "Nieskonfigurowany panel. Użyj klawisza Tab, aby wyświetlić opcje konfiguracji.",
-      "configure-button": "Konfiguruj",
+      "configure-button": "",
       "configure-button-menu": "Przełącz menu",
       "configure-visualization": "Skonfiguruj wizualizację",
       "empty-state-message": "Uruchom zapytanie, aby je tutaj zwizualizować, lub przejdź do wszystkich wizualizacji, aby dodać inne typy paneli",
@@ -6331,10 +6332,8 @@
       "title-provisioned": "Pulpit aprowizowany"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "W wybranym folderze istnieje już pulpit o tej samej nazwie.<br/><2>Czy nadal chcesz zapisać ten pulpit?</2>",
       "body-version-mismatch": "Inna osoba zaktualizowała ten pulpit.<br/><2>Czy nadal chcesz zapisać ten pulpit?</2>",
       "confirmText-save-and-overwrite": "Zapisz i zastąp",
-      "title-name-exists": "Konflikt",
       "title-version-mismatch": "Konflikt"
     },
     "save-dashboard-form": {
@@ -7395,6 +7394,7 @@
       "terraform": "Zarządzane przez Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Nie udało się przenieść pulpitu",
       "cancel-action": "Anuluj",
       "current-file-not-found": "Nie znaleziono bieżącego pliku pulpitu",
@@ -7407,10 +7407,6 @@
       "success-message": "Pulpit został przeniesiony",
       "target-path-label": "Ścieżka docelowa",
       "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "W wybranym folderze istnieje już pulpit o tej samej nazwie. Czy nadal chcesz zapisać ten pulpit?",
-      "title-name-already-exists": "Nazwa już istnieje"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8236,6 +8232,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Dodaj do ulubionych",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Przeglądaj dane",
       "open-in-explore": "Otwórz w widoku Eksploruj",
       "remove-favorite": "Usuń z ulubionych"
@@ -14415,6 +14417,8 @@
       "alerts-loading": "Alerty",
       "card-click": "Wybierz kartę {{id}}",
       "data": "Dane",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nowy: {{type}}",
       "queries-expressions": "Zapytania i wyrażenia",
       "toggle-size": "Przełącz rozmiar paska bocznego",
@@ -15143,10 +15147,13 @@
       "title": "Szybko rozpoczynaj tworzenie pulpitów dzięki sugestiom i szablonom"
     },
     "nav": {
+      "counter": "",
       "go-to": "Przejdź do slajdu {{number}}",
-      "next": "Dalej",
-      "prev": "Wstecz"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Wyjaśnij zapytanie",
@@ -15628,7 +15635,6 @@
       "forwards-time-aria-label": "Przesuń zakres czasu do przodu",
       "to": "do",
       "zoom-out-button": "Oddal zakres czasu",
-      "zoom-out-tooltip": "Oddal zakres czasu <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Oddal zakres czasu <br/> t -"
     },
     "time-range": {
