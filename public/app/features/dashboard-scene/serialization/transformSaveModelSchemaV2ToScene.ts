@@ -378,7 +378,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
       drilldownRecommendationsEnabled:
         config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
-      $behaviors: [new ReportInteractionBehavior()],
+      $behaviors: [new ReportInteractionBehavior({})],
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
@@ -613,7 +613,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
               ? (v.spec.enableGroupBy ?? false)
               : false,
-            $behaviors: [new ReportInteractionBehavior()],
+            $behaviors: [new ReportInteractionBehavior({})],
           });
         }
         // for other variable types we are using the SnapshotVariable

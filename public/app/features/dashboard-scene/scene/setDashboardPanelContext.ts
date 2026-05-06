@@ -189,9 +189,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     if (items.length > 0) {
       const isFilterOut = items.every((item) => item.operator === FILTER_OUT_OPERATOR);
       reportInteraction(
-        isFilterOut
-          ? 'grafana_unified_drilldown_tooltip_filter_out'
-          : 'grafana_unified_drilldown_tooltip_filter_for',
+        isFilterOut ? 'grafana_unified_drilldown_tooltip_filter_out' : 'grafana_unified_drilldown_tooltip_filter_for',
         { filtersCount: items.length }
       );
     }

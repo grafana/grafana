@@ -102,7 +102,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
               getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
             ),
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
-            $behaviors: [new ReportInteractionBehavior()],
+            $behaviors: [new ReportInteractionBehavior({})],
           });
         }
         // for other variable types we are using the SnapshotVariable
@@ -207,7 +207,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
         ? (variable.enableGroupBy ?? false)
         : false,
-      $behaviors: [new ReportInteractionBehavior()],
+      $behaviors: [new ReportInteractionBehavior({})],
     });
   }
   // Custom variable
