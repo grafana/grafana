@@ -938,13 +938,20 @@ jobs:
     runs-on: ubuntu-x64-small
     continue-on-error: true
     permissions:
+      actions: write
       contents: read
       id-token: write
+      issues: write
+      pull-requests: write
+      statuses: read
 
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+
+      - name: Pull image from Dockerhub
+        run: docker pull grafana/grafana-dev:${{ needs.publish-dockerhub.outputs.tag-version }}
 
       - name: Get vault secrets
         id: vault-secrets
