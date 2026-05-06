@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -441,6 +442,11 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		return nil, false, err
 	}
 	return objFromLegacy, createdLegacy, nil
+}
+
+// DeleteCollection is not supported with dual write
+func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(d.gr, "deletecollection")
 }
 
 func (d *dualWriter) Destroy() {
