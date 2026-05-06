@@ -72,7 +72,7 @@ func toSecureJSONData(secure common.InlineSecureValues) map[string]string {
 
 type settingsStorage struct {
 	pluginID       string
-	pluginSettings pluginsettings.Service // TODO? Do we need an explicitly caching version?
+	pluginSettings pluginsettings.Service // TODO we may need a caching version
 	resourceInfo   *utils.ResourceInfo
 }
 
