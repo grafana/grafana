@@ -121,4 +121,3 @@ datasource/TestDataDB
 datasource/Timestream
 datasource/X-Ray
 datasource/Zabbix
-datasource/Zipkin

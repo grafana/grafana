@@ -5270,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Definições"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5672,7 @@
         "title": "Variáveis"
       },
       "variable": {
-        "change-type": "Alterar",
+        "change-type": "",
         "change-type-aria-label": "Alterar tipo de variável",
         "custom-options": {
           "apply": "Aplicar",
@@ -5989,7 +5989,7 @@
       "cancel": "Cancelar",
       "common": {
         "copy": "Copiar",
-        "copy-or-duplicate": "Copiar/colar ou duplicar",
+        "copy-tooltip": "",
         "delete": "Eliminar",
         "duplicate": "Duplicar",
         "layout": "Layout",
@@ -6028,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Painel não configurado. Prima Tab para ver as opções de configuração.",
-      "configure-button": "Configurar",
+      "configure-button": "",
       "configure-button-menu": "Alternar menu",
       "configure-visualization": "Configurar a visualização",
       "empty-state-message": "Execute uma consulta para a visualizar aqui ou aceda a todas as visualizações para adicionar outros tipos de painel",
@@ -6270,10 +6270,8 @@
       "title-provisioned": "Painel de controlo fornecido"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Já existe um painel de controlo com o mesmo nome na pasta selecionada.<br/><2>Pretende guardar este painel de controlo mesmo assim?</2>",
       "body-version-mismatch": "Outra pessoa atualizou este painel de controlo.<br/><2>Pretende guardar este painel de controlo mesmo assim?</2>",
       "confirmText-save-and-overwrite": "Guardar e substituir",
-      "title-name-exists": "Conflito",
       "title-version-mismatch": "Conflito"
     },
     "save-dashboard-form": {
@@ -7327,10 +7325,6 @@
       "success-message": "Painel de controlo movido com sucesso",
       "target-path-label": "Caminho de destino",
       "title-this-repository-is-read-only": "Este repositório é apenas de leitura"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Já existe um painel de controlo com o mesmo nome na pasta selecionada. Ainda pretende guardar este painel de controlo?",
-      "title-name-already-exists": "Nome já existente"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

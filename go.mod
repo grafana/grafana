@@ -157,7 +157,6 @@ require (
 	github.com/openfga/openfga v1.14.2 // @grafana/identity-access-team
 	github.com/opentracing-contrib/go-grpc v0.1.2 // @grafana/grafana-search-and-storage
 	github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b // @grafana/grafana-search-and-storage
-	github.com/openzipkin/zipkin-go v0.4.3 // @grafana/data-sources-plugins
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-backend
 	github.com/pgvector/pgvector-go v0.3.0 // @grafana/grafana-search-and-storage
 	github.com/phpdave11/gofpdi v1.0.14 // indirect; @grafana/sharing-squad
@@ -233,7 +232,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // @grafana/data-sources-plugins
 	modernc.org/sqlite v1.48.2 // indirect; @grafana/grafana-backend-group
-	pgregory.net/rapid v1.2.0 // @grafana/grafana-operator-experience-squad
+	pgregory.net/rapid v1.3.0 // @grafana/grafana-operator-experience-squad
 	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/yaml v1.6.0 // indirect; @grafana/grafana-app-platform-squad

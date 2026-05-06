@@ -29,6 +29,9 @@ var (
 	ScopeRoutesAll               = ScopeRoutesProvider.GetResourceAllScope()
 	ScopeInhibitionRulesProvider = accesscontrol.NewScopeProvider(ScopeInhibitionRulesRoot)
 	ScopeInhibitionRulesAll      = ScopeInhibitionRulesProvider.GetResourceAllScope()
+
+	ScopeAlertmanagerImportsProvider = accesscontrol.NewScopeProvider(accesscontrol.AlertingAlertmanagerImportsKind)
+	ScopeAlertmanagerImportsAll      = ScopeAlertmanagerImportsProvider.GetResourceAllScope()
 )
 
 type ReceiverScopeProvider struct {
