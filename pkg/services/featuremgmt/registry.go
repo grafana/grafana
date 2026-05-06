@@ -253,6 +253,14 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "provisioningReadmes",
+			Description: "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -1096,6 +1104,14 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.orgDashboardTemplates",
+			Description: "Enables org-defined dashboard templates for enterprise",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{React: true},
 			Expression:  "false",
 		},
 		{
@@ -2250,6 +2266,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.dedicatedGrafanaComProxyAPIToken",
+			Description: "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "newVizSuggestions",
 			Description: "Enable new visualization suggestions",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2793,6 +2817,15 @@ var (
 			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
+			Name:         "grafana.scenesFlickeringFix",
+			Description:  "Prevents flickering in dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:            "datasourcesApiServerEnableHealthEndpointFrontend",
 			Description:     "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
 			Stage:           FeatureStageExperimental,
@@ -3084,6 +3117,14 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{Go: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "alerting.disableV0ReceiverConversion",
+			Description: "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true},
+			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
