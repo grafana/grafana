@@ -4355,7 +4355,7 @@ __metadata:
     chance: "npm:^1.1.13"
     jest: "npm:29.7.0"
     jest-canvas-mock: "npm:^2.5.2"
-    jest-canvas-mock-compare: "npm:0.0.3"
+    jest-canvas-mock-compare: "npm:0.0.4"
     jest-matcher-utils: "npm:29.7.0"
     jest-snapshot: "npm:^30.3.0"
     lodash: "npm:^4.17.23"
@@ -20537,7 +20537,6 @@ __metadata:
     ix: "npm:^7.0.0"
     jest: "npm:29.7.0"
     jest-canvas-mock: "npm:2.5.2"
-    jest-canvas-mock-compare: "npm:0.0.3"
     jest-date-mock: "npm:1.0.10"
     jest-environment-jsdom: "npm:29.7.0"
     jest-fail-on-console: "npm:3.3.1"
@@ -22657,9 +22656,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-canvas-mock-compare@npm:0.0.3":
-  version: 0.0.3
-  resolution: "jest-canvas-mock-compare@npm:0.0.3"
+"jest-canvas-mock-compare@npm:0.0.4":
+  version: 0.0.4
+  resolution: "jest-canvas-mock-compare@npm:0.0.4"
   peerDependencies:
     jest: ">=29"
     jest-canvas-mock: ">=2.5"
@@ -22671,7 +22670,7 @@ __metadata:
       optional: false
     jest-snapshot:
       optional: false
-  checksum: 10/f074be74c46e56458b302701bc58d17d3d0ff384086248b65d1a9880562a782c1531a4da2f343d8abd7bfeae6d96a8a51281ced0a3381d64a367b89954870c19
+  checksum: 10/c893c31afd7d2565f3778d9cb4c1a891689569ccf73f5e9c0d5e7900acca03b64fd406b73b0041955f3df5ca92389ceca136c418b346438e22f15da8f63cc646
   languageName: node
   linkType: hard
 
