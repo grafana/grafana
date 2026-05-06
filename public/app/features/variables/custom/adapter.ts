@@ -9,7 +9,6 @@ import { ALL_VARIABLE_TEXT } from '../constants';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
 
-import { CustomVariableEditor } from './CustomVariableEditor';
 import { updateCustomVariableOptions } from './actions';
 import { customVariableReducer, initialCustomVariableModelState } from './reducer';
 
@@ -23,7 +22,6 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
     name: 'Custom',
     initialState: initialCustomVariableModelState,
     reducer: customVariableReducer,
-    editor: CustomVariableEditor,
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variableToTest.name);
     },

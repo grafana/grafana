@@ -7,7 +7,6 @@ import { dispatch } from '../../../store/store';
 import { type VariableAdapter } from '../adapters';
 import { toKeyedVariableIdentifier } from '../utils';
 
-import { AdHocVariableEditor } from './AdHocVariableEditor';
 import { setFiltersFromUrl } from './actions';
 import { adHocVariableReducer, initialAdHocVariableModelState } from './reducer';
 import * as urlParser from './urlParser';
@@ -24,7 +23,6 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     name: 'Filter',
     initialState: initialAdHocVariableModelState,
     reducer: adHocVariableReducer,
-    editor: AdHocVariableEditor,
     dependsOn: () => false,
     setValue: noop,
     setValueFromUrl: async (variable, urlValue) => {

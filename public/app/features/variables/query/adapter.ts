@@ -9,7 +9,6 @@ import { ALL_VARIABLE_TEXT } from '../constants';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
 
-import { QueryVariableEditor } from './QueryVariableEditor';
 import { updateQueryVariableOptions } from './actions';
 import { initialQueryVariableModelState, queryVariableReducer } from './reducer';
 
@@ -23,7 +22,6 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     name: 'Query',
     initialState: initialQueryVariableModelState,
     reducer: queryVariableReducer,
-    editor: QueryVariableEditor,
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variable.datasource?.uid, variable.regex, variableToTest.name);
     },

@@ -8,7 +8,6 @@ import { ALL_VARIABLE_TEXT } from '../constants';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
 
-import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
 import { dataSourceVariableReducer, initialDataSourceVariableModelState } from './reducer';
 
@@ -19,7 +18,6 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
     name: 'Data source',
     initialState: initialDataSourceVariableModelState,
     reducer: dataSourceVariableReducer,
-    editor: DataSourceVariableEditor,
     dependsOn: (variable, variableToTest) => {
       if (variable.regex) {
         return containsVariable(variable.regex, variableToTest.name);

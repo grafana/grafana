@@ -1,15 +1,13 @@
 import { cloneDeep } from 'lodash';
 
 import { type AdHocVariableFilter, type AdHocVariableModel, type DataSourceRef } from '@grafana/data';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type StoreState, type ThunkResult } from 'app/types/store';
 
-import { changeVariableEditorExtended } from '../editor/reducer';
 import { isAdHoc } from '../guard';
 import { variableUpdated } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getLastKey, getNewVariableIndex, getVariable, getVariablesState } from '../state/selectors';
-import { addVariable, changeVariableProp } from '../state/sharedReducer';
+import { addVariable } from '../state/sharedReducer';
 import { type AddVariable, type KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
@@ -94,36 +92,6 @@ export const setFiltersFromUrl = (
   };
 };
 
-export const changeVariableDatasource = (
-  identifier: KeyedVariableIdentifier,
-  datasource?: DataSourceRef
-): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const variable = getVariable(identifier, getState());
-    dispatch(
-      toKeyedAction(
-        identifier.rootStateKey,
-        changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
-      )
-    );
-
-    const ds = await getDatasourceSrv().get(datasource);
-
-    // TS TODO: ds is not typed to be optional - is this check unnecessary or is the type incorrect?
-    const message = ds?.getTagKeys
-      ? 'Ad hoc filters are applied automatically to all queries that target this data source'
-      : 'This data source does not support ad hoc filters yet.';
-
-    dispatch(
-      toKeyedAction(
-        identifier.rootStateKey,
-        changeVariableEditorExtended({
-          infoText: message,
-        })
-      )
-    );
-  };
-};
 
 const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
   return (dispatch, getState) => {

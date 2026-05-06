@@ -8,7 +8,6 @@ import { type VariableAdapter } from '../adapters';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { toKeyedVariableIdentifier } from '../utils';
 
-import { IntervalVariableEditor } from './IntervalVariableEditor';
 import { updateAutoValue, updateIntervalVariableOptions } from './actions';
 import { initialIntervalVariableModelState, intervalVariableReducer } from './reducer';
 
@@ -23,7 +22,6 @@ export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariabl
     name: 'Interval',
     initialState: initialIntervalVariableModelState,
     reducer: intervalVariableReducer,
-    editor: IntervalVariableEditor,
     dependsOn: () => {
       return false;
     },

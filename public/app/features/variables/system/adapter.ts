@@ -1,9 +1,6 @@
-import { type ComponentType } from 'react';
-
 import { LoadingState, type SystemVariable, VariableHide } from '@grafana/data';
 
 import { type VariableAdapter } from '../adapters';
-import { type VariableEditorProps } from '../editor/types';
 import { initialVariableModelState } from '../types';
 
 export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<any>> => {
@@ -20,7 +17,6 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
       state: LoadingState.Done,
     },
     reducer: (state: any) => state,
-    editor: null as unknown as ComponentType<VariableEditorProps<SystemVariable<any>>>,
     dependsOn: () => {
       return false;
     },
