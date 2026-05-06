@@ -895,14 +895,19 @@ func TestIntegrationAuthorization(t *testing.T) {
 	})
 }
 
-func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *ContactPointService {
+func createContactPointServiceSut(t *testing.T,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+) *ContactPointService {
 	// Encrypt secure settings.
 	cfg := createEncryptedConfig(t, secretService)
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
 	return createContactPointServiceSutWithConfigStore(t, secretService, store)
 }
 
-func createContactPointServiceSutWithConfigStore(t *testing.T, secretService secrets.Service, configStore legacy_storage.AMConfigStore) *ContactPointService {
+func createContactPointServiceSutWithConfigStore(t *testing.T,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	configStore legacy_storage.AMConfigStore,
+) *ContactPointService {
 	t.Helper()
 	// Encrypt secure settings.
 	xact := newNopTransactionManager()
@@ -972,7 +977,9 @@ func cpsQueryWithName(orgID int64, name string) ContactPointQuery {
 	}
 }
 
-func createEncryptedConfig(t *testing.T, secretService secrets.Service) string {
+func createEncryptedConfig(t *testing.T,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+) string {
 	c := &definitions.PostableUserConfig{}
 	err := json.Unmarshal([]byte(defaultAlertmanagerConfigJSON), c)
 	require.NoError(t, err)

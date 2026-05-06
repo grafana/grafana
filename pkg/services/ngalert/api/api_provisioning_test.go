@@ -2136,7 +2136,7 @@ func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
 
 // testEnvironment binds together common dependencies for testing alerting APIs.
 type testEnvironment struct {
-	secrets          secrets.Service
+	secrets          secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
 	log              log.Logger
 	store            store.DBstore
 	folderService    folder.Service

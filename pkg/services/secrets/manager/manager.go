@@ -42,7 +42,7 @@ var (
 // If you need to encrypt data in a multi-tenant API, use Grafana Secrets Manager (GSM) instead.
 type SecretsService struct {
 	tracer     tracing.Tracer
-	store      secrets.Store
+	store      secrets.Store //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
 	enc        encryption.Internal
 	cfg        *setting.Cfg
 	features   featuremgmt.FeatureToggles
@@ -52,7 +52,7 @@ type SecretsService struct {
 	dataKeyCache *dataKeyCache
 
 	pOnce               sync.Once
-	providers           map[secrets.ProviderID]secrets.Provider
+	providers           map[secrets.ProviderID]secrets.Provider //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
 	kmsProvidersService kmsproviders.Service
 
 	currentProviderID secrets.ProviderID
@@ -67,7 +67,7 @@ type SecretsService struct {
 // If you need to encrypt data in a multi-tenant API, use Grafana Secrets Manager (GSM) instead.
 func ProvideSecretsService(
 	tracer tracing.Tracer,
-	store secrets.Store,
+	store secrets.Store, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
 	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
 	cfg *setting.Cfg,
