@@ -1,48 +1,11 @@
 import { type DataTransformerConfig, type FieldConfigSource, getPanelOptionsWithDefaults } from '@grafana/data';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { type LibraryElementDTO } from 'app/features/library-panels/types';
-import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
-import { DashboardPanelsChangedEvent, PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
+import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 import { type ThunkResult } from 'app/types/store';
 
 import { changePanelKey, panelModelAndPluginReady, removePanel } from './reducers';
-
-export function initPanelState(panel: PanelModel): ThunkResult<Promise<void>> {
-  return async (dispatch, getStore) => {
-    if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
-      // this will call init with a loaded library panel if it loads succesfully
-      dispatch(loadLibraryPanelAndUpdate(panel));
-      return;
-    }
-
-    // Some old panels, somehow have maxDataPoints value as string.
-    // This is causing problems on the backend-side.
-    // Here we make sure maxDataPoints is always as number.
-    if (panel.maxDataPoints) {
-      panel.maxDataPoints = Number(panel.maxDataPoints);
-    }
-
-    let pluginToLoad = panel.type;
-    let plugin = getStore().plugins.panels[pluginToLoad];
-
-    if (!plugin) {
-      try {
-        plugin = await dispatch(loadPanelPlugin(pluginToLoad));
-      } catch (e) {
-        // When plugin not found
-        plugin = getPanelPluginNotFound(pluginToLoad, pluginToLoad === 'row');
-      }
-    }
-
-    if (!panel.plugin) {
-      await panel.pluginLoaded(plugin);
-    }
-
-    dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
-  };
-}
 
 export function cleanUpPanelState(panelKey: string): ThunkResult<void> {
   return (dispatch) => {
@@ -145,33 +108,5 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
 
     panel.events.publish(PanelQueriesChangedEvent);
     panel.events.publish(PanelOptionsChangedEvent);
-  };
-}
-
-export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const uid = panel.libraryPanel!.uid!;
-    try {
-      const libPanel = await getLibraryPanel(uid, true);
-      panel.initLibraryPanel(libPanel);
-
-      const dashboard = getStore().dashboard.getModel();
-      if (panel.repeat && dashboard) {
-        const panelIndex = dashboard.panels.findIndex((p) => p.id === panel.id);
-        dashboard.repeatPanel(panel, panelIndex);
-        dashboard.sortPanelsByGridPos();
-        dashboard.events.publish(new DashboardPanelsChangedEvent());
-      }
-
-      await dispatch(initPanelState(panel));
-    } catch (ex) {
-      console.log('ERROR: ', ex);
-      dispatch(
-        panelModelAndPluginReady({
-          key: panel.key,
-          plugin: getPanelPluginNotFound('Unable to load library panel: ' + uid, false),
-        })
-      );
-    }
   };
 }

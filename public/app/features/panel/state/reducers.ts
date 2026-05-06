@@ -15,7 +15,7 @@ const panelsSlice = createSlice({
   name: 'panels',
   initialState,
   reducers: {
-    panelModelAndPluginReady: (state, action: PayloadAction<PanelModelAndPluginReadyPayload>) => {
+    panelModelAndPluginReady: (state, action: PayloadAction<{ key: string; plugin: PanelPlugin }>) => {
       state[action.payload.key] = {
         plugin: action.payload.plugin,
       };
@@ -30,21 +30,11 @@ const panelsSlice = createSlice({
     removeAllPanels: (state) => {
       Object.keys(state).forEach((key) => delete state[key]);
     },
-    setPanelInstanceState: (state, action: PayloadAction<SetPanelInstanceStatePayload>) => {
+    setPanelInstanceState: (state, action: PayloadAction<{ key: string; value: unknown }>) => {
       state[action.payload.key].instanceState = action.payload.value;
     },
   },
 });
-
-export interface PanelModelAndPluginReadyPayload {
-  key: string;
-  plugin: PanelPlugin;
-}
-
-export interface SetPanelInstanceStatePayload {
-  key: string;
-  value: unknown;
-}
 
 export const { panelModelAndPluginReady, setPanelInstanceState, changePanelKey, removePanel, removeAllPanels } =
   panelsSlice.actions;

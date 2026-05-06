@@ -1,6 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { type PanelPlugin } from '@grafana/data';
 import { DashboardInitPhase, type DashboardState } from 'app/types/dashboard';
 
 export const initialState: DashboardState = {
@@ -19,16 +18,6 @@ const dashboardSlice = createSlice({
     },
   },
 });
-
-export interface PanelModelAndPluginReadyPayload {
-  panelId: number;
-  plugin: PanelPlugin;
-}
-
-export interface SetPanelInstanceStatePayload {
-  panelId: number;
-  value: unknown;
-}
 
 export const { setInitialDatasource } = dashboardSlice.actions;
 
