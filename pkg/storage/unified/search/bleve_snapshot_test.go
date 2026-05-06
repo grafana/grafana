@@ -234,28 +234,29 @@ func TestPickBestSnapshot(t *testing.T) {
 		}
 	}
 
-	newBackend := func(maxAge time.Duration, minVersion *semver.Version) *bleveBackend {
+	newBackend := func(minVersion *semver.Version) *bleveBackend {
 		return &bleveBackend{
 			log:                 log.New("bleve-snapshot-test"),
-			opts:                BleveOptions{Snapshot: SnapshotOptions{MaxIndexAge: maxAge, MinBuildVersion: minVersion}},
+			opts:                BleveOptions{Snapshot: SnapshotOptions{MinBuildVersion: minVersion}},
 			runningBuildVersion: running,
 		}
 	}
+	cutoff := func(maxAge time.Duration) time.Time { return now.Add(-maxAge) }
 
 	t.Run("empty list", func(t *testing.T) {
-		_, ok := newBackend(24*time.Hour, minV).pickBestSnapshot(nil, now, log.New("bleve-snapshot-test"))
+		_, ok := newBackend(minV).pickBestSnapshot(nil, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
 	t.Run("dropped by age", func(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): snap("11.5.0", 100, 2*time.Hour)}
-		_, ok := newBackend(time.Hour, minV).pickBestSnapshot(all, now, log.New("bleve-snapshot-test"))
+		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
 	t.Run("dropped for unparseable version", func(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): snap("not-a-version", 100, time.Minute)}
-		_, ok := newBackend(24*time.Hour, minV).pickBestSnapshot(all, now, log.New("bleve-snapshot-test"))
+		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
@@ -268,7 +269,7 @@ func TestPickBestSnapshot(t *testing.T) {
 			newer: snap("11.6.0", 300, time.Minute),  // tier 2 (above running)
 			ideal: snap("11.5.0", 100, 10*time.Hour), // tier 0 wins despite lower RV / older upload
 		}
-		c, ok := newBackend(24*time.Hour, minV).pickBestSnapshot(all, now, log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, ideal, c.key)
 		assert.Equal(t, 0, c.tier)
@@ -281,7 +282,7 @@ func TestPickBestSnapshot(t *testing.T) {
 			older: snap("11.3.0", 100, time.Minute),
 			newer: snap("12.0.0", 999, time.Minute),
 		}
-		c, ok := newBackend(24*time.Hour, minV).pickBestSnapshot(all, now, log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, older, c.key)
 		assert.Equal(t, 1, c.tier)
@@ -290,7 +291,7 @@ func TestPickBestSnapshot(t *testing.T) {
 	t.Run("tier 2 picked as last resort", func(t *testing.T) {
 		only := makeULID(t, now)
 		all := map[ulid.ULID]*IndexMeta{only: snap("12.0.0", 100, time.Minute)}
-		c, ok := newBackend(24*time.Hour, minV).pickBestSnapshot(all, now, log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, only, c.key)
 		assert.Equal(t, 2, c.tier)
@@ -309,13 +310,13 @@ func TestPickBestSnapshot(t *testing.T) {
 			b: snap("11.5.0", 50, time.Minute),     // best version, lowest RV, newer upload
 			c: snap("11.5.0", 200, 30*time.Minute), // best version, high RV, older upload
 		}
-		got, ok := newBackend(24*time.Hour, minV).pickBestSnapshot(all, now, log.New("bleve-snapshot-test"))
+		got, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, c, got.key)
 
 		// Adding d (same version + RV as c, newer upload): d wins via upload-desc tiebreaker.
 		all[d] = snap("11.5.0", 200, time.Minute)
-		got, ok = newBackend(24*time.Hour, minV).pickBestSnapshot(all, now, log.New("bleve-snapshot-test"))
+		got, ok = newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, d, got.key)
 	})
@@ -1044,7 +1045,7 @@ type probeCase struct {
 	wantErr string
 }
 
-type probeFn func(ctx context.Context, s RemoteIndexStore, ns resource.NamespacedResource, maxAge time.Duration, v string) (ulid.ULID, *IndexMeta, error)
+type probeFn func(ctx context.Context, s RemoteIndexStore, ns resource.NamespacedResource, notOlderThan time.Time, v string) (ulid.ULID, *IndexMeta, error)
 
 func runProbeCases(t *testing.T, probe probeFn, cases []probeCase) {
 	t.Helper()
@@ -1052,7 +1053,7 @@ func runProbeCases(t *testing.T, probe probeFn, cases []probeCase) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := &fakeRemoteIndexStore{getErr: map[ulid.ULID]error{}}
 			want := tc.setup(store)
-			k, meta, err := probe(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
+			k, meta, err := probe(t.Context(), store, newTestNsResource(), time.Now().Add(-time.Hour), "11.5.0")
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.wantErr)
