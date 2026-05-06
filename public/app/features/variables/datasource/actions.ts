@@ -38,4 +38,3 @@ export const updateDataSourceVariableOptions =
     dispatch(toKeyedAction(rootStateKey, createDataSourceOptions(toVariablePayload(identifier, { sources, regex }))));
     await dispatch(validateVariableSelectionState(identifier));
   };
-

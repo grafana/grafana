@@ -92,7 +92,6 @@ export const setFiltersFromUrl = (
   };
 };
 
-
 const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
   return (dispatch, getState) => {
     const key = getLastKey(getState());

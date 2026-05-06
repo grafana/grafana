@@ -380,4 +380,3 @@ function createAddVariableAction(variable: TypedVariableModel, index = 0) {
   const data = { global, index, model: { ...variable, index: -1, global } };
   return toKeyedAction(variable.rootStateKey!, addVariable(toVariablePayload(identifier, data)));
 }
-
