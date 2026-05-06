@@ -1,12 +1,12 @@
 import { config } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 
-import { getUpdatedHoverHeader } from '../../panel-edit/getPanelFrameOptions';
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { PanelElementEntry, PanelElementsData, MutationResult } from '../types';
@@ -98,7 +98,7 @@ function buildPanelScene(panels: VizPanel[] = [], elementMap: Record<string, num
       Object.assign(state, partial);
     }),
     updatePanelTitle: jest.fn((panel: VizPanel, title: string) => {
-      panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+      panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange?.state) });
     }),
     changePanelPlugin: jest.fn(),
   };
@@ -129,7 +129,7 @@ function buildAutoGridPanelScene(panels: VizPanel[] = [], elementMap: Record<str
       Object.assign(state, partial);
     }),
     updatePanelTitle: jest.fn((panel: VizPanel, title: string) => {
-      panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+      panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange?.state) });
     }),
     changePanelPlugin: jest.fn(),
   };

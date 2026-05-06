@@ -189,3 +189,28 @@ The `GET /api/alertmanager/grafana/api/v2/status` endpoint previously required t
 #### Migration
 
 If you have custom roles that need access to this endpoint, add the `alert.notifications.system-status:read` action to those roles. Admin users are unaffected as they receive this permission automatically through the built-in alerting notifications writer role.
+
+### RBAC enforcement changes for custom roles
+
+Grafana v13.0 tightens RBAC enforcement for custom roles, Terraform-managed roles, and role provisioning. Roles that contain deprecated permissions may fail during create, update, delete, or assignment operations. We recommend reviewing and updating affected roles proactively.
+
+#### You are affected if
+
+You manage custom RBAC roles through Terraform, the API, or provisioning, and those roles contain any of the following:
+
+- Data source UID-scoped permissions (`datasources:uid:<uid>`) on a global role
+- `fixed:annotations.dashboard:writer` or `fixed:annotations.dashboard:reader`
+- `annotations:type:dashboard`
+- `annotations:*`
+
+#### Migration
+
+**Data source permissions on global roles:** If a Terraform-managed `grafana_role` combines `global = true` with `datasources:uid:<uid>`, recreate the role as a non-global role with a new UID. Grafana can't change the scope of an existing role in place. Set `datasource_type` on data source permission resources when possible.
+
+**Dashboard annotation fixed roles:** Remove `fixed:annotations.dashboard:writer` and `fixed:annotations.dashboard:reader` from your configurations. Use dashboard or folder permissions (View, Edit, Admin) to control dashboard annotation access instead. Use `annotations:type:organization` for organization-level annotations.
+
+**`annotations:*` wildcard scope:** Replace with specific scopes: `annotations:type:organization` for organization annotations, and dashboard or folder permissions for dashboard annotations. Don't recreate `annotations:*` in Terraform after it has been removed.
+
+If a role is stuck because Grafana refuses to update or delete it, the role may contain a deprecated permission that must be removed before Terraform or API updates can succeed. Contact Grafana support for assistance.
+
+For detailed examples and troubleshooting, refer to [RBAC behavior changes with Grafana 13](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v13-0/#rbac-behavior-changes-with-grafana-13).

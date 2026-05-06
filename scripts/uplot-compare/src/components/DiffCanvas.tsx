@@ -1,4 +1,8 @@
+import { Differ, Viewer } from 'json-diff-kit';
 import * as React from 'react';
+import 'json-diff-kit/dist/viewer.css';
+
+import type { CanvasEventArray } from '../types.ts';
 
 interface DiffCanvasProps {
   width: number;
@@ -9,6 +13,8 @@ interface DiffCanvasProps {
   onToggleOverlay: () => void;
   renderDiffSetupEvents: boolean;
   onToggleDiffSetupEvents: () => void;
+  expected?: CanvasEventArray;
+  actual?: CanvasEventArray;
 }
 
 export function DiffCanvas({
@@ -20,8 +26,23 @@ export function DiffCanvas({
   onToggleOverlay,
   renderDiffSetupEvents,
   onToggleDiffSetupEvents,
+  expected,
+  actual,
 }: DiffCanvasProps) {
   const diffCanvasRef = React.useRef<HTMLCanvasElement | null>(null);
+
+  const differ = React.useMemo(
+    () =>
+      new Differ({
+        detectCircular: true,
+        maxDepth: Infinity,
+        showModifications: true,
+        arrayDiffMethod: 'lcs',
+      }),
+    []
+  );
+
+  const diff = React.useMemo(() => differ.diff(expected, actual), [differ, expected, actual]);
 
   React.useEffect(() => {
     const diffContext = diffCanvasRef.current?.getContext('2d');
@@ -39,16 +60,8 @@ export function DiffCanvas({
       <div className="plot-panel diff diff-empty">
         <div className="plot-header">
           <div className={'plot-label'}>Diff</div>
-          <div className="plot-actions">
-            <button className="plot-action-btn" type="button" onClick={onToggleDiffSetupEvents}>
-              {renderDiffSetupEvents ? 'Hide uPlot setup' : 'Show uPlot setup'}
-            </button>
-            <button className="overlay-toggle-btn" type="button" onClick={onToggleOverlay} disabled>
-              Overlay on charts
-            </button>
-          </div>
         </div>
-        <div className="compare-empty-diff">No visual differences</div>
+        <Viewer diff={diff} />
       </div>
     );
   }

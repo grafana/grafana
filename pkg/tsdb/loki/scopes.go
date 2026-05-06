@@ -96,13 +96,14 @@ func ApplyScopes(rawExpr string, scopeFilters []scope.ScopeFilter) (string, erro
 		return "", fmt.Errorf("failed to parse raw expression: %w", err)
 	}
 
-	syntaxTree.Walk(func(e syntax.Expr) {
+	syntaxTree.Walk(func(e syntax.Expr) bool {
 		switch e := e.(type) {
 		case *syntax.MatchersExpr:
 			// TODO: Key Collisions?
 			e.Mts = append(e.Mts, scopeMatchers...)
 		default:
 		}
+		return true
 	})
 	return syntaxTree.String(), nil
 }

@@ -1,9 +1,10 @@
+import type { CSSProperties } from 'react';
+
 import { OVERLAY_BLEND_MODES } from '../constants.ts';
-import type { OverlayBlendMode } from '../types.ts';
 
 interface OverlayBlendSelectProps {
-  value: OverlayBlendMode;
-  onChange: (mode: OverlayBlendMode) => void;
+  value: CSSProperties['mixBlendMode'];
+  onChange: (mode: CSSProperties['mixBlendMode']) => void;
 }
 
 export function OverlayBlendSelect({ value, onChange }: OverlayBlendSelectProps) {
@@ -22,6 +23,6 @@ export function OverlayBlendSelect({ value, onChange }: OverlayBlendSelectProps)
   );
 }
 
-function toOverlayBlendMode(value: string): OverlayBlendMode {
+function toOverlayBlendMode(value: string): CSSProperties['mixBlendMode'] {
   return OVERLAY_BLEND_MODES.find((mode) => mode === value) ?? 'exclusion';
 }

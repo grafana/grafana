@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Redigera YAML",
         "save": "Spara"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "namn",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Radera alla regler"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Radera",
       "delete-modal-delete-button": "Radera",
@@ -1573,8 +1575,14 @@
         "update-error": "Misslyckades med att uppdatera regelgrupp",
         "update-success": "Regelgruppen har uppdaterats"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Vald grupp kan inte redigeras",
       "group-not-editable-description": "Den här gruppen tillhör en datakälla som inte stöder redigering.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Redigera regelgrupp",
       "rule-group-error": "Fel vid laddning av regelgrupp"
     },
@@ -4314,6 +4322,7 @@
         "repository-not-found-message": "Lagringsplatsen för den valda mappen kunde inte hittas. Verifiera att mappen är korrekt tilldelad.",
         "repository-not-found-title": "Lagringsplatsen hittades inte"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Fel vid flyttning av resurser",
       "error-no-target-folder-path": "Sökvägen till målmappen är ogiltig eller tom. Välj på nytt.",
       "move-total": "Totalt kommer detta att påverka:",
@@ -4491,6 +4500,8 @@
       "label": {
         "alphabetically-az": "Alfabetiskt (A–Ö)",
         "alphabetically-za": "Alfabetiskt (Ö–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Raderat (nyaste först)",
         "deleted-oldest": "Raderat (äldsta först)"
       }
@@ -5259,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Inställningar"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5661,7 +5672,7 @@
         "title": "Variabler"
       },
       "variable": {
-        "change-type": "Ändra",
+        "change-type": "",
         "change-type-aria-label": "Ändra variabeltyp",
         "custom-options": {
           "apply": "Tillämpa",
@@ -5978,7 +5989,7 @@
       "cancel": "Avbryt",
       "common": {
         "copy": "Kopiera",
-        "copy-or-duplicate": "Kopiera/klistra in eller duplicera",
+        "copy-tooltip": "",
         "delete": "Ta bort",
         "duplicate": "Dubblett",
         "layout": "Layout",
@@ -6017,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Okonfigurerad panel. Tryck på Tabb för att se konfigurationsalternativ.",
-      "configure-button": "Konfigurera",
+      "configure-button": "",
       "configure-button-menu": "Växla meny",
       "configure-visualization": "Konfigurera visualisering",
       "empty-state-message": "Kör en fråga för att visualisera den här eller gå till alla visualiseringar för att lägga till andra paneltyper",
@@ -6259,10 +6270,8 @@
       "title-provisioned": "Tilldelad instrumentpanel"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "En instrumentpanel med samma namn finns redan i den valda mappen.<br/><2>Vill du fortfarande spara denna instrumentpanel?</2>",
       "body-version-mismatch": "Någon annan har uppdaterat denna instrumentpanel<br/><2>Vill du fortfarande spara denna instrumentpanel?</2>",
       "confirmText-save-and-overwrite": "Spara och skriv över",
-      "title-name-exists": "Konflikt",
       "title-version-mismatch": "Konflikt"
     },
     "save-dashboard-form": {
@@ -7303,6 +7312,7 @@
       "terraform": "Hanteras av: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Det gick inte att flytta kontrollpanelen",
       "cancel-action": "Avbryt",
       "current-file-not-found": "Den aktuella kontrollpanelfilen kunde inte hittas",
@@ -7315,10 +7325,6 @@
       "success-message": "Kontrollpanelen har flyttats",
       "target-path-label": "Målsökväg",
       "title-this-repository-is-read-only": "Den här lagringsplatsen är skrivskyddad"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "En instrumentpanel med samma namn finns redan i den valda mappen. Vill du fortfarande spara denna instrumentpanel?",
-      "title-name-already-exists": "Namnet finns redan"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8134,6 +8140,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Lägg till i favoriter",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Utforska data",
       "open-in-explore": "Öppna i Utforska vy",
       "remove-favorite": "Ta bort från favoriter"
@@ -13577,6 +13589,7 @@
       "contact-admin": "Kontakta din Grafana-administratör för att konvertera denna resurs till lokal eller radera alla resurser från den saknade lagringsplatsen.",
       "convert-to-local-button": "Konvertera till lokala",
       "delete-button": "Radera",
+      "go-to-dashboards": "",
       "job-error": "Ett fel uppstod vid behandlingen av övergivna resurser",
       "job-success": "Övergivna resurser har behandlats",
       "job-warning": "Vissa resurser behandlades med varningar. Granska resultaten.",
@@ -13823,7 +13836,8 @@
       "make-sure": "Skapa en token med dessa behörigheter"
     },
     "validation": {
-      "hidden-characters": "Detta fält innehåller dolda tecken som kan ha införts genom att kopiera och klistra in. Skriv in värdet på nytt eller rensa det och försök igen."
+      "hidden-characters": "Detta fält innehåller dolda tecken som kan ha införts genom att kopiera och klistra in. Skriv in värdet på nytt eller rensa det och försök igen.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Varning",
     "watch-stream": {
@@ -14231,6 +14245,8 @@
       "alerts-loading": "Larm",
       "card-click": "Välj kort {{id}}",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Ny {{type}}",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
@@ -14284,6 +14300,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Återställ"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Du har inte raderat några instrumentpaneler nyligen.",
@@ -14446,6 +14466,10 @@
     },
     "results-table": {
       "datasource-header": "Datakälla",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Återstående tid",
       "location-header": "Plats",
@@ -14939,10 +14963,13 @@
       "title": "Kom igång med instrumentpaneler snabbt med hjälp av förslag och mallar"
     },
     "nav": {
+      "counter": "",
       "go-to": "Gå till bilden {{number}}",
-      "next": "Nästa",
-      "prev": "Föregående"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Förklara fråga",
@@ -15422,7 +15449,6 @@
       "forwards-time-aria-label": "Flytta tidsintervallet framåt",
       "to": "till",
       "zoom-out-button": "Zooma ut tidsintervall",
-      "zoom-out-tooltip": "Zooma ut tidsintervall <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Zooma ut tidsintervall <br/> t -"
     },
     "time-range": {
