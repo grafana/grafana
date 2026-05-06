@@ -48,6 +48,19 @@ var labelColumnOperators = []schemas.Operator{
 	schemas.OperatorLike,
 }
 
+// lokiTableHints lists execution hints supported by Grafana SQL → LogQL normalization
+// (see normalizeGrafanaSQLRequest / TableHintValues).
+var lokiTableHints = []schemas.TableHint{
+	{Name: "step", Description: "Override range query step/resolution, e.g. step('30s').", HasValue: true},
+	{Name: "direction", Description: "Log direction: direction('forward') or direction('backward').", HasValue: true},
+}
+
+// lokiDatasourceCapabilities declares what the SQL engine may push to Loki. Aggregates are
+// not pushed to LogQL here (raw log rows are returned; SQL-layer aggregation applies).
+var lokiDatasourceCapabilities = &schemas.DatasourceCapabilities{
+	Limit: true,
+}
+
 type lokiLabelsAPIResponse struct {
 	Status string   `json:"status"`
 	Data   []string `json:"data"`
@@ -90,10 +103,17 @@ func (p *SchemaProvider) Schema(ctx context.Context, _ *schemas.SchemaRequest) (
 	}
 	tables := make([]schemas.Table, len(names))
 	for i, name := range names {
-		tables[i] = schemas.Table{Name: name, Columns: schemaBaseColumns}
+		tables[i] = schemas.Table{
+			Name:       name,
+			Columns:    schemaBaseColumns,
+			TableHints: lokiTableHints,
+		}
 	}
 	return &schemas.SchemaResponse{
-		FullSchema: &schemas.Schema{Tables: tables},
+		FullSchema: &schemas.Schema{
+			Tables:       tables,
+			Capabilities: lokiDatasourceCapabilities,
+		},
 	}, nil
 }
 
@@ -103,7 +123,10 @@ func (p *SchemaProvider) Tables(ctx context.Context, _ *schemas.TablesRequest) (
 	if err != nil {
 		return nil, err
 	}
-	return &schemas.TablesResponse{Tables: names}, nil
+	return &schemas.TablesResponse{
+		Tables:       names,
+		Capabilities: lokiDatasourceCapabilities,
+	}, nil
 }
 
 // Columns implements schemas.ColumnsHandler.

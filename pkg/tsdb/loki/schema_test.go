@@ -62,6 +62,7 @@ func TestSchemaProvider_DiscoverTableLabel_PrefersServiceName(t *testing.T) {
 	tr, err := p.Tables(ctx, &schemas.TablesRequest{})
 	require.NoError(t, err)
 	require.Equal(t, []string{"my-svc"}, tr.Tables)
+	require.Equal(t, lokiDatasourceCapabilities, tr.Capabilities)
 }
 
 func TestSchemaProvider_DiscoverTableLabel_FallbackToApp(t *testing.T) {
@@ -189,6 +190,8 @@ func TestSchemaProvider_Schema(t *testing.T) {
 	require.Len(t, sr.FullSchema.Tables, 2)
 	require.Equal(t, "a", sr.FullSchema.Tables[0].Name)
 	require.Equal(t, schemaBaseColumns, sr.FullSchema.Tables[0].Columns)
+	require.Equal(t, lokiTableHints, sr.FullSchema.Tables[0].TableHints)
+	require.Equal(t, lokiDatasourceCapabilities, sr.FullSchema.Capabilities)
 }
 
 func Test_appendTimeRangeParams(t *testing.T) {
