@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/util"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const AnnoKeyLastSeenAt = "iam.grafana.app/lastSeenAt"
@@ -97,11 +96,6 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 
 	iamUser := toUserItem(&result.User, ns.Value)
 	return &iamUser, false, nil
-}
-
-// DeleteCollection implements rest.CollectionDeleter.
-func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, apierrors.NewMethodNotSupported(userResource.GroupResource(), "deletecollection")
 }
 
 // Delete implements rest.GracefulDeleter.

@@ -443,11 +443,6 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	return objFromLegacy, createdLegacy, nil
 }
 
-// DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
-func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("delete collection is not supported")
-}
-
 func (d *dualWriter) Destroy() {
 	d.legacy.Destroy()
 	d.unified.Destroy()

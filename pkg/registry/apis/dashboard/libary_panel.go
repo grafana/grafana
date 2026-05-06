@@ -124,10 +124,6 @@ func (s *LibraryPanelStore) Delete(ctx context.Context, name string, deleteValid
 	return nil, true, nil
 }
 
-func (s *LibraryPanelStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, apierrors.NewMethodNotSupported(s.ResourceInfo.GroupResource(), "deletecollection")
-}
-
 func (s *LibraryPanelStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	if options.ResourceVersion != "" {
 		return nil, apierrors.NewBadRequest("List with explicit resourceVersion is not supported with this storage backend")
