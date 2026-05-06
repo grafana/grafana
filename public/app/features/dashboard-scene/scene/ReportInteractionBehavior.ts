@@ -7,10 +7,6 @@ export class ReportInteractionBehavior
 {
   public readonly isAdHocFilterInteractionHandler = true as const;
 
-  public constructor() {
-    super({});
-  }
-
   public onFilterAdded(p: { key: string; operator: string }) {
     reportInteraction('grafana_unified_drilldown_filter_added', p);
   }
