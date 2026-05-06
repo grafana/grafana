@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { memo, ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 
-import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
+import { getValueFormat, type GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { ClickedItemData } from '../types';
+import { type ClickedItemData } from '../types';
 
-import { FlameGraphDataContainer } from './dataTransform';
+import { type FlameGraphDataContainer } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;

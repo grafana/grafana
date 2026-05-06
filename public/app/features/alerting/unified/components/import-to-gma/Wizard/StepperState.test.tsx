@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { StepperStateProvider, useStepperState } from './StepperState';

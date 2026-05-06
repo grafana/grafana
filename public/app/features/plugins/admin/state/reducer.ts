@@ -1,9 +1,9 @@
-import { createSlice, createEntityAdapter, Reducer, AnyAction, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createEntityAdapter, type Reducer, type AnyAction, type PayloadAction } from '@reduxjs/toolkit';
 
-import { PanelPlugin } from '@grafana/data';
+import { type PanelPlugin } from '@grafana/data';
 
 import { STATE_PREFIX } from '../constants';
-import { CatalogPlugin, ReducerState, RequestStatus } from '../types';
+import { type CatalogPlugin, type ReducerState, RequestStatus } from '../types';
 
 import {
   fetchDetails,

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 
 import { DashboardLinkForm } from './DashboardLinkForm';
 import { NEW_LINK } from './utils';

@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
-import { AssistantHook, useAssistant } from '@grafana/assistant';
+import { type AssistantHook, useAssistant } from '@grafana/assistant';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardCard } from './DashboardCard';
@@ -182,6 +182,34 @@ describe('DashboardCard', () => {
       );
 
       expect(screen.queryByText('Data source provided')).not.toBeInTheDocument();
+    });
+
+    it('should show community badge when showCommunityBadge is true', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          showCommunityBadge={true}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.getByText('Community')).toBeInTheDocument();
+    });
+
+    it('should not show community badge when showCommunityBadge is false', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          showCommunityBadge={false}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.queryByText('Community')).not.toBeInTheDocument();
     });
   });
 

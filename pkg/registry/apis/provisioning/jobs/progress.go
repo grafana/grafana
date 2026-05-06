@@ -114,15 +114,31 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 		// A rename is a move operation; if it fails the child stays under the old folder.
 		if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
 			r.failedUpdates = append(r.failedUpdates, result.Path())
+			if result.Action() == repository.FileActionRenamed && result.PreviousPath() != "" {
+				r.failedUpdates = append(r.failedUpdates, result.PreviousPath())
+			}
 		}
 	} else if result.Warning() != nil {
 		// Track failed deletions/updates/renames with warnings — these still represent
 		// operations that did not fully succeed and may block parent folder removal.
-		if result.Action() == repository.FileActionDeleted {
-			r.failedDeletions = append(r.failedDeletions, result.Path())
-		}
-		if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
-			r.failedUpdates = append(r.failedUpdates, result.Path())
+		// Non-failing warnings (e.g. missing/invalid folder metadata) are excluded
+		// because the underlying resource operation succeeded.
+		if !isNonFailingWarning(result.Warning()) {
+			if result.Action() == repository.FileActionDeleted {
+				r.failedDeletions = append(r.failedDeletions, result.Path())
+			}
+			if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
+				r.failedUpdates = append(r.failedUpdates, result.Path())
+				if result.Action() == repository.FileActionRenamed && result.PreviousPath() != "" {
+					r.failedUpdates = append(r.failedUpdates, result.PreviousPath())
+				}
+			}
+
+			// Folder creation failures may be surfaced as warnings.
+			var pathErr *resources.PathCreationError
+			if errors.As(result.Warning(), &pathErr) {
+				r.failedCreations = append(r.failedCreations, pathErr.Path)
+			}
 		}
 
 		if reason := result.WarningReason(); reason != "" {

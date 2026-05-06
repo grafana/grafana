@@ -1,4 +1,4 @@
-import { PluginLoadingStrategy } from '@grafana/data';
+import { type PluginLoadingStrategy } from '@grafana/data';
 
 import { clearPluginSettingsCache } from '../pluginSettings';
 

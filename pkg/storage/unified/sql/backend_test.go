@@ -5,6 +5,8 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -124,6 +126,29 @@ func TestNewBackend(t *testing.T) {
 		require.NotNil(t, b)
 	})
 
+	t.Run("with TmpDir does not create directory eagerly", func(t *testing.T) {
+		t.Parallel()
+
+		tmpDir := t.TempDir() + "/not-yet-created"
+		dbp := test.NewDBProviderNopSQL(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, TmpDir: tmpDir})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+
+		// The directory should NOT have been created at construction time.
+		_, statErr := os.Stat(tmpDir)
+		require.True(t, os.IsNotExist(statErr), "TmpDir should not be created eagerly by NewBackend")
+	})
+
+	t.Run("with empty TmpDir", func(t *testing.T) {
+		t.Parallel()
+
+		dbp := test.NewDBProviderNopSQL(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, TmpDir: ""})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+	})
+
 	t.Run("no db provider", func(t *testing.T) {
 		t.Parallel()
 
@@ -131,6 +156,18 @@ func TestNewBackend(t *testing.T) {
 		require.Nil(t, b)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "no db provider")
+	})
+}
+
+func TestTmpDir(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns empty string for empty dataPath", func(t *testing.T) {
+		require.Equal(t, "", tmpDir(""))
+	})
+
+	t.Run("returns dataPath/tmp for non-empty dataPath", func(t *testing.T) {
+		require.Equal(t, filepath.Join("/var/lib/grafana", "tmp"), tmpDir("/var/lib/grafana"))
 	})
 }
 
@@ -954,38 +991,93 @@ func setupBackendTestStorageDisabled(t *testing.T) (testBackend, context.Context
 	}, ctx
 }
 
-func TestBackend_prunerHistoryLimit(t *testing.T) {
+func TestSqlPruneHistoryRequest_Validate(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
-		name     string
-		group    string
-		resource string
-		expected int64
+		name    string
+		req     sqlPruneHistoryRequest
+		wantErr string
 	}{
 		{
-			name:     "plugin resource returns custom limit",
-			group:    "plugins.grafana.app",
-			resource: "plugins",
-			expected: 3,
+			name: "valid namespaced key",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
 		},
 		{
-			name:     "dashboard resource returns default limit",
-			group:    "dashboard.grafana.app",
-			resource: "dashboards",
-			expected: defaultPrunerHistoryLimit,
+			name: "valid cluster-scoped key (no namespace)",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "",
+					Group:     "cluster.example.io",
+					Resource:  "clusterresources",
+					Name:      "my-cluster-resource",
+				},
+				HistoryLimit: 10,
+			},
 		},
 		{
-			name:     "other resource returns default limit",
-			group:    "some.app",
-			resource: "resources",
-			expected: defaultPrunerHistoryLimit,
+			name: "missing key",
+			req: sqlPruneHistoryRequest{
+				HistoryLimit: 10,
+			},
+			wantErr: "missing key",
+		},
+		{
+			name: "missing group",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+			wantErr: "missing group",
+		},
+		{
+			name: "missing resource",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+			wantErr: "missing resource",
+		},
+		{
+			name: "invalid history limit",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 0,
+			},
+			wantErr: "history limit must be greater than zero",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b, _ := setupBackendTest(t)
-			limit := b.prunerHistoryLimit(tc.group, tc.resource)
-			require.Equal(t, tc.expected, limit)
+			t.Parallel()
+			err := tc.req.Validate()
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }

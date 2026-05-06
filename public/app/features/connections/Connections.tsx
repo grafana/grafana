@@ -1,6 +1,6 @@
 import { Navigate, Routes, Route, useLocation } from 'react-router-dom-v5-compat';
 
-import { StoreState, useSelector } from 'app/types/store';
+import { type StoreState, useSelector } from 'app/types/store';
 
 import { isOpenSourceBuildOrUnlicenced } from '../admin/EnterpriseAuthFeaturesCard';
 

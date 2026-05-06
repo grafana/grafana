@@ -1,14 +1,22 @@
 import { css } from '@emotion/css';
-import { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { useMeasure } from 'react-use';
 
 import { PIXELS_PER_LEVEL } from '../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, SelectedView, ViewMode, TextAlign } from '../types';
+import {
+  type ClickedItemData,
+  type ColorScheme,
+  type ColorSchemeDiff,
+  type PaneView,
+  type SelectedView,
+  type ViewMode,
+  type TextAlign,
+} from '../types';
 
-import FlameGraphContextMenu, { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
+import FlameGraphContextMenu, { type GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphTooltip from './FlameGraphTooltip';
-import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
 import { getBarX, useFlameRender } from './rendering';
 
 type Props = {

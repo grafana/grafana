@@ -3,11 +3,11 @@ import { SimpleLinearRegression } from 'ml-regression-simple-linear';
 import { map } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
   FieldMatcherID,
   FieldType,
-  SynchronousDataTransformerInfo,
+  type SynchronousDataTransformerInfo,
   fieldMatchers,
   getFieldDisplayName,
 } from '@grafana/data';

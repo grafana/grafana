@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { FormEventHandler, KeyboardEventHandler, ReactNode } from 'react';
+import { type FormEventHandler, type KeyboardEventHandler, type ReactNode } from 'react';
 
-import { DocsId, GrafanaTheme2, LocalStorageValueProvider, TransformerRegistryItem } from '@grafana/data';
+import { DocsId, type GrafanaTheme2, LocalStorageValueProvider, type TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Card, Container, Input, Stack, useStyles2 } from '@grafana/ui';

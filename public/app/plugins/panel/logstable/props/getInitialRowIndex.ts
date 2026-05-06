@@ -1,4 +1,4 @@
-import { LogsFrame } from 'app/features/logs/logsFrame';
+import { type LogsFrame } from 'app/features/logs/logsFrame';
 
 export const getInitialRowIndex = (permalinkedLogId: string | undefined, logsFrame: LogsFrame | null) => {
   if (!permalinkedLogId || !logsFrame) {

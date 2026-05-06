@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 
-import { DataFrame, TimeRange } from '@grafana/data';
+import { type DataFrame, type TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
-import { hasVisibleLegendSeries, PlotLegend, UPlotConfigBuilder } from '@grafana/ui/internal';
-import { TimeSeriesLegendOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
+import { hasVisibleLegendSeries, PlotLegend, type UPlotConfigBuilder } from '@grafana/ui/internal';
+import { type TimeSeriesLegendOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 
-import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
+import { GraphNG, type GraphNGProps, type PropDiffFn } from '../GraphNG/GraphNG';
 
 import { getXAxisConfig, preparePlotConfigBuilder } from './utils';
 

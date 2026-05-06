@@ -1,4 +1,4 @@
-import { test, expect, E2ESelectorGroups, DashboardPage } from '@grafana/plugin-e2e';
+import { test, expect, type E2ESelectorGroups, type DashboardPage } from '@grafana/plugin-e2e';
 
 import { switchToAutoGrid, importTestDashboard } from './utils';
 

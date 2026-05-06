@@ -7,7 +7,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { PublicDashboardListResponse, PublicDashboardListWithPaginationResponse } from '../../types';
+import { type PublicDashboardListResponse, type PublicDashboardListWithPaginationResponse } from '../../types';
 
 import { PublicDashboardListTable } from './PublicDashboardListTable';
 

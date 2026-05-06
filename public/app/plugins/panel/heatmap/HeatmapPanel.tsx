@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { useMemo, useRef, useState } from 'react';
 
-import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
+import { DashboardCursorSync, type PanelProps, type TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { ScaleDistributionConfig } from '@grafana/schema';
+import { type ScaleDistributionConfig } from '@grafana/schema';
 import {
   EventBusPlugin,
   TooltipDisplayMode,
@@ -15,7 +15,7 @@ import {
   VizLayout,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { FacetedData, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type FacetedData, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
@@ -25,9 +25,9 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { HeatmapTooltip } from './HeatmapTooltip';
-import { HeatmapData, prepareHeatmapData } from './fields';
+import { type HeatmapData, prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { calculateYSizeDivisor, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
@@ -261,7 +261,7 @@ const HeatmapPanelViz = ({
             <AnnotationsPlugin
               replaceVariables={replaceVariables}
               options={options.annotations}
-              annotations={data.annotations ?? []}
+              annotations={data.annotations}
               config={builder}
               timeZone={timeZone}
               newRange={newAnnotationRange}

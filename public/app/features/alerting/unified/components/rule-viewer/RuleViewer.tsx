@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
-import { GrafanaTheme2, NavModelItem, UrlQueryValue } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem, type UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -18,19 +18,19 @@ import {
   useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
-import { PageInfoItem } from 'app/core/components/Page/types';
+import { type PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import {
   AlertInstanceTotalState,
-  AlertInstanceTotals,
-  CombinedRule,
-  RuleGroupIdentifierV2,
-  RuleHealth,
-  RuleIdentifier,
+  type AlertInstanceTotals,
+  type CombinedRule,
+  type RuleGroupIdentifierV2,
+  type RuleHealth,
+  type RuleIdentifier,
 } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import { type PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
@@ -38,6 +38,8 @@ import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
+import { useEnrichmentUrlParams } from '../../hooks/useEnrichmentUrlParams';
+import { useHasInhibitedInstances } from '../../hooks/useHasInhibitedInstances';
 import { useHasRulerV2 } from '../../hooks/useHasRuler';
 import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { useReturnTo } from '../../hooks/useReturnTo';
@@ -45,17 +47,12 @@ import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { normalizeHealth, normalizeState } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
-import {
-  GRAFANA_RULES_SOURCE_NAME,
-  getRulesSourceUid,
-  isGrafanaRulesSource,
-  ruleIdentifierToRuleSourceIdentifier,
-} from '../../utils/datasource';
+import { getRulesSourceUid, ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink, groups } from '../../utils/navigation';
 import {
-  RulePluginOrigin,
+  type RulePluginOrigin,
   getRulePluginOrigin,
   isFederatedRuleGroup,
   isGrafanaRuleIdentifier,
@@ -64,8 +61,7 @@ import {
   rulerRuleType,
 } from '../../utils/rules';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
-import { InhibitionRulesAlert } from '../InhibitionRulesAlert';
-import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
+import { ProvisioningBadge } from '../Provisioning';
 import { WithReturnButton } from '../WithReturnButton';
 import { decodeGrafanaNamespace } from '../expressions/util';
 import { RedirectToCloneRule } from '../rules/CloneRule';
@@ -74,6 +70,7 @@ import { ContactPointLink } from './ContactPointLink';
 import { Details } from './Details';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import { useAlertRule } from './RuleContext';
+import { ActiveTab } from './activeTab';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
@@ -81,16 +78,6 @@ import { Notifications } from './tabs/Notifications';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 import { RulePageEnrichmentSectionExtension } from './tabs/extensions/RuleViewerExtension';
-
-export enum ActiveTab {
-  Query = 'query',
-  Instances = 'instances',
-  History = 'history',
-  Notifications = 'notifications',
-  Routing = 'routing',
-  VersionHistory = 'version-history',
-  Enrichment = 'enrichment',
-}
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
@@ -110,13 +97,19 @@ const RuleViewer = () => {
   // of duplicating provisioned alert rules
   const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
   const { returnTo } = useReturnTo('/alerting/list');
-  const { annotations, promRule, rulerRule, namespace } = rule;
+  const { annotations, promRule, rulerRule } = rule;
 
   const hasError = isErrorHealth(promRule?.health);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = rulerRuleType.grafana.rule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
   const isPaused = rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule);
+
+  // Only check for inhibited instances on Grafana-managed alerting rules
+  const grafanaAlertingRuleUid = rulerRuleType.grafana.alertingRule(rulerRule)
+    ? rulerRule.grafana_alert.uid
+    : undefined;
+  const { hasInhibitedInstances } = useHasInhibitedInstances(grafanaAlertingRuleUid);
 
   const showError = hasError && !isPaused;
   const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
@@ -132,7 +125,10 @@ const RuleViewer = () => {
         <Title
           name={title}
           paused={isPaused}
+          isProvisioned={isProvisioned}
+          provenance={rulerRuleType.grafana.rule(rulerRule) ? rulerRule.grafana_alert.provenance : undefined}
           state={prometheusRuleType.alertingRule(promRule) ? promRule.state : undefined}
+          isInhibited={hasInhibitedInstances}
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
@@ -147,10 +143,6 @@ const RuleViewer = () => {
           {/* alerts and notifications and stuff */}
           {isPaused && <InfoPausedRule />}
           {isFederatedRule && <FederatedRuleWarning />}
-          {/* indicator for rules in a provisioned group */}
-          {isProvisioned && (
-            <ProvisioningAlert resource={ProvisionedResource.AlertRule} bottomSpacing={0} topSpacing={2} />
-          )}
           {/* error state */}
           {showError && (
             <Alert
@@ -170,12 +162,8 @@ const RuleViewer = () => {
       }
     >
       {shouldUseConsistencyCheck && <PrometheusConsistencyCheck ruleIdentifier={identifier} />}
-      {/* Show inhibition rules alert only for Grafana-managed rules */}
-      {isGrafanaRulesSource(namespace.rulesSource) && (
-        <InhibitionRulesAlert alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME} />
-      )}
       <div className={styles.layout}>
-        <Stack direction="column" gap={2}>
+        <Stack direction="column" gap={2} minWidth={0}>
           {/* tabs and tab content */}
           <TabContent>
             {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
@@ -315,21 +303,35 @@ const createMetadata = (rule: CombinedRule, styles: ReturnType<typeof getStyles>
 interface TitleProps {
   name: string;
   paused?: boolean;
+  isProvisioned?: boolean;
+  provenance?: string;
   // recording rules don't have a state
   state?: PromAlertingRuleState;
+  isInhibited?: boolean;
   health?: RuleHealth;
   ruleType?: PromRuleType;
   ruleOrigin?: RulePluginOrigin;
   returnToHref?: string;
 }
 
-export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin, returnToHref = '' }: TitleProps) => {
+export const Title = ({
+  name,
+  paused = false,
+  isProvisioned,
+  provenance,
+  state,
+  isInhibited,
+  health,
+  ruleType,
+  ruleOrigin,
+  returnToHref = '',
+}: TitleProps) => {
   const isRecordingRule = ruleType === PromRuleType.Recording;
 
   const { returnTo } = useReturnTo(returnToHref);
 
   const textHealth = normalizeHealth(health);
-  const textState = normalizeState(state);
+  const textState = isInhibited ? 'inhibited' : normalizeState(state);
 
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
@@ -345,6 +347,7 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
       <Text variant="h1" truncate>
         {name}
       </Text>
+      {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}
       {/* recording rules won't have a state */}
       {state && <StateText type="alerting" state={textState} health={textHealth} isPaused={paused} />}
       {isRecordingRule && <StateText type="recording" health={textHealth} isPaused={paused} />}
@@ -441,6 +444,7 @@ function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
 
 function usePageNav(rule: CombinedRule) {
   const [activeTab, setActiveTab] = useActiveTab();
+  useEnrichmentUrlParams({ activeTab, setActiveTab });
 
   const { annotations, promRule, rulerRule } = rule;
 

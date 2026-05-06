@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { fromPairs } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsyncFn, useMount, useMountedState } from 'react-use';
-import { AsyncState } from 'react-use/lib/useAsyncFn';
+import { type AsyncState } from 'react-use/lib/useAsyncFn';
 
-import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import {
   ButtonCascader,
-  CascaderOption,
+  type CascaderOption,
   FileDropzone,
   InlineField,
   InlineFieldRow,
@@ -21,8 +21,8 @@ import {
   Button,
 } from '@grafana/ui';
 
-import { ZipkinDatasource } from './datasource';
-import { ZipkinQuery, ZipkinQueryType, ZipkinSpan } from './types';
+import { type ZipkinDatasource } from './datasource';
+import { type ZipkinQuery, type ZipkinQueryType, type ZipkinSpan } from './types';
 
 type Props = QueryEditorProps<ZipkinDatasource, ZipkinQuery>;
 

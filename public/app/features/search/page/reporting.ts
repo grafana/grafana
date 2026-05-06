@@ -1,7 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
-import { InspectTab } from 'app/features/inspector/types';
+import { type InspectTab } from 'app/features/inspector/types';
 
-import { EventTrackingNamespace, SearchLayout } from '../types';
+import { type EventTrackingNamespace, type SearchLayout } from '../types';
 
 interface QueryProps {
   layout: SearchLayout;
@@ -9,6 +9,7 @@ interface QueryProps {
   sortValue?: string;
   query: string;
   tagCount: number;
+  ownerReference?: boolean;
   includePanels?: boolean;
   deleted: boolean;
   createdBy?: boolean;
@@ -47,6 +48,7 @@ const getQuerySearchContext = (query: QueryProps) => {
     starredFilter: query.starred ?? false,
     sort: query.sortValue ?? '',
     tagCount: query.tagCount ?? 0,
+    ownerReference: query.ownerReference ?? false,
     queryLength: query.query?.length ?? 0,
     includePanels: query.includePanels ?? false,
     deleted: query.deleted ?? false,

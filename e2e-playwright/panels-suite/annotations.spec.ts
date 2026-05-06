@@ -1,6 +1,6 @@
-import { Locator } from 'playwright';
+import { type Locator } from 'playwright';
 
-import { DashboardPage, E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = 'ad7p5pj';
 

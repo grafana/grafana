@@ -34,6 +34,11 @@ jest.mock('app/features/dashboard/utils/dashboard', () => ({
   getCopiedPanelPlugin: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useListedPanelPluginMetas: jest.fn().mockResolvedValue({ loading: false, value: [] }),
+}));
+
 function setup() {
   const props = {
     dashboard: createDashboardModelFixture(defaultDashboard),

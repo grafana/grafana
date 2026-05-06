@@ -7,9 +7,9 @@ import {
   colorManipulator,
   FieldColorModeId,
   fieldColorModeRegistry,
-  GrafanaTheme2,
-  ThemeRichColor,
-  ThemeVizHue,
+  type GrafanaTheme2,
+  type ThemeRichColor,
+  type ThemeVizHue,
 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -23,11 +23,11 @@ import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
-import { BackgroundColor, BorderColor, Box, BoxShadow } from '../Layout/Box/Box';
+import { type BackgroundColor, type BorderColor, Box, type BoxShadow } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Switch } from '../Switch/Switch';
-import { Text, TextProps } from '../Text/Text';
+import { Text, type TextProps } from '../Text/Text';
 
 interface DemoBoxProps {
   bg?: BackgroundColor;
@@ -95,6 +95,7 @@ export const ThemeDemo = () => {
   const richColors = [
     t.colors.primary,
     t.colors.secondary,
+    t.colors.tertiary,
     t.colors.success,
     t.colors.error,
     t.colors.warning,

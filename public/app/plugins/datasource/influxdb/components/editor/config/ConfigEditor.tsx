@@ -2,16 +2,16 @@ import { uniqueId } from 'lodash';
 import { PureComponent } from 'react';
 
 import {
-  DataSourcePluginOptionsEditorProps,
-  DataSourceSettings,
-  SelectableValue,
+  type DataSourcePluginOptionsEditorProps,
+  type DataSourceSettings,
+  type SelectableValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet } from '@grafana/ui';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
-import { InfluxOptions, InfluxOptionsV1, InfluxVersion } from '../../../types';
+import { type InfluxOptions, type InfluxOptionsV1, InfluxVersion } from '../../../types';
 
 import { InfluxFluxConfig } from './InfluxFluxConfig';
 import { InfluxInfluxQLConfig } from './InfluxInfluxQLConfig';

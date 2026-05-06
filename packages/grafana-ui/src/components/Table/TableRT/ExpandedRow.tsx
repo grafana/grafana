@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
 import * as React from 'react';
 
-import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
-import { TableCellHeight } from '@grafana/schema';
+import { type DataFrame, type Field, type GrafanaTheme2 } from '@grafana/data';
+import { type TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { EXPANDER_WIDTH } from '../utils';
 
 import { Table } from './Table';
-import { TableStyles } from './styles';
+import { type TableStyles } from './styles';
 
 export interface Props {
   nestedData: Field;

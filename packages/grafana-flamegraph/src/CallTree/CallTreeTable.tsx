@@ -1,11 +1,18 @@
 import { css, cx } from '@emotion/css';
 import { useEffect } from 'react';
-import { Row, HeaderGroup, TablePropGetter, TableBodyPropGetter, TableProps, TableBodyProps } from 'react-table';
+import {
+  type Row,
+  type HeaderGroup,
+  type TablePropGetter,
+  type TableBodyPropGetter,
+  type TableProps,
+  type TableBodyProps,
+} from 'react-table';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { CallTreeNode } from './utils';
+import { type CallTreeNode } from './utils';
 
 type CallTreeTableProps = {
   width: number;

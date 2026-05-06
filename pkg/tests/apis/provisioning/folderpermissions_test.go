@@ -4,15 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -20,13 +16,11 @@ import (
 
 // We currently block permission updates for folders managed by provisioning.
 func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	repoName := "nested-folder-repo"
-	helper := common.RunGrafana(t)
-	helper.CreateRepo(t, common.TestRepo{
+	helper := sharedHelper(t)
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repoName,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 		Copies: map[string]string{
 			"testdata/all-panels.json": "folder/subfolder/dashboard.json",
@@ -72,66 +66,12 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 	})
 }
 
-// TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag verifies that permission updates
-// succeed for provisioned folders when the provisioningFolderMetadata feature flag is enabled.
-func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	repoName := "nested-folder-repo-flag"
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
-	helper.CreateRepo(t, common.TestRepo{
-		Name:            repoName,
-		Target:          "folder",
-		ExpectedFolders: 1,
-		Copies: map[string]string{
-			"testdata/all-panels.json": "folder/subfolder/dashboard.json",
-		},
-		SkipResourceAssertions: true,
-	})
-	t.Run("should succeed updating permissions for provisioned nested folder when flag is enabled", func(t *testing.T) {
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.GreaterOrEqual(t, len(folders.Items), 2, "should have 2 folders (root and nested)")
-
-		// Find all folders managed by provisioning
-		var provisionedFolders []*unstructured.Unstructured
-		for i := range folders.Items {
-			annotations := folders.Items[i].GetAnnotations()
-			if _, hasManagerKind := annotations[utils.AnnoKeyManagerKind]; hasManagerKind {
-				if _, hasManagerIdentity := annotations[utils.AnnoKeyManagerIdentity]; hasManagerIdentity {
-					provisionedFolders = append(provisionedFolders, &folders.Items[i])
-				}
-			}
-		}
-		require.Greater(t, len(provisionedFolders), 0, "should have at least one provisioned folder")
-
-		permissionsPayload := map[string]interface{}{
-			"items": []map[string]interface{}{
-				{
-					"role":       "Viewer",
-					"permission": 1, // View permission
-				},
-			},
-		}
-
-		// Test that permission updates succeed for all provisioned folders when the flag is enabled
-		for _, folder := range provisionedFolders {
-			folderName := folder.GetName()
-			permissionsURL := fmt.Sprintf("/api/folders/%s/permissions", folderName)
-			permissionsData, code, err := common.PostHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
-			require.NoError(t, err, "should succeed updating permissions for folder %s", folderName)
-			require.Equal(t, http.StatusOK, code, "should return OK status for folder %s", folderName)
-			require.NotNil(t, permissionsData, "should have response data for folder %s", folderName)
-		}
-	})
-}
-
 func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 	const repo = "test-repo"
-	helper := common.RunGrafana(t)
-	helper.CreateRepo(t, common.TestRepo{
+	helper := sharedHelper(t)
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repo,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
@@ -153,20 +93,8 @@ func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 		require.NoError(t, err, "should successfully patch finalizers")
 
 		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
-			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*10, time.Millisecond*50, "repository should be deleted")
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			foundFolders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-			require.NoError(t, err, "can list values")
-			for _, v := range foundFolders.Items {
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
-			}
-		}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
+		helper.WaitForRepositoryDeleted(t, t.Context(), repo)
+		common.WaitForResourcesReleased(t, t.Context(), helper.Folders.Resource, "folders")
 
 		permissionsPayload := map[string]interface{}{
 			"items": []map[string]interface{}{

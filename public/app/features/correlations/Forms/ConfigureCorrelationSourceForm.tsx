@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Card, Field, FieldSet, Input, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -11,7 +11,7 @@ import { getVariableUsageInfo } from '../../explore/utils/links';
 
 import { TransformationsEditor } from './TransformationsEditor';
 import { useCorrelationsFormContext } from './correlationsFormContext';
-import { FormDTO } from './types';
+import { type FormDTO } from './types';
 import { getInputId } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({

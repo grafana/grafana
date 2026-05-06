@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -58,7 +57,6 @@ type K8sClientWithFallback struct {
 func ProvideK8sClientWithFallback(
 	cfg *setting.Cfg,
 	restConfigProvider apiserver.RestConfigProvider,
-	dashboardStore dashboards.Store,
 	userService user.Service,
 	resourceClient resource.ResourceClient,
 	featureToggles featuremgmt.FeatureToggles,
@@ -67,7 +65,7 @@ func ProvideK8sClientWithFallback(
 	reg prometheus.Registerer,
 ) K8sHandlerWithFallback {
 	return NewK8sClientWithFallback(
-		cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dualWriter, reg, featureToggles,
+		cfg, restConfigProvider, userService, resourceClient, sorter, dualWriter, reg, featureToggles,
 	)
 }
 
@@ -75,7 +73,6 @@ func ProvideK8sClientWithFallback(
 func NewK8sClientWithFallback(
 	cfg *setting.Cfg,
 	restConfigProvider apiserver.RestConfigProvider,
-	dashboardStore dashboards.Store,
 	userService user.Service,
 	resourceClient resource.ResourceClient,
 	sorter sort.Service,
@@ -83,7 +80,7 @@ func NewK8sClientWithFallback(
 	reg prometheus.Registerer,
 	features featuremgmt.FeatureToggles,
 ) *K8sClientWithFallback {
-	newClientFunc := newK8sClientFactory(cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual, features)
+	newClientFunc := newK8sClientFactory(cfg, restConfigProvider, userService, resourceClient, sorter, dual, features)
 	return &K8sClientWithFallback{
 		K8sHandler:    newClientFunc(context.Background(), dashboardv0.VERSION),
 		newClientFunc: newClientFunc,
@@ -347,7 +344,6 @@ func getConversionStatus(obj *unstructured.Unstructured) (failed bool, storedVer
 func newK8sClientFactory(
 	cfg *setting.Cfg,
 	restConfigProvider apiserver.RestConfigProvider,
-	dashboardStore dashboards.Store,
 	userService user.Service,
 	resourceClient resource.ResourceClient,
 	sorter sort.Service,
@@ -390,7 +386,7 @@ func newK8sClientFactory(
 		}
 
 		span.AddEvent("Creating new client")
-		newClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), gvr, restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient, sorter, features)
+		newClient := client.NewK8sHandler(request.GetNamespaceMapper(cfg), gvr, restConfigProvider.GetRestConfig, userService, resourceClient)
 		clientCache[version] = newClient
 
 		return newClient

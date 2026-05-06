@@ -1,10 +1,10 @@
 import { t } from '@grafana/i18n';
 import { sceneUtils } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { DashboardWithAccessInfo } from '../../dashboard/api/types';
+import { type DashboardWithAccessInfo } from '../../dashboard/api/types';
 import { getK8sV2DashboardApiConfig } from '../../dashboard/api/v2';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 

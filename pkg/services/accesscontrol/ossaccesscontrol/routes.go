@@ -20,6 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type ResourcePermission = string
+
+const (
+	PermissionView  ResourcePermission = "View"
+	PermissionEdit  ResourcePermission = "Edit"
+	PermissionAdmin ResourcePermission = "Admin"
+)
+
 var RoutesViewActions = []string{accesscontrol.ActionAlertingManagedRoutesRead}
 var RoutesEditActions = append(RoutesViewActions, []string{
 	accesscontrol.ActionAlertingManagedRoutesWrite,
@@ -33,8 +41,8 @@ var RoutesAdminActions = append(RoutesEditActions, []string{
 // routeDefaultPermissions returns the default permissions for a newly created route.
 func routeDefaultPermissions() []accesscontrol.SetResourcePermissionCommand {
 	return []accesscontrol.SetResourcePermissionCommand{
-		{BuiltinRole: string(org.RoleEditor), Permission: string(models.PermissionEdit)},
-		{BuiltinRole: string(org.RoleViewer), Permission: string(models.PermissionView)},
+		{BuiltinRole: string(org.RoleEditor), Permission: PermissionEdit},
+		{BuiltinRole: string(org.RoleViewer), Permission: PermissionView},
 	}
 }
 
@@ -44,11 +52,13 @@ func ProvideRoutePermissionsService(
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*RoutePermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:          "routes",
+		APIGroup:          accesscontrol.AlertingNotificationsApiGroup,
+		Resource:          accesscontrol.AlertingRoutesResource,
 		ResourceAttribute: "uid",
 		ResourceTranslator: func(ctx context.Context, orgID int64, resourceID string) (string, error) {
 			return resourceID, nil
 		},
+		K8sActionFormat: true,
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,
 			Teams:           true,
@@ -56,9 +66,9 @@ func ProvideRoutePermissionsService(
 			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
-			string(models.PermissionView):  append([]string{}, RoutesViewActions...),
-			string(models.PermissionEdit):  append([]string{}, RoutesEditActions...),
-			string(models.PermissionAdmin): append([]string{}, RoutesAdminActions...),
+			PermissionView:  append([]string{}, RoutesViewActions...),
+			PermissionEdit:  append([]string{}, RoutesEditActions...),
+			PermissionAdmin: append([]string{}, RoutesAdminActions...),
 		},
 		ReaderRoleName: "Alerting route permission reader",
 		WriterRoleName: "Alerting route permission writer",
@@ -69,7 +79,7 @@ func ProvideRoutePermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	return &RoutePermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.routes")}, nil
+	return &RoutePermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions." + accesscontrol.AlertingRoutesResource)}, nil
 }
 
 var _ accesscontrol.RoutePermissionsService = new(RoutePermissionsService)
@@ -92,7 +102,7 @@ func (r RoutePermissionsService) SetDefaultPermissions(ctx context.Context, orgI
 			r.log.Error("Could not make user admin", "route_name", name, "id", user.GetID(), "error", err)
 		} else {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: userID, Permission: string(models.PermissionAdmin),
+				UserID: userID, Permission: PermissionAdmin,
 			})
 			clearCache = true
 		}
@@ -104,8 +114,4 @@ func (r RoutePermissionsService) SetDefaultPermissions(ctx context.Context, orgI
 		r.ac.ClearUserPermissionCache(user)
 	}
 	return nil
-}
-
-func (r RoutePermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, name string) error {
-	return r.Service.DeleteResourcePermissions(ctx, orgID, name)
 }

@@ -3,7 +3,7 @@ import { resolve } from 'path';
 
 import {
   transformationDocsContent,
-  TransformationDocsContentType,
+  type TransformationDocsContentType,
   ImageRenderType,
 } from '../../public/app/features/transformers/docs/content';
 

@@ -17,8 +17,7 @@ type DashboardAccess struct {
 }
 
 type AnnotationPermission struct {
-	Dashboard    AnnotationActions `json:"dashboard"`
-	Organization AnnotationActions `json:"organization"`
+	Dashboard AnnotationActions `json:"dashboard"`
 }
 
 type AnnotationActions struct {

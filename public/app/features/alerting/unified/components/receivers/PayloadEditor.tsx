@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, CodeEditor, Dropdown, Menu, Stack, Toggletip, useStyles2 } from '@grafana/ui';
-import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { EditorColumnHeader } from '../EditorColumnHeader';
 
@@ -124,7 +124,7 @@ export function PayloadEditor({
 
         <div className={styles.editorWrapper}>
           <AutoSizer>
-            {({ width, height }) => (
+            {({ width, height }: Size) => (
               <CodeEditor
                 containerStyles={styles.editorContainer}
                 width={width}

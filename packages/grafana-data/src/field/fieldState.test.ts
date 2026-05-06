@@ -1,5 +1,10 @@
 import { toDataFrame } from '../dataframe/processDataFrame';
-import { DataFrame, TIME_SERIES_TIME_FIELD_NAME, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
+import {
+  type DataFrame,
+  TIME_SERIES_TIME_FIELD_NAME,
+  FieldType,
+  TIME_SERIES_VALUE_FIELD_NAME,
+} from '../types/dataFrame';
 
 import { decoupleHideFromState, getFieldDisplayName, getFrameDisplayName } from './fieldState';
 

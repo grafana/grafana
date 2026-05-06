@@ -36,7 +36,7 @@ describe('v0alpha1AppMapper', () => {
     it('should map angular property correctly', () => {
       const result = v0alpha1AppMapper(v0alpha1Response);
 
-      expect(result[pluginId].angular).toEqual({});
+      expect(result[pluginId].angular).toEqual({ detected: false });
     });
 
     it('should map loadingStrategy property correctly', () => {
@@ -77,7 +77,7 @@ describe('v0alpha1AppMapper', () => {
   it('should only map specs with type app', () => {
     const result = v0alpha1AppMapper(v0alpha1Response);
 
-    expect(v0alpha1Response.items).toHaveLength(53);
+    expect(v0alpha1Response.items).toHaveLength(54);
     expect(Object.keys(result)).toHaveLength(4);
     expect(Object.keys(result)).toEqual(Object.keys(apps));
   });

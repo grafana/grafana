@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -75,7 +76,7 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 				}
 			}
 
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][folder.ActionFoldersRead] = []string{folder.ScopeFoldersAll}
 
 			// by uid
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
@@ -101,8 +102,8 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 			b, err := json.Marshal(map[string]string{"test": "test"})
 			require.NoError(t, err)
 			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][folder.ActionFoldersRead] = []string{folder.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][folder.ActionFoldersDelete] = []string{folder.ScopeFoldersAll}
 			result, err := sc.service.CreateElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
@@ -129,72 +130,6 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-	scenarioWithPanel(t, "When an admin tries to get a connected library panel, it should succeed and return correct connected dashboards",
-		func(t *testing.T, sc scenarioContext) {
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 1)
-			require.NoError(t, err)
-
-			expected := func(res libraryElementResult) libraryElementResult {
-				return libraryElementResult{
-					Result: libraryElement{
-						ID:          1,
-						OrgID:       1,
-						FolderID:    1, // nolint:staticcheck
-						FolderUID:   sc.folder.UID,
-						UID:         res.Result.UID,
-						Name:        "Text - Library Panel",
-						Kind:        int64(model.PanelElement),
-						Type:        "text",
-						Description: "A description",
-						Model: map[string]any{
-							"datasource":  "${DS_GDEV-TESTDATA}",
-							"description": "A description",
-							"id":          float64(1),
-							"title":       "Text - Library Panel",
-							"type":        "text",
-						},
-						Version: 1,
-						Meta: model.LibraryElementDTOMeta{
-							FolderName:          sc.folder.Title,
-							FolderUID:           sc.folder.UID,
-							ConnectedDashboards: 1,
-							Created:             res.Result.Meta.Created,
-							Updated:             res.Result.Meta.Updated,
-							CreatedBy: model.LibraryElementDTOMetaUser{
-								Id:        1,
-								Name:      userInDbName,
-								AvatarUrl: userInDbAvatar,
-							},
-							UpdatedBy: model.LibraryElementDTOMetaUser{
-								Id:        1,
-								Name:      userInDbName,
-								AvatarUrl: userInDbAvatar,
-							},
-						},
-					},
-				}
-			}
-
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
-
-			// by uid
-			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.getHandler(sc.reqContext)
-			result := validateAndUnMarshalResponse(t, resp)
-
-			if diff := cmp.Diff(expected(result), result, getCompareOptions()...); diff != "" {
-				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-			}
-
-			// by name
-			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
-			resp = sc.service.getByNameHandler(sc.reqContext)
-			arrayResult := validateAndUnMarshalArrayResponse(t, resp)
-			if diff := cmp.Diff(libraryElementArrayResult{Result: []libraryElement{expected(result).Result}}, arrayResult, getCompareOptions()...); diff != "" {
-				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-			}
-		})
-
 	scenarioWithPanel(t, "When an admin tries to get a library panel that exists in an other org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.OrgID = 2
@@ -209,5 +144,24 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
 			resp = sc.service.getByNameHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
+		})
+
+	scenarioWithPanel(t, "When a library panel has connected dashboards, connectedDashboards should reflect the count",
+		func(t *testing.T, sc scenarioContext) {
+			sc.defaultGetDashByLP.Unset()
+			sc.dashboardSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Return([]*dashboards.DashboardRef{
+				{UID: "dash-1", ID: 10},
+				{UID: "dash-2", ID: 20},
+			}, nil)
+
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			resp := sc.service.getHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementResult
+			err := json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, int64(2), result.Result.Meta.ConnectedDashboards,
+				"connectedDashboards should match the number of dashboards returned by unified search")
 		})
 }

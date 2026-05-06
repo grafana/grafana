@@ -9,7 +9,7 @@
       "button-add-resource": "添加资源",
       "button-add-resource-uri": "添加资源 URI",
       "label-namespace": "命名空间",
-      "label-region": "地区",
+      "label-region": "区域",
       "label-resource-group": "资源组",
       "label-resource-name": "资源名称",
       "label-resource-number": "资源 {{resourceNum}}",
@@ -34,22 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
-      "aria-label-client-certificate": "",
+      "aria-label-client-certificate": "客户端证书",
       "aria-label-client-id": "客户端 ID",
       "aria-label-client-secret": "客户端密码",
-      "aria-label-private-key": "",
-      "aria-label-private-key-password": "",
+      "aria-label-private-key": "私钥",
+      "aria-label-private-key-password": "证书密码",
       "aria-label-symbol-client-secret": "客户端密码",
       "aria-label-tenant-id": "租户 ID",
-      "description-certificate-format": "",
+      "description-certificate-format": "选择证书格式（PEM 证书应采用纯文本 PEM 格式，PFX 证书应采用 Base64 编码的 PFX 格式）",
       "label-azure-cloud": "Azure Cloud",
-      "label-certificate-format": "",
-      "label-client-certificate": "",
+      "label-certificate-format": "格式",
+      "label-client-certificate": "客户端证书",
       "label-client-id": "应用程序（客户端）ID",
       "label-client-secret": "客户端密码",
-      "label-private-key": "",
+      "label-private-key": "私钥",
       "label-symbol-client-secret": "客户端密码",
-      "label-symbol-private-key-password": "",
+      "label-symbol-private-key-password": "证书密码",
       "label-tenant-id": "目录（租户）ID",
       "placeholder-symbol-client-secret": "已配置",
       "reset-symbol-client-secret": "重置"
@@ -71,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "选择 Azure 服务的身份验证类型",
-      "label-authentication": "",
+      "label-authentication": "身份验证类型",
       "title-authentication": "身份验证"
     },
     "basic-logs-toggle": {
@@ -239,7 +239,7 @@
       "button-cancel": "取消",
       "header-location": "位置",
       "header-resource-group": "资源组",
-      "header-scope": "范围",
+      "header-scope": "作用域",
       "header-type": "类型",
       "heading-selection": "选择",
       "locations-filter": "位置",
@@ -256,7 +256,7 @@
       "types-filter-placeholder": "选择资源类型"
     },
     "scope-selector": {
-      "label": "范围"
+      "label": "作用域"
     },
     "search": {
       "aria-label-resource-search": "资源搜索",
@@ -285,7 +285,7 @@
       "tooltip-time-range": "<0>指定用于查询的时间范围。<1>查询</1>选项将只使用查询中指定的时间范围。<3>数据面板</3>只使用 Grafana 时间范围。</0>。"
     },
     "top-field": {
-      "label-top": "热门"
+      "label-top": "顶部"
     },
     "trace-type-field": {
       "label-event-type": "活动类型",
@@ -313,7 +313,7 @@
       "label-custom-namespace": "自定义命名空间",
       "label-namespace": "命名空间",
       "label-query-type": "查询类型",
-      "label-region": "地区",
+      "label-region": "区域",
       "label-resource": "资源",
       "label-resource-group": "资源组",
       "label-resource-type": "资源类型",

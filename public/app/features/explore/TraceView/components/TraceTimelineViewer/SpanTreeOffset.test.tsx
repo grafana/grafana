@@ -17,10 +17,10 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 
-import { TraceSpan } from '../types/trace';
+import { type TraceSpan } from '../types/trace';
 import spanAncestorIdsSpy from '../utils/span-ancestor-ids';
 
-import SpanTreeOffset, { getStyles, TProps } from './SpanTreeOffset';
+import SpanTreeOffset, { getStyles, type TProps } from './SpanTreeOffset';
 
 jest.mock('../utils/span-ancestor-ids');
 

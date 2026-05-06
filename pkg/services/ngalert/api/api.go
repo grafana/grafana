@@ -67,7 +67,7 @@ type API struct {
 	DataProxy             *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager  *notifier.MultiOrgAlertmanager
 	StateManager          state.AlertInstanceManager
-	RuleStatusReader      apiprometheus.StatusReader
+	RuleMutator           apiprometheus.RuleMutator
 	AccessControl         ac.AccessControl
 	ReceiverService       *notifier.ReceiverService
 	ReceiverTestService   *notifier.ReceiverTestingService
@@ -109,37 +109,32 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.AlertRules,
 		api.FeatureManager,
 		api.MultiOrgAlertmanager,
+		accesscontrol.NewAlertmanagerImportsAccess(api.AccessControl),
 	)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
-	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
-		api.DatasourceCache,
-		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{
-			crypto:         api.MultiOrgAlertmanager.Crypto,
-			log:            logger,
-			ac:             api.AccessControl,
-			mam:            api.MultiOrgAlertmanager,
-			featureManager: api.FeatureManager,
-			silenceSvc: notifier.NewSilenceService(
-				accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
-				api.TransactionManager,
-				logger,
-				api.MultiOrgAlertmanager,
-				api.RuleStore,
-				ruleAuthzService,
-				api.SilenceLimitsProvider,
-			),
-			receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
-		},
-		convertSrv,
-		api.FeatureManager,
-	), m)
+	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(api.DatasourceCache, NewLotexAM(proxy, logger), &AlertmanagerSrv{
+		crypto:         api.MultiOrgAlertmanager.Crypto,
+		log:            logger,
+		ac:             api.AccessControl,
+		mam:            api.MultiOrgAlertmanager,
+		featureManager: api.FeatureManager,
+		silenceSvc: notifier.NewSilenceService(
+			accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
+			api.TransactionManager,
+			logger,
+			api.MultiOrgAlertmanager,
+			api.RuleStore,
+			ruleAuthzService,
+			api.SilenceLimitsProvider,
+		),
+		receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
+	}), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.RuleStatusReader, api.RuleStore, ruleAuthzService, api.ProvenanceStore),
+		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.RuleMutator, api.RuleStore, ruleAuthzService, api.ProvenanceStore),
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(

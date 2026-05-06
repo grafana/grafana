@@ -11,25 +11,23 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "move-auth-test"
 	testRepo := common.TestRepo{
-		Name: repo,
+		Name:      repo,
+		Workflows: []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard.json",
 		},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    0,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Grant the editor user dashboard permissions (the default editor role
 	// does not include dashboards:write/dashboards:create which are required
@@ -118,7 +116,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 	})
 
 	t.Run("move job blocked for folder resource in file", func(t *testing.T) {
-		folderJSON := `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"sneaky-folder"},"spec":{"title":"Sneaky"}}`
+		folderJSON := `{"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{"name":"sneaky-folder"},"spec":{"title":"Sneaky"}}`
 		helper.WriteToProvisioningPath(t, "folder-as-file-move.json", []byte(folderJSON))
 
 		body := common.AsJSON(provisioning.JobSpec{

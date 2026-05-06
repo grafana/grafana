@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 
 import {
-  StandardEditorProps,
-  StandardEditorsRegistryItem,
-  StringFieldConfigSettings,
-  SelectableValue,
+  type StandardEditorProps,
+  type StandardEditorsRegistryItem,
+  type StringFieldConfigSettings,
+  type SelectableValue,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup, Select } from '@grafana/ui';

@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { BaseVariableModel } from '@grafana/data';
+import { type BaseVariableModel } from '@grafana/data';
 
 export class VariableBuilder<T extends BaseVariableModel> {
   protected variable: T;

@@ -580,6 +580,191 @@ func TestChanges(t *testing.T) {
 	})
 }
 
+func TestChanges_DuplicatePaths(t *testing.T) {
+	t.Run("duplicate path with matching hash keeps primary and deletes orphan", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "dashboard.json", Hash: "current-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "current-hash", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "real-dash"},
+				{Path: "dashboard.json", Hash: "old-hash", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "orphan-dash"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Len(t, changes, 1, "only the orphan should be deleted, primary untouched")
+		require.Equal(t, repository.FileActionDeleted, changes[0].Action)
+		require.Equal(t, "orphan-dash", changes[0].Existing.Name)
+	})
+
+	t.Run("duplicate path with no matching hash deletes orphan and updates primary", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "dashboard.json", Hash: "new-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "hash-a", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"},
+				{Path: "dashboard.json", Hash: "hash-b", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-b"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Len(t, changes, 2)
+
+		actionsByName := make(map[string]repository.FileAction)
+		for _, c := range changes {
+			actionsByName[c.Existing.Name] = c.Action
+		}
+		require.Equal(t, repository.FileActionUpdated, actionsByName["dash-a"], "first item should be updated")
+		require.Equal(t, repository.FileActionDeleted, actionsByName["dash-b"], "second item should be deleted as orphan")
+	})
+
+	t.Run("duplicate path where source file is deleted removes all items", func(t *testing.T) {
+		source := []repository.FileTreeEntry{}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "hash-a", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"},
+				{Path: "dashboard.json", Hash: "hash-b", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-b"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Len(t, changes, 2, "both items should be deleted")
+		for _, c := range changes {
+			require.Equal(t, repository.FileActionDeleted, c.Action)
+		}
+	})
+
+	t.Run("three or more items at same path", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "dashboard.json", Hash: "current", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "old-1", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "orphan-1"},
+				{Path: "dashboard.json", Hash: "current", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "real"},
+				{Path: "dashboard.json", Hash: "old-2", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "orphan-2"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Len(t, changes, 2, "two orphans should be deleted, primary untouched")
+
+		deletedNames := make([]string, 0, 2)
+		for _, c := range changes {
+			require.Equal(t, repository.FileActionDeleted, c.Action)
+			deletedNames = append(deletedNames, c.Existing.Name)
+		}
+		require.Contains(t, deletedNames, "orphan-1")
+		require.Contains(t, deletedNames, "orphan-2")
+	})
+
+	t.Run("duplicate path does not affect other non-duplicate paths", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "dashboard.json", Hash: "current", Blob: true},
+			{Path: "other.json", Hash: "other-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "current", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "real"},
+				{Path: "dashboard.json", Hash: "stale", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "orphan"},
+				{Path: "other.json", Hash: "other-hash", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "other"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Len(t, changes, 1, "only the orphan should be deleted")
+		require.Equal(t, "orphan", changes[0].Existing.Name)
+		require.Equal(t, repository.FileActionDeleted, changes[0].Action)
+	})
+
+	t.Run("duplicate folder paths are not cleaned up by Changes (handled downstream)", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "myfolder", Hash: "tree-hash", Blob: false},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "myfolder/", Hash: "meta-hash-1", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-uid-1"},
+				{Path: "myfolder/", Hash: "meta-hash-2", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-uid-2"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		for _, c := range changes {
+			require.NotEqual(t, repository.FileActionDeleted, c.Action,
+				"folder duplicates should not be deleted by Changes(); orphan cleanup is deferred to augmentChangesForFolderMetadata")
+		}
+	})
+
+	t.Run("_folder.json with multiple parent folders keeps best-match and deletes orphan", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "myfolder", Hash: "tree-hash", Blob: false},
+			{Path: "myfolder/_folder.json", Hash: "new-meta-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "myfolder/", Hash: "old-meta-hash", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "orphan-uid"},
+				{Path: "myfolder/", Hash: "new-meta-hash", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "current-uid"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+
+		// No update for the best-match (hash matches _folder.json).
+		for _, c := range changes {
+			if c.Path == "myfolder/" && c.Action == repository.FileActionUpdated {
+				t.Fatalf("should not emit folder update when best-match hash equals _folder.json hash, got Existing=%s", c.Existing.Name)
+			}
+		}
+		// The orphan should be deleted.
+		var deleted []string
+		for _, c := range changes {
+			if c.Path == "myfolder/" && c.Action == repository.FileActionDeleted {
+				deleted = append(deleted, c.Existing.Name)
+			}
+		}
+		require.Equal(t, []string{"orphan-uid"}, deleted, "orphan folder should be deleted")
+	})
+
+	t.Run("_folder.json with multiple parent folders emits update and deletes orphan", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "myfolder", Hash: "tree-hash", Blob: false},
+			{Path: "myfolder/_folder.json", Hash: "brand-new-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "myfolder/", Hash: "old-hash-a", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-a"},
+				{Path: "myfolder/", Hash: "old-hash-b", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-b"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+
+		var folderUpdate *ResourceFileChange
+		var deletedNames []string
+		for i := range changes {
+			if changes[i].Path == "myfolder/" && changes[i].Action == repository.FileActionUpdated {
+				folderUpdate = &changes[i]
+			}
+			if changes[i].Path == "myfolder/" && changes[i].Action == repository.FileActionDeleted {
+				deletedNames = append(deletedNames, changes[i].Existing.Name)
+			}
+		}
+		require.NotNil(t, folderUpdate, "should emit folder update when no parent hash matches")
+		require.Equal(t, "folder-a", folderUpdate.Existing.Name, "should fall back to first item when no hash matches")
+		require.Equal(t, []string{"folder-b"}, deletedNames, "non-primary folder should be deleted as orphan")
+	})
+}
+
 func TestChanges_FolderMetadataFlagDisabled(t *testing.T) {
 	t.Run("_folder.json is kept but not treated as resource or metadata when flag off", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
@@ -700,16 +885,18 @@ func TestCompare(t *testing.T) {
 
 			tt.setupMocks(repo, repoResources)
 
-			changes, missing, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
+			changes, missing, invalid, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 				require.Nil(t, changes)
 				require.Nil(t, missing)
+				require.Nil(t, invalid)
 			} else {
 				require.NoError(t, err, tt.description)
 				require.Equal(t, tt.expectedChanges, changes, tt.description)
 				require.Equal(t, tt.expectedMissing, missing, tt.description)
+				require.Nil(t, invalid, tt.description)
 			}
 		})
 	}
@@ -737,8 +924,9 @@ func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
 		// it would call ReadFolderMetadata which calls repo.Read, and
 		// the mock would panic on unexpected call.
 
-		changes, _, err := Compare(context.Background(), repo, repoResources, "ref", false)
+		changes, _, invalid, err := Compare(context.Background(), repo, repoResources, "ref", false)
 		require.NoError(t, err)
+		require.Nil(t, invalid)
 
 		// No folder update should be emitted — the metadata processing is skipped.
 		for _, c := range changes {
@@ -747,6 +935,96 @@ func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestCompare_InvalidFolderMetadataWarning(t *testing.T) {
+	tests := []struct {
+		name         string
+		metadataData []byte
+	}{
+		{
+			name:         "malformed json",
+			metadataData: []byte("not-json"),
+		},
+		{
+			name:         "missing metadata name",
+			metadataData: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"My Folder"}}`),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockRepository(t)
+			repoResources := resources.NewMockRepositoryResources(t)
+
+			source := []repository.FileTreeEntry{
+				{Path: "my-folder/", Hash: "folder-hash", Blob: false},
+				{Path: "my-folder/_folder.json", Hash: "new-metadata-hash", Blob: true},
+			}
+			target := &provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{
+						Path:     "my-folder/",
+						Hash:     "old-metadata-hash",
+						Resource: resources.FolderResource.Resource,
+						Group:    resources.FolderResource.Group,
+						Name:     "existing-uid",
+					},
+				},
+			}
+
+			repoResources.On("List", mock.Anything).Return(target, nil)
+			repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
+			repo.On("Read", mock.Anything, "my-folder/_folder.json", "current-ref").
+				Return(&repository.FileInfo{Data: tt.metadataData, Hash: "new-metadata-hash"}, nil)
+
+			changes, missing, invalid, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
+
+			require.NoError(t, err)
+			require.Empty(t, changes)
+			require.Empty(t, missing)
+			require.Len(t, invalid, 1)
+			require.ErrorIs(t, invalid[0], resources.ErrInvalidFolderMetadata)
+			require.Equal(t, "my-folder/", invalid[0].Path)
+			require.Equal(t, repository.FileActionUpdated, invalid[0].Action)
+		})
+	}
+}
+
+func TestCompare_InvalidCreatedFolderMetadataWarningPreservesFolderCreate(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+
+	source := []repository.FileTreeEntry{
+		{Path: "my-folder/", Hash: "folder-hash", Blob: false},
+		{Path: "my-folder/_folder.json", Hash: "new-metadata-hash", Blob: true},
+		{Path: "my-folder/dashboard.json", Hash: "dashboard-hash", Blob: true},
+	}
+	target := &provisioning.ResourceList{}
+
+	repoResources.On("List", mock.Anything).Return(target, nil)
+	repoResources.On("SetTree", mock.Anything).Return().Maybe()
+	repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
+	repo.On("Read", mock.Anything, "my-folder/_folder.json", "current-ref").
+		Return(&repository.FileInfo{
+			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken Folder"}}`),
+			Hash: "new-metadata-hash",
+		}, nil)
+
+	changes, missing, invalid, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
+
+	require.NoError(t, err)
+	require.Empty(t, missing)
+	require.Len(t, invalid, 1)
+	require.ErrorIs(t, invalid[0], resources.ErrInvalidFolderMetadata)
+	require.Equal(t, repository.FileActionCreated, invalid[0].Action)
+
+	actionsByPath := make(map[string]repository.FileAction, len(changes))
+	for _, change := range changes {
+		actionsByPath[change.Path] = change.Action
+	}
+	require.Equal(t, repository.FileActionCreated, actionsByPath["my-folder/"])
+	require.Equal(t, repository.FileActionCreated, actionsByPath["my-folder/dashboard.json"])
 }
 
 func TestAugmentChangesForFolderMoves(t *testing.T) {
@@ -877,7 +1155,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 		require.Len(t, result, 2)
 	})
 
-	t.Run("empty UID in metadata is skipped", func(t *testing.T) {
+	t.Run("invalid metadata leaves folder move as delete plus create", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"No UID"}}`)}, nil)
@@ -891,9 +1169,12 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, result, 2)
 
+		paths := map[string]repository.FileAction{}
 		for _, c := range result {
-			require.NotEqual(t, repository.FileActionUpdated, c.Action, "no UPDATE should be emitted")
+			paths[c.Path] = c.Action
 		}
+		require.Equal(t, repository.FileActionDeleted, paths["old-folder/"])
+		require.Equal(t, repository.FileActionCreated, paths["new-folder/"])
 	})
 
 	t.Run("non-folder paths are ignored", func(t *testing.T) {
@@ -1010,7 +1291,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1050,7 +1331,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Len(t, result, 1, "only the original folder update — no children emitted")
 		require.Equal(t, "my-folder/", result[0].Path)
@@ -1087,7 +1368,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1133,7 +1414,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		count := 0
@@ -1160,7 +1441,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			{Action: repository.FileActionCreated, Path: "my-folder/dashboard.json"},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Equal(t, changes, result, "should return changes unchanged")
 	})
@@ -1184,7 +1465,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{} // no changes from Changes()
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		require.Len(t, result, 1)
@@ -1214,7 +1495,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{} // empty
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		require.Len(t, result, 3, "folder update + dashboard + child folder")
@@ -1246,7 +1527,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, nil)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, nil)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1274,7 +1555,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Empty(t, result, "no changes expected when folder never had metadata")
 	})
@@ -1296,7 +1577,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Empty(t, result, "no changes expected when _folder.json still exists")
 	})
@@ -1320,7 +1601,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			}},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Equal(t, changes, result, "no additional changes expected when folder is entirely deleted")
 	})
@@ -1350,7 +1631,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		folderCount := 0
@@ -1389,7 +1670,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1547,5 +1828,20 @@ func TestDetectRenames(t *testing.T) {
 		require.Equal(t, repository.FileActionDeleted, result[0].Action)
 		require.Equal(t, repository.FileActionDeleted, result[1].Action)
 		require.Equal(t, repository.FileActionCreated, result[2].Action)
+	})
+
+	t.Run("orphan cleanup deletions are excluded from rename detection", func(t *testing.T) {
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "dashboard.json",
+				Existing:      &provisioning.ResourceListItem{Hash: "abc123"},
+				OrphanCleanup: true},
+			{Action: repository.FileActionCreated, Path: "new-location/dashboard.json", Hash: "abc123"},
+		}
+
+		result := DetectRenames(changes)
+		require.Len(t, result, 2, "orphan delete should not be consumed as rename")
+		require.Equal(t, repository.FileActionDeleted, result[0].Action)
+		require.True(t, result[0].OrphanCleanup)
+		require.Equal(t, repository.FileActionCreated, result[1].Action)
 	})
 }

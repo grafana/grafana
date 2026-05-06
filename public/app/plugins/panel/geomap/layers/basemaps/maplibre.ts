@@ -1,8 +1,8 @@
-import Map from 'ol/Map';
+import type Map from 'ol/Map';
 import LayerGroup from 'ol/layer/Group';
 import { apply } from 'ol-mapbox-style';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, type EventBus } from '@grafana/data';
 
 // MapLibre Style Specification constants
 const LAYER_TYPE_BACKGROUND = 'background';

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { AlertErrorPayload, AlertPayload, AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { type AlertErrorPayload, type AlertPayload, AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { useGrafana } from 'app/core/context/GrafanaContext';

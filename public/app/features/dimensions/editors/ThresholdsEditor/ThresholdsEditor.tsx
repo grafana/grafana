@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { isNumber } from 'lodash';
-import { ChangeEvent, memo, useEffect, useRef, useState } from 'react';
+import { type ChangeEvent, memo, useEffect, useRef, useState } from 'react';
 
 import {
-  GrafanaTheme2,
-  SelectableValue,
+  type GrafanaTheme2,
+  type SelectableValue,
   sortThresholds,
-  Threshold,
-  ThresholdsConfig,
+  type Threshold,
+  type ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';

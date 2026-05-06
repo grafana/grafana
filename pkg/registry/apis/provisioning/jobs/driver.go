@@ -368,6 +368,10 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 
 		repo, err := d.repoGetter.GetRepository(ctx, namespace, repoName)
 		if err != nil {
+			if apierrors.IsNotFound(err) && IsOrphanCleanupAction(job.Spec.Action) {
+				logger.Info("repository not found -- expected for orphan cleanup job")
+				return worker.Process(ctx, nil, *job, recorder)
+			}
 			span.RecordError(err)
 			return apifmt.Errorf("failed to get repository '%s': %w", repoName, err)
 		}
@@ -382,10 +386,21 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		)
 
 		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
+			if IsOrphanCleanupAction(job.Spec.Action) {
+				logger.Info("repository marked for deletion -- proceeding with cleanup job")
+				return worker.Process(ctx, repo, *job, recorder)
+			}
 			logger.Info("repository marked for deletion - skip job",
 				"deletionTimestamp", r.DeletionTimestamp,
 			)
 			return nil
+		}
+
+		if IsOrphanCleanupAction(job.Spec.Action) {
+			logger.Info("repository was recreated since cleanup job was queued -- aborting",
+				"repository", repoName,
+			)
+			return apifmt.Errorf("repository '%s' exists and is healthy; orphan cleanup is no longer needed", repoName)
 		}
 
 		if appcontroller.IsPendingDelete(r.Labels) {

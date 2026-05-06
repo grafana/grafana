@@ -3,8 +3,8 @@ import { of } from 'rxjs';
 import {
   FieldType,
   LoadingState,
-  PanelData,
-  PluginExtensionPanelContext,
+  type PanelData,
+  type PluginExtensionPanelContext,
   PluginExtensionTypes,
   getDefaultTimeRange,
   store,
@@ -24,7 +24,7 @@ import {
 } from '@grafana/scenes';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
-import { GetExploreUrlArguments } from 'app/core/utils/explore';
+import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
@@ -948,7 +948,7 @@ describe('panelMenuBehavior', () => {
       expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
     });
 
-    it('should not show styles menu for non-timeseries panels', async () => {
+    it('should not show styles menu for unsupported panel types', async () => {
       const { menu } = await buildTestScene({});
 
       expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
@@ -964,6 +964,110 @@ describe('panelMenuBehavior', () => {
       const { menu } = await buildTimeseriesTestScene(false);
 
       expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
+    });
+
+    it.each([
+      'trend',
+      'candlestick',
+      'stat',
+      'gauge',
+      'bargauge',
+      'barchart',
+      'piechart',
+      'histogram',
+      'heatmap',
+      'state-timeline',
+      'status-history',
+      'xychart',
+    ])('should show styles menu for %s panel', async (pluginId) => {
+      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
+      const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      new DashboardScene({
+        title: 'My dashboard',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeDefined();
+    });
+
+    it.each([
+      'trend',
+      'candlestick',
+      'stat',
+      'gauge',
+      'bargauge',
+      'barchart',
+      'piechart',
+      'histogram',
+      'heatmap',
+      'state-timeline',
+      'status-history',
+      'xychart',
+    ])('should show paste option for %s panel when matching styles are copied', async (pluginId) => {
+      store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: pluginId, styles: {} }));
+
+      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
+      const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      new DashboardScene({
+        title: 'My dashboard',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const stylesMenu = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu;
+      expect(stylesMenu).toHaveLength(2);
+      expect(stylesMenu?.[1].text).toBe('Paste styles');
+    });
+
+    it.each([
+      'trend',
+      'candlestick',
+      'stat',
+      'gauge',
+      'bargauge',
+      'barchart',
+      'piechart',
+      'histogram',
+      'heatmap',
+      'state-timeline',
+      'status-history',
+      'xychart',
+    ])('should not show paste option for %s panel when timeseries styles are copied', async (pluginId) => {
+      store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
+
+      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
+      const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      new DashboardScene({
+        title: 'My dashboard',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const stylesMenu = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu;
+      expect(stylesMenu).toHaveLength(1);
+      expect(stylesMenu?.[0].text).toBe('Copy styles');
     });
   });
 });

@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
-import { LokiDatasource } from '../../datasource';
+import { type LokiDatasource } from '../../datasource';
 import { createLokiDatasource } from '../../mocks/datasource';
-import { LokiQuery } from '../../types';
+import { type LokiQuery } from '../../types';
 
-import { LabelBrowserModal, Props } from './LabelBrowserModal';
+import { LabelBrowserModal, type Props } from './LabelBrowserModal';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

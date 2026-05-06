@@ -1,4 +1,4 @@
-import { CustomVariable, SceneVariable } from '@grafana/scenes';
+import { CustomVariable, type SceneVariable } from '@grafana/scenes';
 
 import { OptionsPaneItemDescriptor } from '../../../../../dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 

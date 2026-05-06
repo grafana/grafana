@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, PanelPlugin, standardEditorsRegistry, ThresholdsMode } from '@grafana/data';
+import { type DataSourceInstanceSettings, PanelPlugin, standardEditorsRegistry, ThresholdsMode } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { BigValueColorMode, Button, Stack } from '@grafana/ui';
@@ -12,7 +12,7 @@ import {
 
 import { GroupBy } from './GroupByWithLoading';
 import { UnifiedAlertListPanel } from './UnifiedAlertList';
-import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, UnifiedAlertListOptions, ViewMode } from './types';
+import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, type UnifiedAlertListOptions, ViewMode } from './types';
 
 const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertListPanel)
   .setPanelOptions((builder) => {

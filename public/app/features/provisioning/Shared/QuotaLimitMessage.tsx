@@ -41,7 +41,7 @@ export function QuotaLimitMessage({
           <Trans i18nKey="provisioning.quota-limit.to-increase-limits" values={{ type: limitType }}>
             To add more {{ type: limitType }},
           </Trans>{' '}
-          <TextLink href={url} external>
+          <TextLink href={url} external variant="bodySmall">
             {onPrem ? (
               <Trans i18nKey="provisioning.quota-limit.update-configuration-link">
                 update your Grafana configuration

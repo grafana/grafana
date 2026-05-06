@@ -1,9 +1,9 @@
 import { store } from '@grafana/data';
 import { SceneTimeRange } from '@grafana/scenes';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { DASHBOARD_FROM_LS_KEY, DashboardDTO } from 'app/types/dashboard';
+import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 
 export function addPanelsOnLoadBehavior(scene: DashboardScene) {

@@ -1,15 +1,15 @@
 import { memo, useCallback, useMemo } from 'react';
 
-import { DataFrame, FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
+import { type DataFrame, FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { MatcherScope } from '@grafana/schema';
+import { type MatcherScope } from '@grafana/schema';
 
 import { getFieldTypeIconName } from '../../types/icon';
 import { Combobox } from '../Combobox/Combobox';
-import { ComboboxOption } from '../Combobox/types';
+import { type ComboboxOption } from '../Combobox/types';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
+import { type FieldMatcherUIRegistryItem, type MatcherUIProps } from './types';
 
 export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps, id, scope = 'series' } = props;

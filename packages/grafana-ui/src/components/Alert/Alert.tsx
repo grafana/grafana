@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { AriaRole, HTMLAttributes, ReactNode } from 'react';
+import { type AriaRole, type HTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
@@ -160,6 +160,7 @@ const getStyles = (
         bottom: 0,
         right: 0,
         background: theme.colors.background.primary,
+        borderRadius: theme.shape.radius.default,
         zIndex: -1,
       },
     }),

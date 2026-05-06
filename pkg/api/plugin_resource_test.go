@@ -53,7 +53,7 @@ func TestIntegrationCallResource(t *testing.T) {
 	cfg.Azure = &azsettings.AzureSettings{}
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.Service{}, nil, nil, nil, nil,
-		nil, nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil, nil, nil)
+		nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil, nil, nil)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 

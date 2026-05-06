@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { FormEventHandler, useState } from 'react';
+import { type FormEventHandler, useState } from 'react';
 
 import {
-  TeamGroupDto,
+  type TeamGroupDto,
   useAddTeamGroupApiMutation,
   useGetTeamGroupsApiQuery,
   useRemoveTeamGroupApiQueryMutation,
@@ -12,7 +12,7 @@ import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow, u
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { UpgradeBox, UpgradeContent, UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
+import { UpgradeBox, UpgradeContent, type UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
 import { highlightTrial } from 'app/features/admin/utils';
 
 interface Props {

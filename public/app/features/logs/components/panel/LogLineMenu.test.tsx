@@ -7,10 +7,10 @@ import { createLogLine } from '../mocks/logRow';
 
 import { LogDetailsContextProvider } from './LogDetailsContext';
 import { getStyles } from './LogLine';
-import { LogLineMenu, LogLineMenuCustomItem } from './LogLineMenu';
+import { LogLineMenu, type LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider } from './LogListContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 jest.mock('./LogListContext');
 

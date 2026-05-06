@@ -2,34 +2,41 @@ import { isNumber, set, unset, get, cloneDeep, defaultsDeep } from 'lodash';
 import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
-import { ThresholdsMode, VariableFormatID, MatcherScope } from '@grafana/schema';
+import { ThresholdsMode, VariableFormatID, type MatcherScope } from '@grafana/schema';
 
+import { NullValueMode } from '../../src/types/data';
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
 import { createDataFrame, guessFieldTypeForField } from '../dataframe/processDataFrame';
-import { PanelPlugin } from '../panel/PanelPlugin';
+import { type PanelPlugin } from '../panel/PanelPlugin';
 import { asHexString } from '../themes/colorManipulator';
-import { GrafanaTheme2 } from '../themes/types';
-import { ReducerID, reduceField } from '../transformations/fieldReducer';
+import { type GrafanaTheme2 } from '../themes/types';
 import { fieldMatchers } from '../transformations/matchers';
-import { ScopedVars, DataContextScopedVar } from '../types/ScopedVars';
-import { DataFrame, NumericRange, FieldType, Field, ValueLinkConfig, FieldConfig } from '../types/dataFrame';
-import { LinkModel, DataLink } from '../types/dataLink';
-import { DisplayProcessor, DisplayValue, DecimalCount } from '../types/displayValue';
+import { type ScopedVars, type DataContextScopedVar } from '../types/ScopedVars';
+import {
+  type DataFrame,
+  type NumericRange,
+  FieldType,
+  type Field,
+  type ValueLinkConfig,
+  type FieldConfig,
+} from '../types/dataFrame';
+import { type LinkModel, type DataLink } from '../types/dataLink';
+import { type DisplayProcessor, type DisplayValue, type DecimalCount } from '../types/displayValue';
 import { FieldColorModeId } from '../types/fieldColor';
 import {
-  DynamicConfigValue,
-  ApplyFieldOverrideOptions,
-  FieldOverrideContext,
-  DataLinkPostProcessor,
-  FieldConfigSource,
+  type DynamicConfigValue,
+  type ApplyFieldOverrideOptions,
+  type FieldOverrideContext,
+  type DataLinkPostProcessor,
+  type FieldConfigSource,
 } from '../types/fieldOverrides';
-import { InterpolateFunction, PanelData } from '../types/panel';
-import { TimeZone } from '../types/time';
-import { FieldMatcher } from '../types/transformations';
+import { type InterpolateFunction, type PanelData } from '../types/panel';
+import { type TimeZone } from '../types/time';
+import { type FieldMatcher } from '../types/transformations';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { locationUtil } from '../utils/location';
 
-import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { type FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
@@ -40,27 +47,46 @@ interface OverrideProps {
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
-  let min: number | null = null;
-  let max: number | null = null;
-
-  const reducers = [ReducerID.min, ReducerID.max];
+  let min: number | null = Infinity;
+  let max: number | null = -Infinity;
 
   for (const frame of data) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
-        const stats = reduceField({ field, reducers });
-        const statsMin = stats[ReducerID.min];
-        const statsMax = stats[ReducerID.max];
+        const nullAsZero = field.config.nullValueMode === NullValueMode.AsZero;
+        const vals = field.values;
 
-        if (min === null || statsMin < min) {
-          min = statsMin;
-        }
+        for (let i = 0; i < vals.length; i++) {
+          let v = vals[i];
 
-        if (max === null || statsMax > max) {
-          max = statsMax;
+          if (v === null) {
+            if (nullAsZero) {
+              if (min! > 0) {
+                min = 0;
+              }
+              if (max! < 0) {
+                max = 0;
+              }
+            }
+          } else if (!Number.isNaN(v)) {
+            if (min! > v) {
+              min = v;
+            }
+            if (max! < v) {
+              max = v;
+            }
+          }
         }
       }
     }
+  }
+
+  if (min === Infinity) {
+    min = null;
+  }
+
+  if (max === -Infinity) {
+    max = null;
   }
 
   return { min, max, delta: (max ?? 0) - (min ?? 0) };
@@ -95,13 +121,17 @@ export function applyFieldOverrides(
       if ((rule.matcher.scope ?? 'series') !== scope) {
         continue;
       }
-      const info = fieldMatchers.get(rule.matcher.id);
-      if (info) {
-        override.push({
-          match: info.get(rule.matcher.options),
-          properties: rule.properties,
-        });
+      const info = fieldMatchers.getIfExists(rule.matcher.id);
+
+      if (!info) {
+        console.warn(`Unknown field matcher id: "${rule.matcher.id}", skipping override rule`);
+        continue;
       }
+
+      override.push({
+        match: info.get(rule.matcher.options),
+        properties: rule.properties,
+      });
     }
   }
 

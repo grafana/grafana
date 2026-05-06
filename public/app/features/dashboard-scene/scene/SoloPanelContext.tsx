@@ -1,10 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { LazyLoader, VizPanel } from '@grafana/scenes';
+import { LazyLoader, type VizPanel } from '@grafana/scenes';
 import { Box, Spinner } from '@grafana/ui';
 
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 
 export interface SoloPanelContextValue {
   matches: (VizPanel: VizPanel) => boolean;

@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { rawListItemColumnWidth, rawListPaddingToHoldSpaceForCopyIcon, RawListValue } from './RawListItem';
+import { rawListItemColumnWidth, rawListPaddingToHoldSpaceForCopyIcon, type RawListValue } from './RawListItem';
 import { RawPrometheusListItemEmptyValue } from './utils/getRawPrometheusListItemsFromDataFrame';
 
 const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number) => ({

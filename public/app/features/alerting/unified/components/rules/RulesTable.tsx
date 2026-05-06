@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Pagination, Tooltip, useStyles2 } from '@grafana/ui';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -21,7 +21,7 @@ import { calculateNextEvaluationEstimate } from '../../rule-list/components/util
 import { Annotation } from '../../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { getRulePluginOrigin, isPausedRule, rulerRuleType } from '../../utils/rules';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';

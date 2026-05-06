@@ -1,4 +1,11 @@
-import { DataFrameType, FieldType, getDefaultTimeRange, LoadingState, PanelData, toDataFrame } from '@grafana/data';
+import {
+  DataFrameType,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
+  toDataFrame,
+} from '@grafana/data';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 
 const testLogsDataFrame = [

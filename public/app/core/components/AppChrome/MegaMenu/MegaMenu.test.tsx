@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 import { getWrapper, render, screen, userEvent } from 'test/test-utils';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { configureStore } from 'app/store/configureStore';

@@ -1,8 +1,8 @@
 import {
-  AdHocVariableEditorState,
-  DataSourceVariableEditorState,
-  QueryVariableEditorState,
-  VariableEditorState,
+  type AdHocVariableEditorState,
+  type DataSourceVariableEditorState,
+  type QueryVariableEditorState,
+  type VariableEditorState,
 } from './reducer';
 
 /**

@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { SceneDataLayerProvider } from '@grafana/scenes';
+import { type SceneDataLayerProvider } from '@grafana/scenes';
 import { Box, Button, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
 import { dashboardEditActions } from '../shared';
@@ -36,7 +36,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
 
   const onClickAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
     const { editPane } = getDashboardSceneFor(a).state;
-    editPane.selectObject(a, a.state.key!);
+    editPane.selectObject(a);
   }, []);
 
   const onDragEnd = useCallback(

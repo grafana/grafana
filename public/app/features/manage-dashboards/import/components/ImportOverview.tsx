@@ -1,7 +1,7 @@
 import { locationService } from '@grafana/runtime';
 import { isDashboardV1Spec, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
-import { DashboardInputs, DashboardSource } from '../../types';
+import { type DashboardInputs, type DashboardSource } from '../../types';
 
 import { ImportOverviewV1 } from './ImportOverviewV1';
 import { ImportOverviewV2 } from './ImportOverviewV2';

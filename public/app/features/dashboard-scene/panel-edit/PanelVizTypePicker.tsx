@@ -3,11 +3,11 @@ import { debounce } from 'lodash';
 import { useCallback, useId, useMemo, useState } from 'react';
 import { useMedia, useSessionStorage } from 'react-use';
 
-import { GrafanaTheme2, PanelData } from '@grafana/data';
+import { type GrafanaTheme2, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import {
   Button,
   Field,
@@ -24,7 +24,7 @@ import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypePicker } from 'app/features/panel/components/VizTypePicker/VizTypePicker';
-import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+import { type VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
 import { PanelModelCompatibilityWrapper } from '../utils/PanelModelCompatibilityWrapper';
 

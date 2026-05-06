@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import { useEffect, useState, useRef, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { VariableValueOption } from '@grafana/scenes';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type VariableValueOption } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { VariableStaticOptionsFormAddButton } from './VariableStaticOptionsFormAddButton';
-import { VariableStaticOptionsFormItem } from './VariableStaticOptionsFormItemEditor';
+import { type VariableStaticOptionsFormItem } from './VariableStaticOptionsFormItemEditor';
 import { VariableStaticOptionsFormItems } from './VariableStaticOptionsFormItems';
 
 interface VariableStaticOptionsFormProps {

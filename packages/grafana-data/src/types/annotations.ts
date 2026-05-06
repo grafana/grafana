@@ -1,10 +1,10 @@
-import { ComponentType } from 'react';
-import { Observable } from 'rxjs';
+import { type ComponentType } from 'react';
+import { type Observable } from 'rxjs';
 
-import { AnnotationQuery as SchemaAnnotationQuery, DataQuery } from '@grafana/schema';
+import { type AnnotationQuery as SchemaAnnotationQuery, type DataQuery } from '@grafana/schema';
 
-import { DataFrame } from './dataFrame';
-import { QueryEditorProps } from './datasource';
+import { type DataFrame } from './dataFrame';
+import { type QueryEditorProps } from './datasource';
 
 /**
  * This JSON object is stored in the dashboard json model.

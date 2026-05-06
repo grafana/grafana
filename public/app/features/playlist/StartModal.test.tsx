@@ -2,7 +2,7 @@ import { render, screen } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 
-import { Playlist } from '../../api/clients/playlist/v1';
+import { type Playlist } from '../../api/clients/playlist/v1';
 
 import { StartModal } from './StartModal';
 

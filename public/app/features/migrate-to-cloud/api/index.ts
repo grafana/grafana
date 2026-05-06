@@ -1,7 +1,7 @@
 import { handleRequestError } from '@grafana/api-clients';
 import { generatedAPI } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { getLocalPlugins } from 'app/features/plugins/admin/api';
-import { LocalPlugin } from 'app/features/plugins/admin/types';
+import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
 export const cloudMigrationAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({

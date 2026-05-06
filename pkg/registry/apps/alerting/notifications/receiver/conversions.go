@@ -123,12 +123,16 @@ var permissionMapper = map[ngmodels.ReceiverPermission]string{
 }
 
 func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {
+	prov, err := ngmodels.ProvenanceFromString(receiver.GetProvenanceStatus())
+	if err != nil {
+		return nil, nil, ngmodels.ErrReceiverInvalid(err)
+	}
 	domain := &ngmodels.Receiver{
 		UID:          receiver.Name,
 		Name:         receiver.Spec.Title,
 		Integrations: make([]*ngmodels.Integration, 0, len(receiver.Spec.Integrations)),
 		Version:      receiver.ResourceVersion,
-		Provenance:   ngmodels.ProvenanceNone,
+		Provenance:   prov,
 		Origin:       ngmodels.ResourceOriginGrafana, // Set to Grafana by default.
 	}
 	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))

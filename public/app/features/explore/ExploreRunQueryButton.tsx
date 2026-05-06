@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { ConnectedProps, connect } from 'react-redux';
+import { type ConnectedProps, connect } from 'react-redux';
 
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Button, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
 

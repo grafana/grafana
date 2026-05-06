@@ -1,27 +1,27 @@
 import { get as lodashGet } from 'lodash';
 
 import {
-  EventBus,
-  InterpolateFunction,
-  PanelData,
-  PanelPlugin,
-  StandardEditorContext,
-  VariableSuggestionsScope,
+  type EventBus,
+  type InterpolateFunction,
+  type PanelData,
+  type PanelPlugin,
+  type StandardEditorContext,
+  type VariableSuggestionsScope,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
-import { NestedValueAccess, isNestedPanelOptions, PanelOptionsSupplier } from '@grafana/data/internal';
+import { type NestedValueAccess, isNestedPanelOptions, type PanelOptionsSupplier } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
-import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
+import { type LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { getOptionOverrides } from './state/getOptionOverrides';
-import { OptionPaneRenderProps } from './types';
+import { type OptionPaneRenderProps } from './types';
 import { setOptionImmutably, updateDefaultFieldConfigValue } from './utils';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
@@ -136,6 +136,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
         id: htmlId,
+        useFieldset: fieldOption.useFieldset,
         description: fieldOption.description,
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
@@ -282,6 +283,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
         id: htmlId,
+        useFieldset: fieldOption.useFieldset,
         description: fieldOption.description,
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
@@ -355,6 +357,7 @@ export function fillOptionsPaneItems(
         title: pluginOption.name,
         id: htmlId,
         description: pluginOption.description,
+        useFieldset: pluginOption.useFieldset,
         render: function renderEditor() {
           return (
             <Editor

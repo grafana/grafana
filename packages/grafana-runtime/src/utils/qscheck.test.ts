@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, DataSourcePluginMeta, DataSourceJsonData } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type DataSourceJsonData } from '@grafana/data';
 
 import { isQueryServiceCompatible } from './qscheck';
 
@@ -37,7 +37,7 @@ describe('qscheck', () => {
       name: 'no queries',
       ds: [],
       flag: { types: ['prometheus', 'loki'] },
-      expected: true,
+      expected: false,
       errorLogs: 0,
     },
     {

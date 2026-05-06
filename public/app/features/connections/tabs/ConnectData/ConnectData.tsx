@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { useMemo, useState, MouseEvent } from 'react';
+import { useId, useMemo, useState, type MouseEvent } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { PluginType, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { PluginType, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox, useStyles2 } from '@grafana/ui';
@@ -53,6 +53,8 @@ export function AddNewConnection() {
   const searchTerm = queryParams.search ? String(queryParams.search) : '';
   const [isNoAccessModalOpen, setIsNoAccessModalOpen] = useState(false);
   const [focusedItem, setFocusedItem] = useState<CardGridItem | null>(null);
+  const searchId = useId();
+  const sortId = useId();
   const location = useLocation();
   const history = useHistory();
   const locationSearch = locationSearchToObject(location.search);
@@ -157,8 +159,8 @@ export function AddNewConnection() {
 
       <div className={styles.searchContainer}>
         <HorizontalGroup wrap>
-          <Field label={t('common.search', 'Search')}>
-            <SearchField value={searchTerm} onSearch={handleSearchChange} />
+          <Field label={t('common.search', 'Search')} htmlFor={searchId}>
+            <SearchField id={searchId} value={searchTerm} onSearch={handleSearchChange} />
           </Field>
           <HorizontalGroup className={styles.actionBar}>
             {/* Filter by installed / all */}
@@ -190,6 +192,7 @@ export function AddNewConnection() {
             {/* Sorting */}
             <Field label={t('plugins.filter.sort', 'Sort')}>
               <Combobox
+                id={sortId}
                 aria-label={t('plugins.filter.sort-list', 'Sort Plugins List')}
                 width={24}
                 value={sortBy?.toString()}

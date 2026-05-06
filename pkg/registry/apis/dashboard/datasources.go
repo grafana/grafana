@@ -127,8 +127,9 @@ func (l *libraryElementIndexProvider) GetLibraryElementInfo(ctx context.Context)
 	page := 1
 	for {
 		result, err := l.libraryElementService.GetAllElements(ctx, user, model.SearchLibraryElementsQuery{
-			PerPage: perPage,
-			Page:    page,
+			PerPage:                perPage,
+			Page:                   page,
+			SkipFolderTreeForAdmin: true,
 		})
 		if err != nil {
 			span.SetAttributes(attribute.String("error", err.Error()))

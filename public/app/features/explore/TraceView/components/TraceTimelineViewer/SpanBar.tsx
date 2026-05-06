@@ -18,18 +18,18 @@ import { groupBy as _groupBy } from 'lodash';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';
-import TNil from '../types/TNil';
-import { TraceSpan, CriticalPathSection } from '../types/trace';
+import type TNil from '../types/TNil';
+import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 
 import AccordianLogs from './SpanDetail/AccordianLogs';
-import { ViewedBoundsFunctionType } from './utils';
+import { type ViewedBoundsFunctionType } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

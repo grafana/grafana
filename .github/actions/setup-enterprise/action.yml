@@ -3,15 +3,19 @@ description: 'Clones and sets up Grafana Enterprise repository for testing'
 
 inputs:
   github-app-name:
-    description: 'Name of the GitHub App in Vault'
+    description: 'Name of the GitHub App in Vault (unused when token is provided)'
     required: false
     default: 'grafana-ci-bot'
+  token:
+    description: 'GitHub token for cloning grafana-enterprise (when provided, skips vault and token generation)'
+    required: false
 
 runs:
   using: "composite"
   steps:
     - name: Retrieve GitHub App secrets
       id: get-secrets
+      if: ${{ inputs.token == '' }}
       uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1 # zizmor: ignore[unpinned-uses]
       with:
         repo_secrets: |
@@ -21,6 +25,7 @@ runs:
 
     - name: Generate GitHub App token
       id: generate_token
+      if: ${{ inputs.token == '' }}
       uses: actions/create-github-app-token@v1
       with:
         app-id: ${{ env.APP_ID }}
@@ -31,9 +36,10 @@ runs:
     - name: Setup Enterprise
       shell: bash
       env:
-        GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        GH_TOKEN: ${{ inputs.token || steps.generate_token.outputs.token }}
       run: |
         RETRIES="5"
+        grafana_root="$PWD"
 
         for i in $(seq 1 $RETRIES); do
           echo "Attempt $i to clone..."
@@ -77,4 +83,4 @@ runs:
           sleep "$i"
         done
 
-        QUIET=1 ./build.sh
+        QUIET=1 ./build.sh "$grafana_root"

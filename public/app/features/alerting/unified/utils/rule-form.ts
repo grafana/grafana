@@ -1,43 +1,44 @@
 import { produce } from 'immer';
 
 import {
-  DataSourceInstanceSettings,
-  IntervalValues,
-  RelativeTimeRange,
-  ScopedVars,
-  TimeRange,
+  type DataSourceInstanceSettings,
+  type IntervalValues,
+  type RelativeTimeRange,
+  type ScopedVars,
+  type TimeRange,
   getDefaultRelativeTimeRange,
   getNextRefId,
   rangeUtil,
 } from '@grafana/data';
-import { PromQuery } from '@grafana/prometheus';
+import { t } from '@grafana/i18n';
+import { type PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { VizPanel, sceneGraph } from '@grafana/scenes';
-import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type VizPanel, sceneGraph } from '@grafana/scenes';
+import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   getDashboardSceneFor,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
 } from 'app/features/dashboard-scene/utils/utils';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { LokiQuery } from 'app/plugins/datasource/loki/types';
-import { RuleWithLocation } from 'app/types/unified-alerting';
+import { type LokiQuery } from 'app/plugins/datasource/loki/types';
+import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
-  AlertDataQuery,
-  AlertQuery,
-  Annotations,
-  GrafanaNotificationSettings,
-  GrafanaRuleDefinition,
-  Labels,
-  PostableRuleGrafanaRuleDTO,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
-  RulerRuleDTO,
+  type AlertDataQuery,
+  type AlertQuery,
+  type Annotations,
+  type GrafanaNotificationSettings,
+  type GrafanaRuleDefinition,
+  type Labels,
+  type PostableRuleGrafanaRuleDTO,
+  type RulerAlertingRuleDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerRecordingRuleDTO,
+  type RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
@@ -45,12 +46,13 @@ import { NAMED_ROOT_LABEL_NAME } from '../components/notification-policies/useNo
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { normalizeDefaultAnnotations } from '../rule-editor/formProcessing';
 import {
-  AlertManagerManualRouting,
-  ContactPoint,
-  KVObject,
+  type AlertManagerManualRouting,
+  type ContactPoint,
+  type Folder,
+  type KVObject,
   RuleFormType,
-  RuleFormValues,
-  SimplifiedEditor,
+  type RuleFormValues,
+  type SimplifiedEditor,
 } from '../types/rule-form';
 
 import { Annotation } from './constants';
@@ -806,6 +808,19 @@ export const dataQueriesToGrafanaQueries = async (
   return result;
 };
 
+/**
+ * Folder that contains the dashboard, used to pre-fill the alert rule folder.
+ */
+export function folderFromDashboardMeta(meta: { folderUid?: string; folderTitle?: string }): Folder | undefined {
+  const uid = meta.folderUid ?? '';
+  const title = meta.folderTitle ?? '';
+  if (!uid && !title) {
+    return undefined;
+  }
+  const displayTitle = title || (uid ? uid : t('browse-dashboards.folder-picker.root-title', 'Dashboards'));
+  return { uid, title: displayTitle };
+}
+
 export const panelToRuleFormValues = async (
   panel: PanelModel,
   dashboard: DashboardModel
@@ -843,15 +858,7 @@ export const panelToRuleFormValues = async (
     queries.push(...expressions);
   }
 
-  const { folderTitle, folderUid } = dashboard.meta;
-  const folder =
-    folderUid && folderTitle
-      ? {
-          kind: 'folder',
-          uid: folderUid,
-          title: folderTitle,
-        }
-      : undefined;
+  const folder = folderFromDashboardMeta(dashboard.meta);
 
   const formValues = {
     type: RuleFormType.grafana,
@@ -921,16 +928,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
     grafanaQueries.push(...expressions);
   }
 
-  const { folderTitle, folderUid } = dashboard.state.meta;
-
-  const folder =
-    folderUid && folderTitle
-      ? {
-          kind: 'folder',
-          uid: folderUid,
-          title: folderTitle,
-        }
-      : undefined;
+  const folder = folderFromDashboardMeta(dashboard.state.meta);
 
   const formValues = {
     type: RuleFormType.grafana,

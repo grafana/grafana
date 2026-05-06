@@ -1,7 +1,7 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { KeyValue } from './data';
-import { IconName } from './icon';
+import { type KeyValue } from './data';
+import { type IconName } from './icon';
 
 /** Describes plugins life cycle status */
 export enum PluginState {

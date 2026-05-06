@@ -2,16 +2,16 @@ import { kebabCase } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Divider, Field, FileUpload, Input, RadioButtonList, Select, Stack, Text } from '@grafana/ui';
 
 import { getAlertManagerDataSources } from '../../../utils/datasource';
-import { ExtraConfigWarning } from '../ExtraConfigWarning';
-import { ImportFormValues } from '../ImportToGMA';
+import { type ImportFormValues } from '../ImportToGMA';
+import { PolicyTreeNameHelp } from '../PolicyTreeNameHelp';
 import { ValidationStatus } from '../ValidationStatus';
 import { getNotificationsSourceOptions } from '../Wizard/constants';
-import { DryRunValidationResult } from '../types';
+import { type DryRunValidationResult } from '../types';
 
 import { hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';
 
@@ -24,8 +24,6 @@ interface Step1ContentProps {
   dryRunResult?: DryRunValidationResult;
   /** Callback to trigger dry-run validation */
   onTriggerDryRun: () => void;
-  /** Identifier of an existing imported config that will be replaced, if any */
-  existingIdentifier?: string;
 }
 
 /**
@@ -33,13 +31,7 @@ interface Step1ContentProps {
  * This component contains only the form fields, without the header or action buttons
  * The WizardStep wrapper provides those
  */
-export function Step1Content({
-  canImport,
-  dryRunState,
-  dryRunResult,
-  onTriggerDryRun,
-  existingIdentifier,
-}: Step1ContentProps) {
+export function Step1Content({ canImport, dryRunState, dryRunResult, onTriggerDryRun }: Step1ContentProps) {
   const {
     control,
     register,
@@ -93,9 +85,6 @@ export function Step1Content({
           </Trans>
         </Alert>
       )}
-
-      {/* Extra config overwrite warning */}
-      {existingIdentifier && <ExtraConfigWarning existingIdentifier={existingIdentifier} />}
 
       {/* Import Source Card */}
       <Box backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
@@ -165,12 +154,14 @@ export function Step1Content({
         </Box>
         <Divider spacing={0} />
         <Box padding={2}>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="alerting.import-to-gma.step1.policy-tree-desc">
-              Name for the imported notification policy tree. Alerts with the label{' '}
-              <code>__grafana_managed_route__</code> matching this name will be routed through this policy tree.
-            </Trans>
-          </Text>
+          <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="alerting.import-to-gma.step1.policy-tree-desc">
+                When you import, Grafana creates a separate notification policy tree. Enter a name you will recognize.
+              </Trans>
+            </Text>
+            <PolicyTreeNameHelp />
+          </Stack>
           <Box marginTop={2}>
             <Field
               label={t('alerting.import-to-gma.step1.policy-tree-name', 'Policy tree name')}

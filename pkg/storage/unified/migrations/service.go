@@ -59,7 +59,6 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 	if !p.cfg.ShouldRunMigrations() {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
 		logger.Info("Data migrations are disabled, skipping",
-			"disableDataMigrations", p.cfg.DisableDataMigrations,
 			"unifiedStorageType", p.cfg.UnifiedStorageType(),
 			"target", p.cfg.Target,
 		)

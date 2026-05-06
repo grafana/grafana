@@ -1936,6 +1936,284 @@ func TestListAlertRules(t *testing.T) {
 			assert.Equal(t, "HasAccessInFolder", ac.Calls[2].Method)
 		})
 	})
+
+	t.Run("GroupFilter", func(t *testing.T) {
+		t.Run("Include should return only rules in the specified groups", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				GroupFilter: ListRuleStringFilter{Include: []string{groupKey1.RuleGroup}},
+			})
+			require.NoError(t, err)
+
+			expected := make([]string, 0, len(rules1))
+			for _, r := range rules1 {
+				expected = append(expected, r.UID)
+			}
+			got := make([]string, 0, len(rules))
+			for _, r := range rules {
+				got = append(got, r.UID)
+			}
+			require.ElementsMatch(t, expected, got)
+		})
+
+		t.Run("Exclude should return rules not in the specified groups", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				GroupFilter: ListRuleStringFilter{Exclude: []string{groupKey1.RuleGroup}},
+			})
+			require.NoError(t, err)
+
+			expected := make([]string, 0, len(rules2))
+			for _, r := range rules2 {
+				expected = append(expected, r.UID)
+			}
+			got := make([]string, 0, len(rules))
+			for _, r := range rules {
+				got = append(got, r.UID)
+			}
+			require.ElementsMatch(t, expected, got)
+		})
+
+		t.Run("Exists true should return rules with a non-empty group", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			trueVal := true
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				GroupFilter: ListRuleStringFilter{Exists: &trueVal},
+			})
+			require.NoError(t, err)
+			// all allRules have a non-empty group
+			require.Len(t, rules, len(allRules))
+		})
+
+		t.Run("Exists false should return rules without a group", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			falseVal := false
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				GroupFilter: ListRuleStringFilter{Exists: &falseVal},
+			})
+			require.NoError(t, err)
+			// all rules have a group, so none should be returned
+			require.Empty(t, rules)
+		})
+	})
+
+	t.Run("FolderFilter", func(t *testing.T) {
+		t.Run("Include when user can read all should filter to requested folders", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				FolderFilter: ListRuleStringFilter{Include: []string{groupKey1.NamespaceUID}},
+			})
+			require.NoError(t, err)
+
+			expected := make([]string, 0, len(rules1))
+			for _, r := range rules1 {
+				expected = append(expected, r.UID)
+			}
+			got := make([]string, 0, len(rules))
+			for _, r := range rules {
+				got = append(got, r.UID)
+			}
+			require.ElementsMatch(t, expected, got)
+		})
+
+		t.Run("Include when user cannot read all should intersect with accessible folders", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			// User can only access groupKey2's folder
+			ac.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
+				return folder.GetNamespaceUID() == groupKey2.NamespaceUID, nil
+			}
+
+			// Request both folders; intersection should yield only groupKey2
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				FolderFilter: ListRuleStringFilter{Include: []string{groupKey1.NamespaceUID, groupKey2.NamespaceUID}},
+			})
+			require.NoError(t, err)
+
+			expected := make([]string, 0, len(rules2))
+			for _, r := range rules2 {
+				expected = append(expected, r.UID)
+			}
+			got := make([]string, 0, len(rules))
+			for _, r := range rules {
+				got = append(got, r.UID)
+			}
+			require.ElementsMatch(t, expected, got)
+		})
+
+		t.Run("Exclude should return rules not in the specified folders", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				FolderFilter: ListRuleStringFilter{Exclude: []string{groupKey1.NamespaceUID}},
+			})
+			require.NoError(t, err)
+
+			expected := make([]string, 0, len(rules2))
+			for _, r := range rules2 {
+				expected = append(expected, r.UID)
+			}
+			got := make([]string, 0, len(rules))
+			for _, r := range rules {
+				got = append(got, r.UID)
+			}
+			require.ElementsMatch(t, expected, got)
+		})
+	})
+
+	t.Run("TitleFilter", func(t *testing.T) {
+		matchTitle := "exact-match-title"
+		matchRules := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex(), gen.WithTitle(matchTitle)).GenerateManyRef(2)
+		otherRules := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex()).GenerateManyRef(3)
+
+		initWithTitleData := func(t *testing.T) (*AlertRuleService, *fakeRuleAccessControlService) {
+			service, ruleStore, _, ac := initService(t)
+			service.folderService = fs
+			ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(matchRules, otherRules...)}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+			return service, ac
+		}
+
+		t.Run("Include should return only rules with the exact title", func(t *testing.T) {
+			service, _ := initWithTitleData(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				TitleFilter: ListRuleStringFilter{Include: []string{matchTitle}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				require.Equal(t, matchTitle, r.Title)
+			}
+		})
+	})
+
+	t.Run("PausedFilter", func(t *testing.T) {
+		pausedRules := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex(), gen.WithIsPaused(true)).GenerateManyRef(2)
+		activeRules := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex(), gen.WithIsPaused(false)).GenerateManyRef(3)
+
+		initWithPausedData := func(t *testing.T) (*AlertRuleService, *fakeRuleAccessControlService) {
+			service, ruleStore, _, ac := initService(t)
+			service.folderService = fs
+			ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(pausedRules, activeRules...)}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+			return service, ac
+		}
+
+		t.Run("true should return only paused rules", func(t *testing.T) {
+			service, _ := initWithPausedData(t)
+			trueVal := true
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				PausedFilter: ListRuleBoolFilter{Value: &trueVal},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				require.True(t, r.IsPaused)
+			}
+		})
+
+		t.Run("false should return only non-paused rules", func(t *testing.T) {
+			service, _ := initWithPausedData(t)
+			falseVal := false
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				PausedFilter: ListRuleBoolFilter{Value: &falseVal},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 3)
+			for _, r := range rules {
+				require.False(t, r.IsPaused)
+			}
+		})
+	})
+
+	t.Run("DashboardFilter", func(t *testing.T) {
+		dashUID := "dash-abc"
+		otherDashUID := "dash-xyz"
+		dashRules := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex(), gen.WithDashboardAndPanel(&dashUID, nil)).GenerateManyRef(2)
+		otherRules := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex(), gen.WithDashboardAndPanel(&otherDashUID, nil)).GenerateManyRef(3)
+
+		initWithDashData := func(t *testing.T) (*AlertRuleService, *fakeRuleAccessControlService) {
+			service, ruleStore, _, ac := initService(t)
+			service.folderService = fs
+			ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(dashRules, otherRules...)}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+			return service, ac
+		}
+
+		t.Run("Include should return only rules with the exact dashboardUID", func(t *testing.T) {
+			service, _ := initWithDashData(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				DashboardFilter: ListRuleStringFilter{Include: []string{dashUID}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				require.Equal(t, dashUID, r.GetDashboardUID())
+			}
+		})
+	})
+
+	t.Run("PanelIDFilter", func(t *testing.T) {
+		panelID := int64(42)
+		panelIDStr := "42"
+		dashUID := "dash-for-panel"
+		panelRules := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex(), gen.WithDashboardAndPanel(&dashUID, &panelID)).GenerateManyRef(2)
+		otherPanelID := int64(99)
+		otherRules := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex(), gen.WithDashboardAndPanel(&dashUID, &otherPanelID)).GenerateManyRef(3)
+
+		initWithPanelData := func(t *testing.T) (*AlertRuleService, *fakeRuleAccessControlService) {
+			service, ruleStore, _, ac := initService(t)
+			service.folderService = fs
+			ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(panelRules, otherRules...)}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+			return service, ac
+		}
+
+		t.Run("Include should return only rules with the exact panelID", func(t *testing.T) {
+			service, _ := initWithPanelData(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				PanelIDFilter: ListRuleStringFilter{Include: []string{panelIDStr}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				require.Equal(t, panelID, r.GetPanelID())
+			}
+		})
+	})
 }
 
 func TestGetAlertRules(t *testing.T) {

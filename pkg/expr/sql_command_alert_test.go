@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 func TestExtractNumberSetFromSQLForAlerting(t *testing.T) {
@@ -135,7 +136,7 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 		values := make([]*float64, totalRows)
 		hosts := make([]*string, totalRows)
 
-		for i := 0; i < totalRows; i++ {
+		for i := range totalRows {
 			labels[i] = "cpu"
 			values[i] = fp(float64(i + 1))
 			h := fmt.Sprintf("host%d", i%15) // 15 distinct combos, each duplicated

@@ -1,6 +1,6 @@
 import { ValueMatcherID } from '@grafana/data';
 
-import { ValueMatcherUIRegistryItem } from './types';
+import { type ValueMatcherUIRegistryItem } from './types';
 
 interface Props {}
 export const NoopMatcherEditor = (props: Props) => {

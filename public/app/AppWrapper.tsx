@@ -1,7 +1,7 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { UNSAFE_PortalProvider } from '@react-aria/overlays';
-import { Action, KBarProvider } from 'kbar';
-import { Component, ComponentType, Fragment, ReactNode } from 'react';
+import { type Action, KBarProvider } from 'kbar';
+import { Component, type ComponentType, Fragment, type ReactNode } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
 import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
@@ -13,14 +13,14 @@ import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
 import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
-import { GrafanaContext, GrafanaContextType } from './core/context/GrafanaContext';
+import { GrafanaContext, type GrafanaContextType } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
-import { RouteDescriptor } from './core/navigation/types';
+import { type RouteDescriptor } from './core/navigation/types';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
-import { PluginExtensionRegistries } from './features/plugins/extensions/registry/types';
+import { type PluginExtensionRegistries } from './features/plugins/extensions/registry/types';
 import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
 import { RouterWrapper } from './routes/RoutesWrapper';
 

@@ -1,9 +1,9 @@
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, getDefaultTimeRange } from '@grafana/data';
+import { CoreApp, type DataQueryRequest, getDefaultTimeRange } from '@grafana/data';
 
-import { DataAPI, VariableSupport } from './VariableSupport';
-import { ProfileTypeMessage, VariableQuery } from './types';
+import { type DataAPI, VariableSupport } from './VariableSupport';
+import { type ProfileTypeMessage, type VariableQuery } from './types';
 
 describe('VariableSupport', () => {
   it('should query profiles', async function () {

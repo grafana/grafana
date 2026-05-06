@@ -4,7 +4,7 @@
  * Replace an existing template variable with a new definition, preserving its position.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { sceneGraph } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';

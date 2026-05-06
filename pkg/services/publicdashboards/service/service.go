@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -111,9 +111,12 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 		FolderUid:              dash.FolderUID,
 		PublicDashboardEnabled: pubdash.IsEnabled,
 	}
-	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
-
-	sanitizeData(dash.Data)
+	if isDashboardV2(dash) {
+		sanitizeDataV2(dash.Data)
+	} else {
+		dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
+		sanitizeData(dash.Data)
+	}
 
 	return &dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}, nil
 }
@@ -390,7 +393,7 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 		DashboardUIDs: dashUIDs,
 		SignedInUser:  query.User,
 		Limit:         int64(len(dashUIDs)),
-		Type:          searchstore.TypeDashboard,
+		Type:          model.TypeDashboard,
 	})
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetDashboards: %w", err)

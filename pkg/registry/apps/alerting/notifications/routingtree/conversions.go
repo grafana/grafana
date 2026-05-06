@@ -15,16 +15,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, namespacer request.NamespaceMapper) (*model.RoutingTreeList, error) {
+func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, namespacer request.NamespaceMapper, accesses map[string]ngmodels.RoutePermissionSet) (*model.RoutingTreeList, error) {
 	result := &model.RoutingTreeList{
 		Items: make([]model.RoutingTree, 0, len(routes)),
 	}
 	for _, r := range routes {
-		k8sResource, err := ConvertToK8sResource(orgID, r, namespacer)
+		var access *ngmodels.RoutePermissionSet
+		if accesses != nil {
+			if a, ok := accesses[r.GetUID()]; ok {
+				access = &a
+			}
+		}
+		k8sResource, err := ConvertToK8sResource(orgID, r, namespacer, access)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert route %q to k8s resource: %w", r.Name, err)
 		}
@@ -33,7 +40,7 @@ func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, nam
 	return result, nil
 }
 
-func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, namespacer request.NamespaceMapper) (*model.RoutingTree, error) {
+func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, namespacer request.NamespaceMapper, access *ngmodels.RoutePermissionSet) (*model.RoutingTree, error) {
 	spec := model.RoutingTreeSpec{
 		Defaults: model.RoutingTreeRouteDefaults{
 			GroupBy:        r.GroupBy,
@@ -63,9 +70,26 @@ func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, namespace
 		},
 		Spec: spec,
 	}
+	if access != nil {
+		for _, action := range ngmodels.RoutePermissions() {
+			mappedAction, ok := permissionMapper[action]
+			if !ok {
+				return nil, fmt.Errorf("unknown action %v", action)
+			}
+			if can, _ := access.Has(action); can {
+				result.SetAccessControl(mappedAction)
+			}
+		}
+	}
 	result.SetProvenanceStatus(string(r.Provenance))
 	result.UID = gapiutil.CalculateClusterWideUID(result)
 	return result, nil
+}
+
+var permissionMapper = map[ngmodels.RoutePermission]string{
+	ngmodels.RoutePermissionAdmin:  "canAdmin",
+	ngmodels.RoutePermissionWrite:  "canWrite",
+	ngmodels.RoutePermissionDelete: "canDelete",
 }
 
 func convertRouteToK8sSubRoute(r *definitions.Route) model.RoutingTreeRoute {

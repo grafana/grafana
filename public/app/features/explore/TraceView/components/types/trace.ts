@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { type TraceKeyValuePair, type TraceLog } from '@grafana/data';
 
 /**
  * All timestamps are in microseconds

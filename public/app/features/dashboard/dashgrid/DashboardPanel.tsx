@@ -1,12 +1,12 @@
 import { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { initPanelState } from '../../panel/state/actions';
 import { setPanelInstanceState } from '../../panel/state/reducers';
-import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
+import { type DashboardModel } from '../state/DashboardModel';
+import { type PanelModel } from '../state/PanelModel';
 
 import { LazyLoader } from './LazyLoader';
 import { PanelStateWrapper } from './PanelStateWrapper';

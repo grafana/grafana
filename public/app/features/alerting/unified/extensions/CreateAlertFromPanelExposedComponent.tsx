@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 import { getDefaultRelativeTimeRange, getNextRefId, locationUtil, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 

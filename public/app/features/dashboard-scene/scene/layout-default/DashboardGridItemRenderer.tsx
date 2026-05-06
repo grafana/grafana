@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { RefObject, useMemo } from 'react';
+import { type RefObject, useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
-import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { LazyLoader, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
 import { useElementSelection } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
@@ -11,7 +11,7 @@ import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayou
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
 
-import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
+import { type DashboardGridItem, type RepeatDirection } from './DashboardGridItem';
 
 interface PanelWrapperProps {
   panel: VizPanel;

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 
 import { isTableCellStylesKeyEqual } from '../styles';
-import { DataLinksCellProps, TableCellStyles } from '../types';
+import { type DataLinksCellProps, type TableCellStyles } from '../types';
 import { getCellLinks, getJustifyContent } from '../utils';
 
 export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {

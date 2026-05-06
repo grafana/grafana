@@ -3,11 +3,11 @@ import * as React from 'react';
 
 import { Spinner, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Resource } from 'app/features/apiserver/types';
+import { type Resource } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import {
-  DecoratedRevisionModel,
-  RevisionModel,
+  type DecoratedRevisionModel,
+  type RevisionModel,
   VERSIONS_FETCH_LIMIT,
 } from 'app/features/dashboard/types/revisionModels';
 import { VersionsHistoryButtons } from 'app/features/dashboard-scene/settings/version-history/VersionHistoryButtons';
@@ -16,7 +16,7 @@ import { VersionHistoryHeader } from 'app/features/dashboard-scene/settings/vers
 import { VersionHistoryComparison } from '../VersionHistory/VersionHistoryComparison';
 import { VersionHistoryTable } from '../VersionHistory/VersionHistoryTable';
 
-import { SettingsPageProps } from './types';
+import { type SettingsPageProps } from './types';
 
 interface Props extends SettingsPageProps {}
 

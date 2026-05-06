@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import yaml from 'js-yaml';
+import type * as MonacoEditorModule from 'monaco-editor';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   CodeEditor,
@@ -287,7 +288,7 @@ function isValidJson(value: string): boolean {
   }
 }
 
-function configureSchemaDiagnostics(monaco: typeof import('monaco-editor'), schema: JSONSchema): void {
+function configureSchemaDiagnostics(monaco: typeof MonacoEditorModule, schema: JSONSchema): void {
   monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
     allowComments: false,

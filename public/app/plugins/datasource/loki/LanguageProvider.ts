@@ -1,11 +1,18 @@
 import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
 
-import { AbstractQuery, getDefaultTimeRange, KeyValue, LanguageProvider, ScopedVars, TimeRange } from '@grafana/data';
-import { BackendSrvRequest, config } from '@grafana/runtime';
+import {
+  type AbstractQuery,
+  getDefaultTimeRange,
+  type KeyValue,
+  LanguageProvider,
+  type ScopedVars,
+  type TimeRange,
+} from '@grafana/data';
+import { type BackendSrvRequest, config } from '@grafana/runtime';
 
 import { LokiQueryType } from './dataquery.gen';
-import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
+import { DEFAULT_MAX_LINES_SAMPLE, type LokiDatasource } from './datasource';
 import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
 import { getStreamSelectorsFromQuery } from './queryUtils';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
@@ -14,7 +21,7 @@ import {
   extractLogParserFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LabelType, LokiQuery, ParserAndLabelKeysResult } from './types';
+import { type DetectedFieldsResult, LabelType, type LokiQuery, type ParserAndLabelKeysResult } from './types';
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';
@@ -240,7 +247,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const range = options?.timeRange ?? this.getDefaultTimeRange();
     const { start, end } = this.datasource.getTimeRangeParams(range);
     const params = { 'match[]': match, start, end };
-    return await this.request(url, params);
+    const data = await this.request(url, params);
+    if (!Array.isArray(data)) {
+      return [];
+    }
+    return data;
   };
 
   // Cache key is a bit different here. We round up to a minute the intervals.
@@ -362,8 +373,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
           this.detectedFieldValuesCache.set(cacheKey, labelValues);
           this.detectedLabelValuesPromisesCache.delete(cacheKey);
           resolve(labelValues);
+        } else {
+          this.detectedLabelValuesPromisesCache.delete(cacheKey);
+          resolve([]);
         }
       } catch (error) {
+        this.detectedLabelValuesPromisesCache.delete(cacheKey);
         if (queryOptions?.throwError) {
           reject(error);
         } else {
@@ -435,6 +450,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
           this.labelsCache.set(cacheKey, labelValues);
           this.labelsPromisesCache.delete(cacheKey);
           resolve(labelValues);
+        } else {
+          this.labelsPromisesCache.delete(cacheKey);
+          resolve([]);
         }
       } catch (error) {
         console.error(error);

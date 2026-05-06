@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Controller, FormProvider, SubmitHandler, useForm, useFormContext } from 'react-hook-form';
+import { Controller, FormProvider, type SubmitHandler, useForm, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -25,7 +25,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
-import { Folder } from '../../types/rule-form';
+import { type Folder } from '../../types/rule-form';
 import {
   DataSourceType,
   isSupportedExternalPrometheusFlavoredRulesSourceType,

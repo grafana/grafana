@@ -27,6 +27,7 @@ var (
 
 var appManifestData = app.ManifestData{
 	AppName:          "correlation",
+	AppDisplayName:   "correlation",
 	Group:            "correlations.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
@@ -50,7 +51,7 @@ var appManifestData = app.ManifestData{
 					},
 					Schema: &versionSchemaCorrelationv0alpha1,
 					SelectableFields: []string{
-						"spec.datasource.name",
+						"spec.source.name",
 					},
 				},
 			},

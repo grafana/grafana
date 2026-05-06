@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/authlib/types"
@@ -14,10 +16,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/util/retry"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,6 +32,8 @@ import (
 )
 
 var ErrRestConfigNotAvailable = errors.New("k8s rest config provider not available")
+
+const subjectKindUser = "User"
 
 func (a *api) getDynamicClient(c *contextmodel.ReqContext) (dynamic.Interface, error) {
 	if a.restConfigProvider == nil {
@@ -83,10 +88,9 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 	// Get provisioned permissions from legacy API
 	provisionedDTO, err := a.getProvisionedPermissions(ctx, namespace, resourceID)
 	if err != nil {
-		a.logger.Warn("Failed to get provisioned permissions from legacy API", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
-	} else {
-		dto = append(dto, provisionedDTO...)
+		return nil, fmt.Errorf("failed to get provisioned permissions: %w", err)
 	}
+	dto = append(dto, provisionedDTO...)
 
 	// Add default Admin role when access control enforcement is disabled
 	// This maintains parity with the legacy API behavior
@@ -109,17 +113,13 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 }
 
 func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePermission, namespace string, isInherited bool) (getResourcePermissionsResponse, error) {
-	permissions := resourcePerm.Spec.Permissions
-	if len(permissions) == 0 {
-		return getResourcePermissionsResponse{}, nil
-	}
-
 	namespaceInfo, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse namespace %q: %w", namespace, err)
 	}
 	orgID := namespaceInfo.OrgID
 
+	permissions := resourcePerm.Spec.Permissions
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 
 	for _, perm := range permissions {
@@ -316,6 +316,15 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 	}
 	orgID := namespaceInfo.OrgID
 
+	var inheritedScopes []string
+	if a.service.options.InheritedScopesSolver != nil {
+		var err error
+		inheritedScopes, err = a.service.options.InheritedScopesSolver(ctx, orgID, resourceID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get inherited scopes for provisioned permissions: %w", err)
+		}
+	}
+
 	legacyPermissions, err := a.service.store.GetResourcePermissions(ctx, orgID, GetResourcePermissionsQuery{
 		Actions:              a.service.actions,
 		Resource:             a.service.options.Resource,
@@ -323,6 +332,7 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 		ResourceAttribute:    a.service.options.ResourceAttribute,
 		OnlyManaged:          false,
 		ExcludeManaged:       true, // SQL-level filter: exclude "managed:" roles to get only provisioned
+		InheritedScopes:      inheritedScopes,
 		EnforceAccessControl: false,
 		User:                 nil,
 	})
@@ -330,16 +340,9 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 		return nil, fmt.Errorf("failed to get legacy permissions: %w", err)
 	}
 
-	var provisionedPermissions []accesscontrol.ResourcePermission
-	for _, perm := range legacyPermissions {
-		if !perm.IsInherited {
-			provisionedPermissions = append(provisionedPermissions, perm)
-		}
-	}
-
 	// Convert to DTOs
-	dto := make(getResourcePermissionsResponse, 0, len(provisionedPermissions))
-	for _, p := range provisionedPermissions {
+	dto := make(getResourcePermissionsResponse, 0, len(legacyPermissions))
+	for _, p := range legacyPermissions {
 		if permission := a.service.MapActions(p); permission != "" {
 			teamAvatarUrl := ""
 			if p.TeamID != 0 {
@@ -361,7 +364,7 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 				Actions:          p.Actions,
 				Permission:       permission,
 				IsManaged:        false,
-				IsInherited:      false,
+				IsInherited:      p.IsInherited,
 				IsServiceAccount: p.IsServiceAccount,
 			})
 		}
@@ -605,4 +608,210 @@ func (a *api) getPermissionName(ctx context.Context, perm accesscontrol.SetResou
 		return perm.BuiltinRole, nil
 	}
 	return "", fmt.Errorf("no valid permission subject found")
+}
+
+// Teams-specific redirect functions reading and writing Team.Spec.Members.
+
+func (a *api) getTeamPermissionsFromMembers(c *contextmodel.ReqContext, namespace string, resourceID string) (getResourcePermissionsResponse, error) {
+	dynamicClient, err := a.getDynamicClient(c)
+	if err != nil {
+		return nil, err
+	}
+	return a.listTeamMemberPermissions(c, dynamicClient, namespace, resourceID)
+}
+
+func (a *api) listTeamMemberPermissions(c *contextmodel.ReqContext, dynamicClient dynamic.Interface, namespace string, resourceID string) (getResourcePermissionsResponse, error) {
+	ctx := c.Req.Context()
+
+	teamID, err := strconv.ParseInt(resourceID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid team resource ID: %w", err)
+	}
+
+	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+		OrgID: c.GetOrgID(),
+		ID:    teamID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get team details: %w", err)
+	}
+
+	teamResource := dynamicClient.Resource(iamv0.TeamResourceInfo.GroupVersionResource()).Namespace(namespace)
+	teamObj, err := teamResource.Get(ctx, teamDetails.UID, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get team from k8s: %w", err)
+	}
+
+	var t iamv0.Team
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(teamObj.Object, &t); err != nil {
+		return nil, fmt.Errorf("failed to decode team: %w", err)
+	}
+
+	dto := make(getResourcePermissionsResponse, 0, len(t.Spec.Members))
+	for _, member := range t.Spec.Members {
+		if member.Kind != subjectKindUser {
+			continue
+		}
+
+		permission, err := teamMemberPermissionToString(member.Permission)
+		if err != nil {
+			a.logger.Warn("Skipping team member with unknown permission", "error", err, "resource", a.service.options.Resource)
+			continue
+		}
+		// Capitalize for legacy clients and PermissionsToActions, which still
+		// key on "Admin"/"Member" rather than the lowercase schema form.
+		legacyLabel := cases.Title(language.Und).String(permission)
+		actions, exists := a.service.options.PermissionsToActions[legacyLabel]
+		if !exists {
+			a.logger.Warn("Permission not found in PermissionsToActions map", "permission", legacyLabel, "resource", a.service.options.Resource)
+			actions = []string{}
+		}
+
+		permDTO := resourcePermissionDTO{
+			Permission: legacyLabel,
+			Actions:    actions,
+			IsManaged:  true,
+		}
+
+		userDetails, err := a.service.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: member.Name})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user details for UID %s: %w", member.Name, err)
+		}
+
+		permDTO.UserID = userDetails.ID
+		permDTO.UserUID = userDetails.UID
+		permDTO.UserLogin = userDetails.Login
+		permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
+		permDTO.IsServiceAccount = userDetails.IsServiceAccount
+		permDTO.RoleName = fmt.Sprintf("managed:users:%d:permissions", userDetails.ID)
+		permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, c.GetOrgID())
+
+		dto = append(dto, permDTO)
+	}
+
+	return dto, nil
+}
+
+func (a *api) setUserPermissionInTeamMembers(c *contextmodel.ReqContext, namespace string, resourceID string, userID int64, permission string) error {
+	dynamicClient, err := a.getDynamicClient(c)
+	if err != nil {
+		return err
+	}
+	return a.setTeamMember(c, dynamicClient, namespace, resourceID, userID, permission)
+}
+
+func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.Interface, namespace string, resourceID string, userID int64, permission string) error {
+	ctx := c.Req.Context()
+
+	userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	if err != nil {
+		return fmt.Errorf("failed to get user details: %w", err)
+	}
+
+	teamID, err := strconv.ParseInt(resourceID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid team resource ID: %w", err)
+	}
+
+	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+		OrgID: c.GetOrgID(),
+		ID:    teamID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get team details: %w", err)
+	}
+
+	var memberPerm iamv0.TeamTeamPermission
+	if permission != "" {
+		mp, err := stringToTeamMemberPermission(permission)
+		if err != nil {
+			return err
+		}
+		memberPerm = mp
+	}
+
+	teamResource := dynamicClient.Resource(iamv0.TeamResourceInfo.GroupVersionResource()).Namespace(namespace)
+
+	// Read-modify-write: spec.members is a slice on the Team object so a
+	// concurrent writer can lose updates if we don't refetch on conflict.
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		teamObj, err := teamResource.Get(ctx, teamDetails.UID, metav1.GetOptions{})
+		if err != nil {
+			// Removing a member from a team that no longer exists is a no-op.
+			if k8serrors.IsNotFound(err) && permission == "" {
+				return nil
+			}
+			return fmt.Errorf("failed to get team: %w", err)
+		}
+
+		var t iamv0.Team
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(teamObj.Object, &t); err != nil {
+			return fmt.Errorf("failed to decode team: %w", err)
+		}
+
+		idx := slices.IndexFunc(t.Spec.Members, func(m iamv0.TeamTeamMember) bool {
+			return m.Kind == subjectKindUser && m.Name == userDetails.UID
+		})
+
+		// External members are owned by team-sync and must not be mutated through
+		// this path. Returning an error (rather than a silent no-op) prevents the
+		// dual-write caller from proceeding with the legacy SQL write, which would
+		// otherwise cause k8s and SQL to diverge until the next reconciliation.
+		if idx >= 0 && t.Spec.Members[idx].External {
+			return ErrExternalTeamMember.Errorf("user %q is externally-synced", userDetails.UID)
+		}
+
+		switch {
+		case permission == "" && idx < 0:
+			return nil
+		case permission == "":
+			t.Spec.Members = slices.Delete(t.Spec.Members, idx, idx+1)
+		case idx >= 0:
+			if t.Spec.Members[idx].Permission == memberPerm {
+				return nil
+			}
+			t.Spec.Members[idx].Permission = memberPerm
+		default:
+			t.Spec.Members = append(t.Spec.Members, iamv0.TeamTeamMember{
+				Kind:       subjectKindUser,
+				Name:       userDetails.UID,
+				Permission: memberPerm,
+				External:   false,
+			})
+		}
+
+		updatedObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&t)
+		if err != nil {
+			return fmt.Errorf("failed to encode team: %w", err)
+		}
+
+		if _, err := teamResource.Update(ctx, &unstructured.Unstructured{Object: updatedObj}, metav1.UpdateOptions{}); err != nil {
+			return fmt.Errorf("failed to update team members: %w", err)
+		}
+		return nil
+	})
+}
+
+// teamMemberPermissionToString returns the lowercase schema value ("admin",
+// "member") that matches teammember.cue.
+func teamMemberPermissionToString(p iamv0.TeamTeamPermission) (string, error) {
+	switch p {
+	case iamv0.TeamTeamPermissionAdmin:
+		return "admin", nil
+	case iamv0.TeamTeamPermissionMember:
+		return "member", nil
+	default:
+		return "", fmt.Errorf("unhandled TeamTeamPermission %q", p)
+	}
+}
+
+func stringToTeamMemberPermission(s string) (iamv0.TeamTeamPermission, error) {
+	switch strings.ToLower(s) {
+	case "admin":
+		return iamv0.TeamTeamPermissionAdmin, nil
+	case "member":
+		return iamv0.TeamTeamPermissionMember, nil
+	default:
+		return "", fmt.Errorf("unsupported team permission %q", s)
+	}
 }

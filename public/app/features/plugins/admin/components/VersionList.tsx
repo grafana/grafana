@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect, useState, useMemo } from 'react';
 import { major, compare, lte } from 'semver';
 
-import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
+import { dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2, Badge } from '@grafana/ui';
 
-import { getLatestCompatibleVersion, shouldDisablePluginInstall } from '../helpers';
-import { CatalogPlugin, PluginUpdateStrategy, Version } from '../types';
+import { formatGrafanaDependency, getLatestCompatibleVersion, shouldDisablePluginInstall } from '../helpers';
+import { type CatalogPlugin, PluginUpdateStrategy, type Version } from '../types';
 
 import { VersionInstallButton } from './VersionInstallButton';
 
@@ -127,6 +127,7 @@ export const VersionList = ({ plugin }: Props) => {
                       shouldDisableVersionInstallation({
                         version,
                         latestMajorVersions,
+                        latestCompatibleVersion: latestCompatibleVersion?.version,
                         installedVersion,
                         updateStrategy: plugin.managed.strategy,
                       })
@@ -141,7 +142,9 @@ export const VersionList = ({ plugin }: Props) => {
                 {dateTimeFormatTimeAgo(version.updatedAt || version.createdAt)}
               </td>
               {/* Dependency */}
-              <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>
+              <td className={isInstalledVersion ? styles.currentVersion : ''}>
+                {formatGrafanaDependency(version.grafanaDependency)}
+              </td>
             </tr>
           );
         })}
@@ -204,6 +207,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 interface ShouldDisableVersionInstallationArgs {
   version: Version;
   latestMajorVersions: Set<string>;
+  latestCompatibleVersion: string | undefined;
   installedVersion: string | undefined;
   updateStrategy?: PluginUpdateStrategy;
 }
@@ -211,6 +215,7 @@ interface ShouldDisableVersionInstallationArgs {
 function shouldDisableVersionInstallation({
   version,
   latestMajorVersions,
+  latestCompatibleVersion,
   installedVersion,
   updateStrategy,
 }: ShouldDisableVersionInstallationArgs) {
@@ -219,7 +224,12 @@ function shouldDisableVersionInstallation({
   }
 
   if (updateStrategy === PluginUpdateStrategy.MajorAligned) {
-    const lessThanInstalledVersion = installedVersion && lte(version.version, installedVersion);
+    if (!installedVersion) {
+      // When no version is installed, only the latest compatible version can be installed
+      return version.version !== latestCompatibleVersion;
+    }
+
+    const lessThanInstalledVersion = lte(version.version, installedVersion);
     const isLatestMajorVersion = latestMajorVersions.has(version.version);
 
     // should disable the install when the version is lower than the current installed

@@ -64,7 +64,6 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		configStore,
 		10*time.Second,
 		notifier.NewCrypto(secretsService, configStore, log.NewNopLogger()),
-		configStore,
 		m.GetRemoteAlertmanagerMetrics(),
 		tracing.InitializeTracerForTest(),
 		false,
@@ -88,10 +87,12 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
 		ngfakes.NewFakeReceiverPermissionsService(),
+		ngfakes.NewFakeRoutePermissionsService(),
 		nopLogger,
 		secretsService,
 		featuremgmt.WithFeatures(),
 		nil,
+		false,
 		notifier.WithAlertmanagerOverride(override),
 	)
 	require.NoError(t, err)

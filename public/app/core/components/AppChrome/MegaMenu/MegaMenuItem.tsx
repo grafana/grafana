@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { FeatureState, GrafanaTheme2, NavModelItem, store, toIconName } from '@grafana/data';
+import { FeatureState, type GrafanaTheme2, type NavModelItem, store, toIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';

@@ -6,10 +6,10 @@ import { Fragment, useDeferredValue, useMemo } from 'react';
 import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 import {
-  AlertGroupTotals,
+  type AlertGroupTotals,
   AlertInstanceTotalState,
-  CombinedRuleGroup,
-  CombinedRuleNamespace,
+  type CombinedRuleGroup,
+  type CombinedRuleNamespace,
 } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 

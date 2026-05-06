@@ -1,112 +1,44 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import {
-  useCreateRepositoryJobsMutation,
-  useDeleteRepositoryFilesWithPathMutation,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
-import { ProvisionedDashboardData, useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
+import { setupProvisioningMswServer } from '../../mocks/server';
 
-import { DeleteProvisionedDashboardDrawer, Props } from './DeleteProvisionedDashboardDrawer';
+import { DeleteProvisionedDashboardForm, type Props } from './DeleteProvisionedDashboardForm';
 
-jest.mock('../../hooks/useProvisionedDashboardData', () => ({
-  useProvisionedDashboardData: jest.fn(),
-}));
+setupProvisioningMswServer();
 
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  useDeleteRepositoryFilesWithPathMutation: jest.fn(),
-  useCreateRepositoryJobsMutation: jest.fn(),
-  provisioningAPIv0alpha1: {
-    endpoints: {
-      listRepository: {
-        select: jest.fn(() => () => ({ data: { items: [] } })),
-      },
-    },
-  },
-}));
-jest.mock('react-redux', () => {
-  const actual = jest.requireActual('react-redux');
-  return {
-    ...actual,
-    useDispatch: jest.fn(),
-  };
-});
 jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
-  useProvisionedRequestHandler: jest.fn(({ request, handlers }) => {
-    if (request.isError && handlers.onError) {
-      handlers.onError(request.error, { repoType: 'github', resourceType: 'dashboard', workflow: 'branch' });
-    }
-  }),
+  useProvisionedRequestHandler: jest.fn(),
 }));
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppEvents: jest.fn(),
-}));
+
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
-  useNavigate: () => mockNavigate,
+  useNavigate: () => jest.fn(),
 }));
-// Add this variable declaration near your other mock variables
-const mockNavigate = jest.fn();
 
-// Mock shared form components
 jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
   ResourceEditFormSharedFields: ({ disabled }: { disabled: boolean }) => (
     <textarea data-testid="shared-fields" disabled={disabled} />
   ),
 }));
 
-const mockDeleteRepoFile = jest.fn();
-const mockCreateJob = jest.fn();
-const mockPublish = jest.fn();
-const mockUseDeleteRepositoryFiles = useDeleteRepositoryFilesWithPathMutation as jest.MockedFunction<
-  typeof useDeleteRepositoryFilesWithPathMutation
->;
-const mockUseCreateRepositoryJobs = useCreateRepositoryJobsMutation as jest.MockedFunction<
-  typeof useCreateRepositoryJobsMutation
->;
-const mockUseProvisionedDashboardData = useProvisionedDashboardData as jest.MockedFunction<
-  typeof useProvisionedDashboardData
->;
-
-// Mock request state helper
-type MockRequestState = {
-  isLoading: boolean;
-  isSuccess: boolean;
-  isError: boolean;
-  error?: Error;
-  reset: () => void;
-};
-
-const createMockRequestState = (overrides: Partial<MockRequestState> = {}): MockRequestState => ({
-  isLoading: false,
-  isSuccess: false,
-  isError: false,
-  reset: jest.fn(),
-  ...overrides,
-});
-
-interface SetupOptions extends Partial<Props> {
-  provisionedData?: Partial<ProvisionedDashboardData>;
-  requestState?: Partial<MockRequestState>;
-}
-
-function setup(options: SetupOptions = {}) {
-  const { provisionedData = {}, requestState = {}, ...props } = options;
-  const user = userEvent.setup();
-
+function setup(props: Partial<Props> = {}) {
   const defaultDashboard = new DashboardScene({
     title: 'Test Dashboard',
     uid: 'test-uid',
     meta: { slug: 'test-slug' },
   });
 
-  const defaultProvisionedData: ProvisionedDashboardData = {
+  const defaultProps: Props = {
+    dashboard: defaultDashboard,
+    canPushToConfiguredBranch: true,
+    readOnly: false,
+    isNew: false,
+    onDismiss: jest.fn(),
     defaultValues: {
       repo: 'test-repo',
       ref: 'main',
@@ -115,10 +47,7 @@ function setup(options: SetupOptions = {}) {
       comment: '',
       title: 'Test Dashboard',
       description: 'Test Description',
-      folder: {
-        uid: 'test-folder',
-        title: 'Test Folder',
-      },
+      folder: { uid: 'test-folder', title: 'Test Folder' },
     },
     repository: {
       name: 'test-repo',
@@ -127,47 +56,18 @@ function setup(options: SetupOptions = {}) {
       type: 'github' as const,
       workflows: ['branch', 'write'] as Array<'branch' | 'write'>,
     },
-    loadedFromRef: 'main',
-    readOnly: false,
-    canPushToConfiguredBranch: true,
-    isNew: false,
-    repoDataStatus: RepoViewStatus.Ready,
-    ...provisionedData,
-  };
-
-  const defaultProps: Props = {
-    dashboard: defaultDashboard,
-    onDismiss: jest.fn(),
     ...props,
   };
 
-  // Set up mocks with the merged data
-  mockUseProvisionedDashboardData.mockReturnValue(defaultProvisionedData);
-  mockUseDeleteRepositoryFiles.mockReturnValue([
-    mockDeleteRepoFile,
-    createMockRequestState(requestState) as ReturnType<typeof useDeleteRepositoryFilesWithPathMutation>[1],
-  ]);
-  mockUseCreateRepositoryJobs.mockReturnValue([
-    mockCreateJob,
-    createMockRequestState(requestState) as ReturnType<typeof useCreateRepositoryJobsMutation>[1],
-  ]);
-
   return {
-    user,
     props: defaultProps,
-    defaultProvisionedData,
-    ...render(<DeleteProvisionedDashboardDrawer {...defaultProps} />),
+    ...render(<DeleteProvisionedDashboardForm {...defaultProps} />),
   };
 }
 
-describe('DeleteProvisionedDashboardDrawer', () => {
+describe('DeleteProvisionedDashboardForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Mock getAppEvents
-    (getAppEvents as jest.Mock).mockReturnValue({
-      publish: mockPublish,
-    });
   });
 
   describe('Rendering', () => {
@@ -176,16 +76,6 @@ describe('DeleteProvisionedDashboardDrawer', () => {
 
       expect(screen.getByRole('heading', { name: 'Delete Provisioned Dashboard' })).toBeInTheDocument();
       expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
-    });
-
-    it('should return null when defaultValues are not provided', () => {
-      setup({
-        provisionedData: {
-          defaultValues: null,
-        },
-      });
-
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     it('should render shared form fields correctly', () => {
@@ -204,103 +94,96 @@ describe('DeleteProvisionedDashboardDrawer', () => {
 
   describe('Form Submission', () => {
     it('should successfully delete dashboard with branch workflow', async () => {
+      let capturedRequest: { url: URL } | null = null;
+
+      server.use(
+        http.delete(`${BASE}/repositories/:name/files/*`, ({ request }) => {
+          capturedRequest = { url: new URL(request.url) };
+          return HttpResponse.json({ resource: {} });
+        })
+      );
+
       const { user } = setup();
 
       const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
       await user.click(deleteButton);
 
       await waitFor(() => {
-        expect(mockDeleteRepoFile).toHaveBeenCalledWith({
-          name: 'test-repo',
-          path: 'dashboards/test.json',
-          ref: 'main',
-          message: 'Delete dashboard: Test Dashboard',
-        });
+        expect(capturedRequest).not.toBeNull();
       });
+
+      expect(capturedRequest!.url.pathname).toContain('/repositories/test-repo/files/dashboards/test.json');
+      expect(capturedRequest!.url.searchParams.get('ref')).toBe('main');
+      expect(capturedRequest!.url.searchParams.get('message')).toBe('Delete dashboard: Test Dashboard');
     });
 
     it('should handle missing repository name', async () => {
       const { user } = setup({
-        provisionedData: {
-          defaultValues: {
-            repo: '',
-            ref: 'main',
-            workflow: 'branch' as const,
-            path: 'dashboards/test.json',
-            comment: '',
-            title: 'Test Dashboard',
-            description: 'Test Description',
-            folder: { uid: 'test-folder', title: 'Test Folder' },
-          },
-          repository: undefined,
+        defaultValues: {
+          repo: '',
+          ref: 'main',
+          workflow: 'branch' as const,
+          path: 'dashboards/test.json',
+          comment: '',
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          folder: { uid: 'test-folder', title: 'Test Folder' },
         },
-      });
-
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
-      await user.click(deleteButton);
-
-      expect(consoleSpy).toHaveBeenCalledWith('Missing required repository for deletion:', {
-        repo: '',
-      });
-      expect(mockDeleteRepoFile).not.toHaveBeenCalled();
-      consoleSpy.mockRestore();
-    });
-
-    it('should handle missing path', async () => {
-      const { user } = setup({
-        provisionedData: {
-          defaultValues: {
-            repo: 'test-repo',
-            ref: 'main',
-            workflow: 'branch' as const,
-            path: '',
-            comment: '',
-            title: 'Test Dashboard',
-            description: 'Test Description',
-            folder: { uid: 'test-folder', title: 'Test Folder' },
-          },
-        },
+        repository: undefined,
       });
 
       const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
       await user.click(deleteButton);
 
-      expect(mockDeleteRepoFile).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Missing required repository for deletion');
+      });
     });
   });
 
   describe('Error Handling', () => {
-    it('should handle error state', async () => {
-      const error = new Error('API Error');
-      setup({
-        requestState: {
-          isError: true,
-          error,
-        },
-      });
+    it('should display error alert when delete request fails', async () => {
+      server.use(
+        http.delete(`${BASE}/repositories/:name/files/*`, () => {
+          return HttpResponse.json({ message: 'Something went wrong' }, { status: 500 });
+        })
+      );
+
+      const { user } = setup();
+
+      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
+      await user.click(deleteButton);
 
       await waitFor(() => {
-        expect(mockPublish).toHaveBeenCalledWith({
-          type: AppEvents.alertError.name,
-          payload: ['Failed to delete dashboard', error],
-        });
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+    });
+
+    it('should display branch-not-found message for 404 errors', async () => {
+      server.use(
+        http.delete(`${BASE}/repositories/:name/files/*`, () => {
+          return HttpResponse.json({ message: 'file not found' }, { status: 404 });
+        })
+      );
+
+      const { user } = setup();
+
+      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
+      await user.click(deleteButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          'You have selected a branch that does not contain this dashboard'
+        );
       });
     });
   });
 
-  describe('Loading State', () => {
-    it('should show loading state when deletion is in progress', () => {
-      setup({
-        requestState: {
-          isLoading: true,
-        },
-      });
+  describe('Read-only State', () => {
+    it('should disable delete button when read-only', () => {
+      setup({ readOnly: true });
 
-      const deleteButton = screen.getByRole('button', { name: /deleting/i });
-      expect(deleteButton).toBeDisabled();
-      expect(deleteButton).toHaveTextContent('Deleting...');
+      expect(screen.getByRole('button', { name: /delete dashboard/i })).toBeDisabled();
     });
   });
 

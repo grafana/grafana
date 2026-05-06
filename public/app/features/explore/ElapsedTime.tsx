@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useInterval } from 'react-use';
 
-import { Time, TimeProps } from './Time';
+import { Time, type TimeProps } from './Time';
 
 const INTERVAL = 150;
 

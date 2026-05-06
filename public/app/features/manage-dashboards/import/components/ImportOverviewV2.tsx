@@ -2,12 +2,12 @@ import { useMemo } from 'react';
 
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
-import { DashboardInputs, DashboardSource, ImportFormDataV2 } from '../../types';
+import { type DashboardInputs, DashboardSource, type ImportFormDataV2 } from '../../types';
 import { truncateFloatGridItems } from '../utils/floatingGridItems';
 import { applyV2Inputs } from '../utils/inputs';
 

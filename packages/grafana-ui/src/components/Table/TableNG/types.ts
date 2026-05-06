@@ -1,25 +1,25 @@
-import { FC, SyntheticEvent } from 'react';
-import { CellRendererProps, Column } from 'react-data-grid';
+import { type FC, type SyntheticEvent } from 'react';
+import { type CellRendererProps, type Column } from 'react-data-grid';
 
 import {
-  DataFrame,
-  Field,
-  GrafanaTheme2,
-  KeyValue,
-  TimeRange,
-  FieldConfigSource,
-  ActionModel,
-  FieldType,
-  DataFrameWithValue,
-  SelectableValue,
-  FieldState,
+  type DataFrame,
+  type Field,
+  type GrafanaTheme2,
+  type KeyValue,
+  type TimeRange,
+  type FieldConfigSource,
+  type ActionModel,
+  type FieldType,
+  type DataFrameWithValue,
+  type SelectableValue,
+  type FieldState,
 } from '@grafana/data';
-import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
+import { type MatcherScope, type TableCellHeight, type TableFieldOptions } from '@grafana/schema';
 
-import { TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellOptions } from '../types';
+import { type TableCellInspectorMode } from '../TableCellInspector';
+import { type TableCellOptions } from '../types';
 
-import { TextAlign } from './utils';
+import { type ApplyFilterResult, type TextAlign } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -27,7 +27,11 @@ export const FILTER_OUT_OPERATOR = '!=';
 export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
 export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
-export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
+export type TableColumnResizeActionCallback = (
+  fieldDisplayName: string,
+  width: number,
+  fieldScope?: MatcherScope
+) => void;
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
@@ -148,7 +152,9 @@ export interface BaseTableProps {
   maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
-  /** @alpha Used by SparklineCell when provided */
+  /* message to show when no rows are present */
+  noValue?: string;
+  /** used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
   // The index of the field value that the table will initialize scrolled to
@@ -289,6 +295,7 @@ export type FrameToRowsConverter = (frame: DataFrame, nestedRowIndex?: number) =
 export interface NestedRowEntry {
   raw: TableRow[];
   final: TableRow[];
+  filterResult: ApplyFilterResult;
 }
 
 // Type for mapping column names to their field types

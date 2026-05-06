@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 
 import {
-  Connection,
-  ConnectionSecure,
-  ConnectionSpec,
+  type Connection,
+  type ConnectionSecure,
+  type ConnectionSpec,
   useCreateConnectionMutation,
   useReplaceConnectionMutation,
 } from 'app/api/clients/provisioning/v0alpha1';

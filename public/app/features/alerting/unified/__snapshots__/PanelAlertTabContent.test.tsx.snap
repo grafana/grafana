@@ -14,7 +14,6 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
   ],
   "condition": "C",
   "folder": {
-    "kind": "folder",
     "title": "super folder",
     "uid": "abc",
   },

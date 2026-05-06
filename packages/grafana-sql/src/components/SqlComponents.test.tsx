@@ -1,6 +1,6 @@
 import { render, waitFor } from '@testing-library/react';
 
-import { SQLExpression } from '../types';
+import { type SQLExpression } from '../types';
 import { makeVariable } from '../utils/testHelpers';
 
 import { DatasetSelector } from './DatasetSelector';

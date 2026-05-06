@@ -33,6 +33,7 @@ function mockDiscoveryFailure() {
 }
 
 beforeAll(() => {
+  config.featureToggles.kubernetesDashboards = false;
   dashboardAPIVersionResolver.set({ v1: 'v1beta1', v2: 'v2beta1' });
 });
 
@@ -55,10 +56,6 @@ describe('DashboardApi', () => {
   });
 
   describe('when scenes enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.dashboardScene = true;
-    });
-
     it('should use legacy api kubernetesDashboards toggle is disabled', async () => {
       config.featureToggles.kubernetesDashboards = false;
       expect(await getDashboardAPI()).toBeInstanceOf(LegacyDashboardAPI);
@@ -90,34 +87,8 @@ describe('DashboardApi', () => {
     });
   });
 
-  describe('when scenes and dashboardNewLayouts are disabled', () => {
+  describe('when dashboardNewLayouts enabled', () => {
     beforeEach(() => {
-      config.featureToggles.dashboardScene = false;
-      config.featureToggles.dashboardNewLayouts = false;
-    });
-
-    it.each([undefined, false])('should use legacy api when kubernetesDashboards is %s', async (value) => {
-      config.featureToggles.kubernetesDashboards = value;
-      expect(await getDashboardAPI()).toBeInstanceOf(LegacyDashboardAPI);
-    });
-
-    it('should use v1 api when kubernetesDashboards toggle is enabled', async () => {
-      config.featureToggles.kubernetesDashboards = true;
-      expect(await getDashboardAPI()).toBeInstanceOf(K8sDashboardAPI);
-    });
-
-    it('should use v1 when v1 is passed in the params', async () => {
-      expect(await getDashboardAPI('v1')).toBeInstanceOf(K8sDashboardAPI);
-    });
-
-    it('should throw when v2 is passed in the params', async () => {
-      await expect(getDashboardAPI('v2')).rejects.toThrow('v2 is not supported for legacy architecture');
-    });
-  });
-
-  describe('when dashboardScene disabled but dashboardNewLayouts enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.dashboardScene = false;
       config.featureToggles.dashboardNewLayouts = true;
     });
 
@@ -131,7 +102,6 @@ describe('DashboardApi', () => {
     beforeEach(() => {
       dashboardAPIVersionResolver.reset();
       setDashboardAPI(undefined);
-      config.featureToggles.dashboardScene = true;
       config.featureToggles.kubernetesDashboards = true;
       jest.spyOn(console, 'log').mockImplementation();
     });

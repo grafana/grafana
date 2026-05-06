@@ -3,7 +3,7 @@ import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { RuleFormType } from '../../../types/rule-form';
 
-import { RuleType, SharedProps } from './RuleType';
+import { RuleType, type SharedProps } from './RuleType';
 
 const GrafanaManagedRuleType = ({ selected = false, disabled, onClick }: SharedProps) => {
   return (

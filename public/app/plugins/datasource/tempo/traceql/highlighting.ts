@@ -1,4 +1,4 @@
-import { SyntaxNode } from '@lezer/common';
+import { type SyntaxNode } from '@lezer/common';
 
 import {
   Aggregate,
@@ -25,7 +25,7 @@ import {
   SpansetFilter,
   SpansetPipelineExpression,
 } from '@grafana/lezer-traceql';
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 /**
  * Given an error node, generate an error message to be displayed to the user.

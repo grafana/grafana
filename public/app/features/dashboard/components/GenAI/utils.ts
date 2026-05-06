@@ -2,10 +2,10 @@ import { pick } from 'lodash';
 
 import { llm } from '@grafana/llm';
 import { isAppPluginInstalled } from '@grafana/runtime';
-import { Panel } from '@grafana/schema';
+import { type Panel } from '@grafana/schema';
 
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
 import { getDashboardStringDiff } from './jsonDiffText';

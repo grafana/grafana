@@ -1,4 +1,4 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 import { sqlTestDataMultiLineFullQuery } from '../../../mocks/cloudwatch-sql-test-data/multiLineFullQuery';
 import { sqlTestDataSingleLineEmptyQuery } from '../../../mocks/cloudwatch-sql-test-data/singleLineEmptyQuery';

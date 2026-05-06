@@ -96,7 +96,7 @@ func (t translation) Resource() string {
 type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
-	Get(group, resource string) (Mapping, bool)
+	Get(group, resource, subresource string) (Mapping, bool)
 	// GetAPIResourceName returns the API resource name (e.g. "repositories") for the given group and resource.
 	// Use this to send the canonical resource name in Check requests instead of legacy names (e.g. "provisioning.repositories").
 	// Returns ("", false) if no translation is found.
@@ -213,13 +213,15 @@ func NewMapperRegistry() MapperRegistry {
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
-			// Virtual resource: maps annotation verbs to annotation actions scoped to dashboards:uid:<uid>.
-			"annotations": translation{
+			// Annotations subresource for dashboards
+			// Uses dashboard scope (dashboards:uid:...) but annotation actions
+			"dashboards/annotations": translation{
 				resource:  "dashboards",
 				attribute: "uid",
 				verbMapping: map[string]string{
 					utils.VerbGet:              "annotations:read",
 					utils.VerbList:             "annotations:read",
+					utils.VerbWatch:            "annotations:read",
 					utils.VerbCreate:           "annotations:create",
 					utils.VerbUpdate:           "annotations:write",
 					utils.VerbPatch:            "annotations:write",
@@ -230,14 +232,14 @@ func NewMapperRegistry() MapperRegistry {
 				actionSetMapping: map[string][]string{
 					utils.VerbGet:              {"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
 					utils.VerbList:             {"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbWatch:            {"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
 					utils.VerbCreate:           {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
 					utils.VerbUpdate:           {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
 					utils.VerbPatch:            {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
 					utils.VerbDelete:           {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
 					utils.VerbDeleteCollection: {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
 				},
-				folderSupport:   false,
-				skipScopeOnVerb: nil,
+				folderSupport: true,
 			},
 		},
 		"folder.grafana.app": {
@@ -398,14 +400,19 @@ func (m mapper) findGroupKey(group string) (string, bool) {
 	return "", false
 }
 
-func (m mapper) Get(group, resource string) (Mapping, bool) {
+func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return nil, false
 	}
 
+	lookupResource := resource
+	if subresource != "" {
+		lookupResource = resource + "/" + subresource
+	}
+
 	resources := m[groupKey]
-	t, ok := resources[resource]
+	t, ok := resources[lookupResource]
 	if !ok {
 		return nil, false
 	}

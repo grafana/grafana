@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -17,10 +17,15 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
+import type AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
 import { AzureQueryType } from '../../dataquery.gen';
-import { AzureMonitorQuery } from '../../types/query';
-import { Category, CheatsheetQueries, CheatsheetQuery, DropdownCategories } from '../../types/types';
+import { type AzureMonitorQuery } from '../../types/query';
+import {
+  type Category,
+  type CheatsheetQueries,
+  type CheatsheetQuery,
+  type DropdownCategories,
+} from '../../types/types';
 
 import { RawQuery } from './RawQuery';
 import tokenizer from './syntax';

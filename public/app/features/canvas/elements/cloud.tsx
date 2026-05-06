@@ -1,21 +1,21 @@
 import { css } from '@emotion/css';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import {
-  CanvasElementItem,
-  CanvasElementProps,
-  CanvasElementOptions,
+  type CanvasElementItem,
+  type CanvasElementProps,
+  type CanvasElementOptions,
   defaultBgColor,
   defaultTextColor,
 } from '../element';
-import { Align, CanvasElementConfig, CanvasElementData, VAlign } from '../types';
+import { Align, type CanvasElementConfig, type CanvasElementData, VAlign } from '../types';
 
 const Cloud = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
   const { data } = props;

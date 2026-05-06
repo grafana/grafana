@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2, Stack } from '@grafana/ui';
 
 import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
-import { ClassicCondition, ReducerType } from '../types';
+import { type ClassicCondition, type ReducerType } from '../types';
 
 interface Props {
   condition: ClassicCondition;

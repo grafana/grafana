@@ -34,7 +34,7 @@ checkv0alpha1: {
 			links: [...#ErrorLink]
 			// More information about the failure, not meant to be displayed to the user. Used for LLM suggestions.
 			moreInfo?: string
-		}	
+		}
 		#Report: {
 			// Number of elements analyzed
 			count: int

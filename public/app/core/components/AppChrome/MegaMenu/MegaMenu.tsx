@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { DOMAttributes } from '@react-types/shared';
+import { type DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/rtkq/legacy/preferences';
+import { usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
-import { fuzzySearch, GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { fuzzySearch, type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';

@@ -1,11 +1,11 @@
 import { isString as _isString } from 'lodash';
 
 import {
-  TimeRange,
+  type TimeRange,
   AppEvents,
   rangeUtil,
   dateMath,
-  PanelModel as IPanelModel,
+  type PanelModel as IPanelModel,
   dateTimeAsMoment,
   store,
 } from '@grafana/data';
@@ -15,7 +15,7 @@ import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { UnlinkModal } from 'app/features/dashboard-scene/scene/UnlinkModal';
 import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
@@ -33,7 +33,6 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
       new ShowConfirmModalEvent({
         title: t('dashboard.remove-panel.title.remove-panel', 'Remove panel'),
         text: t('dashboard.remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
-        icon: 'trash-alt',
         confirmText: confirmText,
         yesText: 'Remove',
         onConfirm: () => removePanel(dashboard, panel, false),

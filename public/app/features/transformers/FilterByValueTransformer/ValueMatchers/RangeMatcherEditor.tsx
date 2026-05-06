@@ -1,14 +1,14 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { ValueMatcherID, RangeValueMatcherOptions } from '@grafana/data';
+import { ValueMatcherID, type RangeValueMatcherOptions } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { InlineLabel } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
 
-import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
+import { type ValueMatcherEditorConfig, type ValueMatcherUIProps, type ValueMatcherUIRegistryItem } from './types';
 
 type PropNames = 'from' | 'to';
 

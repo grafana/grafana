@@ -2,11 +2,11 @@ import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
-import { Combobox, ComboboxOption, Field, Stack } from '@grafana/ui';
+import { Combobox, type ComboboxOption, Field, Stack } from '@grafana/ui';
 
 import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSuggestions';
 
-import { ImportFormValues } from './ImportToGMARules';
+import { type ImportFormValues } from './ImportToGMARules';
 
 interface Props {
   rulesSourceName?: string;

@@ -5,30 +5,31 @@ import * as React from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   CoreApp,
-  DataFrame,
+  type DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  DataQueryResponse,
-  DataSourceApi,
+  type DataQueryResponse,
+  type DataSourceApi,
   dateTimeForTimeZone,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   hasLogsContextSupport,
   hasLogsContextUiSupport,
-  Labels,
-  LogRowContextOptions,
-  LogRowModel,
+  type Labels,
+  type LogRowContextOptions,
+  type LogRowModel,
   LogsSortOrder,
-  PanelData,
-  PanelProps,
-  TimeRange,
-  TimeZone,
+  type PanelData,
+  type PanelProps,
+  type TimeRange,
+  type TimeZone,
   toUtc,
   LogSortOrderChangeEvent,
   LoadingState,
   rangeUtil,
   transformDataFrame,
+  store,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
@@ -51,7 +52,7 @@ import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../feat
 
 import type { Options } from './panelcfg.gen';
 import {
-  GetFieldLinksFn,
+  type GetFieldLinksFn,
   isCoreApp,
   isGrammar,
   isIsFilterLabelActive,
@@ -66,7 +67,7 @@ import {
   isOnNewLogsReceivedType,
   isReactNodeArray,
   isSetDisplayedFields,
-  onNewLogsReceivedType,
+  type onNewLogsReceivedType,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 
@@ -145,6 +146,7 @@ const noCommonLabels: Labels = {};
 
 export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChange, height, id }: LogsPanelProps) => {
   const {
+    allowDownload,
     showControls,
     showFieldSelector,
     controlsStorageKey,
@@ -589,6 +591,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
         >
           {deduplicatedRows.length > 0 && scrollElement && (
             <LogList
+              allowDownload={allowDownload}
               app={isCoreApp(app) ? app : CoreApp.Dashboard}
               containerElement={scrollElement}
               dataFrames={panelData.series}
@@ -631,7 +634,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
               showControls={Boolean(showControls)}
               showFieldSelector={showFieldSelector}
               showLogAttributes={showLogAttributes}
-              showLevel={showLevel}
+              showLevel={storageKey ? store.getBool(`${storageKey}.showLevel`, showLevel ?? true) : showLevel}
               showTime={showTime}
               showUniqueLabels={showLabels}
               sortOrder={sortOrder}

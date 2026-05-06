@@ -1,8 +1,9 @@
-import { PluginMeta } from '@grafana/data';
+import { OrgRole, type PluginMeta } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { useGetPluginSettingsQuery } from '../api/pluginsApi';
-import { PluginID } from '../components/PluginBridge';
+import { type PluginID } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 interface PluginBridgeHookResponse {
@@ -44,6 +45,34 @@ export interface PluginBridgeResult {
   installed?: boolean;
   error?: Error;
   settings?: PluginMeta<{}>;
+}
+
+/**
+ * Checks access to a specific plugin page path using the same include role/action
+ * semantics as the core app plugin route guard.
+ */
+export function canAccessPluginPage(settings: PluginMeta<{}>, pluginPagePath: string): boolean {
+  const requestedPath = pluginPagePath.split('?')[0];
+  const pluginInclude = settings.includes?.find((include) => include.path === requestedPath);
+
+  if (!pluginInclude) {
+    return true;
+  }
+
+  if (pluginInclude.action) {
+    return contextSrv.hasPermission(pluginInclude.action);
+  }
+
+  if (contextSrv.isGrafanaAdmin || contextSrv.user.orgRole === OrgRole.Admin) {
+    return true;
+  }
+
+  const includeRole = pluginInclude.role ?? '';
+  if (!includeRole || (contextSrv.isEditor && includeRole === OrgRole.Viewer)) {
+    return true;
+  }
+
+  return contextSrv.hasRole(includeRole);
 }
 /**
  * Hook that checks for IRM plugin first, falls back to specified plugin.

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { AdHocFiltersController } from '@grafana/scenes';
+import { type AdHocFiltersController } from '@grafana/scenes';
 
 import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
 

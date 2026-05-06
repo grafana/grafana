@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
@@ -38,20 +39,20 @@ func (r *Reconciler) fetchGlobalRolePerms(ctx context.Context) (
 	ctx, span := r.tracer.Start(ctx, "reconciler.fetchGlobalRolePerms")
 	defer span.End()
 
-	gvr := iamv0.GlobalRoleInfo.GroupVersionResource()
+	crd := iamv0.GlobalRoleInfo.GroupVersionResource()
 
 	clients, err := r.clientFactory.Clients(ctx, "")
 	if err != nil {
 		return nil, tracing.Errorf(span, "failed to get cluster clients: %w", err)
 	}
-	resourceClient, _, err := clients.ForResource(ctx, gvr)
+	resourceClient, _, err := clients.ForResource(ctx, crd)
 	if err != nil {
-		return nil, tracing.Errorf(span, "failed to get client for %s: %w", gvr, err)
+		return nil, tracing.Errorf(span, "failed to get client for %s: %w", crd, err)
 	}
 
 	// 1. Collect all GlobalRole objects into a map for two-pass resolution.
 	allGlobalRoles := make(map[string]*iamv0.GlobalRole)
-	err = listAndProcess(ctx, resourceClient, func(item *unstructured.Unstructured) error {
+	err = listAndProcess(ctx, resourceClient, r.cfg.listPageSize(), func(item *unstructured.Unstructured) error {
 		var gr iamv0.GlobalRole
 		if err := convertUnstructured(item, &gr); err != nil {
 			return err
@@ -68,6 +69,8 @@ func (r *Reconciler) fetchGlobalRolePerms(ctx context.Context) (
 	if err != nil {
 		return nil, tracing.Errorf(span, "failed to resolve GlobalRole permissions: %w", err)
 	}
+
+	span.SetAttributes(attribute.Int("global_roles.count", len(resolvedPerms)))
 
 	return resolvedPerms, nil
 }
@@ -97,7 +100,9 @@ func resolveAllGlobalRolePermissions(
 // namespace Role are added standalone. GlobalRoles that ARE referenced already have their
 // permissions inlined into the namespace Role's tuples via translateRoleToTuples composition.
 func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace string) (map[string]*openfgav1.TupleKey, error) {
-	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateTuples")
+	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateTuples", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
 	defer span.End()
 
 	globalRolePerms := r.getGlobalRolePerms()
@@ -124,17 +129,18 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 		"resourcepermissions": TranslateResourcePermissionToTuples,
 		"teambindings":        TranslateTeamBindingToTuples,
 		"users":               TranslateUserToTuples,
+		"serviceaccounts":     TranslateServiceAccountToTuples,
 	}
 
-	// Process each GVR type and insert translated tuples directly into the map
-	for _, gvr := range reconcileGVRs {
-		translator, ok := translators[gvr.Resource]
+	// Process each crd type and insert translated tuples directly into the map
+	for _, crd := range r.cfg.CRDs {
+		translator, ok := translators[crd.Resource]
 		if !ok {
-			return nil, tracing.Errorf(span, "no translator found for resource type: %s", gvr.Resource)
+			return nil, tracing.Errorf(span, "no translator found for resource type: %s", crd.Resource)
 		}
 
-		if err := r.fetchAndTranslateGVR(ctx, namespace, gvr, translator, expectedMap); err != nil {
-			return nil, tracing.Errorf(span, "failed to process %s: %w", gvr.Resource, err)
+		if err := r.fetchAndTranslateCRD(ctx, namespace, crd, translator, expectedMap); err != nil {
+			return nil, tracing.Errorf(span, "failed to process %s: %w", crd.Resource, err)
 		}
 	}
 
@@ -156,21 +162,25 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 	return expectedMap, nil
 }
 
-// fetchAndTranslateGVR fetches CRDs of a specific type and inserts translated tuples
+// fetchAndTranslateCRD fetches CRDs of a specific type and inserts translated tuples
 // directly into the destination map
-func (r *Reconciler) fetchAndTranslateGVR(
+func (r *Reconciler) fetchAndTranslateCRD(
 	ctx context.Context,
 	namespace string,
-	gvr schema.GroupVersionResource,
+	crd schema.GroupVersionResource,
 	translator func(*unstructured.Unstructured) ([]*openfgav1.TupleKey, error),
 	dest map[string]*openfgav1.TupleKey,
 ) error {
-	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateGVR", trace.WithAttributes(
-		attribute.String("gvr.group", gvr.Group),
-		attribute.String("gvr.version", gvr.Version),
-		attribute.String("gvr.resource", gvr.Resource),
+	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateCRD", trace.WithAttributes(
+		attribute.String("crd.group", crd.Group),
+		attribute.String("crd.version", crd.Version),
+		attribute.String("crd.resource", crd.Resource),
 	))
 	defer span.End()
+
+	start := time.Now()
+	objectsFetched := 0
+	tuplesProduced := 0
 
 	// Get the dynamic client for this namespace
 	clients, err := r.clientFactory.Clients(ctx, namespace)
@@ -178,18 +188,20 @@ func (r *Reconciler) fetchAndTranslateGVR(
 		return tracing.Errorf(span, "failed to get clients for namespace %s: %w", namespace, err)
 	}
 
-	// Get the resource interface for the specific GVR
-	resourceClient, _, err := clients.ForResource(ctx, gvr)
+	// Get the resource interface for the specific CRD
+	resourceClient, _, err := clients.ForResource(ctx, crd)
 	if err != nil {
-		return tracing.Errorf(span, "failed to get client for resource %s: %w", gvr.String(), err)
+		return tracing.Errorf(span, "failed to get client for resource %s: %w", crd.String(), err)
 	}
 
 	// Stream through pages using the Kubernetes dynamic client
-	err = listAndProcess(ctx, resourceClient, func(item *unstructured.Unstructured) error {
+	err = listAndProcess(ctx, resourceClient, r.cfg.listPageSize(), func(item *unstructured.Unstructured) error {
+		objectsFetched++
 		tuples, err := translator(item)
 		if err != nil {
-			return fmt.Errorf("failed to translate %s/%s: %w", gvr.Resource, item.GetName(), err)
+			return fmt.Errorf("failed to translate %s/%s: %w", crd.Resource, item.GetName(), err)
 		}
+		tuplesProduced += len(tuples)
 		for _, t := range tuples {
 			dest[tupleKey(t)] = t
 		}
@@ -200,17 +212,25 @@ func (r *Reconciler) fetchAndTranslateGVR(
 		return tracing.Error(span, err)
 	}
 
+	elapsed := time.Since(start)
+
+	span.SetAttributes(
+		attribute.Int("crd.objects_fetched", objectsFetched),
+		attribute.Int("crd.tuples_produced", tuplesProduced),
+	)
+	r.metrics.crdFetchDurationSeconds.WithLabelValues(crd.Resource).Observe(elapsed.Seconds())
+
 	return nil
 }
 
 // listAndProcess is a helper function that lists all resources and processes each one.
 // It handles pagination using Kubernetes continuation tokens.
-func listAndProcess(ctx context.Context, client dynamic.ResourceInterface, fn func(*unstructured.Unstructured) error) error {
+func listAndProcess(ctx context.Context, client dynamic.ResourceInterface, pageSize int64, fn func(*unstructured.Unstructured) error) error {
 	var continueToken string
 
 	for {
 		list, err := client.List(ctx, metav1.ListOptions{
-			Limit:    10000, // Page size
+			Limit:    pageSize,
 			Continue: continueToken,
 		})
 		if err != nil {
@@ -239,29 +259,35 @@ func (r *Reconciler) computeDiffStreaming(
 	ctx context.Context, namespace string,
 	expectedMap map[string]*openfgav1.TupleKey,
 ) (toAdd, toDelete []*openfgav1.TupleKey, err error) {
-	ctx, span := r.tracer.Start(ctx, "reconciler.computeDiffStreaming")
+	ctx, span := r.tracer.Start(ctx, "reconciler.computeDiffStreaming", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
 	defer span.End()
 
-	// Get store info for the namespace
+	// Get store info for the namespace. The reconciler runs as a background
+	// worker without end-user claims, so it calls the internal ReadTuples helper
+	// (mirroring WriteTuples) to bypass the public-API authorization check.
 	storeInfo, err := r.server.GetOrCreateStore(ctx, namespace)
 	if err != nil {
 		return nil, nil, tracing.Errorf(span, "failed to get store info: %w", err)
 	}
 
+	pagesRead := 0
 	var continuationToken string
 
 	// Read current tuples page-by-page and diff against expected
 	for {
 		req := &openfgav1.ReadRequest{
-			StoreId:           storeInfo.ID,
 			PageSize:          wrapperspb.Int32(r.cfg.zanzanaReadPageSize()),
 			ContinuationToken: continuationToken,
 		}
 
-		resp, err := r.server.GetOpenFGAServer().Read(ctx, req)
+		resp, err := r.server.ReadTuples(ctx, storeInfo, req)
 		if err != nil {
 			return nil, nil, tracing.Errorf(span, "failed to read tuples: %w", err)
 		}
+
+		pagesRead++
 
 		for _, tuple := range resp.GetTuples() {
 			key := tupleKey(tuple.GetKey())
@@ -291,6 +317,12 @@ func (r *Reconciler) computeDiffStreaming(
 		toAdd = append(toAdd, tuple)
 	}
 
+	span.SetAttributes(
+		attribute.Int("diff.pages_read", pagesRead),
+		attribute.Int("diff.tuples_to_add", len(toAdd)),
+		attribute.Int("diff.tuples_to_delete", len(toDelete)),
+	)
+
 	return toAdd, toDelete, nil
 }
 
@@ -298,7 +330,9 @@ func (r *Reconciler) computeDiffStreaming(
 // If a batch fails, it logs the error and continues with the next batch.
 // Uses the server's WriteTuples method directly to avoid authzextv1 ↔ openfgav1 conversions.
 func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string, toAdd, toDelete []*openfgav1.TupleKey) error {
-	ctx, span := r.tracer.Start(ctx, "reconciler.writeTuplesToZanzana")
+	ctx, span := r.tracer.Start(ctx, "reconciler.writeTuplesToZanzana", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
 	defer span.End()
 
 	// Get store info for the namespace
@@ -323,6 +357,12 @@ func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string,
 		batchSize = 100
 	}
 
+	span.SetAttributes(
+		attribute.Int("write.total_adds", len(toAdd)),
+		attribute.Int("write.total_deletes", len(deleteTuples)),
+		attribute.Int("write.batch_size", batchSize),
+	)
+
 	// If total tuples fit in one batch, write directly
 	totalTuples := len(toAdd) + len(deleteTuples)
 	if totalTuples <= batchSize {
@@ -330,8 +370,11 @@ func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string,
 		if err == nil {
 			r.metrics.tuplesWrittenTotal.WithLabelValues("add").Add(float64(len(toAdd)))
 			r.metrics.tuplesWrittenTotal.WithLabelValues("delete").Add(float64(len(deleteTuples)))
+			span.SetAttributes(attribute.Int("write.failed_batches", 0))
 			return nil
 		}
+		r.metrics.batchFailuresTotal.Inc()
+		span.SetAttributes(attribute.Int("write.failed_batches", 1))
 		return tracing.Error(span, err)
 	}
 
@@ -353,6 +396,7 @@ func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string,
 				"batchSize", len(batchWrites),
 				"error", err,
 			)
+			r.metrics.batchFailuresTotal.Inc()
 			failedBatches++
 		} else {
 			addCounter.Add(float64(len(batchWrites)))
@@ -372,11 +416,18 @@ func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string,
 				"batchSize", len(batchDeletes),
 				"error", err,
 			)
+			r.metrics.batchFailuresTotal.Inc()
 			failedBatches++
 		} else {
 			deleteCounter.Add(float64(len(batchDeletes)))
 			successfulBatches++
 		}
+	}
+
+	span.SetAttributes(attribute.Int("write.failed_batches", failedBatches))
+
+	if failedBatches > 0 {
+		r.metrics.errorsTotal.WithLabelValues("write_tuples_partial").Inc()
 	}
 
 	r.logger.Info("Completed batched tuple writes",

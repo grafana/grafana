@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { FieldNamePickerConfigSettings, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { type FieldNamePickerConfigSettings, type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Combobox } from '../Combobox/Combobox';

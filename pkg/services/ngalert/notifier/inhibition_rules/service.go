@@ -30,11 +30,12 @@ func NewService(
 	config alertmanagerConfigStore,
 	log log.Logger,
 	featureToggles featuremgmt.FeatureToggles,
+	validator validation.ProvenanceStatusTransitionValidator,
 ) *Service {
 	return &Service{
 		configStore:    config,
 		log:            log,
-		validator:      validation.ValidateProvenanceRelaxed,
+		validator:      validator,
 		featureToggles: featureToggles,
 	}
 }
@@ -107,6 +108,10 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule definitions.I
 		return definitions.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
 	}
 
+	if err := svc.validator(ctx, models.ProvenanceNone, models.Provenance(rule.Provenance)); err != nil {
+		return definitions.InhibitionRule{}, err
+	}
+
 	created, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
 	if err != nil {
 		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
@@ -144,7 +149,7 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule 
 	}
 
 	prov := models.Provenance(rule.Provenance)
-	if err := svc.validator(existingProv, prov); err != nil {
+	if err := svc.validator(ctx, existingProv, prov); err != nil {
 		return definitions.InhibitionRule{}, err
 	}
 
@@ -199,7 +204,7 @@ func (svc *Service) DeleteInhibitionRule(ctx context.Context, name string, orgID
 		return models.MakeErrInhibitionRuleOrigin(existing.Name, "delete")
 	}
 
-	if err := svc.validator(existingProv, provenance); err != nil {
+	if err := svc.validator(ctx, existingProv, provenance); err != nil {
 		return err
 	}
 

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config as grafanaConfig } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Dropdown, Icon, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';

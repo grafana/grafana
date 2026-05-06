@@ -1,8 +1,8 @@
 import { isString } from 'lodash';
 import { nanoid } from 'nanoid';
-import { Observable, ReplaySubject } from 'rxjs';
+import { type Observable, ReplaySubject } from 'rxjs';
 
-import { Labels, LogLevel } from '@grafana/data';
+import { type Labels, LogLevel } from '@grafana/data';
 import { config, createMonitoringLogger } from '@grafana/runtime';
 
 export type ExtensionsLogItem = {

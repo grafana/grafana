@@ -1,7 +1,7 @@
 import { t, Trans } from '@grafana/i18n';
 import { Button, EmptyState, Stack } from '@grafana/ui';
 
-import { DataSourceRights } from '../types';
+import { type DataSourceRights } from '../types';
 
 import { DataSourceReadOnlyMessage } from './DataSourceReadOnlyMessage';
 

@@ -7,7 +7,7 @@ import { byText } from 'testing-library-selector';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { RecordingRuleEditorProps } from '../components/rule-editor/RecordingRuleEditor';
+import { type RecordingRuleEditorProps } from '../components/rule-editor/RecordingRuleEditor';
 import { grantUserPermissions } from '../mocks';
 import { GROUP_3, NAMESPACE_2 } from '../mocks/mimirRulerApi';
 import { mimirDataSource } from '../mocks/server/configure';

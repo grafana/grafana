@@ -38,7 +38,7 @@ func VerifyDeb(ctx context.Context, d *dagger.Client, file *dagger.File, src *da
 	}
 
 	svc := service.WithExposedPort(3000).AsService(dagger.ContainerAsServiceOpts{
-		Args: []string{"grafana-server"},
+		Args: []string{"./bin/grafana", "server"},
 	})
 
 	result, err := e2e.ValidatePackage(ctx, d, svc, src, yarn, nodeVersion)
@@ -77,11 +77,11 @@ func VerifyRpm(ctx context.Context, d *dagger.Client, file *dagger.File, src *da
 	}
 
 	service = service.
-		WithExec([]string{"grafana-server"}).
+		WithExec([]string{"./bin/grafana", "server"}).
 		WithExposedPort(3000)
 
 	svc := service.WithExposedPort(3000).AsService(dagger.ContainerAsServiceOpts{
-		Args: []string{"grafana-server"},
+		Args: []string{"./bin/grafana", "server"},
 	})
 
 	result, err := e2e.ValidatePackage(ctx, d, svc, src, yarn, nodeVersion)

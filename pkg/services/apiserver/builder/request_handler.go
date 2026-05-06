@@ -8,9 +8,13 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	klog "k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/spec3"
+
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // convertHandlerToRouteFunction converts an http.HandlerFunc to a restful.RouteFunction
@@ -140,20 +144,7 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 		fullPath = "/" + routePath
 	}
 
-	// Add routes for each HTTP method defined in the OpenAPI spec
-	operations := map[string]*spec3.Operation{
-		"GET":    pathProps.Get,
-		"POST":   pathProps.Post,
-		"PUT":    pathProps.Put,
-		"PATCH":  pathProps.Patch,
-		"DELETE": pathProps.Delete,
-	}
-
-	for method, operation := range operations {
-		if operation == nil {
-			continue
-		}
-
+	for method, operation := range GetPathOperations(pathProps) {
 		// Create route builder for this method
 		var routeBuilder *restful.RouteBuilder
 		switch method {
@@ -167,6 +158,8 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 			routeBuilder = ws.PATCH(fullPath)
 		case "DELETE":
 			routeBuilder = ws.DELETE(fullPath)
+		default:
+			return fmt.Errorf("unsupported method: %s / path:%s", method, fullPath)
 		}
 
 		// Set operation ID from OpenAPI spec (with K8s verb prefix if needed)
@@ -181,22 +174,6 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 		// Add description from OpenAPI spec
 		if operation.Description != "" {
 			routeBuilder = routeBuilder.Doc(operation.Description)
-		}
-
-		// Check if namespace parameter is already in the OpenAPI spec
-		hasNamespaceParam := false
-		if operation.Parameters != nil {
-			for _, param := range operation.Parameters {
-				if param.Name == "namespace" && param.In == "path" {
-					hasNamespaceParam = true
-					break
-				}
-			}
-		}
-
-		// Add namespace parameter for namespaced routes if not already in spec
-		if isNamespaced && !hasNamespaceParam {
-			routeBuilder = routeBuilder.Param(restful.PathParameter("namespace", "object name and auth scope, such as for teams and projects"))
 		}
 
 		// Add parameters from OpenAPI spec
@@ -224,6 +201,39 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 		// and will be added to the OpenAPI document via addBuilderRoutes in openapi.go.
 		// We don't duplicate that information here since restful uses the route metadata
 		// for OpenAPI generation, which is handled separately in this codebase.
+
+		if isNamespaced {
+			// Check if namespace parameter is already in the OpenAPI spec
+			hasNamespaceParam := false
+			if operation.Parameters != nil {
+				for _, param := range operation.Parameters {
+					if param.Name == "namespace" && param.In == "path" {
+						hasNamespaceParam = true
+						break
+					}
+				}
+			}
+
+			// Add namespace parameter for namespaced routes if not already in spec
+			if !hasNamespaceParam {
+				routeBuilder = routeBuilder.Param(restful.PathParameter("namespace", "object name and auth scope, such as for teams and projects"))
+			}
+
+			// Add the namespace to context, matching standard k8s behavior
+			routeBuilder = routeBuilder.Filter(func(req *restful.Request, resp *restful.Response, next *restful.FilterChain) {
+				ns := req.PathParameter("namespace")
+				if ns == "" {
+					err := errors.NewBadRequest("missing user")
+					errhttp.Write(req.Request.Context(), err, resp)
+					return
+				}
+
+				// Set the namespace value
+				ctx := request.WithNamespace(req.Request.Context(), ns)
+				req.Request = req.Request.WithContext(ctx)
+				next.ProcessFilter(req, resp)
+			})
+		}
 
 		// Register the route with handler
 		ws.Route(routeBuilder.To(handler))

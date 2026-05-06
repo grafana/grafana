@@ -2,21 +2,21 @@ import { css } from '@emotion/css';
 import { memo, useState, useEffect, useCallback } from 'react';
 
 import {
-  SelectableValue,
+  type SelectableValue,
   getFieldDisplayName,
-  AnnotationEvent,
-  AnnotationEventMappings,
-  AnnotationEventFieldMapping,
+  type AnnotationEvent,
+  type AnnotationEventMappings,
+  type AnnotationEventFieldMapping,
   formattedValueToString,
   AnnotationEventFieldSource,
   getValueFormat,
-  GrafanaTheme2,
+  type GrafanaTheme2,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Select, Tooltip, Icon, useStyles2, Label } from '@grafana/ui';
 
-import { getAnnotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
-import { AnnotationQueryResponse } from '../types';
+import { getAnnotationEventNames, type AnnotationFieldInfo } from '../standardAnnotationSupport';
+import { type AnnotationQueryResponse } from '../types';
 
 interface Props {
   response?: AnnotationQueryResponse;

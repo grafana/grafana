@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -15,6 +16,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -29,11 +31,12 @@ var (
 
 // wrapAsValidationErrorIfNeeded wraps certain errors as ResourceValidationError
 // to treat them as warnings rather than hard errors. This includes:
-// - Kubernetes field validation errors
-// - Kubernetes API BadRequest errors (which often wrap dashboard/resource validation errors)
-// - Dashboard validation errors (all DashboardErr types)
-// - Duplicate resource errors
-// - Resource already in repository errors
+//   - Kubernetes field validation errors
+//   - Kubernetes API BadRequest errors (which often wrap dashboard/resource validation errors)
+//   - Kubernetes API Invalid errors (StatusReasonInvalid, HTTP 422)
+//   - Dashboard validation errors (all DashboardErr types)
+//   - Duplicate resource errors
+//   - Resource already in repository errors
 func wrapAsValidationErrorIfNeeded(err error) error {
 	if err == nil {
 		return nil
@@ -51,9 +54,13 @@ func wrapAsValidationErrorIfNeeded(err error) error {
 		return NewResourceValidationError(err)
 	}
 
-	// Check if it's a Kubernetes API BadRequest error (these are usually validation errors)
-	// Dashboard validation errors are wrapped as BadRequest by the dashboard API
-	if apierrors.IsBadRequest(err) {
+	// Check if it's a Kubernetes API validation-shaped error:
+	//   - BadRequest (400): generic validation failure; the dashboard API
+	//     also wraps some of its validation errors as BadRequest.
+	//   - Invalid (422, StatusReasonInvalid): field.ErrorList-based
+	//     rejections, e.g. CUE schema mismatches and immutable-field
+	//     violations.
+	if apierrors.IsBadRequest(err) || apierrors.IsInvalid(err) {
 		return NewResourceValidationError(err)
 	}
 
@@ -230,6 +237,10 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 	parseSpan.End()
 
+	return r.writeResourceFromParsed(ctx, path, ref, parsed)
+}
+
+func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource, folderOpts ...EnsurePathOption) (string, schema.GroupVersionKind, error) {
 	if parsed.Obj.GetName() == "" {
 		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
@@ -257,7 +268,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 			folderPath = safepath.Dir(safepath.Dir(path))
 		}
 		folderCtx, folderSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.ensure_folder")
-		folder, err := r.folders.EnsureFolderPathExist(folderCtx, folderPath)
+		folder, err := r.folders.EnsureFolderPathExist(folderCtx, folderPath, ref, folderOpts...)
 		if err != nil {
 			folderSpan.RecordError(err)
 			folderSpan.End()
@@ -272,7 +283,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	parsed.Meta.SetResourceVersion("")
 
 	runCtx, runSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.run_resource")
-	err = parsed.Run(runCtx)
+	err := parsed.Run(runCtx)
 	if err != nil {
 		runSpan.RecordError(err)
 		// Wrap resource validation errors (like dashboard refresh interval) as warnings
@@ -283,15 +294,142 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	return parsed.Obj.GetName(), parsed.GVK, err
 }
 
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, string, schema.GroupVersionKind, error) {
-	name, oldFolderName, gvk, err := r.RemoveResourceFromFile(ctx, previousPath, previousRef)
-	if err != nil {
-		return name, oldFolderName, gvk, fmt.Errorf("failed to remove resource: %w", err)
+// ReplaceResourceFromFile writes a resource from file and, if the resource name
+// changed compared to oldName, deletes the old resource to prevent orphans.
+// Used by full sync where the old identity is known from Changes().Existing.
+func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource) (string, schema.GroupVersionKind, error) {
+	newName, gvk, err := r.WriteResourceFromFile(ctx, path, ref)
+	if err != nil || oldName == "" || oldName == newName {
+		return newName, gvk, err
 	}
 
-	newName, gvk, err := r.WriteResourceFromFile(ctx, newPath, newRef)
+	return newName, gvk, r.deleteOldResource(ctx, path, oldName, oldGVR, newName)
+}
+
+// ReplaceResourceFromFileByRef writes a resource from the file at path/ref and,
+// if the resource identity changed compared to the previous version at
+// path/previousRef, deletes the old resource to prevent orphans.
+// Used by incremental sync where the previous git ref is available.
+func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string) (string, schema.GroupVersionKind, error) {
+	oldInfo, err := r.repo.Read(ctx, path, previousRef)
 	if err != nil {
-		return name, oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("reading previous file: %w", err)
+	}
+
+	oldParsed, err := r.parser.Parse(ctx, oldInfo)
+	if err != nil {
+		return "", schema.GroupVersionKind{}, fmt.Errorf("parsing previous file: %w", err)
+	}
+
+	newName, gvk, writeErr := r.WriteResourceFromFile(ctx, path, ref)
+	if writeErr != nil {
+		return newName, gvk, writeErr
+	}
+
+	oldName := oldParsed.Obj.GetName()
+	if oldName == "" || oldName == newName {
+		return newName, gvk, nil
+	}
+
+	return newName, gvk, r.deleteOldResource(ctx, path, oldName, oldParsed.GVR, newName)
+}
+
+// deleteOldResource deletes the previous resource when a name change is
+// detected. It sets the provisioning identity, checks ownership, and
+// calls the client directly.
+//
+// The sourcePath parameter is the file path that triggered the replacement.
+// Before deleting, we verify that the existing resource's sourcePath annotation
+// still points to this file. If another file in the same sync has already
+// written a resource with the same UID (e.g. a multi-file UID swap), the
+// annotation will reference the other file and we skip the delete.
+func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, oldName string, oldGVR schema.GroupVersionResource, newName string) error {
+	client, _, err := r.clients.ForResource(ctx, oldGVR)
+	if err != nil {
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+
+	cfg := r.repo.Config()
+
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("unable to use provisioning identity: %w", err)
+	}
+
+	existing, err := client.Get(ctx, oldName, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+
+	if currentPath := existing.GetAnnotations()[utils.AnnoKeySourcePath]; currentPath != "" && currentPath != sourcePath {
+		return fmt.Errorf("skipping delete of old resource %s: now managed by %s, not %s", oldName, currentPath, sourcePath)
+	}
+
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: cfg.GetName(),
+	}
+	if err := CheckResourceOwnership(ctx, existing, oldName, requestingManager); err != nil {
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+
+	if err := client.Delete(ctx, oldName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+	return nil
+}
+
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, error) {
+	oldInfo, err := r.repo.Read(ctx, previousPath, previousRef)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read previous file: %w", err)
+	}
+	oldParsed, err := r.parser.Parse(ctx, oldInfo)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse previous file: %w", err)
+	}
+
+	newInfo, err := r.repo.Read(ctx, newPath, newRef)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read new file: %w", err)
+	}
+	newParsed, err := r.parser.Parse(ctx, newInfo)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse new file: %w", err)
+	}
+
+	// Delete the old resource when the identity changed (name or resource kind).
+	// When both match, writeResourceFromParsed will update in place.
+	if !oldParsed.SameIdentity(newParsed) {
+		oldParsed.Action = provisioning.ResourceActionDelete
+		if err := oldParsed.Run(ctx); err != nil {
+			return oldParsed.Obj.GetName(), oldParsed.ExistingFolder(), oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
+		}
+	} else {
+		// Delete dry-run fetches the existing object (with ownership validation)
+		// without mutating it, populating oldParsed.Existing for identity comparison.
+		oldParsed.Action = provisioning.ResourceActionDelete
+		if err := oldParsed.DryRun(ctx); err != nil {
+			return "", "", schema.GroupVersionKind{}, err
+		}
+	}
+
+	oldFolderName := oldParsed.ExistingFolder()
+
+	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
+	if err != nil {
+		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+	}
+
+	// When the resource's parent folder didn't change (e.g. the entire
+	// directory was renamed and the folder was updated in place with the
+	// same UID), the old folder was not emptied — suppress the signal so
+	// the caller doesn't mark it for orphan deletion.
+	if newParsed.Meta.GetFolder() == oldFolderName {
+		oldFolderName = ""
 	}
 
 	return newName, oldFolderName, gvk, nil
@@ -312,15 +450,8 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 
 	err = parsed.Run(ctx)
 
-	// Extract the folder annotation from the existing Grafana object (if fetched by Run).
-	// The folder annotation is not stored in the git file.
 	objName := parsed.Obj.GetName()
-	var folderName string
-	if parsed.Existing != nil {
-		if meta, metaErr := utils.MetaAccessor(parsed.Existing); metaErr == nil {
-			folderName = meta.GetFolder()
-		}
-	}
+	folderName := parsed.ExistingFolder()
 
 	if err != nil {
 		return objName, folderName, parsed.GVK, fmt.Errorf("failed to delete: %w", err)

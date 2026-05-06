@@ -9,7 +9,7 @@
 
 import { t } from '@grafana/i18n';
 
-import { SavedSearch } from '../components/saved-searches/savedSearchesSchema';
+import { type SavedSearch } from '../components/saved-searches/savedSearchesSchema';
 
 import { buildTriageQueryStringFromParts } from './scene/triageSavedSearchUtils';
 import { defaultTimeRange } from './scene/utils';
@@ -24,7 +24,7 @@ const PREDEFINED_IDS = [
 ] as const;
 
 /** Predefined search used as default when the user has not set a default (grouped by folder). */
-export const TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID = PREDEFINED_IDS[2];
+export const TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID = PREDEFINED_IDS[0];
 
 /**
  * Pre-defined triage saved searches for common scenarios.
@@ -37,7 +37,7 @@ export function getTriagePredefinedSearches(): SavedSearch[] {
     {
       id: PREDEFINED_IDS[0],
       name: t('alerting.triage.saved-searches.predefined.folder-firing', 'Show only firing, grouped by folder'),
-      isDefault: false,
+      isDefault: true,
       query: buildTriageQueryStringFromParts({
         filters: [{ key: 'alertstate', operator: '=', value: 'firing' }],
         groupBy: ['grafana_folder'],

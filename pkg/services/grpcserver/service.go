@@ -20,7 +20,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -46,22 +45,21 @@ type gPRCServerService struct {
 	separateShutdown bool
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
-	return provideService(cfg, features, authenticator, tracer, registerer, false)
+func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
+	return provideService(cfg, authenticator, tracer, registerer, false)
 }
 
-func provideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer, separateShutdown bool) (*gPRCServerService, error) {
+func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer, separateShutdown bool) (*gPRCServerService, error) {
 	s := &gPRCServerService{
-		cfg:    cfg.GRPCServer,
-		logger: log.New("grpc-server"),
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		enabled:          features.IsEnabledGlobally(featuremgmt.FlagGrpcServer), // TODO: replace with cfg.GRPCServer.Enabled when we remove feature toggle.
+		cfg:              cfg.GRPCServer,
+		logger:           log.New("grpc-server"),
+		enabled:          cfg.GRPCServer.Enabled,
 		startedChan:      make(chan struct{}),
 		separateShutdown: separateShutdown,
 	}
 
 	// Register the metric here instead of an init() function so that we do
-	// nothing unless the feature is actually enabled.
+	// nothing unless the gRPC server is actually enabled.
 	if grpcRequestDuration == nil {
 		grpcRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       "grafana",
@@ -224,7 +222,6 @@ type DSKitService struct {
 // ProvideDSKitService wraps a Provider into a dskit BasicService.
 func ProvideDSKitService(
 	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
 	tracer trace.Tracer,
 	registerer prometheus.Registerer,
 	serviceName string,
@@ -234,7 +231,7 @@ func ProvideDSKitService(
 	passthrough := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	})
-	grpcService, err := provideService(cfg, features, passthrough, tracer, registerer, true)
+	grpcService, err := provideService(cfg, passthrough, tracer, registerer, true)
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,8 @@
-import { Column as RTColumn } from 'react-table';
+import { css } from '@emotion/css';
+import { type Column as RTColumn } from 'react-table';
 
 import { EmptyExpanderHeader, ExpanderCell, ExpanderHeader } from './Expander';
-import { Column } from './types';
+import { type Column } from './types';
 
 export const EXPANDER_CELL_ID = '__expander' as const;
 
@@ -31,7 +32,14 @@ export function getColumns<K extends object>(
       Header: column.header || (() => null),
       sortType: column.sortType || 'alphanumeric',
       disableSortBy: !Boolean(column.sortType),
-      width: column.disableGrow ? 0 : undefined,
+      width: column.width ?? (column.disableGrow ? 0 : undefined),
+      minWidth: column.minWidth,
+      maxWidth: column.maxWidth,
+      widthClass: css({
+        width: typeof column.width === 'number' && column.width > 0 ? column.width : undefined,
+        minWidth: typeof column.minWidth === 'number' && column.minWidth > 0 ? column.minWidth : undefined,
+        maxWidth: typeof column.maxWidth === 'number' && column.maxWidth > 0 ? column.maxWidth : undefined,
+      }),
       visible: column.visible,
       ...(column.sortDescFirst !== undefined && { sortDescFirst: column.sortDescFirst }),
       ...(column.cell && { Cell: column.cell }),

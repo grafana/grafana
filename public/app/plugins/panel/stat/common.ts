@@ -2,14 +2,14 @@
 
 import {
   escapeStringForRegex,
-  FieldOverrideContext,
+  type FieldOverrideContext,
   getFieldDisplayName,
-  PanelOptionsEditorBuilder,
+  type PanelOptionsEditorBuilder,
   ReducerID,
   standardEditorsRegistry,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
+import { type SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,

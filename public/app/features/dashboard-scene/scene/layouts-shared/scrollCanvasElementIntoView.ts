@@ -1,4 +1,4 @@
-import { SceneGridRow, SceneObject } from '@grafana/scenes';
+import { SceneGridRow, type SceneObject } from '@grafana/scenes';
 
 import { RowItem } from '../layout-rows/RowItem';
 import { TabItem } from '../layout-tabs/TabItem';

@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import {
   CoreApp,
   createTheme,
-  DataSourceApi,
+  type DataSourceApi,
   EventBusSrv,
   LoadingState,
   PluginExtensionTypes,
@@ -16,7 +16,7 @@ import { usePluginLinks } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
-import { Explore, Props } from './Explore';
+import { Explore, type Props } from './Explore';
 import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';

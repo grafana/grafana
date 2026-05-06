@@ -112,6 +112,15 @@
             }
           },
           {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
             "name": "timeoutSeconds",
             "in": "query",
             "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
@@ -136,17 +145,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               }
             }
@@ -198,12 +207,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             }
           },
@@ -215,12 +224,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -230,12 +239,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -245,12 +254,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -379,6 +388,15 @@
             }
           },
           {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
             "name": "timeoutSeconds",
             "in": "query",
             "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
@@ -447,12 +465,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -504,12 +522,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             }
           },
@@ -521,12 +539,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -536,12 +554,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -721,12 +739,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -736,12 +754,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -799,7 +817,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderAccessInfo"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderAccessInfo"
                 }
               }
             }
@@ -848,7 +866,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               }
             }
@@ -897,7 +915,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.DescendantCounts"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.DescendantCounts"
                 }
               }
             }
@@ -946,7 +964,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfoList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfoList"
                 }
               }
             }
@@ -985,7 +1003,7 @@
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.DescendantCounts": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.DescendantCounts": {
         "type": "object",
         "required": [
           "counts"
@@ -1001,7 +1019,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.ResourceStats"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.ResourceStats"
                 }
               ]
             }
@@ -1015,11 +1033,16 @@
           {
             "group": "folder.grafana.app",
             "kind": "DescendantCounts",
+            "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "DescendantCounts",
             "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder": {
         "type": "object",
         "required": [
           "metadata",
@@ -1047,7 +1070,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderSpec"
               }
             ]
           }
@@ -1056,11 +1079,16 @@
           {
             "group": "folder.grafana.app",
             "kind": "Folder",
+            "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "Folder",
             "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderAccessInfo": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderAccessInfo": {
         "description": "Access control information for the current user",
         "type": "object",
         "required": [
@@ -1099,11 +1127,16 @@
           {
             "group": "folder.grafana.app",
             "kind": "FolderAccessInfo",
+            "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "FolderAccessInfo",
             "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfo": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfo": {
         "description": "FolderInfo briefly describes a folder -- unlike a folder resource, this is a partial record of the folder metadata used for navigating parents and children",
         "type": "object",
         "required": [
@@ -1135,7 +1168,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfoList": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfoList": {
         "description": "FolderInfoList returns a list of folder references (parents or children) Unlike FolderList, each item is not a full k8s object",
         "type": "object",
         "required": [
@@ -1152,7 +1185,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfo"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfo"
                 }
               ]
             },
@@ -1178,11 +1211,16 @@
           {
             "group": "folder.grafana.app",
             "kind": "FolderInfoList",
+            "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "FolderInfoList",
             "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList": {
         "type": "object",
         "required": [
           "metadata",
@@ -1199,7 +1237,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               ]
             }
@@ -1221,11 +1259,16 @@
           {
             "group": "folder.grafana.app",
             "kind": "FolderList",
+            "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "FolderList",
             "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderSpec": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderSpec": {
         "type": "object",
         "required": [
           "title"
@@ -1240,7 +1283,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.ResourceStats": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.ResourceStats": {
         "type": "object",
         "required": [
           "group",

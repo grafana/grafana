@@ -1,10 +1,10 @@
 import ansicolor from 'ansicolor';
 
-import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
+import { BusEventWithPayload, type GrafanaTheme2 } from '@grafana/data';
 
-import { LogLineTimestampResolution } from './LogLine';
-import { LogListFontSize } from './LogList';
-import { LogListModel } from './processing';
+import { type LogLineTimestampResolution } from './LogLine';
+import { type LogListFontSize } from './LogList';
+import { type LogListModel } from './processing';
 
 export const LOG_LIST_MIN_WIDTH = 35 * 8;
 // Controls the space between fields in the log line, timestamp, level, displayed fields, and log line body

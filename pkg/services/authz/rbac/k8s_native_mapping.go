@@ -25,12 +25,17 @@ var k8sVerbMap = map[string]string{
 // mapper. Actions follow the {group}/{resource}:{verb} format and all values are
 // derived at call time from the group and resource name alone.
 type k8sNativeMapping struct {
-	group    string
-	resource string
+	group       string
+	resource    string
+	subresource string
 }
 
-func newK8sNativeMapping(group, resource string) Mapping {
-	return &k8sNativeMapping{group: group, resource: resource}
+func newK8sNativeMapping(group, resource, subresource string) Mapping {
+	return &k8sNativeMapping{
+		group:       group,
+		resource:    resource,
+		subresource: subresource,
+	}
 }
 
 // Action returns the RBAC action for the given K8s verb in the format
@@ -40,7 +45,11 @@ func (m *k8sNativeMapping) Action(verb string) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	return m.group + "/" + m.resource + ":" + v, true
+	prefix := m.group + "/" + m.resource
+	if m.subresource != "" {
+		prefix += "/" + m.subresource
+	}
+	return prefix + ":" + v, true
 }
 
 // ActionSets returns nil; K8s-native resources have no legacy RBAC action sets.
@@ -51,6 +60,7 @@ func (m *k8sNativeMapping) ActionSets(_ string) []string {
 
 // Scope returns the RBAC scope for the given resource instance name.
 // Format: {resource}:uid:{name}
+// Note: The subresource is not included in the scope, as the subresource applies to the resource itself.
 func (m *k8sNativeMapping) Scope(name string) string {
 	return m.group + "/" + m.resource + ":uid:" + name
 }
@@ -63,11 +73,15 @@ func (m *k8sNativeMapping) Prefix() string {
 
 // AllActions returns the deduplicated set of RBAC actions for this resource.
 func (m *k8sNativeMapping) AllActions() []string {
-	base := m.group + "/" + m.resource + ":"
+	prefix := m.group + "/" + m.resource
+	if m.subresource != "" {
+		prefix += "/" + m.subresource
+	}
+
 	seen := make(map[string]struct{}, len(k8sVerbMap))
 	actions := make([]string, 0, len(k8sVerbMap))
 	for _, v := range k8sVerbMap {
-		action := base + v
+		action := prefix + ":" + v
 		if _, ok := seen[action]; ok {
 			continue
 		}

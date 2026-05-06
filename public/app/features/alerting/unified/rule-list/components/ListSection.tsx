@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { PropsWithChildren, ReactNode } from 'react';
+import { type PropsWithChildren, type ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 

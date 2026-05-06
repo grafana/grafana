@@ -1,10 +1,14 @@
 package resourcepermission
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"strings"
 
+	"github.com/grafana/authlib/types"
+	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -30,21 +34,54 @@ type Mapper interface {
 	// Used in list queries with SQL LIKE to match all permissions for this resource type.
 	// Example: "folders:uid:%" matches "folders:uid:abc", "folders:uid:xyz", etc.
 	ScopePattern() string
+
+	// AllowsKind reports whether the resource type permits assignments to the given permission kind.
+	// Returns true when no kind restriction is configured (all kinds allowed).
+	AllowsKind(kind v0alpha1.ResourcePermissionSpecPermissionKind) bool
 }
+
+// ScopeAttribute defines how a resource is identified in RBAC scope strings.
+// It is the middle segment of a scope, e.g. "uid" in "folders:uid:abc".
+type ScopeAttribute string
+
+const (
+	// ScopeAttributeUID identifies resources by their UID (e.g. "folders:uid:abc").
+	ScopeAttributeUID ScopeAttribute = "uid"
+	// ScopeAttributeID identifies resources by their numeric database ID (e.g. "serviceaccounts:id:123").
+	ScopeAttributeID ScopeAttribute = "id"
+)
 
 type mapper struct {
-	resource   string
-	actionSets []string
+	resource       string
+	scopeAttribute ScopeAttribute
+	actionSets     []string
+	allowedKinds   []v0alpha1.ResourcePermissionSpecPermissionKind // nil = all kinds allowed
 }
 
+// NewMapper creates a Mapper for uid-scoped resources (folders, dashboards).
+// All permission kinds are allowed.
 func NewMapper(resource string, levels []string) Mapper {
+	return NewMapperWithAttribute(resource, levels, ScopeAttributeUID, nil)
+}
+
+// NewIDScopedMapper creates a Mapper for id-scoped resources (teams, users).
+// All permission kinds are allowed.
+func NewIDScopedMapper(resource string, levels []string) Mapper {
+	return NewMapperWithAttribute(resource, levels, ScopeAttributeID, nil)
+}
+
+// NewMapperWithAttribute creates a Mapper with an explicit scope attribute and optional kind restrictions.
+// When allowedKinds is nil, all permission kinds are permitted.
+func NewMapperWithAttribute(resource string, levels []string, attr ScopeAttribute, allowedKinds []v0alpha1.ResourcePermissionSpecPermissionKind) Mapper {
 	sets := make([]string, 0, len(levels))
 	for _, level := range levels {
-		sets = append(sets, resource+":"+level)
+		sets = append(sets, resource+":"+strings.ToLower(level))
 	}
 	return mapper{
-		resource:   resource,
-		actionSets: sets,
+		resource:       resource,
+		scopeAttribute: attr,
+		actionSets:     sets,
+		allowedKinds:   allowedKinds,
 	}
 }
 
@@ -53,7 +90,7 @@ func (m mapper) ActionSets() []string {
 }
 
 func (m mapper) Scope(name string) string {
-	return m.resource + ":uid:" + name
+	return m.resource + ":" + string(m.scopeAttribute) + ":" + name
 }
 
 func (m mapper) ActionSet(level string) (string, error) {
@@ -65,7 +102,14 @@ func (m mapper) ActionSet(level string) (string, error) {
 }
 
 func (m mapper) ScopePattern() string {
-	return m.resource + ":uid:%"
+	return m.resource + ":" + string(m.scopeAttribute) + ":%"
+}
+
+func (m mapper) AllowsKind(kind v0alpha1.ResourcePermissionSpecPermissionKind) bool {
+	if m.allowedKinds == nil {
+		return true
+	}
+	return slices.Contains(m.allowedKinds, kind)
 }
 
 type mapperEntry struct {
@@ -171,7 +215,9 @@ func (m *MappersRegistry) IsEnabled(gr schema.GroupResource) bool {
 // Used when reading permissions from the database for two purposes:
 //  1. Populating the ResourcePermission Spec (Group, Resource, Name fields)
 //  2. Making AccessClient Check requests to authorize viewing the resource
-func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
+//
+// datasourceType is the datasource type from the permission row, used to resolve the concrete group.
+func (m *MappersRegistry) ParseScope(scope, datasourceType string) (*groupResourceName, error) {
 	parts := strings.SplitN(scope, ":", 3)
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
@@ -180,16 +226,22 @@ func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
 	}
-	group := gr.Group
 
-	// FIXME: This is a hack to support wildcard entries, since we have no way to know
-	// the exact concrete group from just the RBAC scope prefix
-	// (e.g., "datasources" -> could be loki, tempo, etc.).
-	// Return "unknown.<suffix>" as a placeholder.
-	if strings.HasPrefix(group, "*.") {
-		group = "unknown" + group[1:] // e.g., "unknown.datasource.grafana.app"
-	}
+	group := resolveGroup(gr.Group, datasourceType)
+
 	return &groupResourceName{Group: group, Resource: gr.Resource, Name: parts[2]}, nil
+}
+
+// resolveGroup resolves a wildcard group (e.g. "*.datasource.grafana.app") to a concrete group
+// (e.g. "loki.datasource.grafana.app") using the prefix
+func resolveGroup(group, prefix string) string {
+	if !strings.HasPrefix(group, "*.") {
+		return group
+	}
+	if prefix == "" {
+		return "unknown" + group[1:]
+	}
+	return prefix + group[1:]
 }
 
 // EnabledActionSets returns the action sets for all currently-enabled mappers.
@@ -218,4 +270,37 @@ func (m *MappersRegistry) EnabledScopePatterns() []string {
 		out = append(out, e.mapper.ScopePattern())
 	}
 	return out
+}
+
+// ParseScopeCtx parses an RBAC scope string into a groupResourceName, resolving id to uid for
+// id-scoped resources (teams, users, service accounts) using the provided store and namespace.
+// For uid-scoped resources (folders, dashboards) it behaves identically to ParseScope.
+func (m *MappersRegistry) ParseScopeCtx(ctx context.Context, ns types.NamespaceInfo, store IdentityStore, scope, datasourceType string) (*groupResourceName, error) {
+	parts := strings.SplitN(scope, ":", 3)
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
+	}
+	gr, ok := m.reverse[parts[0]]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
+	}
+
+	entry := m.entries[gr]
+	group := resolveGroup(gr.Group, datasourceType)
+
+	name := parts[2]
+	if isIDScoped(entry.mapper) && store != nil {
+		uid, err := legacy.ResolveIDScopeToUIDName(ctx, store, ns, scope)
+		if err != nil {
+			return nil, err
+		}
+		name = uid
+	}
+
+	return &groupResourceName{Group: group, Resource: gr.Resource, Name: name}, nil
+}
+
+// isIDScoped returns true if the mapper's ScopePattern uses ":id:" (id-scoped resources).
+func isIDScoped(m Mapper) bool {
+	return strings.Contains(m.ScopePattern(), ":id:")
 }

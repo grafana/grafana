@@ -1,12 +1,20 @@
-import { LogRowModel } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { type LogRowModel } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
+import { SceneTimeRange } from '@grafana/scenes';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
-import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
+import { type ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
 import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.spec.gen';
 import { defaultStatus } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.status.gen';
 
-import { createShortLink, createAndCopyShortLink, getLogsPermalinkRange, buildShortUrl } from './shortLinks';
+import {
+  createShortLink,
+  createAndCopyShortLink,
+  createDashboardShareUrl,
+  getLogsPermalinkRange,
+  buildShortUrl,
+} from './shortLinks';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -189,6 +197,67 @@ describe('buildShortUrl', () => {
 
     const result = buildShortUrl(shortUrl);
     expect(result).toBe('https://grafana.example.com/grafana/goto/xyz789?orgId=org-1');
+  });
+});
+
+describe('createDashboardShareUrl', () => {
+  const opts = { useAbsoluteTimeRange: false, theme: 'current', useShortUrl: true };
+
+  it('uses snapshotKey as the URL identifier for snapshot dashboards', () => {
+    locationService.push('/dashboard/snapshot/the-real-snapshot-key?orgId=1');
+
+    const dashboard = new DashboardScene({
+      uid: 'original-dashboard-uid',
+      meta: { isSnapshot: true, snapshotKey: 'the-real-snapshot-key' },
+      $timeRange: new SceneTimeRange({}),
+    });
+
+    const url = createDashboardShareUrl(dashboard, opts);
+
+    expect(url).toContain('/dashboard/snapshot/the-real-snapshot-key');
+    expect(url).not.toContain('original-dashboard-uid');
+  });
+
+  it('does not append slug to snapshot URLs', () => {
+    locationService.push('/dashboard/snapshot/the-real-snapshot-key?orgId=1');
+
+    const dashboard = new DashboardScene({
+      uid: 'original-dashboard-uid',
+      meta: { isSnapshot: true, snapshotKey: 'the-real-snapshot-key', slug: 'some-slug' },
+      $timeRange: new SceneTimeRange({}),
+    });
+
+    const url = createDashboardShareUrl(dashboard, opts);
+
+    expect(url).toBe('/dashboard/snapshot/the-real-snapshot-key?orgId=1');
+  });
+
+  it('falls back to uid if snapshotKey is missing', () => {
+    locationService.push('/dashboard/snapshot/some-key?orgId=1');
+
+    const dashboard = new DashboardScene({
+      uid: 'original-dashboard-uid',
+      meta: { isSnapshot: true },
+      $timeRange: new SceneTimeRange({}),
+    });
+
+    const url = createDashboardShareUrl(dashboard, opts);
+
+    expect(url).toBe('/dashboard/snapshot/original-dashboard-uid?orgId=1');
+  });
+
+  it('uses uid and slug for regular dashboards', () => {
+    locationService.push('/d/original-dashboard-uid/my-dashboard?orgId=1');
+
+    const dashboard = new DashboardScene({
+      uid: 'original-dashboard-uid',
+      meta: { isSnapshot: false, slug: 'my-dashboard' },
+      $timeRange: new SceneTimeRange({}),
+    });
+
+    const url = createDashboardShareUrl(dashboard, opts);
+
+    expect(url).toBe('/d/original-dashboard-uid/my-dashboard?orgId=1');
   });
 });
 

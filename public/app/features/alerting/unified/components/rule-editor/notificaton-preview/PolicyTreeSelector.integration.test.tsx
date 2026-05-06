@@ -1,12 +1,13 @@
-import { UserEvent } from '@testing-library/user-event';
+import { type UserEvent } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
@@ -25,7 +26,7 @@ import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { MANUAL_ROUTING_KEY } from 'app/features/alerting/unified/utils/rule-form';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { RulerGrafanaRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerGrafanaRuleDTO, type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import * as analytics from '../../notification-policies/notificationPolicyAnalytics';
 import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
@@ -80,18 +81,7 @@ const selectFolderAndGroup = async (user: UserEvent) => {
 const server = setupMswServer();
 
 beforeEach(() => {
-  const mockGetBoundingClientRect = jest.fn(() => ({
-    width: 120,
-    height: 120,
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  }));
-
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: mockGetBoundingClientRect,
-  });
+  mockComboboxRect();
 
   mockPreviewApiResponse(server, []);
 });

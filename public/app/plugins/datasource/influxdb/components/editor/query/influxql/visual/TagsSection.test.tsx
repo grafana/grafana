@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-import { InfluxQueryTag } from '../../../../../types';
+import { type InfluxQueryTag } from '../../../../../types';
 
 import { TagsSection } from './TagsSection';
 

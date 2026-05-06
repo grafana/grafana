@@ -1,9 +1,9 @@
-import { ReactElement, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 
-import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
+import { type PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 // import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 // import { Button } from '@grafana/ui';
 
 import { ConfirmNavigationModal } from './ConfirmationNavigationModal';

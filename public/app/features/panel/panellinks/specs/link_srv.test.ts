@@ -1,17 +1,17 @@
 import {
   DataLinkBuiltInVars,
   FieldType,
-  GrafanaConfig,
+  type GrafanaConfig,
   locationUtil,
   toDataFrame,
   VariableOrigin,
 } from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
-import { DashboardLink } from '@grafana/schema';
-import { ContextSrv } from 'app/core/services/context_srv';
+import { type DashboardLink } from '@grafana/schema';
+import { type ContextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv, setTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TimeModel } from 'app/features/dashboard/state/TimeModel';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { type TimeModel } from 'app/features/dashboard/state/TimeModel';
+import { type TemplateSrv } from 'app/features/templating/template_srv';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
 
@@ -474,6 +474,26 @@ describe('linkSrv', () => {
             origin: VariableOrigin.Fields,
           },
         ]);
+      });
+    });
+
+    describe('when called with a DataFrame that contains a nestedFrames field', () => {
+      it('then it should skip the nestedFrames field and return suggestions for other fields', () => {
+        const frame = toDataFrame({
+          name: 'events',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'nested', type: FieldType.nestedFrames, values: [] },
+            { name: 'value', type: FieldType.number, values: [10, 11, 12] },
+          ],
+        });
+
+        const suggestions = getDataFrameVars([frame]);
+
+        const labels = suggestions.map((s) => s.label);
+        expect(labels).not.toContain('nested');
+        expect(labels).toContain('time');
+        expect(labels).toContain('value');
       });
     });
 

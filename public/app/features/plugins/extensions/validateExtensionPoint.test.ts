@@ -1,4 +1,4 @@
-import { PluginContextType } from '@grafana/data';
+import { type PluginContextType } from '@grafana/data';
 
 import * as errors from './errors';
 import { ExtensionsLog } from './logs/log';

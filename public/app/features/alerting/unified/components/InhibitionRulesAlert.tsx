@@ -1,4 +1,4 @@
-import { ComponentPropsWithoutRef } from 'react';
+import { type ComponentPropsWithoutRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';

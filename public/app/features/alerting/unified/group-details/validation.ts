@@ -1,7 +1,7 @@
-import { FieldValues, RegisterOptions } from 'react-hook-form';
+import { type FieldValues, type RegisterOptions } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { rulesInSameGroupHaveInvalidFor } from '../state/actions';
 import { MIN_TIME_RANGE_STEP_S } from '../utils/constants';

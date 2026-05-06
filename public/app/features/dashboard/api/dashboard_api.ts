@@ -1,11 +1,11 @@
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { DashboardDTO } from 'app/types/dashboard';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DashboardDTO } from 'app/types/dashboard';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';
 import { LegacyDashboardAPI } from './legacy';
-import { DashboardAPI, DashboardWithAccessInfo } from './types';
+import { type DashboardAPI, type DashboardWithAccessInfo } from './types';
 import { getDashboardsApiVersion } from './utils';
 import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';

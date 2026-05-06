@@ -1,14 +1,14 @@
 import { keys as _keys } from 'lodash';
 
-import { dateTime, TimeRange, VariableHide } from '@grafana/data';
-import { Dashboard, defaultVariableModel, RowPanel } from '@grafana/schema';
+import { dateTime, type TimeRange, VariableHide } from '@grafana/data';
+import { type Dashboard, defaultVariableModel, type RowPanel } from '@grafana/schema';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
 import { createCustomVariableAdapter } from '../../variables/custom/adapter';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
-import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { setTimeSrv, type TimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 

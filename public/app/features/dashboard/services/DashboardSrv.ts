@@ -1,11 +1,9 @@
-import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { BackendSrvRequest } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type BackendSrvRequest } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardMeta } from 'app/types/dashboard';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { RemovePanelEvent } from '../../../types/events';
 import { DashboardModel } from '../state/DashboardModel';
@@ -70,32 +68,6 @@ export class DashboardSrv {
       folderUid: data.folderUid,
       dashboard: data.dashboard.getSaveModelClone(),
       showErrorAlert: requestOptions?.showErrorAlert,
-    });
-  }
-
-  starDashboard(dashboardUid: string, isStarred: boolean) {
-    const backendSrv = getBackendSrv();
-
-    const request = {
-      showSuccessAlert: false,
-      url: '/api/user/stars/dashboard/uid/' + dashboardUid,
-      method: isStarred ? 'DELETE' : 'POST',
-    };
-
-    return backendSrv.request(request).then(() => {
-      const newIsStarred = !isStarred;
-
-      if (this.dashboard?.uid === dashboardUid) {
-        this.dashboard.meta.isStarred = newIsStarred;
-      }
-
-      const message = newIsStarred
-        ? t('notifications.starred-dashboard', 'Dashboard starred')
-        : t('notifications.unstarred-dashboard', 'Dashboard unstarred');
-
-      appEvents.emit(AppEvents.alertSuccess, [message]);
-
-      return newIsStarred;
     });
   }
 }

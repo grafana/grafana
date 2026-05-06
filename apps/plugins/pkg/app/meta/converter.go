@@ -595,6 +595,10 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) plugi
 		metaSpec.Translations = plugin.Translations
 	}
 
+	if len(plugin.AliasIDs) > 0 {
+		metaSpec.AliasIds = plugin.AliasIDs
+	}
+
 	return metaSpec
 }
 
@@ -694,33 +698,44 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 		metaSpec.Translations = plugin.Translations
 	}
 
+	if len(plugin.AliasIDs) > 0 {
+		metaSpec.AliasIds = plugin.AliasIDs
+	}
+
 	return metaSpec
+}
+
+// grafanaComPluginVersionMetaJSON is a wrapper around MetaJSONData that includes
+// additional fields like aliasIDs which are not part of the official plugin.json schema
+type grafanaComPluginVersionMetaJSON struct {
+	pluginsv0alpha1.MetaJSONData
+	AliasIDs []string `json:"aliasIDs,omitempty"`
 }
 
 // grafanaComPluginVersionMeta represents the response from grafana.com API
 // GET /api/plugins/{pluginId}/versions/{version}
 type grafanaComPluginVersionMeta struct {
-	PluginSlug          string                         `json:"pluginSlug"`
-	Version             string                         `json:"version"`
-	JSON                pluginsv0alpha1.MetaJSONData   `json:"json"`
-	SignatureType       string                         `json:"signatureType"`
-	SignedByOrg         string                         `json:"signedByOrg"`
-	SignedByOrgName     string                         `json:"signedByOrgName"`
-	Manifest            grafanaComPluginManifest       `json:"manifest"`
-	AngularDetected     bool                           `json:"angularDetected"`
-	CDNURL              string                         `json:"cdnUrl"`
-	CreatePluginVersion string                         `json:"createPluginVersion"`
-	Children            []grafanaComChildPluginVersion `json:"children,omitempty"`
+	PluginSlug          string                          `json:"pluginSlug"`
+	Version             string                          `json:"version"`
+	JSON                grafanaComPluginVersionMetaJSON `json:"json"`
+	SignatureType       string                          `json:"signatureType"`
+	SignedByOrg         string                          `json:"signedByOrg"`
+	SignedByOrgName     string                          `json:"signedByOrgName"`
+	Manifest            grafanaComPluginManifest        `json:"manifest"`
+	AngularDetected     bool                            `json:"angularDetected"`
+	CDNURL              string                          `json:"cdnUrl"`
+	CreatePluginVersion string                          `json:"createPluginVersion"`
+	Children            []grafanaComChildPluginVersion  `json:"children,omitempty"`
 }
 
 // grafanaComChildPluginVersion represents a child plugin in the parent's version response.
 type grafanaComChildPluginVersion struct {
-	ID              int                          `json:"id"`
-	PluginID        int                          `json:"pluginId"`
-	PluginVersionID int                          `json:"pluginVersionId"`
-	Path            string                       `json:"path"`
-	Slug            string                       `json:"slug"`
-	JSON            pluginsv0alpha1.MetaJSONData `json:"json"`
+	ID              int                             `json:"id"`
+	PluginID        int                             `json:"pluginId"`
+	PluginVersionID int                             `json:"pluginVersionId"`
+	Path            string                          `json:"path"`
+	Slug            string                          `json:"slug"`
+	JSON            grafanaComPluginVersionMetaJSON `json:"json"`
 }
 
 type grafanaComPluginManifest struct {
@@ -763,8 +778,13 @@ func grafanaComChildPluginVersionToMetaSpec(logger logging.Logger, child grafana
 // grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
 func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafanaComPluginVersionMeta, pluginRelBasePath string) (pluginsv0alpha1.MetaSpec, error) {
 	metaSpec := pluginsv0alpha1.MetaSpec{
-		PluginJson: gcomMeta.JSON,
+		PluginJson: gcomMeta.JSON.MetaJSONData,
 		Class:      pluginsv0alpha1.MetaSpecClassExternal,
+	}
+
+	// Extract aliasIDs from the JSON wrapper
+	if len(gcomMeta.JSON.AliasIDs) > 0 {
+		metaSpec.AliasIds = gcomMeta.JSON.AliasIDs
 	}
 
 	if gcomMeta.SignatureType != "" {
@@ -828,7 +848,7 @@ func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafa
 	}
 	metaSpec.Children = children
 
-	translations, err := translationsFromManifest(gcomMeta.CDNURL, gcomMeta.Manifest.Files, pluginRelBasePath, gcomMeta.JSON)
+	translations, err := translationsFromManifest(gcomMeta.CDNURL, gcomMeta.Manifest.Files, pluginRelBasePath, gcomMeta.JSON.MetaJSONData)
 	if err != nil {
 		logger.Warn("Error building translations", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "error", err)
 	}

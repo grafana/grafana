@@ -17,6 +17,6 @@ export const usePullRequestParam = () => {
     repoType: repoType ? textUtil.sanitizeUrl(decodeURIComponent(repoType)) : undefined,
     // Repository name the resource was pushed to, used to link to its status overview page
     resourcePushedTo: resourcePushedTo ? textUtil.sanitizeUrl(decodeURIComponent(resourcePushedTo)) : undefined,
-    action: actionParam === 'create' || actionParam === 'delete' ? actionParam : undefined,
+    action: actionParam === 'create' || actionParam === 'delete' || actionParam === 'update' ? actionParam : undefined,
   };
 };

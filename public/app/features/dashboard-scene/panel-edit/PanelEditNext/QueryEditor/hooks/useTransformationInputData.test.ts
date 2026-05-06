@@ -1,9 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
-import { DataFrame, transformDataFrame } from '@grafana/data';
+import { type DataFrame, transformDataFrame } from '@grafana/data';
 
-import { Transformation } from '../types';
+import { type Transformation } from '../types';
 
 import { useTransformationInputData } from './useTransformationInputData';
 

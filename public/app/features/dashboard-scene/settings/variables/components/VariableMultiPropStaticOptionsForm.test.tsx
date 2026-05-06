@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import {
   VariableMultiPropStaticOptionsForm,
-  VariableMultiPropStaticOptionsFormProps,
+  type VariableMultiPropStaticOptionsFormProps,
 } from './VariableMultiPropStaticOptionsForm';
 
 function renderForm(props: Partial<VariableMultiPropStaticOptionsFormProps>) {

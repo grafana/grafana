@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/grafana/authlib/types"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -93,7 +94,7 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 	// build checks - use item index as correlation ID so results map back without a side table
 	checks := make([]types.BatchCheckItem, 0, n)
 	var namespace string
-	for i := 0; i < n; i++ {
+	for i := range n {
 		ns, apiGroup, resource, name, ok := getTarget(i)
 		if !ok {
 			continue
@@ -202,14 +203,11 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 			return err
 		}
 		if !res.Allowed {
-			return fmt.Errorf(
-				"user cannot set permissions on resource %s/%s/%s: %w",
-				target.ApiGroup, target.Resource, target.Name, storewrapper.ErrUnauthorized,
-			)
+			return k8serrors.NewNotFound(targetGR, target.Name)
 		}
 		return nil
 	default:
-		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, storewrapper.ErrUnexpectedType)
+		return k8serrors.NewBadRequest(fmt.Sprintf("expected ResourcePermission, got %T", o))
 	}
 }
 
@@ -252,14 +250,11 @@ func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj run
 			return err
 		}
 		if !res.Allowed {
-			return fmt.Errorf(
-				"user cannot set permissions on resource %s/%s/%s: %w",
-				target.ApiGroup, target.Resource, target.Name, storewrapper.ErrUnauthorized,
-			)
+			return k8serrors.NewForbidden(targetGR, target.Name, fmt.Errorf("user cannot set permissions on this resource"))
 		}
 		return nil
 	default:
-		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, storewrapper.ErrUnexpectedType)
+		return k8serrors.NewBadRequest(fmt.Sprintf("expected ResourcePermission, got %T", o))
 	}
 }
 
@@ -297,6 +292,6 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 		l.Items = filtered
 		return l, nil
 	default:
-		return nil, fmt.Errorf("expected ResourcePermissionList, got %T: %w", l, storewrapper.ErrUnexpectedType)
+		return nil, k8serrors.NewBadRequest(fmt.Sprintf("expected ResourcePermissionList, got %T", l))
 	}
 }
