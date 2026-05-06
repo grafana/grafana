@@ -2,11 +2,13 @@ name: PR build Docker image
 
 on:
   pull_request:
+  workflow_dispatch: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
+# for meticulous tests
 permissions: {}
 
 jobs:
@@ -80,6 +82,8 @@ jobs:
       - build-grafana
     if: needs.detect-changes.outputs.changed == 'true'
     name: Push PR Docker image
+    outputs:
+      IMAGE: ${{ steps.push-image.outputs.IMAGE }}
     permissions:
       contents: read
       id-token: write
@@ -100,6 +104,7 @@ jobs:
           name: grafana-docker-tar-gz
           path: .
       - name: Load & Push Docker image
+        id: push-image
         env:
           BUILD_ID: ${{ github.run_id }}
         run: |
@@ -110,6 +115,7 @@ jobs:
           docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
           docker push "${DOCKER_IMAGE}"
           echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
+          echo "IMAGE=${DOCKER_IMAGE}" | tee -a "$GITHUB_OUTPUT"
       - name: Add PR status check
         env:
           GH_TOKEN: ${{ steps.get-github-token.outputs.token }}
@@ -127,3 +133,45 @@ jobs:
            -f 'output[title]=Docker image' \
            -f "output[summary]=${IMAGE}" \
            -f "output[text]=${IMAGE}"
+
+  run-meticulous-tests:
+    if: github.repository == 'grafana/grafana'
+    needs: push-docker-image
+    name: Run Meticulous tests
+    runs-on: ubuntu-x64-small
+    continue-on-error: true
+    permissions:
+      actions: write
+      contents: read
+      id-token: write
+      issues: write
+      pull-requests: write
+      statuses: read
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        id: login-to-gar
+        with:
+          registry: 'us-docker.pkg.dev'
+          environment: 'dev'
+
+      - name: Pull image from GAR
+        run: docker pull ${{ needs.push-docker-image.outputs.IMAGE }}
+
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            METICULOUS_API_TOKEN=meticulous-ui:api-token
+
+      - name: Run Meticulous tests
+        uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
+        with:
+          api-token: ${{ env.METICULOUS_API_TOKEN }}
+          image-tag: ${{ needs.push-docker-image.outputs.IMAGE }}
+          container-port: 3000

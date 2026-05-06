@@ -39,6 +39,8 @@ export const FlagKeys = {
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
   GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
+  /** Prevents flickering in dashboards */
+  GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Enables an inline version of Log Details that creates no new scrolls */
@@ -218,6 +220,17 @@ export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.orgDashboardTemplates", false, options).value;
+};
+
+/**
+ * Prevents flickering in dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.scenesFlickeringFix`
+ * - default value: `false`
+ */
+export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.scenesFlickeringFix", false, options).value;
 };
 
 /**

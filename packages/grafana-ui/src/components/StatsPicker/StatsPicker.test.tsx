@@ -3,27 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { useCallback, useRef, useState, type ReactElement } from 'react';
 
 import { ReducerID } from '@grafana/data';
+import { mockComboboxRect } from '@grafana/test-utils';
 
 import { Field } from '../Forms/Field';
 
 import { StatsPicker } from './StatsPicker';
 import { pickComboboxLayout } from './pickComboboxLayout';
-
-/** Needed for Combobox virtual list. Clone of `public/test/helpers/comboboxTestSetup` (avoid cross-package import). */
-const comboboxTestSetup = () => {
-  const mockGetBoundingClientRect = jest.fn(() => ({
-    width: 120,
-    height: 120,
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  }));
-
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: mockGetBoundingClientRect,
-  });
-};
 
 describe('pickComboboxLayout', () => {
   it('returns auto layout with default minWidth 8 when minWidth is omitted', () => {
@@ -58,7 +43,7 @@ describe('StatsPicker', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeAll(() => {
-    comboboxTestSetup();
+    mockComboboxRect();
   });
 
   beforeEach(() => {

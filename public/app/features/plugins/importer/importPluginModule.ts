@@ -1,6 +1,7 @@
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { getResolvedLanguage } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 
 import builtInPlugins, { isBuiltinPluginPath } from '../built_in_plugins';
 import { registerPluginInfoInCache } from '../loader/pluginInfoCache';
@@ -8,7 +9,6 @@ import { SystemJS } from '../loader/systemjs';
 import { resolveModulePath } from '../loader/utils';
 import { importPluginModuleInSandbox } from '../sandbox/sandboxPluginLoader';
 import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandboxPluginLoaderRegistry';
-import { pluginsLogger } from '../utils';
 
 import { addTranslationsToI18n } from './addTranslationsToI18n';
 import { type PluginImportInfo } from './types';
@@ -69,7 +69,7 @@ export async function importPluginModule({
   return SystemJS.import(modulePath).catch((e) => {
     let error = new Error('Could not load plugin', { cause: e });
     console.error(error);
-    pluginsLogger.logError(error, {
+    getLogger('features.plugins').logError(error, {
       path,
       pluginId,
       pluginVersion: version ?? '',
