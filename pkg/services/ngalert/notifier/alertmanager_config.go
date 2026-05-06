@@ -95,7 +95,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	if logInfo := mergeResult.LogContext(); len(logInfo) > 0 {
 		moa.logger.Info("Configurations merged successfully but some resources were renamed", logInfo...)
 	}
-	preparedConfig := mergeResult.Config
+	preparedConfig := mergeResult.Config.AlertmanagerConfig
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingDisableV0ReceiverConversion) {
 		moa.logger.Info("Skipping converting Mimir receivers to Grafana receivers", "identifier", mergeResult.Identifier)
@@ -345,7 +345,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 		if err != nil {
 			return definitions.GettableUserConfig{}, fmt.Errorf("failed to merge configuration: %w", err)
 		}
-		alertmanagerConfig = mergeResult.Config
+		alertmanagerConfig = mergeResult.Config.AlertmanagerConfig
 
 		mergedTemplates := cfg.GetMergedTemplateDefinitions()
 		templateFiles = make(map[string]string, len(mergedTemplates))

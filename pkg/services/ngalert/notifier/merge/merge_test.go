@@ -150,7 +150,7 @@ func TestMerge(t *testing.T) {
 			grafana: load(t, fullGrafanaConfig),
 			mimir:   load(t, fullMimirConfig),
 			expected: MergeResult{
-				Config: *load(t, fullMergedConfig),
+				Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig)},
 			},
 		},
 		{
@@ -162,14 +162,14 @@ func TestMerge(t *testing.T) {
 				p.Route.RepeatInterval = nil
 			}),
 			expected: MergeResult{
-				Config: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
+				Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
 					gw := model.Duration(dispatch.DefaultRouteOpts.GroupWait)
 					gi := model.Duration(dispatch.DefaultRouteOpts.GroupInterval)
 					ri := model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)
 					p.Route.Routes[0].GroupWait = &gw
 					p.Route.Routes[0].GroupInterval = &gi
 					p.Route.Routes[0].RepeatInterval = &ri
-				}),
+				})},
 			},
 		},
 		{
@@ -193,7 +193,7 @@ func TestMerge(t *testing.T) {
 				})
 			}),
 			expected: MergeResult{
-				Config: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
+				Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
 					p.Route.Routes[0].Routes = append(p.Route.Routes[0].Routes, &definition.Route{
 						Receiver: "grafana-default-email_mimir-12345",
 						Matchers: config.Matchers{
@@ -209,7 +209,7 @@ func TestMerge(t *testing.T) {
 							Name: "grafana-default-email_mimir-12345",
 						},
 					})
-				}),
+				})},
 				RenameResources: RenameResources{
 					Receivers: map[string]string{
 						"grafana-default-email": "grafana-default-email_mimir-12345",
@@ -234,7 +234,7 @@ func TestMerge(t *testing.T) {
 				})
 			}),
 			expected: MergeResult{
-				Config: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
+				Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
 					p.Receivers = append(p.Receivers,
 						&definition.PostableApiReceiver{
 							Receiver: definition.Receiver{
@@ -247,7 +247,7 @@ func TestMerge(t *testing.T) {
 							},
 						},
 					)
-				}),
+				})},
 				RenameResources: RenameResources{
 					Receivers: map[string]string{
 						"grafana-default-email": "grafana-default-email_mimir-12345_01",
@@ -281,7 +281,7 @@ func TestMerge(t *testing.T) {
 				})
 			}),
 			expected: MergeResult{
-				Config: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
+				Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
 					// remove mti2 that we replaced with ti-1
 					expected := p.TimeIntervals[:len(p.TimeIntervals)-1]
 					expected = append(expected, config.TimeInterval{
@@ -302,7 +302,7 @@ func TestMerge(t *testing.T) {
 						MuteTimeIntervals:   []string{"ti-1_mimir-12345"},
 						ActiveTimeIntervals: []string{"mti-1_mimir-12345"},
 					})
-				}),
+				})},
 				RenameResources: RenameResources{
 					TimeIntervals: map[string]string{
 						"ti-1":  "ti-1_mimir-12345",
@@ -337,7 +337,7 @@ func TestMerge(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := Merge(*tc.grafana, *tc.mimir, opts)
+			result, err := Merge(definitions.PostableUserConfig{AlertmanagerConfig: *tc.grafana}, *tc.mimir, opts)
 			if tc.expectedErr != nil {
 				if err == nil {
 					data, err := yaml.Marshal(result.Config)
@@ -348,10 +348,10 @@ func TestMerge(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			tc.expected.Config.Global = nil
+			tc.expected.Config.AlertmanagerConfig.Config.Global = nil
 
 			diff := cmp.Diff(tc.expected, result,
-				cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, httpcfg.ProxyConfig{}, labels.Matcher{}),
+				cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, httpcfg.ProxyConfig{}, labels.Matcher{}, definitions.PostableUserConfig{}),
 				cmpopts.SortSlices(func(a, b *labels.Matcher) bool {
 					return a.Name < b.Name
 				}),
@@ -371,7 +371,7 @@ func TestMerge(t *testing.T) {
 	t.Run("should not modify existing config", func(t *testing.T) {
 		g := load(t, fullGrafanaConfig)
 		m := load(t, fullMimirConfig)
-		_, err := Merge(*g, *m, opts)
+		_, err := Merge(definitions.PostableUserConfig{AlertmanagerConfig: *g}, *m, opts)
 		require.NoError(t, err)
 		assert.Equal(t, load(t, fullGrafanaConfig), g)
 		assert.Equal(t, load(t, fullMimirConfig), m)
@@ -384,7 +384,7 @@ func TestMerge(t *testing.T) {
 			DedupSuffix:     "_mimir-12345",
 			SubtreeMatchers: config.Matchers{},
 		}
-		result, err := Merge(*g, *m, opts)
+		result, err := Merge(definitions.PostableUserConfig{AlertmanagerConfig: *g}, *m, opts)
 		require.NoError(t, err)
 
 		full := load(t, fullMergedConfig)
@@ -392,8 +392,8 @@ func TestMerge(t *testing.T) {
 		full.InhibitRules = g.InhibitRules
 		full.Global = nil
 
-		diff := cmp.Diff(MergeResult{Config: *full}, result,
-			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, httpcfg.ProxyConfig{}, labels.Matcher{}),
+		diff := cmp.Diff(MergeResult{Config: definitions.PostableUserConfig{AlertmanagerConfig: *full}}, result,
+			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, httpcfg.ProxyConfig{}, labels.Matcher{}, definitions.PostableUserConfig{}),
 			cmpopts.SortSlices(func(a, b *labels.Matcher) bool {
 				return a.Name < b.Name
 			}),
@@ -1095,7 +1095,7 @@ func TestMergeExtraConfig(t *testing.T) {
 				AlertmanagerConfig: alertmanagerCfg,
 			},
 			expected: MergeResult{
-				Config: definition.PostableApiAlertingConfig{
+				Config: definitions.PostableUserConfig{AlertmanagerConfig: definition.PostableApiAlertingConfig{
 					Config: definition.Config{
 						Route: &definition.Route{
 							Receiver: "default",
@@ -1108,7 +1108,7 @@ func TestMergeExtraConfig(t *testing.T) {
 							},
 						},
 					},
-				},
+				}},
 				RenameResources: RenameResources{},
 			},
 		},
@@ -1140,7 +1140,7 @@ receivers:
 				},
 			},
 			expected: MergeResult{
-				Config: definition.PostableApiAlertingConfig{
+				Config: definitions.PostableUserConfig{AlertmanagerConfig: definition.PostableApiAlertingConfig{
 					Config: definition.Config{
 						Route: &definition.Route{
 							Receiver: "default",
@@ -1196,7 +1196,7 @@ receivers:
 							},
 						},
 					},
-				},
+				}},
 				RenameResources: RenameResources{
 					Receivers: map[string]string{
 						"default": "defaultmimir-1",
@@ -1245,7 +1245,7 @@ receivers:
 				},
 			},
 			expected: MergeResult{
-				Config: definition.PostableApiAlertingConfig{
+				Config: definitions.PostableUserConfig{AlertmanagerConfig: definition.PostableApiAlertingConfig{
 					Config: definition.Config{
 						Route: &definition.Route{
 							Receiver: "default",
@@ -1269,7 +1269,7 @@ receivers:
 							},
 						},
 					},
-				},
+				}},
 				RenameResources: RenameResources{
 					Receivers: map[string]string{
 						"default": "defaultmimir-1",

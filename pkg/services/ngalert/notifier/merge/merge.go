@@ -97,7 +97,7 @@ func (o MergeOpts) Validate() error {
 // imported route subtree and inhibit rules separately so callers can register them as
 // managed routes / managed inhibit rules. Plain calls to Merge leave these fields zero.
 type MergeResult struct {
-	Config definition.PostableApiAlertingConfig
+	Config definitions.PostableUserConfig
 	RenameResources
 	Identifier        string
 	ExtraRoute        *definition.Route
@@ -143,7 +143,7 @@ func (m MergeResult) LogContext() []any {
 // collisions and as the MergeResult.Identifier. The given matchers are used as the subtree
 // matchers for the merge.
 func GetMergedAlertmanagerConfig(
-	base definition.PostableApiAlertingConfig,
+	base definitions.PostableUserConfig,
 	imported definition.PostableApiAlertingConfig,
 	identifier string,
 	matchers config.Matchers,
@@ -177,7 +177,7 @@ func GetMergedAlertmanagerConfig(
 // If no extra configurations are present, it returns the base configuration wrapped in a MergeResult.
 func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (MergeResult, error) {
 	if len(cfg.ExtraConfigs) == 0 {
-		return MergeResult{Config: cfg.AlertmanagerConfig}, nil
+		return MergeResult{Config: *cfg}, nil
 	}
 	// support only one config for now
 	mimirCfg := cfg.ExtraConfigs[0]
@@ -188,7 +188,11 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 	if err != nil {
 		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
-	return GetMergedAlertmanagerConfig(cfg.AlertmanagerConfig, mcfg, mimirCfg.Identifier, mimirCfg.MergeMatchers)
+	result, err := GetMergedAlertmanagerConfig(*cfg, mcfg, mimirCfg.Identifier, mimirCfg.MergeMatchers)
+	if err != nil {
+		return MergeResult{}, err
+	}
+	return result, nil
 }
 
 // Merge combines two Alertmanager configurations into a single unified configuration.
@@ -232,13 +236,13 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 // would conflict with existing routes, potentially disrupting alert notifications. In this
 // case, you should choose different SubtreeMatchers that don't overlap with existing route
 // matchers.
-func Merge(a, b definition.PostableApiAlertingConfig, opts MergeOpts) (MergeResult, error) {
+func Merge(a definitions.PostableUserConfig, b definition.PostableApiAlertingConfig, opts MergeOpts) (MergeResult, error) {
 	if err := opts.Validate(); err != nil {
 		return MergeResult{}, err
 	}
 
 	if len(opts.SubtreeMatchers) > 0 {
-		match, err := checkIfMatchersUsed(opts.SubtreeMatchers, a.Route.Routes)
+		match, err := checkIfMatchersUsed(opts.SubtreeMatchers, a.AlertmanagerConfig.Route.Routes)
 		if err != nil {
 			return MergeResult{}, err
 		}
@@ -247,11 +251,11 @@ func Merge(a, b definition.PostableApiAlertingConfig, opts MergeOpts) (MergeResu
 		}
 	}
 
-	mergedReceivers, renamedReceivers := MergeReceivers(a.Receivers, b.Receivers, opts.DedupSuffix)
+	mergedReceivers, renamedReceivers := MergeReceivers(a.AlertmanagerConfig.Receivers, b.Receivers, opts.DedupSuffix)
 
 	mergedTimeInterval, renamedTimeIntervals := MergeTimeIntervals(
-		a.MuteTimeIntervals,
-		a.TimeIntervals,
+		a.AlertmanagerConfig.MuteTimeIntervals,
+		a.AlertmanagerConfig.TimeIntervals,
 		b.MuteTimeIntervals,
 		b.TimeIntervals,
 		opts.DedupSuffix,
@@ -262,8 +266,8 @@ func Merge(a, b definition.PostableApiAlertingConfig, opts MergeOpts) (MergeResu
 		TimeIntervals: renamedTimeIntervals,
 	}
 
-	route := a.Route
-	inhibitRules := a.InhibitRules
+	route := a.AlertmanagerConfig.Route
+	inhibitRules := a.AlertmanagerConfig.InhibitRules
 	if len(opts.SubtreeMatchers) > 0 {
 		RenameResourceUsagesInRoutes([]*definition.Route{b.Route}, renamed)
 		if route == nil {
@@ -277,16 +281,21 @@ func Merge(a, b definition.PostableApiAlertingConfig, opts MergeOpts) (MergeResu
 	}
 
 	return MergeResult{
-		Config: definition.PostableApiAlertingConfig{
-			Config: definition.Config{
-				Global:            nil, // Grafana does not have global.
-				Route:             route,
-				InhibitRules:      inhibitRules,
-				MuteTimeIntervals: a.MuteTimeIntervals,
-				TimeIntervals:     mergedTimeInterval,
-				Templates:         nil, // we do not use this.
+		Config: definitions.PostableUserConfig{
+			TemplateFiles: a.TemplateFiles,
+			AlertmanagerConfig: definition.PostableApiAlertingConfig{
+				Config: definition.Config{
+					Global:            nil, // Grafana does not have global.
+					Route:             route,
+					InhibitRules:      inhibitRules,
+					MuteTimeIntervals: a.AlertmanagerConfig.MuteTimeIntervals,
+					TimeIntervals:     mergedTimeInterval,
+					Templates:         nil, // we do not use this.
+				},
+				Receivers: mergedReceivers,
 			},
-			Receivers: mergedReceivers,
+			ManagedRoutes:          a.ManagedRoutes,
+			ManagedInhibitionRules: a.ManagedInhibitionRules,
 		},
 		RenameResources: renamed,
 	}, nil
