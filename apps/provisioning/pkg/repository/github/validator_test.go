@@ -107,7 +107,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			name: "valid GitHub Enterprise repository",
+			name: "GHES URL on github type rejected with githubEnterprise hint",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo-enterprise",
@@ -126,6 +126,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
+			expectedError: true,
+			errorContains: []string{"github.com", "githubEnterprise"},
 		},
 	}
 
