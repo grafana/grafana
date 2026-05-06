@@ -10,8 +10,8 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2
 	github.com/grafana/grafana-plugin-sdk-go v0.292.0
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0
-	github.com/grafana/grafana/pkg/semconv v0.0.0
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260424202308-770920975880
+	github.com/grafana/grafana/pkg/semconv v0.0.0-20260424202308-770920975880
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-plugin v1.7.0
 	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.5.0

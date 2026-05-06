@@ -53,7 +53,6 @@ import (
 	_ "go.opentelemetry.io/otel/trace/noop"
 	_ "go.uber.org/mock/gomock"
 	_ "golang.org/x/net/websocket"
-	_ "golang.org/x/oauth2"
 	_ "google.golang.org/protobuf/testing/protocmp"
 	_ "k8s.io/api/authentication/v1"
 	_ "k8s.io/apiserver/pkg/endpoints/discovery"
