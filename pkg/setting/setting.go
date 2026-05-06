@@ -346,6 +346,7 @@ type Cfg struct {
 	ResponseLimit                  int64
 	DataProxyRowLimit              int64
 	DataProxyUserAgent             string
+	DataProxyForwardUserAgent      bool
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings

@@ -588,7 +588,13 @@ Limits the number of rows that Grafana processes from SQL data sources. Default 
 
 #### `user_agent`
 
-Sets a custom value for the `User-Agent` header for outgoing data proxy requests. If empty, the default value is `Grafana/<BuildVersion>` (for example `Grafana/9.0.0`).
+Sets a custom value for the `User-Agent` header for outgoing data proxy requests. If empty, the default value is `Grafana/<BuildVersion>` (for example `Grafana/13.0.0`).
+
+#### `forward_user_agent`
+
+If enabled, the data proxy preserves the client's original `User-Agent` header by appending it to the proxy's `User-Agent`. Useful for tracking the originating client (browser, CLI, AI agent, etc.) at upstream data sources. Default is `false`.
+
+For example, with this enabled, a request from a client carrying `User-Agent: my-client/1.4` is forwarded with `User-Agent: Grafana/13.0.0 my-client/1.4`.
 
 <hr />
 
