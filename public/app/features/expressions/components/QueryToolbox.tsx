@@ -95,8 +95,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     border: `1px solid ${theme.colors.border.medium}`,
     borderTop: 'none',
-    borderBottomLeftRadius: theme.shape.radius.default,
-    borderBottomRightRadius: theme.shape.radius.default,
     padding: theme.spacing(1),
     display: 'flex',
     flexGrow: 1,
