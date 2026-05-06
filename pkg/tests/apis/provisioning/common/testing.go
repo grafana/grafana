@@ -2782,21 +2782,10 @@ func (h *GitTestHelper) createRepo(
 	workflowsJSON, err := json.Marshal(workflows)
 	require.NoError(t, err)
 
-	specURL := remote.URL
-	if repoType == "github" {
-		// The github validator requires a github.com URL. The github provider only
-		// uses Spec.GitHub.URL as metadata (owner/repo parsing, UI links); real git
-		// operations go through the mocked GitHub API client and the local gittest
-		// server. Swap the host so validation passes while keeping the owner/repo path.
-		parsed, err := url.Parse(remote.URL)
-		require.NoError(t, err)
-		specURL = "https://github.com" + parsed.Path
-	}
-
 	templateValues := map[string]any{
 		"Name":          repoName,
 		"Title":         fmt.Sprintf("Test Repository %s", repoName),
-		"URL":           specURL,
+		"URL":           remote.URL,
 		"Branch":        "main",
 		"TokenUser":     user.Username,
 		"SyncTarget":    syncTarget,
