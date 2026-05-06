@@ -22,10 +22,11 @@ export function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEd
   const styles = useStyles2(getStyles);
 
   const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
+  const selected = editPane.state.selectionContext.selected;
 
   const element = useMemo(() => {
-    return getEditableElementForSelection(editPane, editPane.state.selectionContext.selected);
-  }, [editPane]);
+    return getEditableElementForSelection(editPane, selected);
+  }, [editPane, selected]);
 
   const categories = element?.useEditPaneOptions ? element.useEditPaneOptions(editPane.state.isNewElement) : [];
 
