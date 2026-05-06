@@ -2,7 +2,7 @@
  * @alpha
  */
 
-import { reportInteraction } from '../../analytics/utils';
+import { reportInteraction } from '../analytics/utils';
 
 import { type DefineFeatureEventsOptions, type Exact, type Event, type EventProperty } from './types';
 

@@ -11,3 +11,5 @@
 
 export { clearLoggerRegistry, getLogger, initializeLoggersRegistry, setLogger } from './services/logging/registry';
 export { type LoggerSource } from './services/logging/loggers';
+export { defineFeatureEvents } from './analyticsFramework/main';
+export type { EventProperty, Event } from './analyticsFramework/types';

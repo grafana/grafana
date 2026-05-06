@@ -40,11 +40,15 @@ import (
 // probing on the main goroutine. The mutex is uncontended in single-
 // threaded tests.
 type fakeRemoteIndexStore struct {
-	mu            sync.Mutex
-	data          map[ulid.ULID]*IndexMeta
-	listErr       error
-	downloadErr   error
+	mu          sync.Mutex
+	data        map[ulid.ULID]*IndexMeta
+	getErr      map[ulid.ULID]error
+	listErr     error
+	downloadErr error
+
 	listCalls     atomic.Int32
+	listKeyCalls  atomic.Int32
+	getMetaCalls  atomic.Int32
 	downloadCalls atomic.Int32
 }
 
@@ -84,6 +88,7 @@ func (f *fakeRemoteIndexStore) ListIndexes(context.Context, resource.NamespacedR
 }
 
 func (f *fakeRemoteIndexStore) ListIndexKeys(context.Context, resource.NamespacedResource) ([]ulid.ULID, error) {
+	f.listKeyCalls.Add(1)
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.listErr != nil {
@@ -97,8 +102,12 @@ func (f *fakeRemoteIndexStore) ListIndexKeys(context.Context, resource.Namespace
 }
 
 func (f *fakeRemoteIndexStore) GetIndexMeta(_ context.Context, _ resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	f.getMetaCalls.Add(1)
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if err, ok := f.getErr[k]; ok {
+		return nil, err
+	}
 	meta, ok := f.data[k]
 	if !ok {
 		return nil, ErrSnapshotNotFound
@@ -1025,39 +1034,13 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 
 // --- findFreshSnapshot{ByUploadTime,ByBuildStart} ---
 
-// probeFakeStore embeds fakeRemoteIndexStore but lets individual GetIndexMeta
-// calls fail with a chosen error, so we can test mid-walk error tolerance.
-type probeFakeStore struct {
-	*fakeRemoteIndexStore
-	getErr     map[ulid.ULID]error
-	listKeyErr error
-}
-
-func (s *probeFakeStore) ListIndexKeys(ctx context.Context, ns resource.NamespacedResource) ([]ulid.ULID, error) {
-	if s.listKeyErr != nil {
-		return nil, s.listKeyErr
-	}
-	return s.fakeRemoteIndexStore.ListIndexKeys(ctx, ns)
-}
-
-func (s *probeFakeStore) GetIndexMeta(ctx context.Context, ns resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
-	if e, ok := s.getErr[k]; ok {
-		return nil, e
-	}
-	return s.fakeRemoteIndexStore.GetIndexMeta(ctx, ns, k)
-}
-
-func newProbeFake() *probeFakeStore {
-	return &probeFakeStore{fakeRemoteIndexStore: &fakeRemoteIndexStore{}, getErr: map[ulid.ULID]error{}}
-}
-
 // probeCase is one row in a table-driven test for findFreshSnapshotBy*.
 // setup populates the per-case store and returns the ULID we expect the
 // probe to return (zero ULID means "no match"). wantErr (substring) flags
 // error-path cases; when set, the probe is expected to return an error.
 type probeCase struct {
 	name    string
-	setup   func(s *probeFakeStore) ulid.ULID
+	setup   func(s *fakeRemoteIndexStore) ulid.ULID
 	wantErr string
 }
 
@@ -1067,7 +1050,7 @@ func runProbeCases(t *testing.T, probe probeFn, cases []probeCase) {
 	t.Helper()
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			store := newProbeFake()
+			store := &fakeRemoteIndexStore{getErr: map[ulid.ULID]error{}}
 			want := tc.setup(store)
 			k, meta, err := probe(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
 			if tc.wantErr != "" {
@@ -1093,7 +1076,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 	runProbeCases(t, findFreshSnapshotByUploadTime, []probeCase{
 		{
 			name: "homogeneous cluster: newest same-version returned",
-			setup: func(s *probeFakeStore) ulid.ULID {
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
 				s.put(mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
 				k := mk(-5 * time.Minute)
 				s.put(k, &IndexMeta{BuildVersion: "11.5.0"})
@@ -1102,7 +1085,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		},
 		{
 			name: "mixed version: walks past newer wrong-version",
-			setup: func(s *probeFakeStore) ulid.ULID {
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
 				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0"})
 				match := mk(-30 * time.Minute)
 				s.put(match, &IndexMeta{BuildVersion: "11.5.0"})
@@ -1112,11 +1095,11 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		},
 		{
 			name:  "no candidates",
-			setup: func(s *probeFakeStore) ulid.ULID { return ulid.ULID{} },
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID { return ulid.ULID{} },
 		},
 		{
 			name: "tolerates ErrSnapshotNotFound and ErrInvalidManifest mid-walk",
-			setup: func(s *probeFakeStore) ulid.ULID {
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
 				nf := mk(-5 * time.Minute)
 				s.put(nf, &IndexMeta{BuildVersion: "11.5.0"})
 				s.getErr[nf] = ErrSnapshotNotFound
@@ -1130,15 +1113,15 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		},
 		{
 			name: "surfaces list error",
-			setup: func(s *probeFakeStore) ulid.ULID {
-				s.listKeyErr = errors.New("boom")
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
+				s.listErr = errors.New("boom")
 				return ulid.ULID{}
 			},
 			wantErr: "boom",
 		},
 		{
 			name: "surfaces unexpected GET error",
-			setup: func(s *probeFakeStore) ulid.ULID {
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
 				bad := mk(-5 * time.Minute)
 				s.put(bad, &IndexMeta{BuildVersion: "11.5.0"})
 				s.getErr[bad] = errors.New("transport boom")
@@ -1156,7 +1139,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 	runProbeCases(t, findFreshSnapshotByBuildStart, []probeCase{
 		{
 			name: "homogeneous cluster: newest same-version returned",
-			setup: func(s *probeFakeStore) ulid.ULID {
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
 				s.put(mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
 				k := mk(-5 * time.Minute)
 				s.put(k, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
@@ -1165,7 +1148,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 		},
 		{
 			name: "mixed version: walks past newer wrong-version",
-			setup: func(s *probeFakeStore) ulid.ULID {
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
 				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0", BuildTime: now.Add(-10 * time.Minute)})
 				match := mk(-30 * time.Minute)
 				s.put(match, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
@@ -1178,7 +1161,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 			// recent ULID + matching version + old BuildTime (a periodic
 			// re-upload of a long-lived index) must be rejected.
 			name: "skips recent re-upload of old build",
-			setup: func(s *probeFakeStore) ulid.ULID {
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
 				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-3 * time.Hour)})
 				return ulid.ULID{}
 			},
@@ -1186,18 +1169,18 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 		{
 			// Zero-value BuildTime carries no freshness signal.
 			name: "skips zero BuildTime",
-			setup: func(s *probeFakeStore) ulid.ULID {
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
 				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
 				return ulid.ULID{}
 			},
 		},
 		{
 			name:  "no candidates",
-			setup: func(s *probeFakeStore) ulid.ULID { return ulid.ULID{} },
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID { return ulid.ULID{} },
 		},
 		{
 			name: "tolerates ErrSnapshotNotFound and ErrInvalidManifest mid-walk",
-			setup: func(s *probeFakeStore) ulid.ULID {
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
 				nf := mk(-5 * time.Minute)
 				s.put(nf, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
 				s.getErr[nf] = ErrSnapshotNotFound
@@ -1211,15 +1194,15 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 		},
 		{
 			name: "surfaces list error",
-			setup: func(s *probeFakeStore) ulid.ULID {
-				s.listKeyErr = errors.New("boom")
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
+				s.listErr = errors.New("boom")
 				return ulid.ULID{}
 			},
 			wantErr: "boom",
 		},
 		{
 			name: "surfaces unexpected GET error",
-			setup: func(s *probeFakeStore) ulid.ULID {
+			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
 				bad := mk(-5 * time.Minute)
 				s.put(bad, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
 				s.getErr[bad] = errors.New("transport boom")
