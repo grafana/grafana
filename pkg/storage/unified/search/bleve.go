@@ -705,13 +705,13 @@ func (b *bleveBackend) BuildIndex(
 		}
 	}()
 
-	if !prepared.source.needsBuild() {
-		switch prepared.source {
-		case buildIndexSourceDownloadedSnapshot:
-			logWithDetails.Debug("Using index downloaded from remote snapshot", "indexRV", prepared.indexRV, "directory", filepath.Join(resourceDir, prepared.fileIndexName))
-		case buildIndexSourceExistingFile:
-			logWithDetails.Debug("Existing index found on filesystem", "indexRV", prepared.indexRV, "directory", filepath.Join(resourceDir, prepared.fileIndexName))
-		}
+	switch prepared.source {
+	case buildIndexSourceNew:
+		// New indexes are logged by the create/build path; this switch only adds source-specific reuse logs.
+	case buildIndexSourceDownloadedSnapshot:
+		logWithDetails.Debug("Using index downloaded from remote snapshot", "indexRV", prepared.indexRV, "directory", filepath.Join(resourceDir, prepared.fileIndexName))
+	case buildIndexSourceExistingFile:
+		logWithDetails.Debug("Existing index found on filesystem", "indexRV", prepared.indexRV, "directory", filepath.Join(resourceDir, prepared.fileIndexName))
 	}
 
 	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
