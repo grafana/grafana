@@ -22,12 +22,8 @@ test.use({
     scopeFilters: true,
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
-    useScopesNavigationEndpoint: true,
   },
 });
-
-// This test has 6 sequential steps each requiring navigation and variable interactions.
-test.setTimeout(60_000);
 
 test.describe(
   'AdHoc Filters CUJs',
@@ -179,13 +175,11 @@ test.describe(
 
         expect(await adHocFilterPills.count()).toBe(2);
 
-        // Pass the current dashboard as the scope binding so that scope navigation points here
-        // and Grafana doesn't redirect away to the scope's default linked dashboard (cuj-dashboard-2).
-        await setScopes(page, { uid: DASHBOARD_UNDER_TEST, title: 'CUJ Dashboard 1' });
+        await setScopes(page);
 
         await expect(scopesSelectorInput).toHaveAttribute('data-value', /.+/);
 
-        await expect(adHocFilterPills).toHaveCount(3);
+        expect(await adHocFilterPills.count()).toBe(3);
 
         const defaultDashboardFilter = adHocFilterPills.first();
         const pillText = await defaultDashboardFilter.textContent();

@@ -20,12 +20,8 @@ test.use({
     scopeFilters: true,
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
-    useScopesNavigationEndpoint: true,
   },
 });
-
-// This test has multiple sequential steps with scope selection, navigation, and variable checks.
-test.setTimeout(120_000);
 
 const USE_LIVE_DATA = Boolean(process.env.API_CONFIG_PATH);
 const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
@@ -139,21 +135,8 @@ test.describe(
             const requests = getRequests();
             expect(checkDashboardReloadBehavior(requests)).toBe(true);
 
-            // After navigating to the new dashboard, scope filters and user-entered groupBy
-            // carry over, but dashboard-specific default filters from the source dashboard do not.
-            // Wait for the scope filter pill to appear before reading (allTextContents doesn't retry).
-            await expect(page.getByLabel(/^Edit filter with key namespace/)).toBeVisible();
-            const postNavPills = await adhocFilterPills.allTextContents();
-            const postNavProcessedPills = postNavPills
-              .map((p) => {
-                const parts = p.split(' ');
-                return `${parts[0]}${parts[1]}"${parts[2]}"`;
-              })
-              .join(',');
-            // Scope filter must persist across navigation
-            expect(postNavProcessedPills).toContain('namespace');
-            // Panel content must reflect the new dashboard state (groupBy and scope filter)
-            await expect(markdownContent).toContainText(`GroupByVar: dev\n\nAdHocVar: ${postNavProcessedPills}`);
+            //all values are set after dashboard switch
+            await expect(markdownContent).toContainText(`GroupByVar: dev\n\nAdHocVar: ${processedPills}`);
           }
         );
       }

@@ -14,12 +14,8 @@ test.use({
     scopeFilters: true,
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
-    useScopesNavigationEndpoint: true,
   },
 });
-
-// This test has 4 sequential steps requiring dashboard navigation and variable interactions.
-test.setTimeout(60_000);
 
 const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 

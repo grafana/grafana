@@ -1690,11 +1690,11 @@ var (
 		{
 			Name:         "useScopesNavigationEndpoint",
 			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			Generate:     Generate{LegacyFrontend: true},
 			HideFromDocs: true,
-			Expression:   "true",
+			Expression:   "false",
 		},
 		{
 			Name:         "scopeSearchAllLevels",

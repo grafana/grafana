@@ -5826,19 +5826,16 @@
     {
       "metadata": {
         "name": "useScopesNavigationEndpoint",
-        "resourceVersion": "1777035186143",
-        "creationTimestamp": "2025-03-31T15:20:00Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-24 12:53:06.14374 +0000 UTC"
-        }
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2025-03-31T15:20:00Z"
       },
       "spec": {
         "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-        "stage": "preview",
+        "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
