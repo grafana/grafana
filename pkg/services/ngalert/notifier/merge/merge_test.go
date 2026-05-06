@@ -21,96 +21,84 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-func TestMergeOpts_Validate(t *testing.T) {
+func TestValidateSubtreeMatchers(t *testing.T) {
 	testCases := []struct {
 		name        string
-		opts        MergeOpts
+		matchers    config.Matchers
 		expectedErr error
 	}{
 		{
-			name: "no error if subtree matchers are empty",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{},
-			},
+			name:     "no error if subtree matchers are empty",
+			matchers: config.Matchers{},
 		},
 		{
 			name: "error if subtree matchers are not equal",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{
-					{
-						Type:  labels.MatchNotEqual,
-						Name:  "label",
-						Value: "test",
-					},
+			matchers: config.Matchers{
+				{
+					Type:  labels.MatchNotEqual,
+					Name:  "label",
+					Value: "test",
 				},
 			},
 			expectedErr: ErrInvalidMatchers,
 		},
 		{
 			name: "error if subtree matchers are regex",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{
-					{
-						Type:  labels.MatchRegexp,
-						Name:  "label",
-						Value: "test",
-					},
+			matchers: config.Matchers{
+				{
+					Type:  labels.MatchRegexp,
+					Name:  "label",
+					Value: "test",
 				},
 			},
 			expectedErr: ErrInvalidMatchers,
 		},
 		{
 			name: "error if subtree matchers are not-regex",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{
-					{
-						Type:  labels.MatchNotRegexp,
-						Name:  "label",
-						Value: "test",
-					},
+			matchers: config.Matchers{
+				{
+					Type:  labels.MatchNotRegexp,
+					Name:  "label",
+					Value: "test",
 				},
 			},
 			expectedErr: ErrInvalidMatchers,
 		},
 		{
 			name: "error if duplicates",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{
-					{
-						Type:  labels.MatchEqual,
-						Name:  "label",
-						Value: "test",
-					},
-					{
-						Type:  labels.MatchEqual,
-						Name:  "label",
-						Value: "test",
-					},
+			matchers: config.Matchers{
+				{
+					Type:  labels.MatchEqual,
+					Name:  "label",
+					Value: "test",
+				},
+				{
+					Type:  labels.MatchEqual,
+					Name:  "label",
+					Value: "test",
 				},
 			},
 			expectedErr: ErrDuplicateMatchers,
 		},
 		{
 			name: "valid if no duplicates and only equal matchers",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{
-					{
-						Type:  labels.MatchEqual,
-						Name:  "al",
-						Value: "test",
-					},
-					{
-						Type:  labels.MatchEqual,
-						Name:  "bl",
-						Value: "test",
-					},
+			matchers: config.Matchers{
+				{
+					Type:  labels.MatchEqual,
+					Name:  "al",
+					Value: "test",
+				},
+				{
+					Type:  labels.MatchEqual,
+					Name:  "bl",
+					Value: "test",
 				},
 			},
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual := tc.opts.Validate()
+			actual := ValidateSubtreeMatchers(tc.matchers)
 			if tc.expectedErr != nil {
 				assert.ErrorIs(t, actual, tc.expectedErr)
 				return

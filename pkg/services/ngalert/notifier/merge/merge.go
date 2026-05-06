@@ -30,54 +30,11 @@ var (
 	ErrSubtreeMatchersConflict = errors.New("subtree matchers conflict with existing Grafana routes, merging will break existing notifications")
 )
 
-type MergeOpts struct {
-	// DedupSuffix is a string suffix that will be appended to any resources (receivers or time intervals)
-	// from the secondary configuration that have name conflicts with the primary configuration.
-	//
-	// The deduplication process works as follows:
-	// 1. If a resource from the secondary config has the same name as one in the primary config,
-	//    this suffix is appended to create a new name (e.g., "webhook" becomes "webhooksuffix")
-	// 2. If the new name still conflicts, a sequential number is added (e.g., "webhooksuffix_01")
-	// 3. All references to renamed resources are automatically updated throughout the configuration
-	//
-	// When left empty, only numeric suffixes will be used for deduplication (e.g., "webhook_01").
-	//
-	// Example usage:
-	//   MergeOpts{
-	//     DedupSuffix: "_secondary",  // Results in names like "webhook_secondary" or "webhook_secondary_01"
-	//   }
-	//
-	// This field helps maintain distinct resource identities while preserving relationships
-	// between components during the merge process.
-	DedupSuffix string
-	// SubtreeMatchers specifies a list of matchers that will be applied to the root route
-	// of the routing tree being merged. These matchers are essential for properly isolating
-	// and identifying alerts from the secondary configuration after merging.
-	//
-	// The matchers must follow these requirements:
-	// - Each matcher must use the equality operator (labels.MatchEqual type)
-	// - Each matcher name must be unique within the list
-	//
-	// Example usage:
-	//   SubtreeMatchers: config.Matchers{
-	//     {Name: "source", Value: "external", Type: labels.MatchEqual},
-	//     {Name: "environment", Value: "production", Type: labels.MatchEqual},
-	//   }
-	//
-	// These matchers will be:
-	// 1. Added to the root of the secondary routing tree during merge
-	// 2. Added to both source and target matchers of all inhibit rules from the secondary config
-	// 3. Used to ensure alerts are properly routed after configurations are merged
-	//
-	// Warning: If these matchers conflict with existing routes in the primary configuration,
-	// the merge operation will fail with ErrSubtreeMatchersConflict to prevent breaking
-	// existing notification flows.
-	SubtreeMatchers config.Matchers
-}
-
-func (o MergeOpts) Validate() error {
-	seenNames := make(map[string]struct{}, len(o.SubtreeMatchers))
-	for _, matcher := range o.SubtreeMatchers {
+// ValidateSubtreeMatchers checks that all matchers use the equality operator and have unique names.
+// These are the requirements for matchers used as subtree identifiers when merging configurations.
+func ValidateSubtreeMatchers(matchers config.Matchers) error {
+	seenNames := make(map[string]struct{}, len(matchers))
+	for _, matcher := range matchers {
 		if _, ok := seenNames[matcher.Name]; ok {
 			return ErrDuplicateMatchers
 		}
@@ -174,32 +131,28 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 	if err != nil {
 		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
-	opts := MergeOpts{
-		DedupSuffix:     mimirCfg.Identifier,
-		SubtreeMatchers: mimirCfg.MergeMatchers,
-	}
-	if err := opts.Validate(); err != nil {
+	if err := ValidateSubtreeMatchers(mimirCfg.MergeMatchers); err != nil {
 		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
 	}
 
-	if len(opts.SubtreeMatchers) > 0 {
-		match, err := checkIfMatchersUsed(opts.SubtreeMatchers, cfg.AlertmanagerConfig.Route.Routes)
+	if len(mimirCfg.MergeMatchers) > 0 {
+		match, err := checkIfMatchersUsed(mimirCfg.MergeMatchers, cfg.AlertmanagerConfig.Route.Routes)
 		if err != nil {
 			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
 		}
 		if match {
-			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w: sub tree matchers: %s", ErrSubtreeMatchersConflict, opts.SubtreeMatchers)
+			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w: sub tree matchers: %s", ErrSubtreeMatchersConflict, mimirCfg.MergeMatchers)
 		}
 	}
 
-	mergedReceivers, renamedReceivers := MergeReceivers(cfg.AlertmanagerConfig.Receivers, mcfg.Receivers, opts.DedupSuffix)
+	mergedReceivers, renamedReceivers := MergeReceivers(cfg.AlertmanagerConfig.Receivers, mcfg.Receivers, mimirCfg.Identifier)
 
 	mergedTimeIntervals, renamedTimeIntervals := MergeTimeIntervals(
 		cfg.AlertmanagerConfig.MuteTimeIntervals,
 		cfg.AlertmanagerConfig.TimeIntervals,
 		mcfg.MuteTimeIntervals,
 		mcfg.TimeIntervals,
-		opts.DedupSuffix,
+		mimirCfg.Identifier,
 	)
 
 	renamed := RenameResources{
@@ -209,7 +162,7 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 
 	route := cfg.AlertmanagerConfig.Route
 	inhibitRules := cfg.AlertmanagerConfig.InhibitRules
-	if len(opts.SubtreeMatchers) > 0 {
+	if len(mimirCfg.MergeMatchers) > 0 {
 		RenameResourceUsagesInRoutes([]*definition.Route{mcfg.Route}, renamed)
 		if route == nil {
 			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: cannot merge into undefined routing tree")
@@ -217,8 +170,8 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 		if mcfg.Route == nil {
 			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: cannot merge undefined routing tree")
 		}
-		route = MergeRoutes(*route, *mcfg.Route, opts.SubtreeMatchers)
-		inhibitRules = MergeInhibitRules(inhibitRules, mcfg.InhibitRules, opts.SubtreeMatchers)
+		route = MergeRoutes(*route, *mcfg.Route, mimirCfg.MergeMatchers)
+		inhibitRules = MergeInhibitRules(inhibitRules, mcfg.InhibitRules, mimirCfg.MergeMatchers)
 	}
 
 	mergedConfig := definitions.PostableUserConfig{
@@ -250,15 +203,15 @@ func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (M
 }
 
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by applying suffixes. Returns renamed resources for tracking adjustments made.
-func DeduplicateResources(a, b definition.PostableApiAlertingConfig, opts MergeOpts) (RenameResources, error) {
-	_, renamedReceivers := MergeReceivers(a.Receivers, b.Receivers, opts.DedupSuffix)
+func DeduplicateResources(a, b definition.PostableApiAlertingConfig, suffix string) (RenameResources, error) {
+	_, renamedReceivers := MergeReceivers(a.Receivers, b.Receivers, suffix)
 
 	_, renamedTimeIntervals := MergeTimeIntervals(
 		a.MuteTimeIntervals,
 		a.TimeIntervals,
 		b.MuteTimeIntervals,
 		b.TimeIntervals,
-		opts.DedupSuffix,
+		suffix,
 	)
 	return RenameResources{
 		Receivers:     renamedReceivers,
