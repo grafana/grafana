@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -1972,18 +1973,18 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 	runTestCase := func(t *testing.T, tc testcase) {
 		postableReceiver, err := legacy_storage.ReceiverToPostableApiReceiver(&tc.receiver)
 		require.NoError(t, err)
-		postable := definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{
+		postable := v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
 						Receiver: postableReceiver.Name,
 					},
 				},
-				Receivers: []*definitions.PostableApiReceiver{postableReceiver},
+				Receivers: []*v1.PostableApiReceiver{postableReceiver},
 			},
 		}
 
-		amConfig, err := json.Marshal(postable)
+		amConfig, err := legacy_storage.SerializeAlertmanagerConfig(postable)
 		require.NoError(t, err)
 
 		env := createTestEnv(t, string(amConfig))
@@ -2166,7 +2167,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	})
 	require.NoError(t, err)
 
-	raw, err := json.Marshal(c)
+	raw, err := legacy_storage.SerializeAlertmanagerConfig(*c)
 	require.NoError(t, err)
 
 	log := log.NewNopLogger()
@@ -2285,10 +2286,10 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	tracer := tracing.InitializeTracerForTest()
 
 	rev := legacy_storage.ConfigRevision{
-		Config: &definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{
+		Config: &v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
 						Receiver: "some-receiver",
 					},
 				},
@@ -2376,21 +2377,21 @@ func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID
 		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
 	result := *f.config.Config.AlertmanagerConfig.Route
-	result.Provenance = definitions.Provenance(f.prov)
-	return result, "", nil
+	result.Provenance = v1.Provenance(f.prov)
+	return *notifier.RouteToAPI(&result), "", nil
 }
 
 func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
 	if orgID != 1 {
 		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
-	f.config.Config.AlertmanagerConfig.Route = &tree
+	f.config.Config.AlertmanagerConfig.Route = v1.RouteToModel(&tree)
 	f.prov = p
 	return tree, "some", nil
 }
 
 func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
-	f.config.Config.AlertmanagerConfig.Route = &definitions.Route{} // TODO
+	f.config.Config.AlertmanagerConfig.Route = &v1.Route{} // TODO
 	return definitions.Route{}, nil
 }
 

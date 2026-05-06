@@ -14,12 +14,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/alerting/definition"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -29,7 +29,7 @@ func TestGetPolicyTree(t *testing.T) {
 	orgID := int64(1)
 	rev := getDefaultConfigRevision()
 	expectedRoute := *rev.Config.AlertmanagerConfig.Route
-	expectedRoute.Provenance = definitions.Provenance(models.ProvenanceAPI)
+	expectedRoute.Provenance = v1.Provenance(models.ProvenanceAPI)
 	expectedVersion := calculateRouteFingerprint(expectedRoute)
 
 	sut, store, prov := createNotificationPolicyServiceSut()
@@ -43,9 +43,9 @@ func TestGetPolicyTree(t *testing.T) {
 	tree, version, err := sut.GetPolicyTree(context.Background(), orgID)
 	require.NoError(t, err)
 
-	assert.Equal(t, expectedRoute, tree)
+	assert.Equal(t, notifier.RouteToAPI(&expectedRoute), &tree)
 	assert.Equal(t, expectedVersion, version)
-	assert.Equal(t, expectedRoute.Provenance, tree.Provenance)
+	assert.Equal(t, definitions.Provenance(expectedRoute.Provenance), tree.Provenance)
 
 	assert.Len(t, store.Calls, 1)
 	assert.Equal(t, "Get", store.Calls[0].Method)
@@ -53,7 +53,7 @@ func TestGetPolicyTree(t *testing.T) {
 
 	assert.Len(t, prov.Calls, 1)
 	assert.Equal(t, "GetProvenance", prov.Calls[0].MethodName)
-	assert.IsType(t, &definitions.Route{}, prov.Calls[0].Arguments[1])
+	assert.IsType(t, &v1.Route{}, prov.Calls[0].Arguments[1])
 	assert.Equal(t, orgID, prov.Calls[0].Arguments[2])
 }
 
@@ -172,7 +172,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		expectedRev := getDefaultConfigRevision()
 		route := newRoute
 		expectedRev.ConcurrencyToken = rev.ConcurrencyToken
-		expectedRev.Config.AlertmanagerConfig.Route = &route
+		expectedRev.Config.AlertmanagerConfig.Route = v1.RouteToModel(&route)
 
 		expectedErr := errors.New("test")
 		sut.validator = func(_ context.Context, from, to models.Provenance) error {
@@ -186,12 +186,12 @@ func TestUpdatePolicyTree(t *testing.T) {
 
 		assert.Len(t, prov.Calls, 1)
 		assert.Equal(t, "GetProvenance", prov.Calls[0].MethodName)
-		assert.IsType(t, &definitions.Route{}, prov.Calls[0].Arguments[1])
+		assert.IsType(t, &v1.Route{}, prov.Calls[0].Arguments[1])
 		assert.Equal(t, orgID, prov.Calls[0].Arguments[2].(int64))
 	})
 
 	t.Run("should ignore extra config validation if it is invalid", func(t *testing.T) {
-		extra := definitions.ExtraConfiguration{}
+		extra := v1.ExtraConfiguration{}
 		rev := getDefaultConfigRevision()
 		rev.Config.ExtraConfigs = append(rev.Config.ExtraConfigs, extra)
 
@@ -223,7 +223,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, route, models.ProvenanceAPI, defaultVersion)
 		require.NoError(t, err)
 		assert.Equal(t, route, result)
-		assert.Equal(t, calculateRouteFingerprint(route), version)
+		assert.Equal(t, calculateRouteFingerprint(*v1.RouteToModel(&route)), version)
 	})
 
 	t.Run("updates Route and sets provenance in transaction if route is valid and version matches", func(t *testing.T) {
@@ -234,12 +234,12 @@ func TestUpdatePolicyTree(t *testing.T) {
 		expectedRev := getDefaultConfigRevision()
 		route := newRoute
 		expectedRev.ConcurrencyToken = rev.ConcurrencyToken
-		expectedRev.Config.AlertmanagerConfig.Route = &route
+		expectedRev.Config.AlertmanagerConfig.Route = v1.RouteToModel(&route)
 
 		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, defaultVersion)
 		require.NoError(t, err)
 		assert.Equal(t, newRoute, result)
-		assert.Equal(t, calculateRouteFingerprint(newRoute), version)
+		assert.Equal(t, calculateRouteFingerprint(*v1.RouteToModel(&newRoute)), version)
 
 		assert.Len(t, store.Calls, 2)
 		assert.Equal(t, "Save", store.Calls[1].Method)
@@ -248,12 +248,12 @@ func TestUpdatePolicyTree(t *testing.T) {
 
 		c := prov.Calls[0]
 		assert.Equal(t, "GetProvenance", c.MethodName)
-		assert.IsType(t, &definitions.Route{}, c.Arguments[1])
+		assert.IsType(t, &v1.Route{}, c.Arguments[1])
 		assert.Equal(t, orgID, c.Arguments[2].(int64))
 		c = prov.Calls[1]
 		assert.Equal(t, "SetProvenance", c.MethodName)
 		assertInTransaction(t, c.Arguments[0].(context.Context))
-		assert.IsType(t, &definitions.Route{}, c.Arguments[1])
+		assert.IsType(t, &v1.Route{}, c.Arguments[1])
 		assert.Equal(t, orgID, c.Arguments[2].(int64))
 		assert.Equal(t, models.ProvenanceAPI, c.Arguments[3].(models.Provenance))
 	})
@@ -265,13 +265,13 @@ func TestUpdatePolicyTree(t *testing.T) {
 		}
 
 		expectedRev := getDefaultConfigRevision()
-		expectedRev.Config.AlertmanagerConfig.Route = &newRoute
+		expectedRev.Config.AlertmanagerConfig.Route = v1.RouteToModel(&newRoute)
 		expectedRev.ConcurrencyToken = rev.ConcurrencyToken
 
 		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, "")
 		require.NoError(t, err)
 		assert.Equal(t, newRoute, result)
-		assert.Equal(t, calculateRouteFingerprint(newRoute), version)
+		assert.Equal(t, calculateRouteFingerprint(*v1.RouteToModel(&newRoute)), version)
 
 		assert.Len(t, store.Calls, 2)
 		assert.Equal(t, "Save", store.Calls[1].Method)
@@ -282,7 +282,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		c := prov.Calls[1]
 		assert.Equal(t, "SetProvenance", c.MethodName)
 		assertInTransaction(t, c.Arguments[0].(context.Context))
-		assert.IsType(t, &definitions.Route{}, c.Arguments[1])
+		assert.IsType(t, &v1.Route{}, c.Arguments[1])
 		assert.Equal(t, orgID, c.Arguments[2].(int64))
 		assert.Equal(t, models.ProvenanceAPI, c.Arguments[3].(models.Provenance))
 	})
@@ -292,22 +292,22 @@ func TestResetPolicyTree(t *testing.T) {
 	orgID := int64(1)
 
 	currentRevision := getDefaultConfigRevision()
-	currentRevision.Config.AlertmanagerConfig.Route = &definitions.Route{
+	currentRevision.Config.AlertmanagerConfig.Route = &v1.Route{
 		Receiver: "receiver",
 	}
 	currentRevision.Config.TemplateFiles = map[string]string{
 		"test": "test",
 	}
-	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []definitions.TimeInterval{
+	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []v1.TimeInterval{
 		{
 			Name: "test",
 		},
 	}
-	currentRevision.Config.AlertmanagerConfig.Receivers = []*definitions.PostableApiReceiver{
+	currentRevision.Config.AlertmanagerConfig.Receivers = []*v1.PostableApiReceiver{
 		{
 			Receiver: definitions.Receiver{Name: "receiver"},
-			PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 					{
 						UID: "test", Name: "test", Type: "email", Settings: []byte("{}"),
 					},
@@ -358,7 +358,7 @@ func TestResetPolicyTree(t *testing.T) {
 			cfg, err := legacy_storage.DeserializeAlertmanagerConfig(data)
 			require.NoError(t, err)
 			return &legacy_storage.ConfigRevision{
-				Config:           cfg,
+				Config:           v1.ToModel(cfg),
 				ConcurrencyToken: util.GenerateShortUID(),
 			}, nil
 		}
@@ -369,7 +369,7 @@ func TestResetPolicyTree(t *testing.T) {
 
 		tree, err := sut.ResetPolicyTree(context.Background(), orgID, models.ProvenanceNone)
 		require.NoError(t, err)
-		assert.Equal(t, *defaultConfig.AlertmanagerConfig.Route, tree)
+		assert.Equal(t, *notifier.RouteToAPI(defaultConfig.AlertmanagerConfig.Route), tree)
 
 		assert.Len(t, store.Calls, 2)
 		assert.Equal(t, "Save", store.Calls[1].Method)
@@ -385,7 +385,7 @@ func TestResetPolicyTree(t *testing.T) {
 		c = prov.Calls[1]
 		assert.Equal(t, "DeleteProvenance", c.MethodName)
 		assertInTransaction(t, c.Arguments[0].(context.Context))
-		assert.IsType(t, &definitions.Route{}, c.Arguments[1])
+		assert.IsType(t, &v1.Route{}, c.Arguments[1])
 		assert.Equal(t, orgID, c.Arguments[2])
 	})
 }
@@ -402,8 +402,8 @@ func TestRoute_Fingerprint(t *testing.T) {
 		require.NoError(t, err)
 		return m
 	}
-	baseRouteGen := func() definitions.Route {
-		return definitions.Route{
+	baseRouteGen := func() v1.Route {
+		return v1.Route{
 			Receiver:   "Receiver",
 			GroupByStr: []string{"GroupByStr1", "GroupByStr2"},
 			GroupBy: []model.LabelName{
@@ -419,7 +419,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 				mustMatcher(t, labels.MatchEqual, "Matchers2", "Matchers2Value"),
 				mustMatcher(t, labels.MatchRegexp, "Matchers3", "Matchers3Value"),
 			},
-			ObjectMatchers: definitions.ObjectMatchers{
+			ObjectMatchers: v1.ObjectMatchers{
 				mustMatcher(t, labels.MatchNotRegexp, "ObjectMatchers1", "ObjectMatchers1Value"),
 				mustMatcher(t, labels.MatchRegexp, "ObjectMatchers2", "ObjectMatchers2Value"),
 			},
@@ -429,12 +429,12 @@ func TestRoute_Fingerprint(t *testing.T) {
 			GroupWait:           new(model.Duration(2 * time.Minute)),
 			GroupInterval:       new(model.Duration(5 * time.Minute)),
 			RepeatInterval:      new(model.Duration(30 * time.Hour)),
-			Provenance:          definitions.Provenance(models.ProvenanceAPI),
+			Provenance:          v1.Provenance(models.ProvenanceAPI),
 			Routes:              nil, // Nested routes are not included in the fingerprint test for simplicity.
 		}
 	}
 
-	completelyDifferentRoute := definitions.Route{
+	completelyDifferentRoute := v1.Route{
 		Receiver:   "Receiver_2",
 		GroupByStr: []string{"GroupByStr1_2", "GroupByStr2_2"},
 		GroupBy: []model.LabelName{
@@ -450,7 +450,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 			mustMatcher(t, labels.MatchEqual, "Matchers2", "Matchers2Value_2"),
 			mustMatcher(t, labels.MatchEqual, "Matchers3", "Matchers3Value"),
 		},
-		ObjectMatchers: definitions.ObjectMatchers{
+		ObjectMatchers: v1.ObjectMatchers{
 			mustMatcher(t, labels.MatchNotRegexp, "ObjectMatchers1_2", "ObjectMatchers1Value"),
 			mustMatcher(t, labels.MatchRegexp, "ObjectMatchers2", "ObjectMatchers2Value_2"),
 		},
@@ -460,7 +460,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 		GroupWait:           new(model.Duration(20 * time.Minute)),
 		GroupInterval:       new(model.Duration(50 * time.Minute)),
 		RepeatInterval:      new(model.Duration(300 * time.Hour)),
-		Provenance:          definitions.Provenance(models.ProvenanceFile),
+		Provenance:          v1.Provenance(models.ProvenanceFile),
 		Routes:              nil, // Nested routes are not included in the fingerprint test for simplicity, recursive fingerprinting is assumed.
 	}
 
@@ -477,7 +477,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 
 		reflectVal := reflect.ValueOf(&completelyDifferentRoute).Elem()
 
-		receiverType := reflect.TypeOf((*definitions.Route)(nil)).Elem()
+		receiverType := reflect.TypeOf((*v1.Route)(nil)).Elem()
 		for i := 0; i < receiverType.NumField(); i++ {
 			field := receiverType.Field(i).Name
 			if _, ok := excludedFields[field]; ok {
@@ -528,20 +528,20 @@ func createNotificationPolicyServiceSut() (*NotificationPolicyService, *legacy_s
 
 func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 	return legacy_storage.ConfigRevision{
-		Config: &definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definition.Config{
-					Route: &definitions.Route{
+		Config: &v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
 						Receiver: "test-receiver",
 					},
 					InhibitRules: nil,
-					TimeIntervals: []definitions.TimeInterval{
+					TimeIntervals: []v1.TimeInterval{
 						{
 							Name: "test-mute-interval",
 						},
 					},
 				},
-				Receivers: []*definitions.PostableApiReceiver{
+				Receivers: []*v1.PostableApiReceiver{
 					{
 						Receiver: definitions.Receiver{
 							Name: "test-receiver",

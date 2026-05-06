@@ -6,13 +6,13 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 type crypto interface {
-	EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
-	DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
+	EncryptExtraConfigs(ctx context.Context, config *v1.AMConfigV1) error
+	DecryptExtraConfigs(ctx context.Context, config *v1.AMConfigV1) error
 }
 
 type amConfigStore interface {

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -121,12 +122,12 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
 		managedRoutes := maps.Clone(prepared.ManagedRoutes)
 		if managedRoutes == nil {
-			managedRoutes = make(map[string]*definitions.Route)
+			managedRoutes = make(map[string]*v1.Route)
 		}
 
 		managedInhibitionRules := maps.Clone(prepared.ManagedInhibitionRules)
 		if managedInhibitionRules == nil {
-			managedInhibitionRules = make(definitions.ManagedInhibitionRules)
+			managedInhibitionRules = make(v1.ManagedInhibitionRules)
 		}
 
 		if mergeResult.ExtraRoute != nil {
@@ -399,7 +400,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 	ctx context.Context,
 	org int64,
-	modifyFn func([]definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error),
+	modifyFn func([]v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error),
 	dryRun bool,
 ) (merge.RenameResources, error) {
 	currentCfg, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
@@ -457,8 +458,8 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 }
 
 // SaveAndApplyExtraConfiguration adds or replaces an ExtraConfiguration while preserving the main AlertmanagerConfig.
-func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, extraConfig definitions.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error) {
-	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
+func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error) {
+	modifyFunc := func(configs []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
 		if replace {
 			// When replacing all configs, authorize deletion for each config with a different identifier.
 			for _, c := range configs {
@@ -494,7 +495,7 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 			}
 		}
 
-		return []definitions.ExtraConfiguration{extraConfig}, nil
+		return []v1.ExtraConfiguration{extraConfig}, nil
 	}
 
 	renamed, err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, dryRun)
@@ -512,11 +513,11 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 
 // DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
 func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, identifier string) error {
-	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
+	modifyFunc := func(configs []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
 		if err := authz.AuthorizeDelete(ctx, user, identifier); err != nil {
 			return nil, err
 		}
-		filtered := make([]definitions.ExtraConfiguration, 0, len(configs))
+		filtered := make([]v1.ExtraConfiguration, 0, len(configs))
 		for _, ec := range configs {
 			if ec.Identifier != identifier {
 				filtered = append(filtered, ec)
@@ -669,7 +670,7 @@ func newSaveAMConfigCmd(cfg string, orgID int64, isDefault bool) *models.SaveAle
 // This should not be generally used but exists to facilitate operations that rely on the legacy blob config:
 // - Create/Update ExtraConfig, whose storage currently piggybacks on PostableUserConfig.
 // - Config version history revert, which will eventually need to be replaced with per-resource version history.
-func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, orgID int64, am Alertmanager, cfg *definitions.PostableUserConfig) error {
+func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, orgID int64, am Alertmanager, cfg *v1.AMConfigV1) error {
 	moa.alertmanagersMtx.RLock()
 	defer moa.alertmanagersMtx.RUnlock()
 

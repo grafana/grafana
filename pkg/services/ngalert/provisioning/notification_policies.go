@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,7 +57,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 		return definitions.Route{}, "", err
 	}
 	result := *rev.Config.AlertmanagerConfig.Route
-	result.Provenance = definitions.Provenance(provenance)
+	result.Provenance = v1.Provenance(provenance)
 	version := calculateRouteFingerprint(result)
 	return result, version, nil
 }
@@ -148,11 +149,11 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	return *route, nil
 }
 
-func calculateRouteFingerprint(route definitions.Route) string {
+func calculateRouteFingerprint(route v1.Route) string {
 	return legacy_storage.CalculateRouteFingerprint(route)
 }
 
-func (nps *NotificationPolicyService) checkOptimisticConcurrency(current definitions.Route, provenance models.Provenance, desiredVersion string, action string) error {
+func (nps *NotificationPolicyService) checkOptimisticConcurrency(current v1.Route, provenance models.Provenance, desiredVersion string, action string) error {
 	if desiredVersion == "" {
 		if provenance != models.ProvenanceFile {
 			// if version is not specified and it's not a file provisioning, emit a log message to reflect that optimistic concurrency is disabled for this request
