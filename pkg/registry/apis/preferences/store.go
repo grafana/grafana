@@ -56,11 +56,13 @@ func (s *preferencesStorage) List(ctx context.Context, options *internalversion.
 		Items: make([]preferences.Preferences, 0, 10),
 	}
 
-	// Append user+team preferences
 	groups := user.GetGroups()
 	if len(groups) != len(user.GetTeams()) {
-		return nil, fmt.Errorf("teams not resolved!!!!!")
+		// SOMETHING IS WRONG.... these should be the same!
+		return nil, fmt.Errorf("teams not resolved accurately (%v != %v)", groups, user.GetTeams())
 	}
+
+	// Append user+team preferences
 	append := func(name string) error {
 		info, _ := utils.ParseOwnerFromName(name)
 		switch info.Owner {
@@ -78,7 +80,7 @@ func (s *preferencesStorage) List(ctx context.Context, options *internalversion.
 			return nil // skip
 		}
 
-		rsp, err := s.BasicStorage.Get(ctx, name, &metav1.GetOptions{})
+		rsp, err := s.Get(ctx, name, &metav1.GetOptions{})
 		if k8serrors.IsNotFound(err) {
 			return nil // don't add it to the list
 		}
@@ -124,15 +126,6 @@ func (s *preferencesStorage) List(ctx context.Context, options *internalversion.
 	}
 
 	return result, nil
-}
-
-func (s *preferencesStorage) Create(ctx context.Context,
-	obj runtime.Object,
-	createValidation rest.ValidateObjectFunc,
-	options *metav1.CreateOptions,
-) (runtime.Object, error) {
-	// TODO... check name???
-	return s.BasicStorage.Create(ctx, obj, createValidation, options)
 }
 
 // GracefulDeleter
