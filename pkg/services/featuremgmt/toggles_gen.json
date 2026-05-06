@@ -1060,9 +1060,23 @@
     },
     {
       "metadata": {
-        "name": "appPluginAPIServer",
-        "resourceVersion": "1770813648403",
-        "creationTimestamp": "2026-02-11T12:40:48Z"
+        "name": "appplugins.handleProxyRequests",
+        "resourceVersion": "1777879188163",
+        "creationTimestamp": "2026-05-04T07:19:48Z"
+      },
+      "spec": {
+        "description": "Register the proxy endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "appplugins.registerAPIServer",
+        "resourceVersion": "1777319865396",
+        "creationTimestamp": "2026-04-27T19:57:45Z"
       },
       "spec": {
         "description": "Registers an API server for each backend app plugin exposing a settings endpoint",
@@ -2714,8 +2728,8 @@
     {
       "metadata": {
         "name": "grafana.scenesFlickeringFix",
-        "resourceVersion": "1777349561512",
-        "creationTimestamp": "2026-04-28T04:12:41Z"
+        "resourceVersion": "1778059584976",
+        "creationTimestamp": "2026-05-06T09:26:24Z"
       },
       "spec": {
         "description": "Prevents flickering in dashboards",
@@ -2723,6 +2737,23 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.unifiedHomepage",
+        "resourceVersion": "1778065754369",
+        "creationTimestamp": "2026-05-06T07:05:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-06 11:09:14.369545 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Replaces the bundled home dashboard with the unified homepage React page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -4653,6 +4684,19 @@
     },
     {
       "metadata": {
+        "name": "preferences.rerouteLegacyAPIs",
+        "resourceVersion": "1778065172575",
+        "creationTimestamp": "2026-05-06T10:59:32Z"
+      },
+      "spec": {
+        "description": "Use K8s client implementation for legacy preferences API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-05-27T12:28:06Z"
@@ -5434,41 +5478,6 @@
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "expression": "true"
-      }
-    },
-    {
-      "metadata": {
-        "name": "scenesFlickeringFix",
-        "resourceVersion": "1777349289155",
-        "creationTimestamp": "2026-04-28T04:08:09Z",
-        "deletionTimestamp": "2026-04-28T04:12:41Z"
-      },
-      "spec": {
-        "description": "Prevents flickering in scenes",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "frontend": true,
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "scenesNoFlickering",
-        "resourceVersion": "1777348999596",
-        "creationTimestamp": "2026-03-03T15:07:32Z",
-        "deletionTimestamp": "2026-04-28T04:08:09Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-28 04:03:19.596606 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Prevents flickering in scenes",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "frontend": true,
-        "hideFromDocs": true,
-        "expression": "false"
       }
     },
     {

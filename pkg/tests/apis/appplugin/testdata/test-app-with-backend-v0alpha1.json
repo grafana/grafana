@@ -1,12 +1,18 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "preferences.grafana.app/v1alpha1"
+    "description": "Test App with backend resource routes",
+    "title": "test-app-with-backend/v0alpha1",
+    "x-grafana-plugin": {
+      "id": "test-app-with-backend"
+    }
   },
   "paths": {
-    "/": {
+    "/apis/test-app-with-backend/v0alpha1/": {
       "get": {
-        "tags": ["API Discovery"],
+        "tags": [
+          "API Discovery"
+        ],
         "description": "Describe the available kubernetes resources",
         "operationId": "getAPIResources",
         "responses": {
@@ -15,12 +21,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/APIResourceList"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/APIResourceList"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
                 }
               }
             }
@@ -28,309 +34,25 @@
         }
       }
     },
-    "/preferences": {
+    "/apis/test-app-with-backend/v0alpha1/namespaces/{namespace}/app/instance": {
       "get": {
-        "tags": ["Preferences"],
-        "description": "list objects of kind Preferences",
-        "operationId": "listPreferences",
-        "parameters": [
-          {
-            "name": "allowWatchBookmarks",
-            "in": "query",
-            "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "continue",
-            "in": "query",
-            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "labelSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersion",
-            "in": "query",
-            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "shardSelector",
-            "in": "query",
-            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "timeoutSeconds",
-            "in": "query",
-            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "watch",
-            "in": "query",
-            "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          }
+        "tags": [
+          "Settings"
         ],
+        "description": "read the specified Settings",
+        "operationId": "getSettings",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PreferencesList"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/PreferencesList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/PreferencesList"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "list",
-        "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
-          "version": "v1alpha1",
-          "kind": "Preferences"
-        }
-      },
-      "post": {
-        "tags": ["Preferences"],
-        "description": "create Preferences",
-        "operationId": "createPreferences",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Preferences"
-              }
-            },
-            "application/yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/Preferences"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              }
-            }
-          },
-          "202": {
-            "description": "Accepted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "post",
-        "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
-          "version": "v1alpha1",
-          "kind": "Preferences"
-        }
-      },
-      "parameters": [
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/preferences/merged": {
-      "get": {
-        "tags": ["Preferences"],
-        "description": "Get preferences for requester.  This combines the user preferences with the team and global defaults",
-        "operationId": "mergedPreferences",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["metadata", "spec"],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "default": {}
-                    },
-                    "spec": {
-                      "description": "Spec is the spec of the Preferences",
-                      "default": {}
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/preferences/{name}": {
-      "get": {
-        "tags": ["Preferences"],
-        "description": "read the specified Preferences",
-        "operationId": "getPreferences",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
                 }
               }
             }
@@ -338,15 +60,17 @@
         },
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
-          "version": "v1alpha1",
-          "kind": "Preferences"
+          "group": "test-app-with-backend",
+          "kind": "Settings",
+          "version": "v0alpha1"
         }
       },
       "put": {
-        "tags": ["Preferences"],
-        "description": "replace the specified Preferences",
-        "operationId": "replacePreferences",
+        "tags": [
+          "Settings"
+        ],
+        "description": "replace the specified Settings",
+        "operationId": "replaceSettings",
         "parameters": [
           {
             "name": "dryRun",
@@ -380,12 +104,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
               }
             }
           },
@@ -397,12 +121,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
                 }
               }
             }
@@ -412,12 +136,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
                 }
               }
             }
@@ -425,15 +149,17 @@
         },
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
-          "version": "v1alpha1",
-          "kind": "Preferences"
+          "group": "test-app-with-backend",
+          "kind": "Settings",
+          "version": "v0alpha1"
         }
       },
       "delete": {
-        "tags": ["Preferences"],
-        "description": "delete Preferences",
-        "operationId": "deletePreferences",
+        "tags": [
+          "Settings"
+        ],
+        "description": "delete Settings",
+        "operationId": "deleteSettings",
         "parameters": [
           {
             "name": "dryRun",
@@ -487,12 +213,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Status"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Status"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               }
             }
@@ -502,12 +228,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Status"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Status"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               }
             }
@@ -515,15 +241,17 @@
         },
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
-          "version": "v1alpha1",
-          "kind": "Preferences"
+          "group": "test-app-with-backend",
+          "kind": "Settings",
+          "version": "v0alpha1"
         }
       },
       "patch": {
-        "tags": ["Preferences"],
-        "description": "partially update the specified Preferences",
-        "operationId": "updatePreferences",
+        "tags": [
+          "Settings"
+        ],
+        "description": "partially update the specified Settings",
+        "operationId": "updateSettings",
         "parameters": [
           {
             "name": "dryRun",
@@ -566,22 +294,22 @@
           "content": {
             "application/apply-patch+yaml": {
               "schema": {
-                "$ref": "#/components/schemas/Patch"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
               }
             },
             "application/json-patch+json": {
               "schema": {
-                "$ref": "#/components/schemas/Patch"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
               }
             },
             "application/merge-patch+json": {
               "schema": {
-                "$ref": "#/components/schemas/Patch"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
               }
             },
             "application/strategic-merge-patch+json": {
               "schema": {
-                "$ref": "#/components/schemas/Patch"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
               }
             }
           },
@@ -593,12 +321,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
                 }
               }
             }
@@ -608,12 +336,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
                 }
               }
             }
@@ -621,16 +349,16 @@
         },
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
-          "version": "v1alpha1",
-          "kind": "Preferences"
+          "group": "test-app-with-backend",
+          "kind": "Settings",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
         {
-          "name": "name",
+          "name": "namespace",
           "in": "path",
-          "description": "name of the Preferences",
+          "description": "object name and auth scope, such as for teams and projects",
           "required": true,
           "schema": {
             "type": "string",
@@ -647,51 +375,255 @@
           }
         }
       ]
+    },
+    "/apis/test-app-with-backend/v0alpha1/namespaces/{namespace}/app/instance/health": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "description": "connect GET requests to health of Settings",
+        "operationId": "getSettingsHealth",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.HealthCheckResult"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "test-app-with-backend",
+          "kind": "HealthCheckResult",
+          "version": "v0alpha1"
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/test-app-with-backend/v0alpha1/namespaces/{namespace}/app/instance/resources": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "description": "Get resources in the resources plugin. NOTE, additional routes may exist, but are not exposed via OpenAPI",
+        "operationId": "getSettingsResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "test-app-with-backend",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
     "schemas": {
-      "Preferences": {
+      "SettingsSpec": {
         "type": "object",
-        "required": ["metadata", "spec"],
+        "properties": {
+          "enabled": {
+            "description": "can be executed",
+            "type": "boolean"
+          },
+          "jsonData": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "pinned": {
+            "description": "shows up in the sidebar",
+            "type": "boolean"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue": {
+        "description": "Allow access to a secure value inside",
+        "oneOf": [
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "create"
+            ]
+          },
+          {
+            "required": [
+              "remove"
+            ]
+          }
+        ],
+        "properties": {
+          "create": {
+            "description": "Create a secure value -- this is only used for POST/PUT",
+            "type": "string",
+            "maxLength": 24576,
+            "minLength": 1
+          },
+          "description": {
+            "description": "Optionally when creating a secure value, you can pass a custom description.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name in the secret service (reference)",
+            "type": "string",
+            "maxLength": 253,
+            "minLength": 1
+          },
+          "remove": {
+            "description": "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
+        "type": "object",
+        "additionalProperties": true,
+        "x-kubernetes-preserve-unknown-fields": true
+      },
+      "com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.HealthCheckResult": {
+        "type": "object",
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
+          "code": {
+            "description": "Explicit status code",
+            "type": "integer",
+            "format": "int32"
+          },
+          "details": {
+            "description": "Spec depends on the plugin",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
+          },
+          "message": {
+            "description": "Optional description for the data source",
+            "type": "string"
+          },
+          "status": {
+            "description": "The string description",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "test-app-with-backend",
+            "kind": "HealthCheckResult",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings": {
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "test-app-with-backend/v0alpha1"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "Settings"
+            ]
           },
           "metadata": {
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/ObjectMeta"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
               }
             ]
           },
+          "secure": {
+            "description": "Secure values allows setting values that are never shown to users. The returned properties are only the names of the configured values.",
+            "type": "object",
+            "additionalProperties": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+                }
+              ]
+            }
+          },
           "spec": {
-            "description": "Spec is the spec of the Preferences",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/PreferencesSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/SettingsSpec"
+          }
+        },
+        "example": {
+          "metadata": {
+            "name": "instance"
+          },
+          "spec": {
+            "enabled": true,
+            "pinned": true
           }
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "preferences.grafana.app",
-            "kind": "Preferences",
-            "version": "v1alpha1"
+            "group": "test-app-with-backend",
+            "kind": "Settings",
+            "version": "v0alpha1"
           }
         ]
       },
-      "PreferencesList": {
+      "com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.SettingsList": {
         "type": "object",
-        "required": ["metadata", "items"],
+        "required": [
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -703,7 +635,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
                 }
               ]
             }
@@ -716,90 +648,50 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/ListMeta"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
               }
             ]
           }
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "preferences.grafana.app",
-            "kind": "PreferencesList",
-            "version": "v1alpha1"
+            "group": "test-app-with-backend",
+            "kind": "SettingsList",
+            "version": "v0alpha1"
           }
         ]
       },
-      "PreferencesNavbarPreference": {
+      "com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.SettingsSpec": {
         "type": "object",
-        "required": ["bookmarkUrls"],
+        "required": [
+          "enabled",
+          "pinned",
+          "jsonData"
+        ],
         "properties": {
-          "bookmarkUrls": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "jsonData": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+          },
+          "pinned": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
-      "PreferencesQueryHistoryPreference": {
-        "type": "object",
-        "properties": {
-          "homeTab": {
-            "description": "one of: '' | 'query' | 'starred';",
-            "type": "string"
-          }
-        }
-      },
-      "PreferencesSpec": {
-        "type": "object",
-        "properties": {
-          "homeDashboardUID": {
-            "description": "UID for the home dashboard",
-            "type": "string"
-          },
-          "language": {
-            "description": "Selected language",
-            "type": "string"
-          },
-          "navbar": {
-            "description": "Navigation preferences",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/PreferencesNavbarPreference"
-              }
-            ]
-          },
-          "queryHistory": {
-            "description": "Explore query history preferences",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/PreferencesQueryHistoryPreference"
-              }
-            ]
-          },
-          "regionalFormat": {
-            "description": "Selected locale (beta)",
-            "type": "string"
-          },
-          "theme": {
-            "description": "user interface theme",
-            "type": "string"
-          },
-          "timezone": {
-            "description": "The timezone selection",
-            "type": "string"
-          },
-          "weekStart": {
-            "description": "day of the week (sunday, monday, etc)",
-            "type": "string"
-          }
-        }
-      },
-      "APIResource": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
         "type": "object",
-        "required": ["name", "singularName", "namespaced", "kind", "verbs"],
+        "required": [
+          "name",
+          "singularName",
+          "namespaced",
+          "kind",
+          "verbs"
+        ],
         "properties": {
           "categories": {
             "description": "categories is a list of the grouped resources this resource belongs to (e.g. 'all')",
@@ -861,10 +753,13 @@
           }
         }
       },
-      "APIResourceList": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
         "description": "APIResourceList is a list of APIResource, it is used to expose the name of the resources supported in a specific group and version, and if the resource is namespaced.",
         "type": "object",
-        "required": ["groupVersion", "resources"],
+        "required": [
+          "groupVersion",
+          "resources"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -886,7 +781,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/APIResource"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResource"
                 }
               ]
             },
@@ -894,7 +789,7 @@
           }
         }
       },
-      "DeleteOptions": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions": {
         "description": "DeleteOptions may be provided when deleting an API object.",
         "type": "object",
         "properties": {
@@ -932,7 +827,7 @@
             "description": "Must be fulfilled before a deletion is carried out. If not possible, a 409 Conflict status will be returned.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/Preconditions"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Preconditions"
               }
             ]
           },
@@ -942,11 +837,11 @@
           }
         }
       },
-      "FieldsV1": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
         "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:<name>', where <name> is the name of a field in a struct, or key in a map 'v:<value>', where <value> is the exact json formatted value of a list item 'i:<index>', where <index> is position of a item in a list 'k:<keys>', where <keys> is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
         "type": "object"
       },
-      "ListMeta": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta": {
         "description": "ListMeta describes metadata that synthetic resources must have, including lists and various status objects. A resource may have only one of {ObjectMeta, ListMeta}.",
         "type": "object",
         "properties": {
@@ -969,7 +864,7 @@
           }
         }
       },
-      "ManagedFieldsEntry": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsEntry": {
         "description": "ManagedFieldsEntry is a workflow-id, a FieldSet and the group version of the resource that the fieldset applies to.",
         "type": "object",
         "properties": {
@@ -985,7 +880,7 @@
             "description": "FieldsV1 holds the first JSON version format as described in the \"FieldsV1\" type.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/FieldsV1"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1"
               }
             ]
           },
@@ -1005,13 +900,13 @@
             "description": "Time is the timestamp of when the ManagedFields entry was added. The timestamp will also be updated if a field is added, the manager changes any of the owned fields value or removes a field. The timestamp does not update when a field is removed from the entry because another manager took it over.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/Time"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
               }
             ]
           }
         }
       },
-      "ObjectMeta": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
         "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects users must create.",
         "type": "object",
         "properties": {
@@ -1027,7 +922,7 @@
             "description": "CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
             "allOf": [
               {
-                "$ref": "#/components/schemas/Time"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
               }
             ]
           },
@@ -1040,7 +935,7 @@
             "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This field is set by the server when a graceful deletion is requested by the user, and is not directly settable by a client. The resource is expected to be deleted (no longer visible from resource lists, and not reachable by name) after the time in this field, once the finalizers list is empty. As long as the finalizers list contains items, deletion is blocked. Once the deletionTimestamp is set, this value may not be unset or be set further into the future, although it may be shortened or the resource may be deleted prior to this time. For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react by sending a graceful termination signal to the containers in the pod. After that 30 seconds, the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup, remove the pod from the API. In the presence of network partitions, this object may still exist after this timestamp, until an administrator or automated process can determine the resource is fully terminated. If not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
             "allOf": [
               {
-                "$ref": "#/components/schemas/Time"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
               }
             ]
           },
@@ -1078,7 +973,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/ManagedFieldsEntry"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsEntry"
                 }
               ]
             },
@@ -1099,11 +994,13 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/OwnerReference"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference"
                 }
               ]
             },
-            "x-kubernetes-list-map-keys": ["uid"],
+            "x-kubernetes-list-map-keys": [
+              "uid"
+            ],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "uid",
             "x-kubernetes-patch-strategy": "merge"
@@ -1122,10 +1019,15 @@
           }
         }
       },
-      "OwnerReference": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference": {
         "description": "OwnerReference contains enough information to let you identify an owning object. An owning object must be in the same namespace as the dependent, or be cluster-scoped, so there is no namespace field.",
         "type": "object",
-        "required": ["apiVersion", "kind", "name", "uid"],
+        "required": [
+          "apiVersion",
+          "kind",
+          "name",
+          "uid"
+        ],
         "properties": {
           "apiVersion": {
             "description": "API version of the referent.",
@@ -1158,11 +1060,11 @@
         },
         "x-kubernetes-map-type": "atomic"
       },
-      "Patch": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Patch": {
         "description": "Patch is provided to give a concrete name and type to the Kubernetes PATCH request body.",
         "type": "object"
       },
-      "Preconditions": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Preconditions": {
         "description": "Preconditions must be fulfilled before an operation (update, delete, etc.) is carried out.",
         "type": "object",
         "properties": {
@@ -1176,7 +1078,7 @@
           }
         }
       },
-      "Status": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
         "description": "Status is a return value for calls that don't return other objects.",
         "type": "object",
         "properties": {
@@ -1193,7 +1095,7 @@
             "description": "Extended data associated with the reason.  Each reason may define its own extended details. This field is optional and the data returned is not guaranteed to conform to any schema except that defined by the reason type.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/StatusDetails"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
               }
             ]
           },
@@ -1210,7 +1112,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/ListMeta"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
               }
             ]
           },
@@ -1224,7 +1126,7 @@
           }
         }
       },
-      "StatusCause": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause": {
         "description": "StatusCause provides more information about an api.Status failure, including cases when multiple errors are encountered.",
         "type": "object",
         "properties": {
@@ -1242,7 +1144,7 @@
           }
         }
       },
-      "StatusDetails": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
         "description": "StatusDetails is a set of additional properties that MAY be set by the server to provide additional information about a response. The Reason field of a Status object defines what attributes will be set. Clients must ignore fields that do not match the defined type of each attribute, and should assume that any attribute may be empty, invalid, or under defined.",
         "type": "object",
         "properties": {
@@ -1253,7 +1155,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/StatusCause"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause"
                 }
               ]
             },
@@ -1282,10 +1184,36 @@
           }
         }
       },
-      "Time": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
         "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
         "type": "string",
         "format": "date-time"
+      },
+      "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+        "description": "Event represents a single event to a watched resource.",
+        "type": "object",
+        "required": [
+          "type",
+          "object"
+        ],
+        "properties": {
+          "object": {
+            "description": "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Error: *Status is recommended; other types may make sense\n   depending on context.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.runtime.RawExtension"
+              }
+            ]
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "io.k8s.apimachinery.pkg.runtime.RawExtension": {
+        "description": "RawExtension is used to hold extensions in external versions.\n\nTo use this, make a field which has RawExtension as its type in your external, versioned struct, and Object in your internal struct. You also need to register your various plugin types.\n\n// Internal package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.Object `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// External package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.RawExtension `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// On the wire, the JSON will look something like this:\n\n\t{\n\t\t\"kind\":\"MyAPIObject\",\n\t\t\"apiVersion\":\"v1\",\n\t\t\"myPlugin\": {\n\t\t\t\"kind\":\"PluginA\",\n\t\t\t\"aOption\":\"foo\",\n\t\t},\n\t}\n\nSo what happens? Decode first uses json or yaml to unmarshal the serialized data into your external MyAPIObject. That causes the raw JSON to be stored, but not unpacked. The next step is to copy (using pkg/conversion) into the internal struct. The runtime package's DefaultScheme has conversion functions installed which will unpack the JSON stored in RawExtension, turning it into the correct object type, and storing it in the Object. (TODO: In the case where the object is of an unknown type, a runtime.Unknown object will be created and stored.)",
+        "type": "object"
       }
     }
   }
