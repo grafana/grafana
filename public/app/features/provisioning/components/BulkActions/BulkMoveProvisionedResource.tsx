@@ -221,9 +221,8 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
   // Check if we're on the root browser dashboards page
   const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
   const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
-
   const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: isRootPage ? resolvedRepoUID.current : folderUid,
+    folderName: isRootPage ? selectedItemsRepoUID : folderUid,
   });
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
