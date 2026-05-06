@@ -9,6 +9,7 @@ const SQL_IDENTIFIER_NODE_NAME = 'Identifier';
 const SQL_KEYWORD_NODE_NAME = 'Keyword';
 const SQL_PUNCTUATION_NODE_NAME = 'Punctuation';
 
+const SQL_SELECT_KEYWORD = 'SELECT';
 const SQL_FROM_KEYWORD = 'FROM';
 const SQL_JOIN_KEYWORD = 'JOIN';
 const SQL_AS_KEYWORD = 'AS';
@@ -74,6 +75,15 @@ export function getSqlCompletionSituation(
 
   if (statement && isTableCompletionPosition(context, statement, completionFrom)) {
     return { type: 'table', from: completionFrom };
+  }
+
+  // Let whitespace-triggered completions in the SELECT list use tables declared later in FROM.
+  if (statement && tableRefs.length > 0 && isSelectListCompletionPosition(context, statement, completionFrom)) {
+    return {
+      type: 'general',
+      from: completionFrom,
+      tables: getUniqueTables(tableRefs),
+    };
   }
 
   if (!word || (word.from === word.to && !context.explicit)) {
@@ -297,6 +307,36 @@ function isTableCompletionPosition(
     previousKeyword === SQL_JOIN_KEYWORD ||
     (isComma(context, previousNode) && isInFromSection(context, statement, completionFrom))
   );
+}
+
+/**
+ * Detects cursor positions before FROM where unqualified SELECT-list columns are useful.
+ */
+function isSelectListCompletionPosition(
+  context: CodeMirrorCompletionContext,
+  statement: SyntaxNode,
+  completionFrom: number
+): boolean {
+  let hasSelectBeforeCursor = false;
+
+  for (const child of getStatementChildren(statement)) {
+    const keyword = getKeywordText(context, child);
+
+    if (child.from >= completionFrom) {
+      return hasSelectBeforeCursor;
+    }
+
+    if (keyword === SQL_SELECT_KEYWORD) {
+      hasSelectBeforeCursor = true;
+      continue;
+    }
+
+    if (keyword === SQL_FROM_KEYWORD) {
+      return false;
+    }
+  }
+
+  return hasSelectBeforeCursor;
 }
 
 function isAfterStatementTerminator(context: CodeMirrorCompletionContext, statement: SyntaxNode, pos: number): boolean {

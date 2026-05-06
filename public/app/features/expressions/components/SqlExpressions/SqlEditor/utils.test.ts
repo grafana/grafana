@@ -4,9 +4,14 @@ import { EditorState } from '@codemirror/state';
 
 import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
 
-const getCompletionResult = (completionProvider: SqlCompletionProvider, sql: string, pos = sql.length) => {
+const getCompletionResult = (
+  completionProvider: SqlCompletionProvider,
+  sql: string,
+  pos = sql.length,
+  explicit = true
+) => {
   const completionSource = getSqlCompletionSource(completionProvider);
-  const context = new CompletionContext(EditorState.create({ doc: sql, extensions: [sqlLanguage()] }), pos, true);
+  const context = new CompletionContext(EditorState.create({ doc: sql, extensions: [sqlLanguage()] }), pos, explicit);
 
   return completionSource(context);
 };
@@ -189,6 +194,55 @@ describe('SQL editor completion utils', () => {
           expect.objectContaining({ label: 'aValue' }),
           expect.objectContaining({ label: 'bValue' }),
         ]),
+      })
+    );
+  });
+
+  it('suggests columns from FROM tables in the SELECT list without qualification', async () => {
+    const columns = jest.fn().mockReturnValue([{ label: 'time', insertText: 'time' }]);
+    const result = await getCompletionResult(
+      {
+        columns,
+        functions: () => [],
+      },
+      `SELECT
+  *
+FROM
+  A
+LIMIT
+  10`,
+      'SELECT\n  '.length
+    );
+
+    expect(columns).toHaveBeenCalledWith({ table: 'A' });
+    expect(result).toEqual(
+      expect.objectContaining({
+        options: expect.arrayContaining([expect.objectContaining({ label: 'time' })]),
+      })
+    );
+  });
+
+  it('opens column completions after whitespace in the SELECT list when FROM tables are available', async () => {
+    const columns = jest.fn().mockReturnValue([{ label: 'time', insertText: 'time' }]);
+    const result = await getCompletionResult(
+      {
+        columns,
+        functions: () => [],
+      },
+      `SELECT
+  *
+FROM
+  A
+LIMIT
+  10`,
+      'SELECT\n  '.length,
+      false
+    );
+
+    expect(columns).toHaveBeenCalledWith({ table: 'A' });
+    expect(result).toEqual(
+      expect.objectContaining({
+        options: expect.arrayContaining([expect.objectContaining({ label: 'time' })]),
       })
     );
   });
