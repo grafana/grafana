@@ -523,7 +523,7 @@ function createTimeZoneInfo(name: string): MomentTimeZoneInfo | null {
 function normalizeInput(input: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): DateTime {
   const locale = normalizeLocale(options?.locale);
 
-  if (input == null) {
+  if (typeof input === 'undefined') {
     return DateTime.now()
       .reconfigure({ locale })
       .setZone(options?.zone ?? 'local');
