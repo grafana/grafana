@@ -9,9 +9,8 @@ import { type TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { useReducerEntries } from '../hooks';
-import { getDefaultCellStyles } from '../styles';
+import { getDefaultCellStyles, getJustifyContent, type TextAlign } from '../styles';
 import { type TableRow } from '../types';
-import { getJustifyContent, type TextAlign } from '../styles';
 import { getDisplayName } from '../utils';
 
 interface SummaryCellProps {

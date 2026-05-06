@@ -1,10 +1,5 @@
 import memoize from 'micro-memoize';
-import {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { type DataGridHandle, type DataGridProps } from 'react-data-grid';
 
 import { type Field } from '@grafana/data';
@@ -14,11 +9,8 @@ import { getTextColorForBackground as _getTextColorForBackground } from '../../.
 import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../utils';
 
-<<<<<<< HEAD
-import { buildColumnsFromFields, type ColumnBuildConfig } from './columnBuilder';
-import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
-=======
->>>>>>> 849420b91fe (internal component)
+import { TableDataGrid } from './TableDataGrid';
+import { buildColumnsFromFields } from './columnBuilder';
 import { TABLE } from './constants';
 import {
   useColumnResize,
@@ -31,7 +23,6 @@ import {
   useScrollbarWidth,
   useSortedRows,
 } from './hooks';
-import { TableDataGrid } from './TableDataGrid';
 import {
   type CellRootRenderer,
   type FromFieldsResult,
@@ -130,10 +121,7 @@ export function TableFlat(props: TableNGProps) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const field = (column as unknown as TableColumn).field;
 
-      if (
-        ev.target instanceof HTMLElement &&
-        ev.target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
-      ) {
+      if (ev.target instanceof HTMLElement && ev.target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')) {
         const rowIdx = row.__index;
         setTooltipState({
           coords: { clientX: ev.clientX, clientY: ev.clientY },

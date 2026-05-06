@@ -2,13 +2,7 @@ import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import {
-  useCallback,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import {
   Cell,
   DataGrid,
@@ -26,6 +20,9 @@ import { getTextColorForBackground as _getTextColorForBackground } from '../../.
 import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../utils';
 
+import { TableDataGrid } from './TableDataGrid';
+import { buildColumnsFromFields } from './columnBuilder';
+import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
 import { RowExpander } from './components/RowExpander';
 import { COLUMN, TABLE } from './constants';
 import {
@@ -42,7 +39,6 @@ import {
   useSortedRows,
 } from './hooks';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
-import { TableDataGrid } from './TableDataGrid';
 import {
   type CellRootRenderer,
   type FromFieldsResult,
@@ -188,10 +184,7 @@ export function TableNested(props: TableNGProps) {
         return;
       }
 
-      if (
-        ev.target instanceof HTMLElement &&
-        ev.target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
-      ) {
+      if (ev.target instanceof HTMLElement && ev.target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')) {
         const rowIdx = row.__index;
         setTooltipState({
           coords: { clientX: ev.clientX, clientY: ev.clientY },
@@ -241,7 +234,7 @@ export function TableNested(props: TableNGProps) {
     [theme]
   );
 
-  const [widths, ] = useColWidths(visibleFields, availableWidth, frozenColumns);
+  const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns);
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
@@ -426,8 +419,7 @@ export function TableNested(props: TableNGProps) {
       visibleRows: TableRow[]
     ): FromFieldsResult => {
       const parentIndex = visibleRows[0]?.__parentIndex;
-      const resolvedFilterResult =
-        parentIndex == null ? filterResult : nestedRows[parentIndex].filterResult;
+      const resolvedFilterResult = parentIndex == null ? filterResult : nestedRows[parentIndex].filterResult;
       return buildColumnsFromFields(f, colWidths, frame, rawRows, visibleRows, resolvedFilterResult, columnBuildConfig);
     },
     [filterResult, nestedRows, columnBuildConfig]

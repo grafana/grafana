@@ -1,20 +1,8 @@
 import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
-import {
-  type Dispatch,
-  type RefObject,
-  type SetStateAction,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-import {
-  DataGrid,
-  type DataGridHandle,
-  type DataGridProps,
-  type SortColumn,
-} from 'react-data-grid';
+import { type Dispatch, type RefObject, type SetStateAction, useEffect, useMemo, useState } from 'react';
+import { DataGrid, type DataGridHandle, type DataGridProps, type SortColumn } from 'react-data-grid';
 
 import { Trans } from '@grafana/i18n';
 
@@ -30,14 +18,20 @@ import {
   type CellRootRenderer,
   type InspectCellProps,
   type TableNGProps,
-  type TableRow,
+  type TableRow as BaseTableRow,
   type TableSummaryRow,
 } from './types';
 import { rowKeyGetter } from './utils';
 
-type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
-type OnCellKeyDown = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellKeyDown']>;
-type RenderRowFn = NonNullable<NonNullable<DataGridProps<TableRow, TableSummaryRow>['renderers']>['renderRow']>;
+type OnCellClick<TableRow extends BaseTableRow = BaseTableRow> = NonNullable<
+  DataGridProps<TableRow, TableSummaryRow>['onCellClick']
+>;
+type OnCellKeyDown<TableRow extends BaseTableRow = BaseTableRow> = NonNullable<
+  DataGridProps<TableRow, TableSummaryRow>['onCellKeyDown']
+>;
+type RenderRowFn<TableRow extends BaseTableRow = BaseTableRow> = NonNullable<
+  NonNullable<DataGridProps<TableRow, TableSummaryRow>['renderers']>['renderRow']
+>;
 
 // Props that TableDataGrid manages internally — consumers must not override these.
 type OmittedDataGridProps =
@@ -59,16 +53,17 @@ type OmittedDataGridProps =
   | 'onCellClick'
   | 'onCellKeyDown';
 
-export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSummaryRow>, OmittedDataGridProps> {
+export interface TableDataGridProps<TableRow extends BaseTableRow = BaseTableRow>
+  extends Omit<DataGridProps<TableRow, TableSummaryRow>, OmittedDataGridProps> {
   role: 'grid' | 'treegrid';
   gridRef: RefObject<DataGridHandle>;
   noValue?: string;
   renderers: {
-    renderRow: RenderRowFn;
+    renderRow: RenderRowFn<TableRow>;
     renderCell: CellRootRenderer;
   };
-  onCellClick: OnCellClick;
-  onCellKeyDown: OnCellKeyDown;
+  onCellClick: OnCellClick<TableRow>;
+  onCellKeyDown: OnCellKeyDown<TableRow>;
   sortColumns: SortColumn[];
   setSortColumns: Dispatch<SetStateAction<SortColumn[]>>;
   onSortByChange?: TableNGProps['onSortByChange'];
@@ -94,7 +89,7 @@ export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSu
   onInspectCellDismiss: () => void;
 }
 
-export function TableDataGrid({
+export function TableDataGrid<TableRow extends BaseTableRow = BaseTableRow>({
   role,
   gridRef,
   columns,
@@ -129,7 +124,7 @@ export function TableDataGrid({
   inspectCell,
   onInspectCellDismiss,
   ...dataGridOverrides
-}: TableDataGridProps) {
+}: TableDataGridProps<TableRow>) {
   const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
 
   const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
