@@ -652,13 +652,13 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/openFeature @grafana/grafana-frontend-platform
-/packages/grafana-runtime/src/internal/analyticsFramework @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/unstable.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/tsconfig.build.json @grafana/grafana-frontend-platform
 /packages/grafana-runtime/tsconfig.json @grafana/grafana-frontend-platform
 
 /packages/grafana-runtime/src/analytics @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/analytics/plugins @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/analyticsFramework @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/DataSourcePicker* @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/EmbeddedDashboard.tsx @grafana/dashboards-squad
 /packages/grafana-runtime/src/components/FolderPicker.tsx @grafana/grafana-frontend-platform
@@ -895,6 +895,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/impression_srv.ts @grafana/grafana-frontend-platform
 /public/app/core/services/KeybindingSet* @grafana/grafana-frontend-platform
 /public/app/core/services/keybindingSrv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/meticulous.ts @grafana/dataviz-squad
 /public/app/core/services/mocks/subscribeTester.ts @grafana/grafana-frontend-platform
 /public/app/core/services/mousetrap/ @grafana/grafana-frontend-platform
 /public/app/core/services/NewFrontendAssetsChecker* @grafana/grafana-frontend-platform
