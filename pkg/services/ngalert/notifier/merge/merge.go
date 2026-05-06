@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/grafana/alerting/definition"
@@ -285,7 +286,7 @@ func MergeRoutes(a, b definition.Route, matcher config.Matchers) *definition.Rou
 		ri := model.Duration(defaultOpts.RepeatInterval)
 		b.RepeatInterval = &ri
 	}
-	b.Matchers = append(b.Matchers, matcher...)
+	b.Matchers = append(slices.Clone(b.Matchers), matcher...)
 	a.Routes = append([]*definition.Route{&b}, a.Routes...)
 	return &a
 }
@@ -354,8 +355,8 @@ func MergeInhibitRules(a, b []config.InhibitRule, matcher config.Matchers) []con
 	result := make([]config.InhibitRule, 0, len(a)+len(b))
 	result = append(result, a...)
 	for _, rule := range b {
-		rule.SourceMatchers = append(rule.SourceMatchers, matcher...)
-		rule.TargetMatchers = append(rule.TargetMatchers, matcher...)
+		rule.SourceMatchers = append(slices.Clone(rule.SourceMatchers), matcher...)
+		rule.TargetMatchers = append(slices.Clone(rule.TargetMatchers), matcher...)
 		result = append(result, rule)
 	}
 	return result
