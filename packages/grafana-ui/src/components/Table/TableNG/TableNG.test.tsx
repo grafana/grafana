@@ -132,6 +132,48 @@ const createNestedDataFrame = (): DataFrame => {
   );
 };
 
+/**
+ * Outer table has NO footer reducers; nested frame fields DO have footer reducers.
+ * Used to verify that the nested table shows its own footer independent of the outer table.
+ */
+const createNestedDataFrameWithFooter = (): DataFrame => {
+  const processedNestedFrame = withFieldOverrides(
+    toDataFrame({
+      name: 'NestedWithFooter',
+      fields: [
+        {
+          name: 'Nested A',
+          type: FieldType.string,
+          values: ['N1', 'N2'],
+          config: { custom: { footer: { reducers: ['count'] } } },
+        },
+        {
+          name: 'Nested B',
+          type: FieldType.number,
+          values: [10, 20],
+          config: { custom: { footer: { reducers: ['sum'] } } },
+        },
+      ],
+    })
+  );
+
+  return withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 1,
+      fields: [
+        { name: 'Column A', type: FieldType.string, values: ['A1'], config: { custom: {} } },
+        {
+          name: '__nestedFrames',
+          type: FieldType.nestedFrames,
+          values: [[processedNestedFrame]],
+          config: { custom: {} },
+        },
+      ],
+    })
+  );
+};
+
 const createSortingTestDataFrame = (length = 5): DataFrame =>
   withFieldOverrides(
     toDataFrame({
@@ -487,6 +529,82 @@ describe('TableNG', () => {
         const expandedRow = container.querySelector('[aria-expanded="true"]');
         expect(expandedRow).toBeInTheDocument();
       }
+    });
+  });
+
+  describe('Nested table footer', () => {
+    it('shows the nested footer when nested fields have footer reducers, even when the top-level table has no footer', async () => {
+      // The outer table has no footer reducers. The nested frame fields do.
+      // Before the fix, bottomSummaryRows was driven by the top-level hasFooter, so the nested
+      // footer never rendered. After the fix, each table controls its own footer independently.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createNestedDataFrameWithFooter()} width={800} height={600} />
+      );
+
+      // Before expansion: no footer row should be visible at all
+      expect(container.querySelector('.rdg-summary-row')).not.toBeInTheDocument();
+
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
+      expect(expandButton).toBeInTheDocument();
+      await user.click(expandButton!);
+
+      // After expansion: the nested DataGrid should show its own footer row
+      const footerRow = container.querySelector('.rdg-summary-row');
+      expect(footerRow).toBeInTheDocument();
+    });
+
+    it('nested footer displays values computed from the nested fields (sum of Nested B = 30)', async () => {
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createNestedDataFrameWithFooter()} width={800} height={600} />
+      );
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      // The nested Nested B column has values [10, 20]; sum = 30
+      expect(screen.getByText('30')).toBeInTheDocument();
+    });
+
+    it('does not show a footer row in the nested table when nested fields have no footer reducers', async () => {
+      // Uses the plain nested frame (no footer reducers on nested fields)
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createNestedDataFrame()} width={800} height={600} />
+      );
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      // No summary row should appear — nested fields have no footer reducers
+      expect(container.querySelector('.rdg-summary-row')).not.toBeInTheDocument();
+    });
+
+    it('shows independent footer rows for both top-level and nested tables when both have footer reducers', async () => {
+      // Add footer reducers to the top-level fields as well
+      const baseFrame = createNestedDataFrameWithFooter();
+      const frameWithTopLevelFooter = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          config: {
+            ...field.config,
+            custom: { ...field.config.custom, footer: { reducers: ['count'] } },
+          },
+        })),
+      };
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={frameWithTopLevelFooter} width={800} height={600} />
+      );
+
+      // Top-level footer is visible before expansion
+      expect(container.querySelector('.rdg-summary-row')).toBeInTheDocument();
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      // Both the top-level and nested summary rows should be present
+      const footerRows = container.querySelectorAll('.rdg-summary-row');
+      expect(footerRows.length).toBeGreaterThanOrEqual(2);
+
+      // The nested footer value (sum of Nested B = 30) must be visible
+      expect(screen.getByText('30')).toBeInTheDocument();
     });
   });
 

@@ -2,6 +2,7 @@
   {
     "grant": "Admin",
     "roles": [
+      "fixed:alerting.alertmanager-imports:writer",
       "fixed:alerting.legacy:writer",
       "fixed:alerting.provisioning.provenance:writer",
       "fixed:alerting.provisioning.secrets:reader",
@@ -190,6 +191,22 @@
       {
         "action": "folders:read",
         "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:create",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:delete",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:get",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:update",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
       },
       {
         "action": "notifications.alerting.grafana.app/routingtrees:create"

@@ -5270,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Einstellungen"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5672,7 @@
         "title": "Variablen"
       },
       "variable": {
-        "change-type": "Ändern",
+        "change-type": "",
         "change-type-aria-label": "Variablentyp ändern",
         "custom-options": {
           "apply": "Anwenden",
@@ -5989,7 +5989,7 @@
       "cancel": "Abbrechen",
       "common": {
         "copy": "Kopieren",
-        "copy-or-duplicate": "Kopieren/einfügen oder duplizieren",
+        "copy-tooltip": "",
         "delete": "Löschen",
         "duplicate": "Duplikat",
         "layout": "Layout",
@@ -6028,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Nicht konfiguriertes Panel. Drücken Sie die Tabulatortaste, um die Konfigurationsoptionen anzuzeigen.",
-      "configure-button": "Konfigurieren",
+      "configure-button": "",
       "configure-button-menu": "Menü umschalten",
       "configure-visualization": "Visualisierung konfigurieren",
       "empty-state-message": "Führen Sie eine Abfrage aus, um sie hier zu visualisieren, oder gehen Sie weiter zu allen Visualisierungen, um andere Panel-Typen hinzuzufügen",
@@ -6270,10 +6270,8 @@
       "title-provisioned": "Bereitgestelltes Dashboard"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Ein Dashboard mit demselben Namen im ausgewählten Ordner existiert bereits.<br/><2>Möchten Sie dieses Dashboard trotzdem speichern?</2>",
       "body-version-mismatch": "Eine andere Person hat dieses Dashboard aktualisiert<br/><2>Möchten Sie dieses Dashboard trotzdem speichern?</2>",
       "confirmText-save-and-overwrite": "Speichern und überschreiben",
-      "title-name-exists": "Widerspruch",
       "title-version-mismatch": "Widerspruch"
     },
     "save-dashboard-form": {
@@ -7327,10 +7325,6 @@
       "success-message": "Dashboard erfolgreich verschoben",
       "target-path-label": "Zielpfad",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Ein Dashboard mit demselben Namen im ausgewählten Ordner existiert bereits. Möchten Sie dieses Dashboard trotzdem speichern?",
-      "title-name-already-exists": "Der Name existiert bereits"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
