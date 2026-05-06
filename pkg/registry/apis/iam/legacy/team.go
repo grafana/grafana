@@ -537,21 +537,13 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 			}
 		}
 
-		// Read back the stored `updated` value: MySQL DATETIME(0) truncates
-		// the millisecond fraction we send, so cmd.Updated.Time may not be
-		// what the next caller will compare against in PreviousUpdated.
-		var storedUpdated legacysql.DBTime
-		if err := st.Get(ctx, &storedUpdated, "SELECT updated FROM team WHERE org_id = ? AND uid = ?", ns.OrgID, cmd.UID); err != nil {
-			return fmt.Errorf("re-read team updated: %w", err)
-		}
-
 		updatedTeam = team.Team{
 			UID:           cmd.UID,
 			Name:          cmd.Name,
 			Email:         cmd.Email,
 			ExternalUID:   cmd.ExternalUID,
 			IsProvisioned: cmd.IsProvisioned,
-			Updated:       storedUpdated.Time,
+			Updated:       cmd.Updated.Time,
 		}
 		return nil
 	})
