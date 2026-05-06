@@ -5270,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Beállítások"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5672,7 @@
         "title": "Változók"
       },
       "variable": {
-        "change-type": "Módosítás",
+        "change-type": "",
         "change-type-aria-label": "Változótípus módosítása",
         "custom-options": {
           "apply": "Alkalmaz",
@@ -5989,7 +5989,7 @@
       "cancel": "Mégse",
       "common": {
         "copy": "Másolás",
-        "copy-or-duplicate": "Másolás/beillesztés vagy duplikálás",
+        "copy-tooltip": "",
         "delete": "Törlés",
         "duplicate": "Duplikálás",
         "layout": "Elrendezés",
@@ -6028,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Nem konfigurált panel. A konfigurációs beállítások megtekintéséhez nyissa meg a lapot.",
-      "configure-button": "Konfigurálás",
+      "configure-button": "",
       "configure-button-menu": "Menü átkapcsolása",
       "configure-visualization": "Vizualizáció konfigurálása",
       "empty-state-message": "Futtasson egy lekérdezést, hogy itt megjelenítse, vagy lépjen az összes megjelenítéshez, hogy hozzáadjon más paneltípusokat",
@@ -6270,10 +6270,8 @@
       "title-provisioned": "Kiépített irányítópult"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Egy irányítópult már létezik ugyanazzal a névvel a kijelölt mappában.<br/><2>Biztosan menti ezt az irányítópultot?</2>",
       "body-version-mismatch": "Valaki más frissítette ezt az irányítópultot<br/><2>Biztosan menti ezt az irányítópultot?</2>",
       "confirmText-save-and-overwrite": "Mentés és felülírás",
-      "title-name-exists": "Ütközés",
       "title-version-mismatch": "Ütközés"
     },
     "save-dashboard-form": {
@@ -7327,10 +7325,6 @@
       "success-message": "Irányítópult sikeresen áthelyezve",
       "target-path-label": "Célútvonal",
       "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Egy irányítópult már létezik ugyanazzal a névvel a kijelölt mappában. Biztosan menti ezt az irányítópultot?",
-      "title-name-already-exists": "A név már létezik"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

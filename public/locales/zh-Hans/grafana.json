@@ -5240,7 +5240,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "设置"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5642,7 +5642,7 @@
         "title": "变量"
       },
       "variable": {
-        "change-type": "更改",
+        "change-type": "",
         "change-type-aria-label": "更改变量类型",
         "custom-options": {
           "apply": "应用",
@@ -5959,7 +5959,7 @@
       "cancel": "取消",
       "common": {
         "copy": "复制",
-        "copy-or-duplicate": "复制/粘贴或重复创建",
+        "copy-tooltip": "",
         "delete": "删除",
         "duplicate": "复制",
         "layout": "布局",
@@ -5998,7 +5998,7 @@
     },
     "new-panel": {
       "aria-label": "未配置的面板。按 Tab 键可查看配置选项。",
-      "configure-button": "配置",
+      "configure-button": "",
       "configure-button-menu": "切换菜单",
       "configure-visualization": "配置可视化",
       "empty-state-message": "运行查询以在此处可视化，或转到所有可视化以添加其他面板类型",
@@ -6239,10 +6239,8 @@
       "title-provisioned": "已预置的数据面板"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "所选文件夹中已存在具有相同名称的数据面板。<br/><2>您仍然要保存此数据面板吗？</2>",
       "body-version-mismatch": "其他人已更新此数据面板<br/><2>您仍然要保存此数据面板吗？</2>",
       "confirmText-save-and-overwrite": "保存并覆盖",
-      "title-name-exists": "冲突",
       "title-version-mismatch": "冲突"
     },
     "save-dashboard-form": {
@@ -7286,10 +7284,6 @@
       "success-message": "数据面板已成功移动",
       "target-path-label": "目标路径",
       "title-this-repository-is-read-only": "此存储库为只读"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "所选文件夹中已存在具有相同名称的数据面板。您仍然要保存此数据面板吗？",
-      "title-name-already-exists": "名称已存在"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

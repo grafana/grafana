@@ -5270,7 +5270,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Configurações"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5672,7 @@
         "title": "Variáveis"
       },
       "variable": {
-        "change-type": "Alterar",
+        "change-type": "",
         "change-type-aria-label": "Alterar tipo de variável",
         "custom-options": {
           "apply": "Aplicar",
@@ -5989,7 +5989,7 @@
       "cancel": "Cancelar",
       "common": {
         "copy": "Copiar",
-        "copy-or-duplicate": "Copiar/colar ou duplicar",
+        "copy-tooltip": "",
         "delete": "Excluir",
         "duplicate": "Duplicar",
         "layout": "Layout",
@@ -6028,7 +6028,7 @@
     },
     "new-panel": {
       "aria-label": "Painel não configurado. Pressione Tab para ver as opções de configuração.",
-      "configure-button": "Configuração",
+      "configure-button": "",
       "configure-button-menu": "Ativar ou desativar o menu",
       "configure-visualization": "Configurar visualização",
       "empty-state-message": "Execute uma consulta para visualizá-la aqui ou acesse todas as visualizações para adicionar outros tipos de painel",
@@ -6270,10 +6270,8 @@
       "title-provisioned": "Painel provisionado"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Já existe um painel com o mesmo nome na pasta selecionada.<br/><2>Deseja salvar este painel mesmo assim?</2>",
       "body-version-mismatch": "Outra pessoa atualizou este painel<br/><2>Deseja salvar este painel mesmo assim?</2>",
       "confirmText-save-and-overwrite": "Salvar e substituir",
-      "title-name-exists": "Conflito",
       "title-version-mismatch": "Conflito"
     },
     "save-dashboard-form": {
@@ -7327,10 +7325,6 @@
       "success-message": "Painel de controle movido com sucesso",
       "target-path-label": "Caminho de destino",
       "title-this-repository-is-read-only": "Este repositório é somente leitura"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Já existe um painel com o mesmo nome na pasta selecionada. Deseja salvar este painel mesmo assim?",
-      "title-name-already-exists": "O nome já existe"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {

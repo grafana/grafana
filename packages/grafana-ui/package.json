@@ -142,6 +142,7 @@
   "devDependencies": {
     "@babel/core": "7.28.0",
     "@faker-js/faker": "^9.0.0",
+    "@grafana/test-utils": "workspace:*",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@storybook/addon-a11y": "10.3.6",
     "@storybook/addon-docs": "10.3.6",
