@@ -7,7 +7,7 @@ const LOSSY_QUALITY = 0.92;
 
 type Format = NonNullable<PanelScreenshotOptions['format']>;
 type PluginSource = 'html-to-image' | 'override';
-type ErrorKind = 'panel_not_in_dom' | 'html_to_image_failed' | 'unknown';
+type ErrorKind = 'panel_not_in_dom' | 'html_to_image_failed' | 'override_failed' | 'unknown';
 
 export class PanelScreenshotServiceImpl implements PanelScreenshotService {
   async capture(panelPathId: string, options: PanelScreenshotOptions = {}): Promise<Blob> {
@@ -27,12 +27,20 @@ export class PanelScreenshotServiceImpl implements PanelScreenshotService {
 
       if (panelPlugin?.onScreenshot) {
         const ctx: PanelScreenshotContext = { element, format };
-        const overrideBlob = await panelPlugin.onScreenshot(ctx);
+        plugin = 'override';
+        let overrideBlob: Blob | null;
+        try {
+          overrideBlob = await panelPlugin.onScreenshot(ctx);
+        } catch (overrideErr) {
+          const msg = overrideErr instanceof Error ? overrideErr.message : String(overrideErr);
+          throw Object.assign(new Error(`override_failed: ${msg}`), { kind: 'override_failed' });
+        }
         if (overrideBlob) {
-          plugin = 'override';
           report(panelType, start, true, undefined, plugin);
           return overrideBlob;
         }
+        // Handler returned null — fall through to html-to-image.
+        plugin = 'html-to-image';
       }
 
       const blob = await captureWithHtmlToImage(element, format);
@@ -155,6 +163,9 @@ function report(panelType: string, start: number, ok: boolean, errorKind: ErrorK
 
 function classifyError(err: unknown): ErrorKind {
   if (err instanceof Error) {
+    if (err.message.startsWith('override_failed')) {
+      return 'override_failed';
+    }
     if (err.message.startsWith('Panel not in DOM')) {
       return 'panel_not_in_dom';
     }
