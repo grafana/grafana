@@ -52,7 +52,6 @@ type MergeOpts struct {
 	// and identifying alerts from the secondary configuration after merging.
 	//
 	// The matchers must follow these requirements:
-	// - At least one matcher must be provided (cannot be empty)
 	// - Each matcher must use the equality operator (labels.MatchEqual type)
 	// - Each matcher name must be unique within the list
 	//
@@ -113,7 +112,8 @@ func (m MergeResult) LogContext() []any {
 	if len(m.Receivers) == 0 && len(m.TimeIntervals) == 0 {
 		return nil
 	}
-	logCtx := make([]any, 0, 4)
+	logCtx := make([]any, 0, 6)
+	logCtx = append(logCtx, "identifier", m.Identifier)
 	if len(m.Receivers) > 0 {
 		rcvBuilder := strings.Builder{}
 		for from, to := range m.Receivers {
