@@ -1353,9 +1353,8 @@ func newColdStartTest(t *testing.T, store *coldStartFakeStore) coldStartTest {
 	}
 }
 
-func (ct coldStartTest) coordinate(ctx context.Context, lastImportTime time.Time) (string, ulid.ULID, IndexStoreLock, error) {
+func (ct coldStartTest) coordinate(ctx context.Context, lastImportTime time.Time) (string, IndexStoreLock, error) {
 	idx, _, _, lock, err := ct.be.coordinateColdStartBuild(ctx, ct.ns, ct.resourceDir, lastImportTime, ct.be.log)
-	var idxKey ulid.ULID
 	role := "build_alone"
 	switch {
 	case err != nil:
@@ -1366,7 +1365,7 @@ func (ct coldStartTest) coordinate(ctx context.Context, lastImportTime time.Time
 	case lock != nil:
 		role = "leader"
 	}
-	return role, idxKey, lock, err
+	return role, lock, err
 }
 
 func (ct coldStartTest) coldStartCounter(outcome string) float64 {
@@ -1377,7 +1376,7 @@ func TestColdStart_BecameLeader(t *testing.T) {
 	store := newColdStartFakeStore()
 	ct := newColdStartTest(t, store)
 
-	role, _, lock, err := ct.coordinate(context.Background(), time.Time{})
+	role, lock, err := ct.coordinate(context.Background(), time.Time{})
 	require.NoError(t, err)
 	assert.Equal(t, "leader", role)
 	require.NotNil(t, lock)
@@ -1405,7 +1404,7 @@ func TestColdStart_WaitedForLeader(t *testing.T) {
 		store.put(makeULID(t, time.Now()), freshSnapshot(time.Minute))
 	}()
 
-	role, _, lock, err := ct.coordinate(context.Background(), time.Time{})
+	role, lock, err := ct.coordinate(context.Background(), time.Time{})
 	require.NoError(t, err)
 	assert.Equal(t, "downloaded", role)
 	assert.Nil(t, lock)
@@ -1420,7 +1419,7 @@ func TestColdStart_WaitTimeout(t *testing.T) {
 	ct := newColdStartTest(t, store)
 	withColdStartTimings(t, 5*time.Millisecond, 30*time.Millisecond)
 
-	role, _, lock, err := ct.coordinate(context.Background(), time.Time{})
+	role, lock, err := ct.coordinate(context.Background(), time.Time{})
 	require.NoError(t, err)
 	assert.Equal(t, "build_alone", role)
 	assert.Nil(t, lock)
@@ -1443,7 +1442,7 @@ func TestColdStart_AcquiresLockAfterLeaderRelease(t *testing.T) {
 		store.setLockHeld(false)
 	}()
 
-	role, _, lock, err := ct.coordinate(context.Background(), time.Time{})
+	role, lock, err := ct.coordinate(context.Background(), time.Time{})
 	require.NoError(t, err)
 	assert.Equal(t, "leader", role)
 	require.NotNil(t, lock)
@@ -1455,7 +1454,7 @@ func TestColdStart_LockBackendErrorBuildsAlone(t *testing.T) {
 	store.lockBackendErr = errors.New("backend down")
 	ct := newColdStartTest(t, store)
 
-	role, _, lock, err := ct.coordinate(context.Background(), time.Time{})
+	role, lock, err := ct.coordinate(context.Background(), time.Time{})
 	require.NoError(t, err)
 	assert.Equal(t, "build_alone", role)
 	assert.Nil(t, lock)
@@ -1474,7 +1473,7 @@ func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
 		cancel()
 	}()
 
-	_, _, _, err := ct.coordinate(ctx, time.Time{})
+	_, _, err := ct.coordinate(ctx, time.Time{})
 	require.ErrorIs(t, err, context.Canceled)
 }
 
@@ -1570,7 +1569,7 @@ func TestColdStart_NoProbeWindowSkipsWaitLoopProbe(t *testing.T) {
 	require.NotNil(t, lock)
 	t.Cleanup(func() { _ = lock.Release() })
 
-	assert.Zero(t, store.fakeRemoteIndexStore.listCalls.Load(), "wait-loop probe must not list when no freshness window is configured")
+	assert.Zero(t, store.listCalls.Load(), "wait-loop probe must not list when no freshness window is configured")
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
 }
 
