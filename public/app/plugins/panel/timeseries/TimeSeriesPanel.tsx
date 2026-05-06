@@ -200,11 +200,14 @@ export const TimeSeriesPanel = ({
                         groupingFilters.length &&
                         onAddAdHocFilters
                           ? {
-                              onFilterForGroupedLabels: () => onAddAdHocFilters(groupingFilters),
-                              onFilterOutGroupedLabels: () =>
+                              onFilterForGroupedLabels: () => {
+                                onAddAdHocFilters(groupingFilters);
+                              },
+                              onFilterOutGroupedLabels: () => {
                                 onAddAdHocFilters(
                                   groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                                ),
+                                );
+                              },
                             }
                           : undefined
                       }

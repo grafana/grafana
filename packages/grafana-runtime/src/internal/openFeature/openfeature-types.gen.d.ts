@@ -40,7 +40,8 @@ declare module "@openfeature/core" {
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
-    | "assistant.frontend.tools.dashboardTemplates";
+    | "assistant.frontend.tools.dashboardTemplates"
+    | "grafana.unifiedHomepage";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

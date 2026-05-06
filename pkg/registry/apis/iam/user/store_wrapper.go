@@ -212,6 +212,12 @@ func (f *StoreWrapper) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Obj
 	return nil
 }
 
+// WatchFilter implements ResourceStorageAuthorizer.
+// TODO: implement proper watch filtering by pre-fetching hidden users at watch start.
+func (f *StoreWrapper) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.RejectAllWatchFilter, nil
+}
+
 // BeforeDelete returns Forbidden if the target user is in the hidden users list.
 // Service identities bypass hidden user restrictions.
 func (f *StoreWrapper) BeforeDelete(ctx context.Context, obj runtime.Object) error {

@@ -505,12 +505,12 @@ export interface FeatureToggles {
   scopeApi?: boolean;
   /**
   * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
-  * @default false
+  * @default true
   */
   useScopeSingleNodeEndpoint?: boolean;
   /**
   * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
-  * @default false
+  * @default true
   */
   useMultipleScopeNodesEndpoint?: boolean;
   /**
@@ -1546,11 +1546,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingPolicyRoutingSettings?: boolean;
-  /**
-  * Registers an API server for each backend app plugin exposing a settings endpoint
-  * @default false
-  */
-  appPluginAPIServer?: boolean;
   /**
   * Makes NoData and Error alerts fire immediately, without 'pending' stage
   * @default false

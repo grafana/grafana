@@ -11,7 +11,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -89,7 +88,7 @@ func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 	return legacyGet, nil
 }
 
-func (d *dualWriter) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+func (d *dualWriter) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	readUnified, errorIsOK := d.getMode(ctx)
 	ctx, span := tracer.Start(ctx, "dualwrite.dualWriter.List",
 		trace.WithAttributes(
