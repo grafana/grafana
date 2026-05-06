@@ -232,7 +232,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // @grafana/data-sources-plugins
 	modernc.org/sqlite v1.48.2 // indirect; @grafana/grafana-backend-group
-	pgregory.net/rapid v1.2.0 // @grafana/grafana-operator-experience-squad
+	pgregory.net/rapid v1.3.0 // @grafana/grafana-operator-experience-squad
 	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/yaml v1.6.0 // indirect; @grafana/grafana-app-platform-squad
