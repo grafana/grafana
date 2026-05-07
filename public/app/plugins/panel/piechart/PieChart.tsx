@@ -289,20 +289,17 @@ function PieSlice({
     [eventBus, arc, tooltip, pie, tooltipOptions, gradientFills]
   );
 
-  const onMouseOut = useCallback(
-    () => {
-      eventBus?.publish({
-        type: DataHoverClearEvent.type,
-        payload: {
-          x: 0,
-          y: 0,
-          dataId: arc.data.display.title,
-        },
-      });
-      tooltip.hideTooltip();
-    },
-    [eventBus, arc, tooltip]
-  );
+  const onMouseOut = useCallback(() => {
+    eventBus?.publish({
+      type: DataHoverClearEvent.type,
+      payload: {
+        x: 0,
+        y: 0,
+        dataId: arc.data.display.title,
+      },
+    });
+    tooltip.hideTooltip();
+  }, [eventBus, arc, tooltip]);
 
   const onMouseMoveOverArc = useCallback(
     (event: React.MouseEvent<SVGGElement>) => {
