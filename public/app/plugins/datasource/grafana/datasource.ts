@@ -9,6 +9,7 @@ import {
   type DataQueryRequest,
   type DataQueryResponse,
   type DataSourceInstanceSettings,
+  type Scope,
   type TestDataSourceResponse,
   isValidLiveChannelAddress,
   MutableDataFrame,
@@ -86,12 +87,18 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     for (const target of request.targets) {
       if (target.queryType === GrafanaQueryType.Annotations) {
         return from(
-          this.getAnnotations({
-            range: request.range,
-            rangeRaw: request.range.raw,
-            annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
-            dashboard: getDashboardSrv().getCurrent(),
-          })
+          this.getAnnotations(
+            {
+              range: request.range,
+              rangeRaw: request.range.raw,
+              annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
+              dashboard: getDashboardSrv().getCurrent(),
+            },
+            // Forward the scenes-populated scopes (set by AnnotationsDataLayer's
+            // standardAnnotationQuery) so /search can filter by them. options.dashboard
+            // is the legacy DashboardModel here, so we can't read scopes from it.
+            request.scopes
+          )
         );
       }
       if (target.hide) {
@@ -199,7 +206,10 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     return Promise.resolve([]);
   }
 
-  async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
+  async getAnnotations(
+    options: AnnotationQueryRequest<GrafanaQuery>,
+    requestScopes?: Scope[]
+  ): Promise<DataQueryResponse> {
     const query = options.annotation.target as GrafanaQuery;
     if (query?.queryType === GrafanaQueryType.TimeRegions) {
       const frame = doTimeRegionQuery(options.annotation.name, query.timeRegion!, options.range);
@@ -208,21 +218,24 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     const annotation = options.annotation as unknown as AnnotationQuery<GrafanaAnnotationQuery>;
     const target = annotation.target!;
-    // For scenes-based dashboards, mirror SceneQueryRunner's `request.scopes` so the
-    // backend can filter annotations by the dashboard's selected scopes. Only sent on
-    // the k8s path; the legacy /api/annotations endpoint has no scope filter and would
-    // just ignore it, but we'd rather not send param noise.
-    const scopes =
-      config.annotationAppPlatformEnabled && isSceneObject(options.dashboard)
-        ? sceneGraph.getScopes(options.dashboard)?.map((s) => s.metadata.name)
-        : undefined;
+    // Prefer the scopes the caller threaded in from request.scopes (set by the
+    // scenes AnnotationsDataLayer via standardAnnotationQuery). options.dashboard
+    // is the legacy DashboardModel here even on scenes dashboards, so reading
+    // scopes off it via sceneGraph wouldn't work. Only sent on the k8s path; the
+    // legacy /api/annotations endpoint has no scope filter.
+    const scopeNames = config.annotationAppPlatformEnabled
+      ? (requestScopes?.map((s) => s.metadata.name) ??
+        (isSceneObject(options.dashboard)
+          ? sceneGraph.getScopes(options.dashboard)?.map((s) => s.metadata.name)
+          : undefined))
+      : undefined;
     const params: any = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: target.limit,
       tags: target.tags,
       matchAny: target.matchAny,
-      scopes: scopes && scopes.length > 0 ? scopes : undefined,
+      scopes: scopeNames && scopeNames.length > 0 ? scopeNames : undefined,
     };
 
     if (target.type === GrafanaAnnotationType.Dashboard) {
