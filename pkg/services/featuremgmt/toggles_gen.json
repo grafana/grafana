@@ -2939,12 +2939,16 @@
     {
       "metadata": {
         "name": "kubernetesAnnotationsClient",
-        "creationTimestamp": "2026-05-07T00:00:00Z"
+        "resourceVersion": "1778146254687",
+        "creationTimestamp": "2026-05-07T00:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-07 09:30:54.687995422 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Routes manual annotation create/update/delete and tag autocomplete from /api/annotations to the /apis/annotation.grafana.app endpoint",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/dashboards-squad",
         "requiresRestart": true,
         "expression": "false"
       }
