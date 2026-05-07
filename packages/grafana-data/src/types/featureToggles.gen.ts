@@ -224,6 +224,11 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
+  * Routes manual annotation create/update/delete and tag autocomplete from /api/annotations to the /apis/annotation.grafana.app endpoint
+  * @default false
+  */
+  kubernetesAnnotations?: boolean;
+  /**
   * Enables k8s short url api and uses it under the hood when handling legacy /api
   * @default false
   */
