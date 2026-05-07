@@ -54,8 +54,8 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -63,7 +63,7 @@ describe('connectionMovementUtils', () => {
         },
       ];
 
-      updateConnectionsAfterIndividualMove(sourceElement as ElementState, connectionStates, mockCalculateCoords);
+      updateConnectionsAfterIndividualMove(sourceElement, connectionStates, mockCalculateCoords);
 
       // Verify sourceOriginal was updated
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 100, y: 100 });
@@ -82,8 +82,8 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -91,7 +91,7 @@ describe('connectionMovementUtils', () => {
         },
       ];
 
-      updateConnectionsAfterIndividualMove(targetElement as ElementState, connectionStates, mockCalculateCoords);
+      updateConnectionsAfterIndividualMove(targetElement, connectionStates, mockCalculateCoords);
 
       // Verify sourceOriginal was NOT updated
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 50, y: 50 });
@@ -111,8 +111,8 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 100, y: 100 },
@@ -120,7 +120,7 @@ describe('connectionMovementUtils', () => {
         },
       ];
 
-      updateConnectionsAfterIndividualMove(targetElement as ElementState, connectionStates, mockCalculateCoords);
+      updateConnectionsAfterIndividualMove(targetElement, connectionStates, mockCalculateCoords);
 
       // Verify vertex was recalculated
       const vertex = sourceElement.options?.connections?.[0].vertices?.[0];
@@ -140,8 +140,8 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -150,7 +150,7 @@ describe('connectionMovementUtils', () => {
       ];
 
       expect(() => {
-        updateConnectionsAfterIndividualMove(sourceElement as ElementState, connectionStates, mockCalculateCoords);
+        updateConnectionsAfterIndividualMove(sourceElement, connectionStates, mockCalculateCoords);
       }).not.toThrow();
 
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 100, y: 100 });
@@ -168,8 +168,8 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 100, y: 100 },
@@ -178,7 +178,7 @@ describe('connectionMovementUtils', () => {
       ];
 
       expect(() => {
-        updateConnectionsAfterIndividualMove(sourceElement as ElementState, connectionStates, mockCalculateCoords);
+        updateConnectionsAfterIndividualMove(sourceElement, connectionStates, mockCalculateCoords);
       }).not.toThrow();
     });
 
@@ -194,8 +194,8 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -203,7 +203,7 @@ describe('connectionMovementUtils', () => {
         },
       ];
 
-      updateConnectionsAfterIndividualMove(otherElement as ElementState, connectionStates, mockCalculateCoords);
+      updateConnectionsAfterIndividualMove(otherElement, connectionStates, mockCalculateCoords);
 
       // Coordinates should remain unchanged
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 50, y: 50 });
@@ -223,8 +223,8 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -233,7 +233,7 @@ describe('connectionMovementUtils', () => {
       ];
 
       const selectedTargets = [sourceElement.div!, targetElement.div!];
-      const movedElements = [sourceElement as ElementState, targetElement as ElementState];
+      const movedElements = [sourceElement, targetElement];
 
       updateConnectionsAfterGroupMove(movedElements, selectedTargets, connectionStates, mockCalculateCoords);
 
@@ -253,8 +253,8 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -263,7 +263,7 @@ describe('connectionMovementUtils', () => {
       ];
 
       const selectedTargets = [sourceElement.div!];
-      const movedElements = [sourceElement as ElementState];
+      const movedElements = [sourceElement];
 
       updateConnectionsAfterGroupMove(movedElements, selectedTargets, connectionStates, mockCalculateCoords);
 
@@ -283,8 +283,8 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -293,7 +293,7 @@ describe('connectionMovementUtils', () => {
       ];
 
       const selectedTargets = [targetElement.div!];
-      const movedElements = [targetElement as ElementState];
+      const movedElements = [targetElement];
 
       updateConnectionsAfterGroupMove(movedElements, selectedTargets, connectionStates, mockCalculateCoords);
 
@@ -313,8 +313,8 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -328,7 +328,7 @@ describe('connectionMovementUtils', () => {
       mockConnectionSVG.setAttribute('data-connection-source', 'source');
 
       const selectedTargets = [sourceElement.div!, targetElement.div!, mockConnectionSVG];
-      const movedElements = [sourceElement as ElementState, targetElement as ElementState];
+      const movedElements = [sourceElement, targetElement];
 
       updateConnectionsAfterGroupMove(movedElements, selectedTargets, connectionStates, mockCalculateCoords);
 
@@ -355,16 +355,16 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: element1 as ElementState,
-          target: element2 as ElementState,
+          source: element1,
+          target: element2,
           info: createConnection({ targetName: 'element2' }),
           index: 0,
           sourceOriginal: { x: 10, y: 10 },
           targetOriginal: { x: 20, y: 20 },
         },
         {
-          source: element1 as ElementState,
-          target: element3 as ElementState,
+          source: element1,
+          target: element3,
           info: createConnection({ targetName: 'element3' }),
           index: 1,
           sourceOriginal: { x: 30, y: 30 },
@@ -374,7 +374,7 @@ describe('connectionMovementUtils', () => {
 
       // Select element1 and element2 (not element3)
       const selectedTargets = [element1.div!, element2.div!];
-      const movedElements = [element1 as ElementState, element2 as ElementState];
+      const movedElements = [element1, element2];
 
       updateConnectionsAfterGroupMove(movedElements, selectedTargets, connectionStates, mockCalculateCoords);
 
@@ -398,8 +398,8 @@ describe('connectionMovementUtils', () => {
 
       const connectionStates: ConnectionState[] = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
