@@ -195,8 +195,6 @@ type FrontendSettingsDTO struct {
 	NewsFeedEnabled     bool `json:"newsFeedEnabled"`
 	QueryHistoryEnabled bool `json:"queryHistoryEnabled"`
 
-	// AnnotationAppPlatformEnabled mirrors [annotations.app_platform] enabled, so the
-	// frontend can route reads/writes through /apis/annotation.grafana.app when on.
 	AnnotationAppPlatformEnabled bool `json:"annotationAppPlatformEnabled"`
 
 	GoogleAnalyticsId                   string `json:"googleAnalyticsId"`
