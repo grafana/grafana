@@ -17,6 +17,7 @@ import {
   LoadingState,
 } from '@grafana/data';
 import {
+  config,
   DataSourceWithBackend,
   getDataSourceSrv,
   getGrafanaLiveSrv,
@@ -24,6 +25,7 @@ import {
   type StreamingFrameOptions,
 } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
+import { isSceneObject, sceneGraph } from '@grafana/scenes';
 import { annotationServer } from 'app/features/annotations/api';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 
@@ -206,12 +208,21 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     const annotation = options.annotation as unknown as AnnotationQuery<GrafanaAnnotationQuery>;
     const target = annotation.target!;
+    // For scenes-based dashboards, mirror SceneQueryRunner's `request.scopes` so the
+    // backend can filter annotations by the dashboard's selected scopes. Only sent on
+    // the k8s path; the legacy /api/annotations endpoint has no scope filter and would
+    // just ignore it, but we'd rather not send param noise.
+    const scopes =
+      config.annotationAppPlatformEnabled && isSceneObject(options.dashboard)
+        ? sceneGraph.getScopes(options.dashboard)?.map((s) => s.metadata.name)
+        : undefined;
     const params: any = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: target.limit,
       tags: target.tags,
       matchAny: target.matchAny,
+      scopes: scopes && scopes.length > 0 ? scopes : undefined,
     };
 
     if (target.type === GrafanaAnnotationType.Dashboard) {

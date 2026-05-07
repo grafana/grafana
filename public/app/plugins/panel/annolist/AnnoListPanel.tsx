@@ -13,7 +13,7 @@ import {
   type PanelProps,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getBackendSrv, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, locationService, ScopesContext, type ScopesContextValue } from '@grafana/runtime';
 import { Button, ScrollContainer, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/internal';
 import { type AnnotationEventResource, annotationK8sClient } from 'app/api/clients/annotation/v0alpha1';
@@ -50,6 +50,11 @@ interface State {
   requestId: string;
 }
 export class AnnoListPanel extends PureComponent<Props, State> {
+  // ScopesContext lets the /search call below filter annotations by the dashboard's
+  // currently selected scopes — same source the create/update path reads from.
+  static contextType = ScopesContext;
+  declare context: ScopesContextValue | undefined;
+
   style = getStyles(config.theme2);
   subs = new Subscription();
   tagListRef = createRef<HTMLUListElement>();
@@ -127,6 +132,8 @@ export class AnnoListPanel extends PureComponent<Props, State> {
         : queryTags
       : interpolatedTags;
 
+    const scopeNames = this.context?.state.value?.map((s) => s.metadata.name);
+
     let annotations: AnnotationEvent[];
     if (config.annotationAppPlatformEnabled) {
       // /search hardcodes Type: "annotation" on the backend, so the legacy `type: 'annotation'`
@@ -139,6 +146,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
           limit: options.limit,
           tags,
           createdBy: queryUser?.uid ? `user:${queryUser.uid}` : undefined,
+          scopes: scopeNames && scopeNames.length > 0 ? scopeNames : undefined,
         },
         requestId
       );

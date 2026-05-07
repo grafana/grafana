@@ -1,8 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type AnnotationEvent, type FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import {
+  type AnnotationEvent,
+  type FieldConfigSource,
+  getDefaultTimeRange,
+  LoadingState,
+  type Scope,
+} from '@grafana/data';
+import { config, locationService, ScopesContext, type ScopesContextValue } from '@grafana/runtime';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../core/services/backend_srv';
@@ -341,7 +347,7 @@ describe('AnnoListPanel', () => {
       internalId: 1,
     };
 
-    const setupK8sContext = async (options: Options = defaultOptions) => {
+    const setupK8sContext = async (options: Options = defaultOptions, scopeNames?: string[]) => {
       jest.clearAllMocks();
       config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
@@ -384,7 +390,23 @@ describe('AnnoListPanel', () => {
         transparent: false,
         width: 320,
       };
-      render(<AnnoListPanel {...props} />);
+      const panel = <AnnoListPanel {...props} />;
+      if (scopeNames) {
+        const scopes: Scope[] = scopeNames.map((name) => ({
+          metadata: { name },
+          spec: { title: name, filters: [] },
+        }));
+        const ctx: ScopesContextValue = {
+          state: { drawerOpened: false, enabled: true, loading: false, readOnly: false, value: scopes },
+          stateObservable: { subscribe: () => ({ unsubscribe: () => {} }) } as unknown as ScopesContextValue['stateObservable'],
+          changeScopes: jest.fn(),
+          setReadOnly: jest.fn(),
+          setEnabled: jest.fn(),
+        };
+        render(<ScopesContext.Provider value={ctx}>{panel}</ScopesContext.Provider>);
+      } else {
+        render(panel);
+      }
       await waitFor(() => expect(getMock).toHaveBeenCalled());
       return { getMock };
     };
@@ -405,6 +427,16 @@ describe('AnnoListPanel', () => {
           tag: ['tag A', 'tag B'],
         }),
         expect.stringMatching(/^anno-list-panel-\d\.\d+/)
+      );
+    });
+
+    it('forwards selected scope names from ScopesContext to /search', async () => {
+      const { getMock } = await setupK8sContext(defaultOptions, ['scope-a', 'scope-b']);
+
+      expect(getMock).toHaveBeenCalledWith(
+        SEARCH_URL,
+        expect.objectContaining({ scope: ['scope-a', 'scope-b'] }),
+        expect.any(String)
       );
     });
 
