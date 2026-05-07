@@ -240,6 +240,7 @@ export async function openScopesSelector(page: Page, scopes?: TestScope[]) {
     .catch(() => null);
 
   await Promise.race([responsePromise, uiLoaded]);
+  responsePromise.catch(() => null);
 }
 
 /**
@@ -268,6 +269,7 @@ export async function expandScopesSelection(page: Page, parentScope: string, sco
     .catch(() => null);
 
   await Promise.race([responsePromise, uiExpanded]);
+  responsePromise.catch(() => null);
 }
 
 /**
@@ -337,6 +339,10 @@ export async function selectScope(page: Page, scopeName: string, selectedScope?:
     .catch(() => null);
 
   await Promise.race([responsePromise, uiSelected]);
+  // Suppress any rejection from responsePromise if it outlives the race (cache-hit path).
+  // Without this, Playwright teardown rejects the still-pending waitForResponse and the
+  // error surfaces as a spurious test failure.
+  responsePromise.catch(() => null);
 }
 
 /**
@@ -480,6 +486,7 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     .catch(() => null);
 
   await Promise.race([responsePromise, uiClosed]);
+  responsePromise.catch(() => null);
 
   // Wait for the apply button to disappear (selector closed)
   await page.waitForSelector('[data-testid="scopes-selector-apply"]', { state: 'hidden', timeout: 5000 });
@@ -502,17 +509,7 @@ export async function searchScopes(page: Page, value: string, resultScopes?: Tes
   const responsePromise = scopeNodeChildrenRequest(page, resultScopes);
 
   await click();
-
-  // Wait for either a network response (first fetch) or tree items updating in the UI.
-  // When scope node children are already in the RTK Query cache, no HTTP request is made
-  // and waitForResponse would time out. Racing against the UI update handles both cases.
-  const uiUpdated = page
-    .getByTestId(/^scopes-tree-.*-(checkbox|radio|link|expand)/)
-    .first()
-    .waitFor({ timeout: 5000 })
-    .catch(() => null);
-
-  await Promise.race([responsePromise, uiUpdated]);
+  await responsePromise;
 }
 
 export async function getScopeTreeName(page: Page, nth: number): Promise<string> {
