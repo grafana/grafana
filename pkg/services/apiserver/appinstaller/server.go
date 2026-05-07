@@ -6,9 +6,13 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/registry/rest"
 	genericrest "k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
@@ -73,6 +77,15 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 						)
 						if err != nil {
 							return err
+						}
+
+						if cdProvider, ok := s.installer.(LegacyCollectionDeleterProvider); ok {
+							if cd := cdProvider.GetLegacyCollectionDeleter(gvr); cd != nil {
+								storage = &collectionDeleterStorage{
+									Storage:           storage.(grafanarest.Storage),
+									collectionDeleter: cd,
+								}
+							}
 						}
 					}
 				} else if statusRest, ok := storage.(*appsdkapiserver.StatusREST); ok {
@@ -212,4 +225,16 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 
 func (s *serverWrapper) RegisteredWebServices() []*restful.WebService {
 	return s.GenericAPIServer.RegisteredWebServices()
+}
+
+// collectionDeleterStorage wraps a storage that does not support DeleteCollection
+// (e.g. the dualWriter) and adds CollectionDeleter support by delegating to a
+// separate CollectionDeleter (typically the legacy storage).
+type collectionDeleterStorage struct {
+	grafanarest.Storage
+	collectionDeleter rest.CollectionDeleter
+}
+
+func (s *collectionDeleterStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	return s.collectionDeleter.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }

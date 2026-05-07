@@ -6,6 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	rest2 "k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -25,8 +26,9 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller                 = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider           = (*AppInstaller)(nil)
+	_ appinstaller.LegacyCollectionDeleterProvider = (*AppInstaller)(nil)
 )
 
 type AppInstaller struct {
@@ -101,5 +103,18 @@ func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) r
 		},
 	)
 
+	return a.legacy
+}
+
+func (a *AppInstaller) GetLegacyCollectionDeleter(requested schema.GroupVersionResource) rest2.CollectionDeleter {
+	kind := correlationsV0.CorrelationKind()
+	gvr := schema.GroupVersionResource{
+		Group:    kind.Group(),
+		Version:  kind.Version(),
+		Resource: kind.Plural(),
+	}
+	if requested.String() != gvr.String() {
+		return nil
+	}
 	return a.legacy
 }

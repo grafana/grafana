@@ -37,6 +37,10 @@ type LegacyStatusProvider interface {
 	GetLegacyStatus(schema.GroupVersionResource, *appsdkapiserver.StatusREST) rest.Storage
 }
 
+type LegacyCollectionDeleterProvider interface {
+	GetLegacyCollectionDeleter(schema.GroupVersionResource) rest.CollectionDeleter
+}
+
 type AuthorizerProvider interface {
 	GetAuthorizer() authorizer.Authorizer
 }

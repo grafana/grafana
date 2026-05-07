@@ -26,6 +26,7 @@ var (
 	_ rest.Creater              = (*legacyStorage)(nil)
 	_ rest.Updater              = (*legacyStorage)(nil)
 	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
+	_ rest.CollectionDeleter    = (*legacyStorage)(nil)
 )
 
 type legacyStorage struct {
@@ -216,6 +217,25 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		UID:   name,
 	})
 	return nil, (err == nil), err
+}
+
+// CollectionDeleter
+func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	orgID, err := request.OrgIDForList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	labelSelectors, _ := listOptions.LabelSelector.Requirements()
+	datasourceRef := labelSelectors[0].Values().List()[0]
+	datasourceData := strings.Split(datasourceRef, ".") // the selector is type.uid
+	if labelSelectors[0].Key() == "correlations.grafana.app/sourceDSProv-ref" {
+		return nil, s.service.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{SourceUID: datasourceData[1], SourceType: datasourceData[0], OrgId: orgID, OnlyProvisioned: true})
+	}
+	if labelSelectors[0].Key() == "correlations.grafana.app/targetDS-ref" {
+		return nil, s.service.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{TargetUID: datasourceData[1], TargetType: datasourceData[0], OrgId: orgID})
+	}
+	return nil, fmt.Errorf("deleteCollection key not implemented for passthrough to legacy")
 }
 
 type continueToken struct {
