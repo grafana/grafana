@@ -195,6 +195,29 @@ func newFolderTranslation() translation {
 	return folderTranslation
 }
 
+// newServiceAccountTranslation creates a translation for service accounts and maps actions to action sets.
+// Service accounts only have Edit and Admin permission levels — there is no View level.
+func newServiceAccountTranslation() translation {
+	saTranslation := newResourceTranslation("serviceaccounts", "uid", false, map[string]bool{utils.VerbCreate: true})
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range saTranslation.verbMapping {
+		var actionSets []string
+		if slices.Contains(ossaccesscontrol.ServiceAccountEditActions, rbacAction) {
+			actionSets = append(actionSets, "serviceaccounts:edit")
+			actionSets = append(actionSets, "serviceaccounts:admin")
+		}
+		if slices.Contains(ossaccesscontrol.ServiceAccountAdminActions, rbacAction) &&
+			!slices.Contains(ossaccesscontrol.ServiceAccountEditActions, rbacAction) {
+			actionSets = append(actionSets, "serviceaccounts:admin")
+		}
+		actionSetMapping[verb] = actionSets
+	}
+
+	saTranslation.actionSetMapping = actionSetMapping
+	return saTranslation
+}
+
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -265,7 +288,7 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
 			},
-			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, map[string]bool{utils.VerbCreate: true}),
+			"serviceaccounts": newServiceAccountTranslation(),
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, map[string]bool{utils.VerbCreate: true}),
 			"globalroles": translation{
