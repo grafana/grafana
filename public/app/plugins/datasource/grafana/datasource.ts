@@ -26,7 +26,6 @@ import {
   type StreamingFrameOptions,
 } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
-import { isSceneObject, sceneGraph } from '@grafana/scenes';
 import { annotationServer } from 'app/features/annotations/api';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 
@@ -94,9 +93,6 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
               annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
               dashboard: getDashboardSrv().getCurrent(),
             },
-            // Forward the scenes-populated scopes (set by AnnotationsDataLayer's
-            // standardAnnotationQuery) so /search can filter by them. options.dashboard
-            // is the legacy DashboardModel here, so we can't read scopes from it.
             request.scopes
           )
         );
@@ -218,24 +214,13 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     const annotation = options.annotation as unknown as AnnotationQuery<GrafanaAnnotationQuery>;
     const target = annotation.target!;
-    // Prefer the scopes the caller threaded in from request.scopes (set by the
-    // scenes AnnotationsDataLayer via standardAnnotationQuery). options.dashboard
-    // is the legacy DashboardModel here even on scenes dashboards, so reading
-    // scopes off it via sceneGraph wouldn't work. Only sent on the k8s path; the
-    // legacy /api/annotations endpoint has no scope filter.
-    const scopeNames = config.annotationAppPlatformEnabled
-      ? (requestScopes?.map((s) => s.metadata.name) ??
-        (isSceneObject(options.dashboard)
-          ? sceneGraph.getScopes(options.dashboard)?.map((s) => s.metadata.name)
-          : undefined))
-      : undefined;
     const params: any = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: target.limit,
       tags: target.tags,
       matchAny: target.matchAny,
-      scopes: scopeNames && scopeNames.length > 0 ? scopeNames : undefined,
+      scopes: requestScopes && requestScopes?.length > 0 ? requestScopes.map((s) => s.metadata.name) : undefined,
     };
 
     if (target.type === GrafanaAnnotationType.Dashboard) {

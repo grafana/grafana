@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { createRef, PureComponent, type JSX } from 'react';
 import { Subscription } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 
 import {
   AnnotationChangeEvent,
@@ -58,11 +59,6 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   style = getStyles(config.theme2);
   subs = new Subscription();
   tagListRef = createRef<HTMLUListElement>();
-  // ScopesContext exposes a stable Provider value; consumers must subscribe to
-  // stateObservable to react to scope changes (the React render path won't fire).
-  // Tracks the scope-name key from the last doSearch so the observable can skip
-  // its replay-on-subscribe and only re-query when the names actually differ.
-  private lastScopeKey = '';
 
   constructor(props: Props) {
     super(props);
@@ -77,8 +73,6 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.doSearch();
-
     // When an annotation on this dashboard changes, re-run the query
     this.subs.add(
       this.props.eventBus.getStream(AnnotationChangeEvent).subscribe({
@@ -88,21 +82,21 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       })
     );
 
-    // ScopesContext stateObservable is BehaviorSubject-shaped (replays current
-    // value on subscribe). Compare the joined scope-name key against the last
-    // one we ran with, so the replayed initial value is a no-op and only real
-    // changes trigger a re-query.
+    // ScopesContext exposes a stable Provider value; consumers subscribe to
+    // stateObservable to react to scope changes. The BehaviorSubject replay
+    // drives the initial doSearch; distinctUntilChanged dedupes by joined
+    // scope-name key so only real changes trigger a re-query.
     if (this.context) {
       this.subs.add(
-        this.context.stateObservable.subscribe({
-          next: (state) => {
-            const key = state.value.map((s) => s.metadata.name).join(',');
-            if (key !== this.lastScopeKey) {
-              this.doSearch();
-            }
-          },
-        })
+        this.context.stateObservable
+          .pipe(
+            map((state) => state.value.map((s) => s.metadata.name).join(',')),
+            distinctUntilChanged()
+          )
+          .subscribe(() => this.doSearch())
       );
+    } else {
+      this.doSearch();
     }
   }
 
@@ -155,7 +149,6 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       : interpolatedTags;
 
     const scopeNames = this.context?.state.value?.map((s) => s.metadata.name);
-    this.lastScopeKey = scopeNames?.join(',') ?? '';
 
     let annotations: AnnotationEvent[];
     if (config.annotationAppPlatformEnabled) {
