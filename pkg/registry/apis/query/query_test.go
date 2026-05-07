@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -193,27 +192,19 @@ func TestQueryAPI(t *testing.T) {
 				req.Header.Set(key, value)
 			}
 
-			ctx := context.Background()
-			mr := &mockResponder{}
-			qr := newQueryREST(builder)
-
-			handler, err := qr.Connect(ctx, "name", nil, mr)
-			require.NoError(t, err)
 			rr := httptest.NewRecorder()
-			handler.ServeHTTP(rr, req)
-
+			builder.QueryDatasources(rr, req)
 			result := rr.Result()
+
 			defer func() {
 				_ = result.Body.Close()
 			}()
-
-			require.False(t, mr.used, "Responder should be unused")
 
 			require.Equal(t, tc.expectedStatus, result.StatusCode, "Should return expected status code")
 
 			// Verify the response is the expected type
 			qdr := &queryapi.QueryDataResponse{}
-			err = json.NewDecoder(result.Body).Decode(qdr)
+			err := json.NewDecoder(result.Body).Decode(qdr)
 			require.NoError(t, err, "Failed to decode response body")
 
 			require.NotNil(t, qdr.Responses, "Should have responses")
@@ -252,26 +243,6 @@ func TestQueryAPI(t *testing.T) {
 			t.Logf("Test case '%s' completed successfully", tc.name)
 		})
 	}
-}
-
-type mockResponder struct {
-	used       bool
-	statusCode int
-	response   runtime.Object
-	err        error
-}
-
-// Object writes the provided object to the response. Invoking this method multiple times is undefined.
-func (m *mockResponder) Object(statusCode int, obj runtime.Object) {
-	m.statusCode = statusCode
-	m.response = obj
-	m.used = true
-}
-
-// Error writes the provided error to the response. This method may only be invoked once.
-func (m *mockResponder) Error(err error) {
-	m.err = err
-	m.used = true
 }
 
 type mockClient struct {

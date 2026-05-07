@@ -37,6 +37,12 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
+  /** Enables org-defined dashboard templates for enterprise */
+  GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
+  /** Prevents flickering in dashboards */
+  GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
+  /** Replaces the bundled home dashboard with the unified homepage React page */
+  GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -55,6 +61,8 @@ export const FlagKeys = {
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
   QueryEditorNext: "queryEditorNext",
+  /** Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor */
+  QueryEditorNextMultiSelect: "queryEditorNextMultiSelect",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
@@ -65,6 +73,8 @@ export const FlagKeys = {
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
+  /** Enables plugins setting from new apis */
+  UseMTPluginSettings: "useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   UseMTPlugins: "useMTPlugins",
 } as const;
@@ -107,10 +117,10 @@ export const useFlagCreatedByMeSearchFilter = (options?: ReactFlagEvaluationOpti
  *
  * **Details:**
  * - flag key: `dashboardSectionVariables`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDashboardSectionVariables = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboardSectionVariables", false, options).value;
+  return useFlag("dashboardSectionVariables", true, options).value;
 };
 
 /**
@@ -199,6 +209,39 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", false, options).value;
+};
+
+/**
+ * Enables org-defined dashboard templates for enterprise
+ *
+ * **Details:**
+ * - flag key: `grafana.orgDashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.orgDashboardTemplates", false, options).value;
+};
+
+/**
+ * Prevents flickering in dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.scenesFlickeringFix`
+ * - default value: `false`
+ */
+export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.scenesFlickeringFix", false, options).value;
+};
+
+/**
+ * Replaces the bundled home dashboard with the unified homepage React page
+ *
+ * **Details:**
+ * - flag key: `grafana.unifiedHomepage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.unifiedHomepage", false, options).value;
 };
 
 /**
@@ -301,6 +344,17 @@ export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): bo
 };
 
 /**
+ * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
+ *
+ * **Details:**
+ * - flag key: `queryEditorNextMultiSelect`
+ * - default value: `false`
+ */
+export const useFlagQueryEditorNextMultiSelect = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryEditorNextMultiSelect", false, options).value;
+};
+
+/**
  * Enables recently viewed dashboards section in the browsing dashboard page
  *
  * **Details:**
@@ -353,6 +407,17 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
+};
+
+/**
+ * Enables plugins setting from new apis
+ *
+ * **Details:**
+ * - flag key: `useMTPluginSettings`
+ * - default value: `false`
+ */
+export const useFlagUseMTPluginSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("useMTPluginSettings", false, options).value;
 };
 
 /**

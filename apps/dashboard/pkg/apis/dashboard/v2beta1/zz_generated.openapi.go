@@ -723,7 +723,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationPanelFilter(ref common
 									SchemaProps: spec.SchemaProps{
 										Default: 0,
 										Type:    []string{"integer"},
-										Format:  "int64",
+										Format:  "int32",
 									},
 								},
 							},
@@ -3040,8 +3040,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardLibraryPanelKindSpec(ref common.
 						SchemaProps: spec.SchemaProps{
 							Description: "Panel ID for the library panel in the dashboard",
 							Default:     0,
-							Type:        []string{"number"},
-							Format:      "double",
+							Type:        []string{"integer"},
+							Format:      "int32",
 						},
 					},
 					"title": {
@@ -3345,8 +3345,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPanelSpec(ref common.ReferenceCa
 					"id": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
-							Type:    []string{"number"},
-							Format:  "double",
+							Type:    []string{"integer"},
+							Format:  "int32",
 						},
 					},
 					"title": {

@@ -26,6 +26,7 @@ const (
 	EventsSection         = "unified/events"
 	LastImportTimeSection = "unified/lastimport"
 	PendingDeleteSection  = "unified/pendingdelete"
+	LeasesSection         = "unified/leases"
 )
 
 var _ KV = &SqlKV{}
