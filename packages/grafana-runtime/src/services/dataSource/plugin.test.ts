@@ -3,7 +3,7 @@ import { DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMe
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { RuntimeDataSource } from '../RuntimeDataSource';
 
-import { _resetForTests as resetInstanceSettings, init, reload } from './instanceSettings';
+import { _resetForTests as resetInstanceSettings, initDataSources, reload } from './instanceSettings';
 import {
   _resetForTests as resetPlugin,
   getDataSourcePlugin,
@@ -59,7 +59,7 @@ describe('plugin', () => {
   describe('getDataSourcePlugin', () => {
     it('loads and returns a datasource instance', async () => {
       const settings = ds();
-      init({ [settings.name]: settings }, settings.name);
+      initDataSources({ [settings.name]: settings }, settings.name);
 
       const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
       const MockClass = jest.fn().mockReturnValue(instance);
@@ -73,7 +73,7 @@ describe('plugin', () => {
 
     it('caches the instance and does not call the importer twice', async () => {
       const settings = ds();
-      init({ [settings.name]: settings }, settings.name);
+      initDataSources({ [settings.name]: settings }, settings.name);
 
       const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
       const mockImport = jest.fn().mockResolvedValue({
@@ -90,7 +90,7 @@ describe('plugin', () => {
     });
 
     it('throws when the datasource is not found', async () => {
-      init({}, '');
+      initDataSources({}, '');
       setDataSourceImporter(jest.fn());
 
       await expect(getDataSourcePlugin('unknown-uid')).rejects.toThrow(/was not found/);
@@ -98,7 +98,7 @@ describe('plugin', () => {
 
     it('throws when the importer has not been set', async () => {
       const settings = ds();
-      init({ [settings.name]: settings }, settings.name);
+      initDataSources({ [settings.name]: settings }, settings.name);
 
       await expect(getDataSourcePlugin(settings.uid)).rejects.toThrow(/has not been set/);
     });
@@ -106,7 +106,7 @@ describe('plugin', () => {
 
   describe('registerRuntimeDataSource', () => {
     it('makes the runtime instance available via getDataSourcePlugin', async () => {
-      init({}, '');
+      initDataSources({}, '');
       const runtime = new TestRuntime('plugin-id', 'runtime-uid');
       registerRuntimeDataSource({ dataSource: runtime });
 
@@ -115,7 +115,7 @@ describe('plugin', () => {
     });
 
     it('throws on duplicate uid', () => {
-      init({}, '');
+      initDataSources({}, '');
       const runtime = new TestRuntime('plugin-id', 'runtime-uid');
       registerRuntimeDataSource({ dataSource: runtime });
       const duplicate = new TestRuntime('plugin-id', 'runtime-uid');
@@ -126,7 +126,7 @@ describe('plugin', () => {
   describe('reload', () => {
     it('clears non-runtime plugin instances so they are rebuilt from fresh settings', async () => {
       const settings = ds();
-      init({ [settings.name]: settings }, settings.name);
+      initDataSources({ [settings.name]: settings }, settings.name);
 
       const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
       const MockClass = jest.fn().mockReturnValue(instance);
@@ -152,7 +152,7 @@ describe('plugin', () => {
     });
 
     it('preserves runtime plugin instances across reload', async () => {
-      init({}, '');
+      initDataSources({}, '');
       const runtime = new TestRuntime('plugin-id', 'runtime-uid');
       registerRuntimeDataSource({ dataSource: runtime });
 

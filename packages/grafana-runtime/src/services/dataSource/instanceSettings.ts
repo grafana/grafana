@@ -12,30 +12,9 @@ import { type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
 import { clearPluginCache } from './pluginCache';
+import { type DataSourceInstanceSettingsPage, type GetInstanceSettingsListOptions } from './types';
 
-/**
- * Paginated response shape. The initial implementation always returns
- * every item in a single page — `hasMore` is false and `nextCursor` undefined.
- * The shape is in place so callers don't need to migrate twice when real
- * pagination lands on the backend.
- *
- * @public
- */
-export interface DataSourceInstanceSettingsPage {
-  items: DataSourceInstanceSettings[];
-  /** Opaque cursor for fetching the next page. Undefined when no more pages. */
-  nextCursor?: string;
-  hasMore: boolean;
-}
-
-/**
- * @public
- */
-export interface GetInstanceSettingsListOptions {
-  filters?: GetDataSourceListFilters;
-  /** Cursor returned by a previous call; omit to fetch the first page. */
-  cursor?: string;
-}
+export type { DataSourceInstanceSettingsPage, GetInstanceSettingsListOptions };
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const FETCH_CACHE_KEY = 'grafana-runtime:ds-instance-settings';
@@ -75,7 +54,7 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
  *
  * @internal
  */
-export function init(settings: Record<string, DataSourceInstanceSettings>, defaultDsName: string): void {
+export function initDataSources(settings: Record<string, DataSourceInstanceSettings>, defaultDsName: string): void {
   defaultName = defaultDsName;
   populateMaps(settings);
   fetchedAt = Date.now();
@@ -133,12 +112,12 @@ export async function getInstanceSettings(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceInstanceSettings | undefined> {
-  const found = lookup(ref, scopedVars);
+  const found = lookupFromMaps(ref, scopedVars);
   if (found) {
     return found;
   }
   await ensureFetched();
-  return lookup(ref, scopedVars);
+  return lookupFromMaps(ref, scopedVars);
 }
 
 /**
@@ -170,7 +149,7 @@ export function upsertRuntimeDataSource(settings: DataSourceInstanceSettings): v
   byUid[settings.uid] = settings;
 }
 
-function lookup(
+function lookupFromMaps(
   ref: DataSourceRef | string | null | undefined,
   scopedVars: ScopedVars | undefined
 ): DataSourceInstanceSettings | undefined {
@@ -341,6 +320,9 @@ function variableInterpolation<T>(value: T | T[]): T {
  * @internal
  */
 export function _resetForTests(): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('_resetForTests must only be called from tests');
+  }
   byName = {};
   byUid = {};
   byId = {};

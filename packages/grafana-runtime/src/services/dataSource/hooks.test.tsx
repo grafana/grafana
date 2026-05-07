@@ -7,7 +7,7 @@ import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { useDataSourcePlugin, useInstanceSettingsList, useInstanceSettings } from './hooks';
-import { _resetForTests as resetInstanceSettings, init } from './instanceSettings';
+import { _resetForTests as resetInstanceSettings, initDataSources } from './instanceSettings';
 import { _resetForTests as resetPlugin, setDataSourceImporter } from './plugin';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
@@ -62,7 +62,7 @@ beforeEach(() => {
   resetInstanceSettings();
   resetPlugin();
   invalidateCachedPromisesCache();
-  init(fixtures, 'Bravo');
+  initDataSources(fixtures, 'Bravo');
 });
 
 describe('useInstanceSettings', () => {
