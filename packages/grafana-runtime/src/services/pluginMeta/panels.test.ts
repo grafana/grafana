@@ -31,6 +31,14 @@ const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
 describe('when useMTPlugins flag is enabled', () => {
   beforeAll(() => {
     setTestFlags({ useMTPlugins: true });
+    (window as unknown as Record<string, unknown>).__grafana_public_path__ = '';
+    setLogger('grafana/runtime.plugins.settings', {
+      logDebug: jest.fn(),
+      logError: jest.fn(),
+      logInfo: jest.fn(),
+      logMeasurement: jest.fn(),
+      logWarning: jest.fn(),
+    });
   });
 
   afterAll(() => {
@@ -159,7 +167,7 @@ describe('when useMTPlugins flag is enabled', () => {
         expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
         expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
           'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-          { type: 'panel' }
+          { pluginType: 'panel' }
         );
       });
 
@@ -171,7 +179,7 @@ describe('when useMTPlugins flag is enabled', () => {
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
             'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-            { type: 'panel' }
+            { pluginType: 'panel' }
           );
         }
       );

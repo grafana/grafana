@@ -517,7 +517,7 @@ type TestMultiOrgAlertmanagerOptions struct {
 	featureToggles featuremgmt.FeatureToggles
 	peer           alertingNotify.ClusterPeer
 	waitReady      bool
-	secretService  *secretsManager.SecretsService
+	secretService  *secretsManager.SecretsService //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	alertmanagers  map[int64]Alertmanager
 	cfgStore       AlertingStore
 	skipLoad       bool
@@ -561,7 +561,9 @@ func WithWaitReady() TestMultiOrgAlertmanagerOption {
 	}
 }
 
-func WithSecretService(secretService *secretsManager.SecretsService) TestMultiOrgAlertmanagerOption {
+func WithSecretService(
+	secretService *secretsManager.SecretsService, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) TestMultiOrgAlertmanagerOption {
 	return func(opts *TestMultiOrgAlertmanagerOptions) {
 		opts.secretService = secretService
 	}
@@ -645,6 +647,7 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		secretsService,
 		options.featureToggles,
 		nil,
+		false,
 		moaOpts...,
 	)
 	require.NoError(t, err)
@@ -701,32 +704,32 @@ type FakeReceiverService struct {
 }
 
 type FakeEmailValidator struct {
-	ValidateIntegrationFunc       func(ctx context.Context, requester identity.Requester, integration models.Integration) error
-	ValidateIntegrationConfigFunc func(ctx context.Context, requester identity.Requester, integration alertingModels.IntegrationConfig) error
+	ValidateIntegrationFunc       func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error
+	ValidateIntegrationConfigFunc func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
 }
 
 func NewFakeEmailValidator(t *testing.T, err error) *FakeEmailValidator {
 	t.Helper()
 	return &FakeEmailValidator{
-		ValidateIntegrationFunc: func(ctx context.Context, requester identity.Requester, integration models.Integration) error {
+		ValidateIntegrationFunc: func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
 			return err
 		},
-		ValidateIntegrationConfigFunc: func(ctx context.Context, requester identity.Requester, integration alertingModels.IntegrationConfig) error {
+		ValidateIntegrationConfigFunc: func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
 			return err
 		},
 	}
 }
 
-func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, requester identity.Requester, integration models.Integration) error {
+func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
 	if f.ValidateIntegrationFunc != nil {
-		return f.ValidateIntegrationFunc(ctx, requester, integration)
+		return f.ValidateIntegrationFunc(ctx, orgID, integration, logger)
 	}
 	return nil
 }
 
-func (f *FakeEmailValidator) ValidateIntegrationConfig(ctx context.Context, requester identity.Requester, integration alertingModels.IntegrationConfig) error {
+func (f *FakeEmailValidator) ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
 	if f.ValidateIntegrationConfigFunc != nil {
-		return f.ValidateIntegrationConfigFunc(ctx, requester, integration)
+		return f.ValidateIntegrationConfigFunc(ctx, orgID, integration, logger)
 	}
 	return nil
 }

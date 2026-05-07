@@ -52,7 +52,7 @@ func (r *Reconciler) fetchGlobalRolePerms(ctx context.Context) (
 
 	// 1. Collect all GlobalRole objects into a map for two-pass resolution.
 	allGlobalRoles := make(map[string]*iamv0.GlobalRole)
-	err = listAndProcess(ctx, resourceClient, func(item *unstructured.Unstructured) error {
+	err = listAndProcess(ctx, resourceClient, r.cfg.listPageSize(), func(item *unstructured.Unstructured) error {
 		var gr iamv0.GlobalRole
 		if err := convertUnstructured(item, &gr); err != nil {
 			return err
@@ -195,7 +195,7 @@ func (r *Reconciler) fetchAndTranslateCRD(
 	}
 
 	// Stream through pages using the Kubernetes dynamic client
-	err = listAndProcess(ctx, resourceClient, func(item *unstructured.Unstructured) error {
+	err = listAndProcess(ctx, resourceClient, r.cfg.listPageSize(), func(item *unstructured.Unstructured) error {
 		objectsFetched++
 		tuples, err := translator(item)
 		if err != nil {
@@ -225,12 +225,12 @@ func (r *Reconciler) fetchAndTranslateCRD(
 
 // listAndProcess is a helper function that lists all resources and processes each one.
 // It handles pagination using Kubernetes continuation tokens.
-func listAndProcess(ctx context.Context, client dynamic.ResourceInterface, fn func(*unstructured.Unstructured) error) error {
+func listAndProcess(ctx context.Context, client dynamic.ResourceInterface, pageSize int64, fn func(*unstructured.Unstructured) error) error {
 	var continueToken string
 
 	for {
 		list, err := client.List(ctx, metav1.ListOptions{
-			Limit:    10000, // Page size
+			Limit:    pageSize,
 			Continue: continueToken,
 		})
 		if err != nil {

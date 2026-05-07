@@ -35,7 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -84,11 +84,11 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	// If public dashboards is enabled and we have a public dashboard, update meta values
 	if hs.Cfg.PublicDashboardsEnabled {
 		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(ctx, c.GetOrgID(), dash.UID)
-		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
+		if err != nil && !errors.Is(err, publicdashboards.ErrPublicDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)
 		}
 
-		if publicDashboard != nil && (hs.License.FeatureEnabled(publicdashboardModels.FeaturePublicDashboardsEmailSharing) || publicDashboard.Share != publicdashboardModels.EmailShareType) {
+		if publicDashboard != nil && (hs.License.FeatureEnabled(publicdashboards.FeaturePublicDashboardsEmailSharing) || publicDashboard.Share != publicdashboards.EmailShareType) {
 			publicDashboardEnabled = publicDashboard.IsEnabled
 		}
 	}

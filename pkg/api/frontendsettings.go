@@ -230,6 +230,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ProfileEnabled:                       hs.Cfg.ProfileEnabled,
 		NewsFeedEnabled:                      hs.Cfg.NewsFeedEnabled,
 		QueryHistoryEnabled:                  hs.Cfg.QueryHistoryEnabled,
+		AnnotationAppPlatformEnabled:         hs.Cfg.AnnotationAppPlatform.Enabled,
 		GoogleAnalyticsId:                    hs.Cfg.GoogleAnalyticsID,
 		GoogleAnalytics4Id:                   hs.Cfg.GoogleAnalytics4ID,
 		GoogleAnalytics4SendManualPageViews:  hs.Cfg.GoogleAnalytics4SendManualPageViews,

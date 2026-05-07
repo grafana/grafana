@@ -240,6 +240,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     return (
       <Box padding={1}>
         <RenderHiddenVariables dashboard={dashboard} />
+        {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Box>
     );
   }

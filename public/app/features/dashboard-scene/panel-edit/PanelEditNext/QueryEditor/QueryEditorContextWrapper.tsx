@@ -74,6 +74,7 @@ export function QueryEditorContextWrapper({
 
   const clearSideEffectsRef = useRef<() => void>(() => {});
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
 
   const {
     selectedQueryRefIds,
@@ -238,6 +239,7 @@ export function QueryEditorContextWrapper({
       selectedAlert,
       selectedQueryRefIds,
       selectedTransformationIds,
+      multiSelectMode,
       toggleQuerySelection,
       toggleTransformationSelection,
       clearSelection,
@@ -252,6 +254,7 @@ export function QueryEditorContextWrapper({
       setSelectedAlert: (alert: AlertRule | null) => {
         selectAlert(alert?.alertId ?? null);
       },
+      setMultiSelectMode,
       queryOptions: {
         options: queryOptions,
         isQueryOptionsOpen,
@@ -307,6 +310,7 @@ export function QueryEditorContextWrapper({
       selectedAlert,
       selectedQueryRefIds,
       selectedTransformationIds,
+      multiSelectMode,
       toggleQuerySelection,
       toggleTransformationSelection,
       clearSelection,

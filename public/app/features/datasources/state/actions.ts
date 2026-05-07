@@ -17,7 +17,7 @@ import {
   isFetchError,
   locationService,
 } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -253,7 +253,7 @@ export function addDataSource(
 
     let uid,
       version = '';
-    if (getFeatureFlagClient().getBooleanValue('datasources.config.ui.useNewDatasourceCRUDAPIs', false)) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
       const result = await api.createDataSourceWithK8sAPI(newInstance);
       uid = result.metadata.name;
     } else {
