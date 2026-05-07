@@ -121,9 +121,10 @@ export function getConfig(opts: TimelineCoreOptions) {
   const labelHeightPx =
     namePosition === 'top' ? Math.round(12 * devicePixelRatio) + Math.round(4 * devicePixelRatio) : 0;
 
-  // Walk rows with label space reserved above each bar. Subtracts total label
-  // space from the available dimension before distributing, so rowHeight
-  // semantics apply to bar area only and bars never overflow the panel.
+  // Walk rows with label space included within each row's allocation.
+  // Each row is split into a label portion and a bar portion, with the
+  // label height capped at half the row height to prevent overflow when
+  // there are many series.
   function walkWithLabels(
     rh: number,
     yIdx: number | null,
@@ -131,15 +132,9 @@ export function getConfig(opts: TimelineCoreOptions) {
     dim: number,
     draw: (idx: number, labelY: number, barY: number, barH: number) => void
   ) {
-    const totalLabelSpace = count * labelHeightPx;
-    const barDim = Math.max(0, dim - totalLabelSpace);
-
-    walk(rh, yIdx, count, barDim, (i, barOff, barHgt) => {
-      // Each row: shift down by (i * labelHeightPx) for all preceding labels,
-      // plus (labelHeightPx) for this row's own label
-      const labelY = barOff + i * labelHeightPx;
-      const barY = labelY + labelHeightPx;
-      draw(i, labelY, barY, barHgt);
+    walk(rh, yIdx, count, dim, (i, y0, height) => {
+      const effectiveLabelH = Math.min(labelHeightPx, Math.floor(height * 0.4));
+      draw(i, y0, y0 + effectiveLabelH, height - effectiveLabelH);
     });
   }
 
