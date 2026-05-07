@@ -41,11 +41,12 @@ var (
 )
 
 type DataSourceAPIBuilderConfig struct {
-	LoadQueryTypes         bool
-	LoadOpenAPISpec        bool
-	UseDualWriter          bool
-	EnableResourceEndpoint bool
-	EnableHealthEndpoint   bool
+	LoadQueryTypes              bool
+	LoadOpenAPISpec             bool
+	UseDualWriter               bool
+	EnableResourceEndpoint      bool
+	EnableHealthEndpoint        bool
+	EnableChunkedQueryStreaming bool
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -79,11 +80,12 @@ func RegisterAPIService(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	flags := DataSourceAPIBuilderConfig{
-		LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
-		LoadOpenAPISpec:        features.IsEnabledGlobally(featuremgmt.FlagDatasourcesLoadOpenAPI),
-		UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
-		EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
-		EnableHealthEndpoint:   features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
+		LoadQueryTypes:              features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
+		LoadOpenAPISpec:             features.IsEnabledGlobally(featuremgmt.FlagDatasourcesLoadOpenAPI),
+		UseDualWriter:               features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
+		EnableResourceEndpoint:      features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
+		EnableHealthEndpoint:        features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
+		EnableChunkedQueryStreaming: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesChunkedQueryStreaming),
 	}
 
 	var err error

@@ -17,11 +17,9 @@ import {
   IconButton,
   Icon,
   FieldValidationMessage,
+  Grid,
   useStyles2,
-  Stack,
-  InlineLabel,
   Text,
-  Box,
   InlineField,
   InlineFieldRow,
   RadioButtonGroup,
@@ -294,7 +292,7 @@ export const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: Or
       <DragDropContext onDragEnd={onDragEndFields}>
         <Droppable droppableId="sortable-fields-transformer" direction="vertical">
           {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
+            <div ref={provided.innerRef} className={styles.droppableList} {...provided.droppableProps}>
               {orderedFieldNames.map((fieldName, index) => {
                 const isIncludeFilter = includeByName && fieldName in includeByName ? includeByName[fieldName] : false;
                 const isVisible = filterType === 'include' ? isIncludeFilter : !excludeByName[fieldName];
@@ -326,7 +324,15 @@ const getDraggableStyles = (theme: GrafanaTheme2) => ({
   fieldOrderRadio: css({
     marginBottom: theme.spacing(1),
   }),
+  droppableList: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+  }),
   labelsDraggable: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
     marginBottom: theme.spacing(3),
   }),
 });
@@ -357,40 +363,37 @@ const DraggableFieldName = ({
   return (
     <Draggable draggableId={fieldName} index={index} isDragDisabled={isDragDisabled}>
       {(provided) => (
-        <Box display="flex" gap={0} marginBottom={0.5} ref={provided.innerRef} {...provided.draggableProps}>
-          <InlineLabel as="div" className={styles.flexLabel}>
-            <Stack gap={0} justifyContent="flex-start" alignItems="center" width="100%">
-              {!isDragDisabled && (
-                <span {...provided.dragHandleProps}>
-                  <Icon
-                    name="draggabledots"
-                    title={t(
-                      'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
-                      'Drag and drop to reorder'
-                    )}
-                    size="lg"
-                    className={styles.draggable}
-                  />
-                </span>
-              )}
-              <IconButton
-                className={styles.toggle}
-                size="md"
-                name={visible ? 'eye' : 'eye-slash'}
-                onClick={() => onToggleVisibility(fieldName, visible)}
-                tooltip={
-                  visible
-                    ? t('transformers.draggable-field-name.tooltip-disable', 'Disable')
-                    : t('transformers.draggable-field-name.tooltip-enable', 'Enable')
-                }
-              />
-              <Text truncate={true} element="p" variant="bodySmall" weight="bold">
-                {fieldName}
-              </Text>
-            </Stack>
-          </InlineLabel>
+        <Grid columns={2} gap={0.5} alignItems="center" ref={provided.innerRef} {...provided.draggableProps}>
+          <div className={styles.labelCell}>
+            {!isDragDisabled && (
+              <span {...provided.dragHandleProps} className={styles.dragHandle}>
+                <Icon
+                  name="draggabledots"
+                  title={t(
+                    'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
+                    'Drag and drop to reorder'
+                  )}
+                  size="lg"
+                  className={styles.draggable}
+                />
+              </span>
+            )}
+            <IconButton
+              className={styles.toggle}
+              size="md"
+              name={visible ? 'eye' : 'eye-slash'}
+              onClick={() => onToggleVisibility(fieldName, visible)}
+              tooltip={
+                visible
+                  ? t('transformers.draggable-field-name.tooltip-disable', 'Disable')
+                  : t('transformers.draggable-field-name.tooltip-enable', 'Enable')
+              }
+            />
+            <Text truncate={true} element="p" variant="bodySmall" weight="bold">
+              {fieldName}
+            </Text>
+          </div>
           <Input
-            className={styles.flexInput}
             defaultValue={renamedFieldName || ''}
             placeholder={t('transformers.draggable-field-name.rename-placeholder', 'Rename {{fieldName}}', {
               fieldName,
@@ -398,7 +401,7 @@ const DraggableFieldName = ({
             })}
             onBlur={(event) => onRenameField(fieldName, event.currentTarget.value)}
           />
-        </Box>
+        </Grid>
       )}
     </Draggable>
   );
@@ -419,37 +422,37 @@ const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderB
   return (
     <Draggable draggableId={draggableId} index={index} isDragDisabled={item.order === Order.Off}>
       {(provided) => (
-        <Box marginBottom={0.5} display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
-          <InlineLabel as="div" className={styles.flexLabel}>
-            <Stack gap={3} justifyContent="flex-start" alignItems="center" width="100%">
-              <span {...provided.dragHandleProps}>
-                <Icon
-                  name="draggabledots"
-                  title={t(
-                    'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
-                    'Drag and drop to reorder'
-                  )}
-                  size="lg"
-                  className={cx(styles.draggable, { [styles.disabled]: item.order === Order.Off })}
-                />
-              </span>
-              <Text truncate={true} element="p" variant="bodySmall" weight="bold">
-                {item.type === OrderByType.Label ? `Label: ${item.name}` : `Field name`}
-              </Text>
-            </Stack>
-          </InlineLabel>
-          <RadioButtonGroup
-            options={[
-              { label: t('transformers.draggable-sort-order.off', 'Off'), value: Order.Off },
-              { label: t('transformers.draggable-sort-order.asc', 'ASC'), value: Order.Asc },
-              { label: t('transformers.draggable-sort-order.desc', 'DESC'), value: Order.Desc },
-            ]}
-            value={item.order}
-            onChange={(order) => {
-              onChangeSort(item, order);
-            }}
-          />
-        </Box>
+        <Grid columns={2} gap={0.5} alignItems="center" ref={provided.innerRef} {...provided.draggableProps}>
+          <div className={styles.labelCell}>
+            <span {...provided.dragHandleProps} className={styles.dragHandle}>
+              <Icon
+                name="draggabledots"
+                title={t(
+                  'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
+                  'Drag and drop to reorder'
+                )}
+                size="lg"
+                className={cx(styles.draggable, { [styles.disabled]: item.order === Order.Off })}
+              />
+            </span>
+            <Text truncate={true} element="p" variant="bodySmall" weight="bold">
+              {item.type === OrderByType.Label ? `Label: ${item.name}` : `Field name`}
+            </Text>
+          </div>
+          <div className={styles.sortControl}>
+            <RadioButtonGroup
+              options={[
+                { label: t('transformers.draggable-sort-order.off', 'Off'), value: Order.Off },
+                { label: t('transformers.draggable-sort-order.asc', 'ASC'), value: Order.Asc },
+                { label: t('transformers.draggable-sort-order.desc', 'DESC'), value: Order.Desc },
+              ]}
+              value={item.order}
+              onChange={(order) => {
+                onChangeSort(item, order);
+              }}
+            />
+          </div>
+        </Grid>
       )}
     </Draggable>
   );
@@ -458,17 +461,24 @@ const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderB
 DraggableUIOrderByItem.displayName = 'DraggableUIOrderByItem';
 
 const getFieldNameStyles = (theme: GrafanaTheme2) => ({
-  flexLabel: css({
-    flex: '1 1 0',
-    width: 'auto',
+  labelCell: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
     overflow: 'hidden',
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.default,
+    height: theme.spacing(theme.components.height.md),
+    padding: theme.spacing(0, 1),
   }),
-  flexInput: css({
-    flex: '1 1 0',
-    width: 'auto',
+  sortControl: css({
+    justifySelf: 'start',
+  }),
+  dragHandle: css({
+    display: 'flex',
+    alignItems: 'center',
   }),
   toggle: css({
-    margin: theme.spacing(0, 1),
     color: theme.colors.text.secondary,
   }),
   draggable: css({

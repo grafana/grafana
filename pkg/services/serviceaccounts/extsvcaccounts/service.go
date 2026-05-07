@@ -36,7 +36,10 @@ type ExtSvcAccountsService struct {
 	enabled      bool
 }
 
-func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bus, db db.DB, features featuremgmt.FeatureToggles, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService, secretsSvc secrets.Service, tracer tracing.Tracer) *ExtSvcAccountsService {
+func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bus, db db.DB, features featuremgmt.FeatureToggles, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService,
+	secretsSvc secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	tracer tracing.Tracer,
+) *ExtSvcAccountsService {
 	logger := log.New("serviceauth.extsvcaccounts")
 	esa := &ExtSvcAccountsService{
 		acSvc:        acSvc,
