@@ -91,7 +91,7 @@ describe('DataLinksContextMenu', () => {
     it('exposes triggerProps with role="button", tabIndex=0 and aria-haspopup="menu"', () => {
       let captured: DataLinksMenuTriggerProps | undefined;
       render(
-        <DataLinksContextMenu links={multipleLinks}>
+        <DataLinksContextMenu links={twoLinks}>
           {({ triggerProps }) => {
             captured = triggerProps;
             return <div aria-label="fake aria label" />;
@@ -110,7 +110,7 @@ describe('DataLinksContextMenu', () => {
     it('opens the context menu when triggerProps.onClick fires (mouse path)', async () => {
       const user = userEvent.setup();
       render(
-        <DataLinksContextMenu links={multipleLinks}>
+        <DataLinksContextMenu links={twoLinks}>
           {({ triggerProps }) => (
             <button data-testid="trigger" {...triggerProps}>
               open
@@ -134,7 +134,7 @@ describe('DataLinksContextMenu', () => {
       // or Space on the trigger should open the menu via the element-anchored path.
       const user = userEvent.setup();
       render(
-        <DataLinksContextMenu links={multipleLinks}>
+        <DataLinksContextMenu links={twoLinks}>
           {({ triggerProps }) => (
             <button data-testid="trigger" {...triggerProps}>
               open
@@ -153,7 +153,7 @@ describe('DataLinksContextMenu', () => {
     it('does not open the menu for unrelated keys', async () => {
       const user = userEvent.setup();
       render(
-        <DataLinksContextMenu links={multipleLinks}>
+        <DataLinksContextMenu links={twoLinks}>
           {({ triggerProps }) => (
             <button data-testid="trigger" {...triggerProps}>
               open
