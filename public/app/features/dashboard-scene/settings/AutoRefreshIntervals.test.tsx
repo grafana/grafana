@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { defaultIntervals } from '@grafana/ui';
 
-import { type TimeSrv } from '../../services/TimeSrv';
+import { type TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { AutoRefreshIntervals, getValidIntervals, type Props, validateIntervals } from './AutoRefreshIntervals';
 
