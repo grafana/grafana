@@ -6,7 +6,14 @@ import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { notificationsPermissions } from '../../../utils/access-control';
 import { type EntityToCheck, canDeleteEntity, canEditEntity, isK8sEntityProvisioned } from '../../../utils/k8s/utils';
 import { makeAbility } from '../abilityUtils';
-import { type Ability, ContactPointAction, InsufficientPermissions, NotSupported, Provisioned } from '../types';
+import {
+  type Ability,
+  ContactPointAction,
+  Granted,
+  InsufficientPermissions,
+  NotSupported,
+  Provisioned,
+} from '../types';
 
 export type ContactPointAbilityParam =
   | { action: ContactPointAction.View }
@@ -56,10 +63,14 @@ export function useContactPointAbility(payload: ContactPointAbilityParam): Abili
         if (isK8sEntityProvisioned(payload.context)) {
           return Provisioned;
         }
+        // The backend sets grafana.com/access/write based on its own scoped RBAC check, so a
+        // false annotation means the user is denied regardless of global permissions.
         if (!canEditEntity(payload.context)) {
           return InsufficientPermissions(PERMISSIONS[ContactPointAction.Update]);
         }
-        return makeAbility(true, PERMISSIONS[ContactPointAction.Update]);
+        // canEditEntity is true — the server already confirmed write access; return Granted
+        // directly rather than re-checking global RBAC (which may not hold for folder-scoped users).
+        return Granted;
       }
 
       case ContactPointAction.Delete: {
@@ -69,10 +80,11 @@ export function useContactPointAbility(payload: ContactPointAbilityParam): Abili
         if (isK8sEntityProvisioned(payload.context)) {
           return Provisioned;
         }
+        // Same reasoning as Update above — trust the server-set annotation over global RBAC.
         if (!canDeleteEntity(payload.context)) {
           return InsufficientPermissions(PERMISSIONS[ContactPointAction.Delete]);
         }
-        return makeAbility(true, PERMISSIONS[ContactPointAction.Delete]);
+        return Granted;
       }
 
       case ContactPointAction.Export: {
@@ -82,7 +94,7 @@ export function useContactPointAbility(payload: ContactPointAbilityParam): Abili
         if (isK8sEntityProvisioned(payload.context)) {
           return Provisioned;
         }
-        return makeAbility(true, PERMISSIONS[ContactPointAction.View]);
+        return makeAbility(true, PERMISSIONS[ContactPointAction.Export]);
       }
     }
   }, [payload, hasConfigurationAPI]);
