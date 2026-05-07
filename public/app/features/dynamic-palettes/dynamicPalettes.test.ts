@@ -10,6 +10,7 @@ import {
   resetDynamicFieldColorModesForTests,
 } from './dynamicPalettes';
 
+const wait = 2000;
 let testIdCounter = 0;
 
 function getTestPaletteId(prefix: string): string {
@@ -31,7 +32,7 @@ describe('dynamicPalettes', () => {
   it('returns no modes when index key is missing', async () => {
     const modesPromise = fetchDynamicFieldColorModes();
 
-    jest.advanceTimersByTime(50);
+    jest.advanceTimersByTime(wait);
 
     await expect(modesPromise).resolves.toEqual([]);
   });
@@ -44,7 +45,7 @@ describe('dynamicPalettes', () => {
 
     const modesPromise = fetchDynamicFieldColorModes();
 
-    jest.advanceTimersByTime(50);
+    jest.advanceTimersByTime(wait);
     await expect(modesPromise).resolves.toHaveLength(0);
   });
 
@@ -58,7 +59,7 @@ describe('dynamicPalettes', () => {
     localStorage.setItem(`${DYNAMIC_PALETTE_KEY_PREFIX}${paletteId}`, JSON.stringify(['#FF0000', '#00FF00']));
 
     const firstLoad = loadDynamicFieldColorModes();
-    jest.advanceTimersByTime(50);
+    jest.advanceTimersByTime(wait);
     const firstModes = await firstLoad;
 
     expect(firstModes).toHaveLength(1);
@@ -78,7 +79,7 @@ describe('dynamicPalettes', () => {
       resolved = true;
     });
 
-    jest.advanceTimersByTime(49);
+    jest.advanceTimersByTime(wait - 1);
     await Promise.resolve();
     expect(resolved).toBe(false);
 
