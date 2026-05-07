@@ -331,13 +331,19 @@ func (m *Manager) autoRenewLoop(lease *Lease, ttl, renewInterval time.Duration) 
 		case <-lease.stop:
 			return
 		case <-ticker.C:
-			err := m.extendGeneration(context.Background(), lease, ttl)
+			err := m.renewOnce(lease, ttl, renewInterval)
 			if errors.Is(err, ErrLeaseLost) {
 				lease.notifyLoss()
 				return
 			}
 		}
 	}
+}
+
+func (m *Manager) renewOnce(lease *Lease, ttl, renewInterval time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), renewInterval*3/4)
+	defer cancel()
+	return m.extendGeneration(ctx, lease, ttl)
 }
 
 func (m *Manager) latest(ctx context.Context, name string) (string, int64, error) {
