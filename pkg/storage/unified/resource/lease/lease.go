@@ -232,6 +232,7 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...Option) (*Le
 func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 	lease.stopOnce.Do(func() { close(lease.stop) })
 	<-lease.done
+	defer lease.notifyLoss()
 
 	key := leaseKey(lease.name, lease.generation)
 	meta, err := m.read(ctx, key)
@@ -254,7 +255,6 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
 	}
 
-	lease.notifyLoss()
 	return nil
 }
 
