@@ -291,20 +291,16 @@ func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.D
 	}
 
 	newKey := leaseKey(lease.name, newGeneration)
-	err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{{
-		Mode:  kv.BatchOpCreate,
-		Key:   newKey,
-		Value: value,
-	}})
+	err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{
+		{Mode: kv.BatchOpCreate, Key: newKey, Value: value},
+		{Mode: kv.BatchOpDelete, Key: key},
+	})
 	if errors.Is(err, kv.ErrKeyAlreadyExists) {
 		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
 	}
 	if err != nil {
 		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
 	}
-
-	meta.Deleted = true
-	_ = m.save(ctx, key, meta)
 
 	lease.generation = newGeneration
 	return expires, nil
