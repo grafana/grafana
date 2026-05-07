@@ -1,4 +1,5 @@
 import { type Field, fieldColorModeRegistry, type FieldColorMode, type GrafanaTheme2 } from '@grafana/data';
+import { createAsyncSingletonLoader } from 'app/features/dynamic-options/createAsyncSingletonLoader';
 
 export const DYNAMIC_PALETTES_INDEX_KEY = 'grafana.dynamicPalettes';
 export const DYNAMIC_PALETTE_KEY_PREFIX = 'grafana.dynamicPalette.';
@@ -8,9 +9,6 @@ export interface DynamicPaletteMeta {
   name: string;
   group?: string;
 }
-
-let cachedLoadPromise: Promise<FieldColorMode[]> | undefined;
-let dynamicPalettesLoaded = false;
 
 function getStorage(): Storage | undefined {
   if (typeof window === 'undefined') {
@@ -114,23 +112,19 @@ export function registerDynamicFieldColorModes(modes: FieldColorMode[]): void {
   }
 }
 
+export const dynamicPalettesLoader = createAsyncSingletonLoader(
+  fetchDynamicFieldColorModes,
+  registerDynamicFieldColorModes
+);
+
 export function isDynamicPalettesLoaded(): boolean {
-  return dynamicPalettesLoaded;
+  return dynamicPalettesLoader.isLoaded();
 }
 
 export async function loadDynamicFieldColorModes(): Promise<FieldColorMode[]> {
-  if (!cachedLoadPromise) {
-    cachedLoadPromise = fetchDynamicFieldColorModes().then((modes) => {
-      registerDynamicFieldColorModes(modes);
-      dynamicPalettesLoaded = true;
-      return modes;
-    });
-  }
-
-  return cachedLoadPromise;
+  return dynamicPalettesLoader.load();
 }
 
 export function resetDynamicFieldColorModesForTests(): void {
-  cachedLoadPromise = undefined;
-  dynamicPalettesLoaded = false;
+  dynamicPalettesLoader.reset();
 }

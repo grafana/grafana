@@ -22,29 +22,37 @@ const defaultFieldConfig = { defaults: {}, overrides: [] };
 
 export function PanelRenderer<P extends object = {}, F extends object = {}>(props: PanelRendererProps<P, F>) {
   const shouldWaitForDynamicPalette = needsDynamicPalette(props.fieldConfig);
+  // Future dynamic options can append additional checks here.
+  const shouldWaitForDynamicOptions = shouldWaitForDynamicPalette;
 
-  if (shouldWaitForDynamicPalette) {
-    return <PanelRendererWithDynamicPaletteGate {...props} />;
+  if (shouldWaitForDynamicOptions) {
+    return <PanelRendererWithDynamicOptionsGate {...props} />;
   }
 
-  return <PanelRendererWithPalettes {...props} />;
+  return <PanelRendererWithLoadedDynamicOptions {...props} />;
 }
 
-function PanelRendererWithDynamicPaletteGate<P extends object = {}, F extends object = {}>(
+function PanelRendererWithDynamicOptionsGate<P extends object = {}, F extends object = {}>(
   props: PanelRendererProps<P, F>
 ) {
   const palettesReady = useDynamicPalettesReady();
+  // Future dynamic options can append additional ready hooks here.
+  const dynamicOptionsReady = palettesReady;
 
-  if (!palettesReady) {
+  if (!dynamicOptionsReady) {
     return (
-      <LoadingPlaceholder text={t('panel.panel-renderer.loading-color-palettes', 'Loading dynamic palettes...')} />
+      <LoadingPlaceholder
+        text={t('panel.panel-renderer.loading-dynamic-options', 'Loading dynamic panel options...')}
+      />
     );
   }
 
-  return <PanelRendererWithPalettes {...props} />;
+  return <PanelRendererWithLoadedDynamicOptions {...props} />;
 }
 
-function PanelRendererWithPalettes<P extends object = {}, F extends object = {}>(props: PanelRendererProps<P, F>) {
+function PanelRendererWithLoadedDynamicOptions<P extends object = {}, F extends object = {}>(
+  props: PanelRendererProps<P, F>
+) {
   const {
     pluginId,
     data,

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { isDynamicPalettesLoaded, loadDynamicFieldColorModes } from 'app/features/dynamic-palettes/dynamicPalettes';
+import { useAsyncReady } from 'app/features/dynamic-options/useAsyncReady';
+import { dynamicPalettesLoader } from 'app/features/dynamic-palettes/dynamicPalettes';
 
 export interface UseDynamicFieldColorModesResult {
   loading: boolean;
@@ -8,34 +9,8 @@ export interface UseDynamicFieldColorModesResult {
 }
 
 export function useDynamicFieldColorModes(): UseDynamicFieldColorModesResult {
-  const [loading, setLoading] = useState(!isDynamicPalettesLoaded());
+  const ready = useAsyncReady(dynamicPalettesLoader);
   const [error, setError] = useState<Error | undefined>();
-
-  useEffect(() => {
-    let cancelled = false;
-
-    loadDynamicFieldColorModes()
-      .catch((e) => {
-        if (!cancelled) {
-          setError(e instanceof Error ? e : new Error(String(e)));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return { loading, error };
-}
-
-export function useDynamicPalettesReady(): boolean {
-  const [ready, setReady] = useState(isDynamicPalettesLoaded());
 
   useEffect(() => {
     if (ready) {
@@ -44,9 +19,9 @@ export function useDynamicPalettesReady(): boolean {
 
     let cancelled = false;
 
-    loadDynamicFieldColorModes().finally(() => {
+    dynamicPalettesLoader.load().catch((e) => {
       if (!cancelled) {
-        setReady(true);
+        setError(e instanceof Error ? e : new Error(String(e)));
       }
     });
 
@@ -55,5 +30,9 @@ export function useDynamicPalettesReady(): boolean {
     };
   }, [ready]);
 
-  return ready;
+  return { loading: !ready, error };
+}
+
+export function useDynamicPalettesReady(): boolean {
+  return useAsyncReady(dynamicPalettesLoader);
 }

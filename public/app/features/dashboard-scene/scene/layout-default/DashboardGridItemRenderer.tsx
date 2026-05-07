@@ -25,10 +25,12 @@ interface PanelWrapperProps {
 
 function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
   const shouldWaitForDynamicPalette = needsDynamicPalette(panel.state.fieldConfig);
+  // Future dynamic options can append additional checks here.
+  const shouldWaitForDynamicOptions = shouldWaitForDynamicPalette;
 
-  if (shouldWaitForDynamicPalette) {
+  if (shouldWaitForDynamicOptions) {
     return (
-      <PanelWrapperWithDynamicPaletteGate
+      <PanelWrapperWithDynamicOptionsGate
         panel={panel}
         isLazy={isLazy}
         containerRef={containerRef}
@@ -40,10 +42,12 @@ function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperP
   return <PanelWrapperContent panel={panel} isLazy={isLazy} containerRef={containerRef} isSelected={isSelected} />;
 }
 
-function PanelWrapperWithDynamicPaletteGate({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
+function PanelWrapperWithDynamicOptionsGate({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
   const palettesReady = useDynamicPalettesReady();
+  // Future dynamic options can append additional ready hooks here.
+  const dynamicOptionsReady = palettesReady;
 
-  if (!palettesReady) {
+  if (!dynamicOptionsReady) {
     return (
       <div className={cx(panelWrapper, isSelected && 'dashboard-selected-element')} ref={containerRef}>
         <LoadingPlaceholder
