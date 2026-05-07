@@ -19,7 +19,6 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/google/uuid"
-	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
@@ -527,6 +526,8 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 	totalDeleted := int64(0)
 	totalDryRun := int64(0)
+	deletedPerNamespace := map[string]int64{}
+	dryRunPerNamespace := map[string]int64{}
 
 	// get the start and end keys for the list operation based on the resource prefix
 	// for example, for dashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
@@ -637,6 +638,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				if b.garbageCollection.DryRun {
 					// if in dry run mode, just count the keys to delete
 					totalDryRun += int64(len(keysToDelete))
+					dryRunPerNamespace[dk.Namespace] += int64(len(keysToDelete))
 					continue
 				}
 
@@ -648,6 +650,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 				// update the total number of keys deleted
 				keysDeleted = keysDeleted + int64(len(keysToDelete))
+				deletedPerNamespace[dk.Namespace] += int64(len(keysToDelete))
 			}
 		}
 
@@ -672,6 +675,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			"rows", totalDeleted,
 			"seconds", time.Since(start).Seconds(),
 		)
+		for ns, count := range deletedPerNamespace {
+			b.log.Info("garbage collection deleted history per namespace",
+				"group", group,
+				"resource", resourceName,
+				"namespace", ns,
+				"rows", count,
+			)
+		}
 	}
 
 	if totalDryRun > 0 {
@@ -681,6 +692,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			"rows", totalDryRun,
 			"seconds", time.Since(start).Seconds(),
 		)
+		for ns, count := range dryRunPerNamespace {
+			b.log.Info("garbage collection dry run per namespace",
+				"group", group,
+				"resource", resourceName,
+				"namespace", ns,
+				"rows", count,
+			)
+		}
 	}
 
 	return nil
@@ -1150,7 +1169,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			break
 		}
 	}
-	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "", k.retryPolicyFor(ctx))
+	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
 	defer iter.stop()
 
 	err := cb(iter)
@@ -1161,180 +1180,14 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
-// BatchGetRetryPolicy bounds how many retryable BatchGet failures the
-// streaming list iterator absorbs before giving up.
-type BatchGetRetryPolicy struct {
-	// MaxConsecutiveFailures resets each time a key is yielded.
-	MaxConsecutiveFailures int
-	// MaxTotalFailureRate scales the budget by the number of BatchGet chunks
-	MaxTotalFailureRate float64
-	// FailureBudgetFloor keeps tiny key sets from failing on the first hiccup.
-	FailureBudgetFloor int
-}
-
-func (p BatchGetRetryPolicy) totalBudget(numKeys int) int {
-	chunks := (numKeys + dataBatchSize - 1) / dataBatchSize
-	scaled := int(float64(chunks) * p.MaxTotalFailureRate)
-	if scaled < p.FailureBudgetFloor {
-		return p.FailureBudgetFloor
-	}
-	return scaled
-}
-
-// defaultBatchGetRetryPolicy keeps a stuck KV from blocking sync requests
-// for more than ~5s under the 500ms minimum backoff.
-var defaultBatchGetRetryPolicy = BatchGetRetryPolicy{
-	MaxConsecutiveFailures: 3,
-	FailureBudgetFloor:     10,
-}
-
-// defaultRebuildBatchGetRetryPolicy absorbs a sustained ~5% failure rate on
-// million-key rebuilds with 2x headroom.
-var defaultRebuildBatchGetRetryPolicy = BatchGetRetryPolicy{
-	MaxConsecutiveFailures: 3,
-	MaxTotalFailureRate:    0.10,
-	FailureBudgetFloor:     20,
-}
-
-type indexBuildRetryBudgetCtxKey struct{}
-
-// WithIndexBuildRetryBudget opts the caller into the dataset-size-scaled
-// retry budget. Use only on long-running background reads — synchronous
-// API paths must not call it or transient KV issues turn into minutes-long
-// client waits.
-func WithIndexBuildRetryBudget(ctx context.Context) context.Context {
-	return context.WithValue(ctx, indexBuildRetryBudgetCtxKey{}, struct{}{})
-}
-
-func isIndexBuildRetryBudget(ctx context.Context) bool {
-	return ctx.Value(indexBuildRetryBudgetCtxKey{}) != nil
-}
-
-func (k *kvStorageBackend) retryPolicyFor(ctx context.Context) BatchGetRetryPolicy {
-	if isIndexBuildRetryBudget(ctx) {
-		return defaultRebuildBatchGetRetryPolicy
-	}
-	return defaultBatchGetRetryPolicy
-}
-
-// kvListIteratorBackoff is the default backoff config used between retry attempts.
-var kvListIteratorBackoff = backoff.Config{
-	MinBackoff: 500 * time.Millisecond,
-	MaxBackoff: 3 * time.Second,
-}
-
-var batchGetRetryLogger = log.New("kv-batchget-retry")
-
-type batchGetRetryPull struct {
-	ctx       context.Context
-	dataStore *dataStore
-	keys      []DataKey
-	nextIdx   int // next not-yet-yielded position in keys
-	stopFn    func()
-	retryBo   *backoff.Backoff
-	policy    BatchGetRetryPolicy
-
-	consecutiveFailures int
-	totalFailures       int
-
-	next func() (DataObj, error, bool)
-}
-
-// newBatchGetRetryPull builds a pull-style iterator over dataStore.BatchGet
-// that retries on kv.ErrRetryable failures.
-func newBatchGetRetryPull(ctx context.Context, ds *dataStore, keys []DataKey, policy BatchGetRetryPolicy) *batchGetRetryPull {
-	p := &batchGetRetryPull{
-		ctx:       ctx,
-		dataStore: ds,
-		keys:      keys,
-		retryBo:   backoff.New(ctx, kvListIteratorBackoff),
-		policy:    policy,
-	}
-	p.next, p.stopFn = iter.Pull2(p.dataStore.BatchGet(p.ctx, keys))
-	return p
-}
-
-// fetch reads the next (DataObj, err, hasMore) from the current pull.
-// Retryable errors are handled before returning.
-func (p *batchGetRetryPull) fetch() (DataObj, error, bool) {
-	obj, err, ok := p.next()
-	for ok && err != nil {
-		canRetry, retryErr := p.tryRetry(err)
-		if retryErr != nil {
-			return obj, retryErr, ok
-		}
-		if !canRetry {
-			return obj, err, ok
-		}
-		obj, err, ok = p.next()
-	}
-	return obj, err, ok
-}
-
-// tryRetry consumes a retry budget slot, waits the backoff, and
-// re-opens the pull at keys[nextIdx:] if the error is kv.ErrRetryable.
-// Returns (true, nil) if the caller may retry the current iteration
-// Returns (false, nil) if the error is not retryable or budget is exhausted
-// Returns (false, err) if the wait was aborted (e.g. ctx cancelled).
-func (p *batchGetRetryPull) tryRetry(err error) (bool, error) {
-	if !errors.Is(err, kv.ErrRetryable) {
-		return false, nil
-	}
-	p.totalFailures++
-	p.consecutiveFailures++
-	totalBudget := p.policy.totalBudget(len(p.keys))
-	logArgs := []any{
-		"next_idx", p.nextIdx,
-		"remaining_keys", len(p.keys) - p.nextIdx,
-		"total_failures", p.totalFailures,
-		"consecutive_failures", p.consecutiveFailures,
-		"total_budget", totalBudget,
-		"error", err,
-	}
-	if p.totalFailures >= totalBudget {
-		batchGetRetryLogger.Warn("kv BatchGet retry budget exhausted (total attempts)", logArgs...)
-		return false, nil
-	}
-	if p.consecutiveFailures >= p.policy.MaxConsecutiveFailures {
-		batchGetRetryLogger.Warn("kv BatchGet retry budget exhausted (consecutive failures)", logArgs...)
-		return false, nil
-	}
-	batchGetRetryLogger.Warn("kv BatchGet retrying after retryable error", logArgs...)
-	p.stop()
-	p.retryBo.Wait()
-	if bErr := p.retryBo.Err(); bErr != nil {
-		return false, bErr
-	}
-	p.next, p.stopFn = iter.Pull2(p.dataStore.BatchGet(p.ctx, p.keys[p.nextIdx:]))
-	return true, nil
-}
-
-// advance marks key as yielded and resets the consecutive-failure counter.
-func (p *batchGetRetryPull) advance(key DataKey) {
-	p.consecutiveFailures = 0
-	p.retryBo.Reset()
-	for i := p.nextIdx; i < len(p.keys); i++ {
-		if p.keys[i] == key {
-			p.nextIdx = i + 1
-			return
-		}
-	}
-}
-
-// stop closes the current pull.
-func (p *batchGetRetryPull) stop() {
-	if p.stopFn != nil {
-		p.stopFn()
-		p.stopFn = nil
-	}
-}
-
 // newKvListIterator builds a kvListIterator over dataStore.BatchGet(keys).
-func newKvListIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, isCrossNamespace bool, policy BatchGetRetryPolicy) *kvListIterator {
+func newKvListIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, isCrossNamespace bool) *kvListIterator {
+	next, stopFn := iter.Pull2(ds.BatchGet(ctx, keys))
 	return &kvListIterator{
 		listRV:           listRV,
 		isCrossNamespace: isCrossNamespace,
-		pull:             newBatchGetRetryPull(ctx, ds, keys, policy),
+		next:             next,
+		stopFn:           stopFn,
 	}
 }
 
@@ -1342,7 +1195,8 @@ type kvListIterator struct {
 	listRV           int64
 	isCrossNamespace bool
 
-	pull *batchGetRetryPull
+	next   func() (DataObj, error, bool)
+	stopFn func()
 
 	// current item state
 	started        bool
@@ -1355,46 +1209,34 @@ type kvListIterator struct {
 }
 
 // stop closes the underlying pull. Callers should defer this.
-func (i *kvListIterator) stop() { i.pull.stop() }
+func (i *kvListIterator) stop() {
+	if i.stopFn != nil {
+		i.stopFn()
+	}
+}
 
 func (i *kvListIterator) Next() bool {
 	if !i.started {
 		i.started = true
-		i.nextDataObj, i.nextErr, i.hasMore = i.pull.fetch()
+		i.nextDataObj, i.nextErr, i.hasMore = i.next()
 	}
 
-	for {
-		if !i.hasMore {
-			return false
-		}
-
-		i.currentDataObj, i.err = i.nextDataObj, i.nextErr
-		if i.err != nil {
-			return false
-		}
-
-		i.value, i.err = readAndClose(i.currentDataObj.Value)
-		if i.err != nil {
-			if i.shouldRetry(i.err) {
-				i.nextDataObj, i.nextErr, i.hasMore = i.pull.fetch()
-				continue
-			}
-			return false
-		}
-
-		// Success: advance past the yielded key and fetch next entry
-		i.pull.advance(i.currentDataObj.Key)
-		i.nextDataObj, i.nextErr, i.hasMore = i.pull.fetch()
-		return true
+	if !i.hasMore {
+		return false
 	}
-}
 
-func (i *kvListIterator) shouldRetry(err error) bool {
-	canRetry, retryErr := i.pull.tryRetry(err)
-	if retryErr != nil {
-		i.err = retryErr
+	i.currentDataObj, i.err = i.nextDataObj, i.nextErr
+	if i.err != nil {
+		return false
 	}
-	return canRetry
+
+	i.value, i.err = readAndClose(i.currentDataObj.Value)
+	if i.err != nil {
+		return false
+	}
+
+	i.nextDataObj, i.nextErr, i.hasMore = i.next()
+	return true
 }
 
 func (i *kvListIterator) Error() error {
@@ -1821,7 +1663,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	// Pagination: filter out items up to and including lastSeenRV
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV)
 
-	iter := newKvHistoryIterator(ctx, k.dataStore, pagedKeys, listRV, false, k.retryPolicyFor(ctx))
+	iter := newKvHistoryIterator(ctx, k.dataStore, pagedKeys, listRV, false)
 	defer iter.stop()
 
 	if err := fn(iter); err != nil {
@@ -1901,7 +1743,7 @@ func (k *kvStorageBackend) processTrashEntries(
 	// Apply RV-based pagination: skip candidates already seen on previous pages.
 	candidates = applyPagination(candidates, lastSeenRV)
 
-	iter := newKvHistoryIterator(ctx, k.dataStore, candidates, listRV, true, k.retryPolicyFor(ctx))
+	iter := newKvHistoryIterator(ctx, k.dataStore, candidates, listRV, true)
 	defer iter.stop()
 
 	if err := fn(iter); err != nil {
@@ -1925,11 +1767,13 @@ func matchesTrashVersionFilter(req *resourcepb.ListRequest, key DataKey) bool {
 }
 
 // newKvHistoryIterator builds a kvHistoryIterator over dataStore.BatchGet(keys).
-func newKvHistoryIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, skipProvisioned bool, policy BatchGetRetryPolicy) *kvHistoryIterator {
+func newKvHistoryIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, skipProvisioned bool) *kvHistoryIterator {
+	next, stopFn := iter.Pull2(ds.BatchGet(ctx, keys))
 	return &kvHistoryIterator{
 		listRV:          listRV,
 		skipProvisioned: skipProvisioned,
-		pull:            newBatchGetRetryPull(ctx, ds, keys, policy),
+		next:            next,
+		stopFn:          stopFn,
 	}
 }
 
@@ -1937,7 +1781,8 @@ type kvHistoryIterator struct {
 	listRV          int64
 	skipProvisioned bool
 
-	pull *batchGetRetryPull
+	next   func() (DataObj, error, bool)
+	stopFn func()
 
 	// current item state
 	currentDataObj *DataObj
@@ -1947,11 +1792,15 @@ type kvHistoryIterator struct {
 }
 
 // stop closes the underlying pull. Callers should defer this.
-func (i *kvHistoryIterator) stop() { i.pull.stop() }
+func (i *kvHistoryIterator) stop() {
+	if i.stopFn != nil {
+		i.stopFn()
+	}
+}
 
 func (i *kvHistoryIterator) Next() bool {
 	for {
-		dataObj, err, ok := i.pull.fetch()
+		dataObj, err, ok := i.next()
 		if !ok {
 			return false
 		}
@@ -1964,9 +1813,6 @@ func (i *kvHistoryIterator) Next() bool {
 
 		i.value, err = readAndClose(dataObj.Value)
 		if err != nil {
-			if i.shouldRetry(err) {
-				continue
-			}
 			i.err = err
 			return false
 		}
@@ -1985,9 +1831,6 @@ func (i *kvHistoryIterator) Next() bool {
 		}
 		i.folder = meta.GetFolder()
 
-		// Success: advance past the yielded key
-		i.pull.advance(dataObj.Key)
-
 		// if the resource is provisioned and we are skipping provisioned resources, continue onto the next one
 		if i.skipProvisioned && meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
 			continue
@@ -1995,14 +1838,6 @@ func (i *kvHistoryIterator) Next() bool {
 
 		return true
 	}
-}
-
-func (i *kvHistoryIterator) shouldRetry(err error) bool {
-	canRetry, retryErr := i.pull.tryRetry(err)
-	if retryErr != nil {
-		i.err = retryErr
-	}
-	return canRetry
 }
 
 func (i *kvHistoryIterator) Error() error {

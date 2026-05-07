@@ -76,7 +76,7 @@ func ProvideService(
 	expressionService *expr.Service,
 	dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService quota.Service,
-	secretsService secrets.Service,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	notificationService notifications.Service,
 	m *metrics.NGAlert,
 	folderService folder.Service,
@@ -152,7 +152,7 @@ type AlertNG struct {
 	ExpressionService     *expr.Service
 	DataProxy             *datasourceproxy.DataSourceProxyService
 	QuotaService          quota.Service
-	SecretsService        secrets.Service
+	SecretsService        secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	Metrics               *metrics.NGAlert
 	NotificationService   notifications.Service
 	Log                   log.Logger

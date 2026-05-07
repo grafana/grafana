@@ -4462,6 +4462,14 @@
       "resource-detail-dashboards": "Vous avez créé {{usage}} tableaux de bord sur {{limit}} ({{percentage}} %).",
       "resource-detail-folders": "Vous avez créé {{usage}} dossiers sur {{limit}} ({{percentage}} %)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Effacer l’historique",
       "error": "Impossible de charger les tableaux de bord consultés récemment.",
@@ -5270,7 +5278,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Paramètres"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5680,7 @@
         "title": "Variables"
       },
       "variable": {
-        "change-type": "Modifier",
+        "change-type": "",
         "change-type-aria-label": "Modifier le type de variable",
         "custom-options": {
           "apply": "Appliquer",
@@ -5989,7 +5997,7 @@
       "cancel": "Annuler",
       "common": {
         "copy": "Copier",
-        "copy-or-duplicate": "Copier/coller ou dupliquer",
+        "copy-tooltip": "",
         "delete": "Supprimer",
         "duplicate": "Dupliquer",
         "layout": "Mise en page",
@@ -6028,7 +6036,7 @@
     },
     "new-panel": {
       "aria-label": "Panneau non configuré. Appuyez sur la touche Tab pour afficher les options de configuration.",
-      "configure-button": "Configurer",
+      "configure-button": "",
       "configure-button-menu": "Afficher/Masquer le menu",
       "configure-visualization": "Configurer la visualisation",
       "empty-state-message": "Exécutez une requête pour la visualiser ici ou accédez à toutes les visualisations, afin d’ajouter d’autres types de panneaux",
@@ -6270,10 +6278,8 @@
       "title-provisioned": "Tableau de bord provisionné"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Un tableau de bord portant le même nom existe déjà dans le dossier sélectionné.<br/><2>Souhaitez-vous quand même enregistrer ce tableau de bord ?</2>",
       "body-version-mismatch": "Quelqu’un d’autre a mis à jour ce tableau de bord<br/><2>Souhaitez-vous quand même enregistrer ce tableau de bord ?</2>",
       "confirmText-save-and-overwrite": "Enregistrer et écraser",
-      "title-name-exists": "Conflits",
       "title-version-mismatch": "Conflits"
     },
     "save-dashboard-form": {
@@ -7328,10 +7334,6 @@
       "target-path-label": "Chemin de destination",
       "title-this-repository-is-read-only": "Ce dépôt est en lecture seule"
     },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Un tableau de bord du même nom existe déjà dans le dossier sélectionné. Voulez-vous toujours enregistrer ce tableau de bord ?",
-      "title-name-already-exists": "Nom déjà existant"
-    },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
         "proceed": "Continuer"
@@ -8038,19 +8040,6 @@
       "aria-label-create-a-dashboard": "Créer un tableau de bord",
       "aria-label-explore-data": "Explorer les données",
       "aria-label-suggested-dashboards": "Tableaux de bord suggérés"
-    },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alertes non prises en charge",
-      "text-alerting-supported": "Alertes prises en charge"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Le nom est utilisé lorsque vous sélectionnez la source de données dans les panneaux. La source de données par défaut est présélectionnée dans les nouveaux panneaux."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Paramètres de base de la page des paramètres de la source de données",
-      "basic-settings-name-placeholder-name": "Nom",
-      "label-default": "Par défaut",
-      "label-name": "Nom"
     },
     "build-a-dashboard-button": {
       "blank": "Vide",
@@ -11255,7 +11244,7 @@
     "description-order": "Afficher les journaux les plus récents ou les plus anciens en premier. Lorsque l’option Les plus anciens en premier est sélectionnée, la vue défile automatiquement vers les journaux les plus récents, situés en bas.",
     "description-prettify-json": "Formater les entrées de journal JSON avec retraits et retours à la ligne.",
     "description-show-controls": "Afficher les commandes pour accéder à la première ou à la dernière ligne du journal et filtrer par niveau de journal.",
-    "description-show-log-attributes": "En phase de test. Lorsque les journaux OTel sont affichés, ajouter un champ supplémentaire contenant les paires clé-valeur pertinentes issues des étiquettes et des métadonnées.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Aligner les valeurs à l’aide de colonnes lorsque les champs affichés sont utilisés.",
     "description-wrap-lines": "Afficher les journaux sur une seule ligne ou retourner à la ligne pour les entrées de journal longues afin de les adapter au panneau.",
     "field-selector": {
@@ -11581,7 +11570,7 @@
       "line-contains-not": "Ajouter car la ligne ne contient pas de filtre",
       "search-text": "Rechercher dans les résultats"
     },
-    "show-log-attributes": "Afficher les attributs de journal pour les journaux OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Résolution des horodatages",
     "un-themed-log-details": {
       "aria-label-data-links": "Données de liaison",
