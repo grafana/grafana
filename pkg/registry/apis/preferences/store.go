@@ -22,6 +22,10 @@ type preferencesStorage struct {
 	grafanarest.Storage
 }
 
+// [TODO] this should have a test to assert that they're returned in the correct order (org, teams, user)
+// merged needs this in the right order so inheritence works correctly
+// or just test in merged?
+
 func (s *preferencesStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -51,7 +55,8 @@ func (s *preferencesStorage) List(ctx context.Context, options *internalversion.
 	}
 
 	// Append user+team preferences
-	append := func(name string) error {
+	getPrefsAndAppend := func(name string) error {
+		// GetPreferenceAndAppendToResults
 		info, _ := utils.ParseOwnerFromName(name)
 		switch info.Owner {
 		case utils.NamespaceResourceOwner:
@@ -92,22 +97,27 @@ func (s *preferencesStorage) List(ctx context.Context, options *internalversion.
 		if r[0].Operator != selection.Equals {
 			return nil, fmt.Errorf("only the = operator is supported")
 		}
-		if err = append(r[0].Value); err != nil {
+		if err = getPrefsAndAppend(r[0].Value); err != nil {
 			return nil, err
 		}
 		return result, nil
 	}
 
 	// Add the explicit user values
-	if err = append("user-" + user.GetIdentifier()); err != nil {
+	if err = getPrefsAndAppend("user-" + user.GetIdentifier()); err != nil {
 		return nil, err
 	}
 
 	// Append teams
+	// [TODO] change to first 25 teams??
 	if len(groups) < 25 { // Do not fetch all teams when there are too many (used for merged)
+
+		// [todo] Is it possible to match the existing sql implementation sort (of numerical team ID?)
+		// if not, should we change it to something else more... intuitive?
 		slices.Sort(groups)
+
 		for _, group := range groups {
-			if err = append("team-" + group); err != nil {
+			if err = getPrefsAndAppend("team-" + group); err != nil {
 				return nil, err
 			}
 		}
