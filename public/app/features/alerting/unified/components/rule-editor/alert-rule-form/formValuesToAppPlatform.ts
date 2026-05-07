@@ -17,8 +17,16 @@ import { cleanAnnotations, cleanLabels, fixBothInstantAndRangeQuery } from '../.
 const ALERT_RULE_API_VERSION = 'rules.alerting.grafana.app/v0alpha1';
 const FOLDER_ANNOTATION = 'grafana.app/folder';
 
-// The form's GrafanaAlertStateDecision enum and the generated AlertRule*State unions overlap
-// but use different casing for "Ok"/"OK". Map at the wire boundary so the body matches the API.
+// TODO: GrafanaAlertStateDecision is a single enum used for both noDataState and execErrState form
+// fields, but the two fields have different valid values — noDataState doesn't accept Error, and
+// execErrState doesn't accept NoData. The API schema (AlertRuleNoDataState / AlertRuleExecErrState)
+// already models them as separate types. GrafanaAlertStateDecision should be split into two
+// separate types to make this constraint explicit in TypeScript and remove the need for the
+// defensive fallback cases below.
+
+// Maps the form's noDataState decision to the API type. Error is not a valid NoDataState in the
+// API schema, so it falls back to NoData. In practice this case is unreachable because the UI
+// picker excludes Error from the noDataState field.
 function toApiNoDataState(decision: GrafanaAlertStateDecision): AlertRuleNoDataState {
   switch (decision) {
     case GrafanaAlertStateDecision.OK:
@@ -32,6 +40,9 @@ function toApiNoDataState(decision: GrafanaAlertStateDecision): AlertRuleNoDataS
   }
 }
 
+// Maps the form's execErrState decision to the API type. NoData is not a valid ExecErrState in
+// the API schema, so it falls back to Error. In practice this case is unreachable because the UI
+// picker excludes NoData from the execErrState field.
 function toApiExecErrState(decision: GrafanaAlertStateDecision): AlertRuleExecErrState {
   switch (decision) {
     case GrafanaAlertStateDecision.OK:
