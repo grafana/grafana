@@ -21,10 +21,12 @@ type SnapshotSpec struct {
 	// The raw dashboard (unstructured for now)
 	Dashboard map[string]interface{} `json:"dashboard,omitempty"`
 	// The dashboard payload encrypted at rest. Persisted in unified storage
-	// in place of `dashboard`; the value is base64-encoded ciphertext
-	// produced by Grafana's secrets service. Clients should not set this
-	// directly; it is populated by the storage layer.
-	DashboardEncrypted []byte `json:"dashboardEncrypted,omitempty"`
+	// in place of `dashboard`. The envelope is produced by the app-platform
+	// EncryptionManager, which is namespace-scoped: dataKeyId identifies the
+	// per-namespace data encryption key used to produce encryptedData.
+	// Clients should not set this directly; it is populated by the storage
+	// layer.
+	DashboardEncrypted *SnapshotV0alpha1SpecDashboardEncrypted `json:"dashboardEncrypted,omitempty"`
 }
 
 // NewSnapshotSpec creates a new SnapshotSpec object.
@@ -38,4 +40,20 @@ func NewSnapshotSpec() *SnapshotSpec {
 // OpenAPIModelName returns the OpenAPI model name for SnapshotSpec.
 func (SnapshotSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotSpec"
+}
+
+// +k8s:openapi-gen=true
+type SnapshotV0alpha1SpecDashboardEncrypted struct {
+	DataKeyId     string `json:"dataKeyId"`
+	EncryptedData []byte `json:"encryptedData"`
+}
+
+// NewSnapshotV0alpha1SpecDashboardEncrypted creates a new SnapshotV0alpha1SpecDashboardEncrypted object.
+func NewSnapshotV0alpha1SpecDashboardEncrypted() *SnapshotV0alpha1SpecDashboardEncrypted {
+	return &SnapshotV0alpha1SpecDashboardEncrypted{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for SnapshotV0alpha1SpecDashboardEncrypted.
+func (SnapshotV0alpha1SpecDashboardEncrypted) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotV0alpha1SpecDashboardEncrypted"
 }

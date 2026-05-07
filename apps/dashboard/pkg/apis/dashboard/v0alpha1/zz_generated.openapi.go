@@ -44,6 +44,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		SnapshotList{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v0alpha1_SnapshotList(ref),
 		SnapshotSharingOptions{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v0alpha1_SnapshotSharingOptions(ref),
 		SnapshotSpec{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v0alpha1_SnapshotSpec(ref),
+		SnapshotV0alpha1SpecDashboardEncrypted{}.OpenAPIModelName():                                schema_pkg_apis_dashboard_v0alpha1_SnapshotV0alpha1SpecDashboardEncrypted(ref),
 		SortBy{}.OpenAPIModelName():                                                                schema_pkg_apis_dashboard_v0alpha1_SortBy(ref),
 		SortableField{}.OpenAPIModelName():                                                         schema_pkg_apis_dashboard_v0alpha1_SortableField(ref),
 		SortableFields{}.OpenAPIModelName():                                                        schema_pkg_apis_dashboard_v0alpha1_SortableFields(ref),
@@ -1397,12 +1398,39 @@ func schema_pkg_apis_dashboard_v0alpha1_SnapshotSpec(ref common.ReferenceCallbac
 					},
 					"dashboardEncrypted": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The dashboard payload encrypted at rest. Persisted in unified storage in place of `dashboard`; the value is base64-encoded ciphertext produced by Grafana's secrets service. Clients should not set this directly; it is populated by the storage layer.",
-							Type:        []string{"string"},
-							Format:      "byte",
+							Description: "The dashboard payload encrypted at rest. Persisted in unified storage in place of `dashboard`. The envelope is produced by the app-platform EncryptionManager, which is namespace-scoped: dataKeyId identifies the per-namespace data encryption key used to produce encryptedData. Clients should not set this directly; it is populated by the storage layer.",
+							Ref:         ref(SnapshotV0alpha1SpecDashboardEncrypted{}.OpenAPIModelName()),
 						},
 					},
 				},
+			},
+		},
+		Dependencies: []string{
+			SnapshotV0alpha1SpecDashboardEncrypted{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_SnapshotV0alpha1SpecDashboardEncrypted(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dataKeyId": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"encryptedData": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+				},
+				Required: []string{"dataKeyId", "encryptedData"},
 			},
 		},
 	}

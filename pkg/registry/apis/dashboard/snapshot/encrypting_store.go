@@ -8,11 +8,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/secrets"
+	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 // encryptingStore wraps a snapshot rest.Storage and applies envelope encryption
@@ -24,25 +26,29 @@ import (
 // storage never persists plaintext. On read, Spec.DashboardEncrypted is
 // decrypted back into Spec.Dashboard.
 type encryptingStore struct {
-	inner          grafanarest.Storage
-	secretsService secrets.Service
+	inner             grafanarest.Storage
+	encryptionManager secretcontracts.EncryptionManager
 }
 
 var _ grafanarest.Storage = (*encryptingStore)(nil)
 
 // NewEncryptingStore wraps inner so that snapshot dashboards are encrypted
 // before persistence and decrypted after reads. It is meant to wrap the
-// unified-storage branch of the snapshot dual-writer; the legacy branch
-// already encrypts via dashboardsnapshots.Service.
+// unified-storage branch of the snapshot dual-writer; the legacy SQL branch
+// continues to encrypt via dashboardsnapshots.Service / pkg/services/secrets,
+// which is single-tenant. This wrapper uses the app-platform EncryptionManager
+// (pkg/registry/apis/secret/contracts), which is namespace-scoped and works in
+// both single-tenant and multi-tenant deployments.
 //
-// Migration invariant: a job that copies snapshots from the legacy SQL
-// `dashboard_encrypted` column into unified storage must write those bytes
-// verbatim into Spec.DashboardEncrypted (the envelope is compatible because
-// both paths use secretsService.Encrypt with secrets.WithoutScope()), or
-// route plaintext through this wrapper. Writing plaintext directly to the
-// unified backend silently drops the at-rest encryption property.
-func NewEncryptingStore(inner grafanarest.Storage, secretsService secrets.Service) grafanarest.Storage {
-	return &encryptingStore{inner: inner, secretsService: secretsService}
+// The two paths are NOT envelope-compatible: legacy ciphertext is bound to the
+// global secrets service's data keys, while EncryptionManager mints
+// per-namespace data keys. A future migration job that copies snapshots from
+// the legacy dashboard_snapshot.dashboard_encrypted column into unified
+// storage must decrypt with the legacy secrets.Service and re-encrypt
+// per-namespace via EncryptionManager — copying ciphertext bytes verbatim
+// will not round-trip.
+func NewEncryptingStore(inner grafanarest.Storage, encryptionManager secretcontracts.EncryptionManager) grafanarest.Storage {
+	return &encryptingStore{inner: inner, encryptionManager: encryptionManager}
 }
 
 func (s *encryptingStore) New() runtime.Object     { return s.inner.New() }
@@ -111,15 +117,22 @@ func (s *encryptingStore) encryptInPlace(ctx context.Context, obj runtime.Object
 	if len(snap.Spec.Dashboard) == 0 {
 		return nil
 	}
+	ns, err := namespaceFromContext(ctx)
+	if err != nil {
+		return err
+	}
 	plaintext, err := json.Marshal(snap.Spec.Dashboard)
 	if err != nil {
 		return fmt.Errorf("marshal snapshot dashboard for encryption: %w", err)
 	}
-	ciphertext, err := s.secretsService.Encrypt(ctx, plaintext, secrets.WithoutScope())
+	payload, err := s.encryptionManager.Encrypt(ctx, ns, plaintext, secretcontracts.EncryptionOption{})
 	if err != nil {
 		return fmt.Errorf("encrypt snapshot dashboard: %w", err)
 	}
-	snap.Spec.DashboardEncrypted = ciphertext
+	snap.Spec.DashboardEncrypted = &dashv0.SnapshotV0alpha1SpecDashboardEncrypted{
+		DataKeyId:     payload.DataKeyID,
+		EncryptedData: payload.EncryptedData,
+	}
 	snap.Spec.Dashboard = nil
 	return nil
 }
@@ -133,10 +146,17 @@ func (s *encryptingStore) decryptInPlace(ctx context.Context, obj runtime.Object
 }
 
 func (s *encryptingStore) decryptSpec(ctx context.Context, spec *dashv0.SnapshotSpec) error {
-	if len(spec.DashboardEncrypted) == 0 {
+	if spec.DashboardEncrypted == nil || len(spec.DashboardEncrypted.EncryptedData) == 0 {
 		return nil
 	}
-	plaintext, err := s.secretsService.Decrypt(ctx, spec.DashboardEncrypted)
+	ns, err := namespaceFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	plaintext, err := s.encryptionManager.Decrypt(ctx, ns, secretcontracts.EncryptedPayload{
+		DataKeyID:     spec.DashboardEncrypted.DataKeyId,
+		EncryptedData: spec.DashboardEncrypted.EncryptedData,
+	}, secretcontracts.EncryptionOption{})
 	if err != nil {
 		return fmt.Errorf("decrypt snapshot dashboard: %w", err)
 	}
@@ -147,4 +167,17 @@ func (s *encryptingStore) decryptSpec(ctx context.Context, spec *dashv0.Snapshot
 	spec.Dashboard = m
 	spec.DashboardEncrypted = nil
 	return nil
+}
+
+// namespaceFromContext extracts the request namespace as xkube.Namespace, which
+// EncryptionManager uses to scope per-tenant data keys. The apiserver always
+// populates the namespace on requests for namespaced resources; an empty value
+// would silently collapse all tenants onto the same DEK, so we surface it as
+// an error instead of defaulting.
+func namespaceFromContext(ctx context.Context) (xkube.Namespace, error) {
+	ns := request.NamespaceValue(ctx)
+	if ns == "" {
+		return "", fmt.Errorf("missing namespace in request context")
+	}
+	return xkube.Namespace(ns), nil
 }
