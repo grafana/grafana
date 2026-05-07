@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"net"
@@ -79,6 +80,16 @@ type service struct {
 	// uninitializedSearchServer holds the server created during module init, whose Init() is
 	// deferred to starting() so the ring is Running when search indexes are built.
 	uninitializedSearchServer resource.SearchServer
+
+	// -- Vector Storage Services
+	// backfiller is the embedding backfiller. Spawned as a plain goroutine
+	// from running() — intentionally NOT a subservice. dskit's Manager
+	// closes its healthy channel the moment any service transitions to
+	// Stopping/Terminated before all reach Running, so a one-shot service
+	// that drains its work and exits would race startup and fail
+	// AwaitHealthy. backfillerDone is closed when the goroutine exits.
+	backfiller     *backfill.VectorBackfiller
+	backfillerDone chan struct{}
 }
 
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
@@ -185,10 +196,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	if err != nil {
 		return nil, fmt.Errorf("create vector backfiller: %w", err)
 	}
-	if bf != nil {
-		s.subservices = append(s.subservices,
-			services.NewBasicService(nil, bf.Run, nil).WithName("vector-backfiller"))
-	}
+	s.backfiller = bf // may be nil; running() checks before spawning
 
 	err = s.initializeSubservicesManager()
 	if err != nil {
@@ -417,6 +425,18 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 }
 
 func (s *service) running(ctx context.Context) error {
+	if s.backfiller != nil {
+		s.backfillerDone = make(chan struct{})
+		go func() {
+			defer close(s.backfillerDone)
+			// ctx cancels when the service moves to Stopping; bf.Run
+			// honors it and runs `defer release()` to drop the advisory
+			// lock before returning.
+			if err := s.backfiller.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+				s.log.Error("vector backfiller exited with error", "err", err)
+			}
+		}()
+	}
 	select {
 	case err := <-s.subservicesWatcher.Chan():
 		return fmt.Errorf("subservice failure: %w", err)
@@ -449,6 +469,10 @@ func (s *service) CheckHealth(ctx context.Context) (bool, error) {
 }
 
 func (s *service) stopping(_ error) error {
+	// Wait for the backfiller goroutine to exit. Ctx is canceled so it just needs to release its db lock
+	if s.backfillerDone != nil {
+		<-s.backfillerDone
+	}
 	if s.subservicesMngr != nil {
 		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservicesMngr)
 		if err != nil {
