@@ -2,7 +2,10 @@ package authnserver
 
 import (
 	"context"
+	"slices"
+	"strings"
 
+	grpclog "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"go.opentelemetry.io/otel/attribute"
 
 	authnv1 "github.com/grafana/authlib/authn/proto/v1"
@@ -51,6 +54,8 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 	ctx, span := s.tracer.Start(ctx, "authnserver.Authenticate")
 	defer span.End()
 
+	grpclog.AddFields(ctx, grpclog.Fields{"authn.headers", headerNames(req.GetHttpHeaders())})
+
 	for _, c := range s.clients {
 		if !c.Test(ctx, req) {
 			continue
@@ -61,15 +66,27 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 		resp, err := c.Authenticate(ctx, req)
 		if err != nil {
 			s.log.Error("Client authentication error", "client", c.Name(), "error", err)
+			grpclog.AddFields(ctx, grpclog.Fields{"authn.client", c.Name(), "authn.namespace", req.GetNamespace()})
 			return nil, err
 		}
 
 		if resp.Code != authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED {
+			grpclog.AddFields(ctx, grpclog.Fields{"authn.client", c.Name(), "authn.code", resp.Code.String(), "authn.namespace", req.GetNamespace()})
 			return resp, nil
 		}
 	}
 
+	grpclog.AddFields(ctx, grpclog.Fields{"authn.client", "none", "authn.code", authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED.String(), "authn.namespace", req.GetNamespace()})
 	return &authnv1.AuthenticateResponse{
 		Code: authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED,
 	}, nil
+}
+
+func headerNames(headers map[string]string) string {
+	names := make([]string, 0, len(headers))
+	for k := range headers {
+		names = append(names, k)
+	}
+	slices.Sort(names)
+	return strings.Join(names, ",")
 }
