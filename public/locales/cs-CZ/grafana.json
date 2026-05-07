@@ -4516,6 +4516,14 @@
       "resource-detail-dashboards": "Vytvořili jste {{usage}} z {{limit}} nástěnek ({{percentage}} %).",
       "resource-detail-folders": "Vytvořili jste {{usage}} z {{limit}} složek ({{percentage}} %)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Vymazat historii",
       "error": "Nedávno zobrazené nástěnky se nepodařilo načíst.",
@@ -8125,19 +8133,6 @@
       "aria-label-explore-data": "Prozkoumat data",
       "aria-label-suggested-dashboards": "Navrhované nástěnky"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Upozorňování není podporováno",
-      "text-alerting-supported": "Upozorňování je podporováno"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Název se použije při výběru zdroje dat v panelech. Výchozí zdroj dat se předvolí v nových panelech."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Základní nastavení stránky nastavení zdroje dat",
-      "basic-settings-name-placeholder-name": "Název",
-      "label-default": "Výchozí",
-      "label-name": "Název"
-    },
     "build-a-dashboard-button": {
       "blank": "Prázdné",
       "build-a-dashboard": "Vytvořit nástěnku",
@@ -11375,7 +11370,7 @@
     "description-order": "Zobrazit nejdříve nejnovější nebo nejstarší protokoly. Pokud je vybrána možnost Nejstarší nejdříve, zobrazení se automaticky posune na nejnovější protokoly ve spodní části.",
     "description-prettify-json": "Formátovat záznamy protokolu JSON pomocí odsazení a zalomení řádků.",
     "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu.",
-    "description-show-log-attributes": "Experimentální. Když se zobrazí protokoly OTel, přidejte další zobrazené pole s relevantními páry klíč-hodnota ze štítků a metadat.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Při používání zobrazených polí zarovnat hodnoty pomocí sloupců.",
     "description-wrap-lines": "Zobrazujte protokoly jako jeden řádek nebo zalomte dlouhé záznamy protokolu tak, aby se vešly do panelu.",
     "field-selector": {
@@ -11707,7 +11702,7 @@
       "line-contains-not": "Přidat jako řádek neobsahuje filtr",
       "search-text": "Hledat ve výsledcích"
     },
-    "show-log-attributes": "Zobrazit atributy protokolu pro protokoly OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Rozlišení časového razítka",
     "un-themed-log-details": {
       "aria-label-data-links": "Propojení dat",

@@ -4462,6 +4462,14 @@
       "resource-detail-dashboards": "Has creado {{usage}} de {{limit}} dashboards ({{percentage}} %).",
       "resource-detail-folders": "Has creado {{usage}} de {{limit}} carpetas ({{percentage}} %)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Borrar historial",
       "error": "No se han podido cargar los dashboards vistos recientemente.",
@@ -8033,19 +8041,6 @@
       "aria-label-explore-data": "Explorar datos",
       "aria-label-suggested-dashboards": "Dashboards sugeridos"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alertas no compatibles",
-      "text-alerting-supported": "Alertas compatibles"
-    },
-    "basic-serttings": {
-      "tooltip-name": "El nombre se utiliza cuando se selecciona la fuente de datos en los paneles. La fuente de datos predeterminada está preseleccionada en los paneles nuevos."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Ajustes básicos de la página de configuración de la fuente de datos",
-      "basic-settings-name-placeholder-name": "Nombre",
-      "label-default": "Por defecto",
-      "label-name": "Nombre"
-    },
     "build-a-dashboard-button": {
       "blank": "En blanco",
       "build-a-dashboard": "Crear un dashboard",
@@ -11249,7 +11244,7 @@
     "description-order": "Muestra primero los logs más recientes o los más antiguos. Si se selecciona «Más antiguos primero», la vista se desplaza automáticamente hasta los logs más recientes, situados en la parte inferior.",
     "description-prettify-json": "Da formato a las entradas de log JSON con sangría y saltos de línea.",
     "description-show-controls": "Muestra controles para saltar a la última o primera línea de log y filtra por nivel de log.",
-    "description-show-log-attributes": "Experimental. Cuando se muestran los logs de OTel, añade un campo adicional con los pares clave-valor relevantes de las etiquetas y los metadatos.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Alinea los valores mediante columnas al utilizar los campos mostrados.",
     "description-wrap-lines": "Muestra los logs en una sola línea o ajusta las entradas de logs largas para que se adapten al panel.",
     "field-selector": {
@@ -11575,7 +11570,7 @@
       "line-contains-not": "Añadir como filtro «la línea no contiene»",
       "search-text": "Buscar en resultados"
     },
-    "show-log-attributes": "Mostrar atributos del log para logs OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Resolución de marca de tiempo",
     "un-themed-log-details": {
       "aria-label-data-links": "Enlaces de datos",

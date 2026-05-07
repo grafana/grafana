@@ -41,6 +41,9 @@ jobs:
               - '!**/*.gen.ts'
               - '!**/*.gen.d.ts'
               - '!packages/grafana-openapi/**'
+              - '!public/api-enterprise-spec.json'
+              - '!public/api-merged.json'
+              - '!public/openapi3.json'
             backend_strict:
               - 'pkg/**'
               - 'go.mod'

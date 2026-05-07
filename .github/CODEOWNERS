@@ -79,7 +79,6 @@
 /scripts/ci/generate-enterprise-imports @grafana/grafana-operator-experience-squad
 /scripts/catalog-plugins-defaults @grafana/grafana-datasources-core-services @kminehart
 /scripts/download-catalog-plugins.sh @grafana/grafana-datasources-core-services @kminehart
-/scripts/uplot-compare/ @grafana/dataviz-squad
 /hack/ @grafana/grafana-app-platform-squad
 /.air.toml @macabu
 
@@ -187,7 +186,7 @@
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
 /pkg/services/provisioning/alerting/ @grafana/alerting-backend
 /pkg/services/query/ @grafana/grafana-datasources-core-services
-/pkg/services/queryhistory/ @grafana/observability-traces-and-profiling
+/pkg/services/queryhistory/ @grafana/datapro
 /pkg/services/quota/ @grafana/grafana-search-and-storage
 /pkg/services/screenshot/ @grafana/grafana-backend-group
 /pkg/services/search/ @grafana/grafana-search-and-storage
@@ -652,13 +651,13 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/openFeature @grafana/grafana-frontend-platform
-/packages/grafana-runtime/src/internal/analyticsFramework @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/unstable.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/tsconfig.build.json @grafana/grafana-frontend-platform
 /packages/grafana-runtime/tsconfig.json @grafana/grafana-frontend-platform
 
 /packages/grafana-runtime/src/analytics @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/analytics/plugins @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/analyticsFramework @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/DataSourcePicker* @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/EmbeddedDashboard.tsx @grafana/dashboards-squad
 /packages/grafana-runtime/src/components/FolderPicker.tsx @grafana/grafana-frontend-platform
@@ -895,6 +894,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/impression_srv.ts @grafana/grafana-frontend-platform
 /public/app/core/services/KeybindingSet* @grafana/grafana-frontend-platform
 /public/app/core/services/keybindingSrv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/meticulous.ts @grafana/dataviz-squad
 /public/app/core/services/mocks/subscribeTester.ts @grafana/grafana-frontend-platform
 /public/app/core/services/mousetrap/ @grafana/grafana-frontend-platform
 /public/app/core/services/NewFrontendAssetsChecker* @grafana/grafana-frontend-platform
@@ -938,7 +938,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/navBarItem-translations.ts @grafana/grafana-frontend-navigation
 /public/app/core/utils/object* @grafana/grafana-frontend-platform
 /public/app/core/utils/query* @grafana/grafana-datasources-core-services
-/public/app/core/utils/richHistory* @grafana/observability-traces-and-profiling
+/public/app/core/utils/richHistory* @grafana/datapro
 /public/app/core/utils/set.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/shortLinks* @grafana/sharing-squad
 /public/app/core/utils/ticks.ts @grafana/plugins-platform-frontend
@@ -969,7 +969,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/dataviz-squad
-/public/app/features/explore/ @grafana/observability-traces-and-profiling
+/public/app/features/explore/ @grafana/datapro
 /public/app/features/expressions/ @grafana/grafana-datasources-core-services
 /public/app/features/folders/ @grafana/grafana-frontend-navigation
 /public/app/features/inspector/ @grafana/dashboards-squad
@@ -1274,7 +1274,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/create-next-release-branch.yml @grafana/grafana-backend-services-squad
 /.github/workflows/create-security-branch.yml @grafana/grafana-backend-services-squad
 /.github/workflows/codeowners-validator.yml @tolzhabayev
-/.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/community-release.yml @grafana/grafana-backend-services-squad
 /.github/workflows/detect-breaking-changes-* @grafana/grafana-frontend-platform
@@ -1293,8 +1292,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-endpoint-feature-toggle.yml @grafana/alerting-frontend
 /.github/workflows/pr-mt-service-compatibility.yml @evictorero
-/.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
-/.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check-event.yml @grafana/grafana-backend-services-squad

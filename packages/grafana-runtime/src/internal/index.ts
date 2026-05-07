@@ -58,8 +58,6 @@ export {
   replaceCachedPromise,
   getCacheKeyFromPromise,
 } from '../utils/getCachedPromise';
-export { defineFeatureEvents } from './analyticsFramework/main';
-export type { EventProperty, Event } from './analyticsFramework/types';
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,
@@ -71,6 +69,7 @@ export {
 } from '../services/pluginMeta/panels';
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
+export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
 
 export { init as initDataSources, upsertRuntimeDataSource } from '../services/dataSource/instanceSettings';
 export { setDataSourceImporter } from '../services/dataSource/plugin';

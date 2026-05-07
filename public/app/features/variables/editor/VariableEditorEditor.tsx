@@ -1,5 +1,5 @@
 import { css, keyframes } from '@emotion/css';
-import { type FormEvent, PureComponent } from 'react';
+import { type FormEvent, memo, useEffect, useState } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
@@ -14,7 +14,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, Stack, Icon, type Themeable2, withTheme2 } from '@grafana/ui';
+import { Button, Stack, Icon, useStyles2 } from '@grafana/ui';
 import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
@@ -73,211 +73,193 @@ const mapDispatchToProps = (dispatch: ThunkDispatch) => {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export interface OwnProps extends Themeable2 {
+export interface OwnProps {
   identifier: KeyedVariableIdentifier;
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-interface State {
-  showDeleteModal: boolean;
-}
+export const VariableEditorEditorUnConnected = memo(function VariableEditorEditorUnConnected({
+  identifier,
+  editor,
+  variable,
+  variableEditorMount,
+  variableEditorUnMount,
+  changeVariableName,
+  changeVariableProp,
+  changeVariableType,
+  removeVariable,
+  updateOptions,
+}: Props) {
+  const styles = useStyles2(getStyles);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-export class VariableEditorEditorUnConnected extends PureComponent<Props, State> {
-  state: State = {
-    showDeleteModal: false,
-  };
+  useEffect(() => {
+    variableEditorMount(identifier);
+    return () => {
+      variableEditorUnMount(identifier);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  componentDidMount(): void {
-    this.props.variableEditorMount(this.props.identifier);
-  }
-
-  componentWillUnmount(): void {
-    this.props.variableEditorUnMount(this.props.identifier);
-  }
-
-  onNameChange = (event: FormEvent<HTMLInputElement>) => {
+  function onNameChange(event: FormEvent<HTMLInputElement>) {
     event.preventDefault();
-    this.props.changeVariableName(this.props.identifier, event.currentTarget.value);
-  };
+    changeVariableName(identifier, event.currentTarget.value);
+  }
 
-  onTypeChange = (option: SelectableValue<VariableType>) => {
+  function onTypeChange(option: SelectableValue<VariableType>) {
     if (!option.value) {
       return;
     }
-    this.props.changeVariableType(this.props.identifier, option.value);
-  };
+    changeVariableType(identifier, option.value);
+  }
 
-  onLabelChange = (event: FormEvent<HTMLInputElement>) => {
+  function onLabelChange(event: FormEvent<HTMLInputElement>) {
     event.preventDefault();
-    this.props.changeVariableProp(this.props.identifier, 'label', event.currentTarget.value);
-  };
+    changeVariableProp(identifier, 'label', event.currentTarget.value);
+  }
 
-  onDescriptionChange = (event: FormEvent<HTMLTextAreaElement>) => {
-    this.props.changeVariableProp(this.props.identifier, 'description', event.currentTarget.value);
-  };
+  function onDescriptionChange(event: FormEvent<HTMLTextAreaElement>) {
+    changeVariableProp(identifier, 'description', event.currentTarget.value);
+  }
 
-  onHideChange = (option: VariableHide) => {
-    this.props.changeVariableProp(this.props.identifier, 'hide', option);
-  };
+  function onHideChange(option: VariableHide) {
+    changeVariableProp(identifier, 'hide', option);
+  }
 
-  onPropChanged = ({ propName, propValue, updateOptions = false }: OnPropChangeArguments) => {
-    this.props.changeVariableProp(this.props.identifier, propName, propValue);
+  function onPropChanged({ propName, propValue, updateOptions: shouldUpdateOptions = false }: OnPropChangeArguments) {
+    changeVariableProp(identifier, propName, propValue);
 
-    if (updateOptions) {
-      this.props.updateOptions(toKeyedVariableIdentifier(this.props.variable));
+    if (shouldUpdateOptions) {
+      updateOptions(toKeyedVariableIdentifier(variable));
     }
-  };
+  }
 
-  onHandleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  async function onHandleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!this.props.editor.isValid) {
+    if (!editor.isValid) {
       return;
     }
 
-    this.props.updateOptions(toKeyedVariableIdentifier(this.props.variable));
-  };
-
-  onModalOpen = () => {
-    this.setState({ showDeleteModal: true });
-  };
-
-  onModalClose = () => {
-    this.setState({ showDeleteModal: false });
-  };
-
-  onDelete = () => {
-    this.props.removeVariable(this.props.identifier);
-    this.onModalClose();
-    locationService.partial({ editIndex: null });
-  };
-
-  onApply = () => {
-    locationService.partial({ editIndex: null });
-  };
-
-  getVariableOptions = () => {
-    const { variable } = this.props;
-    if (!hasOptions(variable)) {
-      return [];
-    }
-    return variable.options.map((option) => ({ label: String(option.text), value: String(option.value) }));
-  };
-
-  render() {
-    const { theme, variable } = this.props;
-    const EditorToRender = variableAdapters.get(this.props.variable.type).editor;
-    if (!EditorToRender) {
-      return null;
-    }
-    const loading = variable.state === LoadingState.Loading;
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const styles = getStyles(theme);
-
-    return (
-      <>
-        <form
-          aria-label={t(
-            'variables.variable-editor-editor-un-connected.aria-label-variable-editor-form',
-            'Variable editor Form'
-          )}
-          onSubmit={this.onHandleSubmit}
-        >
-          <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
-
-          <VariableLegend>
-            <Trans i18nKey="variables.variable-editor-editor-un-connected.general">General</Trans>
-          </VariableLegend>
-          <VariableTextField
-            value={this.props.editor.name}
-            onChange={this.onNameChange}
-            name={t('variables.variable-editor-editor-un-connected.name-name', 'Name')}
-            placeholder={t('variables.variable-editor-editor-un-connected.placeholder-variable-name', 'Variable name')}
-            description={t(
-              'variables.variable-editor-editor-un-connected.description-template-variable-characters',
-              'The name of the template variable. (Max. 50 characters)'
-            )}
-            invalid={!!this.props.editor.errors.name}
-            error={this.props.editor.errors.name}
-            testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
-            maxLength={VariableNameConstraints.MaxSize}
-            required
-          />
-
-          <VariableTextField
-            name={t('variables.variable-editor-editor-un-connected.name-label', 'Label')}
-            description={t(
-              'variables.variable-editor-editor-un-connected.description-optional-display-name',
-              'Optional display name'
-            )}
-            value={this.props.variable.label ?? ''}
-            placeholder={t('variables.variable-editor-editor-un-connected.placeholder-label-name', 'Label name')}
-            onChange={this.onLabelChange}
-            testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
-          />
-          <VariableTextAreaField
-            name={t('variables.variable-editor-un-connected.name-description', 'Description')}
-            value={variable.description ?? ''}
-            placeholder={t(
-              'variables.variable-editor-editor-un-connected.placeholder-descriptive-text',
-              'Descriptive text'
-            )}
-            onChange={this.onDescriptionChange}
-            width={52}
-          />
-          <VariableHideSelect
-            onChange={this.onHideChange}
-            hide={this.props.variable.hide}
-            type={this.props.variable.type}
-          />
-
-          {EditorToRender && <EditorToRender variable={this.props.variable} onPropChange={this.onPropChanged} />}
-
-          {hasOptions(this.props.variable) ? <LegacyVariableValuesPreview variable={this.props.variable} /> : null}
-
-          <div style={{ marginTop: '16px' }}>
-            <Stack gap={2} height="inherit">
-              <Button variant="destructive" fill="outline" onClick={this.onModalOpen}>
-                <Trans i18nKey="variables.variable-editor-editor-un-connected.delete">Delete</Trans>
-              </Button>
-              <Button
-                type="submit"
-                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
-                disabled={loading}
-                variant="secondary"
-              >
-                <Trans i18nKey="variables.variable-editor-editor-un-connected.run-query">Run query</Trans>
-                {loading && (
-                  <Icon
-                    className={styles.spin}
-                    name={prefersReducedMotion ? 'hourglass' : 'sync'}
-                    size="sm"
-                    style={{ marginLeft: '2px' }}
-                  />
-                )}
-              </Button>
-              <Button
-                variant="primary"
-                onClick={this.onApply}
-                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
-              >
-                <Trans i18nKey="variables.variable-editor-editor-un-connected.apply">Apply</Trans>
-              </Button>
-            </Stack>
-          </div>
-        </form>
-        <ConfirmDeleteModal
-          isOpen={this.state.showDeleteModal}
-          varName={this.props.editor.name}
-          onConfirm={this.onDelete}
-          onDismiss={this.onModalClose}
-        />
-      </>
-    );
+    updateOptions(toKeyedVariableIdentifier(variable));
   }
-}
 
-export const VariableEditorEditor = withTheme2(connector(VariableEditorEditorUnConnected));
+  function onDelete() {
+    removeVariable(identifier);
+    setShowDeleteModal(false);
+    locationService.partial({ editIndex: null });
+  }
+
+  function onApply() {
+    locationService.partial({ editIndex: null });
+  }
+
+  const EditorToRender = variableAdapters.get(variable.type).editor;
+  if (!EditorToRender) {
+    return null;
+  }
+
+  const loading = variable.state === LoadingState.Loading;
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  return (
+    <>
+      <form
+        aria-label={t(
+          'variables.variable-editor-editor-un-connected.aria-label-variable-editor-form',
+          'Variable editor Form'
+        )}
+        onSubmit={onHandleSubmit}
+      >
+        <VariableTypeSelect onChange={onTypeChange} type={variable.type} />
+
+        <VariableLegend>
+          <Trans i18nKey="variables.variable-editor-editor-un-connected.general">General</Trans>
+        </VariableLegend>
+        <VariableTextField
+          value={editor.name}
+          onChange={onNameChange}
+          name={t('variables.variable-editor-editor-un-connected.name-name', 'Name')}
+          placeholder={t('variables.variable-editor-editor-un-connected.placeholder-variable-name', 'Variable name')}
+          description={t(
+            'variables.variable-editor-editor-un-connected.description-template-variable-characters',
+            'The name of the template variable. (Max. 50 characters)'
+          )}
+          invalid={!!editor.errors.name}
+          error={editor.errors.name}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
+          maxLength={VariableNameConstraints.MaxSize}
+          required
+        />
+
+        <VariableTextField
+          name={t('variables.variable-editor-editor-un-connected.name-label', 'Label')}
+          description={t(
+            'variables.variable-editor-editor-un-connected.description-optional-display-name',
+            'Optional display name'
+          )}
+          value={variable.label ?? ''}
+          placeholder={t('variables.variable-editor-editor-un-connected.placeholder-label-name', 'Label name')}
+          onChange={onLabelChange}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
+        />
+        <VariableTextAreaField
+          name={t('variables.variable-editor-un-connected.name-description', 'Description')}
+          value={variable.description ?? ''}
+          placeholder={t(
+            'variables.variable-editor-editor-un-connected.placeholder-descriptive-text',
+            'Descriptive text'
+          )}
+          onChange={onDescriptionChange}
+          width={52}
+        />
+        <VariableHideSelect onChange={onHideChange} hide={variable.hide} type={variable.type} />
+
+        {EditorToRender && <EditorToRender variable={variable} onPropChange={onPropChanged} />}
+
+        {hasOptions(variable) ? <LegacyVariableValuesPreview variable={variable} /> : null}
+
+        <div style={{ marginTop: '16px' }}>
+          <Stack gap={2} height="inherit">
+            <Button variant="destructive" fill="outline" onClick={() => setShowDeleteModal(true)}>
+              <Trans i18nKey="variables.variable-editor-editor-un-connected.delete">Delete</Trans>
+            </Button>
+            <Button
+              type="submit"
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
+              disabled={loading}
+              variant="secondary"
+            >
+              <Trans i18nKey="variables.variable-editor-editor-un-connected.run-query">Run query</Trans>
+              {loading && (
+                <Icon
+                  className={styles.spin}
+                  name={prefersReducedMotion ? 'hourglass' : 'sync'}
+                  size="sm"
+                  style={{ marginLeft: '2px' }}
+                />
+              )}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={onApply}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
+            >
+              <Trans i18nKey="variables.variable-editor-editor-un-connected.apply">Apply</Trans>
+            </Button>
+          </Stack>
+        </div>
+      </form>
+      <ConfirmDeleteModal
+        isOpen={showDeleteModal}
+        varName={editor.name}
+        onConfirm={onDelete}
+        onDismiss={() => setShowDeleteModal(false)}
+      />
+    </>
+  );
+});
+
+export const VariableEditorEditor = connector(VariableEditorEditorUnConnected);
 
 const spin = keyframes({
   '0%': {
