@@ -9,16 +9,27 @@ import {
   type OptionDefaults,
   useFieldOverrides,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { getTemplateSrv, type PanelRendererProps } from '@grafana/runtime';
-import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, LoadingPlaceholder, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { useDynamicPalettesReady } from 'app/features/dynamic-palettes/useDynamicFieldColorModes';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 
 export function PanelRenderer<P extends object = {}, F extends object = {}>(props: PanelRendererProps<P, F>) {
+  const palettesReady = useDynamicPalettesReady();
+
+  if (!palettesReady) {
+    return <LoadingPlaceholder text={t('panel.panel-renderer.loading-color-palettes', 'Loading color palettes...')} />;
+  }
+
+  return <PanelRendererWithPalettes {...props} />;
+}
+
+function PanelRendererWithPalettes<P extends object = {}, F extends object = {}>(props: PanelRendererProps<P, F>) {
   const {
     pluginId,
     data,
