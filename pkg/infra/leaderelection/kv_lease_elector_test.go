@@ -31,7 +31,6 @@ func testConfig() Config {
 		LeaseName:     "test-lease",
 		Identity:      "test-holder",
 		LeaseDuration: 500 * time.Millisecond,
-		RenewDeadline: 300 * time.Millisecond,
 		RetryPeriod:   100 * time.Millisecond,
 	}
 }
@@ -105,7 +104,6 @@ func TestKVLeaseElector_LeadershipHandoff(t *testing.T) {
 		LeaseName:     cfg.LeaseName,
 		Identity:      "holder-1",
 		LeaseDuration: cfg.LeaseDuration,
-		RenewDeadline: cfg.RenewDeadline,
 		RetryPeriod:   cfg.RetryPeriod,
 	}, log.NewNopLogger(), testElectorOpts()...)
 	require.NoError(t, err)
@@ -114,7 +112,6 @@ func TestKVLeaseElector_LeadershipHandoff(t *testing.T) {
 		LeaseName:     cfg.LeaseName,
 		Identity:      "holder-2",
 		LeaseDuration: cfg.LeaseDuration,
-		RenewDeadline: cfg.RenewDeadline,
 		RetryPeriod:   cfg.RetryPeriod,
 	}, log.NewNopLogger(), testElectorOpts()...)
 	require.NoError(t, err)
@@ -162,7 +159,6 @@ func TestKVLeaseElector_IdentityAutoGeneration(t *testing.T) {
 		LeaseName:     "test-auto-id",
 		Identity:      "",
 		LeaseDuration: time.Second,
-		RenewDeadline: 500 * time.Millisecond,
 		RetryPeriod:   200 * time.Millisecond,
 	}, log.NewNopLogger())
 	require.NoError(t, err)
