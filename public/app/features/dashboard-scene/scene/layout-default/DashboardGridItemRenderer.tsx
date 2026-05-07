@@ -24,8 +24,7 @@ interface PanelWrapperProps {
 }
 
 function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
-  const colorMode = panel.state.fieldConfig?.defaults?.color?.mode;
-  const shouldWaitForDynamicPalette = needsDynamicPalette(colorMode);
+  const shouldWaitForDynamicPalette = needsDynamicPalette(panel.state.fieldConfig);
 
   if (shouldWaitForDynamicPalette) {
     return (

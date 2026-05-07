@@ -21,8 +21,7 @@ import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanel
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 
 export function PanelRenderer<P extends object = {}, F extends object = {}>(props: PanelRendererProps<P, F>) {
-  const colorMode = props.fieldConfig?.defaults?.color?.mode;
-  const shouldWaitForDynamicPalette = needsDynamicPalette(colorMode);
+  const shouldWaitForDynamicPalette = needsDynamicPalette(props.fieldConfig);
 
   if (shouldWaitForDynamicPalette) {
     return <PanelRendererWithDynamicPaletteGate {...props} />;
