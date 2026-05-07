@@ -217,8 +217,6 @@ var wireExtsModuleServerSet = wire.NewSet(
 	zStore.ProvideDefaultStoreProvider,
 	// Zanzana MT reconciler CRD list
 	authz.ProvideReconcileCRDs,
-	// KV store provider for lease-based leader election
-	resourcekv.ProvideEventualKVStore,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

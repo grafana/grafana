@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcekv "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -50,6 +51,7 @@ type Options struct {
 	SecureValues  secrets.InlineSecureValueSupport
 	VectorBackend vector.VectorBackend
 	Embedder      *embedder.Embedder
+	KVProvider    *resourcekv.EventualKVProvider
 }
 
 type clientMetrics struct {
@@ -71,7 +73,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.KVProvider)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -100,6 +102,7 @@ func newClient(opts options.StorageOptions,
 	secure secrets.InlineSecureValueSupport,
 	vectorBackend vector.VectorBackend,
 	embedderInstance *embedder.Embedder,
+	kvProvider *resourcekv.EventualKVProvider,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -157,7 +160,7 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, false, nil)
+		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, false, kvProvider)
 		if err != nil {
 			return nil, err
 		}

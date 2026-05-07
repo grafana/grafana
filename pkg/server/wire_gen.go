@@ -563,6 +563,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	eventualKVProvider := kv.ProvideEventualKVStore()
 	options := &unified.Options{
 		Cfg:           cfg,
 		Features:      featureToggles,
@@ -574,6 +575,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		SecureValues:  inlineSecureValueSupport,
 		VectorBackend: vectorBackend,
 		Embedder:      embedder,
+		KVProvider:    eventualKVProvider,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1273,6 +1275,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	eventualKVProvider := kv.ProvideEventualKVStore()
 	options := &unified.Options{
 		Cfg:           cfg,
 		Features:      featureToggles,
@@ -1284,6 +1287,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		SecureValues:  inlineSecureValueSupport,
 		VectorBackend: vectorBackend,
 		Embedder:      embedder,
+		KVProvider:    eventualKVProvider,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1889,8 +1893,7 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	}
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
-	eventualKVProvider := kv.ProvideEventualKVStore()
-	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, storageBackend, hooksService, storeProvider, v, eventualKVProvider)
+	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, storageBackend, hooksService, storeProvider, v)
 	if err != nil {
 		return nil, err
 	}
