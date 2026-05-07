@@ -13,7 +13,7 @@ type BuildInfo struct {
 }
 
 type APIServerFactory interface {
-	GetCLICommand(info BuildInfo) *cli.Command
+	GetCLICommands(info BuildInfo) []*cli.Command
 }
 
 // NOOP
@@ -23,6 +23,6 @@ func ProvideAPIServerFactory() APIServerFactory {
 
 type NoOpAPIServerFactory struct{}
 
-func (f *NoOpAPIServerFactory) GetCLICommand(info BuildInfo) *cli.Command {
+func (f *NoOpAPIServerFactory) GetCLICommands(info BuildInfo) []*cli.Command {
 	return nil
 }

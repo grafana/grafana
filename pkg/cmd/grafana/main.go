@@ -64,9 +64,9 @@ func MainApp() *cli.App {
 	// Add the enterprise command line to build an api server
 	f, err := server.InitializeAPIServerFactory()
 	if err == nil {
-		cmd := f.GetCLICommand(buildInfo)
-		if cmd != nil {
-			app.Commands = append(app.Commands, cmd)
+		cmds := f.GetCLICommands(buildInfo)
+		if cmds != nil {
+			app.Commands = append(app.Commands, cmds...)
 		}
 	}
 
