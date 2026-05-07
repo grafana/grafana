@@ -120,28 +120,27 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 			return
 		}
 		var (
-			alreadyMember     bool
 			resultingPerm     iamv0alpha1.TeamTeamPermission
 			resultingExternal bool
 			needUpdate        bool
 		)
-		found := -1
+		foundIdx := -1
 		for i, m := range t.Spec.Members {
 			if m.Kind == "User" && m.Name == body.Name {
-				alreadyMember = true
-				found = i
+				foundIdx = i
 				break
 			}
 		}
-		if found >= 0 {
+		alreadyMember := foundIdx >= 0
+		if alreadyMember {
 			// Re-add: update Permission, but leave External untouched —
 			// External records the membership origin (IdP sync vs manual)
 			// and isn't a state /addmember flips.
-			existing := t.Spec.Members[found]
+			existing := t.Spec.Members[foundIdx]
 			resultingPerm = permStr
 			resultingExternal = existing.External
 			if existing.Permission != permStr {
-				t.Spec.Members[found].Permission = permStr
+				t.Spec.Members[foundIdx].Permission = permStr
 				needUpdate = true
 			}
 		} else {

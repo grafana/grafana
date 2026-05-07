@@ -5,7 +5,8 @@ package v0alpha1
 type CreateTeamMemberRequestBody struct {
 	Name       string `json:"name"`
 	Permission string `json:"permission"`
-	External   bool   `json:"external"`
+	// external marks the membership origin: true = added by team sync, false = added manually. Honored on a fresh add only; on re-add the existing member's origin is preserved and this field is ignored.
+	External bool `json:"external"`
 }
 
 // NewCreateTeamMemberRequestBody creates a new CreateTeamMemberRequestBody object.

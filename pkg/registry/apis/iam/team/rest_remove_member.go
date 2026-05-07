@@ -109,17 +109,15 @@ func (s *TeamRemoveMemberREST) Connect(ctx context.Context, name string, _ runti
 			responder.Error(apierrors.NewInternalError(fmt.Errorf("team store returned unexpected type %T", obj)))
 			return
 		}
-		filtered := make([]iamv0alpha1.TeamTeamMember, 0, len(t.Spec.Members))
-		var removed bool
-		for _, m := range t.Spec.Members {
+		removeIdx := -1
+		for i, m := range t.Spec.Members {
 			if m.Kind == "User" && m.Name == body.Name {
-				removed = true
-				continue
+				removeIdx = i
+				break
 			}
-			filtered = append(filtered, m)
 		}
-		if removed {
-			t.Spec.Members = filtered
+		if removeIdx >= 0 {
+			t.Spec.Members = append(t.Spec.Members[:removeIdx], t.Spec.Members[removeIdx+1:]...)
 			// 409 surfaces unchanged; SQL deadlocks (which arrive as 500
 			// from unified storage) are converted so RetryOnConflict catches them.
 			if _, _, err := s.updater.Update(nsCtx, name, rest.DefaultUpdatedObjectInfo(t),

@@ -7,7 +7,8 @@ type CreateTeamMemberBody struct {
 	Team       string `json:"team"`
 	User       string `json:"user"`
 	Permission string `json:"permission"`
-	External   bool   `json:"external"`
+	// external reflects the stored origin of the membership after the operation. On a re-add this may differ from the value submitted in the request; clients that care about origin should diff request vs response.
+	External bool `json:"external"`
 }
 
 // NewCreateTeamMemberBody creates a new CreateTeamMemberBody object.

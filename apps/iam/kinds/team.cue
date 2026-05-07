@@ -46,7 +46,7 @@ teamv0alpha1: teamKind & {
 				}
 			}
 		}
-		// 201 Created on fresh add, 200 OK on idempotent re-add or remove.
+		// 201 on fresh add, 200 on re-add. Re-add updates permission only; external is preserved.
 		"/addmember": {
 			"POST": {
 				name: "createTeamMember"
@@ -54,14 +54,16 @@ teamv0alpha1: teamKind & {
 					body: {
 						name:       string
 						permission: string
-						external:   bool
+						// external marks the membership origin: true = added by team sync, false = added manually. Honored on a fresh add only; on re-add the existing member's origin is preserved and this field is ignored.
+						external: bool
 					}
 				}
 				response: {
 					team:       string
 					user:       string
 					permission: string
-					external:   bool
+					// external reflects the stored origin of the membership after the operation. On a re-add this may differ from the value submitted in the request; clients that care about origin should diff request vs response.
+					external: bool
 				}
 			}
 		}

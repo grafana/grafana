@@ -200,9 +200,10 @@ func schema_pkg_apis_iam_v0alpha1_CreateTeamMemberBody(ref common.ReferenceCallb
 					},
 					"external": {
 						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
+							Description: "external reflects the stored origin of the membership after the operation. On a re-add this may differ from the value submitted in the request; clients that care about origin should diff request vs response.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},
@@ -255,9 +256,10 @@ func schema_pkg_apis_iam_v0alpha1_CreateTeamMemberResponse(ref common.ReferenceC
 					},
 					"external": {
 						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
+							Description: "external reflects the stored origin of the membership after the operation. On a re-add this may differ from the value submitted in the request; clients that care about origin should diff request vs response.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},

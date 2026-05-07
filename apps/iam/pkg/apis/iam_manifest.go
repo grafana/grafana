@@ -191,7 +191,8 @@ var appManifestData = app.ManifestData{
 																Properties: map[string]spec.Schema{
 																	"external": {
 																		SchemaProps: spec.SchemaProps{
-																			Type: []string{"boolean"},
+																			Type:        []string{"boolean"},
+																			Description: "external marks the membership origin: true = added by team sync, false = added manually. Honored on a fresh add only; on re-add the existing member's origin is preserved and this field is ignored.",
 																		},
 																	},
 																	"name": {
@@ -234,7 +235,8 @@ var appManifestData = app.ManifestData{
 																			},
 																			"external": {
 																				SchemaProps: spec.SchemaProps{
-																					Type: []string{"boolean"},
+																					Type:        []string{"boolean"},
+																					Description: "external reflects the stored origin of the membership after the operation. On a re-add this may differ from the value submitted in the request; clients that care about origin should diff request vs response.",
 																				},
 																			},
 																			"kind": {
