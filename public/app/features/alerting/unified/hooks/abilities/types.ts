@@ -151,7 +151,7 @@ export type Action =
  * @example
  * // Rich UI using utility functions
  * const ability = useContactPointAbility({ action: ContactPointAction.Export });
- * {isAvailable(ability) && (
+ * {isSupported(ability) && (
  *   <Tooltip content={isInsufficientPermissions(ability) ? `Requires: ${ability.anyOfPermissions.join(', ')}` : undefined}>
  *     <Button disabled={!ability.granted}>Export</Button>
  *   </Tooltip>
