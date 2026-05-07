@@ -1606,11 +1606,6 @@ export interface FeatureToggles {
   */
   cacheConfigUnifiedStorageMigration?: boolean;
   /**
-  * Boots the frontend using the boot.js script built from TS instead of the embedded boot script
-  * @default false
-  */
-  compiledBootScript?: boolean;
-  /**
   * Enables validation on the InfluxDB data source configuration page
   * @default false
   */

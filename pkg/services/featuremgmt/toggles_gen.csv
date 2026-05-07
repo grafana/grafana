@@ -344,7 +344,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,querycaching.redirectToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,querycaching.enableConnectionsClient,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,querycaching.useInQueryService,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-2026-05-22,compiledBootScript,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-05-22,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-05-22,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,true
