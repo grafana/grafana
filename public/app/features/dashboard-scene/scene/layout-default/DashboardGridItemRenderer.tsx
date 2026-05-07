@@ -1,10 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { type RefObject, useMemo } from 'react';
 
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { LazyLoader, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
-import { useElementSelection } from '@grafana/ui';
+import { LoadingPlaceholder, useElementSelection } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+import { needsDynamicPalette } from 'app/features/dynamic-palettes/needsDynamicPalette';
+import { useDynamicPalettesReady } from 'app/features/dynamic-palettes/useDynamicFieldColorModes';
 
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
@@ -21,6 +24,43 @@ interface PanelWrapperProps {
 }
 
 function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
+  const colorMode = panel.state.fieldConfig?.defaults?.color?.mode;
+  const shouldWaitForDynamicPalette = needsDynamicPalette(colorMode);
+
+  if (shouldWaitForDynamicPalette) {
+    return (
+      <PanelWrapperWithDynamicPaletteGate
+        panel={panel}
+        isLazy={isLazy}
+        containerRef={containerRef}
+        isSelected={isSelected}
+      />
+    );
+  }
+
+  return <PanelWrapperContent panel={panel} isLazy={isLazy} containerRef={containerRef} isSelected={isSelected} />;
+}
+
+function PanelWrapperWithDynamicPaletteGate({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
+  const palettesReady = useDynamicPalettesReady();
+
+  if (!palettesReady) {
+    return (
+      <div className={cx(panelWrapper, isSelected && 'dashboard-selected-element')} ref={containerRef}>
+        <LoadingPlaceholder
+          text={t(
+            'dashboard-scene.panel-wrapper-with-dynamic-palette-gate.text-loading-dynamic-panel',
+            'Loading dynamic panel...'
+          )}
+        />
+      </div>
+    );
+  }
+
+  return <PanelWrapperContent panel={panel} isLazy={isLazy} containerRef={containerRef} isSelected={isSelected} />;
+}
+
+function PanelWrapperContent({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
   if (isLazy) {
     return (
       <LazyLoader

@@ -2,12 +2,9 @@ import { useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { LoadingPlaceholder } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useDynamicPalettesReady } from 'app/features/dynamic-palettes/useDynamicFieldColorModes';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
@@ -56,7 +53,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       : getNavModel(navIndex, 'dashboards/browse');
   const isSettingsOpen = editview !== undefined;
   const soloPanelContext = useDefineSoloPanelContext(viewPanel);
-  const palettesReady = useDynamicPalettesReady();
 
   // Remember scroll pos when going into view panel, edit panel or settings
   useMemo(() => {
@@ -82,10 +78,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   function renderBody() {
-    if (!palettesReady) {
-      return <LoadingPlaceholder text={t('common.loading', 'Loading...')} />;
-    }
-
     if (!viewPanel && (panelSearch || panelsPerRow)) {
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }

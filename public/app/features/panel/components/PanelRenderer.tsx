@@ -13,6 +13,7 @@ import { t, Trans } from '@grafana/i18n';
 import { getTemplateSrv, type PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, LoadingPlaceholder, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { needsDynamicPalette } from 'app/features/dynamic-palettes/needsDynamicPalette';
 import { useDynamicPalettesReady } from 'app/features/dynamic-palettes/useDynamicFieldColorModes';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
@@ -20,10 +21,25 @@ import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanel
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 
 export function PanelRenderer<P extends object = {}, F extends object = {}>(props: PanelRendererProps<P, F>) {
+  const colorMode = props.fieldConfig?.defaults?.color?.mode;
+  const shouldWaitForDynamicPalette = needsDynamicPalette(colorMode);
+
+  if (shouldWaitForDynamicPalette) {
+    return <PanelRendererWithDynamicPaletteGate {...props} />;
+  }
+
+  return <PanelRendererWithPalettes {...props} />;
+}
+
+function PanelRendererWithDynamicPaletteGate<P extends object = {}, F extends object = {}>(
+  props: PanelRendererProps<P, F>
+) {
   const palettesReady = useDynamicPalettesReady();
 
   if (!palettesReady) {
-    return <LoadingPlaceholder text={t('panel.panel-renderer.loading-color-palettes', 'Loading color palettes...')} />;
+    return (
+      <LoadingPlaceholder text={t('panel.panel-renderer.loading-color-palettes', 'Loading dynamic palettes...')} />
+    );
   }
 
   return <PanelRendererWithPalettes {...props} />;
