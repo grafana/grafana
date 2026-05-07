@@ -3098,9 +3098,9 @@ func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataS
 
 // Reproduces the grafana-kvtest crash scenario: a user-storage object whose
 // name contains ':' (the userstorage strategy mandates "<service>:<userUID>")
-// must round-trip cleanly through Save -> getGroupResources -> Get without
-// emitting a colon in the on-disk key. The deployed unified-storage KV
-// validator rejects ':' in keys, so DataKey.String / Prefix must encode it.
+// must round-trip cleanly through Save -> getGroupResources -> Get. The
+// iterator-side validator in the enterprise KV client rejects keys that fail
+// IsValidKey, so the KV regex has to permit ':' for these names.
 func TestIntegrationDataStore_ColonInResourceName(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreColonInResourceName)
 	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreColonInResourceName)
@@ -3125,8 +3125,8 @@ func testDataStoreColonInResourceName(t *testing.T, ctx context.Context, ds *dat
 		ResourceVersion: rv,
 		Action:          DataActionCreated,
 	}
-	require.NotContains(t, dataKey.String(), ":",
-		"DataKey.String must not emit ':' to the KV layer; got %q", dataKey.String())
+	require.True(t, kv.IsValidKey(dataKey.String()),
+		"on-disk key %q must pass IsValidKey", dataKey.String())
 
 	err := ds.Save(ctx, dataKey, bytes.NewReader([]byte("payload")))
 	require.NoError(t, err)
@@ -3134,11 +3134,10 @@ func testDataStoreColonInResourceName(t *testing.T, ctx context.Context, ds *dat
 	// Mirrors resource server init: must enumerate group/resource pairs
 	// without choking on the colon-bearing name.
 	results, err := ds.getGroupResources(ctx)
-	require.NoError(t, err, "getGroupResources must succeed even when a stored key contains a name with ':'")
+	require.NoError(t, err, "getGroupResources must succeed when a stored key contains a name with ':'")
 	require.Contains(t, results, GroupResource{Group: group, Resource: resource})
 
-	// Mirrors GetLatestAndPredecessor / Get path used during writes: prefix
-	// must encode the same way as Save so the lookup actually finds the row.
+	// Mirrors GetLatestAndPredecessor / Get path used during writes.
 	got, err := ds.GetLatestResourceKey(ctx, GetRequestKey{
 		Group:     group,
 		Resource:  resource,
@@ -3146,7 +3145,7 @@ func testDataStoreColonInResourceName(t *testing.T, ctx context.Context, ds *dat
 		Name:      name,
 	})
 	require.NoError(t, err)
-	require.Equal(t, name, got.Name, "round-tripped Name must equal original (with ':')")
+	require.Equal(t, name, got.Name)
 }
 
 func TestIntegrationDataStore_BatchDelete(t *testing.T) {

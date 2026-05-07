@@ -433,9 +433,10 @@ func PrefixRangeEnd(prefix string) string {
 
 var (
 	// validKeyRegex validates keys used in the unified storage
-	// Keys can contain alphanumeric characters (both upper and lowercase), '-', '.', '/', and '~'
+	// Keys can contain alphanumeric characters (both upper and lowercase), ':', '-', '.', '/', and '~'
 	// Any combination of these characters is allowed as long as the key is not empty
-	validKeyRegex = regexp.MustCompile(`^[a-zA-Z0-9./~_-]+$`)
+	// Note: grafanaNameFmt, resourceFmt, qualifiedNameFmt should be supported (from pkg/apimachinery/validation/validation.go)
+	validKeyRegex = regexp.MustCompile(`^[a-zA-Z0-9.:/~_-]+$`)
 )
 
 func IsValidKey(key string) bool {

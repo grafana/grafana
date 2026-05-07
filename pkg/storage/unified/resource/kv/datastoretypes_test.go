@@ -68,15 +68,12 @@ func TestParseDataKeyParts_ResourceVersionMetadata(t *testing.T) {
 	})
 }
 
-// Names of grafana resources are allowed to contain ':' (e.g. user-storage names
-// like "grafana-splash-screen:<user-uid>"), but the KV layer's validKeyRegex
-// rejects ':'. DataKey.String must encode disallowed characters so the on-disk
-// key passes IsValidKey, and ParseDataKeyParts must decode them back.
-//
-// Why: the dev grafana-kvtest cell crash-looped because a user-storage object
-// named "grafana-splash-screen:afgzow84sv3lsf" produced a KV key containing
-// ':', which the unified-storage KV server rejected on every iteration during
-// resource server init.
+// Resource Names that pass the Grafana name validator (grafanaNameFmt) include
+// ':' — the user-storage strategy uses the "<service>:<userUID>" convention,
+// so user-storage names always contain ':'. The KV layer's validKeyRegex must
+// accept that, otherwise iterator-side validation (in the enterprise client
+// wrapper) rejects every freshly-written user-storage key with "received
+// invalid key from server" and the resource server cannot init.
 func TestDataKey_KvtestSplashScreenReproduction(t *testing.T) {
 	t.Parallel()
 
@@ -89,81 +86,20 @@ func TestDataKey_KvtestSplashScreenReproduction(t *testing.T) {
 		Action:          DataActionCreated,
 	}
 
-	encoded := dk.String()
-	require.NotContains(t, encoded, ":",
-		"DataKey.String must not emit ':' in the on-disk key, got %q", encoded)
-	require.True(t, IsValidKey(encoded),
-		"DataKey.String must produce a key that passes IsValidKey, got %q", encoded)
+	key := dk.String()
+	require.Contains(t, key, ":", "':' must survive verbatim in the on-disk key")
+	require.True(t, IsValidKey(key),
+		"on-disk key %q must pass IsValidKey so iterator validation does not reject it", key)
 
-	parts := strings.Split(encoded, "/")
+	parts := strings.Split(key, "/")
 	parsed, _, err := ParseDataKeyParts(parts)
 	require.NoError(t, err)
-	require.Equal(t, dk.Name, parsed.Name, "Name must round-trip through encode/decode")
+	require.Equal(t, dk.Name, parsed.Name)
 	require.Equal(t, dk.Group, parsed.Group)
 	require.Equal(t, dk.Resource, parsed.Resource)
 	require.Equal(t, dk.Namespace, parsed.Namespace)
 	require.Equal(t, dk.ResourceVersion, parsed.ResourceVersion)
 	require.Equal(t, dk.Action, parsed.Action)
-}
-
-func TestEncodeDecodeKeyName(t *testing.T) {
-	t.Parallel()
-
-	t.Run("safe characters pass through unchanged", func(t *testing.T) {
-		t.Parallel()
-		for _, name := range []string{"simple", "a-b-c", "a.b.c", "a_b_c", "abc123", "", "ABC"} {
-			require.Equal(t, name, EncodeKeyName(name))
-			decoded, err := DecodeKeyName(name)
-			require.NoError(t, err)
-			require.Equal(t, name, decoded)
-		}
-	})
-
-	t.Run("colon is escaped to ~3a", func(t *testing.T) {
-		t.Parallel()
-		require.Equal(t, "a~3ab", EncodeKeyName("a:b"))
-		require.Equal(t, "grafana-splash-screen~3aafgzow84sv3lsf",
-			EncodeKeyName("grafana-splash-screen:afgzow84sv3lsf"))
-	})
-
-	t.Run("tilde itself is escaped so escapes are unambiguous", func(t *testing.T) {
-		t.Parallel()
-		// '~' is the escape marker so a literal '~' must be encoded too,
-		// otherwise decode could be ambiguous.
-		require.Equal(t, "a~7eb", EncodeKeyName("a~b"))
-	})
-
-	t.Run("round-trip for representative names", func(t *testing.T) {
-		t.Parallel()
-		for _, name := range []string{
-			"grafana-splash-screen:afgzow84sv3lsf",
-			"service:user-uid",
-			"a:b:c:d",
-			"with.dots-and-dashes",
-			"no_underscores_either",
-		} {
-			encoded := EncodeKeyName(name)
-			decoded, err := DecodeKeyName(encoded)
-			require.NoError(t, err)
-			require.Equal(t, name, decoded)
-			require.True(t, IsValidKey(encoded),
-				"encoded form %q must pass IsValidKey", encoded)
-		}
-	})
-
-	t.Run("decode rejects truncated escape", func(t *testing.T) {
-		t.Parallel()
-		_, err := DecodeKeyName("foo~3")
-		require.Error(t, err)
-		_, err = DecodeKeyName("foo~")
-		require.Error(t, err)
-	})
-
-	t.Run("decode rejects non-hex escape", func(t *testing.T) {
-		t.Parallel()
-		_, err := DecodeKeyName("foo~zz")
-		require.Error(t, err)
-	})
 }
 
 func TestParseKeyWithGUID(t *testing.T) {
