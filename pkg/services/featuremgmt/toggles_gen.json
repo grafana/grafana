@@ -3183,6 +3183,22 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAnnotationsClient",
+        "resourceVersion": "1778163715528",
+        "creationTimestamp": "2026-05-07T00:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-07 14:21:55.528883 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables usage of the new annotations API client",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
         "resourceVersion": "1773696968793",
         "creationTimestamp": "2025-08-29T14:46:39Z",
@@ -4069,6 +4085,21 @@
     },
     {
       "metadata": {
+        "name": "marketplaceLicensing",
+        "resourceVersion": "1777971479944",
+        "creationTimestamp": "2026-05-05T08:57:59Z",
+        "deletionTimestamp": "2026-05-05T09:01:34Z"
+      },
+      "spec": {
+        "description": "Enables marketplace plugin licensing: per-plugin license token storage in marketplace_license_token, bootstrap from env vars / on-disk seeds, and periodic renewal against grafana.com.",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "metricsFromProfiles",
         "resourceVersion": "1776334714934",
         "creationTimestamp": "2025-04-09T10:55:28Z",
@@ -4629,6 +4660,23 @@
         "description": "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "plugins.marketplaceLicensing",
+        "resourceVersion": "1778058834640",
+        "creationTimestamp": "2026-05-05T09:01:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-06 09:13:54.640785 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables marketplace plugin licensing",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -5472,6 +5520,7 @@
         "name": "sceneCsvExport",
         "resourceVersion": "1776334251375",
         "creationTimestamp": "2026-02-11T10:49:36Z",
+        "deletionTimestamp": "2026-05-06T12:14:02Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-04-16 10:10:51.375991 +0000 UTC"
         }

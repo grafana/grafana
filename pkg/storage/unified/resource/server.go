@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -346,6 +347,11 @@ type ResourceServerOptions struct {
 	// the resource and search servers hold a reference for use by future
 	// write and query paths.
 	VectorBackend vector.VectorBackend
+
+	// Embedder is the optional text-to-vector embedder used by the
+	// VectorSearch RPC. nil when no [vector_embedder] provider is configured;
+	// the RPC then returns Unimplemented.
+	Embedder *embedder.Embedder
 }
 
 func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
@@ -374,7 +380,7 @@ func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, err
 	}
 
 	// Create the search server using the search.go factory
-	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
+	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
 	if err != nil || searchServer == nil {
 		return nil, fmt.Errorf("search server could not be created: %w", err)
 	}
@@ -483,7 +489,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
@@ -1517,7 +1523,12 @@ func (s *server) initWatcher() error {
 	if s.storageMetrics != nil {
 		broadcasterMetrics = s.storageMetrics.Broadcaster
 	}
-	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics)
+	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics, func(e *WrittenEvent) string {
+		if e == nil || e.Key == nil {
+			return ""
+		}
+		return e.Key.Resource
+	})
 	return nil
 }
 
@@ -1548,7 +1559,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	// Start listening -- this will buffer any changes that happen while we backfill.
 	// If events are generated faster than we can process them, then some events will be dropped.
 	// TODO: Think of a way to allow the client to catch up.
-	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace))
+	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace), key.Resource)
 	if err != nil {
 		return err
 	}
@@ -1738,6 +1749,16 @@ func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchReque
 	}
 
 	return s.search.Search(ctx, req)
+}
+
+// VectorSearch delegates to the embedded searchServer; the searchServer is
+// where the vector backend and embedder live and where the actual handler
+// is implemented.
+func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("vector search is not configured")
+	}
+	return s.search.VectorSearch(ctx, req)
 }
 
 // StatsGetter provides resource statistics (via search index or backend).

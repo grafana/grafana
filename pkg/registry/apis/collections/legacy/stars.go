@@ -22,6 +22,7 @@ import (
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	gutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -29,15 +30,7 @@ import (
 )
 
 var (
-	_ rest.Scoper               = (*DashboardStarsStorage)(nil)
-	_ rest.SingularNameProvider = (*DashboardStarsStorage)(nil)
-	_ rest.Getter               = (*DashboardStarsStorage)(nil)
-	_ rest.Lister               = (*DashboardStarsStorage)(nil)
-	_ rest.Storage              = (*DashboardStarsStorage)(nil)
-	_ rest.Creater              = (*DashboardStarsStorage)(nil)
-	_ rest.Updater              = (*DashboardStarsStorage)(nil)
-	_ rest.GracefulDeleter      = (*DashboardStarsStorage)(nil)
-	_ rest.CollectionDeleter    = (*DashboardStarsStorage)(nil)
+	_ grafanarest.Storage = (*DashboardStarsStorage)(nil)
 )
 
 func NewDashboardStarsStorage(
@@ -291,11 +284,6 @@ func (s *DashboardStarsStorage) Delete(ctx context.Context, name string, deleteV
 		return nil, false, err
 	}
 	return obj, true, err
-}
-
-// DeleteCollection implements rest.CollectionDeleter.
-func (s *DashboardStarsStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("not implemented")
 }
 
 func asStarsResource(ns string, v *dashboardStars) collections.Stars {

@@ -4462,6 +4462,14 @@
       "resource-detail-dashboards": "Você criou {{usage}} de {{limit}} painéis ({{percentage}}%).",
       "resource-detail-folders": "Você criou {{usage}} de {{limit}} pastas ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Limpar histórico",
       "error": "Não foi possível carregar os painéis visualizados recentemente.",
@@ -8033,19 +8041,6 @@
       "aria-label-explore-data": "Explorar dados",
       "aria-label-suggested-dashboards": "Painéis sugeridos"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alerta incompatível",
-      "text-alerting-supported": "Alerta compatível"
-    },
-    "basic-serttings": {
-      "tooltip-name": "O nome é usado quando você seleciona a fonte de dados nos painéis. A fonte de dados padrão é pré-selecionada em novos painéis."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Configurações básicas da página de configurações da fonte de dados",
-      "basic-settings-name-placeholder-name": "Nome",
-      "label-default": "Padrão",
-      "label-name": "Nome"
-    },
     "build-a-dashboard-button": {
       "blank": "Em branco",
       "build-a-dashboard": "Criar um painel",
@@ -11249,7 +11244,7 @@
     "description-order": "Exibir os logs mais recentes ou mais antigos primeiro. Quando a opção \"Mais antigos primeiro\" é selecionada, a visualização é direcionada automaticamente para os logs mais recentes na parte inferior.",
     "description-prettify-json": "Formatar entradas de log JSON com recuo e quebras de linha.",
     "description-show-controls": "Exibir controles para pular para a última ou primeira linha do log e filtros por nível de log.",
-    "description-show-log-attributes": "Em teste. Quando os logs do OTel forem exibidos, adicione um campo extra exibido com pares de valores-chave relevantes de rótulos e metadados.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Alinhar valores usando colunas ao usar os campos exibidos.",
     "description-wrap-lines": "Exiba os logs em uma única linha ou quebre as entradas de log longas para que caibam no painel.",
     "field-selector": {
@@ -11575,7 +11570,7 @@
       "line-contains-not": "Adicionar como linha não contém filtro",
       "search-text": "Buscar nos resultados"
     },
-    "show-log-attributes": "Exibir atributos de log para logs OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Resolução de data e hora",
     "un-themed-log-details": {
       "aria-label-data-links": "Links de dados",

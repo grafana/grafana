@@ -4516,6 +4516,14 @@
       "resource-detail-dashboards": "Utworzono {{usage}} z {{limit}} pulpitów ({{percentage}}%).",
       "resource-detail-folders": "Utworzono {{usage}} z {{limit}} folderów ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Wyczyść historię",
       "error": "Nie udało się załadować ostatnio wyświetlanych pulpitów.",
@@ -8125,19 +8133,6 @@
       "aria-label-explore-data": "Przeglądaj dane",
       "aria-label-suggested-dashboards": "Sugerowane pulpity"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alerty nie są obsługiwane",
-      "text-alerting-supported": "Alerty są obsługiwane"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Nazwa jest używana podczas wybierania źródła danych w panelach. Domyślne źródło danych jest wstępnie wybrane w nowych panelach."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Strona ustawień źródła danych – ustawienia podstawowe",
-      "basic-settings-name-placeholder-name": "Imię",
-      "label-default": "Domyślny",
-      "label-name": "Imię"
-    },
     "build-a-dashboard-button": {
       "blank": "Pusty",
       "build-a-dashboard": "Utwórz pulpit",
@@ -11375,7 +11370,7 @@
     "description-order": "Wyświetlanie logów od najnowszych lub najstarszych. Po wybraniu opcji „Najpierw najstarsze” widok automatycznie przewija się do najnowszych logów u dołu.",
     "description-prettify-json": "Formatowanie wpisów logów JSON za pomocą znaków wcięcia i podziału wiersza.",
     "description-show-controls": "Wyświetlanie elementów sterujących umożliwiających przejście do ostatniego lub pierwszego wiersza logu i filtrowanie według poziomu logów.",
-    "description-show-log-attributes": "Funkcja eksperymentalna. Gdy wyświetlane są dzienniki OTel, wyświetlane jest dodatkowe pole z odpowiednimi parami klucz-wartość z etykiet i metadanych.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Wyrównywanie wartości za pomocą kolumn podczas korzystania z wyświetlanych pól.",
     "description-wrap-lines": "Wyświetlanie logów w pojedynczym wierszu lub zawijanie długich wpisów, aby zmieściły się w panelu.",
     "field-selector": {
@@ -11707,7 +11702,7 @@
       "line-contains-not": "Dodaj jako wiersz nie zawierający filtra",
       "search-text": "Szukaj w wynikach"
     },
-    "show-log-attributes": "Wyświetl atrybuty logów OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Rozdzielczość znacznika czasu",
     "un-themed-log-details": {
       "aria-label-data-links": "Połączenia danych",

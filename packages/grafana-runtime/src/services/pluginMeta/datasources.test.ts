@@ -3,6 +3,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { config } from '../../config';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
+import { setLogger } from '../logging/registry';
 
 import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import {
@@ -37,6 +38,13 @@ const datasourceIdsFromApi = datasourceItemsFromApi.map((i) => i.spec.pluginJson
 describe('when useMTPlugins flag is enabled', () => {
   beforeAll(() => {
     setTestFlags({ useMTPlugins: true });
+    setLogger('grafana/runtime.plugins.settings', {
+      logDebug: jest.fn(),
+      logError: jest.fn(),
+      logInfo: jest.fn(),
+      logMeasurement: jest.fn(),
+      logWarning: jest.fn(),
+    });
   });
 
   afterAll(() => {
@@ -216,7 +224,9 @@ describe('when useMTPlugins flag is enabled', () => {
       await getDatasourcePluginMetas();
 
       expect(logPluginMetaWarningMock).toHaveBeenCalledTimes(1);
-      expect(logPluginMetaWarningMock).toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_WARNING, PluginType.datasource);
+      expect(logPluginMetaWarningMock).toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_WARNING, {
+        pluginType: 'datasource',
+      });
     });
   });
 });

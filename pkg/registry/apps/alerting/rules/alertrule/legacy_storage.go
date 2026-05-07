@@ -286,8 +286,3 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 	return old, false, nil
 }
-
-func (s *legacyStorage) DeleteCollection(ctx context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	// TODO: support this once a pattern is established for bulk delete operations
-	return nil, k8serrors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
-}
