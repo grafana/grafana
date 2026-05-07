@@ -168,11 +168,11 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
     if (config.featureToggles.otelLogsFormatting && config.featureToggles.newLogsPanel) {
       builder.addBooleanSwitch({
         path: 'showLogAttributes',
-        name: t('logs.show-log-attributes', 'Display log attributes for OTel logs'),
+        name: t('logs.show-log-attributes', 'Enable log attributes for OTel logs'),
         category,
         description: t(
           'logs.description-show-log-attributes',
-          'Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.'
+          'Experimental. When OTel logs are displayed, and there are no displayed fields selected, the panel automatically sets displayed fields with relevant key-value pairs from labels and metadata.'
         ),
         defaultValue: true,
       });

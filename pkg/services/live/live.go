@@ -585,6 +585,15 @@ func checkAllowedOrigin(origin string, originURL *url.URL, appURL *url.URL, orig
 
 var clientConcurrency = 12
 
+// errorExpiredTemporary mirrors centrifuge.ErrorExpired but sets Temporary so
+// clients retry the operation with backoff after a server-side token refresh,
+// instead of treating the error as fatal and tearing down the subscription.
+var errorExpiredTemporary = &centrifuge.Error{
+	Code:      centrifuge.ErrorExpired.Code,
+	Message:   centrifuge.ErrorExpired.Message,
+	Temporary: true,
+}
+
 func (g *GrafanaLive) IsHA() bool {
 	return g.Cfg != nil && g.Cfg.LiveHAEngine != ""
 }
@@ -616,9 +625,10 @@ func (g *GrafanaLive) checkIDTokenExpirationAndRefresh(user identity.Requester, 
 	err := g.node.Refresh(client.UserID(), centrifuge.WithRefreshExpired(true))
 	if err != nil {
 		logger.Error("Failed to refresh expired ID token", "user", client.UserID(), "client", client.ID(), "error", err)
+		return true
 	}
 
-	return true
+	return false
 }
 
 func (g *GrafanaLive) HandleDatasourceDelete(orgID int64, dsUID string) {
@@ -654,7 +664,7 @@ func (g *GrafanaLive) handleOnRPC(clientContextWithSpan context.Context, client 
 
 	// Check if ID token is expired and trigger refresh if needed
 	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
-		return centrifuge.RPCReply{}, centrifuge.ErrorExpired
+		return centrifuge.RPCReply{}, errorExpiredTemporary
 	}
 
 	// RPC events not available
@@ -672,7 +682,7 @@ func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, c
 
 	// Check if ID token is expired and trigger refresh if needed
 	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorExpired
+		return centrifuge.SubscribeReply{}, errorExpiredTemporary
 	}
 
 	// See a detailed comment for StripK8sNamespace about orgID management in Live.
@@ -782,7 +792,7 @@ func (g *GrafanaLive) handleOnPublish(clientCtxWithSpan context.Context, client 
 
 	// Check if ID token is expired and trigger refresh if needed
 	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
-		return centrifuge.PublishReply{}, centrifuge.ErrorExpired
+		return centrifuge.PublishReply{}, errorExpiredTemporary
 	}
 
 	// See a detailed comment for StripK8sNamespace about orgID management in Live.

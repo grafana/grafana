@@ -7,6 +7,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import {
   setOnCallFeatures,
@@ -98,18 +99,7 @@ const ui = {
 
 describe('GrafanaReceiverForm', () => {
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    mockComboboxRect();
   });
 
   beforeEach(() => {
