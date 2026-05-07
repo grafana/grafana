@@ -200,11 +200,6 @@ func NewStorageBackend(
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	}
 
-	if cfg.EnableKVLeases && !cfg.EnableSQLKVCompatibilityMode {
-		kvBackendOpts.EnableKVLeases = true
-		kvBackendOpts.Holder = resolveLeaseHolder(cfg)
-	}
-
 	if cfg.EnableSQLKVCompatibilityMode {
 		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
 			Dialect:                 dialect,
@@ -216,6 +211,11 @@ func NewStorageBackend(
 		}
 
 		kvBackendOpts.RvManager = rvManager
+	}
+
+	if cfg.EnableKVLeases {
+		kvBackendOpts.EnableKVLeases = true
+		kvBackendOpts.Holder = resolveLeaseHolder(cfg)
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
@@ -240,16 +240,17 @@ func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
 }
 
 func resolveLeaseHolder(cfg *setting.Cfg) string {
+	id := "unknown"
 	if cfg.InstanceID != "" {
-		return cfg.InstanceID
+		id = cfg.InstanceID
 	}
 
 	hostname, err := os.Hostname()
 	if err == nil {
-		return hostname
+		id = hostname
 	}
 
-	return fmt.Sprintf("storage-backend-%s", uuid.NewString())
+	return fmt.Sprintf("%s-%s", id, uuid.NewString())
 }
 
 type BackendOptions struct {

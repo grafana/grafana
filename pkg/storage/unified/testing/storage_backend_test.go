@@ -10,6 +10,7 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
@@ -36,7 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func setupBadgerKV(t *testing.T, setupOpts ...kvBackendSetupOption) resource.StorageBackend {
+func setupBadgerKV(t *testing.T) resource.StorageBackend {
 	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
 	db, err := badger.Open(opts)
 	require.NoError(t, err)
@@ -46,10 +47,9 @@ func setupBadgerKV(t *testing.T, setupOpts ...kvBackendSetupOption) resource.Sto
 	kvOpts := resource.KVBackendOptions{
 		KvStore: resource.NewBadgerKV(db),
 		// keep it low in tests as most of them don't exercise concurrent writes
-		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
-	}
-	for _, opt := range setupOpts {
-		opt(&kvOpts)
+		WatchOptions:   resource.WatchOptions{SettleDelay: time.Millisecond},
+		EnableKVLeases: true,
+		Holder:         fmt.Sprintf("badger-holder-%s", uuid.NewString()),
 	}
 	backend, err := resource.NewKVStorageBackend(kvOpts)
 	require.NoError(t, err)
@@ -309,7 +309,7 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 func TestConcurrentWritesWithLeases(t *testing.T) {
 	t.Run("Badger", func(t *testing.T) {
 		runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
-			return setupBadgerKV(t, withLeasesEnabled())
+			return setupBadgerKV(t)
 		}, "badgerkv-leases")
 	})
 
@@ -318,7 +318,7 @@ func TestConcurrentWritesWithLeases(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
 		runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, t.Context(), false, withLeasesEnabled())
+			backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
 			return backend
 		}, "sqlkv-leases")
 	})

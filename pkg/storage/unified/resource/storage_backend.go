@@ -181,7 +181,6 @@ type KVBackendOptions struct {
 	DashboardVersionsToKeep int
 
 	// EnableKVLeases enables per-resource leases for serializing writes.
-	// Has no effect when RvManager is non-nil.
 	EnableKVLeases bool
 
 	// Holder identifies this process for lease ownership. Required when
@@ -241,7 +240,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	metrics := newKVBackendMetrics(opts.Reg)
 
 	var leaseManager *lease.Manager
-	if opts.EnableKVLeases && opts.RvManager == nil {
+	if opts.EnableKVLeases {
 		if opts.Holder == "" {
 			cancel()
 			return nil, errors.New("holder is required when enable_kv_leases is true")
@@ -787,7 +786,7 @@ func conflictError(event WriteEvent, message string) error {
 //
 // When leases are not active, it returns ctx unchanged and a no-op release.
 func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, bool, func(), error) {
-	leasesActive := k.leaseManager != nil && k.rvManager == nil
+	leasesActive := k.leaseManager != nil
 	if !leasesActive {
 		return ctx, false, func() {}, nil
 	}

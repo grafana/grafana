@@ -26,16 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-type kvBackendSetupOption func(*resource.KVBackendOptions)
-
-func withLeasesEnabled() kvBackendSetupOption {
-	return func(o *resource.KVBackendOptions) {
-		o.EnableKVLeases = true
-		o.Holder = "test-holder-" + uuid.NewString()
-	}
-}
-
-func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool, setupOpts ...kvBackendSetupOption) (resource.KVBackend, sqldb.DB) {
+func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) (resource.KVBackend, sqldb.DB) {
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
@@ -64,10 +55,9 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool, 
 		require.NoError(t, err)
 
 		kvOpts.RvManager = rvManager
-	}
-
-	for _, opt := range setupOpts {
-		opt(&kvOpts)
+	} else {
+		kvOpts.EnableKVLeases = true
+		kvOpts.Holder = "test-holder-" + uuid.NewString()
 	}
 
 	backend, err := resource.NewKVStorageBackend(kvOpts)
