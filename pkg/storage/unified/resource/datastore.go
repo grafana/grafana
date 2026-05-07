@@ -157,16 +157,17 @@ func (k ListRequestKey) Validate() error {
 }
 
 func (k ListRequestKey) Prefix() string {
+	name := kvpkg.EncodeKeyName(k.Name)
 	if k.Namespace == "" {
 		if k.Name == "" {
 			return fmt.Sprintf("%s/%s/", k.Group, k.Resource)
 		}
-		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Name)
+		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, name)
 	}
 	if k.Name == "" {
 		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Namespace)
 	}
-	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
+	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, name)
 }
 
 // GetRequestKey is used for getting a specific data object by latest version
@@ -199,10 +200,11 @@ func (k GetRequestKey) Validate() error {
 
 // Prefix returns the prefix for getting a specific data object
 func (k GetRequestKey) Prefix() string {
+	name := kvpkg.EncodeKeyName(k.Name)
 	if k.Namespace == "" {
-		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Name)
+		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, name)
 	}
-	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
+	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, name)
 }
 
 const (
