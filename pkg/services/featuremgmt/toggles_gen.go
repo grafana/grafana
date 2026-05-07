@@ -131,9 +131,9 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
-	// FlagKubernetesAnnotations
+	// FlagKubernetesAnnotationsClient
 	// Routes manual annotation create/update/delete and tag autocomplete from /api/annotations to the /apis/annotation.grafana.app endpoint
-	FlagKubernetesAnnotations = "kubernetesAnnotations"
+	FlagKubernetesAnnotationsClient = "kubernetesAnnotationsClient"
 
 	// FlagKubernetesShortURLs
 	// Enables k8s short url api and uses it under the hood when handling legacy /api

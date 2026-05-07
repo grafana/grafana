@@ -2924,7 +2924,7 @@
     },
     {
       "metadata": {
-        "name": "kubernetesAnnotations",
+        "name": "kubernetesAnnotationsClient",
         "resourceVersion": "1777284736317",
         "creationTimestamp": "2025-11-06T18:22:20Z",
         "deletionTimestamp": "2026-02-19T21:17:23Z",
