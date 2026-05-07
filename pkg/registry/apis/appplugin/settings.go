@@ -61,7 +61,7 @@ func toSecureJSONData(secure common.InlineSecureValues) map[string]string {
 	result := map[string]string{}
 	for k, v := range secure {
 		if !v.Create.IsZero() {
-			result[k] = v.Create.DangerouslyExposeAndConsumeValue() // ?????? for dual write, I don't think we can do the dangerous one
+			result[k] = v.Create.DangerouslyExposeAndConsumeValue()
 		}
 		if v.Remove {
 			result[k] = "" // best effort with the legacy API
@@ -72,7 +72,7 @@ func toSecureJSONData(secure common.InlineSecureValues) map[string]string {
 
 type settingsStorage struct {
 	pluginID       string
-	pluginSettings pluginsettings.Service // Do we need an explicitly caching version?
+	pluginSettings pluginsettings.Service // TODO we may need a caching version
 	resourceInfo   *utils.ResourceInfo
 }
 

@@ -11,7 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -28,6 +30,8 @@ type DataSourceMigrator interface {
 	// pre-authorization.
 	PluginGroups(ctx context.Context, namespace string, client resource.SearchClient) ([]schema.GroupResource, error)
 }
+
+var logger = log.New("storage.unified.datasource.migrator")
 
 type dataSourceMigrator struct {
 	getter      func(ctx context.Context, namespace string) ([]*datasourceV0.DataSource, error)
@@ -203,6 +207,9 @@ func (m *dataSourceMigrator) PluginGroups(ctx context.Context, namespace string,
 		group := ds.GroupVersionKind().Group
 		if group == "" || seen[group] {
 			continue
+		}
+		if errs := validation.IsValidGroup(group); len(errs) > 0 {
+			logger.Error("datasource plugin has invalid group name and cannot be migrated", "name", ds.Name, "group", group, "errors", errs)
 		}
 		seen[group] = true
 		legacy = append(legacy, schema.GroupResource{Group: group, Resource: "datasources"})

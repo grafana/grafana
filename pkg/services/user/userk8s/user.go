@@ -430,7 +430,40 @@ func (s *UserK8sService) BatchDisableUsers(ctx context.Context, cmd *user.BatchD
 }
 
 func (s *UserK8sService) GetProfile(ctx context.Context, cmd *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
-	return nil, errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.getProfile", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("failed to get orgID from context in GetProfile", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getUserClient()
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	found, err := s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	return toUserProfileDTO(found, orgID), nil
 }
 
 func (s *UserK8sService) GetUsageStats(ctx context.Context) map[string]any {
@@ -528,6 +561,22 @@ func toSignedInUser(u *iamv0alpha1.User, orgID int64) *user.SignedInUser {
 	}
 
 	return signedInUser
+}
+
+func toUserProfileDTO(u *iamv0alpha1.User, orgID int64) *user.UserProfileDTO {
+	return &user.UserProfileDTO{
+		ID:             getUserID(u),
+		UID:            u.Name,
+		Email:          u.Spec.Email,
+		Name:           u.Spec.Title,
+		Login:          u.Spec.Login,
+		OrgID:          orgID,
+		IsGrafanaAdmin: u.Spec.GrafanaAdmin,
+		IsDisabled:     u.Spec.Disabled,
+		IsProvisioned:  u.Spec.Provisioned,
+		UpdatedAt:      u.GetUpdateTimestamp(),
+		CreatedAt:      u.CreationTimestamp.Time,
+	}
 }
 
 func toUser(u *iamv0alpha1.User, orgID int64) *user.User {

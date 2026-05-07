@@ -200,6 +200,14 @@ func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableU
 }
 
 func (s *Service) GetProfile(ctx context.Context, cmd *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.GetProfile(k8sCtx, cmd)
+	}
+
 	return s.legacyService.GetProfile(ctx, cmd)
 }
 
