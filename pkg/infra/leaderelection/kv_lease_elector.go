@@ -15,6 +15,12 @@ import (
 // KVLeaseElector implements Elector using the KV store lease primitive.
 // It is used for leader election in embedded mode where Kubernetes Lease
 // objects are not available.
+//
+// Unlike KubernetesElector, this implementation does not use
+// Config.RenewDeadline. Renewal is handled internally by the lease
+// package's auto-renewal goroutine, which retries at RetryPeriod
+// intervals and reports loss only when the lease is actually superseded
+// by another holder.
 type KVLeaseElector struct {
 	kvProvider    *kv.EventualKVProvider
 	leaseName     string
@@ -116,7 +122,7 @@ func (k *KVLeaseElector) Run(ctx context.Context, fn func(ctx context.Context), 
 // nil if the lease is held by someone else (after sleeping retryPeriod),
 // or an error if the context is cancelled.
 func (k *KVLeaseElector) tryAcquire(ctx context.Context, mgr *lease.Manager) (*lease.Lease, error) {
-	l, err := mgr.Acquire(ctx, k.leaseName, lease.WithTTL(k.leaseDuration), lease.WithAutoRenew())
+	l, err := mgr.Acquire(ctx, k.leaseName, lease.WithTTL(k.leaseDuration), lease.WithAutoRenew(k.retryPeriod))
 	if err == nil {
 		return l, nil
 	}
