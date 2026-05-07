@@ -140,7 +140,7 @@ func WithTTL(d time.Duration) AcquireOption {
 // WithAutoRenew enables automatic lease renewal. A background goroutine
 // extends the lease every renewInterval by creating the next generation.
 // Lost() is notified only when a renewal fails with ErrLeaseLost.
-// If renewInterval is zero, it defaults to half the TTL.
+// If renewInterval is zero, or if it's >= TTL, it defaults to 1/3 the TTL.
 func WithAutoRenew(renewInterval time.Duration) AcquireOption {
 	return func(o *acquireOptions) {
 		o.autoRenew = true
@@ -225,8 +225,8 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 
 		if cfg.autoRenew {
 			renewInterval := cfg.renewInterval
-			if renewInterval == 0 {
-				renewInterval = cfg.ttl / 2
+			if renewInterval == 0 || renewInterval >= cfg.ttl {
+				renewInterval = cfg.ttl / 3
 			}
 			go m.autoRenewLoop(l, cfg.ttl, renewInterval)
 		} else {
@@ -331,13 +331,19 @@ func (m *Manager) autoRenewLoop(lease *Lease, ttl, renewInterval time.Duration) 
 		case <-lease.stop:
 			return
 		case <-ticker.C:
-			err := m.extendGeneration(context.Background(), lease, ttl)
+			err := m.renewOnce(lease, ttl, renewInterval)
 			if errors.Is(err, ErrLeaseLost) {
 				lease.notifyLoss()
 				return
 			}
 		}
 	}
+}
+
+func (m *Manager) renewOnce(lease *Lease, ttl, renewInterval time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), renewInterval*3/4)
+	defer cancel()
+	return m.extendGeneration(ctx, lease, ttl)
 }
 
 func (m *Manager) latest(ctx context.Context, name string) (string, int64, error) {

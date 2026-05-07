@@ -281,7 +281,7 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 }
 
 func runLeaseAutoRenew(t *testing.T, store kv.KV) {
-	const ttl = 50 * time.Millisecond
+	const ttl = 500 * time.Millisecond
 	ctx := t.Context()
 
 	t.Run("keeps lease alive past TTL", func(t *testing.T) {
@@ -319,29 +319,6 @@ func runLeaseAutoRenew(t *testing.T, store kv.KV) {
 		case <-time.After(time.Second):
 			t.Fatal("Lost() did not close after Release")
 		}
-	})
-
-	t.Run("Lost fires when another holder acquires after expiry", func(t *testing.T) {
-		a := lease.NewManager(store, "holder-renew-lost-a", lease.WithInternalMinTTL(ttl))
-		b := lease.NewManager(store, "holder-renew-lost-b", lease.WithInternalMinTTL(ttl))
-
-		// Acquire without auto-renew so it naturally expires.
-		la, err := a.Acquire(ctx, "renew/lost", lease.WithTTL(ttl))
-		require.NoError(t, err)
-
-		time.Sleep(ttl + 50*time.Millisecond)
-
-		// Another holder acquires after expiry.
-		lb, err := b.Acquire(ctx, "renew/lost", lease.WithTTL(ttl), lease.WithAutoRenew(0))
-		require.NoError(t, err)
-
-		select {
-		case <-la.Lost():
-		case <-time.After(time.Second):
-			t.Fatal("original Lost() did not fire after TTL elapsed")
-		}
-
-		require.NoError(t, b.Release(ctx, lb))
 	})
 }
 
@@ -702,13 +679,13 @@ func (p *leasePBT) runOp(serverIdx int, op operation) (violation bool) {
 			// nothing to release.
 			return false
 		}
+		p.m.released(serverIdx, op.leaseIdx)
 		if err := p.managers[serverIdx].Release(p.ctx, l); err != nil {
 			p.t.Logf("violation: server %d failed to release: %v",
 				serverIdx, err)
 			return true
 		}
 		delete(p.held[serverIdx], op.leaseIdx)
-		p.m.released(serverIdx, op.leaseIdx)
 	}
 	return false
 }

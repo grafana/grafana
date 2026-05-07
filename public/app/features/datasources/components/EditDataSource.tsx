@@ -33,7 +33,6 @@ import { setIsDefault, setDataSourceName, dataSourceLoaded, testDataSourceFailed
 import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { type DataSourceRights } from '../types';
 
-import { BasicSettings } from './BasicSettings';
 import { ButtonRow } from './ButtonRow';
 import { CloudInfoBox } from './CloudInfoBox';
 import { DataSourceLoadError } from './DataSourceLoadError';
@@ -241,14 +240,6 @@ export function EditDataSourceView({
       {dataSourceMeta.state && <DataSourcePluginState state={dataSourceMeta.state} />}
 
       <CloudInfoBox dataSource={dataSource} />
-
-      <BasicSettings
-        dataSourceName={dataSource.name}
-        isDefault={dataSource.isDefault}
-        onDefaultChange={onDefaultChange}
-        onNameChange={onNameChange}
-        disabled={readOnly || !hasWriteRights}
-      />
 
       {plugin && (
         <DataSourcePluginContextProvider instanceSettings={dsi}>

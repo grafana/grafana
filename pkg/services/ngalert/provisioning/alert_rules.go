@@ -820,7 +820,13 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
+		return models.AlertRule{}, errProvenanceMismatch.Build(errutil.TemplateData{
+			Public: map[string]interface{}{
+				"ProvidedProvenance": provenance,
+				"StoredProvenance":   storedProvenance,
+				"Operation":          "update",
+			},
+		})
 	}
 	if rule.NotificationSettings != nil {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
