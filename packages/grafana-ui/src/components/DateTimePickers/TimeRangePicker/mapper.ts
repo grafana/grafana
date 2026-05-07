@@ -1,7 +1,5 @@
 import { type TimeOption, type TimeRange, type TimeZone, rangeUtil, dateTimeFormat } from '@grafana/data';
 
-import { getFeatureToggle } from '../../../utils/featureToggle';
-
 /**
  * Takes a printable TimeOption and builds a TimeRange with DateTime properties from it
  */
@@ -16,15 +14,9 @@ export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): Tim
   const from = dateTimeFormat(range.from, { timeZone });
   const to = dateTimeFormat(range.to, { timeZone });
 
-  let display = `${from} to ${to}`;
-
-  if (getFeatureToggle('localeFormatPreference')) {
-    display = rangeUtil.describeTimeRange(range, timeZone);
-  }
-
   return {
     from,
     to,
-    display,
+    display: rangeUtil.describeTimeRange(range, timeZone),
   };
 };
