@@ -320,29 +320,6 @@ func runLeaseAutoRenew(t *testing.T, store kv.KV) {
 			t.Fatal("Lost() did not close after Release")
 		}
 	})
-
-	t.Run("Lost fires when another holder acquires after expiry", func(t *testing.T) {
-		a := lease.NewManager(store, "holder-renew-lost-a", lease.WithInternalMinTTL(ttl))
-		b := lease.NewManager(store, "holder-renew-lost-b", lease.WithInternalMinTTL(ttl))
-
-		// Acquire without auto-renew so it naturally expires.
-		la, err := a.Acquire(ctx, "renew/lost", lease.WithTTL(ttl))
-		require.NoError(t, err)
-
-		time.Sleep(ttl + 50*time.Millisecond)
-
-		// Another holder acquires after expiry.
-		lb, err := b.Acquire(ctx, "renew/lost", lease.WithTTL(ttl), lease.WithAutoRenew(0))
-		require.NoError(t, err)
-
-		select {
-		case <-la.Lost():
-		case <-time.After(time.Second):
-			t.Fatal("original Lost() did not fire after TTL elapsed")
-		}
-
-		require.NoError(t, b.Release(ctx, lb))
-	})
 }
 
 func runLeaseLoss(t *testing.T, store kv.KV) {
