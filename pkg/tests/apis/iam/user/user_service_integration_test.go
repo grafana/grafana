@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -311,6 +312,210 @@ func TestIntegrationUserService(t *testing.T) {
 					require.NoError(t, err)
 				}
 			})
+		})
+	}
+}
+
+// go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceSearch$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
+func TestIntegrationUserServiceSearch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type createUserResponse struct {
+		ID  int64  `json:"id"`
+		UID string `json:"uid"`
+	}
+
+	type searchUserHit struct {
+		UID   string `json:"uid"`
+		Name  string `json:"name"`
+		Login string `json:"login"`
+		Email string `json:"email"`
+	}
+
+	type searchUsersResponse struct {
+		TotalCount int64           `json:"totalCount"`
+		Users      []searchUserHit `json:"users"`
+		Page       int             `json:"page"`
+		PerPage    int             `json:"perPage"`
+	}
+
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
+		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				APIServerStorageType:   "unified",
+				RBACSingleOrganization: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"users.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesUsersApi,
+					featuremgmt.FlagKubernetesUsersRedirect,
+				},
+			})
+
+			alphaUser := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "POST",
+				Path:   "/api/admin/users",
+				Body:   []byte(`{"name": "Alpha User", "email": "alpha@example.com", "login": "alpha-user", "password": "password123"}`),
+			}, &createUserResponse{})
+			require.Equal(t, 200, alphaUser.Response.StatusCode, "body: %s", string(alphaUser.Body))
+			require.NotEmpty(t, alphaUser.Result.UID)
+			require.NotZero(t, alphaUser.Result.ID)
+
+			betaUser := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "POST",
+				Path:   "/api/admin/users",
+				Body:   []byte(`{"name": "Beta User", "email": "beta@example.com", "login": "beta-user", "password": "password123"}`),
+			}, &createUserResponse{})
+			require.Equal(t, 200, betaUser.Response.StatusCode, "body: %s", string(betaUser.Body))
+			require.NotEmpty(t, betaUser.Result.UID)
+			require.NotZero(t, betaUser.Result.ID)
+
+			// Wait for the search index to be populated.
+			time.Sleep(2 * time.Second)
+
+			t.Cleanup(func() {
+				ctx := context.Background()
+				userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+					User:      helper.Org1.Admin,
+					Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+					GVR:       gvrUsers,
+				})
+				_ = userClient.Resource.Delete(ctx, alphaUser.Result.UID, metav1.DeleteOptions{})
+				_ = userClient.Resource.Delete(ctx, betaUser.Result.UID, metav1.DeleteOptions{})
+			})
+
+			t.Run("should return users with correct fields", func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/search?query=alpha",
+				}, &searchUsersResponse{})
+				require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+				require.NotEmpty(t, rsp.Result.Users)
+
+				var hit *searchUserHit
+				for i := range rsp.Result.Users {
+					if rsp.Result.Users[i].Login == "alpha-user" {
+						hit = &rsp.Result.Users[i]
+						break
+					}
+				}
+				require.NotNil(t, hit, "alpha-user not found in search results")
+				require.Equal(t, alphaUser.Result.UID, hit.UID)
+				require.Equal(t, "Alpha User", hit.Name)
+				require.Equal(t, "alpha@example.com", hit.Email)
+			})
+
+			t.Run("should filter results by query", func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/search?query=beta",
+				}, &searchUsersResponse{})
+				require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+
+				foundBeta := false
+				for _, u := range rsp.Result.Users {
+					require.NotEqual(t, "alpha-user", u.Login, "alpha-user should not appear in beta search")
+					if u.Login == "beta-user" {
+						foundBeta = true
+					}
+				}
+				require.True(t, foundBeta, "beta-user should be in search results")
+			})
+
+			t.Run("should return all users when no query given", func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/search",
+				}, &searchUsersResponse{})
+				require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+				require.GreaterOrEqual(t, rsp.Result.TotalCount, int64(2))
+
+				logins := make([]string, 0, len(rsp.Result.Users))
+				for _, u := range rsp.Result.Users {
+					logins = append(logins, u.Login)
+				}
+				require.Contains(t, logins, "alpha-user")
+				require.Contains(t, logins, "beta-user")
+			})
+
+			t.Run("should respect perpage and page parameters", func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/search?perpage=1&page=1",
+				}, &searchUsersResponse{})
+				require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+				require.Len(t, rsp.Result.Users, 1)
+				require.Equal(t, 1, rsp.Result.Page)
+				require.Equal(t, 1, rsp.Result.PerPage)
+				require.GreaterOrEqual(t, rsp.Result.TotalCount, int64(2))
+
+				allLogins := []string{rsp.Result.Users[0].Login}
+				for page := 2; page <= int(rsp.Result.TotalCount); page++ {
+					pageRsp := apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: "GET",
+						Path:   fmt.Sprintf("/api/users/search?perpage=1&page=%d", page),
+					}, &searchUsersResponse{})
+					require.Equal(t, 200, pageRsp.Response.StatusCode, "body: %s", string(pageRsp.Body))
+					if len(pageRsp.Result.Users) == 0 {
+						break
+					}
+					allLogins = append(allLogins, pageRsp.Result.Users[0].Login)
+				}
+				require.Contains(t, allLogins, "alpha-user")
+				require.Contains(t, allLogins, "beta-user")
+			})
+
+			for _, tc := range []struct {
+				sortParam  string
+				alphaFirst bool
+			}{
+				{"login-asc", true},
+				{"login-desc", false},
+				{"name-asc", true},
+				{"name-desc", false},
+				{"email-asc", true},
+				{"email-desc", false},
+			} {
+				tc := tc
+				t.Run(fmt.Sprintf("should sort users by %s", tc.sortParam), func(t *testing.T) {
+					rsp := apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: "GET",
+						Path:   fmt.Sprintf("/api/users/search?sort=%s", tc.sortParam),
+					}, &searchUsersResponse{})
+					require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+
+					alphaIdx, betaIdx := -1, -1
+					for i, u := range rsp.Result.Users {
+						switch u.Login {
+						case "alpha-user":
+							alphaIdx = i
+						case "beta-user":
+							betaIdx = i
+						}
+					}
+					require.NotEqual(t, -1, alphaIdx, "alpha-user not found in results")
+					require.NotEqual(t, -1, betaIdx, "beta-user not found in results")
+					if tc.alphaFirst {
+						require.Less(t, alphaIdx, betaIdx, "alpha-user should come before beta-user")
+					} else {
+						require.Greater(t, alphaIdx, betaIdx, "beta-user should come before alpha-user")
+					}
+				})
+			}
 		})
 	}
 }

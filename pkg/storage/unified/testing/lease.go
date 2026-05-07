@@ -636,13 +636,13 @@ func (p *leasePBT) runOp(serverIdx int, op operation) (violation bool) {
 			// nothing to release.
 			return false
 		}
+		p.m.released(serverIdx, op.leaseIdx)
 		if err := p.managers[serverIdx].Release(p.ctx, l); err != nil {
 			p.t.Logf("violation: server %d failed to release: %v",
 				serverIdx, err)
 			return true
 		}
 		delete(p.held[serverIdx], op.leaseIdx)
-		p.m.released(serverIdx, op.leaseIdx)
 	}
 	return false
 }

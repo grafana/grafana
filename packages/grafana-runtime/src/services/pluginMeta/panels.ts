@@ -51,7 +51,7 @@ function setMetas(metas: PluginMetasResponse) {
     // fallback to config.panels from bootdata
     // eslint-disable-next-line @grafana/no-config-panels
     setPanelsAndAliases(config.panels);
-    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, PluginType.panel);
+    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, { pluginType: PluginType.panel });
     return;
   }
 
