@@ -1,26 +1,11 @@
-import {
-  DataSourceApi,
-  type DataSourceJsonData,
-  type DataSourcePlugin,
-  type DataSourcePluginMeta,
-  type DataSourceRef,
-  type ScopedVars,
-} from '@grafana/data';
-import { type DataQuery } from '@grafana/schema';
+import { DataSourceApi, type DataSourceRef, type ScopedVars } from '@grafana/data';
 
 import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
 import { getInstanceSettings, upsertRuntimeDataSource } from './instanceSettings';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
-
-type GenericDataSourcePlugin = DataSourcePlugin<
-  DataSourceApi<DataQuery, DataSourceJsonData>,
-  DataQuery,
-  DataSourceJsonData
->;
-
-type ImportDataSourceFn = (meta: DataSourcePluginMeta) => Promise<GenericDataSourcePlugin>;
+import { type GenericDataSourcePlugin, type ImportDataSourceFn } from './types';
 
 let importDataSource: ImportDataSourceFn | undefined;
 
