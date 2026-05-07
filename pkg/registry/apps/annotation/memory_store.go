@@ -23,6 +23,8 @@ func NewMemoryStore() Store {
 	}
 }
 
+func (m *memoryStore) Close() error { return nil }
+
 func (m *memoryStore) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

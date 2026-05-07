@@ -113,10 +113,11 @@ func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*Postgr
 }
 
 // Close closes the database connection pool
-func (s *PostgreSQLStore) Close() {
+func (s *PostgreSQLStore) Close() error {
 	if s.pool != nil {
 		s.pool.Close()
 	}
+	return nil
 }
 
 // Get retrieves a single annotation by namespace and name

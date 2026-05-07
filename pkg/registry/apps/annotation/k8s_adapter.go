@@ -48,16 +48,18 @@ func (s *k8sRESTAdapter) New() runtime.Object {
 }
 
 func (s *k8sRESTAdapter) Destroy() {
-	// Stop background cleanup goroutines
+	// Stop background cleanup goroutines first so they can't issue new
+	// queries against a backend we're about to close.
 	if s.installer != nil && s.installer.cleanupCancel != nil {
 		s.installer.cleanupCancel()
 		s.installer.cleanupWg.Wait()
 	}
 
-	// Call Close() on the PostgreSQL store to cleanup connection pool
-	// TODO: add Close() to the Store interface so we can do proper cleanup for other store types
-	if pg, ok := s.store.(*PostgreSQLStore); ok {
-		pg.Close()
+	// Release backend resources (postgres pool, gRPC connection, ...).
+	if s.store != nil {
+		if err := s.store.Close(); err != nil {
+			s.installer.logger.Error("annotation store close failed", "error", err)
+		}
 	}
 }
 
