@@ -36,7 +36,7 @@ interface UserInfo {
   login?: string;
   email?: string;
   // The k8s identity ref ("user:<uid>") used to filter through the new /search endpoint.
-  // Absent when the legacy path (kubernetesAnnotationsClient FF off) populated this entry.
+  // Absent when the legacy path (annotationAppPlatformEnabled off) populated this entry.
   uid?: string;
 }
 
@@ -128,10 +128,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       : interpolatedTags;
 
     let annotations: AnnotationEvent[];
-    // TEMP: backend FF PR (mdv/annotations-k8s-feature-flag) still in review, force the new k8s path for local testing.
-    // Restore `if (config.featureToggles.kubernetesAnnotationsClient)` once the backend lands.
-    // eslint-disable-next-line no-constant-condition
-    if (true) {
+    if (config.annotationAppPlatformEnabled) {
       // /search hardcodes Type: "annotation" on the backend, so the legacy `type: 'annotation'`
       // filter is implicit. User filter switches from legacy `userId` to k8s `createdBy`.
       const events = await annotationK8sClient.search(
@@ -279,7 +276,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
   onUserClick = (anno: AnnotationEvent) => {
     // Hydrated events expose the k8s identity ref ("user:<uid>") via createdBy when
-    // kubernetesAnnotationsClient is on. Stash the uid so the next /search can filter by it.
+    // annotationAppPlatformEnabled is on. Stash the uid so the next /search can filter by it.
     const createdBy = (anno as AnnotationEventResource).createdBy;
     const uid = createdBy?.startsWith('user:') ? createdBy.slice('user:'.length) : undefined;
     this.setState({

@@ -311,7 +311,7 @@ describe('AnnoListPanel', () => {
     });
   });
 
-  describe('with kubernetesAnnotationsClient toggle ON', () => {
+  describe('with annotationAppPlatformEnabled ON', () => {
     const SEARCH_URL = '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/search';
     const DISPLAY_URL = '/apis/iam.grafana.app/v0alpha1/namespaces/stack-1/display';
 
@@ -343,7 +343,7 @@ describe('AnnoListPanel', () => {
 
     const setupK8sContext = async (options: Options = defaultOptions) => {
       jest.clearAllMocks();
-      config.featureToggles.kubernetesAnnotationsClient = true;
+      config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
 
       const getMock = jest.spyOn(backendSrv, 'get');
@@ -390,7 +390,7 @@ describe('AnnoListPanel', () => {
     };
 
     afterEach(() => {
-      config.featureToggles.kubernetesAnnotationsClient = false;
+      config.annotationAppPlatformEnabled = false;
     });
 
     it('hits the k8s /search endpoint with translated params', async () => {
