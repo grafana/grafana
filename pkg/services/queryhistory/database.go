@@ -51,10 +51,15 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 
 		err = s.store.WithDbSession(ctx, func(session *db.Session) error {
 			for _, queryHistoryDetailsItem := range queryHistoryDetailsItems {
-				_, err = session.Insert(queryHistoryDetailsItem)
+				if _, insertErr := session.Insert(queryHistoryDetailsItem); insertErr != nil {
+					return insertErr
+				}
 			}
 			return nil
 		})
+		if err != nil {
+			return QueryHistoryDTO{}, err
+		}
 	}
 
 	dto := QueryHistoryDTO{
