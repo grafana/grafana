@@ -224,7 +224,9 @@ describe('when useMTPlugins flag is enabled', () => {
       await getDatasourcePluginMetas();
 
       expect(logPluginMetaWarningMock).toHaveBeenCalledTimes(1);
-      expect(logPluginMetaWarningMock).toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_WARNING, PluginType.datasource);
+      expect(logPluginMetaWarningMock).toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_WARNING, {
+        pluginType: 'datasource',
+      });
     });
   });
 });

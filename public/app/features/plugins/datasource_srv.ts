@@ -233,7 +233,7 @@ export class DatasourceSrv implements DataSourceService {
       if (!meta) {
         logPluginMetaWarning(
           `Plugin meta for datasource ${key} (pluginId: ${pluginId}) was not found, falling back to instanceSettings.meta`,
-          pluginId
+          { pluginId, key }
         );
         meta = instanceSettings.meta;
       }

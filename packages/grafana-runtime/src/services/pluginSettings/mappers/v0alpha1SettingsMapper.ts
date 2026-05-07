@@ -1,10 +1,8 @@
 import {
   type PluginInclude,
   PluginIncludeType,
-  PluginType,
   type KeyValue,
   PluginSignatureType,
-  locationUtil,
   type PluginMeta,
 } from '@grafana/data';
 
@@ -14,6 +12,7 @@ import {
   extensionsMapper,
   infoMapper,
   loadingStrategyMapper,
+  pluginTypeMapper,
   stateMapper,
   signatureStatusMapper,
 } from '../../pluginMeta/mappers/shared';
@@ -101,28 +100,6 @@ export function secureJsonFieldsMapper(settings: v0alpha1Settings): KeyValue<boo
   return secureJsonFields;
 }
 
-export function pluginTypeMapper(spec: v0alpha1Spec): PluginType {
-  if (!spec.pluginJson.type) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return '' as PluginType;
-  }
-
-  switch (spec.pluginJson.type) {
-    case 'app':
-      return PluginType.app;
-    case 'datasource':
-      return PluginType.datasource;
-    case 'panel':
-      return PluginType.panel;
-    case 'renderer':
-      return PluginType.renderer;
-    default:
-      logPluginSettingsWarning(`pluginTypeMapper: unknown PluginType ${spec.pluginJson.type}`, spec.pluginJson.id);
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return '' as PluginType;
-  }
-}
-
 export function includeTypeMapper(include: v0alpha1Include, spec: v0alpha1Spec): PluginIncludeType {
   if (!include.type) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -139,7 +116,11 @@ export function includeTypeMapper(include: v0alpha1Include, spec: v0alpha1Spec):
     case 'datasource':
       return PluginIncludeType.datasource;
     default:
-      logPluginSettingsWarning(`includeTypeMapper: unknown PluginIncludeType ${include.type}`, spec.pluginJson.id);
+      logPluginSettingsWarning(`includeTypeMapper: unknown PluginIncludeType ${include.type}`, {
+        pluginId: spec.pluginJson.id,
+        pluginType: spec.pluginJson.type,
+        includeType: include.type,
+      });
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return '' as PluginIncludeType;
   }
@@ -186,39 +167,14 @@ export function signatureTypeMapper(spec: v0alpha1Spec): PluginSignatureType {
     case 'private':
       return PluginSignatureType.private;
     default:
-      logPluginSettingsWarning(
-        `signatureTypeMapper: unknown PluginSignatureType ${spec.signature.type}`,
-        spec.pluginJson.id
-      );
+      logPluginSettingsWarning(`signatureTypeMapper: unknown PluginSignatureType ${spec.signature.type}`, {
+        pluginId: spec.pluginJson.id,
+        pluginType: spec.pluginJson.type,
+        signatureType: spec.signature.type,
+      });
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return '' as PluginSignatureType;
   }
-}
-
-function getDefaultNavUrlForDashboard(include: v0alpha1Include): string | undefined {
-  if (include.type !== 'dashboard') {
-    return undefined;
-  }
-
-  if (!include.uid) {
-    return undefined;
-  }
-
-  return locationUtil.assureBaseUrl(`/d/${include.uid}`);
-}
-
-export function defaultNavUrlMapper(spec: v0alpha1Spec): string | undefined {
-  const defaultInclude = spec.pluginJson.includes?.find((i) => i.defaultNav);
-  if (!defaultInclude) {
-    return undefined;
-  }
-
-  if (defaultInclude.type === 'page') {
-    const slug = slugMapper(defaultInclude);
-    return locationUtil.assureBaseUrl(`/plugins/${spec.pluginJson.id}/page/${slug}`);
-  }
-
-  return getDefaultNavUrlForDashboard(defaultInclude);
 }
 
 function v0alpha1SpecMapper(spec: v0alpha1Spec) {
@@ -229,23 +185,21 @@ function v0alpha1SpecMapper(spec: v0alpha1Spec) {
   const autoEnabled = spec.pluginJson.autoEnabled ?? false;
   const hasUpdate = false;
   const latestVersion = '';
-  const type = pluginTypeMapper(spec);
+  const type = pluginTypeMapper(spec, logPluginSettingsWarning);
   const info = infoMapper(spec);
   const angular = angularMapper(spec);
   const angularDetected = false;
-  const dependencies = dependenciesMapper(spec);
+  const dependencies = dependenciesMapper(spec, logPluginSettingsWarning);
   const extensions = extensionsMapper(spec);
   const includes = includesMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);
   const signature = signatureStatusMapper(spec, logPluginSettingsWarning);
   const signatureType = signatureTypeMapper(spec);
   const state = stateMapper(spec, logPluginSettingsWarning);
-  const defaultNavUrl = defaultNavUrlMapper(spec);
 
   return {
     autoEnabled,
     baseUrl,
-    defaultNavUrl,
     hasUpdate,
     id,
     info,

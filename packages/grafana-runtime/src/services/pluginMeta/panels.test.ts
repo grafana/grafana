@@ -167,7 +167,7 @@ describe('when useMTPlugins flag is enabled', () => {
         expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
         expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
           'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-          { typeOrPluginId: 'panel' }
+          { pluginType: 'panel' }
         );
       });
 
@@ -179,7 +179,7 @@ describe('when useMTPlugins flag is enabled', () => {
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
             'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-            { typeOrPluginId: 'panel' }
+            { pluginType: 'panel' }
           );
         }
       );

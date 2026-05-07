@@ -150,7 +150,8 @@ describe('settings', () => {
 
         expect(enabled).toEqual(false);
         expect(logger.logError).toHaveBeenCalledWith(
-          expect.objectContaining({ message: `isAppPluginEnabled failed for plugin with id myorg-test-app` })
+          new Error('isAppPluginEnabled: failed because of unknonw reason'),
+          { pluginId: 'myorg-test-app' }
         );
         expect(logger.logWarning).not.toHaveBeenCalled();
       });

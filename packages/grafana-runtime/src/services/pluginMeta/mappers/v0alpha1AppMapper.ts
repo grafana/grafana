@@ -1,5 +1,6 @@
 import { type AppPluginConfig } from '@grafana/data';
 
+import { logPluginMetaWarning } from '../logging';
 import type { AppPluginMetas, AppPluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
@@ -8,7 +9,7 @@ import { angularMapper, dependenciesMapper, extensionsMapper, loadingStrategyMap
 function specMapper(spec: v0alpha1Spec): AppPluginConfig {
   const { id, info, preload = false } = spec.pluginJson;
   const angular = angularMapper(spec);
-  const dependencies = dependenciesMapper(spec);
+  const dependencies = dependenciesMapper(spec, logPluginMetaWarning);
   const extensions = extensionsMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);
   const path = spec.module?.path ?? '';

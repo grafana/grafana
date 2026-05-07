@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 
 import { setLogger } from '../../logging/registry';
-import { signatureStatusMapper, stateMapper } from '../../pluginMeta/mappers/shared';
+import { signatureStatusMapper, stateMapper, pluginTypeMapper } from '../../pluginMeta/mappers/shared';
 import { myOrgTestAppMeta } from '../../pluginMeta/test-fixtures/v0alpha1Response';
 import type { Include as v0alpha1Include, Spec as v0alpha1Spec } from '../../pluginMeta/types/meta/types.spec.gen';
 import { myOrgTestAppSettings } from '../test-fixtures/v0alpha1Response';
@@ -24,7 +24,6 @@ import {
   settingsSpecMapper,
   signatureTypeMapper,
   slugMapper,
-  pluginTypeMapper,
   v0alpha1SettingsMapper,
 } from './v0alpha1SettingsMapper';
 
@@ -55,9 +54,7 @@ describe('v0alpha1SettingsMapper', () => {
   });
 
   it('should map defaultNavUrl correctly', () => {
-    expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).defaultNavUrl).toStrictEqual(
-      '/plugins/myorg-test-app/page/page-one'
-    );
+    expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).defaultNavUrl).toBeUndefined();
   });
 
   it('should hardcode hasUpdate to false', () => {
@@ -285,99 +282,6 @@ describe('v0alpha1SettingsMapper', () => {
   });
 });
 
-describe('defaultNavUrlMapper', () => {
-  it('should return undefined if there are no includes', () => {
-    myOrgTestAppMeta.spec.pluginJson.includes = [];
-
-    expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).defaultNavUrl).toBeUndefined();
-  });
-
-  it('should return undefined if there is no default include', () => {
-    myOrgTestAppMeta.spec.pluginJson.includes = [{ defaultNav: false }];
-
-    expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).defaultNavUrl).toBeUndefined();
-  });
-
-  it('should return undefined if the default include is of type datasource', () => {
-    myOrgTestAppMeta.spec.pluginJson.includes = [
-      { defaultNav: false, name: 'Help Page', type: 'dashboard' },
-      { defaultNav: true, type: 'datasource', name: 'Main Page' },
-    ];
-
-    expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).defaultNavUrl).toBeUndefined();
-  });
-
-  it('should return undefined if the default include is of type panel', () => {
-    myOrgTestAppMeta.spec.pluginJson.includes = [
-      { defaultNav: false, name: 'Help Page', type: 'dashboard' },
-      { defaultNav: true, type: 'panel', name: 'Main Page' },
-    ];
-
-    expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).defaultNavUrl).toBeUndefined();
-  });
-
-  it('should return undefined if the default include is of type dashboard but missing the uid', () => {
-    myOrgTestAppMeta.spec.pluginJson.includes = [
-      { defaultNav: false, name: 'Help Page', type: 'dashboard' },
-      { defaultNav: true, type: 'dashboard', name: 'Main Page' },
-    ];
-
-    expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).defaultNavUrl).toBeUndefined();
-  });
-
-  it('should return correct url if the default include is of type page', () => {
-    myOrgTestAppMeta.spec.pluginJson.includes = [
-      { defaultNav: false, name: 'Help Page', type: 'page' },
-      { defaultNav: true, type: 'page', name: 'Main Page' },
-    ];
-
-    expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).defaultNavUrl).toStrictEqual(
-      '/plugins/myorg-test-app/page/main-page'
-    );
-  });
-
-  it('should return correct url if the default include is of type dashboard and has uid', () => {
-    myOrgTestAppMeta.spec.pluginJson.includes = [
-      { defaultNav: false, name: 'Help Page', type: 'dashboard', uid: 'abc' },
-      { defaultNav: true, type: 'dashboard', name: 'Main Page', uid: 'def' },
-    ];
-
-    expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).defaultNavUrl).toStrictEqual('/d/def');
-  });
-
-  describe('when there is an appSubUrl configured', () => {
-    beforeEach(() => {
-      locationUtil.initialize({
-        config: { appSubUrl: '/gf' } as GrafanaConfig,
-        getTimeRangeForUrl: jest.fn(),
-        getVariablesUrlParams: jest.fn(),
-      });
-    });
-
-    it('should return correct url if the default include is of type page', () => {
-      myOrgTestAppMeta.spec.pluginJson.includes = [
-        { defaultNav: false, name: 'Help Page', type: 'page' },
-        { defaultNav: true, type: 'page', name: 'Main Page' },
-      ];
-
-      expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).defaultNavUrl).toStrictEqual(
-        '/gf/plugins/myorg-test-app/page/main-page'
-      );
-    });
-
-    it('should return correct url if the default include is of type dashboard and has uid', () => {
-      myOrgTestAppMeta.spec.pluginJson.includes = [
-        { defaultNav: false, name: 'Help Page', type: 'dashboard', uid: 'abc' },
-        { defaultNav: true, type: 'dashboard', name: 'Main Page', uid: 'def' },
-      ];
-
-      expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).defaultNavUrl).toStrictEqual(
-        '/gf/d/def'
-      );
-    });
-  });
-});
-
 describe('signatureTypeMapper', () => {
   it.each([
     { type: 'commercial', expected: PluginSignatureType.commercial },
@@ -522,7 +426,7 @@ describe('typeMapper', () => {
     { type: undefined, expected: '' },
   ])(`when called with $type then it should map to $expected`, ({ expected, type }) => {
     myOrgTestAppMeta.spec.pluginJson.type = type as v0alpha1Spec['pluginJson']['type'];
-    expect(pluginTypeMapper(myOrgTestAppMeta.spec)).toStrictEqual(expected);
+    expect(pluginTypeMapper(myOrgTestAppMeta.spec, () => {})).toStrictEqual(expected);
   });
 });
 

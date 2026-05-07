@@ -123,7 +123,6 @@ export const legacyMyOrgTestAppSettings: PluginMeta = structuredClone({
     apiKey: true,
     password: true,
   },
-  defaultNavUrl: '/plugins/myorg-test-app/page/page-one',
   latestVersion: '',
   hasUpdate: false,
   state: '' as PluginState,

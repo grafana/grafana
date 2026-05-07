@@ -7,10 +7,13 @@ import {
   type PluginMetaInfo,
   PluginSignatureStatus,
   PluginState,
-  type PluginType,
+  PluginType,
 } from '@grafana/data';
+import { type LogContext } from '@grafana/faro-web-sdk';
 
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
+
+type LogFunction = (message: string, context: LogContext) => void;
 
 export function angularMapper(spec: v0alpha1Spec): AngularMeta {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -81,7 +84,7 @@ export function infoMapper(spec: v0alpha1Spec): PluginMetaInfo {
   };
 }
 
-export function stateMapper(spec: v0alpha1Spec, logFn: (message: string, type: string) => void): PluginState {
+export function stateMapper(spec: v0alpha1Spec, logFn: LogFunction): PluginState {
   if (!spec.pluginJson.state) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return (spec.pluginJson.state ?? '') as PluginState;
@@ -97,16 +100,17 @@ export function stateMapper(spec: v0alpha1Spec, logFn: (message: string, type: s
     case 'stable':
       return PluginState.stable;
     default:
-      logFn(`stateMapper: unknown PluginState ${spec.pluginJson.state}`, spec.pluginJson.id);
+      logFn(`stateMapper: unknown PluginState ${spec.pluginJson.state}`, {
+        pluginId: spec.pluginJson.id,
+        pluginType: spec.pluginJson.type,
+        pluginState: spec.pluginJson.state,
+      });
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return '' as PluginState;
   }
 }
 
-export function signatureStatusMapper(
-  spec: v0alpha1Spec,
-  logFn: (message: string, type: string) => void
-): PluginSignatureStatus {
+export function signatureStatusMapper(spec: v0alpha1Spec, logFn: LogFunction): PluginSignatureStatus {
   if (!spec.signature.status) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return 'unsigned' as PluginSignatureStatus;
@@ -122,17 +126,49 @@ export function signatureStatusMapper(
     case 'valid':
       return PluginSignatureStatus.valid;
     default:
-      logFn(`signatureStatusMapper: unknown PluginSignatureStatus ${spec.signature.status}`, spec.pluginJson.id);
+      logFn(`signatureStatusMapper: unknown PluginSignatureStatus ${spec.signature.status}`, {
+        pluginId: spec.pluginJson.id,
+        pluginType: spec.pluginJson.type,
+        pluginSignatureStatus: spec.signature.status,
+      });
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return 'unsigned' as PluginSignatureStatus;
   }
 }
 
-export function dependenciesMapper(spec: v0alpha1Spec): PluginDependencies {
+function internalPluginTypeMapper(type: string, id: string, logFn: LogFunction): PluginType {
+  if (!type) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return '' as PluginType;
+  }
+
+  switch (type) {
+    case 'app':
+      return PluginType.app;
+    case 'datasource':
+      return PluginType.datasource;
+    case 'panel':
+      return PluginType.panel;
+    case 'renderer':
+      return PluginType.renderer;
+    default:
+      logFn(`pluginTypeMapper: unknown PluginType ${type}`, {
+        pluginId: id,
+        pluginType: type,
+      });
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return '' as PluginType;
+  }
+}
+
+export function pluginTypeMapper(spec: v0alpha1Spec, logFn: LogFunction): PluginType {
+  return internalPluginTypeMapper(spec.pluginJson.type, spec.pluginJson.id, logFn);
+}
+
+export function dependenciesMapper(spec: v0alpha1Spec, logFn: LogFunction): PluginDependencies {
   const plugins = (spec.pluginJson.dependencies?.plugins ?? []).map((v) => ({
     ...v,
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    type: v.type as PluginType,
+    type: internalPluginTypeMapper(v.type, spec.pluginJson.id, logFn),
     version: '',
   }));
 
