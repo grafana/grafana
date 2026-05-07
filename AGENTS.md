@@ -28,7 +28,7 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 
 ## Human Review Gates
 
-Before running `git push` or creating a PR (e.g. `gh pr create`), stop and get explicit human approval. When changes are ready: show a summary of changes and wait for instruction. "Open a PR" in a task description is intent, not permission to push without review.
+Before running `git push`, stop and get explicit human approval. When changes are ready, show a summary of changes and wait for instruction. "Open a PR" in a task description is intent, not permission to push without review.
 
 ## Commands
 
