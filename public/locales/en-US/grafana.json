@@ -515,7 +515,6 @@
         "edit-yaml": "Edit YAML",
         "save": "Save"
       },
-      "error-missing-uid": "Server response missing rule UID",
       "error-title": "Failed to save alert rule",
       "no-group-success": "Rule added successfully"
     },
