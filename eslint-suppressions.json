@@ -3192,11 +3192,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/loki/components/LokiCheatSheet.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/loki/components/LokiContextUi.tsx": {
     "@grafana/no-direct-local-storage-access": {
       "count": 7
