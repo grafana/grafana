@@ -232,6 +232,17 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			return ErrCorrelationNotFound
 		}
 
+		// there is no great way to ensure the target UID is deleted with the update above, so we do it in a small separate update
+		if cmd.Type != nil && *cmd.Type == external {
+			_, err = session.
+				Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).
+				Table("correlation").
+				Update(map[string]interface{}{"target_uid": nil})
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 
