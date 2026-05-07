@@ -33,7 +33,18 @@ export const AnnotationListItem = ({ options, annotation, formatDate, onClick, o
     // Plain-div row rather than <Card>: Card's grid layout puts Description on its
     // own row and makes Heading span across columns, which the panel's single-row
     // layout can't override cleanly. Visual styling kept close to a Card.
-    <div role="button" tabIndex={0} className={styles.row} onClick={onItemClick}>
+    <div
+      role="button"
+      tabIndex={0}
+      className={styles.row}
+      onClick={onItemClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onItemClick();
+        }
+      }}
+    >
       <RenderUserContentAsHTML
         className={styles.heading}
         onClick={(e) => {
