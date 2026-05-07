@@ -155,6 +155,9 @@ export function computeRuleDeletePermanentlyAbility(isApplicable: boolean, delet
     return deleteAbility;
   }
   if (!isAdmin()) {
+    // TODO: replace InsufficientPermissions([]) with an INSUFFICIENT_ROLE cause once the
+    // Ability discriminated union gains that variant. Empty anyOfPermissions currently
+    // renders as "Requires: " with nothing after it — misleading for role-gated actions.
     return InsufficientPermissions([]);
   }
   return Granted;

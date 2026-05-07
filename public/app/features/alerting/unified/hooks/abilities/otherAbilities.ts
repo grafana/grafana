@@ -22,6 +22,9 @@ export function useFolderBulkActionAbilities(): Abilities<FolderBulkAction> {
   const admin = isAdmin();
   return useMemo(
     () => ({
+      // TODO: replace InsufficientPermissions([]) with an INSUFFICIENT_ROLE cause once the
+      // Ability discriminated union gains that variant. Empty anyOfPermissions currently
+      // renders as "Requires: " with nothing after it — misleading for role-gated actions.
       [FolderBulkAction.Pause]: admin ? Granted : InsufficientPermissions([]),
       [FolderBulkAction.Delete]: admin ? Granted : InsufficientPermissions([]),
     }),
