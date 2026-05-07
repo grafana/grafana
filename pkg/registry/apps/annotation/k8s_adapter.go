@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +21,7 @@ import (
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -41,6 +45,10 @@ type k8sRESTAdapter struct {
 	tableConverter rest.TableConvertor
 	accessClient   authtypes.AccessClient
 	installer      *AppInstaller
+
+	tracer  trace.Tracer
+	metrics *Metrics
+	logger  log.Logger
 }
 
 func (s *k8sRESTAdapter) New() runtime.Object {
@@ -48,17 +56,17 @@ func (s *k8sRESTAdapter) New() runtime.Object {
 }
 
 func (s *k8sRESTAdapter) Destroy() {
-	// Stop background cleanup goroutines first so they can't issue new
-	// queries against a backend we're about to close.
+	// Stop background cleanup goroutines
 	if s.installer != nil && s.installer.cleanupCancel != nil {
 		s.installer.cleanupCancel()
 		s.installer.cleanupWg.Wait()
 	}
 
-	// Release backend resources (postgres pool, gRPC connection, ...).
+	// Release backend resources (postgres pool, gRPC connection, ...). Close()
+	// on the decorator passes through to the underlying backend
 	if s.store != nil {
 		if err := s.store.Close(); err != nil {
-			s.installer.logger.Error("annotation store close failed", "error", err)
+			s.logger.Error("annotation store close failed", "error", err)
 		}
 	}
 }
@@ -79,8 +87,14 @@ func (s *k8sRESTAdapter) ConvertToTable(ctx context.Context, object runtime.Obje
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.ListOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.list", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+	start := time.Now()
+	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "list", start, err) }()
 
 	opts := ListOptions{}
 	if options.FieldSelector != nil {
@@ -91,41 +105,41 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
 					opts.DashboardUID = r.Value
 				} else {
-					return nil, fmt.Errorf("unsupported operator %s for spec.dashboardUID (only = supported)", r.Operator)
+					return nil, apierrors.NewBadRequest(fmt.Sprintf("unsupported operator %s for spec.dashboardUID (only = supported)", r.Operator))
 				}
 
 			case "spec.panelID":
 				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
-					panelID, err := strconv.ParseInt(r.Value, 10, 64)
-					if err != nil {
-						return nil, fmt.Errorf("invalid panelID value %q: %w", r.Value, err)
+					panelID, perr := strconv.ParseInt(r.Value, 10, 64)
+					if perr != nil {
+						return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid panelID value %q: %v", r.Value, perr))
 					}
 					opts.PanelID = panelID
 				} else {
-					return nil, fmt.Errorf("unsupported operator %s for spec.panelID (only = supported)", r.Operator)
+					return nil, apierrors.NewBadRequest(fmt.Sprintf("unsupported operator %s for spec.panelID (only = supported)", r.Operator))
 				}
 			case "spec.time":
 				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
-					from, err := strconv.ParseInt(r.Value, 10, 64)
-					if err != nil {
-						return nil, fmt.Errorf("invalid time value %q: %w", r.Value, err)
+					from, perr := strconv.ParseInt(r.Value, 10, 64)
+					if perr != nil {
+						return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid time value %q: %v", r.Value, perr))
 					}
 					opts.From = from
 				} else {
-					return nil, fmt.Errorf("unsupported operator %s for spec.from (only = supported)", r.Operator)
+					return nil, apierrors.NewBadRequest(fmt.Sprintf("unsupported operator %s for spec.from (only = supported)", r.Operator))
 				}
 			case "spec.timeEnd":
 				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
-					to, err := strconv.ParseInt(r.Value, 10, 64)
-					if err != nil {
-						return nil, fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
+					to, perr := strconv.ParseInt(r.Value, 10, 64)
+					if perr != nil {
+						return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid timeEnd value %q: %v", r.Value, perr))
 					}
 					opts.To = to
 				} else {
-					return nil, fmt.Errorf("unsupported operator %s for spec.to (only = supported)", r.Operator)
+					return nil, apierrors.NewBadRequest(fmt.Sprintf("unsupported operator %s for spec.to (only = supported)", r.Operator))
 				}
 			default:
-				return nil, fmt.Errorf("unsupported field selector: %s", r.Field)
+				return nil, apierrors.NewBadRequest(fmt.Sprintf("unsupported field selector: %s", r.Field))
 			}
 		}
 	}
@@ -163,8 +177,15 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	}, nil
 }
 
-func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.get", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("name", name),
+	))
+	defer span.End()
+	start := time.Now()
+	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "get", start, err) }()
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
@@ -190,13 +211,19 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	obj runtime.Object,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
-) (runtime.Object, error) {
+) (out runtime.Object, err error) {
+	namespace := request.NamespaceValue(ctx)
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.create", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+	start := time.Now()
+	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "create", start, err) }()
+
 	annotation, ok := obj.(*annotationV0.Annotation)
 	if !ok {
-		return nil, fmt.Errorf("expected annotation")
+		return nil, apierrors.NewInternalError(fmt.Errorf("expected *Annotation, got %T", obj))
 	}
-
-	namespace := request.NamespaceValue(ctx)
 
 	allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbCreate)
 	if err != nil {
@@ -209,7 +236,6 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	if annotation.Name == "" && annotation.GenerateName == "" {
 		return nil, apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
 	}
-
 	if annotation.Name == "" && annotation.GenerateName != "" {
 		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
 	}
@@ -230,8 +256,15 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	updateValidation rest.ValidateObjectUpdateFunc,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
-) (runtime.Object, bool, error) {
+) (out runtime.Object, created bool, err error) {
 	namespace := request.NamespaceValue(ctx)
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.update", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("name", name),
+	))
+	defer span.End()
+	start := time.Now()
+	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "update", start, err) }()
 
 	// Fetch the existing annotation for patch merging and to verify authz on the pre-update resource.
 	existing, err := s.store.Get(ctx, namespace, name)
@@ -249,15 +282,15 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 
 	resource, ok := obj.(*annotationV0.Annotation)
 	if !ok {
-		return nil, false, fmt.Errorf("expected annotation")
+		return nil, false, apierrors.NewInternalError(fmt.Errorf("expected *Annotation, got %T", obj))
 	}
 
 	if resource.Name != name {
-		return nil, false, fmt.Errorf("name in URL does not match name in body")
+		return nil, false, apierrors.NewBadRequest("name in URL does not match name in body")
 	}
 
 	if resource.Namespace != namespace {
-		return nil, false, fmt.Errorf("namespace in URL does not match namespace in body")
+		return nil, false, apierrors.NewBadRequest("namespace in URL does not match namespace in body")
 	}
 
 	// Check authz on both existing and new body: prevents privilege escalation via scope changes.
@@ -277,15 +310,18 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	}
 
 	updated, err := s.store.Update(ctx, resource)
-	if err != nil {
-		return nil, false, err
-	}
-
-	return updated, false, nil
+	return updated, false, err
 }
 
-func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (out runtime.Object, completed bool, err error) {
 	namespace := request.NamespaceValue(ctx)
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.delete", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("name", name),
+	))
+	defer span.End()
+	start := time.Now()
+	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "delete", start, err) }()
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
@@ -301,9 +337,9 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 	}
 	if !allowedDelete {
 		// Return 404 if caller can't read (don't leak existence), 403 if readable but not deletable.
-		allowedRead, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbGet)
-		if err != nil {
-			return nil, false, err
+		allowedRead, rerr := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbGet)
+		if rerr != nil {
+			return nil, false, rerr
 		}
 		if !allowedRead {
 			return nil, false, apierrors.NewNotFound(annotationGR, name)

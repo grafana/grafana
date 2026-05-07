@@ -9,6 +9,8 @@ import (
 	"sync"
 
 	authtypes "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -41,6 +43,8 @@ type AppInstaller struct {
 	cleanupCancel context.CancelFunc
 	cleanupWg     sync.WaitGroup
 	logger        log.Logger
+	tracer        trace.Tracer
+	metrics       *Metrics
 }
 
 // RegisterAppInstaller is the wire entry point for the ST server.
@@ -49,8 +53,10 @@ func RegisterAppInstaller(
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
 	accessClient authtypes.AccessClient,
+	tracer trace.Tracer,
+	reg prometheus.Registerer,
 ) (*AppInstaller, error) {
-	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient)
+	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient, tracer, reg)
 }
 
 // NewAppInstaller Layers (from bottom to top):
@@ -62,9 +68,15 @@ func NewAppInstaller(
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
 	accessClient authtypes.AccessClient,
+	tracer trace.Tracer,
+	reg prometheus.Registerer,
 ) (*AppInstaller, error) {
+	logger := log.New("annotation.app")
+	metrics := ProvideMetrics(reg)
 	installer := &AppInstaller{
-		logger: log.New("annotation.app"),
+		logger:  logger,
+		tracer:  tracer,
+		metrics: metrics,
 	}
 
 	ctx := context.Background()
@@ -75,16 +87,22 @@ func NewAppInstaller(
 		return nil, err
 	}
 
+	if pgStore, ok := store.(*PostgreSQLStore); ok && reg != nil {
+		reg.MustRegister(newPgxPoolCollector(pgStore.pool))
+	}
+
 	// Start background cleanup if the store supports lifecycle management
 	if lifecycleMgr, ok := store.(LifecycleManager); ok {
 		installer.startCleanup(ctx, lifecycleMgr, cfg.RetentionTTL)
 	}
 
-	// Create K8s REST adapter
 	installer.k8sAdapter = &k8sRESTAdapter{
 		store:        store,
 		accessClient: accessClient,
 		installer:    installer,
+		tracer:       installer.tracer,
+		metrics:      installer.metrics,
+		logger:       logger,
 	}
 
 	// Create the tags handler
