@@ -83,7 +83,7 @@ function setMetas(metas: PluginMetasResponse) {
     // fallback to config.datasources from bootdata
     // eslint-disable-next-line no-restricted-syntax
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
-    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, PluginType.datasource);
+    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, { pluginType: PluginType.datasource });
     return;
   }
 

@@ -4462,6 +4462,14 @@
       "resource-detail-dashboards": "Hai creato {{usage}} di {{limit}} dashboard ({{percentage}}%).",
       "resource-detail-folders": "Hai creato {{usage}} di {{limit}} cartelle ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Cancella cronologia",
       "error": "Impossibile caricare le dashboard visualizzate di recente.",
@@ -8033,19 +8041,6 @@
       "aria-label-explore-data": "Esplora i dati",
       "aria-label-suggested-dashboards": "Dashboard suggerite"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Avvisi non supportati",
-      "text-alerting-supported": "Avvisi supportati"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Il nome viene utilizzato quando si seleziona l'origine dei dati nei pannelli. L'origine dei dati predefinita è preselezionata nei nuovi pannelli."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Impostazioni di base della pagina delle impostazioni dell'origine dei dati",
-      "basic-settings-name-placeholder-name": "Nome",
-      "label-default": "Predefinito",
-      "label-name": "Nome"
-    },
     "build-a-dashboard-button": {
       "blank": "Vuota",
       "build-a-dashboard": "Crea una dashboard",
@@ -11249,7 +11244,7 @@
     "description-order": "Mostra per primi i registri più recenti o quelli più vecchi. Quando si seleziona l'opzione \"Prima i meno recenti\", la visualizzazione scorre automaticamente fino ai registri più recenti in fondo alla pagina.",
     "description-prettify-json": "Imposta le voci di registro JSON con rientro e ritorno a capo.",
     "description-show-controls": "Visualizza i controlli per passare all'ultima o alla prima riga del registro e filtra per livello di registro.",
-    "description-show-log-attributes": "Sperimentale. Quando vengono visualizzati i registri OTel, aggiungi un campo visualizzato extra con coppie chiave-valore pertinenti da etichette e metadati.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Allinea i valori utilizzando le colonne quando si usano i campi visualizzati.",
     "description-wrap-lines": "Visualizza i registri su una singola riga oppure adatta le voci più lunghe per adattarle al pannello.",
     "field-selector": {
@@ -11575,7 +11570,7 @@
       "line-contains-not": "Aggiungi come riga non contenente filtro",
       "search-text": "Cerca nei risultati"
     },
-    "show-log-attributes": "Visualizza gli attributi del registro per i registri OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Risoluzione marca temporale",
     "un-themed-log-details": {
       "aria-label-data-links": "Collegamenti dati",
