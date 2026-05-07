@@ -4,7 +4,6 @@ import moment, { type Moment } from 'moment-timezone';
 import { formatDate } from '@grafana/i18n';
 
 import { type TimeZone } from '../types/time';
-import { getFeatureToggle } from '../utils/featureToggles';
 
 import { type DateTimeOptions, getTimeZone } from './common';
 import { systemDateFormats } from './formats';
@@ -103,8 +102,8 @@ type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (dateInUtc
  * @public
  */
 export const dateTimeFormat: DateTimeFormatter<DateTimeOptionsWithFormat> = (dateInUtc, options?) => {
-  // If a custom format is provided (or the toggle isn't enabled), use the previous implementation
-  if (!getFeatureToggle('localeFormatPreference') || options?.format) {
+  // If a custom format is provided, use the previous implementation
+  if (options?.format) {
     return toTz(dateInUtc, getTimeZone(options)).format(getFormat(options));
   }
 
@@ -149,8 +148,8 @@ export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc, options?) =>
  * @public
  */
 export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) => {
-  // If a custom format is provided (or the toggle isn't enabled), use the previous implementation
-  if (!getFeatureToggle('localeFormatPreference') || options?.format) {
+  // If a custom format is provided, use the previous implementation
+  if (options?.format) {
     return toTz(dateInUtc, getTimeZone(options)).format(`${systemDateFormats.fullDate} z`);
   }
 

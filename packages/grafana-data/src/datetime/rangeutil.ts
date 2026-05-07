@@ -8,7 +8,6 @@ import {
   type RelativeTimeRange,
   type TimeOption,
 } from '../types/time';
-import { getFeatureToggle } from '../utils/featureToggles';
 
 import * as dateMath from './datemath';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo, toIANATimezone } from './formatter';
@@ -456,10 +455,6 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
   if (isDateTime(range.from) && isDateTime(range.to)) {
     const fromDate = range.from.toDate();
     const toDate = range.to.toDate();
-
-    if (!getFeatureToggle('localeFormatPreference')) {
-      return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
-    }
 
     const hasSeconds = fromDate.getSeconds() !== 0 || toDate.getSeconds() !== 0;
     const intlFormat = hasSeconds ? rangeFormatFull : rangeFormatShort;
