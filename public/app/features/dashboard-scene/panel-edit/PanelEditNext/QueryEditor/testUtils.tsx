@@ -1,7 +1,7 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactElement } from 'react';
+import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
@@ -145,6 +145,8 @@ export const mockUIStateBase = {
   toggleTransformationSelection: jest.fn(),
   clearSelection: jest.fn(),
   setMultiSelectMode: jest.fn(),
+  confirmingDeleteItemKey: null,
+  setConfirmingDeleteItemKey: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -195,6 +197,36 @@ interface CreateQueryEditorProviderOptions {
   qrState?: Partial<QueryRunnerState>;
   panelState?: Partial<PanelState>;
   alertingState?: Partial<AlertingState>;
+}
+
+/**
+ * Wires the inline-delete confirmation state with real React state so tests exercise the same
+ * flow as production. Tests can still override `confirmingDeleteItemKey` / `setConfirmingDeleteItemKey`
+ * via `uiStateOverrides` for edge cases.
+ */
+function StatefulConfirmationProvider({
+  uiState,
+  children,
+  render,
+}: {
+  uiState: QueryEditorUIState;
+  children: ReactNode;
+  render: (uiState: QueryEditorUIState, children: ReactNode) => ReactElement;
+}) {
+  const [confirmingDeleteItemKey, setConfirmingDeleteItemKey] = useState<string | null>(
+    uiState.confirmingDeleteItemKey ?? null
+  );
+
+  const wiredUiState = useMemo<QueryEditorUIState>(
+    () => ({
+      ...uiState,
+      confirmingDeleteItemKey,
+      setConfirmingDeleteItemKey,
+    }),
+    [uiState, confirmingDeleteItemKey]
+  );
+
+  return render(wiredUiState, children);
 }
 
 /**
@@ -275,6 +307,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingSavedQuery: null,
     setPendingSavedQuery: jest.fn(),
     showVersionBanner: false,
+    confirmingDeleteItemKey: null,
+    setConfirmingDeleteItemKey: jest.fn(),
     ...uiStateOverrides,
   };
 
@@ -294,17 +328,24 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     user: userEvent.setup({ pointerEventsCheck: 0 }),
     ...render(
       <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-        <QueryEditorProvider
-          dsState={defaultDsState}
-          qrState={defaultQrState}
-          panelState={defaultPanelState}
+        <StatefulConfirmationProvider
           uiState={defaultUiState}
-          actions={defaultActions}
-          alertingState={defaultAlertingState}
-          typeConfig={mockTypeConfig}
+          render={(wiredUiState, wiredChildren) => (
+            <QueryEditorProvider
+              dsState={defaultDsState}
+              qrState={defaultQrState}
+              panelState={defaultPanelState}
+              uiState={wiredUiState}
+              actions={defaultActions}
+              alertingState={defaultAlertingState}
+              typeConfig={mockTypeConfig}
+            >
+              {wiredChildren}
+            </QueryEditorProvider>
+          )}
         >
           {children}
-        </QueryEditorProvider>
+        </StatefulConfirmationProvider>
       </OpenFeatureProvider>
     ),
   };

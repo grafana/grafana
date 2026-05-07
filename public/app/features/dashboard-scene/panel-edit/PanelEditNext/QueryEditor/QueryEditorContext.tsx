@@ -110,6 +110,8 @@ export interface QueryEditorUIState {
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;
   showVersionBanner: boolean;
+  confirmingDeleteItemKey: string | null;
+  setConfirmingDeleteItemKey: (key: string | null) => void;
 }
 
 export interface QueryEditorActions {

@@ -1,23 +1,15 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { type AlertState, type GrafanaTheme2, type IconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, Stack, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ConfirmationStyle, DeleteConfirm } from './DeleteConfirm';
-import { useQueryEditorTypeConfig } from './QueryEditor/QueryEditorContext';
+import { useQueryEditorTypeConfig, useQueryEditorUIContext } from './QueryEditor/QueryEditorContext';
+import { type ActionItem, getActionItemKey } from './actionItem';
 import { QueryEditorType } from './constants';
 import { trackCardAction, type CardActionSource } from './tracking';
-
-export interface ActionItem {
-  name: string;
-  type: QueryEditorType;
-  isHidden: boolean;
-  error?: string;
-  /** Alert state for dynamic styling (only used when type is Alert) */
-  alertState?: AlertState | null;
-}
 
 enum ActionButtonId {
   duplicate = 'duplicate',
@@ -70,7 +62,9 @@ export function Actions({
   const theme = useTheme2();
   const typeConfig = useQueryEditorTypeConfig();
   const styles = useStyles2(getStyles);
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const { confirmingDeleteItemKey, setConfirmingDeleteItemKey } = useQueryEditorUIContext();
+  const itemKey = getActionItemKey(item);
+  const showDeleteConfirmation = confirmingDeleteItemKey === itemKey;
   const typeLabel = typeConfig[item.type].getLabel();
   const requiresDeleteConfirmation = typeConfig[item.type].deleteConfirmation;
   const cardActionSource: CardActionSource = contentHeader ? 'content_header' : 'sidebar_card';
@@ -89,19 +83,29 @@ export function Actions({
 
   const handleDelete = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+
       if (!onDelete) {
         return;
       }
 
       if (requiresDeleteConfirmation) {
-        setShowDeleteConfirmation(true);
+        setConfirmingDeleteItemKey(itemKey);
       } else {
         trackCardAction('delete', item.type, cardActionSource);
         onDelete();
         handleResetFocus?.();
       }
     },
-    [requiresDeleteConfirmation, onDelete, handleResetFocus, item.type, cardActionSource]
+    [
+      requiresDeleteConfirmation,
+      onDelete,
+      handleResetFocus,
+      itemKey,
+      item.type,
+      cardActionSource,
+      setConfirmingDeleteItemKey,
+    ]
   );
 
   const handleConfirmDelete = useCallback(() => {
@@ -111,14 +115,14 @@ export function Actions({
 
     trackCardAction('delete', item.type, cardActionSource);
     onDelete();
-    setShowDeleteConfirmation(false);
+    setConfirmingDeleteItemKey(null);
     handleResetFocus?.();
-  }, [onDelete, handleResetFocus, item.type, cardActionSource]);
+  }, [onDelete, handleResetFocus, item.type, cardActionSource, setConfirmingDeleteItemKey]);
 
   const handleCancelDelete = useCallback(() => {
-    setShowDeleteConfirmation(false);
+    setConfirmingDeleteItemKey(null);
     handleResetFocus?.();
-  }, [handleResetFocus]);
+  }, [handleResetFocus, setConfirmingDeleteItemKey]);
 
   const actionButtons = useMemo<ActionButtonConfig[]>(() => {
     const orderMap: Record<ActionButtonId, number> = {

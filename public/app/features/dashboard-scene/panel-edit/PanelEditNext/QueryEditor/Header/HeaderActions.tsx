@@ -5,6 +5,7 @@ import { Stack } from '@grafana/ui';
 
 import { Actions } from '../../Actions';
 import { ConfirmationStyle } from '../../DeleteConfirm';
+import { queryToActionItem, transformationToActionItem } from '../../actionItem';
 import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
@@ -49,16 +50,17 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
     }
   }, [selectedQuery, selectedTransformation, deleteQuery, deleteTransformation]);
 
-  const itemName =
-    selectedQuery?.refId ?? selectedTransformation?.registryItem?.name ?? selectedTransformation?.transformId ?? '';
-
-  const item = {
-    name: itemName,
-    type: cardType,
-    isHidden: selectedQuery?.hide || selectedTransformation?.transformConfig?.disabled || false,
-  };
-
   if (cardType === QueryEditorType.Alert) {
+    return null;
+  }
+
+  const item = selectedQuery
+    ? queryToActionItem(selectedQuery, { type: cardType })
+    : selectedTransformation
+      ? transformationToActionItem(selectedTransformation)
+      : null;
+
+  if (!item) {
     return null;
   }
 
@@ -68,8 +70,6 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
       <SaveButton parentRef={containerRef} />
       <PluginActions app={CoreApp.PanelEditor} />
       <Actions
-        // Remount on selection change so an open delete prompt doesn't follow the user.
-        key={`${item.type}:${item.name}`}
         contentHeader={true}
         confirmStyle={ConfirmationStyle.full}
         item={item}

@@ -193,6 +193,91 @@ function renderWithBothContexts(dataPane: PanelDataPaneNext) {
   );
 }
 
+describe('QueryEditorContextWrapper - delete confirmation', () => {
+  beforeEach(() => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [],
+      loading: false,
+      isDashboardSaved: true,
+    });
+  });
+
+  it('starts with no item in the intermediate confirmation state', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+    expect(result.current.confirmingDeleteItemKey).toBeNull();
+  });
+
+  it('records the most recently set item key and clears it on null', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteItemKey('query:A'));
+    expect(result.current.confirmingDeleteItemKey).toBe('query:A');
+
+    act(() => result.current.setConfirmingDeleteItemKey('query:B'));
+    expect(result.current.confirmingDeleteItemKey).toBe('query:B');
+
+    act(() => result.current.setConfirmingDeleteItemKey(null));
+    expect(result.current.confirmingDeleteItemKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected query changes', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteItemKey('query:A'));
+    expect(result.current.confirmingDeleteItemKey).toBe('query:A');
+
+    act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
+
+    expect(result.current.confirmingDeleteItemKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected transformation changes', () => {
+    const { useTransformations } = require('./hooks/useTransformations');
+    const mockTransformation: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    useTransformations.mockReturnValue([mockTransformation]);
+
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteItemKey('transformation:reduce-0'));
+    expect(result.current.confirmingDeleteItemKey).toBe('transformation:reduce-0');
+
+    act(() => result.current.setSelectedTransformation(mockTransformation));
+
+    expect(result.current.confirmingDeleteItemKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected alert changes', () => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [mockAlert],
+      loading: false,
+      isDashboardSaved: true,
+    });
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteItemKey('query:A'));
+    expect(result.current.confirmingDeleteItemKey).toBe('query:A');
+
+    act(() => result.current.setSelectedAlert(mockAlert));
+
+    expect(result.current.confirmingDeleteItemKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when selection is cleared', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteItemKey('query:A'));
+    expect(result.current.confirmingDeleteItemKey).toBe('query:A');
+
+    act(() => result.current.clearSelection());
+
+    expect(result.current.confirmingDeleteItemKey).toBeNull();
+  });
+});
+
 describe('QueryEditorContextWrapper - delete actions', () => {
   beforeEach(() => {
     mockUseAlertRulesForPanel.mockReturnValue({

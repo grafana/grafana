@@ -1,8 +1,9 @@
 import { screen } from '@testing-library/react';
 
-import { Actions, type ActionItem } from './Actions';
+import { Actions } from './Actions';
 import { ConfirmationStyle } from './DeleteConfirm';
 import { renderWithQueryEditorProvider } from './QueryEditor/testUtils';
+import { type ActionItem } from './actionItem';
 import { QueryEditorType } from './constants';
 import { trackCardAction } from './tracking';
 
@@ -14,7 +15,7 @@ jest.mock('./tracking', () => ({
 const trackCardActionMock = jest.mocked(trackCardAction);
 
 const queryItem: ActionItem = {
-  name: 'A',
+  id: 'A',
   type: QueryEditorType.Query,
   isHidden: false,
 };
@@ -123,6 +124,56 @@ describe('Actions', () => {
 
       await user.click(screen.getByRole('button', { name: 'Confirm' }));
       expect(handleResetFocus).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('single confirmation across instances', () => {
+    it("cancels item A's confirmation when the user clicks trash on item B", async () => {
+      const onDeleteA = jest.fn();
+      const onDeleteB = jest.fn();
+      const itemA: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
+      const itemB: ActionItem = { id: 'B', type: QueryEditorType.Query, isHidden: false };
+
+      const { user } = renderWithQueryEditorProvider(
+        <>
+          <Actions item={itemA} onDelete={onDeleteA} />
+          <Actions item={itemB} onDelete={onDeleteB} />
+        </>
+      );
+
+      const trashButtons = screen.getAllByRole('button', { name: 'Remove Query' });
+      expect(trashButtons).toHaveLength(2);
+
+      await user.click(trashButtons[0]);
+      expect(screen.getAllByRole('button', { name: 'Confirm' })).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: 'Remove Query' })).toHaveLength(1);
+
+      // Clicking trash on B should auto-cancel A and open the prompt for B only.
+      await user.click(screen.getByRole('button', { name: 'Remove Query' }));
+
+      expect(onDeleteA).not.toHaveBeenCalled();
+      expect(onDeleteB).not.toHaveBeenCalled();
+      expect(screen.getAllByRole('button', { name: 'Confirm' })).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: 'Remove Query' })).toHaveLength(1);
+    });
+
+    it('does not show a confirmation on a sibling Actions whose id does not match', async () => {
+      const itemA: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
+      const itemB: ActionItem = { id: 'B', type: QueryEditorType.Query, isHidden: false };
+
+      const { user } = renderWithQueryEditorProvider(
+        <>
+          <Actions item={itemA} onDelete={jest.fn()} />
+          <Actions item={itemB} onDelete={jest.fn()} />
+        </>
+      );
+
+      const [trashA] = screen.getAllByRole('button', { name: 'Remove Query' });
+      await user.click(trashA);
+
+      // Only one confirmation cluster regardless of how many Actions are mounted.
+      expect(screen.getAllByRole('button', { name: 'Confirm' })).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: 'Cancel' })).toHaveLength(1);
     });
   });
 
