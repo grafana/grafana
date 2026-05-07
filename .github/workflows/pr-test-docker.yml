@@ -1,0 +1,48 @@
+name: Test Dockerfile
+
+on:
+  pull_request:
+    paths:
+      - Makefile
+      - Dockerfile
+      - public/**
+      - packages/**
+      - apps/**
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**/go.work'
+      - '**/go.work.sum'
+      - '**/package.json'
+      - '**/nx.json'
+      - '**/project.json'
+      - '**/yarn.lock'
+      - conf/**
+      - .yarnrc.yml
+      - .yarn/**
+      - tsconfig.json
+      - '**.js'
+      # We only want the top directory here.
+      - '*.ts'
+      # But this one we want all
+      - '**.config.ts'
+      - scripts/**
+      - emails/**
+      - .citools/**
+      - kinds/**
+      - embed.go
+      - packaging/docker/**
+      - .github/workflows/pr-test-docker.yml
+
+jobs:
+  build-dockerfile:
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4
+      - name: Build Dockerfile
+        run: make build-docker-full

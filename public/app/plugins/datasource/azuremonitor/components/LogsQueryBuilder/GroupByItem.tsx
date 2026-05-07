@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
 import {
-  BuilderQueryEditorGroupByExpression,
+  type BuilderQueryEditorGroupByExpression,
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorExpressionType,
 } from '../../dataquery.gen';
@@ -28,7 +28,6 @@ export const GroupByItem: React.FC<GroupByItemProps> = ({
   columns,
   templateVariableOptions,
 }) => {
-  const { t } = useTranslate();
   const columnOptions: Array<SelectableValue<string>> =
     columns.length > 0
       ? columns.map((c) => ({ label: c.label, value: c.value }))

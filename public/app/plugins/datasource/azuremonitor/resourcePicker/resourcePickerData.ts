@@ -1,25 +1,28 @@
+import { uniq } from 'lodash';
+
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
-import { logsResourceTypes, resourceTypeDisplayNames, resourceTypes } from '../azureMetadata';
-import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
-import AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
-import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
+import { logsResourceTypes } from '../azureMetadata/logsResourceTypes';
+import { resourceTypeDisplayNames, resourceTypes } from '../azureMetadata/resourceTypes';
+import type AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
+import type AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
+import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import {
   addResources,
-  findRow,
   parseMultipleResourceDetails,
   parseResourceDetails,
   parseResourceURI,
   resourceToString,
 } from '../components/ResourcePicker/utils';
+import { type AzureMonitorResource } from '../dataquery.gen';
+import { type AzureMonitorQuery } from '../types/query';
 import {
-  AzureMonitorDataSourceInstanceSettings,
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorResource,
-  AzureMonitorQuery,
-  AzureResourceSummaryItem,
-  RawAzureResourceItem,
-} from '../types';
+  type AzureMonitorDataSourceInstanceSettings,
+  type AzureMonitorDataSourceJsonData,
+  type AzureResourceSummaryItem,
+  type RawAzureResourceItem,
+  type ResourceGraphFilters,
+} from '../types/types';
 
 const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');
 
@@ -46,63 +49,95 @@ export default class ResourcePickerData extends DataSourceWithBackend<
 
   async fetchInitialRows(
     type: ResourcePickerQueryType,
-    currentSelection?: AzureMonitorResource[]
+    currentSelection?: AzureMonitorResource[],
+    filters?: ResourceGraphFilters
   ): Promise<ResourceRowGroup> {
-    const subscriptions = await this.getSubscriptions();
+    try {
+      const subscriptions = await this.getSubscriptions(filters);
 
-    if (!currentSelection) {
-      return subscriptions;
-    }
+      if (!currentSelection) {
+        return subscriptions;
+      }
 
-    let resources = subscriptions;
-    const promises = currentSelection.map((selection) => async () => {
-      if (selection.subscription) {
-        const resourceGroupURI = `/subscriptions/${selection.subscription}/resourceGroups/${selection.resourceGroup}`;
+      const rgUriOf = (s: AzureMonitorResource) => `/subscriptions/${s.subscription}/resourceGroups/${s.resourceGroup}`;
 
-        if (selection.resourceGroup && !findRow(resources, resourceGroupURI)) {
-          const resourceGroups = await this.getResourceGroupsBySubscriptionId(selection.subscription, type);
-          resources = addResources(resources, `/subscriptions/${selection.subscription}`, resourceGroups);
+      const hasSubAndRG = (
+        s: AzureMonitorResource
+      ): s is AzureMonitorResource & { subscription: string; resourceGroup: string } =>
+        Boolean(s.subscription && s.resourceGroup);
+
+      const hasResource = (
+        s: AzureMonitorResource
+      ): s is AzureMonitorResource & { subscription: string; resourceGroup: string; resourceName: string } =>
+        hasSubAndRG(s) && Boolean(s.resourceName);
+
+      const subsToFetch = uniq(currentSelection.filter(hasSubAndRG).map(({ subscription }) => subscription));
+
+      const rgUrisToFetch = uniq(currentSelection.filter(hasResource).map(rgUriOf));
+
+      const [groupsResults, resourcesResults] = await Promise.all([
+        Promise.all(
+          subsToFetch.map((sub) => this.getResourceGroupsBySubscriptionId(sub, type).then((rgs) => [sub, rgs] as const))
+        ),
+        Promise.all(
+          rgUrisToFetch.map((rgUri) =>
+            this.getResourcesForResourceGroup(rgUri, type).then((res) => [rgUri, res] as const)
+          )
+        ),
+      ]);
+
+      const withGroups = groupsResults.reduce<ResourceRowGroup>(
+        (acc, [sub, rgs]) => addResources(acc, `/subscriptions/${sub}`, rgs),
+        subscriptions
+      );
+
+      return resourcesResults.reduce<ResourceRowGroup>(
+        (acc, [rgUri, res]) => addResources(acc, rgUri, res),
+        withGroups
+      );
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message !== 'No subscriptions were found') {
+          throw err;
         }
-
-        const resourceURI = resourceToString(selection);
-        if (selection.resourceName && !findRow(resources, resourceURI)) {
-          const resourcesForResourceGroup = await this.getResourcesForResourceGroup(resourceGroupURI, type);
-          resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
+        if (filters) {
+          return [];
         }
       }
-    });
-
-    for (const promise of promises) {
-      // Fetch resources one by one, avoiding re-fetching the same resource
-      // and race conditions updating the resources array
-      await promise();
+      throw err;
     }
-
-    return resources;
   }
 
   async fetchAndAppendNestedRow(
     rows: ResourceRowGroup,
     parentRow: ResourceRow,
-    type: ResourcePickerQueryType
+    type: ResourcePickerQueryType,
+    filters?: ResourceGraphFilters
   ): Promise<ResourceRowGroup> {
     const nestedRows =
       parentRow.type === ResourceRowType.Subscription
-        ? await this.getResourceGroupsBySubscriptionId(parentRow.id, type)
-        : await this.getResourcesForResourceGroup(parentRow.uri, type);
+        ? await this.getResourceGroupsBySubscriptionId(parentRow.id, type, filters)
+        : await this.getResourcesForResourceGroup(parentRow.uri, type, filters);
 
     return addResources(rows, parentRow.uri, nestedRows);
   }
 
-  search = async (searchPhrase: string, searchType: ResourcePickerQueryType): Promise<ResourceRowGroup> => {
+  search = async (
+    searchPhrase: string,
+    searchType: ResourcePickerQueryType,
+    filters: ResourceGraphFilters
+  ): Promise<ResourceRowGroup> => {
     let searchQuery = 'resources';
     if (searchType === 'logs') {
       searchQuery += `
       | union resourcecontainers`;
     }
+
+    const filtersQuery = createFilter(filters);
     searchQuery += `
         | where id contains "${searchPhrase}"
         ${await this.filterByType(searchType)}
+        ${filtersQuery}
         | order by tolower(name) asc
         | limit ${this.resultLimit}
       `;
@@ -134,8 +169,8 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     });
   };
 
-  async getSubscriptions(): Promise<ResourceRowGroup> {
-    const subscriptions = await this.azureResourceGraphDatasource.getSubscriptions();
+  async getSubscriptions(filters?: ResourceGraphFilters): Promise<ResourceRowGroup> {
+    const subscriptions = await this.azureResourceGraphDatasource.getSubscriptions(filters);
 
     if (!subscriptions.length) {
       throw new Error('No subscriptions were found');
@@ -153,11 +188,12 @@ export default class ResourcePickerData extends DataSourceWithBackend<
 
   async getResourceGroupsBySubscriptionId(
     subscriptionId: string,
-    type: ResourcePickerQueryType
+    type: ResourcePickerQueryType,
+    filters?: ResourceGraphFilters
   ): Promise<ResourceRowGroup> {
     const filter = await this.filterByType(type);
 
-    const resourceGroups = await this.azureResourceGraphDatasource.getResourceGroups(subscriptionId, filter);
+    const resourceGroups = await this.azureResourceGraphDatasource.getResourceGroups(subscriptionId, filter, filters);
 
     return resourceGroups.map((r) => {
       const parsedUri = parseResourceURI(r.resourceGroupURI);
@@ -176,8 +212,16 @@ export default class ResourcePickerData extends DataSourceWithBackend<
   }
 
   // Refactor this one out at a later date
-  async getResourcesForResourceGroup(uri: string, type: ResourcePickerQueryType): Promise<ResourceRowGroup> {
-    const resources = await this.azureResourceGraphDatasource.getResourceNames({ uri }, await this.filterByType(type));
+  async getResourcesForResourceGroup(
+    uri: string,
+    type: ResourcePickerQueryType,
+    filters?: ResourceGraphFilters
+  ): Promise<ResourceRowGroup> {
+    const resources = await this.azureResourceGraphDatasource.getResourceNames(
+      { uri },
+      await this.filterByType(type),
+      filters
+    );
 
     return resources.map((resource) => {
       return {
@@ -338,3 +382,19 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     return newSelectedRows;
   }
 }
+export const createFilter = (filters: ResourceGraphFilters) => {
+  let filtersQuery = '';
+  if (filters) {
+    if (filters.subscriptions && filters.subscriptions.length > 0) {
+      filtersQuery += `| where subscriptionId in (${filters.subscriptions.map((s) => `"${s.toLowerCase()}"`).join(',')})\n`;
+    }
+    if (filters.types && filters.types.length > 0) {
+      filtersQuery += `| where type in (${filters.types.map((t) => `"${t.toLowerCase()}"`).join(',')})\n`;
+    }
+    if (filters.locations && filters.locations.length > 0) {
+      filtersQuery += `| where location in (${filters.locations.map((l) => `"${l.toLowerCase()}"`).join(',')})\n`;
+    }
+  }
+
+  return filtersQuery;
+};

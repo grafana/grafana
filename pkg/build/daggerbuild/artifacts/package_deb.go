@@ -83,7 +83,6 @@ func (d *Deb) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 		BeforeRemove: "/src/packaging/deb/control/prerm",
 		Depends: []string{
 			"adduser",
-			"musl",
 		},
 		EnvFolder: "/pkg/etc/default",
 		ExtraArgs: []string{
@@ -128,6 +127,10 @@ func (d *Deb) VerifyFile(ctx context.Context, client *dagger.Client, file *dagge
 
 func (d *Deb) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
 	panic("not implemented") // TODO: Implement
+}
+
+func (d *Deb) String() string {
+	return "deb"
 }
 
 func NewDebFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {

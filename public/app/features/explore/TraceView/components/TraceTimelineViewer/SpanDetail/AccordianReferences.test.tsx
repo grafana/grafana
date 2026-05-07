@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import AccordianReferences, { AccordianReferencesProps } from './AccordianReferences';
+import AccordianReferences, { type AccordianReferencesProps } from './AccordianReferences';
 
 const traceID = 'trace1';
 const references = [
@@ -75,7 +75,7 @@ describe('AccordianReferences tests', () => {
   it('renders the correct number of references', () => {
     setup();
 
-    expect(screen.getByRole('switch', { name: 'References (3)' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'References 3' })).toBeInTheDocument();
   });
 
   it('content doesnt show when not expanded', () => {
@@ -88,7 +88,7 @@ describe('AccordianReferences tests', () => {
   it('renders the content when it is expanded', () => {
     setup({ isOpen: true } as AccordianReferencesProps);
 
-    expect(screen.getByRole('switch', { name: 'References (3)' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'References 3' })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: /^service\d\sop\d/ })).toHaveLength(2);
     expect(screen.getByRole('link', { name: /^View\sLinked/ })).toBeInTheDocument();
   });

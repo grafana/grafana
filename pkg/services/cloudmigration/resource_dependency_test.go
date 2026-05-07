@@ -144,10 +144,11 @@ func TestResourceDependencyParse(t *testing.T) {
 				NotificationPolicyType,
 				ContactPointType,
 				NotificationTemplateType,
+				MuteTimingType,
 			}
 			result, err := ResourceDependency.Parse(input)
 			require.NoError(t, err)
-			require.Len(t, result, 3)
+			require.Len(t, result, len(input))
 		})
 	})
 

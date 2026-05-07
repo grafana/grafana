@@ -1,8 +1,8 @@
-import { clamp } from 'lodash';
 import { useLayoutEffect } from 'react';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { clamp } from '../../../utils/clamp';
+import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 interface KeyboardPluginProps {
   config: UPlotConfigBuilder; // onkeypress, onkeyup, onkeydown (triggered by vizlayout handlers)
@@ -168,9 +168,6 @@ const initHook = (u: uPlot) => {
   (u.hooks.destroy ??= []).push(onDestroy);
 };
 
-/**
- * @alpha
- */
 export const KeyboardPlugin = ({ config }: KeyboardPluginProps) => {
   useLayoutEffect(() => config.addHook('init', initHook), [config]);
 

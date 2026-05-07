@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
 
 import { NetworkGraphModal } from './NetworkGraphModal';
-import { UsagesToNetwork } from './utils';
+import { type UsagesToNetwork } from './types';
 
 interface Props {
   id: string;
@@ -15,7 +15,7 @@ interface Props {
 
 export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
   const network = useMemo(() => usages.find((n) => n.variable.id === id), [usages, id]);
-  const { t } = useTranslate();
+
   if (usages.length === 0 || isAdhoc || !network) {
     return null;
   }

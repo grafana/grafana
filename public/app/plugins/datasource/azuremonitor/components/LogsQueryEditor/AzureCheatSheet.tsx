@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -13,18 +13,19 @@ import {
   LoadingPlaceholder,
   ScrollContainer,
   Select,
+  Stack,
   useStyles2,
 } from '@grafana/ui';
 
-import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
+import type AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
+import { AzureQueryType } from '../../dataquery.gen';
+import { type AzureMonitorQuery } from '../../types/query';
 import {
-  AzureMonitorQuery,
-  AzureQueryType,
-  Category,
-  CheatsheetQueries,
-  CheatsheetQuery,
-  DropdownCategories,
-} from '../../types';
+  type Category,
+  type CheatsheetQueries,
+  type CheatsheetQuery,
+  type DropdownCategories,
+} from '../../types/types';
 
 import { RawQuery } from './RawQuery';
 import tokenizer from './syntax';
@@ -42,7 +43,7 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchInputValue, setSearchInputValue] = useState('');
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const lang = { grammar: tokenizer, name: 'kql' };
   const dropdownMenu = useMemo(() => {
     if (cheatsheetQueries) {
@@ -161,7 +162,10 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                 backspaceRemovesValue={true}
                 placeholder={t('components.azure-cheat-sheet.placeholder-all-categories', 'All categories')}
                 isClearable={true}
-                noOptionsMessage="Unable to list all categories"
+                noOptionsMessage={t(
+                  'components.azure-cheat-sheet.noOptionsMessage-unable-to-list-categories',
+                  'Unable to list all categories'
+                )}
                 formatCreateLabel={(input: string) => `Category: ${input}`}
                 isSearchable={true}
                 isMulti={true}
@@ -188,55 +192,56 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                 return (
                   <Collapse
                     label={category + ' ' + `(${visibleQueries[category]!.length})`}
-                    collapsible={true}
                     isOpen={areDropdownsOpen[category]}
                     onToggle={(isOpen) => setAreDropdownsOpen({ ...areDropdownsOpen, [category]: isOpen })}
                     key={category}
                   >
-                    {visibleQueries[category]!.map((query) => {
-                      return (
-                        <Card className={styles.card} key={query.id}>
-                          <Card.Heading>{query.displayName}</Card.Heading>
-                          <ScrollContainer showScrollIndicators maxHeight="100px">
-                            <RawQuery
-                              aria-label={t(
-                                'components.azure-cheat-sheet.aria-label-raw-query',
-                                '{{queryDisplayName}} raw query',
-                                { queryDisplayName: query.displayName }
-                              )}
-                              query={query.body}
-                              lang={lang}
-                              className={styles.rawQuery}
-                            />
-                          </ScrollContainer>
-                          <Card.Actions>
-                            <Button
-                              size="sm"
-                              aria-label={t(
-                                'components.azure-cheat-sheet.aria-label-use-query',
-                                'Use this query button'
-                              )}
-                              onClick={() => {
-                                props.onChange({
-                                  refId: 'A',
-                                  queryType: AzureQueryType.LogAnalytics,
-                                  azureLogAnalytics: { query: query.body },
-                                  datasource: props.datasource,
-                                });
-                                reportInteraction('grafana_azure_cheatsheet_logs_query_selected', {
-                                  id: query.id,
-                                  queryName: query.displayName,
-                                  query: query.body,
-                                  queryCategories: query.related.categories,
-                                });
-                              }}
-                            >
-                              <Trans i18nKey="components.azure-cheat-sheet.button-use-query">Use this query</Trans>
-                            </Button>
-                          </Card.Actions>
-                        </Card>
-                      );
-                    })}
+                    <Stack direction="column">
+                      {visibleQueries[category]!.map((query) => {
+                        return (
+                          <Card noMargin className={styles.card} key={query.id}>
+                            <Card.Heading>{query.displayName}</Card.Heading>
+                            <ScrollContainer showScrollIndicators maxHeight="100px">
+                              <RawQuery
+                                aria-label={t(
+                                  'components.azure-cheat-sheet.aria-label-raw-query',
+                                  '{{queryDisplayName}} raw query',
+                                  { queryDisplayName: query.displayName }
+                                )}
+                                query={query.body}
+                                lang={lang}
+                                className={styles.rawQuery}
+                              />
+                            </ScrollContainer>
+                            <Card.Actions>
+                              <Button
+                                size="sm"
+                                aria-label={t(
+                                  'components.azure-cheat-sheet.aria-label-use-query',
+                                  'Use this query button'
+                                )}
+                                onClick={() => {
+                                  props.onChange({
+                                    refId: 'A',
+                                    queryType: AzureQueryType.LogAnalytics,
+                                    azureLogAnalytics: { query: query.body },
+                                    datasource: props.datasource,
+                                  });
+                                  reportInteraction('grafana_azure_cheatsheet_logs_query_selected', {
+                                    id: query.id,
+                                    queryName: query.displayName,
+                                    query: query.body,
+                                    queryCategories: query.related.categories,
+                                  });
+                                }}
+                              >
+                                <Trans i18nKey="components.azure-cheat-sheet.button-use-query">Use this query</Trans>
+                              </Button>
+                            </Card.Actions>
+                          </Card>
+                        );
+                      })}
+                    </Stack>
                   </Collapse>
                 );
               }

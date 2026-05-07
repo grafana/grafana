@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, FormattedValue, toDataFrame } from '@grafana/data';
+import { type DataFrame, FieldType, type FormattedValue, toDataFrame } from '@grafana/data';
 
 import { getRawPrometheusListItemsFromDataFrame } from './getRawPrometheusListItemsFromDataFrame';
 
@@ -30,7 +30,7 @@ describe('getRawPrometheusListItemsFromDataFrame', () => {
     const result = getRawPrometheusListItemsFromDataFrame(dataFrame);
     const differenceBetweenValueAndAttribute = 6;
     result.forEach((row) => {
-      expect(parseInt(row.attribute, 10)).toEqual(parseInt(row.Value, 10) + differenceBetweenValueAndAttribute);
+      expect(parseInt(row.attribute!, 10)).toEqual(parseInt(row.Value, 10) + differenceBetweenValueAndAttribute);
     });
   });
 });

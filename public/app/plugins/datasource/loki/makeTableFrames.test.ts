@@ -1,4 +1,4 @@
-import { DataFrame, FieldType } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data';
 
 import { makeTableFrames } from './makeTableFrames';
 
@@ -102,7 +102,7 @@ const outputSingle = [
       { config: {}, name: 'Value #A', type: 'number', values: [23] },
     ],
     length: 1,
-    meta: { preferredVisualisationType: 'table' },
+    meta: { type: 'numeric-long' },
     refId: 'A',
   },
 ];
@@ -117,7 +117,7 @@ const outputMulti = [
       { config: {}, name: 'Value #A', type: 'number', values: [23, 45] },
     ],
     length: 2,
-    meta: { preferredVisualisationType: 'table' },
+    meta: { type: 'numeric-long' },
     refId: 'A',
   },
   {
@@ -129,7 +129,7 @@ const outputMulti = [
       { config: {}, name: 'Value #B', type: 'number', values: [72] },
     ],
     length: 1,
-    meta: { preferredVisualisationType: 'table' },
+    meta: { type: 'numeric-long' },
     refId: 'B',
   },
 ];

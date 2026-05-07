@@ -1,28 +1,28 @@
 import React, { useMemo, useState, useCallback } from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type SelectableValue, type TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
-  BuilderQueryEditorReduceExpression,
-  BuilderQueryEditorWhereExpression,
-  BuilderQueryEditorGroupByExpression,
-  BuilderQueryEditorOrderByExpression,
-  BuilderQueryEditorPropertyExpression,
-  BuilderQueryExpression,
+  type BuilderQueryEditorReduceExpression,
+  type BuilderQueryEditorWhereExpression,
+  type BuilderQueryEditorGroupByExpression,
+  type BuilderQueryEditorOrderByExpression,
+  type BuilderQueryEditorPropertyExpression,
+  type BuilderQueryExpression,
 } from '../../dataquery.gen';
-import Datasource from '../../datasource';
+import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import {
-  AzureLogAnalyticsMetadataTable,
-  AzureLogAnalyticsMetadataColumn,
-  AzureMonitorQuery,
-  EngineSchema,
-} from '../../types';
+  type AzureLogAnalyticsMetadataTable,
+  type AzureLogAnalyticsMetadataColumn,
+} from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
+import { type EngineSchema } from '../../types/types';
 
 import { AggregateSection } from './AggregationSection';
 import { AzureMonitorKustoQueryBuilder } from './AzureMonitorKustoQueryBuilder';
@@ -39,7 +39,7 @@ interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
   basicLogsEnabled: boolean;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
-  schema: EngineSchema;
+  schema?: EngineSchema;
   templateVariableOptions: SelectableValue<string>;
   datasource: Datasource;
   timeRange?: TimeRange;
@@ -49,7 +49,6 @@ interface LogsQueryBuilderProps {
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const { query, onQueryChange, schema, datasource, timeRange, isLoadingSchema } = props;
   const [isKQLPreviewHidden, setIsKQLPreviewHidden] = useState<boolean>(true);
-  const { t } = useTranslate();
 
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
     return schema?.database?.tables || [];
@@ -135,7 +134,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   );
 
   return (
-    <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
+    <span data-testid={selectors.components.queryEditor.logsQueryBuilder.container.input}>
       <EditorRows>
         {schema && tables.length === 0 && (
           <Alert

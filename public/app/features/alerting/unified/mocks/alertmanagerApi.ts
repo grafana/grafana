@@ -1,13 +1,13 @@
 import { HttpResponse, http } from 'msw';
-import { SetupServer } from 'msw/node';
+import { type SetupServer } from 'msw/node';
 
 import { grafanaAlertingConfigurationStatusHandler } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 
 import {
   AlertmanagerChoice,
-  ExternalAlertmanagersStatusResponse,
+  type ExternalAlertmanagersStatusResponse,
 } from '../../../../plugins/datasource/alertmanager/types';
-import { GrafanaAlertingConfigurationStatusResponse } from '../api/alertmanagerApi';
+import { type GrafanaAlertingConfigurationStatusResponse } from '../api/alertmanagerApi';
 
 export const defaultGrafanaAlertingConfigurationStatusResponse: GrafanaAlertingConfigurationStatusResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,

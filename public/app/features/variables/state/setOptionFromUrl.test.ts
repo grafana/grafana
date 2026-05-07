@@ -6,7 +6,7 @@ import { customBuilder } from '../shared/testing/builders';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { setOptionFromUrl } from './actions';
-import { getTemplatingRootReducer, TemplatingReducerType } from './helpers';
+import { getTemplatingRootReducer, type TemplatingReducerType } from './helpers';
 import { toKeyedAction } from './keyedVariablesReducer';
 import { addVariable, setCurrentVariableValue } from './sharedReducer';
 

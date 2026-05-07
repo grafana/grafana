@@ -92,3 +92,10 @@ func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator 
 func getScopeCacheKey(orgID int64, scope string) string {
 	return fmt.Sprintf("%s-%v", scope, orgID)
 }
+
+// InvalidateCache removes a scope resolution from the cache
+func (s *Resolvers) InvalidateCache(orgID int64, scope string) {
+	key := getScopeCacheKey(orgID, scope)
+	s.cache.Delete(key)
+	s.log.Debug("Invalidated scope cache", "scope", scope, "orgID", orgID)
+}

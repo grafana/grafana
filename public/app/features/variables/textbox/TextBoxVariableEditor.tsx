@@ -1,12 +1,12 @@
-import { FormEvent, ReactElement, useCallback } from 'react';
+import { type FormEvent, type ReactElement, useCallback } from 'react';
 
-import { TextBoxVariableModel } from '@grafana/data';
+import { type TextBoxVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 
 import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
-import { VariableEditorProps } from '../editor/types';
+import { type VariableEditorProps } from '../editor/types';
 
 export interface Props extends VariableEditorProps<TextBoxVariableModel> {}
 
@@ -20,8 +20,6 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
     [onPropChange]
   );
 
-  const { t } = useTranslate();
-
   const onChange = useCallback((e: FormEvent<HTMLInputElement>) => updateVariable(e, false), [updateVariable]);
   const onBlur = useCallback((e: FormEvent<HTMLInputElement>) => updateVariable(e, true), [updateVariable]);
 
@@ -32,7 +30,7 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
       </VariableLegend>
       <VariableTextField
         value={query}
-        name="Default value"
+        name={t('variables.text-box-variable-editor.name-default-value', 'Default value')}
         placeholder={t('variables.text-box-variable-editor.placeholder-default-value-if-any', 'default value, if any')}
         onChange={onChange}
         onBlur={onBlur}

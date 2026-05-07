@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { CSSProperties, ReactNode } from 'react';
+import { type CSSProperties, type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 import { VizTooltipRow } from './VizTooltipRow';
-import { VizTooltipItem } from './types';
+import { type VizTooltipItem } from './types';
 
 interface VizTooltipContentProps {
   items: VizTooltipItem[];
@@ -34,7 +34,7 @@ export const VizTooltipContent = ({
 
   return (
     <div className={styles.wrapper} style={scrollableStyle}>
-      {items.map(({ label, value, color, colorIndicator, colorPlacement, isActive, lineStyle }, i) => (
+      {items.map(({ label, value, color, colorIndicator, colorPlacement, isActive, lineStyle, isHiddenFromViz }, i) => (
         <VizTooltipRow
           key={i}
           label={label}
@@ -43,10 +43,10 @@ export const VizTooltipContent = ({
           colorIndicator={colorIndicator}
           colorPlacement={colorPlacement}
           isActive={isActive}
-          justify={'space-between'}
           isPinned={isPinned}
           lineStyle={lineStyle}
           showValueScroll={!scrollable}
+          isHiddenFromViz={isHiddenFromViz}
         />
       ))}
       {children}

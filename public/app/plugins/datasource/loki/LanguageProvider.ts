@@ -1,10 +1,18 @@
 import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
 
-import { AbstractQuery, getDefaultTimeRange, KeyValue, LanguageProvider, ScopedVars, TimeRange } from '@grafana/data';
-import { BackendSrvRequest, config } from '@grafana/runtime';
+import {
+  type AbstractQuery,
+  getDefaultTimeRange,
+  type KeyValue,
+  LanguageProvider,
+  type ScopedVars,
+  type TimeRange,
+} from '@grafana/data';
+import { type BackendSrvRequest, config } from '@grafana/runtime';
 
-import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
+import { LokiQueryType } from './dataquery.gen';
+import { DEFAULT_MAX_LINES_SAMPLE, type LokiDatasource } from './datasource';
 import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
 import { getStreamSelectorsFromQuery } from './queryUtils';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
@@ -13,7 +21,7 @@ import {
   extractLogParserFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LabelType, LokiQuery, LokiQueryType, ParserAndLabelKeysResult } from './types';
+import { type DetectedFieldsResult, LabelType, type LokiQuery, type ParserAndLabelKeysResult } from './types';
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';
@@ -36,13 +44,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
   private labelsPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
   private detectedLabelValuesPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
 
-  constructor(datasource: LokiDatasource, initialValues?: any) {
+  constructor(datasource: LokiDatasource) {
     super();
 
     this.datasource = datasource;
     this.labelKeys = [];
-
-    Object.assign(this, initialValues);
   }
 
   request = async (
@@ -176,7 +182,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const { start, end } = this.datasource.getTimeRangeParams(range);
     const params: Record<string, string | number> = { start, end };
     if (options?.streamSelector && options?.streamSelector !== EMPTY_SELECTOR) {
-      params['query'] = options.streamSelector;
+      const interpolatedStreamSelector = this.datasource.interpolateString(options.streamSelector);
+      params['query'] = interpolatedStreamSelector;
     }
     const res = await this.request(url, params);
     if (Array.isArray(res)) {
@@ -240,7 +247,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const range = options?.timeRange ?? this.getDefaultTimeRange();
     const { start, end } = this.datasource.getTimeRangeParams(range);
     const params = { 'match[]': match, start, end };
-    return await this.request(url, params);
+    const data = await this.request(url, params);
+    if (!Array.isArray(data)) {
+      return [];
+    }
+    return data;
   };
 
   // Cache key is a bit different here. We round up to a minute the intervals.
@@ -362,8 +373,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
           this.detectedFieldValuesCache.set(cacheKey, labelValues);
           this.detectedLabelValuesPromisesCache.delete(cacheKey);
           resolve(labelValues);
+        } else {
+          this.detectedLabelValuesPromisesCache.delete(cacheKey);
+          resolve([]);
         }
       } catch (error) {
+        this.detectedLabelValuesPromisesCache.delete(cacheKey);
         if (queryOptions?.throwError) {
           reject(error);
         } else {
@@ -435,6 +450,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
           this.labelsCache.set(cacheKey, labelValues);
           this.labelsPromisesCache.delete(cacheKey);
           resolve(labelValues);
+        } else {
+          this.labelsPromisesCache.delete(cacheKey);
+          resolve([]);
         }
       } catch (error) {
         console.error(error);
@@ -477,9 +495,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
       hasLogfmt: false,
       hasPack: false,
     };
-    if (!config.featureToggles.lokiQueryHints) {
-      return empty;
-    }
 
     const series = await this.datasource.getDataSamples(
       {
@@ -514,7 +529,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    *
    * @returns {TimeRange} The default time range
    */
-  private getDefaultTimeRange(): TimeRange {
+  getDefaultTimeRange(): TimeRange {
     return getDefaultTimeRange();
   }
 }

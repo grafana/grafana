@@ -1,6 +1,6 @@
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme, type GrafanaTheme2 } from '@grafana/data';
 
 export function cardChrome(theme: GrafanaTheme2): string {
   return `
@@ -69,6 +69,13 @@ export function getFocusStyles(theme: GrafanaTheme2) {
     transitionTimingFunction: `cubic-bezier(0.19, 1, 0.22, 1)`,
     transitionDuration: '0.2s',
     transitionProperty: 'outline, outline-offset, box-shadow',
+  };
+}
+
+export function getButtonFocusStyles(theme: GrafanaTheme2) {
+  return {
+    ...getFocusStyles(theme),
+    transitionProperty: undefined,
   };
 }
 

@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { shuffle } from 'lodash';
 import { PureComponent } from 'react';
 
-import { GrafanaTheme2, QueryEditorHelpProps } from '@grafana/data';
+import { type GrafanaTheme2, type QueryEditorHelpProps } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Themeable2, withTheme2 } from '@grafana/ui';
+import { TextLink, type Themeable2, withTheme2 } from '@grafana/ui';
 
-import LokiLanguageProvider from '../LanguageProvider';
+import type LokiLanguageProvider from '../LanguageProvider';
 import { escapeLabelValueInExactSelector } from '../languageUtils';
-import { LokiQuery } from '../types';
+import { type LokiQuery } from '../types';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
 const PREFERRED_LABELS = ['job', 'app', 'k8s_app'];
@@ -135,9 +135,9 @@ class UnthemedLokiCheatSheet extends PureComponent<
           {this.renderExpression('{app="cassandra"} |~ "(duration|latency)s*(=|is|of)s*[d.]+"')}
           {this.renderExpression('{app="cassandra"} |= "exact match"')}
           {this.renderExpression('{app="cassandra"} != "do not match"')}
-          <a href="https://grafana.com/docs/loki/latest/logql/#log-pipeline" target="logql">
+          <TextLink href="https://grafana.com/docs/loki/latest/logql/#log-pipeline" external>
             LogQL
-          </a>{' '}
+          </TextLink>{' '}
           supports exact and regular expression filters.
         </div>
         {LOGQL_EXAMPLES.map((item) => (

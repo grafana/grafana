@@ -3,6 +3,7 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"math"
 	"slices"
 	"sort"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -499,8 +499,7 @@ func TestThresholdExecute(t *testing.T) {
 		"number - 11":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(11))),
 		"number - 12":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(12))),
 	}
-	keys := maps.Keys(input)
-	slices.Sort(keys)
+	keys := slices.Sorted(maps.Keys(input))
 	testCases := []struct {
 		name     string
 		pred     predicate

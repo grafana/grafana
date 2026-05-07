@@ -2,18 +2,18 @@ import { css, cx } from '@emotion/css';
 import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
-import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, rangeUtil, urlUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type DataSourceInstanceSettings, type GrafanaTheme2, type PanelData, urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
-import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
+import { type DataSourceRef } from '@grafana/schema';
+import { Preview } from '@grafana/sql';
 import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type CombinedRule } from 'app/types/unified-alerting';
 
-import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
+import { type AlertDataQuery, type AlertQuery } from '../../../types/unified-alerting-dto';
 import { isExpressionQuery } from '../../expressions/guards';
 import {
-  ExpressionQuery,
+  type ExpressionQuery,
   ExpressionQueryType,
   ReducerMode,
   downsamplingTypes,
@@ -25,9 +25,10 @@ import {
 import alertDef, { EvalFunction } from '../state/alertDef';
 
 import { Spacer } from './components/Spacer';
+import { TimeRangeLabel } from './components/TimeRangeLabel';
 import { WithReturnButton } from './components/WithReturnButton';
 import { ExpressionResult } from './components/expressions/Expression';
-import { ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
+import { type ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
 import { AlertRuleAction, useAlertRuleAbility } from './hooks/useAbilities';
@@ -123,12 +124,7 @@ export function QueryPreview({
   if (relativeTimeRange) {
     headerItems.push(
       <Text color="secondary" key="timerange">
-        <Trans
-          i18nKey="alerting.query-preview.relative-time-range"
-          values={{ from: rangeUtil.secondsToHms(relativeTimeRange.from) }}
-        >
-          <code>{'{{from}}'}</code> to now
-        </Trans>
+        <TimeRangeLabel relativeTimeRange={relativeTimeRange} />
       </Text>
     );
   }
@@ -212,7 +208,6 @@ interface ExpressionPreviewProps extends Pick<AlertQuery, 'refId'> {
 
 function ExpressionPreview({ refId, model, evalData, isAlertCondition }: ExpressionPreviewProps) {
   const styles = useStyles2(getQueryBoxStyles);
-  const { t } = useTranslate();
 
   function renderPreview() {
     switch (model.type) {
@@ -281,7 +276,6 @@ interface QueryBoxProps extends React.PropsWithChildren<unknown> {
 
 function QueryBox({ refId, headerItems = [], children, isAlertCondition, exploreLink }: QueryBoxProps) {
   const styles = useStyles2(getQueryBoxStyles);
-  const { t } = useTranslate();
 
   return (
     <div className={cx(styles.container)}>
@@ -342,7 +336,7 @@ const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
 
 function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
   const styles = useStyles2(getClassicConditionViewerStyles);
-  const { t } = useTranslate();
+
   const reducerFunctions = keyBy(alertDef.reducerTypes, (rt) => rt.value);
   const evalOperators = keyBy(alertDef.evalOperators, (eo) => eo.value);
   const evalFunctions = keyBy(alertDef.evalFunctions, (ef) => ef.value);

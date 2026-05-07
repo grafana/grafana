@@ -2,26 +2,26 @@ import { debounce } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { CoreApp, QueryEditorProps } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { CoreApp, type QueryEditorProps } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, CodeEditor, Space, TextLink } from '@grafana/ui';
 
-import AzureMonitorDatasource from '../../datasource';
+import { AzureQueryType } from '../../dataquery.gen';
+import type AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
+import { type AzureMonitorQuery } from '../../types/query';
 import {
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorErrorish,
-  AzureMonitorOption,
-  AzureMonitorQuery,
-  AzureQueryType,
-} from '../../types';
+  type AzureMonitorDataSourceJsonData,
+  type AzureMonitorErrorish,
+  type AzureMonitorOption,
+} from '../../types/types';
 import useLastError from '../../utils/useLastError';
-import ArgQueryEditor from '../ArgQueryEditor';
-import LogsQueryEditor from '../LogsQueryEditor';
+import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
+import LogsQueryEditor from '../LogsQueryEditor/LogsQueryEditor';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
-import TracesQueryEditor from '../TracesQueryEditor';
+import TracesQueryEditor from '../TracesQueryEditor/TracesQueryEditor';
 
 import { QueryHeader } from './QueryHeader';
 import usePreparedQuery from './usePreparedQuery';
@@ -45,7 +45,6 @@ const QueryEditor = ({
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
   const [azureLogsCheatSheetModalOpen, setAzureLogsCheatSheetModalOpen] = useState(false);
   const [defaultSubscriptionId, setDefaultSubscriptionId] = useState('');
-  const { t } = useTranslate();
 
   const onQueryChange = useCallback(
     (newQuery: AzureMonitorQuery) => {
@@ -157,7 +156,6 @@ const EditorForQueryType = ({
   onQueryChange,
   range,
 }: EditorForQueryTypeProps) => {
-  const { t } = useTranslate();
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
       return (
@@ -238,7 +236,6 @@ const EditorForQueryType = ({
 };
 
 const UserAuthAlert = () => {
-  const { t } = useTranslate();
   return (
     <Alert
       title={t('components.user-auth-alert.title-unsupported-auth', 'Unsupported authentication provider')}
@@ -260,7 +257,6 @@ const UserAuthAlert = () => {
 };
 
 const UserAuthFallbackAlert = () => {
-  const { t } = useTranslate();
   return (
     <Alert
       title={t(

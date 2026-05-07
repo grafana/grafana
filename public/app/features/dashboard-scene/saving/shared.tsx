@@ -1,13 +1,11 @@
-import * as React from 'react';
-
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { config, isFetchError } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Alert, Box, Button, Stack } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Alert, Button } from '@grafana/ui';
 
-import { Diffs } from '../settings/version-history/utils';
+import { type Diffs } from '../settings/version-history/utils';
 
 export interface DashboardChangeInfo {
   changedSaveModel: Dashboard | DashboardV2Spec;
@@ -35,15 +33,8 @@ export function isPluginDashboardError(error?: Error) {
   return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
 }
 
-export interface NameAlreadyExistsErrorProps {
-  cancelButton: React.ReactNode;
-  saveButton: (overwrite: boolean) => React.ReactNode;
-}
-
-export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlreadyExistsErrorProps) {
-  const { t } = useTranslate();
-  const isRestoreDashboardsEnabled = config.featureToggles.restoreDashboards;
-  return isRestoreDashboardsEnabled ? (
+export function NameAlreadyExistsError() {
+  return (
     <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
       <p>
         <Trans i18nKey="save-dashboards.name-exists.message-info">
@@ -56,23 +47,6 @@ export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlready
         </Trans>
       </p>
     </Alert>
-  ) : (
-    <Alert
-      title={t('dashboard-scene.name-already-exists-error.title-name-already-exists', 'Name already exists')}
-      severity="error"
-    >
-      <p>
-        <Trans i18nKey="dashboard-scene.name-already-exists-error.body-name-already-exists">
-          A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?
-        </Trans>
-      </p>
-      <Box paddingTop={2}>
-        <Stack alignItems="center">
-          {cancelButton}
-          {saveButton(true)}
-        </Stack>
-      </Box>
-    </Alert>
   );
 }
 
@@ -84,7 +58,6 @@ export interface SaveButtonProps {
 }
 
 export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButtonProps) {
-  const { t } = useTranslate();
   return (
     <Button
       disabled={!isValid || isLoading}

@@ -1,16 +1,17 @@
-import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
+import { type FieldConfigSource, type PanelModel, type PanelTypeChangedHandler } from '@grafana/data';
 import {
   AxisPlacement,
   ScaleDistribution,
   VisibilityMode,
   HeatmapCellLayout,
   HeatmapCalculationMode,
-  HeatmapCalculationOptions,
+  type HeatmapCalculationOptions,
 } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
 
 import { colorSchemes } from './palettes';
-import { Options, defaultOptions, HeatmapColorMode } from './types';
+import { type Options, HeatmapColorMode } from './panelcfg.gen';
+import { defaultOptions } from './types';
 
 /** Called when the version number changes */
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<Options> => {

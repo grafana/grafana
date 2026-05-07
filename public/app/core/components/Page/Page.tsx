@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useLayoutEffect } from 'react';
 
-import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -10,7 +10,7 @@ import NativeScrollbar from '../NativeScrollbar';
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
 import { PageTabs } from './PageTabs';
-import { PageType } from './types';
+import { type PageType } from './types';
 import { usePageNav } from './usePageNav';
 import { usePageTitle } from './usePageTitle';
 
@@ -27,6 +27,7 @@ export const Page: PageType = ({
   info,
   layout = PageLayoutType.Standard,
   onSetScrollRef,
+  background,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
@@ -49,8 +50,10 @@ export const Page: PageType = ({
     }
   }, [navModel, pageNav, chrome, layout]);
 
+  const isPrimaryBg = (background ?? getDefaultBackgroundForLayout(layout)) === 'primary';
+
   return (
-    <div className={cx(styles.wrapper, className)} {...otherProps}>
+    <div className={cx(styles.wrapper, isPrimaryBg && styles.wrapperPrimary, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
@@ -99,19 +102,20 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: '1 1 0',
       flexDirection: 'column',
       position: 'relative',
+      container: 'page / inline-size',
+    }),
+    wrapperPrimary: css({
+      label: 'page-wrapper-primary',
+      background: theme.colors.background.primary,
     }),
     pageContent: css({
       label: 'page-content',
       flexGrow: 1,
     }),
-    primaryBg: css({
-      background: theme.colors.background.primary,
-    }),
     pageInner: css({
       label: 'page-inner',
       padding: theme.spacing(2),
       borderBottom: 'none',
-      background: theme.colors.background.primary,
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
@@ -131,3 +135,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+function getDefaultBackgroundForLayout(layout: PageLayoutType) {
+  return layout === PageLayoutType.Standard ? 'primary' : 'canvas';
+}

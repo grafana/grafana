@@ -1,8 +1,8 @@
-import { DataFrameJSON } from '@grafana/data';
-import { LiveDataFilter } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { TimeRegionConfig } from 'app/core/utils/timeRegions';
-import { SearchQuery } from 'app/features/search/service/types';
+import { type DataFrameJSON } from '@grafana/data';
+import { type LiveDataFilter } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
+import { type TimeRegionConfig } from 'app/core/utils/timeRegions';
+import { type SearchQuery } from 'app/features/search/service/types';
 
 //----------------------------------------------
 // Query
@@ -18,8 +18,6 @@ export enum GrafanaQueryType {
   RandomWalk = 'randomWalk',
   List = 'list',
   Read = 'read',
-  Search = 'search',
-  SearchNext = 'searchNext',
 }
 
 export interface GrafanaQuery extends DataQuery {
@@ -33,6 +31,14 @@ export interface GrafanaQuery extends DataQuery {
   snapshot?: DataFrameJSON[];
   timeRegion?: TimeRegionConfig;
   file?: GrafanaQueryFile;
+  // Random walk configuration
+  seriesCount?: number;
+  startValue?: number;
+  min?: number;
+  max?: number;
+  spread?: number;
+  noise?: number;
+  dropPercent?: number;
 }
 
 export interface GrafanaQueryFile {
@@ -43,16 +49,6 @@ export interface GrafanaQueryFile {
 export const defaultQuery: GrafanaQuery = {
   refId: 'A',
   queryType: GrafanaQueryType.RandomWalk,
-};
-
-export const defaultFileUploadQuery: GrafanaQuery = {
-  refId: 'A',
-  datasource: {
-    type: 'grafana',
-    uid: 'grafana',
-  },
-  queryType: GrafanaQueryType.Snapshot,
-  snapshot: [],
 };
 
 //----------------------------------------------

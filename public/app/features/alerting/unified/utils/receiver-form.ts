@@ -1,22 +1,28 @@
 import { has, isArray, isNil, omitBy, pickBy } from 'lodash';
 
 import {
-  AlertmanagerReceiver,
-  GrafanaManagedContactPoint,
-  GrafanaManagedReceiverConfig,
-  GrafanaManagedReceiverSecureFields,
-  Receiver,
+  type CloudNotifierType,
+  type NotificationChannelOption,
+  type NotifierDTO,
+  type NotifierType,
+} from 'app/features/alerting/unified/types/alerting';
+import { getOptionsForVersion } from 'app/features/alerting/unified/utils/notifier-versions';
+import {
+  type AlertmanagerReceiver,
+  type GrafanaManagedContactPoint,
+  type GrafanaManagedReceiverConfig,
+  type GrafanaManagedReceiverSecureFields,
+  type Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
-import { CloudNotifierType, NotificationChannelOption, NotifierDTO, NotifierType } from 'app/types';
 
 import {
-  ChannelValues,
-  CloudChannelConfig,
-  CloudChannelMap,
-  CloudChannelValues,
-  GrafanaChannelMap,
-  GrafanaChannelValues,
-  ReceiverFormValues,
+  type ChannelValues,
+  type CloudChannelConfig,
+  type CloudChannelMap,
+  type CloudChannelValues,
+  type GrafanaChannelMap,
+  type GrafanaChannelValues,
+  type ReceiverFormValues,
 } from '../types/receiver-form';
 
 export function grafanaReceiverToFormValues(
@@ -180,6 +186,7 @@ function grafanaChannelConfigToFormChannelValues(
   const values: GrafanaChannelValues = {
     __id: id,
     type: channel.type as NotifierType,
+    version: channel.version,
     provenance: channel.provenance,
     settings: { ...channel.settings },
     secureFields: { ...channel.secureFields },
@@ -214,7 +221,7 @@ export function getSecureFieldNames(notifier: NotifierDTO): string[] {
     }
   }
 
-  findSecureOptions(notifier.options);
+  findSecureOptions(getOptionsForVersion(notifier));
 
   return secureFieldPaths;
 }
@@ -234,6 +241,7 @@ export function formChannelValuesToGrafanaChannelConfig(
     }),
     secureFields: secureFieldsFromValues,
     type: values.type,
+    version: values.version ?? existing?.version,
     name,
     disableResolveMessage:
       values.disableResolveMessage ?? existing?.disableResolveMessage ?? defaults.disableResolveMessage,

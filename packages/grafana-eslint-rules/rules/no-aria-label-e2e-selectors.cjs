@@ -50,7 +50,7 @@ const rule = createRule({
             (v) =>
               v.type === 'ImportBinding' &&
               v.parent.type === 'ImportDeclaration' &&
-              v.parent.source.value === GRAFANA_E2E_PACKAGE_NAME
+              v.parent.source.value.startsWith(GRAFANA_E2E_PACKAGE_NAME)
           );
 
           if (importDef) {

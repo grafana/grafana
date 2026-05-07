@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type setUserResourcePermissionTest struct {
@@ -41,9 +43,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStore_SetUserResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setUserResourcePermissionTest{
 		{
 			desc:              "should set resource permission for user",
@@ -126,9 +127,8 @@ type setTeamResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetTeamResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setTeamResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for team",
@@ -214,9 +214,8 @@ type setBuiltInResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetBuiltInResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setBuiltInResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for builtin role",
@@ -298,9 +297,8 @@ type setResourcePermissionsTest struct {
 }
 
 func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setResourcePermissionsTest{
 		{
 			desc:              "should set all permissions provided",
@@ -371,9 +369,8 @@ type getResourcePermissionsTest struct {
 }
 
 func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []getResourcePermissionsTest{
 		{
 			desc: "should return permissions for resource id",
@@ -530,7 +527,7 @@ func seedResourcePermissions(
 
 	usrSvc, err := userimpl.ProvideService(
 		sql, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
@@ -587,7 +584,7 @@ func TestStore_IsInherited(t *testing.T) {
 		{
 			description: "specific folder scope for dashboards is inherited",
 			permission: &flatResourcePermission{
-				Scope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+				Scope:    folder.ScopeFoldersProvider.GetResourceScopeUID("parent"),
 				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
 			},
 			requiredScope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
@@ -605,10 +602,10 @@ func TestStore_IsInherited(t *testing.T) {
 		{
 			description: "parent folder scope for nested folders is inherited",
 			permission: &flatResourcePermission{
-				Scope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+				Scope:    folder.ScopeFoldersProvider.GetResourceScopeUID("parent"),
 				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
 			},
-			requiredScope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
+			requiredScope: folder.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
 			expected:      true,
 		},
 	}
@@ -628,9 +625,7 @@ type orgPermission struct {
 }
 
 func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	type deleteResourcePermissionsTest struct {
 		desc              string
@@ -742,6 +737,183 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 	}
 }
 
+func TestIntegrationStore_setResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type setResourcePermissionTest struct {
+		desc                string
+		orgID               int64
+		userID              int64
+		actions             []string
+		permission          string
+		resource            string
+		resourceID          string
+		resourceAttribute   string
+		existingPermissions []accesscontrol.Permission
+		expectedPermissions []orgPermission
+	}
+
+	tests := []setResourcePermissionTest{
+		{
+			desc:              "should set only action set permissions for folder when user doesn't have any resource permissions yet",
+			userID:            1,
+			orgID:             1,
+			actions:           []string{"folders:edit"},
+			resource:          "folders",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+			expectedPermissions: []orgPermission{
+				{
+					OrgID:  1,
+					Action: "folders:edit",
+					Scope:  "folders:uid:1",
+				},
+			},
+		},
+		{
+			desc:              "should remove the existing action set and underlying resource permissions when action set is empty",
+			orgID:             1,
+			userID:            1,
+			actions:           []string{},
+			resource:          "folders",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+			existingPermissions: []accesscontrol.Permission{
+				{
+					Action: "folders:read",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "folders:view",
+					Scope:  "folders:uid:1",
+				},
+			},
+			expectedPermissions: []orgPermission{},
+		},
+		{
+			desc:              "when increasing access level, should replace the existing permissions with the higher action set",
+			orgID:             1,
+			userID:            1,
+			actions:           []string{"folders:edit"},
+			resource:          "folders",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+			existingPermissions: []accesscontrol.Permission{
+				{
+					Action: "folders:read",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "folders:view",
+					Scope:  "folders:uid:1",
+				},
+			},
+			expectedPermissions: []orgPermission{
+				{
+					OrgID:  1,
+					Action: "folders:edit",
+					Scope:  "folders:uid:1",
+				},
+			},
+		},
+		{
+			desc:              "when decreasing access level, should replace the existing permissions with the lower action set",
+			orgID:             1,
+			userID:            1,
+			actions:           []string{"folders:view"},
+			resource:          "folders",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+			existingPermissions: []accesscontrol.Permission{
+				{
+					Action: "folders:admin",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "folders:delete",
+					Scope:  "folders:uid:1",
+				},
+			},
+			expectedPermissions: []orgPermission{
+				{
+					OrgID:  1,
+					Action: "folders:view",
+					Scope:  "folders:uid:1",
+				},
+			},
+		},
+		{
+			desc:              "when updating access level, should not touch resource permissions on other resources",
+			orgID:             1,
+			userID:            1,
+			actions:           []string{"folders:view"},
+			resource:          "folders",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+			existingPermissions: []accesscontrol.Permission{
+				{
+					Action: "folders:admin",
+					Scope:  "folders:uid:2",
+				},
+				{
+					Action: "folders:delete",
+					Scope:  "folders:uid:2",
+				},
+				{
+					Action: "folders:edit",
+					Scope:  "folders:uid:1",
+				},
+			},
+			expectedPermissions: []orgPermission{
+				{
+					OrgID:  1,
+					Action: "folders:admin",
+					Scope:  "folders:uid:2",
+				},
+				{
+					OrgID:  1,
+					Action: "folders:delete",
+					Scope:  "folders:uid:2",
+				},
+				{
+					OrgID:  1,
+					Action: "folders:view",
+					Scope:  "folders:uid:1",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			store, _, _ := setupTestEnv(t)
+
+			// Populate store with existing permissions
+			setPermissionsHelper(store, test.existingPermissions, t)
+
+			// Set new permission
+			_, err := store.SetResourcePermissions(context.Background(), test.orgID, []SetResourcePermissionsCommand{
+				{
+					User: accesscontrol.User{ID: test.userID},
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
+						Actions:           test.actions,
+						Resource:          test.resource,
+						ResourceID:        test.resourceID,
+						ResourceAttribute: test.resourceAttribute,
+						Permission:        test.permission,
+					},
+				},
+			}, ResourceHooks{})
+			require.NoError(t, err)
+
+			// Get permissions directly from DB to verify
+			permissions := retrievePermissionsHelper(store, t)
+
+			require.ElementsMatch(t, test.expectedPermissions, permissions)
+		})
+	}
+}
+
 func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 	permissions := []orgPermission{}
 	err := store.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -758,11 +930,23 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 	return permissions
 }
 
-func TestStore_StoreActionSet(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func setPermissionsHelper(store *store, permissions []accesscontrol.Permission, t *testing.T) {
+	err := store.sql.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+		sql := "INSERT INTO permission(role_id, action, scope, created, updated, kind, attribute, identifier) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
+		for _, p := range permissions {
+			kind, attribute, identifier := p.SplitScope()
+			// Hardcode role_id to 1 since the test only tests one managed role, would need to extend the logic if we test with several managed roles
+			_, err := sess.Exec(sql, 1, p.Action, p.Scope, time.Now(), time.Now(), kind, attribute, identifier)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	require.NoError(t, err)
+}
 
+func TestStore_StoreActionSet(t *testing.T) {
 	type actionSetTest struct {
 		desc     string
 		resource string
@@ -781,10 +965,14 @@ func TestStore_StoreActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			opts := Options{
+				Resource:        tt.resource,
+				K8sActionFormat: false,
+			}
 			asService := NewInMemoryActionSetStore()
-			asService.StoreActionSet(GetActionSetName(tt.resource, tt.action), tt.actions)
+			asService.StoreActionSet(opts.GetActionSetName(tt.action), tt.actions)
 
-			actionSetName := GetActionSetName(tt.resource, tt.action)
+			actionSetName := opts.GetActionSetName(tt.action)
 			actionSet := asService.ResolveActionSet(actionSetName)
 			require.Equal(t, tt.actions, actionSet)
 		})
@@ -796,6 +984,8 @@ func TestStore_ResolveActionSet(t *testing.T) {
 	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
+	actionSetService.StoreActionSet(accesscontrol.AlertingRoutesKind+":view", []string{accesscontrol.ActionAlertingManagedRoutesRead})
+	actionSetService.StoreActionSet(accesscontrol.AlertingRoutesKind+":edit", []string{accesscontrol.ActionAlertingManagedRoutesRead, accesscontrol.ActionAlertingManagedRoutesWrite})
 
 	type actionSetTest struct {
 		desc               string
@@ -823,6 +1013,14 @@ func TestStore_ResolveActionSet(t *testing.T) {
 			desc:               "should be able to resolve multiple action sets for the resource of a different type",
 			action:             "dashboards:read",
 			expectedActionSets: []string{"folders:view", "folders:edit", "dashboards:view"},
+		},
+		{
+			desc:   "should support routes",
+			action: accesscontrol.ActionAlertingManagedRoutesRead,
+			expectedActionSets: []string{
+				accesscontrol.AlertingRoutesKind + ":view",
+				accesscontrol.AlertingRoutesKind + ":edit",
+			},
 		},
 	}
 

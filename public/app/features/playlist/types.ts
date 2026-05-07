@@ -1,8 +1,8 @@
-import { Playlist } from '../../api/clients/playlist';
-import { DashboardQueryResult } from '../search/service/types';
+import { type PlaylistSpec } from '../../api/clients/playlist/v1';
+import { type DashboardQueryResult } from '../search/service/types';
 export type PlaylistMode = boolean;
 
-type PlaylistItem = Playlist['spec']['items'][number];
+type PlaylistItem = PlaylistSpec['items'][number];
 
 export interface PlaylistItemUI extends PlaylistItem {
   /**

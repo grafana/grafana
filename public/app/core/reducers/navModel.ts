@@ -1,7 +1,7 @@
-import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { type AnyAction, createAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
 
-import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
+import { type NavIndex, type NavModel, type NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
@@ -122,7 +122,6 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
       teams: getItemWithNewSubTitle(state.teams, subTitle),
       plugins: getItemWithNewSubTitle(state.plugins, subTitle),
       'org-settings': getItemWithNewSubTitle(state['org-settings'], subTitle),
-      apikeys: getItemWithNewSubTitle(state.apikeys, subTitle),
     };
   } else if (removeNavIndex.match(action)) {
     delete state[action.payload];

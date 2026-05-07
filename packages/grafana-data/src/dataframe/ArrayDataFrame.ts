@@ -1,5 +1,5 @@
-import { QueryResultMeta } from '../types/data';
-import { Field, FieldType, DataFrame, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
+import { type QueryResultMeta } from '../types/data';
+import { type Field, FieldType, type DataFrame, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
 
 import { guessFieldTypeForField } from './processDataFrame';
 
@@ -8,26 +8,30 @@ import { guessFieldTypeForField } from './processDataFrame';
  *
  * @deprecated use arrayToDataFrame
  */
-export class ArrayDataFrame<T = any> implements DataFrame {
+export class ArrayDataFrame implements DataFrame {
   fields: Field[] = [];
   length = 0;
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
 
-  constructor(source: T[], names?: string[]) {
+  constructor(source: unknown[], names?: string[]) {
     return arrayToDataFrame(source, names); // returns a standard DataFrame
   }
 }
 
 /**
  * arrayToDataFrame will convert any array into a DataFrame.
+ *
+ * If the items are objects, it is assumed that all the items have the same fields. If names of fields are not provided,
+ * the fields of the first item will be used, and any fields that are not present in first item will be lost from the
+ * later items.
  * @param source - can be an array of objects or an array of simple values.
  * @param names - will be used for ordering of fields. Source needs to be array of objects if names are provided.
  *
  * @public
  */
-export function arrayToDataFrame(source: Array<Record<string, unknown>> | unknown[], names?: string[]): DataFrame {
+export function arrayToDataFrame(source: unknown[], names?: string[]): DataFrame {
   const df: DataFrame = {
     fields: [],
     length: source.length,

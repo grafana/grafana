@@ -1,18 +1,39 @@
-import { Registry } from '@grafana/data';
+import { useMemo } from 'react';
 
-import { fieldNameByRegexMatcherItem } from './FieldNameByRegexMatcherEditor';
-import { fieldNameMatcherItem } from './FieldNameMatcherEditor';
-import { fieldNamesMatcherItem } from './FieldNamesMatcherEditor';
-import { fieldTypeMatcherItem } from './FieldTypeMatcherEditor';
-import { fieldValueMatcherItem } from './FieldValueMatcher';
-import { fieldsByFrameRefIdItem } from './FieldsByFrameRefIdMatcher';
-import { FieldMatcherUIRegistryItem } from './types';
+import { Registry, type SelectableValue } from '@grafana/data';
+
+import { type ComboboxOption } from '../Combobox/types';
+import { selectableValueToComboboxOption } from '../Combobox/utils';
+
+import { getFieldNameByRegexMatcherItem } from './FieldNameByRegexMatcherEditor';
+import { getFieldNameMatcherItem } from './FieldNameMatcherEditor';
+import { getFieldNamesMatcherItem } from './FieldNamesMatcherEditor';
+import { getFieldTypeMatcherItem } from './FieldTypeMatcherEditor';
+import { getFieldValueMatcherItem } from './FieldValueMatcher';
+import { getFieldsByFrameRefIdItem } from './FieldsByFrameRefIdMatcher';
+import { type FieldMatcherUIRegistryItem } from './types';
 
 export const fieldMatchersUI = new Registry<FieldMatcherUIRegistryItem<any>>(() => [
-  fieldNameMatcherItem,
-  fieldNameByRegexMatcherItem,
-  fieldTypeMatcherItem,
-  fieldsByFrameRefIdItem,
-  fieldNamesMatcherItem,
-  fieldValueMatcherItem,
+  getFieldNameMatcherItem(),
+  getFieldNameByRegexMatcherItem(),
+  getFieldTypeMatcherItem(),
+  getFieldsByFrameRefIdItem(),
+  getFieldNamesMatcherItem(),
+  getFieldValueMatcherItem(),
 ]);
+
+export function useFieldMatchersOptions(asComboboxOptions: true): Array<ComboboxOption<string>>;
+export function useFieldMatchersOptions(asComboboxOptions: false): Array<SelectableValue<string>>;
+export function useFieldMatchersOptions(asComboboxOptions?: undefined): Array<SelectableValue<string>>;
+export function useFieldMatchersOptions(
+  asComboboxOptions: boolean
+): Array<ComboboxOption<string>> | Array<SelectableValue<string>>;
+export function useFieldMatchersOptions(asComboboxOptions?: boolean) {
+  return useMemo(() => {
+    const selectableValues = fieldMatchersUI.selectOptions().options;
+    if (asComboboxOptions) {
+      return selectableValues.map(selectableValueToComboboxOption).filter((v) => !!v);
+    }
+    return selectableValues;
+  }, [asComboboxOptions]);
+}

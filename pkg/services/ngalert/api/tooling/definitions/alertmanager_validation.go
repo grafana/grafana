@@ -5,8 +5,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/grafana/alerting/templates"
-	"gopkg.in/yaml.v3"
+	"github.com/grafana/alerting/definition"
+	"github.com/grafana/alerting/notify"
+	"go.yaml.in/yaml/v3"
 )
 
 func (t *NotificationTemplate) Validate() error {
@@ -31,18 +32,19 @@ func (t *NotificationTemplate) Validate() error {
 		content = fmt.Sprintf("{{ define \"%s\" }}\n%s\n{{ end }}", t.Name, content)
 	}
 	t.Template = content
-
-	// Validate template contents. We try to stick as close to what will actually happen when the templates are parsed
-	// by the alertmanager as possible.
-	tmpl, err := templates.NewTemplate()
-	if err != nil {
-		return fmt.Errorf("failed to create template: %w", err)
+	if t.Kind == "" {
+		t.Kind = definition.GrafanaTemplateKind
 	}
-	if err := tmpl.Parse(strings.NewReader(t.Template)); err != nil {
-		return fmt.Errorf("invalid template: %w", err)
+	postable := definition.PostableApiTemplate{
+		Name:    t.Name,
+		Content: t.Template,
+		Kind:    t.Kind,
 	}
-
-	return nil
+	if err := postable.Validate(); err != nil {
+		return err
+	}
+	def := notify.PostableAPITemplateToTemplateDefinition(postable)
+	return def.Validate()
 }
 
 func (mt *MuteTimeInterval) Validate() error {

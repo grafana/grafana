@@ -31,9 +31,9 @@ func TestQueryEvaluator_Eval(t *testing.T) {
 
 		intervals := make([]time.Time, times)
 
-		err := evaluator.Eval(ctx, from, interval, times, func(idx int, now time.Time, results eval.Results) error {
+		err := evaluator.Eval(ctx, from, interval, times, func(idx int, now time.Time, results eval.Results) (bool, error) {
 			intervals[idx] = now
-			return nil
+			return true, nil
 		})
 		require.NoError(t, err)
 		require.Len(t, intervals, times)
@@ -49,7 +49,7 @@ func TestQueryEvaluator_Eval(t *testing.T) {
 		}
 	})
 
-	t.Run("should stop evaluation if error", func(t *testing.T) {
+	t.Run("should stop evaluation", func(t *testing.T) {
 		t.Run("when evaluation fails", func(t *testing.T) {
 			m := &eval_mocks.ConditionEvaluatorMock{}
 			expectedResults := eval.Results{}
@@ -62,9 +62,9 @@ func TestQueryEvaluator_Eval(t *testing.T) {
 
 			intervals := make([]time.Time, 0, times)
 
-			err := evaluator.Eval(ctx, from, interval, times, func(idx int, now time.Time, results eval.Results) error {
+			err := evaluator.Eval(ctx, from, interval, times, func(idx int, now time.Time, results eval.Results) (bool, error) {
 				intervals = append(intervals, now)
-				return nil
+				return true, nil
 			})
 			require.ErrorIs(t, err, expectedError)
 			require.Len(t, intervals, 3)
@@ -81,14 +81,31 @@ func TestQueryEvaluator_Eval(t *testing.T) {
 
 			intervals := make([]time.Time, 0, times)
 
-			err := evaluator.Eval(ctx, from, interval, times, func(idx int, now time.Time, results eval.Results) error {
+			err := evaluator.Eval(ctx, from, interval, times, func(idx int, now time.Time, results eval.Results) (bool, error) {
 				if len(intervals) > 3 {
-					return expectedError
+					return false, expectedError
 				}
 				intervals = append(intervals, now)
-				return nil
+				return true, nil
 			})
 			require.ErrorIs(t, err, expectedError)
+		})
+
+		t.Run("when callback does not want to continue", func(t *testing.T) {
+			m := &eval_mocks.ConditionEvaluatorMock{}
+			expectedResults := eval.Results{}
+			m.EXPECT().Evaluate(mock.Anything, mock.Anything).Return(expectedResults, nil)
+			evaluator := queryEvaluator{
+				eval: m,
+			}
+
+			evaluated := 0
+			err := evaluator.Eval(ctx, from, interval, times, func(idx int, now time.Time, results eval.Results) (bool, error) {
+				evaluated++
+				return evaluated <= 2, nil
+			})
+			require.NoError(t, err, nil)
+			require.Equal(t, 3, evaluated)
 		})
 	})
 }

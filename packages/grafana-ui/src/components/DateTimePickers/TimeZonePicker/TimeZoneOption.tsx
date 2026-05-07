@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { isString } from 'lodash';
-import { PropsWithChildren, RefCallback } from 'react';
+import { type PropsWithChildren, type RefCallback, type JSX } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, SelectableValue, getTimeZoneInfo } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, getTimeZoneInfo } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
 
 import { TimeZoneDescription } from './TimeZoneDescription';
@@ -33,7 +32,7 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
-  if (!isString(data.value)) {
+  if (typeof data.value !== 'string') {
     return null;
   }
 
@@ -72,7 +71,7 @@ export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => 
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
-  if (!isString(data.value)) {
+  if (typeof data.value !== 'string') {
     return null;
   }
 

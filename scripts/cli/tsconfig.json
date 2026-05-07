@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
-    "moduleResolution": "node",
-    "module": "commonjs"
+    "moduleResolution": "nodenext",
+    "module": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "extends": "../../tsconfig.json",
   "ts-node": {
@@ -10,5 +12,6 @@
     "compilerOptions": {
       "module": "commonjs"
     }
-  }
+  },
+  "include": ["./**/*.ts", "./**/*.mts", "./**/*.js", "./**/*.mjs"]
 }

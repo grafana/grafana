@@ -1,4 +1,4 @@
-import { MappingType, SpecialValueMatch, ValueMapping } from '../types/valueMapping';
+import { MappingType, SpecialValueMatch, type ValueMapping } from '../types/valueMapping';
 
 import { getValueMappingResult, isNumeric } from './valueMappings';
 
@@ -279,5 +279,97 @@ describe('isNumeric', () => {
     ${[]}         | ${false}
   `('detects numeric values', ({ value, expected }) => {
     expect(isNumeric(value)).toEqual(expected);
+  });
+});
+
+describe('null and NaN special mapping', () => {
+  it('should return null for NaN', () => {
+    const value = Number.NaN;
+    expect(
+      getValueMappingResult(
+        [
+          {
+            type: MappingType.SpecialValue,
+            options: {
+              match: SpecialValueMatch.NullAndNaN,
+              result: { text: 'it is null or nan' },
+            },
+          },
+        ],
+        value
+      )
+    ).toEqual({ text: 'it is null or nan' });
+  });
+
+  it('should return null for null', () => {
+    const value = null;
+    expect(
+      getValueMappingResult(
+        [
+          {
+            type: MappingType.SpecialValue,
+            options: {
+              match: SpecialValueMatch.NullAndNaN,
+              result: { text: 'it is null or nan' },
+            },
+          },
+        ],
+        value
+      )
+    ).toEqual({ text: 'it is null or nan' });
+  });
+
+  it('should return null for undefined', () => {
+    const value = undefined;
+    expect(
+      getValueMappingResult(
+        [
+          {
+            type: MappingType.SpecialValue,
+            options: {
+              match: SpecialValueMatch.NullAndNaN,
+              result: { text: 'it is null or nan' },
+            },
+          },
+        ],
+        value
+      )
+    ).toEqual({ text: 'it is null or nan' });
+  });
+
+  it('should return null for numeric non-NaN', () => {
+    const value = 42;
+    expect(
+      getValueMappingResult(
+        [
+          {
+            type: MappingType.SpecialValue,
+            options: {
+              match: SpecialValueMatch.NullAndNaN,
+              result: { text: 'it is null or nan' },
+            },
+          },
+        ],
+        value
+      )
+    ).toBeNull();
+  });
+
+  it('should return null for string', () => {
+    const value = 'foo';
+    expect(
+      getValueMappingResult(
+        [
+          {
+            type: MappingType.SpecialValue,
+            options: {
+              match: SpecialValueMatch.NullAndNaN,
+              result: { text: 'it is null or nan' },
+            },
+          },
+        ],
+        value
+      )
+    ).toBeNull();
   });
 });

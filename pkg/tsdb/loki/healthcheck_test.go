@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -75,7 +75,7 @@ func (provider *healthCheckProvider[T]) GetTransport(opts ...httpclient.Options)
 
 // Return a mocked HTTP client provider.
 //
-// Example taken from `pkg/promlib/healthcheck_test.go`
+// Example taken from `https://github.com/grafana/grafana-prometheus-datasource/pkg/promlib/healthcheck_test.go`
 func getMockProvider[T http.RoundTripper]() *httpclient.Provider {
 	p := &healthCheckProvider[T]{
 		RoundTripper: new(T),
@@ -93,7 +93,7 @@ func Test_healthcheck(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckSuccessRoundTripper]()
 		s := &Service{
 			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
-			tracer: tracing.InitializeTracerForTest(),
+			tracer: tracing.DefaultTracer(),
 			logger: backend.NewLoggerWith("logger", "loki test"),
 		}
 
@@ -111,7 +111,7 @@ func Test_healthcheck(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckFailRoundTripper]()
 		s := &Service{
 			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
-			tracer: tracing.InitializeTracerForTest(),
+			tracer: tracing.DefaultTracer(),
 			logger: backend.NewLoggerWith("logger", "loki test"),
 		}
 

@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -19,25 +19,45 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Test if the service is disabled
 func TestService_IsDisabled(t *testing.T) {
-	// Create a new service
-	s, err := ProvideService(
-		&setting.Cfg{
-			PreinstallPluginsAsync: []setting.InstallPlugin{{ID: "myplugin"}},
+	tests := []struct {
+		name                   string
+		preinstallPluginsSync  []setting.InstallPlugin
+		preinstallPluginsAsync []setting.InstallPlugin
+		expectedDisabled       bool
+	}{
+		{
+			name:                   "enabled when async plugins are configured",
+			preinstallPluginsAsync: []setting.InstallPlugin{{ID: "myplugin"}},
+			expectedDisabled:       false,
 		},
-		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
-		&fakes.FakePluginInstaller{},
-		prometheus.NewRegistry(),
-		&fakes.FakePluginRepo{},
-		featuremgmt.WithFeatures(),
-		&pluginchecker.FakePluginUpdateChecker{},
-	)
-	require.NoError(t, err)
+		{
+			name:                  "enabled when only sync plugins are configured",
+			preinstallPluginsSync: []setting.InstallPlugin{{ID: "myplugin"}},
+			expectedDisabled:      false,
+		},
+		{
+			name:             "disabled when no plugins are configured",
+			expectedDisabled: true,
+		},
+	}
 
-	// Check if the service is disabled
-	if s.IsDisabled() {
-		t.Error("Service should be enabled")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := ProvideService(
+				&setting.Cfg{
+					PreinstallPluginsSync:  tt.preinstallPluginsSync,
+					PreinstallPluginsAsync: tt.preinstallPluginsAsync,
+				},
+				pluginstore.New(registry.NewInMemory(), &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}),
+				&pluginfakes.FakePluginInstaller{},
+				prometheus.NewRegistry(),
+				&pluginfakes.FakePluginRepo{},
+				&pluginchecker.FakePluginUpdateChecker{},
+			)
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedDisabled, s.IsDisabled())
+		})
 	}
 }
 
@@ -144,6 +164,12 @@ func TestService_Run(t *testing.T) {
 			pluginsToInstallSync: []setting.InstallPlugin{{ID: "myplugin"}},
 			pluginsToInstall:     []setting.InstallPlugin{{ID: "myplugin2"}},
 		},
+		{
+			name:                 "should install a plugin with a URL regardless of versioning",
+			shouldInstall:        true,
+			pluginsToInstallSync: []setting.InstallPlugin{{ID: "our-plugin-datasource", URL: "https://s3.our.domain/grafana-plugins/our-plugin-datasource-1.2.1+linux.zip"}},
+			existingPlugins:      []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "our-plugin-datasource", Info: plugins.Info{Version: "1.2.2"}}}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -154,13 +180,16 @@ func TestService_Run(t *testing.T) {
 			}
 			installed := 0
 			installedFromURL := 0
+			store, err := pluginstore.NewPluginStoreForTest(preg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+			require.NoError(t, err)
 			s, err := ProvideService(
 				&setting.Cfg{
 					PreinstallPluginsAsync: tt.pluginsToInstall,
 					PreinstallPluginsSync:  tt.pluginsToInstallSync,
+					PreinstallAutoUpdate:   true,
 				},
-				pluginstore.New(preg, &fakes.FakeLoader{}),
-				&fakes.FakePluginInstaller{
+				store,
+				&pluginfakes.FakePluginInstaller{
 					AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.AddOpts) error {
 						for _, plugin := range tt.pluginsToFail {
 							if plugin == pluginID {
@@ -185,25 +214,41 @@ func TestService_Run(t *testing.T) {
 					},
 				},
 				prometheus.NewRegistry(),
-				&fakes.FakePluginRepo{
+				&pluginfakes.FakePluginRepo{
 					GetPluginArchiveInfoFunc: func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
 						return tt.latestPlugin, nil
 					},
 				},
-				featuremgmt.WithFeatures(featuremgmt.FlagPreinstallAutoUpdate),
 				pluginchecker.ProvideService(
 					managedplugins.NewNoop(),
 					provisionedplugins.NewNoop(),
 					&pluginchecker.FakePluginPreinstall{},
 				),
 			)
+			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				s.StopAsync()
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				err := s.AwaitTerminated(ctx)
+				if tt.shouldThrowError {
+					require.ErrorContains(t, err, "Failed to install plugin")
+					return
+				}
+				require.NoError(t, err)
+			})
+
+			err = s.StartAsync(context.Background())
+			require.NoError(t, err)
+			err = s.AwaitRunning(context.Background())
 			if tt.shouldThrowError {
 				require.ErrorContains(t, err, "Failed to install plugin")
 				return
 			}
 			require.NoError(t, err)
-			err = s.Run(context.Background())
-			require.NoError(t, err)
+
+			<-s.installComplete
 
 			if tt.shouldInstall {
 				expectedInstalled := 0

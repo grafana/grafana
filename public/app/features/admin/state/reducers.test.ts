@@ -1,6 +1,7 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { LdapState, LdapUser, UserAdminState, UserDTO, UserListAdminState } from 'app/types';
+import { type LdapState, type LdapUser } from 'app/types/ldap';
+import { type UserAdminState, type UserListAdminState, type UserDTO } from 'app/types/user';
 
 import {
   clearUserMappingInfoAction,

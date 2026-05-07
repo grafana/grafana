@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { SyntheticEvent, useEffect, useRef, useState } from 'react';
-import Draggable, { DraggableEventHandler } from 'react-draggable';
-import { Resizable, ResizeCallbackData } from 'react-resizable';
+import { type SyntheticEvent, useEffect, useRef, useState } from 'react';
+import Draggable, { type DraggableEventHandler } from 'react-draggable';
+import { Resizable, type ResizeCallbackData } from 'react-resizable';
 
-import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
+import { type Dimensions2D, type GrafanaTheme2, store } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { IconButton, Portal, useStyles2 } from '@grafana/ui';
-import store from 'app/core/store';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { type Scene } from 'app/features/canvas/runtime/scene';
 
 import { InlineEditBody } from './InlineEditBody';
 
@@ -83,13 +83,15 @@ export function InlineEdit({ onClose, id, scene }: Props) {
             >
               <strong className={styles.inlineEditorHeader}>
                 <div className={styles.placeholder} />
-                <div>Canvas Inline Editor</div>
+                <div>
+                  <Trans i18nKey="canvas.inline-edit.canvas-inline-editor">Canvas Inline Editor</Trans>
+                </div>
                 <IconButton
                   name="times"
                   size="xl"
                   className={styles.inlineEditorClose}
                   onClick={onClose}
-                  tooltip="Close inline editor"
+                  tooltip={t('canvas.inline-edit.tooltip-close-inline-editor', 'Close inline editor')}
                 />
               </strong>
               <div className={styles.inlineEditorContentWrapper}>

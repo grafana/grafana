@@ -433,11 +433,6 @@ func (m *mockCorrelationsStore) CreateCorrelation(c context.Context, cmd correla
 	return correlations.Correlation{}, nil
 }
 
-func (m *mockCorrelationsStore) CreateOrUpdateCorrelation(c context.Context, cmd correlations.CreateCorrelationCommand) error {
-	m.created = append(m.created, cmd)
-	return nil
-}
-
 func (m *mockCorrelationsStore) DeleteCorrelationsBySourceUID(c context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error {
 	m.deletedBySourceUID = append(m.deletedBySourceUID, cmd)
 	return nil
@@ -457,7 +452,7 @@ type spyStore struct {
 
 func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	for _, v := range s.items {
-		if query.Name == v.Name && query.OrgID == v.OrgID {
+		if query.Name == v.Name && query.OrgID == v.OrgID { // nolint:staticcheck
 			return v, nil
 		}
 	}

@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
-import { SceneComponentProps } from '@grafana/scenes';
+import { Trans, t } from '@grafana/i18n';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { Alert, ClipboardButton, Divider, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import ShareInternallyConfiguration from '../../ShareInternallyConfiguration';
-import { ShareLinkTab, ShareLinkTabState } from '../../ShareLinkTab';
+import { ShareLinkTab, type ShareLinkTabState } from '../../ShareLinkTab';
 import { getShareLinkConfiguration, updateShareLinkConfiguration } from '../utils';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareInternally;
@@ -67,7 +66,6 @@ export class ShareInternally extends ShareLinkTab {
 function ShareInternallyRenderer({ model }: SceneComponentProps<ShareInternally>) {
   const styles = useStyles2(getStyles);
   const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading } = model.useState();
-  const { t } = useTranslate();
 
   return (
     <div className={selectors.container}>

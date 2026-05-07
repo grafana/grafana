@@ -1,19 +1,10 @@
-import { useCallback, ChangeEvent } from 'react';
+import { useCallback, type ChangeEvent } from 'react';
 
-import {
-  DataTransformerID,
-  SelectableValue,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  getFieldDisplayName,
-  PluginState,
-} from '@grafana/data';
-import { FormatTimeTransformerOptions } from '@grafana/data/internal';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type SelectableValue, type TransformerUIProps, getFieldDisplayName } from '@grafana/data';
+import { type FormatTimeTransformerOptions } from '@grafana/data/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField, Input, TextLink } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import { getTimezoneOptions } from '../utils';
 
 export function FormatTimeTransfomerEditor({
@@ -21,7 +12,6 @@ export function FormatTimeTransfomerEditor({
   options,
   onChange,
 }: TransformerUIProps<FormatTimeTransformerOptions>) {
-  const { t } = useTranslate();
   const timeFields: Array<SelectableValue<string>> = [];
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
 
@@ -81,7 +71,7 @@ export function FormatTimeTransfomerEditor({
             value={options.timeField}
             onChange={onSelectField}
             /* don't translate here as this references a field name */
-            /* eslint-disable-next-line @grafana/no-untranslated-strings */
+            /* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */
             placeholder="time"
             isClearable
           />
@@ -117,13 +107,3 @@ export function FormatTimeTransfomerEditor({
     </>
   );
 }
-
-export const formatTimeTransformerRegistryItem: TransformerRegistryItem<FormatTimeTransformerOptions> = {
-  id: DataTransformerID.formatTime,
-  editor: FormatTimeTransfomerEditor,
-  transformation: standardTransformers.formatTimeTransformer,
-  name: standardTransformers.formatTimeTransformer.name,
-  state: PluginState.alpha,
-  description: standardTransformers.formatTimeTransformer.description,
-  help: getTransformationContent(DataTransformerID.formatTime).helperDocs,
-};

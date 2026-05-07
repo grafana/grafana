@@ -8,7 +8,8 @@ import (
 	"sort"
 	"time"
 
-	"golang.org/x/exp/constraints"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
@@ -44,7 +45,7 @@ type RuleStore interface {
 }
 
 type lokiQueryClient interface {
-	RangeQuery(ctx context.Context, query string, start, end, limit int64) (historian.QueryRes, error)
+	RangeQuery(ctx context.Context, query string, start, end, limit int64) (lokiclient.QueryRes, error)
 	MaxQuerySize() int
 }
 
@@ -56,18 +57,19 @@ type LokiHistorianStore struct {
 	ruleStore RuleStore
 }
 
-func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, ruleStore RuleStore, log log.Logger, tracer tracing.Tracer) *LokiHistorianStore {
+func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, ruleStore RuleStore, log log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) *LokiHistorianStore {
 	if !useStore(cfg) {
 		return nil
 	}
-	lokiCfg, err := historian.NewLokiConfig(cfg)
+	lokiCfg, err := lokiconfig.NewLokiConfig(cfg.LokiSettings)
 	if err != nil {
 		// this config error is already handled elsewhere
 		return nil
 	}
 
+	metrics := ngmetrics.NewHistorianMetrics(reg, subsystem)
 	return &LokiHistorianStore{
-		client:    historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem), log, tracer),
+		client:    lokiclient.NewLokiClient(lokiCfg, lokiclient.NewRequester(), metrics.BytesWritten, metrics.WriteDuration, log, tracer, historian.LokiClientSpanName),
 		db:        db,
 		log:       log,
 		ruleStore: ruleStore,
@@ -85,6 +87,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query annotations.ItemQuer
 
 	// if the query is filtering on tags, but not on a specific dashboard, we shouldn't query loki
 	// since state history won't have tags for annotations
+	// nolint: staticcheck
 	if len(query.Tags) > 0 && query.DashboardID == 0 && query.DashboardUID == "" {
 		return make([]*annotations.ItemDTO, 0), nil
 	}
@@ -141,7 +144,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query annotations.ItemQuer
 	return items, err
 }
 
-func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac accesscontrol.AccessResources) []*annotations.ItemDTO {
+func (r *LokiHistorianStore) annotationsFromStream(stream lokiclient.Stream, ac accesscontrol.AccessResources) []*annotations.ItemDTO {
 	items := make([]*annotations.ItemDTO, 0, len(stream.Values))
 	for _, sample := range stream.Values {
 		entry := historian.LokiEntry{}
@@ -169,16 +172,17 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 			continue
 		}
 
-		annotationText, annotationData := historian.BuildAnnotationTextAndData(
+		annotationText, annotationData, _ := historian.BuildAnnotationTextAndData(
 			historymodel.RuleMeta{
 				Title: entry.RuleTitle,
 			},
 			transition.State,
+			0, // maxTagsLength not used for Loki store
 		)
 
 		items = append(items, &annotations.ItemDTO{
 			AlertID:      entry.RuleID,
-			DashboardID:  ac.Dashboards[entry.DashboardUID],
+			DashboardID:  ac.Dashboards[entry.DashboardUID], // nolint: staticcheck
 			DashboardUID: &entry.DashboardUID,
 			PanelID:      entry.PanelID,
 			NewState:     entry.Current,
@@ -201,9 +205,6 @@ func (r *LokiHistorianStore) GetTags(ctx context.Context, query annotations.Tags
 func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResources) bool {
 	orgFilter := resources.CanAccessOrgAnnotations && entry.DashboardUID == ""
 	dashFilter := func() bool {
-		if !resources.CanAccessDashAnnotations {
-			return false
-		}
 		_, canAccess := resources.Dashboards[entry.DashboardUID]
 		return canAccess
 	}
@@ -211,8 +212,9 @@ func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResource
 	return orgFilter || dashFilter()
 }
 
+// add more type as needed, for now only float64 is being used
 type number interface {
-	constraints.Integer | constraints.Float
+	float64
 }
 
 // numericMap converts a simplejson map[string]any to a map[string]N, where N is numeric (int or float).
@@ -280,8 +282,10 @@ func buildHistoryQuery(query *annotations.ItemQuery, dashboards map[string]int64
 		RuleUID:      ruleUID,
 	}
 
+	// nolint: staticcheck
 	if historyQuery.DashboardUID == "" && query.DashboardID != 0 {
 		for uid, id := range dashboards {
+			// nolint: staticcheck
 			if query.DashboardID == id {
 				historyQuery.DashboardUID = uid
 				break

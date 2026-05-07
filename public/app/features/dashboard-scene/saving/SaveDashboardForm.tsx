@@ -1,15 +1,15 @@
 import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
-import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
-import { SaveDashboardDrawer } from './SaveDashboardDrawer';
+import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import {
-  DashboardChangeInfo,
+  type DashboardChangeInfo,
   NameAlreadyExistsError,
   SaveButton,
   isNameExistsError,
@@ -36,7 +36,6 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       ...dashboard.serializer.getK8SMetadata(),
     },
   });
-  const { t } = useTranslate();
 
   const onSave = async (overwrite: boolean) => {
     const result = await onSaveDashboard(dashboard, { ...options, rawDashboardJSON: changedSaveModel, overwrite });
@@ -101,7 +100,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     }
 
     if (isNameExistsError(error)) {
-      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
+      return <NameAlreadyExistsError />;
     }
 
     if (isPluginDashboardError(error)) {
@@ -161,15 +160,16 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
         <Alert
           title={t(
             'dashboard-scene.save-dashboard-form.title-dashboard-drastically-changed',
-            'Dashboard drastically changed'
+            'Dashboard irreversibly changed'
           )}
           severity="warning"
         >
           <p>
             <Trans i18nKey="dashboard-scene.save-dashboard-form.body-dashboard-drastically-changed">
-              Because you're using new dashboards features only supported on new Grafana dashboard schema format, the
-              dashboard will be saved in the new format. Please make sure you want to perform this action or you prefer
-              to save the dashboard as a new copy.
+              The dashboard will be saved using the new experimental Grafana dashboard schema. This action can’t be
+              reverted and could result in the irreversible loss of data. We recommend that you save this dashboard as a
+              copy instead. If you’re seeing this message in a production environment, contact Support to have the
+              feature disabled.
             </Trans>
           </p>
         </Alert>
@@ -203,8 +203,12 @@ export interface SaveDashboardFormCommonOptionsProps {
 }
 
 export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashboardFormCommonOptionsProps) {
-  const { t } = useTranslate();
-  const { saveVariables = false, saveTimeRange = false, saveRefresh = false } = drawer.useState();
+  const {
+    saveVariables = false,
+    saveTimeRange = false,
+    saveRefresh = false,
+    showVariablesWarning = false,
+  } = drawer.useState();
   const { hasTimeChanges, hasVariableValueChanges, hasRefreshChange } = changeInfo;
 
   return (
@@ -242,20 +246,38 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
         />
       )}
       {hasVariableValueChanges && (
-        <Checkbox
-          id="save-variables"
-          label={t(
-            'dashboard-scene.save-dashboard-form-common-options.save-variables-label-update-default-variable-values',
-            'Update default variable values'
+        <>
+          <Checkbox
+            id="save-variables"
+            label={t(
+              'dashboard-scene.save-dashboard-form-common-options.save-variables-label-update-default-variable-values',
+              'Update default variable values'
+            )}
+            description={t(
+              'dashboard-scene.save-dashboard-form-common-options.save-variables-description-current-values-default',
+              'Will make the current values the new default'
+            )}
+            checked={saveVariables}
+            onChange={drawer.onToggleSaveVariables}
+            data-testid={selectors.pages.SaveDashboardModal.saveVariables}
+          />
+          {saveVariables && showVariablesWarning && (
+            <Alert
+              data-testid={selectors.pages.SaveDashboardModal.variablesWarningAlert}
+              title={t(
+                'dashboard-scene.save-dashboard-form-common-options.show-variables-warning-alert-title',
+                'Variable queries failed'
+              )}
+              severity="warning"
+            >
+              <Trans i18nKey="dashboard-scene.save-dashboard-form-common-options.show-variables-warning-alert-body">
+                Some variables failed to load. If you keep “Update default variable values” checked, the current
+                (failed) values will become the dashboard defaults. You can save anyway or uncheck the option to avoid
+                storing those (failed) values.
+              </Trans>
+            </Alert>
           )}
-          description={t(
-            'dashboard-scene.save-dashboard-form-common-options.save-variables-description-current-values-default',
-            'Will make the current values the new default'
-          )}
-          checked={saveVariables}
-          onChange={drawer.onToggleSaveVariables}
-          data-testid={selectors.pages.SaveDashboardModal.saveVariables}
-        />
+        </>
       )}
     </Stack>
   );

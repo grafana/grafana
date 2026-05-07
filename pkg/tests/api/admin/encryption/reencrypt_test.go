@@ -3,32 +3,27 @@ package encryption
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/receivers/oncall"
 	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	alertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -36,11 +31,13 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegration_AdminApiReencrypt(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	const (
 		dataSourceTable              = "data_source"
 		secretsTable                 = "secrets"
 		secretsValueColumn           = "value"
-		alertmanagerSecureSettingKey = "secure-value"
+		alertmanagerSecureSettingKey = "password"
 		secureJsonKey                = "db-secure-key"
 	)
 
@@ -59,18 +56,12 @@ func TestIntegration_AdminApiReencrypt(t *testing.T) {
 	}
 
 	setup := func(t *testing.T, env *server.TestEnv, grafanaListenAddr string) {
-		userId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "admin",
-			Login:          "admin",
-		})
-
 		dsCmd := &datasources.AddDataSourceCommand{
 			Name:            "TestDatasource",
 			Type:            "testdata",
 			Access:          datasources.DS_ACCESS_DIRECT,
 			UID:             "testuid",
-			UserID:          userId,
+			UserID:          1,
 			OrgID:           1,
 			WithCredentials: true,
 			SecureJsonData: map[string]string{
@@ -82,7 +73,7 @@ func TestIntegration_AdminApiReencrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		// Trigger creation of signing key
-		_, _, err = env.IDService.SignIdentity(context.Background(), &authn.Identity{ID: fmt.Sprintf("%d", userId), Type: claims.TypeUser})
+		_, _, err = env.IDService.SignIdentity(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
 		require.NoError(t, err)
 
 		// Add alerting config with secure settings.
@@ -103,6 +94,9 @@ func RunAdminApiReencryptTest(
 ) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		APIServerStorageType: options.StorageTypeUnified,
+		EnableLog:            false,
+		QueryRetries:         30, // arbitrary 3x from the default
+		TransactionRetries:   30, // arbitrary 3x from the default
 	})
 
 	grafanaListenAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -116,7 +110,7 @@ func RunAdminApiReencryptTest(
 	// Reencrypt with new data key.
 	ok, err := env.Server.HTTPServer.SecretsMigrator.ReEncryptSecrets(context.Background())
 	require.NoError(t, err)
-	assert.True(t, ok, "Failed to reencrypt all secrets")
+	require.True(t, ok, "Failed to reencrypt all secrets")
 
 	afterReencrypt := getSecrets(t, secretsFns, env)
 	verifyAllSecrets(t, env, beforeReencrypt, afterReencrypt)
@@ -124,7 +118,7 @@ func RunAdminApiReencryptTest(
 	// Rollback from envelope to legacy encryption.
 	ok, err = env.Server.HTTPServer.SecretsMigrator.RollBackSecrets(context.Background())
 	require.NoError(t, err)
-	assert.True(t, ok, "Failed to rollback all secrets")
+	require.True(t, ok, "Failed to rollback all secrets")
 
 	afterRollback := getSecrets(t, secretsFns, env)
 	verifyAllSecrets(t, env, afterReencrypt, afterRollback)
@@ -169,7 +163,7 @@ next:
 				require.NoError(t, err)
 				result[r.Id] = secret{
 					id:     r.Id,
-					secret: decoded,
+					secret: append([]byte(nil), decoded...),
 				}
 				continue next
 			}
@@ -179,35 +173,14 @@ next:
 }
 
 func addAlertingConfig(t *testing.T, env *server.TestEnv) {
-	// Create alertmanager config
-	cfg := apimodels.PostableUserConfig{}
-	body := `
-		{
-			"alertmanager_config": {
-				"route": {
-					"receiver": "grafana-default-email"
-				},
-				"receivers": [{
-					"name": "grafana-default-email",
-					"grafana_managed_receiver_configs": [{
-						"uid": "",
-						"name": "email receiver",
-						"type": "email",
-						"isDefault": true,
-						"settings": {
-							"addresses": "<example@email.com>"
-						},
-						"secureSettings": {
-							"secure-value": "secret"
-						}
-					}]
-				}]
-			}
-		}
-		`
-	err := json.Unmarshal([]byte(body), &cfg)
-	require.NoError(t, err)
-	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.SaveAndApplyAlertmanagerConfiguration(context.Background(), 1, cfg)
+	// Receiver has the secure field "password".
+	receiverWithSecrets := alertmodels.ReceiverGen(alertmodels.ReceiverMuts.WithName("receiver-1"), alertmodels.ReceiverMuts.WithValidIntegration(oncall.Type))()
+
+	u := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {accesscontrol.ActionAlertingReceiversCreate: nil},
+	}}
+
+	_, err := env.Server.HTTPServer.AlertNG.Api.ReceiverService.CreateReceiver(context.Background(), &receiverWithSecrets, 1, u)
 	require.NoError(t, err)
 }
 
@@ -248,24 +221,6 @@ func verifySecrets(t *testing.T, env *server.TestEnv, before, after map[int]secr
 	}
 }
 
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
-	cfg.AutoAssignOrg = true
-	cfg.AutoAssignOrgId = 1
-
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
-	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
-	)
-	require.NoError(t, err)
-
-	u, err := usrSvc.Create(context.Background(), &cmd)
-	require.NoError(t, err)
-	return u.ID
-}
-
 func getSecureJsonSecrets(t *testing.T, store db.DB, table string, secureJsonDataKey string) map[int]secret {
 	var rows []struct {
 		Id             int
@@ -282,7 +237,7 @@ func getSecureJsonSecrets(t *testing.T, store db.DB, table string, secureJsonDat
 	for _, r := range rows {
 		result[r.Id] = secret{
 			id:     r.Id,
-			secret: r.SecureJsonData[secureJsonDataKey],
+			secret: append([]byte(nil), r.SecureJsonData[secureJsonDataKey]...),
 			update: r.Updated,
 		}
 	}
@@ -307,7 +262,7 @@ func getBase64Secrets(t *testing.T, store db.DB, table, column string, enc *base
 		require.NoError(t, err)
 		result[r.Id] = secret{
 			id:     r.Id,
-			secret: d,
+			secret: append([]byte(nil), d...),
 			update: r.Updated,
 		}
 	}
@@ -331,7 +286,7 @@ func getSigningKeys(t *testing.T, store db.DB) map[int]secret {
 		require.NoError(t, err)
 		result[r.Id] = secret{
 			id:     r.Id,
-			secret: d,
+			secret: append([]byte(nil), d...),
 			// there's no update time, leave it at 0
 		}
 	}

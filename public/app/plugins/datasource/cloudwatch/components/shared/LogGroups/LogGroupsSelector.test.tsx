@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import lodash from 'lodash';
 import selectEvent from 'react-select-event';
 
-import { ResourceResponse, LogGroupResponse } from '../../../resources/types';
+import { type ResourceResponse, type LogGroupResponse } from '../../../resources/types';
 
 import { LogGroupsSelector } from './LogGroupsSelector';
 

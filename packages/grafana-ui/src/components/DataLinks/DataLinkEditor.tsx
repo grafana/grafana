@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { memo, ChangeEvent } from 'react';
+import { memo, useId, type ChangeEvent } from 'react';
 
-import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
+import { type VariableSuggestion, type GrafanaTheme2, type DataLink } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes/index';
-import { t, Trans } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Field } from '../Forms/Field';
+import { getLabelStyles } from '../Forms/Label';
 import { Input } from '../Input/Input';
 import { Switch } from '../Switch/Switch';
 
@@ -20,20 +21,11 @@ interface DataLinkEditorProps {
   showOneClick?: boolean;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  listItem: css({
-    marginBottom: theme.spacing(),
-  }),
-  infoText: css({
-    paddingBottom: theme.spacing(2),
-    marginLeft: '66px',
-    color: theme.colors.text.secondary,
-  }),
-});
-
 export const DataLinkEditor = memo(
   ({ index, value, onChange, suggestions, isLast, showOneClick = false }: DataLinkEditorProps) => {
     const styles = useStyles2(getStyles);
+    const labelStyles = useStyles2(getLabelStyles);
+    const id = useId();
 
     const onUrlChange = (url: string, callback?: () => void) => {
       onChange(index, { ...value, url }, callback);
@@ -55,18 +47,25 @@ export const DataLinkEditor = memo(
       <div className={styles.listItem}>
         <Field label={t('grafana-ui.data-link-editor.title-label', 'Title')}>
           <Input
+            id="link-title"
             value={value.title}
             onChange={onTitleChange}
             placeholder={t('grafana-ui.data-link-editor.title-placeholder', 'Show details')}
           />
         </Field>
 
-        <Field label={t('grafana-ui.data-link-editor.url-label', 'URL')}>
-          <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
+        <Field
+          label={
+            <div className={labelStyles.label} id={id}>
+              <Trans i18nKey="grafana-ui.data-link-editor.url-label">URL</Trans>
+            </div>
+          }
+        >
+          <DataLinkInput aria-labelledby={id} value={value.url} onChange={onUrlChange} suggestions={suggestions} />
         </Field>
 
         <Field label={t('grafana-ui.data-link-editor.new-tab-label', 'Open in new tab')}>
-          <Switch value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
+          <Switch id="new-tab-toggle" value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
         </Field>
 
         {showOneClick && (
@@ -77,17 +76,15 @@ export const DataLinkEditor = memo(
               'Only one link can have one click enabled at a time'
             )}
           >
-            <Switch value={value.oneClick || false} onChange={onOneClickChanged} />
+            <Switch id="one-click-toggle" value={value.oneClick || false} onChange={onOneClickChanged} />
           </Field>
         )}
 
         {isLast && (
-          <div className={styles.infoText}>
-            <Trans i18nKey="grafana-ui.data-link-editor.info">
-              With data links you can reference data variables like series name, labels and values. Type CMD+Space,
-              CTRL+Space, or $ to open variable suggestions.
-            </Trans>
-          </div>
+          <Trans i18nKey="grafana-ui.data-link-editor.info" className={styles.infoText}>
+            With data links you can reference data variables like series name, labels and values. Type CMD+Space,
+            CTRL+Space, or $ to open variable suggestions.
+          </Trans>
         )}
       </div>
     );
@@ -95,3 +92,14 @@ export const DataLinkEditor = memo(
 );
 
 DataLinkEditor.displayName = 'DataLinkEditor';
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  listItem: css({
+    marginBottom: theme.spacing(),
+  }),
+  infoText: css({
+    paddingBottom: theme.spacing(2),
+    marginLeft: '66px',
+    color: theme.colors.text.secondary,
+  }),
+});

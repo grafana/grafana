@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Candlestick",
   "id": "candlestick",
-
+  "suggestions": true,
   "info": {
     "description": "Graphical representation of price movements of a security, derivative, or currency.",
     "keywords": ["financial", "price", "currency", "k-line"],

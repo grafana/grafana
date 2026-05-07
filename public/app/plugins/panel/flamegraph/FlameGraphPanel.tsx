@@ -1,6 +1,8 @@
-import { CoreApp, PanelProps } from '@grafana/data';
+import { CoreApp, type PanelProps } from '@grafana/data';
 import { FlameGraph, checkFields, getMessageCheckFieldsResult } from '@grafana/flamegraph';
 import { PanelDataErrorView, reportInteraction, config } from '@grafana/runtime';
+
+import { type Options } from './types';
 
 function interaction(name: string, context: Record<string, string | number> = {}) {
   reportInteraction(`grafana_flamegraph_${name}`, {
@@ -10,7 +12,7 @@ function interaction(name: string, context: Record<string, string | number> = {}
   });
 }
 
-export const FlameGraphPanel = (props: PanelProps) => {
+export const FlameGraphPanel = (props: PanelProps<Options>) => {
   const wrongFields = checkFields(props.data.series[0]);
   if (wrongFields) {
     return (

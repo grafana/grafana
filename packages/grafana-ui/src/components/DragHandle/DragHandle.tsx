@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export type DragHandlePosition = 'middle' | 'start' | 'end';
 
@@ -33,7 +33,9 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
     '&:before': {
       content: '""',
       position: 'absolute',
-      transition: theme.transitions.create('border-color'),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create('border-color'),
+      },
       zIndex: 1,
     },
 
@@ -41,7 +43,9 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
       background: baseColor,
       content: '""',
       position: 'absolute',
-      transition: theme.transitions.create('background'),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create('background'),
+      },
       transform: 'translate(-50%, -50%)',
       borderRadius: theme.shape.radius.pill,
       zIndex: 1,

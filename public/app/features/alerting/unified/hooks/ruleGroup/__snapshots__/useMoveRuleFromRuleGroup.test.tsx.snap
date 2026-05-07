@@ -4,6 +4,7 @@ exports[`Moving a Data source managed rule should move a rule in a namespace to 
 [
   {
     "body": {
+      "interval": "1m",
       "name": "group-1",
       "rules": [
         {
@@ -49,6 +50,7 @@ exports[`Moving a Data source managed rule should move a rule in an existing gro
 [
   {
     "body": {
+      "interval": "1m",
       "name": "entirely new group name",
       "rules": [
         {
@@ -190,6 +192,7 @@ exports[`Moving a Grafana managed rule should move a rule from an existing group
 [
   {
     "body": {
+      "interval": "1m",
       "name": "empty-group",
       "rules": [
         {

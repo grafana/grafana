@@ -1,34 +1,44 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import * as React from 'react';
-import { TableInstance, useTable } from 'react-table';
+import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
+import { type TableInstance, useTable } from 'react-table';
 import { VariableSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
-import { GrafanaTheme2, isTruthy } from '@grafana/data';
+import { type GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { DashboardViewItem } from 'app/features/search/types';
+import { FolderReadmePanel } from 'app/features/provisioning/components/Folders/FolderReadmePanel';
+import { type DashboardViewItem } from 'app/features/search/types';
 
-import { DashboardsTreeCellProps, DashboardsTreeColumn, DashboardsTreeItem, SelectionState } from '../types';
+import { canSelectItems } from '../permissions';
+import {
+  type BrowseDashboardsPermissions,
+  type DashboardsTreeCellProps,
+  type DashboardsTreeColumn,
+  type DashboardsTreeItem,
+  type SelectionState,
+} from '../types';
+import { makeRowID } from '../utils/dashboards';
 
 import CheckboxCell from './CheckboxCell';
 import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
 import { TagsCell } from './TagsCell';
 import { useCustomFlexLayout } from './customFlexTableLayout';
-import { makeRowID } from './utils';
 
 interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
   width: number;
   height: number;
-  canSelect: boolean;
+  permissions: BrowseDashboardsPermissions;
+  folderUID?: string;
   isSelected: (kind: DashboardViewItem | '$all') => SelectionState;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
+  onTagClick: (tag: string) => void;
 
   isItemLoaded: (itemIndex: number) => boolean;
   requestLoadMore: (folderUid: string | undefined) => void;
@@ -37,6 +47,9 @@ interface DashboardsTreeProps {
 const HEADER_HEIGHT = 36;
 const ROW_HEIGHT = 36;
 const DIVIDER_HEIGHT = 0; // Yes - make it appear as a border on the row rather than a row itself
+// README is always the last item, so an approximate height is fine.
+const README_ROW_HEIGHT = 320;
+const README_ROW_PADDING_TOP = 16; // matches theme.spacing(2)
 
 export function DashboardsTree({
   items,
@@ -44,18 +57,19 @@ export function DashboardsTree({
   height,
   isSelected,
   onFolderClick,
+  onTagClick,
   onAllSelectionChange,
   onItemSelectionChange,
   isItemLoaded,
   requestLoadMore,
-  canSelect = false,
+  permissions,
+  folderUID,
 }: DashboardsTreeProps) {
   const treeID = useId();
 
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const listRef = useRef<List | null>(null);
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   useEffect(() => {
     // If the tree changed identity, then some indexes that were previously loaded may now be unloaded,
@@ -93,12 +107,13 @@ export function DashboardsTree({
       id: 'tags',
       width: 2,
       Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
-      Cell: TagsCell,
+      Cell: (props: DashboardsTreeCellProps) => <TagsCell {...props} onTagClick={onTagClick} />,
     };
+    const canSelect = canSelectItems(permissions);
     const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
-  }, [onFolderClick, canSelect, t]);
+  }, [onFolderClick, onTagClick, permissions]);
 
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;
@@ -110,10 +125,12 @@ export function DashboardsTree({
       onAllSelectionChange,
       onItemSelectionChange,
       treeID,
+      permissions,
+      folderUID,
     }),
     // we need this to rerender if items changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID]
+    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID, permissions, folderUID]
   );
 
   const handleIsItemLoaded = useCallback(
@@ -137,8 +154,26 @@ export function DashboardsTree({
       if (row.item.kind === 'ui' && row.item.uiKind === 'divider') {
         return DIVIDER_HEIGHT;
       }
+      if (row.item.kind === 'ui' && row.item.uiKind === 'readme') {
+        return README_ROW_HEIGHT + README_ROW_PADDING_TOP;
+      }
 
       return ROW_HEIGHT;
+    },
+    [items]
+  );
+
+  const itemKey = useCallback(
+    (index: number) => {
+      const item = items[index].item;
+      // Stabilize the readme row's identity across position shifts so
+      // react-window preserves the component instance when items are
+      // inserted before it (e.g. folder expansion). Other rows keep the
+      // default index-based keying.
+      if (item.kind === 'ui' && item.uiKind === 'readme') {
+        return item.uid;
+      }
+      return index;
     },
     [items]
   );
@@ -157,7 +192,7 @@ export function DashboardsTree({
 
               return (
                 <div key={key} {...headerProps} role="columnheader" className={styles.cell}>
-                  {column.render('Header', { isSelected, onAllSelectionChange })}
+                  {column.render('Header', { isSelected, onAllSelectionChange, permissions })}
                 </div>
               );
             })}
@@ -185,6 +220,7 @@ export function DashboardsTree({
               estimatedItemSize={ROW_HEIGHT}
               itemSize={getRowHeight}
               onItemsRendered={onItemsRendered}
+              itemKey={itemKey}
             >
               {VirtualListRow}
             </List>
@@ -204,12 +240,14 @@ interface VirtualListRowProps {
     onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
     onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
     treeID: string;
+    permissions: BrowseDashboardsPermissions;
+    folderUID?: string;
   };
 }
 
 function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const styles = useStyles2(getStyles);
-  const { table, isSelected, onItemSelectionChange, treeID } = data;
+  const { table, isSelected, onItemSelectionChange, treeID, permissions } = data;
   const { rows, prepareRow } = table;
 
   const row = rows[index];
@@ -222,6 +260,14 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
     return (
       <div key={key} {...rowProps}>
         <hr className={styles.divider} />
+      </div>
+    );
+  }
+
+  if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'readme' && data.folderUID) {
+    return (
+      <div key={key} {...rowProps} className={styles.readmeRow}>
+        <FolderReadmePanel folderUID={data.folderUID} />
       </div>
     );
   }
@@ -241,7 +287,7 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 
         return (
           <div key={key} {...cellProps} className={styles.cell}>
-            {cell.render('Cell', { isSelected, onItemSelectionChange, treeID })}
+            {cell.render('Cell', { isSelected, onItemSelectionChange, treeID, permissions })}
           </div>
         );
       })}
@@ -261,6 +307,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderTop: `1px solid ${theme.colors.border.weak}`,
       width: '100%',
       margin: 0,
+    }),
+
+    readmeRow: css({
+      paddingTop: theme.spacing(2),
+      flexDirection: 'column',
     }),
 
     headerRow: css({

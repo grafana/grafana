@@ -1,8 +1,8 @@
 import * as comlink from 'comlink';
 import { useCallback, useEffect } from 'react';
 
-import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
-import { Labels } from '../../../types/unified-alerting-dto';
+import { type AlertmanagerGroup, type RouteWithID } from '../../../plugins/datasource/alertmanager/types';
+import { type Labels } from '../../../types/unified-alerting-dto';
 
 import { logError, logInfo } from './Analytics';
 import { createWorker } from './createRouteGroupsMatcherWorker';
@@ -75,19 +75,19 @@ export function useRouteGroupsMatcher() {
     []
   );
 
-  const matchInstancesToRoute = useCallback(
-    async (rootRoute: RouteWithID, instancesToMatch: Labels[], options?: MatchOptions) => {
+  const matchInstancesToRoutes = useCallback(
+    async (rootRoute: RouteWithID, instances: Labels[], options?: MatchOptions) => {
       validateWorker(routeMatcher);
 
       const startTime = performance.now();
 
-      const result = await routeMatcher.matchInstancesToRoute(rootRoute, instancesToMatch, options);
+      const result = await routeMatcher.matchInstancesToRoutes(rootRoute, instances, options);
 
       const timeSpent = performance.now() - startTime;
 
       logInfo(`Instances Matched in  ${timeSpent} ms`, {
         matchingTime: timeSpent.toString(),
-        instancesToMatchCount: instancesToMatch.length.toString(),
+        instancesToMatchCount: instances.length.toString(),
         // Counting all nested routes might be too time-consuming, so we only count the first level
         topLevelRoutesCount: rootRoute.routes?.length.toString() ?? '0',
       });
@@ -97,5 +97,5 @@ export function useRouteGroupsMatcher() {
     []
   );
 
-  return { getRouteGroupsMap, matchInstancesToRoute };
+  return { getRouteGroupsMap, matchInstancesToRoutes };
 }

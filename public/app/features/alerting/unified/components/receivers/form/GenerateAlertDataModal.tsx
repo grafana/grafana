@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
-import { addDays, subDays } from 'date-fns';
+import { addDays } from 'date-fns/addDays';
+import { subDays } from 'date-fns/subDays';
 import { uniqueId } from 'lodash';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Card, Modal, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
-import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
-import { KeyValueField } from '../../../api/templateApi';
+import { type KeyValueField } from '../../../api/templateApi';
 import AnnotationsStep from '../../rule-editor/AnnotationsStep';
 import LabelsField from '../../rule-editor/labels/LabelsField';
 
@@ -40,7 +41,6 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   const annotations = formMethods.watch('annotations');
   const labels = formMethods.watch('labels');
   const [status, setStatus] = useState<'firing' | 'resolved'>('firing');
-  const { t } = useTranslate();
 
   const onAdd = () => {
     const alert: TestTemplateAlert = {
@@ -82,10 +82,10 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   };
   const alertOptions: AlertOption[] = [
     {
-      label: 'Firing',
+      label: t('alerting.generate-alert-data-modal.alert-options.label.firing', 'Firing'),
       value: 'firing',
     },
-    { label: 'Resolved', value: 'resolved' },
+    { label: t('alerting.generate-alert-data-modal.alert-options.label.resolved', 'Resolved'), value: 'resolved' },
   ];
 
   return (
@@ -103,7 +103,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
             setStatus('firing');
           }}
         >
-          <Card>
+          <Card noMargin>
             <Stack direction="column" gap={1}>
               <div className={styles.section}>
                 <AnnotationsStep />

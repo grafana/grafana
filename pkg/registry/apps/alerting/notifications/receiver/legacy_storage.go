@@ -11,14 +11,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
 var (
@@ -26,11 +24,11 @@ var (
 )
 
 type ReceiverService interface {
-	GetReceiver(ctx context.Context, q ngmodels.GetReceiverQuery, user identity.Requester) (*ngmodels.Receiver, error)
+	GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*ngmodels.Receiver, error)
 	GetReceivers(ctx context.Context, q ngmodels.GetReceiversQuery, user identity.Requester) ([]*ngmodels.Receiver, error)
 	CreateReceiver(ctx context.Context, r *ngmodels.Receiver, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
 	UpdateReceiver(ctx context.Context, r *ngmodels.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
-	DeleteReceiver(ctx context.Context, name string, provenance definitions.Provenance, version string, orgID int64, user identity.Requester) error
+	DeleteReceiver(ctx context.Context, name string, provenance ngmodels.Provenance, version string, orgID int64, user identity.Requester) error
 }
 
 type MetadataService interface {
@@ -76,9 +74,9 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	q := ngmodels.GetReceiversQuery{
 		OrgID:   orgId,
 		Decrypt: false,
-		//Names:   ctx.QueryStrings("names"), // TODO: Query params.
-		//Limit:   ctx.QueryInt("limit"),
-		//Offset:  ctx.QueryInt("offset"),
+		// Names:   ctx.QueryStrings("names"), // TODO: Query params.
+		// Limit:   ctx.QueryInt("limit"),
+		// Offset:  ctx.QueryInt("offset"),
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -117,22 +115,12 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
-	name, err := legacy_storage.UidToName(uid)
-	if err != nil {
-		return nil, apierrors.NewNotFound(ResourceInfo.GroupResource(), uid)
-	}
-	q := ngmodels.GetReceiverQuery{
-		OrgID:   info.OrgID,
-		Name:    name,
-		Decrypt: false,
-	}
-
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := s.service.GetReceiver(ctx, q, user)
+	r, err := s.service.GetReceiver(ctx, uid, false, user)
 	if err != nil {
 		return nil, err
 	}
@@ -273,8 +261,16 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 		version = *options.Preconditions.ResourceVersion
 	}
 
-	err = s.service.DeleteReceiver(ctx, uid, definitions.Provenance(ngmodels.ProvenanceNone), version, info.OrgID, user) // TODO add support for dry-run option
-	return old, false, err                                                                                               // false - will be deleted async
+	oldReceiver, ok := old.(*model.Receiver)
+	if !ok {
+		return nil, false, fmt.Errorf("expected receiver but got %s", old.GetObjectKind().GroupVersionKind())
+	}
+	prov, err := ngmodels.ProvenanceFromString(oldReceiver.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, apierrors.NewBadRequest(err.Error())
+	}
+	err = s.service.DeleteReceiver(ctx, uid, prov, version, info.OrgID, user) // TODO add support for dry-run option
+	return old, false, err                                                    // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {

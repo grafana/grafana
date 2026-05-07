@@ -1,8 +1,8 @@
-import * as React from 'react';
+import type * as React from 'react';
 
-import { DataFrame } from '../types/dataFrame';
-import { DataTransformerInfo } from '../types/transformations';
-import { Registry, RegistryItem } from '../utils/Registry';
+import { type DataFrame } from '../types/dataFrame';
+import { type DataTransformerInfo } from '../types/transformations';
+import { Registry, type RegistryItem } from '../utils/Registry';
 
 export interface TransformerUIProps<T> {
   /**
@@ -18,9 +18,30 @@ export interface TransformerUIProps<T> {
 
 export interface TransformerRegistryItem<TOptions = any> extends RegistryItem {
   /**
-   * Object describing transformer configuration
+   * Resolver for the transformer configuration. Returns a promise that resolves to the
+   * DataTransformerInfo containing the operator function and metadata.
+   * Use `Promise.resolve(info)` for eagerly-loaded transformers.
    */
-  transformation: DataTransformerInfo<TOptions>;
+  transformation: () => Promise<DataTransformerInfo<TOptions>>;
+
+  /**
+   * Default options for this transformer, used when rendering the editor.
+   * Hoisted from DataTransformerInfo so it's available synchronously without
+   * resolving the transformation promise.
+   */
+  defaultOptions?: Partial<TOptions>;
+
+  /**
+   * Checks whether this transformer is applicable to the given data.
+   * Hoisted from DataTransformerInfo so the picker can check applicability
+   * without resolving the async transformation.
+   */
+  isApplicable?: (data: DataFrame[]) => number;
+
+  /**
+   * Description shown when the transformer is not applicable.
+   */
+  isApplicableDescription?: string | ((data: DataFrame[]) => string);
 
   /** Markdown with more detailed description and help */
   help?: string;
@@ -34,6 +55,21 @@ export interface TransformerRegistryItem<TOptions = any> extends RegistryItem {
    * Set of categories associated with the transformer
    */
   categories?: Set<TransformerCategory>;
+
+  /**
+   * Set of tags associated with the transformer for improved transformation search
+   */
+  tags?: Set<string>;
+
+  /**
+   * Image representing the transformer, for dark themes
+   */
+  imageDark: string;
+
+  /**
+   * Image representing the transformer, for light themes
+   */
+  imageLight: string;
 }
 
 export enum TransformerCategory {

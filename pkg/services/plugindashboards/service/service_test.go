@@ -171,7 +171,7 @@ type pluginDashboardStoreMock struct {
 
 func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, args *dashboards.ListPluginDashboardFilesArgs) (*dashboards.ListPluginDashboardFilesResult, error) {
 	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginID]; exists {
-		references := []string{}
+		references := make([]string, 0, len(dashboardFiles))
 
 		for ref := range dashboardFiles {
 			references = append(references, ref)

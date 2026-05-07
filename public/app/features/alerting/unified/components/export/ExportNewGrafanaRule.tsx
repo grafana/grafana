@@ -1,3 +1,6 @@
+import { t } from '@grafana/i18n';
+
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ModifyExportRuleForm } from '../rule-editor/alert-rule-form/ModifyExportRuleForm';
@@ -5,9 +8,9 @@ import { ModifyExportRuleForm } from '../rule-editor/alert-rule-form/ModifyExpor
 function ExportNewGrafanaRulePage() {
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={getAlertRulesNavId()}
       pageNav={{
-        text: 'Export new Grafana rule',
+        text: t('alerting.export-new-grafana-rule-page.text.export-new-grafana-rule', 'Export new Grafana rule'),
         subTitle: 'Export a new rule definition in Terraform(HCL) format. Any changes you make will not be saved.',
       }}
     >

@@ -44,16 +44,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Text: "Organizations", SubTitle: "Isolated instances of Grafana running on the same server", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
 		})
 	}
-	if s.features.IsEnabled(ctx, featuremgmt.FlagFeatureToggleAdminPage) && hasAccess(ac.EvalPermission(ac.ActionFeatureManagementRead)) {
-		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
-			Text:     "Feature toggles",
-			SubTitle: "View and edit feature toggles",
-			Id:       "feature-toggles",
-			Url:      s.cfg.AppSubURL + "/admin/featuretoggles",
-			Icon:     "toggle-on",
-		})
-	}
-	if hasAccess(cloudmigration.MigrationAssistantAccess) && s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) {
+	if hasAccess(cloudmigration.MigrationAssistantAccess) && s.cfg.CloudMigration.Enabled {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Migrate to Grafana Cloud",
 			Id:       "migrate-to-cloud",
@@ -61,14 +52,15 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if c.HasRole(identity.RoleAdmin) &&
-		(s.cfg.StackID == "" || // show OnPrem even when provisioning is disabled
-			s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning)) {
-		configNodes = append(configNodes, &navtree.NavLink{
+		s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
+			Keywords: []string{"git sync", "git-sync", "repository", "version control", "as code"},
 		})
 	}
 
@@ -76,7 +68,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Text:     "General",
 		SubTitle: "Manage default preferences and settings across Grafana",
 		Id:       navtree.NavIDCfgGeneral,
-		Url:      "/admin/general",
+		Url:      s.cfg.AppSubURL + "/admin/general",
 		Icon:     "shield",
 		Children: generalNodeLinks,
 	}
@@ -97,7 +89,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/plugins",
 		})
 	}
-	if s.features.IsEnabled(ctx, featuremgmt.FlagCorrelations) && hasAccess(correlations.ConfigurationPageAccess) {
+	if hasAccess(correlations.ConfigurationPageAccess) {
 		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
 			Text:     "Correlations",
 			Icon:     "gf-glue",
@@ -107,6 +99,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if (s.cfg.Env == setting.Dev) || s.features.IsEnabled(ctx, featuremgmt.FlagEnableExtensionsAdminPage) && hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
 		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
 			Text:     "Extensions",
@@ -121,7 +114,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Text:     "Plugins and data",
 		SubTitle: "Install plugins and define the relationships between data",
 		Id:       navtree.NavIDCfgPlugins,
-		Url:      "/admin/plugins",
+		Url:      s.cfg.AppSubURL + "/admin/plugins",
 		Icon:     "shield",
 		Children: pluginsNodeLinks,
 	}
@@ -154,20 +147,8 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
-	disabled, err := s.apiKeyService.IsDisabled(ctx, c.GetOrgID())
-	if err != nil {
-		return nil, err
-	}
-	if hasAccess(ac.ApiKeyAccessEvaluator) && !disabled {
-		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
-			Text:     "API keys",
-			Id:       "apikeys",
-			SubTitle: "Manage and create API keys that are used to interact with Grafana HTTP APIs",
-			Icon:     "key-skeleton-alt",
-			Url:      s.cfg.AppSubURL + "/org/apikeys",
-		})
-	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.license.FeatureEnabled("groupsync") &&
 		s.features.IsEnabled(ctx, featuremgmt.FlagGroupAttributeSync) &&
 		hasAccess(ac.EvalAny(
@@ -187,7 +168,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Text:     "Users and access",
 		SubTitle: "Configure access for individual users, teams, and service accounts",
 		Id:       navtree.NavIDCfgAccess,
-		Url:      "/admin/access",
+		Url:      s.cfg.AppSubURL + "/admin/access",
 		Icon:     "shield",
 		Children: accessNodeLinks,
 	}
@@ -196,7 +177,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	configNodes = append(configNodes, usersNode)
 
 	if authConfigUIAvailable && hasAccess(ssoutils.EvalAuthenticationSettings(s.cfg)) ||
-		(hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) && s.features.IsEnabled(ctx, featuremgmt.FlagSsoSettingsApi)) {
+		hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:      "Authentication",
 			Id:        "authentication",
@@ -214,7 +195,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Icon:       "cog",
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,
-		Url:        "/admin",
+		Url:        s.cfg.AppSubURL + "/admin",
 	}
 
 	return configNode, nil

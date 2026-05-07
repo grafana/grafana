@@ -2,11 +2,11 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
-import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
-import { GetDimensionKeysRequest } from '../../resources/types';
+import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
+import { type GetDimensionKeysRequest } from '../../resources/types';
 import { VariableQueryType } from '../../types';
 
-import { VariableQueryEditor, Props } from './VariableQueryEditor';
+import { VariableQueryEditor, type Props } from './VariableQueryEditor';
 
 const defaultQuery = {
   queryType: VariableQueryType.Regions,

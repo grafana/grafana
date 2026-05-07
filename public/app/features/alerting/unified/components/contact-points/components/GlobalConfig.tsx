@@ -1,7 +1,8 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 import { useAlertmanagerConfig } from '../../../hooks/useAlertmanagerConfig';
+import { useContactPointsNav } from '../../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../../AlertingPageWrapper';
@@ -10,7 +11,6 @@ import { GlobalConfigForm } from '../../receivers/GlobalConfigForm';
 const GlobalConfig = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
-  const { t } = useTranslate();
 
   if (isLoading && !data) {
     return 'loading...';
@@ -38,8 +38,10 @@ const GlobalConfig = () => {
 };
 
 function GlobalConfigPage() {
+  const { navId, pageNav } = useContactPointsNav();
+
   return (
-    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+    <AlertmanagerPageWrapper navId={navId} pageNav={pageNav} accessType="notification">
       <GlobalConfig />
     </AlertmanagerPageWrapper>
   );

@@ -18,11 +18,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -49,7 +50,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			}
 			return c, ok
 		})
-		var result []fakes.GenericRecordedQuery
+		result := make([]fakes.GenericRecordedQuery, 0, len(results))
 		for _, cmd := range results {
 			result = append(result, cmd.(fakes.GenericRecordedQuery))
 		}
@@ -216,7 +217,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			folder := randFolder()
 			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference()))
+			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference()), gen.WithUpdatedBy(util.Pointer(models.UserUID("test-user"))))
 			queryAccessRules := folderGen.GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), queryAccessRules...)
 			noQueryAccessRules := folderGen.GenerateManyRef(2, 6)
@@ -283,7 +284,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 				userUids = append(userUids, string(*rule.UpdatedBy))
 			}
 		}
-		fakeUserServiceResponse := []*user.User{}
+		fakeUserServiceResponse := make([]*user.User, 0, len(userUids))
 		for i, uid := range userUids {
 			fakeUserServiceResponse = append(fakeUserServiceResponse, &user.User{ID: int64(i + 1), UID: uid})
 		}
@@ -351,7 +352,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 				userUids = append(userUids, string(*rule.UpdatedBy))
 			}
 		}
-		fakeUserServiceResponse := []*user.User{}
+		fakeUserServiceResponse := make([]*user.User, 0, len(userUids))
 		for i, uid := range userUids {
 			fakeUserServiceResponse = append(fakeUserServiceResponse, &user.User{ID: int64(i + 1), UID: uid})
 		}
@@ -376,8 +377,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		for i, actual := range groups[0].Rules {
 			expected := expectedRules[i]
 			if actual.GrafanaManagedAlert.UID != expected.UID {
-				var actualUIDs []string
-				var expectedUIDs []string
+				actualUIDs := make([]string, 0, len(group.Rules))
+				expectedUIDs := make([]string, 0, len(expectedRules))
 				for _, rule := range group.Rules {
 					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
 				}
@@ -560,11 +561,17 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], f)
 
 		rule := gen.GenerateRef()
-		history := gen.With(gen.WithUID(rule.UID)).GenerateManyRef(3)
+		historyRules := gen.With(gen.WithUID(rule.UID)).GenerateManyRef(3)
+		history := make([]*models.AlertRuleVersion, len(historyRules))
 		// simulate order of the history
 		rule.ID = 100
-		for i, alertRule := range history {
+		for i, alertRule := range historyRules {
 			alertRule.ID = rule.ID - int64(i) - 1
+
+			history[i] = &models.AlertRuleVersion{
+				AlertRule: *alertRule,
+				Message:   fmt.Sprintf("revision %d", i),
+			}
 		}
 
 		ruleStore.PutRule(context.Background(), rule)
@@ -584,9 +591,20 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 		require.Len(t, result, len(history)+1) // history + current version
 
 		t.Run("should be in correct order", func(t *testing.T) {
-			expectedHistory := append([]*models.AlertRule{rule}, history...)
+			expectedHistory := append([]*models.AlertRuleVersion{{AlertRule: *rule}}, history...)
 			for i, rul := range expectedHistory {
 				assert.Equal(t, rul.UID, result[i].GrafanaManagedAlert.UID)
+			}
+		})
+
+		t.Run("should have correct messages", func(t *testing.T) {
+			expectedMessages := make([]string, 0, len(history)+1)
+			expectedMessages = append(expectedMessages, "")
+			for i := range history {
+				expectedMessages = append(expectedMessages, history[i].Message)
+			}
+			for i := range expectedMessages {
+				assert.Equal(t, expectedMessages[i], result[i].GrafanaManagedAlert.Message)
 			}
 		})
 	})
@@ -599,10 +617,17 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 			UID:   "test",
 		}
 		guid := uuid.NewString()
-		history := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		historyRules := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		history := make([]*models.AlertRuleVersion, len(historyRules))
+		for i, alertRule := range historyRules {
+			history[i] = &models.AlertRuleVersion{
+				AlertRule: *alertRule,
+				Message:   fmt.Sprintf("revision %d", i),
+			}
+		}
 		ruleStore.History[guid] = append(ruleStore.History[guid], history...) // even if history is full of records
 
-		perms := createPermissionsForRules(history, orgID)
+		perms := createPermissionsForRules(historyRules, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
 		response := createService(ruleStore, nil).RouteGetRuleVersionsByUID(req, ruleKey.UID)
 
@@ -643,10 +668,17 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 		guid := uuid.NewString()
 		rule := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey), gen.WithNamespaceUID(anotherFolder.UID)).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
-		history := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		historyRules := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		history := make([]*models.AlertRuleVersion, len(historyRules))
+		for i, alertRule := range historyRules {
+			history[i] = &models.AlertRuleVersion{
+				AlertRule: *alertRule,
+				Message:   fmt.Sprintf("revision %d", i),
+			}
+		}
 		ruleStore.History[guid] = history
 
-		perms := createPermissionsForRules(history, orgID) // grant permissions to all records in history but not the rule itself
+		perms := createPermissionsForRules(historyRules, orgID) // grant permissions to all records in history but not the rule itself
 		req := createRequestContextWithPerms(orgID, perms, nil)
 		response := createService(ruleStore, nil).RouteGetRuleVersionsByUID(req, ruleKey.UID)
 
@@ -736,8 +768,8 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		for i, actual := range groups[0].Rules {
 			expected := expectedRules[i]
 			if actual.GrafanaManagedAlert.UID != expected.UID {
-				var actualUIDs []string
-				var expectedUIDs []string
+				actualUIDs := make([]string, 0, len(group.Rules))
+				expectedUIDs := make([]string, 0, len(expectedRules))
 				for _, rule := range group.Rules {
 					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
 				}
@@ -747,6 +779,72 @@ func TestRouteGetRulesConfig(t *testing.T) {
 				require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedUIDs, actualUIDs))
 			}
 		}
+	})
+
+	t.Run("deleted=true should return deleted rules sorted by deletion time descending", func(t *testing.T) {
+		orgID := rand.Int63()
+		ruleStore := fakes.NewRuleStore(t)
+
+		now := time.Now()
+		// Create three deleted rules with distinct deletion times.
+		// The fake store returns them in the order they are appended (oldest first),
+		// which is the wrong order the fix must correct.
+		rule1 := models.RuleGen.With(models.RuleGen.WithOrgID(orgID)).Generate()
+		rule1.Updated = now.Add(-2 * time.Minute) // deleted earliest
+
+		rule2 := models.RuleGen.With(models.RuleGen.WithOrgID(orgID)).Generate()
+		rule2.Updated = now.Add(-1 * time.Minute) // deleted in the middle
+
+		rule3 := models.RuleGen.With(models.RuleGen.WithOrgID(orgID)).Generate()
+		rule3.Updated = now // deleted most recently
+
+		// Intentionally append in oldest-first order so that any accidental
+		// reliance on insertion order would produce the wrong answer.
+		ruleStore.Deleted = map[int64][]*models.AlertRule{
+			orgID: {&rule1, &rule2, &rule3},
+		}
+
+		uri, _ := url.Parse("http://localhost?deleted=true")
+		ctx := web.Context{
+			Req: &http.Request{
+				URL:    uri,
+				Header: make(http.Header),
+				// Form must not be pre-initialised so that web.Context.Query
+				// calls ParseForm and picks up the URL query parameters.
+			},
+			Resp: web.NewResponseWriter("GET", httptest.NewRecorder()),
+		}
+		req := &contextmodel.ReqContext{
+			IsSignedIn: true,
+			SignedInUser: &user.SignedInUser{
+				OrgID:   orgID,
+				OrgRole: identity.RoleAdmin,
+				Permissions: map[int64]map[string][]string{
+					orgID: {datasources.ActionQuery: {datasources.ScopeAll}},
+				},
+			},
+			Context: &ctx,
+		}
+
+		svc := createService(ruleStore, nil)
+		svc.featureManager = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
+
+		response := svc.RouteGetRulesConfig(req)
+		require.Equal(t, http.StatusOK, response.Status())
+
+		result := &apimodels.NamespaceConfigResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+
+		groups, ok := (*result)[""]
+		require.True(t, ok)
+		require.Len(t, groups, 1)
+		rules := groups[0].Rules
+		require.Len(t, rules, 3)
+
+		// Most recently deleted rule (rule3) should be first.
+		assert.Equal(t, rule3.GUID, rules[0].GrafanaManagedAlert.GUID, "first rule should be the most recently deleted")
+		assert.Equal(t, rule2.GUID, rules[1].GrafanaManagedAlert.GUID, "second rule should be the second most recently deleted")
+		assert.Equal(t, rule1.GUID, rules[2].GrafanaManagedAlert.GUID, "third rule should be the oldest deleted")
 	})
 }
 
@@ -783,8 +881,8 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		for i, actual := range result.Rules {
 			expected := expectedRules[i]
 			if actual.GrafanaManagedAlert.UID != expected.UID {
-				var actualUIDs []string
-				var expectedUIDs []string
+				actualUIDs := make([]string, 0, len(result.Rules))
+				expectedUIDs := make([]string, 0, len(expectedRules))
 				for _, rule := range result.Rules {
 					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
 				}
@@ -982,8 +1080,8 @@ func createService(store *fakes.RuleStore, _userService *usertest.FakeUserServic
 type fakeAMRefresher struct {
 }
 
-func (f *fakeAMRefresher) ApplyConfig(ctx context.Context, orgId int64, dbConfig *models.AlertConfiguration) error {
-	return nil
+func (f *fakeAMRefresher) ApplyConfig(ctx context.Context, orgId int64, dbConfig *models.AlertConfiguration) (bool, error) {
+	return true, nil
 }
 
 func (f *fakeAMRefresher) GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {
@@ -1024,8 +1122,8 @@ func createPermissionsForRules(rules []*models.AlertRule, orgID int64) map[int64
 	permissions := map[string][]string{}
 	for _, rule := range rules {
 		if _, ok := ns[rule.NamespaceUID]; !ok {
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
-			permissions[dashboards.ActionFoldersRead] = append(permissions[dashboards.ActionFoldersRead], scope)
+			scope := folder.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
+			permissions[folder.ActionFoldersRead] = append(permissions[folder.ActionFoldersRead], scope)
 			permissions[ac.ActionAlertingRuleRead] = append(permissions[ac.ActionAlertingRuleRead], scope)
 			permissions[ac.ActionAlertingRuleUpdate] = append(permissions[ac.ActionAlertingRuleUpdate], scope)
 			ns[rule.NamespaceUID] = struct{}{}
@@ -1042,8 +1140,8 @@ func createPermissionsForRulesWithoutDS(rules []*models.AlertRule, orgID int64) 
 	permissions := map[string][]string{}
 	for _, rule := range rules {
 		if _, ok := ns[rule.NamespaceUID]; !ok {
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
-			permissions[dashboards.ActionFoldersRead] = append(permissions[dashboards.ActionFoldersRead], scope)
+			scope := folder.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
+			permissions[folder.ActionFoldersRead] = append(permissions[folder.ActionFoldersRead], scope)
 			permissions[ac.ActionAlertingRuleRead] = append(permissions[ac.ActionAlertingRuleRead], scope)
 			ns[rule.NamespaceUID] = struct{}{}
 		}
@@ -1073,7 +1171,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 			return nil, false
 		})
 
-		updates := []models.UpdateRule{}
+		updates := []models.UpdateRule{} //nolint:prealloc
 		for _, cmd := range raw {
 			updates = append(updates, cmd.([]models.UpdateRule)...)
 		}
@@ -1256,5 +1354,65 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 
 		updatedRules := getRecordedUpdatedRules(ruleStore)
 		require.Empty(t, updatedRules)
+	})
+
+	t.Run("should reject update when folder is managed by ManagerKindRepo", func(t *testing.T) {
+		ruleStore := fakes.NewRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		// Create a managed folder
+		managedFolder := randFolder()
+		managedFolder.ManagedBy = utils.ManagerKindRepo
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], managedFolder)
+
+		// Create some rules in the managed folder
+		ruleGen := models.RuleGen.With(
+			models.RuleGen.WithOrgID(orgID),
+			models.RuleGen.WithNamespaceUID(managedFolder.UID),
+		)
+		rules := ruleGen.GenerateManyRef(2)
+		ruleStore.PutRule(context.Background(), rules...)
+
+		permissions := createPermissionsForRules(rules, orgID)
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: util.Pointer(true),
+		}, managedFolder.UID)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "cannot store rules in folder managed by Git Sync")
+
+		// Verify no rules were updated
+		updatedRules := getRecordedUpdatedRules(ruleStore)
+		require.Empty(t, updatedRules)
+	})
+}
+
+func TestRoutePostNameRulesConfig(t *testing.T) {
+	t.Run("should reject creation when folder is managed by ManagerKindRepo", func(t *testing.T) {
+		orgID := rand.Int63()
+		ruleStore := fakes.NewRuleStore(t)
+
+		// Create a managed folder
+		managedFolder := randFolder()
+		managedFolder.ManagedBy = utils.ManagerKindRepo
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], managedFolder)
+
+		permissions := map[int64]map[string][]string{
+			orgID: {
+				folder.ScopeFoldersProvider.GetResourceScopeUID(managedFolder.UID): {folder.ActionFoldersRead},
+			},
+		}
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		svc := createService(ruleStore, nil)
+		response := svc.RoutePostNameRulesConfig(requestCtx, apimodels.PostableRuleGroupConfig{
+			Name: "test-group",
+		}, managedFolder.UID)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "cannot store rules in folder managed by Git Sync")
 	})
 }

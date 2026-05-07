@@ -1,0 +1,62 @@
+{
+  "title": "V13 Graph Thresholds Migration Test",
+  "schemaVersion": 12,
+  "panels": [
+    {
+      "type": "graph",
+      "id": 1,
+      "title": "Graph with Line Thresholds",
+      "grid": {
+        "threshold1": 200,
+        "threshold2": 400,
+        "threshold1Color": "yellow",
+        "threshold2Color": "red",
+        "thresholdLine": true
+      }
+    },
+    {
+      "type": "graph",
+      "id": 2,
+      "title": "Graph with Fill Thresholds",
+      "grid": {
+        "threshold1": 100,
+        "threshold2": 300,
+        "threshold1Color": "green",
+        "threshold2Color": "blue",
+        "thresholdLine": false
+      }
+    },
+    {
+      "type": "graph",
+      "id": 3,
+      "title": "Graph with Single Threshold",
+      "grid": {
+        "threshold1": 150,
+        "threshold1Color": "orange",
+        "thresholdLine": true
+      }
+    },
+    {
+      "type": "graph",
+      "id": 4,
+      "title": "Graph with Existing Thresholds",
+      "thresholds": [
+        {
+          "value": 50,
+          "color": "purple",
+          "colorMode": "custom"
+        }
+      ],
+      "grid": {
+        "threshold1": 200,
+        "threshold1Color": "yellow",
+        "thresholdLine": false
+      }
+    },
+    {
+      "type": "singlestat",
+      "id": 5,
+      "title": "Non-Graph Panel"
+    }
+  ]
+}

@@ -10,14 +10,8 @@ import (
 
 var validateCertFunc = validateCertFilePaths
 
-type tlsManager struct {
+type TLSManager struct {
 	logger log.Logger
-}
-
-func newTLSManager(logger log.Logger) *tlsManager {
-	return &tlsManager{
-		logger: logger,
-	}
 }
 
 type tlsSettings struct {
@@ -28,8 +22,14 @@ type tlsSettings struct {
 	CertKeyFile         string
 }
 
+func newTLSManager(logger log.Logger) *TLSManager {
+	return &TLSManager{
+		logger: logger,
+	}
+}
+
 // getTLSSettings retrieves TLS settings and handles certificate file creation if needed.
-func (m *tlsManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error) {
+func (m *TLSManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error) {
 	tlsConfig := tlsSettings{
 		Mode: dsInfo.JsonData.Mode,
 	}
@@ -58,7 +58,7 @@ func (m *tlsManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, 
 }
 
 // createCertFiles writes certificate files to temporary locations.
-func (m *tlsManager) createCertFiles(dsInfo sqleng.DataSourceInfo, tlsConfig *tlsSettings) error {
+func (m *TLSManager) createCertFiles(dsInfo sqleng.DataSourceInfo, tlsConfig *tlsSettings) error {
 	m.logger.Debug("Writing TLS certificate files to temporary locations")
 
 	var err error
@@ -76,7 +76,7 @@ func (m *tlsManager) createCertFiles(dsInfo sqleng.DataSourceInfo, tlsConfig *tl
 }
 
 // writeCertFile writes a single certificate file to a temporary location.
-func (m *tlsManager) writeCertFile(pattern, content string) (string, error) {
+func (m *TLSManager) writeCertFile(pattern, content string) (string, error) {
 	if content == "" {
 		return "", nil
 	}
@@ -100,7 +100,7 @@ func (m *tlsManager) writeCertFile(pattern, content string) (string, error) {
 }
 
 // cleanupCertFiles removes temporary certificate files.
-func (m *tlsManager) cleanupCertFiles(tlsConfig tlsSettings) {
+func (m *TLSManager) cleanupCertFiles(tlsConfig tlsSettings) {
 	// Only clean up if the configuration method is "file-content"
 	if tlsConfig.ConfigurationMethod != "file-content" {
 		m.logger.Debug("Skipping cleanup of TLS certificate files")

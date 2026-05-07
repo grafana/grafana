@@ -3,170 +3,227 @@ package conversion
 import (
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
+	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
-func RegisterConversions(s *runtime.Scheme) error {
-	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv1.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V0_to_V1(a.(*dashv0.Dashboard), b.(*dashv1.Dashboard), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv2.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V0_to_V2(a.(*dashv0.Dashboard), b.(*dashv2.Dashboard), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*dashv1.Dashboard)(nil), (*dashv0.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V1_to_V0(a.(*dashv1.Dashboard), b.(*dashv0.Dashboard), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*dashv1.Dashboard)(nil), (*dashv2.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V1_to_V2(a.(*dashv1.Dashboard), b.(*dashv2.Dashboard), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv0.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V2_to_V0(a.(*dashv2.Dashboard), b.(*dashv0.Dashboard), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv1.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V2_to_V1(a.(*dashv2.Dashboard), b.(*dashv1.Dashboard), scope)
-	}); err != nil {
-		return err
-	}
-	return nil
+// DashboardConversion provides methods for managing conversion consistently among dashboard conversions.
+type DashboardConversion interface {
+	// GetStoredVersion returns the stored version from status.conversion.storedVersion,
+	// or empty string if not set.
+	GetStoredVersion() string
+	// GetVersion returns the short version string (e.g., "v2beta1").
+	// Used for storedVersion in conversion status.
+	GetVersion() string
+	// GetAPIVersion returns the full API version (e.g., "dashboard.grafana.app/v2beta1").
+	// Used for the apiVersion field on the dashboard TypeMeta.
+	GetAPIVersion() string
+	// SetConversionStatus sets the conversion status on the dashboard.
+	SetConversionStatus(storedVersion string, failed bool, errMsg *string, source interface{})
+	// GetObjectMeta returns the ObjectMeta of the dashboard for copying metadata.
+	GetObjectMeta() interface{}
+	// SetObjectMeta sets the ObjectMeta on the dashboard.
+	SetObjectMeta(meta interface{})
+	// GetKind returns the Kind of the dashboard.
+	GetKind() string
+	// SetKind sets the Kind on the dashboard.
+	SetKind(kind string)
+	// SetAPIVersion sets the APIVersion on the dashboard.
+	SetAPIVersion(version string)
+	// EnsureDefaultSpec ensures the dashboard spec has default/valid values.
+	// This is called on error to ensure the output is in a valid state for JSON marshaling.
+	EnsureDefaultSpec()
 }
 
-func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-
-	out.Spec.Object = in.Spec.Object
-
-	out.Status = dashv1.DashboardStatus{
-		Conversion: &dashv1.DashboardConversionStatus{
-			StoredVersion: dashv0.VERSION,
-		},
+func getStoredVersion(in DashboardConversion) string {
+	if sv := in.GetStoredVersion(); sv != "" {
+		return sv
 	}
-
-	if err := migration.Migrate(out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
-		out.Status.Conversion.Failed = true
-		out.Status.Conversion.Error = err.Error()
-	}
-
-	return nil
+	return in.GetVersion()
 }
 
-func Convert_V0_to_V2(in *dashv0.Dashboard, out *dashv2.Dashboard, scope conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
+func setConversionStatus(in DashboardConversion, out DashboardConversion, err error, source interface{}) {
+	storedVersion := getStoredVersion(in)
+	var errMsg *string
+	if err != nil {
+		errMsg = ptr.To(err.Error())
+	}
+	out.SetConversionStatus(storedVersion, err != nil, errMsg, source)
+}
 
-	// TODO (@radiohead): implement V0 to V2 conversion
-	// This is the bare minimum conversion that is needed to make the dashboard servable.
+// setMetadata copies ObjectMeta and Kind from input to output, and sets output's APIVersion.
+func setMetadata(in, out DashboardConversion) {
+	out.SetObjectMeta(in.GetObjectMeta())
+	out.SetAPIVersion(out.GetAPIVersion())
+	out.SetKind(in.GetKind())
+}
 
-	if v, ok := in.Spec.Object["title"]; ok {
-		if title, ok := v.(string); ok {
-			out.Spec.Title = title
+// normalizeConversion wraps a conversion function with both metrics and status handling.
+// It ensures:
+// - Conversion status is always set (on success and failure)
+// - Metadata (ObjectMeta, APIVersion, Kind) is always set
+// - Default spec is ensured on error (to prevent JSON marshaling errors)
+// - Metrics are tracked
+func normalizeConversion(
+	sourceVersion, targetVersion string,
+	conversionFunc func(a, b interface{}, scope conversion.Scope) error,
+) func(a, b interface{}, scope conversion.Scope) error {
+	return withConversionMetrics(sourceVersion, targetVersion, func(a, b interface{}, scope conversion.Scope) error {
+		inConv := a.(DashboardConversion)
+		outConv := b.(DashboardConversion)
+
+		err := conversionFunc(a, b, scope)
+
+		setMetadata(inConv, outConv)
+
+		if err != nil {
+			outConv.EnsureDefaultSpec()
 		}
-	}
 
-	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.
-	out.Spec.Layout = dashv2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
-		GridLayoutKind: &dashv2.DashboardGridLayoutKind{
-			Kind: "GridLayout",
-			Spec: dashv2.DashboardGridLayoutSpec{},
-		},
-	}
-
-	out.Status = dashv2.DashboardStatus{
-		Conversion: &dashv2.DashboardConversionStatus{
-			StoredVersion: dashv0.VERSION,
-			Failed:        true,
-			Error:         "backend conversion not yet implemented",
-		},
-	}
-
-	return nil
+		setConversionStatus(inConv, outConv, err, nil)
+		return err
+	})
 }
 
-func Convert_V1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-
-	out.Spec.Object = in.Spec.Object
-
-	out.Status = dashv0.DashboardStatus{
-		Conversion: &dashv0.DashboardConversionStatus{
-			StoredVersion: dashv1.VERSION,
-		},
+func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
+	// v0 conversions
+	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv1.Dashboard)(nil),
+		normalizeConversion(dashv0.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V0_to_V1(a.(*dashv0.Dashboard), b.(*dashv1.Dashboard), scope)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv2alpha1.Dashboard)(nil),
+		normalizeConversion(dashv0.APIVERSION, dashv2alpha1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V0_to_V2alpha1(a.(*dashv0.Dashboard), b.(*dashv2alpha1.Dashboard), scope, dsIndexProvider, leIndexProvider)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil),
+		normalizeConversion(dashv0.APIVERSION, dashv2beta1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V0_to_V2beta1(a.(*dashv0.Dashboard), b.(*dashv2beta1.Dashboard), scope, dsIndexProvider, leIndexProvider)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv2.Dashboard)(nil),
+		normalizeConversion(dashv0.APIVERSION, dashv2.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V0_to_V2(a.(*dashv0.Dashboard), b.(*dashv2.Dashboard), scope, dsIndexProvider, leIndexProvider)
+		})); err != nil {
+		return err
 	}
 
-	return nil
-}
-
-func Convert_V1_to_V2(in *dashv1.Dashboard, out *dashv2.Dashboard, scope conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-
-	// TODO (@radiohead): implement V1 to V2 conversion
-	// This is the bare minimum conversion that is needed to make the dashboard servable.
-
-	if v, ok := in.Spec.Object["title"]; ok {
-		if title, ok := v.(string); ok {
-			out.Spec.Title = title
-		}
+	// v1 conversions
+	//
+	// v1beta1 is a thin wrapper around v1 (type aliases, identical schema). Both versions map to
+	// the same Go type (*dashv1.Dashboard), so a single AddConversionFunc registration covers
+	// requests for either API version.
+	if err := s.AddConversionFunc((*dashv1.Dashboard)(nil), (*dashv0.Dashboard)(nil),
+		normalizeConversion(dashv1.APIVERSION, dashv0.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V1_to_V0(a.(*dashv1.Dashboard), b.(*dashv0.Dashboard), scope)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv1.Dashboard)(nil), (*dashv2alpha1.Dashboard)(nil),
+		normalizeConversion(dashv1.APIVERSION, dashv2alpha1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V1_to_V2alpha1(a.(*dashv1.Dashboard), b.(*dashv2alpha1.Dashboard), scope, dsIndexProvider, leIndexProvider)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv1.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil),
+		normalizeConversion(dashv1.APIVERSION, dashv2beta1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V1_to_V2beta1(a.(*dashv1.Dashboard), b.(*dashv2beta1.Dashboard), scope, dsIndexProvider, leIndexProvider)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv1.Dashboard)(nil), (*dashv2.Dashboard)(nil),
+		normalizeConversion(dashv1.APIVERSION, dashv2.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V1beta1_to_V2(a.(*dashv1.Dashboard), b.(*dashv2.Dashboard), scope, dsIndexProvider, leIndexProvider)
+		})); err != nil {
+		return err
 	}
 
-	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.
-	out.Spec.Layout = dashv2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
-		GridLayoutKind: &dashv2.DashboardGridLayoutKind{
-			Kind: "GridLayout",
-			Spec: dashv2.DashboardGridLayoutSpec{},
-		},
+	// v2alpha1 conversions
+	if err := s.AddConversionFunc((*dashv2alpha1.Dashboard)(nil), (*dashv0.Dashboard)(nil),
+		normalizeConversion(dashv2alpha1.APIVERSION, dashv0.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2alpha1_to_V0(a.(*dashv2alpha1.Dashboard), b.(*dashv0.Dashboard), scope)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv2alpha1.Dashboard)(nil), (*dashv1.Dashboard)(nil),
+		normalizeConversion(dashv2alpha1.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2alpha1_to_V1(a.(*dashv2alpha1.Dashboard), b.(*dashv1.Dashboard), scope)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv2alpha1.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil),
+		normalizeConversion(dashv2alpha1.APIVERSION, dashv2beta1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2alpha1_to_V2beta1(a.(*dashv2alpha1.Dashboard), b.(*dashv2beta1.Dashboard), scope)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv2alpha1.Dashboard)(nil), (*dashv2.Dashboard)(nil),
+		normalizeConversion(dashv2alpha1.APIVERSION, dashv2.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2alpha1_to_V2(a.(*dashv2alpha1.Dashboard), b.(*dashv2.Dashboard), scope)
+		})); err != nil {
+		return err
 	}
 
-	out.Status = dashv2.DashboardStatus{
-		Conversion: &dashv2.DashboardConversionStatus{
-			StoredVersion: dashv1.VERSION,
-			Failed:        true,
-			Error:         "backend conversion not yet implemented",
-		},
+	// v2beta1 conversions
+	if err := s.AddConversionFunc((*dashv2beta1.Dashboard)(nil), (*dashv0.Dashboard)(nil),
+		normalizeConversion(dashv2beta1.APIVERSION, dashv0.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2beta1_to_V0(a.(*dashv2beta1.Dashboard), b.(*dashv0.Dashboard), scope, dsIndexProvider)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv2beta1.Dashboard)(nil), (*dashv1.Dashboard)(nil),
+		normalizeConversion(dashv2beta1.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2beta1_to_V1(a.(*dashv2beta1.Dashboard), b.(*dashv1.Dashboard), scope, dsIndexProvider)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv2beta1.Dashboard)(nil), (*dashv2alpha1.Dashboard)(nil),
+		normalizeConversion(dashv2beta1.APIVERSION, dashv2alpha1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2beta1_to_V2alpha1(a.(*dashv2beta1.Dashboard), b.(*dashv2alpha1.Dashboard), scope)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv2beta1.Dashboard)(nil), (*dashv2.Dashboard)(nil),
+		normalizeConversion(dashv2beta1.APIVERSION, dashv2.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2beta1_to_V2(a.(*dashv2beta1.Dashboard), b.(*dashv2.Dashboard), scope)
+		})); err != nil {
+		return err
 	}
 
-	return nil
-}
-
-func Convert_V2_to_V0(in *dashv2.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-
-	// TODO: implement V2 to V0 conversion
-
-	out.Status = dashv0.DashboardStatus{
-		Conversion: &dashv0.DashboardConversionStatus{
-			StoredVersion: dashv2.VERSION,
-			Failed:        true,
-			Error:         "backend conversion not yet implemented",
-		},
+	// v2 conversions
+	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv0.Dashboard)(nil),
+		normalizeConversion(dashv2.APIVERSION, dashv0.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2_to_V0(a.(*dashv2.Dashboard), b.(*dashv0.Dashboard), scope, dsIndexProvider)
+		})); err != nil {
+		return err
 	}
-
-	return nil
-}
-
-func Convert_V2_to_V1(in *dashv2.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-
-	// TODO: implement V2 to V1 conversion
-
-	out.Status = dashv1.DashboardStatus{
-		Conversion: &dashv1.DashboardConversionStatus{
-			StoredVersion: dashv2.VERSION,
-			Failed:        true,
-			Error:         "backend conversion not yet implemented",
-		},
+	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv1.Dashboard)(nil),
+		normalizeConversion(dashv2.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2_to_V1beta1(a.(*dashv2.Dashboard), b.(*dashv1.Dashboard), scope, dsIndexProvider)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv2alpha1.Dashboard)(nil),
+		normalizeConversion(dashv2.APIVERSION, dashv2alpha1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2_to_V2alpha1(a.(*dashv2.Dashboard), b.(*dashv2alpha1.Dashboard), scope)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil),
+		normalizeConversion(dashv2.APIVERSION, dashv2beta1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2_to_V2beta1(a.(*dashv2.Dashboard), b.(*dashv2beta1.Dashboard), scope)
+		})); err != nil {
+		return err
 	}
 
 	return nil

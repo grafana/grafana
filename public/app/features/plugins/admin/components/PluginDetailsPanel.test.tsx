@@ -1,10 +1,22 @@
+import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin, SCORE_LEVELS } from '../types';
 
 import { PluginDetailsPanel } from './PluginDetailsPanel';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      pluginInsights: false,
+    },
+  },
+}));
 
 const mockPlugin: CatalogPlugin = {
   description: 'Test plugin description',
@@ -24,7 +36,6 @@ const mockPlugin: CatalogPlugin = {
   isInstalled: true,
   isDisabled: false,
   isDeprecated: false,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   isPublished: true,
   name: 'Test Plugin',
@@ -75,6 +86,7 @@ const mockPlugin: CatalogPlugin = {
     documentationUrl: 'https://test-plugin.com/docs',
     licenseUrl: 'https://github.com/grafana/test-plugin/blob/main/LICENSE',
     sponsorshipUrl: 'https://github.com/sponsors/grafana',
+    repositoryUrl: 'https://github.com/grafana/test-plugin',
     grafanaDependency: '>=9.0.0',
     statusContext: 'stable',
   },
@@ -82,6 +94,10 @@ const mockPlugin: CatalogPlugin = {
   isFullyInstalled: true,
   accessControl: {},
   url: 'https://github.com/grafana/test-plugin',
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 const mockInfo = [
@@ -183,5 +199,62 @@ describe('PluginDetailsPanel', () => {
     expect(regularLinks).toContainElement(documentationLink);
     expect(regularLinks).toContainElement(raiseIssueLink);
     expect(regularLinks).not.toContainElement(websiteLink);
+  });
+
+  it('should render plugin insights when plugin has insights', async () => {
+    config.featureToggles.pluginInsights = true;
+    const pluginWithInsights = {
+      ...mockPlugin,
+      insights: {
+        id: 1,
+        name: 'test-plugin',
+        version: '1.0.0',
+        insights: [
+          {
+            name: 'security',
+            scoreValue: 90,
+            scoreLevel: SCORE_LEVELS.EXCELLENT,
+            items: [
+              {
+                id: 'signature',
+                name: 'Signature verified',
+                level: 'ok' as const,
+              },
+            ],
+          },
+        ],
+      },
+    };
+    render(<PluginDetailsPanel plugin={pluginWithInsights} pluginExtentionsInfo={mockInfo} />);
+    expect(screen.getByTestId('plugin-insights-container')).toBeInTheDocument();
+    expect(screen.getByText('Plugin insights')).toBeInTheDocument();
+    expect(screen.queryByText('Security')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Security'));
+    expect(screen.getByTestId('plugin-insight-item-signature')).toBeInTheDocument();
+  });
+
+  it('should not render plugin insights when plugin has no insights', () => {
+    const pluginWithoutInsights = {
+      ...mockPlugin,
+      insights: undefined,
+    };
+    render(<PluginDetailsPanel plugin={pluginWithoutInsights} pluginExtentionsInfo={mockInfo} />);
+    expect(screen.queryByTestId('plugin-insights-container')).not.toBeInTheDocument();
+    expect(screen.queryByText('Plugin insights')).not.toBeInTheDocument();
+  });
+
+  it('should not render plugin insights when insights array is empty', () => {
+    const pluginWithEmptyInsights = {
+      ...mockPlugin,
+      insights: {
+        id: 1,
+        name: 'test-plugin',
+        version: '1.0.0',
+        insights: [],
+      },
+    };
+    render(<PluginDetailsPanel plugin={pluginWithEmptyInsights} pluginExtentionsInfo={mockInfo} />);
+    expect(screen.queryByTestId('plugin-insights-container')).not.toBeInTheDocument();
+    expect(screen.queryByText('Plugin insights')).not.toBeInTheDocument();
   });
 });

@@ -1,27 +1,34 @@
 import {
   AppEvents,
   DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  DataSourceSelectItem,
-  ScopedVars,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+  type ScopedVars,
   isObject,
   matchPluginId,
 } from '@grafana/data';
 import {
-  DataSourceSrv as DataSourceService,
+  type DataSourceSrv as DataSourceService,
   getBackendSrv,
-  GetDataSourceListFilters,
+  type GetDataSourceListFilters,
   getDataSourceSrv as getDataSourceService,
   getTemplateSrv,
-  RuntimeDataSourceRegistration,
-  RuntimeDataSource,
-  TemplateSrv,
+  type RuntimeDataSourceRegistration,
+  type RuntimeDataSource,
+  type TemplateSrv,
   isExpressionReference,
 } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
-import appEvents from 'app/core/app_events';
+import {
+  ExpressionDatasourceRef,
+  getPluginIdFromDatasourceInstanceType,
+  getDatasourcePluginMeta,
+  logPluginMetaError,
+  logPluginMetaWarning,
+  refetchDatasourcePluginMetas,
+  UserStorage,
+} from '@grafana/runtime/internal';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
+import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
 import {
   dataSource as expressionDatasource,
@@ -29,7 +36,7 @@ import {
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
-import { importDataSourcePlugin } from './plugin_loader';
+import { pluginImporter } from './importer/pluginImporter';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -53,7 +60,9 @@ export class DatasourceSrv implements DataSourceService {
       }
 
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
-      this.settingsMapById[dsSettings.id] = dsSettings;
+      if (dsSettings.id) {
+        this.settingsMapById[dsSettings.id] = dsSettings;
+      }
     }
 
     for (const ds of Object.values(this.runtimeDataSources)) {
@@ -107,6 +116,14 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     if (nameOrUid === 'default' || nameOrUid == null) {
+      // Handle type-only datasource references (e.g., {type: 'prometheus'})
+      if (isDatasourceRef(ref) && ref.type) {
+        const ds = this.findDatasourceByType(ref.type);
+        if (ds) {
+          return ds;
+        }
+      }
+      // Fall back to default datasource if no type match found
       return this.settingsMapByUid[this.defaultName] ?? this.settingsMapByName[this.defaultName];
     }
 
@@ -143,13 +160,12 @@ export class DatasourceSrv implements DataSourceService {
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     let nameOrUid = getNameOrUid(ref);
     if (!nameOrUid) {
-      // type exists, but not the other properties
-      if (isDatasourceRef(ref)) {
-        const settings = this.getList({ type: ref.type });
-        if (!settings?.length) {
+      // Handle type-only datasource references
+      if (isDatasourceRef(ref) && ref.type) {
+        const ds = this.findDatasourceByType(ref.type);
+        if (!ds) {
           return Promise.reject('no datasource of type');
         }
-        const ds = settings.find((v) => v.isDefault) ?? settings[0];
         return this.get(ds.uid);
       }
       return this.get(this.defaultName);
@@ -184,6 +200,18 @@ export class DatasourceSrv implements DataSourceService {
     return this.loadDatasource(nameOrUid);
   }
 
+  /**
+   * Finds the best datasource instance settings for a given type.
+   * Prefers the default datasource of that type, otherwise returns the first one found.
+   */
+  private findDatasourceByType(type: string): DataSourceInstanceSettings | undefined {
+    const settings = this.getList({ type });
+    if (!settings?.length) {
+      return undefined;
+    }
+    return settings.find((v) => v.isDefault) ?? settings[0];
+  }
+
   async loadDatasource(key: string): Promise<DataSourceApi> {
     if (this.datasources[key]) {
       return Promise.resolve(this.datasources[key]);
@@ -196,7 +224,20 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     try {
-      const dsPlugin = await importDataSourcePlugin(instanceSettings.meta);
+      // check if we're dealing with a builtin default frontend data sources as // -- Grafana --, -- Mixed etc
+      const pluginId = getPluginIdFromDatasourceInstanceType(instanceSettings.type, instanceSettings.name);
+
+      // Fall back to instanceSettings.meta when the plugin meta lookup misses so that
+      // runtime-registered datasources (which aren't in the plugin meta map) still load.
+      let meta = await getDatasourcePluginMeta(pluginId);
+      if (!meta) {
+        logPluginMetaWarning(
+          `Plugin meta for datasource ${key} (pluginId: ${pluginId}) was not found, falling back to instanceSettings.meta`,
+          { pluginId, key }
+        );
+        meta = instanceSettings.meta;
+      }
+      const dsPlugin = await pluginImporter.importDataSource(meta);
       // check if its in cache now
       if (this.datasources[key]) {
         return this.datasources[key];
@@ -205,14 +246,18 @@ export class DatasourceSrv implements DataSourceService {
       const instance = new dsPlugin.DataSourceClass(instanceSettings);
 
       instance.components = dsPlugin.components;
+      if (!instance.userStorage) {
+        // DatasourceApi does not instantiate a userStorage property, but DataSourceWithBackend does
+        instance.userStorage = new UserStorage(instanceSettings.type);
+      }
 
       // Some old plugins does not extend DataSourceApi so we need to manually patch them
       if (!(instance instanceof DataSourceApi)) {
         const anyInstance: any = instance;
         anyInstance.name = instanceSettings.name;
         anyInstance.id = instanceSettings.id;
-        anyInstance.type = instanceSettings.type;
-        anyInstance.meta = instanceSettings.meta;
+        anyInstance.type = pluginId;
+        anyInstance.meta = meta;
         anyInstance.uid = instanceSettings.uid;
         anyInstance.getRef = DataSourceApi.prototype.getRef;
       }
@@ -344,44 +389,16 @@ export class DatasourceSrv implements DataSourceService {
     return sorted;
   }
 
-  /**
-   * @deprecated use getList
-   * */
-  getExternal(): DataSourceInstanceSettings[] {
-    return this.getList();
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getAnnotationSources() {
-    return this.getList({ annotations: true, variables: true }).map((x) => {
-      return {
-        name: x.name,
-        value: x.name,
-        meta: x.meta,
-      };
-    });
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getMetricSources(options?: { skipVariables?: boolean }): DataSourceSelectItem[] {
-    return this.getList({ metrics: true, variables: !options?.skipVariables }).map((x) => {
-      return {
-        name: x.name,
-        value: x.name,
-        meta: x.meta,
-      };
-    });
-  }
-
   async reload() {
     const settings = await getBackendSrv().get('/api/frontend/settings');
     config.datasources = settings.datasources;
     config.defaultDatasource = settings.defaultDatasource;
     this.init(settings.datasources, settings.defaultDatasource);
+    // Refresh the deduplicated plugin metadata cache in the background.
+    // This does not need to block reload since init() already has the full data.
+    refetchDatasourcePluginMetas(settings).catch((error) => {
+      logPluginMetaError('Failed to refresh datasource plugin metadata', error);
+    });
   }
 }
 

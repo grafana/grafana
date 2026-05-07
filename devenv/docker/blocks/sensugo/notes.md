@@ -24,7 +24,6 @@ The output should look similar to this:
 Created: /api/core/v2/apikeys/0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
 ```
 
-
 ## Configuring the notification channel
 
 ### Backend URL
@@ -36,4 +35,3 @@ The Backend URL is the API port (8080) forwarded to the container, it should be
 
 The `0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d` in the output above is the API Key
 to use in configuring the Sensu Go notification channel.
-

@@ -25,6 +25,13 @@ type Dashboard struct {
 	Status DashboardStatus `json:"status" yaml:"status"`
 }
 
+func NewDashboard() *Dashboard {
+	return &Dashboard{
+		Spec:   *NewDashboardSpec(),
+		Status: *NewDashboardStatus(),
+	}
+}
+
 func (o *Dashboard) GetSpec() any {
 	return o.Spec
 }
@@ -236,6 +243,10 @@ func (o *Dashboard) DeepCopyInto(dst *Dashboard) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (Dashboard) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Dashboard{}
 
@@ -289,12 +300,14 @@ func (o *DashboardList) DeepCopyInto(dst *DashboardList) {
 	resource.CopyObjectInto(dst, o)
 }
 
+func (DashboardList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardList"
+}
+
 // Interface compliance compile-time check
 var _ resource.ListObject = &DashboardList{}
 
 // Copy methods for all subresource types
-
-
 
 // DeepCopy creates a full deep copy of DashboardStatus
 func (s *DashboardStatus) DeepCopy() *DashboardStatus {

@@ -42,6 +42,8 @@ type TempoQuery struct {
 	ServiceMapQuery *StringOrArrayOfString `json:"serviceMapQuery,omitempty"`
 	// Use service.namespace in addition to service.name to uniquely identify a service.
 	ServiceMapIncludeNamespace *bool `json:"serviceMapIncludeNamespace,omitempty"`
+	// Whether to use native histograms for service map queries
+	ServiceMapUseNativeHistograms *bool `json:"serviceMapUseNativeHistograms,omitempty"`
 	// Defines the maximum number of traces that are returned from Tempo
 	Limit *int64 `json:"limit,omitempty"`
 	// Defines the maximum number of spans per spanset that are returned from Tempo
@@ -84,6 +86,8 @@ type TraceqlFilter struct {
 	ValueType *string `json:"valueType,omitempty"`
 	// The scope of the filter, can either be unscoped/all scopes, resource or span
 	Scope *TraceqlSearchScope `json:"scope,omitempty"`
+	// Whether the value is a custom value typed by the user
+	IsCustomValue *bool `json:"isCustomValue,omitempty"`
 }
 
 // NewTraceqlFilter creates a new TraceqlFilter object.

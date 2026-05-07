@@ -5,14 +5,14 @@ import { toString, toNumber as _toNumber, isEmpty, isBoolean, isArray, join } fr
 import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { toUtc } from '../datetime/moment_wrapper';
 import { dateTimeParse } from '../datetime/parser';
-import { GrafanaTheme2 } from '../themes/types';
-import { KeyValue } from '../types/data';
-import { Field, FieldType } from '../types/dataFrame';
-import { DecimalCount, DisplayProcessor, DisplayValue } from '../types/displayValue';
-import { TimeZone } from '../types/time';
+import { type GrafanaTheme2 } from '../themes/types';
+import { type KeyValue } from '../types/data';
+import { type Field, FieldType } from '../types/dataFrame';
+import { type DecimalCount, type DisplayProcessor, type DisplayValue } from '../types/displayValue';
+import { type TimeZone } from '../types/time';
 import { anyToNumber } from '../utils/anyToNumber';
 import { getValueMappingResult } from '../utils/valueMappings';
-import { FormattedValue, getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
+import { type FormattedValue, getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
 
 import { getScaleCalculator } from './scale';
 
@@ -49,7 +49,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const { palette } = options.theme.visualization;
 
   let unit = config.unit;
-  let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
+  let hasDateUnit = Boolean(unit && (timeFormats[unit] || unit.startsWith('time:')));
   let showMs = false;
 
   if (field.type === FieldType.time && !hasDateUnit) {
@@ -152,7 +152,11 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
           // this is needed because we may have determined the minimum determined `adjacentDecimals` for y tick increments based on
           // e.g. 'seconds' field unit (0.15s, 0.20s, 0.25s), but then formatFunc decided to return milli or nanos (150, 200, 250)
           // so we end up with excess precision: 150.00, 200.00, 250.00
-          v.text = +v.text + '';
+          // #73795 - some units, like duration formats, return text which cannot be coerced back into a number safely at this point.
+          const asNum = +v.text;
+          if (!Number.isNaN(asNum)) {
+            v.text = asNum + '';
+          }
         } else {
           v = formatFunc(numeric, config.decimals, null, options.timeZone, showMs);
         }

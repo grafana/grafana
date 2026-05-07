@@ -1,5 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
-import { Props } from 'react-virtualized-auto-sizer';
+import { type Props } from 'react-virtualized-auto-sizer';
 
 import { EventBusSrv } from '@grafana/data';
 
@@ -24,8 +24,9 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     hasPermission: () => true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
@@ -34,7 +35,6 @@ jest.mock('app/core/core', () => ({
 jest.mock('../hooks/useExplorePageTitle', () => ({
   useExplorePageTitle: jest.fn(),
 }));
-
 describe('Explore: handle datasource states', () => {
   afterEach(() => {
     tearDown();
@@ -45,13 +45,21 @@ describe('Explore: handle datasource states', () => {
   });
 
   it('handles datasource changes', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const expectedWarning = 'Virtualized log list: falling back to DOM for measurement';
     const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
-    const { datasources } = setupExplore({ urlParams });
-    jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
-    await waitForExplore();
-    await changeDatasource('elastic');
+    try {
+      const { datasources } = setupExplore({ urlParams });
+      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
+      await waitForExplore();
+      await changeDatasource('elastic');
 
-    await screen.findByText('elastic Editor input:');
-    expect(datasources.elastic.query).not.toBeCalled();
+      await screen.findByText('elastic Editor input:');
+      expect(datasources.elastic.query).not.toBeCalled();
+      const unexpectedWarnings = warnSpy.mock.calls.filter(([message]) => message !== expectedWarning);
+      expect(unexpectedWarnings).toEqual([]);
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });

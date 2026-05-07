@@ -1,15 +1,11 @@
-import { css } from '@emotion/css';
-
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
-import { Alert, ClipboardButton, Divider, Stack, Text, useStyles2 } from '@grafana/ui';
+import { type SceneComponentProps } from '@grafana/scenes';
+import { Alert, ClipboardButton, Divider, Stack, Text, TextLink } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import ShareInternallyConfiguration from '../ShareInternallyConfiguration';
-import { ShareLinkTab, ShareLinkTabState } from '../ShareLinkTab';
+import { ShareLinkTab, type ShareLinkTabState } from '../ShareLinkTab';
 
 import { SharePanelPreview } from './SharePanelPreview';
 
@@ -26,9 +22,6 @@ export class SharePanelInternally extends ShareLinkTab {
 }
 
 function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelInternally>) {
-  const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
-
   const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading, imageUrl, panelRef } = model.useState();
 
   const panelTitle = panelRef?.resolve().state.title;
@@ -36,14 +29,14 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
   const isDashboardSaved = Boolean(dashboard.state.uid);
 
   return (
-    <div>
+    <Stack gap={2} direction="column">
       <Text variant="body">
         <Trans i18nKey="link.share-panel.config-description">
           Create a personalized, direct link to share your panel within your organization, with the following
           customization settings:
         </Trans>
       </Text>
-      <div className={styles.configurationContainer}>
+      <Stack gap={2} direction="column" alignItems="flex-start">
         <ShareInternallyConfiguration
           useLockedTime={useLockedTime}
           onToggleLockedTime={model.onToggleLockedTime}
@@ -63,8 +56,8 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
         >
           <Trans i18nKey="link.share.copy-link-button">Copy link</Trans>
         </ClipboardButton>
-      </div>
-      <Divider spacing={2} />
+      </Stack>
+      <Divider spacing={0} />
       <Stack gap={2} direction="column">
         {!isDashboardSaved && (
           <Alert severity="info" title={t('share-modal.link.save-alert', 'Dashboard is not saved')} bottomSpacing={0}>
@@ -80,15 +73,10 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
             bottomSpacing={0}
           >
             <Trans i18nKey="share-modal.link.render-instructions">
-              To render a panel image, you must install the{' '}
-              <a
-                href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="external-link"
-              >
+              To render an image, you must install the{' '}
+              <TextLink href="https://grafana.com/grafana/plugins/grafana-image-renderer" external>
                 Grafana image renderer plugin
-              </a>
+              </TextLink>
               . Please contact your Grafana administrator to install the plugin.
             </Trans>
           </Alert>
@@ -101,12 +89,6 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
           theme={selectedTheme}
         />
       </Stack>
-    </div>
+    </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  configurationContainer: css({
-    marginTop: theme.spacing(2),
-  }),
-});

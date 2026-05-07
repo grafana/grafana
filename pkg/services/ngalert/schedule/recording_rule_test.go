@@ -12,13 +12,18 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/gogo/protobuf/proto"
+	"github.com/golang/snappy"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/prometheus/prometheus/prompb"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -173,17 +178,11 @@ func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 	st := setting.RecordingRuleSettings{
 		Enabled: true,
 	}
-	return newRecordingRule(context.Background(), models.AlertRuleKeyWithGroup{}, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
+
+	return newRecordingRule(context.Background(), models.AlertRuleKeyWithGroup{}, RetryConfig{}, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
-	t.Run("with prometheus writer", func(t *testing.T) {
-		writeTarget := writer.NewTestRemoteWriteTarget(t)
-		defer writeTarget.Close()
-		writerReg := prometheus.NewPedanticRegistry()
-		writer := setupPrometheusWriter(t, writeTarget, writerReg)
-		testRecordingRule_Integration(t, writeTarget, writer, writerReg, "")
-	})
 	t.Run("with datasource writer", func(t *testing.T) {
 		writeTarget := writer.NewTestRemoteWriteTarget(t)
 		defer writeTarget.Close()
@@ -240,7 +239,7 @@ func TestRecordingRuleAfterEval(t *testing.T) {
 		ruleStore.PutRule(context.Background(), rule)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 
 		evalDoneChan := make(chan time.Time, 1) // Buffer to avoid blocking
 		afterEvalCh := make(chan struct{}, 1)   // Buffer to avoid blocking
@@ -433,7 +432,8 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
-	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
+	clk := clock.NewMock()
+	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil, withSchedulerClock(clk))
 	sch.recordingWriter = writer
 
 	t.Run("rule that succeeds", func(t *testing.T) {
@@ -444,7 +444,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -583,7 +583,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -608,7 +608,20 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			rule:        rule,
 			folderTitle: folderTitle,
 		})
-		_ = waitForTimeChannel(t, evalDoneChan)
+
+		// Advance the mock clock to trigger retries. We poll WaitForAllTimers
+		// which advances the clock just enough to fire each registered timer.
+		// This avoids the race of a fixed time.Sleep before clk.Add, where the
+		// goroutine may not have registered its timer yet.
+		require.Eventually(t, func() bool {
+			clk.WaitForAllTimers()
+			select {
+			case <-evalDoneChan:
+				return true
+			default:
+				return false
+			}
+		}, 10*time.Second, 10*time.Millisecond)
 
 		t.Run("reports basic evaluation metrics", func(t *testing.T) {
 			expectedMetric := fmt.Sprintf(
@@ -707,7 +720,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 
 			require.Equal(t, "error", status.Health)
 			require.NotNil(t, status.LastError)
-			require.ErrorContains(t, status.LastError, "unable to find dependent node")
+			require.ErrorContains(t, status.LastError, "could not find dependent node")
 		})
 
 		t.Run("no write was performed", func(t *testing.T) {
@@ -721,7 +734,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -746,13 +759,89 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			rule:        rule,
 			folderTitle: folderTitle,
 		})
-		_ = waitForTimeChannel(t, evalDoneChan)
+
+		// Advance the mock clock to trigger retries. We poll WaitForAllTimers
+		// which advances the clock just enough to fire each registered timer.
+		// This avoids the race of a fixed time.Sleep before clk.Add, where the
+		// goroutine may not have registered its timer yet.
+		require.Eventually(t, func() bool {
+			clk.WaitForAllTimers()
+			select {
+			case <-evalDoneChan:
+				return true
+			default:
+				return false
+			}
+		}, 10*time.Second, 10*time.Millisecond)
 
 		t.Run("status shows evaluation", func(t *testing.T) {
 			status := process.(*recordingRule).Status()
 
 			// TODO: assert "error" to fix test, update to "nodata" in the future
 			require.Equal(t, "error", status.Health)
+		})
+	})
+
+	t.Run("rule with private labels filtered", func(t *testing.T) {
+		writeTarget.Reset()
+		rule := gen.With(withQueryForHealth("ok")).GenerateRef()
+		rule.Record.TargetDatasourceUID = dsUID
+		rule.Labels = map[string]string{
+			"normal_label":                             "not_filtered_1",
+			"another_label":                            "not_filtered_2",
+			models.AutogeneratedRouteLabel:             "filtered",
+			models.AutogeneratedRouteReceiverNameLabel: "filtered",
+			"__user_custom__":                          "not_filtered_3",
+			"only_end__":                               "not_filtered_4",
+		}
+
+		ruleStore.PutRule(context.Background(), rule)
+		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
+		ruleFactory := ruleFactoryFromScheduler(sch)
+
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+		evalDoneChan := make(chan time.Time)
+		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
+			evalDoneChan <- t
+		}
+		now := time.Now()
+
+		go func() {
+			_ = process.Run()
+		}()
+
+		process.Eval(&Evaluation{
+			scheduledAt: now,
+			rule:        rule,
+			folderTitle: folderTitle,
+		})
+		_ = waitForTimeChannel(t, evalDoneChan)
+
+		t.Run("write was performed with filtered labels", func(t *testing.T) {
+			require.Equal(t, 1, writeTarget.RequestsCount)
+			require.NotEmpty(t, writeTarget.LastRequestBody)
+
+			writeReq := decodePrometheusWriteRequest(t, writeTarget.LastRequestBody)
+
+			// Check that the private labels are filtered out
+			for _, label := range []string{
+				models.AutogeneratedRouteLabel,
+				models.AutogeneratedRouteReceiverNameLabel,
+			} {
+				_, found := getLabel(writeReq, label)
+				require.False(t, found, "Label %s should not be present in the write request", label)
+			}
+
+			// Check that user-defined labels are preserved
+			for _, label := range []string{
+				"normal_label",
+				"another_label",
+				"__user_custom__",
+				"only_end__",
+			} {
+				value, _ := getLabel(writeReq, label)
+				require.Equal(t, rule.Labels[label], value, "Label %s=%s should be present in the write request", label, rule.Labels[label])
+			}
 		})
 	})
 }
@@ -798,14 +887,6 @@ func withQueryForHealth(health string) models.AlertRuleMutator {
 	}
 }
 
-func setupPrometheusWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer) *writer.PrometheusWriter {
-	provider := testClientProvider{}
-	m := metrics.NewNGAlert(reg)
-	wr, err := writer.NewPrometheusWriterWithSettings(target.ClientSettings(), provider, clock.NewMock(), log.NewNopLogger(), m.GetRemoteWriterMetrics())
-	require.NoError(t, err)
-	return wr
-}
-
 func setupDatasourceWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer, dsUID string) *writer.DatasourceWriter {
 	provider := testClientProvider{}
 	m := metrics.NewNGAlert(reg)
@@ -823,7 +904,8 @@ func setupDatasourceWriter(t *testing.T, target *writer.TestRemoteWriteTarget, r
 		DefaultDatasourceUID: "",
 	}
 
-	return writer.NewDatasourceWriter(cfg, dss, provider, clock.NewMock(),
+	mockPluginConfig := &mockPluginContextProvider{}
+	return writer.NewDatasourceWriter(cfg, dss, provider, mockPluginConfig, clock.NewMock(),
 		log.New("test"), m.GetRemoteWriterMetrics())
 }
 
@@ -831,4 +913,35 @@ type testClientProvider struct{}
 
 func (t testClientProvider) New(options ...httpclient.Options) (*http.Client, error) {
 	return &http.Client{}, nil
+}
+
+type mockPluginContextProvider struct{}
+
+func (m *mockPluginContextProvider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
+	return backend.PluginContext{}, nil
+}
+
+func decodePrometheusWriteRequest(t *testing.T, data string) *prompb.WriteRequest {
+	t.Helper()
+
+	decompressed, err := snappy.Decode(nil, []byte(data))
+	require.NoError(t, err)
+
+	var writeReq prompb.WriteRequest
+	err = proto.Unmarshal(decompressed, &writeReq)
+	require.NoError(t, err)
+
+	return &writeReq
+}
+
+func getLabel(req *prompb.WriteRequest, labelName string) (string, bool) {
+	for _, ts := range req.Timeseries {
+		for _, label := range ts.Labels {
+			if label.Name == labelName {
+				return label.Value, true
+			}
+		}
+	}
+
+	return "", false
 }

@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
 title: Organization preferences
-weight: 500
+weight: 3600
 ---
 
 # Organization preferences
@@ -208,9 +208,9 @@ Users with the Grafana Server Admin flag on their account or access to the confi
 default_home_dashboard_path = data/main-dashboard.json
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Set the home dashboard for your organization
 

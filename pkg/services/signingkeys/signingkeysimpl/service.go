@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v4"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -31,7 +31,8 @@ import (
 
 var _ signingkeys.Service = new(Service)
 
-func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Service,
+func ProvideEmbeddedSigningKeysService(dbStore db.DB,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	remoteCache remotecache.CacheStorage, routerRegister routing.RouteRegister,
 ) (*Service, error) {
 	s := &Service{
@@ -54,7 +55,7 @@ func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Ser
 type Service struct {
 	log            log.Logger
 	store          signingkeystore.SigningStore
-	secretsService secrets.Service
+	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	remoteCache    remotecache.CacheStorage
 	localCache     *localcache.CacheService
 }

@@ -3,15 +3,15 @@ import { useState } from 'react';
 
 import {
   CoreApp,
-  DataSourceApi,
+  type DataSourceApi,
   formattedValueToString,
   getValueFormat,
-  PanelData,
-  PanelPlugin,
+  type PanelData,
+  type PanelPlugin,
   LoadingState,
-  DataQueryError,
+  type DataQueryError,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -22,9 +22,9 @@ import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type GetDataOptions } from '../../../query/state/PanelQueryRunner';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 
 interface Props {
   dashboard: DashboardModel;
@@ -56,7 +56,7 @@ export const InspectContent = ({
   onClose,
 }: Props) => {
   const [currentTab, setCurrentTab] = useState(defaultTab ?? InspectTab.Data);
-  const { t } = useTranslate();
+
   if (!plugin) {
     return null;
   }
@@ -129,7 +129,7 @@ function getErrors(data: PanelData | undefined): DataQueryError[] {
   if (!errors.length && data?.state === LoadingState.Error) {
     return [
       {
-        message: 'Error loading data',
+        message: t('dashboard.get-errors.message.error-loading-data', 'Error loading data'),
       },
     ];
   }

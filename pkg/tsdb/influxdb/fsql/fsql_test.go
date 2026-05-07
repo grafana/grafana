@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net"
+	"strings"
 	"testing"
 
 	"github.com/apache/arrow-go/v18/arrow/flight"
@@ -55,7 +56,14 @@ func (suite *FSQLTestSuite) AfterTest(suiteName, testName string) {
 	suite.server.Shutdown()
 }
 
-func TestFSQLTestSuite(t *testing.T) {
+func TestIntegrationFSQLTestSuite(t *testing.T) {
+	if !strings.HasPrefix(t.Name(), "TestIntegration") {
+		t.Fatal("test is not an integration test")
+	}
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	suite.Run(t, new(FSQLTestSuite))
 }
 

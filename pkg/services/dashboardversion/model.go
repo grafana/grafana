@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -56,8 +57,13 @@ type GetDashboardVersionQuery struct {
 	Version      int64
 }
 
-type DeleteExpiredVersionsCommand struct {
-	DeletedRows int64
+// RestoreVersionCommand is used to restore a dashboard version.
+// Only one of DashboardID and DashboardUID are required.
+type RestoreVersionCommand struct {
+	Requester    identity.Requester
+	DashboardUID string
+	DashboardID  int64
+	Version      int64
 }
 
 type ListDashboardVersionsQuery struct {

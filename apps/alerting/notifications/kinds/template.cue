@@ -2,27 +2,28 @@ package kinds
 
 import (
 	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v1beta1"
 )
 
-templateGroup: {
-	kind: "TemplateGroup"
-	apiResource: {
-		groupOverride: "notifications.alerting.grafana.app"
-	}
+templateKind: {
+	kind:       "TemplateGroup"
 	pluralName: "TemplateGroups"
-	current:    "v0alpha1"
-	codegen: {
-		ts: {enabled: false}
-		go: {enabled: true}
+}
+
+templatev0alpha1: templateKind & {
+	schema: {
+		spec: v0alpha1.TemplateGroupSpec
 	}
-	versions: {
-		"v0alpha1": {
-			schema: {
-				spec: v0alpha1.TemplateGroupSpec
-			}
-			selectableFields: [
-				"spec.title",
-			]
-		}
+	//	selectableFields: [ // TODO revisit when custom field selectors are supported
+	//		"spec.title",
+	//	]
+}
+
+templatev1beta1: templateKind & {
+	schema: {
+		spec: v1beta1.TemplateGroupSpec
 	}
+	//	selectableFields: [ // TODO revisit when custom field selectors are supported
+	//		"spec.title",
+	//	]
 }

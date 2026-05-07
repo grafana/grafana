@@ -30,14 +30,13 @@ func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 		}
 
 		data := map[string]any{
-			"Nonce":          c.RequestNonce,
-			"Assets":         assets,
-			"FavIcon":        "public/img/fav32.png",
-			"AppleTouchIcon": "public/img/apple-touch-icon.png",
+			"Nonce":  c.RequestNonce,
+			"Assets": assets,
 		}
 		if hs.Cfg.CSPEnabled {
 			data["CSPEnabled"] = true
-			data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, c.RequestNonce)
+			hosts := middleware.CSPHostLists{FormActionAdditionalHosts: hs.Cfg.FormActionAdditionalHosts}
+			data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, hosts, c.RequestNonce)
 		}
 
 		c.HTML(http.StatusOK, "swagger", data)

@@ -1,9 +1,13 @@
-import { useTranslate } from '@grafana/i18n';
+import type { JSX } from 'react';
+
+import { type OrgRole } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Label } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
-import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
+import { type Role, AccessControlAction } from 'app/types/accessControl';
+import { type ServiceAccountDTO } from 'app/types/serviceaccount';
 
 interface Props {
   label: string;
@@ -13,7 +17,6 @@ interface Props {
 }
 
 export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRoleChange }: Props): JSX.Element => {
-  const { t } = useTranslate();
   const inputId = `${label}-input`;
   const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
 

@@ -39,6 +39,12 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
       values: ['db'],
     },
     {
+      name: 'serviceNamespace',
+      type: FieldType.string,
+      config: {},
+      values: [undefined],
+    },
+    {
       name: 'kind',
       type: FieldType.string,
       config: {},

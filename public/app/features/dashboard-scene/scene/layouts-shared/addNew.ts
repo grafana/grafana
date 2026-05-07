@@ -1,13 +1,13 @@
 import { config } from '@grafana/runtime';
-import { SceneGridRow } from '@grafana/scenes';
+import { type SceneGridRow } from '@grafana/scenes';
 
 import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
-import { RowItem } from '../layout-rows/RowItem';
+import { type RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { TabItem } from '../layout-tabs/TabItem';
+import { type TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
 export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
@@ -50,6 +50,9 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
 
   if (layout instanceof TabsLayoutManager) {
     const currentTab = layout.getCurrentTab();
+    if (!currentTab) {
+      throw new Error('Could find currently active tab');
+    }
     return addNewRowTo(currentTab.state.layout);
   }
 

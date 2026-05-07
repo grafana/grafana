@@ -9,7 +9,7 @@ import (
 )
 
 // sequence represents a chain of rules that should be evaluated in order.
-// It is a convience type that wraps readyToRunItem as an indicator of what
+// It is a convenience type that wraps readyToRunItem as an indicator of what
 // is being represented.
 type sequence readyToRunItem
 
@@ -30,8 +30,6 @@ type groupKey struct {
 //
 // The function returns a slice of sequences, where each sequence represents a chain of rules
 // that should be evaluated in order.
-//
-// NOTE: This currently only chains rules in imported groups.
 func (sch *schedule) buildSequences(items []readyToRunItem, runJobFn func(next readyToRunItem, prev ...readyToRunItem) func()) []sequence {
 	// Step 1: Group rules by their folder and group name
 	groups := map[groupKey][]readyToRunItem{}
@@ -115,9 +113,13 @@ func (sch *schedule) shouldEvaluateSequentially(groupItems []readyToRunItem) boo
 		return false
 	}
 
+	if len(groupItems) > 0 && models.IsRuleChainGroup(groupItems[0].rule.RuleGroup) {
+		return true
+	}
+
 	// only evaluate rules in imported groups sequentially
 	for _, item := range groupItems {
-		if item.rule.ImportedFromPrometheus() {
+		if item.rule.ImportedPrometheusRule() {
 			return true
 		}
 	}

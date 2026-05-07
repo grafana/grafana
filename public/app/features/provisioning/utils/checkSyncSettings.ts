@@ -1,4 +1,4 @@
-import { Repository } from 'app/api/clients/provisioning';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 type syncState = {
   instanceConnected: boolean;
@@ -7,7 +7,7 @@ type syncState = {
   maxReposReached: boolean;
 };
 
-export function checkSyncSettings(repos?: Repository[]): syncState {
+export function checkSyncSettings(repos?: Repository[], maxRepositories = 0): syncState {
   if (!repos?.length) {
     return {
       instanceConnected: false,
@@ -16,10 +16,14 @@ export function checkSyncSettings(repos?: Repository[]): syncState {
       maxReposReached: false,
     };
   }
+
+  const repoCount = repos.length;
+  const maxReposReached = maxRepositories > 0 && repoCount >= maxRepositories;
+
   return {
     instanceConnected: repos.some((item) => item.spec?.sync.target === 'instance'),
     folderConnected: repos.some((item) => item.spec?.sync.target === 'folder'),
-    maxReposReached: Boolean((repos ?? []).length >= 10),
-    repoCount: repos.length,
+    maxReposReached,
+    repoCount,
   };
 }

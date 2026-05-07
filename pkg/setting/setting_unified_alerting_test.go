@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
@@ -349,4 +350,122 @@ func TestHARedisTLSSettings(t *testing.T) {
 	require.Equal(t, insecureSkipVerify, cfg.UnifiedAlerting.HARedisTLSConfig.InsecureSkipVerify)
 	require.Equal(t, cipherSuites, cfg.UnifiedAlerting.HARedisTLSConfig.CipherSuites)
 	require.Equal(t, minVersion, cfg.UnifiedAlerting.HARedisTLSConfig.MinVersion)
+}
+
+func TestHARedisSentinelModeSettings(t *testing.T) {
+	testCases := []struct {
+		desc                       string
+		haRedisSentinelModeEnabled bool
+		haRedisClusterModeEnabled  bool
+		haRedisSentinelMasterName  string
+		haRedisSentinelUsername    string
+		haRedisSentinelPassword    string
+		expectedErr                error
+	}{
+		{
+			desc:                       "should not fail when Sentinel mode is enabled and master name is set",
+			haRedisSentinelModeEnabled: true,
+			haRedisSentinelMasterName:  "exampleMasterName",
+		},
+		{
+			desc:                       "should not fail when Sentinel mode is enabled, master name is set, and Sentinel username and password are provided",
+			haRedisSentinelModeEnabled: true,
+			haRedisSentinelMasterName:  "exampleMasterName",
+			haRedisSentinelUsername:    "exampleSentinelUsername",
+			haRedisSentinelPassword:    "exampleSentinelPassword",
+		},
+		{
+			desc:                       "should fail when Sentinel mode is enabled but master name is not set",
+			haRedisSentinelModeEnabled: true,
+			expectedErr:                errHARedisSentinelMasterNameRequired,
+		},
+		{
+			desc:                       "should fail when both Sentinel mode and Cluster mode are enabled",
+			haRedisSentinelModeEnabled: true,
+			haRedisClusterModeEnabled:  true,
+			expectedErr:                errHARedisBothClusterAndSentinel,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f := ini.Empty()
+			section, err := f.NewSection("unified_alerting")
+			require.NoError(t, err)
+
+			_, err = section.NewKey("ha_redis_sentinel_mode_enabled", strconv.FormatBool(tc.haRedisSentinelModeEnabled))
+			require.NoError(t, err)
+			_, err = section.NewKey("ha_redis_cluster_mode_enabled", strconv.FormatBool(tc.haRedisClusterModeEnabled))
+			require.NoError(t, err)
+			_, err = section.NewKey("ha_redis_sentinel_master_name", tc.haRedisSentinelMasterName)
+			require.NoError(t, err)
+			_, err = section.NewKey("ha_redis_sentinel_username", tc.haRedisSentinelUsername)
+			require.NoError(t, err)
+			_, err = section.NewKey("ha_redis_sentinel_password", tc.haRedisSentinelPassword)
+			require.NoError(t, err)
+
+			cfg := NewCfg()
+			err = cfg.ReadUnifiedAlertingSettings(f)
+			if tc.expectedErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorIs(t, err, tc.expectedErr)
+				return
+			}
+
+			require.Equal(t, tc.haRedisSentinelModeEnabled, cfg.UnifiedAlerting.HARedisSentinelModeEnabled)
+			require.Equal(t, tc.haRedisSentinelMasterName, cfg.UnifiedAlerting.HARedisSentinelMasterName)
+			require.Equal(t, tc.haRedisSentinelUsername, cfg.UnifiedAlerting.HARedisSentinelUsername)
+			require.Equal(t, tc.haRedisSentinelPassword, cfg.UnifiedAlerting.HARedisSentinelPassword)
+		})
+	}
+}
+
+func TestReadAllowedIntegrations(t *testing.T) {
+	testCases := []struct {
+		name    string
+		value   string
+		want    map[schema.IntegrationType]struct{}
+		wantErr bool
+	}{
+		{
+			name:  "blank leaves allowlist nil",
+			value: "",
+			want:  nil,
+		},
+		{
+			name:  "valid list builds canonical map",
+			value: "slack,email,pagerduty",
+			want: map[schema.IntegrationType]struct{}{
+				schema.SlackType:     {},
+				schema.EmailType:     {},
+				schema.PagerDutyType: {},
+			},
+		},
+		{
+			name:    "unknown type returns error",
+			value:   "slack,bogus",
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := ini.Empty()
+			sec, err := f.NewSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = sec.NewKey("allowed_integrations", tc.value)
+			require.NoError(t, err)
+
+			cfg := NewCfg()
+			cfg.IsFeatureToggleEnabled = func(string) bool { return false }
+			err = cfg.ReadUnifiedAlertingSettings(f)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, cfg.UnifiedAlerting.AllowedIntegrations)
+		})
+	}
 }

@@ -1,25 +1,29 @@
 import { css } from '@emotion/css';
-import { useState, useEffect, useId } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
 import {
-  Collapse,
+  type DataLinkTransformationConfig,
+  type ExploreCorrelationHelperData,
+  type GrafanaTheme2,
+} from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import {
   Alert,
-  Field,
-  Input,
   Button,
   Card,
-  IconButton,
-  useStyles2,
+  Collapse,
   DeleteButton,
-  Tooltip,
+  Field,
   Icon,
+  IconButton,
+  Input,
   Stack,
+  Tooltip,
+  useStyles2,
 } from '@grafana/ui';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { getTransformationVars } from '../correlations/transformations';
 import { generateDefaultLabel } from '../correlations/utils';
@@ -132,8 +136,6 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, transformations]);
 
-  const { t } = useTranslate();
-
   return (
     <>
       {showTransformationAddModal && (
@@ -173,7 +175,6 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           })}
         </pre>
         <Collapse
-          collapsible
           isOpen={isLabelDescOpen}
           onToggle={() => {
             setIsLabelDescOpen(!isLabelDescOpen);
@@ -203,7 +204,6 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           </Field>
         </Collapse>
         <Collapse
-          collapsible
           isOpen={isTransformOpen}
           onToggle={() => {
             setIsTransformOpen(!isTransformOpen);
@@ -243,7 +243,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
               ) : undefined,
             ].filter((val) => val);
             return (
-              <Card key={`trans-${i}`}>
+              <Card noMargin key={`trans-${i}`}>
                 <Card.Heading>
                   {field}: {type}
                 </Card.Heading>

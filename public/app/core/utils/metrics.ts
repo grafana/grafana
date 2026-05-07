@@ -35,3 +35,15 @@ export function stopMeasure(eventName: string) {
     return;
   }
 }
+
+/**
+ * Report when a metric of a given name was marked during the document lifecycle. Works for markers with no duration,
+ * like PerformanceMark or PerformancePaintTiming (e.g. created with performance.mark, or first-contentful-paint)
+ */
+export function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = ''): void {
+  const metric = performance.getEntriesByName(metricName).at(0);
+  if (metric) {
+    const metricName = metric.name.replace(/-/g, '_');
+    reportPerformance(`${prefix}${metricName}${suffix}`, Math.round(metric.startTime) / 1000);
+  }
+}

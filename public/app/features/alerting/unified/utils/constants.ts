@@ -8,6 +8,8 @@ export const SILENCES_POLL_INTERVAL_MS = 20000;
 export const NOTIFICATIONS_POLL_INTERVAL_MS = 20000;
 export const CONTACT_POINTS_STATE_INTERVAL_MS = 20000;
 
+export const DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP = 100;
+
 export const TIMESERIES = 'timeseries';
 export const TABLE = 'table';
 export const STAT = 'stat';
@@ -47,3 +49,12 @@ export const defaultAnnotations = [
 
 /** Special matcher name used to identify alert rules by UID */
 export const MATCHER_ALERT_RULE_UID = '__alert_rule_uid__';
+
+/** Label added by Grafana to all alert instances with the folder/namespace title */
+export const GRAFANA_FOLDER_LABEL = 'grafana_folder';
+
+/** Minimum evaluation interval step in seconds (used for validation and UI) */
+export const MIN_TIME_RANGE_STEP_S = 10;
+
+/** Maximum number of rule groups to fetch for evaluation group selector */
+export const MAX_GROUP_RESULTS = 1000;

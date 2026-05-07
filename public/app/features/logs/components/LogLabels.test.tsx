@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { LogLabels, LogLabelsList } from './LogLabels';
+import { LOG_LINE_BODY_FIELD_NAME } from './fieldSelector/logFields';
+import { getNormalizedFieldName } from './panel/processing';
 
 describe('<LogLabels />', () => {
   it('renders notice when no labels are found', () => {
@@ -96,6 +97,6 @@ describe('<LogLabelsList />', () => {
     render(<LogLabelsList labels={['bar', '42', LOG_LINE_BODY_FIELD_NAME]} />);
     expect(screen.queryByText('bar')).toBeInTheDocument();
     expect(screen.queryByText('42')).toBeInTheDocument();
-    expect(screen.queryByText('log line')).toBeInTheDocument();
+    expect(screen.queryByText(getNormalizedFieldName(LOG_LINE_BODY_FIELD_NAME))).toBeInTheDocument();
   });
 });

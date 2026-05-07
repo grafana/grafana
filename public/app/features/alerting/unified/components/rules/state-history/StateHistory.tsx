@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
-import { FormEvent, useCallback, useState } from 'react';
+import { type FormEvent, useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { AlertState, GrafanaTheme2, dateTimeFormat } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type AlertState, type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
-import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { type StateHistoryItem, type StateHistoryItemData } from 'app/types/unified-alerting';
+import { type GrafanaAlertStateWithReason, type PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { useManagedAlertStateHistory } from '../../../hooks/useManagedAlertStateHistory';
 import { AlertLabel } from '../../AlertLabel';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../../DynamicTable';
+import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../../DynamicTable';
 import { AlertStateTag } from '../AlertStateTag';
 
 type StateHistoryRowItem = {
@@ -40,7 +40,7 @@ const StateHistory = ({ ruleUID }: Props) => {
   const { loading, error, result = [] } = useManagedAlertStateHistory(ruleUID);
 
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   if (loading && !error) {
     return <LoadingPlaceholder text={t('alerting.state-history.text-loading-history', 'Loading history...')} />;
   }
@@ -59,9 +59,19 @@ const StateHistory = ({ ruleUID }: Props) => {
   }
 
   const columns: Array<DynamicTableColumnProps<StateHistoryRowItem>> = [
-    { id: 'state', label: 'State', size: 'max-content', renderCell: renderStateCell },
+    {
+      id: 'state',
+      label: t('alerting.state-history.columns.label.state', 'State'),
+      size: 'max-content',
+      renderCell: renderStateCell,
+    },
     { id: 'value', label: '', size: 'auto', renderCell: renderValueCell },
-    { id: 'timestamp', label: 'Time', size: 'max-content', renderCell: renderTimestampCell },
+    {
+      id: 'timestamp',
+      label: t('alerting.state-history.columns.label.time', 'Time'),
+      size: 'max-content',
+      renderCell: renderTimestampCell,
+    },
   ];
 
   // group the state history list by unique set of labels

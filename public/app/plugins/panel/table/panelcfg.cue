@@ -24,6 +24,7 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
+				// @deprecated - use common in /packages/grafana-schema/src/common/table.cue instead i.e. `import { TableOptions } from '@grafana/schema';`
 				Options: {
 					// Represents the index of the selected frame
 					frameIndex: number | *0
@@ -33,21 +34,20 @@ composableKinds: PanelCfg: {
 					showTypeIcons?: bool | *false
 					// Used to control row sorting
 					sortBy?: [...ui.TableSortByFieldState]
-					// Controls footer options
-					footer?: ui.TableFooterOptions | *{
-						// Controls whether the footer should be shown
-						show: false
-						// Controls whether the footer should show the total number of rows on Count calculation
-						countRows: false
-						// Represents the selected calculations
-						reducer: []
-					}
+					// Enable pagination on the table
+					enablePagination?: bool
 					// Controls the height of the rows
 					cellHeight?: ui.TableCellHeight & (*"sm" | _)
+					// limits the maximum height of a row, if text wrapping or dynamic height is enabled
+					maxRowHeight?: number
+					// Defines the number of columns to freeze on the left side of the table
+					frozenColumns?: {
+						left?: number | *0
+					}
+					// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
+					disableKeyboardEvents?: bool
 				} @cuetsy(kind="interface")
-				FieldConfig: {
-					ui.TableFieldOptions
-				} @cuetsy(kind="interface")
+				FieldConfig: {ui.TableFieldOptions} @cuetsy(kind="interface")
 			}
 		}]
 		lenses: []

@@ -21,6 +21,7 @@ const defaultEtcdPathPrefix = "/registry/grafana.app"
 
 type Options struct {
 	RecommendedOptions       *genericoptions.RecommendedOptions
+	APIEnablementOptions     *genericoptions.APIEnablementOptions
 	GrafanaAggregatorOptions *GrafanaAggregatorOptions
 	StorageOptions           *StorageOptions
 	ExtraOptions             *ExtraOptions
@@ -30,6 +31,7 @@ type Options struct {
 func NewOptions(codec runtime.Codec) *Options {
 	return &Options{
 		RecommendedOptions:       NewRecommendedOptions(codec),
+		APIEnablementOptions:     genericoptions.NewAPIEnablementOptions(),
 		GrafanaAggregatorOptions: NewGrafanaAggregatorOptions(),
 		StorageOptions:           NewStorageOptions(),
 		ExtraOptions:             NewExtraOptions(),
@@ -38,6 +40,7 @@ func NewOptions(codec runtime.Codec) *Options {
 
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.RecommendedOptions.AddFlags(fs)
+	o.APIEnablementOptions.AddFlags(fs)
 	o.GrafanaAggregatorOptions.AddFlags(fs)
 	o.StorageOptions.AddFlags(fs)
 	o.ExtraOptions.AddFlags(fs)
@@ -113,6 +116,15 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 			return err
 		}
 		serverConfig.SecureServing = nil
+	}
+
+	// serverConfig.RequestTimeout is a k8s setting for all http requests, defaulting to 1 minute
+	// This setting is not removable so we force a long timeout to match existing behavior
+	// (ex: most (all?) sql datasources before apiservers were introduced did not have a global timeout and could run indefinitely)
+	// Normally for apiservers, this is set with a command line flag, --request-timeout, however in st-mode, we set a default in ExtraOptions
+	// and make it potentially configurable as needed by users in custom.ini
+	if o.ExtraOptions.RequestTimeout > 0 {
+		serverConfig.RequestTimeout = o.ExtraOptions.RequestTimeout
 	}
 	return nil
 }

@@ -1,16 +1,16 @@
 import { toLower } from 'lodash';
 
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import {
-  QueryEditorArrayExpression,
-  QueryEditorExpression,
+  type QueryEditorArrayExpression,
+  type QueryEditorExpression,
   QueryEditorExpressionType,
-  QueryEditorFunctionExpression,
-  QueryEditorOperatorExpression,
-  QueryEditorPropertyExpression,
-} from '../../expressions';
-import { SQLExpression } from '../../types';
+  type QueryEditorFunctionExpression,
+  type QueryEditorPropertyExpression,
+  type SQLExpression,
+} from '../../dataquery.gen';
+import { type QueryEditorOperatorExpression } from '../../expressions';
 
 import { InsightsReservedKeywords } from './consts';
 

@@ -1,33 +1,31 @@
-import { Action, KBarProvider } from 'kbar';
-import { Component, ComponentType, Fragment, ReactNode } from 'react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { UNSAFE_PortalProvider } from '@react-aria/overlays';
+import { type Action, KBarProvider } from 'kbar';
+import { type ComponentType, Fragment, type ReactNode, useEffect, useState } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
 import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { ErrorBoundaryAlert, PortalContainer, TimeRangeProvider } from '@grafana/ui';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
-import { GrafanaApp } from './app';
 import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
-import { GlobalStylesWrapper } from './core/components/AppChrome/ExtensionSidebar/GlobalStylesWrapper';
-import { GrafanaContext } from './core/context/GrafanaContext';
+import { GrafanaContext, type GrafanaContextType } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
-import { RouteDescriptor } from './core/navigation/types';
+import { type RouteDescriptor } from './core/navigation/types';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
-import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
+import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
+import { type PluginExtensionRegistries } from './features/plugins/extensions/registry/types';
 import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
 import { RouterWrapper } from './routes/RoutesWrapper';
 
 interface AppWrapperProps {
-  app: GrafanaApp;
-}
-
-interface AppWrapperState {
-  ready?: boolean;
+  context: GrafanaContextType;
 }
 
 /** Used by enterprise */
@@ -47,28 +45,40 @@ export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
 
-export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
-  private iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;
+const iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;
 
-  constructor(props: AppWrapperProps) {
-    super(props);
-    this.state = {};
-  }
+export function AppWrapper({ context }: AppWrapperProps) {
+  const [ready, setReady] = useState(false);
+  const [registries, setRegistries] = useState<PluginExtensionRegistries | undefined>(undefined);
 
-  async componentDidMount() {
-    this.setState({ ready: true });
-    $('.preloader').remove();
+  useEffect(() => {
+    async function init() {
+      const regs = await getPluginExtensionRegistries();
+      setReady(true);
+      setRegistries(regs);
+      removePreloader();
 
-    // clear any old icon caches
-    const cacheKeys = await window.caches.keys();
-    for (const key of cacheKeys) {
-      if (key.startsWith('grafana-icon-cache') && key !== this.iconCacheID) {
-        window.caches.delete(key);
+      // clear any old icon caches
+      const cacheKeys = (await window.caches?.keys()) ?? [];
+      for (const key of cacheKeys) {
+        if (key.startsWith('grafana-icon-cache') && key !== iconCacheID) {
+          window.caches.delete(key);
+        }
       }
+    }
+    init();
+  }, []);
+
+  function removePreloader() {
+    const preloader = document.querySelector('.preloader');
+    if (preloader) {
+      preloader.remove();
+    } else {
+      console.warn('Preloader element not found');
     }
   }
 
-  renderRoute = (route: RouteDescriptor) => {
+  function renderRoute(route: RouteDescriptor) {
     return (
       <Route
         caseSensitive={route.sensitive === undefined ? false : route.sensitive}
@@ -77,58 +87,54 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
         element={<GrafanaRouteWrapper route={route} />}
       />
     );
-  };
-
-  renderRoutes() {
-    return <Routes>{getAppRoutes().map((r) => this.renderRoute(r))}</Routes>;
   }
 
-  render() {
-    const { app } = this.props;
-    const { ready } = this.state;
+  function renderRoutes() {
+    return <Routes>{getAppRoutes().map((r) => renderRoute(r))}</Routes>;
+  }
 
-    navigationLogger('AppWrapper', false, 'rendering');
+  navigationLogger('AppWrapper', false, 'rendering');
 
-    const commandPaletteActionSelected = (action: Action) => {
-      reportInteraction('command_palette_action_selected', {
-        actionId: action.id,
-        actionName: action.name,
-      });
-    };
+  const commandPaletteActionSelected = (action: Action) => {
+    reportInteraction('command_palette_action_selected', {
+      actionId: action.id,
+      actionName: action.name,
+    });
+  };
 
-    const routerWrapperProps = {
-      routes: ready && this.renderRoutes(),
-      pageBanners,
-      bodyRenderHooks,
-      providers: enterpriseProviders,
-    };
+  const routerWrapperProps = {
+    routes: ready && renderRoutes(),
+    pageBanners,
+    bodyRenderHooks,
+    providers: enterpriseProviders,
+  };
 
-    const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
-    const MaybeExtensionSidebarProvider = config.featureToggles.extensionSidebar
-      ? ExtensionSidebarContextProvider
-      : Fragment;
+  const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
 
-    return (
-      <Provider store={store}>
-        <ErrorBoundaryAlert style="page">
-          <GrafanaContext.Provider value={app.context}>
+  return (
+    <Provider store={store}>
+      <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
+        <OpenFeatureProvider client={getFeatureFlagClient()}>
+          <GrafanaContext.Provider value={context}>
             <ThemeProvider value={config.theme2}>
-              <CacheProvider name={this.iconCacheID}>
+              <CacheProvider name={iconCacheID}>
                 <KBarProvider
                   actions={[]}
                   options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
                 >
                   <MaybeTimeRangeProvider>
                     <ScopesContextProvider>
-                      <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <MaybeExtensionSidebarProvider>
-                          <GlobalStylesWrapper />
-                          <div className="grafana-app">
-                            <RouterWrapper {...routerWrapperProps} />
-                            <LiveConnectionWarning />
-                            <PortalContainer />
-                          </div>
-                        </MaybeExtensionSidebarProvider>
+                      <ExtensionRegistriesProvider registries={registries}>
+                        <ExtensionSidebarContextProvider>
+                          <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+                            <GlobalStyles />
+                            <div className="grafana-app">
+                              <RouterWrapper {...routerWrapperProps} />
+                              <LiveConnectionWarning />
+                              <PortalContainer />
+                            </div>
+                          </UNSAFE_PortalProvider>
+                        </ExtensionSidebarContextProvider>
                       </ExtensionRegistriesProvider>
                     </ScopesContextProvider>
                   </MaybeTimeRangeProvider>
@@ -136,8 +142,8 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
               </CacheProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>
-        </ErrorBoundaryAlert>
-      </Provider>
-    );
-  }
+        </OpenFeatureProvider>
+      </ErrorBoundaryAlert>
+    </Provider>
+  );
 }

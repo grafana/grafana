@@ -1,10 +1,11 @@
-import { VizPanel, sceneGraph, behaviors, SceneObject, SceneGridRow } from '@grafana/scenes';
+import { VizPanel, sceneGraph, behaviors, type SceneObject, SceneGridRow } from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
 
-import { isClonedKey } from './clone';
 import { getDashboardSceneFor, getLayoutManagerFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
 
 function getTimePicker(scene: DashboardScene) {
@@ -37,12 +38,11 @@ export function getNextPanelId(scene: SceneObject): number {
   let max = 0;
 
   sceneGraph
-    .findAllObjects(scene.getRoot(), (obj) => obj instanceof VizPanel || obj instanceof SceneGridRow)
+    .findAllObjects(
+      scene.getRoot(),
+      (obj) => (obj instanceof VizPanel || obj instanceof SceneGridRow) && !obj.state.repeatSourceKey
+    )
     .forEach((panel) => {
-      if (isClonedKey(panel.state.key!)) {
-        return;
-      }
-
       const panelId = getPanelIdForVizPanel(panel);
       if (panelId > max) {
         max = panelId;
@@ -50,6 +50,17 @@ export function getNextPanelId(scene: SceneObject): number {
     });
 
   return max + 1;
+}
+
+export type PanelIdGenerator = () => number;
+
+/**
+ * Returns a sequential ID generator seeded from the current max panel ID.
+ * Shared across sibling layouts to prevent duplicate panel IDs during duplication.
+ */
+export function getPanelIdGenerator(scene: SceneObject): PanelIdGenerator {
+  let id = getNextPanelId(scene);
+  return () => id++;
 }
 
 function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
@@ -60,14 +71,6 @@ function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
   }
 
   return data;
-}
-
-function getAllSelectedObjects(scene: SceneObject): SceneObject[] {
-  return (
-    getDashboardSceneFor(scene)
-      .state.editPane.state.selection?.getSelectionEntries()
-      .map(([, ref]) => ref.resolve()) ?? []
-  );
 }
 
 export function getCursorSync(scene: DashboardScene) {
@@ -92,15 +95,28 @@ export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
   return elementKey;
 }
 
+// Used to find the section owner of a variable (row or tab)
+function findSectionOwner(element: SceneObject | undefined): RowItem | TabItem | undefined {
+  let current = element;
+  while (current) {
+    if (current instanceof RowItem || current instanceof TabItem) {
+      return current;
+    }
+    current = current.parent;
+  }
+  return undefined;
+}
+
 export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
   getPanelLinks,
   getVizPanels,
   getDataLayers,
-  getAllSelectedObjects,
   getCursorSync,
   getLayoutManagerFor,
   getNextPanelId,
+  getPanelIdGenerator,
   getElementIdentifierForVizPanel,
+  findSectionOwner,
 };

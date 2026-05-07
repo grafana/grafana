@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { ExportFormats, allGrafanaExportProviders } from './providers';
+import { type ExportFormats, allGrafanaExportProviders } from './providers';
 
 interface GrafanaReceiversExportPreviewProps {
   exportFormat: ExportFormats;
@@ -20,7 +20,6 @@ const GrafanaReceiversExportPreview = ({ decrypt, exportFormat, onClose }: Grafa
     decrypt: decrypt,
     format: exportFormat,
   });
-  const { t } = useTranslate();
 
   const downloadFileName = `contact-points-${new Date().getTime()}`;
 

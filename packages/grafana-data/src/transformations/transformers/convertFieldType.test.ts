@@ -1,5 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { Field, FieldType } from '../../types/dataFrame';
+import { type Field, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 
 import {
@@ -116,7 +116,7 @@ it('can convert proper numeric strings to numbers, but also treat edge-cases', (
   expect(numbers).toEqual({
     name: 'stringy nums',
     type: FieldType.number,
-    values: [10, null, 30, 14, 10, 23, 0, 0],
+    values: [10, null, 30, 14, 10, 23, null, null],
     config: {},
   });
 });
@@ -419,6 +419,35 @@ describe('field convert types transformer', () => {
       {
         type: FieldType.string,
         values: ['a&b&c', 'd&e&f'],
+      },
+    ]);
+  });
+
+  it('will support custom join separators for field type string, correctly handling undefined and null', () => {
+    const options = {
+      conversions: [{ targetField: 'mixed_values', destinationType: FieldType.string, joinWith: '&' }],
+    };
+
+    const mixedValues = toDataFrame({
+      fields: [
+        {
+          name: 'mixed_values',
+          type: FieldType.string,
+          values: [['a', 'b', 'c'], ['d', undefined, 'f'], undefined, 'regular string', null],
+        },
+      ],
+    });
+
+    const stringified = convertFieldTypes(options, [mixedValues]);
+    expect(
+      stringified[0].fields.map(({ type, values }) => ({
+        type,
+        values,
+      }))
+    ).toEqual([
+      {
+        type: FieldType.string,
+        values: ['a&b&c', 'd&&f', undefined, '"regular string"', 'null'],
       },
     ]);
   });

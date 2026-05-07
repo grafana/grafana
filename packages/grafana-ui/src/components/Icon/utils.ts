@@ -1,4 +1,4 @@
-import { IconName, IconSize, IconType } from '../../types/icon';
+import { type IconName, type IconSize, type IconType } from '../../types/icon';
 
 const alwaysMonoIcons: IconName[] = [
   'grafana',
@@ -59,4 +59,10 @@ export function getIconRoot(): string {
   }
 
   return iconRoot;
+}
+
+export function getIconPath(name: IconName, type: IconType = 'default'): string {
+  const iconRoot = getIconRoot();
+  const subDir = getIconSubDir(name, type);
+  return `${iconRoot}${subDir}/${name}.svg`;
 }

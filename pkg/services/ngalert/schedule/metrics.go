@@ -47,7 +47,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	// gauge for groups per org
 	groupsPerOrg := make(map[int64]map[string]struct{})
 	// gauge for rules imported from Prometheus per org
-	orgsRulesPrometheusImported := make(map[int64]int64)
+	orgsRulesPrometheusImported := make(map[int64]map[string]int64)
 
 	simplifiedEditorSettingsPerOrg := make(map[int64]map[string]int64) // orgID -> setting -> count
 
@@ -70,7 +70,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 		buckets[key]++
 
 		// Count rules with notification settings per org
-		if len(rule.NotificationSettings) > 0 {
+		if rule.NotificationSettings != nil {
 			orgsNfSettings[rule.OrgID]++
 		}
 
@@ -88,8 +88,15 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 			}
 		}
 
-		if rule.ImportedFromPrometheus() {
-			orgsRulesPrometheusImported[rule.OrgID]++
+		if rule.ImportedPrometheusRule() {
+			if orgsRulesPrometheusImported[rule.OrgID] == nil {
+				orgsRulesPrometheusImported[rule.OrgID] = make(map[string]int64)
+			}
+			state := metrics.AlertRuleActiveLabelValue
+			if rule.IsPaused {
+				state = metrics.AlertRulePausedLabelValue
+			}
+			orgsRulesPrometheusImported[rule.OrgID][state]++
 		}
 
 		// Count groups per org
@@ -102,15 +109,11 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	}
 
 	// Reset metrics to avoid stale data
-	sch.metrics.GroupRules.Reset()
-	sch.metrics.SimpleNotificationRules.Reset()
-	sch.metrics.Groups.Reset()
-	sch.metrics.SimplifiedEditorRules.Reset()
-	sch.metrics.PrometheusImportedRules.Reset()
+	sch.metrics.ResetRuleMetrics()
 
 	// Set metrics
 	for key, count := range buckets {
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.ruleType.String(), key.state, makeRuleGroupLabelValue(key.ruleGroup)).Set(float64(count))
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.ruleType.String(), key.state, makeRuleGroupLabelValue(key.ruleGroup), key.ruleGroup.NamespaceUID).Set(float64(count))
 	}
 	for orgID, numRulesNfSettings := range orgsNfSettings {
 		sch.metrics.SimpleNotificationRules.WithLabelValues(fmt.Sprint(orgID)).Set(float64(numRulesNfSettings))
@@ -118,8 +121,10 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	for orgID, groups := range groupsPerOrg {
 		sch.metrics.Groups.WithLabelValues(fmt.Sprint(orgID)).Set(float64(len(groups)))
 	}
-	for orgID, count := range orgsRulesPrometheusImported {
-		sch.metrics.PrometheusImportedRules.WithLabelValues(fmt.Sprint(orgID)).Set(float64(count))
+	for orgID, counts := range orgsRulesPrometheusImported {
+		for state, count := range counts {
+			sch.metrics.PrometheusImportedRules.WithLabelValues(fmt.Sprint(orgID), state).Set(float64(count))
+		}
 	}
 	for orgID, settings := range simplifiedEditorSettingsPerOrg {
 		for setting, count := range settings {

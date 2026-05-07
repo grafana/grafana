@@ -1,13 +1,14 @@
-import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
+import { type DataQuery, type DataQueryRequest, type DataSourceJsonData, type TimeRange } from '@grafana/data';
 
 import {
-  LokiDataQuery as LokiQueryFromSchema,
-  LokiQueryType,
-  SupportingQueryType,
-  LokiQueryDirection,
+  type LokiDataQuery as LokiQueryFromSchema,
+  type LokiQueryType,
+  type SupportingQueryType,
+  type LokiQueryDirection,
 } from './dataquery.gen';
 
-export { LokiQueryDirection, LokiQueryType, SupportingQueryType };
+// @todo import from core
+export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';
 
 export enum LokiResultType {
   Stream = 'streams',
@@ -30,12 +31,6 @@ export interface LokiQuery extends LokiQueryFromSchema {
   // the temporary fix (until this gets improved in the codegen), is to
   // override it here
   queryType?: LokiQueryType;
-
-  /**
-   * This is a property for the experimental query splitting feature.
-   * @experimental
-   */
-  splitDuration?: string;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
@@ -43,7 +38,6 @@ export interface LokiOptions extends DataSourceJsonData {
   derivedFields?: DerivedFieldConfig[];
   alertmanager?: string;
   keepCookies?: string[];
-  predefinedOperations?: string;
 }
 
 export interface LokiStreamResult {

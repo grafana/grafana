@@ -1,13 +1,18 @@
 import { Observable } from 'rxjs';
 
-import { DataLinkTransformationConfig } from '@grafana/data';
-import { CorrelationData, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
+import {
+  type CorrelationSpec,
+  generatedAPI as correlationsAPIv0alpha1,
+} from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { type DataLinkTransformationConfig } from '@grafana/data';
+import { type CorrelationData, getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { CreateCorrelationParams } from 'app/features/correlations/types';
-import { getCorrelationsBySourceUIDs, createCorrelation, generateDefaultLabel } from 'app/features/correlations/utils';
+import { notifyApp } from 'app/core/reducers/appNotification';
+import { getMessageFromError } from 'app/core/utils/errors';
+import { type CreateCorrelationParams } from 'app/features/correlations/types';
+import { createCorrelation, generateDefaultLabel, getCorrelationsFromStorage } from 'app/features/correlations/utils';
 import { store } from 'app/store/store';
-import { ThunkResult } from 'app/types';
+import { type ThunkResult } from 'app/types/store';
 
 import { saveCorrelationsAction } from './explorePane';
 import { splitClose } from './main';
@@ -40,11 +45,7 @@ function reloadCorrelations(exploreId: string): ThunkResult<Promise<void>> {
     const pane = getState().explore!.panes[exploreId]!;
 
     if (pane.datasourceInstance?.uid !== undefined) {
-      // TODO: Tie correlations with query refID for mixed datasource
-      let datasourceUIDs = pane.datasourceInstance.meta.mixed
-        ? pane.queries.map((query) => query.datasource?.uid).filter((x): x is string => x !== null)
-        : [pane.datasourceInstance.uid];
-      const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+      const correlations = await getCorrelationsFromStorage(dispatch, pane.queries, pane.datasourceInstance.uid);
       dispatch(saveCorrelationsAction({ exploreId, correlations: correlations.correlations || [] }));
     }
   };
@@ -75,20 +76,35 @@ export function saveCurrentCorrelation(
     ]);
 
     if (sourceDatasource?.uid && targetDatasource?.uid && targetPane.correlationEditorHelperData?.resultField) {
-      const correlation: CreateCorrelationParams = {
-        sourceUID: sourceDatasource.uid,
-        targetUID: targetDatasource.uid,
-        label: label || (await generateDefaultLabel(sourcePane, targetPane)),
-        description,
-        type: 'query',
-        config: {
-          field: targetPane.correlationEditorHelperData.resultField,
-          target: targetPane.queries[0],
-          transformations: transformations,
-        },
-      };
-      await createCorrelation(sourceDatasource.uid, correlation)
-        .then(async () => {
+      const finalLabel = label || (await generateDefaultLabel(sourcePane, targetPane));
+
+      if (config.featureToggles.kubernetesCorrelations) {
+        const corrSpec: CorrelationSpec = {
+          label: finalLabel,
+          description: description,
+          source: { group: sourceDatasource.type, name: sourceDatasource.uid },
+          target: { group: targetDatasource.type, name: targetDatasource.uid },
+          type: 'query',
+          config: {
+            field: targetPane.correlationEditorHelperData.resultField,
+            target: targetPane.queries[0],
+            transformations: transformations,
+          },
+        };
+
+        // the generateName is discarded, but the server returns a 500 without it
+        const response = await dispatch(
+          correlationsAPIv0alpha1.endpoints.createCorrelation.initiate({
+            correlation: {
+              metadata: { generateName: 'correlation-' },
+              apiVersion: 'correlations.grafana.app/v0alpha1',
+              kind: 'Correlation',
+              spec: corrSpec,
+            },
+          })
+        );
+
+        if (response.error === undefined) {
           dispatch(splitClose(keys[1]));
           await dispatch(reloadCorrelations(keys[0]));
           await dispatch(runQueries({ exploreId: keys[0] }));
@@ -96,11 +112,41 @@ export function saveCurrentCorrelation(
             sourceDatasourceType: sourceDatasource.type,
             targetDataSourceType: targetDatasource.type,
           });
-        })
-        .catch((err) => {
-          dispatch(notifyApp(createErrorNotification('Error creating correlation', err)));
-          console.error(err);
-        });
+        } else {
+          dispatch(
+            notifyApp(createErrorNotification('Error creating correlation', getMessageFromError(response.error)))
+          );
+          console.error(response.error);
+        }
+      } else {
+        const correlation: CreateCorrelationParams = {
+          sourceUID: sourceDatasource.uid,
+          targetUID: targetDatasource.uid,
+          label: finalLabel,
+          description,
+          type: 'query',
+          config: {
+            field: targetPane.correlationEditorHelperData.resultField,
+            target: targetPane.queries[0],
+            transformations: transformations,
+          },
+        };
+
+        await createCorrelation(sourceDatasource.uid, correlation)
+          .then(async () => {
+            dispatch(splitClose(keys[1]));
+            await dispatch(reloadCorrelations(keys[0]));
+            await dispatch(runQueries({ exploreId: keys[0] }));
+            reportInteraction('grafana_explore_correlation_editor_saved', {
+              sourceDatasourceType: sourceDatasource.type,
+              targetDataSourceType: targetDatasource.type,
+            });
+          })
+          .catch((err) => {
+            dispatch(notifyApp(createErrorNotification('Error creating correlation', err)));
+            console.error(err);
+          });
+      }
     }
   };
 }

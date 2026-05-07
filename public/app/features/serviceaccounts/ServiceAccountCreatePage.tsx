@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type JSX } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
@@ -9,8 +10,9 @@ import { Page } from 'app/core/components/Page/Page';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { RolePickerSelect } from 'app/core/components/RolePickerDrawer/RolePickerSelect';
-import { contextSrv } from 'app/core/core';
-import { AccessControlAction, OrgRole, Role, ServiceAccountCreateApiResponse, ServiceAccountDTO } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { type Role, AccessControlAction } from 'app/types/accessControl';
+import { type ServiceAccountDTO, type ServiceAccountCreateApiResponse } from 'app/types/serviceaccount';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 
@@ -73,8 +75,6 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
       fetchOptions();
     }
   }, [currentOrgId]);
-
-  const { t } = useTranslate();
 
   const onSubmit = useCallback(
     async (data: ServiceAccountDTO) => {

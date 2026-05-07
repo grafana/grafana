@@ -1,17 +1,16 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2, PluginSignatureType } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { PageInfoItem } from '../../../../core/components/Page/types';
-import { PluginDisabledBadge } from '../components/Badges';
+import { type PageInfoItem } from '../../../../core/components/Page/types';
+import { PluginDisabledBadge } from '../components/Badges/PluginDisabledBadge';
 import { PluginDetailsHeaderDependencies } from '../components/PluginDetailsHeaderDependencies';
 import { PluginDetailsHeaderSignature } from '../components/PluginDetailsHeaderSignature';
-import { getLatestCompatibleVersion } from '../helpers';
-import { CatalogPlugin } from '../types';
+import { formatGrafanaDependency, getLatestCompatibleVersion } from '../helpers';
+import { type CatalogPlugin } from '../types';
 
 export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
-  const { t } = useTranslate();
   const info: PageInfoItem[] = [];
 
   if (!plugin) {
@@ -40,13 +39,14 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
       }
     };
 
+    const isManagedPlugin = plugin.managed.enabled;
     if (plugin.isInstalled) {
-      const installedVersionValue = plugin.isManaged ? managedVersionText : installedVersion;
+      const installedVersionValue = isManagedPlugin ? managedVersionText : installedVersion;
       addInfo('installedVersion', installedVersionValue);
     }
 
     let latestVersionValue;
-    if (plugin.isManaged) {
+    if (isManagedPlugin) {
       latestVersionValue = managedVersionText;
     } else if (plugin.isPreinstalled?.withVersion) {
       latestVersionValue = `${latestVersion} (preinstalled)`;
@@ -79,10 +79,11 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   }
 
   const pluginDependencies = plugin.details?.pluginDependencies;
-  let grafanaDependency = plugin.details?.grafanaDependency;
+  let rawGrafanaDependency = plugin.details?.grafanaDependency;
   if (useLatestCompatibleInfo && latestCompatibleVersion?.grafanaDependency) {
-    grafanaDependency = latestCompatibleVersion?.grafanaDependency;
+    rawGrafanaDependency = latestCompatibleVersion?.grafanaDependency;
   }
+  const grafanaDependency = rawGrafanaDependency ? formatGrafanaDependency(rawGrafanaDependency) : undefined;
   const hasNoDependencyInfo = !grafanaDependency && (!pluginDependencies || !pluginDependencies.length);
 
   if (!hasNoDependencyInfo) {

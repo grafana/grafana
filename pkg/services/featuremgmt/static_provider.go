@@ -2,48 +2,47 @@ package featuremgmt
 
 import (
 	"fmt"
+	"maps"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func newStaticProvider(cfg *setting.Cfg) (openfeature.FeatureProvider, error) {
-	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
+func newStaticProvider(confFlags map[string]memprovider.InMemoryFlag, standardFlags []FeatureFlag) (openfeature.FeatureProvider, error) {
+	flags, err := buildStaticFlagsMap(confFlags, standardFlags)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read feature toggles from config: %w", err)
+		return nil, err
 	}
-
-	flags := make(map[string]memprovider.InMemoryFlag, len(standardFeatureFlags))
-
-	// Add flags from config.ini file
-	for name, value := range confFlags {
-		flags[name] = createInMemoryFlag(name, value)
-	}
-
-	// Add standard flags
-	for _, flag := range standardFeatureFlags {
-		if _, exists := flags[flag.Name]; !exists {
-			enabled := flag.Expression == "true"
-			flags[flag.Name] = createInMemoryFlag(flag.Name, enabled)
-		}
-	}
-
 	return memprovider.NewInMemoryProvider(flags), nil
 }
 
-func createInMemoryFlag(name string, enabled bool) memprovider.InMemoryFlag {
-	variant := "disabled"
-	if enabled {
-		variant = "enabled"
+func buildStaticFlagsMap(confFlags map[string]memprovider.InMemoryFlag, standardFlags []FeatureFlag) (map[string]memprovider.InMemoryFlag, error) {
+	flags := make(map[string]memprovider.InMemoryFlag, len(standardFlags))
+	for _, flag := range standardFlags {
+		inMemFlag, err := setting.ParseFlag(flag.Name, flag.Expression)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse flag %s: %w", flag.Name, err)
+		}
+		flags[flag.Name] = inMemFlag
 	}
+	maps.Copy(flags, confFlags)
+	return flags, nil
+}
 
-	return memprovider.InMemoryFlag{
-		Key:            name,
-		DefaultVariant: variant,
-		Variants: map[string]interface{}{
-			"enabled":  true,
-			"disabled": false,
-		},
+func buildStaticFlagsMapFromCfg(cfg *setting.Cfg) (map[string]memprovider.InMemoryFlag, error) {
+	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read feature flags from config: %w", err)
 	}
+	return buildStaticFlagsMap(confFlags, standardFeatureFlags)
+}
+
+func newStaticProviderFromCfg(cfg *setting.Cfg) (openfeature.FeatureProvider, error) {
+	flags, err := buildStaticFlagsMapFromCfg(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return memprovider.NewInMemoryProvider(flags), nil
 }

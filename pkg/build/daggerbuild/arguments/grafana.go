@@ -3,16 +3,13 @@ package arguments
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"path"
 	"path/filepath"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/cliutil"
-	"github.com/grafana/grafana/pkg/build/daggerbuild/containers"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/daggerutil"
-	"github.com/grafana/grafana/pkg/build/daggerbuild/frontend"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/git"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/pipeline"
 	"github.com/urfave/cli/v2"
@@ -95,16 +92,32 @@ func GrafanaDirectoryOptsFromFlags(c cliutil.CLIContext) *GrafanaDirectoryOpts {
 }
 
 func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, ref string, ght string) (*dagger.Directory, error) {
-	// If GrafanaDir was provided, then we can just use that one.
-	if path := localPath; path != "" {
-		slog.Info("Using local Grafana found", "path", path)
-		return daggerutil.HostDir(client, path)
+	if localPath != "" {
+		absolute, err := filepath.Abs(localPath)
+		if err != nil {
+			return nil, fmt.Errorf("error getting absolute path for local dir: %w", err)
+		}
+		localPath = absolute
+		slog.Info("Using local directory for repository", "path", localPath, "repo", repo)
+		return daggerutil.HostDir(client, localPath, dagger.HostDirectoryOpts{
+			Exclude: []string{"dist", "node_modules"},
+		})
+	}
+
+	ght, err := githubToken(ctx, ght)
+	if err != nil {
+		return nil, fmt.Errorf("error acquiring GitHub token: %w", err)
 	}
 
 	return git.CloneWithGitHubToken(client, ght, repo, ref)
 }
 
 func applyPatches(ctx context.Context, client *dagger.Client, src *dagger.Directory, repo, patchesPath, ref, ght string) (*dagger.Directory, error) {
+	ght, err := githubToken(ctx, ght)
+	if err != nil {
+		return nil, fmt.Errorf("error acquiring GitHub token: %w", err)
+	}
+
 	// Clone the patches repository on 'main'
 	dir, err := git.CloneWithGitHubToken(client, ght, repo, ref)
 	if err != nil {
@@ -144,12 +157,7 @@ func applyPatches(ctx context.Context, client *dagger.Client, src *dagger.Direct
 func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
 	o := GrafanaDirectoryOptsFromFlags(opts.CLIContext)
 
-	ght, err := githubToken(ctx, o.GitHubToken)
-	if err != nil {
-		log.Println("No github token found:", err)
-	}
-
-	src, err := cloneOrMount(ctx, opts.Client, o.GrafanaDir, o.GrafanaRepo, o.GrafanaRef, ght)
+	src, err := cloneOrMount(ctx, opts.Client, o.GrafanaDir, o.GrafanaRepo, o.GrafanaRef, o.GitHubToken)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +180,7 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 		WithFile(".buildinfo.branch", branchFile)
 
 	if o.PatchesRepo != "" {
-		withPatches, err := applyPatches(ctx, opts.Client, src, o.PatchesRepo, o.PatchesPath, o.PatchesRef, ght)
+		withPatches, err := applyPatches(ctx, opts.Client, src, o.PatchesRepo, o.PatchesPath, o.PatchesRef, o.GitHubToken)
 		if err != nil {
 			opts.Log.Debug("patch application skipped", "error", err)
 		} else {
@@ -181,23 +189,7 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 		}
 	}
 
-	nodeVersion, err := frontend.NodeVersion(opts.Client, src).Stdout(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
-	}
-
-	yarnCache, err := opts.State.CacheVolume(ctx, YarnCacheDirectory)
-	if err != nil {
-		return nil, err
-	}
-
-	container := frontend.YarnInstall(opts.Client, src, nodeVersion, yarnCache, opts.Platform)
-
-	if _, err := containers.ExitError(ctx, container); err != nil {
-		return nil, err
-	}
-
-	return container.Directory("/src"), nil
+	return src, nil
 }
 
 func enterpriseDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
@@ -209,17 +201,12 @@ func enterpriseDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any,
 		return nil, fmt.Errorf("error initializing grafana directory: %w", err)
 	}
 
-	ght, err := githubToken(ctx, o.GitHubToken)
+	clone, err := cloneOrMount(ctx, opts.Client, o.EnterpriseDir, o.EnterpriseRepo, o.EnterpriseRef, o.GitHubToken)
 	if err != nil {
-		return nil, nil
+		return nil, fmt.Errorf("error cloning or mounting Grafana Enterprise directory: %w", err)
 	}
 
-	src, err := cloneOrMount(ctx, opts.Client, o.EnterpriseDir, o.EnterpriseRepo, o.EnterpriseRef, ght)
-	if err != nil {
-		return nil, err
-	}
-
-	return InitializeEnterprise(opts.Client, grafanaDir.(*dagger.Directory), src), nil
+	return InitializeEnterprise(opts.Client, grafanaDir.(*dagger.Directory), clone), nil
 }
 
 var GrafanaDirectoryFlags = []cli.Flag{

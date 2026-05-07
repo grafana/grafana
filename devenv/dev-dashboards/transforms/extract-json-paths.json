@@ -14,13 +14,7 @@
         "target": {
           "limit": 100,
           "matchAny": false,
-          "tags": [
-            "gdev",
-            "transform",
-            "transformations",
-            "extract",
-            "json"
-          ],
+          "tags": ["gdev", "transform", "transformations", "extract", "json"],
           "type": "dashboard"
         },
         "type": "dashboard"
@@ -66,8 +60,7 @@
         }
       ],
       "datasource": {
-        "type": "testdata",
-        "uid": "gdev-testdata"
+        "type": "grafana-testdata-datasource"
       },
       "pluginVersion": "9.4.0-pre",
       "fieldConfig": {
@@ -100,9 +93,7 @@
         "showHeader": true,
         "footer": {
           "show": false,
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "countRows": false,
           "fields": ""
         }
@@ -110,8 +101,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
+            "type": "grafana-testdata-datasource"
           },
           "rawFrameContent": "[{\"schema\":{\"refId\":\"A\",\"meta\":{\"channel\":\"ds/bHGPS1h4z/1s/test\",\"transformations\":[\"extractFields\",\"extractFields\",\"extractFields\"]},\"fields\":[{\"name\":\"Time\",\"type\":\"time\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}},{\"name\":\"Value\",\"type\":\"other\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}}]},\"data\":{\"values\":[[1673543683471,1673543689063,1673543695050],[[\"2023-01-12T17:14:44.419Z\",62,141,79,29,79,-29,29,{\"testdata\":{\"source1\":{\"value1\":9,\"value2\":18},\"source2\":[[0,1,2,3,4,5,6,7,8,9],[7,11,13,17,19,23,27,29]]}}],[\"2023-01-12T17:14:50.050Z\",62,143,81,29,81,-29,29,{\"testdata\":{\"source1\":{\"value1\":10,\"value2\":20},\"source2\":[[1,2,3,4,5,6,7,8,9,10],[11,13,17,19,23,27,29,31]]}}],[\"2023-01-12T17:14:55.050Z\",61,146,80,22,85,-28,28,{\"testdata\":{\"source1\":{\"value1\":11,\"value2\":22},\"source2\":[[3,4,5,6,7,8,9,10,11,12],[13,17,19,23,27,29,31,37,41]]}}]]]}}]",
           "refId": "A",
@@ -148,8 +138,7 @@
         }
       ],
       "datasource": {
-        "type": "testdata",
-        "uid": "gdev-testdata"
+        "type": "grafana-testdata-datasource"
       },
       "pluginVersion": "9.4.0-pre",
       "fieldConfig": {
@@ -219,8 +208,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
+            "type": "grafana-testdata-datasource"
           },
           "rawFrameContent": "[{\"schema\":{\"refId\":\"A\",\"meta\":{\"channel\":\"ds/bHGPS1h4z/1s/test\",\"transformations\":[\"extractFields\",\"extractFields\",\"extractFields\"]},\"fields\":[{\"name\":\"Time\",\"type\":\"time\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}},{\"name\":\"Value\",\"type\":\"other\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}}]},\"data\":{\"values\":[[1673543683471,1673543689063,1673543695050],[[\"2023-01-12T17:14:44.419Z\",62,141,79,29,79,-29,29,{\"testdata\":{\"source1\":{\"value1\":9,\"value2\":18},\"source2\":[[0,1,2,3,4,5,6,7,8,9],[7,11,13,17,19,23,27,29]]}}],[\"2023-01-12T17:14:50.050Z\",62,143,81,29,81,-29,29,{\"testdata\":{\"source1\":{\"value1\":10,\"value2\":20},\"source2\":[[1,2,3,4,5,6,7,8,9,10],[11,13,17,19,23,27,29,31]]}}],[\"2023-01-12T17:14:55.050Z\",61,146,80,22,85,-28,28,{\"testdata\":{\"source1\":{\"value1\":11,\"value2\":22},\"source2\":[[3,4,5,6,7,8,9,10,11,12],[13,17,19,23,27,29,31,37,41]]}}]]]}}]",
           "refId": "A",
@@ -241,8 +229,7 @@
       "title": "Raw data",
       "transformations": [],
       "datasource": {
-        "type": "testdata",
-        "uid": "gdev-testdata"
+        "type": "grafana-testdata-datasource"
       },
       "pluginVersion": "9.4.0-pre",
       "fieldConfig": {
@@ -275,9 +262,7 @@
         "showHeader": true,
         "footer": {
           "show": false,
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "countRows": false,
           "fields": ""
         }
@@ -285,8 +270,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
+            "type": "grafana-testdata-datasource"
           },
           "rawFrameContent": "[{\"schema\":{\"refId\":\"A\",\"meta\":{\"channel\":\"ds/bHGPS1h4z/1s/test\",\"transformations\":[\"extractFields\",\"extractFields\",\"extractFields\"]},\"fields\":[{\"name\":\"Time\",\"type\":\"time\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}},{\"name\":\"Value\",\"type\":\"other\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}}]},\"data\":{\"values\":[[1673543683471,1673543689063,1673543695050],[[\"2023-01-12T17:14:44.419Z\",62,141,79,29,79,-29,29,{\"testdata\":{\"source1\":{\"value1\":9,\"value2\":18},\"source2\":[[0,1,2,3,4,5,6,7,8,9],[7,11,13,17,19,23,27,29]]}}],[\"2023-01-12T17:14:50.050Z\",62,143,81,29,81,-29,29,{\"testdata\":{\"source1\":{\"value1\":10,\"value2\":20},\"source2\":[[1,2,3,4,5,6,7,8,9,10],[11,13,17,19,23,27,29,31]]}}],[\"2023-01-12T17:14:55.050Z\",61,146,80,22,85,-28,28,{\"testdata\":{\"source1\":{\"value1\":11,\"value2\":22},\"source2\":[[3,4,5,6,7,8,9,10,11,12],[13,17,19,23,27,29,31,37,41]]}}]]]}}]",
           "refId": "A",
@@ -298,10 +282,7 @@
   ],
   "revision": 1,
   "schemaVersion": 37,
-  "tags": [
-    "gdev",
-    "transform"
-  ],
+  "tags": ["gdev", "transform"],
   "templating": {
     "list": []
   },

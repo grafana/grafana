@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
-import { LoadingState, PanelData } from '@grafana/data';
+import { LoadingState, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Space, Stack } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -238,7 +237,7 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     return (
       <div className={styles.wrap}>
-        <div aria-label={selectors.components.PanelInspector.Query.content}>
+        <div data-testid={selectors.components.PanelInspector.Query.content}>
           <h3 className={styles.heading}>
             <Trans i18nKey="inspector.query-inspector.query-inspector">Query inspector</Trans>
           </h3>
@@ -254,19 +253,18 @@ export class QueryInspector extends PureComponent<Props, State> {
           <Button
             icon="sync"
             onClick={onRefreshQuery}
-            aria-label={selectors.components.PanelInspector.Query.refreshButton}
+            data-testid={selectors.components.PanelInspector.Query.refreshButton}
           >
             <Trans i18nKey="inspector.query.refresh">Refresh</Trans>
           </Button>
 
-          {haveData && allNodesExpanded && (
-            <Button icon="minus" variant="secondary" onClick={this.onToggleExpand}>
-              <Trans i18nKey="inspector.query.collapse-all">Collapse all</Trans>
-            </Button>
-          )}
-          {haveData && !allNodesExpanded && (
-            <Button icon="plus" variant="secondary" onClick={this.onToggleExpand}>
-              <Trans i18nKey="inspector.query.expand-all">Expand all</Trans>
+          {haveData && (
+            <Button icon={allNodesExpanded ? 'minus' : 'plus'} variant="secondary" onClick={this.onToggleExpand}>
+              {allNodesExpanded ? (
+                <Trans i18nKey="inspector.query.collapse-all">Collapse all</Trans>
+              ) : (
+                <Trans i18nKey="inspector.query.expand-all">Expand all</Trans>
+              )}
             </Button>
           )}
 

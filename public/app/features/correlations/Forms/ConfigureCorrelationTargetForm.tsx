@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
-import { Controller, FieldError, useFormContext, useWatch } from 'react-hook-form';
+import { Controller, type FieldError, useFormContext, useWatch } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { CorrelationExternal } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { type CorrelationExternal } from '@grafana/runtime';
 import { Field, FieldSet, Input, Select, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { CorrelationType } from '../types';
+import { type CorrelationType } from '../types';
 
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
-import { assertIsQueryTypeError, FormDTO } from './types';
+import { assertIsQueryTypeError, type FormDTO } from './types';
 
 type CorrelationTypeOptions = {
   value: CorrelationType;
@@ -49,7 +49,7 @@ export const ConfigureCorrelationTargetForm = () => {
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || targetUIDFromCorrelation;
   const correlationType: CorrelationType | undefined = useWatch({ name: 'type' }) || correlation?.type;
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <>
       <FieldSet label={t('correlations.target-form.title', 'Setup the target for the correlation (Step 2 of 3)')}>

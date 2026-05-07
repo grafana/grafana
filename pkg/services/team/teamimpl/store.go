@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,7 +24,7 @@ type store interface {
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
-	GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error)
+	GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error)
 	RemoveUsersMemberships(ctx context.Context, userID int64) error
 	IsMember(orgId int64, teamId int64, userId int64) (bool, error)
 	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error)
@@ -111,9 +112,10 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 		}
 
 		t := team.Team{
-			Name:    cmd.Name,
-			Email:   cmd.Email,
-			Updated: time.Now(),
+			Name:        cmd.Name,
+			Email:       cmd.Email,
+			ExternalUID: cmd.ExternalUID,
+			Updated:     time.Now(),
 		}
 
 		sess.MustCols("email")
@@ -139,7 +141,7 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 			return err
 		}
 
-		deletes := []string{
+		deletes := []string{ //nolint:prealloc
 			"DELETE FROM team_member WHERE org_id=? and team_id = ?",
 			"DELETE FROM team WHERE org_id=? and id = ?",
 			"DELETE FROM dashboard_acl WHERE org_id=? and team_id = ?",
@@ -205,7 +207,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		}
 
 		if query.Name != "" {
-			sql.WriteString(` and team.name = ?`)
+			sql.WriteString(` and LOWER(team.name) = LOWER(?)`)
 			params = append(params, query.Name)
 		}
 
@@ -213,6 +215,13 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 			sql.WriteString(` and team.id IN (?` + strings.Repeat(",?", len(query.TeamIds)-1) + ")")
 			for _, id := range query.TeamIds {
 				params = append(params, id)
+			}
+		}
+
+		if len(query.UIDs) > 0 {
+			sql.WriteString(` and team.uid IN (?` + strings.Repeat(",?", len(query.UIDs)-1) + ")")
+			for _, uid := range query.UIDs {
+				params = append(params, uid)
 			}
 		}
 
@@ -254,7 +263,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		}
 
 		if query.Name != "" {
-			countSess.Where("name=?", query.Name)
+			countSess.Where("LOWER(name) = LOWER(?)", query.Name)
 		}
 
 		// Only count teams user can see
@@ -347,19 +356,38 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 }
 
 // GetIDsByUser returns a list of team IDs for the given user
-func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
-	queryResult := make([]int64, 0)
+func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
+	ids := make([]int64, 0)
+	uids := make([]string, 0)
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.SQL(`SELECT tm.team_id
-FROM team_member as tm
-WHERE tm.user_id=? AND tm.org_id=?;`, query.UserID, query.OrgID).Find(&queryResult)
+		rows, err := sess.QueryRows(`SELECT tm.team_id, team.uid
+			FROM team_member as tm
+			JOIN team ON team.id = tm.team_id
+			WHERE tm.user_id=? AND tm.org_id=?
+			ORDER BY tm.team_id asc`, query.UserID, query.OrgID)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			_ = rows.Close()
+		}()
+		var id int64
+		var uid string
+		for rows.Next() {
+			err = rows.Scan(&id, &uid)
+			if err != nil {
+				return err
+			}
+			ids = append(ids, id)
+			uids = append(uids, uid)
+		}
+		return rows.Err()
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get team IDs by user: %w", err)
+		return nil, nil, fmt.Errorf("failed to get team IDs by user: %w", err)
 	}
-
-	return queryResult, nil
+	return ids, uids, nil
 }
 
 func getTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (team.TeamMember, error) {
@@ -422,6 +450,7 @@ func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal boo
 	}
 
 	entity := team.TeamMember{
+		UID:        util.GenerateShortUID(),
 		OrgID:      orgID,
 		TeamID:     teamID,
 		UserID:     userID,
@@ -558,6 +587,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		sess.Select(fmt.Sprintf(`team_member.org_id,
 			team_member.team_id,
 			team_member.user_id,
+			team_member.uid,
 			%[1]s.email,
 			%[1]s.name,
 			%[1]s.login,
@@ -565,7 +595,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 			team_member.external,
 			team_member.permission,
 			user_auth.auth_module,
-			team.uid`, ss.db.GetDialect().Quote("user")))
+			team.uid as team_uid`, ss.db.GetDialect().Quote("user")))
 		sess.Asc("user.login", "user.email")
 
 		err := sess.Find(&queryResult)
@@ -580,4 +610,26 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 // RegisterDelete registers a delete query to be executed when the transaction is committed
 func (ss *xormStore) RegisterDelete(query string) {
 	ss.deletes = append(ss.deletes, query)
+}
+
+// teamMemberUidMigration ensures that all team members have a valid uid.
+// To protect against upgrade / downgrade we need to run this for a couple of releases.
+// FIXME: Remove this migration around Q2 2026
+func (ss *xormStore) teamMemberUidMigration() error {
+	return ss.db.WithDbSession(context.Background(), func(sess *db.Session) error {
+		switch ss.db.GetDBType() {
+		case migrator.SQLite:
+			_, err := sess.Exec("UPDATE team_member SET uid=printf('tm%09d',id) WHERE uid IS NULL OR uid = '';")
+			return err
+		case migrator.Postgres:
+			_, err := sess.Exec("UPDATE team_member SET uid='tm' || lpad('' || id::text,9,'0') WHERE uid IS NULL OR uid = '';")
+			return err
+		case migrator.MySQL:
+			_, err := sess.Exec("UPDATE team_member SET uid=concat('tm',lpad(id,9,'0')) WHERE uid IS NULL OR uid = '';")
+			return err
+		default:
+			// this branch should be unreachable
+			return nil
+		}
+	})
 }

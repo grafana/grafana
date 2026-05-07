@@ -46,3 +46,11 @@ func dropValues(frame *data.Frame, percent float64) (*data.Frame, error) {
 
 	return copy, err
 }
+
+func setFrameType(f *data.Frame, t data.FrameType, v data.FrameTypeVersion) {
+	if f.Meta == nil {
+		f.Meta = &data.FrameMeta{}
+	}
+	f.Meta.Type = t
+	f.Meta.TypeVersion = v
+}

@@ -13,22 +13,22 @@ import (
 // MemoryFrameCache ...
 type MemoryFrameCache struct {
 	mu     sync.RWMutex
-	frames map[int64]map[string]data.FrameJSONCache
+	frames map[string]map[string]data.FrameJSONCache
 	log    log.Logger
 }
 
 // NewMemoryFrameCache ...
 func NewMemoryFrameCache() *MemoryFrameCache {
 	return &MemoryFrameCache{
-		frames: map[int64]map[string]data.FrameJSONCache{},
+		frames: map[string]map[string]data.FrameJSONCache{},
 		log:    log.New("live.memoryframecache"),
 	}
 }
 
-func (c *MemoryFrameCache) GetActiveChannels(orgID int64) (map[string]json.RawMessage, error) {
+func (c *MemoryFrameCache) GetActiveChannels(ns string) (map[string]json.RawMessage, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	frames, ok := c.frames[orgID]
+	frames, ok := c.frames[ns]
 	if !ok {
 		return nil, nil
 	}
@@ -39,30 +39,30 @@ func (c *MemoryFrameCache) GetActiveChannels(orgID int64) (map[string]json.RawMe
 	return info, nil
 }
 
-func (c *MemoryFrameCache) GetFrame(ctx context.Context, orgID int64, channel string) (json.RawMessage, bool, error) {
+func (c *MemoryFrameCache) GetFrame(ctx context.Context, ns string, channel string) (json.RawMessage, bool, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	cachedFrame, ok := c.frames[orgID][channel]
+	cachedFrame, ok := c.frames[ns][channel]
 	raw := cachedFrame.Bytes(data.IncludeAll)
 	c.log.Debug("Cache get",
-		"orgId", orgID,
+		"ns", ns,
 		"channel", channel,
 		"length", len(raw),
 	)
 	return raw, ok, nil
 }
 
-func (c *MemoryFrameCache) Update(ctx context.Context, orgID int64, channel string, jsonFrame data.FrameJSONCache) (bool, error) {
+func (c *MemoryFrameCache) Update(ctx context.Context, ns string, channel string, jsonFrame data.FrameJSONCache) (bool, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if _, ok := c.frames[orgID]; !ok {
-		c.frames[orgID] = map[string]data.FrameJSONCache{}
+	if _, ok := c.frames[ns]; !ok {
+		c.frames[ns] = map[string]data.FrameJSONCache{}
 	}
-	cachedJsonFrame, exists := c.frames[orgID][channel]
+	cachedJsonFrame, exists := c.frames[ns][channel]
 	schemaUpdated := !exists || !cachedJsonFrame.SameSchema(&jsonFrame)
-	c.frames[orgID][channel] = jsonFrame
+	c.frames[ns][channel] = jsonFrame
 	c.log.Debug("Cache update",
-		"orgId", orgID,
+		"ns", ns,
 		"channel", channel,
 		"length", len(jsonFrame.Bytes(data.IncludeAll)),
 	)

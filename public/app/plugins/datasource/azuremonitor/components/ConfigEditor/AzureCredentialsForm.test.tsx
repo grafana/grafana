@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
-import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
+import AzureCredentialsForm, { type Props } from './AzureCredentialsForm';
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {

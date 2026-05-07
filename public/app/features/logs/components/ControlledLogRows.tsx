@@ -2,36 +2,37 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   CoreApp,
-  DataFrame,
+  type DataFrame,
   EventBusSrv,
-  ExploreLogsPanelState,
-  LogsMetaItem,
+  type ExploreLogsPanelState,
+  type LogLevel,
+  type LogRowModel,
+  type LogsMetaItem,
   LogsSortOrder,
-  SplitOpen,
-  TimeRange,
+  type SplitOpen,
+  type TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
-import { LogsVisualisationType } from '../../explore/Logs/Logs';
+import { type LogsVisualisationType } from '../../explore/Logs/constants';
 
 import { ControlledLogsTable } from './ControlledLogsTable';
 import { InfiniteScroll } from './InfiniteScroll';
-import { LogRows, Props } from './LogRows';
-import { LogListControlOptions } from './panel/LogList';
+import { LogRows, type Props } from './LogRows';
+import { type LogListOptions } from './panel/LogList';
 import { LogListContextProvider, useLogListContext } from './panel/LogListContext';
 import { LogListControls } from './panel/LogListControls';
 import { ScrollToLogsEvent } from './panel/virtualization';
 
 export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
-  hasUnescapedContent?: boolean;
   loading: boolean;
   logsMeta?: LogsMetaItem[];
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
-  onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
+  filterLevels?: LogLevel[];
 
   /** Props added for Table **/
   visualisationType: LogsVisualisationType;
@@ -41,11 +42,22 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   datasourceType?: string;
   width?: number;
   logsTableFrames?: DataFrame[];
+  displayedFields?: string[];
+  exploreId?: string;
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 export type LogRowsComponentProps = Omit<
   ControlledLogRowsProps,
-  'app' | 'dedupStrategy' | 'showLabels' | 'showTime' | 'logsSortOrder' | 'prettifyLogMessage' | 'wrapLogMessage'
+  | 'app'
+  | 'dedupStrategy'
+  | 'filterLevels'
+  | 'showLabels'
+  | 'showTime'
+  | 'logsSortOrder'
+  | 'prettifyLogMessage'
+  | 'wrapLogMessage'
 >;
 
 export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLogRowsProps>(
@@ -53,7 +65,7 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
     {
       deduplicatedRows,
       dedupStrategy,
-      hasUnescapedContent,
+      filterLevels,
       showLabels,
       showTime,
       logsMeta,
@@ -71,8 +83,8 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         app={rest.app || CoreApp.Unknown}
         displayedFields={[]}
         dedupStrategy={dedupStrategy}
-        enableLogDetails={false}
-        hasUnescapedContent={hasUnescapedContent}
+        filterLevels={filterLevels}
+        fontSize="default"
         logOptionsStorageKey={logOptionsStorageKey}
         logs={deduplicatedRows ?? []}
         logsMeta={logsMeta}
@@ -142,7 +154,7 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
       if (ref) {
         return styles.forwardedScrollableLogRows;
       }
-      return config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows;
+      return styles.scrollableLogRows;
     }, [ref]);
 
     const scrollIntoView = useCallback(

@@ -1,4 +1,4 @@
-import { SyntaxNode } from '@lezer/common';
+import { type SyntaxNode } from '@lezer/common';
 import { trim } from 'lodash';
 
 import { parser } from './search';
@@ -16,6 +16,8 @@ const filterTokenToTypeMap: Record<number, string> = {
   [terms.DashboardToken]: 'dashboard',
   [terms.PluginsToken]: 'plugins',
   [terms.ContactPointToken]: 'contactPoint',
+  [terms.RuleSourceToken]: 'source',
+  [terms.PolicyToken]: 'policy',
 };
 
 // This enum allows to configure parser behavior
@@ -33,6 +35,8 @@ export enum FilterSupportedTerm {
   dashboard = 'dashboardFilter',
   plugins = 'pluginsFilter',
   contactPoint = 'contactPointFilter',
+  source = 'sourceFilter',
+  policy = 'policyFilter',
 }
 
 export type QueryFilterMapper = Record<number, (filter: string) => void>;

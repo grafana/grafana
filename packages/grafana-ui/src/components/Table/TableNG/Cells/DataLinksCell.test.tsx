@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
-import { Field, FieldType, LinkModel } from '@grafana/data';
-import { TableCellDisplayMode } from '@grafana/schema';
+import { type Field, FieldType, type LinkModel } from '@grafana/data';
+
+import { TableCellDisplayMode } from '../../types';
 
 import { DataLinksCell } from './DataLinksCell';
 

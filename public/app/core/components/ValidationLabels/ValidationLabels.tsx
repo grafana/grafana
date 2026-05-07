@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Box, Icon, Text, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
@@ -41,7 +41,7 @@ export const strongPasswordValidations: StrongPasswordValidation[] = [
   },
   {
     message: 'One symbol',
-    validation: (value: string) => /[\W]/.test(value),
+    validation: (value: string) => /[^A-Za-z0-9]/.test(value),
   },
 ];
 

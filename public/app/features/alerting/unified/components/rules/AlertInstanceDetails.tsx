@@ -1,5 +1,5 @@
-import { useTranslate } from '@grafana/i18n';
-import { Alert } from 'app/types/unified-alerting';
+import { t } from '@grafana/i18n';
+import { type Alert } from 'app/types/unified-alerting';
 
 import { useAnnotationLinks, useCleanAnnotations } from '../../utils/annotations';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
@@ -12,7 +12,7 @@ interface Props {
 export const AlertInstanceDetails = ({ instance }: Props) => {
   const annotations = useCleanAnnotations(instance.annotations);
   const annotationLinks = useAnnotationLinks(annotations);
-  const { t } = useTranslate();
+
   return (
     <div>
       {instance.value && (

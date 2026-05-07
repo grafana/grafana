@@ -1,28 +1,32 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import * as React from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Field, Label, useStyles2 } from '@grafana/ui';
+import { getLabelStyles } from '@grafana/ui/internal';
 
-import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';
-import { OptionPaneItemOverrideInfo } from './types';
+import { type OptionPaneItemOverrideInfo } from './types';
 
 export interface OptionsPaneItemInfo {
   title?: string;
   value?: any;
   description?: string;
   popularRank?: number;
-  render: () => React.ReactElement;
+  render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement<Record<string, unknown>>;
   skipField?: boolean;
+  useFieldset?: boolean;
   showIf?: () => boolean;
   /** Hook for controlling visibility */
   useShowIf?: () => boolean;
   overrides?: OptionPaneItemOverrideInfo[];
   addon?: ReactNode;
+  /** Must be unique on the page! */
+  id: string;
 }
 
 /**
@@ -30,11 +34,14 @@ export interface OptionsPaneItemInfo {
  */
 export class OptionsPaneItemDescriptor {
   parent!: OptionsPaneCategoryDescriptor;
+  props: OptionsPaneItemInfo;
 
-  constructor(public props: OptionsPaneItemInfo) {}
+  constructor(props: OptionsPaneItemInfo) {
+    this.props = { ...props };
+  }
 
-  render(searchQuery?: string) {
-    return <OptionsPaneItem key={this.props.title} itemDescriptor={this} searchQuery={searchQuery} />;
+  renderElement(searchQuery?: string) {
+    return <OptionsPaneItem key={this.props.id} itemDescriptor={this} searchQuery={searchQuery} />;
   }
 
   useShowIf() {
@@ -56,7 +63,7 @@ interface OptionsPaneItemProps {
 }
 
 function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) {
-  const { title, description, render, skipField } = itemDescriptor.props;
+  const { title, description, id, render, skipField, useFieldset } = itemDescriptor.props;
   const key = `${itemDescriptor.parent.props.id} ${title}`;
   const showIf = itemDescriptor.useShowIf();
 
@@ -65,7 +72,7 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
   }
 
   if (skipField) {
-    return render();
+    return render(itemDescriptor);
   }
 
   return (
@@ -73,15 +80,17 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
       label={renderOptionLabel(itemDescriptor, searchQuery)}
       description={description}
       key={key}
-      aria-label={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
+      data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
+      htmlFor={id}
+      useFieldset={useFieldset}
     >
-      {render()}
+      {render(itemDescriptor)}
     </Field>
   );
 }
 
 function renderOptionLabel(itemDescriptor: OptionsPaneItemDescriptor, searchQuery?: string): ReactNode {
-  const { title, description, overrides, addon } = itemDescriptor.props;
+  const { title, description, overrides, id, addon, useFieldset } = itemDescriptor.props;
 
   if (!title) {
     return null;
@@ -93,7 +102,16 @@ function renderOptionLabel(itemDescriptor: OptionsPaneItemDescriptor, searchQuer
       return null;
     }
 
-    return <OptionPaneLabel title={title} description={description} overrides={overrides} addon={addon} />;
+    return (
+      <OptionPaneLabel
+        title={title}
+        description={description}
+        overrides={overrides}
+        addon={addon}
+        htmlFor={id}
+        useFieldset={useFieldset}
+      />
+    );
   }
 
   const categories: React.ReactNode[] = [];
@@ -107,7 +125,7 @@ function renderOptionLabel(itemDescriptor: OptionsPaneItemDescriptor, searchQuer
   }
 
   return (
-    <Label description={description && highlightWord(description, searchQuery)} category={categories}>
+    <Label description={description && highlightWord(description, searchQuery)} category={categories} htmlFor={id}>
       {highlightWord(title, searchQuery)}
       {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
     </Label>
@@ -123,22 +141,35 @@ interface OptionPanelLabelProps {
   description?: string;
   overrides?: OptionPaneItemOverrideInfo[];
   addon: ReactNode;
+  htmlFor?: string;
+  useFieldset?: boolean;
 }
 
-function OptionPaneLabel({ title, description, overrides, addon }: OptionPanelLabelProps) {
-  const styles = useStyles2(getLabelStyles);
+function OptionPaneLabel({ title, description, overrides, addon, htmlFor, useFieldset }: OptionPanelLabelProps) {
+  const styles = useStyles2(getOptionPaneLabelStyles);
+  const labelStyles = useStyles2(getLabelStyles);
   return (
     <div className={styles.container}>
-      <Label description={description}>
-        {title}
-        {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
-      </Label>
+      {useFieldset ? (
+        <div className={labelStyles.label}>
+          <div className={labelStyles.labelContent}>
+            {title}
+            {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
+          </div>
+          {description && <span className={labelStyles.description}>{description}</span>}
+        </div>
+      ) : (
+        <Label description={description} htmlFor={htmlFor}>
+          {title}
+          {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
+        </Label>
+      )}
       {addon}
     </div>
   );
 }
 
-function getLabelStyles(theme: GrafanaTheme2) {
+function getOptionPaneLabelStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       display: 'flex',

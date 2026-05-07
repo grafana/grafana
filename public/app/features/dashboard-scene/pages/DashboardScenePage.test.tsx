@@ -1,26 +1,35 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
 import { useParams } from 'react-router-dom-v5-compat';
+import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { PanelProps, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
+import { type PanelProps, store, systemDateFormats, type SystemDateFormatsState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { LocationServiceProvider, config, locationService, setPluginImportUtils } from '@grafana/runtime';
+import {
+  LocationServiceProvider,
+  locationSearchToObject,
+  locationService,
+  setPluginImportUtils,
+} from '@grafana/runtime';
+import { setGetObservablePluginLinks, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import store from 'app/core/store';
-import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
+import { type Dashboard } from '@grafana/schema';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
+import { setPublicDashboardConfigFn } from '../../dashboard/components/PublicDashboard/usePublicDashboardConfig';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
 
-import { DashboardScenePage, Props } from './DashboardScenePage';
+import { DashboardScenePage, type Props } from './DashboardScenePage';
 import {
   DashboardScenePageStateManager,
   DashboardScenePageStateManagerV2,
@@ -52,11 +61,8 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useParams: jest.fn().mockReturnValue({ uid: 'my-dash-uid' }),
 }));
 
-const getPluginExtensionsMock = jest.fn().mockReturnValue({ extensions: [] });
-jest.mock('app/features/plugins/extensions/getPluginExtensions', () => ({
-  ...jest.requireActual('app/features/plugins/extensions/getPluginExtensions'),
-  createPluginExtensionsGetter: () => getPluginExtensionsMock,
-}));
+const getObservablePluginLinks = jest.fn().mockReturnValue(of([]));
+setGetObservablePluginLinks(getObservablePluginLinks);
 
 function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps> } = {}) {
   const context = getGrafanaContextMock();
@@ -68,18 +74,22 @@ function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps
 
   const renderResult = render(
     <TestProvider grafanaContext={context}>
-      <LocationServiceProvider service={locationService}>
-        <DashboardScenePage {...props} />
-      </LocationServiceProvider>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <LocationServiceProvider service={locationService}>
+          <DashboardScenePage {...props} />
+        </LocationServiceProvider>
+      </OpenFeatureProvider>
     </TestProvider>
   );
 
   const rerender = (newProps: Props) => {
     renderResult.rerender(
       <TestProvider grafanaContext={context}>
-        <LocationServiceProvider service={locationService}>
-          <DashboardScenePage {...newProps} />
-        </LocationServiceProvider>
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <LocationServiceProvider service={locationService}>
+            <DashboardScenePage {...newProps} />
+          </LocationServiceProvider>
+        </OpenFeatureProvider>
       </TestProvider>
     );
   };
@@ -133,7 +143,13 @@ const panelPlugin = getPanelPlugin(
   CustomVizPanel
 );
 
-config.panels['custom-viz-panel'] = panelPlugin.meta;
+beforeEach(() => {
+  setPanelPluginMetas({ 'custom-viz-panel': panelPlugin.meta });
+});
+
+afterEach(() => {
+  setPanelPluginMetas({});
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(panelPlugin),
@@ -150,15 +166,22 @@ setDashboardLoaderSrv({
 
 describe('DashboardScenePage', () => {
   beforeEach(() => {
-    locationService.push('/');
+    setPublicDashboardConfigFn({
+      footerHide: false,
+      footerText: 'Powered by',
+      footerLogo: 'grafana-logo',
+      footerLink: 'https://grafana.com/?src=grafananet&cnt=public-dashboards',
+      headerLogoHide: false,
+    });
+    locationService.push('/d/my-dash-uid');
     getDashboardScenePageStateManager().clearDashboardCache();
     loadDashboardMock.mockClear();
     loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
-    getPluginExtensionsMock.mockRestore();
-    getPluginExtensionsMock.mockReturnValue({ extensions: [] });
+    getObservablePluginLinks.mockRestore();
+    getObservablePluginLinks.mockReturnValue(of([]));
     store.delete(DASHBOARD_FROM_LS_KEY);
   });
 
@@ -172,6 +195,64 @@ describe('DashboardScenePage', () => {
 
     expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
     expect(await screen.findByText('Content B')).toBeInTheDocument();
+  });
+
+  it('shows Powered by footer in kiosk mode', async () => {
+    setup({ routeProps: { queryParams: { kiosk: true } } });
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
+  });
+
+  it('shows kiosk Powered by footer even when public dashboard footerHide is enabled', async () => {
+    setPublicDashboardConfigFn({
+      footerHide: true,
+      footerText: 'Powered by',
+      footerLogo: 'grafana-logo',
+      footerLink: 'https://grafana.com/?src=grafananet&cnt=public-dashboards',
+      headerLogoHide: false,
+    });
+
+    setup({ routeProps: { queryParams: { kiosk: true } } });
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
+  });
+
+  it('shows Powered by footer when kiosk query param is present with no value (?kiosk)', async () => {
+    setup({ routeProps: { queryParams: locationSearchToObject('?kiosk') } });
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
+  });
+
+  it('does not show Powered by footer when kiosk=false', async () => {
+    setup({ routeProps: { queryParams: { kiosk: 'false' } } });
+
+    await waitForDashboardToRender();
+
+    expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
+  });
+
+  it('uses kiosk dashboard CTA url', async () => {
+    setup({ routeProps: { queryParams: { kiosk: true } } });
+
+    await waitForDashboardToRender();
+
+    const footer = await screen.findByTestId(selectors.pages.PublicDashboard.footer);
+    const link = footer.querySelector('a');
+    expect(link).toHaveAttribute('href', 'https://grafana.com/?src=grafananet&cnt=kiosk-dashboard');
+  });
+
+  it('hides Powered by footer in kiosk mode when hideLogo is present', async () => {
+    setup({ routeProps: { queryParams: { kiosk: true, hideLogo: true } } });
+
+    await waitForDashboardToRender();
+
+    expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
   });
 
   it('routeReloadCounter should trigger reload', async () => {
@@ -212,7 +293,7 @@ describe('DashboardScenePage', () => {
 
     expect(await screen.findByText('Inspect: Panel B')).toBeInTheDocument();
 
-    act(() => locationService.partial({ inspect: null }));
+    await userEvent.click(screen.getByTestId(selectors.components.Drawer.General.close));
 
     expect(screen.queryByText('Inspect: Panel B')).not.toBeInTheDocument();
   });
@@ -279,7 +360,7 @@ describe('DashboardScenePage', () => {
 
       await waitForDashboardToRender();
 
-      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+      expect(screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
 
       // Hacking a bit, accessing private cache property to get access to the underlying DashboardScene object
       const dashboardScenesCache = getDashboardScenePageStateManager().getCache();
@@ -289,7 +370,7 @@ describe('DashboardScenePage', () => {
       act(() => {
         dashboard.removePanel(panels[0]);
       });
-      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+      expect(screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
 
       act(() => {
         dashboard.removePanel(panels[1]);
@@ -301,7 +382,7 @@ describe('DashboardScenePage', () => {
       });
 
       expect(await screen.findByTitle('Panel Added')).toBeInTheDocument();
-      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+      expect(screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
     });
   });
 
@@ -339,6 +420,11 @@ describe('DashboardScenePage', () => {
   });
 
   describe('errors rendering', () => {
+    const origError = console.error;
+    const consoleErrorMock = jest.fn();
+    afterEach(() => (console.error = origError));
+    beforeEach(() => (console.error = consoleErrorMock));
+
     it('should render dashboard not found notice when dashboard... not found', async () => {
       setupLoadDashboardMockReject({
         status: 404,
@@ -362,6 +448,7 @@ describe('DashboardScenePage', () => {
 
       expect(await screen.findByTestId(selectors.components.EntityNotFound.container)).toBeInTheDocument();
     });
+
     it('should render error alert for backend errors', async () => {
       setupLoadDashboardMockReject({
         status: 500,
@@ -386,6 +473,7 @@ describe('DashboardScenePage', () => {
       expect(await screen.findByTestId('dashboard-page-error')).toBeInTheDocument();
       expect(await screen.findByTestId('dashboard-page-error')).toHaveTextContent('Internal server error');
     });
+
     it('should render error alert for runtime errors', async () => {
       setupLoadDashboardRuntimeErrorMock();
 
@@ -400,11 +488,20 @@ describe('DashboardScenePage', () => {
     it('should reset active manager when unmounting', async () => {
       const manager = getDashboardScenePageStateManager();
       manager.setActiveManager('v2');
-      const { unmount } = setup();
 
-      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
-      unmount();
-      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      // This test is only validating manager cleanup on unmount.
+      // Prevent the component from triggering a real v2 dashboard load (which requires extra setup).
+      const loadDashboardSpy = jest.spyOn(manager, 'loadDashboard').mockResolvedValue(undefined);
+
+      try {
+        const { unmount } = setup();
+
+        expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+        unmount();
+        expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      } finally {
+        loadDashboardSpy.mockRestore();
+      }
     });
   });
 });

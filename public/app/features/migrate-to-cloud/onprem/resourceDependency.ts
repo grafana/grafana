@@ -1,8 +1,7 @@
-import { IconName } from '@grafana/ui';
+import { type ResourceDependencyDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { type IconName } from '@grafana/ui';
 
-import { ResourceDependencyDto } from '../api';
-
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 
 export type ResourceTypeId = ResourceTableItem['type'];
 

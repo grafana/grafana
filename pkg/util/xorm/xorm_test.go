@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/stretchr/testify/require"
 )
 

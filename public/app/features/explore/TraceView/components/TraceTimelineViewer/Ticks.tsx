@@ -16,13 +16,12 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { TNil } from '../types';
-
-import { formatDuration } from './utils';
+import type TNil from '../types/TNil';
+import { formatDuration } from '../utils/date';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   Ticks: css({
@@ -43,6 +42,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'TicksTickLabel',
     left: '0.25rem',
     position: 'absolute',
+    whiteSpace: 'nowrap',
   }),
   TicksTickLabelEndAnchor: css({
     label: 'TicksTickLabelEndAnchor',

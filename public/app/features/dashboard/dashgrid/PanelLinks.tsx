@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import type { JSX } from 'react';
 
-import { DataLink, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type DataLink, type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Dropdown, Icon, Menu, ToolbarButton, useStyles2, PanelChrome } from '@grafana/ui';
 
 interface Props {
@@ -11,7 +12,6 @@ interface Props {
 
 export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   const getLinksContent = (): JSX.Element => {
     const interpolatedLinks = onShowPanelLinks();

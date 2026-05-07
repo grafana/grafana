@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
 )
@@ -61,7 +60,7 @@ func TransformMetricsResponse(query string, resp tempopb.QueryRangeResponse) []*
 	return append(frames, exemplarFrames...)
 }
 
-func TransformInstantMetricsResponse(query *dataquery.TempoQuery, resp tempopb.QueryInstantResponse) []*data.Frame {
+func TransformInstantMetricsResponse(resp tempopb.QueryInstantResponse) []*data.Frame {
 	frames := make([]*data.Frame, len(resp.Series))
 
 	for i, series := range resp.Series {
@@ -126,7 +125,7 @@ func transformLabelsAndGetName(seriesLabels []v1.KeyValue) (string, data.Labels)
 			}
 			sort.Strings(keys)
 
-			var labelStrings []string
+			labelStrings := make([]string, 0, len(keys))
 			for _, key := range keys {
 				labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", key, labels[key]))
 			}

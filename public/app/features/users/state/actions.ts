@@ -1,12 +1,12 @@
 import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { FetchDataArgs } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { type FetchDataArgs } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { OrgUser } from 'app/types';
-
-import { AccessControlAction, ThunkResult } from '../../../types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { type ThunkResult } from 'app/types/store';
+import { type OrgUser } from 'app/types/user';
 
 import {
   usersLoaded,

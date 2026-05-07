@@ -1,10 +1,11 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useGetContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
+import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -20,7 +21,6 @@ const EditContactPoint = () => {
     error,
     data: contactPoint,
   } = useGetContactPoint({ name: contactPointName, alertmanager: selectedAlertmanager! });
-  const { t } = useTranslate();
 
   if (isLoading) {
     return <LoadingPlaceholder text={t('alerting.edit-contact-point.text-loading', 'Loading...')} />;
@@ -49,8 +49,10 @@ const EditContactPoint = () => {
 };
 
 function EditContactPointPage() {
+  const { navId, pageNav } = useContactPointsNav();
+
   return (
-    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+    <AlertmanagerPageWrapper navId={navId} pageNav={pageNav} accessType="notification">
       <EditContactPoint />
     </AlertmanagerPageWrapper>
   );

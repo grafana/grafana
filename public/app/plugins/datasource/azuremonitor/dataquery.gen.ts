@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/azuremonitor/dataquery.cue file.
+
 import * as common from '@grafana/schema';
 
 export interface AzureMonitorQuery extends common.DataQuery {
@@ -35,6 +37,7 @@ export interface AzureMonitorQuery extends common.DataQuery {
    * @deprecated Legacy template variable support.
    */
   grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
+  keepCookies?: Array<string>;
   /**
    * Namespace used in template variable queries
    */
@@ -71,6 +74,7 @@ export interface AzureMonitorQuery extends common.DataQuery {
 }
 
 export const defaultAzureMonitorQuery: Partial<AzureMonitorQuery> = {
+  keepCookies: [],
   subscriptions: [],
 };
 
@@ -325,8 +329,17 @@ export enum BuilderQueryEditorOrderByOptions {
   Desc = 'desc',
 }
 
+export enum BuilderQueryEditorReduceParameterTypes {
+  Generic = 'generic',
+  Numeric = 'numeric',
+}
+
 export interface BuilderQueryEditorProperty {
   name: string;
+  /**
+   * Optional parameter type for function properties
+   */
+  parameterType?: BuilderQueryEditorReduceParameterTypes;
   type: BuilderQueryEditorPropertyType;
 }
 
@@ -450,6 +463,11 @@ export interface BuilderQueryExpression {
   where?: BuilderQueryEditorWhereExpressionArray;
 }
 
+export enum ARGScope {
+  Directory = 'directory',
+  Subscription = 'subscription',
+}
+
 export interface AzureResourceGraphQuery {
   /**
    * Azure Resource Graph KQL query to be executed.
@@ -459,6 +477,10 @@ export interface AzureResourceGraphQuery {
    * Specifies the format results should be returned as. Defaults to table.
    */
   resultFormat?: string;
+  /**
+   * Specifies the scope of the query. Defaults to subscription.
+   */
+  scope?: ARGScope;
 }
 
 export interface AzureMonitorResource {

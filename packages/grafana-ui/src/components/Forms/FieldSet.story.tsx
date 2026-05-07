@@ -1,10 +1,10 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { Input } from '../Input/Input';
 
 import { Field } from './Field';
-import { FieldSet, Props } from './FieldSet';
+import { FieldSet, type Props } from './FieldSet';
 import mdx from './FieldSet.mdx';
 import { Form } from './Form';
 

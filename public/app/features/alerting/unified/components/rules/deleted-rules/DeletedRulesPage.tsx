@@ -1,8 +1,9 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
+import { useDeletedRulesNav } from '../../../navigation/useDeletedRulesNav';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
@@ -10,6 +11,7 @@ import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 import { DeletedRules } from './DeletedRules';
 
 function DeletedrulesPage() {
+  const { navId, pageNav } = useDeletedRulesNav();
   const {
     currentData = [],
     isLoading,
@@ -18,10 +20,9 @@ function DeletedrulesPage() {
     rulerConfig: GRAFANA_RULER_CONFIG,
     filter: {}, // todo: add filters, and limit?????
   });
-  const { t } = useTranslate();
 
   return (
-    <AlertingPageWrapper navId="alerts/recently-deleted" isLoading={isLoading}>
+    <AlertingPageWrapper navId={navId} pageNav={pageNav} isLoading={isLoading}>
       <>
         {error && (
           <Alert title={t('alerting.deleted-rules.errorloading', 'Failed to load alert deleted rules')}>

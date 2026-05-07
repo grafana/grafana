@@ -1,11 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, type PanelPluginMeta } from '@grafana/data';
+import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import {
   createDashboardModelFixture,
@@ -15,20 +16,15 @@ import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
 
 import { DashboardQueryEditor, INVALID_PANEL_DESCRIPTION } from './DashboardQueryEditor';
 import { SHARED_DASHBOARD_QUERY } from './constants';
-import { DashboardDatasource } from './datasource';
+import { type DashboardDatasource } from './datasource';
+import { type DashboardQuery } from './types';
 
-jest.mock('app/core/config', () => ({
-  ...jest.requireActual('app/core/config'),
-  panels: {
-    timeseries: {
-      info: {
-        logos: {
-          small: '',
-        },
-      },
-    },
-  },
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  usePanelPluginMetasMap: jest.fn(),
 }));
+
+const usePanelPluginMetasMapMock = jest.mocked(usePanelPluginMetasMap);
 
 setupDataSources(mockDataSource({ isDefault: true }));
 
@@ -44,6 +40,18 @@ describe('DashboardQueryEditor', () => {
   let mockDashboard: DashboardModel;
 
   beforeEach(() => {
+    usePanelPluginMetasMapMock.mockReturnValue({
+      loading: false,
+      error: undefined,
+      value: {
+        timeseries: {
+          id: 'timeseries',
+          name: 'Time series',
+          info: { logos: { small: '' } },
+        } as PanelPluginMeta,
+      },
+    });
+
     mockDashboard = createDashboardModelFixture({
       panels: [
         createPanelSaveModel({
@@ -85,6 +93,24 @@ describe('DashboardQueryEditor', () => {
       ],
     });
     jest.spyOn(getDashboardSrv(), 'getCurrent').mockImplementation(() => mockDashboard);
+  });
+
+  it('does not show plugins Alert', async () => {
+    const query: DashboardQuery = { refId: 'A', panelId: 1, adHocFiltersEnabled: false };
+    const { queryByText } = await waitFor(() =>
+      render(
+        <DashboardQueryEditor
+          datasource={{} as DashboardDatasource}
+          query={query}
+          data={mockPanelData}
+          onChange={() => {}}
+          onRunQuery={() => {}}
+        />
+      )
+    );
+
+    const alert = queryByText('Failed to load panel plugins');
+    expect(alert).toBe(null);
   });
 
   it('does not show a panel with the SHARED_DASHBOARD_QUERY datasource as an option in the dropdown', async () => {
@@ -163,5 +189,65 @@ describe('DashboardQueryEditor', () => {
     expect(screen.queryByText('A dashboard query panel')?.nextElementSibling).toHaveTextContent(
       INVALID_PANEL_DESCRIPTION
     );
+  });
+
+  describe('AdHoc Filters Toggle', () => {
+    beforeEach(() => {
+      // Reset only the specific mocks we need, not all mocks
+      mockOnChange.mockClear();
+      mockOnRunQueries.mockClear();
+      // Re-establish the dashboard mock in case it was cleared
+      jest.spyOn(getDashboardSrv(), 'getCurrent').mockImplementation(() => mockDashboard);
+    });
+
+    it('shows the AdHoc Filters toggle', async () => {
+      const query: DashboardQuery = { refId: 'A', panelId: 1, adHocFiltersEnabled: false };
+
+      await act(async () => {
+        render(
+          <DashboardQueryEditor
+            datasource={{} as DashboardDatasource}
+            query={query}
+            data={mockPanelData}
+            onChange={mockOnChange}
+            onRunQuery={mockOnRunQueries}
+          />
+        );
+      });
+
+      const adhocFiltersToggle = await screen.findByText('Filters');
+      expect(adhocFiltersToggle).toBeInTheDocument();
+    });
+  });
+
+  describe('usePanelPluginMetasMap errors', () => {
+    beforeEach(() => {
+      usePanelPluginMetasMapMock.mockReturnValue({
+        loading: false,
+        error: new Error('Network error'),
+        value: undefined,
+      });
+    });
+
+    it('shows the error', async () => {
+      const query: DashboardQuery = { refId: 'A', panelId: 1, adHocFiltersEnabled: false };
+      const { findByText } = await waitFor(() =>
+        render(
+          <DashboardQueryEditor
+            datasource={{} as DashboardDatasource}
+            query={query}
+            data={mockPanelData}
+            onChange={() => {}}
+            onRunQuery={() => {}}
+          />
+        )
+      );
+
+      const alert = await findByText('Failed to load panel plugins');
+      expect(alert).toBeInTheDocument();
+
+      const error = await findByText('Network error');
+      expect(error).toBeInTheDocument();
+    });
   });
 });

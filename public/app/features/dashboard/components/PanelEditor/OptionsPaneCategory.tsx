@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useCallback, useEffect, useState, useRef } from 'react';
+import { type ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import * as React from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Button, Counter, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -24,7 +25,7 @@ export interface OptionsPaneCategoryProps {
   /**
    * When set will disable category and show tooltip with disabledText on hover
    */
-  disabledText?: string;
+  disabledText?: string | React.ReactElement;
 }
 
 const CATEGORY_PARAM_NAME = 'showCategory' as const;
@@ -112,11 +113,11 @@ export const OptionsPaneCategory = React.memo(
           data-testid={selectors.components.OptionsGroup.group(id)}
           ref={ref}
         >
-          <Tooltip content={disabledText}>
+          <Tooltip interactive={!(typeof disabledText === 'string')} content={disabledText}>
             <div className={headerStyles}>
-              <h6 id={`button-${id}`} className={cx(styles.title, styles.titleDisabled)}>
+              <h3 id={`button-${id}`} className={cx(styles.title, styles.titleDisabled)}>
                 {renderTitle(isExpanded)}
-              </h6>
+              </h3>
               <Icon size="sm" name="ban" className={styles.disabledIcon} />
             </div>
           </Tooltip>
@@ -135,10 +136,15 @@ export const OptionsPaneCategory = React.memo(
         {/* this just provides a better experience for mouse users */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={headerStyles} onClick={onToggle}>
-          <h6 id={`button-${id}`} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
+          <h3 id={`button-${id}`} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
             {renderTitle(isExpanded)}
-          </h6>
+          </h3>
           <Button
+            aria-label={
+              isExpanded
+                ? t('dashboard.options-pane-category.aria-label-collapse', 'Collapse {{title}} category', { title })
+                : t('dashboard.options-pane-category.aria-label-expand', 'Expand {{title}} category', { title })
+            }
             data-testid={selectors.components.OptionsGroup.toggle(id)}
             type="button"
             fill="text"
@@ -159,6 +165,7 @@ export const OptionsPaneCategory = React.memo(
     );
   }
 );
+OptionsPaneCategory.displayName = 'OptionsPaneCategory';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   box: css({
@@ -208,7 +215,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   disabledIcon: css({
     color: theme.colors.text.disabled,
-    marginRight: theme.spacing(1),
+    margin: theme.spacing(1, 1, 1, 0),
   }),
   bodyNested: css({
     position: 'relative',

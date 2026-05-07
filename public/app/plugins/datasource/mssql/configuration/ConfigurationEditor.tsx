@@ -1,20 +1,19 @@
 import { css } from '@emotion/css';
-import { SyntheticEvent } from 'react';
+import { type SyntheticEvent } from 'react';
 
 import {
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
+  type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
-  SelectableValue,
+  type SelectableValue,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { ConnectionLimits, useMigrateDatabaseFields } from '@grafana/sql';
-import { NumberInput } from '@grafana/sql/src/components/configuration/NumberInput';
+import { ConnectionLimits, NumberInput, useMigrateDatabaseFields } from '@grafana/sql';
 import {
   Alert,
   FieldSet,
@@ -33,9 +32,9 @@ import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
 import {
   MSSQLAuthenticationType,
   MSSQLEncryptOptions,
-  MssqlOptions,
-  AzureAuthConfigType,
-  MssqlSecureOptions,
+  type MssqlOptions,
+  type AzureAuthConfigType,
+  type MssqlSecureOptions,
 } from '../types';
 
 import { KerberosConfig, KerberosAdvancedSettings, UsernameMessage } from './Kerberos';
@@ -46,13 +45,11 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   useMigrateDatabaseFields(props);
 
   const { options: dsSettings, onOptionsChange } = props;
-  const { t } = useTranslate();
+
   const styles = useStyles2(getStyles);
   const jsonData = dsSettings.jsonData;
-  const azureAuthIsSupported = config.azureAuthEnabled;
 
   const azureAuthSettings: AzureAuthConfigType = {
-    azureAuthIsSupported,
     azureAuthSettingsUI: AzureAuthSettings,
   };
 
@@ -108,14 +105,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
       { value: MSSQLAuthenticationType.kerberosKeytab, label: 'Windows AD: Keytab file' },
       { value: MSSQLAuthenticationType.kerberosCredentialCache, label: 'Windows AD: Credential cache' },
       { value: MSSQLAuthenticationType.kerberosCredentialCacheLookupFile, label: 'Windows AD: Credential cache file' },
+      { value: MSSQLAuthenticationType.azureAuth, label: MSSQLAuthenticationType.azureAuth },
     ];
-
-    if (azureAuthIsSupported) {
-      return [
-        ...basicAuthenticationOptions,
-        { value: MSSQLAuthenticationType.azureAuth, label: MSSQLAuthenticationType.azureAuth },
-      ];
-    }
 
     return basicAuthenticationOptions;
   };
@@ -162,7 +153,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             name="host"
             type="text"
             value={dsSettings.url || ''}
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="localhost:1433"
             onChange={onDSOptionChanged('url')}
           />
@@ -303,14 +294,12 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
                   logged onto Windows and have enabled this option for MS SQL Server.
                 </Trans>
               </li>
-              {azureAuthIsSupported && (
-                <li>
-                  <Trans i18nKey="configuration.configuration-editor.description-auth-type-azure-auth">
-                    <i>Azure Authentication</i> Securely authenticate and access Azure resources and applications using
-                    Azure AD credentials - Managed Service Identity and Client Secret Credentials are supported.
-                  </Trans>
-                </li>
-              )}
+              <li>
+                <Trans i18nKey="configuration.configuration-editor.description-auth-type-azure-auth">
+                  <i>Azure Authentication</i> Securely authenticate and access Azure resources and applications using
+                  Azure AD credentials - Managed Service Identity and Client Secret Credentials are supported.
+                </Trans>
+              </li>
               <li>
                 <Trans i18nKey="configuration.configuration-editor.description-auth-type-username-password">
                   <i>Windows AD: Username + password</i> Windows Active Directory - Sign on for domain user via
@@ -367,7 +356,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
                 value={dsSettings.user || ''}
                 placeholder={
                   jsonData.authenticationType === MSSQLAuthenticationType.kerberosRaw
-                    ? // eslint-disable-next-line @grafana/no-untranslated-strings
+                    ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                       'name@EXAMPLE.COM'
                     : t('configuration.configuration-editor.placeholder-user', 'user')
                 }
@@ -393,7 +382,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           </>
         )}
 
-        {azureAuthIsSupported && jsonData.authenticationType === MSSQLAuthenticationType.azureAuth && (
+        {jsonData.authenticationType === MSSQLAuthenticationType.azureAuth && (
           <FieldSet
             label={t('configuration.configuration-editor.label-auth-settings', 'Azure Authentication Settings')}
           >
@@ -434,7 +423,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           >
             <Input
               width={LONG_WIDTH}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="1m"
               value={jsonData.timeInterval || ''}
               onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}

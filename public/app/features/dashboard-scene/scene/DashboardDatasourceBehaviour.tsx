@@ -1,24 +1,31 @@
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
-import { SceneDataTransformer, SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { LoadingState } from '@grafana/data';
+import {
+  SceneDataTransformer,
+  SceneObjectBase,
+  type SceneObjectState,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
-  findOriginalVizPanelByKey,
+  findVizPanelByKey,
   getDashboardSceneFor,
   getLibraryPanelBehavior,
   getQueryRunnerFor,
   getVizPanelKeyForPanelId,
 } from '../utils/utils';
 
-import { DashboardScene } from './DashboardScene';
-import { LibraryPanelBehaviorState } from './LibraryPanelBehavior';
+import { type DashboardScene } from './DashboardScene';
+import { type LibraryPanelBehaviorState } from './LibraryPanelBehavior';
 
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 
 export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatasourceBehaviourState> {
-  private prevRequestId: string | undefined;
+  private prevRequestIds: Map<number, string> = new Map();
   public constructor(state: DashboardDatasourceBehaviourState) {
     super(state);
 
@@ -27,9 +34,8 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
   private _activationHandler() {
     const queryRunner = this.parent;
-    let libraryPanelSub: Unsubscribable;
-    let transformerSub: Unsubscribable;
     let dashboard: DashboardScene;
+
     if (!(queryRunner instanceof SceneQueryRunner)) {
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
     }
@@ -44,64 +50,145 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       return;
     }
 
-    const dashboardQuery = queryRunner.state.queries.find((query) => query.panelId !== undefined);
+    /** Get all "Dashboard datasource" queries
+     * panelId prop is the way we identify Dashboard datasource queries
+     *   {
+     *    datasource: { uid: "-- Dashboard --" },
+     *    panelId: 12,  // ← Points to panel 12
+     *    refId: "A"
+     *   }
+     */
+    const dashboardDsQueries = queryRunner.state.queries.filter((query) => query.panelId !== undefined);
 
-    if (!dashboardQuery) {
+    if (dashboardDsQueries.length === 0) {
       return;
     }
 
-    // find the source panel referenced in the the dashboard ds query
-    const panelId = dashboardQuery.panelId;
-    const vizKey = getVizPanelKeyForPanelId(panelId);
-    // We're trying to find the original panel, not a cloned one, since `panelId` alone cannot resolve clones
-    const sourcePanel = findOriginalVizPanelByKey(dashboard, vizKey);
+    return this._handleQueries(dashboardDsQueries, queryRunner, dashboard);
+  }
 
-    if (!(sourcePanel instanceof VizPanel)) {
-      return;
-    }
+  /**
+   * Handles dashboard datasource queries by tracking all referenced panels.
+   * Supports single or multiple queries with library panels and transformers.
+   */
+  private _handleQueries(
+    dashboardQueries: Array<{ panelId?: number; [key: string]: unknown }>,
+    queryRunner: SceneQueryRunner,
+    dashboard: DashboardScene
+  ): () => void {
+    const libraryPanelSubs: Unsubscribable[] = [];
+    const transformerSubs: Unsubscribable[] = [];
+    let shouldRunQueries = false;
 
-    //check if the source panel is a library panel and wait for it to load
-    const libraryPanelBehaviour = getLibraryPanelBehavior(sourcePanel);
-    if (libraryPanelBehaviour && !libraryPanelBehaviour.state.isLoaded) {
-      libraryPanelSub = libraryPanelBehaviour.subscribeToState((newLibPanel) => {
-        this.handleLibPanelStateUpdates(newLibPanel, queryRunner, sourcePanel);
-      });
-      return;
-    }
+    // Loop through ALL dashboard queries to track each panel
+    for (const dashboardQuery of dashboardQueries) {
+      const panelId = dashboardQuery.panelId;
+      if (panelId === undefined) {
+        continue;
+      }
 
-    const sourcePanelQueryRunner = getQueryRunnerFor(sourcePanel);
+      const vizKey = getVizPanelKeyForPanelId(panelId);
+      const sourcePanel = findVizPanelByKey(dashboard, vizKey);
 
-    if (!sourcePanelQueryRunner) {
-      throw new Error('Could not find SceneQueryRunner for panel');
-    }
+      if (!(sourcePanel instanceof VizPanel)) {
+        continue;
+      }
 
-    const dataTransformer = sourcePanelQueryRunner.parent;
+      // Check if the source panel is a library panel and wait for it to load
+      const libraryPanelBehaviour = getLibraryPanelBehavior(sourcePanel);
 
-    if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
-      // in mixed DS scenario we complete the observable and merge data, so on a variable change
-      // the data transformer will emit but there will be no subscription and thus not visual update
-      // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and
-      // since we never re-run the query, only reprocess the transformations, the panel will not update.
-      transformerSub = dataTransformer.subscribeToState((newState, oldState) => {
-        if (newState.data !== oldState.data) {
+      if (libraryPanelBehaviour && !libraryPanelBehaviour.state.isLoaded) {
+        const sub = libraryPanelBehaviour.subscribeToState((newLibPanel) => {
+          this.handleLibPanelStateUpdates(newLibPanel, queryRunner, sourcePanel);
+        });
+        libraryPanelSubs.push(sub);
+        continue; // Don't process transformers until library panel is loaded
+      }
+
+      // Subscribe to transformer changes for this panel
+      const sourcePanelQueryRunner = getQueryRunnerFor(sourcePanel);
+
+      if (!sourcePanelQueryRunner) {
+        continue; // Skip panels without query runners instead of throwing
+      }
+
+      // Check if this panel's requestId changed since last activation
+      const currentRequestId = sourcePanelQueryRunner.state.data?.request?.requestId;
+      const prevRequestId = this.prevRequestIds.get(panelId);
+
+      if (prevRequestId && currentRequestId && prevRequestId !== currentRequestId) {
+        shouldRunQueries = true;
+      }
+
+      // Only re-run if there's actually new data to process.
+      // This prevents re-running when the source panel is cancelled, which only changes
+      // the loading state but keeps the same requestId.
+      // We trigger when:
+      // 1. requestId changed (new query completed)
+      // 2. isStreaming (continuous data updates)
+      const onSourceDataChange = (
+        newState: { data?: typeof sourcePanelQueryRunner.state.data },
+        oldState: { data?: typeof sourcePanelQueryRunner.state.data }
+      ) => {
+        const newRequestId = newState.data?.request?.requestId;
+        const oldRequestId = oldState.data?.request?.requestId;
+        const hasNewRequest = newRequestId !== oldRequestId;
+        const isStreaming = newState.data?.state === LoadingState.Streaming;
+        if (newState.data !== oldState.data && (hasNewRequest || isStreaming)) {
           queryRunner.runQueries();
         }
-      });
+      };
+
+      const dataTransformer = sourcePanelQueryRunner.parent;
+
+      if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
+        // In mixed DS scenario we complete the observable and merge data, so on a variable change
+        // the data transformer will emit but there will be no subscription and thus no visual update
+        // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and
+        // since we never re-run the query, only reprocess the transformations, the panel will not update.
+        const transformerSub = dataTransformer.subscribeToState(onSourceDataChange);
+        transformerSubs.push(transformerSub);
+      } else {
+        // Source panel has no transformer (or empty transformations). Subscribe to the query runner
+        // so we re-run when the source panel's data updates (e.g. after variable resolution or
+        // time range change). Without this, the dashboard-datasource panel can read stale data
+        // when it runs before the source panels complete and never updates.
+        const queryRunnerSub = sourcePanelQueryRunner.subscribeToState(onSourceDataChange);
+        transformerSubs.push(queryRunnerSub);
+      }
     }
 
-    if (this.prevRequestId && this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
+    // If any panel's data changed since last activation, run queries
+    if (shouldRunQueries) {
       queryRunner.runQueries();
     }
 
+    // Return cleanup function that unsubscribes from ALL subscriptions
     return () => {
-      this.prevRequestId = sourcePanelQueryRunner?.state.data?.request?.requestId;
-      if (libraryPanelSub) {
-        libraryPanelSub.unsubscribe();
+      // Store all current requestIds before cleanup
+      for (const dashboardQuery of dashboardQueries) {
+        const panelId = dashboardQuery.panelId;
+        if (panelId === undefined) {
+          continue;
+        }
+
+        const vizKey = getVizPanelKeyForPanelId(panelId);
+        const sourcePanel = findVizPanelByKey(dashboard, vizKey);
+
+        if (!(sourcePanel instanceof VizPanel)) {
+          continue;
+        }
+
+        const sourcePanelQueryRunner = getQueryRunnerFor(sourcePanel);
+        const requestId = sourcePanelQueryRunner?.state.data?.request?.requestId;
+
+        if (requestId) {
+          this.prevRequestIds.set(panelId, requestId);
+        }
       }
 
-      if (transformerSub) {
-        transformerSub.unsubscribe();
-      }
+      libraryPanelSubs.forEach((sub) => sub.unsubscribe());
+      transformerSubs.forEach((sub) => sub.unsubscribe());
     };
   }
 

@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Field, FieldSet, Select, Switch, useStyles2 } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { TimeRegionConfig } from 'app/core/utils/timeRegions';
-import { getAnnotationTags } from 'app/features/annotations/api';
+import { type TimeRegionConfig } from 'app/core/utils/timeRegions';
+import { annotationServer } from 'app/features/annotations/api';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from '../types';
+import { type GrafanaAnnotationQuery, GrafanaAnnotationType, type GrafanaQuery, GrafanaQueryType } from '../types';
 
 import { TimeRegionEditor } from './TimeRegionEditor';
 
@@ -146,7 +146,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
                   allowCustomValue
                   inputId="grafana-annotations__tags"
                   onChange={onTagsChange}
-                  tagOptions={getAnnotationTags}
+                  tagOptions={annotationServer().tags}
                   tags={tags ?? []}
                 />
               </Field>

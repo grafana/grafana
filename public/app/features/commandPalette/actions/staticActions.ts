@@ -1,14 +1,22 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
-import { NavModelItem } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
-import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
-import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
+import { type NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
+import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
+import {
+  shouldRenderInviteUserButton,
+  performInviteUserClick,
+} from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
+import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
+import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useSelector } from 'app/types/store';
 
-import { useSelector } from '../../../types';
-import { CommandPaletteAction } from '../types';
+import { type CommandPaletteAction } from '../types';
 import { ACTIONS_PRIORITY, DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
 
 // TODO: Clean this once ID is mandatory on nav items
@@ -22,7 +30,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
   for (let navItem of navTree) {
     // help node needs enriching with the frontend links
     if (navItem.id === 'help') {
-      navItem = enrichHelpItem({ ...navItem });
+      navItem = getEnrichedHelpItem({ ...navItem });
       delete navItem.url;
     }
     const { url, target, text, isCreateAction, children, onClick, keywords } = navItem;
@@ -103,7 +111,7 @@ function getGlobalActions(): CommandPaletteAction[] {
   ];
 
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable @grafana/no-untranslated-strings
+    // eslint-disable @grafana/i18n/no-untranslated-strings
     const section = 'Dev tooling';
     const currentState = currentMockApiState();
     const mockApiAction = currentState ? 'Disable' : 'Enable';
@@ -128,7 +136,7 @@ function getGlobalActions(): CommandPaletteAction[] {
         togglePseudoLocale();
       },
     });
-    // eslint-enable @grafana/no-untranslated-strings
+    // eslint-enable @grafana/i18n/no-untranslated-strings
   }
 
   return actions;
@@ -136,13 +144,44 @@ function getGlobalActions(): CommandPaletteAction[] {
 
 export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
-  return useMemo(() => {
-    const navBarActions = navTreeToActions(navBarTree);
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
 
-    if (shouldRenderInviteUserButton) {
+  return useMemo(() => {
+    let navBarActions = navTreeToActions(navBarTree);
+
+    if (config.featureToggles.dashboardTemplates) {
+      const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
+      if (testDataSources.length > 0) {
+        const navBarActionsWithoutActions = navBarActions.filter((action) => action.priority !== ACTIONS_PRIORITY);
+        const navBarActionsWithActions = navBarActions.filter((action) => action.priority === ACTIONS_PRIORITY);
+
+        navBarActionsWithActions.splice(1, 0, {
+          id: 'browse-template-dashboard',
+          name: t('command-palette.action.dashboard-from-template', 'Dashboard from template'),
+          section: t('command-palette.section.actions', 'Actions'),
+          priority: ACTIONS_PRIORITY,
+          perform: () => {
+            isAnalyticsFrameworkEnabled
+              ? NewDashboardLibraryInteractions.entryPointClicked({
+                  entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
+                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                })
+              : DashboardLibraryInteractions.entryPointClicked({
+                  entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
+                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                });
+            locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
+          },
+        });
+
+        navBarActions = [...navBarActionsWithoutActions, ...navBarActionsWithActions];
+      }
+    }
+
+    if (shouldRenderInviteUserButton()) {
       navBarActions.push({
         id: 'invite-user',
-        name: t('navigation.invite-user.invite-new-member-button', 'Invite new member'),
+        name: t('navigation.invite-user.invite-new-user-button', 'Invite new user'),
         section: t('command-palette.section.actions', 'Actions'),
         priority: ACTIONS_PRIORITY,
         perform: () => {
@@ -151,5 +190,5 @@ export function useStaticActions(): CommandPaletteAction[] {
       });
     }
     return [...getGlobalActions(), ...navBarActions];
-  }, [navBarTree]);
+  }, [isAnalyticsFrameworkEnabled, navBarTree]);
 }

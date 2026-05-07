@@ -1,10 +1,12 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+
+import { Field } from '../Forms/Field';
 
 import { TextArea } from './TextArea';
 import mdx from './TextArea.mdx';
 
 const meta: Meta = {
-  title: 'Forms/TextArea',
+  title: 'Inputs/TextArea',
   component: TextArea,
   parameters: {
     controls: {
@@ -22,7 +24,9 @@ const meta: Meta = {
 export const Basic: StoryFn = (args) => {
   return (
     <div style={{ width: args.containerWidth }}>
-      <TextArea invalid={args.invalid} placeholder={args.placeholder} cols={args.cols} disabled={args.disabled} />
+      <Field label="My TextArea" invalid={args.invalid} disabled={args.disabled}>
+        <TextArea placeholder={args.placeholder} cols={args.cols} />
+      </Field>
     </div>
   );
 };

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-// urlBuilder builds the URL for calling the Azure Monitor API
-type urlBuilder struct {
+// UrlBuilder builds the URL for calling the Azure Monitor API
+type UrlBuilder struct {
 	ResourceURI *string
 
 	// Following fields will be used to generate a ResourceURI
@@ -20,7 +20,7 @@ type urlBuilder struct {
 	MetricDefinition    *string
 }
 
-func (params *urlBuilder) buildResourceURI() (*string, error) {
+func (params *UrlBuilder) BuildResourceURI() (*string, error) {
 	if params.ResourceURI != nil && *params.ResourceURI != "" {
 		return params.ResourceURI, nil
 	}
@@ -35,7 +35,7 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 
 	if metricNamespace == nil || *metricNamespace == "" {
 		if params.MetricDefinition == nil || *params.MetricDefinition == "" {
-			return nil, errorsource.DownstreamError(fmt.Errorf("no metricNamespace or metricDefiniton value provided"), false)
+			return nil, backend.DownstreamError(fmt.Errorf("no metricNamespace or metricDefiniton value provided"))
 		}
 		metricNamespace = params.MetricDefinition
 	}
@@ -47,7 +47,7 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 		provider = metricNamespaceArray[0]
 		metricNamespaceArray = metricNamespaceArray[1:]
 	} else {
-		return nil, errorsource.DownstreamError(fmt.Errorf("metricNamespace is not in the correct format"), false)
+		return nil, backend.DownstreamError(fmt.Errorf("metricNamespace is not in the correct format"))
 	}
 
 	var resourceNameArray []string
@@ -78,7 +78,7 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 		if i < len(resourceNameArray) {
 			urlArray = append(urlArray, namespace, resourceNameArray[i])
 		} else {
-			return nil, errorsource.DownstreamError(fmt.Errorf("resourceNameArray does not have enough elements"), false)
+			return nil, backend.DownstreamError(fmt.Errorf("resourceNameArray does not have enough elements"))
 		}
 	}
 

@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { ReactElement, useId } from 'react';
+import { type ReactElement, useId } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
 
 import { PasswordField } from '../PasswordField/PasswordField';
 
-import { FormModel } from './LoginCtrl';
+import { type FormModel } from './LoginCtrl';
 
 interface Props {
   children: ReactElement;
@@ -28,7 +28,7 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
     register,
     formState: { errors },
   } = useForm<FormModel>({ mode: 'onChange' });
-  const { t } = useTranslate();
+
   return (
     <div className={styles.wrapper}>
       <form onSubmit={handleSubmit(onSubmit)}>

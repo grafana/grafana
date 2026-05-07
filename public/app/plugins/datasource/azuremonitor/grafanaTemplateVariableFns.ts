@@ -1,17 +1,18 @@
 import { isGUIDish } from './components/ResourcePicker/utils';
-import DataSource from './datasource';
-import { AzureMonitorQuery, AzureQueryType } from './types';
 import {
-  AppInsightsGroupByQuery,
-  AppInsightsMetricNameQuery,
-  GrafanaTemplateVariableQuery,
-  MetricNamespaceQuery,
-  MetricNamesQuery,
-  ResourceGroupsQuery,
-  ResourceNamesQuery,
-  SubscriptionsQuery,
-  WorkspacesQuery,
-} from './types/templateVariables';
+  type AppInsightsGroupByQuery,
+  type AppInsightsMetricNameQuery,
+  AzureQueryType,
+  type GrafanaTemplateVariableQuery,
+  type MetricNamespaceQuery,
+  type MetricNamesQuery,
+  type ResourceGroupsQuery,
+  type ResourceNamesQuery,
+  type SubscriptionsQuery,
+  type WorkspacesQuery,
+} from './dataquery.gen';
+import type DataSource from './datasource';
+import { type AzureMonitorQuery } from './types/query';
 
 /* 
   Grafana Template Variable Functions

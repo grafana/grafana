@@ -1,13 +1,13 @@
 import { render, screen, fireEvent, getDefaultNormalizer } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
-import { CoreApp, createTheme, LogLevel, LogRowModel } from '@grafana/data';
+import { CoreApp, createTheme, LogLevel, type LogRowModel } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
 
 import { LogRowMessage, MAX_CHARACTERS } from './LogRowMessage';
-import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
+import { createLogRow } from './mocks/logRow';
 
 const setup = (propOverrides?: Partial<ComponentProps<typeof LogRowMessage>>, rowOverrides?: Partial<LogRowModel>) => {
   const theme = createTheme();

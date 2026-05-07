@@ -1,27 +1,40 @@
 import { chain } from 'lodash';
 
-import { Combobox, ComboboxOption } from '@grafana/ui';
+import { Combobox, type ComboboxOption } from '@grafana/ui';
 
-import type { ContactPoint } from '../../../api/v0alpha1/types';
-import { useListContactPointsv0alpha1 } from '../../hooks/useContactPoints';
-import { getContactPointDescription } from '../../utils';
+import type { ContactPoint } from '../../../api/notifications/v0alpha1/types';
+import { type CustomComboBoxProps } from '../../../common/ComboBox.types';
+import { useListContactPoints } from '../../hooks/v0alpha1/useContactPoints';
+import { getContactPointDescription, isUsableContactPoint } from '../../utils';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
-type ContactPointSelectorProps = {
-  onChange: (contactPoint: ContactPoint) => void;
+export type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint> & {
+  /**
+   * Whether to include contact points that are not usable (e.g., imported from external sources).
+   * Unusable contact points have the `grafana.com/canUse` annotation set to `false`.
+   * @default false
+   */
+  includeUnusable?: boolean;
 };
 
 /**
- * Contact Point Combobox which lists all available contact points
- * @TODO make ComboBox accept a ReactNode so we can use icons and such
+ * Contact Point Combobox which lists all available contact points.
+ * By default, only shows contact points that can be used (have `grafana.com/canUse: true`).
+ * Set `includeUnusable` to `true` to show all contact points including imported ones.
  */
-function ContactPointSelector({ onChange }: ContactPointSelectorProps) {
-  const { currentData: contactPoints, isLoading } = useListContactPointsv0alpha1();
+function ContactPointSelector(props: ContactPointSelectorProps) {
+  const { includeUnusable = false, ...comboboxProps } = props;
+
+  const { currentData: contactPoints, isLoading } = useListContactPoints(
+    {},
+    { refetchOnFocus: true, refetchOnMountOrArgChange: true }
+  );
 
   // Create a mapping of options with their corresponding contact points
   const contactPointOptions = chain(contactPoints?.items)
     .toArray()
+    .filter((contactPoint) => includeUnusable || isUsableContactPoint(contactPoint))
     .map((contactPoint) => ({
       option: {
         label: contactPoint.spec.title,
@@ -35,16 +48,23 @@ function ContactPointSelector({ onChange }: ContactPointSelectorProps) {
 
   const options = contactPointOptions.map<ComboboxOption>((item) => item.option);
 
-  const handleChange = ({ value }: ComboboxOption<string>) => {
-    const selectedItem = contactPointOptions.find(({ option }) => option.value === value);
-    if (!selectedItem) {
+  const handleChange = (selectedOption: ComboboxOption<string> | null) => {
+    if (selectedOption == null && comboboxProps.isClearable) {
+      comboboxProps.onChange(null);
       return;
     }
 
-    onChange(selectedItem.contactPoint);
+    if (selectedOption) {
+      const matchedOption = contactPointOptions.find(({ option }) => option.value === selectedOption.value);
+      if (!matchedOption) {
+        return;
+      }
+
+      comboboxProps.onChange(matchedOption.contactPoint);
+    }
   };
 
-  return <Combobox loading={isLoading} onChange={handleChange} options={options} />;
+  return <Combobox {...comboboxProps} loading={isLoading} options={options} onChange={handleChange} />;
 }
 
 export { ContactPointSelector };

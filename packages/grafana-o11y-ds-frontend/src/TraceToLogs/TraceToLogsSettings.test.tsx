@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataSourceInstanceSettings, DataSourceSettings } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
+import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
-import { TraceToLogsData, TraceToLogsSettings } from './TraceToLogsSettings';
+import { type TraceToLogsData, TraceToLogsSettings } from './TraceToLogsSettings';
 
 const defaultOptionsOldFormat: DataSourceSettings<TraceToLogsData> = {
   jsonData: {

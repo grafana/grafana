@@ -1,10 +1,12 @@
-import { DataFrameType, Field, FieldType, LogRowModel, MutableDataFrame } from '@grafana/data';
-import { mockTimeRange } from '@grafana/plugin-ui';
-import { ExploreFieldLinkModel, getFieldLinksForExplore } from 'app/features/explore/utils/links';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { DataFrameType, type Field, FieldType, type LogRowModel, MutableDataFrame } from '@grafana/data';
+import { mockTimeRange } from '@grafana/plugin-ui/test';
+import { setTemplateSrv } from '@grafana/runtime';
+import { type ExploreFieldLinkModel, getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { createLogRow } from './__mocks__/logRow';
-import { getAllFields, createLogLineLinks, FieldDef, getDataframeFields } from './logParser';
+import { getAllFields, createLogLineLinks, type FieldDef, getDataframeFields } from './logParser';
+import { createLogRow } from './mocks/logRow';
 
 describe('logParser', () => {
   describe('getAllFields', () => {
@@ -466,6 +468,10 @@ describe('logParser', () => {
   });
 
   describe('getDataframeFields', () => {
+    beforeEach(() => {
+      setTemplateSrv(new TemplateSrv());
+    });
+
     it('should add row labels as variables for links', () => {
       const row = createLogRow({
         labels: { service_name: 'checkout', service_namespace: 'prod' },

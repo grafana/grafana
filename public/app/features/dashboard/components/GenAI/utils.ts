@@ -1,11 +1,11 @@
 import { pick } from 'lodash';
 
 import { llm } from '@grafana/llm';
-import { config } from '@grafana/runtime';
-import { Panel } from '@grafana/schema';
+import { isAppPluginInstalled } from '@grafana/runtime';
+import { type Panel } from '@grafana/schema';
 
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
 import { getDashboardStringDiff } from './jsonDiffText';
@@ -70,7 +70,8 @@ let llmHealthCheck: Promise<boolean> | undefined;
  * @returns true if the LLM plugin is enabled.
  */
 export async function isLLMPluginEnabled(): Promise<boolean> {
-  if (!config.apps['grafana-llm-app']) {
+  const isLLMAppInstalled = await isAppPluginInstalled('grafana-llm-app');
+  if (!isLLMAppInstalled) {
     return false;
   }
 
@@ -164,9 +165,7 @@ export const DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE =
 export function getPanelStrings(dashboard: DashboardModel): string[] {
   const panelStrings = dashboard.panels
     .filter(
-      (panel) =>
-        (panel.title.length > 0 && panel.title !== NEW_PANEL_TITLE) ||
-        (panel.description && panel.description.length > 0)
+      (panel) => (panel.title && panel.title !== NEW_PANEL_TITLE) || (panel.description && panel.description.length > 0)
     )
     .map(getPanelString);
 

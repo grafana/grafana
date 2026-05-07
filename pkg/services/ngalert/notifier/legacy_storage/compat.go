@@ -3,12 +3,20 @@ package legacy_storage
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"hash/fnv"
 	"maps"
+	"strings"
 
+	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
+	"github.com/prometheus/common/model"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 var NameToUid = models.NameToUid
@@ -25,7 +33,8 @@ func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*api
 	postable := &apimodels.PostableGrafanaReceiver{
 		UID:                   integration.UID,
 		Name:                  integration.Name,
-		Type:                  integration.Config.Type,
+		Type:                  string(integration.Config.Type()),
+		Version:               string(integration.Config.Version),
 		DisableResolveMessage: integration.DisableResolveMessage,
 		SecureSettings:        maps.Clone(integration.SecureSettings),
 	}
@@ -61,5 +70,238 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (*apimodels.PostableApiRe
 			Name: r.Name,
 		},
 		PostableGrafanaReceivers: integrations,
+	}, nil
+}
+
+func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance, origin models.ResourceOrigin) (*models.Receiver, error) {
+	if postable.HasMimirIntegrations() {
+		p, err := PostableMimirReceiverToPostableGrafanaReceiver(postable)
+		if err != nil {
+			return nil, err
+		}
+		postable = p
+	}
+	integrations, err := PostableGrafanaReceiversToIntegrations(postable.GrafanaManagedReceivers)
+	if err != nil {
+		return nil, err
+	}
+	r := &models.Receiver{
+		UID:          NameToUid(postable.GetName()), // TODO replace with stable UID.
+		Name:         postable.GetName(),
+		Integrations: integrations,
+		Provenance:   provenance,
+		Origin:       origin,
+	}
+	r.Version = r.Fingerprint()
+	return r, nil
+}
+
+// GetReceiverProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.
+func GetReceiverProvenance(storedProvenances map[string]models.Provenance, r *apimodels.PostableApiReceiver, origin models.ResourceOrigin) models.Provenance {
+	if origin == models.ResourceOriginImported {
+		return models.ProvenanceConvertedPrometheus
+	}
+
+	if len(r.GrafanaManagedReceivers) == 0 || len(storedProvenances) == 0 {
+		return models.ProvenanceNone
+	}
+
+	// Current provisioning works on the integration level, so we need some way to determine the provenance of the
+	// entire receiver. All integrations in a receiver should have the same provenance, but we don't want to rely on
+	// this assumption in case the first provenance is None and a later one is not. To this end, we return the first
+	// non-zero provenance we find.
+	for _, contactPoint := range r.GrafanaManagedReceivers {
+		if p, exists := storedProvenances[contactPoint.UID]; exists && p != models.ProvenanceNone {
+			return p
+		}
+	}
+	return models.ProvenanceNone
+}
+
+func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafanaReceiver) ([]*models.Integration, error) {
+	integrations := make([]*models.Integration, 0, len(postables))
+	for _, cfg := range postables {
+		integration, err := PostableGrafanaReceiverToIntegration(cfg)
+		if err != nil {
+			return nil, err
+		}
+		integrations = append(integrations, integration)
+	}
+
+	return integrations, nil
+}
+
+// PostableMimirReceiverToPostableGrafanaReceiver converts all legacy models to apimodels.PostableGrafanaReceiver.
+// If receiver does not have any legacy receivers, returns the original receiver.
+// Otherwise, returns a copy that contains converted integrations (and shallow copy of existing Grafana integrations).
+func PostableMimirReceiverToPostableGrafanaReceiver(r *apimodels.PostableApiReceiver) (*apimodels.PostableApiReceiver, error) {
+	if !r.HasMimirIntegrations() {
+		return r, nil
+	}
+	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r.Receiver)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
+	}
+	result := &apimodels.PostableApiReceiver{
+		Receiver: apimodels.Receiver{
+			Name: r.Name,
+		},
+		PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: make([]*apimodels.PostableGrafanaReceiver, 0, len(v0)+len(r.GrafanaManagedReceivers)),
+		},
+	}
+	result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, r.GrafanaManagedReceivers...)
+	typeCount := make(map[string]int)
+	for _, config := range v0 {
+		integrationType := string(config.Schema.Type())
+		idx := typeCount[integrationType]
+		typeCount[integrationType]++
+		integration, err := MimirIntegrationConfigToPostableGrafanaReceiver(config, r.Name, idx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert Mimir integration config to PostableGrafanaReceiver: %w", err)
+		}
+		result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, integration)
+	}
+	return result, nil
+}
+
+// MimirIntegrationConfigToPostableGrafanaReceiver Converts a Mimir integration configuration to a PostableGrafanaReceiver. All settings are unencrypted. Needs to be encrypted later.
+func MimirIntegrationConfigToPostableGrafanaReceiver(config alertingNotify.MimirIntegrationConfig, receiverName string, idx int) (*definition.PostableGrafanaReceiver, error) {
+	raw, err := config.ConfigJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	return &definition.PostableGrafanaReceiver{
+		// mimirIntegrationUID generates a stable, fixed-length UID for a converted Mimir integration that passes ValidateUID, 40-char limit for long names in particular
+		UID:                   mimirIntegrationUID(receiverName, string(config.Schema.Type()), idx),
+		Name:                  receiverName,
+		Type:                  string(config.Schema.Type()),
+		Version:               string(config.Schema.Version),
+		DisableResolveMessage: false, // V0 ignore this flag as they have their own SendResolved one.
+		Settings:              raw,
+		SecureSettings:        nil,
+	}, nil
+}
+
+func mimirIntegrationUID(receiverName string, integrationType string, idx int) string {
+	h := fnv.New64a()
+	_, _ = fmt.Fprintf(h, "%s-%s-%d", receiverName, integrationType, idx)
+	return fmt.Sprintf("%016x", h.Sum64())
+}
+
+func PostableMimirReceiverToIntegrations(r alertingNotify.ConfigReceiver) ([]*models.Integration, error) {
+	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
+	}
+	result := make([]*models.Integration, 0, len(v0))
+	for _, config := range v0 {
+		s, err := config.ConfigMap()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get settings of v0 receiver %s (version %s): %w", config.Schema.Type(), config.Schema.Version, err)
+		}
+		result = append(result, &models.Integration{
+			Config:         config.Schema,
+			Settings:       s,
+			SecureSettings: map[string]string{},
+		})
+	}
+	return result, nil
+}
+
+func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) (*models.Integration, error) {
+	integrationType, err := alertingNotify.IntegrationTypeFromString(p.Type)
+	if err != nil {
+		return nil, err
+	}
+	v := schema.V1
+	if p.Version != "" {
+		v = schema.Version(p.Version)
+	}
+	config, ok := alertingNotify.GetSchemaVersionForIntegration(integrationType, v)
+	if !ok {
+		return nil, fmt.Errorf("integration type [%s] does not have schema of version %s", integrationType, v)
+	}
+	integration := &models.Integration{
+		UID:                   p.UID,
+		Name:                  p.Name,
+		Config:                config,
+		DisableResolveMessage: p.DisableResolveMessage,
+		Settings:              make(map[string]any, len(p.Settings)),
+		SecureSettings:        make(map[string]string, len(p.SecureSettings)),
+	}
+
+	if p.Settings != nil {
+		if err := json.Unmarshal(p.Settings, &integration.Settings); err != nil {
+			return nil, fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", integration.Config.Type(), p.Name, err)
+		}
+	}
+
+	for k, v := range p.SecureSettings {
+		if v != "" {
+			integration.SecureSettings[k] = v
+		}
+	}
+
+	return integration, nil
+}
+
+func ManagedRouteToRoute(r *ManagedRoute) definition.Route {
+	groupByAll, groupBy := ToGroupBy(r.GroupBy...)
+
+	// Only need to copy the fields that are valid for a root route.
+	return definition.Route{
+		Receiver:       r.Receiver,
+		GroupByStr:     r.GroupBy,
+		GroupWait:      r.GroupWait,
+		GroupInterval:  r.GroupInterval,
+		RepeatInterval: r.RepeatInterval,
+		Routes:         r.Routes,
+		Provenance:     definition.Provenance(r.Provenance),
+
+		// These are deceptively necessary since they are normally generated during unmarshalling and assumed to be
+		// present in upstream alertmanager code. We can't assume we'll be unmarshalling the route again, so we need to
+		// set them here.
+		GroupBy:    groupBy,
+		GroupByAll: groupByAll,
+	}
+}
+
+// ToGroupBy converts the given label strings to (groupByAll, []model.LabelName) where groupByAll is true if the input
+// contains models.GroupByAll. This logic is in accordance with upstream Route.ValidateChild().
+func ToGroupBy(groupByStr ...string) (groupByAll bool, groupBy []model.LabelName) {
+	for _, l := range groupByStr {
+		if l == models.GroupByAll {
+			return true, nil
+		} else {
+			groupBy = append(groupBy, model.LabelName(l))
+		}
+	}
+	return false, groupBy
+}
+
+func InhibitRuleToInhibitionRule(name string, rule apimodels.InhibitRule, provenance apimodels.Provenance) (*apimodels.InhibitionRule, error) {
+	if name = strings.TrimSpace(name); name == "" {
+		return nil, fmt.Errorf("inhibition rule name must not be empty")
+	}
+
+	if strings.Contains(name, ":") {
+		return nil, fmt.Errorf("inhibition rule name cannot contain invalid character ':'")
+	}
+
+	if errs := k8svalidation.IsDNS1123Subdomain(name); len(errs) > 0 {
+		return nil, fmt.Errorf("inhibition rule name must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
+	}
+
+	// imported inhibition rules have purposefully long names to ensure no conflict with non-imported ones
+	if models.Provenance(provenance) != models.ProvenanceConvertedPrometheus && len(name) > ualert.UIDMaxLength {
+		return nil, fmt.Errorf("inhibition rule name is too long (exceeds %d characters)", ualert.UIDMaxLength)
+	}
+
+	return &apimodels.InhibitionRule{
+		Name:        name,
+		InhibitRule: rule,
+		Provenance:  provenance,
 	}, nil
 }

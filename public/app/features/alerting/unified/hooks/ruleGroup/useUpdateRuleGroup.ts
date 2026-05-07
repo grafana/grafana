@@ -1,19 +1,18 @@
-import { Action } from '@reduxjs/toolkit';
+import { type Action } from '@reduxjs/toolkit';
 
-import { useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import {
-  DataSourceRuleGroupIdentifier,
-  GrafanaRuleGroupIdentifier,
-  RuleGroupIdentifier,
-  RuleGroupIdentifierV2,
+  type DataSourceRuleGroupIdentifier,
+  type GrafanaRuleGroupIdentifier,
+  type RuleGroupIdentifier,
+  type RuleGroupIdentifierV2,
 } from 'app/types/unified-alerting';
 
 import { logError } from '../../Analytics';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { notFoundToNullOrThrow } from '../../api/util';
 import {
-  SwapOperation,
+  type SwapOperation,
   moveRuleGroupAction,
   renameRuleGroupAction,
   reorderRulesInRuleGroupAction,
@@ -176,7 +175,7 @@ export function useMoveRuleGroup() {
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
-  const { t } = useTranslate();
+
   // @TODO maybe add where we moved it from and to for additional peace of mind
   const successMessage = t('alerting.rule-groups.move.success', 'Successfully moved rule group');
 
@@ -246,7 +245,7 @@ export function useRenameRuleGroup() {
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
-  const { t } = useTranslate();
+
   return useAsync(async (ruleGroup: RuleGroupIdentifier, groupName: string, interval?: string) => {
     const action = renameRuleGroupAction({ groupName, interval });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, [action]);

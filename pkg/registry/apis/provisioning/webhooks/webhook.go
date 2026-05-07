@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -14,12 +15,18 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
+	"github.com/prometheus/client_golang/prometheus"
 )
+
+type WebhookRepository interface {
+	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
+}
 
 // Webhook endpoint max size (25MB)
 // See https://docs.github.com/en/webhooks/webhook-events-and-payloads
@@ -30,6 +37,8 @@ type webhookConnector struct {
 	webhooksEnabled bool
 	core            *provisioningapis.APIBuilder
 	renderer        pullrequest.ScreenshotRenderer
+	registry        prometheus.Registerer
+	metrics         webhookMetrics
 }
 
 func NewWebhookConnector(
@@ -37,11 +46,15 @@ func NewWebhookConnector(
 	// TODO: use interface for this
 	core *provisioningapis.APIBuilder,
 	renderer pullrequest.ScreenshotRenderer,
+	registry prometheus.Registerer,
 ) *webhookConnector {
+	metrics := registerWebhookMetrics(registry)
 	return &webhookConnector{
 		webhooksEnabled: webhooksEnabled,
 		core:            core,
 		renderer:        renderer,
+		registry:        registry,
+		metrics:         metrics,
 	}
 }
 
@@ -104,15 +117,24 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		return nil, err
 	}
 
-	// Get the repository with the worker identity (since the request user is likely anonymous)
-	repo, err := s.core.GetRepository(ctx, name)
+	// Get the repository with the worker identity (since the request user is likely anonymous).
+	// Reject the request early if the repository is not healthy
+	repo, err := s.core.GetHealthyRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
 	return provisioningapis.WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := logging.FromContext(r.Context()).With("logger", "webhook-connector", "repo", name)
-		ctx := logging.Context(r.Context(), logger)
+		ctx, span := tracing.Start(r.Context(), "provisioning.webhook.handle")
+		defer span.End()
+
+		span.SetAttributes(
+			attribute.String("repository", name),
+			attribute.String("namespace", namespace),
+		)
+
+		logger := logging.FromContext(ctx).With("logger", "webhook-connector", "repo", name)
+		ctx = logging.Context(ctx, logger)
 		if !s.webhooksEnabled {
 			responder.Error(errors.NewBadRequest("webhooks are not enabled"))
 			return
@@ -129,12 +151,15 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 		rsp, err := hooks.Webhook(ctx, r)
 		if err != nil {
+			span.RecordError(err)
 			responder.Error(err)
 			return
 		}
 
 		if rsp == nil {
-			responder.Error(fmt.Errorf("expecting a response"))
+			err := fmt.Errorf("expecting a response")
+			span.RecordError(err)
+			responder.Error(err)
 			return
 		}
 
@@ -143,13 +168,25 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			logger.Error("failed to update last event", "error", err)
 		}
 
+		actionTaken := "none"
+		defer func() {
+			s.metrics.recordEventProcessed(actionTaken)
+		}()
+
 		if rsp.Job != nil {
 			rsp.Job.Repository = name
+			actionTaken = string(rsp.Job.Action)
+			span.SetAttributes(attribute.String("job.action", actionTaken))
+
 			job, err := s.core.GetJobQueue().Insert(ctx, namespace, *rsp.Job)
 			if err != nil {
+				span.RecordError(err)
+				logger.Error("failed to insert job", "error", err)
 				responder.Error(err)
 				return
 			}
+			span.SetAttributes(attribute.String("job.name", job.Name))
+			logger.Info("webhook job created", "job", job.Name, "action", actionTaken)
 			responder.Object(rsp.Code, job)
 			return
 		}
@@ -172,7 +209,7 @@ func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.
 	eventAge := time.Since(lastEvent)
 
 	if repo.Config().Status.Webhook != nil && (eventAge > time.Minute) {
-		patchOp := map[string]interface{}{
+		patchOp := map[string]any{
 			"op":    "replace",
 			"path":  "/status/webhook/lastEvent",
 			"value": time.Now().UnixMilli(),

@@ -1,11 +1,11 @@
 import { config } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryLocalStorage from './RichHistoryLocalStorage';
 import RichHistoryRemoteStorage from './RichHistoryRemoteStorage';
-import RichHistoryStorage from './RichHistoryStorage';
+import type RichHistoryStorage from './RichHistoryStorage';
 
 const richHistoryLocalStorage = new RichHistoryLocalStorage();
 const richHistoryRemoteStorage = new RichHistoryRemoteStorage();

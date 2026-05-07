@@ -1,6 +1,12 @@
-import { t } from '@grafana/i18n/internal';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema';
+import { t } from '@grafana/i18n';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
+import { type LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
 import {
   LibraryPanelsSearch,
@@ -38,6 +44,9 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       const layoutItem = panelToReplace.parent;
 
       if (layoutItem && isDashboardLayoutItem(layoutItem)) {
+        // keep the same key from the panelToReplace
+        // this is important for edit mode
+        newPanel.setState({ key: panelToReplace.state.key });
         layoutItem.setElementBody(newPanel);
       }
     } else {

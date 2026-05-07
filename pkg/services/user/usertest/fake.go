@@ -79,6 +79,10 @@ func (f *FakeUserService) GetByLogin(ctx context.Context, query *user.GetUserByL
 	return f.ExpectedUser, f.ExpectedError
 }
 
+func (f *FakeUserService) GetByLoginWithPassword(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	return f.GetByLogin(ctx, query)
+}
+
 func (f *FakeUserService) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
 	if f.GetByEmailFn != nil {
 		return f.GetByEmailFn(ctx, query)

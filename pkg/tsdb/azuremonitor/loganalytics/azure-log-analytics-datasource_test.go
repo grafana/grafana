@@ -1,7 +1,10 @@
 package loganalytics
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,14 +12,17 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -710,6 +716,19 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
 		}
 	})
+
+	t.Run("returns error for AppInsights traces query with empty resources", func(t *testing.T) {
+		ds := AzureLogAnalyticsDatasource{}
+		_, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
+			Resources:        []string{}, // Empty resources
+			Query:            "traces",
+			QueryType:        dataquery.AzureQueryTypeAzureTraces,
+			AppInsightsQuery: true,
+			DashboardTime:    false,
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "no resources specified for Azure traces Application Insights query")
+	})
 }
 
 func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
@@ -788,7 +807,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 
 	t.Run("does not error if feature toggle enabled", func(t *testing.T) {
 		ctx := context.Background()
-		ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "azureMonitorPrometheusExemplars"}))
+		ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "azureMonitorPrometheusExemplars"}))
 		query := backend.DataQuery{
 			JSON: []byte(`{
 					"queryType": "traceql",
@@ -808,7 +827,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 
 	t.Run("errors if feature toggle disabled", func(t *testing.T) {
 		ctx := context.Background()
-		ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": ""}))
+		ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": ""}))
 		query := backend.DataQuery{
 			JSON: []byte(`{
 					"queryType": "traceql",
@@ -825,4 +844,127 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 
 		require.Error(t, err, "query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled")
 	})
+}
+
+func TestAddTraceDataLinksToFields_EmptyResources(t *testing.T) {
+	dsInfo := types.DatasourceInfo{
+		Services: map[string]types.DatasourceService{
+			"Azure Monitor": {},
+		},
+		JSONData: map[string]any{
+			"azureLogAnalyticsSameAs": false,
+		},
+	}
+
+	tests := []struct {
+		name                string
+		queryJSON           string
+		expectedErrorString string
+	}{
+		{
+			name: "empty resources array should return error",
+			queryJSON: `{
+				"queryType": "Azure Traces",
+				"azureTraces": {
+					"resources": [],
+					"resultFormat": "table",
+					"traceTypes": ["trace"]
+				}
+			}`,
+			expectedErrorString: "no resources specified for Azure traces data link",
+		},
+		{
+			name: "missing resources field should return error",
+			queryJSON: `{
+				"queryType": "Azure Traces",
+				"azureTraces": {
+					"resultFormat": "table",
+					"traceTypes": ["trace"]
+				}
+			}`,
+			expectedErrorString: "no resources specified for Azure traces data link",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			query := &AzureLogAnalyticsQuery{
+				JSON:         []byte(tt.queryJSON),
+				QueryType:    dataquery.AzureQueryTypeAzureTraces,
+				ResultFormat: dataquery.ResultFormatTable,
+			}
+
+			// Create a mock data frame
+			frame := data.NewFrame("test")
+
+			err := addTraceDataLinksToFields(query, "https://portal.azure.com", frame, dsInfo)
+
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.expectedErrorString)
+		})
+	}
+}
+
+func decodeEncodedQuery(t *testing.T, encoded string) string {
+	t.Helper()
+	gzipped, err := base64.StdEncoding.DecodeString(encoded)
+	require.NoError(t, err)
+	r, err := gzip.NewReader(bytes.NewReader(gzipped))
+	require.NoError(t, err)
+	defer func() { require.NoError(t, r.Close()) }()
+	decoded, err := io.ReadAll(r)
+	require.NoError(t, err)
+	return string(decoded)
+}
+
+func TestEncodeQuery(t *testing.T) {
+	cases := []struct {
+		name  string
+		query string
+	}{
+		{name: "empty", query: ""},
+		{name: "simple", query: "Heartbeat | take 10"},
+		{name: "multiline", query: "Heartbeat\n| where TimeGenerated > ago(1d)\n| summarize count() by Computer"},
+		{name: "large", query: strings.Repeat("Heartbeat | where TimeGenerated > ago(1d) | summarize count() by Computer ", 50)},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			encoded, err := encodeQuery(tc.query)
+			require.NoError(t, err)
+			require.Equal(t, tc.query, decodeEncodedQuery(t, encoded))
+		})
+	}
+}
+
+func TestEncodeQueryConcurrent(t *testing.T) {
+	// Exercises the gzip.Writer sync.Pool under contention: each goroutine
+	// must produce output that decodes back to its own input.
+	const goroutines = 64
+	const iterations = 32
+
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for g := 0; g < goroutines; g++ {
+		go func(g int) {
+			defer wg.Done()
+			for i := 0; i < iterations; i++ {
+				query := fmt.Sprintf("Heartbeat | where Computer == 'c-%d-%d' | take 10", g, i)
+				encoded, err := encodeQuery(query)
+				require.NoError(t, err)
+				require.Equal(t, query, decodeEncodedQuery(t, encoded))
+			}
+		}(g)
+	}
+	wg.Wait()
+}
+
+func BenchmarkEncodeQuery(b *testing.B) {
+	query := strings.Repeat("Heartbeat | where TimeGenerated > ago(1d) | summarize count() by Computer ", 20)
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		if _, err := encodeQuery(query); err != nil {
+			b.Fatal(err)
+		}
+	}
 }

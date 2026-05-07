@@ -1,13 +1,9 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { TFunction, Trans, useTranslate } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { AlertVariant, Box, Stack, Text } from '@grafana/ui';
-
 import {
-  GetSnapshotResponseDto,
-  SnapshotDto,
+  type GetSnapshotResponseDto,
+  type SnapshotDto,
   useCancelSnapshotMutation,
   useCreateSnapshotMutation,
   useDeleteSessionMutation,
@@ -16,8 +12,12 @@ import {
   useGetShapshotListQuery,
   useGetSnapshotQuery,
   useUploadSnapshotMutation,
-  useGetLocalPluginListQuery,
-} from '../api';
+} from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { type AlertVariant, Box, Stack, Text } from '@grafana/ui';
+
+import { useGetLocalPluginListQuery } from '../api';
 import { maybeAPIError } from '../api/errors';
 import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 
@@ -27,7 +27,7 @@ import { MigrationSummary } from './MigrationSummary';
 import { ResourcesTable } from './ResourcesTable';
 import { CreatingSnapshotCTA } from './SnapshotCTAs';
 import { SupportedTypesDisclosure } from './SupportedTypesDisclosure';
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 import { useNotifySuccessful } from './useNotifyOnSuccess';
 
 /**
@@ -197,7 +197,6 @@ export const Page = () => {
     reconfiguring,
   ]);
 
-  const { t } = useTranslate();
   // UI State Machine
   useEffect(() => {
     // If we don't have a session or the snapshot is still loading, don't do anything yet!
@@ -305,18 +304,15 @@ export const Page = () => {
     uploadSnapshotResult.error,
   ]);
 
-  const error = getError(
-    {
-      snapshot: snapshot.data,
-      getSnapshotError: snapshot.error,
-      getSessionError: session.error,
-      createSnapshotError: createSnapshotResult.error,
-      uploadSnapshotError: uploadSnapshotResult.error,
-      cancelSnapshotError: cancelSnapshotResult.error,
-      disconnectSnapshotError: disconnectResult.error,
-    },
-    t
-  );
+  const error = getError({
+    snapshot: snapshot.data,
+    getSnapshotError: snapshot.error,
+    getSessionError: session.error,
+    createSnapshotError: createSnapshotResult.error,
+    uploadSnapshotError: uploadSnapshotResult.error,
+    cancelSnapshotError: cancelSnapshotResult.error,
+    disconnectSnapshotError: disconnectResult.error,
+  });
 
   // Action Callbacks
   const handleCreateSnapshot = useCallback(
@@ -464,7 +460,7 @@ interface ErrorDescription {
   error?: unknown;
 }
 
-function getError(props: GetErrorProps, t: TFunction): ErrorDescription | undefined {
+function getError(props: GetErrorProps): ErrorDescription | undefined {
   const {
     snapshot,
     getSnapshotError,
@@ -505,7 +501,7 @@ function getError(props: GetErrorProps, t: TFunction): ErrorDescription | undefi
   }
 
   if (createSnapshotError) {
-    return handleCreateSnapshotError(createSnapshotError, seeLogs, t);
+    return handleCreateSnapshotError(createSnapshotError, seeLogs);
   }
 
   if (uploadSnapshotError) {
@@ -565,11 +561,7 @@ function getError(props: GetErrorProps, t: TFunction): ErrorDescription | undefi
   return undefined;
 }
 
-function handleCreateSnapshotError(
-  createSnapshotError: unknown,
-  seeLogs: string,
-  t: TFunction
-): ErrorDescription | undefined {
+function handleCreateSnapshotError(createSnapshotError: unknown, seeLogs: string): ErrorDescription | undefined {
   const apiError = maybeAPIError(createSnapshotError);
 
   let severity: AlertVariant = 'warning';

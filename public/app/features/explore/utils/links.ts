@@ -2,34 +2,35 @@ import { first, uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import {
-  Field,
-  LinkModel,
-  TimeRange,
+  type Field,
+  type LinkModel,
+  type TimeRange,
   mapInternalLinkToExplore,
-  InterpolateFunction,
-  ScopedVars,
-  DataFrame,
+  type InterpolateFunction,
+  type ScopedVars,
+  type DataFrame,
   getFieldDisplayValuesProxy,
-  SplitOpen,
-  DataLink,
-  DisplayValue,
+  type SplitOpen,
+  type DataLink,
+  type DisplayValue,
   DataLinkConfigOrigin,
   CoreApp,
-  SplitOpenOptions,
-  DataLinkPostProcessor,
-  ExploreUrlState,
+  type SplitOpenOptions,
+  type DataLinkPostProcessor,
+  type ExploreUrlState,
   urlUtil,
   DataFrameType,
 } from '@grafana/data';
-import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { t } from '@grafana/i18n';
+import { getTemplateSrv, reportInteraction, type VariableInterpolation } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
 import { parseDataplaneLogsFrame } from 'app/features/logs/logsFrame';
-import { ExploreItemState } from 'app/types/explore';
+import { type ExploreItemState } from 'app/types/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { getUrlStateFromPaneState } from '../hooks/useStateSync';
+import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
 
 type DataLinkFilter = (link: DataLink, scopedVars: ScopedVars) => boolean;
 
@@ -118,7 +119,7 @@ export const getFieldLinksForExplore = (options: {
     value: {
       raw: field.values[rowIndex],
     },
-    text: 'Raw value',
+    text: t('explore.get-field-links-for-explore.text.raw-value', 'Raw value'),
   };
 
   let fieldDisplayValuesProxy: Record<string, DisplayValue> | undefined = undefined;
@@ -136,7 +137,7 @@ export const getFieldLinksForExplore = (options: {
         refId: dataFrame.refId,
         fields: fieldDisplayValuesProxy,
       },
-      text: 'Data',
+      text: t('explore.get-field-links-for-explore.text.data', 'Data'),
     };
 
     if (dataFrame.meta?.type === DataFrameType.LogLines) {

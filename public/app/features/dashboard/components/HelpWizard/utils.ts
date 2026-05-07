@@ -3,18 +3,19 @@ import { firstValueFrom } from 'rxjs';
 
 import {
   dateTimeFormat,
-  TimeRange,
-  DataQuery,
-  PanelData,
-  DataTransformerConfig,
-  DataFrameJSON,
+  type TimeRange,
+  type DataQuery,
+  type PanelData,
+  type DataTransformerConfig,
+  type DataFrameJSON,
   LoadingState,
   dataFrameToJSON,
   DataTopic,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { Randomize, randomizeData } from 'app/features/dashboard-scene/inspect/HelpWizard/randomizer';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type Randomize, randomizeData } from 'app/features/dashboard-scene/inspect/HelpWizard/randomizer';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
@@ -139,7 +140,7 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
         y: 20,
       },
       type: 'table',
-      title: 'Annotations',
+      title: t('dashboard.get-debug-dashboard.title.annotations', 'Annotations'),
       datasource: {
         type: 'datasource',
         uid: '-- Dashboard --',

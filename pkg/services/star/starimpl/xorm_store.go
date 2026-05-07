@@ -2,10 +2,21 @@ package starimpl
 
 import (
 	"context"
+	"sync/atomic"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/star"
 )
+
+// dashboardIDCounter provides a monotonic per-process offset used to generate
+// a synthetic unique dashboard_id value for new star rows. The dashboard_id
+// column is no longer used by the star service, but the legacy
+// UNIQUE (user_id, dashboard_id) index is still present (see star_mig.go).
+// Combining time.Now().UnixMicro() with an atomic counter guarantees uniqueness
+// for every Insert within a process, avoiding silent unique-constraint
+// violations when Add() is called in quick succession.
+var dashboardIDCounter atomic.Int64
 
 type sqlStore struct {
 	db db.DB
@@ -14,22 +25,9 @@ type sqlStore struct {
 func (s *sqlStore) Get(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error) {
 	var isStarred bool
 	err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if query.DashboardUID != "" && query.OrgID != 0 {
-			rawSQL := "SELECT 1 from star where user_id=? and dashboard_uid=? and org_id=?"
-			results, err := sess.Query(rawSQL, query.UserID, query.DashboardUID, query.OrgID)
+		rawSQL := "SELECT 1 from star where user_id=? and dashboard_uid=? and org_id=?"
+		results, err := sess.Query(rawSQL, query.UserID, query.DashboardUID, query.OrgID)
 
-			if err != nil {
-				return err
-			}
-
-			isStarred = len(results) != 0
-			return nil
-		}
-
-		// TODO: Remove this block after all dashboards have a UID
-		// && the deprecated endpoints have been removed
-		rawSQL := "SELECT 1 from star where user_id=? and dashboard_id=?"
-		results, err := sess.Query(rawSQL, query.UserID, query.DashboardID)
 		if err != nil {
 			return err
 		}
@@ -42,6 +40,16 @@ func (s *sqlStore) Get(ctx context.Context, query *star.IsStarredByUserQuery) (b
 
 func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		// nolint:staticcheck
+		if cmd.DashboardID == 0 {
+			// Use UnixMicro plus a monotonic counter so the generated value is
+			// guaranteed unique within this process, even for calls that happen
+			// in the same microsecond. This avoids hitting the legacy
+			// UNIQUE (user_id, dashboard_id) index, which would otherwise be
+			// silently swallowed by Add() and cause data loss.
+			cmd.DashboardID = time.Now().UnixMicro() + dashboardIDCounter.Add(1)
+		}
+
 		entity := star.Star{
 			UserID: cmd.UserID,
 			// nolint:staticcheck
@@ -52,27 +60,14 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) e
 		}
 
 		_, err := sess.Insert(&entity)
-		if s.db.GetDialect().IsUniqueConstraintViolation(err) {
-			return nil
-		}
-
 		return err
 	})
 }
 
 func (s *sqlStore) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if cmd.DashboardUID != "" && cmd.OrgID != 0 {
-			var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_uid=? and org_id=?"
-			_, err := sess.Exec(rawSQL, cmd.UserID, cmd.DashboardUID, cmd.OrgID)
-			return err
-		}
-
-		// TODO: Remove this block after all dashboards have a UID
-		// && the deprecated endpoints have been removed
-		var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_id=?"
-		// nolint:staticcheck
-		_, err := sess.Exec(rawSQL, cmd.UserID, cmd.DashboardID)
+		var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_uid=? and org_id=?"
+		_, err := sess.Exec(rawSQL, cmd.UserID, cmd.DashboardUID, cmd.OrgID)
 		return err
 	})
 }

@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
 
 export interface Step<T> {
@@ -8,6 +8,7 @@ export interface Step<T> {
   name: string;
   title: string;
   submitOnNext?: boolean;
+  formFields?: string[];
 }
 
 export interface Props<T extends string | number> {

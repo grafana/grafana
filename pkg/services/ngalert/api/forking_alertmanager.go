@@ -27,6 +27,7 @@ func (f *AlertmanagerApiHandler) getService(ctx *contextmodel.ReqContext) (*Lote
 	if err != nil {
 		return nil, err
 	}
+
 	return f.AMSvc, nil
 }
 
@@ -111,13 +112,10 @@ func (f *AlertmanagerApiHandler) handleRouteGetSilences(ctx *contextmodel.ReqCon
 	return s.RouteGetSilences(ctx)
 }
 
-func (f *AlertmanagerApiHandler) handleRoutePostAlertingConfig(ctx *contextmodel.ReqContext, body apimodels.PostableUserConfig, dsUID string) response.Response {
+func (f *AlertmanagerApiHandler) handleRoutePostAlertingConfig(ctx *contextmodel.ReqContext, body apimodels.ExternalAlertmanagerConfig, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
-	}
-	if !body.AlertmanagerConfig.ReceiverType().Can(apimodels.AlertmanagerReceiverType) {
-		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.AlertmanagerBackend, body.AlertmanagerConfig.ReceiverType().String()))
 	}
 	return s.RoutePostAlertingConfig(ctx, body)
 }
@@ -133,10 +131,6 @@ func (f *AlertmanagerApiHandler) handleRoutePostAMAlerts(ctx *contextmodel.ReqCo
 
 func (f *AlertmanagerApiHandler) handleRouteDeleteGrafanaSilence(ctx *contextmodel.ReqContext, id string) response.Response {
 	return f.GrafanaSvc.RouteDeleteSilence(ctx, id)
-}
-
-func (f *AlertmanagerApiHandler) handleRouteDeleteGrafanaAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
-	return f.GrafanaSvc.RouteDeleteAlertingConfig(ctx)
 }
 
 func (f *AlertmanagerApiHandler) handleRouteCreateGrafanaSilence(ctx *contextmodel.ReqContext, body apimodels.PostableSilence) response.Response {
@@ -179,8 +173,8 @@ func (f *AlertmanagerApiHandler) handleRouteGetGrafanaReceivers(ctx *contextmode
 	return f.GrafanaSvc.RouteGetReceivers(ctx)
 }
 
-func (f *AlertmanagerApiHandler) handleRoutePostTestGrafanaReceivers(ctx *contextmodel.ReqContext, conf apimodels.TestReceiversConfigBodyParams) response.Response {
-	return f.GrafanaSvc.RoutePostTestReceivers(ctx, conf)
+func (f *AlertmanagerApiHandler) handleRoutePostTestGrafanaReceivers(ctx *contextmodel.ReqContext) response.Response {
+	return f.GrafanaSvc.RoutePostTestReceivers(ctx)
 }
 
 func (f *AlertmanagerApiHandler) handleRoutePostTestGrafanaTemplates(ctx *contextmodel.ReqContext, conf apimodels.TestTemplatesConfigBodyParams) response.Response {

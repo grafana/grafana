@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   InteractiveTable,
   Pagination,
   Stack,
@@ -15,8 +16,9 @@ import {
   Icon,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { contextSrv } from 'app/core/core';
-import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { type Role, AccessControlAction } from 'app/types/accessControl';
+import { type ServiceAccountDTO } from 'app/types/serviceaccount';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 
@@ -163,7 +165,6 @@ const getRoleCell = (
   roleOptions: Role[],
   onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void
 ) => {
-  const { t } = useTranslate();
   const displayRolePicker =
     contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
@@ -205,7 +206,6 @@ const getActionsCell = (
   onDisable: (serviceAccount: ServiceAccountDTO) => void,
   onRemoveButtonClick: (serviceAccount: ServiceAccountDTO) => void
 ) => {
-  const { t } = useTranslate();
   if (isLoading) {
     return <Skeleton width={100} />;
   } else {

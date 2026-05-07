@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
 
-import { RuleFormType } from '../../../types/rule-form';
+import { type RuleFormType } from '../../../types/rule-form';
 
 interface Props extends SharedProps {
   image: string;
@@ -30,7 +30,7 @@ const RuleType = (props: Props) => {
   });
 
   return (
-    <Card className={cardStyles} isSelected={selected} onClick={() => onClick(value)} disabled={disabled}>
+    <Card noMargin className={cardStyles} isSelected={selected} onClick={() => onClick(value)} disabled={disabled}>
       <Card.Figure>
         <img src={image} alt="" />
       </Card.Figure>

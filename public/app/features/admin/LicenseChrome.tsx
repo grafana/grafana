@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import grafanaIconSvg from 'img/grafana_icon.svg';
 import headerDarkSvg from 'img/licensing/header_dark.svg';
@@ -22,12 +22,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       textAlign: 'center',
       padding: theme.spacing(2),
       background: footerBg,
+      borderRadius: theme.shape.radius.lg,
     }),
     header: css({
       height: '137px',
       padding: theme.spacing(4, 0, 0, 4),
       position: 'relative',
       background: `url('${backgroundUrl}') right`,
+      borderRadius: theme.shape.radius.lg,
     }),
   };
 };

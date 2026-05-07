@@ -13,23 +13,27 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
 var _ envvars.Provider = (*EnvVarsProvider)(nil)
 
 type EnvVarsProvider struct {
-	cfg     *PluginInstanceCfg
-	license plugins.Licensing
-	logger  log.Logger
+	cfg         *PluginInstanceCfg
+	license     plugins.Licensing
+	logger      log.Logger
+	ssoSettings pluginsso.SettingsProvider
 }
 
-func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing) *EnvVarsProvider {
+func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings pluginsso.SettingsProvider) *EnvVarsProvider {
 	return &EnvVarsProvider{
-		cfg:     cfg,
-		license: license,
-		logger:  log.New("plugins.envvars"),
+		cfg:         cfg,
+		license:     license,
+		logger:      log.New("plugins.envvars"),
+		ssoSettings: ssoSettings,
 	}
 }
 
@@ -63,7 +67,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
 	hostEnv = append(hostEnv, p.awsEnvVars(plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.secureSocksProxyEnvVars()...)
-	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(p.cfg.Azure)...)
+	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(p.getAzureSettings())...)
 	hostEnv = append(hostEnv, p.tracingEnvVars(plugin)...)
 	hostEnv = append(hostEnv, p.pluginSettingsEnvVars(plugin.PluginID())...)
 
@@ -105,6 +109,9 @@ func (p *EnvVarsProvider) awsEnvVars(pluginID string) []string {
 	if !p.cfg.AWSAssumeRoleEnabled {
 		variables = append(variables, p.envVar(awsds.AssumeRoleEnabledEnvVarKeyName, "false"))
 	}
+	if p.cfg.AWSPerDatasourceHTTPProxyEnabled {
+		variables = append(variables, p.envVar(awsds.PerDatasourceHTTPProxyEnabledEnvVarKeyName, "true"))
+	}
 	if len(p.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, p.envVar(awsds.AllowedAuthProvidersEnvVarKeyName, strings.Join(p.cfg.AWSAllowedAuthProviders, ",")))
 	}
@@ -118,7 +125,32 @@ func (p *EnvVarsProvider) awsEnvVars(pluginID string) []string {
 		variables = append(variables, p.envVar(awsds.ListMetricsPageLimitKeyName, p.cfg.AWSListMetricsPageLimit))
 	}
 
+	// Forward AWS SDK credential chain env vars from the host so that plugins can use
+	// EKS IRSA, ECS task roles, and other environment-based credential providers.
+	for _, envVarName := range awsHostEnvVarNames {
+		if v, ok := os.LookupEnv(envVarName); ok {
+			variables = append(variables, p.envVar(envVarName, v))
+		}
+	}
+
 	return variables
+}
+
+// awsHostEnvVarNames are the host environment variables forwarded to AWS plugins.
+// These are needed for the AWS SDK default credential chain to resolve credentials
+// in container environments (EKS with IRSA, ECS Fargate).
+var awsHostEnvVarNames = []string{
+	// EKS IRSA
+	"AWS_ROLE_ARN",
+	"AWS_WEB_IDENTITY_TOKEN_FILE",
+	// ECS (Fargate / EC2)
+	"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+	"AWS_CONTAINER_CREDENTIALS_FULL_URI",
+	"AWS_CONTAINER_AUTHORIZATION_TOKEN",
+	"AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
+	// Region
+	"AWS_REGION",
+	"AWS_DEFAULT_REGION",
 }
 
 func (p *EnvVarsProvider) secureSocksProxyEnvVars() []string {
@@ -188,4 +220,16 @@ func (p *EnvVarsProvider) envVar(key, value string) string {
 		p.logger.Error("Variable with key '%s' contains NUL", key)
 	}
 	return fmt.Sprintf("%s=%s", key, value)
+}
+
+func (p *EnvVarsProvider) getAzureSettings() *azsettings.AzureSettings {
+	azureSettings := p.cfg.Azure
+	if azureSettings == nil {
+		azureSettings = &azsettings.AzureSettings{}
+	}
+	azureAdSettings, err := p.ssoSettings.GetForProvider(context.Background(), social.AzureADProviderName)
+	if err != nil {
+		p.logger.Error("Failed to get SSO settings", "error", err)
+	}
+	return mergeAzureSettings(azureSettings, azureAdSettings)
 }

@@ -2,21 +2,21 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
-import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVisualizationOptions } from './getVisualizationOptions';
 import { OptionSearchEngine } from './state/OptionSearchEngine';
 import { getRecentOptions } from './state/getRecentOptions';
-import { OptionPaneRenderProps } from './types';
+import { type OptionPaneRenderProps } from './types';
 
 export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   const { plugin, panel } = props;
@@ -43,7 +43,6 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [panel.configRev, props.data, props.instanceState, searchQuery]
   );
-  const { t } = useTranslate();
 
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
@@ -60,23 +59,23 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
       case OptionFilter.All:
         if (isPanelModelLibraryPanel(panel)) {
           // Library Panel options first
-          mainBoxElements.push(libraryPanelOptions.render());
+          mainBoxElements.push(libraryPanelOptions.renderElement());
         }
         // Panel frame options second
-        mainBoxElements.push(panelFrameOptions.render());
+        mainBoxElements.push(panelFrameOptions.renderElement());
 
         // Then add all panel and field defaults
         for (const item of vizOptions) {
-          mainBoxElements.push(item.render());
+          mainBoxElements.push(item.renderElement());
         }
 
         for (const item of justOverrides) {
-          mainBoxElements.push(item.render());
+          mainBoxElements.push(item.renderElement());
         }
         break;
       case OptionFilter.Overrides:
         for (const override of justOverrides) {
-          mainBoxElements.push(override.render());
+          mainBoxElements.push(override.renderElement());
         }
         break;
       case OptionFilter.Recent:
@@ -87,7 +86,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
             key="Recent options"
             forceOpen={true}
           >
-            {getRecentOptions(allOptions).map((item) => item.render())}
+            {getRecentOptions(allOptions).map((item) => item.renderElement())}
           </OptionsPaneCategory>
         );
         break;
@@ -139,7 +138,6 @@ export function renderSearchHits(
   overrides: OptionsPaneCategoryDescriptor[],
   searchQuery: string
 ) {
-  const { t } = useTranslate();
   const engine = new OptionSearchEngine(allOptions, overrides);
   const { optionHits, totalCount, overrideHits } = engine.search(searchQuery);
 
@@ -154,9 +152,9 @@ export function renderSearchHits(
         key="Normal options"
         forceOpen={true}
       >
-        {optionHits.map((hit) => hit.render(searchQuery))}
+        {optionHits.map((hit) => hit.renderElement(searchQuery))}
       </OptionsPaneCategory>
-      {overrideHits.map((override) => override.render(searchQuery))}
+      {overrideHits.map((override) => override.renderElement(searchQuery))}
     </div>
   );
 }
@@ -205,8 +203,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.components.panel.borderColor}`,
     borderTop: 'none',
     flexGrow: 1,
-  }),
-  angularDeprecationWrapper: css({
-    padding: theme.spacing(1),
   }),
 });

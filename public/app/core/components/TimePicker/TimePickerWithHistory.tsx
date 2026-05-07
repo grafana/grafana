@@ -1,11 +1,16 @@
 import { uniqBy } from 'lodash';
 
-import { AppEvents, DateTime, TimeRange, isDateTime, rangeUtil } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
-
-import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
+import {
+  AppEvents,
+  type DateTime,
+  LocalStorageValueProvider,
+  type TimeRange,
+  isDateTime,
+  rangeUtil,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { type TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
 const MAX_HISTORY_ITEMS = 4;
@@ -19,8 +24,6 @@ interface TimePickerHistoryItem {
 }
 
 export const TimePickerWithHistory = (props: Props) => {
-  const { t } = useTranslate();
-
   return (
     <LocalStorageValueProvider<unknown> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(values, onSaveToStore) => {

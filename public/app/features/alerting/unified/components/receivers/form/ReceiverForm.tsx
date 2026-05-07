@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
-import { FieldErrors, FormProvider, SubmitErrorHandler, useForm } from 'react-hook-form';
+import { type FieldErrors, FormProvider, type SubmitErrorHandler, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -15,13 +15,17 @@ import { getMessageFromError } from '../../../../../../core/utils/errors';
 import { logError } from '../../../Analytics';
 import { isOnCallFetchError } from '../../../api/onCallApi';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
-import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
+import {
+  type ChannelValues,
+  type CommonSettingsComponentType,
+  type ReceiverFormValues,
+} from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
 import { initialAsyncRequestState } from '../../../utils/redux';
 
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
-import { Notifier } from './notifiers';
+import { type Notifier } from './notifiers';
 import { normalizeFormValues } from './util';
 
 interface Props<R extends ChannelValues> {
@@ -42,6 +46,7 @@ interface Props<R extends ChannelValues> {
   showDefaultRouteWarning?: boolean;
   contactPointId?: string;
   canManagePermissions?: boolean;
+  canEditProtectedFields: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -58,6 +63,7 @@ export function ReceiverForm<R extends ChannelValues>({
   showDefaultRouteWarning,
   contactPointId,
   canManagePermissions,
+  canEditProtectedFields,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -66,15 +72,16 @@ export function ReceiverForm<R extends ChannelValues>({
   // normalize deprecated and new config values
   const normalizedConfig = normalizeFormValues(initialValues);
 
-  const defaultValues = normalizedConfig ?? {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const defaultValues = (normalizedConfig ?? {
     name: '',
     items: [
       {
         ...defaultItem,
         __id: String(Math.random()),
-      } as any,
+      },
     ],
-  };
+  }) as ReceiverFormValues<R>;
 
   const formAPI = useForm<ReceiverFormValues<R>>({
     // making a copy here beacuse react-hook-form will mutate these, and break if the object is frozen. for real.
@@ -82,7 +89,6 @@ export function ReceiverForm<R extends ChannelValues>({
   });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
-  const { t } = useTranslate();
 
   const {
     handleSubmit,
@@ -107,7 +113,6 @@ export function ReceiverForm<R extends ChannelValues>({
         error.cause = e;
         logError(error);
       }
-      throw e;
     }
   };
 
@@ -149,6 +154,7 @@ export function ReceiverForm<R extends ChannelValues>({
           invalid={!!errors.name}
           error={errors.name && errors.name.message}
           required
+          noMargin
         >
           <Input
             readOnly={!isEditable}
@@ -191,10 +197,12 @@ export function ReceiverForm<R extends ChannelValues>({
               onDelete={() => remove(index)}
               pathPrefix={pathPrefix}
               notifiers={notifiers}
-              errors={errors?.items?.[index] as FieldErrors<R>}
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              errors={errors?.items?.[index] as FieldErrors<R> | undefined}
               commonSettingsComponent={commonSettingsComponent}
               isEditable={isEditable}
               isTestable={isTestable}
+              canEditProtectedFields={canEditProtectedFields}
               customValidators={customValidators ? customValidators[field.type] : undefined}
             />
           );

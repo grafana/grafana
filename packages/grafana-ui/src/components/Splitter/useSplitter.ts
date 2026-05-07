@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import { clamp } from 'lodash';
 import { useCallback, useId, useRef } from 'react';
-import * as React from 'react';
+import type * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-import { ComponentSize } from '../../types';
-import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { type ComponentSize } from '../../types/size';
+import { clamp } from '../../utils/clamp';
+import { type DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 
 export interface UseSplitterOptions {
   /**
@@ -49,6 +49,11 @@ const propsForDirection = {
   },
 } as const;
 
+/**
+ * The splitter creates two resizable panes, either horizontally or vertically.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/utilities-usesplitter--docs
+ */
 export function useSplitter(options: UseSplitterOptions) {
   const {
     direction,
@@ -308,6 +313,8 @@ export function useSplitter(options: UseSplitterOptions) {
     secondaryStyles.flexBasis = `${initialSize}px`;
   }
 
+  const primaryId = `start-panel-${id}`;
+
   return {
     containerProps: {
       ref: containerRef,
@@ -317,6 +324,7 @@ export function useSplitter(options: UseSplitterOptions) {
       ref: firstPaneRef,
       className: styles.panel,
       style: primaryStyles,
+      id: primaryId,
     },
     secondaryProps: {
       ref: secondPaneRef,
@@ -337,7 +345,7 @@ export function useSplitter(options: UseSplitterOptions) {
       'aria-valuemin': 0,
       'aria-valuemax': 100,
       'aria-valuenow': initialSize * 100,
-      'aria-controls': `start-panel-${id}`,
+      'aria-controls': primaryId,
       'aria-label': 'Pane resize widget',
       tabIndex: 0,
       className: dragHandleStyle,

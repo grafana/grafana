@@ -14,7 +14,7 @@ func TestCreateMetricsQuery_Success(t *testing.T) {
 	service := &Service{
 		logger: logger,
 	}
-	dsInfo := &Datasource{
+	dsInfo := &DatasourceInfo{
 		URL: "http://tempo:3100",
 	}
 	queryVal := "{attribute=\"value\"}"
@@ -40,7 +40,7 @@ func TestCreateMetricsQuery_OnlyQuery(t *testing.T) {
 	service := &Service{
 		logger: logger,
 	}
-	dsInfo := &Datasource{
+	dsInfo := &DatasourceInfo{
 		URL: "http://tempo:3100",
 	}
 	queryVal := "{attribute=\"value\"}"
@@ -60,7 +60,7 @@ func TestCreateMetricsQuery_URLParseError(t *testing.T) {
 	service := &Service{
 		logger: logger,
 	}
-	dsInfo := &Datasource{
+	dsInfo := &DatasourceInfo{
 		URL: "http://[::1]:namedport",
 	}
 	queryVal := "{attribute=\"value\"}"
@@ -73,6 +73,28 @@ func TestCreateMetricsQuery_URLParseError(t *testing.T) {
 	req, err := service.createMetricsQuery(context.Background(), dsInfo, query, start, end)
 	assert.Error(t, err)
 	assert.Nil(t, req)
+}
+
+func TestRunTraceQlQuery_NilQuery_ReturnsError(t *testing.T) {
+	service := &Service{logger: backend.NewLoggerWith("logger", "tsdb.tempo.test")}
+	query := backend.DataQuery{JSON: []byte(`{}`)}
+
+	res, err := service.runTraceQlQuery(context.Background(), backend.PluginContext{}, query)
+
+	assert.Nil(t, res)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "query is required")
+}
+
+func TestRunTraceQlQuery_EmptyQuery_ReturnsError(t *testing.T) {
+	service := &Service{logger: backend.NewLoggerWith("logger", "tsdb.tempo.test")}
+	query := backend.DataQuery{JSON: []byte(`{"query": ""}`)}
+
+	res, err := service.runTraceQlQuery(context.Background(), backend.PluginContext{}, query)
+
+	assert.Nil(t, res)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "query is required")
 }
 
 func TestEmptyQueryString_ReturnsFalse(t *testing.T) {

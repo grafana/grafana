@@ -1,4 +1,4 @@
-import { PluginExtensionFunction } from '@grafana/data';
+import { type PluginExtensionFunction } from '@grafana/data';
 
 export type UsePluginFunctionsOptions = {
   extensionPointId: string;

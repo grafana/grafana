@@ -1,13 +1,13 @@
 import { cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { FadeTransition, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { NestedEntry } from './NestedEntry';
 import getStyles from './styles';
-import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
-import { findRow } from './utils';
+import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from './types';
+import { findRow, parseResourceURI } from './utils';
 
 interface NestedRowProps {
   row: ResourceRow;
@@ -32,11 +32,11 @@ const NestedRow = ({
 }: NestedRowProps) => {
   const styles = useStyles2(getStyles);
   const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>('closed');
-  const { t } = useTranslate();
 
   const isSelected = !!selectedRows.find((v) => v.uri.toLowerCase() === row.uri.toLowerCase());
   const isDisabled = !isSelected && disableRow(row, selectedRows);
   const isOpen = rowStatus === 'open';
+  const parsedURI = parseResourceURI(row.uri);
 
   const onRowToggleCollapse = async () => {
     if (rowStatus === 'open') {
@@ -64,7 +64,7 @@ const NestedRow = ({
   return (
     <>
       <tr className={cx(styles.row, isDisabled && styles.disabledRow)} key={row.id}>
-        <td className={styles.cell}>
+        <td className={styles.cell} title={row.name}>
           <NestedEntry
             level={level}
             isSelected={isSelected}
@@ -78,9 +78,23 @@ const NestedRow = ({
           />
         </td>
 
-        <td className={styles.cell}>{row.typeLabel}</td>
+        <td
+          className={styles.cell}
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+          title={parsedURI.resourceGroup && row.type === ResourceRowType.Resource ? parsedURI.resourceGroup : '-'}
+        >
+          {
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            parsedURI.resourceGroup && row.type === ResourceRowType.Resource ? parsedURI.resourceGroup : '-'
+          }
+        </td>
+        <td className={styles.cell} title={row.typeLabel}>
+          {row.typeLabel}
+        </td>
 
-        <td className={styles.cell}>{row.location ?? '-'}</td>
+        <td className={styles.cell} title={row.location ?? '-'}>
+          {row.location ?? '-'}
+        </td>
       </tr>
 
       {isOpen &&

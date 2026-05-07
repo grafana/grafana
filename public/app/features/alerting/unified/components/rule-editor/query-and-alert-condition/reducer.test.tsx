@@ -1,16 +1,16 @@
-import { RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
+import { type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import {
   ExpressionDatasourceUID,
-  ExpressionQuery,
+  type ExpressionQuery,
   ExpressionQueryType,
   ReducerMode,
 } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
-  QueriesAndExpressionsState,
+  type QueriesAndExpressionsState,
   addNewDataQuery,
   addNewExpression,
   duplicateQuery,
@@ -22,7 +22,6 @@ import {
   updateExpression,
   updateExpressionRefId,
   updateExpressionTimeRange,
-  updateExpressionType,
 } from './reducer';
 
 const reduceExpression: AlertQuery<ExpressionQuery> = {
@@ -383,22 +382,6 @@ describe('Query and expressions reducer', () => {
       rewireExpressions({
         oldRefId: 'A',
         newRefId: 'C',
-      })
-    );
-
-    expect(newState).toMatchSnapshot();
-  });
-
-  it('should update expression type', () => {
-    const initialState: QueriesAndExpressionsState = {
-      queries: [alertQuery, expressionQuery],
-    };
-
-    const newState = queriesAndExpressionsReducer(
-      initialState,
-      updateExpressionType({
-        refId: 'B',
-        type: ExpressionQueryType.reduce,
       })
     );
 

@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { forwardRef, HTMLProps, ReactNode, useContext } from 'react';
+import { forwardRef, type HTMLProps, type ReactNode, useContext } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
+import { useFieldContext } from '../Forms/FieldContext';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { Spinner } from '../Spinner/Spinner';
 
@@ -33,6 +35,11 @@ interface StyleDeps {
   width?: number;
 }
 
+/**
+ * Used for regular text input. For an array of data or tree-structured data, consider using `Combobox` or `Cascader` respectively.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-input--docs
+ */
 export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const {
     className,
@@ -40,11 +47,23 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
     addonBefore,
     prefix,
     suffix: suffixProp,
-    invalid,
-    loading,
+    invalid: invalidProp,
+    loading: loadingProp,
     width = 0,
+    id: idProp,
+    disabled: disabledProp,
+    'aria-describedby': ariaDescribedByProp,
+    'aria-labelledby': ariaLabelledByProp,
     ...restProps
   } = props;
+
+  const fieldContext = useFieldContext();
+  const invalid = invalidProp ?? fieldContext.invalid;
+  const loading = loadingProp ?? fieldContext.loading;
+  const id = idProp ?? fieldContext.id;
+  const disabled = disabledProp ?? fieldContext.disabled;
+  const ariaDescribedBy = ariaDescribedByProp ?? fieldContext['aria-describedby'];
+  const ariaLabelledBy = ariaLabelledByProp ?? fieldContext['aria-labelledby'];
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -88,7 +107,20 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
         <input
           ref={ref}
           className={styles.input}
+          aria-invalid={!!invalid}
+          id={id}
+          disabled={disabled}
+          aria-describedby={ariaDescribedBy}
+          aria-labelledby={ariaLabelledBy}
           {...restProps}
+          onWheel={
+            restProps.type === 'number'
+              ? (e) => {
+                  e.currentTarget.blur();
+                  restProps.onWheel?.(e);
+                }
+              : restProps.onWheel
+          }
           style={{
             paddingLeft: prefix ? prefixRect.width + 12 : undefined,
             paddingRight: suffix || loading ? suffixRect.width + 12 : undefined,
@@ -167,8 +199,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       '&:not(:first-child):last-child': {
         '> input': {
           borderLeft: 'none',
-          borderTopLeftRadius: 0,
-          borderBottomLeftRadius: 0,
+          borderTopLeftRadius: 'unset',
+          borderBottomLeftRadius: 'unset',
         },
       },
 
@@ -176,8 +208,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       '&:first-child:not(:last-child)': {
         '> input': {
           borderRight: 'none',
-          borderTopRightRadius: 0,
-          borderBottomRightRadius: 0,
+          borderTopRightRadius: 'unset',
+          borderBottomRightRadius: 'unset',
         },
       },
 
@@ -185,10 +217,10 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       '&:not(:first-child):not(:last-child)': {
         '> input': {
           borderRight: 'none',
-          borderTopRightRadius: 0,
-          borderBottomRightRadius: 0,
-          borderTopLeftRadius: 0,
-          borderBottomLeftRadius: 0,
+          borderTopRightRadius: 'unset',
+          borderBottomRightRadius: 'unset',
+          borderTopLeftRadius: 'unset',
+          borderBottomLeftRadius: 'unset',
         },
       },
 
@@ -237,20 +269,20 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       position: 'relative',
 
       '&:first-child': {
-        borderTopRightRadius: 0,
-        borderBottomRightRadius: 0,
+        borderTopRightRadius: 'unset',
+        borderBottomRightRadius: 'unset',
         '> :last-child': {
-          borderTopRightRadius: 0,
-          borderBottomRightRadius: 0,
+          borderTopRightRadius: 'unset',
+          borderBottomRightRadius: 'unset',
         },
       },
 
       '&:last-child': {
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
+        borderTopLeftRadius: 'unset',
+        borderBottomLeftRadius: 'unset',
         '> :first-child': {
-          borderTopLeftRadius: 0,
-          borderBottomLeftRadius: 0,
+          borderTopLeftRadius: 'unset',
+          borderBottomLeftRadius: 'unset',
         },
       },
       '> *:focus': {
@@ -265,8 +297,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         paddingLeft: theme.spacing(1),
         paddingRight: theme.spacing(0.5),
         borderRight: 'none',
-        borderTopRightRadius: 0,
-        borderBottomRightRadius: 0,
+        borderTopRightRadius: 'unset',
+        borderBottomRightRadius: 'unset',
       })
     ),
     suffix: cx(
@@ -275,10 +307,9 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         label: 'input-suffix',
         paddingLeft: theme.spacing(1),
         paddingRight: theme.spacing(1),
-        marginBottom: '-2px',
         borderLeft: 'none',
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
+        borderTopLeftRadius: 'unset',
+        borderBottomLeftRadius: 'unset',
         right: 0,
       })
     ),

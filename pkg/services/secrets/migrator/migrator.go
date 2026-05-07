@@ -1,3 +1,4 @@
+//nolint:staticcheck // SA1019: Legacy envelope encryption migrator; intentionally uses deprecated secrets manager types.
 package migrator
 
 import (
@@ -71,11 +72,6 @@ func (m *SecretsMigrator) RegisterRotators(rotators ...SecretsRotator) {
 }
 
 func (m *SecretsMigrator) ReEncryptSecrets(ctx context.Context) (bool, error) {
-	err := m.initProvidersIfNeeded()
-	if err != nil {
-		return false, err
-	}
-
 	var anyFailure bool
 
 	for _, r := range m.rotators {
@@ -88,11 +84,6 @@ func (m *SecretsMigrator) ReEncryptSecrets(ctx context.Context) (bool, error) {
 }
 
 func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
-	err := m.initProvidersIfNeeded()
-	if err != nil {
-		return false, err
-	}
-
 	var anyFailure bool
 
 	for _, r := range m.rotators {
@@ -120,19 +111,6 @@ func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func (m *SecretsMigrator) initProvidersIfNeeded() error {
-	if m.features.IsEnabledGlobally(featuremgmt.FlagDisableEnvelopeEncryption) {
-		logger.Info("Envelope encryption is not enabled but trying to init providers anyway...")
-
-		if err := m.secretsSrv.InitProviders(); err != nil {
-			logger.Error("Envelope encryption providers initialization failed", "error", err)
-			return err
-		}
-	}
-
-	return nil
 }
 
 type simpleSecret struct {

@@ -7,6 +7,7 @@ import (
 
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -15,11 +16,8 @@ const (
 	PluginUpdateStrategyMinor  = "minor"
 )
 
-// PluginSettings maps plugin id to map of key/value settings.
-type PluginSettings map[string]map[string]string
-
-func extractPluginSettings(sections []*ini.Section) PluginSettings {
-	psMap := PluginSettings{}
+func extractPluginSettings(sections []*ini.Section) config.PluginSettings {
+	psMap := config.PluginSettings{}
 	for _, section := range sections {
 		sectionName := section.Name()
 		if !strings.HasPrefix(sectionName, "plugin.") {
@@ -40,6 +38,8 @@ var (
 		"grafana-pyroscope-app":        {ID: "grafana-pyroscope-app"},
 		"grafana-exploretraces-app":    {ID: "grafana-exploretraces-app"},
 		"grafana-metricsdrilldown-app": {ID: "grafana-metricsdrilldown-app"},
+		"elasticsearch":                {ID: "elasticsearch"},
+		"zipkin":                       {ID: "zipkin"},
 	}
 )
 
@@ -102,12 +102,32 @@ func (cfg *Cfg) processPreinstallPlugins(rawInstallPlugins []string, preinstallP
 		if len(parts) > 1 {
 			version = parts[1]
 			if len(parts) > 2 {
-				url = parts[2]
+				url = strings.Join(parts[2:], "@")
 			}
 		}
 
 		preinstallPlugins[id] = InstallPlugin{id, version, url}
 	}
+}
+
+// readPluginAPIRestrictionsSection reads a plugin API restrictions section and returns a map of API names to plugin lists
+func readPluginAPIRestrictionsSection(iniFile *ini.File, sectionName string) map[string][]string {
+	result := make(map[string][]string)
+
+	if !iniFile.HasSection(sectionName) {
+		return result
+	}
+
+	section := iniFile.Section(sectionName)
+	for _, key := range section.Keys() {
+		apiName := key.Name()
+		pluginList := util.SplitString(key.MustString(""))
+		if len(pluginList) > 0 {
+			result[apiName] = pluginList
+		}
+	}
+
+	return result
 }
 
 func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
@@ -121,7 +141,6 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 
 	cfg.PluginsAllowUnsigned = util.SplitString(pluginsSection.Key("allow_loading_unsigned_plugins").MustString(""))
 	cfg.DisablePlugins = util.SplitString(pluginsSection.Key("disable_plugins").MustString(""))
-	cfg.HideAngularDeprecation = util.SplitString(pluginsSection.Key("hide_angular_deprecation").MustString(""))
 	cfg.ForwardHostEnvVars = util.SplitString(pluginsSection.Key("forward_host_env_vars").MustString(""))
 	disablePreinstall := pluginsSection.Key("preinstall_disabled").MustBool(false)
 	if !disablePreinstall {
@@ -133,6 +152,9 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		}
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
 			preinstallPluginsAsync["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
+		}
+		if cfg.IsFeatureToggleEnabled("interactiveLearning") { // Use literal string to avoid circular dependency
+			preinstallPluginsAsync["grafana-pathfinder-app"] = InstallPlugin{"grafana-pathfinder-app", "", ""}
 		}
 		cfg.processPreinstallPlugins(rawInstallPluginsAsync, preinstallPluginsAsync)
 
@@ -163,6 +185,8 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 			}
 			cfg.PreinstallPluginsAsync = nil
 		}
+
+		cfg.PreinstallAutoUpdate = pluginsSection.Key("preinstall_auto_update").MustBool(true)
 	}
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
@@ -178,6 +202,10 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginLogBackendRequests = pluginsSection.Key("log_backend_requests").MustBool(false)
 
 	cfg.PluginUpdateStrategy = pluginsSection.Key("update_strategy").In(PluginUpdateStrategyLatest, []string{PluginUpdateStrategyLatest, PluginUpdateStrategyMinor})
+
+	// Plugin API restrictions - read from sections
+	cfg.PluginRestrictedAPIsAllowList = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_allowlist")
+	cfg.PluginRestrictedAPIsBlockList = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_blocklist")
 
 	return nil
 }

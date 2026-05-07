@@ -6,19 +6,21 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegration_CreateLibraryElement(t *testing.T) {
-	scenarioWithPanel(t, "When an admin tries to create a library panel that already exists, it should fail",
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	scenarioWithPanel(t, "When an admin tries to create a library panel with the same name, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
 			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
-			require.Equal(t, 400, resp.Status())
+			require.Equal(t, 200, resp.Status())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists, it should succeed",
@@ -43,20 +45,20 @@ func TestIntegration_CreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: model.LibraryElementDTOMeta{
-						FolderName:          "ScenarioFolder",
-						FolderUID:           "uid_for_ScenarioFolder",
+						FolderName:          sc.folder.Title,
+						FolderUID:           sc.folder.UID,
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             sc.initialResult.Result.Meta.Updated,
-						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+						CreatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/00c249f3bdb8ead55b7b551e293907924d644158062bddc4e29a578ec3f89018",
 						},
-						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+						UpdatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/00c249f3bdb8ead55b7b551e293907924d644158062bddc4e29a578ec3f89018",
 						},
 					},
 				},
@@ -94,20 +96,20 @@ func TestIntegration_CreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: model.LibraryElementDTOMeta{
-						FolderName:          "ScenarioFolder",
-						FolderUID:           "uid_for_ScenarioFolder",
+						FolderName:          sc.folder.Title,
+						FolderUID:           sc.folder.UID,
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
-						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+						CreatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/00c249f3bdb8ead55b7b551e293907924d644158062bddc4e29a578ec3f89018",
 						},
-						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+						UpdatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/00c249f3bdb8ead55b7b551e293907924d644158062bddc4e29a578ec3f89018",
 						},
 					},
 				},
@@ -173,20 +175,20 @@ func TestIntegration_CreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: model.LibraryElementDTOMeta{
-						FolderName:          "ScenarioFolder",
-						FolderUID:           "uid_for_ScenarioFolder",
+						FolderName:          sc.folder.Title,
+						FolderUID:           sc.folder.UID,
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
-						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+						CreatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/00c249f3bdb8ead55b7b551e293907924d644158062bddc4e29a578ec3f89018",
 						},
-						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+						UpdatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/00c249f3bdb8ead55b7b551e293907924d644158062bddc4e29a578ec3f89018",
 						},
 					},
 				},

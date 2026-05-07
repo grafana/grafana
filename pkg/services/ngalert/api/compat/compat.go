@@ -6,7 +6,6 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -190,42 +189,11 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		data = append(data, query)
 	}
 
-	cPtr := &rule.Condition
-	if rule.Condition == "" {
-		cPtr = nil
-	}
-
-	noDataState := definitions.NoDataState(rule.NoDataState)
-	ndsPtr := &noDataState
-	if noDataState == "" {
-		ndsPtr = nil
-	}
-	execErrorState := definitions.ExecutionErrorState(rule.ExecErrState)
-	eesPtr := &execErrorState
-	if execErrorState == "" {
-		eesPtr = nil
-	}
-
 	result := definitions.AlertRuleExport{
-		UID:                  rule.UID,
-		Title:                rule.Title,
-		For:                  model.Duration(rule.For),
-		KeepFiringFor:        model.Duration(rule.KeepFiringFor),
-		Condition:            cPtr,
-		Data:                 data,
-		DashboardUID:         rule.DashboardUID,
-		PanelID:              rule.PanelID,
-		NoDataState:          ndsPtr,
-		ExecErrState:         eesPtr,
-		IsPaused:             rule.IsPaused,
-		NotificationSettings: AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
-		Record:               AlertRuleRecordExportFromRecord(rule.Record),
-	}
-	if rule.For.Seconds() > 0 {
-		result.ForString = util.Pointer(model.Duration(rule.For).String())
-	}
-	if rule.KeepFiringFor.Seconds() > 0 {
-		result.KeepFiringForString = util.Pointer(model.Duration(rule.KeepFiringFor).String())
+		UID:      rule.UID,
+		Title:    rule.Title,
+		Data:     data,
+		IsPaused: rule.IsPaused,
 	}
 	if rule.Annotations != nil {
 		result.Annotations = &rule.Annotations
@@ -233,11 +201,52 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 	if rule.Labels != nil {
 		result.Labels = &rule.Labels
 	}
-	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {
-		result.MissingSeriesEvalsToResolve = rule.MissingSeriesEvalsToResolve
+
+	if rule.Type() == models.RuleTypeRecording {
+		populateRecordingRuleExportFields(rule, &result)
+	} else {
+		populateAlertingRuleExportFields(rule, &result)
 	}
 
 	return result, nil
+}
+
+func populateRecordingRuleExportFields(rule models.AlertRule, result *definitions.AlertRuleExport) {
+	result.Record = AlertRuleRecordExportFromRecord(rule.Record)
+}
+
+func populateAlertingRuleExportFields(rule models.AlertRule, result *definitions.AlertRuleExport) {
+	result.DashboardUID = rule.DashboardUID
+	result.PanelID = rule.PanelID
+	result.NotificationSettings = AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings)
+
+	if rule.Condition != "" {
+		result.Condition = &rule.Condition
+	}
+
+	if rule.NoDataState != "" {
+		noDataState := definitions.NoDataState(rule.NoDataState)
+		result.NoDataState = &noDataState
+	}
+
+	if rule.ExecErrState != "" {
+		execErrorState := definitions.ExecutionErrorState(rule.ExecErrState)
+		result.ExecErrState = &execErrorState
+	}
+
+	result.For = model.Duration(rule.For)
+	if rule.For > 0 {
+		result.ForString = util.Pointer(model.Duration(rule.For).String())
+	}
+
+	result.KeepFiringFor = model.Duration(rule.KeepFiringFor)
+	if rule.KeepFiringFor > 0 {
+		result.KeepFiringForString = util.Pointer(model.Duration(rule.KeepFiringFor).String())
+	}
+
+	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {
+		result.MissingSeriesEvalsToResolve = rule.MissingSeriesEvalsToResolve
+	}
 }
 
 func encodeQueryModel(m map[string]any) (string, error) {
@@ -449,29 +458,39 @@ func AlertRuleMetadataFromModelMetadata(es models.AlertRuleMetadata) *definition
 	}
 }
 
-// AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettings
-func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
-	if len(ns) == 0 {
+// AlertRuleNotificationSettingsFromNotificationSettings converts models.NotificationSettings to definitions.AlertRuleNotificationSettings
+func AlertRuleNotificationSettingsFromNotificationSettings(ns *models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
+	if ns == nil {
 		return nil
 	}
-	m := ns[0]
-	return &definitions.AlertRuleNotificationSettings{
-		Receiver:            m.Receiver,
-		GroupBy:             m.GroupBy,
-		GroupWait:           m.GroupWait,
-		GroupInterval:       m.GroupInterval,
-		RepeatInterval:      m.RepeatInterval,
-		MuteTimeIntervals:   m.MuteTimeIntervals,
-		ActiveTimeIntervals: m.ActiveTimeIntervals,
+	// Should convert faithfully and not worry about validity.
+	res := definitions.AlertRuleNotificationSettings{}
+	if m := ns.ContactPointRouting; m != nil {
+		res = definitions.AlertRuleNotificationSettings{
+			Receiver:            m.Receiver,
+			GroupBy:             m.GroupBy,
+			GroupWait:           m.GroupWait,
+			GroupInterval:       m.GroupInterval,
+			RepeatInterval:      m.RepeatInterval,
+			MuteTimeIntervals:   m.MuteTimeIntervals,
+			ActiveTimeIntervals: m.ActiveTimeIntervals,
+		}
 	}
+	if m := ns.PolicyRouting; m != nil {
+		res.Policy = &m.Policy
+	}
+	return &res
 }
 
-// AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
-func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettingsExport {
-	if len(ns) == 0 {
+// AlertRuleNotificationSettingsFromNotificationSettings converts models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
+func AlertRuleNotificationSettingsExportFromNotificationSettings(ns *models.NotificationSettings) *definitions.AlertRuleNotificationSettingsExport {
+	if ns == nil {
 		return nil
 	}
-	m := ns[0]
+	m := ns.ContactPointRouting
+	if m == nil {
+		return nil
+	}
 
 	toStringIfNotNil := func(d *model.Duration) *string {
 		if d == nil {
@@ -483,31 +502,48 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.Not
 
 	return &definitions.AlertRuleNotificationSettingsExport{
 		Receiver:            m.Receiver,
-		GroupBy:             m.GroupBy,
+		GroupBy:             NilIfEmpty(util.Pointer(m.GroupBy)),
 		GroupWait:           toStringIfNotNil(m.GroupWait),
 		GroupInterval:       toStringIfNotNil(m.GroupInterval),
 		RepeatInterval:      toStringIfNotNil(m.RepeatInterval),
-		MuteTimeIntervals:   m.MuteTimeIntervals,
-		ActiveTimeIntervals: m.ActiveTimeIntervals,
+		MuteTimeIntervals:   NilIfEmpty(util.Pointer(m.MuteTimeIntervals)),
+		ActiveTimeIntervals: NilIfEmpty(util.Pointer(m.ActiveTimeIntervals)),
 	}
 }
 
-// NotificationSettingsFromAlertRuleNotificationSettings converts definitions.AlertRuleNotificationSettings to []models.NotificationSettings
-func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.AlertRuleNotificationSettings) []models.NotificationSettings {
+// NotificationSettingsFromAlertRuleNotificationSettings converts definitions.AlertRuleNotificationSettings to models.NotificationSettings
+func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.AlertRuleNotificationSettings) *models.NotificationSettings {
 	if ns == nil {
 		return nil
 	}
-	return []models.NotificationSettings{
-		{
-			Receiver:            ns.Receiver,
-			GroupBy:             ns.GroupBy,
-			GroupWait:           ns.GroupWait,
-			GroupInterval:       ns.GroupInterval,
-			RepeatInterval:      ns.RepeatInterval,
-			MuteTimeIntervals:   ns.MuteTimeIntervals,
-			ActiveTimeIntervals: ns.ActiveTimeIntervals,
-		},
+
+	// Validation is defined on the model and is not currently the responsibility of this method to enforce. That means
+	// the output of this compat can be an invalid NotificationSettings. Specifically, two such cases are important to
+	// consider here:
+	// 1. Both ContactPoint and Policy routing are specified: should return a NotificationSettings with both routing strategies.
+	// 2. Neither ContactPoint nor Policy routing are specified: should return an empty NotificationSettings, not nil.
+	res := models.NotificationSettings{}
+
+	cpr := models.ContactPointRouting{
+		Receiver:            ns.Receiver,
+		GroupBy:             ns.GroupBy,
+		GroupWait:           ns.GroupWait,
+		GroupInterval:       ns.GroupInterval,
+		RepeatInterval:      ns.RepeatInterval,
+		MuteTimeIntervals:   ns.MuteTimeIntervals,
+		ActiveTimeIntervals: ns.ActiveTimeIntervals,
 	}
+	if !cpr.IsEmpty() {
+		// If any field related to contact point routing is specified, we create an instance of ContactPointRouting so
+		// that it is eventually validated.
+		res.ContactPointRouting = &cpr
+	}
+
+	if ns.Policy != nil {
+		res.PolicyRouting = &models.PolicyRouting{Policy: *ns.Policy}
+	}
+
+	return &res
 }
 
 func pointerOmitEmpty(s string) *string {
@@ -548,57 +584,4 @@ func ApiRecordFromModelRecord(r *models.Record) *definitions.Record {
 		From:                r.From,
 		TargetDatasourceUID: r.TargetDatasourceUID,
 	}
-}
-
-func GettableGrafanaReceiverFromReceiver(r *models.Integration, provenance models.Provenance) (definitions.GettableGrafanaReceiver, error) {
-	out := definitions.GettableGrafanaReceiver{
-		UID:                   r.UID,
-		Name:                  r.Name,
-		Type:                  r.Config.Type,
-		Provenance:            definitions.Provenance(provenance),
-		DisableResolveMessage: r.DisableResolveMessage,
-		SecureFields:          r.SecureFields(),
-	}
-
-	if len(r.Settings) > 0 {
-		jsonBytes, err := json.Marshal(r.Settings)
-		if err != nil {
-			return definitions.GettableGrafanaReceiver{}, err
-		}
-		out.Settings = jsonBytes
-	}
-
-	return out, nil
-}
-
-func GettableApiReceiverFromReceiver(r *models.Receiver) (*definitions.GettableApiReceiver, error) {
-	out := definitions.GettableApiReceiver{
-		Receiver: amConfig.Receiver{
-			Name: r.Name,
-		},
-		GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
-			GrafanaManagedReceivers: make([]*definitions.GettableGrafanaReceiver, 0, len(r.Integrations)),
-		},
-	}
-
-	for _, integration := range r.Integrations {
-		gettable, err := GettableGrafanaReceiverFromReceiver(integration, r.Provenance)
-		if err != nil {
-			return nil, err
-		}
-		out.GrafanaManagedReceivers = append(out.GrafanaManagedReceivers, &gettable)
-	}
-	return &out, nil
-}
-
-func GettableApiReceiversFromReceivers(recvs []*models.Receiver) ([]*definitions.GettableApiReceiver, error) {
-	out := make([]*definitions.GettableApiReceiver, 0, len(recvs))
-	for _, r := range recvs {
-		gettables, err := GettableApiReceiverFromReceiver(r)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, gettables)
-	}
-	return out, nil
 }

@@ -1,19 +1,17 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { Card, Grid, useStyles2, Stack, Badge } from '@grafana/ui';
-import {
-  PluginDeprecatedBadge,
-  PluginDisabledBadge,
-  PluginInstalledBadge,
-  PluginUpdateAvailableBadge,
-} from 'app/features/plugins/admin/components/Badges';
+import { Badge, Card, Grid, Stack, useStyles2 } from '@grafana/ui';
+import { PluginDeprecatedBadge } from 'app/features/plugins/admin/components/Badges/PluginDeprecatedBadge';
+import { PluginDisabledBadge } from 'app/features/plugins/admin/components/Badges/PluginDisabledBadge';
+import { PluginInstalledBadge } from 'app/features/plugins/admin/components/Badges/PluginInstallBadge';
+import { PluginUpdateAvailableBadge } from 'app/features/plugins/admin/components/Badges/PluginUpdateAvailableBadge';
 import { getBadgeColor } from 'app/features/plugins/admin/components/Badges/sharedStyles';
 import { isPluginUpdatable } from 'app/features/plugins/admin/helpers';
-import { CatalogPlugin } from 'app/features/plugins/admin/types';
+import { type CatalogPlugin } from 'app/features/plugins/admin/types';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   heading: css({
@@ -52,7 +50,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 function PluginEnterpriseBadgeWithoutSignature() {
   const customBadgeStyles = useStyles2(getBadgeColor);
-  const { t } = useTranslate();
+
   if (featureEnabled('enterprise.plugins')) {
     return <Badge text={t('get-enterprise.title', 'Enterprise')} color="blue" />;
   }
@@ -87,6 +85,7 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
       {items.map((item) => (
         <Card
           key={item.id}
+          noMargin
           className={styles.card}
           href={item.url}
           onClick={(e) => {

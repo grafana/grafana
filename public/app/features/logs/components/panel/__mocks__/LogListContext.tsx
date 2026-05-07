@@ -1,39 +1,55 @@
 import { createContext, useContext } from 'react';
 
 import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
-import { LogListContextData, Props } from '../LogListContext';
-import { LogListModel } from '../processing';
+import { type LogListContextData, type Props } from '../LogListContext';
+import { type LogListModel } from '../processing';
+
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue({
+      isAvailable: true,
+    }),
+  };
+});
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
-  closeDetails: () => {},
   dedupStrategy: LogsDedupStrategy.none,
-  detailsDisplayed: () => false,
-  detailsWidth: 0,
   displayedFields: [],
   downloadLogs: () => {},
-  enableLogDetails: false,
   filterLevels: [],
+  fontSize: 'default',
+  forceEscape: false,
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
-  setDetailsWidth: () => {},
   setFilterLevels: () => {},
+  setFontSize: () => {},
   setForceEscape: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setPrettifyJSON: () => {},
+  setShowLevel: () => {},
   setShowTime: () => {},
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
+  setTimestampResolution: () => {},
+  setUnwrappedColumns: () => {},
   setWrapLogMessage: () => {},
-  showDetails: [],
+  showLevel: true,
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
-  toggleDetails: () => {},
+  timestampResolution: 'ns',
+  unwrappedColumns: false,
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
+  controlsExpanded: false,
+  setControlsExpanded: () => {},
 });
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
@@ -58,30 +74,37 @@ export const useLogIsPermalinked = (log: LogListModel) => {
 export const defaultValue: LogListContextData = {
   setDedupStrategy: jest.fn(),
   setFilterLevels: jest.fn(),
+  setFontSize: jest.fn(),
   setForceEscape: jest.fn(),
   setLogListState: jest.fn(),
   setPinnedLogs: jest.fn(),
+  setShowLevel: jest.fn(),
   setShowTime: jest.fn(),
   setShowUniqueLabels: jest.fn(),
   setSortOrder: jest.fn(),
   setPrettifyJSON: jest.fn(),
   setSyntaxHighlighting: jest.fn(),
+  setTimestampResolution: jest.fn(),
+  setUnwrappedColumns: jest.fn(),
   setWrapLogMessage: jest.fn(),
-  closeDetails: jest.fn(),
-  detailsDisplayed: jest.fn(),
-  detailsWidth: 0,
   downloadLogs: jest.fn(),
-  enableLogDetails: false,
   filterLevels: [],
-  setDetailsWidth: jest.fn(),
-  showDetails: [],
-  toggleDetails: jest.fn(),
+  fontSize: 'default',
+  forceEscape: false,
+  hasUnescapedContent: false,
   app: CoreApp.Explore,
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
+  showLevel: true,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
+  unwrappedColumns: false,
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: jest.fn(),
+  timestampResolution: 'ns',
+  controlsExpanded: false,
+  setControlsExpanded: jest.fn(),
 };
 
 export const defaultProps: Props = {
@@ -89,8 +112,8 @@ export const defaultProps: Props = {
   containerElement: document.createElement('div'),
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
-  enableLogDetails: false,
   filterLevels: [],
+  fontSize: 'default',
   getRowContextQuery: jest.fn(),
   logSupportsContext: jest.fn(),
   logs: [],
@@ -100,9 +123,12 @@ export const defaultProps: Props = {
   onUnpinLine: jest.fn(),
   pinnedLogs: [],
   showControls: true,
+  showLevel: true,
   showTime: true,
   sortOrder: LogsSortOrder.Descending,
   syntaxHighlighting: true,
+  timestampResolution: 'ms',
+  unwrappedColumns: false,
   wrapLogMessage: true,
 };
 
@@ -111,9 +137,10 @@ export const LogListContextProvider = ({
   children,
   dedupStrategy = LogsDedupStrategy.none,
   displayedFields = [],
-  enableLogDetails = false,
   filterLevels = [],
   getRowContextQuery = jest.fn(),
+  logLineMenuCustomItems = undefined,
+  logs = [],
   logSupportsContext = jest.fn(),
   onLogLineHover,
   onPermalinkClick = jest.fn(),
@@ -122,11 +149,17 @@ export const LogListContextProvider = ({
   onUnpinLine = jest.fn(),
   permalinkedLogId,
   pinnedLogs = [],
+  showLevel = true,
   showTime = true,
   sortOrder = LogsSortOrder.Descending,
   syntaxHighlighting = true,
+  timestampResolution = 'ms',
+  unwrappedColumns = false,
   wrapLogMessage = true,
 }: Partial<Props>) => {
+  const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
+  const hasSampledLogs = logs.some((log) => !!checkLogsSampled(log));
+
   return (
     <LogListContext.Provider
       value={{
@@ -135,9 +168,11 @@ export const LogListContextProvider = ({
         dedupStrategy,
         displayedFields,
         downloadLogs: jest.fn(),
-        enableLogDetails,
+        hasLogsWithErrors,
+        hasSampledLogs,
         filterLevels,
         getRowContextQuery,
+        logLineMenuCustomItems,
         logSupportsContext,
         onLogLineHover,
         onPermalinkClick,
@@ -148,6 +183,7 @@ export const LogListContextProvider = ({
         pinnedLogs,
         setDedupStrategy: jest.fn(),
         setFilterLevels: jest.fn(),
+        setFontSize: jest.fn(),
         setForceEscape: jest.fn(),
         setLogListState: jest.fn(),
         setPinnedLogs: jest.fn(),
@@ -157,9 +193,12 @@ export const LogListContextProvider = ({
         setSortOrder: jest.fn(),
         setSyntaxHighlighting: jest.fn(),
         setWrapLogMessage: jest.fn(),
+        showLevel,
         showTime,
         sortOrder,
         syntaxHighlighting,
+        timestampResolution,
+        unwrappedColumns,
         wrapLogMessage,
       }}
     >

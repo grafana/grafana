@@ -1,25 +1,30 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
+import { type CombinedRuleGroup, type CombinedRuleNamespace, type RulesSource } from 'app/types/unified-alerting';
 
+import { isMergedUngroupedGroup } from '../../hooks/useCombinedRuleNamespaces';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
-import { isFederatedRuleGroup, isPluginProvidedRule, rulerRuleType } from '../../utils/rules';
+import {
+  getPromGroupReadOnlyStatus,
+  getRulerGroupReadOnlyStatus,
+  isFederatedRuleGroup,
+  rulerRuleType,
+} from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
-import { FolderBulkActionsButton } from '../folder-actions/FolderActionsButton';
+import { FolderActionsButton } from '../folder-actions/FolderActionsButton';
 
 import { ActionIcon } from './ActionIcon';
 import { RuleGroupStats } from './RuleStats';
@@ -56,24 +61,29 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const { folder } = useFolder(folderUID);
 
   const { canEditRules } = useRulesAccess();
-  const { t } = useTranslate();
+
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
   const isDeleting = hasRuler && rulerRulesLoaded && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
 
-  // check if group has provisioned items
+  // check if group has provisioned items (badge-only — edit gating uses the status helper below)
   const isProvisioned = group.rules.some((rule) => {
     return rulerRuleType.grafana.rule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
   });
-  const isPluginProvided = group.rules.some((rule) => isPluginProvidedRule(rule.rulerRule ?? rule.promRule));
 
-  const canEditGroup = hasRuler && !isProvisioned && !isFederated && !isPluginProvided && canEditRules(rulesSourceName);
-
-  const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
+  // CombinedRule wraps both API views of the same logical rule. Check each side with its own
+  // typed helper and OR the booleans — the consumer only needs the boolean for edit gating.
+  const rulerRules = group.rules.flatMap((r) => (r.rulerRule ? [r.rulerRule] : []));
+  const promRules = group.rules.flatMap((r) => (r.promRule ? [r.promRule] : []));
+  const groupReadOnly =
+    getRulerGroupReadOnlyStatus({ rules: rulerRules, source_tenants: group.source_tenants }).readOnly ||
+    getPromGroupReadOnlyStatus({ rules: promRules }).readOnly;
+  const canEditGroup = hasRuler && !groupReadOnly && canEditRules(rulesSourceName);
 
   // check what view mode we are in
   const isListView = viewMode === 'list';
   const isGroupView = viewMode === 'grouped';
+  const isVirtualUngroupedGroup = isMergedUngroupedGroup(group);
 
   const actionIcons: React.ReactNode[] = [];
 
@@ -88,7 +98,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
       const baseUrl = makeFolderLink(folderUID);
-      if (isGroupView) {
+      // The virtual "Ungrouped" bucket is a UI-only construct — its name has no backend
+      // representation, so group-level details/edit URLs would 404. Skip those actions.
+      if (isGroupView && !isVirtualUngroupedGroup) {
         actionIcons.push(
           <ActionIcon
             aria-label={t('alerting.rule-group-action.details', 'rule group details')}
@@ -139,19 +151,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       }
       if (folder) {
         if (isListView) {
-          actionIcons.push(
-            <ActionIcon
-              aria-label={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
-              data-testid="export-folder"
-              key="export-folder"
-              icon="download-alt"
-              tooltip={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
-              onClick={() => setIsExporting('folder')}
-            />
-          );
-          if (isFolderBulkActionsEnabled && folderUID && isListView) {
-            actionIcons.push(<FolderBulkActionsButton folderUID={folderUID} key="folder-bulk-actions" />);
-          }
+          actionIcons.push(<FolderActionsButton folderUID={folderUID} key="folder-bulk-actions" />);
         }
       }
     }
@@ -178,12 +178,17 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     }
   }
 
-  // ungrouped rules are rules that are in the "default" group name
-  const groupName = isListView ? (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />
-  ) : (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />
-  );
+  let groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />;
+  if (isListView) {
+    groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />;
+  } else if (isVirtualUngroupedGroup) {
+    groupName = (
+      <RuleLocation
+        namespace={decodeGrafanaNamespace(namespace).name}
+        group={t('alerting.rules-group.ungrouped', 'Ungrouped')}
+      />
+    );
+  }
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">
@@ -333,7 +338,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin: `0 ${theme.spacing(2)}`,
     }),
     actionIcons: css({
-      width: '80px',
+      width: '120px',
       alignItems: 'center',
 
       flexShrink: 0,

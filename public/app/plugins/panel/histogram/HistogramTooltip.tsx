@@ -1,14 +1,14 @@
-import { ReactNode, useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
-import { DataFrame, formattedValueToString } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
+import { type DataFrame, formattedValueToString } from '@grafana/data';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
   getContentItems,
-  VizTooltipItem,
+  type VizTooltipItem,
 } from '@grafana/ui/internal';
 
 import { getDataLinks } from '../status-history/utils';
@@ -50,12 +50,10 @@ export const HistogramTooltip = ({
   const xMinVal = formattedValueToString(xMinDisp!(xMinField.values[dataIdxs[0]!]));
   const xMaxVal = formattedValueToString(xMaxDisp!(xMaxField.values[dataIdxs[1]!]));
 
-  const headerItem: VizTooltipItem | null = xMinField.config.custom?.hideFrom?.tooltip
-    ? null
-    : {
-        label: 'Bucket',
-        value: `${xMinVal} - ${xMaxVal}`,
-      };
+  const headerItem: VizTooltipItem = {
+    label: 'Bucket',
+    value: `${xMinVal} - ${xMaxVal}`,
+  };
 
   const contentItems = useMemo(
     () => getContentItems(xMinOnlyFrame.fields, xMinField, dataIdxs, seriesIdx, mode, sortOrder),

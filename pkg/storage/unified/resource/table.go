@@ -13,14 +13,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -475,7 +473,7 @@ func (x *resourceTableColumn) Encode(v any) ([]byte, error) {
 		switch reflect.TypeOf(v).Kind() {
 		case reflect.Slice, reflect.Array:
 			s := reflect.ValueOf(v)
-			for i := 0; i < s.Len(); i++ {
+			for i := range s.Len() {
 				if i > 0 {
 					stream.WriteMore()
 				}

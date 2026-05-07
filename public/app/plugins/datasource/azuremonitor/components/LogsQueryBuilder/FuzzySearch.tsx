@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorRow, EditorFieldGroup, EditorField, InputGroup } from '@grafana/plugin-ui';
 import { Button, Input, Select } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
-  BuilderQueryEditorWhereExpression,
+  type BuilderQueryEditorWhereExpression,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { type AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
 
-import { BuildAndUpdateOptions, removeExtraQuotes } from './utils';
+import { type BuildAndUpdateOptions, removeExtraQuotes } from './utils';
 
 interface FuzzySearchProps {
   query: AzureMonitorQuery;
@@ -27,7 +28,6 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
   allColumns,
   templateVariableOptions,
 }) => {
-  const { t } = useTranslate();
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
 
@@ -126,10 +126,20 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
                   onChange={(e: SelectableValue<string>) => updateFuzzySearch(e.value ?? '*', searchTerm)}
                   width="auto"
                 />
-                <Button variant="secondary" icon="times" onClick={onDeleteFuzzySearch} />
+                <Button
+                  aria-label={t('components.fuzzy-search.aria-label-remove-fuzzy-search', 'Remove fuzzy search')}
+                  variant="secondary"
+                  icon="times"
+                  onClick={onDeleteFuzzySearch}
+                />
               </>
             ) : (
-              <Button variant="secondary" onClick={() => setIsOpen(true)} icon="plus" />
+              <Button
+                aria-label={t('components.fuzzy-search.aria-label-add-fuzzy-search', 'Add fuzzy search')}
+                variant="secondary"
+                onClick={() => setIsOpen(true)}
+                icon="plus"
+              />
             )}
           </InputGroup>
         </EditorField>

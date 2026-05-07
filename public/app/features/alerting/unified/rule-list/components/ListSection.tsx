@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { PropsWithChildren, ReactNode } from 'react';
+import { type PropsWithChildren, type ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { Spacer } from '../../components/Spacer';
@@ -25,7 +25,7 @@ export const ListSection = ({
 }: ListSectionProps) => {
   const styles = useStyles2(getStyles);
   const [isCollapsed, toggleCollapsed] = useToggle(collapsed);
-  const { t } = useTranslate();
+
   return (
     <li className={styles.wrapper} role="treeitem" aria-selected="false">
       <div className={styles.sectionTitle}>
@@ -62,9 +62,31 @@ const getStyles = (theme: GrafanaTheme2) => ({
   groupItemsWrapper: css({
     position: 'relative',
 
-    // unfortunately we have to resort to this since we can't overwrite the styles of the list items individually
-    // unless we clone the React Elements and modify className
-    'li[role=treeitem]': {
+    // Continuous folder guide line — runs alongside every direct child (groups and ungrouped
+    // rules), so siblings clearly belong to the same folder regardless of their type.
+    '&:before': {
+      content: "''",
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: theme.spacing(2.5),
+      borderLeft: `solid 1px ${theme.colors.border.weak}`,
+    },
+
+    // Direct LI children are ungrouped rules at the folder level. Align their content with
+    // the group headers (paddingLeft matches ListGroup headerWrapper) so they read as
+    // siblings of the groups, not as nested rule rows.
+    '> li[role=treeitem]': {
+      listStyle: 'none',
+      paddingLeft: theme.spacing(4),
+    },
+
+    // LIs nested inside a group (rules inside an expanded ListGroup): keep the deeper
+    // indentation and per-row guide line. We can't pass classNames into rendered list
+    // items individually, so target them via descendant selector.
+    'div[role=treeitem] li[role=treeitem]': {
+      listStyle: 'none',
+      position: 'relative',
       paddingLeft: theme.spacing(6.5),
 
       '&:before': {
@@ -87,6 +109,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       background: theme.colors.action.hover,
+      borderRadius: theme.shape.radius.default,
     },
   }),
 });

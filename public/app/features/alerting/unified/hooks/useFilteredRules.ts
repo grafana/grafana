@@ -1,33 +1,36 @@
-import uFuzzy from '@leeoniya/ufuzzy';
 import { produce } from 'immer';
 import { chain, compact, isEmpty } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 
+import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unified-alerting';
-import { PromRuleType, RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type CombinedRuleGroup, type CombinedRuleNamespace, type Rule } from 'app/types/unified-alerting';
+import { PromRuleType, type RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../Analytics';
-import { RulesFilter, applySearchFilterToQuery, getSearchFilterFromQuery } from '../search/rulesSearchParser';
+import {
+  RuleSource,
+  type RulesFilter,
+  applySearchFilterToQuery,
+  getSearchFilterFromQuery,
+} from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
+import { fuzzyFilter } from '../utils/fuzzySearch';
 import { parseMatcher, parsePromQLStyleMatcherLoose } from '../utils/matchers';
-import { getRuleHealth, isPluginProvidedRule, isPromRuleType, prometheusRuleType, rulerRuleType } from '../utils/rules';
+import {
+  getRuleHealth,
+  isPluginProvidedRule,
+  isPromRuleType,
+  prometheusRuleType,
+  ruleUsesDefaultPolicy,
+  rulerRuleType,
+} from '../utils/rules';
 
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
-
-// if the search term is longer than MAX_NEEDLE_SIZE we disable Levenshtein distance
-const MAX_NEEDLE_SIZE = 25;
-const INFO_THRESHOLD = Infinity;
-const MAX_FUZZY_TERMS = 5;
-// https://catonmat.net/my-favorite-regex :)
-const REGEXP_NON_ASCII = /[^ -~]/m;
-// https://www.asciitable.com/
-// matches only these: `~!@#$%^&*()_+-=[]\{}|;':",./<>?
-const REGEXP_ONLY_SYMBOLS = /^[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]+$/m;
 
 export function useRulesFilter() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
@@ -37,6 +40,10 @@ export function useRulesFilter() {
     return getSearchFilterFromQuery(searchQuery);
   }, [searchQuery]);
   const hasActiveFilters = useMemo(() => Object.values(filterState).some((filter) => !isEmpty(filter)), [filterState]);
+
+  const activeFilters = useMemo(() => {
+    return chain(filterState).omitBy(isEmpty).keys().filter(isRuleFilterKey).value();
+  }, [filterState]);
 
   const updateFilters = useCallback(
     (newFilter: RulesFilter) => {
@@ -86,7 +93,11 @@ export function useRulesFilter() {
     }
   }, [queryParams, updateFilters, filterState, updateQueryParams]);
 
-  return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters };
+  const clearAll = useCallback(() => {
+    updateQueryParams({ search: undefined });
+  }, [updateQueryParams]);
+
+  return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters, clearAll, activeFilters };
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
@@ -185,6 +196,15 @@ const reduceGroups = (filterState: RulesFilter) => {
       filteredRules = fuzzyFilter(filteredRules, (r) => r.name, ruleNameQuery);
     }
 
+    // Filter by rule source at rule-level (Grafana-managed vs datasource-managed)
+    if (filterState.ruleSource) {
+      const grafanaSelected = filterState.ruleSource === RuleSource.Grafana;
+      filteredRules = filteredRules.filter((rule) => {
+        const isGrafana = !!(rule.rulerRule && rulerRuleType.grafana.rule(rule.rulerRule));
+        return grafanaSelected && isGrafana;
+      });
+    }
+
     filteredRules = filteredRules.filter((rule) => {
       const promRuleDefition = rule.promRule;
 
@@ -203,6 +223,8 @@ const reduceGroups = (filterState: RulesFilter) => {
           'dashboardUid',
           'plugins',
           'contactPoint',
+          'ruleSource',
+          'policy',
         ])
         .omitBy(isEmpty)
         .mapValues(() => false)
@@ -224,6 +246,21 @@ const reduceGroups = (filterState: RulesFilter) => {
 
         if (hasContactPoint) {
           matchesFilterFor.contactPoint = true;
+        }
+      }
+
+      if ('policy' in matchesFilterFor) {
+        const policy = filterState.policy;
+        if (rulerRuleType.grafana.rule(rule.rulerRule)) {
+          const isDefaultPolicyFilter = policy === USER_DEFINED_TREE_NAME;
+
+          if (isDefaultPolicyFilter) {
+            if (ruleUsesDefaultPolicy(rule.rulerRule.grafana_alert.notification_settings)) {
+              matchesFilterFor.policy = true;
+            }
+          } else if (rule.rulerRule.grafana_alert.notification_settings?.policy === policy) {
+            matchesFilterFor.policy = true;
+          }
         }
       }
 
@@ -307,42 +344,6 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
   }
 }
 
-function fuzzyFilter<TItem>(items: TItem[], filterBy: (item: TItem) => string, searchTerm: string) {
-  let filteredItems = items;
-
-  // Options details can be found here https://github.com/leeoniya/uFuzzy#options
-  // The following configuration complies with Damerau-Levenshtein distance
-  // https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
-  const ufuzzy = new uFuzzy({ intraMode: 1 });
-  const needleTermsCount = ufuzzy.split(searchTerm).length;
-
-  // If the search term is very long or contains non-ascii characters or only special characters we don't use fuzzy search
-  // and need to fallback to simple string search
-  const fuzzySearchNotApplicable =
-    REGEXP_NON_ASCII.test(searchTerm) ||
-    REGEXP_ONLY_SYMBOLS.test(searchTerm) ||
-    searchTerm.length > MAX_NEEDLE_SIZE ||
-    needleTermsCount > MAX_FUZZY_TERMS;
-
-  if (fuzzySearchNotApplicable) {
-    return items.filter((item) => filterBy(item).toLowerCase().includes(searchTerm.toLowerCase()));
-  }
-
-  const haystack = items.map(filterBy);
-  // apply an outOfOrder limit which helps to limit the number of permutations to search for
-  // and prevents the browser from hanging
-  const outOfOrderLimit = needleTermsCount < 5 ? 4 : 0;
-
-  const [idxs, info, order] = ufuzzy.search(haystack, searchTerm, outOfOrderLimit, INFO_THRESHOLD);
-  if (info && order) {
-    filteredItems = order.map((idx) => filteredItems[info.idx[idx]]);
-  } else if (idxs) {
-    filteredItems = idxs.map((idx) => filteredItems[idx]);
-  }
-
-  return filteredItems;
-}
-
 const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): boolean => {
   if (!filterState.dataSourceNames?.length) {
     return true;
@@ -356,3 +357,22 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: Rules
     return ds?.name && filterState?.dataSourceNames?.includes(ds.name);
   });
 };
+
+const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
+  'freeFormWords',
+  'namespace',
+  'groupName',
+  'ruleName',
+  'ruleState',
+  'ruleType',
+  'dataSourceNames',
+  'labels',
+  'ruleHealth',
+  'dashboardUid',
+  'plugins',
+  'contactPoint',
+  'ruleSource',
+  'policy',
+]);
+
+const isRuleFilterKey = (key: string): key is keyof RulesFilter => RULES_FILTER_KEYS.has(key as keyof RulesFilter);

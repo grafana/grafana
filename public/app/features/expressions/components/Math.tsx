@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, InlineField, InlineLabel, TextArea, Toggletip, useStyles2, Stack, TextLink } from '@grafana/ui';
 
-import { ExpressionQuery } from '../types';
+import { type ExpressionQuery } from '../types';
 
 interface Props {
   labelWidth: number | 'auto';
@@ -20,8 +20,6 @@ const mathPlaceholder =
   'The sum of two scalar values: $A + $B > 10';
 
 export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
-  const { t } = useTranslate();
-
   const onExpressionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onChange({ ...query, expression: event.target.value });
   };

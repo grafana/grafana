@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert, LoadingBar, Pagination } from '@grafana/ui';
-import { RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { type RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -50,7 +50,6 @@ export const EvaluationGroupLoader = ({
       });
     }
   }, [fetchRulerRuleGroup, isOpen, name, namespace, rulerConfig]);
-  const { t } = useTranslate();
 
   return (
     <EvaluationGroup name={name} interval={interval} provenance={provenance} isOpen={isOpen} onToggle={toggle}>

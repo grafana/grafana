@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 import { SaveDashboardButton } from './SaveDashboardButton';
 
@@ -15,13 +15,11 @@ interface UnsavedChangesModalProps {
 }
 
 export const UnsavedChangesModal = ({ dashboard, onSaveSuccess, onDiscard, onDismiss }: UnsavedChangesModalProps) => {
-  const { t } = useTranslate();
   return (
     <Modal
       isOpen={true}
       title={t('dashboard.unsaved-changes-modal.title-unsaved-changes', 'Unsaved changes')}
       onDismiss={onDismiss}
-      icon="exclamation-triangle"
       className={css({
         width: '500px',
       })}

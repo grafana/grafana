@@ -1,19 +1,25 @@
 import { css } from '@emotion/css';
-import { FeatureLike } from 'ol/Feature';
+import { type FeatureLike } from 'ol/Feature';
 import { useCallback, useMemo } from 'react';
 import { useObservable } from 'react-use';
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { GrafanaTheme2, SelectableValue, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  type SelectableValue,
+  type StandardEditorProps,
+  type StandardEditorsRegistryItem,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { comparisonOperationOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
-import { defaultStyleConfig, StyleConfig } from '../style/types';
-import { FeatureStyleConfig } from '../types';
-import { getUniqueFeatureValues, LayerContentInfo } from '../utils/getFeatures';
+import { defaultStyleConfig, type StyleConfig } from '../style/types';
+import { type FeatureStyleConfig } from '../types';
+import { getUniqueFeatureValues, type LayerContentInfo } from '../utils/getFeatures';
 import { getSelectionInfo } from '../utils/selection';
 
 import { StyleEditor } from './StyleEditor';
@@ -132,13 +138,13 @@ export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
   return (
     <div className={styles.rule}>
       <InlineFieldRow className={styles.row}>
-        <InlineField label="Rule" labelWidth={LABEL_WIDTH} grow={true}>
+        <InlineField label={t('geomap.style-rule-editor.label-rule', 'Rule')} labelWidth={LABEL_WIDTH} grow={true}>
           <Select
-            placeholder={'Feature property'}
+            placeholder={t('geomap.style-rule-editor.placeholder-feature-property', 'Feature property')}
             value={propv.current}
             options={propv.options}
             onChange={onChangeProperty}
-            aria-label={'Feature property'}
+            aria-label={t('geomap.style-rule-editor.aria-label-feature-property', 'Feature property')}
             isClearable
             allowCustomValue
           />
@@ -148,7 +154,7 @@ export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
             value={comparisonOperationOptions.find((v) => v.value === check.operation)}
             options={comparisonOperationOptions}
             onChange={onChangeComparison}
-            aria-label={'Comparison operator'}
+            aria-label={t('geomap.style-rule-editor.aria-label-comparison-operator', 'Comparison operator')}
             width={8}
           />
         </InlineField>
@@ -156,11 +162,11 @@ export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
           <div className={styles.flexRow}>
             {(check.operation === ComparisonOperation.EQ || check.operation === ComparisonOperation.NEQ) && (
               <Select
-                placeholder={'value'}
+                placeholder={t('geomap.style-rule-editor.placeholder-value', 'value')}
                 value={valuev.current}
                 options={valuev.options}
                 onChange={onChangeValue}
-                aria-label={'Comparison value'}
+                aria-label={t('geomap.style-rule-editor.aria-label-comparison-value', 'Comparison value')}
                 isClearable
                 allowCustomValue
               />
@@ -169,7 +175,7 @@ export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
               <NumberInput
                 key={`${check.property}/${check.operation}`}
                 value={!isNaN(Number(check.value)) ? Number(check.value) : 0}
-                placeholder="numeric value"
+                placeholder={t('geomap.style-rule-editor.placeholder-numeric-value', 'Numeric value')}
                 onChange={onChangeNumericValue}
               />
             )}
@@ -180,7 +186,7 @@ export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
           icon="trash-alt"
           onClick={() => onDelete()}
           variant="secondary"
-          aria-label={'Delete style rule'}
+          aria-label={t('geomap.style-rule-editor.aria-label-delete-style-rule', 'Delete style rule')}
           className={styles.button}
         ></Button>
       </InlineFieldRow>

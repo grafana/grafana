@@ -38,28 +38,28 @@ func TestMaybeFixValueFieldType(t *testing.T) {
 		},
 		{
 			name:         "should return nullableJson if both are nullableJson",
-			valueFields:  data.Fields{data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)},
-			inputType:    data.FieldTypeNullableJSON,
+			valueFields:  data.Fields{data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)}, //nolint:staticcheck
+			inputType:    data.FieldTypeNullableJSON,                                             //nolint:staticcheck
 			colIdx:       0,
-			expectedType: data.FieldTypeNullableJSON,
+			expectedType: data.FieldTypeNullableJSON, //nolint:staticcheck
 		},
 		{
 			name:         "should return nullableString if valueField is nullableJson and input is nullableString",
-			valueFields:  data.Fields{data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)},
+			valueFields:  data.Fields{data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)}, //nolint:staticcheck
 			inputType:    data.FieldTypeNullableString,
 			colIdx:       0,
 			expectedType: data.FieldTypeNullableString,
 		},
 		{
 			name:         "should return nullableBool if valueField is nullableJson and input is nullableBool",
-			valueFields:  data.Fields{data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)},
+			valueFields:  data.Fields{data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)}, //nolint:staticcheck
 			inputType:    data.FieldTypeNullableBool,
 			colIdx:       0,
 			expectedType: data.FieldTypeNullableBool,
 		},
 		{
 			name:         "should return nullableFloat64 if valueField is nullableJson and input is nullableFloat64",
-			valueFields:  data.Fields{data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)},
+			valueFields:  data.Fields{data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)}, //nolint:staticcheck
 			inputType:    data.FieldTypeNullableFloat64,
 			colIdx:       0,
 			expectedType: data.FieldTypeNullableFloat64,

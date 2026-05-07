@@ -153,6 +153,9 @@ func (s *SimulationEngine) QueryData(ctx context.Context, req *backend.QueryData
 			stepMillis := q.Interval.Milliseconds()
 
 			maxPoints := q.MaxDataPoints * 2
+			if maxPoints > 10000 {
+				maxPoints = 10000
+			}
 			for i := int64(0); i < maxPoints && timeWalkerMs < to; i++ {
 				t := time.UnixMilli(timeWalkerMs).UTC()
 				vals := sim.GetValues(t)

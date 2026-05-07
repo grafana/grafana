@@ -1,9 +1,9 @@
-import { CoreApp, TimeRange } from '@grafana/data';
+import { CoreApp, type TimeRange } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { SpanLinkType } from '../../types/links';
-import { TraceSpan } from '../../types/trace';
+import { type TraceSpan } from '../../types/trace';
 
 import { getSpanDetailLinkButtons, getProfileLinkButtonsContext } from './SpanDetailLinkButtons';
 
@@ -24,6 +24,10 @@ const timeRange = {
   from: new Date(0),
   to: new Date(1000),
 } as unknown as TimeRange;
+
+function getContent(result: ReturnType<typeof getSpanDetailLinkButtons>) {
+  return result.props.children.props.children[0];
+}
 
 describe('getSpanDetailLinkButtons', () => {
   beforeEach(() => {
@@ -55,8 +59,9 @@ describe('getSpanDetailLinkButtons', () => {
       app: CoreApp.Explore,
     });
 
-    expect(result.props.children).toHaveLength(1);
-    expect(result.props.children[0].props.link.title).toBe('Logs for this span');
+    const content = getContent(result);
+    expect(content).toHaveLength(1);
+    expect(content[0].props.spanLinkModel.linkModel.title).toBe('Logs for this span');
   });
 
   it('should create profile link button when profiles link exists', () => {
@@ -75,8 +80,9 @@ describe('getSpanDetailLinkButtons', () => {
       app: CoreApp.Dashboard,
     });
 
-    expect(result.props.children).toHaveLength(1);
-    expect(result.props.children[0].props.link.title).toBe('Profiles for this span');
+    const content = getContent(result);
+    expect(content).toHaveLength(1);
+    expect(content[0].props.spanLinkModel.linkModel.title).toBe('Profiles for this span');
   });
 
   it('should create session link button when session link exists', () => {
@@ -91,8 +97,9 @@ describe('getSpanDetailLinkButtons', () => {
       app: CoreApp.Explore,
     });
 
-    expect(result.props.children).toHaveLength(1);
-    expect(result.props.children[0].props.link.title).toBe('Session for this span');
+    const content = getContent(result);
+    expect(content).toHaveLength(1);
+    expect(content[0].props.spanLinkModel.linkModel.title).toBe('Session for this span');
   });
 
   it('should create profile drilldown button when plugin link exists', () => {
@@ -121,9 +128,10 @@ describe('getSpanDetailLinkButtons', () => {
       app: CoreApp.Explore,
     });
 
-    expect(result.props.children).toHaveLength(2);
-    expect(result.props.children[0].props.link.title).toBe('Profiles for this span');
-    expect(result.props.children[1].props.link.title).toBe('Open in Profiles Drilldown');
+    const content = getContent(result);
+    expect(content).toHaveLength(2);
+    expect(content[0].props.spanLinkModel.linkModel.title).toBe('Profiles for this span');
+    expect(content[1].props.spanLinkModel.linkModel.title).toBe('Open in Profiles Drilldown');
   });
 
   it('should not create profile drilldown button when not in Explore', () => {
@@ -152,8 +160,9 @@ describe('getSpanDetailLinkButtons', () => {
       app: CoreApp.Dashboard,
     });
 
-    expect(result.props.children).toHaveLength(1);
-    expect(result.props.children[0].props.link.title).toBe('Profiles for this span');
+    const content = getContent(result);
+    expect(content).toHaveLength(1);
+    expect(content[0].props.spanLinkModel.linkModel.title).toBe('Profiles for this span');
   });
 });
 

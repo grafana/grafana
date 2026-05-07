@@ -18,8 +18,18 @@ import (
 type CheckType struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
-	Spec              CheckTypeSpec   `json:"spec" yaml:"spec"`
-	CheckTypeStatus   CheckTypeStatus `json:"status" yaml:"status"`
+
+	// Spec is the spec of the CheckType
+	Spec CheckTypeSpec `json:"spec" yaml:"spec"`
+
+	Status CheckTypeStatus `json:"status" yaml:"status"`
+}
+
+func NewCheckType() *CheckType {
+	return &CheckType{
+		Spec:   *NewCheckTypeSpec(),
+		Status: *NewCheckTypeStatus(),
+	}
 }
 
 func (o *CheckType) GetSpec() any {
@@ -37,14 +47,14 @@ func (o *CheckType) SetSpec(spec any) error {
 
 func (o *CheckType) GetSubresources() map[string]any {
 	return map[string]any{
-		"status": o.CheckTypeStatus,
+		"status": o.Status,
 	}
 }
 
 func (o *CheckType) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
-		return o.CheckTypeStatus, true
+		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -57,7 +67,7 @@ func (o *CheckType) SetSubresource(name string, value any) error {
 		if !ok {
 			return fmt.Errorf("cannot set status type %#v, not of type CheckTypeStatus", value)
 		}
-		o.CheckTypeStatus = cast
+		o.Status = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
@@ -219,6 +229,24 @@ func (o *CheckType) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
+func (o *CheckType) DeepCopy() *CheckType {
+	cpy := &CheckType{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *CheckType) DeepCopyInto(dst *CheckType) {
+	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
+	dst.TypeMeta.Kind = o.TypeMeta.Kind
+	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
+	o.Spec.DeepCopyInto(&dst.Spec)
+	o.Status.DeepCopyInto(&dst.Status)
+}
+
+func (CheckType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &CheckType{}
 
@@ -262,5 +290,45 @@ func (o *CheckTypeList) SetItems(items []resource.Object) {
 	}
 }
 
+func (o *CheckTypeList) DeepCopy() *CheckTypeList {
+	cpy := &CheckTypeList{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *CheckTypeList) DeepCopyInto(dst *CheckTypeList) {
+	resource.CopyObjectInto(dst, o)
+}
+
+func (CheckTypeList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeList"
+}
+
 // Interface compliance compile-time check
 var _ resource.ListObject = &CheckTypeList{}
+
+// Copy methods for all subresource types
+
+// DeepCopy creates a full deep copy of Spec
+func (s *CheckTypeSpec) DeepCopy() *CheckTypeSpec {
+	cpy := &CheckTypeSpec{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies Spec into another Spec object
+func (s *CheckTypeSpec) DeepCopyInto(dst *CheckTypeSpec) {
+	resource.CopyObjectInto(dst, s)
+}
+
+// DeepCopy creates a full deep copy of CheckTypeStatus
+func (s *CheckTypeStatus) DeepCopy() *CheckTypeStatus {
+	cpy := &CheckTypeStatus{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies CheckTypeStatus into another CheckTypeStatus object
+func (s *CheckTypeStatus) DeepCopyInto(dst *CheckTypeStatus) {
+	resource.CopyObjectInto(dst, s)
+}

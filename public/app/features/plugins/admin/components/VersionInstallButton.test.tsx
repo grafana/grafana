@@ -1,10 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { JSX } from 'react';
 import { Provider } from 'react-redux';
 
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { Version } from '../types';
+import { type Version } from '../types';
 
 import { VersionInstallButton } from './VersionInstallButton';
 
@@ -15,6 +16,7 @@ describe('VersionInstallButton', () => {
       ...originalConfig.featureToggles,
     };
     config.pluginCatalogPreinstalledPlugins = originalConfig.pluginCatalogPreinstalledPlugins;
+    config.pluginCatalogPreinstalledAutoUpdate = originalConfig.pluginCatalogPreinstalledAutoUpdate;
   });
   it('should show install when no version is installed', () => {
     const version: Version = {
@@ -120,7 +122,7 @@ describe('VersionInstallButton', () => {
       grafanaDependency: null,
     };
     const installedVersion = '1.0.0';
-    config.featureToggles.preinstallAutoUpdate = true;
+    config.pluginCatalogPreinstalledAutoUpdate = true;
     config.pluginCatalogPreinstalledPlugins = [{ id: 'test', version: '1.0.0' }];
     renderWithStore(
       <VersionInstallButton
@@ -142,7 +144,7 @@ describe('VersionInstallButton', () => {
       grafanaDependency: null,
     };
     const installedVersion = '1.0.1';
-    config.featureToggles.preinstallAutoUpdate = true;
+    config.pluginCatalogPreinstalledAutoUpdate = true;
     config.pluginCatalogPreinstalledPlugins = [{ id: 'test', version: '1.0.1' }];
     renderWithStore(
       <VersionInstallButton
@@ -164,7 +166,7 @@ describe('VersionInstallButton', () => {
       grafanaDependency: null,
     };
     const installedVersion = '1.0.1';
-    config.featureToggles.preinstallAutoUpdate = true;
+    config.pluginCatalogPreinstalledAutoUpdate = true;
     config.pluginCatalogPreinstalledPlugins = [{ id: 'test', version: '' }];
     renderWithStore(
       <VersionInstallButton

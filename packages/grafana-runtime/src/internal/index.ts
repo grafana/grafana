@@ -26,4 +26,47 @@ export {
   type GetObservablePluginLinks,
 } from '../services/pluginExtensions/getObservablePluginLinks';
 
-export { UserStorage } from '../utils/userStorage';
+export { UserStorage, useUserStorage } from '../utils/userStorage';
+
+export { initOpenFeature, getFeatureFlagClient } from '../internal/openFeature';
+export * from '../internal/openFeature/openfeature.gen';
+
+export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
+export {
+  getDatasourcePluginMeta,
+  getDatasourcePluginMetas,
+  setDatasourcePluginMetas,
+  refetchDatasourcePluginMetas,
+  getPluginIdFromDatasourceInstanceType,
+} from '../services/pluginMeta/datasources';
+export {
+  useAppPluginMeta,
+  useAppPluginMetas,
+  useDatasourcePluginMeta,
+  useDatasourcePluginMetas,
+  useListedPanelPluginMetas,
+  usePanelPluginMeta,
+  usePanelPluginMetas,
+  usePanelPluginMetasMap,
+} from '../services/pluginMeta/hooks';
+export type { AppPluginMetas, DatasourcePluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
+export {
+  getCachedPromise,
+  getCachedPromiseWithArgs,
+  invalidateCachedPromisesCache,
+  invalidateCachedPromise,
+  replaceCachedPromise,
+  getCacheKeyFromPromise,
+} from '../utils/getCachedPromise';
+export {
+  getListedPanelPluginMetas,
+  getPanelPluginMeta,
+  getPanelPluginMetas,
+  getPanelPluginMetasMap,
+  getPanelPluginMetasMapSync,
+  setPanelPluginMetas,
+  refetchPanelPluginMetas,
+} from '../services/pluginMeta/panels';
+export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
+export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
+export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';

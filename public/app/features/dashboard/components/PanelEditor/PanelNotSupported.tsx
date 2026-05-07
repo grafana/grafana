@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, type JSX } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';

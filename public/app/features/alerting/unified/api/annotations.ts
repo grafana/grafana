@@ -1,11 +1,9 @@
-import { getBackendSrv } from '@grafana/runtime';
-import { StateHistoryItem } from 'app/types/unified-alerting';
+import { annotationServer } from 'app/features/annotations/api';
+import { type StateHistoryItem } from 'app/types/unified-alerting';
 
 export function fetchAnnotations(alertUID: string): Promise<StateHistoryItem[]> {
-  return getBackendSrv()
-    .get('/api/annotations', {
-      alertUID,
-    })
+  return annotationServer()
+    .forAlert(alertUID)
     .then((result) => {
       return result?.sort(sortStateHistory);
     });

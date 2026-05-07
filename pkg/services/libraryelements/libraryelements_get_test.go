@@ -5,19 +5,21 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestIntegration_GetLibraryElement(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	scenarioWithPanel(t, "When an admin tries to get a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// by uid
@@ -54,17 +56,17 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 						},
 						Version: 1,
 						Meta: model.LibraryElementDTOMeta{
-							FolderName:          "ScenarioFolder",
+							FolderName:          sc.folder.Title,
 							FolderUID:           sc.folder.UID,
 							ConnectedDashboards: 0,
 							Created:             res.Result.Meta.Created,
 							Updated:             res.Result.Meta.Updated,
-							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							CreatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,
 							},
-							UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+							UpdatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,
@@ -74,7 +76,7 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 				}
 			}
 
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][folder.ActionFoldersRead] = []string{folder.ScopeFoldersAll}
 
 			// by uid
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
@@ -99,10 +101,10 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			b, err := json.Marshal(map[string]string{"test": "test"})
 			require.NoError(t, err)
-			newFolder := createFolder(t, sc, "NewFolder", nil)
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
-			result, err := sc.service.createLibraryElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
+			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
+			sc.reqContext.Permissions[sc.reqContext.OrgID][folder.ActionFoldersRead] = []string{folder.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][folder.ActionFoldersDelete] = []string{folder.ScopeFoldersAll}
+			result, err := sc.service.CreateElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
 				Name:      "Testing Library Panel With Deleted Folder",
@@ -117,6 +119,8 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 				SignedInUser: sc.reqContext.SignedInUser,
 			})
 			require.NoError(t, err)
+			sc.folderSvc.ExpectedFolder = nil
+			sc.folderSvc.ExpectedError = folder.ErrFolderNotFound
 			err = sc.sqlStore.WithDbSession(sc.reqContext.Req.Context(), func(session *db.Session) error {
 				elem, err := sc.service.GetLibraryElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, session, result.UID)
 				require.NoError(t, err)
@@ -124,104 +128,6 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 				return nil
 			})
 			require.NoError(t, err)
-		})
-
-	scenarioWithPanel(t, "When an admin tries to get a connected library panel, it should succeed and return correct connected dashboards",
-		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]any{
-				"panels": []any{
-					map[string]any{
-						"id": int64(1),
-						"gridPos": map[string]any{
-							"h": 6,
-							"w": 6,
-							"x": 0,
-							"y": 0,
-						},
-					},
-					map[string]any{
-						"id": int64(2),
-						"gridPos": map[string]any{
-							"h": 6,
-							"w": 6,
-							"x": 6,
-							"y": 0,
-						},
-						"libraryPanel": map[string]any{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
-						},
-					},
-				},
-			}
-			dash := dashboards.Dashboard{
-				Title: "Testing getHandler",
-				Data:  simplejson.NewFromAny(dashJSON),
-			}
-			// nolint:staticcheck
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
-			require.NoError(t, err)
-
-			expected := func(res libraryElementResult) libraryElementResult {
-				return libraryElementResult{
-					Result: libraryElement{
-						ID:          1,
-						OrgID:       1,
-						FolderID:    1, // nolint:staticcheck
-						FolderUID:   sc.folder.UID,
-						UID:         res.Result.UID,
-						Name:        "Text - Library Panel",
-						Kind:        int64(model.PanelElement),
-						Type:        "text",
-						Description: "A description",
-						Model: map[string]any{
-							"datasource":  "${DS_GDEV-TESTDATA}",
-							"description": "A description",
-							"id":          float64(1),
-							"title":       "Text - Library Panel",
-							"type":        "text",
-						},
-						Version: 1,
-						Meta: model.LibraryElementDTOMeta{
-							FolderName:          "ScenarioFolder",
-							FolderUID:           sc.folder.UID,
-							ConnectedDashboards: 1,
-							Created:             res.Result.Meta.Created,
-							Updated:             res.Result.Meta.Updated,
-							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
-								Id:        1,
-								Name:      userInDbName,
-								AvatarUrl: userInDbAvatar,
-							},
-							UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
-								Id:        1,
-								Name:      userInDbName,
-								AvatarUrl: userInDbAvatar,
-							},
-						},
-					},
-				}
-			}
-
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
-
-			// by uid
-			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.getHandler(sc.reqContext)
-			result := validateAndUnMarshalResponse(t, resp)
-
-			if diff := cmp.Diff(expected(result), result, getCompareOptions()...); diff != "" {
-				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-			}
-
-			// by name
-			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
-			resp = sc.service.getByNameHandler(sc.reqContext)
-			arrayResult := validateAndUnMarshalArrayResponse(t, resp)
-			if diff := cmp.Diff(libraryElementArrayResult{Result: []libraryElement{expected(result).Result}}, arrayResult, getCompareOptions()...); diff != "" {
-				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-			}
 		})
 
 	scenarioWithPanel(t, "When an admin tries to get a library panel that exists in an other org, it should fail",
@@ -238,5 +144,24 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
 			resp = sc.service.getByNameHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
+		})
+
+	scenarioWithPanel(t, "When a library panel has connected dashboards, connectedDashboards should reflect the count",
+		func(t *testing.T, sc scenarioContext) {
+			sc.defaultGetDashByLP.Unset()
+			sc.dashboardSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Return([]*dashboards.DashboardRef{
+				{UID: "dash-1", ID: 10},
+				{UID: "dash-2", ID: 20},
+			}, nil)
+
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			resp := sc.service.getHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementResult
+			err := json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, int64(2), result.Result.Meta.ConnectedDashboards,
+				"connectedDashboards should match the number of dashboards returned by unified search")
 		})
 }

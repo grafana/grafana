@@ -1,11 +1,12 @@
 package templategroup
 
 import (
+	"github.com/grafana/alerting/definition"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -27,6 +28,10 @@ func convertToK8sResources(orgID int64, list []definitions.NotificationTemplate,
 
 func convertToK8sResource(orgID int64, template definitions.NotificationTemplate, namespacer request.NamespaceMapper) *model.TemplateGroup {
 	result := &model.TemplateGroup{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+			Kind:       kind.Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			UID:             types.UID(template.UID),
 			Name:            template.UID,
@@ -36,6 +41,7 @@ func convertToK8sResource(orgID int64, template definitions.NotificationTemplate
 		Spec: model.TemplateGroupSpec{
 			Title:   template.Name,
 			Content: template.Template,
+			Kind:    model.TemplateGroupTemplateKind(template.Kind),
 		},
 	}
 	result.SetProvenanceStatus(string(template.Provenance))
@@ -43,12 +49,17 @@ func convertToK8sResource(orgID int64, template definitions.NotificationTemplate
 	return result
 }
 
-func convertToDomainModel(template *model.TemplateGroup) definitions.NotificationTemplate {
+func convertToDomainModel(template *model.TemplateGroup) (definitions.NotificationTemplate, error) {
+	prov, err := ngmodels.ProvenanceFromString(template.GetProvenanceStatus())
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
 	return definitions.NotificationTemplate{
 		UID:             template.Name,
 		Name:            template.Spec.Title,
 		Template:        template.Spec.Content,
 		ResourceVersion: template.ResourceVersion,
-		Provenance:      definitions.Provenance(ngmodels.ProvenanceNone),
-	}
+		Provenance:      definitions.Provenance(prov),
+		Kind:            definition.TemplateKind(template.Spec.Kind),
+	}, nil
 }

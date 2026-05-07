@@ -20,11 +20,24 @@ func TestV40(t *testing.T) {
 			},
 		},
 		{
-			name: "boolean refresh value is converted to an empty string",
+			name: "boolean refresh value (true) is converted to an empty string",
 			input: map[string]interface{}{
 				"title":         "Test Dashboard",
 				"schemaVersion": 39,
 				"refresh":       true,
+			},
+			expected: map[string]interface{}{
+				"title":         "Test Dashboard",
+				"schemaVersion": 40,
+				"refresh":       "",
+			},
+		},
+		{
+			name: "boolean refresh value (false) is converted to an empty string",
+			input: map[string]interface{}{
+				"title":         "Test Dashboard",
+				"schemaVersion": 39,
+				"refresh":       false,
 			},
 			expected: map[string]interface{}{
 				"title":         "Test Dashboard",
@@ -43,6 +56,32 @@ func TestV40(t *testing.T) {
 				"title":         "Test Dashboard",
 				"schemaVersion": 40,
 				"refresh":       "1m",
+			},
+		},
+		{
+			name: "empty string refresh value is preserved",
+			input: map[string]interface{}{
+				"title":         "Test Dashboard",
+				"schemaVersion": 39,
+				"refresh":       "",
+			},
+			expected: map[string]interface{}{
+				"title":         "Test Dashboard",
+				"schemaVersion": 40,
+				"refresh":       "",
+			},
+		},
+		{
+			name: "numeric refresh value is converted to empty string",
+			input: map[string]interface{}{
+				"title":         "Test Dashboard",
+				"schemaVersion": 39,
+				"refresh":       60,
+			},
+			expected: map[string]interface{}{
+				"title":         "Test Dashboard",
+				"schemaVersion": 40,
+				"refresh":       "",
 			},
 		},
 	}

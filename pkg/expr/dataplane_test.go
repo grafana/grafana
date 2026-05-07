@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -70,6 +71,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 			Features: features,
 			Tracer:   tracing.InitializeTracerForTest(),
 		},
+		qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
 	}
 	queries := []Query{{
 		RefID: "A",
@@ -90,7 +92,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		User:    &user.SignedInUser{},
 	}
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)

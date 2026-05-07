@@ -58,20 +58,10 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 		for _, r := range requirements {
 			v := r.Key()
 
-			// Parse the history request from labels
-			// TODO: for LabelGetFullpath, we just skip this for unistore. We need a better solution for
-			// getting the full path for folders in unistore, without making a request for each parent folder.
-			// In modes 0-2 we added this label to indicate that the sql query should return that data as
-			// an annotation on the folder. However, this annotation cannot be saved to unified storage, otherwise
-			// we will have to recompute annotations for all descendants of a folder during a folder move.
-			// While we look for a better solution, unified storage will continue to return all folders & the folder
-			// service will get the full path by retrieving each parent folder.
-			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash || v == utils.LabelGetFullpath {
+			// Parse the history/trash request from labels
+			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash {
 				if len(requirements) != 1 {
 					return nil, predicate, apierrors.NewBadRequest("single label supported with: " + v)
-				}
-				if opts.Predicate.Field != nil && !opts.Predicate.Field.Empty() {
-					return nil, predicate, apierrors.NewBadRequest("field selector not supported with: " + v)
 				}
 				if r.Operator() != selection.Equals {
 					return nil, predicate, apierrors.NewBadRequest("only = operator supported with: " + v)
@@ -90,7 +80,21 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 					}
 				case utils.LabelKeyGetHistory:
 					req.Source = resourcepb.ListRequest_HISTORY
-					req.Options.Key.Name = vals[0]
+					if opts.Predicate.Field == nil || opts.Predicate.Field.Empty() {
+						return nil, predicate, apierrors.NewBadRequest("metadata.name field selector required for history requests")
+					}
+
+					fieldRequirements := opts.Predicate.Field.Requirements()
+					if len(fieldRequirements) != 1 {
+						return nil, predicate, apierrors.NewBadRequest("only one field selector supported for history requests")
+					}
+
+					fieldReq := fieldRequirements[0]
+					if fieldReq.Field != "metadata.name" {
+						return nil, predicate, apierrors.NewBadRequest("metadata.name field selector required for history requests")
+					}
+
+					req.Options.Key.Name = fieldReq.Value
 				}
 
 				req.Options.Labels = nil
@@ -113,7 +117,7 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 			if r.Value != "" {
 				requirement.Values = append(requirement.Values, r.Value)
 			}
-			req.Options.Labels = append(req.Options.Labels, requirement)
+			req.Options.Fields = append(req.Options.Fields, requirement)
 		}
 	}
 

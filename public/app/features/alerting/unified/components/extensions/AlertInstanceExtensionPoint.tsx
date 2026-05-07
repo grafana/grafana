@@ -1,13 +1,13 @@
-import { ReactElement, useMemo, useState } from 'react';
+import { type ReactElement, useMemo, useState } from 'react';
 
-import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type PluginExtensionLink, type PluginExtensionPoints } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { Dropdown, IconButton } from '@grafana/ui';
 import { ConfirmNavigationModal } from 'app/features/explore/extensions/ConfirmNavigationModal';
 // We might want to customise this in future but right now the toolbar menu from the Explore view is fine.
 import { ToolbarExtensionPointMenu as AlertExtensionPointMenu } from 'app/features/explore/extensions/ToolbarExtensionPointMenu';
-import { Alert, CombinedRule } from 'app/types/unified-alerting';
+import { type Alert, type CombinedRule } from 'app/types/unified-alerting';
 
 interface AlertInstanceExtensionPointProps {
   rule?: CombinedRule;
@@ -23,7 +23,7 @@ export const AlertInstanceExtensionPoint = ({
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const context = useMemo(() => ({ instance, rule }), [instance, rule]);
   const { links } = usePluginLinks({ context, extensionPointId, limitPerPlugin: 3 });
-  const { t } = useTranslate();
+
   if (links.length === 0) {
     return null;
   }

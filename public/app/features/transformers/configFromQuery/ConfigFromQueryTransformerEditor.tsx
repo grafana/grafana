@@ -1,27 +1,18 @@
 import { css } from '@emotion/css';
 
-import {
-  FieldMatcherID,
-  GrafanaTheme2,
-  PluginState,
-  SelectableValue,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { FieldMatcherID, type GrafanaTheme2, type SelectableValue, type TransformerUIProps } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useFieldMatchersOptions, useStyles2 } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 
-import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
+import { type ConfigFromQueryTransformOptions } from './configFromQuery';
 
 export interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
 
 export function ConfigFromQueryTransformerEditor({ input, onChange, options }: Props) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const refIds = input
     .map((x) => x.refId)
     .filter((x) => x != null)
@@ -47,10 +38,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({ ...options, applyTo: { id: currentMatcher.id, options: matcherOption } });
   };
 
-  const matchers = fieldMatchersUI
-    .list()
-    .filter((o) => !o.excludeFromPicker)
-    .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }));
+  const matchers = useFieldMatchersOptions();
 
   return (
     <>
@@ -77,10 +65,12 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
           className={styles.matcherOptions}
         >
           <matcherUI.component
+            id={matcherUI.id}
             matcher={matcherUI.matcher}
             data={input}
             options={currentMatcher.options}
             onChange={onMatcherConfigChange}
+            scope={currentMatcher.scope}
           />
         </InlineField>
       </InlineFieldRow>
@@ -97,17 +87,6 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     </>
   );
 }
-
-export const configFromQueryTransformRegistryItem: TransformerRegistryItem<ConfigFromQueryTransformOptions> = {
-  id: configFromDataTransformer.id,
-  editor: ConfigFromQueryTransformerEditor,
-  transformation: configFromDataTransformer,
-  name: configFromDataTransformer.name,
-  description: configFromDataTransformer.description,
-  state: PluginState.beta,
-  categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getTransformationContent(configFromDataTransformer.id).helperDocs,
-};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   matcherOptions: css({

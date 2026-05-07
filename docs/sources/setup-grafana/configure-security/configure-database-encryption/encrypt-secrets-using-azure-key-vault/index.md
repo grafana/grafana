@@ -35,7 +35,6 @@ You can use an encryption key from Azure Key Vault to encrypt secrets in the Gra
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.azurekv.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.
    <br><br>b. Fill in the section with the following values:
    <br>
-
    - `tenant_id`: the **Directory ID** (tenant) from the application that you registered.
    - `client_id`: the **Application ID** (client) from the application that you registered.
    - `client_secret`: the VALUE of the secret that you generated in your app. (Don't use the Secret ID).

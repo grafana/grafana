@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
@@ -16,7 +16,7 @@ import {
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
   mockDataSources,
   setupVanillaAlertmanagerServer,
-} from './__mocks__/server';
+} from './mocks/server';
 
 const renderConfiguration = (
   alertManagerSourceName: string,
@@ -38,6 +38,11 @@ const ui = {
   resetConfirmButton: byRole('button', { name: /Yes, reset configuration/ }),
   saveButton: byRole('button', { name: /Save/ }),
   cancelButton: byRole('button', { name: /Cancel/ }),
+};
+
+const waitForEditableConfig = async () => {
+  await waitFor(() => expect(ui.saveButton.get()).toBeEnabled());
+  expect(ui.resetButton.get()).toBeEnabled();
 };
 
 describe('Alerting Settings', () => {
@@ -90,6 +95,7 @@ describe('vanilla Alertmanager', () => {
     expect(ui.cancelButton.get()).toBeInTheDocument();
     expect(ui.saveButton.get()).toBeInTheDocument();
     expect(ui.resetButton.get()).toBeInTheDocument();
+    await waitForEditableConfig();
   });
 
   it('should be able to reset non-Grafana alertmanager config', async () => {
@@ -99,6 +105,7 @@ describe('vanilla Alertmanager', () => {
     expect(ui.cancelButton.get()).toBeInTheDocument();
     expect(ui.saveButton.get()).toBeInTheDocument();
     expect(ui.resetButton.get()).toBeInTheDocument();
+    await waitForEditableConfig();
 
     await userEvent.click(ui.resetButton.get());
 

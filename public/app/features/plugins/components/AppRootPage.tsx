@@ -1,28 +1,30 @@
 // Libraries
-import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { type AnyAction, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import * as React from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import {
   AppEvents,
-  AppPlugin,
-  AppPluginMeta,
-  NavModel,
-  NavModelItem,
+  type AppPlugin,
+  type AppPluginMeta,
+  type NavModel,
+  type NavModelItem,
   OrgRole,
   PluginType,
   PluginContextProvider,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { getLogger } from '@grafana/runtime/unstable';
+import { Alert, ErrorWithStack } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 
 import {
@@ -32,11 +34,13 @@ import {
   useExposedComponentsRegistry,
   useAddedFunctionsRegistry,
 } from '../extensions/ExtensionRegistriesContext';
+import { pluginImporter } from '../importer/pluginImporter';
 import { getPluginSettings } from '../pluginSettings';
-import { importAppPlugin } from '../plugin_loader';
-import { buildPluginSectionNav, pluginsLogger } from '../utils';
+import { buildPluginSectionNav } from '../utils';
 
+import { PluginErrorBoundary } from './PluginErrorBoundary';
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
+import { RestrictedGrafanaApisProvider } from './restrictedGrafanaApis/RestrictedGrafanaApisProvider';
 
 interface Props {
   // The ID of the plugin we would like to load and display
@@ -81,8 +85,6 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     []
   );
 
-  const { t } = useTranslate();
-
   if (!plugin || pluginId !== plugin.meta.id) {
     // Use current layout while loading to reduce flickering
     const currentLayout = grafanaContext.chrome.state.getValue().layout;
@@ -108,22 +110,34 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
 
   const pluginRoot = plugin.root && (
     <PluginContextProvider meta={plugin.meta}>
-      <ExtensionRegistriesProvider
-        registries={{
-          addedLinksRegistry: addedLinksRegistry.readOnly(),
-          addedComponentsRegistry: addedComponentsRegistry.readOnly(),
-          exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
-          addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
-        }}
+      <PluginErrorBoundary
+        fallback={({ error, errorInfo }) => (
+          <ErrorWithStack
+            title={t('plugins.app-root-page.error-loading-plugin', 'Plugin failed to load')}
+            error={error}
+            errorInfo={errorInfo}
+          />
+        )}
       >
-        <plugin.root
-          meta={plugin.meta}
-          basename={location.pathname}
-          onNavChanged={onNavChanged}
-          query={queryParams}
-          path={location.pathname}
-        />
-      </ExtensionRegistriesProvider>
+        <RestrictedGrafanaApisProvider pluginId={pluginId}>
+          <ExtensionRegistriesProvider
+            registries={{
+              addedLinksRegistry: addedLinksRegistry.readOnly(),
+              addedComponentsRegistry: addedComponentsRegistry.readOnly(),
+              exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
+              addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
+            }}
+          >
+            <plugin.root
+              meta={plugin.meta}
+              basename={location.pathname}
+              onNavChanged={onNavChanged}
+              query={queryParams}
+              path={location.pathname}
+            />
+          </ExtensionRegistriesProvider>
+        </RestrictedGrafanaApisProvider>
+      </PluginErrorBoundary>
     </PluginContextProvider>
   );
 
@@ -222,7 +236,7 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
         dispatch(stateSlice.actions.setState({ pluginNav: getWarningNav(error) }));
         return null;
       }
-      return importAppPlugin(info);
+      return pluginImporter.importApp(info);
     });
     dispatch(stateSlice.actions.setState({ plugin: app, loading: false, loadingError: false, pluginNav: null }));
   } catch (err) {
@@ -235,7 +249,7 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
       })
     );
     const error = err instanceof Error ? err : new Error(getMessageFromError(err));
-    pluginsLogger.logError(error);
+    getLogger('features.plugins').logError(error);
     console.error(error);
   }
 }

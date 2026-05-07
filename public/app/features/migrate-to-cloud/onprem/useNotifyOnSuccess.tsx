@@ -1,12 +1,14 @@
 import { useRef, useEffect } from 'react';
 
-import { TFunction, useTranslate } from '@grafana/i18n';
+import {
+  type GetSnapshotResponseDto,
+  type SnapshotDto,
+} from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { t } from '@grafana/i18n';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { GetSnapshotResponseDto, SnapshotDto } from '../api';
-
 import { pluralizeResourceName } from './resourceInfo';
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 
 // After the number of distinct resource types migrated exceeeds this value, we display a generic success message.
 const SUCCESS_MESSAGE_ITEM_TYPES_THRESHOLD = 4;
@@ -14,7 +16,7 @@ const SUCCESS_MESSAGE_ITEM_TYPES_THRESHOLD = 4;
 export function useNotifySuccessful(snapshot: GetSnapshotResponseDto | undefined) {
   const previousStatusRef = useRef<SnapshotDto['status']>(undefined);
   const notifyApp = useAppNotification();
-  const { t } = useTranslate();
+
   useEffect(() => {
     const status = snapshot?.status;
     const didJustFinish =
@@ -28,14 +30,14 @@ export function useNotifySuccessful(snapshot: GetSnapshotResponseDto | undefined
 
     if (snapshot) {
       const title = t('migrate-to-cloud.onprem.success-title', 'Migration completed!');
-      const message = getTranslatedMessage(snapshot, t);
+      const message = getTranslatedMessage(snapshot);
 
       notifyApp.success(title, message);
     }
-  }, [notifyApp, snapshot, t]);
+  }, [notifyApp, snapshot]);
 }
 
-function getTranslatedMessage(snapshot: GetSnapshotResponseDto, t: TFunction) {
+function getTranslatedMessage(snapshot: GetSnapshotResponseDto) {
   const types: string[] = [];
 
   let distinctItems = 0;

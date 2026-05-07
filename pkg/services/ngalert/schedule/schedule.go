@@ -18,9 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule/ticker"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/ticker"
 )
 
 // ScheduleService is an interface for a service that schedules the evaluation
@@ -29,10 +29,9 @@ type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
+	// Status returns the status of a rule's last evaluation.
+	Status(ctx context.Context, key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool)
 }
-
-// retryDelay represents how long to wait between each failed rule evaluation.
-const retryDelay = 1 * time.Second
 
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
 //
@@ -67,7 +66,7 @@ type schedule struct {
 	// each rule gets its own channel and routine
 	registry ruleRegistry
 
-	maxAttempts int64
+	retryConfig RetryConfig
 
 	clock clock.Clock
 
@@ -87,7 +86,8 @@ type schedule struct {
 
 	evaluatorFactory eval.EvaluatorFactory
 
-	ruleStore RulesStore
+	ruleStore      RulesStore
+	ruleChainStore RuleChainStore
 
 	stateManager *state.Manager
 
@@ -112,9 +112,17 @@ type schedule struct {
 	recordingWriter RecordingWriter
 }
 
+// RetryConfig configures the exponential backoff for alert rule and recording rule evaluations.
+type RetryConfig struct {
+	MaxAttempts         int64
+	InitialRetryDelay   time.Duration
+	MaxRetryDelay       time.Duration
+	RandomizationFactor float64
+}
+
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	MaxAttempts            int64
+	RetryConfig            RetryConfig
 	BaseInterval           time.Duration
 	C                      clock.Clock
 	MinRuleInterval        time.Duration
@@ -136,19 +144,20 @@ type SchedulerCfg struct {
 // NewScheduler returns a new scheduler.
 func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	const minMaxAttempts = int64(1)
-	if cfg.MaxAttempts < minMaxAttempts {
-		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.MaxAttempts, "actual", minMaxAttempts)
-		cfg.MaxAttempts = minMaxAttempts
+	if cfg.RetryConfig.MaxAttempts < minMaxAttempts {
+		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.RetryConfig.MaxAttempts, "actual", minMaxAttempts)
+		cfg.RetryConfig.MaxAttempts = minMaxAttempts
 	}
 
 	sch := schedule{
 		registry:               newRuleRegistry(),
-		maxAttempts:            cfg.MaxAttempts,
+		retryConfig:            cfg.RetryConfig,
 		clock:                  cfg.C,
 		baseInterval:           cfg.BaseInterval,
 		log:                    cfg.Log,
 		evaluatorFactory:       cfg.EvaluatorFactory,
 		ruleStore:              cfg.RuleStore,
+		ruleChainStore:         &NoopRuleChainStore{},
 		metrics:                cfg.Metrics,
 		appURL:                 cfg.AppURL,
 		disableGrafanaFolder:   cfg.DisableGrafanaFolder,
@@ -168,8 +177,8 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
-	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval, "maxAttempts", sch.maxAttempts)
-	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker)
+	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval, "maxAttempts", sch.retryConfig.MaxAttempts)
+	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker, sch.log)
 	defer t.Stop()
 
 	if err := sch.schedulePeriodic(ctx, t); err != nil {
@@ -186,7 +195,7 @@ func (sch *schedule) Rules() ([]*ngmodels.AlertRule, map[ngmodels.FolderKey]stri
 }
 
 // Status fetches the health of a given scheduled rule, by key.
-func (sch *schedule) Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool) {
+func (sch *schedule) Status(_ context.Context, key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool) {
 	if rule, ok := sch.registry.get(key); ok {
 		return rule.Status(), true
 	}
@@ -256,6 +265,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 		case <-ctx.Done():
 			// waiting for all rule evaluation routines to stop
 			waitErr := dispatcherGroup.Wait()
+			sch.metrics.ResetOnStop()
 			return waitErr
 		}
 	}
@@ -296,10 +306,11 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	updatedRules := make([]ngmodels.AlertRuleKeyWithVersion, 0, len(updated)) // this is needed for tests only
 	restartedRules := make([]Rule, 0)
 	missingFolder := make(map[string][]string)
+
 	ruleFactory := newRuleFactory(
 		sch.appURL,
 		sch.disableGrafanaFolder,
-		sch.maxAttempts,
+		sch.retryConfig,
 		sch.alertsSender,
 		sch.stateManager,
 		sch.evaluatorFactory,
@@ -314,9 +325,21 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.stopAppliedFunc,
 	)
 	for _, item := range alertRules {
-		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, item, ruleFactory)
 		key := item.GetKey()
 		logger := sch.log.FromContext(ctx).New(key.LogContext()...)
+
+		var folderTitle string
+		if !sch.disableGrafanaFolder {
+			title, ok := folderTitles[item.GetFolderKey()]
+			if ok {
+				folderTitle = title
+			} else {
+				missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
+			}
+		}
+
+		rf := ruleWithFolder{rule: item, folderTitle: folderTitle}
+		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, rf, ruleFactory)
 
 		// enforce minimum evaluation interval
 		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
@@ -331,7 +354,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 			logger.Debug("Rule restarted because type changed", "old", ruleRoutine.Type(), "new", item.Type())
 			restartedRules = append(restartedRules, ruleRoutine)
 			sch.registry.del(key)
-			ruleRoutine, newRoutine = sch.registry.getOrCreate(ctx, item, ruleFactory)
+			ruleRoutine, newRoutine = sch.registry.getOrCreate(ctx, rf, ruleFactory)
 		}
 
 		if newRoutine && !invalidInterval {
@@ -351,16 +374,6 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		offset := jitterOffsetInTicks(item, sch.baseInterval, sch.jitterEvaluations)
 		isReadyToRun := item.IntervalSeconds != 0 && (tickNum%itemFrequency)-offset == 0
 
-		var folderTitle string
-		if !sch.disableGrafanaFolder {
-			title, ok := folderTitles[item.GetFolderKey()]
-			if ok {
-				folderTitle = title
-			} else {
-				missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
-			}
-		}
-
 		if isReadyToRun {
 			logger.Debug("Rule is ready to run on the current tick", "tick", tick, "frequency", itemFrequency, "offset", offset)
 			readyToRun = append(readyToRun, readyToRunItem{ruleRoutine: ruleRoutine, Evaluation: Evaluation{
@@ -372,12 +385,12 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
 			logger.Debug("Rule has been updated. Notifying evaluation routine")
-			go func(routine Rule, rule *ngmodels.AlertRule) {
+			go func(routine Rule, rule *ngmodels.AlertRule, folder string) {
 				routine.Update(&Evaluation{
 					rule:        rule,
-					folderTitle: folderTitle,
+					folderTitle: folder,
 				})
-			}(ruleRoutine, item)
+			}(ruleRoutine, item, folderTitle)
 			updatedRules = append(updatedRules, ngmodels.AlertRuleKeyWithVersion{
 				Version:      item.Version,
 				AlertRuleKey: item.GetKey(),

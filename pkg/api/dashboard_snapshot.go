@@ -2,15 +2,14 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
+	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -19,22 +18,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 // r.Post("/api/snapshots/"
 func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
 		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
 		return func(w http.ResponseWriter, r *http.Request) {
-			user, err := identity.GetRequester(r.Context())
-			if err != nil || user == nil {
-				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
+			requester, err := identity.GetRequester(r.Context())
+			if err != nil || requester == nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				_, _ = w.Write([]byte(`{"message":"Unauthorized"}`))
 				return
 			}
-			r.URL.Path = "/apis/dashboardsnapshot.grafana.app/v0alpha1/namespaces/" +
-				namespaceMapper(user.GetOrgID()) + "/dashboardsnapshots/create"
+			r.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
+				namespaceMapper(requester.GetOrgID()) + "/snapshots/create"
 			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
 		}
 	}
@@ -57,7 +57,7 @@ func (hs *HTTPServer) GetSharingOptions(c *contextmodel.ReqContext) {
 	})
 }
 
-// swagger:route POST /snapshots snapshots createDashboardSnapshot
+// swagger:route POST /snapshots dashboards snapshots createDashboardSnapshot
 //
 // When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI.
 //
@@ -75,25 +75,32 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 		return
 	}
 
-	// Do not check permissions when the instance snapshot public mode is enabled
-	if !hs.Cfg.SnapshotPublicMode {
-		evaluator := ac.EvalAll(ac.EvalPermission(dashboards.ActionSnapshotsCreate), ac.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(cmd.Dashboard.GetNestedString("uid"))))
-		if canSave, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canSave {
-			c.JsonApiErr(http.StatusForbidden, "forbidden", err)
-			return
-		}
+	cfg := snapshot.SnapshotSharingOptions{
+		SnapshotsEnabled:      hs.Cfg.SnapshotEnabled,
+		ExternalEnabled:       hs.Cfg.ExternalEnabled,
+		ExternalSnapshotName:  hs.Cfg.ExternalSnapshotName,
+		ExternalSnapshotURL:   hs.Cfg.ExternalSnapshotUrl,
+		ExternalSnapshotToken: hs.Cfg.ExternalSnapshotToken,
 	}
 
-	dashboardsnapshots.CreateDashboardSnapshot(c, dashboardsnapshot.SnapshotSharingOptions{
-		SnapshotsEnabled:     hs.Cfg.SnapshotEnabled,
-		ExternalEnabled:      hs.Cfg.ExternalEnabled,
-		ExternalSnapshotName: hs.Cfg.ExternalSnapshotName,
-		ExternalSnapshotURL:  hs.Cfg.ExternalSnapshotUrl,
-	}, cmd, hs.dashboardsnapshotsService)
+	if hs.Cfg.SnapshotPublicMode {
+		// Public mode: no user or dashboard validation needed
+		dashboardsnapshots.CreateDashboardSnapshotPublic(c, cfg, cmd, hs.dashboardsnapshotsService)
+		return
+	}
+
+	// Regular mode: check permissions
+	evaluator := ac.EvalAll(ac.EvalPermission(dashboards.ActionSnapshotsCreate), ac.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(cmd.Dashboard.GetNestedString("uid"))))
+	if canSave, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canSave {
+		c.JsonApiErr(http.StatusForbidden, "forbidden", err)
+		return
+	}
+
+	dashboardsnapshots.CreateDashboardSnapshot(c, cfg, cmd, hs.dashboardsnapshotsService)
 }
 
 // GET /api/snapshots/:key
-// swagger:route GET /snapshots/{key} snapshots getDashboardSnapshot
+// swagger:route GET /snapshots/{key} dashboards snapshots getDashboardSnapshot
 //
 // Get Snapshot by Key.
 //
@@ -142,7 +149,7 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.
 	return response.JSON(http.StatusOK, dto).SetHeader("Cache-Control", "public, max-age=3600")
 }
 
-// swagger:route GET /snapshots-delete/{deleteKey} snapshots deleteDashboardSnapshotByDeleteKey
+// swagger:route GET /snapshots-delete/{deleteKey} dashboards snapshots deleteDashboardSnapshotByDeleteKey
 //
 // Delete Snapshot by deleteKey.
 //
@@ -178,7 +185,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqCont
 	})
 }
 
-// swagger:route DELETE /snapshots/{key} snapshots deleteDashboardSnapshot
+// swagger:route DELETE /snapshots/{key} dashboards snapshots deleteDashboardSnapshot
 //
 // Delete Snapshot by Key.
 //
@@ -212,13 +219,6 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusUnauthorized, "OrgID mismatch", nil)
 	}
 
-	if queryResult.External {
-		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to delete external dashboard", err)
-		}
-	}
-
 	// Dashboard can be empty (creation error or external snapshot). This means that the mustInt here returns a 0,
 	// which before RBAC would result in a dashboard which has no ACL. A dashboard without an ACL would fallback
 	// to the user’s org role, which for editors and admins would essentially always be allowed here. With RBAC,
@@ -238,6 +238,13 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 		}
 	}
 
+	if queryResult.External {
+		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to delete external dashboard", err)
+		}
+	}
+
 	cmd := &dashboardsnapshots.DeleteDashboardSnapshotCommand{DeleteKey: queryResult.DeleteKey}
 
 	if err := hs.dashboardsnapshotsService.DeleteDashboardSnapshot(c.Req.Context(), cmd); err != nil {
@@ -250,7 +257,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	})
 }
 
-// swagger:route GET /dashboard/snapshots snapshots searchDashboardSnapshots
+// swagger:route GET /dashboard/snapshots dashboards snapshots searchDashboardSnapshots
 //
 // List snapshots.
 //
@@ -266,7 +273,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 
-	if limit == 0 {
+	if limit <= 0 {
 		limit = 1000
 	}
 

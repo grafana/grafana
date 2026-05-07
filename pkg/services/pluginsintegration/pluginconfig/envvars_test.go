@@ -2,6 +2,7 @@ package pluginconfig
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +30,7 @@ func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 			},
 		}
 
-		licensing := &fakes.FakeLicensingService{
+		licensing := &pluginfakes.FakeLicensingService{
 			LicenseEdition: "test",
 			TokenRaw:       "token",
 			LicensePath:    "/path/to/ent/license",
@@ -46,7 +47,7 @@ func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 			Features:             featuremgmt.WithFeatures(),
 		}
 
-		provider := NewEnvVarsProvider(cfg, licensing)
+		provider := NewEnvVarsProvider(cfg, licensing, &fakeSSOSettingsProvider{})
 		envVars := provider.PluginEnvVars(context.Background(), p)
 		assert.Len(t, envVars, 6)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
@@ -77,7 +78,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		provider := NewEnvVarsProvider(pCfg, nil)
+		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{})
 		envVars := provider.PluginEnvVars(context.Background(), p)
 
 		// We want to test that the envvars.Provider does not add any of the host env vars.
@@ -93,7 +94,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 		cfg := setting.NewCfg()
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
-		provider := NewEnvVarsProvider(pCfg, nil)
+		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{})
 
 		t.Run("should populate allowed host env vars", func(t *testing.T) {
 			// Set all allowed variables
@@ -418,7 +419,7 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			p := NewEnvVarsProvider(tc.cfg, nil)
+			p := NewEnvVarsProvider(tc.cfg, nil, &fakeSSOSettingsProvider{})
 			envVars := p.PluginEnvVars(context.Background(), tc.plugin)
 			tc.exp(t, envVars)
 		})
@@ -473,7 +474,7 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		provider := NewEnvVarsProvider(pCfg, nil)
+		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{})
 		envVars := provider.PluginEnvVars(context.Background(), p)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
 		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[1])
@@ -484,28 +485,89 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 }
 
 func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
-	t.Run("backend datasource with aws settings", func(t *testing.T) {
-		tcs := []struct {
-			name             string
-			pluginID         string
-			forwardToPlugins []string
-			expected         []string
-		}{
-			{
-				name:             "Will generate AWS env vars for plugin as long as is in the forwardToPlugins list",
-				forwardToPlugins: []string{"foobar-datasource", "cloudwatch", "prometheus"},
-				pluginID:         "cloudwatch",
-				expected:         []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100"},
+	tcs := []struct {
+		name             string
+		pluginID         string
+		forwardToPlugins []string
+		hostEnvVars      map[string]string
+		expected         []string
+		unexpectedKeys   []string
+	}{
+		{
+			name:             "generates AWS auth settings for whitelisted plugin",
+			forwardToPlugins: []string{"foobar-datasource", "cloudwatch", "prometheus"},
+			pluginID:         "cloudwatch",
+			expected:         []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100"},
+		},
+		{
+			name:             "does not generate AWS env vars for non-whitelisted plugin",
+			forwardToPlugins: []string{"cloudwatch", "foobar-datasource"},
+			pluginID:         "prometheus",
+			expected:         []string{"GF_VERSION="},
+		},
+		{
+			name:             "forwards AWS SDK credential chain env vars for whitelisted plugin",
+			forwardToPlugins: []string{"cloudwatch"},
+			pluginID:         "cloudwatch",
+			hostEnvVars: map[string]string{
+				"AWS_ROLE_ARN":                           "arn:aws:iam::123456789012:role/test-role",
+				"AWS_WEB_IDENTITY_TOKEN_FILE":            "/var/run/secrets/token",
+				"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": "/v2/credentials/uuid",
+				"AWS_REGION":                             "us-east-1",
 			},
-			{
-				name:             "Will not generate AWS env vars for plugin as long as is in not the forwardToPlugins list",
-				forwardToPlugins: []string{"cloudwatch", "foobar-datasource"},
-				pluginID:         "prometheus",
-				expected:         []string{"GF_VERSION="},
+			expected: []string{
+				"GF_VERSION=",
+				"AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys",
+				"AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100",
+				"AWS_ROLE_ARN=arn:aws:iam::123456789012:role/test-role",
+				"AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/token",
+				"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=/v2/credentials/uuid",
+				"AWS_REGION=us-east-1",
 			},
-		}
+		},
+		{
+			name:             "does not forward AWS SDK credential chain env vars for non-whitelisted plugin",
+			forwardToPlugins: []string{"cloudwatch"},
+			pluginID:         "some-other-plugin",
+			hostEnvVars: map[string]string{
+				"AWS_ROLE_ARN": "arn:aws:iam::123456789012:role/test-role",
+				"AWS_REGION":   "us-east-1",
+			},
+			expected:       []string{"GF_VERSION="},
+			unexpectedKeys: []string{"AWS_ROLE_ARN", "AWS_REGION"},
+		},
+		{
+			name:             "only forwards AWS SDK env vars that are set in the host environment",
+			forwardToPlugins: []string{"cloudwatch"},
+			pluginID:         "cloudwatch",
+			hostEnvVars: map[string]string{
+				"AWS_REGION": "eu-west-1",
+			},
+			expected: []string{
+				"GF_VERSION=",
+				"AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys",
+				"AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100",
+				"AWS_REGION=eu-west-1",
+			},
+			unexpectedKeys: []string{"AWS_ROLE_ARN", "AWS_WEB_IDENTITY_TOKEN_FILE", "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"},
+		},
+	}
 
-		for _, tc := range tcs {
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			// Clear any pre-existing AWS host env vars (e.g., from CI) that aren't
+			// explicitly set by this test case, so they don't leak into results.
+			for _, envVarName := range awsHostEnvVarNames {
+				if _, ok := tc.hostEnvVars[envVarName]; !ok {
+					t.Setenv(envVarName, "")
+					require.NoError(t, os.Unsetenv(envVarName))
+				}
+			}
+
+			for k, v := range tc.hostEnvVars {
+				t.Setenv(k, v)
+			}
+
 			p := &plugins.Plugin{
 				JSONData: plugins.JSONData{
 					ID: tc.pluginID,
@@ -521,11 +583,16 @@ func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
 				Features:                  featuremgmt.WithFeatures(),
 			}
 
-			provider := NewEnvVarsProvider(cfg, nil)
+			provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{})
 			envVars := provider.PluginEnvVars(context.Background(), p)
 			assert.ElementsMatch(t, tc.expected, envVars)
-		}
-	})
+
+			for _, key := range tc.unexpectedKeys {
+				_, ok := getEnvVarWithExists(envVars, key)
+				assert.False(t, ok, "env var %s should not be present", key)
+			}
+		})
+	}
 }
 
 func TestPluginEnvVarsProvider_featureToggleEnvVar(t *testing.T) {
@@ -540,7 +607,7 @@ func TestPluginEnvVarsProvider_featureToggleEnvVar(t *testing.T) {
 			Features: featuremgmt.WithFeatures(expectedFeatures[0], true, expectedFeatures[1], true),
 		}
 
-		p := NewEnvVarsProvider(cfg, nil)
+		p := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{})
 		envVars := p.PluginEnvVars(context.Background(), &plugins.Plugin{})
 		assert.Equal(t, 2, len(envVars))
 
@@ -591,7 +658,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		provider := NewEnvVarsProvider(pCfg, nil)
+		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{})
 		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{})
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_AZURE_AUTH_ENABLED=true",
 			"GFAZPL_MANAGED_IDENTITY_ENABLED=true",
@@ -606,6 +673,115 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_CLIENT_ID=mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET=mock_user_identity_client_secret",
 			"GFAZPL_USER_IDENTITY_ASSERTION=username",
+		}, envVars)
+	})
+
+	t.Run("sets user token endpoint settings from SSO settings for an Azure plugin", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw: ini.Empty(),
+			Azure: &azsettings.AzureSettings{
+				AzureAuthEnabled:        true,
+				Cloud:                   azsettings.AzurePublic,
+				ManagedIdentityEnabled:  true,
+				ManagedIdentityClientId: "mock_managed_identity_client_id",
+				WorkloadIdentityEnabled: true,
+				WorkloadIdentitySettings: &azsettings.WorkloadIdentitySettings{
+					TenantId:  "mock_workload_identity_tenant_id",
+					ClientId:  "mock_workload_identity_client_id",
+					TokenFile: "mock_workload_identity_token_file",
+				},
+				UserIdentityEnabled:                    true,
+				UserIdentityFallbackCredentialsEnabled: true,
+				UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
+					TokenUrl:          "mock_user_identity_token_url",
+					ClientId:          "mock_user_identity_client_id",
+					ClientSecret:      "mock_user_identity_client_secret",
+					UsernameAssertion: true,
+				},
+			},
+		}
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{
+			GetForProviderFunc: getAzureSSOSettings,
+		})
+		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{})
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_AZURE_AUTH_ENABLED=true",
+			"GFAZPL_MANAGED_IDENTITY_ENABLED=true",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID=mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED=true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID=mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID=mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE=mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED=true",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED=true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL=sso_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_AUTHENTICATION=sso_user_client_authentication",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID=sso_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET=sso_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_MANAGED_IDENTITY_CLIENT_ID=sso_user_identity_managed_identity_client_id",
+			"GFAZPL_USER_IDENTITY_FEDERATED_CREDENTIAL_AUDIENCE=sso_user_identity_federated_credential_audience",
+			"GFAZPL_USER_IDENTITY_ASSERTION=username",
+		}, envVars)
+	})
+
+	t.Run("does not use SSO settings if overrides have been set for an Azure plugin", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw: ini.Empty(),
+			Azure: &azsettings.AzureSettings{
+				AzureAuthEnabled:        true,
+				Cloud:                   azsettings.AzurePublic,
+				ManagedIdentityEnabled:  true,
+				ManagedIdentityClientId: "mock_managed_identity_client_id",
+				WorkloadIdentityEnabled: true,
+				WorkloadIdentitySettings: &azsettings.WorkloadIdentitySettings{
+					TenantId:  "mock_workload_identity_tenant_id",
+					ClientId:  "mock_workload_identity_client_id",
+					TokenFile: "mock_workload_identity_token_file",
+				},
+				UserIdentityEnabled:                    true,
+				UserIdentityFallbackCredentialsEnabled: true,
+				UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
+					TokenUrl:                            "override_user_identity_token_url",
+					TokenUrlOverride:                    true,
+					ClientAuthentication:                "override_user_client_authentication",
+					ClientAuthenticationOverride:        true,
+					ClientId:                            "override_user_identity_client_id",
+					ClientIdOverride:                    true,
+					ClientSecret:                        "override_user_identity_client_secret",
+					ClientSecretOverride:                true,
+					ManagedIdentityClientId:             "override_user_identity_managed_identity_client_id",
+					ManagedIdentityClientIdOverride:     true,
+					FederatedCredentialAudience:         "override_user_identity_federated_credential_audience",
+					FederatedCredentialAudienceOverride: true,
+				},
+			},
+		}
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{
+			GetForProviderFunc: getAzureSSOSettings,
+		})
+		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{})
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_AZURE_AUTH_ENABLED=true",
+			"GFAZPL_MANAGED_IDENTITY_ENABLED=true",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID=mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED=true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID=mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID=mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE=mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED=true",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED=true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL=override_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_AUTHENTICATION=override_user_client_authentication",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID=override_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET=override_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_MANAGED_IDENTITY_CLIENT_ID=override_user_identity_managed_identity_client_id",
+			"GFAZPL_USER_IDENTITY_FEDERATED_CREDENTIAL_AUDIENCE=override_user_identity_federated_credential_audience",
 		}, envVars)
 	})
 }

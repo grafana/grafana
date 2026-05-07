@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 import { useToggle } from 'react-use';
 
-import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
+import { getValueFormat, type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Collapse, Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
 
-import { QueryStats } from '../loki/types';
+import { type QueryStats } from '../loki/types';
 
 export interface Props {
   title: string;
@@ -25,7 +25,6 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats, o
     <div className={styles.wrapper}>
       <Collapse
         className={styles.collapse}
-        collapsible
         isOpen={propsIsOpen ?? isOpen}
         onToggle={onToggle ?? toggleOpen}
         label={

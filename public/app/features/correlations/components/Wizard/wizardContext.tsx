@@ -1,6 +1,6 @@
-import { createContext, PropsWithChildren, useContext, useState } from 'react';
+import { createContext, type PropsWithChildren, useContext, useState } from 'react';
 import * as React from 'react';
-import { FieldValues } from 'react-hook-form';
+import { type FieldValues } from 'react-hook-form';
 
 export type WizardContextProps<T> = {
   currentPage: number;

@@ -1,16 +1,17 @@
-import {
-  DataTransformerID,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
-import { TransposeTransformerOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { type TransformerUIProps, type SpecialValue, type SelectableValue } from '@grafana/data';
+import { type TransposeTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
+import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
-  const { t } = useTranslate();
+import { getEmptyOptions } from '../utils';
+
+export const TransposeTransformerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
+  const onSelectEmptyValue = (value?: SelectableValue<SpecialValue>) => {
+    onChange({
+      ...options,
+      emptyValue: value?.value,
+    });
+  };
 
   return (
     <>
@@ -41,15 +42,11 @@ export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIPr
           />
         </InlineField>
       </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label={t('transformers.grouping-to-matrix-transformer-editor.label-empty-value', 'Empty value')}>
+          <Select options={getEmptyOptions()} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />
+        </InlineField>
+      </InlineFieldRow>
     </>
   );
-};
-
-export const transposeTransformerRegistryItem: TransformerRegistryItem<TransposeTransformerOptions> = {
-  id: DataTransformerID.transpose,
-  editor: TransposeTransfomerEditor,
-  transformation: standardTransformers.transposeTransformer,
-  name: standardTransformers.transposeTransformer.name,
-  description: standardTransformers.transposeTransformer.description,
-  categories: new Set([TransformerCategory.Reformat]),
 };

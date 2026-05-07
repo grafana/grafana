@@ -1,5 +1,5 @@
-import { AzureDataSourceSettings } from '@grafana/azure-sdk';
-import { GrafanaBootConfig } from '@grafana/runtime';
+import { type AzureDataSourceSettings } from '@grafana/azure-sdk';
+import { type GrafanaBootConfig } from '@grafana/runtime';
 
 export const configWithManagedIdentityEnabled: Partial<GrafanaBootConfig> = {
   azure: {

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import * as React from 'react';
 
-import { PanelData } from '@grafana/data';
+import { type PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
@@ -13,7 +13,7 @@ import {
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
-import { getPanelFrameOptions } from './getPanelFrameOptions';
+import { getPanelFrameOptions, getPanelStylesOptions } from './getPanelFrameOptions';
 
 interface Props {
   panel: VizPanel;
@@ -26,6 +26,7 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
 
   const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
+  const panelStylesOptions = useMemo(() => getPanelStylesOptions(panel), [panel]);
 
   const visualizationOptions = useMemo(() => {
     const plugin = panel.getPlugin();
@@ -77,7 +78,12 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
   if (isSearching) {
     mainBoxElements.push(
       renderSearchHits(
-        [panelFrameOptions, ...(libraryPanelOptions ? [libraryPanelOptions] : []), ...(visualizationOptions ?? [])],
+        [
+          panelFrameOptions,
+          ...(panelStylesOptions ? [panelStylesOptions] : []),
+          ...(libraryPanelOptions ? [libraryPanelOptions] : []),
+          ...(visualizationOptions ?? []),
+        ],
         justOverrides,
         searchQuery
       )
@@ -87,21 +93,24 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       case OptionFilter.All:
         if (libraryPanelOptions) {
           // Library Panel options first
-          mainBoxElements.push(libraryPanelOptions.render());
+          mainBoxElements.push(libraryPanelOptions.renderElement());
         }
-        mainBoxElements.push(panelFrameOptions.render());
+        mainBoxElements.push(panelFrameOptions.renderElement());
+        if (panelStylesOptions) {
+          mainBoxElements.push(panelStylesOptions.renderElement());
+        }
 
         for (const item of visualizationOptions ?? []) {
-          mainBoxElements.push(item.render());
+          mainBoxElements.push(item.renderElement());
         }
 
         for (const item of justOverrides) {
-          mainBoxElements.push(item.render());
+          mainBoxElements.push(item.renderElement());
         }
         break;
       case OptionFilter.Overrides:
         for (const item of justOverrides) {
-          mainBoxElements.push(item.render());
+          mainBoxElements.push(item.renderElement());
         }
       default:
         break;

@@ -10,8 +10,8 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaGlobalRole = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", &GlobalRole{}, &GlobalRoleList{}, resource.WithKind("GlobalRole"),
-		resource.WithPlural("globalroles"), resource.WithScope(resource.NamespacedScope))
+	schemaGlobalRole = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewGlobalRole(), &GlobalRoleList{}, resource.WithKind("GlobalRole"),
+		resource.WithPlural("globalroles"), resource.WithScope(resource.ClusterScope))
 	kindGlobalRole = resource.Kind{
 		Schema: schemaGlobalRole,
 		Codecs: map[resource.KindEncoding]resource.Codec{

@@ -89,7 +89,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			},
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
 	t.Run("ErrValidation if referenced active time interval does not exist", func(t *testing.T) {
@@ -104,7 +104,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			},
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
 	t.Run("ErrValidation if root route has no receiver", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			Receiver: "",
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
 	t.Run("ErrValidation if referenced receiver does not exist", func(t *testing.T) {
@@ -133,7 +133,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			Receiver: "unknown",
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 
 		t.Run("including sub-routes", func(t *testing.T) {
 			newRoute := definitions.Route{
@@ -143,7 +143,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 				},
 			}
 			_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-			require.ErrorIs(t, err, ErrRouteInvalidFormat)
+			require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 		})
 	})
 
@@ -174,7 +174,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		expectedRev.Config.AlertmanagerConfig.Route = &route
 
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			assert.Equal(t, models.ProvenanceAPI, from)
 			assert.Equal(t, models.ProvenanceNone, to)
 			return expectedErr
@@ -187,6 +187,93 @@ func TestUpdatePolicyTree(t *testing.T) {
 		assert.Equal(t, "GetProvenance", prov.Calls[0].MethodName)
 		assert.IsType(t, &definitions.Route{}, prov.Calls[0].Arguments[1])
 		assert.Equal(t, orgID, prov.Calls[0].Arguments[2].(int64))
+	})
+
+	t.Run("ErrRouteConflictingMatchers if the new route has conflicting matchers ", func(t *testing.T) {
+		rev := getDefaultConfigRevision()
+		rev.Config.ExtraConfigs = append(rev.Config.ExtraConfigs, definitions.ExtraConfiguration{
+			Identifier: "test",
+			MergeMatchers: config.Matchers{
+				{
+					Type:  labels.MatchEqual,
+					Name:  "imported",
+					Value: "true",
+				},
+			},
+			AlertmanagerConfig: `{"route":{"receiver":"mimir-receiver"},"receivers":[{"name":"mimir-receiver"}]}`,
+		})
+
+		route := definitions.Route{
+			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			Routes: []*definitions.Route{
+				{
+					ObjectMatchers: definitions.ObjectMatchers{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "imported",
+							Value: "true",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "label",
+							Value: "value",
+						},
+					},
+				},
+			},
+		}
+
+		sut, store, _ := createNotificationPolicyServiceSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &rev, nil
+		}
+
+		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, route, models.ProvenanceAPI, defaultVersion)
+		require.ErrorIs(t, err, models.ErrRouteConflictingMatchers)
+	})
+
+	t.Run("should ignore extra config validation if it is invalid", func(t *testing.T) {
+		extra := definitions.ExtraConfiguration{
+			MergeMatchers: config.Matchers{
+				{
+					Type:  labels.MatchEqual,
+					Name:  "imported",
+					Value: "true",
+				},
+			},
+		}
+		rev := getDefaultConfigRevision()
+		rev.Config.ExtraConfigs = append(rev.Config.ExtraConfigs, extra)
+
+		route := definitions.Route{
+			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			Routes: []*definitions.Route{
+				{
+					ObjectMatchers: definitions.ObjectMatchers{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "imported",
+							Value: "true",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "label",
+							Value: "value",
+						},
+					},
+				},
+			},
+		}
+
+		sut, store, _ := createNotificationPolicyServiceSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &rev, nil
+		}
+
+		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, route, models.ProvenanceAPI, defaultVersion)
+		require.NoError(t, err)
+		assert.Equal(t, route, result)
+		assert.Equal(t, calculateRouteFingerprint(route), version)
 	})
 
 	t.Run("updates Route and sets provenance in transaction if route is valid and version matches", func(t *testing.T) {
@@ -261,14 +348,14 @@ func TestResetPolicyTree(t *testing.T) {
 	currentRevision.Config.TemplateFiles = map[string]string{
 		"test": "test",
 	}
-	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []config.TimeInterval{
+	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []definitions.TimeInterval{
 		{
 			Name: "test",
 		},
 	}
 	currentRevision.Config.AlertmanagerConfig.Receivers = []*definitions.PostableApiReceiver{
 		{
-			Receiver: config.Receiver{Name: "receiver"},
+			Receiver: definitions.Receiver{Name: "receiver"},
 			PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
 				GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 					{
@@ -295,7 +382,7 @@ func TestResetPolicyTree(t *testing.T) {
 		}
 
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			assert.Equal(t, models.ProvenanceAPI, from)
 			assert.Equal(t, models.ProvenanceNone, to)
 			return expectedErr
@@ -355,8 +442,8 @@ func TestResetPolicyTree(t *testing.T) {
 
 func TestRoute_Fingerprint(t *testing.T) {
 	// Test that the fingerprint is stable.
-	mustRegex := func(rg string) config.Regexp {
-		var regex config.Regexp
+	mustRegex := func(rg string) definitions.Regexp {
+		var regex definitions.Regexp
 		require.NoError(t, json.Unmarshal([]byte(rg), &regex))
 		return regex
 	}
@@ -374,7 +461,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 			},
 			GroupByAll: true,
 			Match:      map[string]string{"Match1": "MatchValue1", "Match2": "MatchValue2"},
-			MatchRE: map[string]config.Regexp{
+			MatchRE: map[string]definitions.Regexp{
 				"MatchRE": mustRegex(`".*"`),
 			},
 			Matchers: config.Matchers{
@@ -405,7 +492,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 		},
 		GroupByAll: false,
 		Match:      map[string]string{"Match1_2": "MatchValue1", "Match2": "MatchValue2_2"},
-		MatchRE: map[string]config.Regexp{
+		MatchRE: map[string]definitions.Regexp{
 			"MatchRE": mustRegex(`".+"`),
 		},
 		Matchers: config.Matchers{
@@ -428,13 +515,14 @@ func TestRoute_Fingerprint(t *testing.T) {
 	}
 
 	t.Run("stable across code changes", func(t *testing.T) {
-		expectedFingerprint := "7faba12778df93b8" // If this is a valid fingerprint generation change, update the expected value.
+		expectedFingerprint := "450c06a7f4a66675" // If this is a valid fingerprint generation change, update the expected value.
 		assert.Equal(t, expectedFingerprint, calculateRouteFingerprint(baseRouteGen()))
 	})
 	t.Run("unstable across field modification", func(t *testing.T) {
 		fingerprint := calculateRouteFingerprint(baseRouteGen())
 		excludedFields := map[string]struct{}{
-			"Routes": {},
+			"Routes":     {},
+			"Provenance": {},
 		}
 
 		reflectVal := reflect.ValueOf(&completelyDifferentRoute).Elem()
@@ -482,7 +570,7 @@ func createNotificationPolicyServiceSut() (*NotificationPolicyService, *legacy_s
 		settings: setting.UnifiedAlertingSettings{
 			DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
 		},
-		validator: func(from, to models.Provenance) error {
+		validator: func(_ context.Context, from, to models.Provenance) error {
 			return nil
 		},
 	}, configStore, prov
@@ -497,7 +585,7 @@ func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 						Receiver: "test-receiver",
 					},
 					InhibitRules: nil,
-					TimeIntervals: []config.TimeInterval{
+					TimeIntervals: []definitions.TimeInterval{
 						{
 							Name: "test-mute-interval",
 						},
@@ -505,7 +593,7 @@ func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "test-receiver",
 						},
 					},

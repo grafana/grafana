@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import Tooltip, { TooltipRef } from 'rc-tooltip';
+import Tooltip, { type TooltipRef } from '@rc-component/tooltip';
 import { useEffect, useRef } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -44,10 +44,12 @@ const HandleTooltip = (props: {
 
   return (
     <Tooltip
-      overlayClassName={styles.tooltip}
+      classNames={{
+        container: styles.container,
+        root: styles.tooltip,
+      }}
       placement={placement}
       overlay={tipFormatter ?? value}
-      overlayInnerStyle={{ minHeight: 'auto' }}
       ref={tooltipRef}
       visible={visible}
       {...restProps}
@@ -67,6 +69,9 @@ const tooltipStyles = (theme: GrafanaTheme2) => {
       opacity: 0.9,
       padding: 3,
       zIndex: theme.zIndex.tooltip,
+    }),
+    container: css({
+      minHeight: 'auto',
     }),
   };
 };

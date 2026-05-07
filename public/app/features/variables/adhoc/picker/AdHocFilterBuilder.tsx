@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { AdHocFilterKey, REMOVE_FILTER_KEY } from './AdHocFilterKey';
 import { AdHocFilterRenderer } from './AdHocFilterRenderer';
@@ -46,8 +46,6 @@ export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, allF
     },
     [onCompleted, operator, key]
   );
-
-  const { t } = useTranslate();
 
   if (key === null) {
     return <AdHocFilterKey datasource={datasource} filterKey={key} onChange={onKeyChanged} allFilters={allFilters} />;

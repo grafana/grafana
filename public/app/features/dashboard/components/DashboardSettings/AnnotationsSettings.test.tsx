@@ -4,10 +4,15 @@ import { locationService } from '@grafana/runtime';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  usePanelPluginMetasMap: jest.fn().mockReturnValue({ loading: false, value: {}, error: undefined }),
+}));
 
 function setup(dashboard: DashboardModel, editIndex?: number) {
   const sectionNav = {

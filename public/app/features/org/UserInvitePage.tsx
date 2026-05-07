@@ -1,6 +1,9 @@
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
+
+import { UsersExternalButton } from '../users/UsersExternalButton';
 
 import UserInviteForm from './UserInviteForm';
 
@@ -12,8 +15,19 @@ export function UserInvitePage() {
     </Trans>
   );
 
+  const onExternalUserMngClick = () => {
+    reportInteraction('admin_manage_users_invite_form_action_clicked');
+  };
+
+  const actions = <UsersExternalButton onExternalUserMngClick={onExternalUserMngClick} />;
+
   return (
-    <Page navId="global-users" pageNav={{ text: 'Invite user' }} subTitle={subTitle}>
+    <Page
+      navId="global-users"
+      pageNav={{ text: t('org.user-invite-page.text.invite-user', 'Invite user') }}
+      subTitle={subTitle}
+      actions={actions}
+    >
       <Page.Contents>
         <UserInviteForm />
       </Page.Contents>

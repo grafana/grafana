@@ -1,22 +1,22 @@
 import { map } from 'lodash';
 
-import { AzureCredentials } from '@grafana/azure-sdk';
-import { ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { type AzureCredentials } from '@grafana/azure-sdk';
+import { type ScopedVars } from '@grafana/data';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import ResponseParser from '../azure_monitor/response_parser';
 import { getCredentials } from '../credentials';
+import { AzureQueryType } from '../dataquery.gen';
+import { type AzureMonitorQuery } from '../types/query';
 import {
-  AzureAPIResponse,
-  AzureLogsVariable,
-  AzureMonitorDataSourceInstanceSettings,
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorQuery,
-  AzureQueryType,
-  DatasourceValidationResult,
-  Subscription,
-  Workspace,
-} from '../types';
+  type AzureMonitorDataSourceJsonData,
+  type AzureMonitorDataSourceInstanceSettings,
+  type AzureAPIResponse,
+  type AzureLogsVariable,
+  type Workspace,
+  type DatasourceValidationResult,
+  type Subscription,
+} from '../types/types';
 import { interpolateVariable, routeNames } from '../utils/common';
 
 import { transformMetadataToKustoSchema } from './utils';

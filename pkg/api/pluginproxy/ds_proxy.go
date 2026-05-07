@@ -32,6 +32,8 @@ import (
 var (
 	logger = glog.New("data-proxy-log")
 	client = newHTTPClient()
+
+	errPluginProxyRouteAccessDenied = errors.New("plugin proxy route access denied")
 )
 
 type DataSourceProxy struct {
@@ -234,7 +236,17 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
 	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.cfg.LoginCookieName})
-	req.Header.Set("User-Agent", proxy.cfg.DataProxyUserAgent)
+	ua := proxy.cfg.DataProxyUserAgent
+	if proxy.cfg.DataProxyForwardUserAgent {
+		if originalUA := req.Header.Get("User-Agent"); originalUA != "" {
+			if ua != "" {
+				ua = ua + " " + originalUA
+			} else {
+				ua = originalUA
+			}
+		}
+	}
+	req.Header.Set("User-Agent", ua)
 
 	jsonData := make(map[string]any)
 	if proxy.ds.JsonData != nil {
@@ -300,20 +312,29 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 
 		// route match
-		r1, err := util.CleanRelativePath(proxy.proxyPath)
+		r1, err := plugins.CleanRelativePath(proxy.proxyPath)
 		if err != nil {
 			return err
 		}
-		r2, err := util.CleanRelativePath(route.Path)
+		r2, err := plugins.CleanRelativePath(route.Path)
 		if err != nil {
 			return err
+		}
+		// issues/116273: When we have an empty input route (or input that becomes relative to "."), we do not want it
+		//   to be ".". This is because the `CleanRelativePath` function will never return "./" prefixes, and as such,
+		//   the common prefix we need is an empty string.
+		if r1 == "." && proxy.proxyPath != "." {
+			r1 = ""
+		}
+		if r2 == "." && route.Path != "." {
+			r2 = ""
 		}
 		if !strings.HasPrefix(r1, r2) {
 			continue
 		}
 
 		if !proxy.hasAccessToRoute(route) {
-			return errors.New("plugin proxy route access denied")
+			return errPluginProxyRouteAccessDenied
 		}
 
 		proxy.matchedRoute = route

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { type JSX, useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';

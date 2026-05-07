@@ -1,18 +1,18 @@
 import { extend } from 'lodash';
 
 import {
-  AnalyticsSettings,
-  OrgRole,
+  type AnalyticsSettings,
+  type OrgRole,
   rangeUtil,
-  WithAccessControlMetadata,
+  type WithAccessControlMetadata,
   userHasPermission,
   userHasPermissionInMetadata,
   userHasAnyPermission,
 } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
 import { getSessionExpiry } from 'app/core/utils/auth';
-import { AccessControlAction, UserPermission } from 'app/types';
-import { CurrentUserInternal } from 'app/types/config';
+import { type UserPermission, AccessControlAction } from 'app/types/accessControl';
+import { type CurrentUserInternal } from 'app/types/config';
 
 import config from '../../core/config';
 
@@ -38,7 +38,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   gravatarUrl: string;
   timezone: string;
   weekStart: string;
-  locale: string;
+  regionalFormat: string;
   language: string;
   helpFlags1: number;
   hasEditPermissionInFolders: boolean;
@@ -65,7 +65,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
     this.hasEditPermissionInFolders = false;
     this.email = '';
     this.name = '';
-    this.locale = '';
+    this.regionalFormat = '';
     this.language = '';
     this.weekStart = '';
     this.gravatarUrl = '';

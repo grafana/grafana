@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -16,13 +15,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
-
-const backendType = "prometheus"
 
 const (
 	// Network error strings
@@ -238,44 +234,18 @@ type HttpClientProvider interface {
 }
 
 type PrometheusWriter struct {
-	client  promremote.Client
-	clock   clock.Clock
-	logger  log.Logger
-	metrics *metrics.RemoteWriter
+	client      promremote.Client
+	clock       clock.Clock
+	logger      log.Logger
+	metrics     *metrics.RemoteWriter
+	backendType backendType
 }
 
 type PrometheusWriterConfig struct {
 	URL         string
 	HTTPOptions httpclient.Options
 	Timeout     time.Duration
-}
-
-func NewPrometheusWriterWithSettings(
-	settings setting.RecordingRuleSettings,
-	httpClientProvider HttpClientProvider,
-	clock clock.Clock,
-	l log.Logger,
-	metrics *metrics.RemoteWriter,
-) (*PrometheusWriter, error) {
-	if err := validateSettings(settings); err != nil {
-		return nil, err
-	}
-
-	headers := make(http.Header)
-	for k, v := range settings.CustomHeaders {
-		headers.Add(k, v)
-	}
-
-	cfg := PrometheusWriterConfig{
-		URL: settings.URL,
-		HTTPOptions: httpclient.Options{
-			BasicAuth: createAuthOpts(settings.BasicAuthUsername, settings.BasicAuthPassword),
-			Header:    headers,
-		},
-		Timeout: settings.Timeout,
-	}
-
-	return NewPrometheusWriter(cfg, httpClientProvider, clock, l, metrics)
+	BackendType backendType
 }
 
 func NewPrometheusWriter(
@@ -302,40 +272,20 @@ func NewPrometheusWriter(
 		return nil, err
 	}
 
+	var backend backendType
+	if cfg.BackendType != "" {
+		backend = cfg.BackendType
+	} else {
+		backend = prometheusType
+	}
+
 	return &PrometheusWriter{
-		client:  client,
-		clock:   clock,
-		logger:  l,
-		metrics: metrics,
+		client:      client,
+		clock:       clock,
+		logger:      l,
+		metrics:     metrics,
+		backendType: backend,
 	}, nil
-}
-
-func validateSettings(settings setting.RecordingRuleSettings) error {
-	if settings.BasicAuthUsername != "" && settings.BasicAuthPassword == "" {
-		return fmt.Errorf("basic auth password is required if username is set")
-	}
-
-	if _, err := url.Parse(settings.URL); err != nil {
-		return fmt.Errorf("invalid URL: %w", err)
-	}
-
-	if settings.Timeout <= 0 {
-		return fmt.Errorf("timeout must be greater than 0")
-	}
-
-	return nil
-}
-
-func createAuthOpts(username, password string) *httpclient.BasicAuthOptions {
-	// If username is empty, do not use basic auth and ignore password.
-	if username == "" {
-		return nil
-	}
-
-	return &httpclient.BasicAuthOptions{
-		User:     username,
-		Password: password,
-	}
 }
 
 // Write writes the given frames to the Prometheus remote write endpoint.
@@ -353,7 +303,7 @@ func (w PrometheusWriter) WriteDatasource(ctx context.Context, dsUID string, nam
 // Write writes the given frames to the Prometheus remote write endpoint.
 func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
-	lvs := []string{fmt.Sprint(orgID), backendType}
+	lvs := []string{fmt.Sprint(orgID), string(w.backendType)} //nolint:prealloc
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {

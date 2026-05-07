@@ -3,12 +3,12 @@ import { concat, uniq, upperFirst, without } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Icon, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { MuteTimingFields } from '../../types/mute-timing-form';
+import { type MuteTimingFields } from '../../types/mute-timing-form';
 import { DAYS_OF_THE_WEEK, MONTHS, defaultTimeInterval, validateArrayField } from '../../utils/mute-timings';
 
 import { MuteTimingTimeRange } from './MuteTimingTimeRange';
@@ -25,7 +25,7 @@ export const MuteTimingTimeInterval = () => {
     name: 'time_intervals',
   });
   const { isGrafanaAlertmanager } = useAlertmanager();
-  const { t } = useTranslate();
+
   return (
     <FieldSet label={t('alerting.mute-timing-time-interval.label-time-intervals', 'Time intervals')}>
       <>

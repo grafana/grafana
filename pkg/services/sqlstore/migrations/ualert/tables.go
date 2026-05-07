@@ -24,6 +24,12 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add last_applied column to alert_configuration_history", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_configuration_history"}, &migrator.Column{
 		Name: "last_applied", Type: migrator.DB_Int, Nullable: false, Default: "0",
 	}))
+	mg.AddMigration("add message column to alert_rule_version", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_rule_version"}, &migrator.Column{
+		Name: "message", Type: migrator.DB_Text, Nullable: true,
+	}))
+	mg.AddMigration("add column external_alertmanager_uid in ngalert_configuration", migrator.NewAddColumnMigration(migrator.Table{Name: "ngalert_configuration"}, &migrator.Column{
+		Name: "external_alertmanager_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: true,
+	}))
 	// End of migration log, add new migrations above this line.
 }
 
@@ -300,6 +306,10 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 	mg.AddMigration("fix is_paused column for alert_rule table", migrator.NewRawSQLMigration("").
 		Postgres(`ALTER TABLE alert_rule ALTER COLUMN is_paused SET DEFAULT false;
 UPDATE alert_rule SET is_paused = false;`))
+
+	mg.AddMigration("alter table alert_rule alter column rule_group_idx type to bigint", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE alert_rule MODIFY rule_group_idx BIGINT;").
+		Postgres("ALTER TABLE alert_rule ALTER COLUMN rule_group_idx TYPE BIGINT;"))
 }
 
 var alertRuleVersionUDX_OrgIdRuleUIDVersion = &migrator.Index{Cols: []string{"rule_org_id", "rule_uid", "version"}, Type: migrator.UniqueIndex}
@@ -371,6 +381,10 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("fix is_paused column for alert_rule_version table", migrator.NewRawSQLMigration("").
 		Postgres(`ALTER TABLE alert_rule_version ALTER COLUMN is_paused SET DEFAULT false;
 UPDATE alert_rule_version SET is_paused = false;`))
+
+	mg.AddMigration("alter table alert_rule_version alter column rule_group_idx type to bigint", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE alert_rule_version MODIFY rule_group_idx BIGINT;").
+		Postgres("ALTER TABLE alert_rule_version ALTER COLUMN rule_group_idx TYPE BIGINT;"))
 }
 
 func addAlertmanagerConfigMigrations(mg *migrator.Migrator) {

@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 import { fuzzyMatch, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-import { JaegerDatasource } from '../datasource';
-import { JaegerQuery } from '../types';
-import { transformToLogfmt } from '../util';
+import { type JaegerDatasource } from '../datasource';
+import { type JaegerQuery } from '../types';
 
 const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
 
@@ -150,7 +149,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
             <Input
               id="tags"
-              value={transformToLogfmt(query.tags)}
+              value={query.tags}
               placeholder="http.status_code=200 error=true"
               onChange={(v) =>
                 onChange({

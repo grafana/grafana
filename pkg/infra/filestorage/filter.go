@@ -230,9 +230,9 @@ func (m allOfPathFilter) ToString() string {
 }
 
 func (m allOfPathFilter) asSQLFilter() accesscontrol.SQLFilter {
-	queries := make([]string, 0)
+	queries := make([]string, 0, len(m.filters))
 
-	args := make([]interface{}, 0)
+	args := make([]interface{}, 0, len(m.filters))
 	for _, filter := range m.filters {
 		sqlFilter := filter.asSQLFilter()
 		queries = append(queries, "("+sqlFilter.Where+")")

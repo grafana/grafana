@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 
 import { useDashboardRestore } from './useDashboardRestore';
@@ -13,7 +13,7 @@ export interface RevertDashboardModalProps {
 export const RevertDashboardModal = ({ hideModal, id, version }: RevertDashboardModalProps) => {
   // TODO: how should state.error be handled?
   const { state, onRestoreDashboard } = useDashboardRestore(id, version);
-  const { t } = useTranslate();
+
   useEffect(() => {
     if (!state.loading && state.value) {
       hideModal();
@@ -24,9 +24,8 @@ export const RevertDashboardModal = ({ hideModal, id, version }: RevertDashboard
     <ConfirmModal
       isOpen={true}
       title={t('dashboard.revert-dashboard-modal.title-restore-version', 'Restore version')}
-      icon="history"
       onDismiss={hideModal}
-      onConfirm={onRestoreDashboard}
+      onConfirm={() => void onRestoreDashboard()}
       body={
         <p>
           <Trans i18nKey="dashboard.revert-dashboard-modal.body-restore-version">
@@ -34,7 +33,11 @@ export const RevertDashboardModal = ({ hideModal, id, version }: RevertDashboard
           </Trans>
         </p>
       }
-      confirmText={`Yes, restore to version ${version}`}
+      confirmText={t(
+        'dashboard.revert-dashboard-modal.confirmText-restore-version',
+        'Yes, restore to version {{version}}',
+        { version }
+      )}
     />
   );
 };

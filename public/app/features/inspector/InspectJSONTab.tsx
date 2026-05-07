@@ -4,14 +4,14 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { firstValueFrom } from 'rxjs';
 
-import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
+import { AppEvents, type PanelData, type SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { TFunction, Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
-import { appEvents } from 'app/core/core';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { appEvents } from 'app/core/app_events';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles2 } from '../inspector/styles';
@@ -34,8 +34,6 @@ interface Props {
 }
 
 export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
-  const { t } = useTranslate();
-
   const options: Array<SelectableValue<ShowContent>> = useMemo(
     () => [
       {
@@ -63,7 +61,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
         value: ShowContent.DataFrames,
       },
     ],
-    [t]
+    []
   );
   const styles = useStyles2(getPanelInspectorStyles2);
   const jsonOptions = useMemo(() => {
@@ -79,9 +77,9 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   const [text, setText] = useState('');
 
   useAsync(async () => {
-    const v = await getJSONObject(show, t, panel, data);
+    const v = await getJSONObject(show, panel, data);
     setText(getPrettyJSON(v));
-  }, [show, panel, data, t]);
+  }, [show, panel, data]);
 
   const onApplyPanelModel = useCallback(() => {
     if (panel && dashboard && text) {
@@ -127,7 +125,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
-        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
+        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1" noMargin>
           <Select
             inputId="select-source-dropdown"
             options={jsonOptions}
@@ -167,7 +165,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   );
 }
 
-async function getJSONObject(show: ShowContent, t: TFunction, panel?: PanelModel, data?: PanelData) {
+async function getJSONObject(show: ShowContent, panel?: PanelModel, data?: PanelData) {
   if (show === ShowContent.PanelData) {
     reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
     return data;

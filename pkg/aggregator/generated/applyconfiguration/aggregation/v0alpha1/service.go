@@ -10,10 +10,15 @@ import (
 
 // ServiceApplyConfiguration represents a declarative configuration of the Service type for use
 // with apply.
+//
+// Service defines the type of service the proxied service provides.
 type ServiceApplyConfiguration struct {
-	Type   *aggregationv0alpha1.ServiceType `json:"type,omitempty"`
-	Method *string                          `json:"method,omitempty"`
-	Path   *string                          `json:"path,omitempty"`
+	// Type is the type of service to proxy.
+	Type *aggregationv0alpha1.ServiceType `json:"type,omitempty"`
+	// Method is the HTTP method to use when proxying the service.
+	Method *string `json:"method,omitempty"`
+	// Path is used by the CustomRouteServiceType and SubResourceServiceType to specify the path to the endpoint.
+	Path *string `json:"path,omitempty"`
 }
 
 // ServiceApplyConfiguration constructs a declarative configuration of the Service type for use with

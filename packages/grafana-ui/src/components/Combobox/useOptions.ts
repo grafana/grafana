@@ -4,10 +4,10 @@
 import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
 
 import { fuzzyFind, itemToString } from './filter';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 type AsyncOptions<T extends string | number> =
@@ -15,6 +15,8 @@ type AsyncOptions<T extends string | number> =
   | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
 
 const asyncNoop = () => Promise.resolve([]);
+
+export const DEBOUNCE_TIME_MS = 200;
 
 /**
  * Abstracts away sync/async options for combobox components.
@@ -25,7 +27,11 @@ const asyncNoop = () => Promise.resolve([]);
  *  - function to call when user types (to filter, or call async fn)
  *  - loading and error states
  */
-export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T>, createCustomValue: boolean) {
+export function useOptions<T extends string | number>(
+  rawOptions: AsyncOptions<T>,
+  createCustomValue: boolean,
+  customValueDescription?: string
+) {
   const isAsync = typeof rawOptions === 'function';
 
   const loadOptions = useLatestAsyncCall(isAsync ? rawOptions : asyncNoop);
@@ -49,7 +55,7 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
               }
             }
           });
-      }, 200),
+      }, DEBOUNCE_TIME_MS),
     [loadOptions]
   );
 
@@ -74,13 +80,13 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
           currentOptions.unshift({
             label: userTypedSearch,
             value: userTypedSearch as T,
-            description: t('combobox.custom-value.description', 'Use custom value'),
+            description: customValueDescription ?? t('combobox.custom-value.description', 'Use custom value'),
           });
         }
       }
       return currentOptions;
     },
-    [createCustomValue, userTypedSearch]
+    [createCustomValue, customValueDescription, userTypedSearch]
   );
 
   const updateOptions = useCallback(
@@ -114,7 +120,11 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     return [addCustomValue(options), groupStartIndices];
   }, [filteredOptions, addCustomValue]);
 
-  return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError };
+  const resetSearch = useCallback(() => {
+    setUserTypedSearch('');
+  }, []);
+
+  return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError, resetSearch };
 }
 
 /**

@@ -1,9 +1,14 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { SceneObject, sceneGraph } from '@grafana/scenes';
-import { Select } from '@grafana/ui';
-import { useSelector } from 'app/types';
+import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { LocalValueVariable, type SceneObject, sceneGraph } from '@grafana/scenes';
+import { Combobox, type ComboboxOption, Select } from '@grafana/ui';
+import {
+  collectAncestorSceneVariables,
+  subscribeAncestorVariableSets,
+} from 'app/features/dashboard-scene/utils/collectAncestorSceneVariables';
+import { useSelector } from 'app/types/store';
 
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
 
@@ -25,13 +30,16 @@ export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
 
     if (options.length === 0) {
       options.unshift({
-        label: 'No template variables found',
+        label: t(
+          'dashboard.repeat-row-select.variable-options.label.no-template-variables-found',
+          'No template variables found'
+        ),
         value: null,
       });
     }
 
     options.unshift({
-      label: 'Disable repeating',
+      label: t('dashboard.repeat-row-select.variable-options.label.disable-repeating', 'Disable repeating'),
       value: null,
     });
 
@@ -51,31 +59,61 @@ interface Props2 {
 }
 
 export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2) => {
-  const sceneVars = useMemo(() => sceneGraph.getVariables(sceneContext.getRoot()), [sceneContext]);
-  const variables = sceneVars.useState().variables;
+  const [ancestorVarsVersion, setAncestorVarsVersion] = useState(0);
+
+  useEffect(() => {
+    return subscribeAncestorVariableSets(sceneContext, () => {
+      setAncestorVarsVersion((v) => v + 1);
+    });
+  }, [sceneContext]);
+
+  const variables = useMemo(() => {
+    return collectAncestorSceneVariables(sceneContext);
+    // Recompute when any ancestor SceneVariableSet emits (see subscribeAncestorVariableSets).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ancestorVarsVersion is an intentional cache bust
+  }, [sceneContext, ancestorVarsVersion]);
 
   const variableOptions = useMemo(() => {
-    const options: Array<SelectableValue<string | null>> = variables.map((item) => ({
-      label: item.state.name,
-      value: item.state.name,
-    }));
-
-    if (options.length === 0) {
-      options.unshift({
-        label: 'No template variables found',
-        value: null,
-      });
-    }
+    const options: ComboboxOption[] = variables
+      .filter((item) => {
+        if (sceneContext.parent) {
+          // filter out local value variables (which are only set on repeated items)
+          return !(sceneGraph.lookupVariable(item.state.name, sceneContext.parent) instanceof LocalValueVariable);
+        }
+        return true;
+      })
+      .map((item) => ({
+        label: item.state.name,
+        value: item.state.name,
+      }));
 
     options.unshift({
-      label: 'Disable repeating',
-      value: null,
+      label: t('dashboard.repeat-row-select2.variable-options.label.disable-repeating', 'Disable repeating'),
+      value: '',
     });
 
     return options;
-  }, [variables]);
+  }, [sceneContext, variables]);
 
-  const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
+  const onSelectChange = useCallback((value: ComboboxOption | null) => value && onChange(value.value), [onChange]);
 
-  return <Select inputId={id} value={repeat} onChange={onSelectChange} options={variableOptions} />;
+  const isDisabled = !repeat && variableOptions.length <= 1;
+
+  return (
+    <Combobox
+      id={id}
+      value={repeat || ''}
+      onChange={onSelectChange}
+      options={variableOptions}
+      disabled={isDisabled}
+      placeholder={
+        isDisabled
+          ? t(
+              'dashboard.repeat-row-select2.variable-options.label.no-template-variables-found',
+              'No template variables found'
+            )
+          : t('dashboard.repeat-row-select2.placeholder', 'Choose')
+      }
+    />
+  );
 };

@@ -3,22 +3,22 @@ import { omit } from 'lodash';
 import moment from 'moment';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Badge,
   Button,
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   ConfirmModal,
   InteractiveTable,
   Stack,
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
+import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { computeVersionDiff } from '../../utils/diff';
@@ -55,7 +55,6 @@ const AlertmanagerConfigurationVersionManager = ({
 
   // in here we'll track the configs we are comparing
   const [activeComparison, setActiveComparison] = useState<[left: string, right: string] | undefined>(undefined);
-  const { t } = useTranslate();
 
   const {
     currentData: historicalConfigs = [],
@@ -243,8 +242,14 @@ const AlertmanagerConfigurationVersionManager = ({
       <ConfirmModal
         isOpen={confirmRestore}
         title={t('alerting.alertmanager-configuration-version-manager.title-restore-version', 'Restore version')}
-        body={'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'}
-        confirmText={'Yes, restore configuration'}
+        body={t(
+          'alerting.alertmanager-configuration-version-manager.body-restore-configuration-version-unsaved-changes',
+          'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'
+        )}
+        confirmText={t(
+          'alerting.alertmanager-configuration-version-manager.confirmText-yes-restore-configuration',
+          'Yes, restore configuration'
+        )}
         onConfirm={() => {
           if (activeRestoreVersion) {
             restoreVersion(activeRestoreVersion);
@@ -277,7 +282,7 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
           we're hiding the line numbers because the historical snapshots will have certain parts of the config hidden (ex. auto-generated policies)
           so the line numbers will not match up with what you can see in the JSON modal tab
         */}
-        <DiffViewer newValue={left} oldValue={right} hideLineNumbers={true} />
+        <LazyDiffViewer newValue={left} oldValue={right} hideLineNumbers={true} />
       </div>
       <Stack direction="row" alignItems="center">
         <Spacer />

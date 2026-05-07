@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { ActionVariable, ActionVariableType } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { IconButton, Input, Stack, Combobox, ComboboxOption } from '@grafana/ui';
+import { type ActionVariable, ActionVariableType } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { IconButton, Input, Stack, Combobox, type ComboboxOption } from '@grafana/ui';
 
 interface Props {
   onChange: (v: ActionVariable[]) => void;
@@ -13,8 +13,6 @@ export const ActionVariablesEditor = ({ value, onChange }: Props) => {
   const [key, setKey] = useState('');
   const [name, setName] = useState('');
   const [type, setType] = useState<ActionVariableType>(ActionVariableType.String);
-
-  const { t } = useTranslate();
 
   const changeKey = (key: string) => {
     setKey(key);
@@ -54,7 +52,13 @@ export const ActionVariablesEditor = ({ value, onChange }: Props) => {
 
   const isAddButtonDisabled = name === '' || key === '';
 
-  const variableTypeOptions: ComboboxOption[] = [{ label: 'string', value: ActionVariableType.String }];
+  const variableTypeOptions: ComboboxOption[] = [
+    {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: 'string',
+      value: ActionVariableType.String,
+    },
+  ];
 
   return (
     <div>

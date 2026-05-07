@@ -1,21 +1,25 @@
-import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
+import { type default as uPlot, type AlignedData, type Options, type PaddingSide } from 'uplot';
 
 import {
-  DataFrame,
-  DisplayProcessor,
-  DisplayValue,
-  ensureTimeField,
-  Field,
+  type DataFrame,
+  type DisplayProcessor,
+  type DisplayValue,
+  type Field,
   fieldReducers,
-  FieldType,
   getDisplayProcessor,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   reduceField,
   ReducerID,
 } from '@grafana/data';
-import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
+import {
+  type BarAlignment,
+  GraphDrawStyle,
+  GraphTransform,
+  type LineInterpolation,
+  StackingMode,
+} from '@grafana/schema';
 
-import { attachDebugger } from '../../utils';
+import { attachDebugger } from '../../utils/debug';
 import { createLogger } from '../../utils/logger';
 
 import { buildScaleKey } from './internal';
@@ -197,11 +201,7 @@ export function preparePlotData2(
     let vals = field.values;
 
     if (i === 0) {
-      if (field.type === FieldType.time) {
-        data[0] = ensureTimeField(field).values;
-      } else {
-        data[0] = vals;
-      }
+      data[i] = vals;
       return;
     }
 
@@ -218,14 +218,12 @@ export function preparePlotData2(
       let firstVal = vals[firstValIdx];
       vals = Array(vals.length).fill(undefined);
       vals[firstValIdx] = firstVal;
-    } else {
+    } else if (custom.transform === GraphTransform.NegativeY) {
       vals = vals.slice();
 
-      if (custom.transform === GraphTransform.NegativeY) {
-        for (let i = 0; i < vals.length; i++) {
-          if (vals[i] != null) {
-            vals[i] *= -1;
-          }
+      for (let i = 0; i < vals.length; i++) {
+        if (vals[i] != null) {
+          vals[i] *= -1;
         }
       }
     }

@@ -1,17 +1,19 @@
 import { css, cx } from '@emotion/css';
-import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
-import Prism, { Grammar, LanguageMap } from 'prismjs';
+import { autoUpdate, offset, useFloating } from '@floating-ui/react';
+import Prism, { type Grammar, type LanguageMap } from 'prismjs';
 import { memo, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
-import { Value } from 'slate';
+import { type Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Editor } from 'slate-react';
 
-import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion } from '@grafana/data';
+import { DataLinkBuiltInVars, type GrafanaTheme2, VariableOrigin, type VariableSuggestion } from '@grafana/data';
 
-import { SlatePrism } from '../../slate-plugins';
-import { useStyles2 } from '../../themes';
+import { SlatePrism } from '../../slate-plugins/slate-prism';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
+import { getPositioningMiddleware } from '../../utils/floating';
 import { SCHEMA, makeValue } from '../../utils/slate';
 import { getInputStyles } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
@@ -27,6 +29,9 @@ interface DataLinkInputProps {
   onChange: (url: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   placeholder?: string;
+  // For accessibility, this should be the id of the label that describes this input.
+  // This is needed because the input is rendered as a contenteditable div and can't use the normal label/htmlFor logic.
+  ['aria-labelledby']?: string;
 }
 
 const datalinksSyntax: Grammar = {
@@ -66,6 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       padding: 0,
       backgroundColor: 'transparent',
       border: 'none',
+      '&:focus-within': getFocusStyles(theme),
     },
   }),
 });
@@ -78,6 +84,7 @@ export const DataLinkInput = memo(
     onChange,
     suggestions,
     placeholder = 'http://your-grafana.com/d/000000010/annotations',
+    ['aria-labelledby']: ariaLabelledby,
   }: DataLinkInputProps) => {
     const editorRef = useRef<Editor>(null);
     const styles = useStyles2(getStyles);
@@ -97,13 +104,7 @@ export const DataLinkInput = memo(
       offset(({ rects }) => ({
         alignmentAxis: rects.reference.width,
       })),
-      flip({
-        fallbackAxisSideDirection: 'start',
-        // see https://floating-ui.com/docs/flip#combining-with-shift
-        crossAxis: false,
-        boundary: document.body,
-      }),
-      shift(),
+      ...getPositioningMiddleware(),
     ];
 
     const { refs, floatingStyles } = useFloating({
@@ -125,6 +126,7 @@ export const DataLinkInput = memo(
       setScrollTop(getElementPosition(activeRef.current, suggestionsIndex));
     }, [suggestionsIndex]);
 
+    // istanbul ignore next: Slate editor keyboard handling
     const onKeyDown = React.useCallback((event: React.KeyboardEvent, next: () => void) => {
       if (!stateRef.current.showingSuggestions) {
         if (event.key === '=' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
@@ -159,10 +161,8 @@ export const DataLinkInput = memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // istanbul ignore next: Slate blur sync
     useEffect(() => {
-      // Update the state of the link in the parent. This is basically done on blur but we need to do it after
-      // our state have been updated. The duplicity of state is done for perf reasons and also because local
-      // state also contains things like selection and formating.
       if (prevLinkUrl && prevLinkUrl.selection.isFocused && !linkUrl.selection.isFocused) {
         stateRef.current.onChange(Plain.serialize(linkUrl));
       }
@@ -172,6 +172,7 @@ export const DataLinkInput = memo(
       setLinkUrl(value);
     }, []);
 
+    // istanbul ignore next: Slate editor variable insertion
     const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
       const precedingChar: string = getCharactersAroundCaret();
       const precedingDollar = precedingChar === '$';
@@ -188,6 +189,7 @@ export const DataLinkInput = memo(
       stateRef.current.onChange(Plain.serialize(editor.value));
     };
 
+    // istanbul ignore next: Slate editor caret detection
     const getCharactersAroundCaret = () => {
       const input: HTMLSpanElement | null = document.getElementById('data-link-input')!;
       let precedingChar = '',
@@ -244,6 +246,7 @@ export const DataLinkInput = memo(
                   padding: '3px 8px',
                 })
               )}
+              aria-labelledby={ariaLabelledby}
             />
           </div>
         </div>

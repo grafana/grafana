@@ -1,14 +1,20 @@
 import { createAction, createReducer, isAnyOf } from '@reduxjs/toolkit';
 import { inRange } from 'lodash';
 
-import { EditableRuleIdentifier, GrafanaRuleIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
-import { PostableRuleDTO, PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import {
+  type EditableRuleIdentifier,
+  type GrafanaRuleIdentifier,
+  type RuleIdentifier,
+} from 'app/types/unified-alerting';
+import { type PostableRuleDTO, type PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { hashRulerRule } from '../../utils/rule-id';
 import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, rulerRuleType } from '../../utils/rules';
 
 // rule-scoped actions
+// TOOD The interval field only make sense when adding a rule to a new rule group.
+// We need to split these into distinct actions and introduce a separete addNewRuleGroupAction.
 export const addRuleAction = createAction<{ rule: PostableRuleDTO; groupName?: string; interval?: string }>(
   'ruleGroup/rules/add'
 );

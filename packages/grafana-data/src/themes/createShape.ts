@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /** @beta */
 export interface ThemeShape {
   /**
@@ -7,22 +9,48 @@ export interface ThemeShape {
   radius: Radii;
 }
 
-interface Radii {
+export interface Radii {
+  /**
+   * Use for most things (inputs, buttons, cards, panels, etc)
+   * Same as `md`
+   */
   default: string;
+  /**
+   * Use for most things (inputs, buttons, cards, panels, etc)
+   * Same as `default`
+   */
+  md: string;
+  /**
+   * Use for smaller things like chips, tags and badges
+   */
+  sm: string;
+  /**
+   * Use for large things, like modals
+   */
+  lg: string;
+  /**
+   * Used to create maximum half circle sides (e.g. for pills)
+   */
   pill: string;
   circle: string;
 }
 
 /** @internal */
-export interface ThemeShapeInput {
-  borderRadius?: number;
-}
+export const ThemeShapeInputSchema = z.object({
+  borderRadius: z.int().nonnegative().optional(),
+});
+
+/** @internal */
+export type ThemeShapeInput = z.infer<typeof ThemeShapeInputSchema>;
 
 export function createShape(options: ThemeShapeInput): ThemeShape {
-  const baseBorderRadius = options.borderRadius ?? 2;
+  const baseBorderRadius = options.borderRadius ?? 6;
 
   const radius = {
     default: `${baseBorderRadius}px`,
+    md: `${baseBorderRadius}px`,
+    sm: `${Math.ceil(baseBorderRadius * (2 / 3))}px`, // for default base becomes 4
+    lg: `${Math.ceil(baseBorderRadius * (5 / 3))}px`, // for default base becomes 10
     pill: '9999px',
     circle: '100%',
   };

@@ -1,18 +1,25 @@
 import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
 import { Drawer } from '@grafana/ui';
 
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { ExportAsCode } from '../ExportButton/ExportAsCode';
+import { ExportAsImage } from '../ExportButton/ExportAsImage';
 import { ShareExternally } from '../ShareButton/share-externally/ShareExternally';
 import { ShareInternally } from '../ShareButton/share-internally/ShareInternally';
 import { ShareSnapshot } from '../ShareButton/share-snapshot/ShareSnapshot';
 import { ShareLibraryPanelTab } from '../ShareLibraryPanelTab';
 import { SharePanelEmbedTab } from '../SharePanelEmbedTab';
 import { SharePanelInternally } from '../panel-share/SharePanelInternally';
-import { ModalSceneObjectLike, SceneShareTabState, ShareView } from '../types';
+import { type ModalSceneObjectLike, type SceneShareTabState, type ShareView } from '../types';
 
 import { ShareDrawerContext } from './ShareDrawerContext';
 
@@ -65,7 +72,12 @@ function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
   const dashboard = getDashboardSceneFor(model);
 
   return (
-    <Drawer title={activeShare?.getTabLabel()} onClose={model.onDismiss} size="md">
+    <Drawer
+      title={activeShare?.getTabLabel()}
+      subtitle={activeShare?.getSubtitle?.()}
+      onClose={model.onDismiss}
+      size="md"
+    >
       <ShareDrawerContext.Provider value={{ dashboard, onDismiss: model.onDismiss }}>
         {activeShare && <activeShare.Component model={activeShare} />}
       </ShareDrawerContext.Provider>
@@ -93,6 +105,8 @@ function getShareView(
       return new ShareSnapshot({ dashboardRef, panelRef, onDismiss });
     case shareDashboardType.export:
       return new ExportAsCode({ onDismiss });
+    case shareDashboardType.image:
+      return new ExportAsImage({ onDismiss });
     default:
       return new ShareInternally({ onDismiss });
   }

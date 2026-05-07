@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -121,6 +123,69 @@ func TestLoadingSettings(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Contains(t, cfg.appliedEnvOverrides, "GF_DATABASE_URL=mysql://user:xxxxx@localhost:3306/database")
+	})
+
+	t.Run("Should create new key from env var when key is not in ini file but section exists", func(t *testing.T) {
+		// This tests the fix for the long-standing bug where env vars only worked
+		// if the key was already present in defaults.ini or custom.ini.
+		t.Setenv("GF_SERVER_MY_CUSTOM_SETTING", "custom_value")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		serverSection, err := cfg.Raw.GetSection("server")
+		require.NoError(t, err)
+		require.Equal(t, "custom_value", serverSection.Key("my_custom_setting").Value())
+		require.Contains(t, cfg.appliedEnvOverrides, "GF_SERVER_MY_CUSTOM_SETTING=custom_value")
+	})
+
+	t.Run("Should not create duplicate lowercase key for unified_storage env vars", func(t *testing.T) {
+		// unified_storage keys use camelCase (e.g. enableMigration). The generic
+		// second pass would lowercase them, creating a duplicate key. These env
+		// vars should be skipped in the generic pass and handled only by
+		// applyUnifiedStorageEnvOverrides.
+		t.Setenv("GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_ENABLEMIGRATION", "false")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		section, err := cfg.Raw.GetSection("unified_storage.dashboards.dashboard.grafana.app")
+		require.NoError(t, err)
+
+		// The correctly-cased key should exist (set by applyUnifiedStorageEnvOverrides).
+		require.Equal(t, "false", section.Key("enableMigration").Value())
+
+		// The lowercased key should NOT have been created by the generic second pass.
+		require.Equal(t, "", section.Key("enablemigration").Value())
+
+		// Should only appear once in appliedEnvOverrides.
+		count := 0
+		for _, o := range cfg.appliedEnvOverrides {
+			if strings.Contains(o, "GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_ENABLEMIGRATION") {
+				count++
+			}
+		}
+		require.Equal(t, 1, count, "env var should be applied exactly once")
+	})
+
+	t.Run("Should match env var to most specific section", func(t *testing.T) {
+		// GF_AUTH_GOOGLE_MY_KEY should match [auth.google] not [auth]
+		t.Setenv("GF_AUTH_GOOGLE_MY_KEY", "google_value")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		googleSection, err := cfg.Raw.GetSection("auth.google")
+		require.NoError(t, err)
+		require.Equal(t, "google_value", googleSection.Key("my_key").Value())
+
+		// Verify it did NOT end up in the [auth] section
+		authSection, err := cfg.Raw.GetSection("auth")
+		require.NoError(t, err)
+		require.Equal(t, "", authSection.Key("google_my_key").Value())
 	})
 
 	t.Run("Should get property map from command line args array", func(t *testing.T) {
@@ -316,6 +381,59 @@ func TestLoadingSettings(t *testing.T) {
 		require.Nil(t, err)
 		require.Equal(t, "https://grafana.com", cfg.GrafanaComURL)
 		require.Equal(t, "https://grafana.com/api", cfg.GrafanaComAPIURL)
+	})
+}
+
+func TestResolveGrafanaComProxyAPIToken(t *testing.T) {
+	skipStaticRootValidation = true
+
+	setProvider := func(t *testing.T, flagOn bool) {
+		t.Helper()
+		variant := "disabled"
+		if flagOn {
+			variant = "enabled"
+		}
+		p := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			"grafana.dedicatedGrafanaComProxyAPIToken": {
+				State:          memprovider.Enabled,
+				DefaultVariant: variant,
+				Variants:       map[string]any{"enabled": true, "disabled": false},
+			},
+		})
+		require.NoError(t, openfeature.SetProviderAndWait(p))
+		t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+	}
+
+	t.Run("falls back to sso_api_token when flag is off", func(t *testing.T) {
+		setProvider(t, false)
+		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
+		t.Setenv("GF_GRAFANA_COM_PROXY_TOKEN", "dedicated-token")
+
+		cfg := NewCfg()
+		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../"}))
+		cfg.ResolveGrafanaComProxyAPIToken()
+		require.Equal(t, "sso-token", cfg.GrafanaComProxyAPIToken)
+	})
+
+	t.Run("uses dedicated token when flag is on and proxy_token is set", func(t *testing.T) {
+		setProvider(t, true)
+		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
+		t.Setenv("GF_GRAFANA_COM_PROXY_TOKEN", "dedicated-token")
+
+		cfg := NewCfg()
+		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../"}))
+		cfg.ResolveGrafanaComProxyAPIToken()
+		require.Equal(t, "dedicated-token", cfg.GrafanaComProxyAPIToken)
+	})
+
+	t.Run("falls back to sso_api_token when flag is on but proxy_token is not set", func(t *testing.T) {
+		setProvider(t, true)
+		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
+
+		cfg := NewCfg()
+		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../"}))
+		cfg.ResolveGrafanaComProxyAPIToken()
+		require.Equal(t, "sso-token", cfg.GrafanaComProxyAPIToken)
 	})
 }
 
@@ -539,6 +657,12 @@ func TestRedactedValue(t *testing.T) {
 			desc:     "client token",
 			key:      "token",
 			value:    "test",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "proxy_token",
+			key:      "GF_GRAFANA_COM_PROXY_TOKEN",
+			value:    "some-token",
 			expected: RedactedPassword,
 		},
 	}

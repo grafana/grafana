@@ -1,41 +1,43 @@
 import {
-  DataFrame,
+  type DataFrame,
   FALLBACK_COLOR,
-  Field,
+  type Field,
   FieldColorModeId,
-  FieldConfig,
+  type FieldConfig,
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
   getValueFormat,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   getActiveThreshold,
-  Threshold,
+  type Threshold,
   getFieldConfigWithMinMax,
   ThresholdsMode,
-  TimeRange,
+  type TimeRange,
   cacheFieldDisplayNames,
   outerJoinDataFrames,
-  ValueMapping,
-  ThresholdsConfig,
+  type ValueMapping,
+  type ThresholdsConfig,
   applyNullInsertThreshold,
   nullToValue,
+  SpecialValueMatch,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import {
-  VizLegendOptions,
+  type VizLegendOptions,
   AxisPlacement,
   ScaleDirection,
   ScaleOrientation,
-  VisibilityMode,
-  TimelineValueAlignment,
-  HideableFieldConfig,
+  type VisibilityMode,
+  type TimelineValueAlignment,
+  type HideableFieldConfig,
   MappingType,
 } from '@grafana/schema';
-import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn, VizLegendItem } from '@grafana/ui';
+import { FIXED_UNIT, UPlotConfigBuilder, type UPlotConfigPrepFn, type VizLegendItem } from '@grafana/ui';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/internal';
 
-import { getConfig, TimelineCoreOptions } from './timeline';
+import { getConfig, type TimelineCoreOptions } from './timeline';
 
 /**
  * @internal
@@ -72,6 +74,12 @@ const defaultConfig: PanelFieldConfig = {
   fillOpacity: 80,
 };
 
+/** Checks if a mapped value of the specified type exists for the given field */
+export const hasSpecialMappedValue = (field: Field, match: SpecialValueMatch): boolean =>
+  field.config.mappings?.some(
+    (mapping: ValueMapping): boolean => mapping.type === MappingType.SpecialValue && mapping.options.match === match
+  ) || false;
+
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = ({
   frame,
   theme,
@@ -85,6 +93,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   mergeValues,
   getValueColor,
   hoverMulti,
+  xAxisConfig,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -94,15 +103,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     const mode = field.config?.color?.mode;
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
-
-  const hasMappedNull = (field: Field) => {
-    return (
-      field.config.mappings?.some(
-        (mapping) => mapping.type === MappingType.SpecialValue && mapping.options.match === 'null'
-      ) || false
-    );
-  };
-
   const getValueColorFn = (seriesIdx: number, value: unknown) => {
     const field = frame.fields[seriesIdx];
 
@@ -121,7 +121,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
-    hasMappedNull: (seriesIdx) => hasMappedNull(frame.fields[seriesIdx]),
+    hasMappedNull: (seriesIdx) =>
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.Null) ||
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NullAndNaN),
+    hasMappedNaN: (seriesIdx) =>
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NaN) ||
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NullAndNaN),
     mergeValues,
     rowHeight: rowHeight,
     colWidth: colWidth,
@@ -151,7 +156,31 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: coreConfig.xRange,
+    range: (u) => {
+      const state = builder.getState();
+      if (state.isPanning) {
+        if (state.isTimeRangePending) {
+          const propsRange = coreConfig.xRange(u);
+          const propsFrom = propsRange[0];
+          const propsTo = propsRange[1];
+
+          if (propsFrom != null && propsTo != null) {
+            const MIN_TIMESPAN_MS = 1;
+            const fromMatches = Math.abs(propsFrom - state.min) <= MIN_TIMESPAN_MS;
+            const toMatches = Math.abs(propsTo - state.max) <= MIN_TIMESPAN_MS;
+            const timeRangeHasUpdated = fromMatches && toMatches;
+
+            if (timeRangeHasUpdated) {
+              builder.setState({ isPanning: false });
+              return propsRange;
+            }
+          }
+        }
+
+        return [state.min, state.max];
+      }
+      return coreConfig.xRange(u);
+    },
   });
 
   builder.addScale({
@@ -162,7 +191,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     range: coreConfig.yRange,
   });
 
-  const xAxisHidden = frame.fields[0].config.custom.axisPlacement === AxisPlacement.Hidden;
+  const xField = frame.fields[0];
+  const xAxisHidden = xField.config.custom?.axisPlacement === AxisPlacement.Hidden;
 
   builder.addAxis({
     show: !xAxisHidden,
@@ -172,6 +202,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     placement: AxisPlacement.Bottom,
     timeZone: timeZones[0],
     theme,
+    formatValue: xField.config.unit?.startsWith('time:')
+      ? (v, decimals) => xField.display!(v, decimals).text
+      : undefined,
+    ...xAxisConfig,
   });
 
   const yCustomConfig = frame.fields[1].config.custom;
@@ -306,8 +340,9 @@ export function prepareTimelineFields(
   timeRange: TimeRange,
   theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
+  // this allows PanelDataErrorView to show the default noValue message
   if (!series?.length) {
-    return { warn: 'No data in response' };
+    return { warn: '' };
   }
 
   cacheFieldDisplayNames(series);
@@ -322,7 +357,7 @@ export function prepareTimelineFields(
     for (let i = 0; i < frame.fields.length; i++) {
       let f = frame.fields[i];
 
-      if (f.type === FieldType.time) {
+      if (f.type === FieldType.time && typeof f.values[0] === 'number') {
         if (startFieldIdx === -1) {
           startFieldIdx = i;
         } else if (endFieldIdx === -1) {
@@ -385,9 +420,11 @@ export function prepareTimelineFields(
     for (let field of frame.fields) {
       switch (field.type) {
         case FieldType.time:
-          isTimeseries = true;
-          hasTimeseries = true;
-          fields.push(field);
+          if (typeof field.values[0] === 'number') {
+            isTimeseries = true;
+            hasTimeseries = true;
+            fields.push(field);
+          }
           break;
         case FieldType.enum:
         case FieldType.number:
@@ -433,10 +470,10 @@ export function prepareTimelineFields(
   }
 
   if (!hasTimeseries) {
-    return { warn: 'Data does not have a time field' };
+    return { warn: t('timeline.missing-field.time', 'Data does not have a time field') };
   }
   if (!frames.length) {
-    return { warn: 'No graphable fields' };
+    return { warn: t('timeline.missing-field.all', 'No graphable fields') };
   }
 
   return { frames };
@@ -664,7 +701,7 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
  * This function calculates with 30 days month and 365 days year.
  * adapted from https://gist.github.com/remino/1563878
  * @param milliSeconds The duration in milliseconds
- * @returns A formated string of the duration
+ * @returns A formatted string of the duration
  */
 export function fmtDuration(milliSeconds: number): string {
   if (milliSeconds < 0 || Number.isNaN(milliSeconds)) {

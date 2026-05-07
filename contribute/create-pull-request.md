@@ -60,16 +60,17 @@ Pull requests that create new UI components or modify existing ones must adhere 
 
 Before submitting pull requests that introduce accessibility (a11y) errors, refer to the [accessibility guidelines](/contribute/style-guides/accessibility.md).
 
-### Betterer
+### ESLint & suppressions
 
-We make use of a tool called [**Betterer**](https://phenomnomnominal.github.io/betterer/) in order to drive long-running code quality improvements. Our intention is for this requirement to be as unintrusive as possible; however, there are some things to be aware of:
+We use [ESLint](https://eslint.org/) to enforce code style and best practices, along with [bulk suppressions](https://eslint.org/docs/latest/use/suppressions#suppressions-file) in order to incrementally improve our code quality and fix rule violations.
 
-- **Betterer runs as a precommit hook**:
-  - You may see changes to the `.betterer.results` file automatically added to your commits.
+- **ESLint runs as a precommit hook**:
+  - You may see changes to the `eslint-suppressions.json` file automatically added to your commits.
   - You may get an error when trying to commit something that decreases the overall code quality. You can either fix these errors or temporarily override the checks (for example, to commit something that's a work in progress). To do so, use `git commit --no-verify`. All errors will eventually have to be fixed before your code can be merged because...
-- **Betterer also runs as part of our CI**:
-  - You may see the following error message in the CI: `Unexpected changes detected in these tests while running in CI mode`. To resolve the error, merge with the target branch (usually `main`).
-  - You may see merge conflicts for the `.betterer.results` file. To resolve, merge with the target branch (usually `main`), and then run `yarn betterer:merge` and commit.
+- **ESLint also runs as part of our CI**:
+  - If you have fixed suppressed issues but not updated the suppressions file, you may see the following error message in the CI: `There are suppressions left that do not occur anymore.`.
+    To resolve the error, run the following command: `yarn lint:prune` and commit the changes.
+  - You may see merge conflicts for the `eslint-suppressions.json` file. To resolve, merge with the target branch (usually `main`) and resolve conflicts however you like, and then run `yarn lint:prune` to ensure the file is up to date and commit.
 
 ## Guidelines for backend development
 

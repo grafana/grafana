@@ -3,38 +3,39 @@ import { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   AnnotationChangeEvent,
-  AnnotationEventUIModel,
+  type AnnotationEventUIModel,
   CoreApp,
   DashboardCursorSync,
-  DataFrame,
-  EventFilterOptions,
-  FieldConfigSource,
+  type DataFrame,
+  type EventFilterOptions,
+  type FieldConfigSource,
   getDataSourceRef,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
-  PanelPlugin,
-  PanelPluginMeta,
+  type PanelData,
+  type PanelPlugin,
+  type PanelPluginMeta,
+  PluginContextProvider,
   SetPanelAttentionEvent,
-  TimeRange,
+  type TimeRange,
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
-import { VizLegendOptions } from '@grafana/schema';
+import { type VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
   PanelChrome,
-  PanelContext,
+  type PanelContext,
   PanelContextProvider,
-  SeriesVisibilityChangeMode,
-  AdHocFilterItem,
+  type SeriesVisibilityChangeMode,
+  type AdHocFilterItem,
 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
+import { appEvents } from 'app/core/app_events';
 import { profiler } from 'app/core/profiler';
+import { annotationServer } from 'app/features/annotations/api';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
@@ -43,11 +44,10 @@ import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/ove
 import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
 
-import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
-import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
+import { getTimeSrv, type TimeSrv } from '../services/TimeSrv';
+import { type DashboardModel } from '../state/DashboardModel';
+import { type PanelModel } from '../state/PanelModel';
 import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
@@ -114,13 +114,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         canAddAnnotations: props.dashboard.canAddAnnotations.bind(props.dashboard),
         canEditAnnotations: props.dashboard.canEditAnnotations.bind(props.dashboard),
         canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
+        canExecuteActions: props.dashboard.canExecuteActions.bind(props.dashboard),
         onAddAdHocFilter: this.onAddAdHocFilter,
         onUpdateData: this.onUpdateData,
       },
       data: this.getInitialPanelDataState(),
     };
 
-    if (config.featureToggles.panelMonitoring && this.getPanelContextApp() === CoreApp.PanelEditor) {
+    if (this.getPanelContextApp() === CoreApp.PanelEditor) {
       const panelInfo = {
         panelId: String(props.panel.id),
         panelType: props.panel.type,
@@ -164,7 +165,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
   };
 
-  onSeriesVisibilityChange = (label: string, mode: SeriesVisibilityChangeMode) => {
+  onSeriesVisibilityChange = (label: string | string[] | null, mode: SeriesVisibilityChangeMode) => {
+    if (typeof label !== 'string') {
+      return;
+    }
     this.onFieldConfigChange(
       seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
     );
@@ -362,6 +366,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       panel.runAllPanelQueries({
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
+        dashboardTitle: dashboard.title,
         timeData,
         width,
       });
@@ -393,7 +398,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   }
 
   onPanelError = (error: Error) => {
-    if (config.featureToggles.panelMonitoring && this.getPanelContextApp() === CoreApp.PanelEditor) {
+    if (this.getPanelContextApp() === CoreApp.PanelEditor) {
       this.logPanelChangesOnError();
     }
 
@@ -419,13 +424,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       tags: event.tags,
       text: event.description,
     };
-    await saveAnnotation(anno);
+    await annotationServer().save(anno);
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
   };
 
   onAnnotationDelete = async (id: string) => {
-    await deleteAnnotation({ id });
+    await annotationServer().delete({ id });
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent({ id }));
   };
@@ -442,7 +447,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       tags: event.tags,
       text: event.description,
     };
-    await updateAnnotation(anno);
+    await annotationServer().update(anno);
 
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
@@ -523,27 +528,29 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return (
       <>
         <PanelContextProvider value={this.state.context}>
-          <PanelComponent
-            id={panel.id}
-            data={data}
-            title={panel.title}
-            timeRange={timeRange}
-            timeZone={this.props.dashboard.getTimezone()}
-            options={panelOptions}
-            fieldConfig={panel.fieldConfig}
-            transparent={panel.transparent}
-            width={innerWidth}
-            height={innerHeight}
-            renderCounter={renderCounter}
-            replaceVariables={panel.replaceVariables}
-            onOptionsChange={this.onOptionsChange}
-            onFieldConfigChange={this.onFieldConfigChange}
-            onChangeTimeRange={this.onChangeTimeRange}
-            eventBus={dashboard.events}
-          />
-          {config.featureToggles.panelMonitoring && this.state.errorMessage === undefined && (
-            <PanelLoadTimeMonitor panelType={plugin.meta.id} panelId={panel.id} panelTitle={panel.title} />
-          )}
+          <PluginContextProvider meta={plugin.meta}>
+            <PanelComponent
+              id={panel.id}
+              data={data}
+              title={panel.title}
+              timeRange={timeRange}
+              timeZone={this.props.dashboard.getTimezone()}
+              options={panelOptions}
+              fieldConfig={panel.fieldConfig}
+              transparent={panel.transparent}
+              width={innerWidth}
+              height={innerHeight}
+              renderCounter={renderCounter}
+              replaceVariables={panel.replaceVariables}
+              onOptionsChange={this.onOptionsChange}
+              onFieldConfigChange={this.onFieldConfigChange}
+              onChangeTimeRange={this.onChangeTimeRange}
+              eventBus={dashboard.events}
+            />
+            {this.state.errorMessage === undefined && (
+              <PanelLoadTimeMonitor panelType={plugin.meta.id} panelId={panel.id} panelTitle={panel.title} />
+            )}
+          </PluginContextProvider>
         </PanelContextProvider>
       </>
     );
@@ -595,6 +602,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         {(innerWidth, innerHeight) => (
           <>
             <ErrorBoundary
+              boundaryName="panel-state-wrapper"
               dependencies={[data, plugin, panel.getOptions()]}
               onError={this.onPanelError}
               onRecover={this.onPanelErrorRecover}

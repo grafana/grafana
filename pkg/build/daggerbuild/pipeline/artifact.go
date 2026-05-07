@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"dagger.io/dagger"
+	"github.com/urfave/cli/v2"
 )
 
 var (
@@ -27,6 +28,10 @@ type ArtifactContainerOpts struct {
 	Platform dagger.Platform
 	State    StateHandler
 	Store    ArtifactStore
+
+	// CLIContext is provided for the handlers to use to read global CLI flags; it's not recommended
+	// to use CLIContext. Instead use the State and Store.
+	CLIContext *cli.Context
 }
 
 type ArtifactPublishFileOpts struct{}
@@ -34,7 +39,7 @@ type ArtifactPublishDirOpts struct{}
 
 type ArtifactInitializer func(context.Context, *slog.Logger, string, StateHandler) (*Artifact, error)
 
-// An Artifact is a file or a directory that is created when using the `-a / --artifact` flag.
+// ArtifactHandler is a file or a directory that is created when using the `-a / --artifact` flag.
 // Each artifact can depend on other artifacts, and can be affected by 'flags' from the artifact string that describes this artifact.
 // For example, the flags in the artifact string, 'targz:linux/amd64:grafana'
 type ArtifactHandler interface {
@@ -56,6 +61,8 @@ type ArtifactHandler interface {
 
 	VerifyFile(context.Context, *dagger.Client, *dagger.File) error
 	VerifyDirectory(context.Context, *dagger.Client, *dagger.Directory) error
+
+	String() string
 }
 
 type Artifact struct {

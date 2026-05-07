@@ -54,7 +54,7 @@ For a minimal setup, refer to [Example using an Access Key](#example-using-an-ac
 
 To create a contact point with a SNS integration, complete the following steps.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 1. Click **+ Add contact point**.
 1. Enter a name for the contact point.
 1. From the **Integration** list, select **AWS SNS**.
@@ -74,7 +74,6 @@ For more details on contact points, including how to test them and enable notifi
     >
     > If left blank, Grafana searches for credentials using the default credentials chain, including environment variables (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`), the shared credential file, and EC2 instance roles.
   - **Profile**: (Optional) Named AWS profile used to authenticate.
-  - **Role ARN**: (Optional) The ARN of an AWS IAM role to assume for authentication, serving as an alternative to using AWS API keys.
 - **SNS topic ARN**: (Optional) If you don't specify this value, you must specify a value for the `Phone number` or `Target ARN`. If you are using a FIFO SNS topic you should set a message group interval longer than 5 minutes to prevent messages with the same group key being deduplicated by the SNS default deduplication window.
 - **Phone number**: (Optional) Phone number if message is delivered via SMS in E.164 format. If you don't specify this value, you must specify a value for the `SNS topic ARN` or `Target ARN`.
 - **Target ARN**: (Optional) The mobile platform endpoint ARN if message is delivered via mobile notifications. If you don't specify this value, you must specify a value for the `SNS topic ARN` or `Phone number`.
@@ -89,11 +88,9 @@ This section outlines a minimal setup to configure Amazon SNS with Alerting.
 ### 1. Create an SNS Topic and Email Subscriber
 
 1. **Navigate to SNS in AWS Console**:
-
    - Go to the [Amazon SNS Console](https://console.aws.amazon.com/sns/v3/home).
 
 2. **Create a new topic**:
-
    - On the **Topics** page, choose **"Create topic"**.
    - Select **"Standard"** as the type.
    - Enter a **Name** for your topic, e.g., `My-Topic`.
@@ -110,11 +107,9 @@ This section outlines a minimal setup to configure Amazon SNS with Alerting.
 ### 2. Create an IAM Policy, User, and Access Key
 
 1. **Navigate to IAM in AWS Console**:
-
    - Go to the [IAM Console](https://console.aws.amazon.com/iam/home).
 
 2. **Create a new policy**:
-
    - On the **Policies** page, choose **"Create policy"**.
    - Switch to the **"JSON"** tab and paste the following policy, replacing `Resource` with your SNS topic ARN:
 
@@ -134,7 +129,6 @@ This section outlines a minimal setup to configure Amazon SNS with Alerting.
    - Click **"Next"**, name it (e.g., `SNSPublishPolicy`), and click **"Create policy"**.
 
 3. **Create a new IAM user and assign the policy**
-
    - In the IAM Console, on the **Users** page, choose **"Create user"**.
    - Enter a **User name**, e.g., `alerting-sns-user`.
    - Click **"Next"**.

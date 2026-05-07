@@ -1,6 +1,10 @@
-import { ReducerID, SelectableValue } from '@grafana/data';
-import { CalculateFieldMode, CalculateFieldTransformerOptions, CumulativeOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { ReducerID, type SelectableValue } from '@grafana/data';
+import {
+  CalculateFieldMode,
+  type CalculateFieldTransformerOptions,
+  type CumulativeOptions,
+} from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker } from '@grafana/ui';
 
 import { LABEL_WIDTH } from './constants';
@@ -10,7 +14,6 @@ export const CumulativeOptionsEditor = (props: {
   names: string[];
   onChange: (options: CalculateFieldTransformerOptions) => void;
 }) => {
-  const { t } = useTranslate();
   const { names, onChange, options } = props;
   const { cumulative } = options;
   const selectOptions = names.map((v) => ({ label: v, value: v }));
@@ -53,7 +56,6 @@ export const CumulativeOptionsEditor = (props: {
       >
         <StatsPicker
           allowMultiple={false}
-          className="width-18"
           stats={[cumulative?.reducer || ReducerID.sum]}
           onChange={onCumulativeStatsChange}
           defaultStat={ReducerID.sum}

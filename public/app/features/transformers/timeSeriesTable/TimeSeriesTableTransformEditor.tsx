@@ -1,26 +1,18 @@
 import { useCallback } from 'react';
 
 import {
-  PluginState,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerUIProps,
   ReducerID,
   isReducerID,
-  SelectableValue,
-  Field,
-  FieldType,
+  type SelectableValue,
+  type Field,
+  type FieldType,
   isTimeSeriesField,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-
-import {
-  timeSeriesTableTransformer,
-  TimeSeriesTableTransformerOptions,
-  getRefData,
-} from './timeSeriesTableTransformer';
+import { type TimeSeriesTableTransformerOptions, getRefData } from './timeSeriesTableTransformer';
 
 export function TimeSeriesTableTransformEditor({
   input,
@@ -58,8 +50,6 @@ export function TimeSeriesTableTransformEditor({
     },
     [onChange, options]
   );
-
-  const { t } = useTranslate();
 
   let configRows = [];
   for (const refId of Object.keys(refIdMap)) {
@@ -124,13 +114,3 @@ export function TimeSeriesTableTransformEditor({
 
   return <>{configRows}</>;
 }
-
-export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeSeriesTableTransformerOptions> = {
-  id: timeSeriesTableTransformer.id,
-  editor: TimeSeriesTableTransformEditor,
-  transformation: timeSeriesTableTransformer,
-  name: timeSeriesTableTransformer.name,
-  description: timeSeriesTableTransformer.description,
-  state: PluginState.beta,
-  help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
-};

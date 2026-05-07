@@ -1,26 +1,33 @@
 import { find } from 'lodash';
 
-import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
-import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
+import {
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+  type PanelPluginMeta,
+  type TypedVariableModel,
+} from '@grafana/data';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
+import { type Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import config from 'app/core/config';
 
 import { LibraryElementKind } from '../../../library-panels/types';
-import { DashboardJson } from '../../../manage-dashboards/types';
+import { type DashboardJson } from '../../../manage-dashboards/types';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { DashboardModel } from '../../state/DashboardModel';
 
-import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
+import { DashboardExporter, type LibraryElementExport } from './DashboardExporter';
 
-jest.mock('app/core/store', () => {
-  return {
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  store: {
     getBool: jest.fn(),
     getObject: jest.fn((_a, b) => b),
     get: jest.fn(),
-  };
-});
+  },
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -39,6 +46,9 @@ jest.mock('@grafana/runtime', () => ({
     apps: {},
     featureToggles: {
       newVariables: false,
+    },
+    unifiedAlerting: {
+      minInterval: '10s',
     },
   },
 }));
@@ -339,23 +349,11 @@ describe('given dashboard with repeated panels', () => {
 
     config.buildInfo.version = '3.0.2';
 
-    config.panels['graph'] = {
-      id: 'graph',
-      name: 'Graph',
-      info: { version: '1.1.0' },
-    } as PanelPluginMeta;
-
-    config.panels['table'] = {
-      id: 'table',
-      name: 'Table',
-      info: { version: '1.1.1' },
-    } as PanelPluginMeta;
-
-    config.panels['heatmap'] = {
-      id: 'heatmap',
-      name: 'Heatmap',
-      info: { version: '1.1.2' },
-    } as PanelPluginMeta;
+    setPanelPluginMetas({
+      graph: { id: 'graph', name: 'Graph', info: { version: '1.1.0' } } as PanelPluginMeta,
+      table: { id: 'table', name: 'Table', info: { version: '1.1.1' } } as PanelPluginMeta,
+      heatmap: { id: 'heatmap', name: 'Heatmap', info: { version: '1.1.2' } } as PanelPluginMeta,
+    });
 
     dash = new DashboardModel(
       dash,
@@ -381,6 +379,10 @@ describe('given dashboard with repeated panels', () => {
       exported = clean;
       done();
     });
+  });
+
+  afterEach(() => {
+    setPanelPluginMetas({});
   });
 
   it('should replace datasource refs', () => {

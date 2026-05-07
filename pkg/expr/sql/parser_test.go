@@ -105,7 +105,7 @@ func TestTablesList(t *testing.T) {
 			)
 			SELECT name, price
 			FROM top_products;`,
-			expected: []string{"products", "top_products"},
+			expected: []string{"products"},
 		},
 		{
 			name:     "with quote",
@@ -121,7 +121,7 @@ func TestTablesList(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			tables, err := TablesList(tc.sql)
+			tables, err := TablesList(t.Context(), tc.sql)
 			if tc.expectError {
 				require.NotNil(t, err, "expected error for SQL: %s", tc.sql)
 			} else {

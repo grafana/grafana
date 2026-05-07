@@ -2,10 +2,19 @@
 import './global-jquery-shim';
 
 import { TransformStream } from 'node:stream/web';
+import { MessageChannel, type MessagePort } from 'node:worker_threads';
 import { TextEncoder, TextDecoder } from 'util';
 
-import { EventBusSrv } from '@grafana/data';
-import { GrafanaBootConfig } from '@grafana/runtime';
+// we need to isolate the `@grafana/data` module here now that it depends on `@grafana/i18n`
+jest.isolateModulesAsync(async () => {
+  const { EventBusSrv } = await import('@grafana/data');
+  const testAppEvents = new EventBusSrv();
+  jest.mock('../app/core/app_events', () => ({
+    ...jest.requireActual('../app/core/app_events'),
+    appEvents: testAppEvents,
+  }));
+});
+import { type GrafanaBootConfig } from '@grafana/runtime';
 
 import 'blob-polyfill';
 import 'mutationobserver-shim';
@@ -14,7 +23,6 @@ import './mocks/workers';
 import '../vendor/flot/jquery.flot';
 import '../vendor/flot/jquery.flot.time';
 
-const testAppEvents = new EventBusSrv();
 const global = window as any;
 
 // mock the default window.grafanaBootData settings
@@ -60,11 +68,6 @@ global.TextDecoder = TextDecoder;
 global.TransformStream = TransformStream;
 // add scrollTo interface since it's not implemented in jsdom
 Element.prototype.scrollTo = () => {};
-
-jest.mock('../app/core/core', () => ({
-  ...jest.requireActual('../app/core/core'),
-  appEvents: testAppEvents,
-}));
 
 const throwUnhandledRejections = () => {
   process.on('unhandledRejection', (err) => {
@@ -124,6 +127,26 @@ global.ResizeObserver = class ResizeObserver {
   }
 };
 
+// originally using just global.MessageChannel = MessageChannel
+// however this results in open handles in jest tests
+// see https://github.com/facebook/react/issues/26608#issuecomment-1734172596
+global.MessageChannel = class {
+  port1: MessagePort;
+  port2: MessagePort;
+  constructor() {
+    const channel = new MessageChannel();
+    this.port1 = new Proxy(channel.port1, {
+      set(port1, prop, value) {
+        const result = Reflect.set(port1, prop, value);
+        if (prop === 'onmessage') {
+          port1.unref();
+        }
+        return result;
+      },
+    });
+    this.port2 = channel.port2;
+  }
+};
 global.BroadcastChannel = class BroadcastChannel {
   onmessage() {}
   onmessageerror() {}

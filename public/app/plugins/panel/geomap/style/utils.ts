@@ -6,11 +6,11 @@ import {
   HorizontalAlign,
   VerticalAlign,
   defaultStyleConfig,
-  StyleConfig,
-  StyleConfigFields,
-  StyleConfigState,
-  SymbolAlign,
-  ColorValue,
+  type StyleConfig,
+  type StyleConfigFields,
+  type StyleConfigState,
+  type SymbolAlign,
+  type ColorValue,
 } from './types';
 
 /** Indicate if the style wants to show text values */

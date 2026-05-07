@@ -1,0 +1,12 @@
+groups:
+  - id: registry.grafana.namespace
+    type: attribute_group
+    display_name: Grafana Namespace Attributes
+    brief: "Describes Grafana app platform namespace attributes."
+    attributes:
+      - id: grafana.namespace.name
+        type: string
+        brief: The namespace name.
+        examples:
+          - "stacks-99999"
+        stability: stable

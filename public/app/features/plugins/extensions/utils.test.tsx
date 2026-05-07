@@ -1,9 +1,10 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
 import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
-import { config, AppPluginConfig } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { config, type AppPluginConfig } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { appEvents } from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { log } from './logs/log';
@@ -17,31 +18,35 @@ import {
   getExtensionPointPluginDependencies,
   getExposedComponentPluginDependencies,
   getAppPluginConfigs,
-  getAppPluginIdFromExposedComponentId,
-  getAppPluginDependencies,
   getExtensionPointPluginMeta,
   getMutationObserverProxy,
-  readOnlyCopy,
-  isReadOnlyProxy,
+  writableProxy,
   isMutationObserverProxy,
 } from './utils';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   ...jest.requireActual('app/features/plugins/pluginSettings'),
-  getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' } }),
+  getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' }, id: 'test-plugin' }),
 }));
 
-jest.mock('./logs/log', () => {
-  const { createLogMock } = jest.requireActual('./logs/testUtils');
-  const original = jest.requireActual('./logs/log');
-
-  return {
-    ...original,
-    log: createLogMock(),
-  };
-});
-
 describe('Plugin Extensions / Utils', () => {
+  const originalEnv = config.buildInfo.env;
+
+  beforeEach(() => {
+    jest.spyOn(log, 'error').mockImplementation(() => {});
+    jest.spyOn(log, 'warning').mockImplementation(() => {});
+    jest.spyOn(log, 'debug').mockImplementation(() => {});
+    jest.spyOn(log, 'info').mockImplementation(() => {});
+    jest.spyOn(log, 'trace').mockImplementation(() => {});
+    jest.spyOn(log, 'fatal').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+
+    config.buildInfo.env = originalEnv;
+  });
+
   describe('deepFreeze()', () => {
     test('should not fail when called with primitive values', () => {
       // Although the type system doesn't allow to call it with primitive values, it can happen that the plugin just ignores these errors.
@@ -387,140 +392,169 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('getMutationObserverProxy()', () => {
-    it('should not be possible to modify values in proxied object, but logs a warning', () => {
-      const proxy = getMutationObserverProxy({ a: 'a' });
-
-      expect(() => {
-        proxy.a = 'b';
-      }).not.toThrow();
-
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "a"`, {
-        stack: expect.any(String),
+    describe('in development mode', () => {
+      beforeEach(() => {
+        config.buildInfo.env = 'development';
       });
 
-      expect(proxy.a).toBe('b');
-    });
+      it('should be possible to modify values in proxied object, but logs an error', () => {
+        const proxy = getMutationObserverProxy(
+          { a: 'a' },
+          { pluginId: 'myorg-cool-datasource', source: 'datasource', pluginVersion: '1.2.3' }
+        );
 
-    it('should be possible to set new values, but logs a warning', () => {
-      const obj: { a: string; b?: string } = { a: 'a' };
-      const proxy = getMutationObserverProxy(obj);
+        expect(() => {
+          proxy.a = 'b';
+        }).not.toThrow();
 
-      expect(() => {
-        Object.defineProperty(proxy, 'b', {
-          value: 'b',
-          writable: false,
+        expect(log.error).toHaveBeenCalledWith(
+          `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version 1.2.3`,
+          {
+            stack: expect.any(String),
+          }
+        );
+
+        expect(proxy.a).toBe('b');
+      });
+
+      it('should be possible to call defineProperty, but logs a debug message', () => {
+        const obj: { a: string; b?: string } = { a: 'a' };
+        const proxy = getMutationObserverProxy(obj, { pluginId: 'myorg-cool-extension' });
+
+        expect(() => {
+          Object.defineProperty(proxy, 'b', {
+            value: 'b',
+            writable: false,
+          });
+        }).not.toThrow();
+
+        expect(log.debug).toHaveBeenCalledWith(
+          `Attempted to define object property "b" from extension with id myorg-cool-extension and version unknown`,
+          {
+            stack: expect.any(String),
+          }
+        );
+
+        expect(proxy.b).toBe('b');
+      });
+
+      it('should be possible to delete properties, but logs an error', () => {
+        const proxy = getMutationObserverProxy({
+          a: {
+            c: 'c',
+          },
+          b: 'b',
         });
-      }).not.toThrow();
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to define object property "b"`, {
-        stack: expect.any(String),
+        expect(() => {
+          // @ts-ignore - This is to test the logic
+          delete proxy.a.c;
+        }).not.toThrow();
+
+        expect(log.error).toHaveBeenCalledWith(
+          `Attempted to delete object property "c" from extension with id unknown and version unknown`,
+          {
+            stack: expect.any(String),
+          }
+        );
+
+        expect(proxy.a.c).toBeUndefined();
       });
-
-      expect(proxy.b).toBe('b');
     });
 
-    it('should be possible to delete properties, but logs a warning', () => {
-      const proxy = getMutationObserverProxy({
-        a: {
-          c: 'c',
-        },
-        b: 'b',
+    describe('in production mode', () => {
+      beforeEach(() => {
+        config.buildInfo.env = 'production';
       });
 
-      expect(() => {
-        // @ts-ignore - This is to test the logic
-        delete proxy.a.c;
-      }).not.toThrow();
+      it('should be possible to modify values in proxied object, but logs a warning', () => {
+        const proxy = getMutationObserverProxy({ a: 'a' }, { pluginId: 'myorg-cool-datasource', source: 'datasource' });
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to delete object property "c"`, {
-        stack: expect.any(String),
+        expect(() => {
+          proxy.a = 'b';
+        }).not.toThrow();
+
+        expect(log.warning).toHaveBeenCalledWith(
+          `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version unknown`,
+          {
+            stack: expect.any(String),
+          }
+        );
+
+        expect(proxy.a).toBe('b');
       });
 
-      expect(proxy.a.c).toBeUndefined();
+      it('should be possible to call defineProperty, but logs a debug message', () => {
+        const obj: { a: string; b?: string } = { a: 'a' };
+        const proxy = getMutationObserverProxy(obj, { pluginId: 'myorg-cool-extension' });
+
+        expect(() => {
+          Object.defineProperty(proxy, 'b', {
+            value: 'b',
+            writable: false,
+          });
+        }).not.toThrow();
+
+        expect(log.debug).toHaveBeenCalledWith(
+          `Attempted to define object property "b" from extension with id myorg-cool-extension and version unknown`,
+          {
+            stack: expect.any(String),
+          }
+        );
+
+        expect(proxy.b).toBe('b');
+      });
+
+      it('should be possible to delete properties, but logs a warning', () => {
+        const proxy = getMutationObserverProxy({
+          a: {
+            c: 'c',
+          },
+          b: 'b',
+        });
+
+        expect(() => {
+          // @ts-ignore - This is to test the logic
+          delete proxy.a.c;
+        }).not.toThrow();
+
+        expect(log.warning).toHaveBeenCalledWith(
+          `Attempted to delete object property "c" from extension with id unknown and version unknown`,
+          {
+            stack: expect.any(String),
+          }
+        );
+
+        expect(proxy.a.c).toBeUndefined();
+      });
     });
   });
 
-  describe('readOnlyCopy()', () => {
+  describe('writableProxy()', () => {
     const originalEnv = config.buildInfo.env;
-
-    beforeEach(() => {
-      jest.spyOn(console, 'warn').mockImplementation();
-      config.featureToggles.extensionsReadOnlyProxy = false;
-    });
 
     afterEach(() => {
       config.buildInfo.env = originalEnv;
-      jest.mocked(console.warn).mockClear();
     });
 
     it('should return the same value for primitive types', () => {
-      expect(readOnlyCopy(1)).toBe(1);
-      expect(readOnlyCopy('a')).toBe('a');
-      expect(readOnlyCopy(true)).toBe(true);
-      expect(readOnlyCopy(false)).toBe(false);
-      expect(readOnlyCopy(null)).toBe(null);
-      expect(readOnlyCopy(undefined)).toBe(undefined);
+      expect(writableProxy(1)).toBe(1);
+      expect(writableProxy('a')).toBe('a');
+      expect(writableProxy(true)).toBe(true);
+      expect(writableProxy(false)).toBe(false);
+      expect(writableProxy(null)).toBe(null);
+      expect(writableProxy(undefined)).toBe(undefined);
     });
 
-    it('should return a read-only proxy of the original object if the feature flag is enabled', () => {
-      config.featureToggles.extensionsReadOnlyProxy = true;
-
-      const obj = { a: 'a' };
-      const copy = readOnlyCopy(obj);
-
-      expect(copy).not.toBe(obj);
-      expect(copy.a).toBe('a');
-      expect(isReadOnlyProxy(copy)).toBe(true);
-      expect(() => {
-        copy.a = 'b';
-      }).toThrow(TypeError);
-    });
-
-    it('should return a read-only proxy of a deep-copy of the original object in dev mode', () => {
-      config.featureToggles.extensionsReadOnlyProxy = false;
+    it('should return a writable deep-copy of the original object in dev mode', () => {
       config.buildInfo.env = 'development';
 
       const obj = { a: 'a' };
-      const copy = readOnlyCopy(obj);
-
-      expect(copy).not.toBe(obj);
-      expect(copy.a).toBe('a');
-      expect(isReadOnlyProxy(copy)).toBe(true);
-      expect(() => {
-        copy.a = 'b';
-      }).toThrow(TypeError);
-
-      // Also test that we can handle frozen objects
-      // (This is not possible with getReadOnlyProxy, as it throws an error when the object is already frozen)
-      const obj2 = {
-        a: {
-          b: {
-            c: {
-              d: 'd',
-            },
-          },
-        },
-      };
-
-      Object.freeze(obj2);
-      Object.freeze(obj2.a);
-      Object.freeze(obj2.a.b);
-
-      const copy2 = readOnlyCopy(obj2);
-
-      expect(() => {
-        copy2.a.b.c.d = 'testing';
-      }).toThrow("'set' on proxy: trap returned falsish for property 'd'");
-
-      expect(copy2.a.b.c.d).toBe('d');
-    });
-
-    it('should return a writable deep-copy of the original object in production mode', () => {
-      config.featureToggles.extensionsReadOnlyProxy = false;
-      config.buildInfo.env = 'production';
-
-      const obj = { a: 'a' };
-      const copy = readOnlyCopy(obj);
+      const copy = writableProxy(obj, {
+        source: 'datasource',
+        pluginId: 'myorg-cool-datasource',
+        pluginVersion: '1.2.3',
+      });
 
       expect(copy).not.toBe(obj);
       expect(copy.a).toBe('a');
@@ -529,19 +563,44 @@ describe('Plugin Extensions / Utils', () => {
         copy.a = 'b';
       }).not.toThrow();
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "a"`, {
-        stack: expect.any(String),
-      });
+      expect(log.error).toHaveBeenCalledWith(
+        `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version 1.2.3`,
+        {
+          stack: expect.any(String),
+        }
+      );
+
+      expect(copy.a).toBe('b');
+    });
+
+    it('should return a writable deep-copy of the original object in production mode', () => {
+      config.buildInfo.env = 'production';
+
+      const obj = { a: 'a' };
+      const copy = writableProxy(obj, { source: 'datasource', pluginId: 'myorg-cool-datasource' });
+
+      expect(copy).not.toBe(obj);
+      expect(copy.a).toBe('a');
+      expect(isMutationObserverProxy(copy)).toBe(true);
+      expect(() => {
+        copy.a = 'b';
+      }).not.toThrow();
+
+      expect(log.warning).toHaveBeenCalledWith(
+        `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version unknown`,
+        {
+          stack: expect.any(String),
+        }
+      );
 
       expect(copy.a).toBe('b');
     });
 
     it('should allow freezing the object in production mode', () => {
-      config.featureToggles.extensionsReadOnlyProxy = false;
       config.buildInfo.env = 'production';
 
       const obj = { a: 'a', b: { c: 'c' } };
-      const copy = readOnlyCopy(obj);
+      const copy = writableProxy(obj);
 
       expect(() => {
         Object.freeze(copy);
@@ -552,9 +611,12 @@ describe('Plugin Extensions / Utils', () => {
       expect(Object.isFrozen(copy.b)).toBe(true);
       expect(copy.b).toEqual({ c: 'c' });
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to define object property "a"`, {
-        stack: expect.any(String),
-      });
+      expect(log.debug).toHaveBeenCalledWith(
+        `Attempted to define object property "a" from extension with id unknown and version unknown`,
+        {
+          stack: expect.any(String),
+        }
+      );
     });
   });
 
@@ -575,7 +637,11 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should open modal with provided title and body', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       openModal({
         title: 'Title in modal',
@@ -589,7 +655,11 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should open modal with default width if not specified', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       openModal({
         title: 'Title in modal',
@@ -605,7 +675,11 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should open modal with specified width', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       openModal({
         title: 'Title in modal',
@@ -621,7 +695,11 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should open modal with specified height', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       openModal({
         title: 'Title in modal',
@@ -637,7 +715,11 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should open modal with the plugin context being available', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       const ModalContent = () => {
         const context = usePluginContext();
@@ -652,6 +734,91 @@ describe('Plugin Extensions / Utils', () => {
 
       const modal = await screen.findByRole('dialog');
       expect(modal).toHaveTextContent('Version: 1.0.0');
+    });
+
+    it('should add a wrapper div with a "data-plugin-sandbox" attribute', async () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
+
+      openModal({
+        title: 'Title in modal',
+        body: () => <div>Text in body</div>,
+      });
+
+      expect(await screen.findByRole('dialog')).toBeVisible();
+
+      expect(screen.getByTestId('plugin-sandbox-wrapper')).toHaveAttribute(
+        'data-plugin-sandbox',
+        'grafana-worldmap-panel'
+      );
+    });
+
+    it('should show an error alert in the modal IN DEV MODE if the extension throws an error', async () => {
+      config.buildInfo.env = 'development';
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const pluginId = 'grafana-worldmap-panel';
+      const extensionTitle = 'Title in modal';
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: extensionTitle,
+      });
+
+      const ModalContent = () => {
+        throw new Error('Test error');
+      };
+
+      openModal({
+        title: extensionTitle,
+        body: ModalContent,
+      });
+
+      await screen.findByRole('dialog');
+
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
+        message: 'Test error',
+        componentStack: expect.any(String),
+      });
+
+      expect(screen.getByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
+    });
+
+    it('should also show an error alert in the modal IN PRODUCTION MODE if the extension throws an error', async () => {
+      config.buildInfo.env = 'production';
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const pluginId = 'grafana-worldmap-panel';
+      const extensionTitle = 'Title in modal';
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: extensionTitle,
+      });
+
+      const ModalContent = () => {
+        throw new Error('Test error');
+      };
+
+      openModal({
+        title: extensionTitle,
+        body: ModalContent,
+      });
+
+      await screen.findByRole('dialog');
+
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
+        message: 'Test error',
+        componentStack: expect.any(String),
+      });
+
+      expect(screen.getByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
     });
   });
 
@@ -687,7 +854,12 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should make the plugin context available for the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
 
       render(<Component a={{ b: { c: 'Grafana' } }} />);
 
@@ -697,7 +869,12 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should pass the properties into the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
 
       render(<Component a={{ b: { c: 'Grafana' } }} />);
 
@@ -705,31 +882,43 @@ describe('Plugin Extensions / Utils', () => {
       expect(screen.getByText('Version: 1.0.0')).toBeVisible();
     });
 
-    it('should not be possible to mutate the props in development mode, and it also throws an error', async () => {
+    it('should not be possible to mutate the props in development mode, but it logs an error', async () => {
       config.buildInfo.env = 'development';
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
       const props = { a: { b: { c: 'Grafana' } } };
 
-      jest.spyOn(console, 'error').mockImplementation();
+      render(<Component {...props} override />);
 
-      await expect(async () => {
-        await act(async () => {
-          render(<Component {...props} override />);
-        });
-      }).rejects.toThrow(`'set' on proxy: trap returned falsish for property 'c'`);
+      expect(await screen.findByText('Hello Grafana!')).toBeVisible();
 
-      // Logs an error
-      expect(console.error).toHaveBeenCalledWith(expect.any(String));
+      // Logs a warning
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledWith(
+        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel and version 1.0.0`,
+        {
+          stack: expect.any(String),
+        }
+      );
 
-      // Not able to mutate the props in development mode
+      // Not able to mutate the props in dev mode either
       expect(props.a.b.c).toBe('Grafana');
     });
 
     it('should not be possible to mutate the props in production mode either, but it logs a warning', async () => {
       config.buildInfo.env = 'production';
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
       const props = { a: { b: { c: 'Grafana' } } };
 
       render(<Component {...props} override />);
@@ -738,17 +927,75 @@ describe('Plugin Extensions / Utils', () => {
 
       // Logs a warning
       expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "c"`, {
-        stack: expect.any(String),
-      });
+      expect(log.warning).toHaveBeenCalledWith(
+        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel and version 1.0.0`,
+        {
+          stack: expect.any(String),
+        }
+      );
 
       // Not able to mutate the props in production mode either
       expect(props.a.b.c).toBe('Grafana');
     });
+
+    it('should render an error alert IN DEV MODE if the extension throws an error', async () => {
+      config.buildInfo.env = 'development';
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const pluginId = 'grafana-worldmap-panel';
+      const ComponentWithError = () => {
+        throw new Error('Test error');
+      };
+      const extensionTitle = 'ComponentWithError';
+      const WrappedComponent = wrapWithPluginContext({
+        pluginId,
+        extensionTitle,
+        Component: ComponentWithError,
+        log,
+      });
+
+      render(<WrappedComponent />);
+
+      expect(await screen.findByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
+
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
+        message: 'Test error',
+        componentStack: expect.any(String),
+      });
+    });
+
+    it('should not render anything IN PRODUCTION MODE if the extension throws an error, but still logs an error', async () => {
+      config.buildInfo.env = 'production';
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const pluginId = 'grafana-worldmap-panel';
+      const ComponentWithError = () => {
+        throw new Error('Test error');
+      };
+      const extensionTitle = 'ComponentWithError';
+      const WrappedComponent = wrapWithPluginContext({
+        pluginId,
+        extensionTitle,
+        Component: ComponentWithError,
+        log,
+      });
+
+      render(<WrappedComponent />);
+
+      await waitFor(() =>
+        expect(screen.queryByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).not.toBeInTheDocument()
+      );
+
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
+        message: 'Test error',
+        componentStack: expect.any(String),
+      });
+    });
   });
 
   describe('getAppPluginConfigs()', () => {
-    const originalApps = config.apps;
     const genereicAppPluginConfig = {
       path: '',
       version: '',
@@ -774,60 +1021,32 @@ describe('Plugin Extensions / Utils', () => {
       },
     };
 
-    afterEach(() => {
-      config.apps = originalApps;
+    beforeEach(() => {
+      setAppPluginMetas({});
     });
 
-    test('should return the app plugin configs based on the provided plugin ids', () => {
-      config.apps = {
-        'myorg-first-app': {
-          ...genereicAppPluginConfig,
-          id: 'myorg-first-app',
-        },
-        'myorg-second-app': {
-          ...genereicAppPluginConfig,
-          id: 'myorg-second-app',
-        },
-        'myorg-third-app': {
-          ...genereicAppPluginConfig,
-          id: 'myorg-third-app',
-        },
-      };
+    test('should return the app plugin configs based on the provided plugin ids', async () => {
+      const app1 = { ...genereicAppPluginConfig, id: 'myorg-first-app' };
+      const app2 = { ...genereicAppPluginConfig, id: 'myorg-second-app' };
+      const app3 = { ...genereicAppPluginConfig, id: 'myorg-third-app' };
+      setAppPluginMetas({ [app1.id]: app1, [app2.id]: app2, [app3.id]: app3 });
 
-      expect(getAppPluginConfigs(['myorg-first-app', 'myorg-third-app'])).toEqual([
-        config.apps['myorg-first-app'],
-        config.apps['myorg-third-app'],
-      ]);
+      const appPluginIds = await getAppPluginConfigs(['myorg-first-app', 'myorg-third-app']);
+      expect(appPluginIds).toEqual([app1, app3]);
     });
 
-    test('should simply ignore the app plugin ids that do not belong to a config', () => {
-      config.apps = {
-        'myorg-first-app': {
-          ...genereicAppPluginConfig,
-          id: 'myorg-first-app',
-        },
-        'myorg-second-app': {
-          ...genereicAppPluginConfig,
-          id: 'myorg-second-app',
-        },
-        'myorg-third-app': {
-          ...genereicAppPluginConfig,
-          id: 'myorg-third-app',
-        },
-      };
+    test('should simply ignore the app plugin ids that do not belong to a config', async () => {
+      const app1 = { ...genereicAppPluginConfig, id: 'myorg-first-app' };
+      const app2 = { ...genereicAppPluginConfig, id: 'myorg-second-app' };
+      const app3 = { ...genereicAppPluginConfig, id: 'myorg-third-app' };
+      setAppPluginMetas({ [app1.id]: app1, [app2.id]: app2, [app3.id]: app3 });
 
-      expect(getAppPluginConfigs(['myorg-first-app', 'unknown-app-id'])).toEqual([config.apps['myorg-first-app']]);
-    });
-  });
-
-  describe('getAppPluginIdFromExposedComponentId()', () => {
-    test('should return the app plugin id from an extension point id', () => {
-      expect(getAppPluginIdFromExposedComponentId('myorg-extensions-app/component/v1')).toBe('myorg-extensions-app');
+      const appPluginIds = await getAppPluginConfigs(['myorg-first-app', 'unknown-app-id']);
+      expect(appPluginIds).toEqual([app1]);
     });
   });
 
   describe('getExtensionPointPluginDependencies()', () => {
-    const originalApps = config.apps;
     const genereicAppPluginConfig = {
       path: '',
       version: '',
@@ -853,14 +1072,14 @@ describe('Plugin Extensions / Utils', () => {
       },
     };
 
-    afterEach(() => {
-      config.apps = originalApps;
+    beforeEach(() => {
+      setAppPluginMetas({});
     });
 
-    test('should return the app plugin ids that register extensions to a link extension point', () => {
+    test('should return the app plugin ids that register extensions to a link extension point', async () => {
       const extensionPointId = 'myorg-first-app/link/v1';
 
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -886,17 +1105,17 @@ describe('Plugin Extensions / Utils', () => {
           ...genereicAppPluginConfig,
           id: 'myorg-third-app',
         },
-      };
+      });
 
-      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+      const appPluginIds = await getExtensionPointPluginDependencies(extensionPointId);
 
       expect(appPluginIds).toEqual(['myorg-second-app']);
     });
 
-    test('should return the app plugin ids that register extensions to a component extension point', () => {
+    test('should return the app plugin ids that register extensions to a component extension point', async () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -922,18 +1141,18 @@ describe('Plugin Extensions / Utils', () => {
             addedFunctions: [],
           },
         },
-      };
+      });
 
-      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+      const appPluginIds = await getExtensionPointPluginDependencies(extensionPointId);
 
       expect(appPluginIds).toEqual(['myorg-third-app']);
     });
 
-    test('should return an empty array if there are no apps that that extend the extension point', () => {
+    test('should return an empty array if there are no apps that that extend the extension point', async () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
       // None of the apps are extending the extension point
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -946,17 +1165,17 @@ describe('Plugin Extensions / Utils', () => {
           ...genereicAppPluginConfig,
           id: 'myorg-third-app',
         },
-      };
+      });
 
-      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+      const appPluginIds = await getExtensionPointPluginDependencies(extensionPointId);
 
       expect(appPluginIds).toEqual([]);
     });
 
-    test('should also return (recursively) the app plugin ids that the apps which extend the extension-point depend on', () => {
+    test('should also return (recursively) the app plugin ids that the apps which extend the extension-point depend on', async () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1032,16 +1251,15 @@ describe('Plugin Extensions / Utils', () => {
           ...genereicAppPluginConfig,
           id: 'myorg-sixth-app',
         },
-      };
+      });
 
-      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+      const appPluginIds = await getExtensionPointPluginDependencies(extensionPointId);
 
       expect(appPluginIds).toEqual(['myorg-second-app', 'myorg-fourth-app', 'myorg-fifth-app']);
     });
   });
 
   describe('getExposedComponentPluginDependencies()', () => {
-    const originalApps = config.apps;
     const genereicAppPluginConfig = {
       path: '',
       version: '',
@@ -1067,14 +1285,14 @@ describe('Plugin Extensions / Utils', () => {
       },
     };
 
-    afterEach(() => {
-      config.apps = originalApps;
+    beforeEach(() => {
+      setAppPluginMetas({});
     });
 
-    test('should only return the app plugin id that exposes the component, if that component does not depend on anything', () => {
+    test('should only return the app plugin id that exposes the component, if that component does not depend on anything', async () => {
       const exposedComponentId = 'myorg-second-app/component/v1';
 
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1099,17 +1317,17 @@ describe('Plugin Extensions / Utils', () => {
           ...genereicAppPluginConfig,
           id: 'myorg-third-app',
         },
-      };
+      });
 
-      const appPluginIds = getExposedComponentPluginDependencies(exposedComponentId);
+      const appPluginIds = await getExposedComponentPluginDependencies(exposedComponentId);
 
       expect(appPluginIds).toEqual(['myorg-second-app']);
     });
 
-    test('should also return the list of app plugin ids that the plugin - which exposes the component - is depending on', () => {
+    test('should also return the list of app plugin ids that the plugin - which exposes the component - is depending on', async () => {
       const exposedComponentId = 'myorg-second-app/component/v1';
 
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1178,106 +1396,15 @@ describe('Plugin Extensions / Utils', () => {
             addedFunctions: [],
           },
         },
-      };
+      });
 
-      const appPluginIds = getExposedComponentPluginDependencies(exposedComponentId);
+      const appPluginIds = await getExposedComponentPluginDependencies(exposedComponentId);
 
       expect(appPluginIds).toEqual(['myorg-second-app', 'myorg-fourth-app', 'myorg-fifth-app']);
     });
   });
 
-  describe('getAppPluginDependencies()', () => {
-    const originalApps = config.apps;
-    const genereicAppPluginConfig = {
-      path: '',
-      version: '',
-      preload: false,
-      angular: {
-        detected: false,
-        hideDeprecation: false,
-      },
-      loadingStrategy: PluginLoadingStrategy.fetch,
-      dependencies: {
-        grafanaVersion: '8.0.0',
-        plugins: [],
-        extensions: {
-          exposedComponents: [],
-        },
-      },
-      extensions: {
-        addedLinks: [],
-        addedComponents: [],
-        addedFunctions: [],
-        exposedComponents: [],
-        extensionPoints: [],
-      },
-    };
-
-    afterEach(() => {
-      config.apps = originalApps;
-    });
-
-    test('should not end up in an infinite loop if there are circular dependencies', () => {
-      config.apps = {
-        'myorg-first-app': {
-          ...genereicAppPluginConfig,
-          id: 'myorg-first-app',
-        },
-        'myorg-second-app': {
-          ...genereicAppPluginConfig,
-          id: 'myorg-second-app',
-          dependencies: {
-            ...genereicAppPluginConfig.dependencies,
-            extensions: {
-              exposedComponents: ['myorg-third-app/link/v1'],
-            },
-          },
-        },
-        'myorg-third-app': {
-          ...genereicAppPluginConfig,
-          id: 'myorg-third-app',
-          dependencies: {
-            ...genereicAppPluginConfig.dependencies,
-            extensions: {
-              exposedComponents: ['myorg-second-app/link/v1'],
-            },
-          },
-        },
-      };
-
-      const appPluginIds = getAppPluginDependencies('myorg-second-app');
-
-      expect(appPluginIds).toEqual(['myorg-third-app']);
-    });
-
-    test('should not end up in an infinite loop if a plugin depends on itself', () => {
-      config.apps = {
-        'myorg-first-app': {
-          ...genereicAppPluginConfig,
-          id: 'myorg-first-app',
-        },
-        'myorg-second-app': {
-          ...genereicAppPluginConfig,
-          id: 'myorg-second-app',
-          dependencies: {
-            ...genereicAppPluginConfig.dependencies,
-            extensions: {
-              // Not a valid scenario!
-              // (As this is sometimes happening out in the wild, we thought it's better to also cover it with a test-case.)
-              exposedComponents: ['myorg-second-app/link/v1'],
-            },
-          },
-        },
-      };
-
-      const appPluginIds = getAppPluginDependencies('myorg-second-app');
-
-      expect(appPluginIds).toEqual([]);
-    });
-  });
-
   describe('getExtensionPointPluginMeta()', () => {
-    const originalApps = config.apps;
     const mockExtensionPointId = 'test-extension-point';
     const mockApp1: AppPluginConfig = {
       id: 'app1',
@@ -1332,30 +1459,26 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      config.apps = {};
+      setAppPluginMetas({});
     });
 
-    afterEach(() => {
-      config.apps = originalApps;
-    });
-
-    it('should return empty map when no plugins have extensions for the point', () => {
-      config.apps = {
+    it('should return empty map when no plugins have extensions for the point', async () => {
+      setAppPluginMetas({
         app1: { ...mockApp1, extensions: { ...mockApp1.extensions, addedComponents: [], addedLinks: [] } },
         app2: { ...mockApp2, extensions: { ...mockApp2.extensions, addedComponents: [], addedLinks: [] } },
-      };
+      });
 
-      const result = getExtensionPointPluginMeta(mockExtensionPointId);
+      const result = await getExtensionPointPluginMeta(mockExtensionPointId);
       expect(result.size).toBe(0);
     });
 
-    it('should return map with plugins that have components for the extension point', () => {
-      config.apps = {
+    it('should return map with plugins that have components for the extension point', async () => {
+      setAppPluginMetas({
         app1: mockApp1,
         app2: mockApp2,
-      };
+      });
 
-      const result = getExtensionPointPluginMeta(mockExtensionPointId);
+      const result = await getExtensionPointPluginMeta(mockExtensionPointId);
 
       expect(result.size).toBe(2);
       expect(result.get('app1')).toEqual({
@@ -1368,8 +1491,8 @@ describe('Plugin Extensions / Utils', () => {
       });
     });
 
-    it('should filter out plugins that do not have any extensions for the point', () => {
-      config.apps = {
+    it('should filter out plugins that do not have any extensions for the point', async () => {
+      setAppPluginMetas({
         app1: mockApp1,
         app2: { ...mockApp2, extensions: { ...mockApp2.extensions, addedComponents: [], addedLinks: [] } },
         app3: {
@@ -1381,9 +1504,9 @@ describe('Plugin Extensions / Utils', () => {
             addedLinks: [{ title: 'Link 3', targets: ['other-point'] }],
           },
         },
-      };
+      });
 
-      const result = getExtensionPointPluginMeta(mockExtensionPointId);
+      const result = await getExtensionPointPluginMeta(mockExtensionPointId);
 
       expect(result.size).toBe(1);
       expect(result.get('app1')).toEqual({

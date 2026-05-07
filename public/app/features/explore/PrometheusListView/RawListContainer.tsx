@@ -4,8 +4,8 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
-import { DataFrame, Field as DataFrameField } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type DataFrame, type Field as DataFrameField } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Field, Switch } from '@grafana/ui';
 
@@ -16,7 +16,11 @@ import {
   RawPrometheusListItemEmptyValue,
 } from './utils/getRawPrometheusListItemsFromDataFrame';
 
-export type instantQueryRawVirtualizedListData = { Value: string; __name__: string; [index: string]: string };
+export type instantQueryRawVirtualizedListData = {
+  Value: string;
+  __name__?: string;
+  [index: string]: string | undefined;
+};
 
 export interface RawListContainerProps {
   tableResult: DataFrame;
@@ -85,8 +89,6 @@ const RawListContainer = (props: RawListContainerProps) => {
     listRef.current?.resetAfterIndex(0, true);
   }, [isExpandedView]);
 
-  const { t } = useTranslate();
-
   const calculateInitialHeight = (length: number): number => {
     const maxListHeight = 600;
     const shortListLength = 10;
@@ -124,6 +126,7 @@ const RawListContainer = (props: RawListContainerProps) => {
           className={styles.switchWrapper}
           label={t('explore.raw-list-container.label-expand-results', 'Expand results')}
           htmlFor={'isExpandedView'}
+          noMargin
         >
           <div className={styles.switch}>
             <Switch
@@ -172,7 +175,7 @@ const RawListContainer = (props: RawListContainerProps) => {
                       isExpandedView={isExpandedView}
                       valueLabels={filteredValueLabels}
                       totalNumberOfValues={valueLabels.length}
-                      listKey={items[index].__name__}
+                      listKey={items[index].__name__ || `item-${index}`}
                       listItemData={items[index]}
                     />
                   </div>

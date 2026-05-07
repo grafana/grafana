@@ -1,12 +1,12 @@
 import { useEffect, useReducer } from 'react';
 
-import { AzureCredentials, isCredentialsComplete } from '@grafana/azure-sdk';
-import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type AzureCredentials, isCredentialsComplete } from '@grafana/azure-sdk';
+import { type SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Select, Button, Field } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorDataSourceJsonData } from '../../types';
+import { type AzureMonitorDataSourceJsonData } from '../../types/types';
 
 export interface Props {
   options: AzureMonitorDataSourceJsonData;
@@ -30,7 +30,6 @@ export const DefaultSubscription = (props: Props) => {
   } = props;
   const hasRequiredFields = isCredentialsComplete(credentials);
   const [loadSubscriptionsClicked, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
-  const { t } = useTranslate();
 
   useEffect(() => {
     if (!getSubscriptions || !hasRequiredFields) {
@@ -40,7 +39,7 @@ export const DefaultSubscription = (props: Props) => {
     let canceled = false;
     getSubscriptions().then((result) => {
       if (!canceled) {
-        updateSubscriptions(result, loadSubscriptionsClicked);
+        updateSubscriptions(result, Boolean(loadSubscriptionsClicked));
       }
     });
     return () => {

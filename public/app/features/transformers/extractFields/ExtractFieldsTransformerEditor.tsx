@@ -1,41 +1,36 @@
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 
 import {
-  DataTransformerID,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  FieldNamePickerConfigSettings,
-  SelectableValue,
-  StandardEditorsRegistryItem,
-  TransformerCategory,
+  type TransformerUIProps,
+  type FieldNamePickerConfigSettings,
+  type SelectableValue,
+  type StandardEditorsRegistryItem,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, ComboboxOption } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, type ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-
 import { JSONPathEditor } from './components/JSONPathEditor';
-import { extractFieldsTransformer } from './extractFields';
 import { fieldExtractors } from './fieldExtractors';
-import { ExtractFieldsOptions, FieldExtractorID, JSONPath } from './types';
-
-const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: {
-    width: 30,
-    placeholderText: 'Select field',
-  },
-  name: '',
-  id: '',
-  editor: () => null,
-};
+import { type ExtractFieldsOptions, FieldExtractorID, type JSONPath } from './types';
 
 export const extractFieldsTransformerEditor = ({
   input,
   options = { delimiter: ',' },
   onChange,
 }: TransformerUIProps<ExtractFieldsOptions>) => {
-  const { t } = useTranslate();
+  const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+    settings: {
+      width: 30,
+      placeholderText: t(
+        'transformers.extract-fields-transformer-editor.field-name-picker-settings.placeholderText.select-field',
+        'Select field'
+      ),
+    },
+    name: '',
+    id: '',
+    editor: () => null,
+  };
 
   const onPickSourceField = (source?: string) => {
     onChange({
@@ -118,16 +113,17 @@ export const extractFieldsTransformerEditor = ({
       {options.format === FieldExtractorID.RegExp && (
         <InlineFieldRow>
           <InlineField
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             label="RegExp"
             labelWidth={16}
             interactive={true}
             tooltip={t('transformers.extract-fields-transformer-editor.tooltip-regexp', 'Example: {{regexExample}}', {
               regexExample: '/(?<NewField>.*)/',
+              interpolation: { escapeValue: false },
             })}
           >
             <Input
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="/(?<NewField>.*)/"
               value={options.regExp}
               onChange={onRegexpChange}
@@ -177,14 +173,4 @@ export const extractFieldsTransformerEditor = ({
       )}
     </div>
   );
-};
-
-export const extractFieldsTransformRegistryItem: TransformerRegistryItem<ExtractFieldsOptions> = {
-  id: DataTransformerID.extractFields,
-  editor: extractFieldsTransformerEditor,
-  transformation: extractFieldsTransformer,
-  name: extractFieldsTransformer.name,
-  description: `Parse fields from content (JSON, labels, etc).`,
-  categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.extractFields).helperDocs,
 };

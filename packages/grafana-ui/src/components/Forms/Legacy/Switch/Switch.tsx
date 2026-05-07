@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { Placement } from '@popperjs/core';
-import { uniqueId } from 'lodash';
 import { PureComponent } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { withTheme2 } from '../../../../themes';
-import { Themeable2 } from '../../../../types';
+import { withTheme2 } from '../../../../themes/ThemeContext';
+import { Themeable2 } from '../../../../types/theme';
+import { uniqueId } from '../../../../utils/uniqueId';
 import { Icon } from '../../../Icon/Icon';
 import { Tooltip } from '../../../Tooltip/Tooltip';
 
@@ -108,7 +108,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       left: '2px',
       top: '2px',
       background: theme.components.input.background,
-      transition: '0.4s',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: '0.4s',
+      },
       borderRadius: theme.shape.radius.circle,
       boxShadow: theme.shadows.z1,
     },

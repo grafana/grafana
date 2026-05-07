@@ -16,11 +16,12 @@ type alertRule struct {
 	Version                     int64   `xorm:"version"` // this tag makes xorm add optimistic lock (see https://xorm.io/docs/chapter-06/1.lock/)
 	UID                         string  `xorm:"uid"`
 	NamespaceUID                string  `xorm:"namespace_uid"`
+	FolderFullpath              string  `xorm:"folder_fullpath"`
 	DashboardUID                *string `xorm:"dashboard_uid"`
 	PanelID                     *int64  `xorm:"panel_id"`
 	RuleGroup                   string
-	RuleGroupIndex              int `xorm:"rule_group_idx"`
-	Record                      string
+	RuleGroupIndex              int    `xorm:"rule_group_idx"`
+	Record                      string // FIXME: record is nullable but we don't save it as null when it's nil
 	NoDataState                 string
 	ExecErrState                string
 	For                         time.Duration
@@ -28,9 +29,10 @@ type alertRule struct {
 	Annotations                 string
 	Labels                      string
 	IsPaused                    bool
-	NotificationSettings        string `xorm:"notification_settings"`
-	Metadata                    string `xorm:"metadata"`
-	MissingSeriesEvalsToResolve *int   `xorm:"missing_series_evals_to_resolve"`
+	NotificationSettings        string  `xorm:"notification_settings"`
+	AlertRoutingPolicy          *string `xorm:"alert_routing_policy"`
+	Metadata                    string  `xorm:"metadata"`
+	MissingSeriesEvalsToResolve *int64  `xorm:"missing_series_evals_to_resolve"`
 }
 
 func (a alertRule) TableName() string {
@@ -66,20 +68,21 @@ type alertRuleVersion struct {
 	Annotations                 string
 	Labels                      string
 	IsPaused                    bool
-	NotificationSettings        string `xorm:"notification_settings"`
-	Metadata                    string `xorm:"metadata"`
-	MissingSeriesEvalsToResolve *int   `xorm:"missing_series_evals_to_resolve"`
+	NotificationSettings        string  `xorm:"notification_settings"`
+	AlertRoutingPolicy          *string `xorm:"alert_routing_policy"`
+	Metadata                    string  `xorm:"metadata"`
+	MissingSeriesEvalsToResolve *int64  `xorm:"missing_series_evals_to_resolve"`
+	Message                     string
 }
 
 // EqualSpec compares two alertRuleVersion objects for equality based on their specifications and returns true if they match.
-// The comparison is very basic and can produce false-negative. Fields excluded: ID, ParentVersion, RestoredFrom, Version, Created and CreatedBy
+// The comparison is very basic and can produce false-negative. Fields excluded: ID, ParentVersion, RestoredFrom, Version, Created, RuleGroupIndex, CreatedBy and Message
 func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
 	return a.RuleOrgID == b.RuleOrgID &&
 		a.RuleGUID == b.RuleGUID &&
 		a.RuleUID == b.RuleUID &&
 		a.RuleNamespaceUID == b.RuleNamespaceUID &&
 		a.RuleGroup == b.RuleGroup &&
-		a.RuleGroupIndex == b.RuleGroupIndex &&
 		a.Title == b.Title &&
 		a.Condition == b.Condition &&
 		a.Data == b.Data &&
@@ -88,12 +91,22 @@ func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
 		a.NoDataState == b.NoDataState &&
 		a.ExecErrState == b.ExecErrState &&
 		a.For == b.For &&
+		a.KeepFiringFor == b.KeepFiringFor &&
 		a.Annotations == b.Annotations &&
 		a.Labels == b.Labels &&
 		a.IsPaused == b.IsPaused &&
 		a.NotificationSettings == b.NotificationSettings &&
 		a.Metadata == b.Metadata &&
-		a.MissingSeriesEvalsToResolve == b.MissingSeriesEvalsToResolve
+		compareInt64Pointer(a.MissingSeriesEvalsToResolve, b.MissingSeriesEvalsToResolve) &&
+		compareStringPointer(a.AlertRoutingPolicy, b.AlertRoutingPolicy)
+}
+
+func compareInt64Pointer(a, b *int64) bool {
+	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
+}
+
+func compareStringPointer(a, b *string) bool {
+	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
 }
 
 func (a alertRuleVersion) TableName() string {

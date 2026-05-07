@@ -1,4 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Card, EmptyState } from '@grafana/ui';
 
 interface Props {
@@ -6,7 +6,6 @@ interface Props {
   canWriteCorrelations: boolean;
 }
 export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations }: Props) => {
-  const { t } = useTranslate();
   // TODO: if there are no datasources show a different message
 
   return canWriteCorrelations ? (
@@ -24,7 +23,7 @@ export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations }: Props) =
       </Trans>
     </EmptyState>
   ) : (
-    <Card>
+    <Card noMargin>
       <Card.Heading>
         <Trans i18nKey="correlations.empty-correlations-cta.there-are-no-correlations-configured-yet">
           There are no correlations configured yet.

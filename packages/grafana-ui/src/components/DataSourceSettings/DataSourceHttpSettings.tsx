@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useState, useCallback, useId, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes';
-import { t, Trans } from '../../utils/i18n';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { Field } from '../Forms/Field';
 import { InlineField } from '../Forms/InlineField';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
@@ -23,7 +23,7 @@ import { CustomHeadersSettings } from './CustomHeadersSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { SecureSocksProxySettings } from './SecureSocksProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
-import { HttpSettingsProps } from './types';
+import { type HttpSettingsProps } from './types';
 
 const ACCESS_HELP_ID = 'grafana-http-access-help';
 
@@ -72,6 +72,8 @@ const LABEL_WIDTH = 26;
 
 /**
  * @deprecated Use components from `@grafana/plugin-ui` instead, according to the [migration guide](https://github.com/grafana/plugin-ui/blob/main/src/components/ConfigEditor/migrating-from-datasource-http-settings.md).
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-datasourcehttpsettings--docs
  */
 export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
   const {

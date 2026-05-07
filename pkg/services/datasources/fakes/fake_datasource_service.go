@@ -4,8 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/grafana/authlib/types"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
+	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -14,16 +16,37 @@ type FakeDataSourceService struct {
 	lastID                int64
 	DataSources           []*datasources.DataSource
 	SimulatePluginFailure bool
+
+	// UID -> Headers
+	DataSourceHeaders map[string]http.Header
+}
+
+// ListConnections implements datasources.DataSourceService.
+func (s *FakeDataSourceService) ListConnections(ctx context.Context, query v0alpha1.DataSourceConnectionQuery) (*v0alpha1.DataSourceConnectionList, error) {
+	return &v0alpha1.DataSourceConnectionList{}, nil
 }
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}
 
 func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	for _, dataSource := range s.DataSources {
-		idMatch := query.ID != 0 && query.ID == dataSource.ID
+		idMatch := query.ID != 0 && query.ID == dataSource.ID // nolint:staticcheck
 		uidMatch := query.UID != "" && query.UID == dataSource.UID
-		nameMatch := query.Name != "" && query.Name == dataSource.Name
+		nameMatch := query.Name != "" && query.Name == dataSource.Name // nolint:staticcheck
 		if idMatch || nameMatch || uidMatch {
+			return dataSource, nil
+		}
+	}
+	return nil, datasources.ErrDataSourceNotFound
+}
+
+func (s *FakeDataSourceService) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
+	for _, dataSource := range s.DataSources {
+		if name == dataSource.UID && ns.OrgID == dataSource.OrgID && group == dataSource.Type {
 			return dataSource, nil
 		}
 	}
@@ -138,5 +161,5 @@ func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datas
 }
 
 func (s *FakeDataSourceService) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (http.Header, error) {
-	return nil, nil
+	return s.DataSourceHeaders[ds.UID], nil
 }

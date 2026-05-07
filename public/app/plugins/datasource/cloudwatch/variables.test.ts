@@ -1,11 +1,6 @@
-import {
-  dimensionVariable,
-  fieldsVariable,
-  labelsVariable,
-  setupMockedDataSource,
-} from './__mocks__/CloudWatchDataSource';
-import { setupMockedResourcesAPI } from './__mocks__/ResourcesAPI';
-import { VariableQuery, VariableQueryType } from './types';
+import { dimensionVariable, fieldsVariable, labelsVariable, setupMockedDataSource } from './mocks/CloudWatchDataSource';
+import { setupMockedResourcesAPI } from './mocks/ResourcesAPI';
+import { type VariableQuery, VariableQueryType } from './types';
 import { CloudWatchVariableSupport } from './variables';
 
 const defaultQuery: VariableQuery = {

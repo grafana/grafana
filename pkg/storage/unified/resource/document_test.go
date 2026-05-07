@@ -14,7 +14,7 @@ import (
 
 func TestStandardDocumentBuilder(t *testing.T) {
 	ctx := context.Background()
-	builder := StandardDocumentBuilder()
+	builder := StandardDocumentBuilder(nil)
 
 	body, err := os.ReadFile("testdata/playlist-resource.json")
 	require.NoError(t, err)
@@ -48,6 +48,10 @@ func TestStandardDocumentBuilder(t *testing.T) {
 			"id": "something"
 		},
 		"managedBy": "repo:something",
+		"ownerReferences": [
+			"iam.grafana.app/Team/engineering",
+			"iam.grafana.app/User/test"
+		],
 		"source": {
 			"path": "path/in/system.json",
 			"checksum": "xyz"

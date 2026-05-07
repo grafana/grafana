@@ -111,6 +111,10 @@ func (a *ArtifactHandlerLogger) VerifyDirectory(ctx context.Context, client *dag
 	return nil
 }
 
+func (a *ArtifactHandlerLogger) String() string {
+	return a.Handler.String()
+}
+
 func ArtifactWithLogging(ctx context.Context, log *slog.Logger, a *Artifact) (*Artifact, error) {
 	h := a.Handler
 	f, err := a.Handler.Filename(ctx)
@@ -120,10 +124,10 @@ func ArtifactWithLogging(ctx context.Context, log *slog.Logger, a *Artifact) (*A
 
 	logger := log.With("artifact", a.ArtifactString, "filename", f, "service", "ArtifactHandler")
 
-	a.Handler = &ArtifactHandlerLogger{
+	a.Handler = ArtifactWithCache(&ArtifactHandlerLogger{
 		log:     logger,
 		Handler: h,
-	}
+	})
 
 	return a, nil
 }

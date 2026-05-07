@@ -4,7 +4,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/grafana/grafana/pkg/util/ticker"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule/ticker"
 )
 
 const (
@@ -130,7 +130,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "rule_group_rules",
 				Help:      "The number of alert rules that are scheduled, by type and state.",
 			},
-			[]string{"org", "type", "state", "rule_group"},
+			[]string{"org", "type", "state", "rule_group", "folder_uid"},
 		),
 		Groups: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -200,7 +200,24 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "prometheus_imported_rules",
 				Help:      "The number of rules imported from a Prometheus-compatible source.",
 			},
-			[]string{"org"},
+			[]string{"org", "state"},
 		),
 	}
+}
+
+func (s *Scheduler) ResetRuleMetrics() {
+	s.GroupRules.Reset()
+	s.SimpleNotificationRules.Reset()
+	s.Groups.Reset()
+	s.SimplifiedEditorRules.Reset()
+	s.PrometheusImportedRules.Reset()
+	s.SchedulableAlertRules.Set(0)
+	s.SchedulableAlertRulesHash.Set(0)
+}
+
+func (s *Scheduler) ResetOnStop() {
+	s.BehindSeconds.Set(0)
+	s.Ticker.LastTickTime.Set(0)
+	s.Ticker.NextTickTime.Set(0)
+	s.ResetRuleMetrics()
 }

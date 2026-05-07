@@ -1,11 +1,6 @@
 # Query service
 
-This query service aims to replace the existing /api/ds/query.  
-
-The key differences are:
-1. This service has a stronger type system (not simplejson)
-2. Same workflow regardless if expressions exist
-3. Datasource settings+access is managed in each datasource, not at the beginning
+This query service aims to replace the existing /api/ds/query, while preserving the same parsing and expression handling as `/api/ds/query`
 
 
 
@@ -57,22 +52,34 @@ sequenceDiagram
     autonumber
     actor User as User or Process
     participant api as /apis/query.grafana.app
-    participant ds as Datasource<br/>Handler/Plugin
-    participant db as Storage<br/>(SQL)
+    participant db as Storage<br/>(CloudConfig)
+    participant ds as Datasource<br/>Plugin
     participant expr as Expression<br/>Engine
 
     User->>api: POST Query
-    api->>api: Parse queries
-    api->>api: Calculate dependencies
-    loop Each datasource (concurrently)
-        api->>ds: QueryData
-        ds->>ds: Verify user access
-        ds->>db: Get settings <br> and secrets
+    loop Each query
+        api->>api: Parse query
+        api->>db: Get ds config<br>and secrets
+        db->>api: 
     end
-    loop Each expression
-        api->>expr: Execute
+    alt Expressions exist
+        api->>expr: Calculate expressions graph
+        loop Each node (eg, refID)
+          alt Is query
+              expr->>ds: QueryData
+          else Is expression
+            expr->>expr: Process
+          end
+        end
+    else No expressions
+      alt Single datasource
+          api->>ds: QueryData
+      else Multiple datasources
+        loop Each datasource (concurrently)
+          api->>ds: QueryData
+        end
+        api->>api: Wait for results
+      end
     end
-    api->>api: Verify ResultExpectations
     api->>User: return results
 ```
-

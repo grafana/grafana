@@ -1,10 +1,12 @@
 package schemaversion_test
 
 import (
+	"context"
 	"testing"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 func TestGetSchemaVersion(t *testing.T) {
@@ -57,9 +59,10 @@ func TestGetSchemaVersion(t *testing.T) {
 }
 
 type migrationTestCase struct {
-	name     string
-	input    map[string]interface{}
-	expected map[string]interface{}
+	name          string
+	input         map[string]interface{}
+	expected      map[string]interface{}
+	expectedError string
 }
 
 func runMigrationTests(t *testing.T, testCases []migrationTestCase, migrationFunc schemaversion.SchemaVersionMigrationFunc) {
@@ -67,9 +70,14 @@ func runMigrationTests(t *testing.T, testCases []migrationTestCase, migrationFun
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			err := migrationFunc(tt.input)
-			require.NoError(t, err)
-			require.Equal(t, tt.expected, tt.input)
+			err := migrationFunc(context.Background(), tt.input)
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError, err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, tt.input)
+			}
 		})
 	}
 }

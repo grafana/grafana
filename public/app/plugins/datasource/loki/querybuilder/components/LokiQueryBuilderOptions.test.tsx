@@ -4,10 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
 import { config, getAppEvents } from '@grafana/runtime';
 
-import { createLokiDatasource } from '../../__mocks__/datasource';
-import { LokiQuery, LokiQueryDirection, LokiQueryType } from '../../types';
+import { LokiQueryType, LokiQueryDirection } from '../../dataquery.gen';
+import { createLokiDatasource } from '../../mocks/datasource';
+import { type LokiQuery } from '../../types';
 
-import { LokiQueryBuilderOptions, Props } from './LokiQueryBuilderOptions';
+import { LokiQueryBuilderOptions, type Props } from './LokiQueryBuilderOptions';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -271,6 +272,48 @@ describe('LokiQueryBuilderOptions', () => {
         );
         expect(onChangeMock).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('Step validation', () => {
+    it('considers empty step as valid', async () => {
+      setup({ expr: 'rate({foo="bar"}[5m]' });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+    });
+
+    it('considers variable step that exists in the datasource as valid', async () => {
+      const datasource = createLokiDatasource();
+      datasource.getVariables = jest.fn().mockReturnValue(['$interval']);
+      setup({ expr: 'rate({foo="bar"}[5m]', step: '$interval' }, undefined, { datasource });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+    });
+
+    it('considers variable step that does not exist in the datasource as invalid', async () => {
+      const datasource = createLokiDatasource();
+      datasource.getVariables = jest.fn().mockReturnValue(['$interval']);
+      setup({ expr: 'rate({foo="bar"}[5m]', step: '$custom' }, undefined, { datasource });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
+    });
+
+    it('considers valid duration step as valid', async () => {
+      setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+    });
+
+    it('considers invalid step as invalid', async () => {
+      setup({ expr: 'rate({foo="bar"}[5m]', step: 'invalid' });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
+    });
+
+    it('considers non-duration number as invalid', async () => {
+      setup({ expr: 'rate({foo="bar"}[5m]', step: '123' });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
     });
   });
 });

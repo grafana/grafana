@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 
 import { ProviderConfigForm } from './ProviderConfigForm';
-import { SSOProvider } from './types';
+import { type SSOProvider } from './types';
 import { emptySettings } from './utils/data';
 
 const putMock = jest.fn(() => Promise.resolve({}));
@@ -62,7 +62,7 @@ const testConfig: SSOProvider = {
   },
 };
 
-jest.mock('app/core/core', () => {
+jest.mock('app/core/services/context_srv', () => {
   return {
     contextSrv: {
       isGrafanaAdmin: true,
@@ -154,6 +154,7 @@ describe('ProviderConfigForm', () => {
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',
             enabled: true,
+            loginPrompt: '',
             name: 'GitHub',
             orgMapping: '["Group A:1:Editor","Group B:2:Admin"]',
             roleAttributePath: 'new-attribute-path',
@@ -204,6 +205,7 @@ describe('ProviderConfigForm', () => {
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',
             enabled: false,
+            loginPrompt: '',
             name: 'GitHub',
             roleAttributePath: '',
             roleAttributeStrict: false,

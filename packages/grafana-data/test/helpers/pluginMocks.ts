@@ -1,7 +1,7 @@
 import { defaultsDeep } from 'lodash';
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '../../src';
+import { type PanelPluginMeta, type PluginMeta, PluginType, PanelPlugin, type PanelProps } from '../../src';
 
 export const getMockPlugins = (amount: number): PluginMeta[] => {
   const plugins: PluginMeta[] = [];
@@ -92,5 +92,6 @@ export function getMockPlugin(overrides?: Partial<PluginMeta>): PluginMeta {
     module: 'path/to/module',
   };
 
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return defaultsDeep(overrides || {}, defaults) as PluginMeta;
 }

@@ -14,14 +14,16 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -114,7 +116,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		}
 		return e.GetBasicLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
 	} else if strings.Contains(req.URL.Path, "/metadata") {
-		isAppInsights := strings.Contains(req.URL.Path, "Microsoft.Insights/components")
+		isAppInsights := strings.Contains(strings.ToLower(req.URL.Path), "microsoft.insights/components")
 		// Add necessary headers
 		if isAppInsights {
 			// metadata-format-v4 is not supported for AppInsights resources
@@ -128,7 +130,11 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		req.URL.RawQuery = queryParams.Encode()
 		resp, err := cli.Do(req)
 		if err != nil {
-			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to fetch metadata: %s", err))
+			statusCode := http.StatusInternalServerError
+			if resp != nil {
+				statusCode = resp.StatusCode
+			}
+			return nil, writeErrorResponse(rw, statusCode, fmt.Sprintf("failed to fetch metadata: %v", err))
 		}
 
 		defer func() {
@@ -387,7 +393,7 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 
 	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) || query.QueryType == string(dataquery.AzureQueryTypeTraceExemplar) {
 		if query.QueryType == string(dataquery.AzureQueryTypeTraceExemplar) {
-			cfg := backend.GrafanaConfigFromContext(ctx)
+			cfg := config.GrafanaConfigFromContext(ctx)
 			hasPromExemplarsToggle := cfg.FeatureToggles().IsEnabled("azureMonitorPrometheusExemplars")
 			if !hasPromExemplarsToggle {
 				return nil, backend.DownstreamError(fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled"))
@@ -473,7 +479,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	logLimitDisabled := backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorDisableLogLimit")
+	logLimitDisabled := config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorDisableLogLimit")
 
 	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, query.QueryType, query.ResultFormat, logLimitDisabled)
 	if err != nil {
@@ -573,6 +579,10 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 		return err
 	}
 
+	if len(queryJSONModel.AzureTraces.Resources) == 0 {
+		return fmt.Errorf("no resources specified for Azure traces data link")
+	}
+
 	traceIdVariable := "${__data.fields.traceID}"
 	resultFormat := dataquery.ResultFormatTrace
 	queryJSONModel.AzureTraces.ResultFormat = &resultFormat
@@ -599,7 +609,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 				DatasourceName: dsInfo.DatasourceName,
 				Query:          queryJSONModel,
 			},
-		})
+		}, MultiField)
 
 		queryJSONModel.AzureTraces.Query = &query.TraceParentExploreQuery
 		AddCustomDataLink(*frame, data.DataLink{
@@ -610,7 +620,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 				DatasourceName: dsInfo.DatasourceName,
 				Query:          queryJSONModel,
 			},
-		})
+		}, MultiField)
 
 		linkTitle := "Explore Trace in Azure Portal"
 		AddConfigLinks(*frame, tracesUrl, &linkTitle)
@@ -624,7 +634,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 			DatasourceName: dsInfo.DatasourceName,
 			Query:          logsJSONModel,
 		},
-	})
+	}, SingleField)
 
 	return nil
 }
@@ -668,6 +678,9 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 	if query.AppInsightsQuery {
 		// If the query type is traces then we only need the first resource as the rest are specified in the query
 		if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
+			if len(query.Resources) == 0 {
+				return nil, fmt.Errorf("no resources specified for Azure traces Application Insights query")
+			}
 			body["applications"] = []string{query.Resources[0]}
 		} else {
 			body["applications"] = query.Resources
@@ -840,10 +853,6 @@ func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*types.AzureRespon
 }
 
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return AzureLogAnalyticsResponse{}, err
-	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			e.Logger.Warn("Failed to close response body", "err", err)
@@ -851,14 +860,20 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}()
 
 	if res.StatusCode/100 != 2 {
+		body, readErr := io.ReadAll(res.Body)
+		if readErr != nil {
+			return AzureLogAnalyticsResponse{}, fmt.Errorf("non-2xx response %s and failed to read body: %w", res.Status, readErr)
+		}
 		return AzureLogAnalyticsResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data AzureLogAnalyticsResponse
-	d := json.NewDecoder(bytes.NewReader(body))
+	// UseNumber preserves int64 precision; downstream converters in
+	// azure-response-table-frame.go type-assert cells to json.Number and
+	// fail on any other numeric type, so this must stay.
+	d := json.NewDecoder(res.Body)
 	d.UseNumber()
-	err = d.Decode(&data)
-	if err != nil {
+	if err := d.Decode(&data); err != nil {
 		return AzureLogAnalyticsResponse{}, err
 	}
 
@@ -871,10 +886,17 @@ type LogAnalyticsMeta struct {
 	AzurePortalLink string   `json:"azurePortalLink,omitempty"`
 }
 
+var gzipWriterPool = sync.Pool{
+	New: func() any { return gzip.NewWriter(io.Discard) },
+}
+
 // encodeQuery encodes the query in gzip so the frontend can build links.
 func encodeQuery(rawQuery string) (string, error) {
 	var b bytes.Buffer
-	gz := gzip.NewWriter(&b)
+	gz := gzipWriterPool.Get().(*gzip.Writer)
+	defer gzipWriterPool.Put(gz)
+	gz.Reset(&b)
+
 	if _, err := gz.Write([]byte(rawQuery)); err != nil {
 		return "", err
 	}

@@ -76,9 +76,9 @@ At the start of notification templates, dot (`.`) refers to [Notification Data](
 
 In annotation and label templates, dot (`.`) is initialized with all alert data. It’s recommended to use the [`$labels` and `$values` variables](ref:alert-rule-template-reference-variables) instead to directly access the alert labels and query values.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Dot (`.`) might refer to something else when used in a [range](#range), a [with](#with), or when writing [templates](#templates) used in other templates.
-{{% /admonition %}}
+{{< /admonition >}}
 
 [//]: <> (The above section is not included in the shared file because `refs` links are not supported in shared files.)
 

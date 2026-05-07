@@ -95,5 +95,6 @@ func StdPackageFlags() []pipeline.Flag {
 	return JoinFlags(
 		distros,
 		names,
+		[]pipeline.Flag{},
 	)
 }

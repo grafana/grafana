@@ -1,14 +1,14 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
+import { type FolderDTO } from 'app/types/folders';
 
-import { FolderDTO } from '../../../../../types';
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { ExportFormats, allGrafanaExportProviders } from './providers';
+import { type ExportFormats, allGrafanaExportProviders } from './providers';
 
 interface GrafanaRuleFolderExporterProps {
   folder: FolderDTO;
@@ -17,7 +17,6 @@ interface GrafanaRuleFolderExporterProps {
 
 export function GrafanaRuleFolderExporter({ folder, onClose }: GrafanaRuleFolderExporterProps) {
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
-  const { t } = useTranslate();
 
   return (
     <GrafanaExportDrawer
@@ -45,7 +44,6 @@ function GrafanaRuleFolderExportPreview({ folder, exportFormat, onClose }: Grafa
     folderUid: folder.uid,
     format: exportFormat,
   });
-  const { t } = useTranslate();
 
   if (isFetching) {
     return <LoadingPlaceholder text={t('alerting.grafana-rule-folder-export-preview.text-loading', 'Loading....')} />;

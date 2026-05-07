@@ -16,15 +16,16 @@ import (
 
 type instrumentationService struct {
 	*services.BasicService
-	cfg          *setting.Cfg
-	httpServ     *http.Server
-	log          log.Logger
-	errChan      chan error
-	promGatherer prometheus.Gatherer
+	cfg            *setting.Cfg
+	httpServ       *http.Server
+	log            log.Logger
+	errChan        chan error
+	promGatherer   prometheus.Gatherer
+	healthNotifier *HealthNotifier
 }
 
 func (ms *ModuleServer) initInstrumentationServer() (*instrumentationService, error) {
-	s := &instrumentationService{log: ms.log, cfg: ms.cfg, promGatherer: ms.promGatherer}
+	s := &instrumentationService{log: ms.log, cfg: ms.cfg, promGatherer: ms.promGatherer, healthNotifier: ms.healthNotifier}
 	s.httpServ, ms.httpServerRouter = s.newInstrumentationServer()
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -60,6 +61,8 @@ func (s *instrumentationService) stop(failureReason error) error {
 func (s *instrumentationService) newInstrumentationServer() (*http.Server, *mux.Router) {
 	router := mux.NewRouter()
 	router.Handle("/metrics", promhttp.HandlerFor(s.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}))
+
+	RegisterHealthEndpoints(router, s.healthNotifier)
 
 	addr := net.JoinHostPort(s.cfg.HTTPAddr, s.cfg.HTTPPort)
 	srv := &http.Server{

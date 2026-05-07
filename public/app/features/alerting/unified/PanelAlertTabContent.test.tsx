@@ -1,14 +1,14 @@
 import { render } from 'test/test-utils';
 import { byTestId, byText } from 'testing-library-selector';
 
-import { PromOptions } from '@grafana/prometheus';
+import { type PromOptions } from '@grafana/prometheus';
 import { setPluginLinksHook } from '@grafana/runtime';
 import config from 'app/core/config';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { AccessControlAction } from 'app/types';
-import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { AccessControlAction } from 'app/types/accessControl';
+import { type AlertQuery, type PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { PanelAlertTabContent } from './PanelAlertTabContent';
 import * as apiRuler from './api/ruler';
@@ -23,11 +23,14 @@ import {
   mockRulerRuleGroup,
 } from './mocks';
 import { captureRequests } from './mocks/server/events';
-import { RuleFormValues } from './types/rule-form';
+import { type RuleFormValues } from './types/rule-form';
 import { Annotation } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./api/ruler');
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
 jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
 
 const prometheusModuleSettings = { alerting: true, module: 'core:plugin/prometheus' };
@@ -211,6 +214,7 @@ describe('PanelAlertTabContent', () => {
     mockAlertRuleApi(server).prometheusRuleNamespaces(GRAFANA_RULES_SOURCE_NAME, promResponse);
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, rulerResponse);
     config.unifiedAlertingEnabled = true;
+    config.featureToggles.createAlertRuleFromPanel = false;
   });
 
   it('Will take into account panel maxDataPoints', async () => {

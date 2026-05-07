@@ -1,37 +1,64 @@
-import {
-  Spec as DashboardV2Spec,
-  RowsLayoutRowKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { type Spec as DashboardV2Spec, type RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
-import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
-import { isClonedKey } from '../../utils/clone';
+import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
+import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
 import { getConditionalRendering } from './utils';
 
-export function serializeRowsLayout(layoutManager: RowsLayoutManager): DashboardV2Spec['layout'] {
+export function serializeRowsLayout(layoutManager: RowsLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
   return {
     kind: 'RowsLayout',
     spec: {
-      rows: layoutManager.state.rows.filter((row) => !isClonedKey(row.state.key!)).map(serializeRow),
+      rows: layoutManager.state.rows
+        .filter((row) => !row.state.repeatSourceKey)
+        .map((row) => serializeRow(row, isSnapshot)),
     },
   };
 }
 
-export function serializeRow(row: RowItem): RowsLayoutRowKind {
-  const layout = row.state.layout.serialize();
+export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowKind {
+  const layout = row.state.layout.serialize(isSnapshot);
+
+  // Normalize Y coordinates to be relative within the row
+  // Panels in the scene have absolute Y coordinates, but in V2 schema they should be relative to the row
+  if (layout.kind === 'GridLayout' && layout.spec.items.length > 0) {
+    // Find the minimum Y coordinate among all items in this row
+    const minY = Math.min(...layout.spec.items.map((item) => item.spec.y));
+
+    // Subtract minY from each item's Y to make coordinates relative to the row start
+    layout.spec.items = layout.spec.items.map((item) => ({
+      ...item,
+      spec: {
+        ...item.spec,
+        y: item.spec.y - minY,
+      },
+    }));
+  }
+
   const rowKind: RowsLayoutRowKind = {
     kind: 'RowsLayoutRow',
     spec: {
       title: row.state.title,
-      collapse: row.state.collapse,
+      collapse: row.state.collapse ?? false,
       layout: layout,
       fillScreen: row.state.fillScreen,
       hideHeader: row.state.hideHeader,
+      ...(row.state.repeatByVariable && {
+        repeat: {
+          mode: 'variable',
+          value: row.state.repeatByVariable,
+        },
+      }),
     },
   };
+
+  const sectionVariables = serializeSectionVariables(row.state.$variables);
+  if (sectionVariables) {
+    rowKind.spec.variables = sectionVariables;
+  }
 
   const conditionalRenderingRootGroup = row.state.conditionalRendering?.serialize();
   // Only serialize the conditional rendering if it has items
@@ -39,16 +66,6 @@ export function serializeRow(row: RowItem): RowsLayoutRowKind {
     rowKind.spec.conditionalRendering = conditionalRenderingRootGroup;
   }
 
-  if (row.state.$behaviors) {
-    for (const behavior of row.state.$behaviors) {
-      if (behavior instanceof RowItemRepeaterBehavior) {
-        if (rowKind.spec.repeat) {
-          throw new Error('Multiple repeaters are not supported');
-        }
-        rowKind.spec.repeat = { value: behavior.state.variableName, mode: 'variable' };
-      }
-    }
-  }
   return rowKind;
 }
 
@@ -56,7 +73,7 @@ export function deserializeRowsLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): RowsLayoutManager {
   if (layout.kind !== 'RowsLayout') {
     throw new Error('Invalid layout kind');
@@ -69,19 +86,17 @@ export function deserializeRow(
   row: RowsLayoutRowKind,
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): RowItem {
   const layout = row.spec.layout;
-  const $behaviors = !row.spec.repeat
-    ? undefined
-    : [new RowItemRepeaterBehavior({ variableName: row.spec.repeat.value })];
 
   return new RowItem({
     title: row.spec.title,
     collapse: row.spec.collapse,
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
-    $behaviors,
+    repeatByVariable: row.spec.repeat?.value,
+    $variables: deserializeSectionVariables(row.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     conditionalRendering: getConditionalRendering(row),
   });

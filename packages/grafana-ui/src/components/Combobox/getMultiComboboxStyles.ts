@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getFocusStyles } from '../../themes/mixins';
 import { getInputStyles } from '../Input/Input';
@@ -33,6 +33,7 @@ export const getMultiComboboxStyles = (
       inputStyles.input,
       css({
         display: 'flex',
+        alignItems: 'center',
         width: '100%',
         gap: theme.spacing(0.5),
         padding: theme.spacing(0.5),
@@ -47,8 +48,9 @@ export const getMultiComboboxStyles = (
       outline: 'none',
       background: 'transparent',
       flexGrow: 1,
+      height: '100%',
       maxWidth: '100%',
-      minWidth: 40, // This is a bit arbitrary, but is used to leave some space for clicking. This will override the minWidth property
+      minWidth: 20, // This is a bit arbitrary, but is used to leave some space for clicking. This will override the minWidth property
       '&::placeholder': {
         color: theme.colors.text.disabled,
       },
@@ -61,6 +63,7 @@ export const getMultiComboboxStyles = (
 
     pillWrapper: css({
       display: 'inline-flex',
+      alignItems: 'center',
       flexWrap: isOpen ? 'wrap' : 'nowrap',
       flexGrow: 1,
       minWidth: '50px',

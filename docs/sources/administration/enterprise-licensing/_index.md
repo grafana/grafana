@@ -18,7 +18,7 @@ labels:
     - enterprise
     - oss
 title: Grafana Enterprise license
-weight: 500
+weight: 5500
 ---
 
 # Grafana Enterprise license
@@ -52,13 +52,13 @@ To download your Grafana Enterprise license:
 
 You must install a Grafana Enterprise build to use the enterprise features, which you can [download](https://grafana.com/grafana/download?edition=enterprise).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 If you already use Grafana OSS, you can replace it with the same version of Grafana Enterprise.
 Ensure that you back up the configuration and database before proceeding.
 For more information, refer to [Back up Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/back-up-grafana/).
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 There is more than one way to add the license to a Grafana instance:
 
@@ -234,6 +234,21 @@ To determine the number of active users:
 1. Click **Stats and license**.
 
 1. Review the utilization count on the **Utilization** panel.
+
+#### User allocation across production instances
+
+If you have multiple production instances, your licensed users form a shared pool. You divide the total number of users across your production instances rather than receiving the full user count on each one.
+
+For example, if your contract includes 3 production instances and 180 total users, you could allocate 60 users per instance, or 100 on one instance and 40 on each of the other 2. You aren't licensed for 180 active users on each instance.
+
+- Users are counted separately on each production instance where they're active. If the same user signs in to 2 production instances, that user counts once on each instance, consuming 2 users from your total allocation.
+- To change how users are allocated across your instances, refer to [Request a change to your license](#request-a-change-to-your-license).
+
+#### Development and test instances
+
+Each production instance includes a paired development instance and a paired test instance. Development and test instances receive the same user count as the production instance they're paired with.
+
+For example, if you have 3 production instances with 60 users allocated to each, then each production instance's paired development and test instances also get 60 users.
 
 ### Tiered licensing (deprecated)
 

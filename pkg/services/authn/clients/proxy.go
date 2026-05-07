@@ -13,6 +13,7 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -45,12 +46,12 @@ var (
 	_ authn.ContextAwareClient = new(Proxy)
 )
 
-func ProvideProxy(cfg *setting.Cfg, cache proxyCache, clients ...authn.ProxyClient) (*Proxy, error) {
+func ProvideProxy(cfg *setting.Cfg, cache proxyCache, tracer trace.Tracer, clients ...authn.ProxyClient) (*Proxy, error) {
 	list, err := parseAcceptList(cfg.AuthProxy.Whitelist)
 	if err != nil {
 		return nil, err
 	}
-	return &Proxy{log.New(authn.ClientProxy), cfg, cache, clients, list}, nil
+	return &Proxy{log.New(authn.ClientProxy), cfg, cache, clients, list, tracer}, nil
 }
 
 type proxyCache interface {
@@ -65,6 +66,7 @@ type Proxy struct {
 	cache       proxyCache
 	clients     []authn.ProxyClient
 	acceptedIPs []*net.IPNet
+	tracer      trace.Tracer
 }
 
 func (c *Proxy) Name() string {
@@ -72,6 +74,8 @@ func (c *Proxy) Name() string {
 }
 
 func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.proxy.Authenticate")
+	defer span.End()
 	if !c.isAllowedIP(r) {
 		return nil, errNotAcceptedIP.Errorf("request ip is not in the configured accept list")
 	}
@@ -115,6 +119,8 @@ func (c *Proxy) IsEnabled() bool {
 // See if we have cached the user id, in that case we can fetch the signed-in user and skip sync.
 // Error here means that we could not find anything in cache, so we can proceed as usual
 func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.proxy.retrieveIDFromCache")
+	defer span.End()
 	entry, err := c.cache.Get(ctx, cacheKey)
 	if err != nil {
 		return nil, err
@@ -148,6 +154,8 @@ func (c *Proxy) Priority() uint {
 }
 
 func (c *Proxy) Hook(ctx context.Context, id *authn.Identity, r *authn.Request) error {
+	ctx, span := c.tracer.Start(ctx, "authn.proxy.Hook")
+	defer span.End()
 	if id.ClientParams.CacheAuthProxyKey == "" {
 		return nil
 	}

@@ -22,6 +22,6 @@ export {
   PSEUDO_LOCALE,
   DEFAULT_LANGUAGE,
 } from './constants';
-export { initPluginTranslations, Trans, useTranslate } from './i18n';
-export type { TFunction, TransProps } from './types';
-export { formatDate, formatDuration, formatDateRange } from './dates';
+export { initPluginTranslations, t, Trans } from './i18n';
+export type { ResourceLoader, Resources, TFunction, TransProps } from './types';
+export { formatDate, formatDuration, formatDateRange, initRegionalFormat as initRegionalFormatForTests } from './dates';

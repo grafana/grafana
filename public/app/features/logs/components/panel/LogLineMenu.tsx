@@ -1,15 +1,16 @@
-import { useCallback, useMemo, useRef, MouseEvent } from 'react';
+import { type MouseEvent, useCallback, useMemo, useRef } from 'react';
 
-import { LogRowContextOptions, LogRowModel } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { type LogRowContextOptions, type LogRowModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { type DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 
-import { LogLineStyles } from './LogLine';
+import { useLogDetailsContext } from './LogDetailsContext';
+import { type LogLineStyles } from './LogLine';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 export type GetRowContextQueryFn = (
   row: LogRowModel,
@@ -17,23 +18,36 @@ export type GetRowContextQueryFn = (
   cacheFilters?: boolean
 ) => Promise<DataQuery | null>;
 
+type MenuItem = {
+  label: string;
+  onClick(log: LogListModel): void;
+};
+
+type MenuItemDivider = {
+  divider: true;
+};
+
+export type LogLineMenuCustomItem = MenuItem | MenuItemDivider;
+
 interface Props {
+  active?: boolean;
   log: LogListModel;
   styles: LogLineStyles;
 }
 
-export const LogLineMenu = ({ log, styles }: Props) => {
+export const LogLineMenu = ({ active, log, styles }: Props) => {
   const {
-    enableLogDetails,
-    detailsDisplayed,
     getRowContextQuery,
     onOpenContext,
     onPermalinkClick,
     onPinLine,
     onUnpinLine,
+    logLineMenuCustomItems = [],
     logSupportsContext,
-    toggleDetails,
+    isAssistantAvailable,
+    openAssistantByLog,
   } = useLogListContext();
+  const { enableLogDetails, detailsDisplayed, toggleDetails } = useLogDetailsContext();
   const pinned = useLogIsPinned(log);
   const menuRef = useRef(null);
 
@@ -69,7 +83,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     }
   }, [log, onPinLine, onUnpinLine, pinned]);
 
-  const { t } = useTranslate();
+  const showFirstDivider = enableLogDetails || shouldlogSupportsContext || onPinLine || onUnpinLine;
 
   const menu = useCallback(
     () => (
@@ -93,10 +107,29 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         {pinned && onUnpinLine && (
           <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.unpin-from-outline', 'Unpin log')} />
         )}
-        <Menu.Divider />
+        {showFirstDivider && <Menu.Divider />}
         <Menu.Item onClick={copyLogLine} label={t('logs.log-line-menu.copy-log', 'Copy log line')} />
         {onPermalinkClick && log.rowId !== undefined && log.uid && (
           <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
+        )}
+        {logLineMenuCustomItems.map((item, i) => {
+          if (isDivider(item)) {
+            return <Menu.Divider key={i} />;
+          }
+          if (isItem(item)) {
+            return <Menu.Item onClick={() => item.onClick(log)} label={item.label} key={i} />;
+          }
+          return null;
+        })}
+        {isAssistantAvailable && (
+          <>
+            <Menu.Divider />
+            <Menu.Item
+              onClick={() => openAssistantByLog?.(log)}
+              icon="ai-sparkle"
+              label={t('logs.log-line-menu.open-assistant', 'Explain log line in Assistant')}
+            />
+          </>
         )}
       </Menu>
     ),
@@ -105,14 +138,17 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       copyLogLine,
       detailsDisplayed,
       enableLogDetails,
+      isAssistantAvailable,
       log,
+      logLineMenuCustomItems,
       onPermalinkClick,
       onPinLine,
       onUnpinLine,
+      openAssistantByLog,
       pinned,
       shouldlogSupportsContext,
       showContext,
-      t,
+      showFirstDivider,
       toggleLogDetails,
       togglePinning,
     ]
@@ -122,9 +158,19 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     <Dropdown overlay={menu} placement="bottom-start">
       <IconButton
         className={styles.menuIcon}
-        name="ellipsis-v"
+        name={active ? 'angle-right' : 'ellipsis-v'}
         aria-label={t('logs.log-line-menu.icon-label', 'Log menu')}
+        role="button"
+        variant={active ? 'primary' : undefined}
       />
     </Dropdown>
   );
 };
+
+function isDivider(item: LogLineMenuCustomItem) {
+  return 'divider' in item && item.divider;
+}
+
+function isItem(item: LogLineMenuCustomItem) {
+  return 'onClick' in item && 'label' in item;
+}

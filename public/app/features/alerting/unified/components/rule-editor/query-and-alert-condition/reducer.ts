@@ -2,22 +2,22 @@ import { createAction, createReducer, original } from '@reduxjs/toolkit';
 
 import {
   ReducerID,
-  RelativeTimeRange,
+  type RelativeTimeRange,
   getDataSourceRef,
   getDefaultRelativeTimeRange,
   getNextRefId,
   rangeUtil,
 } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import {
   defaultCondition,
   isReducerExpression,
   isThresholdExpression,
 } from 'app/features/expressions/utils/expressionTypes';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../../Analytics';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
@@ -247,8 +247,9 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
 
       const dataQuery = updatedQueries.at(0);
       const isInstantDataQuery = dataQuery ? getInstantFromDataQuery(dataQuery) : false;
+      const hasReducer = expressionQueries.some((q) => isReducerExpression(q.model));
+      const shouldRemoveReducer = isInstantDataQuery && expressionQueries.length === 2 && hasReducer;
 
-      const shouldRemoveReducer = isInstantDataQuery && expressionQueries.length === 2;
       if (shouldRemoveReducer) {
         const reduceExpressionIndex = state.queries.findIndex(
           (query) =>
@@ -282,23 +283,6 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
           queryType: 'expression',
         });
       }
-    })
-    .addCase(updateExpressionType, (state, action) => {
-      state.queries = state.queries.map((query) => {
-        return query.refId === action.payload.refId
-          ? {
-              ...query,
-              model: {
-                ...expressionDatasource.newQuery({
-                  type: action.payload.type,
-                  conditions: [{ ...defaultCondition, query: { params: [] } }],
-                  expression: '',
-                }),
-                refId: action.payload.refId,
-              },
-            }
-          : query;
-      });
     });
 });
 

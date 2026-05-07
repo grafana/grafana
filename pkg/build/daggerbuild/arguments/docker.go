@@ -19,13 +19,13 @@ var (
 	}
 	AlpineImageFlag = &cli.StringFlag{
 		Name:  "alpine-base",
-		Usage: "The alpine image to use as the base image when building the Alpine version of the Grafana docker image",
-		Value: "alpine:latest",
+		Usage: "The image or image alias specified in the Dockerfile to be used as the base image when building the Alpine version of the Grafana docker image.",
+		Value: "alpine-base",
 	}
 	UbuntuImageFlag = &cli.StringFlag{
 		Name:  "ubuntu-base",
-		Usage: "The Ubuntu image to use as the base image when building the Ubuntu version of the Grafana docker image",
-		Value: "ubuntu:latest",
+		Usage: "The image or image alias specified in the Dockerfile to be used as the base image when building the Ubuntu version of the Grafana docker image",
+		Value: "ubuntu-base",
 	}
 	TagFormatFlag = &cli.StringFlag{
 		Name:  "tag-format",

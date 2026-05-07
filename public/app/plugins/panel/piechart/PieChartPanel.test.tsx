@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import {
-  FieldConfigSource,
+  type FieldConfigSource,
+  type FieldDisplay,
   toDataFrame,
   FieldType,
   VizOrientation,
@@ -13,8 +14,8 @@ import {
 } from '@grafana/data';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
-import { PieChartPanel } from './PieChartPanel';
-import { Options, PieChartType, PieChartLegendValues } from './panelcfg.gen';
+import { PieChartPanel, comparePieChartItemsByValue } from './PieChartPanel';
+import { type Options, PieChartType, PieChartLegendValues } from './panelcfg.gen';
 
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
@@ -165,6 +166,51 @@ describe('PieChartPanel', () => {
   });
 });
 
+describe('comparePieChartItemsByValue', () => {
+  const makeFieldDisplay = (n: number) => ({ display: { numeric: n } }) as unknown as FieldDisplay;
+
+  it.each([
+    {
+      name: 'always: NaN a sorts after 1',
+      sort: SortOrder.Descending,
+      a: makeFieldDisplay(NaN),
+      b: makeFieldDisplay(1),
+      expected: 1,
+    },
+    {
+      name: 'always: NaN b sorts before 1',
+      sort: SortOrder.Descending,
+      a: makeFieldDisplay(1),
+      b: makeFieldDisplay(NaN),
+      expected: -1,
+    },
+    {
+      name: 'descending: larger a sorts before smaller b (negative)',
+      sort: SortOrder.Descending,
+      a: makeFieldDisplay(10),
+      b: makeFieldDisplay(5),
+      expected: -5,
+    },
+    {
+      name: 'ascending: smaller a sorts before larger b (negative)',
+      sort: SortOrder.Ascending,
+      a: makeFieldDisplay(5),
+      b: makeFieldDisplay(10),
+      expected: -5,
+    },
+    {
+      name: 'none: comparator returns 0 regardless of values',
+      sort: SortOrder.None,
+      a: makeFieldDisplay(5),
+      b: makeFieldDisplay(10),
+      expected: 0,
+    },
+  ])('$name', ({ sort, a, b, expected }) => {
+    const cmp = comparePieChartItemsByValue(sort);
+    expect(cmp(a, b)).toBe(expected);
+  });
+});
+
 const setup = (propsOverrides?: {}) => {
   const fieldConfig: FieldConfigSource = {
     defaults: {},
@@ -173,6 +219,7 @@ const setup = (propsOverrides?: {}) => {
 
   const options: Options = {
     pieType: PieChartType.Pie,
+    sort: SortOrder.Descending,
     displayLabels: [],
     legend: {
       displayMode: LegendDisplayMode.List,

@@ -1,11 +1,12 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, Input } from '@grafana/ui';
 
-import DataSource from '../../datasource';
+import { AzureQueryType } from '../../dataquery.gen';
+import type DataSource from '../../datasource';
 import { migrateStringQueriesToObjectQueries } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+import { type AzureMonitorQuery } from '../../types/query';
 
 const GrafanaTemplateVariableFnInput = ({
   query,
@@ -17,7 +18,6 @@ const GrafanaTemplateVariableFnInput = ({
   datasource: DataSource;
 }) => {
   const [inputVal, setInputVal] = useState('');
-  const { t } = useTranslate();
 
   useEffect(() => {
     setInputVal(query.grafanaTemplateVariableFn?.rawQuery || '');

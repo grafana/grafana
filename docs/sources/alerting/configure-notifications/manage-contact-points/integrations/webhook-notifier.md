@@ -50,7 +50,7 @@ The webhook integration is a flexible way to integrate alerts into your system. 
 
 To create a contact point with webhook integration, complete the following steps.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 1. Click **+ Add contact point**.
 1. Enter a name for the contact point.
 1. From the **Integration** list, select **Webhook**.
@@ -62,9 +62,9 @@ For more details on contact points, including how to test them and enable notifi
 
 ## Webhook settings
 
-| Option | Description      |
-| ------ | ---------------- |
-| URL    | The Webhook URL. |
+| Option | Description                                                                                                  |
+| ------ | ------------------------------------------------------------------------------------------------------------ |
+| URL    | The Webhook URL. This field is [protected](ref:configure-contact-points) from modification in Grafana Cloud. |
 
 #### Optional settings
 
@@ -237,34 +237,24 @@ The following key-value pairs are also included in the JSON payload and can be c
 
 The Alert object represents an alert included in the notification group, as provided by the [`alerts` field](#body).
 
-| Key            | Type   | Description                                                                         |
-| -------------- | ------ | ----------------------------------------------------------------------------------- |
-| `status`       | string | Current status of the alert, `firing` or `resolved`.                                |
-| `labels`       | object | Labels that are part of this alert, map of string keys to string values.            |
-| `annotations`  | object | Annotations that are part of this alert, map of string keys to string values.       |
-| `startsAt`     | string | Start time of the alert.                                                            |
-| `endsAt`       | string | End time of the alert, default value when not resolved is `0001-01-01T00:00:00Z`.   |
-| `values`       | object | Values that triggered the current status.                                           |
-| `generatorURL` | string | URL of the alert rule in the Grafana UI.                                            |
-| `fingerprint`  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint. |
-| `silenceURL`   | string | URL to silence the alert rule in the Grafana UI.                                    |
-| `dashboardURL` | string | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation.        |
-| `panelURL`     | string | A link to the panel if the alert has a Panel ID annotation.                         |
-| `imageURL`     | string | URL of a screenshot of a panel assigned to the rule that created this notification. |
+{{< docs/shared lookup="alerts/table-for-json-alert-object.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Custom Payload
 
+The `Custom Payload` option allows you to completely customize the webhook payload using [templates](ref:notification-templates). This gives you full control over the structure and content of the webhook request.
+
+For detailed information about how to create and manage notification templates, refer to [notification templates](ref:notification-templates).
+
 {{< admonition type="note" >}}
 
-Custom Payload is not yet [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) in Grafana Cloud.
+- When using Custom Payload, the [`Title` and `Message` fields](#optional-notification-settings) are ignored as the entire payload structure is determined by your template.
+- Custom Payload is not yet [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) in Grafana Cloud.
 
 {{< /admonition >}}
 
-The `Custom Payload` option allows you to completely customize the webhook payload using templates. This gives you full control over the structure and content of the webhook request.
-
 | Option            | Description                                                                                               |
 | ----------------- | --------------------------------------------------------------------------------------------------------- |
-| Payload Template  | Template string that defines the structure of the webhook payload.                                        |
+| Payload Template  | [Notification template](ref:notification-templates) that defines the structure of the webhook payload.    |
 | Payload Variables | Key-value pairs that define additional variables available in the template under `.Vars.<variable_name>`. |
 
 Example of a custom payload template that includes variables:
@@ -277,10 +267,6 @@ Example of a custom payload template that includes variables:
   "custom_field": "{{ .Vars.custom_field }}"
 }
 ```
-
-{{< admonition type="note" >}}
-When using Custom Payload, the Title and Message fields are ignored as the entire payload structure is determined by your template.
-{{< /admonition >}}
 
 ### JSON Template Functions
 

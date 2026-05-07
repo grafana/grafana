@@ -2,19 +2,19 @@ import { css } from '@emotion/css';
 import { memo, useCallback, useEffect } from 'react';
 import { Subscription } from 'rxjs';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Tab, TabContent, TabsBar, toIconName, useForceUpdate, useStyles2 } from '@grafana/ui';
 import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
 import { PanelAlertTabContent } from 'app/features/alerting/unified/PanelAlertTabContent';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 
 import { PanelEditorQueries } from './PanelEditorQueries';
-import { PanelEditorTab, PanelEditorTabId } from './types';
+import { type PanelEditorTab, PanelEditorTabId } from './types';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -29,10 +29,7 @@ export const PanelEditorTabs = memo(({ panel, dashboard, tabs, onChangeTab }: Pa
 
   const instrumentedOnChangeTab = useCallback(
     (tab: PanelEditorTab) => {
-      let eventName = 'panel_editor_tabs_changed';
-      if (config.featureToggles.transformationsRedesign) {
-        eventName = 'transformations_redesign_' + eventName;
-      }
+      let eventName = 'transformations_redesign_panel_editor_tabs_changed';
 
       if (!tab.active) {
         reportInteraction(eventName, { tab_id: tab.id });

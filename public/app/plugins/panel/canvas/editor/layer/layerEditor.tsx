@@ -1,12 +1,13 @@
 import { get as lodashGet } from 'lodash';
 
-import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/internal';
-import { ElementState } from 'app/features/canvas/runtime/element';
+import { type NestedPanelOptions, type NestedValueAccess } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
+import { type ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { type Scene } from 'app/features/canvas/runtime/scene';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { InstanceState } from '../../CanvasPanel';
+import { type InstanceState } from '../../CanvasPanel';
 import { PlacementEditor } from '../element/PlacementEditor';
 import { optionBuilder } from '../options';
 
@@ -42,7 +43,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
   const options = scene.currentLayer.options || { elements: [] };
 
   return {
-    category: ['Layer'],
+    category: [t('canvas.layer-editor.category-layer', 'Layer')],
     path: '--', // not used!
 
     // Note that canvas editor writes things to the scene!
@@ -71,7 +72,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
       builder.addCustomEditor({
         id: 'content',
         path: 'root',
-        name: 'Elements',
+        name: t('canvas.layer-editor.name-elements', 'Elements'),
         editor: TreeNavigationEditor,
         settings: { scene, layer: scene.currentLayer, selected },
       });
@@ -84,10 +85,10 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
 
       if (currentLayer && !currentLayer.isRoot()) {
         builder.addCustomEditor({
-          category: ['Layout'],
+          category: [t('canvas.layer-editor.category-layout', 'Layout')],
           id: 'content',
           path: '__', // not used
-          name: 'Constraints',
+          name: t('canvas.layer-editor.name-constraints', 'Constraints'),
           editor: PlacementEditor,
           settings: {
             scene: opts.scene,

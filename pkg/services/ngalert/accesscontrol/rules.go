@@ -3,13 +3,13 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
-	"slices"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -27,21 +27,21 @@ type RuleService struct {
 }
 
 type notificationSettingsAuth interface {
-	AuthorizeRead(context.Context, identity.Requester, *models.NotificationSettings) error
+	AuthorizeRead(context.Context, identity.Requester, *models.ContactPointRouting) error
 }
 
 func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
 		genericService:           genericService{ac: ac},
-		notificationSettingsAuth: NewReceiverAccess[*models.NotificationSettings](ac, true),
+		notificationSettingsAuth: NewReceiverAccess[*models.ContactPointRouting](ac, true),
 	}
 }
 
 // getReadFolderAccessEvaluator constructs accesscontrol.Evaluator that checks all permissions required to read rules in  specific folder
 func getReadFolderAccessEvaluator(folderUID string) accesscontrol.Evaluator {
 	return accesscontrol.EvalAll(
-		accesscontrol.EvalPermission(ruleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
-		accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
+		accesscontrol.EvalPermission(ruleRead, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
+		accesscontrol.EvalPermission(folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
 	)
 }
 
@@ -85,8 +85,8 @@ func (r *RuleService) getRulesQueryEvaluator(rules ...*models.AlertRule) accessc
 // CanReadAllRules returns true when user has access to all folders and can read rules in them.
 func (r *RuleService) CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error) {
 	return r.HasAccess(ctx, user, accesscontrol.EvalAll(
-		accesscontrol.EvalPermission(ruleRead, dashboards.ScopeFoldersProvider.GetResourceAllScope()),
-		accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceAllScope()),
+		accesscontrol.EvalPermission(ruleRead, folder.ScopeFoldersProvider.GetResourceAllScope()),
+		accesscontrol.EvalPermission(folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceAllScope()),
 	))
 }
 
@@ -141,7 +141,10 @@ func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user ident
 // - ("alert.rules:read") read alert rules in the folder
 // Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
 func (r *RuleService) HasAccessInFolder(ctx context.Context, user identity.Requester, rule models.Namespaced) (bool, error) {
-	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
+	if ok := checkFolderAccessByFullpath(user, rule); ok {
+		return true, nil
+	}
+	eval := getReadFolderAccessEvaluator(rule.GetNamespaceUID())
 	return r.HasAccess(ctx, user, eval)
 }
 
@@ -151,17 +154,48 @@ func (r *RuleService) HasAccessInFolder(ctx context.Context, user identity.Reque
 // - ("alert.rules:read") read alert rules in the folder
 // Returns error if at least one permission is missing or if something went wrong during the permission evaluation
 func (r *RuleService) AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, rule models.Namespaced) error {
-	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
+	if ok := checkFolderAccessByFullpath(user, rule); ok {
+		return nil
+	}
+	eval := getReadFolderAccessEvaluator(rule.GetNamespaceUID())
 	return r.HasAccessOrError(ctx, user, eval, func() string {
 		return fmt.Sprintf("access rules in folder '%s'", rule.GetNamespaceUID())
 	})
+}
+
+// checkFolderAccessByFullpath checks permissions in-memory using fullpath UIDs.
+// Returns true if access is granted, false if unavailable or denied (caller should fall back).
+func checkFolderAccessByFullpath(user identity.Requester, rule models.Namespaced) bool {
+	nf, ok := rule.(models.NamespacedWithFullpath)
+	if !ok {
+		return false
+	}
+	fullpath := nf.GetFullpathUIDs()
+	if fullpath == "" {
+		return false
+	}
+
+	folderUID := rule.GetNamespaceUID()
+	targetScopes := []string{folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}
+	for _, uid := range strings.Split(fullpath, "/") {
+		if uid != "" && uid != folderUID {
+			targetScopes = append(targetScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(uid))
+		}
+	}
+
+	evaluator := accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ruleRead, targetScopes...),
+		accesscontrol.EvalPermission(folder.ActionFoldersRead, targetScopes...),
+	)
+
+	return evaluator.Evaluate(user.GetPermissions())
 }
 
 // AuthorizeRuleChanges analyzes changes in the rule group, and checks whether the changes are authorized.
 // NOTE: if there are rules for deletion, and the user does not have access to data sources that a rule uses, the rule is removed from the list.
 // If the user is not authorized to perform the changes the function returns ErrAuthorization with a description of what action is not authorized.
 func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
-	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(change.GroupKey.NamespaceUID)
+	namespaceScope := folder.ScopeFoldersProvider.GetResourceScopeUID(change.GroupKey.NamespaceUID)
 
 	rules, existingGroup := change.AffectedGroups[change.GroupKey]
 	if existingGroup { // not existingGroup can be when user creates a new rule group or moves existing alerts to a new group
@@ -219,7 +253,7 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 
 		// Check if the rule is moved from one folder to the current. If yes, then the user must have the authorization to delete rules from the source folder and add rules to the target folder.
 		if rule.Existing.NamespaceUID != rule.New.NamespaceUID {
-			ev := accesscontrol.EvalPermission(ruleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.Existing.NamespaceUID))
+			ev := accesscontrol.EvalPermission(ruleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(rule.Existing.NamespaceUID))
 			if err := r.HasAccessOrError(ctx, user, ev, func() string {
 				return fmt.Sprintf("move alert rules from folder %s", rule.Existing.NamespaceUID)
 			}); err != nil {
@@ -243,9 +277,7 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 			updateAuthorized = true
 		}
 
-		if !slices.EqualFunc(rule.Existing.NotificationSettings, rule.New.NotificationSettings, func(settings models.NotificationSettings, settings2 models.NotificationSettings) bool {
-			return settings.Equals(&settings2)
-		}) {
+		if !rule.Existing.NotificationSettings.Equals(rule.New.NotificationSettings) {
 			if err := r.authorizeNotificationSettings(ctx, user, rule.New); err != nil {
 				return err
 			}
@@ -256,10 +288,11 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 
 // authorizeNotificationSettings checks if the user has access to all receivers that are used by the rule's notification settings.
 func (r *RuleService) authorizeNotificationSettings(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
-	for _, ns := range rule.NotificationSettings {
-		if err := r.notificationSettingsAuth.AuthorizeRead(ctx, user, &ns); err != nil {
-			return err
-		}
+	if rule.NotificationSettings == nil || rule.NotificationSettings.ContactPointRouting == nil {
+		return nil
+	}
+	if err := r.notificationSettingsAuth.AuthorizeRead(ctx, user, rule.NotificationSettings.ContactPointRouting); err != nil {
+		return err
 	}
 	return nil
 }

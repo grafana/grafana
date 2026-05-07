@@ -1,6 +1,6 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
-import { LanguageDefinition } from './register';
+import { type LanguageDefinition } from './register';
 
 export type CompletionItem = monacoTypes.languages.CompletionItem;
 
@@ -103,6 +103,10 @@ export enum StatementPosition {
   LikeKeyword,
   AfterLikeKeyword,
 
+  DiffKeyword,
+  AfterDiffKeyword,
+  DiffModifierArg,
+
   Function,
   FunctionArg,
   CommandArg,
@@ -171,6 +175,7 @@ export enum SuggestionKind {
   Command,
   Function,
   InKeyword,
+  DiffModifier,
 
   // PPL
   BooleanFunction,

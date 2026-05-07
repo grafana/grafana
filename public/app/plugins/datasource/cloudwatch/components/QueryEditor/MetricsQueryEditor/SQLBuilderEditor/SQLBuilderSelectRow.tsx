@@ -1,14 +1,14 @@
 import { useEffect, useMemo } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../../../../datasource';
+import { type CloudWatchMetricsQuery } from '../../../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../../../datasource';
 import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces } from '../../../../hooks';
 import { STATISTICS } from '../../../../language/cloudwatch-sql/language';
-import { CloudWatchMetricsQuery } from '../../../../types';
 import { appendTemplateVariables } from '../../../../utils/utils';
 import { Account } from '../../../shared/Account';
 

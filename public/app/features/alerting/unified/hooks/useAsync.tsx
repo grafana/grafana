@@ -84,8 +84,8 @@ export function useAsync<Result, Args extends unknown[] = unknown[]>(
     error: undefined,
     result: initialValue,
   });
-  const promiseRef = useRef<Promise<Result>>();
-  const argsRef = useRef<Args>();
+  const promiseRef = useRef<Promise<Result>>(undefined);
+  const argsRef = useRef<Args>(undefined);
 
   const methods = useSyncedRef({
     execute(...params: Args) {

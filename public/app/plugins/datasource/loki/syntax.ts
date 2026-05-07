@@ -1,6 +1,6 @@
-import { Grammar } from 'prismjs';
+import { type Grammar } from 'prismjs';
 
-import { CompletionItem } from '@grafana/ui';
+import { type CompletionItem } from '@grafana/ui';
 
 export const AGGREGATION_OPERATORS: CompletionItem[] = [
   {

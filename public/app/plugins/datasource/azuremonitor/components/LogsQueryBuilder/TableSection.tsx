@@ -1,19 +1,19 @@
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Select } from '@grafana/ui';
 
 import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType } from '../../dataquery.gen';
 import {
-  AzureMonitorQuery,
-  AzureLogAnalyticsMetadataColumn,
-  AzureLogAnalyticsMetadataTable,
-  TablePlan,
-} from '../../types';
+  type AzureLogAnalyticsMetadataColumn,
+  type AzureLogAnalyticsMetadataTable,
+} from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
+import { TablePlan } from '../../types/types';
 
-import { BuildAndUpdateOptions, inputFieldSize } from './utils';
+import { type BuildAndUpdateOptions, inputFieldSize } from './utils';
 
 interface TableSectionProps {
   allColumns: AzureLogAnalyticsMetadataColumn[];
@@ -27,7 +27,8 @@ interface TableSectionProps {
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
   const { allColumns, query, tables, buildAndUpdateQuery, templateVariableOptions, isLoadingSchema } = props;
-  const { t } = useTranslate();
+  const ALL_COLUMNS_VALUE = '__all_columns__';
+
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 
@@ -45,7 +46,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
   const selectAllOption: SelectableValue<string> = {
     label: 'All Columns',
-    value: '__all_columns__',
+    value: ALL_COLUMNS_VALUE,
   };
 
   const selectableOptions: Array<SelectableValue<string>> = [
@@ -90,18 +91,18 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       return;
     }
 
-    const includesAll = selectedArray.some((opt) => opt.value === '__all_columns__');
+    const includesAll = selectedArray.some((opt) => opt.value === ALL_COLUMNS_VALUE);
     const lastSelected = selectedArray[selectedArray.length - 1];
 
-    if (includesAll && lastSelected.value === '__all_columns__') {
+    if (includesAll && lastSelected.value === ALL_COLUMNS_VALUE) {
       buildAndUpdateQuery({
-        columns: allColumns.map((col) => col.name),
+        columns: [ALL_COLUMNS_VALUE],
       });
       return;
     }
 
     if (includesAll && selectedArray.length > 1) {
-      const filtered = selectedArray.filter((opt) => opt.value !== '__all_columns__');
+      const filtered = selectedArray.filter((opt) => opt.value !== ALL_COLUMNS_VALUE);
       buildAndUpdateQuery({
         columns: filtered.map((opt) => opt.value!),
       });
@@ -126,15 +127,9 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     });
   };
 
-  const allColumnNames = allColumns.length > 0 ? allColumns.map((col) => col.name) : [];
+  const allColumnsSelected = selectedColumns.length === 1 && selectedColumns[0] === ALL_COLUMNS_VALUE;
 
-  const areAllColumnsSelected =
-    allColumnNames.length > 0 &&
-    selectedColumns.length > 0 &&
-    selectedColumns.length === allColumnNames.length &&
-    allColumnNames.every((col) => selectedColumns.includes(col));
-
-  const columnSelectValue: Array<SelectableValue<string>> = areAllColumnsSelected
+  const columnSelectValue: Array<SelectableValue<string>> = allColumnsSelected
     ? [selectAllOption]
     : selectedColumns.map((col) => ({ label: col, value: col }));
 
@@ -166,7 +161,12 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
               isDisabled={!builderQuery?.from?.property.name}
               width={30}
             />
-            <Button variant="secondary" icon="times" onClick={onDeleteAllColumns} />
+            <Button
+              tooltip={t('components.table-section.tooltip-remove-all-columns', 'Remove all columns')}
+              variant="secondary"
+              icon="times"
+              onClick={onDeleteAllColumns}
+            />
           </InputGroup>
         </EditorField>
       </EditorFieldGroup>

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { DateTimeInput, GrafanaTheme2 } from '@grafana/data';
+import { type DateTimeInput, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { PanelModelWithLibraryPanel } from '../../types';
+import { type PanelModelWithLibraryPanel } from '../../types';
 
 interface Props {
   panel: PanelModelWithLibraryPanel;

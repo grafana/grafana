@@ -11,8 +11,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/xorm/core"
-	sqlite "github.com/mattn/go-sqlite3"
 )
 
 var (
@@ -476,11 +476,7 @@ func (db *sqlite3) Filters() []core.Filter {
 }
 
 func (db *sqlite3) RetryOnError(err error) bool {
-	var sqlError sqlite.Error
-	if errors.As(err, &sqlError) && (sqlError.Code == sqlite.ErrLocked || sqlError.Code == sqlite.ErrBusy) {
-		return true
-	}
-	return false
+	return sqlite.IsBusyOrLocked(err)
 }
 
 type sqlite3Driver struct {

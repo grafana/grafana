@@ -4,9 +4,14 @@ import (
 	"context"
 	"errors"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
+
+// HeaderGrafanaServiceIdentityName is used to pass the service identity in the gRPC request metadata.
+const HeaderGrafanaServiceIdentityName = "X-Grafana-Service-Identity-Name"
 
 var (
 	ErrDecryptNotFound      = errors.New("not found")
@@ -16,13 +21,10 @@ var (
 
 // DecryptStorage is the interface for wiring and dependency injection.
 type DecryptStorage interface {
-	Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error)
+	Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv1beta1.ExposedSecureValue, error)
 }
 
 // DecryptAuthorizer is the interface for authorizing decryption requests.
 type DecryptAuthorizer interface {
-	Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (identity string, allowed bool)
+	Authorize(ctx context.Context, namespace xkube.Namespace, secureValueName string, secureValueDecrypters []string, owner []metav1.OwnerReference) (identity string, allowed bool, reason string)
 }
-
-// TEMPORARY: Needed to pass it with wire.
-type DecryptAllowList map[string]struct{}

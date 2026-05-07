@@ -1,11 +1,11 @@
-import uPlot, { Padding } from 'uplot';
+import uPlot, { type Padding } from 'uplot';
 
 import {
-  DataFrame,
-  Field,
-  FieldConfigSource,
+  type DataFrame,
+  type Field,
+  type FieldConfigSource,
   FieldType,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   cacheFieldDisplayNames,
   formattedValueToString,
   getDisplayProcessor,
@@ -14,6 +14,7 @@ import {
   outerJoinDataFrames,
 } from '@grafana/data';
 import { decoupleHideFromState } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import {
   AxisColorMode,
   AxisPlacement,
@@ -21,7 +22,7 @@ import {
   GraphThresholdsStyleMode,
   GraphTransform,
   ScaleDistribution,
-  TimeZone,
+  type TimeZone,
   TooltipDisplayMode,
   VizOrientation,
 } from '@grafana/schema';
@@ -33,12 +34,12 @@ import {
   UPlotConfigBuilder,
   measureText,
 } from '@grafana/ui';
-import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
+import { type AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
-import { BarsOptions, getConfig } from './bars';
-import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
+import { type BarsOptions, getConfig } from './bars';
+import { type FieldConfig, type Options, defaultFieldConfig } from './panelcfg.gen';
 // import { isLegendOrdered } from './utils';
 
 interface BarSeries {
@@ -56,8 +57,13 @@ export function prepSeries(
   xFieldName?: string,
   colorFieldName?: string
 ): BarSeries {
+  // this allows PanelDataErrorView to show the default noValue message
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
-    return { series: [], _rest: [], warn: 'No data in response' };
+    return {
+      warn: '',
+      series: [],
+      _rest: [],
+    };
   }
 
   cacheFieldDisplayNames(frames);
@@ -120,7 +126,7 @@ export function prepSeries(
     let warn: string | null = null;
 
     if (fields.length === 1) {
-      warn = 'No numeric fields found';
+      warn = t('bar-chart.warn.missing-numeric', 'No numeric fields found');
     }
 
     frame.fields = fields;
@@ -141,7 +147,7 @@ export function prepSeries(
     series: [],
     _rest: [],
     color: null,
-    warn: 'Bar charts requires a string or time field',
+    warn: t('bar-chart.warn.missing-series', 'Bar charts require a string or time field'),
   };
 }
 

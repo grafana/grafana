@@ -1,11 +1,11 @@
-import { SyntheticEvent } from 'react';
+import { type SyntheticEvent } from 'react';
 
-import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { FieldSet, Input, Field, TextLink } from '@grafana/ui';
 
-import { MSSQLAuthenticationType, MssqlOptions } from '../types';
+import { MSSQLAuthenticationType, type MssqlOptions } from '../types';
 
 export const UsernameMessage = (
   <span>
@@ -17,7 +17,7 @@ export const UsernameMessage = (
 
 export const KerberosConfig = (props: DataSourcePluginOptionsEditorProps<MssqlOptions>) => {
   const { options: settings, onOptionsChange } = props;
-  const { t } = useTranslate();
+
   const jsonData = settings.jsonData;
   const LONG_WIDTH = 40;
 
@@ -62,7 +62,7 @@ export const KerberosConfig = (props: DataSourcePluginOptionsEditorProps<MssqlOp
             error={'Keytab file path is required'}
           >
             <Input
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="/home/grot/grot.keytab"
               onChange={onKeytabFileChanged}
               width={LONG_WIDTH}
@@ -85,7 +85,7 @@ export const KerberosConfig = (props: DataSourcePluginOptionsEditorProps<MssqlOp
             )}
           >
             <Input
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="/tmp/krb5cc_1000"
               onChange={onCredentialCacheChanged}
               width={LONG_WIDTH}
@@ -124,7 +124,7 @@ export const KerberosConfig = (props: DataSourcePluginOptionsEditorProps<MssqlOp
             )}
           >
             <Input
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="/home/grot/cache.json"
               onChange={onCredentialCacheFileChanged}
               width={LONG_WIDTH}
@@ -140,7 +140,7 @@ export const KerberosConfig = (props: DataSourcePluginOptionsEditorProps<MssqlOp
 
 export const KerberosAdvancedSettings = (props: DataSourcePluginOptionsEditorProps<MssqlOptions>) => {
   const { options: settings } = props;
-  const { t } = useTranslate();
+
   const jsonData = settings.jsonData;
   const configFilePath = jsonData?.configFilePath;
   const LONG_WIDTH = 40;
@@ -179,7 +179,7 @@ export const KerberosAdvancedSettings = (props: DataSourcePluginOptionsEditorPro
             <Input
               type="text"
               width={LONG_WIDTH}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="0"
               defaultValue={jsonData.UDPConnectionLimit}
               onChange={(e) => {
@@ -207,7 +207,7 @@ export const KerberosAdvancedSettings = (props: DataSourcePluginOptionsEditorPro
             <Input
               type="text"
               width={LONG_WIDTH}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="true"
               defaultValue={jsonData.enableDNSLookupKDC}
               onChange={onDNSLookupKDCChanged}

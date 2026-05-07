@@ -1,9 +1,9 @@
-import { ActionImpl, getListboxItemId, KBAR_LISTBOX, useKBar } from 'kbar';
+import { type ActionImpl, getListboxItemId, KBAR_LISTBOX, useKBar } from 'kbar';
 import { usePointerMovedSinceMount } from 'kbar/lib/utils';
 import * as React from 'react';
 import { useVirtual } from 'react-virtual';
 
-import { URLCallback } from './types';
+import { type URLCallback } from './types';
 
 // From https://github.com/timc1/kbar/blob/main/src/KBarResults.tsx
 // TODO: Go back to KBarResults from kbar when https://github.com/timc1/kbar/issues/281 is fixed
@@ -19,7 +19,7 @@ interface RenderParams<T = ActionImpl | string> {
 interface KBarResultsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   items: any[];
-  onRender: (params: RenderParams) => React.ReactElement;
+  onRender: (params: RenderParams) => React.ReactElement<Record<string, unknown>>;
   maxHeight?: number;
 }
 
@@ -31,6 +31,21 @@ export const KBarResults = (props: KBarResultsProps) => {
   // them as a dependency when setting up event listeners.
   const itemsRef = React.useRef(props.items);
   itemsRef.current = props.items;
+
+  // A11y: Pre-compute the group label for each item so that option items can
+  // announce their section even when the section header has scrolled out of
+  // the virtual window and is no longer in the DOM.
+  const itemGroupLabels = React.useMemo(() => {
+    const labels: Array<string | null> = [];
+    let currentGroup: string | null = null;
+    for (const item of props.items) {
+      if (typeof item === 'string') {
+        currentGroup = item;
+      }
+      labels.push(currentGroup);
+    }
+    return labels;
+  }, [props.items]);
 
   const rowVirtualizer = useVirtual({
     size: itemsRef.current.length,
@@ -121,6 +136,10 @@ export const KBarResults = (props: KBarResultsProps) => {
       const url = (item as ActionImpl & { url?: string }).url;
 
       if (item.command) {
+        if (url) {
+          // If the item also has a url we should block navigation.
+          ev.preventDefault();
+        }
         item.command.perform(item);
         // TODO: ideally the perform method would return some marker or we would have something like preventDefault()
         if (!item.id.startsWith('scopes/') || item.id === 'scopes/apply') {
@@ -160,8 +179,11 @@ export const KBarResults = (props: KBarResultsProps) => {
         }}
       >
         {rowVirtualizer.virtualItems.map((virtualRow) => {
+          const rawItem = itemsRef.current[virtualRow.index];
+          const isStringItem = typeof rawItem === 'string';
+
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const item = itemsRef.current[virtualRow.index] as ActionImpl & {
+          const item = rawItem as ActionImpl & {
             url?: string | URLCallback;
             target?: React.HTMLAttributeAnchorTarget;
           };
@@ -170,19 +192,24 @@ export const KBarResults = (props: KBarResultsProps) => {
           // so our url property is secretly there, but completely untyped
           // Preferably this change is upstreamed and ActionImpl has this
           const { target, url } = item;
+          const groupLabel = itemGroupLabels[virtualRow.index];
 
-          const handlers = typeof item !== 'string' && {
+          const handlers = !isStringItem && {
             onPointerMove: () =>
               pointerMoved && activeIndex !== virtualRow.index && query.setActiveIndex(virtualRow.index),
             onPointerDown: () => query.setActiveIndex(virtualRow.index),
             onClick: (ev: React.MouseEvent) => execute(ev, item),
           };
-          const active = virtualRow.index === activeIndex;
+          const active = !isStringItem && virtualRow.index === activeIndex;
 
           const childProps = {
-            id: getListboxItemId(virtualRow.index),
-            role: 'option',
-            'aria-selected': active,
+            ...(isStringItem
+              ? { 'aria-hidden': true }
+              : {
+                  id: getListboxItemId(virtualRow.index),
+                  role: 'option',
+                  'aria-selected': active,
+                }),
             style: {
               position: 'absolute',
               top: 0,
@@ -213,6 +240,7 @@ export const KBarResults = (props: KBarResultsProps) => {
                 ref={active ? (activeRef as React.RefObject<HTMLAnchorElement>) : null}
                 {...childProps}
               >
+                {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
                 {renderedItem}
               </a>
             );
@@ -225,6 +253,7 @@ export const KBarResults = (props: KBarResultsProps) => {
               ref={active ? (activeRef as React.RefObject<HTMLDivElement>) : null}
               {...childProps}
             >
+              {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
               {renderedItem}
             </div>
           );

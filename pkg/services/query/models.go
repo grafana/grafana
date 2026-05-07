@@ -24,7 +24,7 @@ type parsedRequest struct {
 }
 
 func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
-	queries := make([]parsedQuery, 0)
+	queries := make([]parsedQuery, 0) //nolint:prealloc
 	for _, pq := range pr.parsedQueries {
 		queries = append(queries, pq...)
 	}

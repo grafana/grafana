@@ -1,6 +1,6 @@
-import { VariableSuggestion } from '@grafana/data';
+import { type VariableSuggestion } from '@grafana/data';
 
-import { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './types';
+import { type CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './types';
 
 /**
  * @alpha

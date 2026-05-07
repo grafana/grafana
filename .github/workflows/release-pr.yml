@@ -16,6 +16,10 @@ on:
         required: true
         type: string
         description: The version of Grafana that is being released (without the `v` prefix)`
+      target:
+        required: false
+        type: string
+        description: 'Unused: left here for backwards compatibility'
       changelog:
         required: false
         type: boolean
@@ -32,25 +36,58 @@ on:
         required: false
         default: false
         type: boolean
+      release_date:
+        required: false
+        type: string
+        description: "Release date in format YYYY-MM-DD"
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
+  capture-date:
+    runs-on: ubuntu-latest
+    outputs:
+      release_date: ${{ steps.set_release_date.outputs.release_date }}
+    steps:
+      - name: compute_release_date
+        run: |
+          if [ -n "$DATE" ]; then
+            echo "release_date=$DATE" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          echo "Fetching workflow run creation date..."
+          created_at=$(gh run view "$GITHUB_RUN_ID" --repo "$GH_REPO" --json createdAt -q .createdAt)
+          formatted_date=$(date -d "$created_at" +%Y-%m-%d)
+          echo "release_date=$formatted_date" >> "$GITHUB_ENV"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          DATE: ${{ inputs.release_date }}
+
+      - id: set_release_date
+        run: echo "release_date=$release_date" >> "$GITHUB_OUTPUT"
+
   push-changelog-to-main:
+    needs: capture-date
     permissions:
       contents: write
       id-token: write
       pull-requests: write
+
     name: Create PR to main to update the changelog
     uses: ./.github/workflows/changelog.yml
+    concurrency:
+      group: grafana-release-pr-update-changelog-main
+      cancel-in-progress: false
     with:
       previous_version: ${{inputs.previous_version}}
       version: ${{ inputs.version }}
       latest: ${{ inputs.latest }}
       dry_run: ${{ inputs.dry_run }}
       target: main
+      work_branch: changelog/update-changelog-${{ needs.capture-date.outputs.release_date }}
 
   create-prs:
     permissions:
@@ -81,27 +118,31 @@ jobs:
           permissions: "{\"contents\": \"write\", \"pull_requests\": \"write\", \"workflows\":\"write\"}"
       - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"
       - name: Checkout Grafana
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ steps.generate_changelog_token.outputs.token }}
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
           fetch-depth: 0
       - name: Checkout Grafana (main)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ steps.generate_changelog_token.outputs.token }}
           ref: main
           fetch-depth: '0'
           path: .grafana-main
 
-      - name: Setup nodejs environment
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-      - uses: actions/setup-go@v5
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+      # Use actions/setup-go directly instead of ./.github/actions/setup-go: the composite
+      # references ./.github/actions/report-go-cache-sizes, which resolves from this job's
+      # workspace (the release-branch checkout). That subtree may lag main and miss the action,
+      # failing the step. Mirror cache-build:false behavior (no GOCACHE; modules via actions/cache).
+      - name: Setup Go
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+          cache: false
       - name: Configure git user
         run: |
           git config --local user.name "grafana-delivery-bot[bot]"
@@ -159,8 +200,9 @@ jobs:
         run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
       - name: Bump versions
         if: ${{ inputs.bump == true || inputs.bump == 'true' }}
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
+          version: 0.18.8
           verb: run
           args: go run -C .grafana-main ./pkg/build/actions/bump-version -version="patch"
 
@@ -171,7 +213,7 @@ jobs:
         if: ${{ inputs.bump == true || inputs.bump == 'true' }}
         run: |
           git add package.json lerna.json yarn.lock packages public
-          test -e e2e/test-plugins && git add e2e/test-plugins
+          test -e e2e-playwright/test-plugins && git add e2e-playwright/test-plugins
           git commit -m "Update version to $VERSION"
 
       - name: Git push

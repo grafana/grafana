@@ -1,25 +1,52 @@
 import path, { dirname, join } from 'node:path';
 import type { StorybookConfig } from '@storybook/react-webpack5';
-import { copyAssetsSync } from './copyAssets';
+import remarkGfm from 'remark-gfm';
+import { copyAssetsSync } from './copyAssets.ts';
+import { createRequire } from 'node:module';
 
-// Internal stories should only be visible during development
-const storyGlob =
-  process.env.NODE_ENV === 'production'
-    ? '../src/components/**/!(*.internal).story.tsx'
-    : '../src/components/**/*.story.tsx';
+const require = createRequire(import.meta.url);
 
-const stories = ['../src/Intro.mdx', storyGlob];
+const coreComponentsGlobs: StorybookConfig['stories'] = [
+  // Specific high-level documentation pages
+  '../src/Intro.mdx',
+  '../src/DesignPrinciples.mdx',
+  '../src/VoiceAndTone.mdx',
+  '../src/Accessibility.mdx',
+
+  // All the other stories
+  '../src/**/*.story.tsx',
+];
+
+const alertingComponentsGlobs: StorybookConfig['stories'] = [
+  {
+    titlePrefix: 'Alerting',
+    directory: '../../grafana-alerting/src',
+    files: 'Intro.mdx',
+  },
+  {
+    titlePrefix: 'Alerting',
+    directory: '../../grafana-alerting/src',
+    files: process.env.NODE_ENV === 'production' ? '**/!(*.internal).story.tsx' : '**/*.story.tsx',
+  },
+];
+
+const stories = [...coreComponentsGlobs, ...alertingComponentsGlobs];
 
 // Copy the assets required by storybook before starting the storybook server.
 copyAssetsSync();
 
 const mainConfig: StorybookConfig = {
   stories,
+
   addons: [
     {
-      name: '@storybook/addon-essentials',
+      name: getAbsolutePath('@storybook/addon-docs'),
       options: {
-        backgrounds: false,
+        mdxPluginOptions: {
+          mdxCompileOptions: {
+            remarkPlugins: [remarkGfm],
+          },
+        },
       },
     },
     getAbsolutePath('@storybook/addon-a11y'),
@@ -42,9 +69,9 @@ const mainConfig: StorybookConfig = {
         },
       },
     },
-    getAbsolutePath('@storybook/addon-storysource'),
     getAbsolutePath('@storybook/addon-webpack5-compiler-swc'),
   ],
+
   framework: {
     name: getAbsolutePath('@storybook/react-webpack5'),
     options: {
@@ -54,19 +81,22 @@ const mainConfig: StorybookConfig = {
       },
     },
   },
+
   logLevel: 'debug',
-  staticDirs: ['static'],
+  staticDirs: ['static', { from: 'images', to: 'images' }],
+
   typescript: {
     check: true,
     reactDocgen: 'react-docgen-typescript',
     reactDocgenTypescriptOptions: {
-      tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
+      tsconfigPath: path.resolve(import.meta.dirname, 'tsconfig.json'),
       shouldExtractLiteralValuesFromEnum: true,
       shouldRemoveUndefinedFromOptional: true,
       propFilter: (prop) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
       savePropValueAsString: true,
     },
   },
+
   swc: () => ({
     jsc: {
       transform: {
@@ -76,6 +106,7 @@ const mainConfig: StorybookConfig = {
       },
     },
   }),
+
   webpackFinal: async (config) => {
     // expose jquery as a global so jquery plugins don't break at runtime.
     config.module?.rules?.push({
@@ -86,11 +117,26 @@ const mainConfig: StorybookConfig = {
       },
     });
 
+    // Tell storybook to resolve imports with the @grafana-app/source condition for
+    // the packages in this repo.
+    if (config && config.resolve) {
+      if (Array.isArray(config.resolve.conditionNames)) {
+        config.resolve.conditionNames.unshift('@grafana-app/source');
+      } else {
+        config.resolve.conditionNames = ['@grafana-app/source', '...'];
+      }
+    }
+
     return config;
   },
+
+  features: {
+    backgrounds: false,
+  },
 };
-module.exports = mainConfig;
 
 function getAbsolutePath(value: string): any {
   return dirname(require.resolve(join(value, 'package.json')));
 }
+
+export default mainConfig;

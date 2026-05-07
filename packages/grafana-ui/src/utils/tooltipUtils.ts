@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { Placement } from '@floating-ui/react';
+import { type Placement } from '@floating-ui/react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { TooltipPlacement } from '../components/Tooltip';
+import { type TooltipPlacement } from '../components/Tooltip/types';
 
 export function getPlacement(placement?: TooltipPlacement): Placement {
   switch (placement) {
@@ -51,8 +51,8 @@ export function buildTooltipTheme(
     headerClose: css({
       color: theme.colors.text.secondary,
       position: 'absolute',
-      right: theme.spacing(1),
-      top: theme.spacing(1.5),
+      right: theme.spacing(0.5),
+      top: theme.spacing(1),
       backgroundColor: 'transparent',
       border: 0,
     }),

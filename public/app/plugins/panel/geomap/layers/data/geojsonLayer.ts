@@ -1,14 +1,14 @@
-import { FeatureLike } from 'ol/Feature';
-import Map from 'ol/Map';
+import { type FeatureLike } from 'ol/Feature';
+import type OpenLayersMap from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorImage from 'ol/layer/VectorImage';
 import VectorSource from 'ol/source/Vector';
-import { Style } from 'ol/style';
+import { type Style } from 'ol/style';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, type EventBus } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { ComparisonOperation } from '@grafana/schema';
 
@@ -20,12 +20,12 @@ import {
   GeoJSONLineStyles,
   GeoJSONPointStyles,
   GeoJSONPolyStyles,
-  StyleConfig,
-  StyleConfigState,
-  StyleConfigValues,
+  type StyleConfig,
+  type StyleConfigState,
+  type StyleConfigValues,
 } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
-import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
+import { type FeatureRuleConfig, type FeatureStyleConfig } from '../../types';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getPublicGeoJSONFiles } from '../../utils/utils';
@@ -73,14 +73,16 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
     // Interpolate variables in the URL
     const interpolatedUrl = getTemplateSrv().replace(config.src || '');
+    const isAbsoluteUrl = interpolatedUrl.startsWith('http');
+    const layerUrl = isAbsoluteUrl ? interpolatedUrl : `${window.__grafana_public_path__}${interpolatedUrl.replace(/^(public\/)/, '')}`;
 
     const source = new VectorSource({
-      url: interpolatedUrl,
+      url: layerUrl,
       format: new GeoJSON(),
     });
 

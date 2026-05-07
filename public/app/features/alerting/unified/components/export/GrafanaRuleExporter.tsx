@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { ExportFormats, allGrafanaExportProviders } from './providers';
+import { type ExportFormats, allGrafanaExportProviders } from './providers';
 
 interface GrafanaRuleExportPreviewProps {
   alertUid: string;
@@ -20,7 +20,6 @@ const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRu
     ruleUid: alertUid,
     format: exportFormat,
   });
-  const { t } = useTranslate();
 
   const downloadFileName = `${alertUid}-${new Date().getTime()}`;
 

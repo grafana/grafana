@@ -1,25 +1,12 @@
 import { useMemo } from 'react';
 
-import { StandardEditorProps, SelectableValue } from '@grafana/data';
-import { LineStyle } from '@grafana/schema';
-import { HorizontalGroup, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
+import { type StandardEditorProps, type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { type LineStyle } from '@grafana/schema';
+import { IconButton, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
-type LineFill = 'solid' | 'dash' | 'dot';
-
-const lineFillOptions: Array<SelectableValue<LineFill>> = [
-  {
-    label: 'Solid',
-    value: 'solid',
-  },
-  {
-    label: 'Dash',
-    value: 'dash',
-  },
-  {
-    label: 'Dots',
-    value: 'dot',
-  },
-];
+type LineFill = 'solid' | 'dash' | 'dot' | 'accessible';
 
 const dashOptions: Array<SelectableValue<string>> = [
   '10, 10', // default
@@ -55,6 +42,27 @@ const dotOptions: Array<SelectableValue<string>> = [
 type Props = StandardEditorProps<LineStyle, unknown>;
 
 export const LineStyleEditor = ({ value, onChange }: Props) => {
+  const lineFillOptions: Array<SelectableValue<LineFill>> = [
+    {
+      label: t('timeseries.line-style-editor.line-fill-options.label-solid', 'Solid'),
+      value: 'solid',
+    },
+    {
+      label: t('timeseries.line-style-editor.line-fill-options.label-dash', 'Dash'),
+      value: 'dash',
+    },
+    {
+      label: t('timeseries.line-style-editor.line-fill-options.label-dots', 'Dots'),
+      value: 'dot',
+    },
+  ];
+
+  if (config.featureToggles.enableColorblindSafePanelOptions) {
+    lineFillOptions.push({
+      label: t('timeseries.line-style-editor.line-fill-options.label-accessible', 'Accessible'),
+      value: 'accessible',
+    });
+  }
   const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
   const current = useMemo(() => {
     if (!value?.dash?.length) {
@@ -71,8 +79,11 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
     return val;
   }, [value, options]);
 
+  // Only dash and dots use LineStyle.dash definitions
+  const hasDashPattern = value?.fill && value?.fill !== 'solid' && value?.fill !== 'accessible';
+
   return (
-    <HorizontalGroup>
+    <Stack wrap={true} alignItems="flex-end">
       <RadioButtonGroup
         value={value?.fill || 'solid'}
         options={lineFillOptions}
@@ -84,13 +95,12 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
             dash = parseText(dashOptions[0].value!);
           }
           onChange({
-            ...value,
             fill: v!,
             dash,
           });
         }}
       />
-      {value?.fill && value?.fill !== 'solid' && (
+      {hasDashPattern && (
         <>
           <Select
             allowCustomValue={true}
@@ -108,17 +118,20 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
           <div>
             &nbsp;
             <a
-              title="The input expects a segment list"
+              title={t(
+                'timeseries.line-style-editor.title-the-input-expects-a-segment-list',
+                'The input expects a segment list'
+              )}
               href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/setLineDash#Parameters"
               target="_blank"
               rel="noreferrer"
             >
-              <IconButton name="question-circle" tooltip="Help" />
+              <IconButton name="question-circle" tooltip={t('timeseries.line-style-editor.tooltip-help', 'Help')} />
             </a>
           </div>
         </>
       )}
-    </HorizontalGroup>
+    </Stack>
   );
 };
 

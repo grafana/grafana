@@ -6,6 +6,8 @@ import (
 	"github.com/gogo/protobuf/proto"
 	alertingCluster "github.com/grafana/alerting/cluster"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type RedisChannel struct {
@@ -16,14 +18,16 @@ type RedisChannel struct {
 	msgc    chan []byte
 }
 
-func newRedisChannel(p *redisPeer, key, channel, msgType string) alertingCluster.ClusterChannel {
+func newRedisChannel(p *redisPeer, key, channel, msgType string, queueSize int) alertingCluster.ClusterChannel {
+	if queueSize <= 0 {
+		queueSize = setting.AlertBroadcastDefaultQueueSize
+	}
 	redisChannel := &RedisChannel{
 		p:       p,
 		key:     key,
 		channel: channel,
 		msgType: msgType,
-		// The buffer size of 200 was taken from the Memberlist implementation.
-		msgc: make(chan []byte, 200),
+		msgc:    make(chan []byte, queueSize),
 	}
 	go redisChannel.handleMessages()
 	return redisChannel
@@ -48,6 +52,8 @@ func (c *RedisChannel) handleMessages() {
 		}
 	}
 }
+
+func (c *RedisChannel) ReliableDelivery([]byte) bool { return true }
 
 func (c *RedisChannel) Broadcast(b []byte) {
 	b, err := proto.Marshal(&alertingClusterPB.Part{Key: c.key, Data: b})

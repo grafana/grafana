@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 
 import { configureStore } from 'app/store/configureStore';
 
-import { getMockInvitees } from '../users/__mocks__/userMocks';
+import { getMockInvitees } from '../users/mocks/userMocks';
 
 import InviteesTable from './InviteesTable';
 

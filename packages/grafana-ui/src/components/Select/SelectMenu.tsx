@@ -1,15 +1,14 @@
 import { css, cx } from '@emotion/css';
-import { max } from 'lodash';
-import { RefCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { type RefCallback, useLayoutEffect, useMemo, useRef, type JSX } from 'react';
 import * as React from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import { SelectableValue, toIconName } from '@grafana/data';
+import { type SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { t, Trans } from '../../utils/i18n';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
@@ -170,7 +169,10 @@ export const VirtualizedSelectMenu = ({
     );
   }
 
-  let longestOption = max(flattenedOptions.map((option) => option.label?.length)) ?? 0;
+  let longestOption = flattenedOptions.reduce((max, option) => {
+    const length = option.label?.length ?? 0;
+    return Math.max(max, length);
+  }, 0);
   if (toggleAllOptions && longestOption < 12) {
     longestOption = 12;
   }
@@ -197,7 +199,7 @@ export const VirtualizedSelectMenu = ({
 // check if a child has array children (and is therefore a react-select group)
 // we need to flatten these so the correct count and elements are passed to the virtualized list
 const hasArrayChildren = (child: React.ReactNode) => {
-  return React.isValidElement(child) && Array.isArray(child.props.children);
+  return React.isValidElement<Record<string, unknown>>(child) && Array.isArray(child.props.children);
 };
 
 VirtualizedSelectMenu.displayName = 'VirtualizedSelectMenu';
@@ -245,8 +247,8 @@ const ToggleAllOption = ({
         innerProps: {},
         children: (
           <>
-            <Trans i18nKey="select.select-menu.selected-count">Selected </Trans>
-            {`(${selectedCount ?? 0})`}
+            <Trans i18nKey="select.select-menu.selected-count">Selected</Trans>
+            {` (${selectedCount ?? 0})`}
           </>
         ),
       })}

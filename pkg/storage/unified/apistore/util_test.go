@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/storage"
@@ -117,6 +118,49 @@ func TestToListRequest(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "with field selector",
+			key: &resourcepb.ResourceKey{
+				Group:     "test",
+				Resource:  "test",
+				Namespace: "default",
+			},
+			opts: storage.ListOptions{
+				Predicate: storage.SelectionPredicate{
+					Label: labels.SelectorFromSet(labels.Set{"label": "A"}),
+					Field: fields.SelectorFromSet(fields.Set{"field": "B"}),
+				},
+			},
+			want: &resourcepb.ListRequest{
+				VersionMatchV2: 1,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Group:     "test",
+						Resource:  "test",
+						Namespace: "default",
+					},
+					Labels: []*resourcepb.Requirement{
+						{
+							Key:      "label",
+							Operator: string(selection.Equals),
+							Values:   []string{"A"},
+						},
+					},
+					Fields: []*resourcepb.Requirement{
+						{
+							Key:      "field",
+							Operator: string(selection.Equals),
+							Values:   []string{"B"},
+						},
+					},
+				},
+			},
+			wantPredicate: storage.SelectionPredicate{
+				Label: labels.SelectorFromSet(labels.Set{"label": "A"}),
+				Field: fields.SelectorFromSet(fields.Set{"field": "B"}),
+			},
+			wantErr: nil,
+		},
+		{
 			name: "with trash label",
 			key: &resourcepb.ResourceKey{
 				Group:     "test",
@@ -153,7 +197,8 @@ func TestToListRequest(t *testing.T) {
 			},
 			opts: storage.ListOptions{
 				Predicate: storage.SelectionPredicate{
-					Label: labels.SelectorFromSet(labels.Set{utils.LabelKeyGetHistory: "test-name"}),
+					Label: labels.SelectorFromSet(labels.Set{utils.LabelKeyGetHistory: "true"}),
+					Field: fields.SelectorFromSet(fields.Set{"metadata.name": "test-name"}),
 				},
 			},
 			want: &resourcepb.ListRequest{
@@ -167,33 +212,6 @@ func TestToListRequest(t *testing.T) {
 						Resource:  "test",
 						Namespace: "default",
 						Name:      "test-name",
-					},
-				},
-			},
-			wantPredicate: storage.Everything,
-			wantErr:       nil,
-		},
-		{
-			name: "with fullpath label",
-			key: &resourcepb.ResourceKey{
-				Group:     "test",
-				Resource:  "test",
-				Namespace: "default",
-			},
-			opts: storage.ListOptions{
-				Predicate: storage.SelectionPredicate{
-					Label: labels.SelectorFromSet(labels.Set{utils.LabelGetFullpath: "true"}),
-				},
-			},
-			want: &resourcepb.ListRequest{
-				VersionMatchV2: 1,
-				Options: &resourcepb.ListOptions{
-					Labels: nil,
-					Fields: nil,
-					Key: &resourcepb.ResourceKey{
-						Group:     "test",
-						Resource:  "test",
-						Namespace: "default",
 					},
 				},
 			},

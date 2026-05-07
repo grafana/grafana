@@ -1,4 +1,4 @@
-import { TemplateSrvStub } from 'test/specs/helpers';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import gfunc from '../gfunc';
 import GraphiteQuery from '../graphite_query';
@@ -12,7 +12,7 @@ describe('Graphite query model', () => {
       createFuncInstance: gfunc.createFuncInstance,
     },
     // @ts-ignore
-    templateSrv: new TemplateSrvStub(),
+    templateSrv: getTemplateSrv(),
     targets: [],
   };
 

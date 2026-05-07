@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -16,19 +15,24 @@ type BuildOpts struct {
 	ExperimentalFlags []string
 	Tags              []string
 	WireTag           string
-	Static            bool
+	GoCacheProg       string
 	Enterprise        bool
 }
 
-func distroOptsFunc(log *slog.Logger, distro Distribution) (DistroBuildOptsFunc, error) {
-	if val, ok := DistributionGoOpts[distro]; ok {
-		return DistroOptsLogger(log, val), nil
-	}
-	return nil, errors.New("unrecognized distribution")
+func distroOptsFunc(log *slog.Logger, distro Distribution, opts *BuildOpts) (DistroBuildOptsFunc, error) {
+	return func(distro Distribution, experiments, tags []string) *GoBuildOpts {
+		os, arch := OSAndArch(distro)
+		archv := ArchVersion(distro)
+		return &GoBuildOpts{
+			OS:    os,
+			Arch:  arch,
+			GoARM: GoARM(archv),
+		}
+	}, nil
 }
 
 func WithGoEnv(log *slog.Logger, container *dagger.Container, distro Distribution, opts *BuildOpts) (*dagger.Container, error) {
-	fn, err := distroOptsFunc(log, distro)
+	fn, err := distroOptsFunc(log, distro, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -38,42 +42,13 @@ func WithGoEnv(log *slog.Logger, container *dagger.Container, distro Distributio
 }
 
 func WithViceroyEnv(log *slog.Logger, container *dagger.Container, distro Distribution, opts *BuildOpts) (*dagger.Container, error) {
-	fn, err := distroOptsFunc(log, distro)
+	fn, err := distroOptsFunc(log, distro, opts)
 	if err != nil {
 		return nil, err
 	}
 	bopts := fn(distro, opts.ExperimentalFlags, opts.Tags)
 
 	return containers.WithEnv(container, ViceroyEnv(bopts)), nil
-}
-
-func ViceroyContainer(
-	d *dagger.Client,
-	log *slog.Logger,
-	distro Distribution,
-	goVersion string,
-	viceroyVersion string,
-	opts *BuildOpts,
-) (*dagger.Container, error) {
-	containerOpts := dagger.ContainerOpts{
-		Platform: "linux/amd64",
-	}
-
-	// Instead of directly using the `arch` variable here to substitute in the GoURL, we have to be careful with the Go releases.
-	// Supported releases (in the names):
-	// * amd64
-	// * armv6l
-	// * arm64
-	goURL := golang.DownloadURL(goVersion, "amd64")
-	container := d.Container(containerOpts).From(fmt.Sprintf("rfratto/viceroy:%s", viceroyVersion))
-
-	// Install Go manually, and install make, git, and curl from the package manager.
-	container = container.WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-yq", "curl", "make", "git"}).
-		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("curl -L %s | tar -C /usr/local -xzf -", goURL)}).
-		WithEnvVariable("PATH", "/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin:/usr/osxcross/bin")
-
-	return WithViceroyEnv(log, container, distro, opts)
 }
 
 func GolangContainer(
@@ -85,24 +60,7 @@ func GolangContainer(
 	distro Distribution,
 	opts *BuildOpts,
 ) (*dagger.Container, error) {
-	os, _ := OSAndArch(distro)
-	// Only use viceroy for all darwin and only windows/amd64
-	if os == "darwin" || distro == DistWindowsAMD64 {
-		return ViceroyContainer(d, log, distro, goVersion, viceroyVersion, opts)
-	}
-
-	container := golang.Container(d, platform, goVersion).
-		WithExec([]string{"apk", "add", "--update", "wget", "build-base", "alpine-sdk", "musl", "musl-dev", "xz"}).
-		WithExec([]string{"wget", "https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz"}).
-		WithExec([]string{"tar", "--strip-components=1", "-C", "/", "-xf", "zig-linux-x86_64-0.11.0.tar.xz"}).
-		WithExec([]string{"mv", "/zig", "/bin/zig"}).
-		// Install the toolchain specifically for armv7 until we figure out why it's crashing w/ zig container = container.
-		WithExec([]string{"mkdir", "/toolchain"}).
-		WithExec([]string{"wget", "http://musl.cc/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
-		WithExec([]string{"tar", "-xvf", "/toolchain/arm-linux-musleabihf-cross.tgz", "-C", "/toolchain"}).
-		WithExec([]string{"wget", "https://musl.cc/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
-		WithExec([]string{"tar", "-xvf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"})
-
+	container := golang.Container(d, platform, goVersion)
 	return WithGoEnv(log, container, distro, opts)
 }
 
@@ -134,49 +92,11 @@ func Builder(
 	distro Distribution,
 	opts *BuildOpts,
 	platform dagger.Platform,
-	src *dagger.Directory,
 	goVersion string,
 	viceroyVersion string,
-	goBuildCache *dagger.CacheVolume,
-	goModCache *dagger.CacheVolume,
 ) (*dagger.Container, error) {
-	var (
-		version = opts.Version
-	)
-
 	// for some distros we use the golang official iamge. For others, we use viceroy.
-	builder, err := GolangContainer(d, log, goVersion, viceroyVersion, platform, distro, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	builder = builder.
-		WithMountedCache("/root/.cache/go", goBuildCache).
-		WithEnvVariable("GOCACHE", "/root/.cache/go")
-
-	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
-
-	builder = withCue(builder, src).
-		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
-			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
-		}).
-		WithDirectory("/src/pkg", src.Directory("pkg")).
-		WithDirectory("/src/apps", src.Directory("apps")).
-		WithDirectory("/src/emails", src.Directory("emails")).
-		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
-		WithFile("/src/.buildinfo.commit", commitInfo.Commit).
-		WithWorkdir("/src")
-
-	if opts.Enterprise {
-		builder = builder.WithFile("/src/.buildinfo.enterprise-commit", commitInfo.EnterpriseCommit)
-	}
-
-	builder = golang.WithCachedGoDependencies(
-		builder,
-		goModCache,
-	)
-
-	return builder, nil
+	return GolangContainer(d, log, goVersion, viceroyVersion, platform, distro, opts)
 }
 
 func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string) *dagger.File {
@@ -184,11 +104,10 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 	return withCue(golang.Container(d, platform, goVersion), src).
 		WithExec([]string{"apk", "add", "make"}).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
-			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
+			Include: []string{"**/*.mod", "**/*.sum", "**/*.work", ".git"},
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/apps", src.Directory("apps")).
-		WithDirectory("/src/.bingo", src.Directory(".bingo")).
 		WithDirectory("/src/.citools", src.Directory(".citools")).
 		WithFile("/src/Makefile", src.File("Makefile")).
 		WithWorkdir("/src").

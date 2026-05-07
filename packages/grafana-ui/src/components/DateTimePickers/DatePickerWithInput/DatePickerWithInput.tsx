@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { autoUpdate, flip, shift, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { ChangeEvent, forwardRef, useImperativeHandle, useState } from 'react';
+import { autoUpdate, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { type ChangeEvent, forwardRef, useImperativeHandle, useState } from 'react';
 
-import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { type GrafanaTheme2, dateTime } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
-import { Props as InputProps, Input } from '../../Input/Input';
+import { useStyles2 } from '../../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../../utils/floating';
+import { type Props as InputProps, Input } from '../../Input/Input';
 import { DatePicker } from '../DatePicker/DatePicker';
 
 export const formatDate = (date: Date | string) => dateTime(date).format('L');
@@ -26,26 +27,25 @@ export interface DatePickerWithInputProps extends Omit<InputProps, 'value' | 'on
   placeholder?: string;
 }
 
-/** @public */
+/**
+ * An input with a calendar view, used to select a date.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-datepickerwithinput--docs
+ * @public
+ */
 export const DatePickerWithInput = forwardRef<HTMLInputElement, DatePickerWithInputProps>(
   ({ value, minDate, maxDate, onChange, closeOnSelect, placeholder = 'Date', ...rest }, ref) => {
     const [open, setOpen] = useState(false);
     const styles = useStyles2(getStyles);
+    const placement = 'bottom-start';
 
     // the order of middleware is important!
     // see https://floating-ui.com/docs/arrow#order
-    const middleware = [
-      flip({
-        // see https://floating-ui.com/docs/flip#combining-with-shift
-        crossAxis: false,
-        boundary: document.body,
-      }),
-      shift(),
-    ];
+    const middleware = getPositioningMiddleware(placement);
 
     const { context, refs, floatingStyles } = useFloating<HTMLInputElement>({
       open,
-      placement: 'bottom-start',
+      placement,
       onOpenChange: setOpen,
       middleware,
       whileElementsMounted: autoUpdate,

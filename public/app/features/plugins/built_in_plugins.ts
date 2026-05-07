@@ -1,20 +1,11 @@
-import { config } from '@grafana/runtime';
-
-const graphitePlugin = async () =>
-  await import(/* webpackChunkName: "graphitePlugin" */ 'app/plugins/datasource/graphite/module');
 const cloudwatchPlugin = async () =>
   await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
 const dashboardDSPlugin = async () =>
   await import(/* webpackChunkName "dashboardDSPlugin" */ 'app/plugins/datasource/dashboard/module');
-const elasticsearchPlugin = async () =>
-  await import(/* webpackChunkName: "elasticsearchPlugin" */ 'app/plugins/datasource/elasticsearch/module');
-const opentsdbPlugin = async () =>
-  await import(/* webpackChunkName: "opentsdbPlugin" */ 'app/plugins/datasource/opentsdb/module');
 const grafanaPlugin = async () =>
   await import(/* webpackChunkName: "grafanaPlugin" */ 'app/plugins/datasource/grafana/module');
 const influxdbPlugin = async () =>
   await import(/* webpackChunkName: "influxdbPlugin" */ 'app/plugins/datasource/influxdb/module');
-const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
 const prometheusPlugin = async () =>
@@ -35,8 +26,6 @@ const candlestickPanel = async () =>
   await import(/* webpackChunkName: "candlestickPanel" */ 'app/plugins/panel/candlestick/module');
 const dashListPanel = async () =>
   await import(/* webpackChunkName: "dashListPanel" */ 'app/plugins/panel/dashlist/module');
-const dataGridPanel = async () =>
-  await import(/* webpackChunkName: "dataGridPanel" */ 'app/plugins/panel/datagrid/module');
 const debugPanel = async () => await import(/* webpackChunkName: "debugPanel" */ 'app/plugins/panel/debug/module');
 const flamegraphPanel = async () =>
   await import(/* webpackChunkName: "flamegraphPanel" */ 'app/plugins/panel/flamegraph/module');
@@ -47,8 +36,8 @@ const histogramPanel = async () =>
   await import(/* webpackChunkName: "histogramPanel" */ 'app/plugins/panel/histogram/module');
 const livePanel = async () => await import(/* webpackChunkName: "livePanel" */ 'app/plugins/panel/live/module');
 const logsPanel = async () => await import(/* webpackChunkName: "logsPanel" */ 'app/plugins/panel/logs/module');
-const newLogsPanel = async () =>
-  await import(/* webpackChunkName: "newLogsPanel" */ 'app/plugins/panel/logs-new/module');
+const logsTablePanel = async () =>
+  await import(/* webpackChunkName: "logsTablePanel" */ 'app/plugins/panel/logstable/module');
 const newsPanel = async () => await import(/* webpackChunkName: "newsPanel" */ 'app/plugins/panel/news/module');
 const pieChartPanel = async () =>
   await import(/* webpackChunkName: "pieChartPanel" */ 'app/plugins/panel/piechart/module');
@@ -57,13 +46,7 @@ const stateTimelinePanel = async () =>
   await import(/* webpackChunkName: "stateTimelinePanel" */ 'app/plugins/panel/state-timeline/module');
 const statusHistoryPanel = async () =>
   await import(/* webpackChunkName: "statusHistoryPanel" */ 'app/plugins/panel/status-history/module');
-const tablePanel = async () => {
-  if (config.featureToggles.tableNextGen) {
-    return await import(/* webpackChunkName: "tableNewPanel" */ 'app/plugins/panel/table/table-new/module');
-  } else {
-    return await import(/* webpackChunkName: "tablePanel" */ 'app/plugins/panel/table/module');
-  }
-};
+const tablePanel = async () => await import(/* webpackChunkName: "tablePanel" */ 'app/plugins/panel/table/module');
 const textPanel = async () => await import(/* webpackChunkName: "textPanel" */ 'app/plugins/panel/text/module');
 const timeseriesPanel = async () =>
   await import(/* webpackChunkName: "timeseriesPanel" */ 'app/plugins/panel/timeseries/module');
@@ -83,14 +66,10 @@ const nodeGraph = async () =>
 
 const builtInPlugins: Record<string, System.Module | (() => Promise<System.Module>)> = {
   // datasources
-  'core:plugin/graphite': graphitePlugin,
   'core:plugin/cloudwatch': cloudwatchPlugin,
   'core:plugin/dashboard': dashboardDSPlugin,
-  'core:plugin/elasticsearch': elasticsearchPlugin,
-  'core:plugin/opentsdb': opentsdbPlugin,
   'core:plugin/grafana': grafanaPlugin,
   'core:plugin/influxdb': influxdbPlugin,
-  'core:plugin/loki': lokiPlugin,
   'core:plugin/mixed': mixedPlugin,
   'core:plugin/prometheus': prometheusPlugin,
   'core:plugin/alertmanager': alertmanagerPlugin,
@@ -112,7 +91,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/news': newsPanel,
   'core:plugin/live': livePanel,
   'core:plugin/stat': statPanel,
-  'core:plugin/datagrid': dataGridPanel,
   'core:plugin/debug': debugPanel,
   'core:plugin/flamegraph': flamegraphPanel,
   'core:plugin/gettingstarted': gettingStartedPanel,
@@ -121,11 +99,15 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/bargauge': barGaugePanel,
   'core:plugin/barchart': barChartPanel,
   'core:plugin/logs': logsPanel,
-  'core:plugin/logs-new': newLogsPanel,
+  'core:plugin/logstable': logsTablePanel,
   'core:plugin/traces': tracesPanel,
   'core:plugin/welcome': welcomeBanner,
   'core:plugin/nodeGraph': nodeGraph,
   'core:plugin/histogram': histogramPanel,
 };
+
+export function isBuiltinPluginPath(path: string): path is keyof typeof builtInPlugins {
+  return Boolean(builtInPlugins[path]);
+}
 
 export default builtInPlugins;

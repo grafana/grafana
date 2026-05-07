@@ -1,4 +1,4 @@
-import { QueryType, MetricKind, ValueTypes } from './types/query';
+import { QueryType, MetricKind, ValueTypes } from './dataquery.gen';
 
 // not super excited about using uneven numbers, but this makes it align perfectly with rows that has two fields
 export const INPUT_WIDTH = 71;
@@ -250,7 +250,7 @@ export const ALIGNMENT_PERIODS: periodOption[] = [
   { text: '10m', value: '+600s' },
   { text: '30m', value: '+1800s' },
   { text: '1h', value: '+3600s' },
-  { text: '3h', value: '+7200s' },
+  { text: '3h', value: '+10800s' },
   { text: '6h', value: '+21600s' },
   { text: '1d', value: '+86400s' },
   { text: '3d', value: '+259200s' },

@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 
-import { TNil } from '../../types';
+import type TNil from '../../types/TNil';
 
 import Positions from './Positions';
 

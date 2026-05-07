@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { forwardRef, ReactNode } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
-export interface Props {
+export interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {
   /** Children should be a single <Tab /> or an array of <Tab /> */
   children: ReactNode;
   className?: string;
@@ -13,17 +13,24 @@ export interface Props {
   hideBorder?: boolean;
 }
 
-export const TabsBar = forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder = false }, ref) => {
-  const styles = useStyles2(getStyles);
+/**
+ * A composition component for rendering a TabBar with Tabs for navigation.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-tabs--docs
+ */
+export const TabsBar = forwardRef<HTMLDivElement, Props>(
+  ({ children, className, hideBorder = false, ...rest }, ref) => {
+    const styles = useStyles2(getStyles);
 
-  return (
-    <div className={cx(styles.tabsWrapper, hideBorder && styles.noBorder, className)} ref={ref}>
-      <div className={styles.tabs} role="tablist">
-        {children}
+    return (
+      <div className={cx(styles.tabsWrapper, hideBorder && styles.noBorder, className)} ref={ref} {...rest}>
+        <div className={styles.tabs} role="tablist">
+          {children}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tabsWrapper: css({

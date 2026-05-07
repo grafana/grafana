@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { PluginDetailsPage } from './PluginDetailsPage';
 
@@ -25,7 +25,6 @@ const plugin: CatalogPlugin = {
   isInstalled: true,
   isDisabled: false,
   isDeprecated: false,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   isPublished: true,
   name: 'Test Plugin',
@@ -62,10 +61,16 @@ const plugin: CatalogPlugin = {
   angularDetected: false,
   isFullyInstalled: true,
   accessControl: {},
+  insights: { id: 1, name: 'test-plugin', version: '1.0.0', insights: [] },
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 jest.mock('../state/hooks', () => ({
   useGetSingle: jest.fn(),
+  useGetPluginInsights: jest.fn(),
   useFetchStatus: jest.fn().mockReturnValue({ isLoading: false }),
   useFetchDetailsStatus: () => ({ isLoading: false }),
   useIsRemotePluginsAvailable: () => false,
@@ -106,14 +111,7 @@ describe('PluginDetailsPage', () => {
     expect(screen.getByText('Plugin not found')).toBeInTheDocument();
   });
 
-  it('should not show right panel when feature toggle is disabled', () => {
-    config.featureToggles.pluginsDetailsRightPanel = false;
-    render(<PluginDetailsPage pluginId="test-plugin" />);
-    expect(screen.queryByTestId('plugin-details-panel')).not.toBeInTheDocument();
-  });
-
-  it('should show right panel when feature toggle is enabled and screen is wide', () => {
-    config.featureToggles.pluginsDetailsRightPanel = true;
+  it('should show right panel when screen is wide', () => {
     window.matchMedia = jest.fn().mockImplementation((query) => ({
       matches: query !== '(max-width: 600px)',
       media: query,
@@ -128,7 +126,6 @@ describe('PluginDetailsPage', () => {
   });
 
   it('should show "Plugin details" tab when screen is narrow', () => {
-    config.featureToggles.pluginsDetailsRightPanel = true;
     window.matchMedia = jest.fn().mockImplementation((query) => ({
       matches: query === '(max-width: 600px)',
       media: query,
@@ -158,7 +155,6 @@ describe('PluginDetailsPage', () => {
   });
 
   it('should not show last version in plugin details panel when plugin is core', () => {
-    config.featureToggles.pluginsDetailsRightPanel = true;
     window.matchMedia = jest.fn().mockImplementation((query) => ({
       matches: query !== '(max-width: 600px)',
       media: query,

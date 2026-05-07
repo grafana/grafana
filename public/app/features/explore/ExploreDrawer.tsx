@@ -1,10 +1,10 @@
 // Libraries
 import { css, cx, keyframes } from '@emotion/css';
-import { Resizable, ResizeCallback } from 're-resizable';
+import { Resizable, type ResizeCallback } from 're-resizable';
 import * as React from 'react';
 
 // Services & Utils
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface Props {

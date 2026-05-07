@@ -322,7 +322,7 @@ func RunTestDelayedWatchDelivery(ctx context.Context, t *testing.T, store storag
 	// closed (as otherwise events would have to be dropped).
 	// For now, this number is smallest for Cacher and it equals 21 for it.
 	totalPods := 21
-	for i := 0; i < totalPods; i++ {
+	for i := range totalPods {
 		out := &example.Pod{}
 		pod := &example.Pod{
 			ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i), Namespace: "test-ns"},
@@ -440,7 +440,7 @@ func RunTestWatcherTimeout(ctx context.Context, t *testing.T, store storage.Inte
 
 	// Create a number of watchers that will not be reading any result.
 	nonReadingWatchers := 50
-	for i := 0; i < nonReadingWatchers; i++ {
+	for range nonReadingWatchers {
 		watcher, err := store.Watch(ctx, KeyFunc("test-ns", ""), options)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
@@ -464,7 +464,7 @@ func RunTestWatcherTimeout(ctx context.Context, t *testing.T, store storage.Inte
 	// Create more events to ensure that we're not blocking other watchers
 	// forever.
 	startTime := time.Now()
-	for i := 0; i < 22; i++ {
+	for i := range 22 {
 		out := &example.Pod{}
 		pod := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i), Namespace: "test-ns"}}
 		if err := store.Create(ctx, computePodKey(pod), pod, out, 0); err != nil {
@@ -684,7 +684,7 @@ func RunTestClusterScopedWatch(ctx context.Context, t *testing.T, store storage.
 			currentObjs := map[string]*example.Pod{}
 			for _, watchTest := range tt.watchTests {
 				out := &example.Pod{}
-				key := "pods/" + watchTest.obj.Name
+				key := "pods/ns-1/" + watchTest.obj.Name
 				err := store.GuaranteedUpdate(ctx, key, out, true, nil, storage.SimpleUpdate(
 					func(runtime.Object) (runtime.Object, error) {
 						obj := watchTest.obj.DeepCopy()
@@ -1134,7 +1134,7 @@ func RunTestOptionalWatchBookmarksWithCorrectResourceVersion(ctx context.Context
 
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			select {
 			case <-done:
 				return
@@ -1220,7 +1220,7 @@ func RunSendInitialEventsBackwardCompatibility(ctx context.Context, t *testing.T
 func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interface) {
 	trueVal, falseVal := true, false
 	addEventsFromCreatedPods := func(createdInitialPods []*example.Pod) []watch.Event {
-		var ret []watch.Event
+		ret := make([]watch.Event, 0, len(createdInitialPods))
 		for _, createdPod := range createdInitialPods {
 			ret = append(ret, watch.Event{Type: watch.Added, Object: createdPod})
 		}
@@ -1607,15 +1607,15 @@ func clusterScopedNodeNameAttrFunc(obj runtime.Object) (labels.Set, fields.Set, 
 }
 
 func basePod(podName string) *example.Pod {
-	return baseNamespacedPod(podName, "")
+	return baseNamespacedPod(podName, "ns-1")
 }
 
 func basePodUpdated(podName string) *example.Pod {
-	return baseNamespacedPodUpdated(podName, "")
+	return baseNamespacedPodUpdated(podName, "ns-1")
 }
 
 func basePodAssigned(podName, nodeName string) *example.Pod {
-	return baseNamespacedPodAssigned(podName, "", nodeName)
+	return baseNamespacedPodAssigned(podName, "ns-1", nodeName)
 }
 
 func baseNamespacedPod(podName, namespace string) *example.Pod {

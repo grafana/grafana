@@ -14,13 +14,10 @@ weight: 300
 
 Custom branding enables you to replace the Grafana Labs brand and logo with your corporate brand and logo.
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud). For Cloud Advanced and Enterprise customers, please provide custom elements and logos to our Support team. We will help you host your images and update your custom branding.
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team. For Cloud customers, please provide custom elements and logos to our Support team. We will help you host your images and update your custom branding.
 
-This feature is not available for Grafana Free and Pro tiers.
-For more information on feature availability across plans, refer to our [feature comparison page](/docs/grafana-cloud/cost-management-and-billing/understand-grafana-cloud-features/)
-
-{{% /admonition %}}
+{{< /admonition >}}
 
 The `grafana.ini` file includes Grafana Enterprise custom branding. As with all configuration options, you can use environment variables to set custom branding.
 
@@ -79,6 +76,17 @@ The configuration file in Grafana Enterprise contains the following options. For
 ;hide_edition =
 ```
 
+{{< admonition type="note" >}}
+For the `login_logo` option, Grafana recommends using SVG files that are 48 pixels by 48 pixels or smaller. You also don't need to use the `url()` function for `login_logo`.
+
+Additionally, you can copy images to the local Grafana image directory, `/usr/share/grafana/public/img/`, and set `login_logo` to the stored image. For example:
+
+```ini
+login_logo = /public/img/<YOUR_LOGO.svg>
+```
+
+{{< /admonition >}}
+
 You have the option of adding custom links in place of the default footer links (Documentation, Support, Community). Below is an example of how to replace the default footer and help links with custom links.
 
 ```ini
@@ -103,9 +111,9 @@ GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_TEXT=Custom Text
 GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_URL=http://your.custom.site
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The following two links are always present in the footer:
-{{% /admonition %}}
+{{< /admonition >}}
 
 - Grafana edition
 - Grafana version with build number

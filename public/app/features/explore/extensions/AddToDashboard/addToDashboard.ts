@@ -1,7 +1,8 @@
-import { DataFrame, ExplorePanelsState } from '@grafana/data';
-import { DataQuery, DataSourceRef, Panel } from '@grafana/schema';
-import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
-import { ExplorePanelData } from 'app/types';
+import { type DataFrame, type ExplorePanelsState } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { type DataQuery, type DataSourceRef, type Panel } from '@grafana/schema';
+import { type DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
+import { type ExplorePanelData } from 'app/types/explore';
 
 interface ExploreToDashboardPanelOptions {
   queries: DataQuery[];
@@ -23,7 +24,10 @@ function getLogsTableTransformations(
   options: ExploreToDashboardPanelOptions
 ): DataTransformerConfig[] {
   let transformations: DataTransformerConfig[] = [];
-  if (panelType === 'table' && options.panelState?.logs?.columns) {
+
+  const oldColumns = Object.values(options.panelState?.logs?.columns ?? {});
+  const fields = oldColumns.length ? oldColumns : options.panelState?.logs?.displayedFields;
+  if (panelType === 'table' && options.panelState && fields?.length) {
     // If we have a labels column, we need to extract the fields from it
     if (options.panelState.logs?.labelFieldName) {
       transformations.push({
@@ -38,14 +42,14 @@ function getLogsTableTransformations(
     transformations.push({
       id: 'organize',
       options: {
-        indexByName: Object.values(options.panelState.logs.columns).reduce(
+        indexByName: fields.reduce(
           (acc: Record<string, number>, value: string, idx) => ({
             ...acc,
             [value]: idx,
           }),
           {}
         ),
-        includeByName: Object.values(options.panelState.logs.columns).reduce(
+        includeByName: fields.reduce(
           (acc: Record<string, boolean>, value: string) => ({
             ...acc,
             [value]: true,
@@ -65,7 +69,7 @@ export function buildDashboardPanelFromExploreState(options: ExploreToDashboardP
     //@ts-ignore
     targets: options.queries,
     type: panelType,
-    title: 'New Panel',
+    title: t('explore.build-dashboard-panel-from-explore-state.title.new-panel', 'New Panel'),
     gridPos: { x: 0, y: 0, w: 12, h: 8 },
     datasource: options.datasource,
     transformations: getLogsTableTransformations(panelType, options),

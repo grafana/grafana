@@ -1,11 +1,13 @@
+import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { act, render, screen } from '@testing-library/react';
+import type { JSX } from 'react';
 import { Provider } from 'react-redux';
 
 import { PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { getCatalogPluginMock } from '../__mocks__';
+import { getCatalogPluginMock } from '../mocks/mockHelpers';
 import { PluginTabIds } from '../types';
 
 import { PluginDetailsBody } from './PluginDetailsBody';
@@ -13,7 +15,11 @@ import { PluginDetailsBody } from './PluginDetailsBody';
 function renderWithStore(component: JSX.Element) {
   const store = configureStore();
 
-  return render(<Provider store={store}>{component}</Provider>);
+  return render(
+    <Provider store={store}>
+      <OpenFeatureTestProvider>{component}</OpenFeatureTestProvider>
+    </Provider>
+  );
 }
 
 describe('PluginDetailsBody', () => {

@@ -73,6 +73,9 @@ type TemplateTestCase struct {
 
 	// Data should be the struct passed to the template.
 	Data sqltemplate.SQLTemplate
+
+	// If the query should not validate
+	ValidationError string
 }
 
 type TemplateTestSetup struct {
@@ -122,8 +125,12 @@ func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
 								// but also not worth deep cloning
 								input.Data.SetDialect(dialect)
 								err := input.Data.Validate()
-
+								if input.ValidationError != "" {
+									require.ErrorContains(t, err, input.ValidationError)
+									return
+								}
 								require.NoError(t, err)
+
 								got, err := sqltemplate.Execute(tmpl, input.Data)
 								require.NoError(t, err)
 

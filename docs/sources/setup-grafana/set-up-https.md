@@ -107,9 +107,9 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
 
 The examples in this section use LetsEncrypt because it is free.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The instructions provided in this section are for a Debian-based Linux system. For other distributions and operating systems, please refer to the [certbot instructions](https://certbot.eff.org/instructions). Also, these instructions require you to have a domain name that you are in control of. Dynamic domain names like those from Amazon EC2 or DynDNS providers will not function.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Install `snapd` and `certbot`
 
@@ -131,7 +131,6 @@ The instructions provided in this section are for a Debian-based Linux system. F
    ```
 
    These commands:
-
    - Uninstall `certbot` from your system if it has been installed using a package manager
    - Install `certbot` using `snapd`
 

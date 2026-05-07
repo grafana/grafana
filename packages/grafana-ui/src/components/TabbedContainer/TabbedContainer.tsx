@@ -2,12 +2,14 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { type SelectableValue, type GrafanaTheme2 } from '@grafana/data';
 
 import { IconButton } from '../../components/IconButton/IconButton';
-import { TabsBar, Tab, TabContent } from '../../components/Tabs';
-import { useStyles2 } from '../../themes';
-import { IconName } from '../../types/icon';
+import { Tab } from '../../components/Tabs/Tab';
+import { TabContent } from '../../components/Tabs/TabContent';
+import { TabsBar } from '../../components/Tabs/TabsBar';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { type IconName } from '../../types/icon';
 import { Box } from '../Layout/Box/Box';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 

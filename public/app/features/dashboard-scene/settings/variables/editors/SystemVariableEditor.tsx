@@ -1,4 +1,4 @@
-import { SceneVariable, LocalValueVariable } from '@grafana/scenes';
+import { type SceneVariable, LocalValueVariable } from '@grafana/scenes';
 import { Stack } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -9,7 +9,7 @@ export function getSystemVariableOptions(variable: SceneVariable): OptionsPaneIt
 
   return [
     new OptionsPaneItemDescriptor({
-      title: '',
+      id: `variable-${variable.state.name}-value`,
       render: () => {
         return (
           <Stack direction="column">

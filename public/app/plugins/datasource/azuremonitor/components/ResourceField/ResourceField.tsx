@@ -2,16 +2,17 @@ import { cx } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
-import { Button, Icon, Modal, useStyles2, IconName } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Button, Icon, Modal, useStyles2, type IconName } from '@grafana/ui';
 
-import Datasource from '../../datasource';
+import { type AzureMonitorResource } from '../../dataquery.gen';
+import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureQueryEditorFieldProps, AzureMonitorResource } from '../../types';
-import ResourcePicker from '../ResourcePicker';
+import { type ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
+import { type AzureQueryEditorFieldProps } from '../../types/types';
+import ResourcePicker from '../ResourcePicker/ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
-import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
+import { type ResourceRow, type ResourceRowGroup, type ResourceRowType } from '../ResourcePicker/types';
 import { parseMultipleResourceDetails, setResources } from '../ResourcePicker/utils';
 import { Field } from '../shared/Field';
 
@@ -43,7 +44,6 @@ const ResourceField = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
-  const { t } = useTranslate();
 
   const handleOpenPicker = useCallback(() => {
     setPickerIsOpen(true);
@@ -68,9 +68,6 @@ const ResourceField = ({
         title={t('components.resource-field.title-select-resource', 'Select a resource')}
         isOpen={pickerIsOpen}
         onDismiss={closePicker}
-        // The growing number of rows added to the modal causes a focus
-        // error in the modal, making it impossible to click on new elements
-        trapFocus={false}
       >
         <ResourcePicker
           resourcePickerData={datasource.resourcePickerData}
@@ -82,6 +79,7 @@ const ResourceField = ({
           disableRow={disableRow}
           renderAdvanced={renderAdvanced}
           selectionNotice={selectionNotice}
+          datasource={datasource}
         />
       </Modal>
       <Field

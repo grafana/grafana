@@ -1,7 +1,7 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Modal } from '@grafana/ui';
 
-import { KBObjectArray } from '../../../types/rule-form';
+import { type KBObjectArray } from '../../../types/rule-form';
 
 import { LabelsSubForm } from './LabelsField';
 
@@ -15,7 +15,6 @@ export interface LabelsEditorModalProps {
   dataSourceName: string;
 }
 export function LabelsEditorModal({ isOpen, onClose, dataSourceName, initialLabels }: LabelsEditorModalProps) {
-  const { t } = useTranslate();
   return (
     <Modal
       title={t('alerting.labels-editor-modal.title-edit-labels', 'Edit labels')}

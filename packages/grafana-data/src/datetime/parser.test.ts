@@ -1,4 +1,4 @@
-import { systemDateFormats, SystemDateFormatsState } from './formats';
+import { systemDateFormats, type SystemDateFormatsState } from './formats';
 import { dateTimeParse } from './parser';
 
 describe('dateTimeParse', () => {

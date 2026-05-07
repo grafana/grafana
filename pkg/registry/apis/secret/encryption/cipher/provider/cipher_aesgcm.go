@@ -10,7 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 )
 
-const gcmSaltLength = 8
+const (
+	gcmSaltLength = 8
+	AesGcm        = "aes-gcm"
+)
 
 var (
 	_ cipher.Encrypter = (*aesGcmCipher)(nil)
@@ -23,7 +26,7 @@ type aesGcmCipher struct {
 	randReader io.Reader
 }
 
-func newAesGcmCipher() aesGcmCipher {
+func NewAesGcmCipher() aesGcmCipher {
 	return aesGcmCipher{
 		randReader: rand.Reader,
 	}

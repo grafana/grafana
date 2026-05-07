@@ -15,11 +15,14 @@ var _ auth.ExternalSessionStore = (*store)(nil)
 
 type store struct {
 	sqlStore       db.DB
-	secretsService secrets.Service
+	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	tracer         tracing.Tracer
 }
 
-func provideExternalSessionStore(sqlStore db.DB, secretService secrets.Service, tracer tracing.Tracer) auth.ExternalSessionStore {
+func provideExternalSessionStore(sqlStore db.DB,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	tracer tracing.Tracer,
+) auth.ExternalSessionStore {
 	return &store{
 		sqlStore:       sqlStore,
 		secretsService: secretService,
@@ -56,6 +59,8 @@ func (s *store) Get(ctx context.Context, ID int64) (*auth.ExternalSession, error
 	return externalSession, nil
 }
 
+// List returns a list of external sessions that match the given query.
+// If the result set contains more than one entry, the entries are sorted by ID in descending order.
 func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error) {
 	ctx, span := s.tracer.Start(ctx, "externalsession.List")
 	defer span.End()
@@ -63,6 +68,10 @@ func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) 
 	externalSession := &auth.ExternalSession{}
 	if query.ID != 0 {
 		externalSession.ID = query.ID
+	}
+
+	if query.UserID != 0 {
+		externalSession.UserID = query.UserID
 	}
 
 	hash := sha256.New()
@@ -80,7 +89,7 @@ func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) 
 
 	queryResult := make([]*auth.ExternalSession, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Find(&queryResult, externalSession)
+		return sess.Desc("id").Find(&queryResult, externalSession)
 	})
 	if err != nil {
 		return nil, err

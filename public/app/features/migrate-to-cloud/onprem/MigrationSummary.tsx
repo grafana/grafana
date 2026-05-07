@@ -1,8 +1,10 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import {
+  type GetSessionApiResponse,
+  type GetSnapshotResponseDto,
+} from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Switch, Space, Stack, Text } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';
-
-import { GetSessionApiResponse, GetSnapshotResponseDto } from '../api';
 
 import { MigrationInfo } from './MigrationInfo';
 
@@ -32,7 +34,6 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = {
 };
 
 export function MigrationSummary(props: MigrationSummaryProps) {
-  const { t } = useTranslate();
   const {
     session,
     snapshot,
@@ -61,6 +62,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
 
   return (
     <Box
+      borderRadius="lg"
       borderColor="weak"
       borderStyle="solid"
       padding={2}

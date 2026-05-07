@@ -1,25 +1,17 @@
 import { cx } from '@emotion/css';
-import { RefCallback, SyntheticEvent, useState } from 'react';
+import { type RefCallback, type SyntheticEvent, useState, type JSX } from 'react';
 import * as React from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, DataFrame, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
+import { CoreApp, type DataFrame, getDefaultTimeRange, type SelectableValue, type TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
-import {
-  HorizontalGroup,
-  Select,
-  ButtonSelect,
-  AsyncMultiSelect,
-  getSelectStyles,
-  useTheme2,
-  Checkbox,
-} from '@grafana/ui';
+import { Select, ButtonSelect, AsyncMultiSelect, getSelectStyles, useTheme2, Checkbox, Stack } from '@grafana/ui';
 
-import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter } from '../../dataquery.gen';
-import Datasource from '../../datasource';
-import { VariableOptionGroup } from '../../types';
+import { type AzureMonitorQuery, AzureQueryType, type AzureTracesFilter } from '../../dataquery.gen';
+import type Datasource from '../../datasource';
+import { type VariableOptionGroup } from '../../types/types';
 import { addValueToOptions } from '../../utils/common';
 
 export interface FilterProps {
@@ -107,7 +99,7 @@ const getTraceProperties = async (
     const result: DataFrame = results.data[0];
     if (result.fields.length > 0) {
       const properties: { [key: string]: Array<{ [key: string]: string | number; count: number }> } = JSON.parse(
-        result.fields[0].values.toArray()[0]
+        result.fields[0].values[0]
       );
       const values = properties[property].map((value) => {
         let label = value[property];
@@ -209,7 +201,6 @@ const Filter = (
   const [selected, setSelected] = useState<SelectableValue[]>(
     item.filters ? item.filters.map((filter) => ({ value: filter, label: filter === '' ? '<Empty>' : filter })) : []
   );
-  const { t } = useTranslate();
 
   const loadOptions = async () => {
     setLoading(true);
@@ -239,7 +230,7 @@ const Filter = (
   };
 
   return (
-    <HorizontalGroup spacing="none">
+    <Stack gap={0}>
       <Select
         menuShouldPortal
         placeholder={t('components.filter.placeholder-property', 'Property')}
@@ -289,7 +280,7 @@ const Filter = (
         onClick={onDelete}
         type="button"
       />
-    </HorizontalGroup>
+    </Stack>
   );
 };
 

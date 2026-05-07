@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
 import {
-  EchoBackend,
+  type EchoBackend,
   EchoEventType,
   isExperimentViewEvent,
   isInteractionEvent,
   isPageviewEvent,
-  PageviewEchoEvent,
+  type PageviewEchoEvent,
 } from '@grafana/runtime';
 
 export class BrowserConsoleBackend implements EchoBackend<PageviewEchoEvent, unknown> {

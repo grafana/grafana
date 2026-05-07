@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -38,6 +38,7 @@ func TestRender_Authenticate(t *testing.T) {
 			},
 			expectedIdentity: &authn.Identity{
 				ID:              "0",
+				UID:             "0",
 				Type:            claims.TypeAnonymous,
 				OrgID:           1,
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
@@ -60,6 +61,7 @@ func TestRender_Authenticate(t *testing.T) {
 			},
 			expectedIdentity: &authn.Identity{
 				ID:              "0",
+				UID:             "0",
 				Type:            claims.TypeRenderService,
 				OrgID:           1,
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},

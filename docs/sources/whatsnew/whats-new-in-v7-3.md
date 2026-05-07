@@ -146,11 +146,11 @@ Insights:
 
 ### SAML single logout
 
-SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current identity provider (IdP) session established via SAML SSO. For more information, refer to the [docs](../../setup-grafana/configure-security/configure-authentication/saml/#single-logout).
+SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current identity provider (IdP) session established via SAML SSO. For more information, refer to the [docs](../../setup-grafana/configure-access/configure-authentication/saml/#single-logout).
 
 ### SAML IdP-initiated single sign on
 
-IdP-initiated single sign on (SSO) allows the user to log in directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs](../../setup-grafana/configure-security/configure-authentication/saml/#idp-initiated-single-sign-on-sso).
+IdP-initiated single sign on (SSO) allows the user to log in directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs](../../setup-grafana/configure-access/configure-authentication/saml/#idp-initiated-single-sign-on-sso).
 
 ## Changelog
 

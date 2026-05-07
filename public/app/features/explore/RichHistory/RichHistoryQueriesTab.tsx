@@ -2,18 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceApi, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type DataSourceApi, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
-import {
-  mapNumbertoTimeInSlider,
-  mapQueriesToHeadings,
-  SortOrder,
-  RichHistorySearchFilters,
-  RichHistorySettings,
-} from 'app/core/utils/richHistory';
-import { RichHistoryQuery } from 'app/types/explore';
+import { mapNumbertoTimeInSlider, mapQueriesToHeadings } from 'app/core/utils/richHistory';
+import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+import { type RichHistoryQuery } from 'app/types/explore';
 
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
@@ -128,7 +123,6 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
   } = props;
 
   const styles = useStyles2(getStyles, height);
-  const { t } = useTranslate();
 
   // on mount, set filter to either active datasource or all datasources
   useEffect(() => {

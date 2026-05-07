@@ -1,15 +1,14 @@
-import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
-import { DataFrame, DataSourceRef } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type AwsAuthDataSourceJsonData, type AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
+import { type DataFrame, type DataSourceRef } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 
-import * as raw from './dataquery.gen';
-
-export * from './dataquery.gen';
+import type * as raw from './dataquery.gen';
 
 export type CloudWatchQuery =
   | raw.CloudWatchMetricsQuery
   | raw.CloudWatchLogsQuery
   | raw.CloudWatchAnnotationQuery
+  | raw.CloudWatchLogsAnomaliesQuery
   | CloudWatchDefaultQuery;
 
 // We want to allow setting defaults for both Logs and Metrics queries
@@ -155,6 +154,26 @@ export interface StartQueryRequest extends DataQuery {
   limit?: number;
   refId: string;
   region: string;
+  /**
+   * Query language for the logs query (CWLI, SQL, PPL)
+   */
+  queryLanguage?: raw.LogsQueryLanguage;
+  /**
+   * Log group selection scope - determines how log groups are selected for the query
+   */
+  logsQueryScope?: raw.LogsQueryScope;
+  /**
+   * Log group name prefixes for namePrefix scope mode (max 5)
+   */
+  logGroupPrefixes?: string[];
+  /**
+   * Log group class filter for namePrefix and allLogGroups scope modes
+   */
+  logGroupClass?: raw.LogGroupClass;
+  /**
+   * Selected account IDs for cross-account queries (max 20)
+   */
+  selectedAccountIds?: string[];
 }
 
 export interface QueryParam extends DataQuery {

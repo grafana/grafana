@@ -1,17 +1,17 @@
 import { css, cx } from '@emotion/css';
-import { Moment } from 'moment';
-import RcPicker, { PickerProps } from 'rc-picker';
-import generateConfig from 'rc-picker/lib/generate/moment';
-import locale from 'rc-picker/lib/locale/en_US';
+import RcPicker, { type PickerProps } from '@rc-component/picker';
+import generateConfig from '@rc-component/picker/lib/generate/moment';
+import locale from '@rc-component/picker/lib/locale/en_US';
+import { type Moment } from 'moment';
 
-import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2, isDateTimeInput } from '@grafana/data';
+import { dateTime, type DateTime, dateTimeAsMoment, type GrafanaTheme2, isDateTimeInput } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { inputSizes } from '../Forms/commonStyles';
-import { FormInputSize } from '../Forms/types';
+import { type FormInputSize } from '../Forms/types';
 import { Icon } from '../Icon/Icon';
-import 'rc-picker/assets/index.css';
+import '@rc-component/picker/assets/index.css';
 
 interface BaseProps {
   onChange: (value: DateTime) => void | ((value?: DateTime) => void);
@@ -26,6 +26,7 @@ interface BaseProps {
   disabledSeconds?: () => number[];
   placeholder?: string;
   allowEmpty?: boolean;
+  id?: string;
 }
 
 interface AllowEmptyProps extends BaseProps {
@@ -52,6 +53,7 @@ export const TimeOfDayPicker = ({
   disabledHours,
   disabledMinutes,
   disabledSeconds,
+  id,
   placeholder,
   // note: we can't destructure allowEmpty/onChange here
   // in order to discriminate the types properly later in the onChange handler
@@ -62,6 +64,7 @@ export const TimeOfDayPicker = ({
 
   return (
     <RcPicker<Moment>
+      id={id}
       generateConfig={generateConfig}
       locale={locale}
       allowClear={
@@ -71,7 +74,9 @@ export const TimeOfDayPicker = ({
       }
       className={cx(inputSizes()[size], styles.input)}
       classNames={{
-        popup: cx(styles.picker, POPUP_CLASS_NAME),
+        popup: {
+          container: cx(styles.picker, POPUP_CLASS_NAME),
+        },
       }}
       defaultValue={restProps.allowEmpty ? undefined : dateTimeAsMoment()}
       disabled={disabled}

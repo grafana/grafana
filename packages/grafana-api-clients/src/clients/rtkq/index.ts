@@ -1,0 +1,73 @@
+/**
+ * Don't manually add to this file! Use the `generate:api-client` command to add new API clients.
+ */
+import { generatedAPI as advisorAPIv0alpha1 } from './advisor/v0alpha1';
+import { generatedAPI as collectionsAPIv1alpha1 } from './collections/v1alpha1';
+import { generatedAPI as correlationsAPIv0alpha1 } from './correlations/v0alpha1';
+import { generatedAPI as dashboardAPIv0alpha1 } from './dashboard/v0alpha1';
+import { generatedAPI as folderAPIv1beta1 } from './folder/v1beta1';
+import { generatedAPI as historianAlertingAPIv0alpha1 } from './historian.alerting/v0alpha1';
+import { generatedAPI as iamAPIv0alpha1 } from './iam/v0alpha1';
+import { generatedAPI as logsdrilldownAPIv1alpha1 } from './logsdrilldown/v1alpha1';
+import { generatedAPI as logsdrilldownAPIv1beta1 } from './logsdrilldown/v1beta1';
+import { generatedAPI as notificationsAlertingAPIv0alpha1 } from './notifications.alerting/v0alpha1';
+import { generatedAPI as notificationsAlertingAPIv1beta1 } from './notifications.alerting/v1beta1';
+import { generatedAPI as playlistAPIv1 } from './playlist/v1';
+import { generatedAPI as orgPreferencesAPI } from './preferences/org';
+import { generatedAPI as teamPreferencesAPI } from './preferences/team';
+import { generatedAPI as preferencesAPIv1alpha1 } from './preferences/v1alpha1';
+import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1';
+import { generatedAPI as quotasAPIv0alpha1 } from './quotas/v0alpha1';
+import { generatedAPI as rulesAlertingAPIv0alpha1 } from './rules.alerting/v0alpha1';
+import { generatedAPI as shortURLAPIv1beta1 } from './shorturl/v1beta1';
+// PLOP_INJECT_IMPORT
+
+/** RTK Query middleware for all API clients  */
+export const allMiddleware = [
+  advisorAPIv0alpha1.middleware,
+  dashboardAPIv0alpha1.middleware,
+  folderAPIv1beta1.middleware,
+  iamAPIv0alpha1.middleware,
+  playlistAPIv1.middleware,
+  collectionsAPIv1alpha1.middleware, // stars
+  preferencesAPIv1alpha1.middleware,
+  provisioningAPIv0alpha1.middleware,
+  shortURLAPIv1beta1.middleware,
+  correlationsAPIv0alpha1.middleware,
+  notificationsAlertingAPIv0alpha1.middleware,
+  rulesAlertingAPIv0alpha1.middleware,
+  historianAlertingAPIv0alpha1.middleware,
+  logsdrilldownAPIv1beta1.middleware,
+  logsdrilldownAPIv1alpha1.middleware,
+  quotasAPIv0alpha1.middleware,
+  orgPreferencesAPI.middleware,
+  teamPreferencesAPI.middleware,
+  notificationsAlertingAPIv1beta1.middleware,
+  // PLOP_INJECT_MIDDLEWARE
+] as const;
+
+/** RTK Query reducers for all API clients  */
+export const allReducers = {
+  [advisorAPIv0alpha1.reducerPath]: advisorAPIv0alpha1.reducer,
+  [dashboardAPIv0alpha1.reducerPath]: dashboardAPIv0alpha1.reducer,
+  [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
+  [iamAPIv0alpha1.reducerPath]: iamAPIv0alpha1.reducer,
+  [playlistAPIv1.reducerPath]: playlistAPIv1.reducer,
+  [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer,
+  [preferencesAPIv1alpha1.reducerPath]: preferencesAPIv1alpha1.reducer,
+  [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
+  [shortURLAPIv1beta1.reducerPath]: shortURLAPIv1beta1.reducer,
+  [correlationsAPIv0alpha1.reducerPath]: correlationsAPIv0alpha1.reducer,
+  [notificationsAlertingAPIv0alpha1.reducerPath]: notificationsAlertingAPIv0alpha1.reducer,
+  [rulesAlertingAPIv0alpha1.reducerPath]: rulesAlertingAPIv0alpha1.reducer,
+  [historianAlertingAPIv0alpha1.reducerPath]: historianAlertingAPIv0alpha1.reducer,
+  [logsdrilldownAPIv1alpha1.reducerPath]: logsdrilldownAPIv1alpha1.reducer,
+  [logsdrilldownAPIv1beta1.reducerPath]: logsdrilldownAPIv1beta1.reducer,
+  [quotasAPIv0alpha1.reducerPath]: quotasAPIv0alpha1.reducer,
+  [orgPreferencesAPI.reducerPath]: orgPreferencesAPI.reducer,
+  [teamPreferencesAPI.reducerPath]: teamPreferencesAPI.reducer,
+  [notificationsAlertingAPIv1beta1.reducerPath]: notificationsAlertingAPIv1beta1.reducer,
+  // PLOP_INJECT_REDUCER
+};
+
+export * from './createBaseQuery';

@@ -1,12 +1,12 @@
-import { ReducerID, SelectableValue } from '@grafana/data';
+import { ReducerID, type SelectableValue } from '@grafana/data';
 import {
   CalculateFieldMode,
   WindowAlignment,
-  CalculateFieldTransformerOptions,
-  WindowOptions,
+  type CalculateFieldTransformerOptions,
+  type WindowOptions,
   WindowSizeMode,
 } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, RadioButtonGroup, Select, StatsPicker } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -17,17 +17,28 @@ export const WindowOptionsEditor = (props: {
   names: string[];
   onChange: (options: CalculateFieldTransformerOptions) => void;
 }) => {
-  const { t } = useTranslate();
   const { options, names, onChange } = props;
   const { window } = options;
   const selectOptions = names.map((v) => ({ label: v, value: v }));
   const typeOptions = [
-    { label: 'Trailing', value: WindowAlignment.Trailing },
-    { label: 'Centered', value: WindowAlignment.Centered },
+    {
+      label: t('transformers.window-options-editor.type-options.label.trailing', 'Trailing'),
+      value: WindowAlignment.Trailing,
+    },
+    {
+      label: t('transformers.window-options-editor.type-options.label.centered', 'Centered'),
+      value: WindowAlignment.Centered,
+    },
   ];
   const windowSizeModeOptions = [
-    { label: 'Percentage', value: WindowSizeMode.Percentage },
-    { label: 'Fixed', value: WindowSizeMode.Fixed },
+    {
+      label: t('transformers.window-options-editor.window-size-mode-options.label.percentage', 'Percentage'),
+      value: WindowSizeMode.Percentage,
+    },
+    {
+      label: t('transformers.window-options-editor.window-size-mode-options.label.fixed', 'Fixed'),
+      value: WindowSizeMode.Fixed,
+    },
   ];
 
   const updateWindowOptions = (v: WindowOptions) => {
@@ -94,7 +105,6 @@ export const WindowOptionsEditor = (props: {
       >
         <StatsPicker
           allowMultiple={false}
-          className="width-18"
           stats={[window?.reducer || ReducerID.mean]}
           onChange={onWindowStatsChange}
           defaultStat={ReducerID.mean}

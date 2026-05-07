@@ -1,15 +1,21 @@
 import { css, cx } from '@emotion/css';
 import { compact, uniqueId } from 'lodash';
 import * as React from 'react';
+import type { JSX } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Button, CodeEditor, useStyles2 } from '@grafana/ui';
 
-import { TemplatePreviewErrors, TemplatePreviewResponse, TemplatePreviewResult } from '../../api/templateApi';
+import {
+  type TemplatePreviewErrors,
+  type TemplatePreviewResponse,
+  type TemplatePreviewResult,
+} from '../../api/templateApi';
+import { AIFeedbackButtonComponent } from '../../enterprise-components/AI/addAIFeedbackButton';
 import { stringifyErrorLike } from '../../utils/misc';
-import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
+import { EditorColumnHeader } from '../EditorColumnHeader';
 
 import { usePreviewTemplate } from './usePreviewTemplate';
 
@@ -20,6 +26,8 @@ export function TemplatePreview({
   payloadFormatError,
   setPayloadFormatError,
   className,
+  aiGeneratedTemplate,
+  setAiGeneratedTemplate,
 }: {
   payload: string;
   templateName: string;
@@ -27,6 +35,8 @@ export function TemplatePreview({
   payloadFormatError: string | null;
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
   className?: string;
+  aiGeneratedTemplate?: boolean;
+  setAiGeneratedTemplate?: (aiGeneratedTemplate: boolean) => void;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -36,7 +46,7 @@ export function TemplatePreview({
     onPreview,
     error: previewError,
   } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError);
-  const { t } = useTranslate();
+
   const previewToRender = getPreviewResults(previewError, payloadFormatError, data);
 
   return (
@@ -48,7 +58,10 @@ export function TemplatePreview({
             disabled={isLoading}
             icon="sync"
             aria-label={t('alerting.template-preview.aria-label-refresh-preview', 'Refresh preview')}
-            onClick={onPreview}
+            onClick={() => {
+              onPreview();
+              setAiGeneratedTemplate?.(false);
+            }}
             size="sm"
             variant="secondary"
           >
@@ -56,6 +69,9 @@ export function TemplatePreview({
           </Button>
         }
       />
+      <div className={styles.viewer.feedbackContainer}>
+        <AIFeedbackButtonComponent origin="template" shouldShowFeedbackButton={Boolean(aiGeneratedTemplate)} />
+      </div>
       <Box flex={1}>
         <AutoSizer disableWidth>
           {({ height }) => <div className={styles.viewerContainer({ height })}>{previewToRender}</div>}
@@ -163,6 +179,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     errorText: css({
       color: theme.colors.error.text,
     }),
+    feedbackContainer: css({
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+      backgroundColor: theme.colors.background.secondary,
+      minHeight: 'auto',
+    }),
+    emptyState: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
   },
 });
 
@@ -171,14 +203,15 @@ export function getPreviewResults(
   payloadFormatError: string | null,
   data: TemplatePreviewResponse | undefined
 ): JSX.Element {
-  const { t } = useTranslate();
   // ERRORS IN JSON OR IN REQUEST (endpoint not available, for example)
   const previewErrorRequest = previewError ? stringifyErrorLike(previewError) : undefined;
   const errorToRender = payloadFormatError || previewErrorRequest;
+  const styles = useStyles2(getStyles);
 
   //PREVIEW : RESULTS AND ERRORS
   const previewResponseResults = data?.results ?? [];
   const previewResponseErrors = data?.errors;
+  const hasContent = previewResponseResults.length > 0 || previewResponseErrors || errorToRender;
 
   return (
     <>
@@ -188,7 +221,12 @@ export function getPreviewResults(
         </Alert>
       )}
       {previewResponseErrors && <PreviewErrorViewer errors={previewResponseErrors} />}
-      {previewResponseResults && <PreviewResultViewer previews={previewResponseResults} />}
+      {previewResponseResults.length > 0 && <PreviewResultViewer previews={previewResponseResults} />}
+      {!hasContent && (
+        <div className={styles.viewer.emptyState}>
+          <Trans i18nKey="alerting.template-preview.empty-state">Add template content to see preview</Trans>
+        </div>
+      )}
     </>
   );
 }

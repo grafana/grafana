@@ -1,22 +1,23 @@
 import { css } from '@emotion/css';
 import { memo, useEffect } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-
-import { useDispatch } from '../../types';
+import { useDispatch } from 'app/types/store';
 
 import { useRecentlyDeletedStateManager } from './api/useRecentlyDeletedStateManager';
+import { DeletedDashboardsLimitBanner } from './components/DeletedDashboardsLimitBanner';
 import { RecentlyDeletedActions } from './components/RecentlyDeletedActions';
 import { RecentlyDeletedEmptyState } from './components/RecentlyDeletedEmptyState';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
-import { setAllSelection, useHasSelection } from './state';
+import { useHasSelection } from './state/hooks';
+import { setAllSelection } from './state/slice';
 
 const RecentlyDeletedPage = memo(() => {
   const dispatch = useDispatch();
@@ -25,8 +26,8 @@ const RecentlyDeletedPage = memo(() => {
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
   const hasSelection = useHasSelection();
 
-  const { canEditFolders, canEditDashboards } = getFolderPermissions();
-  const canSelect = canEditFolders || canEditDashboards;
+  const { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards } = getFolderPermissions();
+  const permissions = { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards };
 
   useEffect(() => {
     stateManager.initStateFromUrl(undefined);
@@ -39,11 +40,11 @@ const RecentlyDeletedPage = memo(() => {
       })
     );
   }, [dispatch, stateManager]);
-  const { t } = useTranslate();
 
   return (
     <Page navId="dashboards/recently-deleted">
       <Page.Contents className={styles.pageContents}>
+        <DeletedDashboardsLimitBanner resultToken={searchState.result} />
         <div>
           <FilterInput
             placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
@@ -56,27 +57,25 @@ const RecentlyDeletedPage = memo(() => {
         {hasSelection ? (
           <RecentlyDeletedActions />
         ) : (
-          <div className={styles.filters}>
-            <ActionRow
-              state={searchState}
-              getTagOptions={stateManager.getTagOptions}
-              getSortOptions={getGrafanaSearcher().getSortOptions}
-              sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
-              onLayoutChange={stateManager.onLayoutChange}
-              onSortChange={stateManager.onSortChange}
-              onTagFilterChange={stateManager.onTagFilterChange}
-              onDatasourceChange={stateManager.onDatasourceChange}
-              onPanelTypeChange={stateManager.onPanelTypeChange}
-              onSetIncludePanels={stateManager.onSetIncludePanels}
-            />
-          </div>
+          <ActionRow
+            state={searchState}
+            getTagOptions={stateManager.getTagOptions}
+            getSortOptions={stateManager.getSortOptions}
+            sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
+            onLayoutChange={stateManager.onLayoutChange}
+            onSortChange={stateManager.onSortChange}
+            onTagFilterChange={stateManager.onTagFilterChange}
+            onDatasourceChange={stateManager.onDatasourceChange}
+            onPanelTypeChange={stateManager.onPanelTypeChange}
+            onSetIncludePanels={stateManager.onSetIncludePanels}
+          />
         )}
 
         <div className={styles.subView}>
           <AutoSizer>
-            {({ width, height }) => (
+            {({ width, height }: Size) => (
               <SearchView
-                canSelect={canSelect}
+                permissions={permissions}
                 width={width}
                 height={height}
                 searchStateManager={stateManager}
@@ -102,14 +101,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   // AutoSizer needs an element to measure the full height available
   subView: css({
     height: '100%',
-  }),
-
-  filters: css({
-    display: 'none',
-
-    [theme.breakpoints.up('md')]: {
-      display: 'block',
-    },
+    minHeight: '300px',
   }),
 });
 

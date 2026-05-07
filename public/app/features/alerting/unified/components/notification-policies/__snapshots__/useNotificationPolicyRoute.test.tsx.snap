@@ -2,6 +2,8 @@
 
 exports[`createKubernetesRoutingTreeSpec 1`] = `
 {
+  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "kind": "RoutingTree",
   "metadata": {
     "name": "user-defined",
     "resourceVersion": "abc123",
@@ -11,6 +13,8 @@ exports[`createKubernetesRoutingTreeSpec 1`] = `
       "group_by": [
         "alertname",
       ],
+      "group_interval": undefined,
+      "group_wait": undefined,
       "receiver": "default-receiver",
       "repeat_interval": "4h",
     },

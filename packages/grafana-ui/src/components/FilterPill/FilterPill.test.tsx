@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { JSX } from 'react';
 
 import { FilterPill } from './FilterPill';
 
@@ -34,5 +35,15 @@ describe('FilterPill', () => {
 
     const icon = screen.getByTestId('filter-pill-icon');
     expect(icon).toBeInTheDocument();
+  });
+
+  it('should set aria-pressed based on selected prop', async () => {
+    const { rerender } = setup(<FilterPill label="Test" selected={false} onClick={onClick} />);
+
+    const button = screen.getByRole('button');
+    expect(button).toHaveAttribute('aria-pressed', 'false');
+
+    rerender(<FilterPill label="Test" selected={true} onClick={onClick} />);
+    expect(button).toHaveAttribute('aria-pressed', 'true');
   });
 });

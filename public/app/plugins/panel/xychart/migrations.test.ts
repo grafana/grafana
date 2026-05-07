@@ -1,7 +1,7 @@
-import { PanelModel } from '@grafana/data';
+import { type PanelModel } from '@grafana/data';
 
 import { xyChartMigrationHandler } from './migrations';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 describe('XYChart migrations', () => {
   it('keep import', () => {

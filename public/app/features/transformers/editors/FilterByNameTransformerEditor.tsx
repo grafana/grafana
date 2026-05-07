@@ -1,22 +1,16 @@
 import * as React from 'react';
 
 import {
-  DataTransformerID,
-  KeyValue,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type KeyValue,
+  type TransformerUIProps,
   getFieldDisplayName,
   stringToJsRegex,
-  TransformerCategory,
-  SelectableValue,
+  type SelectableValue,
 } from '@grafana/data';
-import { FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
-import { t } from '@grafana/i18n/internal';
+import { type FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
-
-import { getTransformationContent } from '../docs/getTransformationContent';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
@@ -252,13 +246,3 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     );
   }
 }
-
-export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<FilterFieldsByNameTransformerOptions> = {
-  id: DataTransformerID.filterFieldsByName,
-  editor: FilterByNameTransformerEditor,
-  transformation: standardTransformers.filterFieldsByNameTransformer,
-  name: standardTransformers.filterFieldsByNameTransformer.name,
-  description: 'Removes part of the query results using a regex pattern. The pattern can be inclusive or exclusive.',
-  categories: new Set([TransformerCategory.Filter]),
-  help: getTransformationContent(DataTransformerID.filterFieldsByName).helperDocs,
-};

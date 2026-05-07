@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { createRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -11,8 +12,9 @@ describe('SubMenu', () => {
       <MenuItem key="subitem1" label="subitem1" icon="history" />,
       <MenuItem key="subitem2" label="subitem2" icon="apps" />,
     ];
+    const parentItemRef = createRef<HTMLElement>();
 
-    render(<SubMenu items={items} isOpen={true} close={jest.fn()} />);
+    render(<SubMenu parentItemRef={parentItemRef} items={items} isOpen={true} close={jest.fn()} />);
 
     expect(screen.getByTestId(selectors.components.Menu.SubMenu.icon)).toBeInTheDocument();
 

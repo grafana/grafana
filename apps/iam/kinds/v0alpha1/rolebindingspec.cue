@@ -3,35 +3,35 @@ package v0alpha1
 RoleBindingSpec: {
 	#Subject: {
 		// kind of the identity getting the permission
-		kind: "User" | "ServiceAccount" | "Team" | "BasicRole"
+		kind: "User" | "ServiceAccount" | "Team"
 		// uid of the identity
 		name: string
 	}
 	#RoleRef: {
 		// kind of role
-		kind: "Role" | "CoreRole" | "GlobalRole"
+		kind: "Role" | "GlobalRole"
 		// uid of the role
 		name: string
 	}
 
-	subjects: [...#Subject]
-	roleRef: #RoleRef
+	subject: #Subject
+	roleRefs: [...#RoleRef]
 }
 
 GlobalRoleBindingSpec: {
 	#Subject: {
 		// kind of the identity getting the permission
-		kind: "User" | "ServiceAccount" | "Team" | "BasicRole"
+		kind: "User" | "ServiceAccount" | "Team"
 		// uid of the identity
 		name: string
 	}
 	#RoleRef: {
 		// kind of role
-		kind: "CoreRole" | "GlobalRole"
+		kind: "GlobalRole"
 		// uid of the role
 		name: string
 	}
 
-	subjects: [...#Subject]
-	roleRef: #RoleRef
+	subject: #Subject
+	roleRefs: [...#RoleRef]
 }

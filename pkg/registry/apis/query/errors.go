@@ -2,7 +2,6 @@ package query
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
@@ -42,40 +41,6 @@ func MakePublicQueryError(refID, err string) error {
 		},
 	}
 	return QueryError.Build(data)
-}
-
-var depErrStr = "did not execute expression [{{ .Public.refId }}] due to a failure of the dependent expression or query [{{.Public.depRefId}}]"
-
-var dependencyError = errutil.BadRequest("sse.dependencyError").MustTemplate(
-	depErrStr,
-	errutil.WithPublic(depErrStr))
-
-func makeDependencyError(refID, depRefID string) error {
-	data := errutil.TemplateData{
-		Public: map[string]interface{}{
-			"refId":    refID,
-			"depRefId": depRefID,
-		},
-		Error: fmt.Errorf("did not execute expression %v due to a failure of the dependent expression or query %v", refID, depRefID),
-	}
-
-	return dependencyError.Build(data)
-}
-
-var cyclicErrStr = "cyclic reference in expression [{{ .Public.refId }}]"
-
-var cyclicErr = errutil.BadRequest("sse.cyclic").MustTemplate(
-	cyclicErrStr,
-	errutil.WithPublic(cyclicErrStr))
-
-func makeCyclicError(refID string) error {
-	data := errutil.TemplateData{
-		Public: map[string]interface{}{
-			"refId": refID,
-		},
-		Error: fmt.Errorf("cyclic reference in %s", refID),
-	}
-	return cyclicErr.Build(data)
 }
 
 type ErrorWithRefID struct {

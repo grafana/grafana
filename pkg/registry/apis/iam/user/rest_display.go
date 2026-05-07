@@ -123,9 +123,9 @@ func (r *LegacyDisplayREST) handleDisplay(w http.ResponseWriter, req *http.Reque
 	rsp := &iam.DisplayList{
 		Keys:        keys.keys,
 		InvalidKeys: keys.invalid,
-		Items:       make([]iam.Display, 0, len(users.Users)+len(keys.disp)+1),
+		Items:       make([]iam.Display, 0, len(users.Items)+len(keys.disp)+1),
 	}
-	for _, user := range users.Users {
+	for _, user := range users.Items {
 		disp := iam.Display{
 			Identity: iam.IdentityRef{
 				Type: authlib.TypeUser,

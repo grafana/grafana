@@ -151,7 +151,7 @@ As part of our efforts to improve the security of Grafana, we are introducing a 
 
 Because this feature introduces a breaking change, it is behind the `accessTokenExpirationCheck` feature toggle and is disabled by default. Enabling this functionality without configuring refresh tokens for the specific OAuth provider will sign users out after their access token has expired, and they would need to sign in again every time.
 
-Complete documentation on how to configure obtaining a refresh token can be found on the [authentication configuration page](../../setup-grafana/configure-security/configure-authentication/), in the instructions for your Oauth identity provider.
+Complete documentation on how to configure obtaining a refresh token can be found on the [authentication configuration page](../../setup-grafana/configure-access/configure-authentication/), in the instructions for your Oauth identity provider.
 
 ### Resolve user conflicts in Grafana's CLI
 
@@ -181,7 +181,7 @@ If you use an LDAP directory to authenticate to Grafana but prefer to assign org
 or via API, you can now skip user organization role synchronization with your LDAP
 directory.
 
-Use the `skip_org_role_sync` [LDAP authentication configuration option](../../setup-grafana/configure-security/configure-authentication/ldap/#disable-org-role-synchronization)
+Use the `skip_org_role_sync` [LDAP authentication configuration option](../../setup-grafana/configure-access/configure-authentication/ldap/#disable-org-role-synchronization)
 when configuring LDAP authentication to prevent the synchronization between your LDAP groups and organization roles
 and make user roles editable manually.
 
@@ -192,7 +192,7 @@ Generally available in all editions of Grafana
 If you use Azure AD OAuth2 authentication and use `SecurityEnabled` groups that you don't want Azure to embed in the
 authentication token, you can configure Grafana to use Microsoft's Graph API instead.
 
-Use the [`force_use_graph_api` configuration option](../../setup-grafana/configure-security/configure-authentication/azuread/#force-fetching-groups-from-microsoft-graph-api)
+Use the [`force_use_graph_api` configuration option](../../setup-grafana/configure-access/configure-authentication/azuread/#force-fetching-groups-from-microsoft-graph-api)
 when configuring Azure AD authentication to force Grafana to fetch groups using Graph API.
 
 ### RBAC: List token's permissions

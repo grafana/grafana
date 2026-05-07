@@ -98,6 +98,10 @@ func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	}
 }
 
+func (a *AccessControl) InvalidateResolverCache(orgID int64, scope string) {
+	a.resolvers.InvalidateCache(orgID, scope)
+}
+
 func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.debug")
 	defer span.End()

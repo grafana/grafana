@@ -1,4 +1,4 @@
-import { setupMockedResourcesAPI } from '../__mocks__/ResourcesAPI';
+import { setupMockedResourcesAPI } from '../mocks/ResourcesAPI';
 
 describe('ResourcesAPI', () => {
   describe('describeLogGroup', () => {

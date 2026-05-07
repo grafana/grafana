@@ -1,4 +1,4 @@
-import { BuilderQueryEditorExpressionType, BuilderQueryExpression } from '../../dataquery.gen';
+import { BuilderQueryEditorExpressionType, type BuilderQueryExpression } from '../../dataquery.gen';
 
 import { AzureMonitorKustoQueryBuilder } from './AzureMonitorKustoQueryBuilder';
 
@@ -18,6 +18,17 @@ describe('AzureMonitorKustoQueryParser', () => {
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('Logs');
     expect(result).toContain('project TimeGenerated, Level, Message');
+  });
+
+  it('excludes the project statement when all columns are selected', () => {
+    const builderQuery = {
+      from: { property: { name: 'Logs' } },
+      columns: { columns: ['__all_columns__'] },
+    } as BuilderQueryExpression;
+
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
+    expect(result).toContain('Logs');
+    expect(result).not.toContain('project');
   });
 
   it('includes time filter when needed', () => {
@@ -114,7 +125,7 @@ describe('AzureMonitorKustoQueryParser', () => {
     } as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
-    expect(result).toContain('summarize percentile(95, Duration)');
+    expect(result).toContain('summarize percentile(Duration,95)');
   });
 
   it('handles summarize with basic aggregation function like avg', () => {

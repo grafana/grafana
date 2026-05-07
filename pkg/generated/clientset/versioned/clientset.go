@@ -8,7 +8,6 @@ import (
 	fmt "fmt"
 	http "net/http"
 
-	provisioningv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	servicev0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/service/v0alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
@@ -17,20 +16,13 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	ProvisioningV0alpha1() provisioningv0alpha1.ProvisioningV0alpha1Interface
 	ServiceV0alpha1() servicev0alpha1.ServiceV0alpha1Interface
 }
 
 // Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	provisioningV0alpha1 *provisioningv0alpha1.ProvisioningV0alpha1Client
-	serviceV0alpha1      *servicev0alpha1.ServiceV0alpha1Client
-}
-
-// ProvisioningV0alpha1 retrieves the ProvisioningV0alpha1Client
-func (c *Clientset) ProvisioningV0alpha1() provisioningv0alpha1.ProvisioningV0alpha1Interface {
-	return c.provisioningV0alpha1
+	serviceV0alpha1 *servicev0alpha1.ServiceV0alpha1Client
 }
 
 // ServiceV0alpha1 retrieves the ServiceV0alpha1Client
@@ -82,10 +74,6 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 
 	var cs Clientset
 	var err error
-	cs.provisioningV0alpha1, err = provisioningv0alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
-	if err != nil {
-		return nil, err
-	}
 	cs.serviceV0alpha1, err = servicev0alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
@@ -111,7 +99,6 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.provisioningV0alpha1 = provisioningv0alpha1.New(c)
 	cs.serviceV0alpha1 = servicev0alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)

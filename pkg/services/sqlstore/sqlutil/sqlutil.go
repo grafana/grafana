@@ -22,6 +22,11 @@ type TestDB struct {
 	DriverName string
 	ConnStr    string
 	Path       string
+	Host       string
+	Port       string
+	User       string
+	Password   string
+	Database   string
 	Cleanup    func()
 }
 
@@ -128,10 +133,15 @@ func mySQLTestDB() (*TestDB, error) {
 	if port == "" {
 		port = "3306"
 	}
-	conn_str := fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_tests?collation=utf8mb4_unicode_ci&sql_mode='ANSI_QUOTES'&parseTime=true", host, port)
+	conn_str := fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_tests?collation=utf8mb4_unicode_ci&sql_mode=ANSI_QUOTES&parseTime=true", host, port)
 	return &TestDB{
 		DriverName: "mysql",
 		ConnStr:    conn_str,
+		Host:       host,
+		Port:       port,
+		User:       "grafana",
+		Password:   "password",
+		Database:   "grafana_tests",
 		Cleanup:    func() {},
 	}, nil
 }
@@ -149,6 +159,11 @@ func postgresTestDB() (*TestDB, error) {
 	return &TestDB{
 		DriverName: "postgres",
 		ConnStr:    connStr,
+		Host:       host,
+		Port:       port,
+		User:       "grafanatest",
+		Password:   "grafanatest",
+		Database:   "grafanatest",
 		Cleanup:    func() {},
 	}, nil
 }

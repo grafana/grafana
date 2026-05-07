@@ -1,69 +1,78 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { debounce } from 'lodash';
-import { Grammar } from 'prismjs';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { VariableSizeList } from 'react-window';
+import { type Grammar } from 'prismjs';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { type Align, VariableSizeList } from 'react-window';
 
 import {
-  AbsoluteTimeRange,
   CoreApp,
-  DataFrame,
-  EventBus,
+  type DataFrame,
+  type EventBus,
   EventBusSrv,
-  LogLevel,
-  LogRowModel,
+  type GrafanaTheme2,
+  type LogLevel,
+  type LogRowModel,
   LogsDedupStrategy,
-  LogsMetaItem,
-  LogsSortOrder,
+  type LogsMetaItem,
+  type LogsSortOrder,
   store,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
-import { PopoverContent, useTheme2 } from '@grafana/ui';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { Trans, t } from '@grafana/i18n';
+import { ConfirmModal, Icon, type PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
+import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { InfiniteScroll } from './InfiniteScroll';
-import { getGridTemplateColumns } from './LogLine';
-import { LogLineDetails } from './LogLineDetails';
-import { GetRowContextQueryFn } from './LogLineMenu';
-import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
+import { LogListFieldSelector } from '../fieldSelector/LogListFieldSelector';
+
+import { type InfiniteScrollMode, InfiniteScroll, type LoadMoreLogsType } from './InfiniteScroll';
+import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsContext';
+import { getGridTemplateColumns, type LogLineTimestampResolution } from './LogLine';
+import { LogLineDetails, type LogLineDetailsMode } from './LogLineDetails';
+import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLineMenu';
+import { LogListContextProvider, type LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
-import { preProcessLogs, LogListModel } from './processing';
-import {
-  calculateFieldDimensions,
-  getLogLineSize,
-  init as initVirtualization,
-  LogFieldDimension,
-  resetLogLineSizes,
-  ScrollToLogsEvent,
-  storeLogLineSize,
-} from './virtualization';
+import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
+import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
+import { preProcessLogs, type LogListModel, getLevelsFromLogs } from './processing';
+import { useKeyBindings } from './useKeyBindings';
+import { usePopoverMenu } from './usePopoverMenu';
+import { LogLineVirtualization, getLogLineSize, type LogFieldDimension, ScrollToLogsEvent } from './virtualization';
 
 export interface Props {
+  allowDownload?: boolean;
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
+  dataFrames?: DataFrame[];
+  detailsMode?: LogLineDetailsMode;
   displayedFields: string[];
   enableLogDetails: boolean;
   eventBus?: EventBus;
   filterLevels?: LogLevel[];
+  fontSize?: LogListFontSize;
   getFieldLinks?: GetFieldLinksFn;
   getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
+  infiniteScrollMode?: InfiniteScrollMode;
   initialScrollPosition?: 'top' | 'bottom';
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   loading?: boolean;
-  loadMore?: (range: AbsoluteTimeRange) => void;
+  loadMore?: LoadMoreLogsType;
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logOptionsStorageKey?: string;
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logSupportsContext?: (row: LogRowModel) => boolean;
+  noInteractions?: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -72,16 +81,30 @@ export interface Props {
   permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  prettifyJSON?: boolean;
+  setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
+  showFieldSelector?: boolean;
+  showLevel?: boolean;
+  /**
+   * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata
+   * @alpha
+   */
+  showLogAttributes?: boolean;
   showTime: boolean;
+  showUniqueLabels?: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
+  timestampResolution?: LogLineTimestampResolution;
   timeZone: string;
   syntaxHighlighting?: boolean;
+  unwrappedColumns?: boolean;
   wrapLogMessage: boolean;
 }
 
-export type LogListControlOptions = LogListState;
+export type LogListFontSize = 'default' | 'small';
+
+export type LogListOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyLogMessage' | 'defaultDisplayedFields';
 
 type LogListComponentProps = Omit<
   Props,
@@ -89,32 +112,42 @@ type LogListComponentProps = Omit<
   | 'dedupStrategy'
   | 'displayedFields'
   | 'enableLogDetails'
+  | 'logOptionsStorageKey'
   | 'permalinkedLogId'
+  | 'showLevel'
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
+  | 'unwrappedColumns'
   | 'wrapLogMessage'
 >;
 
 export const LogList = ({
   app,
+  allowDownload,
   displayedFields,
+  dataFrames,
   containerElement,
+  logOptionsStorageKey,
+  detailsMode,
   dedupStrategy,
   enableLogDetails,
   eventBus,
   filterLevels,
+  fontSize = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.fontSize`) ?? 'default') : 'default',
   getFieldLinks,
   getRowContextQuery,
   grammar,
+  infiniteScrollMode,
   initialScrollPosition = 'top',
   isLabelFilterActive,
   loading,
   loadMore,
-  logOptionsStorageKey,
+  logLineMenuCustomItems,
   logs,
   logsMeta,
   logSupportsContext,
+  noInteractions,
   onClickFilterLabel,
   onClickFilterOutLabel,
   onClickFilterString,
@@ -130,28 +163,40 @@ export const LogList = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
+  prettifyJSON = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true) : true,
+  setDisplayedFields,
   showControls,
+  showFieldSelector,
+  showLevel,
+  showLogAttributes,
   showTime,
+  showUniqueLabels,
   sortOrder,
   syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
   timeRange,
+  timestampResolution,
   timeZone,
+  unwrappedColumns = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.unwrappedColumns`, true) : true,
   wrapLogMessage,
 }: Props) => {
   return (
     <LogListContextProvider
+      allowDownload={allowDownload}
       app={app}
       containerElement={containerElement}
       dedupStrategy={dedupStrategy}
       displayedFields={displayedFields}
-      enableLogDetails={enableLogDetails}
       filterLevels={filterLevels}
+      fontSize={fontSize}
       getRowContextQuery={getRowContextQuery}
+      isCustomGrammar={grammar !== undefined}
       isLabelFilterActive={isLabelFilterActive}
       logs={logs}
       logsMeta={logsMeta}
+      logLineMenuCustomItems={logLineMenuCustomItems}
       logOptionsStorageKey={logOptionsStorageKey}
       logSupportsContext={logSupportsContext}
+      noInteractions={noInteractions}
       onClickFilterLabel={onClickFilterLabel}
       onClickFilterOutLabel={onClickFilterOutLabel}
       onClickFilterString={onClickFilterString}
@@ -167,39 +212,64 @@ export const LogList = ({
       permalinkedLogId={permalinkedLogId}
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
+      prettifyJSON={prettifyJSON}
+      setDisplayedFields={setDisplayedFields}
       showControls={showControls}
+      showLogAttributes={showLogAttributes}
+      showLevel={showLevel}
       showTime={showTime}
+      showUniqueLabels={showUniqueLabels}
       sortOrder={sortOrder}
       syntaxHighlighting={syntaxHighlighting}
+      timestampResolution={timestampResolution}
+      unwrappedColumns={unwrappedColumns}
       wrapLogMessage={wrapLogMessage}
     >
-      <LogListComponent
+      <LogDetailsContextProvider
         containerElement={containerElement}
-        eventBus={eventBus}
-        getFieldLinks={getFieldLinks}
-        grammar={grammar}
-        initialScrollPosition={initialScrollPosition}
-        loading={loading}
-        loadMore={loadMore}
+        detailsMode={detailsMode}
+        enableLogDetails={enableLogDetails}
         logs={logs}
+        logOptionsStorageKey={logOptionsStorageKey}
         showControls={showControls}
-        timeRange={timeRange}
-        timeZone={timeZone}
-      />
+        showFieldSelector={showFieldSelector}
+      >
+        <LogListSearchContextProvider>
+          <LogListComponent
+            containerElement={containerElement}
+            dataFrames={dataFrames}
+            eventBus={eventBus}
+            getFieldLinks={getFieldLinks}
+            grammar={grammar}
+            initialScrollPosition={initialScrollPosition}
+            infiniteScrollMode={infiniteScrollMode}
+            loading={loading}
+            loadMore={loadMore}
+            logs={logs}
+            showControls={showControls}
+            showFieldSelector={showFieldSelector}
+            timeRange={timeRange}
+            timeZone={timeZone}
+          />
+        </LogListSearchContextProvider>
+      </LogDetailsContextProvider>
     </LogListContextProvider>
   );
 };
 
 const LogListComponent = ({
   containerElement,
+  dataFrames,
   eventBus = new EventBusSrv(),
   getFieldLinks,
   grammar,
   initialScrollPosition = 'top',
+  infiniteScrollMode = 'interval',
   loading,
   loadMore,
   logs,
   showControls,
+  showFieldSelector,
   timeRange,
   timeZone,
 }: LogListComponentProps) => {
@@ -208,143 +278,277 @@ const LogListComponent = ({
     displayedFields,
     dedupStrategy,
     filterLevels,
+    fontSize,
     forceEscape,
+    hasLogsWithErrors,
+    hasSampledLogs,
+    onClickFilterString,
+    onClickFilterOutString,
     permalinkedLogId,
-    showDetails,
+    prettifyJSON,
+    showLevel,
     showTime,
+    showUniqueLabels,
     sortOrder,
-    toggleDetails,
+    timestampResolution,
+    unwrappedColumns,
     wrapLogMessage,
   } = useLogListContext();
+  const { detailsMode, showDetails, toggleDetails } = useLogDetailsContext();
+  const { setSearch, showSearch } = useLogListSearchContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
-  const [listHeight, setListHeight] = useState(
-    app === CoreApp.Explore
-      ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
-      : containerElement.clientHeight
-  );
+  const [listHeight, setListHeight] = useState(getListHeight(containerElement, app));
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
   const widthRef = useRef(containerElement.clientWidth);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const virtualization = useMemo(() => new LogLineVirtualization(theme, fontSize), [theme, fontSize]);
   const dimensions = useMemo(
-    () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
-    [displayedFields, processedLogs, wrapLogMessage]
+    () =>
+      wrapLogMessage
+        ? []
+        : virtualization.calculateFieldDimensions(
+            processedLogs,
+            displayedFields,
+            showTime ? timestampResolution : undefined,
+            showUniqueLabels,
+            showLevel
+          ),
+    [
+      displayedFields,
+      processedLogs,
+      showLevel,
+      showTime,
+      showUniqueLabels,
+      timestampResolution,
+      virtualization,
+      wrapLogMessage,
+    ]
   );
-  const styles = getStyles(dimensions, { showTime });
+  const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns });
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
   const widthContainer = wrapperRef.current ?? containerElement;
+  const {
+    closePopoverMenu,
+    handleTextSelection,
+    onDisableCancel,
+    onDisableConfirm,
+    onDisablePopoverMenu,
+    popoverState,
+    showDisablePopoverOptions,
+  } = usePopoverMenu(wrapperRef.current);
+  useKeyBindings();
+  const { filterLogs, matchingUids, searchVisible } = useLogListSearchContext();
 
+  const levelFilteredLogs = useMemo(
+    () =>
+      filterLevels.length === 0 ? processedLogs : processedLogs.filter((log) => filterLevels.includes(log.logLevel)),
+    [filterLevels, processedLogs]
+  );
+
+  const filteredLogs = useMemo(
+    () =>
+      matchingUids && filterLogs
+        ? levelFilteredLogs.filter((log) => matchingUids.includes(log.uid))
+        : levelFilteredLogs,
+    [filterLogs, levelFilteredLogs, matchingUids]
+  );
+
+  // When log lines report size discrepancies, we debounce the calculation reset to give time to
+  // use the smallest log index to reset the heights.
   const debouncedResetAfterIndex = useMemo(() => {
     return debounce((index: number) => {
       listRef.current?.resetAfterIndex(index);
       overflowIndexRef.current = Infinity;
-    }, 25);
+    }, 0);
+  }, []);
+
+  const debouncedScrollToItem = useMemo(() => {
+    return debounce((index: number, align?: Align) => {
+      listRef.current?.scrollToItem(index, align);
+    }, 250);
   }, []);
 
   useEffect(() => {
-    initVirtualization(theme);
-  }, [theme]);
-
-  useEffect(() => {
     const subscription = eventBus.subscribe(ScrollToLogsEvent, (e: ScrollToLogsEvent) =>
-      handleScrollToEvent(e, logs.length, listRef.current)
+      handleScrollToEvent(e, filteredLogs, listRef.current)
     );
     return () => subscription.unsubscribe();
-  }, [eventBus, logs.length]);
+  }, [eventBus, filteredLogs]);
 
   useEffect(() => {
-    if (loading) {
-      return;
-    }
     setProcessedLogs(
-      preProcessLogs(logs, { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone }, grammar)
+      preProcessLogs(
+        logs,
+        {
+          getFieldLinks,
+          escape: forceEscape ?? false,
+          otelLogsFormattingEnabled,
+          prettifyJSON,
+          order: sortOrder,
+          timeZone,
+          virtualization,
+          wrapLogMessage,
+        },
+        grammar
+      )
     );
-    resetLogLineSizes();
+    virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone]);
+  }, [
+    forceEscape,
+    getFieldLinks,
+    grammar,
+    logs,
+    otelLogsFormattingEnabled,
+    prettifyJSON,
+    sortOrder,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  ]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
-  }, [wrapLogMessage, showDetails, displayedFields]);
-
-  useEffect(() => {
-    const handleResize = debounce(() => {
-      setListHeight(
-        app === CoreApp.Explore
-          ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
-          : containerElement.clientHeight
-      );
-    }, 50);
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [app, containerElement.clientHeight]);
+  }, [wrapLogMessage, showDetails, displayedFields, dedupStrategy]);
 
   useLayoutEffect(() => {
-    if (widthRef.current === widthContainer.clientWidth) {
-      return;
-    }
-    widthRef.current = widthContainer.clientWidth;
-    debouncedResetAfterIndex(0);
-  });
+    const handleResize = (entry: ResizeObserverEntry) => {
+      setListHeight(getListHeight(containerElement, app, searchVisible));
+      if (widthRef.current !== entry.contentRect.width) {
+        widthRef.current = entry.contentRect.width;
+      }
+    };
+    const observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+      if (entries.length) {
+        handleResize(entries[0]);
+      }
+    });
+    observer.observe(containerElement);
+    return () => observer.disconnect();
+  }, [app, containerElement, searchVisible]);
 
   const overflowIndexRef = useRef(Infinity);
   const handleOverflow = useCallback(
     (index: number, id: string, height?: number) => {
       if (height !== undefined) {
-        storeLogLineSize(id, widthContainer, height);
+        virtualization.storeLogLineSize(id, widthContainer, height);
+      }
+      if (index === overflowIndexRef.current) {
+        return;
       }
       overflowIndexRef.current = index < overflowIndexRef.current ? index : overflowIndexRef.current;
       debouncedResetAfterIndex(overflowIndexRef.current);
     },
-    [debouncedResetAfterIndex, widthContainer]
+    [debouncedResetAfterIndex, virtualization, widthContainer]
   );
 
-  const handleScrollPosition = useCallback(() => {
-    if (permalinkedLogId) {
-      const index = processedLogs.findIndex((log) => log.uid === permalinkedLogId);
-      if (index >= 0) {
-        listRef.current?.scrollToItem(index, 'start');
+  const handleScrollPosition = useCallback(
+    (log?: LogListModel) => {
+      const scrollToUID = log ? log.uid : permalinkedLogId;
+      if (scrollToUID) {
+        const index = processedLogs.findIndex((log) => log.uid === scrollToUID);
+        if (index >= 0) {
+          listRef.current?.scrollToItem(index, 'start');
+          return;
+        }
+      }
+      listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
+    },
+    [initialScrollPosition, permalinkedLogId, processedLogs]
+  );
+
+  const handleLogLineClick = useCallback(
+    (e: MouseEvent<HTMLElement>, log: LogListModel) => {
+      if (handleTextSelection(e, log)) {
+        // Event handled by the parent.
         return;
       }
-    }
-    listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
-  }, [initialScrollPosition, permalinkedLogId, processedLogs]);
+      toggleDetails(log);
+    },
+    [handleTextSelection, toggleDetails]
+  );
+
+  const focusLogLine = useCallback(
+    (log: LogListModel, align: Align = 'start') => {
+      const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
+      if (index >= 0) {
+        debouncedScrollToItem(index, align);
+      }
+    },
+    [debouncedScrollToItem, filteredLogs]
+  );
+
+  const onClickSearchString = useCallback(
+    (search: string) => {
+      showSearch();
+      setSearch(search);
+    },
+    [setSearch, showSearch]
+  );
+
+  const logLevels = useMemo(() => getLevelsFromLogs(processedLogs), [processedLogs]);
 
   if (!containerElement || listHeight == null) {
     // Wait for container to be rendered
     return null;
   }
 
-  const handleLogLineClick = useCallback(
-    (log: LogListModel) => {
-      // Let people select text
-      if (document.getSelection()?.toString()) {
-        return;
-      }
-      toggleDetails(log);
-    },
-    [toggleDetails]
-  );
-
-  const handleLogDetailsResize = useCallback(() => {
-    debouncedResetAfterIndex(0);
-  }, [debouncedResetAfterIndex]);
-
-  const filteredLogs = useMemo(
-    () =>
-      filterLevels.length === 0 ? processedLogs : processedLogs.filter((log) => filterLevels.includes(log.logLevel)),
-    [filterLevels, processedLogs]
-  );
-
   return (
     <div className={styles.logListContainer}>
+      {showControls && <LogListControls logLevels={logLevels} eventBus={eventBus} />}
+      {detailsMode === 'sidebar' && showDetails.length > 0 && (
+        <LogLineDetails
+          containerElement={containerElement}
+          focusLogLine={focusLogLine}
+          logs={filteredLogs}
+          timeRange={timeRange}
+          timeZone={timeZone}
+          showControls={showControls}
+          showFieldSelector={showFieldSelector}
+        />
+      )}
       <div className={styles.logListWrapper} ref={wrapperRef}>
+        {popoverState.selection && popoverState.selectedRow && (
+          <PopoverMenu
+            close={closePopoverMenu}
+            row={popoverState.selectedRow}
+            selection={popoverState.selection}
+            {...popoverState.popoverMenuCoordinates}
+            onClickFilterString={onClickFilterString}
+            onClickFilterOutString={onClickFilterOutString}
+            onClickSearchString={onClickSearchString}
+            onDisable={onDisablePopoverMenu}
+          />
+        )}
+        {showDisablePopoverOptions && (
+          <ConfirmModal
+            isOpen
+            title={t('logs.log-rows.disable-popover.title', 'Disable menu')}
+            body={
+              <>
+                <Trans i18nKey="logs.log-rows.disable-popover.message">
+                  You are about to disable the logs filter menu. To re-enable it, select text in a log line while
+                  holding the alt key.
+                </Trans>
+                <div className={styles.shortcut}>
+                  <Icon name="keyboard" />
+                  <Trans i18nKey="logs.log-rows.disable-popover-message.shortcut">alt+select to enable again</Trans>
+                </div>
+              </>
+            }
+            confirmText={t('logs.log-rows.disable-popover.confirm', 'Confirm')}
+            onConfirm={onDisableConfirm}
+            onDismiss={onDisableCancel}
+          />
+        )}
+        <LogListSearch logs={levelFilteredLogs} listRef={listRef.current} />
         <InfiniteScroll
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
+          infiniteScrollMode={infiniteScrollMode}
+          loading={loading}
           logs={filteredLogs}
           loadMore={loadMore}
           onClick={handleLogLineClick}
@@ -354,6 +558,7 @@ const LogListComponent = ({
           timeRange={timeRange}
           timeZone={timeZone}
           setInitialScrollPosition={handleScrollPosition}
+          virtualization={virtualization}
           wrapLogMessage={wrapLogMessage}
         >
           {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
@@ -361,7 +566,9 @@ const LogListComponent = ({
               className={styles.logList}
               height={listHeight}
               itemCount={itemCount}
-              itemSize={getLogLineSize.bind(null, filteredLogs, widthContainer, displayedFields, {
+              itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
+                hasLogsWithErrors,
+                hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
                 showTime,
                 wrap: wrapLogMessage,
@@ -370,8 +577,9 @@ const LogListComponent = ({
               layout="vertical"
               onItemsRendered={onItemsRendered}
               outerRef={scrollRef}
+              overscanCount={5}
               ref={listRef}
-              style={{ overflowY: 'scroll' }}
+              style={wrapLogMessage ? { overflowY: 'scroll' } : { overflow: 'scroll' }}
               width="100%"
             >
               {Renderer}
@@ -379,41 +587,69 @@ const LogListComponent = ({
           )}
         </InfiniteScroll>
       </div>
-      {showDetails.length > 0 && (
-        <LogLineDetails
-          containerElement={containerElement}
-          getFieldLinks={getFieldLinks}
-          logs={filteredLogs}
-          onResize={handleLogDetailsResize}
-        />
+      {showFieldSelector && processedLogs.length > 0 && dataFrames && (
+        <LogListFieldSelector containerElement={containerElement} dataFrames={dataFrames} logs={processedLogs} />
       )}
-      {showControls && <LogListControls eventBus={eventBus} />}
     </div>
   );
 };
 
-function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: boolean }) {
-  const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
+function getStyles(
+  theme: GrafanaTheme2,
+  dimensions: LogFieldDimension[],
+  displayedFields: string[] = [],
+  { unwrappedColumns }: { unwrappedColumns: boolean }
+) {
   return {
     logList: css({
       '& .unwrapped-log-line': {
         display: 'grid',
-        gridTemplateColumns: getGridTemplateColumns(columns),
+        gridTemplateColumns: getGridTemplateColumns(dimensions, displayedFields, unwrappedColumns),
+        '& .field': {
+          overflow: 'hidden',
+        },
       },
     }),
     logListContainer: css({
       display: 'flex',
+      flexDirection: 'row-reverse',
+      // Minimum width to prevent rendering issues and a sausage-like logs panel.
+      minWidth: theme.spacing(35),
     }),
     logListWrapper: css({
+      position: 'relative',
       width: '100%',
+    }),
+    shortcut: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      color: theme.colors.text.secondary,
+      opacity: 0.7,
+      fontSize: theme.typography.bodySmall.fontSize,
+      marginTop: theme.spacing(1),
     }),
   };
 }
 
-function handleScrollToEvent(event: ScrollToLogsEvent, logsCount: number, list: VariableSizeList | null) {
+function handleScrollToEvent(event: ScrollToLogsEvent, logs: LogListModel[], list: VariableSizeList | null) {
   if (event.payload.scrollTo === 'top') {
     list?.scrollTo(0);
+  } else if (event.payload.scrollTo === 'bottom') {
+    list?.scrollToItem(logs.length - 1);
   } else {
-    list?.scrollToItem(logsCount - 1);
+    // uid
+    const index = logs.findIndex((log) => log.uid === event.payload.scrollTo);
+    if (index >= 0) {
+      list?.scrollToItem(index, 'center');
+    }
   }
+}
+
+function getListHeight(containerElement: HTMLDivElement, app: CoreApp, searchVisible = false) {
+  return (
+    (app === CoreApp.Explore
+      ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
+      : containerElement.clientHeight) - (searchVisible ? LOG_LIST_SEARCH_HEIGHT : 0)
+  );
 }

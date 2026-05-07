@@ -33,7 +33,7 @@ lineage: schemas: [{
 			revision?: int64
 
 			// ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
-			gnetId?: string
+			gnetId?: int64
 
 			// Tags associated with dashboard.
 			tags?: [...string]
@@ -74,7 +74,7 @@ lineage: schemas: [{
 
 			// Version of the JSON schema, incremented each time a Grafana update brings
 			// changes to said schema.
-			schemaVersion: uint16 | *41
+			schemaVersion: uint16 | *42
 
 			// Version of the dashboard, incremented each time the dashboard is updated.
 			version?: uint32
@@ -173,6 +173,9 @@ lineage: schemas: [{
 			// Set to 1 for the standard annotation query all dashboards have by default.
 			builtIn?: number | *0
 
+			// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+			placement?: #AnnotationQueryPlacement
+
 			// unless datasources have migrated to the target+mapping,
 			// they just spread their query into the base object :(
 			...
@@ -202,6 +205,8 @@ lineage: schemas: [{
 			multi?: bool | *false
 			// Allow custom values to be entered in the variable
 			allowCustomValue?: bool | *true
+			// Whether the group-by operator is enabled in the ad hoc filter combobox.
+			enableGroupBy?: bool | *false
 			// Options that can be selected for a variable.
 			options?: [...#VariableOption]
 			// Options to config when to refresh a variable
@@ -215,6 +220,14 @@ lineage: schemas: [{
 			// Optional field, if you want to extract part of a series name or metric node segment.
 			// Named capture groups can be used to separate the display text and value.
 			regex?: string
+			// Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+			valuesFormat?: "csv" | "json" | *"csv"
+			// Determine whether regex applies to variable value or display text
+			regexApplyTo?: #VariableRegexApplyTo
+			// Additional static options for query variable
+			staticOptions?: [...#VariableOption]
+			// Ordering of static options in relation to options returned from data source for query variable
+			staticOptionsOrder?: "before" | "after" | "sorted"
 			...
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
@@ -226,6 +239,8 @@ lineage: schemas: [{
 			text: string | [...string]
 			// Value of the option
 			value: string | [...string]
+			// Additional properties for multi-props variables
+			properties?: {[string]: string}
 		} @cuetsy(kind="interface")
 
 		// Options to config when to refresh a variable
@@ -235,8 +250,12 @@ lineage: schemas: [{
 		#VariableRefresh: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="never|onDashboardLoad|onTimeRangeChanged")
 
 		// Determine if the variable shows on dashboard
-		// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
-		#VariableHide: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type")
+		// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing), 3 (show under the controls dropdown menu).
+		#VariableHide: 0 | 1 | 2 | 3 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable|inControlsMenu") @grafana(TSVeneer="type")
+
+		// Determine whether regex applies to variable value or display text
+		// Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+		#VariableRegexApplyTo: "value" | "text" @cuetsy(kind="type")
 
 		// Sort variable options
 		// Accepted values are:
@@ -276,16 +295,81 @@ lineage: schemas: [{
 			tags: [...string]
 			// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 			asDropdown: bool | *false
+			// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+			placement?: #DashboardLinkPlacement
 			// If true, the link will be opened in a new tab
 			targetBlank: bool | *false
 			// If true, includes current template variables values in the link as query params
 			includeVars: bool | *false
 			// If true, includes current time range in the link as query params
 			keepTime: bool | *false
+			// The source that registered the link (if any)
+			origin?: #ControlSourceRef
 		} @cuetsy(kind="interface")
 
 		// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 		#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type")
+
+		// Dashboard Link placement. Defines where the link should be displayed.
+		// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+		#DashboardLinkPlacement: "inControlsMenu" @cuetsy(kind="type")
+
+		// Annotation Query placement. Defines where the annotation query should be displayed.
+		// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+		#AnnotationQueryPlacement: "inControlsMenu" @cuetsy(kind="type")
+
+		// Dashboard action type
+		#ActionType: "fetch" | "infinity" @cuetsy(kind="type")
+
+		// Fetch options
+		#FetchOptions: {
+			method: #HttpRequestMethod
+			url:    string
+			body?:  string
+			// These are 2D arrays of strings, each representing a key-value pair
+			// We are defining this way because we can't generate a go struct that
+			// that would have exactly two strings in each sub-array
+			queryParams?: [...[...string]]
+			headers?: [...[...string]]
+		} @cuetsy(kind="interface")
+
+		// Infinity options
+		#InfinityOptions: {
+			method: #HttpRequestMethod
+			url:    string
+			body?:  string
+			// These are 2D arrays of strings, each representing a key-value pair
+			// We are defining them this way because we can't generate a go struct that
+			// that would have exactly two strings in each sub-array
+			queryParams?: [...[...string]]
+			headers?: [...[...string]]
+			datasourceUid: string
+		} @cuetsy(kind="interface")
+
+		#HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH" @cuetsy(kind="type")
+
+		// Action variable type
+		#ActionVariableType: "string" @cuetsy(kind="type")
+
+		#ActionVariable: {
+			key:  string
+			name: string
+			type: #ActionVariableType
+		} @cuetsy(kind="interface")
+
+		// Dashboard action
+		#Action: {
+			type:          #ActionType
+			title:         string
+			fetch?:        #FetchOptions
+			infinity?:     #InfinityOptions
+			confirmation?: string
+			oneClick?:     bool
+			variables?: [...#ActionVariable]
+			style?: {
+				backgroundColor?: string
+			}
+		} @cuetsy(kind="interface")
 
 		// Dashboard variable type
 		// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
@@ -296,8 +380,9 @@ lineage: schemas: [{
 		// `textbox`: Display a free text input field with an optional default value.
 		// `custom`: Define the variable options manually using a comma-separated list.
 		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+		// `switch`: Boolean variables rendered as a switch
 		#VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
-			"system" | "snapshot" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+			"system" | "snapshot" | "switch" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 		// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 		// Continuous color interpolates a color using the percentage of a value relative to min and max.
@@ -305,7 +390,12 @@ lineage: schemas: [{
 		// `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 		// `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 		// `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-		// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+		// `continuous-viridis`: Continuous Viridis palette mode
+		// `continuous-magma`: Continuous Magma palette mode
+		// `continuous-plasma`: Continuous Plasma palette mode
+		// `continuous-inferno`: Continuous Inferno palette mode
+		// `continuous-cividis`: Continuous Cividis palette mode
+		// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 		// `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 		// `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 		// `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -317,7 +407,7 @@ lineage: schemas: [{
 		// `continuous-purples`: Continuous Purple palette mode
 		// `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 		// `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-		#FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" @cuetsy(kind="enum",memberNames="Thresholds|PaletteClassic|PaletteClassicByName|ContinuousGrYlRd|ContinuousRdYlGr|ContinuousBlYlRd|ContinuousYlRd|ContinuousBlPu|ContinuousYlBl|ContinuousBlues|ContinuousReds|ContinuousGreens|ContinuousPurples|Fixed|Shades") @grafanamaturity(NeedsExpertReview)
+		#FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" @cuetsy(kind="enum",memberNames="Thresholds|PaletteClassic|PaletteClassicByName|ContinuousViridis|ContinuousMagma|ContinuousPlasma|ContinuousInferno|ContinuousCividis|ContinuousGrYlRd|ContinuousRdYlGr|ContinuousBlYlRd|ContinuousYlRd|ContinuousBlPu|ContinuousYlBl|ContinuousBlues|ContinuousReds|ContinuousGreens|ContinuousPurples|Fixed|Shades") @grafanamaturity(NeedsExpertReview)
 
 		// Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 		#FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(kind="type")
@@ -601,6 +691,10 @@ lineage: schemas: [{
 			// Controls if the timeFrom or timeShift overrides are shown in the panel header
 			hideTimeOverride?: bool
 
+			// Compare the current time range with a previous period
+			// For example "1d" to compare current period but shifted back 1 day
+			timeCompare?: string
+
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef
 
@@ -615,6 +709,10 @@ lineage: schemas: [{
 
 			// Field options allow you to change how the data is displayed in your visualizations.
 			fieldConfig?: #FieldConfigSource
+
+			// When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+			// This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+			autoMigrateFrom?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
@@ -640,11 +738,15 @@ lineage: schemas: [{
 			uid: string
 		} @cuetsy(kind="interface")
 
+		#MatcherScope: "series" | "nested" | "annotation" | "exemplar" @cuetsy(kind="type")
+
 		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 		// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 		#MatcherConfig: {
 			// The matcher id. This is used to find the matcher implementation from registry.
 			id: string | *"" @grafanamaturity(NeedsExpertReview)
+			// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+			scope?: #MatcherScope
 			// The matcher options. This is specific to the matcher implementation.
 			options?: _ @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
@@ -682,7 +784,7 @@ lineage: schemas: [{
 			filterable?: bool @grafanamaturity(NeedsExpertReview)
 
 			// Unit a field should use. The unit you select is applied to all fields except time.
-			// You can use the units ID availables in Grafana or a custom unit.
+			// You can use the units ID available in Grafana or a custom unit.
 			// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 			// As custom unit, you can use the following formats:
 			// `suffix:<suffix>` for custom unit that should go after value.
@@ -715,6 +817,9 @@ lineage: schemas: [{
 
 			// The behavior when clicking on a result
 			links?: [...] @grafanamaturity(NeedsExpertReview)
+
+			// Define interactive HTTP requests that can be triggered from data visualizations.
+			actions?: [...#Action] @grafanamaturity(NeedsExpertReview)
 
 			// Alternative to empty string
 			noValue?: string @grafanamaturity(NeedsExpertReview)
@@ -750,6 +855,14 @@ lineage: schemas: [{
 			// Name of template variable to repeat for.
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+		#DatasourceControlSourceRef: {
+			type: "datasource"
+			// The plugin type-id
+			group: string
+		}
+
+		#ControlSourceRef: #DatasourceControlSourceRef
 	}
 },
 ]

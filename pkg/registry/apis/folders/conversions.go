@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -22,7 +22,6 @@ func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstru
 			"spec": map[string]any{
 				"title":       cmd.Title,
 				"description": cmd.Description,
-				"version":     1,
 			},
 		},
 	}
@@ -37,6 +36,14 @@ func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstru
 	}
 	meta.SetName(cmd.UID)
 	meta.SetFolder(cmd.ParentUID)
+
+	// nolint:staticcheck
+	if cmd.ManagerKindClassicFP != "" {
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindClassicFP,
+			Identity: cmd.ManagerKindClassicFP,
+		})
+	}
 
 	return obj, nil
 }
@@ -57,7 +64,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 		},
 		Spec: folders.FolderSpec{
 			Title:       v.Title,
-			Description: descr(v.Description),
+			Description: &v.Description,
 		},
 	}
 
@@ -74,14 +81,6 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
 	// as the only user identifier
 
-	if v.Fullpath != "" {
-		meta.SetFullpath(v.Fullpath)
-	}
-
-	if v.FullpathUIDs != "" {
-		meta.SetFullpathUIDs(v.FullpathUIDs)
-	}
-
 	if v.CreatedBy != 0 {
 		meta.SetCreatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(v.CreatedBy, 10)))
 	}
@@ -93,11 +92,4 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
-}
-
-func descr(str string) *string {
-	if str == "" {
-		return nil
-	}
-	return &str
 }

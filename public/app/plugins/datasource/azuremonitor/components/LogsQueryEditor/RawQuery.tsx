@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import Prism, { Grammar } from 'prismjs';
+import Prism, { type Grammar } from 'prismjs';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -15,7 +15,7 @@ export interface Props {
 }
 export function RawQuery({ query, lang, className }: Props) {
   const theme = useTheme2();
-  const { t } = useTranslate();
+
   const styles = getStyles(theme);
   const highlighted = Prism.highlight(query, lang.grammar, lang.name);
 

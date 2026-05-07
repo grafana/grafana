@@ -5,19 +5,27 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
+	"sync/atomic"
+
+	"github.com/Masterminds/semver/v3"
+	"github.com/open-feature/go-sdk/openfeature"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"golang.org/x/sync/singleflight"
 
 	claims "github.com/grafana/authlib/types"
-	"go.opentelemetry.io/otel/attribute"
-	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/scimutil"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -71,6 +79,10 @@ var (
 		"user.sync.user-externalUID-mismatch",
 		errutil.WithPublicMessage("User externalUID mismatch"),
 	)
+	errSCIMAuthModuleMismatch = errutil.Unauthorized(
+		"user.sync.scim-auth-module-mismatch",
+		errutil.WithPublicMessage("User was provisioned via SCIM and must login via SAML"),
+	)
 )
 
 var (
@@ -79,13 +91,25 @@ var (
 	errSignupNotAllowed  = errors.New("system administrator has disabled signup")
 )
 
+// StaticSCIMConfig represents the static SCIM configuration from config.ini
+type StaticSCIMConfig struct {
+	IsUserProvisioningEnabled bool
+	RejectNonProvisionedUsers bool
+}
+
 func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
 	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, cfg *setting.Cfg,
+	k8sClient client.K8sHandler,
 ) *UserSync {
 	scimSection := cfg.Raw.Section("auth.scim")
+	staticConfig := &StaticSCIMConfig{
+		IsUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
+		RejectNonProvisionedUsers: scimSection.Key("reject_non_provisioned_users").MustBool(false),
+	}
+
 	return &UserSync{
-		allowNonProvisionedUsers:  scimSection.Key("allow_non_provisioned_users").MustBool(false),
-		isUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
+		isUserProvisioningEnabled: staticConfig.IsUserProvisioningEnabled,
+		rejectNonProvisionedUsers: staticConfig.RejectNonProvisionedUsers,
 		userService:               userService,
 		authInfoService:           authInfoService,
 		userProtectionService:     userProtectionService,
@@ -93,13 +117,16 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 		log:                       log.New("user.sync"),
 		tracer:                    tracer,
 		features:                  features,
+		openFeatureClient:         openfeature.NewDefaultClient(),
 		lastSeenSF:                &singleflight.Group{},
+		scimUtil:                  scimutil.NewSCIMUtil(k8sClient),
+		staticConfig:              staticConfig,
 	}
 }
 
 type UserSync struct {
-	allowNonProvisionedUsers  bool
 	isUserProvisioningEnabled bool
+	rejectNonProvisionedUsers bool
 	userService               user.Service
 	authInfoService           login.AuthInfoService
 	userProtectionService     login.UserProtectionService
@@ -107,32 +134,80 @@ type UserSync struct {
 	log                       log.Logger
 	tracer                    tracing.Tracer
 	features                  featuremgmt.FeatureToggles
+	openFeatureClient         *openfeature.Client
 	lastSeenSF                *singleflight.Group
+	scimUtil                  *scimutil.SCIMUtil
+	staticConfig              *StaticSCIMConfig
+	scimSuccessfulLogin       atomic.Bool
+	samlCatalogStats          sync.Map
+}
+
+// GetUsageStats implements registry.ProvidesUsageStats
+func (s *UserSync) GetUsageStats(ctx context.Context) map[string]any {
+	stats := map[string]any{}
+	if s.scimSuccessfulLogin.Load() {
+		stats["stats.features.scim.has_successful_login.count"] = 1
+	} else {
+		stats["stats.features.scim.has_successful_login.count"] = 0
+	}
+
+	s.samlCatalogStats.Range(func(key, value interface{}) bool {
+		version := key.(string)
+		flag := value.(*atomic.Bool)
+		if flag.Load() {
+			stats[fmt.Sprintf("stats.features.saml.catalog_version_%s.count", version)] = 1
+		} else {
+			stats[fmt.Sprintf("stats.features.saml.catalog_version_%s.count", version)] = 0
+		}
+		return true
+	})
+	return stats
+}
+
+func (s *UserSync) setSamlCatalogVersion(version string) {
+	value, loaded := s.samlCatalogStats.LoadOrStore(version, &atomic.Bool{})
+	flag := value.(*atomic.Bool)
+	flag.Store(true)
+
+	if !loaded {
+		s.log.Info("New SAML catalog version detected", "version", version)
+	}
+}
+
+func (s *UserSync) CatalogLoginHook(_ context.Context, identity *authn.Identity, r *authn.Request, err error) {
+	if err != nil || identity == nil || !identity.ClientParams.SyncUser || r == nil {
+		return
+	}
+	catalogVersion := r.GetMeta("catalog_version")
+	if _, err := semver.NewVersion(catalogVersion); err != nil {
+		s.log.Warn("The SAML catalog used for this login has an incorrect version format", "catalogVersion", catalogVersion)
+		return
+	}
+
+	s.setSamlCatalogVersion(catalogVersion)
 }
 
 // ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
-func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
-	log := s.log.FromContext(ctx).New("auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIdentity *authn.Identity, _ *authn.Request) error {
+	log := s.log.FromContext(ctx).New("auth_module", currentIdentity.AuthenticatedBy, "auth_id", currentIdentity.AuthID)
+
+	if !currentIdentity.ClientParams.SyncUser {
+		return nil
+	}
+
+	effectiveReject := s.shouldRejectNonProvisionedUsers(ctx, currentIdentity)
+
+	if !effectiveReject {
+		log.Debug("Skip provisioning validation, non-provisioned users are allowed")
+		return nil
+	}
 
 	log.Debug("Validating user provisioning")
 	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
 	defer span.End()
 
-	// Skip validation if user provisioning is disabled
-	if !s.isUserProvisioningEnabled {
-		log.Debug("User provisioning is disabled, skipping validation")
-		return nil
-	}
-
-	// Skip validation if non-provisioned users are allowed
-	if s.allowNonProvisionedUsers {
-		log.Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
-		return nil
-	}
-
-	// Skip validation if the auth module is GrafanaComAuthModule
-	if id.AuthenticatedBy == login.GrafanaComAuthModule {
-		log.Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
+	if s.skipProvisioningValidation(ctx, currentIdentity) {
+		log.Debug("Skipping user provisioning validation")
 		return nil
 	}
 
@@ -140,7 +215,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 	// we must validate the authinfo.ExternalUID with the identity.ExternalUID
 
 	// Retrieve user and authinfo from database
-	usr, authInfo, err := s.getUser(ctx, id)
+	usr, authInfo, err := s.getUser(ctx, currentIdentity)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return nil
@@ -154,24 +229,59 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 		return errUnableToRetrieveUser.Errorf("unable to retrieve user for validation")
 	}
 
-	// Validate the provisioned user.ExternalUID with the authinfo.ExternalUID
 	if usr.IsProvisioned {
-		// Allow non-SAML requests for SAML-provisioned users to proceed if incoming ExternalUID is empty (e.g. session access).
-		if authInfo.AuthModule == login.SAMLAuthModule && id.AuthenticatedBy != login.SAMLAuthModule && authInfo.ExternalUID != "" && id.ExternalUID == "" {
-			log.Debug("Skipping ExternalUID validation for non-SAML request to SAML-provisioned user")
-			return nil
-		}
-		if authInfo.ExternalUID == "" || authInfo.ExternalUID != id.ExternalUID {
+		if authInfo.ExternalUID == "" || authInfo.ExternalUID != currentIdentity.ExternalUID {
 			log.Error("The provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 		}
 		log.Debug("User is provisioned, access granted")
+		s.scimSuccessfulLogin.Store(true)
+
 		return nil
 	}
 
-	// Reject non-provisioned users
-	log.Error("Failed to access user, user is not provisioned")
-	return errUserNotProvisioned.Errorf("user is not provisioned")
+	// Reject non-provisioned users if configured to do so
+	if effectiveReject {
+		log.Error("Failed to authenticate user, user is not provisioned")
+		return errUserNotProvisioned.Errorf("user is not provisioned")
+	}
+
+	return nil
+}
+
+func (s *UserSync) skipProvisioningValidation(ctx context.Context, currentIdentity *authn.Identity) bool {
+	log := s.log.FromContext(ctx).New("auth_module", currentIdentity.AuthenticatedBy, "auth_id", currentIdentity.AuthID, "id", currentIdentity.ID)
+
+	// Use dynamic SCIM settings if available, otherwise fall back to static config
+	effectiveUserSyncEnabled := s.isUserProvisioningEnabled
+
+	if s.scimUtil != nil {
+		orgID := currentIdentity.GetOrgID()
+		effectiveUserSyncEnabled = s.scimUtil.IsUserSyncEnabled(ctx, orgID, s.staticConfig.IsUserProvisioningEnabled)
+	}
+
+	if !effectiveUserSyncEnabled {
+		log.Debug("User provisioning is disabled, skipping validation")
+		return true
+	}
+
+	if currentIdentity.AuthenticatedBy == login.GrafanaComAuthModule {
+		log.Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
+		return true
+	}
+
+	return false
+}
+
+func (s *UserSync) shouldRejectNonProvisionedUsers(ctx context.Context, currentIdentity *authn.Identity) bool {
+	effectiveRejectNonProvisionedUsers := s.rejectNonProvisionedUsers
+
+	if s.scimUtil != nil {
+		orgID := currentIdentity.GetOrgID()
+		effectiveRejectNonProvisionedUsers = s.scimUtil.AreNonProvisionedUsersRejected(ctx, orgID, s.staticConfig.RejectNonProvisionedUsers)
+	}
+
+	return effectiveRejectNonProvisionedUsers
 }
 
 // SyncUserHook syncs a user with the database
@@ -206,6 +316,21 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		// just try to fetch the user one more to make the other request work.
 		if errors.Is(err, user.ErrUserAlreadyExists) {
 			usr, _, err = s.getUser(ctx, id)
+
+			// Check if this is a SCIM-provisioned user trying to login via an auth module that is not SAML or GCOM
+			if err == nil && usr != nil && usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
+				_, authErr := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
+					UserId:     usr.ID,
+					AuthModule: id.AuthenticatedBy,
+				})
+				if errors.Is(authErr, user.ErrUserNotFound) {
+					s.log.FromContext(ctx).Error("SCIM-provisioned user attempted login via non-SAML auth module",
+						"user_id", usr.ID,
+						"attempted_module", id.AuthenticatedBy,
+					)
+					return errSCIMAuthModuleMismatch.Errorf("user was provisioned via SCIM but attempted login via %s", id.AuthenticatedBy)
+				}
+			}
 		}
 
 		if err != nil {
@@ -220,7 +345,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		}
 	}
 
-	syncUserToIdentity(usr, id)
+	syncUserToIdentity(ctx, usr, id)
 	return nil
 }
 
@@ -254,7 +379,8 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 	}
 
 	if id.ClientParams.AllowGlobalOrg && id.OrgID == authn.GlobalOrgID {
-		usr.Teams = nil
+		usr.TeamIDs = nil // nolint:staticcheck
+		usr.TeamUIDs = nil
 		usr.OrgName = ""
 		usr.OrgRole = org.RoleNone
 		usr.OrgID = authn.GlobalOrgID
@@ -318,11 +444,18 @@ func (s *UserSync) EnableUserHook(ctx context.Context, id *authn.Identity, _ *au
 	return s.userService.Update(ctx, &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled})
 }
 
-func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {
+func (s *UserSync) upsertAuthConnection(ctx context.Context, usr *user.User, identity *authn.Identity, createConnection bool) error {
 	ctx, span := s.tracer.Start(ctx, "user.sync.upsertAuthConnection")
 	defer span.End()
 
 	if identity.AuthenticatedBy == "" {
+		return nil
+	}
+
+	// When the Kubernetes user service is active, auth proxy user lookup relies on email/login rather than
+	// the user_auth table, so persisting an auth connection serves no purpose.
+	if s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) &&
+		identity.AuthenticatedBy == login.AuthProxyAuthModule {
 		return nil
 	}
 
@@ -331,11 +464,13 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 	// changing to new auth client
 	if createConnection {
 		setAuthInfoCmd := &login.SetAuthInfoCommand{
-			UserId:     userID,
+			UserId:     usr.ID,
+			UserUID:    usr.UID,
 			AuthModule: identity.AuthenticatedBy,
 			AuthId:     identity.AuthID,
 		}
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			setAuthInfoCmd.OAuthToken = identity.OAuthToken
 		}
@@ -343,11 +478,12 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 	}
 
 	updateAuthInfoCmd := &login.UpdateAuthInfoCommand{
-		UserId:     userID,
+		UserId:     usr.ID,
 		AuthId:     identity.AuthID,
 		AuthModule: identity.AuthenticatedBy,
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 		updateAuthInfoCmd.OAuthToken = identity.OAuthToken
 	}
@@ -363,6 +499,8 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	needsConnectionCreation := userAuth == nil
 
 	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthenticatedBy); errProtection != nil {
+		span.RecordError(errProtection)
+		span.SetStatus(codes.Error, errProtection.Error())
 		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
 	}
 	// sync user info
@@ -406,34 +544,70 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		attribute.String("identity.ID", id.ID),
 		attribute.String("identity.ExternalUID", id.ExternalUID),
 	)
-	if usr.IsProvisioned {
-		s.log.Debug("User is provisioned", "id.UID", id.UID)
+
+	ctxLogger := s.log.FromContext(ctx)
+
+	if s.shouldRejectNonProvisionedUsers(ctx, id) && usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
+		ctxLogger.Debug("User is provisioned", "id.UID", id.UID)
 		needsConnectionCreation = false
 		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
 		if err != nil {
-			s.log.Error("Error getting auth info", "error", err)
+			ctxLogger.Error("Error getting auth info for provisioned user", "error", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 
 		if id.ExternalUID == "" {
-			s.log.Error("externalUID is empty", "id", id.UID)
+			ctxLogger.Error("externalUID is empty for provisioned user", "id", id.UID)
+			span.SetStatus(codes.Error, "externalUID is empty for provisioned user")
 			return errEmptyExternalUID.Errorf("externalUID is empty")
 		}
 
 		if id.ExternalUID != authInfo.ExternalUID {
-			s.log.Error("mismatched externalUID", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
-			return errMismatchedExternalUID.Errorf("externalUID mistmatch")
+			ctxLogger.Error("mismatched externalUID for provisioned user", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
+			span.SetStatus(codes.Error, "mismatched externalUID for provisioned user")
+			return errMismatchedExternalUID.Errorf("externalUID mismatch")
 		}
 	}
 
-	if needsUpdate && !usr.IsProvisioned {
-		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", fmt.Sprintf("%v", updateCmd))
-		if err := s.userService.Update(ctx, updateCmd); err != nil {
-			return err
+	if needsUpdate {
+		finalCmdToExecute := &user.UpdateUserCommand{UserID: usr.ID}
+		shouldExecuteUpdate := false
+
+		if !usr.IsProvisioned {
+			finalCmdToExecute = updateCmd
+			shouldExecuteUpdate = true
+			ctxLogger.Debug("Syncing all differing attributes for non-provisioned user", "id", id.ID,
+				"login", finalCmdToExecute.Login, "email", finalCmdToExecute.Email, "name", finalCmdToExecute.Name,
+				"isGrafanaAdmin", finalCmdToExecute.IsGrafanaAdmin, "emailVerified", finalCmdToExecute.EmailVerified)
+		} else {
+			if updateCmd.IsGrafanaAdmin != nil {
+				finalCmdToExecute.IsGrafanaAdmin = updateCmd.IsGrafanaAdmin
+				shouldExecuteUpdate = true
+				ctxLogger.Debug("Syncing IsGrafanaAdmin for provisioned user", "id", id.ID, "isAdmin", fmt.Sprintf("%v", *updateCmd.IsGrafanaAdmin))
+			}
+
+			if !shouldExecuteUpdate {
+				ctxLogger.Debug("SAML attributes differed, but no SCIM-overridable attributes changed for provisioned user", "id", id.ID,
+					"login", updateCmd.Login, "email", updateCmd.Email, "name", updateCmd.Name,
+					"isGrafanaAdmin", updateCmd.IsGrafanaAdmin, "emailVerified", updateCmd.EmailVerified)
+			}
+		}
+
+		if shouldExecuteUpdate {
+			if err := s.userService.Update(ctx, finalCmdToExecute); err != nil {
+				ctxLogger.Error("Failed to update user attributes", "error", err, "id", id.ID, "isProvisioned", usr.IsProvisioned,
+					"login", finalCmdToExecute.Login, "email", finalCmdToExecute.Email, "name", finalCmdToExecute.Name,
+					"isGrafanaAdmin", finalCmdToExecute.IsGrafanaAdmin, "emailVerified", finalCmdToExecute.EmailVerified)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				return err
+			}
 		}
 	}
 
-	return s.upsertAuthConnection(ctx, usr.ID, id, needsConnectionCreation)
+	return s.upsertAuthConnection(ctx, usr, id, needsConnectionCreation)
 }
 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
@@ -470,7 +644,7 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		return nil, err
 	}
 
-	if err := s.upsertAuthConnection(ctx, usr.ID, id, true); err != nil {
+	if err := s.upsertAuthConnection(ctx, usr, id, true); err != nil {
 		return nil, err
 	}
 
@@ -481,8 +655,13 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	ctx, span := s.tracer.Start(ctx, "user.sync.getUser")
 	defer span.End()
 
+	// Skip auth info for auth proxy when the Kubernetes user service is active since
+	// user lookup falls back to email/login and the user_auth table is not used.
+	skipAuthInfo := s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) &&
+		identity.AuthenticatedBy == login.AuthProxyAuthModule
+
 	// Check auth info first
-	if identity.AuthID != "" && identity.AuthenticatedBy != "" {
+	if identity.AuthID != "" && identity.AuthenticatedBy != "" && !skipAuthInfo {
 		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthenticatedBy}
 		authInfo, errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)
 
@@ -516,9 +695,9 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	}
 
 	var userAuth *login.UserAuth
-	// Special case for generic oauth: generic oauth does not store authID,
-	// so we need to find the user first then check for the userAuth connection by module and userID
-	if identity.AuthenticatedBy == login.GenericOAuthModule {
+	// For auth modules that may not store an authID in user_auth (Generic OAuth never stores one;
+	// SAML omits it for SCIM-provisioned users), fall back to a UserId+AuthModule lookup.
+	if identity.AuthenticatedBy == login.GenericOAuthModule || (identity.AuthenticatedBy == login.SAMLAuthModule && usr.IsProvisioned) {
 		query := &login.GetAuthInfoQuery{AuthModule: identity.AuthenticatedBy, UserId: usr.ID}
 		userAuth, err = s.authInfoService.GetAuthInfo(ctx, query)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
@@ -561,7 +740,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
-func syncUserToIdentity(usr *user.User, id *authn.Identity) {
+func syncUserToIdentity(ctx context.Context, usr *user.User, id *authn.Identity) {
 	id.ID = strconv.FormatInt(usr.ID, 10)
 	id.UID = usr.UID
 	id.Type = claims.TypeUser
@@ -570,9 +749,18 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 	id.Name = usr.Name
 	id.EmailVerified = usr.EmailVerified
 	id.IsGrafanaAdmin = &usr.IsAdmin
+
+	featureClient := openfeature.NewDefaultClient()
+	if featureClient.Boolean(ctx, featuremgmt.FlagRememberUserOrgForSso, true, openfeature.TransactionContext(ctx)) {
+		if id.OrgID == 0 {
+			id.OrgID = usr.OrgID
+		}
+	}
 }
 
 // syncSignedInUserToIdentity syncs a user to an identity.
+// id.Groups must not be overridden as part of this function as it is used to store group information from the auth module
+// which is needed for role mapping in the case of SAML or for team sync.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.UID = usr.UserUID
 	id.Name = usr.Name
@@ -582,7 +770,7 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.OrgName = usr.OrgName
 	id.OrgRoles = map[int64]org.RoleType{id.OrgID: usr.OrgRole}
 	id.HelpFlags1 = usr.HelpFlags1
-	id.Teams = usr.Teams
+	id.TeamIDs = usr.TeamIDs // nolint:staticcheck
 	id.LastSeenAt = usr.LastSeenAt
 	id.IsDisabled = usr.IsDisabled
 	id.IsGrafanaAdmin = &usr.IsGrafanaAdmin

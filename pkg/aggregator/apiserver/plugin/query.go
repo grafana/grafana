@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	grafanasemconv "github.com/grafana/grafana/pkg/semconv"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"k8s.io/component-base/tracing"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/util"
+	grafanasemconv "github.com/grafana/grafana/pkg/semconv"
 )
 
 func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
@@ -70,7 +71,7 @@ func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
 			return
 		}
 
-		ctx = backend.WithGrafanaConfig(ctx, pluginContext.GrafanaConfig)
+		ctx = config.WithGrafanaConfig(ctx, pluginContext.GrafanaConfig)
 		span.AddEvent("QueryData start", grafanasemconv.GrafanaDatasourceRequestQueryCount(len(queries)))
 		rsp, err := h.client.QueryData(ctx, &backend.QueryDataRequest{
 			Queries:       queries,

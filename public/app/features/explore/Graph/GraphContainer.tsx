@@ -2,18 +2,18 @@ import { useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
-  DataFrame,
-  EventBus,
-  AbsoluteTimeRange,
-  TimeZone,
-  SplitOpen,
-  LoadingState,
-  ThresholdsConfig,
-  TimeRange,
+  type DataFrame,
+  type EventBus,
+  type AbsoluteTimeRange,
+  type TimeZone,
+  type SplitOpen,
+  type LoadingState,
+  type ThresholdsConfig,
+  type TimeRange,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { GraphThresholdsStyleConfig, PanelChrome, PanelChromeProps } from '@grafana/ui';
-import { ExploreGraphStyle } from 'app/types';
+import { Trans, t } from '@grafana/i18n';
+import { type GraphThresholdsStyleConfig, PanelChrome, type PanelChromeProps } from '@grafana/ui';
+import { type ExploreGraphStyle } from 'app/types/explore';
 
 import { LimitedDataDisclaimer } from '../LimitedDataDisclaimer';
 import { storeGraphStyle } from '../state/utils';
@@ -37,6 +37,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   loadingState: LoadingState;
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
+  queriesChangedIndexAtRun?: number;
 }
 
 export const GraphContainer = ({
@@ -53,6 +54,7 @@ export const GraphContainer = ({
   thresholdsStyle,
   loadingState,
   statusMessage,
+  queriesChangedIndexAtRun,
 }: Props) => {
   const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
@@ -65,7 +67,6 @@ export const GraphContainer = ({
   const slicedData = useMemo(() => {
     return showAllSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES);
   }, [data, showAllSeries]);
-  const { t } = useTranslate();
 
   return (
     <PanelChrome
@@ -109,6 +110,7 @@ export const GraphContainer = ({
           thresholdsConfig={thresholdsConfig}
           thresholdsStyle={thresholdsStyle}
           eventBus={eventBus}
+          queriesChangedIndexAtRun={queriesChangedIndexAtRun}
         />
       )}
     </PanelChrome>

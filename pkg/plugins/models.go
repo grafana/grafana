@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 const (
@@ -126,8 +126,9 @@ type AddedComponent struct {
 }
 
 type AddedFunction struct {
-	Targets []string `json:"targets"`
-	Title   string   `json:"title"`
+	Targets     []string `json:"targets"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
 }
 
 type ExposedComponent struct {
@@ -147,17 +148,17 @@ type ExtensionsDependencies struct {
 }
 
 type Includes struct {
-	Name       string       `json:"name"`
-	Path       string       `json:"path"`
-	Type       string       `json:"type"`
-	Component  string       `json:"component"`
-	Role       org.RoleType `json:"role"`
-	Action     string       `json:"action,omitempty"`
-	AddToNav   bool         `json:"addToNav"`
-	DefaultNav bool         `json:"defaultNav"`
-	Slug       string       `json:"slug"`
-	Icon       string       `json:"icon"`
-	UID        string       `json:"uid"`
+	Name       string            `json:"name"`
+	Path       string            `json:"path"`
+	Type       string            `json:"type"`
+	Component  string            `json:"component"`
+	Role       identity.RoleType `json:"role"`
+	Action     string            `json:"action,omitempty"`
+	AddToNav   bool              `json:"addToNav"`
+	DefaultNav bool              `json:"defaultNav"`
+	Slug       string            `json:"slug"`
+	Icon       string            `json:"icon"`
+	UID        string            `json:"uid"`
 
 	ID string `json:"-"`
 }
@@ -237,6 +238,7 @@ type ReleaseState string
 
 const (
 	ReleaseStateAlpha ReleaseState = "alpha"
+	ReleaseStateBeta  ReleaseState = "beta"
 )
 
 type SignatureType string
@@ -317,6 +319,7 @@ type PanelDTO struct {
 	HideFromList    bool              `json:"hideFromList"`
 	Sort            int               `json:"sort"`
 	SkipDataQuery   bool              `json:"skipDataQuery"`
+	Suggestions     bool              `json:"suggestions,omitempty"`
 	ReleaseState    string            `json:"state"`
 	BaseURL         string            `json:"baseUrl"`
 	Signature       string            `json:"signature"`
@@ -338,12 +341,13 @@ type AppDTO struct {
 	Dependencies    Dependencies      `json:"dependencies"`
 	ModuleHash      string            `json:"moduleHash,omitempty"`
 	Translations    map[string]string `json:"translations,omitempty"`
+	BuildMode       string            `json:"buildMode,omitempty"`
 }
 
 const (
-	errorCodeSignatureMissing   ErrorCode = "signatureMissing"
-	errorCodeSignatureModified  ErrorCode = "signatureModified"
-	errorCodeSignatureInvalid   ErrorCode = "signatureInvalid"
+	ErrorCodeSignatureMissing   ErrorCode = "signatureMissing"
+	ErrorCodeSignatureModified  ErrorCode = "signatureModified"
+	ErrorCodeSignatureInvalid   ErrorCode = "signatureInvalid"
 	ErrorCodeFailedBackendStart ErrorCode = "failedBackendStart"
 	ErrorAngular                ErrorCode = "angular"
 )
@@ -392,11 +396,11 @@ func (e Error) AsErrorCode() ErrorCode {
 
 	switch e.SignatureStatus {
 	case SignatureStatusInvalid:
-		return errorCodeSignatureInvalid
+		return ErrorCodeSignatureInvalid
 	case SignatureStatusModified:
-		return errorCodeSignatureModified
+		return ErrorCodeSignatureModified
 	case SignatureStatusUnsigned:
-		return errorCodeSignatureMissing
+		return ErrorCodeSignatureMissing
 	case SignatureStatusInternal, SignatureStatusValid:
 		return ""
 	}
@@ -411,11 +415,11 @@ func (e *Error) WithMessage(m string) *Error {
 
 func (e Error) PublicMessage() string {
 	switch e.ErrorCode {
-	case errorCodeSignatureInvalid:
+	case ErrorCodeSignatureInvalid:
 		return "Invalid plugin signature"
-	case errorCodeSignatureModified:
+	case ErrorCodeSignatureModified:
 		return "Plugin signature does not match"
-	case errorCodeSignatureMissing:
+	case ErrorCodeSignatureMissing:
 		return "Plugin signature is missing"
 	case ErrorCodeFailedBackendStart:
 		return "Plugin failed to start"
@@ -455,3 +459,20 @@ type QueryCachingConfig struct {
 	Enabled bool  `json:"enabled"`
 	TTLMS   int64 `json:"TTLMs"`
 }
+
+// CloudProvisioningMethod is the method used to provision the plugin in Grafana Cloud.
+type CloudProvisioningMethod string
+
+const (
+	// CloudProvisioningMethodUnknown is used when the plugin provisioning method is unknown.
+	CloudProvisioningMethodUnknown CloudProvisioningMethod = "unknown"
+
+	// CloudProvisioningMethodNone is used when the plugin is not provisioned in Grafana Cloud.
+	CloudProvisioningMethodNone CloudProvisioningMethod = "none"
+
+	// CloudProvisioningMethodURL is used when the plugin is provisioned from a URL.
+	CloudProvisioningMethodURL CloudProvisioningMethod = "url"
+
+	// CloudProvisioningMethodCatalog is used when the plugin is provisioned from the catalog.
+	CloudProvisioningMethodCatalog CloudProvisioningMethod = "catalog"
+)

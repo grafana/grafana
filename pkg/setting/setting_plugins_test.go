@@ -85,14 +85,10 @@ func Test_readPluginSettings(t *testing.T) {
 				_, err = sec.NewKey("plugin_catalog_hidden_plugins", tc.f("plugin3"))
 				require.NoError(t, err)
 
-				_, err = sec.NewKey("hide_angular_deprecation", tc.f("a", "b", "c"))
-				require.NoError(t, err)
-
 				err = cfg.readPluginSettings(cfg.Raw)
 				require.NoError(t, err)
 				require.Equal(t, []string{"plugin1", "plugin2"}, cfg.DisablePlugins)
 				require.Equal(t, []string{"plugin3", "plugin1", "plugin2"}, cfg.PluginCatalogHiddenPlugins)
-				require.Equal(t, []string{"a", "b", "c"}, cfg.HideAngularDeprecation)
 			})
 		}
 	})
@@ -149,7 +145,7 @@ func Test_readPluginSettings(t *testing.T) {
 
 	t.Run("when plugins.preinstall is defined", func(t *testing.T) {
 		defaultPreinstallPluginsList := make([]InstallPlugin, 0, len(defaultPreinstallPlugins))
-		defaultPreinstallPluginsIDs := []string{}
+		defaultPreinstallPluginsIDs := make([]string, 0, len(defaultPreinstallPlugins))
 		for _, p := range defaultPreinstallPlugins {
 			defaultPreinstallPluginsList = append(defaultPreinstallPluginsList, p)
 			defaultPreinstallPluginsIDs = append(defaultPreinstallPluginsIDs, p.ID)
@@ -215,6 +211,11 @@ func Test_readPluginSettings(t *testing.T) {
 				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: "https://example.com/plugin1.tar.gz"}),
 			},
 			{
+				name:     "should parse a plugin with credentials in the URL",
+				rawInput: "plugin1@@https://username:password@example.com/plugin1.tar.gz",
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: "https://username:password@example.com/plugin1.tar.gz"}),
+			},
+			{
 				name:         "when preinstall_async is false, should add all plugins to preinstall_sync",
 				rawInput:     "plugin1",
 				rawInputSync: "plugin2",
@@ -277,6 +278,16 @@ func Test_readPluginSettings(t *testing.T) {
 				}
 			})
 		}
+	})
+}
+
+func Test_readGrafanaComSettings_GrafanaComProxyAPIToken(t *testing.T) {
+	t.Run("reads proxy_token into GrafanaComProxyAPIToken when set", func(t *testing.T) {
+		t.Setenv("GF_GRAFANA_COM_PROXY_TOKEN", "test-gnet-proxy-token")
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.NoError(t, err)
+		assert.Equal(t, "test-gnet-proxy-token", cfg.GrafanaComProxyAPIToken)
 	})
 }
 
@@ -391,6 +402,17 @@ func Test_migrateInstallPluginsToPreinstallPluginsSync(t *testing.T) {
 				"plugin1": {
 					ID:      "plugin1",
 					Version: "1.0.0",
+				},
+			},
+		},
+		{name: "parse private plugin",
+			installPluginsVal: "https://s3.our.domain/grafana-plugins/our-plugin-datasource-1.2.0+linux.zip;our-plugin-datasource 1.2.0",
+			preinstallPlugins: map[string]InstallPlugin{},
+			expectedPlugins: map[string]InstallPlugin{
+				"our-plugin-datasource": {
+					ID:      "our-plugin-datasource",
+					Version: "1.2.0",
+					URL:     "https://s3.our.domain/grafana-plugins/our-plugin-datasource-1.2.0+linux.zip",
 				},
 			},
 		},

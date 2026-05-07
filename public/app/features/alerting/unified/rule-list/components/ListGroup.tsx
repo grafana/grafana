@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, ReactNode } from 'react';
+import { type PropsWithChildren, type ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { IconButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { Spacer } from '../../components/Spacer';
@@ -57,7 +57,7 @@ const GroupHeader = (props: GroupHeaderProps) => {
   const { name, description, metaRight = null, actions = null, isOpen = false, onToggle, href } = props;
 
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
@@ -109,6 +109,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       background: theme.colors.action.hover,
+      borderRadius: theme.shape.radius.default,
     },
   }),
   childrenWrapper: css({

@@ -1,0 +1,66 @@
+{
+  "title": "V18 Gauge Options Migration Test Dashboard",
+  "schemaVersion": 17,
+  "panels": [
+    {
+      "id": 1,
+      "type": "gauge",
+      "title": "Complete Gauge Panel",
+      "options-gauge": {
+        "unit": "ms",
+        "stat": "last",
+        "decimals": 2,
+        "prefix": "Value: ",
+        "suffix": " ms",
+        "thresholds": [
+          {"color": "green", "value": 0},
+          {"color": "yellow", "value": 50},
+          {"color": "red", "value": 100}
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "type": "gauge",
+      "title": "Partial Gauge Panel",
+      "options-gauge": {
+        "unit": "percent",
+        "decimals": 1
+      }
+    },
+    {
+      "id": 3,
+      "type": "gauge",
+      "title": "Buggy Gauge Panel",
+      "options-gauge": {
+        "unit": "bytes",
+        "options": "this should be deleted",
+        "stat": "avg",
+        "decimals": 0
+      }
+    },
+    {
+      "id": 4,
+      "type": "gauge",
+      "title": "Custom Properties Gauge Panel",
+      "options-gauge": {
+        "unit": "short",
+        "customProperty": "customValue",
+        "anotherProp": 42,
+        "thresholds": [
+          {"color": "blue", "value": 10}
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "type": "graph",
+      "title": "Non-Gauge Panel",
+      "options": {
+        "legend": {
+          "show": true
+        }
+      }
+    }
+  ]
+}

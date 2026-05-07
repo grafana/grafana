@@ -2,29 +2,18 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { locationService, logMeasurement } from '@grafana/runtime';
-import {
-  AlertManagerCortexConfig,
-  AlertmanagerGroup,
-  Matcher,
-  Receiver,
-  TestReceiversAlert,
-} from 'app/plugins/datasource/alertmanager/types';
-import { ThunkResult } from 'app/types';
-import { RuleIdentifier, RuleNamespace, StateHistoryItem } from 'app/types/unified-alerting';
-import { RulerRuleDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type AlertManagerCortexConfig, type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type ThunkResult } from 'app/types/store';
+import { type RuleIdentifier, type RuleNamespace, type StateHistoryItem } from 'app/types/unified-alerting';
+import { type RulerRuleDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { withPromRulesMetadataLogging, withRulerRulesMetadataLogging } from '../Analytics';
-import {
-  deleteAlertManagerConfig,
-  fetchAlertGroups,
-  testReceivers,
-  updateAlertManagerConfig,
-} from '../api/alertmanager';
+import { deleteAlertManagerConfig, updateAlertManagerConfig } from '../api/alertmanager';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { fetchAnnotations } from '../api/annotations';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
-import { FetchRulerRulesFilter, fetchRulerRules } from '../api/ruler';
+import { type FetchPromRulesFilter, fetchRules } from '../api/prometheus';
+import { type FetchRulerRulesFilter, fetchRulerRules } from '../api/ruler';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { getAllRulesSourceNames } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
@@ -239,13 +228,6 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
     )
 );
 
-export const fetchAlertGroupsAction = createAsyncThunk(
-  'unifiedalerting/fetchAlertGroups',
-  (alertManagerSourceName: string): Promise<AlertmanagerGroup[]> => {
-    return withSerializedError(fetchAlertGroups(alertManagerSourceName));
-  }
-);
-
 export const deleteAlertManagerConfigAction = createAsyncThunk(
   'unifiedalerting/deleteAlertManagerConfig',
   async (alertManagerSourceName: string, thunkAPI): Promise<void> => {
@@ -261,22 +243,6 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
         successMessage: 'Alertmanager configuration reset.',
       }
     );
-  }
-);
-
-interface TestReceiversOptions {
-  alertManagerSourceName: string;
-  receivers: Receiver[];
-  alert?: TestReceiversAlert;
-}
-
-export const testReceiversAction = createAsyncThunk(
-  'unifiedalerting/testReceivers',
-  ({ alertManagerSourceName, receivers, alert }: TestReceiversOptions): Promise<void> => {
-    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers, alert)), {
-      errorMessage: 'Failed to send test alert.',
-      successMessage: 'Test alert sent.',
-    });
   }
 );
 

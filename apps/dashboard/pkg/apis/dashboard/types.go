@@ -3,8 +3,9 @@ package dashboard
 // Information about how the requesting user can use a given dashboard
 type DashboardAccess struct {
 	// Metadata fields
-	Slug string `json:"slug,omitempty"`
-	Url  string `json:"url,omitempty"`
+	Slug     string `json:"slug,omitempty"`
+	Url      string `json:"url,omitempty"`
+	IsPublic bool   `json:"isPublic"`
 
 	// The permissions part
 	CanSave                bool                  `json:"canSave"`
@@ -16,8 +17,7 @@ type DashboardAccess struct {
 }
 
 type AnnotationPermission struct {
-	Dashboard    AnnotationActions `json:"dashboard"`
-	Organization AnnotationActions `json:"organization"`
+	Dashboard AnnotationActions `json:"dashboard"`
 }
 
 type AnnotationActions struct {

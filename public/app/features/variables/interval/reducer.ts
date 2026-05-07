@@ -1,10 +1,10 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { map } from 'lodash';
 
-import { IntervalVariableModel, VariableRefresh, VariableOption } from '@grafana/data';
+import { type IntervalVariableModel, VariableRefresh, type VariableOption } from '@grafana/data';
 
-import { getInstanceState } from '../state/selectors';
-import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { getInstanceState } from '../state/getInstanceState';
+import { initialVariablesState, type VariablePayload, type VariablesState } from '../state/types';
 import { initialVariableModelState } from '../types';
 
 export const initialIntervalVariableModelState: IntervalVariableModel = {
@@ -37,6 +37,7 @@ export const intervalVariableSlice = createSlice({
         // add auto option if missing
         if (options.length && options[0].text !== 'auto') {
           options.unshift({
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             text: 'auto',
             value: '$__auto_interval_' + instanceState.name,
             selected: false,

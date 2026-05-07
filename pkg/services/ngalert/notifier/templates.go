@@ -20,7 +20,7 @@ var (
 	}
 	DefaultAnnotations = map[string]string{
 		alertingModels.ValuesAnnotation:       `{"B":22,"C":1}`,
-		alertingModels.ValueStringAnnotation:  `[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]`,
+		alertingModels.ValueStringAnnotation:  `[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]`,
 		alertingModels.OrgIDAnnotation:        `1`,
 		alertingModels.DashboardUIDAnnotation: `dashboard_uid`,
 		alertingModels.PanelIDAnnotation:      `1`,

@@ -1,18 +1,17 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { ValueMatcherID, BasicValueMatcherOptions, VariableSuggestion } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { ValueMatcherID, type BasicValueMatcherOptions, type VariableSuggestion } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions } from '../../utils';
 
-import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
+import { type ValueMatcherEditorConfig, type ValueMatcherUIProps, type ValueMatcherUIRegistryItem } from './types';
 
 export function regexMatcherEditor(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions<string>>> {
-  const { t } = useTranslate();
   return function Render({ options, onChange }) {
     const { validator } = config;
     const { value } = options;

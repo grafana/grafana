@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import * as React from 'react';
 
-import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
+import { type GrafanaTheme2, PluginSignatureType } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { useStyles2, Icon, Badge, IconName } from '@grafana/ui';
+import { useStyles2, Icon, Badge, type IconName } from '@grafana/ui';
 
 const SIGNATURE_ICONS: Record<string, IconName> = {
   [PluginSignatureType.grafana]: 'grafana',

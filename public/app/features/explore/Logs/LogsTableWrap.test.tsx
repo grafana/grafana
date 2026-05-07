@@ -1,14 +1,26 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
-import { createTheme, ExploreLogsPanelState, LogsSortOrder, standardTransformersRegistry, toUtc } from '@grafana/data';
-import { organizeFieldsTransformer } from '@grafana/data/internal';
-import { config } from '@grafana/runtime';
+import { type ExploreLogsPanelState, LogsSortOrder, toUtc } from '@grafana/data';
+import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 
 import { LogsTableWrap } from './LogsTableWrap';
-import { getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/testMocks.test';
+import { getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/mocks';
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
 
 const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap>>) => {
   return (
@@ -27,7 +39,6 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap
       timeZone={'utc'}
       width={50}
       logsFrames={[getMockLokiFrame()]}
-      theme={createTheme()}
       {...partialProps}
     />
   );
@@ -37,20 +48,13 @@ const setup = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap>>) => 
 };
 
 describe('LogsTableWrap', () => {
+  beforeEach(() => {
+    setBooleanFlags({});
+  });
+
   beforeAll(() => {
     const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
-    standardTransformersRegistry.setInit(() => {
-      return transformers.map((t) => {
-        return {
-          id: t.id,
-          aliasIds: t.aliasIds,
-          name: t.name,
-          transformation: t,
-          description: t.description,
-          editor: () => null,
-        };
-      });
-    });
+    mockTransformationsRegistry(transformers);
   });
 
   it('should render 4 table rows', async () => {
@@ -64,7 +68,7 @@ describe('LogsTableWrap', () => {
   });
 
   it('should render 4 table rows (dataplane)', async () => {
-    config.featureToggles.lokiLogsDataplane = true;
+    setBooleanFlags({ lokiLogsDataplane: true });
     setup({ logsFrames: [getMockLokiFrameDataPlane()] });
 
     await waitFor(() => {
@@ -116,7 +120,7 @@ describe('LogsTableWrap', () => {
   });
 
   it('search input should search matching columns', async () => {
-    config.featureToggles.lokiLogsDataplane = false;
+    setBooleanFlags({ lokiLogsDataplane: false });
     const updatePanelState = jest.fn() as (panelState: Partial<ExploreLogsPanelState>) => void;
     setup({
       panelState: {
@@ -162,7 +166,7 @@ describe('LogsTableWrap', () => {
   });
 
   it('search input should search matching columns (dataplane)', async () => {
-    config.featureToggles.lokiLogsDataplane = true;
+    setBooleanFlags({ lokiLogsDataplane: true });
 
     const updatePanelState = jest.fn() as (panelState: Partial<ExploreLogsPanelState>) => void;
     setup({

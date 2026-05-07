@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTime, makeTimeRange, TimeRange } from '@grafana/data';
+import { dateTime, makeTimeRange, type TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { TimeRangeProvider } from './TimeRangeContext';
@@ -145,11 +145,31 @@ it('does not submit wrapping forms', async () => {
     </form>
   );
 
-  const clicks = screen.getAllByRole('button').map((button) => userEvent.click(button));
+  const buttons = screen.getAllByRole('button');
 
-  await Promise.all(clicks);
+  for (const button of buttons) {
+    await userEvent.click(button);
+  }
 
   expect(onSubmit).not.toHaveBeenCalled();
+});
+
+it('shows t - in zoom out tooltip', async () => {
+  render(
+    <TimeRangePicker
+      onChangeTimeZone={() => {}}
+      onChange={(value) => {}}
+      value={value}
+      onMoveBackward={() => {}}
+      onMoveForward={() => {}}
+      onZoom={() => {}}
+    />
+  );
+
+  const zoomButton = screen.getByLabelText('Zoom out time range');
+  await userEvent.hover(zoomButton);
+
+  expect(await screen.findByText(/t -/)).toBeInTheDocument();
 });
 
 describe('TimePickerTooltip', () => {
@@ -187,19 +207,20 @@ describe('TimePickerTooltip', () => {
 
   it('renders time range without timezone if timezone is not passed in', () => {
     render(<TimePickerTooltip timeRange={timeRange} />);
-    expect(screen.queryByText('United States, EDT')).not.toBeInTheDocument();
+    expect(screen.queryByText(/United States, E[DS]T/)).not.toBeInTheDocument();
   });
 
   it('renders time range with browser timezone', () => {
     render(<TimePickerTooltip timeRange={timeRange} timeZone="browser" />);
 
-    expect(screen.getByText('Local browser time')).toBeInTheDocument();
-    expect(screen.getByText('United States, EDT')).toBeInTheDocument(); // this was mocked at the beginning, in beforeAll block
+    expect(screen.getByText('Browser Time')).toBeInTheDocument();
+    expect(screen.getByText(/E[DS]T/)).toBeInTheDocument(); // this was mocked at the beginning, in beforeAll block. matches either daylight savings time or standard time
   });
 
   it('renders time range with specific timezone', () => {
     render(<TimePickerTooltip timeRange={timeRange} timeZone="Africa/Accra" />);
 
-    expect(screen.getByText('Ghana, GMT')).toBeInTheDocument();
+    expect(screen.getByText('Accra')).toBeInTheDocument();
+    expect(screen.getByText('GMT')).toBeInTheDocument();
   });
 });

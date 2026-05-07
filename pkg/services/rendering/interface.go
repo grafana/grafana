@@ -74,15 +74,6 @@ type ErrorOpts struct {
 	ErrorRenderUnavailable bool
 }
 
-type SanitizeSVGRequest struct {
-	Filename string
-	Content  []byte
-}
-
-type SanitizeSVGResponse struct {
-	Sanitized []byte
-}
-
 type Result struct {
 	FilePath string
 	FileName string
@@ -99,21 +90,11 @@ type RenderCSVResult struct {
 
 type renderFunc func(ctx context.Context, renderType RenderType, renderKey string, options Opts) (*RenderResult, error)
 type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) (*RenderCSVResult, error)
-type sanitizeFunc func(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 
 type renderKeyProvider interface {
 	get(ctx context.Context, opts AuthOpts) (string, error)
 	afterRequest(ctx context.Context, opts AuthOpts, renderKey string)
-}
-
-type SessionOpts struct {
-	Expiry                     time.Duration
-	RefreshExpiryOnEachRequest bool
-}
-
-type Session interface {
-	renderKeyProvider
-	Dispose(ctx context.Context)
+	validate(ctx context.Context, key string) (*RenderUser, bool)
 }
 
 type CapabilitySupportRequestResult struct {
@@ -121,16 +102,14 @@ type CapabilitySupportRequestResult struct {
 	SemverConstraint string
 }
 
-//go:generate mockgen -destination=mock.go -package=rendering github.com/grafana/grafana/pkg/services/rendering Service
+//go:generate go run go.uber.org/mock/mockgen@v0.5.2 -destination=mock.go -package=rendering github.com/grafana/grafana/pkg/services/rendering Service
 type Service interface {
 	IsAvailable(ctx context.Context) bool
 	Version() string
-	Render(ctx context.Context, renderType RenderType, opts Opts, session Session) (*RenderResult, error)
-	RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error)
-	RenderErrorImage(theme models.Theme, error error) (*RenderResult, error)
+	Render(ctx context.Context, renderType RenderType, opts Opts) (*RenderResult, error)
+	RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error)
+	RenderErrorImage(theme models.Theme, err error) (*RenderResult, error)
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
 	HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error)
 	IsCapabilitySupported(ctx context.Context, capability CapabilityName) error
-	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
-	SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 }

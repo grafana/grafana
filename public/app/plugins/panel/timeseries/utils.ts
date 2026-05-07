@@ -1,20 +1,22 @@
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldType,
   getDisplayProcessor,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   isBooleanUnit,
-  TimeRange,
+  type TimeRange,
+  type PanelData,
   cacheFieldDisplayNames,
   applyNullInsertThreshold,
   nullToValue,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/internal';
-import { GraphFieldConfig, LineInterpolation, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
-import { buildScaleKey } from '@grafana/ui/internal';
+import { type GraphFieldConfig, LineInterpolation, TooltipDisplayMode, type VizTooltipOptions } from '@grafana/schema';
+import { type AdHocFilterItem } from '@grafana/ui';
+import { buildScaleKey, FILTER_FOR_OPERATOR } from '@grafana/ui/internal';
 
-import { HeatmapTooltip } from '../heatmap/panelcfg.gen';
+import { type HeatmapTooltip } from '../heatmap/panelcfg.gen';
 
 type ScaleKey = string;
 
@@ -36,7 +38,7 @@ function reEnumFields(frames: DataFrame[]): DataFrame[] {
             allTextsByKey.set(scaleKey, allTexts);
           }
 
-          let idxs: number[] = field.values.toArray().slice();
+          let idxs: number[] = field.values.slice();
           let txts = field.config.type!.enum!.text!;
 
           // by-reference incrementing
@@ -147,14 +149,27 @@ export function prepareGraphableFields(
           break;
         case FieldType.number:
           hasValueField = useNumericX ? fieldIdx > 0 : true;
+
+          // we need to make sure all values in the array are numbers or null
+          // so, check all values and if we encounter a bad one, copy the array and
+          // replace all further-occuring non-numbers with null to make safe values array
+          let values = field.values;
+          let safeValues: unknown[] | undefined = undefined;
+
+          for (let i = 0; i < values.length; i++) {
+            let v = values[i];
+
+            if (!(Number.isFinite(v) || v == null)) {
+              safeValues ??= values.slice();
+              safeValues[i] = null;
+            }
+          }
+
+          safeValues ??= values;
+
           copy = {
             ...field,
-            values: field.values.map((v) => {
-              if (!(Number.isFinite(v) || v == null)) {
-                return null;
-              }
-              return v;
-            }),
+            values: safeValues,
           };
 
           fields.push(copy);
@@ -176,12 +191,12 @@ export function prepareGraphableFields(
             ...field.config,
             max: 1,
             min: 0,
-            custom,
+            custom: { ...custom },
           };
 
           // smooth and linear do not make sense
-          if (custom.lineInterpolation !== LineInterpolation.StepBefore) {
-            custom.lineInterpolation = LineInterpolation.StepAfter;
+          if (config.custom.lineInterpolation !== LineInterpolation.StepBefore) {
+            config.custom.lineInterpolation = LineInterpolation.StepAfter;
           }
 
           copy = {
@@ -242,20 +257,81 @@ const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) 
 
 export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
   let seriesIndex = 0;
-  frames.forEach((frame) => {
-    frame.fields.forEach((field, fieldIdx) => {
-      if (
-        fieldIdx !== skipFieldIdx &&
-        (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)
-      ) {
-        field.state = {
-          ...field.state,
-          seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
-        };
-        field.display = getDisplayProcessor({ field, theme });
+
+  const updateFieldDisplay = (field: Field, idx: number) => {
+    field.state = { ...field.state, seriesIndex: idx };
+    field.display = getDisplayProcessor({ field, theme });
+  };
+
+  const shouldProcessField = (field: Field, fieldIdx: number) => {
+    return (
+      fieldIdx !== skipFieldIdx &&
+      (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)
+    );
+  };
+
+  // Pre-pass to group main frames by refId
+  const mainFramesByRefId = new Map<string, DataFrame[]>();
+  for (const frame of frames) {
+    if (!frame.meta?.timeCompare?.isTimeShiftQuery && frame.refId) {
+      if (!mainFramesByRefId.has(frame.refId)) {
+        mainFramesByRefId.set(frame.refId, []);
       }
-    });
-  });
+      mainFramesByRefId.get(frame.refId)!.push(frame);
+    }
+  }
+
+  // Counter for comparison indices per baseRefId
+  const compareIndicesByRefId = new Map<string, number>();
+
+  for (const frame of frames) {
+    const isCompareFrame = frame.meta?.timeCompare?.isTimeShiftQuery;
+
+    if (isCompareFrame) {
+      const baseRefId = frame.refId?.replace('-compare', '');
+
+      if (baseRefId) {
+        // Get and increment the comparison index
+        let compareIndex = compareIndicesByRefId.get(baseRefId) ?? 0;
+        compareIndicesByRefId.set(baseRefId, compareIndex + 1);
+
+        // Get the matching main frame using the index
+        const mainFrames = mainFramesByRefId.get(baseRefId);
+        const mainFrame = mainFrames?.[compareIndex];
+
+        if (mainFrame && mainFrame.fields.length === frame.fields.length) {
+          // Match series indices with main frame
+          frame.fields.forEach((field, fieldIdx) => {
+            if (shouldProcessField(field, fieldIdx)) {
+              const mainField = mainFrame.fields[fieldIdx];
+              updateFieldDisplay(field, mainField.state?.seriesIndex ?? seriesIndex++);
+            }
+          });
+        } else {
+          // Fallback
+          frame.fields.forEach((field, fieldIdx) => {
+            if (shouldProcessField(field, fieldIdx)) {
+              updateFieldDisplay(field, seriesIndex++);
+            }
+          });
+        }
+      } else {
+        // Fallback when no baseRefId
+        frame.fields.forEach((field, fieldIdx) => {
+          if (shouldProcessField(field, fieldIdx)) {
+            updateFieldDisplay(field, seriesIndex++);
+          }
+        });
+      }
+    } else {
+      // Main frames
+      frame.fields.forEach((field, fieldIdx) => {
+        if (shouldProcessField(field, fieldIdx)) {
+          updateFieldDisplay(field, seriesIndex++);
+        }
+      });
+    }
+  }
 };
 
 export function getTimezones(timezones: string[] | undefined, defaultTimezone: string): string[] {
@@ -268,3 +344,111 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
 export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions | HeatmapTooltip) => {
   return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
 };
+
+export function getGroupedFilters(
+  frame: DataFrame,
+  seriesIdx: number,
+  getFiltersBasedOnGrouping: (filters: AdHocFilterItem[]) => AdHocFilterItem[]
+) {
+  const groupingFilters: AdHocFilterItem[] = [];
+  const xField = frame.fields[seriesIdx];
+
+  if (xField && xField.labels && xField.config.filterable) {
+    const seriesFilters: AdHocFilterItem[] = [];
+
+    Object.entries(xField.labels).forEach(([key, value]) => {
+      seriesFilters.push({
+        key,
+        operator: FILTER_FOR_OPERATOR,
+        value,
+      });
+    });
+
+    groupingFilters.push(...getFiltersBasedOnGrouping(seriesFilters));
+  }
+
+  return groupingFilters;
+}
+
+export const LTTB_THRESHOLD = 150;
+
+// adapted from https://github.com/pingec/downsample-lttb
+function lttbIndices(xs: number[], ys: number[], threshold: number): number[] {
+  const len = xs.length;
+  if (threshold >= len) {
+    return Array.from({ length: len }, (_, i) => i);
+  }
+
+  const indices = new Array(threshold);
+  indices[0] = 0;
+  indices[threshold - 1] = len - 1;
+
+  const bucketSize = (len - 2) / (threshold - 2);
+  let prevIdx = 0;
+
+  for (let i = 1; i < threshold - 1; i++) {
+    const bucketStart = Math.floor((i - 1) * bucketSize) + 1;
+    const bucketEnd = Math.min(Math.floor(i * bucketSize) + 1, len - 1);
+    const nextEnd = Math.min(Math.floor((i + 1) * bucketSize) + 1, len - 1);
+
+    let avgX = 0,
+      avgY = 0,
+      count = 0;
+    for (let j = bucketEnd; j < nextEnd; j++) {
+      avgX += xs[j];
+      avgY += ys[j];
+      count++;
+    }
+    if (count > 0) {
+      avgX /= count;
+      avgY /= count;
+    }
+
+    let maxArea = -1,
+      maxIdx = bucketStart;
+    for (let j = bucketStart; j < bucketEnd; j++) {
+      const area =
+        Math.abs((xs[prevIdx] - avgX) * (ys[j] - ys[prevIdx]) - (xs[prevIdx] - xs[j]) * (avgY - ys[prevIdx])) * 0.5;
+      if (area > maxArea) {
+        maxArea = area;
+        maxIdx = j;
+      }
+    }
+    indices[i] = maxIdx;
+    prevIdx = maxIdx;
+  }
+
+  return indices;
+}
+
+// Downsamples each frame using the first numeric field to compute LTTB indices,
+// then applies those indices to all fields. For frames with multiple numeric fields
+// the sampling is optimal for the first field only, which is acceptable for small
+// preview cards where pixel density already limits visible detail.
+export function lttbPreviewData(data: PanelData, threshold = LTTB_THRESHOLD): PanelData {
+  return {
+    ...data,
+    series: data.series.map((frame) => {
+      const timeField = frame.fields.find((f) => f.type === FieldType.time);
+      const numericField = frame.fields.find((f) => f.type === FieldType.number);
+      if (!timeField || !numericField || frame.length <= threshold) {
+        return frame;
+      }
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const indices = lttbIndices(timeField.values as number[], numericField.values as number[], threshold);
+
+      return {
+        ...frame,
+        length: indices.length,
+        fields: frame.fields.map((field) => ({
+          ...field,
+          values: indices.map((i) => field.values[i]),
+          ...(field.type === FieldType.time && {
+            // since lttb may pick points further apart than timeField.config.interval, we clear it out to avoid gap insertion
+            config: { ...field.config, interval: undefined },
+          }),
+        })),
+      };
+    }),
+  };
+}

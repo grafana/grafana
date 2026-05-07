@@ -1,17 +1,17 @@
-import { action } from '@storybook/addon-actions';
-import { useArgs, useEffect, useState } from '@storybook/preview-api';
-import type { Meta, StoryFn, StoryObj } from '@storybook/react';
-import { ComponentProps } from 'react';
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-webpack5';
+import { type ComponentProps } from 'react';
+import { action } from 'storybook/actions';
+import { useArgs, useEffect, useState } from 'storybook/preview-api';
 
 import { Field } from '../Forms/Field';
 
 import { MultiCombobox } from './MultiCombobox';
 import mdx from './MultiCombobox.mdx';
 import { generateOptions, fakeSearchAPI, generateGroupingOptions } from './storyUtils';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 
 const meta: Meta<typeof MultiCombobox> = {
-  title: 'Forms/MultiCombobox',
+  title: 'Inputs/MultiCombobox',
   component: MultiCombobox,
   parameters: {
     docs: {
@@ -46,12 +46,11 @@ type ManyOptionsArgs = storyArgs & { numberOfOptions?: number };
 
 type Story = StoryObj<typeof MultiCombobox>;
 
-export const Basic: Story = {
-  args: commonArgs,
-  render: (args) => {
-    const [{ value }, setArgs] = useArgs();
+const BasicStory: StoryFn<typeof MultiCombobox> = (args) => {
+  const [{ value }, setArgs] = useArgs();
 
-    return (
+  return (
+    <Field label="Country">
       <MultiCombobox
         {...args}
         value={value}
@@ -60,16 +59,49 @@ export const Basic: Story = {
           setArgs({ value: val });
         }}
       />
-    );
-  },
+    </Field>
+  );
 };
 
-export const AutoSize: Story = {
-  args: { ...commonArgs, width: 'auto', minWidth: 20 },
-  render: (args) => {
-    const [{ value }, setArgs] = useArgs();
+export const Basic: Story = {
+  args: commonArgs,
+  render: BasicStory,
+};
 
-    return (
+const WithInfoOptionStory: StoryFn<typeof MultiCombobox> = (args) => {
+  const [{ value }, setArgs] = useArgs();
+
+  return (
+    <Field label="Country">
+      <MultiCombobox
+        {...args}
+        value={value}
+        onChange={(val) => {
+          onChangeAction(val);
+          setArgs({ value: val });
+        }}
+      />
+    </Field>
+  );
+};
+
+export const WithInfoOption: Story = {
+  name: 'With infoOption',
+  args: {
+    ...commonArgs,
+    options: [
+      ...commonArgs.options,
+      { label: 'Can’t find your country? Select “Other” or contact an admin', value: '__INFO__', infoOption: true },
+    ],
+  },
+  render: WithInfoOptionStory,
+};
+
+const AutoSizeStory: StoryFn<typeof MultiCombobox> = (args) => {
+  const [{ value }, setArgs] = useArgs();
+
+  return (
+    <Field label="Country">
       <MultiCombobox
         {...args}
         value={value}
@@ -78,13 +110,17 @@ export const AutoSize: Story = {
           setArgs({ value: val });
         }}
       />
-    );
-  },
+    </Field>
+  );
+};
+
+export const AutoSize: Story = {
+  args: { ...commonArgs, width: 'auto', minWidth: 20 },
+  render: AutoSizeStory,
 };
 
 const ManyOptionsStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e4, ...args }) => {
   const [dynamicArgs, setArgs] = useArgs();
-
   const [options, setOptions] = useState<ComboboxOption[]>([]);
 
   useEffect(() => {
@@ -96,15 +132,17 @@ const ManyOptionsStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e4, ...
 
   const { onChange, ...rest } = args;
   return (
-    <MultiCombobox
-      {...rest}
-      {...dynamicArgs}
-      options={options}
-      onChange={(opts) => {
-        setArgs({ value: opts });
-        onChangeAction(opts);
-      }}
-    />
+    <Field label="Lots of options">
+      <MultiCombobox
+        {...rest}
+        {...dynamicArgs}
+        options={options}
+        onChange={(opts) => {
+          setArgs({ value: opts });
+          onChangeAction(opts);
+        }}
+      />
+    </Field>
   );
 };
 
@@ -119,7 +157,6 @@ export const ManyOptions: StoryObj<ManyOptionsArgs> = {
 
 const ManyOptionsGroupedStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e5, ...args }) => {
   const [dynamicArgs, setArgs] = useArgs();
-
   const [options, setOptions] = useState<ComboboxOption[]>([]);
 
   useEffect(() => {
@@ -130,15 +167,17 @@ const ManyOptionsGroupedStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1
   }, [numberOfOptions]);
   const { onChange, ...rest } = args;
   return (
-    <MultiCombobox
-      {...rest}
-      {...dynamicArgs}
-      options={options}
-      onChange={(opts) => {
-        setArgs({ value: opts });
-        onChangeAction(opts);
-      }}
-    />
+    <Field label="Lots of options with groups">
+      <MultiCombobox
+        {...rest}
+        {...dynamicArgs}
+        options={options}
+        onChange={(opts) => {
+          setArgs({ value: opts });
+          onChangeAction(opts);
+        }}
+      />
+    </Field>
   );
 };
 
@@ -156,6 +195,26 @@ function loadOptionsWithLabels(inputValue: string) {
   return fakeSearchAPI(`http://example.com/search?errorOnQuery=break&query=${inputValue}`);
 }
 
+const AsyncOptionsWithLabelsStory: StoryFn<typeof MultiCombobox> = (args) => {
+  const [dynamicArgs, setArgs] = useArgs();
+
+  return (
+    <Field
+      label='Async options fn returns objects like { label: "Option 69", value: "69" }'
+      description="Search for 'break' to see an error"
+    >
+      <MultiCombobox
+        {...args}
+        {...dynamicArgs}
+        onChange={(val) => {
+          onChangeAction(val);
+          setArgs({ value: val });
+        }}
+      />
+    </Field>
+  );
+};
+
 export const AsyncOptionsWithLabels: Story = {
   name: 'Async - options returns labels',
   args: {
@@ -163,25 +222,7 @@ export const AsyncOptionsWithLabels: Story = {
     value: [{ label: 'Option 69', value: '69' }],
     placeholder: 'Select an option',
   },
-  render: (args) => {
-    const [dynamicArgs, setArgs] = useArgs();
-
-    return (
-      <Field
-        label='Async options fn returns objects like { label: "Option 69", value: "69" }'
-        description="Search for 'break' to see an error"
-      >
-        <MultiCombobox
-          {...args}
-          {...dynamicArgs}
-          onChange={(val) => {
-            onChangeAction(val);
-            setArgs({ value: val });
-          }}
-        />
-      </Field>
-    );
-  },
+  render: AsyncOptionsWithLabelsStory,
 };
 
 function loadOptionsOnlyValues(inputValue: string) {
@@ -191,6 +232,26 @@ function loadOptionsOnlyValues(inputValue: string) {
   );
 }
 
+const AsyncOptionsWithOnlyValuesStory: StoryFn<typeof MultiCombobox> = (args) => {
+  const [dynamicArgs, setArgs] = useArgs();
+
+  return (
+    <Field
+      label='Async options fn returns objects like { value: "69" }'
+      description="Search for 'break' to see an error"
+    >
+      <MultiCombobox
+        {...args}
+        {...dynamicArgs}
+        onChange={(val) => {
+          onChangeAction(val);
+          setArgs({ value: val });
+        }}
+      />
+    </Field>
+  );
+};
+
 export const AsyncOptionsWithOnlyValues: Story = {
   name: 'Async - options returns only values',
   args: {
@@ -198,23 +259,5 @@ export const AsyncOptionsWithOnlyValues: Story = {
     value: [{ value: 'Option 69' }],
     placeholder: 'Select an option',
   },
-  render: (args) => {
-    const [dynamicArgs, setArgs] = useArgs();
-
-    return (
-      <Field
-        label='Async options fn returns objects like { value: "69" }'
-        description="Search for 'break' to see an error"
-      >
-        <MultiCombobox
-          {...args}
-          {...dynamicArgs}
-          onChange={(val) => {
-            onChangeAction(val);
-            setArgs({ value: val });
-          }}
-        />
-      </Field>
-    );
-  },
+  render: AsyncOptionsWithOnlyValuesStory,
 };

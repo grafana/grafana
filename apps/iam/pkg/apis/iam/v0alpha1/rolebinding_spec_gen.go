@@ -15,6 +15,11 @@ func NewRoleBindingspecSubject() *RoleBindingspecSubject {
 	return &RoleBindingspecSubject{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for RoleBindingspecSubject.
+func (RoleBindingspecSubject) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingspecSubject"
+}
+
 // +k8s:openapi-gen=true
 type RoleBindingspecRoleRef struct {
 	// kind of role
@@ -28,17 +33,28 @@ func NewRoleBindingspecRoleRef() *RoleBindingspecRoleRef {
 	return &RoleBindingspecRoleRef{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for RoleBindingspecRoleRef.
+func (RoleBindingspecRoleRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingspecRoleRef"
+}
+
 // +k8s:openapi-gen=true
 type RoleBindingSpec struct {
-	Subjects []RoleBindingspecSubject `json:"subjects"`
-	RoleRef  RoleBindingspecRoleRef   `json:"roleRef"`
+	Subject  RoleBindingspecSubject   `json:"subject"`
+	RoleRefs []RoleBindingspecRoleRef `json:"roleRefs"`
 }
 
 // NewRoleBindingSpec creates a new RoleBindingSpec object.
 func NewRoleBindingSpec() *RoleBindingSpec {
 	return &RoleBindingSpec{
-		RoleRef: *NewRoleBindingspecRoleRef(),
+		Subject:  *NewRoleBindingspecSubject(),
+		RoleRefs: []RoleBindingspecRoleRef{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for RoleBindingSpec.
+func (RoleBindingSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -48,14 +64,22 @@ const (
 	RoleBindingSpecSubjectKindUser           RoleBindingSpecSubjectKind = "User"
 	RoleBindingSpecSubjectKindServiceAccount RoleBindingSpecSubjectKind = "ServiceAccount"
 	RoleBindingSpecSubjectKindTeam           RoleBindingSpecSubjectKind = "Team"
-	RoleBindingSpecSubjectKindBasicRole      RoleBindingSpecSubjectKind = "BasicRole"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for RoleBindingSpecSubjectKind.
+func (RoleBindingSpecSubjectKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingSpecSubjectKind"
+}
 
 // +k8s:openapi-gen=true
 type RoleBindingSpecRoleRefKind string
 
 const (
 	RoleBindingSpecRoleRefKindRole       RoleBindingSpecRoleRefKind = "Role"
-	RoleBindingSpecRoleRefKindCoreRole   RoleBindingSpecRoleRefKind = "CoreRole"
 	RoleBindingSpecRoleRefKindGlobalRole RoleBindingSpecRoleRefKind = "GlobalRole"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for RoleBindingSpecRoleRefKind.
+func (RoleBindingSpecRoleRefKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingSpecRoleRefKind"
+}

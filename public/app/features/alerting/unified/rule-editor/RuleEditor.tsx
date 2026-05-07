@@ -1,12 +1,13 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type NavModelItem } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 
 import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
+import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { useRulesAccess } from '../utils/accessControlHooks';
 import * as ruleId from '../utils/rule-id';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
@@ -28,7 +29,7 @@ const RuleEditor = () => {
   const isManualRestore = useManualRestore();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
-  const { t } = useTranslate();
+
   if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
     return (
       <AlertWarning title={t('alerting.rule-editor.get-content.title-cannot-create-rules', 'Cannot create rules')}>
@@ -79,7 +80,6 @@ function NewRuleEditor() {
   const prefill = useDefaultsFromQuery();
   const isManualRestore = useManualRestore();
   const { type = '', identifier = '' } = useRuleEditorPathParams();
-  const { t } = useTranslate();
 
   const isExisting = Boolean(identifier);
   const isRecordingRule = RECORDING_TYPE.includes(type);
@@ -92,9 +92,11 @@ function NewRuleEditor() {
     ? t('alerting.editor.edit-recording-rule', 'Edit recording rule')
     : t('alerting.editor.edit-alert-rule', 'Edit alert rule');
 
+  const navId = getAlertRulesNavId();
+
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={navId}
       pageNav={{
         id: 'alert-rule-add',
         text: isExisting ? editText : newText,

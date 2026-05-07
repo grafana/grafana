@@ -1,12 +1,13 @@
 import { useState } from 'react';
 
-import { IconName } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type IconName } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, config } from '@grafana/runtime';
 import { Dropdown, Menu, MenuGroup, ButtonGroup, Button } from '@grafana/ui';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { selectPanes } from './state/selectors';
 import { constructAbsoluteUrl } from './utils/links';
@@ -26,9 +27,7 @@ interface ShortLinkMenuItemData {
   absTime: boolean;
 }
 
-export function ShortLinkButtonMenu() {
-  const { t } = useTranslate();
-
+export function ShortLinkButtonMenu({ hideText }: { hideText: boolean }) {
   const defaultMode: ShortLinkMenuItemData = {
     key: 'copy-link',
     label: t('explore.toolbar.copy-shortened-link', 'Copy shortened URL'),
@@ -136,21 +135,21 @@ export function ShortLinkButtonMenu() {
       <Button
         tooltip={lastSelected.label}
         icon={lastSelected.icon}
-        size="sm"
         variant="secondary"
         onClick={() => {
           const url = lastSelected.getUrl();
           onCopyLink(lastSelected.shorten, lastSelected.absTime, url);
         }}
+        data-testid={selectors.pages.Explore.toolbar.share}
         aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened URL')}
       >
-        <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>
+        {!hideText && <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>}
       </Button>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
         <Button
           variant={'secondary'}
-          size="sm"
           icon={isOpen ? 'angle-up' : 'angle-down'}
+          data-testid={selectors.pages.Explore.toolbar.copyLink}
           aria-label={t('explore.toolbar.copy-shortened-link-menu', 'Open copy link options')}
         />
       </Dropdown>

@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../../../../datasource';
 import {
+  type CloudWatchMetricsQuery,
   QueryEditorExpressionType,
-  QueryEditorGroupByExpression,
+  type QueryEditorGroupByExpression,
   QueryEditorPropertyType,
-} from '../../../../expressions';
+} from '../../../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../../../datasource';
 import { useDimensionKeys, useIsMonitoringAccount } from '../../../../hooks';
-import { CloudWatchMetricsQuery } from '../../../../types';
 
 import {
   getFlattenedGroupBys,

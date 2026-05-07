@@ -3,50 +3,50 @@ import { groupBy, size } from 'lodash';
 import { from, isObservable, Observable } from 'rxjs';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   createDataFrame,
-  DataFrame,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceJsonData,
+  type DataFrame,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceJsonData,
   DataTopic,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
-  DateTimeInput,
-  Field,
+  type DateTimeInput,
+  type Field,
   FieldCache,
   FieldColorModeId,
   FieldType,
   findCommonLabels,
   findUniqueLabels,
   getTimeField,
-  Labels,
+  type Labels,
   LoadingState,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   LogsDedupStrategy,
-  LogsMetaItem,
+  type LogsMetaItem,
   LogsMetaKind,
-  LogsModel,
-  LogsVolumeCustomMetaData,
+  type LogsModel,
+  type LogsVolumeCustomMetaData,
   LogsVolumeType,
   rangeUtil,
-  ScopedVars,
+  type ScopedVars,
   sortDataFrame,
   textUtil,
   toDataFrame,
   toUtc,
 } from '@grafana/data';
 import { SIPrefix } from '@grafana/data/internal';
-import { config } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
-import { LokiQueryDirection } from 'app/plugins/datasource/loki/types';
+import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 
-import { LogsFrame, parseLogsFrame } from './logsFrame';
+import { type LogsFrame, parseLogsFrame } from './logsFrame';
 import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
@@ -101,16 +101,6 @@ export function dedupLogRows(rows: LogRowModel[], strategy?: LogsDedupStrategy):
     }
     return result;
   }, []);
-}
-
-export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<string>): LogRowModel[] {
-  if (hiddenLogLevels.size === 0) {
-    return logRows;
-  }
-
-  return logRows.filter((row: LogRowModel) => {
-    return !hiddenLogLevels.has(row.logLevel);
-  });
 }
 
 interface Series {
@@ -429,14 +419,16 @@ export function logSeriesToLogsModel(
       }
 
       let logLevel = LogLevel.unknown;
-      const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels?.level ?? labels?.detected_level);
+      const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels?.detected_level ?? labels?.level);
       if (typeof logLevelKey === 'number' || typeof logLevelKey === 'string') {
         logLevel = getLogLevelFromKey(logLevelKey);
       } else {
         logLevel = getLogLevel(entry);
       }
 
-      const datasourceType = queries.find((query) => query.refId === series.refId)?.datasource?.type;
+      const datasource = queries.find((query) => query.refId === series.refId)?.datasource;
+      const datasourceType = datasource?.type;
+      const datasourceUid = datasource?.uid;
 
       const row: LogRowModel = {
         entryFieldIndex: stringField.index,
@@ -458,6 +450,7 @@ export function logSeriesToLogsModel(
         // prepend refId to uid to make it unique across all series in a case when series contain duplicates
         uid: `${series.refId}_${idField ? idField.values[j] : j.toString()}`,
         datasourceType,
+        datasourceUid,
       };
 
       if (idField !== null) {
@@ -535,7 +528,7 @@ export function logSeriesToLogsModel(
   if (totalBytes > 0) {
     const { text, suffix } = SIPrefix('B')(totalBytes);
     meta.push({
-      label: 'Total bytes processed',
+      label: t('logs.log-series-to-logs-model.label.total-bytes-processed', 'Total bytes processed'),
       value: `${text} ${suffix}`,
       kind: LogsMetaKind.String,
     });
@@ -582,8 +575,7 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
         metaLimitValue = `${limit} lines shown — ${coverage}% (${rangeUtil.msRangeToTimeString(visibleRangeMs)}) of ${rangeUtil.msRangeToTimeString(requestedRangeMs)}`;
       }
     } else {
-      const description = config.featureToggles.logsInfiniteScrolling ? 'displayed' : 'returned';
-      metaLimitValue = `${logsModel.rows.length} ${logsModel.rows.length > 1 ? 'lines' : 'line'} ${description}`;
+      metaLimitValue = `${logsModel.rows.length} ${logsModel.rows.length > 1 ? 'lines' : 'line'} displayed`;
     }
 
     logsModelMeta[limitIndex] = {
@@ -614,7 +606,7 @@ function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean) {
       lineColor: color,
       pointColor: color,
       fillColor: color,
-      lineWidth: 1,
+      lineWidth: 0,
       fillOpacity: 100,
       stacking: {
         mode: StackingMode.Normal,

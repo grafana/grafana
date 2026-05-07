@@ -1,10 +1,10 @@
 import { map } from 'rxjs/operators';
 
-import { TimeZone } from '@grafana/schema';
+import { type TimeZone } from '@grafana/schema';
 
-import { dateTimeParse, DateTimeOptionsWhenParsing } from '../../datetime/parser';
-import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
-import { SynchronousDataTransformerInfo } from '../../types/transformations';
+import { dateTimeParse, type DateTimeOptionsWhenParsing } from '../../datetime/parser';
+import { type DataFrame, type EnumFieldConfig, type Field, FieldType } from '../../types/dataFrame';
+import { type SynchronousDataTransformerInfo } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -168,6 +168,11 @@ function fieldToNumberField(field: Field): Field {
       toBeConverted = toBeConverted.replace(/,/g, '');
     }
 
+    if (toBeConverted == null || toBeConverted === '') {
+      numValues[n] = null;
+      continue;
+    }
+
     const number = +toBeConverted;
 
     numValues[n] = Number.isFinite(number) ? number : null;
@@ -218,7 +223,7 @@ export function fieldToStringField(
         if (joinWith?.length && Array.isArray(v)) {
           return v.join(joinWith);
         }
-        return field.type === FieldType.other ? JSON.stringify(v) : `${v}`;
+        return JSON.stringify(v);
       });
       break;
 

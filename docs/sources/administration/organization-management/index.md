@@ -14,7 +14,7 @@ labels:
     - oss
 menuTitle: Manage organizations
 title: Manage organizations
-weight: 200
+weight: 3500
 ---
 
 # Manage organizations
@@ -39,7 +39,7 @@ The following table summarizes the resources you can share and/or isolate using 
 | Notification channels    | Isolate only     |
 | Annotations              | Isolate only     |
 | Reports                  | Isolate only     |
-| API keys                 | Isolate only     |
+| Service accounts         | Isolate only     |
 | Authentication providers | Share only       |
 | Configuration settings   | Share only       |
 | Licenses                 | Share            |
@@ -88,9 +88,9 @@ For more information about adding users to an organization, refer to [Add a user
 
 This action permanently removes an organization from your Grafana server.
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 Deleting the organization also deletes all teams and dashboards associated the organization.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Before you begin
 

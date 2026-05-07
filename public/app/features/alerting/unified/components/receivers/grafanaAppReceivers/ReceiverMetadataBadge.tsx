@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, LinkButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { ReceiverPluginMetadata } from './useReceiversMetadata';
+import { type ReceiverPluginMetadata } from './useReceiversMetadata';
 
 interface Props {
   metadata: ReceiverPluginMetadata;
@@ -25,7 +26,14 @@ export const ReceiverMetadataBadge = ({ metadata: { icon, title, externalUrl, wa
         <span>{title}</span>
       </Stack>
       {externalUrl && (
-        <LinkButton icon="external-link-alt" href={externalUrl} target="_blank" variant="secondary" size="sm" />
+        <LinkButton
+          aria-label={t('alerting.receiver-metadata-badge.aria-label-open-external-link', 'Open external link')}
+          icon="external-link-alt"
+          href={externalUrl}
+          target="_blank"
+          variant="secondary"
+          size="sm"
+        />
       )}
     </Stack>
   );

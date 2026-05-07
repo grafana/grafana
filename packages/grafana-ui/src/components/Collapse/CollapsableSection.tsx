@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
-import { ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
@@ -25,6 +24,11 @@ export interface Props {
   unmountContentWhenClosed?: boolean;
 }
 
+/**
+ * A simple container for enabling collapsing/expanding of content.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-collapsablesection--docs
+ */
 export const CollapsableSection = ({
   label,
   isOpen,
@@ -58,7 +62,7 @@ export const CollapsableSection = ({
       toggleInternalOpenState(!internalOpenState);
     }
   };
-  const { current: id } = useRef(uniqueId());
+  const id = useId();
 
   const buttonLabelId = labelId ?? `collapse-label-${id}`;
 
@@ -92,7 +96,7 @@ export const CollapsableSection = ({
           {loading ? (
             <Spinner className={styles.spinner} />
           ) : (
-            <Icon name={isSectionOpen ? 'angle-up' : 'angle-down'} className={styles.icon} />
+            <Icon name={isSectionOpen ? 'angle-down' : 'angle-right'} className={styles.icon} />
           )}
         </button>
         <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
@@ -107,21 +111,24 @@ export const CollapsableSection = ({
 const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   header: css({
     display: 'flex',
+    alignItems: 'center',
     cursor: 'pointer',
     boxSizing: 'border-box',
-    flexDirection: 'row-reverse',
     position: 'relative',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     fontSize: theme.typography.size.lg,
     padding: `${theme.spacing(0.5)} 0`,
     '&:focus-within': getFocusStyles(theme),
   }),
   button: css({
     all: 'unset',
+    marginRight: theme.spacing(1),
     '&:focus-visible': {
       outline: 'none',
       outlineOffset: 'unset',
-      transition: 'none',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'none',
+      },
       boxShadow: 'none',
     },
   }),
@@ -141,6 +148,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   }),
   label: css({
     display: 'flex',
+    flex: '1 1 auto',
     fontWeight: theme.typography.fontWeightMedium,
     color: theme.colors.text.maxContrast,
   }),

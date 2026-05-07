@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
-import { createFieldConfigRegistry, SetFieldConfigOptionsArgs } from '@grafana/data';
-import { GraphFieldConfig, TableSparklineCellOptions } from '@grafana/schema';
-import { VerticalGroup, Field, useStyles2 } from '@grafana/ui';
+import { createFieldConfigRegistry, type SetFieldConfigOptionsArgs } from '@grafana/data';
+import { type GraphFieldConfig, type TableSparklineCellOptions } from '@grafana/schema';
+import { Field, useStyles2 } from '@grafana/ui';
 import { defaultSparklineCellConfig } from '@grafana/ui/internal';
 
 import { getGraphFieldConfig } from '../../timeseries/config';
-import { TableCellEditorProps } from '../TableCellOptionEditor';
+import { type TableCellEditorProps } from '../TableCellOptionEditor';
 
 type OptionKey = keyof TableSparklineCellOptions;
 
@@ -51,8 +51,10 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
 
   const values = { ...defaultSparklineCellConfig, ...cellOptions };
 
+  const htmlIdBase = useId();
+
   return (
-    <VerticalGroup>
+    <>
       {registry.list(optionIds.map((id) => `custom.${id}`)).map((item) => {
         if (item.showIf && !item.showIf(values)) {
           return null;
@@ -61,17 +63,18 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
         const path = item.path;
 
         return (
-          <Field label={item.name} key={item.id} className={style.field}>
+          <Field key={item.id} noMargin label={item.name} className={style.field}>
             <Editor
               onChange={(val) => onChange({ ...cellOptions, [path]: val })}
               value={(isOptionKey(path, values) ? values[path] : undefined) ?? item.defaultValue}
               item={item}
               context={{ data: [] }}
+              id={`${htmlIdBase}${item.id}`}
             />
           </Field>
         );
       })}
-    </VerticalGroup>
+    </>
   );
 };
 

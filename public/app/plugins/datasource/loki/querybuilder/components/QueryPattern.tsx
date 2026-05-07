@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { RawQuery } from '@grafana/plugin-ui';
 import { Button, Card, useStyles2 } from '@grafana/ui';
 
 import logqlGrammar from '../../syntax';
 import { lokiQueryModeller } from '../LokiQueryModeller';
-import { LokiQueryPattern } from '../types';
+import { type LokiQueryPattern } from '../types';
 
 type Props = {
   pattern: LokiQueryPattern;
@@ -25,7 +25,7 @@ export const QueryPattern = (props: Props) => {
   const lang = { grammar: logqlGrammar, name: 'logql' };
 
   return (
-    <Card className={styles.card}>
+    <Card noMargin className={styles.card}>
       <Card.Heading>{pattern.name}</Card.Heading>
       <div className={styles.rawQueryContainer}>
         <RawQuery

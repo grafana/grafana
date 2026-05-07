@@ -8,5 +8,9 @@
       "cache": true
     }
   },
+  "tui": {
+    "autoExit": true,
+    "enabled": false
+  },
   "defaultBase": "main"
 }

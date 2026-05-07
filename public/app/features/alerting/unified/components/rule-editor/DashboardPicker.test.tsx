@@ -1,7 +1,9 @@
 import { noop } from 'lodash';
-import { Props } from 'react-virtualized-auto-sizer';
+import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
+
+import { config } from '@grafana/runtime';
 
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
@@ -27,6 +29,8 @@ const ui = {
 
 describe('DashboardPicker', () => {
   beforeEach(() => {
+    config.featureToggles.kubernetesDashboards = false;
+
     mockDashboardApi(server).search([
       mockDashboardSearchItem({ uid: 'dash-1', type: DashboardSearchItemType.DashDB, title: 'Dashboard 1' }),
       mockDashboardSearchItem({ uid: 'dash-2', type: DashboardSearchItemType.DashDB, title: 'Dashboard 2' }),

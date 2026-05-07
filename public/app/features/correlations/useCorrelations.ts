@@ -1,20 +1,20 @@
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import { getDataSourceSrv, FetchResponse, CorrelationData, CorrelationsData } from '@grafana/runtime';
+import { getDataSourceSrv, type FetchResponse, type CorrelationData, type CorrelationsData } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import {
-  Correlation,
-  CreateCorrelationParams,
-  CreateCorrelationResponse,
-  GetCorrelationsParams,
-  RemoveCorrelationParams,
-  RemoveCorrelationResponse,
-  UpdateCorrelationParams,
-  UpdateCorrelationResponse,
+  type Correlation,
+  type CreateCorrelationParams,
+  type CreateCorrelationResponse,
+  type GetCorrelationsParams,
+  type RemoveCorrelationParams,
+  type RemoveCorrelationResponse,
+  type UpdateCorrelationParams,
+  type UpdateCorrelationResponse,
 } from './types';
-import { correlationsLogger } from './utils';
 
 export interface CorrelationsResponse {
   correlations: Correlation[];
@@ -23,7 +23,7 @@ export interface CorrelationsResponse {
   totalCount: number;
 }
 
-const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {
+export const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {
   const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
   const targetDatasource =
     correlation.type === 'query' ? getDataSourceSrv().getInstanceSettings(correlation.targetUID) : undefined;
@@ -32,7 +32,7 @@ const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): 
   // This logging is to check if there are any customers who did not migrate existing correlations.
   // See Deprecation Notice in https://github.com/grafana/grafana/pull/72258 for more details
   if (correlation?.orgId === undefined || correlation?.orgId === null || correlation?.orgId === 0) {
-    correlationsLogger.logWarning('Invalid correlation config: Missing org id.');
+    getLogger('features.correlations').logWarning('Invalid correlation config: Missing org id.');
   }
 
   if (
@@ -60,7 +60,7 @@ const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): 
     };
   }
 
-  correlationsLogger.logWarning(`Invalid correlation config: Missing source or target.`, {
+  getLogger('features.correlations').logWarning(`Invalid correlation config: Missing source or target.`, {
     source: JSON.stringify(sourceDatasource),
     target: JSON.stringify(targetDatasource),
   });
@@ -90,8 +90,8 @@ export const useCorrelations = () => {
   const { backend } = useGrafana();
 
   const [getInfo, get] = useAsyncFn<(params: GetCorrelationsParams) => Promise<CorrelationsData>>(
-    (params) =>
-      lastValueFrom(
+    async (params) => {
+      return lastValueFrom(
         backend.fetch<CorrelationsResponse>({
           url: '/api/datasources/correlations',
           params: { page: params.page },
@@ -100,13 +100,15 @@ export const useCorrelations = () => {
         })
       )
         .then(getData)
-        .then(toEnrichedCorrelationsData),
+        .then(toEnrichedCorrelationsData);
+    },
+
     [backend]
   );
 
   const [createInfo, create] = useAsyncFn<(params: CreateCorrelationParams) => Promise<CorrelationData>>(
-    ({ sourceUID, ...correlation }) =>
-      backend
+    async ({ sourceUID, ...correlation }) => {
+      return backend
         .post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation)
         .then((response) => {
           const enrichedCorrelation = toEnrichedCorrelationData(response.result);
@@ -115,7 +117,8 @@ export const useCorrelations = () => {
           } else {
             throw new Error('invalid sourceUID');
           }
-        }),
+        });
+    },
     [backend]
   );
 

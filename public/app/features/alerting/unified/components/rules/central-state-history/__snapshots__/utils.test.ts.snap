@@ -53,7 +53,11 @@ exports[`historyResultToDataFrame should decode and filter example1 1`] = `
         "name": "time",
         "type": "time",
         "values": [
+          1727189670000,
           1727189680000,
+          1727189700000,
+          1727189690000,
+          1727189710000,
         ],
       },
       {
@@ -61,11 +65,15 @@ exports[`historyResultToDataFrame should decode and filter example1 1`] = `
         "name": "value",
         "type": "number",
         "values": [
-          1,
+          11,
+          2,
+          2,
+          8,
+          9,
         ],
       },
     ],
-    "length": 1,
+    "length": 5,
   },
 ]
 `;
@@ -85,6 +93,10 @@ exports[`historyResultToDataFrame should decode and filter example2 1`] = `
         "type": "time",
         "values": [
           1727189670000,
+          1727189680000,
+          1727189700000,
+          1727189690000,
+          1727189710000,
         ],
       },
       {
@@ -92,11 +104,15 @@ exports[`historyResultToDataFrame should decode and filter example2 1`] = `
         "name": "value",
         "type": "number",
         "values": [
+          11,
+          2,
+          2,
           8,
+          9,
         ],
       },
     ],
-    "length": 1,
+    "length": 5,
   },
 ]
 `;

@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/heatmap/panelcfg.cue file.
+
 import * as ui from '@grafana/schema';
 
 /**
@@ -183,9 +185,14 @@ export interface RowsHeatmapOptions {
    * Sets the name of the cell when not calculating from data
    */
   value?: string;
+  /**
+   * Controls the scale distribution of the y-axis buckets
+   */
+  yBucketScale?: ui.ScaleDistributionConfig;
 }
 
 export interface Options {
+  annotations?: ui.VizAnnotations;
   /**
    * Controls if the heatmap should be calculated from data
    */

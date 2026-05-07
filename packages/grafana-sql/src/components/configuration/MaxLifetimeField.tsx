@@ -1,7 +1,8 @@
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Field, Icon, Label, Stack, Tooltip } from '@grafana/ui';
 
-import { SQLOptions } from '../../types';
+import { type SQLOptions } from '../../types';
 
 import { NumberInput } from './NumberInput';
 
@@ -13,15 +14,20 @@ interface Props {
 export function MaxLifetimeField({ labelWidth, onMaxLifetimeChanged, jsonData }: Props) {
   return (
     <Field
+      noMargin
       label={
         <Label>
           <Stack gap={0.5}>
-            <span>Max lifetime</span>
+            <span>
+              <Trans i18nKey="grafana-sql.components.connection-limits.max-lifetime">Max lifetime</Trans>
+            </span>
             <Tooltip
               content={
                 <span>
-                  The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused
-                  forever.
+                  <Trans i18nKey="grafana-sql.components.connection-limits.content-max-lifetime">
+                    The maximum amount of time in seconds a connection may be reused. If set to 0, connections are
+                    reused forever.
+                  </Trans>
                 </span>
               }
             >

@@ -1,13 +1,14 @@
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 
-import { AzureCredentials, AzureAuthType } from '@grafana/azure-sdk';
-import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type AzureCredentials, type AzureAuthType } from '@grafana/azure-sdk';
+import { type SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Select, Input } from '@grafana/ui';
 
 export interface Props {
   managedIdentityEnabled: boolean;
   azureEntraPasswordCredentialsEnabled: boolean;
+  userIdentityEnabled: boolean;
   credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
@@ -22,14 +23,25 @@ export const AzureCredentialsForm = (props: Props) => {
     azureCloudOptions,
     onCredentialsChange,
     disabled,
+    userIdentityEnabled,
   } = props;
-  const { t } = useTranslate();
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
+    const defaultAuthType = (() => {
+      if (managedIdentityEnabled) {
+        return 'msi';
+      }
+
+      if (userIdentityEnabled) {
+        return 'currentuser';
+      }
+
+      return 'clientsecret';
+    })();
     if (onCredentialsChange) {
       const updated: AzureCredentials = {
         ...credentials,
-        authType: selected.value || 'msi',
+        authType: selected.value || defaultAuthType,
       };
       onCredentialsChange(updated);
     }
@@ -132,6 +144,13 @@ export const AzureCredentialsForm = (props: Props) => {
       value: 'ad-password',
       label: t('azureauth.azure-credentials-form.auth-options-azure-entra', 'Azure Entra Password'),
     });
+
+    if (userIdentityEnabled) {
+      authTypeOptions.unshift({
+        value: 'currentuser',
+        label: 'Current User',
+      });
+    }
   }
 
   return (
@@ -180,7 +199,7 @@ export const AzureCredentialsForm = (props: Props) => {
           >
             <Input
               width={45}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.tenantId || ''}
               onChange={onTenantIdChange}
@@ -197,7 +216,7 @@ export const AzureCredentialsForm = (props: Props) => {
           >
             <Input
               width={45}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.clientId || ''}
               onChange={onClientIdChange}
@@ -242,7 +261,7 @@ export const AzureCredentialsForm = (props: Props) => {
                 <Input
                   width={45}
                   aria-label={t('azureauth.azure-credentials-form.aria-label-client-secret', 'Client Secret')}
-                  // eslint-disable-next-line @grafana/no-untranslated-strings
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.clientSecret || ''}
                   onChange={onClientSecretChange}

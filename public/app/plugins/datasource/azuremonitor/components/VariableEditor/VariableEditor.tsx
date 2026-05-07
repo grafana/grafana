@@ -2,19 +2,22 @@ import { get, isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Alert, Field, Select, Space } from '@grafana/ui';
 
 import UrlBuilder from '../../azure_monitor/url_builder';
-import DataSource from '../../datasource';
+import { AzureQueryType } from '../../dataquery.gen';
+import type DataSource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
+import { type AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorOption } from '../../types/types';
 import useLastError from '../../utils/useLastError';
-import ArgQueryEditor from '../ArgQueryEditor';
-import LogsQueryEditor from '../LogsQueryEditor';
+import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
+import LogsQueryEditor from '../LogsQueryEditor/LogsQueryEditor';
+import { parseResourceURI } from '../ResourcePicker/utils';
 
 import GrafanaTemplateVariableFnInput from './GrafanaTemplateVariableFn';
 
@@ -28,7 +31,7 @@ const removeOption: SelectableValue = { label: '-', value: '' };
 
 const VariableEditor = (props: Props) => {
   const { query, onChange, datasource } = props;
-  const { t } = useTranslate();
+
   const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
     { label: 'Subscriptions', value: AzureQueryType.SubscriptionsQuery },
     { label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery },
@@ -182,7 +185,12 @@ const VariableEditor = (props: Props) => {
   useEffect(() => {
     if (subscription && resourceGroup && namespace) {
       datasource.getResourceNames(subscription, resourceGroup, namespace).then((resources) => {
-        setResources(resources.map((s) => ({ label: s.name, value: s.name })));
+        setResources(
+          resources.map((s) => {
+            const parsedResource = parseResourceURI(s.id);
+            return { label: s.name, value: parsedResource.resourceName };
+          })
+        );
       });
     }
   }, [datasource, subscription, resourceGroup, namespace]);

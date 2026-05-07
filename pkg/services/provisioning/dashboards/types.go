@@ -69,11 +69,17 @@ func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *con
 	dash.Dashboard = dashboards.NewDashboardFromJson(data)
 	dash.UpdatedAt = lastModified
 	dash.Overwrite = true
+	if dash.Dashboard.OrgID > 0 && dash.Dashboard.OrgID != cfg.OrgID {
+		return nil, fmt.Errorf("dashboard orgID (%d) does not match provisioning provider orgID (%d)", dash.Dashboard.OrgID, cfg.OrgID)
+	}
 	dash.OrgID = cfg.OrgID
 	dash.Dashboard.OrgID = cfg.OrgID
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 	// nolint:staticcheck
 	dash.Dashboard.FolderID = folderID
+	if dash.Dashboard.FolderUID != "" && folderUID != dash.Dashboard.FolderUID {
+		return nil, fmt.Errorf("dashboard folderUID (%q) does not match provisioning provider folderUID (%q)", dash.Dashboard.FolderUID, folderUID)
+	}
 	dash.Dashboard.FolderUID = folderUID
 
 	if dash.Dashboard.Title == "" {

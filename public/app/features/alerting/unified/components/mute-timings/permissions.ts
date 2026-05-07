@@ -1,4 +1,4 @@
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 /**
  * List of granular permissions that allow viewing contact points

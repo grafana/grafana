@@ -1,13 +1,13 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
+import { type Role } from 'app/types/accessControl';
+import { type ApiKey } from 'app/types/apiKeys';
 import {
-  ApiKey,
-  Role,
-  ServiceAccountDTO,
-  ServiceAccountProfileState,
-  ServiceAccountsState,
+  type ServiceAccountProfileState,
+  type ServiceAccountDTO,
+  type ServiceAccountsState,
   ServiceAccountStateFilter,
-} from 'app/types';
+} from 'app/types/serviceaccount';
 
 // serviceAccountsProfilePage
 export const initialStateProfile: ServiceAccountProfileState = {

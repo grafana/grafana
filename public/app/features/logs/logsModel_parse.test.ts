@@ -1,4 +1,11 @@
-import { DataFrame, FieldType, dateTimeFormatISO, DateTimeInput, DateTimeOptions, DataFrameType } from '@grafana/data';
+import {
+  type DataFrame,
+  FieldType,
+  dateTimeFormatISO,
+  type DateTimeInput,
+  type DateTimeOptions,
+  DataFrameType,
+} from '@grafana/data';
 
 import { logSeriesToLogsModel } from './logsModel';
 
@@ -76,6 +83,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[0],
           rowId: 'id1',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line1',
           entryFieldIndex: 4,
           hasAnsi: false,
@@ -103,6 +111,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[0],
           rowId: 'id2',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line2',
           entryFieldIndex: 4,
           hasAnsi: false,
@@ -130,6 +139,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[0],
           rowId: 'id3',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line3',
           entryFieldIndex: 4,
           hasAnsi: false,
@@ -287,6 +297,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[0],
           rowId: 'id1',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line1',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -315,6 +326,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[1],
           rowId: 'id2',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line2',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -343,6 +355,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[2],
           rowId: 'id3',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line3',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -438,6 +451,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[0],
           rowId: 'id1',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line1',
           entryFieldIndex: 2,
           hasAnsi: false,
@@ -467,6 +481,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[0],
           rowId: 'id2',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line2',
           entryFieldIndex: 2,
           hasAnsi: false,
@@ -496,6 +511,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[0],
           rowId: 'id3',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line3',
           entryFieldIndex: 2,
           hasAnsi: false,
@@ -628,6 +644,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line1',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -648,6 +665,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line2',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -668,6 +686,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line3',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -720,6 +739,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line1',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -740,6 +760,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line2',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -760,6 +781,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line3',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -818,6 +840,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line1',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -838,6 +861,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line2',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -858,6 +882,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line3',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -911,6 +936,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line1',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -931,6 +957,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line2',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -951,6 +978,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line3',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -1012,6 +1040,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line1',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -1032,6 +1061,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line2',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -1052,6 +1082,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line3',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -1112,6 +1143,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[0],
           rowId: 'id1',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line1',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -1133,6 +1165,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[0],
           rowId: 'id2',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line2',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -1186,6 +1219,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line1',
           entryFieldIndex: 1,
           hasAnsi: false,
@@ -1206,6 +1240,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         {
           dataFrame: frames[0],
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line2',
           entryFieldIndex: 1,
           hasAnsi: false,

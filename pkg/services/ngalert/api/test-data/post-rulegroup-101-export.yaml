@@ -187,3 +187,48 @@ groups:
           record:
             metric: test_metric
             from: condition
+        - title: recording rule with target
+          data:
+            - refId: query
+              relativeTimeRange:
+                from: 18000
+                to: 10800
+              datasourceUid: "000000002"
+              model:
+                expr: rate(http_requests_total[5m])
+                hide: false
+                interval: ""
+                intervalMs: 1000
+                legendFormat: ""
+                maxDataPoints: 100
+                refId: query
+            - refId: reduced
+              relativeTimeRange:
+                from: 18000
+                to: 10800
+              datasourceUid: __expr__
+              model:
+                expression: query
+                hide: false
+                intervalMs: 1000
+                maxDataPoints: 100
+                reducer: mean
+                refId: reduced
+                type: reduce
+            - refId: condition
+              relativeTimeRange:
+                from: 18000
+                to: 10800
+              datasourceUid: __expr__
+              model:
+                expression: $reduced > 5
+                hide: false
+                intervalMs: 1000
+                maxDataPoints: 100
+                refId: condition
+                type: math
+          isPaused: false
+          record:
+            metric: http_requests_rate
+            from: condition
+            targetDatasourceUid: "000000003"

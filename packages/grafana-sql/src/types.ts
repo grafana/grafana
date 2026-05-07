@@ -1,21 +1,21 @@
-import { JsonTree } from '@react-awesome-query-builder/ui';
+import type { JsonTree } from '@react-awesome-query-builder/ui';
 
 import {
-  DataFrame,
-  DataQuery,
-  DataSourceJsonData,
-  MetricFindValue,
-  SelectableValue,
-  TimeRange,
+  type DataFrame,
+  type DataQuery,
+  type DataSourceJsonData,
+  type MetricFindValue,
+  type SelectableValue,
+  type TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { CompletionItemKind, EditorMode, LanguageDefinition } from '@grafana/plugin-ui';
+import { type CompletionItemKind, type EditorMode, type LanguageDefinition } from '@grafana/plugin-ui';
 
-import { QueryWithDefaults } from './defaults';
+import { type QueryWithDefaults } from './defaults';
 import {
-  QueryEditorFunctionExpression,
-  QueryEditorGroupByExpression,
-  QueryEditorPropertyExpression,
+  type QueryEditorFunctionExpression,
+  type QueryEditorGroupByExpression,
+  type QueryEditorPropertyExpression,
 } from './expressions';
 
 export interface SqlQueryForInterpolation {
@@ -50,6 +50,8 @@ export enum QueryFormat {
   Table = 'table',
 }
 
+export type SQLQueryMeta = { valueField?: string; textField?: string };
+
 export interface SQLQuery extends DataQuery {
   alias?: string;
   format?: QueryFormat;
@@ -59,7 +61,10 @@ export interface SQLQuery extends DataQuery {
   sql?: SQLExpression;
   editorMode?: EditorMode;
   rawQuery?: boolean;
+  meta?: SQLQueryMeta;
 }
+
+export type SQLVariableQuery = { query: string } & SQLQuery;
 
 export interface NameValue {
   name: string;
@@ -129,7 +134,6 @@ export interface DB {
   tables: (dataset?: string) => Promise<string[]>;
   fields: (query: SQLQuery, order?: boolean) => Promise<SQLSelectableValue[]>;
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
-  dsID: () => number;
   dispose?: (dsID?: string) => void;
   lookup?: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getEditorLanguageDefinition: () => LanguageDefinition;

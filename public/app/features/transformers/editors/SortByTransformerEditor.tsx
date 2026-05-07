@@ -1,18 +1,11 @@
 import { useCallback } from 'react';
 
-import {
-  DataTransformerID,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
-import { SortByField, SortByTransformerOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { type TransformerUIProps } from '@grafana/data';
+import { type SortByField, type SortByTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const SortByTransformerEditor = ({ input, options, onChange }: TransformerUIProps<SortByTransformerOptions>) => {
@@ -27,8 +20,6 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
     },
     [onChange, options]
   );
-
-  const { t } = useTranslate();
 
   const sorts: SortByField[] = options.sort?.length ? options.sort : [{} as SortByField];
 
@@ -64,14 +55,4 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
       })}
     </div>
   );
-};
-
-export const sortByTransformRegistryItem: TransformerRegistryItem<SortByTransformerOptions> = {
-  id: DataTransformerID.sortBy,
-  editor: SortByTransformerEditor,
-  transformation: standardTransformers.sortByTransformer,
-  name: standardTransformers.sortByTransformer.name,
-  description: standardTransformers.sortByTransformer.description,
-  categories: new Set([TransformerCategory.ReorderAndRename]),
-  help: getTransformationContent(DataTransformerID.sortBy).helperDocs,
 };

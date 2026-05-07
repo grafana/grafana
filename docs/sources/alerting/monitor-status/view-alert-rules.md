@@ -29,33 +29,31 @@ refs:
 
 # View alert rules
 
-The Alert rules list view page lists all existing recording and alert rules, including those created in Grafana and those available in configured data sources.
+The Alert rules list view page lists all existing recording and alert rules. The rules are organized in a hierarchical structure, from folder -> rule group -> rules.
 
 To access the Alert rules page, click **Alerts & IRM** -> **Alerting** -> **Alert rules**.
 
-{{< figure src="/media/docs/alerting/alert-rules-page.png" max-width="750px" alt="Alert rule view page in Grafana Alerting" >}}
+Select a group to expand it and view the list of alert rules within that group.
 
-By default, alert rules are grouped by alert rule type: Grafana-managed or data source-managed.
+The list view includes a number of filters to simplify managing large volumes of alerts.
 
-In this view, you can find and edit rules created in Grafana. However, rules created in Prometheus-compatible data sources are displayed but cannot be edited.
+## Filter and save searches
 
-This view includes filters to simplify managing large volumes of alerts.
+Click the **Filter** button to open the filter popup. You can filter by name, label, folder/namespace, evaluation group, data source, contact point, rule source, rule state, rule type, and the health of the alert rule from the popup menu. Click **Apply** at the bottom of the filter popup to enact the filters as you search.
 
-You can filter by data sources, dashboards, and alert rule properties such as state, type, health, and contact points. The **Search** input allows you to filter by additional parameters like folders, evaluation groups, labels, and more.
+Click the **Saved searches** button to open the list of previously saved searches, or click **+ Save current search** to add your current search to the saved searches list. You can also rename a saved search or set it as a default search. When you set a saved search as the default search, the Alert rules page opens with the search applied.
+
+{{< figure src="/media/docs/alerting/alerting-saved-searches.png" max-width="750px" alt="Alert rule filter options" >}}
 
 ## Change alert rules list view
 
 You can also change how the rule list is displayed using the **View as** option.
 
-- **Grouped**: Displays Grafana rules grouped by folder and evaluation group, and data-source rules by namespace and evaluation group. This is the default view.
+- **Grouped**: Displays rules grouped in a hierarchical structure, from folder/namespace, to evaluation group, to the individual rules. This is the default view.
 
-- **List**: Displays Grafana rules grouped only by folder.
+- **List**: Displays all rules in a flat, unpaginated list.
 
-- **State**: Displays rules grouped by state, providing an overview for each state.
-
-Select a group to expand it and view the list of alert rules within that group.
-
-{{< figure src="/media/docs/alerting/view-alert-rule-list-with-actions.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
+{{< figure src="/media/docs/alerting/view-alert-rule-list-with-actions-2.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
 
 For details on how rule states and alert instance states are displayed, refer to [View alert state](ref:view-alert-state).
 
@@ -69,7 +67,7 @@ In Grafana OSS and Enterprise, the number of alert rule versions is limited. Fre
 
 To view or restore previous versions for an alert rule, complete the following steps.
 
-1. Navigate to **Alerts & IRM -> Alerting -> Alert rules**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Alert rules**.
 1. Select an alert rule and click **View**.
 1. Click the **Versions** tab.  
    The page displays a list of the previous rule versions.
@@ -89,7 +87,7 @@ Admin users can delete all of the alert rules within a folder. To delete all the
 
 Only users with an Admin role can restore deleted Grafana-managed alert rules. After an alert rule is restored, it is restored with a new, different UID from the one it had before.
 
-1. Go to **Alerts & IRM > Alerting > Recently deleted**.
+1. Go to **Alerts & IRM** -> **Alerting** -> **Alert rules**, then click the **Recently deleted** tab.
 1. Click the **Restore** button to restore the alert rule or click **Delete permanently** to delete the alert rule.
 
 {{< admonition type="note" >}}

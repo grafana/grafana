@@ -70,15 +70,16 @@ func (d *Docker) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error)
 }
 
 func (d *Docker) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
+	return opts.Client.Container().From("docker"), nil
+}
+
+func (d *Docker) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
 	targz, err := opts.Store.File(ctx, d.Tarball)
 	if err != nil {
 		return nil, err
 	}
 
-	return docker.Builder(opts.Client, opts.Client.Host().UnixSocket("/var/run/docker.sock"), targz), nil
-}
-
-func (d *Docker) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
+	builder = docker.WithMounts(opts.Client, builder, opts.Client.Host().UnixSocket("/var/run/docker.sock"), targz)
 	// Unlike most other things we push to, docker image tags do not support all characters.
 	// Specifically, the `+` character used in the `buildmetadata` section of semver.
 	version := strings.ReplaceAll(d.Version, "+", "-")
@@ -153,6 +154,10 @@ func (d *Docker) VerifyFile(ctx context.Context, client *dagger.Client, file *da
 
 func (d *Docker) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
 	panic("not implemented") // TODO: Implement
+}
+
+func (d *Docker) String() string {
+	return "docker"
 }
 
 func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {

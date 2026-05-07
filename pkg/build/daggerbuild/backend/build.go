@@ -33,7 +33,10 @@ func GoLDFlags(flags []LDFlag) string {
 
 // GoBuildCommand returns the arguments for go build to be used in 'WithExec'.
 func GoBuildCommand(output string, ldflags []LDFlag, tags []string, main string) []string {
-	args := []string{"go", "build", "-v", "-x",
+	args := []string{"go", "build",
+		// We should not publish Grafana as a Go module, disabling vcs changes the version to (devel)
+		// and works better with SBOM and Vulnerability Scanners.
+		"-buildvcs=false",
 		fmt.Sprintf("-ldflags=\"%s\"", GoLDFlags(ldflags)),
 		fmt.Sprintf("-o=%s", output),
 		"-trimpath",
@@ -53,20 +56,41 @@ func Build(
 	distro Distribution,
 	out string,
 	opts *BuildOpts,
+	goBuildCache *dagger.CacheVolume,
+	goModules *dagger.Directory,
 ) *dagger.Directory {
+	builder = builder.
+		WithMountedCache("/root/.cache/go", goBuildCache).
+		WithEnvVariable("GOCACHE", "/root/.cache/go")
+	builder = builder.
+		WithMountedDirectory("/go/pkg/mod", goModules)
+
+	if prog := opts.GoCacheProg; prog != "" {
+		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
+	}
+
+	commitInfo := GetVCSInfo(src, opts.Version, opts.Enterprise)
+
+	builder = withCue(builder, src).
+		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
+			Include: []string{"**/*.mod", "**/*.sum", "**/*.work", ".git"},
+		}).
+		WithDirectory("/src/pkg", src.WithoutDirectory("pkg/build").Directory("pkg")).
+		WithDirectory("/src/apps", src.Directory("apps")).
+		WithDirectory("/src/emails", src.Directory("emails")).
+		WithFile("/src/.buildinfo.commit", commitInfo.Commit).
+		WithWorkdir("/src")
+
+	if opts.Enterprise {
+		builder = builder.WithFile("/src/.buildinfo.enterprise-commit", commitInfo.EnterpriseCommit)
+	}
 	vcsinfo := GetVCSInfo(src, opts.Version, opts.Enterprise)
 	builder = WithVCSInfo(builder, vcsinfo, opts.Enterprise)
 
 	ldflags := LDFlagsDynamic(vcsinfo)
 
-	if opts.Static {
-		ldflags = LDFlagsStatic(vcsinfo)
-	}
-
 	cmd := []string{
 		"grafana",
-		"grafana-server",
-		"grafana-cli",
 		"grafana-example-apiserver",
 	}
 

@@ -105,8 +105,11 @@ composableKinds: PanelCfg: lineage: {
 				value?: string
 				// Controls tick alignment when not calculating from data
 				layout?: ui.HeatmapCellLayout
+				// Controls the scale distribution of the y-axis buckets
+				yBucketScale?: ui.ScaleDistributionConfig
 			} @cuetsy(kind="interface")
 			Options: {
+				annotations?: ui.VizAnnotations
 				// Controls if the heatmap should be calculated from data
 				calculate?: bool | *false
 				// Calculation options for the heatmap

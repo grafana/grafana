@@ -1,9 +1,8 @@
 import { getThemeById } from '@grafana/data/internal';
-import { ThemeChangedEvent } from '@grafana/runtime';
+import { config, ThemeChangedEvent } from '@grafana/runtime';
 
-import appEvents from '../app_events';
-import { config } from '../config';
-import { contextSrv } from '../core';
+import { appEvents } from '../app_events';
+import { contextSrv } from '../services/context_srv';
 
 import { PreferencesService } from './PreferencesService';
 

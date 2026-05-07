@@ -34,7 +34,7 @@ After you localize the latency problem to a few exemplar traces, you can combine
 
 Support for exemplars is available for the Prometheus data source only.
 After you enable the functionality, exemplar data is available by default.
-For more information on exemplar configuration and how to enable exemplars, refer to [configuring exemplars in the Prometheus data source](../../datasources/prometheus/configure-prometheus-data-source/#exemplars).
+For more information on exemplar configuration and how to enable exemplars, refer to the Exemplars section in [Prometheus configuration options](https://grafana.com/docs/grafana/latest/datasources/prometheus/configure/#configuration-options).
 
 Grafana shows exemplars alongside a metric in the Explore view and in dashboards.
 Each exemplar displays as a highlighted star.
@@ -101,7 +101,6 @@ This panel shows the details of the trace in different segments.
 
 - The next segment shows the entire span for the specific trace as a narrow strip.
   All levels of the trace from the client all the way down to database query is displayed, which provides a bird's eye view of the time distribution across all layers over which the HTTP request was processed.
-
   1. You can click within this strip view to display a magnified view of a smaller time segment within the span. This magnified view shows up in the bottom segment of the panel.
 
   1. In the magnified view, you can expand or collapse the various levels of the trace to drill down to the specific span of interest.

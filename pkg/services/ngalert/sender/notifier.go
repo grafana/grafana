@@ -1,6 +1,6 @@
 // THIS FILE IS COPIED FROM UPSTREAM
 //
-// https://github.com/prometheus/prometheus/blob/293f0c9185260165fd7dabbf8a9e8758b32abeae/notifier/notifier.go
+// https://github.com/prometheus/prometheus/blob/bd5b2ea95ce14fba11db871b4068313408465207/notifier/notifier.go
 //
 // Copyright 2013 The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/grafana/pkg/util/httpclient"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	config_util "github.com/prometheus/common/config"
@@ -39,7 +38,7 @@ import (
 	"github.com/prometheus/common/promslog"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/sigv4"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery/targetgroup"
@@ -48,14 +47,10 @@ import (
 )
 
 const (
-	contentTypeJSON = "application/json"
-)
+	// DefaultMaxBatchSize is the default maximum number of alerts to send in a single request to the alertmanager.
+	DefaultMaxBatchSize = 256
 
-// String constants for instrumentation.
-const (
-	namespace         = "prometheus"
-	subsystem         = "notifications"
-	alertmanagerLabel = "alertmanager"
+	contentTypeJSON = "application/json"
 )
 
 var userAgent = version.PrometheusUserAgent()
@@ -135,6 +130,9 @@ type Options struct {
 	Do func(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error)
 
 	Registerer prometheus.Registerer
+
+	// MaxBatchSize determines the maximum number of alerts to send in a single request to the alertmanager.
+	MaxBatchSize int
 }
 
 type alertMetrics struct {
@@ -147,85 +145,14 @@ type alertMetrics struct {
 	alertmanagersDiscovered prometheus.GaugeFunc
 }
 
-func newAlertMetrics(r prometheus.Registerer, queueCap int, queueLen, alertmanagersDiscovered func() float64) *alertMetrics {
-	m := &alertMetrics{
-		latency: prometheus.NewSummaryVec(prometheus.SummaryOpts{
-			Namespace:  namespace,
-			Subsystem:  subsystem,
-			Name:       "latency_seconds",
-			Help:       "Latency quantiles for sending alert notifications.",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-		},
-			[]string{alertmanagerLabel},
-		),
-		errors: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "errors_total",
-			Help:      "Total number of sent alerts affected by errors.",
-		},
-			[]string{alertmanagerLabel},
-		),
-		sent: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "sent_total",
-			Help:      "Total number of alerts sent.",
-		},
-			[]string{alertmanagerLabel},
-		),
-		dropped: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "dropped_total",
-			Help:      "Total number of alerts dropped due to errors when sending to Alertmanager.",
-		}),
-		queueLength: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "queue_length",
-			Help:      "The number of alert notifications in the queue.",
-		}, queueLen),
-		queueCapacity: prometheus.NewGauge(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "queue_capacity",
-			Help:      "The capacity of the alert notifications queue.",
-		}),
-		alertmanagersDiscovered: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "prometheus_notifications_alertmanagers_discovered",
-			Help: "The number of alertmanagers discovered and active.",
-		}, alertmanagersDiscovered),
-	}
-
-	m.queueCapacity.Set(float64(queueCap))
-
-	if r != nil {
-		r.MustRegister(
-			m.latency,
-			m.errors,
-			m.sent,
-			m.dropped,
-			m.queueLength,
-			m.queueCapacity,
-			m.alertmanagersDiscovered,
-		)
-	}
-
-	return m
-}
-
-func do(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
-	if client == nil {
-		client = httpclient.New()
-	}
-	return client.Do(req.WithContext(ctx))
-}
-
 // NewManager is the manager constructor.
 func NewManager(o *Options, logger *slog.Logger) *Manager {
 	if o.Do == nil {
 		o.Do = do
+	}
+	// Set default MaxBatchSize if not provided.
+	if o.MaxBatchSize <= 0 {
+		o.MaxBatchSize = DefaultMaxBatchSize
 	}
 	if logger == nil {
 		logger = promslog.NewNopLogger()
@@ -253,8 +180,6 @@ func NewManager(o *Options, logger *slog.Logger) *Manager {
 	return n
 }
 
-const maxBatchSize = 64
-
 func (n *Manager) queueLen() int {
 	n.mtx.RLock()
 	defer n.mtx.RUnlock()
@@ -268,7 +193,7 @@ func (n *Manager) nextBatch() []*Alert {
 
 	var alerts []*Alert
 
-	if len(n.queue) > maxBatchSize {
+	if maxBatchSize := n.opts.MaxBatchSize; len(n.queue) > maxBatchSize {
 		alerts = append(make([]*Alert, 0, maxBatchSize), n.queue[:maxBatchSize]...)
 		n.queue = n.queue[maxBatchSize:]
 	} else {
@@ -574,57 +499,6 @@ func newAlertmanagerSet(cfg *config.AlertmanagerConfig, logger *slog.Logger, met
 		metrics: metrics,
 	}
 	return s, nil
-}
-
-// sync extracts a deduplicated set of Alertmanager endpoints from a list
-// of target groups definitions.
-func (s *alertmanagerSet) sync(tgs []*targetgroup.Group) {
-	allAms := []alertmanager{}
-	allDroppedAms := []alertmanager{}
-
-	for _, tg := range tgs {
-		ams, droppedAms, err := AlertmanagerFromGroup(tg, s.cfg)
-		if err != nil {
-			s.logger.Error("Creating discovered Alertmanagers failed", "err", err)
-			continue
-		}
-		allAms = append(allAms, ams...)
-		allDroppedAms = append(allDroppedAms, droppedAms...)
-	}
-
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
-	previousAms := s.ams
-	// Set new Alertmanagers and deduplicate them along their unique URL.
-	s.ams = []alertmanager{}
-	s.droppedAms = []alertmanager{}
-	s.droppedAms = append(s.droppedAms, allDroppedAms...)
-	seen := map[string]struct{}{}
-
-	for _, am := range allAms {
-		us := am.url().String()
-		if _, ok := seen[us]; ok {
-			continue
-		}
-
-		// This will initialize the Counters for the AM to 0.
-		s.metrics.sent.WithLabelValues(us)
-		s.metrics.errors.WithLabelValues(us)
-
-		seen[us] = struct{}{}
-		s.ams = append(s.ams, am)
-	}
-	// Now remove counters for any removed Alertmanagers.
-	for _, am := range previousAms {
-		us := am.url().String()
-		if _, ok := seen[us]; ok {
-			continue
-		}
-		s.metrics.latency.DeleteLabelValues(us)
-		s.metrics.sent.DeleteLabelValues(us)
-		s.metrics.errors.DeleteLabelValues(us)
-		seen[us] = struct{}{}
-	}
 }
 
 func (s *alertmanagerSet) configHash() (string, error) {

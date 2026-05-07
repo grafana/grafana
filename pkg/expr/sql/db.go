@@ -17,42 +17,11 @@ import (
 )
 
 // DB is a database that can execute SQL queries against a set of Frames.
-type DB struct{}
-
-// GoMySQLServerError represents an error from the underlying Go MySQL Server
-type GoMySQLServerError struct {
-	Err error
-}
-
-// Error implements the error interface
-func (e *GoMySQLServerError) Error() string {
-	return fmt.Sprintf("error in go-mysql-server: %v", e.Err)
-}
-
-// Unwrap provides the original error for errors.Is/As
-func (e *GoMySQLServerError) Unwrap() error {
-	return e.Err
-}
-
-// WrapGoMySQLServerError wraps errors from Go MySQL Server with additional context
-func WrapGoMySQLServerError(err error) error {
-	// Don't wrap nil errors
-	if err == nil {
-		return nil
-	}
-
-	// Check if it's a function not found error or other specific GMS errors
-	if isFunctionNotFoundError(err) {
-		return &GoMySQLServerError{Err: err}
-	}
-
-	// Return original error if it's not one we want to wrap
-	return err
-}
-
-// isFunctionNotFoundError checks if the error is related to a function not being found
-func isFunctionNotFoundError(err error) bool {
-	return mysql.ErrFunctionNotFound.Is(err)
+type DB struct {
+	// queryGuard is an optional function that validates SQL queries before execution.
+	// It takes a refID and the raw SQL string, returning true if the query is allowed
+	// and false with an error if the query should be blocked. If nil, AllowQuery is used as the default.
+	queryGuard func(refID, rawSQL string) (bool, error)
 }
 
 type QueryOption func(*QueryOptions)
@@ -79,11 +48,15 @@ func WithMaxOutputCells(n int64) QueryOption {
 // It is expected that there is only one frame per RefID.
 // The name becomes the name and RefID of the returned frame.
 func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name string, query string, frames []*data.Frame, opts ...QueryOption) (*data.Frame, error) {
-	// We are parsing twice due to TablesList, but don't care fow now. We can save the parsed query and reuse it later if we want.
-	if allow, err := AllowQuery(query); err != nil || !allow {
-		if err != nil {
-			return nil, err
-		}
+	guard := db.queryGuard
+	if guard == nil {
+		// Use the default query guard if none is provided
+		// AllowQuery is parsing twice due to TablesList, but don't care for now. We can save the parsed query and reuse it later if we want.
+		guard = AllowQuery
+	}
+
+	allow, err := guard(name, query)
+	if err != nil || !allow {
 		return nil, err
 	}
 
@@ -104,7 +77,7 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 	session := mysql.NewBaseSession()
 
 	// Create a new context with the session and tracer
-	mCtx := mysql.NewContext(ctx, mysql.WithSession(session), mysql.WithTracer(tracer))
+	mCtx := mysql.NewContext(ctx, mysql.WithSession(session), mysql.WithTracer(tracer), mysql.WithDisableFileWrites(true))
 
 	// Select the database in the context
 	mCtx.SetCurrentDatabase(dbName)
@@ -122,9 +95,9 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 	contextErr := func(err error) error {
 		switch {
 		case errors.Is(err, context.DeadlineExceeded):
-			return fmt.Errorf("SQL expression for refId %v did not complete within the timeout of %v: %w", name, QueryOptions.Timeout, err)
+			return MakeTimeOutError(err, name, QueryOptions.Timeout)
 		case errors.Is(err, context.Canceled):
-			return fmt.Errorf("SQL expression for refId %v was cancelled before it completed: %w", name, err)
+			return MakeCancelError(err, name)
 		default:
 			return fmt.Errorf("SQL expression for refId %v ended unexpectedly: %w", name, err)
 		}
@@ -136,7 +109,7 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 		if ctx.Err() != nil {
 			return nil, contextErr(ctx.Err())
 		}
-		return nil, WrapGoMySQLServerError(err)
+		return nil, MakeGMSError(name, err)
 	}
 
 	// Convert the iterator into a Grafana data.Frame

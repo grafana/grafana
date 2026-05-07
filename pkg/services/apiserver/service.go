@@ -2,52 +2,59 @@ package apiserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
+	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/audit"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
-	servicetracing "github.com/grafana/grafana/pkg/modules/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -77,7 +84,6 @@ type service struct {
 	features featuremgmt.FeatureToggles
 	log      log.Logger
 
-	stopCh    chan struct{}
 	stoppedCh chan error
 
 	db       db.DB
@@ -88,20 +94,24 @@ type service struct {
 	tracing *tracing.TracingService
 	metrics prometheus.Registerer
 
-	authorizer        *authorizer.GrafanaAuthorizer
-	serverLockService builder.ServerLockService
-	storageStatus     dualwrite.Service
-	kvStore           kvstore.KVStore
+	authorizer *authorizer.GrafanaAuthorizer
+	dualWriter dualwrite.Service
 
 	pluginClient       plugins.Client
 	datasources        datasource.ScopedPluginDatasourceProvider
 	contextProvider    datasource.PluginContextWrapper
 	pluginStore        pluginstore.Store
 	unified            resource.ResourceClient
+	secrets            secret.InlineSecureValueSupport
 	restConfigProvider RestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
+	appInstallers                     []appsdkapiserver.AppInstaller
+	builderMetrics                    *builder.BuilderMetrics
+
+	auditBackend            audit.Backend
+	auditPolicyRuleProvider auditing.PolicyRuleProvider
 }
 
 func ProvideService(
@@ -109,20 +119,23 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
 	tracing *tracing.TracingService,
-	serverLockService *serverlock.ServerLockService,
 	db db.DB,
-	kvStore kvstore.KVStore,
 	pluginClient plugins.Client,
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
-	storageStatus dualwrite.Service,
+	dualWriter dualwrite.Service,
 	unified resource.ResourceClient,
+	secrets secret.InlineSecureValueSupport,
 	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
 	reg prometheus.Registerer,
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
+	appInstallers []appsdkapiserver.AppInstaller,
+	builderMetrics *builder.BuilderMetrics,
+	auditBackend audit.Backend,
+	auditPolicyRuleProvider auditing.PolicyRuleProvider,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -133,27 +146,28 @@ func ProvideService(
 		cfg:                               cfg,
 		features:                          features,
 		rr:                                rr,
-		stopCh:                            make(chan struct{}),
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg),
+		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           reg,
-		kvStore:                           kvStore,
 		pluginClient:                      pluginClient,
 		datasources:                       datasources,
 		contextProvider:                   contextProvider,
 		pluginStore:                       pluginStore,
-		serverLockService:                 serverLockService,
-		storageStatus:                     storageStatus,
+		dualWriter:                        dualWriter,
 		unified:                           unified,
+		secrets:                           secrets,
 		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 		aggregatorRunner:                  aggregatorRunner,
+		appInstallers:                     appInstallers,
+		builderMetrics:                    builderMetrics,
+		auditBackend:                      auditBackend,
+		auditPolicyRuleProvider:           auditPolicyRuleProvider,
 	}
 	// This will be used when running as a dskit service
-	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
-	s.NamedService = servicetracing.NewServiceTracer(tracing.GetTracerProvider(), service)
+	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
 
 	// TODO: this is very hacky
 	// We need to register the routes in ProvideService to make sure
@@ -178,6 +192,11 @@ func ProvideService(
 			}
 
 			if c.SignedInUser != nil {
+				// For unauthenticated requests, we set the namespace to the requested one
+				if !c.IsSignedIn {
+					useNamespaceFromPath(req.URL.Path, c.SignedInUser)
+				}
+
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
 				req = req.WithContext(ctx)
 			}
@@ -185,6 +204,14 @@ func ProvideService(
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
 		}
+		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
+		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
+		// Snapshots are shared via URL with the key, so they are always publicly accessible.
+		// Authorization is enforced by the snapshot authorizer.
+		snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
+		k8sRoute.Get(snapshotPath, handler)
+		k8sRoute.Get(snapshotPath+"/dashboard", handler)
+
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
@@ -218,15 +245,19 @@ func (s *service) Run(ctx context.Context) error {
 	if err := s.StartAsync(ctx); err != nil {
 		return err
 	}
-
-	if err := s.AwaitRunning(ctx); err != nil {
-		return err
-	}
-	return s.AwaitTerminated(ctx)
+	stopCtx := context.Background()
+	return s.AwaitTerminated(stopCtx)
 }
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
+	if registrar, ok := b.(builder.HTTPRouteRegistrar); ok {
+		registrar.RegisterHTTPRoutes(s.rr)
+	}
+}
+
+func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
+	s.appInstallers = append(s.appInstallers, i)
 }
 
 // nolint:gocyclo
@@ -235,7 +266,7 @@ func (s *service) start(ctx context.Context) error {
 	builders := s.builders
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 
-	// Install schemas
+	// Install schemas for existing builders
 	for _, b := range builders {
 		gvs := builder.GetGroupVersions(b)
 		groupVersions = append(groupVersions, gvs...)
@@ -252,19 +283,42 @@ func (s *service) start(ctx context.Context) error {
 				auth := a.GetAuthorizer()
 				if auth != nil {
 					s.authorizer.Register(gv, auth)
+				} else {
+					panic("authorizer can not be nil for api group=" + gv.String())
 				}
 			}
 		}
 	}
 
+	// Add schemas from app installers to the scheme before creating options
+	additionalGroupVersions, err := appinstaller.AddToScheme(s.appInstallers, s.scheme)
+	if err != nil {
+		return err
+	}
+	groupVersions = append(groupVersions, additionalGroupVersions...)
+
+	// reorder so the preferred version, if set in the config.ini, is first in the slice.
+	// this will impact what version is stored in unified storage.
+	groupVersions, err = ReorderGroupVersionsForLegacyCodec(s.log, s.cfg, s.scheme, groupVersions)
+	if err != nil {
+		return fmt.Errorf("preferred_api_version: %w", err)
+	}
+
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
-	err := applyGrafanaConfig(s.cfg, s.features, o)
+
+	// Register authorizers from app installers
+	appinstaller.RegisterAuthorizers(ctx, s.appInstallers, s.authorizer)
+
+	err = applyGrafanaConfig(s.cfg, s.features, o)
 	if err != nil {
 		return err
 	}
 
 	if errs := o.Validate(); len(errs) != 0 {
-		// TODO: handle multiple errors
+		return errs[0]
+	}
+
+	if errs := o.APIEnablementOptions.Validate(s.scheme); len(errs) != 0 {
 		return errs[0]
 	}
 
@@ -272,6 +326,25 @@ func (s *service) start(ctx context.Context) error {
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
 	}
+	serverConfig.EffectiveVersion = builder.GetEffectiveVersion(
+		s.cfg.BuildStamp,
+		s.cfg.BuildVersion,
+		s.cfg.BuildCommit,
+		s.cfg.BuildBranch,
+	)
+
+	apiResourceConfig := appinstaller.NewAPIResourceConfig(s.appInstallers)
+	// add the builder group versions to the api resource config
+	apiResourceConfig.EnableVersions(groupVersions...)
+
+	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, s.scheme); err != nil {
+		return err
+	}
+
+	if err := applyPreferredAPIVersions(s.log, s.cfg, s.scheme, apiResourceConfig); err != nil {
+		return err
+	}
+
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
@@ -292,23 +365,38 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
 		optsregister = getter.RegisterOptions
-
-		// Use unified storage client
 		serverConfig.RESTOptionsGetter = getter
 	}
 
-	// Add OpenAPI specs for each group+version
+	defGetters := []common.GetOpenAPIDefinitions{
+		appinstaller.BuildOpenAPIDefGetter(s.appInstallers),
+	}
+
+	// Auditing Options
+	serverConfig.AuditBackend = s.auditBackend
+	serverConfig.AuditPolicyRuleEvaluator = s.auditPolicyRuleProvider.PolicyRuleProvider(builder.EvaluatorPolicyRuleFromBuilders(s.builders))
+
+	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
 		s.scheme,
 		serverConfig,
 		builders,
-		s.cfg.BuildStamp,
 		s.cfg.BuildVersion,
-		s.cfg.BuildCommit,
-		s.cfg.BuildBranch,
 		s.buildHandlerChainFuncFromBuilders,
+		groupVersions,
+		defGetters,
+		s.metrics,
+		apiResourceConfig,
+	)
+	if err != nil {
+		return err
+	}
+
+	serverConfig.AdmissionControl, err = appinstaller.RegisterAdmission(
+		serverConfig.AdmissionControl,
+		s.appInstallers,
 	)
 	if err != nil {
 		return err
@@ -316,22 +404,58 @@ func (s *service) start(ctx context.Context) error {
 
 	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
 
+	if err := appinstaller.RegisterPostStartHooks(s.appInstallers, serverConfig); err != nil {
+		return fmt.Errorf("failed to register post start hooks for app installers: %w", err)
+	}
+
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
 	if err != nil {
 		return err
 	}
 
-	// Install the API group+version
-	err = builder.InstallAPIs(s.scheme, s.codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
-		// Required for the dual writer initialization
-		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
-		s.serverLockService,
-		s.storageStatus,
+	// Install the API group+version for existing builders
+	err = builder.InstallAPIs(s.scheme,
+		s.codecs,
+		server,
+		serverConfig.RESTOptionsGetter,
+		builders,
+		o.StorageOptions,
+		s.metrics,
+		s.dualWriter,
 		optsregister,
+		s.features,
+		s.builderMetrics,
+		apiResourceConfig,
 	)
 	if err != nil {
 		return err
+	}
+
+	if err := appinstaller.InstallAPIs(
+		ctx,
+		s.appInstallers,
+		server,
+		serverConfig.RESTOptionsGetter,
+		o.StorageOptions,
+		s.dualWriter,
+		s.builderMetrics,
+		serverConfig.MergedResourceConfig,
+	); err != nil {
+		return err
+	}
+
+	// Augment existing WebServices with custom routes from builders
+	// This directly adds routes to existing WebServices using the OpenAPI specs from builders
+	if server.Handler != nil && server.Handler.GoRestfulContainer != nil {
+		if err := builder.AugmentWebServicesWithCustomRoutes(
+			server.Handler.GoRestfulContainer,
+			builders,
+			s.metrics,
+			serverConfig.MergedResourceConfig,
+		); err != nil {
+			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
+		}
 	}
 
 	// stash the options for later use
@@ -340,11 +464,15 @@ func (s *service) start(ctx context.Context) error {
 	delegate := server
 
 	var runningServer *genericapiserver.GenericAPIServer
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	isDataplaneAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator)
 
 	if isKubernetesAggregatorEnabled {
-		aggregatorServer, err := s.aggregatorRunner.Configure(s.options, serverConfig, delegate, s.scheme, builders)
+		aggregatorServer, err := s.aggregatorRunner.Configure(
+			s.options, serverConfig, &aggregatorrunner.ExtraConfig{}, delegate, s.scheme, builders,
+		)
 		if err != nil {
 			return err
 		}
@@ -353,7 +481,7 @@ func (s *service) start(ctx context.Context) error {
 			if !isDataplaneAggregatorEnabled {
 				runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
 				if err != nil {
-					s.log.Error("aggregator runner failed to run", "error", err)
+					s.log.Error("aggregator runner failed to run", "err", err)
 					return err
 				}
 			} else {
@@ -390,6 +518,13 @@ func (s *service) start(ctx context.Context) error {
 	s.handler = runningServer.Handler
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
+
+	for _, installer := range s.appInstallers {
+		err := installer.InitializeApp(*s.restConfig)
+		if err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -484,6 +619,10 @@ func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.handler.ServeHTTP(w, r)
 }
 
+func (s *service) IsReady() bool {
+	return s.handler != nil
+}
+
 func (s *service) running(ctx context.Context) error {
 	select {
 	case err := <-s.stoppedCh:
@@ -491,7 +630,6 @@ func (s *service) running(ctx context.Context) error {
 			return err
 		}
 	case <-ctx.Done():
-		return ctx.Err()
 	}
 	return nil
 }
@@ -528,4 +666,17 @@ func (p *pluginContextProvider) GetPluginContext(ctx context.Context, pluginID s
 	}
 
 	return p.contextProvider.PluginContextForDataSource(ctx, s)
+}
+
+func useNamespaceFromPath(path string, user *user.SignedInUser) {
+	if strings.HasPrefix(path, "/apis/") && len(path) > 6 {
+		parts := strings.Split(path[6:], "/")
+		if len(parts) >= 4 && parts[2] == "namespaces" {
+			ns, err := types.ParseNamespace(parts[3])
+			if err == nil {
+				user.Namespace = ns.Value
+				user.OrgID = ns.OrgID
+			}
+		}
+	}
 }

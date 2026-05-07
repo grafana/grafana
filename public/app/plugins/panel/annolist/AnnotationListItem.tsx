@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import { MouseEvent } from 'react';
+import { type MouseEvent } from 'react';
 
-import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
-import { Card, TagList, Tooltip, RenderUserContentAsHTML, useStyles2 } from '@grafana/ui';
+import { type AnnotationEvent, type DateTimeInput, type GrafanaTheme2, type PanelProps } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { Card, RenderUserContentAsHTML, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 interface Props extends Pick<PanelProps<Options>, 'options'> {
   annotation: AnnotationEvent;
@@ -29,7 +30,7 @@ export const AnnotationListItem = ({ options, annotation, formatDate, onClick, o
   const showTimeStampEnd = timeEnd && timeEnd !== time && showTime;
 
   return (
-    <Card className={styles.card} onClick={onItemClick}>
+    <Card noMargin className={styles.card} onClick={onItemClick}>
       <Card.Heading>
         <RenderUserContentAsHTML
           className={styles.heading}
@@ -79,8 +80,10 @@ const Avatar = ({ onClick, avatarUrl, login, email }: AvatarProps) => {
   };
   const tooltipContent = (
     <span>
-      Created by:
-      <br /> {email}
+      <Trans i18nKey="annolist.annotation-list-item.tooltip-created-by">
+        Created by:
+        <br /> {{ email }}
+      </Trans>
     </span>
   );
 

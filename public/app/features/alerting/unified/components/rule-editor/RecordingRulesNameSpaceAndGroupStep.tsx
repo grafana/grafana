@@ -1,15 +1,15 @@
 import { useFormContext } from 'react-hook-form';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export function RecordingRulesNameSpaceAndGroupStep() {
   const { watch } = useFormContext<RuleFormValues>();
-  const { t } = useTranslate();
+
   const dataSourceName = watch('dataSourceName');
 
   if (!dataSourceName) {

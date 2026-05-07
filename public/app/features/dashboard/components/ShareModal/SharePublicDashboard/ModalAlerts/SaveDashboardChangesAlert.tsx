@@ -1,9 +1,7 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 export const SaveDashboardChangesAlert = () => {
-  const { t } = useTranslate();
-
   return (
     <Alert
       title={t(

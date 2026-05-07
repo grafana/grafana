@@ -9,35 +9,46 @@ import (
 
 // ResourceInfo helps define a k8s resource
 type ResourceInfo struct {
-	group        string
-	version      string
-	resourceName string
-	singularName string
-	shortName    string
-	kind         string
-	newObj       func() runtime.Object
-	newList      func() runtime.Object
-	columns      TableColumns
+	group         string
+	version       string
+	resourceName  string
+	singularName  string
+	shortName     string
+	kind          string
+	newObj        func() runtime.Object
+	newList       func() runtime.Object
+	columns       TableColumns
+	clusterScoped bool
 }
 
 func NewResourceInfo(group, version, resourceName, singularName, kind string,
 	newObj func() runtime.Object, newList func() runtime.Object, columns TableColumns) ResourceInfo {
-	shortName := "" // an optional alias helpful in kubectl eg ("sa" for serviceaccounts)
-	return ResourceInfo{group, version, resourceName, singularName, shortName, kind, newObj, newList, columns}
+	shortName := ""        // an optional alias helpful in kubectl eg ("sa" for serviceaccounts)
+	clusterScoped := false // if true, this resource is cluster scoped, otherwise it is namespace scoped
+	return ResourceInfo{group, version, resourceName, singularName, shortName, kind, newObj, newList, columns, clusterScoped}
 }
 
 func (info *ResourceInfo) WithGroupAndShortName(group string, shortName string) ResourceInfo {
 	return ResourceInfo{
-		group:        group,
-		version:      info.version,
-		resourceName: info.resourceName,
-		singularName: info.singularName,
-		kind:         info.kind,
-		shortName:    shortName,
-		newObj:       info.newObj,
-		newList:      info.newList,
-		columns:      info.columns,
+		group:         group,
+		version:       info.version,
+		resourceName:  info.resourceName,
+		singularName:  info.singularName,
+		kind:          info.kind,
+		shortName:     shortName,
+		newObj:        info.newObj,
+		newList:       info.newList,
+		columns:       info.columns,
+		clusterScoped: info.clusterScoped,
 	}
+}
+func (info *ResourceInfo) WithClusterScope() ResourceInfo {
+	info.clusterScoped = true
+	return *info
+}
+
+func (info *ResourceInfo) IsClusterScoped() bool {
+	return info.clusterScoped
 }
 
 func (info *ResourceInfo) GetName() string {

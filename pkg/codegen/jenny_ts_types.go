@@ -38,10 +38,5 @@ func (j TSTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 		return nil, err
 	}
 
-	outputName := sfg.Name
-	if sfg.OutputName != "" {
-		outputName = sfg.OutputName
-	}
-
-	return codejen.NewFile(outputName+"_types.gen.ts", []byte(f.String()), j), nil
+	return codejen.NewFile("types.gen.ts", []byte(f.String()), j), nil
 }

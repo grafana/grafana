@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { ExportFormats, allGrafanaExportProviders } from './providers';
+import { type ExportFormats, allGrafanaExportProviders } from './providers';
 
 interface GrafanaReceiverExportPreviewProps {
   exportFormat: ExportFormats;
@@ -27,7 +27,6 @@ const GrafanaReceiverExportPreview = ({
     decrypt: decrypt,
     format: exportFormat,
   });
-  const { t } = useTranslate();
 
   const downloadFileName = `cp-${receiverName}-${new Date().getTime()}`;
 

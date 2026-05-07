@@ -1,17 +1,10 @@
 import { useCallback, useState } from 'react';
 
-import {
-  DataTransformerID,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
-import { histogramFieldInfo, HistogramTransformerInputs } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { type TransformerUIProps } from '@grafana/data';
+import { histogramFieldInfo, type HistogramTransformerInputs } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../utils';
 
@@ -70,8 +63,6 @@ export const HistogramTransformerEditor = ({
       combine: !options.combine,
     });
   }, [onChange, options]);
-
-  const { t } = useTranslate();
 
   const suggestions = getVariableSuggestions();
 
@@ -136,14 +127,4 @@ export const HistogramTransformerEditor = ({
       </InlineFieldRow>
     </div>
   );
-};
-
-export const histogramTransformRegistryItem: TransformerRegistryItem<HistogramTransformerInputs> = {
-  id: DataTransformerID.histogram,
-  editor: HistogramTransformerEditor,
-  transformation: standardTransformers.histogramTransformer,
-  name: standardTransformers.histogramTransformer.name,
-  description: standardTransformers.histogramTransformer.description,
-  categories: new Set([TransformerCategory.CreateNewVisualization]),
-  help: getTransformationContent(DataTransformerID.histogram).helperDocs,
 };

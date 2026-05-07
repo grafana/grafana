@@ -578,8 +578,8 @@ search_base_dns = ["dc=grafana,dc=org"]`)
 		{
 			url:          "/api/admin/ldap/reload",
 			method:       http.MethodPost,
-			desc:         "ReloadLDAPCfg should return 200 for user with correct permissions",
-			expectedCode: http.StatusOK,
+			desc:         "ReloadLDAPCfg should return 410 Gone status code",
+			expectedCode: http.StatusGone,
 			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPConfigReload},
 			},

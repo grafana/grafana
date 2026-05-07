@@ -1,4 +1,4 @@
-import { Scope } from '@grafana/data';
+import { type Scope } from '@grafana/data';
 
 export function getEmptyScopeObject(name: string, title?: string): Scope {
   return {
@@ -6,9 +6,6 @@ export function getEmptyScopeObject(name: string, title?: string): Scope {
     spec: {
       filters: [],
       title: title || name,
-      type: '',
-      category: '',
-      description: '',
     },
   };
 }

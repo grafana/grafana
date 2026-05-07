@@ -1,10 +1,12 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+
+import { Field } from '../Forms/Field';
 
 import { FileDropzone } from './FileDropzone';
 import mdx from './FileDropzone.mdx';
 
 const meta: Meta<typeof FileDropzone> = {
-  title: 'Forms/FileDropzone',
+  title: 'Inputs/FileDropzone',
   component: FileDropzone,
   parameters: {
     docs: {
@@ -13,7 +15,13 @@ const meta: Meta<typeof FileDropzone> = {
   },
 };
 
-const Template: StoryFn<typeof FileDropzone> = (args) => <FileDropzone {...args} />;
+const Template: StoryFn<typeof FileDropzone> = (args) => {
+  return (
+    <Field label="Test JSON file">
+      <FileDropzone {...args} />
+    </Field>
+  );
+};
 
 export const Basic = Template.bind({});
 

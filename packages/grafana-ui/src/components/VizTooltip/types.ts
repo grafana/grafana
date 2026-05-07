@@ -1,4 +1,4 @@
-import { LineStyle } from '@grafana/schema';
+import { type LineStyle } from '@grafana/schema';
 
 export enum ColorIndicator {
   series = 'series',
@@ -27,6 +27,7 @@ export interface VizTooltipItem {
   colorPlacement?: ColorPlacement;
   isActive?: boolean;
   lineStyle?: LineStyle;
+  isHiddenFromViz?: boolean;
 
   // internal/tmp for sorting
   numeric?: number;

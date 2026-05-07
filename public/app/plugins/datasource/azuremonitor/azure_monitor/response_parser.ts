@@ -1,18 +1,19 @@
 import { find, get } from 'lodash';
 
-import { FetchResponse } from '@grafana/runtime';
+import { type FetchResponse } from '@grafana/runtime';
 
 import TimeGrainConverter from '../time_grain_converter';
 import {
-  AzureMonitorLocalizedValue,
-  AzureMonitorLocations,
-  AzureMonitorMetricAvailabilityMetadata,
-  AzureMonitorMetricsMetadataResponse,
-  AzureMonitorOption,
-  AzureAPIResponse,
-  Location,
-  Subscription,
-} from '../types';
+  type AzureAPIResponse,
+  type AzureMonitorLocalizedValue,
+  type AzureMonitorLocations,
+  type AzureMonitorMetricAvailabilityMetadata,
+  type AzureMonitorMetricsMetadataResponse,
+  type AzureMonitorOption,
+  type Location,
+  type Subscription,
+} from '../types/types';
+
 export default class ResponseParser {
   static parseResponseValues<T>(
     result: AzureAPIResponse<T>,

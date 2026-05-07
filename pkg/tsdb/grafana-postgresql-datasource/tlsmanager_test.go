@@ -66,7 +66,7 @@ func TestGetTLSSettings(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			var settings tlsSettings
 			var err error
-			mng := tlsManager{
+			mng := TLSManager{
 				logger: backend.NewLoggerWith("logger", "tsdb.postgres"),
 			}
 

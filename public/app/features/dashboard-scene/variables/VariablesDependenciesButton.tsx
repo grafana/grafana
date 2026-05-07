@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { SceneVariable, SceneVariableState } from '@grafana/scenes';
+import { type SceneVariable, type SceneVariableState } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { NetworkGraphModal } from 'app/features/variables/inspect/NetworkGraphModal';
 
@@ -15,7 +15,6 @@ interface Props {
 export const VariablesDependenciesButton = ({ variables }: Props) => {
   const nodes = useMemo(() => createDependencyNodes(variables), [variables]);
   const edges = useMemo(() => createDependencyEdges(variables), [variables]);
-  const { t } = useTranslate();
 
   if (!edges.length) {
     return null;

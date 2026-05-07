@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
-import { RuleFormValues } from '../../types/rule-form';
+import { type RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
+import { type RuleFormValues } from '../../types/rule-form';
+import { EXTERNAL_URL_PROMETHEUS_ALERTING_RULES } from '../../utils/docs';
 import {
   alertingRulerRuleToRuleForm,
   formValuesToRulerRuleDTO,
@@ -27,7 +28,7 @@ export const RuleInspector = ({ onClose }: Props) => {
   const [activeTab, setActiveTab] = useState('yaml');
   const { setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(drawerStyles);
-  const { t } = useTranslate();
+
   const onApply = (formValues: RuleFormValues) => {
     // Need to loop through all values and set them individually
     // TODO this is not type-safe :(
@@ -135,7 +136,7 @@ function YamlContentInfo() {
       <Trans i18nKey="alerting.yaml-content-info.body">
         The YAML content in the editor only contains alert rule configuration <br />
         To configure Prometheus, you need to provide the rest of the{' '}
-        <TextLink href="https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" external>
+        <TextLink href={EXTERNAL_URL_PROMETHEUS_ALERTING_RULES} external>
           configuration file content.
         </TextLink>
       </Trans>

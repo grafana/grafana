@@ -1,6 +1,7 @@
-import { WithAccessControlMetadata } from '@grafana/data';
+import { type OrgRole, type WithAccessControlMetadata } from '@grafana/data';
 
-import { ApiKey, OrgRole, Role } from '.';
+import { type Role } from './accessControl';
+import { type ApiKey } from './apiKeys';
 
 export interface OrgServiceAccount extends WithAccessControlMetadata {
   serviceAccountId: number;

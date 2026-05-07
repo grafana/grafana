@@ -7,6 +7,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -14,6 +15,7 @@ import (
 // Read stats from legacy SQL
 type LegacyStatsGetter struct {
 	SQL legacysql.LegacyDatabaseProvider
+	Cfg *setting.Cfg
 }
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
@@ -58,19 +60,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		group := "sql-fallback"
 
 		// Legacy alert rule table
-		err = fn("alert_rule", "org_id=? AND dashboard_uid=?", group, "alertrules", false)
-		if err != nil {
-			return err
-		}
-
-		// Legacy dashboard table
-		err = fn("dashboard", "org_id=? AND folder_uid=?", group, "dashboards", true)
-		if err != nil {
-			return err
-		}
-
-		// Legacy folder table
-		err = fn("folder", "org_id=? AND parent_uid=?", group, "folders", true)
+		err = fn("alert_rule", "org_id=? AND namespace_uid=?", group, "alertrules", false)
 		if err != nil {
 			return err
 		}

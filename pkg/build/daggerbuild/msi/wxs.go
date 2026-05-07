@@ -45,6 +45,14 @@ func WxsVersion(ersion string) string {
 	if v, ok := result["prerelease"]; ok && v != "" {
 		v := strings.TrimPrefix(v, "beta")
 		v = strings.TrimPrefix(v, "pre")
+
+		if v == "local" {
+			v = "0"
+		}
+
+		if len(v) > 5 {
+			v = v[len(v)-5:]
+		}
 		return fmt.Sprintf("%s.%s.%s.%s", major, minor, patch, v)
 	}
 	return fmt.Sprintf("%s.%s.%s.0", major, minor, patch)
@@ -108,7 +116,7 @@ const firewallTemplate = `<?xml version="1.0" encoding="utf-8"?>
   <Fragment>
       <ComponentGroup Id="GrafanaFirewallExceptionsGroup">
         <Component Id="FirewallGrafanaServer" Guid="7278f07d-de6f-497f-9267-d5feb5216a5c" Directory="INSTALLDIR">
-          <File KeyPath="yes" Source="SourceDir\grafana\bin\grafana-server.exe">
+          <File KeyPath="yes" Source="SourceDir\grafana\bin\grafana.exe">
              <fire:FirewallException
               Id="FWX1"
               Name="Grafana Server TCP 3000"
@@ -211,8 +219,8 @@ const svcTemplate = `<?xml version="1.0" encoding="utf-8"?>
         <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Services\Grafana">
           <RegistryKey Key="Parameters">
             <RegistryValue Name="AppDirectory" Value="[INSTALLDIR]grafana" Type="expandable" />
-            <RegistryValue Name="Application" Value="[INSTALLDIR]grafana\bin\grafana-server.exe" Type="expandable" />
-            <RegistryValue Name="AppParameters" Value='' Type="expandable" />
+            <RegistryValue Name="Application" Value="[INSTALLDIR]grafana\bin\grafana.exe" Type="expandable" />
+            <RegistryValue Name="AppParameters" Value='server' Type="expandable" />
 
             <RegistryValue Name="AppEnvironmentExtra" Type="multiString">
               <MultiStringValue>LOG_LEVEL=DEBUG</MultiStringValue>

@@ -1,14 +1,14 @@
 import { useCallback, useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { Box, Button, Text } from '@grafana/ui';
-
 import {
   useCreateCloudMigrationTokenMutation,
   useDeleteCloudMigrationTokenMutation,
   useGetCloudMigrationTokenQuery,
-} from '../../api';
+} from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { Box, Button, Text } from '@grafana/ui';
+
 import { maybeAPIError } from '../../api/errors';
 import { TokenErrorAlert } from '../TokenErrorAlert';
 
@@ -54,8 +54,6 @@ export const MigrationTokenPane = () => {
       setShowDeleteModal(false);
     }
   }, [deleteTokenMutation, getTokenQuery.data]);
-
-  const { t } = useTranslate();
 
   return (
     <>

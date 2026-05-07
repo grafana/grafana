@@ -1,14 +1,13 @@
 import { debounce } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, Input } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 
 const Search = ({ searchFn }: { searchFn: (searchPhrase: string) => void }) => {
   const [searchFilter, setSearchFilter] = useState('');
-  const { t } = useTranslate();
 
   const debouncedSearch = useMemo(() => debounce(searchFn, 600), [searchFn]);
   useEffect(() => {
@@ -30,6 +29,7 @@ const Search = ({ searchFn }: { searchFn: (searchPhrase: string) => void }) => {
       }}
       placeholder={t('components.search.placeholder-resource-search', 'Search for a resource')}
       data-testid={selectors.components.queryEditor.resourcePicker.search.input}
+      style={{ marginBottom: '10px' }}
     />
   );
 };

@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math/rand"
 	"slices"
 	"sync"
@@ -13,12 +14,14 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/alerting/receivers/webex"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
 	alertingModels "github.com/grafana/alerting/models"
 
@@ -29,9 +32,11 @@ import (
 )
 
 var (
-	RuleMuts = AlertRuleMutators{}
-	NSMuts   = NotificationSettingsMutators{}
-	RuleGen  = &AlertRuleGenerator{
+	RuleMuts     = AlertRuleMutators{}
+	NSMuts       = NotificationSettingsMutators{}
+	CPRMuts      = ContactPointRoutingMutators{}
+	InstanceMuts = AlertInstanceMutators{}
+	RuleGen      = &AlertRuleGenerator{
 		mutators: []AlertRuleMutator{
 			RuleMuts.WithUniqueUID(), RuleMuts.WithUniqueTitle(),
 		},
@@ -93,9 +98,14 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		panelID = &p
 	}
 
-	var ns []NotificationSettings
+	var ns *NotificationSettings
 	if rand.Int63()%2 == 0 {
-		ns = append(ns, NotificationSettingsGen()())
+		ns = util.Pointer(NotificationSettingsGen()())
+		if rand.Int63()%2 == 0 {
+			// Use PolicyRouting instead.
+			ns.ContactPointRouting = nil
+			ns.PolicyRouting = util.Pointer(PolicyRoutingGen()())
+		}
 	}
 
 	var updatedBy *UserUID
@@ -128,7 +138,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		Labels:                      labels,
 		NotificationSettings:        ns,
 		Metadata:                    GenerateMetadata(),
-		MissingSeriesEvalsToResolve: util.Pointer(2),
+		MissingSeriesEvalsToResolve: util.Pointer[int64](2),
 	}
 
 	for _, mutator := range g.mutators {
@@ -314,7 +324,7 @@ func (a *AlertRuleMutators) WithIntervalSeconds(seconds int64) AlertRuleMutator 
 	}
 }
 
-// WithIntervalMatching mutator that generates random interval and `for` duration that are times of the provided base interval.
+// WithIntervalMatching mutator that generates random interval and `for` duration that are multiples of the provided base interval.
 func (a *AlertRuleMutators) WithIntervalMatching(baseInterval time.Duration) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.IntervalSeconds = int64(baseInterval.Seconds()) * (rand.Int63n(10) + 1)
@@ -404,6 +414,22 @@ func (a *AlertRuleMutators) WithDashboardAndPanel(dashboardUID *string, panelID 
 	return func(rule *AlertRule) {
 		rule.DashboardUID = dashboardUID
 		rule.PanelID = panelID
+	}
+}
+
+// WithDataSourceUID takes a list of UIDs. It adds the nth UID to the nth query in the alert (same index).
+// If there are not enough queries, it adds an empty one with the given data source UID.
+func (a *AlertRuleMutators) WithDataSourceUID(dsUIDs ...string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		for i, uid := range dsUIDs {
+			if i >= len(rule.Data) {
+				rule.Data = append(rule.Data, AlertQuery{
+					DatasourceUID: uid,
+				})
+				continue
+			}
+			rule.Data[i].DatasourceUID = uid
+		}
 	}
 }
 
@@ -514,23 +540,36 @@ func (a *AlertRuleMutators) WithSameGroup() AlertRuleMutator {
 	}
 }
 
-func (a *AlertRuleMutators) WithMissingSeriesEvalsToResolve(timesOfInterval int) AlertRuleMutator {
+func (a *AlertRuleMutators) WithMissingSeriesEvalsToResolve(timesOfInterval int64) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		if timesOfInterval <= 0 {
 			panic("timesOfInterval must be greater than 0")
 		}
-		rule.MissingSeriesEvalsToResolve = util.Pointer(timesOfInterval)
+		rule.MissingSeriesEvalsToResolve = util.Pointer[int64](timesOfInterval)
 	}
 }
 
 func (a *AlertRuleMutators) WithNotificationSettingsGen(ns func() NotificationSettings) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NotificationSettings = []NotificationSettings{ns()}
+		rule.NotificationSettings = util.Pointer(ns())
 	}
 }
+
 func (a *AlertRuleMutators) WithNotificationSettings(ns NotificationSettings) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NotificationSettings = []NotificationSettings{ns}
+		rule.NotificationSettings = &ns
+	}
+}
+
+func (a *AlertRuleMutators) WithContactPointRouting(ns ContactPointRouting) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NotificationSettings = util.Pointer(NotificationSettingsFromContact(ns))
+	}
+}
+
+func (a *AlertRuleMutators) WithPolicyRouting(pr PolicyRouting) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NotificationSettings = util.Pointer(NotificationSettingsFromPolicy(pr.Policy))
 	}
 }
 
@@ -558,6 +597,14 @@ func (a *AlertRuleMutators) WithRandomRecordingRules() AlertRuleMutator {
 func (a *AlertRuleMutators) WithAllRecordingRules() AlertRuleMutator {
 	return func(rule *AlertRule) {
 		ConvertToRecordingRule(rule)
+	}
+}
+
+func (a *AlertRuleMutators) WithoutTargetDataSource() AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Record != nil {
+			rule.Record.TargetDatasourceUID = ""
+		}
 	}
 }
 
@@ -901,11 +948,73 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 	return instance
 }
 
+type AlertInstanceMutators struct{}
+
+func (a AlertInstanceMutators) WithOrgID(orgID int64) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.RuleOrgID = orgID
+	}
+}
+
+func (a AlertInstanceMutators) WithRuleUID(ruleUID string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.RuleUID = ruleUID
+	}
+}
+
+func (a AlertInstanceMutators) WithLabelsHash(hash string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LabelsHash = hash
+	}
+}
+
+func (a AlertInstanceMutators) WithReason(reason string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.CurrentReason = reason
+	}
+}
+
+func (a AlertInstanceMutators) WithState(state InstanceStateType) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.CurrentState = state
+	}
+}
+
+func (a AlertInstanceMutators) WithLabels(labels InstanceLabels) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.Labels = labels
+	}
+}
+
+func (a AlertInstanceMutators) WithAnnotations(annotations InstanceAnnotations) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.Annotations = annotations
+	}
+}
+
+func (a AlertInstanceMutators) WithResultFingerprint(fp string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.ResultFingerprint = fp
+	}
+}
+
+func (a AlertInstanceMutators) WithLastError(lastError string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LastError = lastError
+	}
+}
+
+func (a AlertInstanceMutators) WithLastResult(lastResult LastResult) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LastResult = lastResult
+	}
+}
+
 type Mutator[T any] func(*T)
 
-// CopyNotificationSettings creates a deep copy of NotificationSettings.
-func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[NotificationSettings]) NotificationSettings {
-	c := NotificationSettings{
+// CopyContactPointRouting creates a deep copy of ContactPointRouting.
+func CopyContactPointRouting(ns ContactPointRouting, mutators ...Mutator[ContactPointRouting]) ContactPointRouting {
+	c := ContactPointRouting{
 		Receiver: ns.Receiver,
 	}
 	if ns.GroupWait != nil {
@@ -935,10 +1044,10 @@ func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[Notif
 	return c
 }
 
-// NotificationSettingsGen generates NotificationSettings using a base and mutators.
-func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() NotificationSettings {
-	return func() NotificationSettings {
-		c := NotificationSettings{
+// ContactPointRoutingGen generates ContactPointRouting using a base and mutators.
+func ContactPointRoutingGen(mutators ...Mutator[ContactPointRouting]) func() ContactPointRouting {
+	return func() ContactPointRouting {
+		c := ContactPointRouting{
 			Receiver:            util.GenerateShortUID(),
 			GroupBy:             []string{model.AlertNameLabel, FolderTitleLabel, util.GenerateShortUID()},
 			GroupWait:           util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
@@ -954,16 +1063,16 @@ func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() N
 	}
 }
 
-type NotificationSettingsMutators struct{}
+type ContactPointRoutingMutators struct{}
 
-func (n NotificationSettingsMutators) WithReceiver(receiver string) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
+func (n ContactPointRoutingMutators) WithReceiver(receiver string) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
 		ns.Receiver = receiver
 	}
 }
 
-func (n NotificationSettingsMutators) WithGroupWait(groupWait *time.Duration) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
+func (n ContactPointRoutingMutators) WithGroupWait(groupWait *time.Duration) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
 		if groupWait == nil {
 			ns.GroupWait = nil
 			return
@@ -973,8 +1082,8 @@ func (n NotificationSettingsMutators) WithGroupWait(groupWait *time.Duration) Mu
 	}
 }
 
-func (n NotificationSettingsMutators) WithGroupInterval(groupInterval *time.Duration) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
+func (n ContactPointRoutingMutators) WithGroupInterval(groupInterval *time.Duration) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
 		if groupInterval == nil {
 			ns.GroupInterval = nil
 			return
@@ -984,8 +1093,8 @@ func (n NotificationSettingsMutators) WithGroupInterval(groupInterval *time.Dura
 	}
 }
 
-func (n NotificationSettingsMutators) WithRepeatInterval(repeatInterval *time.Duration) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
+func (n ContactPointRoutingMutators) WithRepeatInterval(repeatInterval *time.Duration) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
 		if repeatInterval == nil {
 			ns.RepeatInterval = nil
 			return
@@ -995,21 +1104,137 @@ func (n NotificationSettingsMutators) WithRepeatInterval(repeatInterval *time.Du
 	}
 }
 
+func (n ContactPointRoutingMutators) WithGroupBy(groupBy ...string) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
+		ns.GroupBy = groupBy
+	}
+}
+
+func (n ContactPointRoutingMutators) WithMuteTimeIntervals(muteTimeIntervals ...string) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
+		ns.MuteTimeIntervals = muteTimeIntervals
+	}
+}
+
+func (n ContactPointRoutingMutators) WithActiveTimeIntervals(activeTimeIntervals ...string) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
+		ns.ActiveTimeIntervals = activeTimeIntervals
+	}
+}
+
+// PolicyRoutingGen generates PolicyRouting using a base and mutators.
+func PolicyRoutingGen(mutators ...Mutator[PolicyRouting]) func() PolicyRouting {
+	return func() PolicyRouting {
+		c := PolicyRouting{
+			Policy: util.GenerateShortUID(),
+		}
+		for _, mutator := range mutators {
+			mutator(&c)
+		}
+		return c
+	}
+}
+
+// CopyNotificationSettings creates a deep copy of NotificationSettings.
+func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[NotificationSettings]) NotificationSettings {
+	c := NotificationSettings{}
+	if ns.ContactPointRouting != nil {
+		c.ContactPointRouting = util.Pointer(CopyContactPointRouting(*ns.ContactPointRouting))
+	}
+	if ns.PolicyRouting != nil {
+		c.PolicyRouting = &PolicyRouting{Policy: ns.PolicyRouting.Policy}
+	}
+	for _, mutator := range mutators {
+		mutator(&c)
+	}
+	return c
+}
+
+// NotificationSettingsGen generates NotificationSettings using a base and mutators.
+func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() NotificationSettings {
+	return func() NotificationSettings {
+		c := ContactPointRoutingGen()()
+		ns := NotificationSettings{
+			ContactPointRouting: &c,
+		}
+		for _, mutator := range mutators {
+			mutator(&ns)
+		}
+		return ns
+	}
+}
+
+type NotificationSettingsMutators struct{}
+
+func (n NotificationSettingsMutators) WithReceiver(receiver string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithReceiver(receiver)(ns.ContactPointRouting)
+	}
+}
+
+func (n NotificationSettingsMutators) WithGroupWait(groupWait *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithGroupWait(groupWait)(ns.ContactPointRouting)
+	}
+}
+
+func (n NotificationSettingsMutators) WithGroupInterval(groupInterval *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithGroupInterval(groupInterval)(ns.ContactPointRouting)
+	}
+}
+
+func (n NotificationSettingsMutators) WithRepeatInterval(repeatInterval *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithRepeatInterval(repeatInterval)(ns.ContactPointRouting)
+	}
+}
+
 func (n NotificationSettingsMutators) WithGroupBy(groupBy ...string) Mutator[NotificationSettings] {
 	return func(ns *NotificationSettings) {
-		ns.GroupBy = groupBy
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithGroupBy(groupBy...)(ns.ContactPointRouting)
 	}
 }
 
 func (n NotificationSettingsMutators) WithMuteTimeIntervals(muteTimeIntervals ...string) Mutator[NotificationSettings] {
 	return func(ns *NotificationSettings) {
-		ns.MuteTimeIntervals = muteTimeIntervals
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithMuteTimeIntervals(muteTimeIntervals...)(ns.ContactPointRouting)
 	}
 }
 
 func (n NotificationSettingsMutators) WithActiveTimeIntervals(activeTimeIntervals ...string) Mutator[NotificationSettings] {
 	return func(ns *NotificationSettings) {
-		ns.ActiveTimeIntervals = activeTimeIntervals
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithActiveTimeIntervals(activeTimeIntervals...)(ns.ContactPointRouting)
+	}
+}
+
+func (n NotificationSettingsMutators) WithPolicy(policy string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if ns.PolicyRouting == nil {
+			ns.PolicyRouting = &PolicyRouting{}
+		}
+		ns.PolicyRouting.Policy = policy
 	}
 }
 
@@ -1172,6 +1397,7 @@ func ReceiverGen(mutators ...Mutator[Receiver]) func() Receiver {
 			Name:         name,
 			Integrations: []*Integration{&integration},
 			Provenance:   ProvenanceNone,
+			Origin:       ResourceOriginGrafana,
 		}
 		for _, mutator := range mutators {
 			mutator(&c)
@@ -1200,15 +1426,17 @@ func (n ReceiverMutators) WithProvenance(provenance Provenance) Mutator[Receiver
 	}
 }
 
-func (n ReceiverMutators) WithValidIntegration(integrationType string) Mutator[Receiver] {
+func (n ReceiverMutators) WithValidIntegration(integrationType schema.IntegrationType) Mutator[Receiver] {
 	return func(r *Receiver) {
+		// TODO add support for v0
 		integration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 		r.Integrations = []*Integration{&integration}
 	}
 }
 
-func (n ReceiverMutators) WithInvalidIntegration(integrationType string) Mutator[Receiver] {
+func (n ReceiverMutators) WithInvalidIntegration(integrationType schema.IntegrationType) Mutator[Receiver] {
 	return func(r *Receiver) {
+		// TODO add support for v0
 		integration := IntegrationGen(IntegrationMuts.WithInvalidConfig(integrationType))()
 		r.Integrations = []*Integration{&integration}
 	}
@@ -1236,6 +1464,24 @@ func (n ReceiverMutators) Decrypted(fn DecryptFn) Mutator[Receiver] {
 	}
 }
 
+func (n ReceiverMutators) WithOrigin(origin ResourceOrigin) Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.Origin = origin
+	}
+}
+
+func (n ReceiverMutators) WithEmptyIntegrations() Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.Integrations = []*Integration{}
+	}
+}
+
+func (n ReceiverMutators) WithUID(uid string) Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.UID = uid
+	}
+}
+
 // Integrations
 
 // CopyIntegrationWith creates a deep copy of Integration and then applies mutators to it.
@@ -1251,7 +1497,7 @@ func CopyIntegrationWith(r Integration, mutators ...Mutator[Integration]) Integr
 func IntegrationGen(mutators ...Mutator[Integration]) func() Integration {
 	return func() Integration {
 		name := util.GenerateShortUID()
-		randomIntegrationType, _ := randomMapKey(alertingNotify.AllKnownConfigsForTesting)
+		randomIntegrationType, _ := randomMapKey(notifytest.AllKnownV1ConfigsForTesting)
 
 		c := Integration{
 			UID:                   util.GenerateShortUID(),
@@ -1295,11 +1541,15 @@ func (n IntegrationMutators) WithName(name string) Mutator[Integration] {
 	}
 }
 
-func (n IntegrationMutators) WithValidConfig(integrationType string) Mutator[Integration] {
+func (n IntegrationMutators) WithValidConfig(integrationType schema.IntegrationType) Mutator[Integration] {
 	return func(c *Integration) {
-		config := alertingNotify.AllKnownConfigsForTesting[integrationType].GetRawNotifierConfig(c.Name)
-		integrationConfig, _ := IntegrationConfigFromType(integrationType)
-		c.Config = integrationConfig
+		// TODO add support for v0 integrations
+		ncfg, ok := notifytest.AllKnownV1ConfigsForTesting[integrationType]
+		if !ok {
+			panic(fmt.Sprintf("unknown integration type: %s", integrationType))
+		}
+		config := ncfg.GetRawNotifierConfig(c.Name)
+		c.Config, _ = alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
 
 		var settings map[string]any
 		_ = json.Unmarshal(config.Settings, &settings)
@@ -1314,13 +1564,16 @@ func (n IntegrationMutators) WithValidConfig(integrationType string) Mutator[Int
 	}
 }
 
-func (n IntegrationMutators) WithInvalidConfig(integrationType string) Mutator[Integration] {
+func (n IntegrationMutators) WithInvalidConfig(integrationType schema.IntegrationType) Mutator[Integration] {
 	return func(c *Integration) {
-		integrationConfig, _ := IntegrationConfigFromType(integrationType)
-		c.Config = integrationConfig
+		var ok bool
+		c.Config, ok = alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+		if !ok {
+			panic(fmt.Sprintf("unknown integration type: %s", integrationType))
+		}
 		c.Settings = map[string]interface{}{}
 		c.SecureSettings = map[string]string{}
-		if integrationType == "webex" {
+		if integrationType == webex.Type {
 			// Webex passes validation without any settings but should fail with an unparsable URL.
 			c.Settings["api_url"] = "(*^$*^%!@#$*()"
 		}
@@ -1351,6 +1604,12 @@ func (n IntegrationMutators) AddSecureSetting(key, val string) Mutator[Integrati
 	}
 }
 
+func (n IntegrationMutators) RemoveSetting(key string) Mutator[Integration] {
+	return func(c *Integration) {
+		delete(c.Settings, key)
+	}
+}
+
 func randomMapKey[K comparable, V any](m map[K]V) (K, V) {
 	randIdx := rand.Intn(len(m))
 	i := 0
@@ -1374,10 +1633,14 @@ func ConvertToRecordingRule(rule *AlertRule) {
 	if rule.Record.Metric == "" {
 		rule.Record.Metric = fmt.Sprintf("some_metric_%s", util.GenerateShortUID())
 	}
+	if rule.Record.TargetDatasourceUID == "" {
+		rule.Record.TargetDatasourceUID = util.GenerateShortUID()
+	}
 	rule.Condition = ""
 	rule.NoDataState = ""
 	rule.ExecErrState = ""
 	rule.For = 0
+	rule.KeepFiringFor = 0
 	rule.NotificationSettings = nil
 	rule.MissingSeriesEvalsToResolve = nil
 }

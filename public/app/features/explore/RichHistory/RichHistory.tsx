@@ -1,19 +1,14 @@
 import { debounce } from 'lodash';
 import { useState, useEffect } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
-import { TabbedContainer, TabConfig } from '@grafana/ui';
-import {
-  SortOrder,
-  RichHistorySearchFilters,
-  RichHistorySettings,
-  createDatasourcesList,
-} from 'app/core/utils/richHistory';
-import { useSelector } from 'app/types';
-import { RichHistoryQuery } from 'app/types/explore';
+import { t } from '@grafana/i18n';
+import { TabbedContainer, type TabConfig } from '@grafana/ui';
+import { createDatasourcesList } from 'app/core/utils/richHistory';
+import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+import { type RichHistoryQuery } from 'app/types/explore';
+import { useSelector } from 'app/types/store';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';
@@ -51,7 +46,7 @@ export function RichHistory(props: RichHistoryProps) {
   const { richHistory, richHistoryTotal, height, deleteRichHistory, onClose, firstTab } = props;
 
   const [loading, setLoading] = useState(false);
-  const { t } = useTranslate();
+
   const updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
     props.updateHistorySettings({ ...props.richHistorySettings, ...settingsToUpdate });
   };

@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { createTheme, LogLevel } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
 
-import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
-import { LogRowMessageDisplayedFields, Props } from './LogRowMessageDisplayedFields';
-import { createLogRow } from './__mocks__/logRow';
+import { LogRowMessageDisplayedFields, type Props } from './LogRowMessageDisplayedFields';
+import { LOG_LINE_BODY_FIELD_NAME } from './fieldSelector/logFields';
 import { getLogRowStyles } from './getLogRowStyles';
+import { createLogRow } from './mocks/logRow';
 
 const setup = (propOverrides: Partial<Props> = {}, detectedFields = ['place', 'planet']) => {
   const theme = createTheme();

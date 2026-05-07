@@ -46,7 +46,7 @@ func benchScheduler(b *testing.B, numWorkers, numTenants, itemsPerTenant int) {
 		for i := 0; i < numTenants; i++ {
 			tenantID := tenantIDs[i]
 			for j := 0; j < itemsPerTenant; j++ {
-				require.NoError(b, q.Enqueue(context.Background(), tenantID, func(_ context.Context) {
+				require.NoError(b, q.Enqueue(context.Background(), tenantID, func() {
 					processed.Add(1)
 					wg.Done()
 				}))
@@ -166,7 +166,7 @@ func BenchmarkSchedulerFairness(b *testing.B) {
 			tenantID := tenantIDs[i]
 			tenantIdx := i
 			for j := 0; j < itemsPerTenant; j++ {
-				require.NoError(b, q.Enqueue(context.Background(), tenantID, func(_ context.Context) {
+				require.NoError(b, q.Enqueue(context.Background(), tenantID, func() {
 					processedPerTenant[tenantIdx].Add(1)
 					wg.Done()
 				}))
@@ -248,7 +248,7 @@ func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 			for i := 0; i < numTenants; i++ {
 				tenantID := tenantIDs[i]
 				tenantIdx := i
-				require.NoError(b, q.Enqueue(context.Background(), tenantID, func(_ context.Context) {
+				require.NoError(b, q.Enqueue(context.Background(), tenantID, func() {
 					processedPerTenant[tenantIdx].Add(1)
 					wg.Done()
 				}))

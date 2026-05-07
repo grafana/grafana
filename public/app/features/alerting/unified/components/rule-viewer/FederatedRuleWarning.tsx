@@ -1,9 +1,9 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
 
-export function FederatedRuleWarning() {
-  const { t } = useTranslate();
+import { DOCS_URL_FEDERATED_RULES } from '../../utils/docs';
 
+export function FederatedRuleWarning() {
   return (
     <Alert
       severity="info"
@@ -16,7 +16,7 @@ export function FederatedRuleWarning() {
           Federated rule groups are currently an experimental feature.
         </Trans>
         <Button fill="text" icon="book">
-          <a href="https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation">
+          <a href={DOCS_URL_FEDERATED_RULES}>
             <Trans i18nKey="alerting.federated-rule-warning.read-documentation">Read documentation</Trans>
           </a>
         </Button>

@@ -1,14 +1,15 @@
-import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
+import { type AnnotationQuery, type DataQuery, type VariableModel, VariableRefresh, type Panel } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
-  GridLayoutItemKind,
-  GridLayoutKind,
-  PanelKind,
-  RowsLayoutKind,
-  RowsLayoutRowKind,
-  VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+  type Spec as DashboardV2Spec,
+  defaultDataQueryKind,
+  type GridLayoutItemKind,
+  type GridLayoutKind,
+  type PanelKind,
+  type RowsLayoutKind,
+  type RowsLayoutRowKind,
+  type VariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -24,7 +25,7 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import {
   getDefaultDatasource,
@@ -32,45 +33,41 @@ import {
   ResponseTransformers,
   transformMappingsToV1,
 } from './ResponseTransformers';
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    bootData: {
-      ...jest.requireActual('@grafana/runtime').config.bootData,
-      settings: {
-        ...jest.requireActual('@grafana/runtime').config.bootData.settings,
-        datasources: {
-          PromTest: {
-            uid: 'xyz-abc',
-            name: 'PromTest',
-            id: 'prometheus',
-            meta: {
-              id: 'prometheus',
-              name: 'PromTest',
-              type: 'datasource',
-            },
-            isDefault: true,
-            apiVersion: 'v2',
-          },
-          '-- Grafana --': {
-            uid: 'grafana',
-            name: '-- Grafana --',
-            id: 'grafana',
-            meta: {
-              id: 'grafana',
-              name: '-- Grafana --',
-              type: 'datasource',
-            },
-            isDefault: false,
-          },
+    datasources: {
+      PromTest: {
+        uid: 'xyz-abc',
+        name: 'PromTest',
+        id: 'prometheus',
+        meta: {
+          id: 'prometheus',
+          name: 'PromTest',
+          type: 'datasource',
         },
-
-        defaultDatasource: 'PromTest',
+        isDefault: true,
+        apiVersion: 'v2',
+        type: 'prometheus',
+      },
+      '-- Grafana --': {
+        uid: 'grafana',
+        name: '-- Grafana --',
+        id: 'grafana',
+        meta: {
+          id: 'grafana',
+          name: '-- Grafana --',
+          type: 'datasource',
+        },
+        isDefault: false,
+        type: 'datasource',
       },
     },
+
+    defaultDatasource: 'PromTest',
   },
 }));
 
@@ -79,7 +76,7 @@ describe('ResponseTransformers', () => {
     it('should return prometheus as default', () => {
       expect(getDefaultDatasource()).toEqual({
         apiVersion: 'v2',
-        uid: 'PromTest',
+        uid: 'xyz-abc',
         type: 'prometheus',
       });
     });
@@ -88,7 +85,7 @@ describe('ResponseTransformers', () => {
   describe('getDefaultDataSourceRef', () => {
     it('should return prometheus as default', () => {
       expect(getDefaultDataSourceRef()).toEqual({
-        uid: 'PromTest',
+        uid: 'xyz-abc',
         type: 'prometheus',
       });
     });
@@ -130,7 +127,7 @@ describe('ResponseTransformers', () => {
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
         version: 1,
-        gnetId: 'something-like-a-uid',
+        gnetId: 456,
         revision: 225,
         links: [
           {
@@ -144,6 +141,19 @@ describe('ResponseTransformers', () => {
             icon: 'external link',
             type: 'link',
             tooltip: 'Link 1 Tooltip',
+          },
+          {
+            title: 'Link 2',
+            url: 'https://grafana.com',
+            asDropdown: false,
+            targetBlank: true,
+            includeVars: true,
+            keepTime: true,
+            tags: ['tag3', 'tag4'],
+            icon: 'external link',
+            type: 'link',
+            tooltip: 'Link 2 Tooltip',
+            placement: 'inControlsMenu',
           },
         ],
         annotations: {
@@ -314,6 +324,31 @@ describe('ResponseTransformers', () => {
               type: 'query',
               query: { refId: 'A', query: 'label_values(grafanacloud_org_info{org_slug="$org_slug"}, org_id)' },
             },
+            {
+              type: 'switch',
+              name: 'var9',
+              label: 'Switch variable',
+              description: 'Switch variable description',
+              skipUrlSync: false,
+              hide: 0,
+              current: {
+                value: 'true',
+                text: 'true',
+              },
+              options: [
+                {
+                  selected: true,
+                  text: 'true',
+                  value: 'true',
+                },
+                {
+                  selected: false,
+                  text: 'false',
+                  value: 'false',
+                },
+              ],
+              query: '',
+            },
           ],
         },
         panels: [
@@ -325,7 +360,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  uid: 'datasource1',
+                  type: 'prometheus',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -368,7 +406,6 @@ describe('ResponseTransformers', () => {
           canStar: true,
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
         apiVersion: 'v1',
@@ -393,14 +430,14 @@ describe('ResponseTransformers', () => {
       const transformed = ResponseTransformers.ensureV2Response(dto);
 
       // Metadata
-      expect(transformed.apiVersion).toBe('v2alpha1');
+      expect(transformed.apiVersion).toBe('v2');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
       expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedBy]).toEqual('user2');
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedTimestamp]).toEqual('2023-01-02T00:00:00Z');
       expect(transformed.metadata.annotations?.[AnnoKeyFolder]).toEqual('folder1');
       expect(transformed.metadata.annotations?.[AnnoKeySlug]).toEqual('dashboard-slug');
-      expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('something-like-a-uid');
+      expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('456');
       expect(transformed.metadata.labels?.[DeprecatedInternalId]).toBe('123');
 
       // Spec
@@ -448,15 +485,17 @@ describe('ResponseTransformers', () => {
           description: '',
           id: 1,
           links: [],
+          transparent: false,
           vizConfig: {
-            kind: 'timeseries',
+            kind: 'VizConfig',
+            group: 'timeseries',
+            version: '',
             spec: {
               fieldConfig: {
                 defaults: {},
                 overrides: [],
               },
               options: {},
-              pluginVersion: undefined,
             },
           },
           data: {
@@ -466,10 +505,14 @@ describe('ResponseTransformers', () => {
                 {
                   kind: 'PanelQuery',
                   spec: {
-                    datasource: 'datasource1',
                     hidden: false,
                     query: {
-                      kind: 'prometheus',
+                      kind: 'DataQuery',
+                      version: defaultDataQueryKind().version,
+                      group: 'prometheus',
+                      datasource: {
+                        name: 'datasource1',
+                      },
                       spec: {
                         expr: 'test-query',
                       },
@@ -478,15 +521,7 @@ describe('ResponseTransformers', () => {
                   },
                 },
               ],
-              queryOptions: {
-                cacheTimeout: undefined,
-                hideTimeOverride: undefined,
-                interval: undefined,
-                maxDataPoints: undefined,
-                queryCachingTTL: undefined,
-                timeFrom: undefined,
-                timeShift: undefined,
-              },
+              queryOptions: {},
               transformations: [],
             },
           },
@@ -525,6 +560,7 @@ describe('ResponseTransformers', () => {
       validateVariablesV1ToV2(spec.variables[6], dashboardV1.templating?.list?.[6]);
       validateVariablesV1ToV2(spec.variables[7], dashboardV1.templating?.list?.[7]);
       validateVariablesV1ToV2(spec.variables[8], dashboardV1.templating?.list?.[8]);
+      validateVariablesV1ToV2(spec.variables[9], dashboardV1.templating?.list?.[9]);
     });
   });
 
@@ -564,7 +600,7 @@ describe('ResponseTransformers', () => {
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
         version: 1,
-        gnetId: 'something-like-a-uid',
+        gnetId: 456,
         revision: 225,
         links: [],
         annotations: {
@@ -582,7 +618,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'datasource1',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -627,7 +666,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'datasource1',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -656,7 +698,10 @@ describe('ResponseTransformers', () => {
                 targets: [
                   {
                     refId: 'A',
-                    datasource: 'datasource1',
+                    datasource: {
+                      type: 'prometheus',
+                      uid: 'datasource1',
+                    },
                     expr: 'test-query',
                     hide: false,
                   },
@@ -704,7 +749,6 @@ describe('ResponseTransformers', () => {
           canStar: true,
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
         apiVersion: 'v1',
@@ -793,7 +837,7 @@ describe('ResponseTransformers', () => {
 
     it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
       const dashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-        apiVersion: 'v2alpha1',
+        apiVersion: 'v2',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           creationTimestamp: '2023-01-01T00:00:00Z',
@@ -805,7 +849,7 @@ describe('ResponseTransformers', () => {
             'grafana.app/updatedTimestamp': '2023-01-02T00:00:00Z',
             'grafana.app/folder': 'folder1',
             'grafana.app/slug': 'dashboard-slug',
-            'grafana.app/dashboard-gnet-id': 'something-like-a-uid',
+            'grafana.app/dashboard-gnet-id': '456',
           },
         },
         spec: {
@@ -853,6 +897,19 @@ describe('ResponseTransformers', () => {
               type: 'link',
               tooltip: 'Link 1 Tooltip',
             },
+            {
+              title: 'Link 2',
+              url: 'https://grafana.com',
+              asDropdown: false,
+              targetBlank: true,
+              includeVars: true,
+              keepTime: true,
+              tags: ['tag3', 'tag4'],
+              icon: 'external link',
+              type: 'link',
+              tooltip: 'Link 2 Tooltip',
+              placement: 'inControlsMenu',
+            },
           ],
           annotations: handyTestingSchema.annotations,
           variables: handyTestingSchema.variables,
@@ -870,7 +927,6 @@ describe('ResponseTransformers', () => {
           slug: 'dashboard-slug',
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
       };
@@ -903,7 +959,6 @@ describe('ResponseTransformers', () => {
       expect(dashboard.liveNow).toBe(dashboardV2.spec.liveNow);
       expect(dashboard.editable).toBe(dashboardV2.spec.editable);
       expect(dashboard.revision).toBe(225);
-      expect(dashboard.gnetId).toBe(dashboardV2.metadata.annotations?.['grafana.app/dashboard-gnet-id']);
       expect(dashboard.time?.from).toBe(dashboardV2.spec.timeSettings.from);
       expect(dashboard.time?.to).toBe(dashboardV2.spec.timeSettings.to);
       expect(dashboard.timezone).toBe(dashboardV2.spec.timeSettings.timezone);
@@ -923,11 +978,20 @@ describe('ResponseTransformers', () => {
       validateVariablesV1ToV2(dashboardV2.spec.variables[5], dashboard.templating?.list?.[5]);
       validateVariablesV1ToV2(dashboardV2.spec.variables[6], dashboard.templating?.list?.[6]);
       validateVariablesV1ToV2(dashboardV2.spec.variables[7], dashboard.templating?.list?.[7]);
+      validateVariablesV1ToV2(dashboardV2.spec.variables[8], dashboard.templating?.list?.[8]);
       // annotations
       validateAnnotation(dashboard.annotations!.list![0], dashboardV2.spec.annotations[0]);
       validateAnnotation(dashboard.annotations!.list![1], dashboardV2.spec.annotations[1]);
       validateAnnotation(dashboard.annotations!.list![2], dashboardV2.spec.annotations[2]);
       validateAnnotation(dashboard.annotations!.list![3], dashboardV2.spec.annotations[3]);
+
+      const gnetId = dashboardV2.metadata.annotations?.[AnnoKeyDashboardGnetId];
+      if (gnetId?.length) {
+        expect(dashboard.gnetId).toBe(+gnetId);
+      } else {
+        expect(dashboard.gnetId).toBeUndefined();
+      }
+
       // panel
       const panelKey = 'panel-1';
       expect(dashboardV2.spec.elements[panelKey].kind).toBe('Panel');
@@ -968,16 +1032,17 @@ describe('ResponseTransformers', () => {
         const result = getPanelQueries(targets, panelDs);
 
         expect(result).toHaveLength(targets.length);
+        // @ts-expect-error
         expect(result[0].spec.refId).toBe('A');
+        // @ts-expect-error
         expect(result[1].spec.refId).toBe('B');
 
+        // @ts-expect-error
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
-          expect(query.spec.datasource).toEqual({
-            type: 'theoretical-ds',
-            uid: 'theoretical-uid',
-          });
-          expect(query.spec.query.kind).toBe('theoretical-ds');
+          expect(query.spec.query.group).toEqual('theoretical-ds');
+          expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
+          expect(query.spec.query.kind).toBe('DataQuery');
         });
       });
 
@@ -998,16 +1063,17 @@ describe('ResponseTransformers', () => {
         const result = getPanelQueries(targets, panelDs);
 
         expect(result).toHaveLength(targets.length);
+        // @ts-expect-error
         expect(result[0].spec.refId).toBe('A');
+        // @ts-expect-error
         expect(result[1].spec.refId).toBe('B');
 
+        // @ts-expect-error
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
-          expect(query.spec.datasource).toEqual({
-            type: 'theoretical-ds',
-            uid: 'theoretical-uid',
-          });
-          expect(query.spec.query.kind).toBe('theoretical-ds');
+          expect(query.spec.query.group).toEqual('theoretical-ds');
+          expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
+          expect(query.spec.query.kind).toBe('DataQuery');
         });
       });
     });
@@ -1015,14 +1081,14 @@ describe('ResponseTransformers', () => {
 
   function validateAnnotation(v1: AnnotationQuery, v2: DashboardV2Spec['annotations'][0]) {
     const { spec: v2Spec } = v2;
-
     expect(v1.name).toBe(v2Spec.name);
-    expect(v1.datasource).toBe(v2Spec.datasource);
+    expect(v1.datasource?.type).toBe(v2Spec.query.group);
+    expect(v1.datasource?.uid).toBe(v2Spec.query.datasource?.name);
     expect(v1.enable).toBe(v2Spec.enable);
     expect(v1.hide).toBe(v2Spec.hide);
     expect(v1.iconColor).toBe(v2Spec.iconColor);
-    expect(v1.builtIn).toBe(v2Spec.builtIn ? 1 : 0);
-    expect(v1.target).toBe(v2Spec.query?.spec);
+    expect(v1.builtIn).toBe(v2Spec.builtIn !== undefined ? (v2Spec.builtIn ? 1 : 0) : undefined);
+    expect(v1.target).toEqual(v2Spec.query.spec);
     expect(v1.filter).toEqual(v2Spec.filter);
   }
 
@@ -1031,24 +1097,27 @@ describe('ResponseTransformers', () => {
 
     expect(v1.id).toBe(v2Spec.id);
     expect(v1.id).toBe(v2Spec.id);
-    expect(v1.type).toBe(v2Spec.vizConfig.kind);
+    expect(v1.type).toBe(v2Spec.vizConfig.group);
     expect(v1.title).toBe(v2Spec.title);
     expect(v1.description).toBe(v2Spec.description);
     expect(v1.fieldConfig).toEqual(transformMappingsToV1(v2Spec.vizConfig.spec.fieldConfig));
     expect(v1.options).toBe(v2Spec.vizConfig.spec.options);
-    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.spec.pluginVersion);
+    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.version);
     expect(v1.links).toEqual(v2Spec.links);
     expect(v1.targets).toEqual(
       v2Spec.data.spec.queries.map((q) => {
         return {
           refId: q.spec.refId,
           hide: q.spec.hidden,
-          datasource: q.spec.datasource,
+          datasource: {
+            type: q.spec.query.group,
+            uid: q.spec.query.datasource?.name,
+          },
           ...q.spec.query.spec,
         };
       })
     );
-    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => t.spec));
+    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => ({ id: t.group, ...t.spec })));
     const layoutElement = layoutV2.spec.items.find(
       (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === panelKey
     ) as GridLayoutItemKind;
@@ -1093,18 +1162,24 @@ describe('ResponseTransformers', () => {
     };
 
     expect(v2Common).toEqual(v1Common);
-
     if (v2.kind === 'QueryVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
-
-      if (typeof v1.query === 'string') {
-        expect(v2.spec.query.spec[LEGACY_STRING_VALUE_KEY]).toEqual(v1.query);
-      } else {
-        expect(v2.spec.query).toEqual({
-          kind: v1.datasource?.type,
-          spec: {
-            ...(typeof v1.query === 'object' ? v1.query : {}),
+      expect(v2.spec.query).toMatchObject({
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: (v1.datasource?.type || getDefaultDataSourceRef()?.type) ?? 'grafana',
+        ...(v1.datasource?.uid && {
+          datasource: {
+            name: v1.datasource?.uid,
           },
+        }),
+      });
+      if (typeof v1.query === 'string') {
+        expect(v2.spec.query.spec).toEqual({
+          [LEGACY_STRING_VALUE_KEY]: v1.query,
+        });
+      } else {
+        expect(v2.spec.query.spec).toEqual({
+          ...(typeof v1.query === 'object' ? v1.query : {}),
         });
       }
     }
@@ -1120,7 +1195,8 @@ describe('ResponseTransformers', () => {
     }
 
     if (v2.kind === 'AdhocVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
+      expect(v2.datasource?.name).toEqual(v1.datasource?.uid);
+      expect(v2.group).toEqual(v1.datasource?.type);
       // @ts-expect-error
       expect(v2.spec.filters).toEqual(v1.filters);
       // @ts-expect-error
@@ -1149,8 +1225,27 @@ describe('ResponseTransformers', () => {
     }
 
     if (v2.kind === 'GroupByVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
+      expect(v2.datasource?.name).toEqual(v1.datasource?.uid);
+      expect(v2.group).toEqual(v1.datasource?.type);
       expect(v2.spec.options).toEqual(v1.options);
+    }
+
+    if (v2.kind === 'SwitchVariable') {
+      // V1 switch variables have options array with exactly 2 options
+      // First option is enabledValue, second is disabledValue
+      const options = v1.options ?? [];
+      const enabledValueRaw = options[0]?.value ?? 'true';
+      const disabledValueRaw = options[1]?.value ?? 'false';
+      const enabledValue = Array.isArray(enabledValueRaw) ? enabledValueRaw[0] : enabledValueRaw;
+      const disabledValue = Array.isArray(disabledValueRaw) ? disabledValueRaw[0] : disabledValueRaw;
+
+      // Current value should be a string (not array)
+      const currentValueRaw = v1.current?.value ?? disabledValue;
+      const currentValue = Array.isArray(currentValueRaw) ? currentValueRaw[0] : currentValueRaw;
+
+      expect(v2.spec.current).toBe(currentValue);
+      expect(v2.spec.enabledValue).toBe(enabledValue);
+      expect(v2.spec.disabledValue).toBe(disabledValue);
     }
   }
 });

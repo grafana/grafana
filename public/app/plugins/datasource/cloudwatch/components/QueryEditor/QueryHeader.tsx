@@ -1,12 +1,15 @@
-import { CoreApp, LoadingState, QueryEditorProps, SelectableValue } from '@grafana/data';
+import type { JSX } from 'react';
+
+import { CoreApp, LoadingState, type QueryEditorProps, type SelectableValue } from '@grafana/data';
 import { EditorHeader, InlineSelect, FlexItem } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Badge, Button } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../../datasource';
+import { type CloudWatchQueryMode } from '../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
 import { useIsMonitoringAccount, useRegions } from '../../hooks';
-import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode } from '../../types';
+import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   extraHeaderElementLeft?: JSX.Element;
@@ -47,9 +50,9 @@ const QueryHeader = ({
   const onRegionChange = async (region: string) => {
     if (config.featureToggles.cloudWatchCrossAccountQuerying && isCloudWatchMetricsQuery(query)) {
       const isMonitoringAccount = await datasource.resources.isMonitoringAccount(region);
-      onChange({ ...query, region, accountId: isMonitoringAccount ? query.accountId : undefined });
+      onChange({ ...query, logGroups: [], region, accountId: isMonitoringAccount ? query.accountId : undefined });
     } else {
-      onChange({ ...query, region });
+      onChange({ ...query, logGroups: [], region });
     }
   };
 

@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { FocusScope } from '@react-aria/focus';
-import { FormEvent, MouseEvent, useState } from 'react';
+import { type FormEvent, type MouseEvent, useState } from 'react';
 
-import { dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
+import { dateTime, getDefaultTimeRange, type GrafanaTheme2, type TimeRange, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -12,8 +12,8 @@ import { getInputStyles } from '../Input/Input';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeRangeLabel } from './TimeRangePicker/TimeRangeLabel';
-import { WeekStart } from './WeekStartPicker';
-import { quickOptions } from './options';
+import { type WeekStart } from './WeekStartPicker';
+import { getQuickOptions } from './options';
 import { isValidTimeRange } from './utils';
 
 export interface TimeRangeInputProps {
@@ -36,6 +36,11 @@ export interface TimeRangeInputProps {
 
 const noop = () => {};
 
+/**
+ * A variant of TimeRangePicker for use in forms.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-timerangeinput--docs
+ */
 export const TimeRangeInput = ({
   value,
   onChange,
@@ -123,7 +128,7 @@ export const TimeRangeInput = ({
               timeZone={timeZone}
               value={isValidTimeRange(value) ? value : getDefaultTimeRange()}
               onChange={onRangeChange}
-              quickOptions={quickOptions}
+              quickOptions={getQuickOptions()}
               onChangeTimeZone={onChangeTimeZone}
               className={styles.content}
               hideTimeZone={hideTimeZone}

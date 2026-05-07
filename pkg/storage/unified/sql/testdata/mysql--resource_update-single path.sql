@@ -10,4 +10,5 @@ UPDATE `resource`
         AND `resource`  = 'rr'
         AND `namespace` = 'nn'
         AND `name`      = 'name'
+        AND `resource_version` = 1759304090100678
 ;

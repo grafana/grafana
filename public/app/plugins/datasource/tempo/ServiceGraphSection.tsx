@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Alert, InlineField, InlineFieldRow, TextLink, useStyles2 } from '@grafana/ui';
 
 import { AdHocFilter } from './_importedDependencies/components/AdHocFilter/AdHocFilter';
-import { AdHocVariableFilter } from './_importedDependencies/components/AdHocFilter/types';
-import { PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
-import { TempoQuery } from './types';
+import { type AdHocVariableFilter } from './_importedDependencies/components/AdHocFilter/types';
+import { type PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
+import { type TempoQuery } from './types';
 import { getDS } from './utils';
 
 export function ServiceGraphSection({
@@ -116,18 +116,13 @@ export function ServiceGraphSection({
   );
 }
 
-function getWarning(title: string, description: string, styles: { alert: string; link: string }) {
+function getWarning(title: string, description: string, styles: { alert: string }) {
   return (
     <Alert title={title} severity="info" className={styles.alert}>
       {description} according to the{' '}
-      <a
-        target="_blank"
-        rel="noreferrer noopener"
-        href="https://grafana.com/docs/grafana/latest/datasources/tempo/service-graph/"
-        className={styles.link}
-      >
+      <TextLink external href="https://grafana.com/docs/grafana/latest/datasources/tempo/service-graph/">
         Tempo documentation
-      </a>
+      </TextLink>
       .
     </Alert>
   );
@@ -156,9 +151,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   alert: css({
     maxWidth: '75ch',
     marginTop: theme.spacing(2),
-  }),
-  link: css({
-    color: theme.colors.text.link,
-    textDecoration: 'underline',
   }),
 });

@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
+import { type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
-import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
+import {
+  type NotificationChannelOption,
+  type NotificationChannelSecureFields,
+  type OptionMeta,
+} from 'app/features/alerting/unified/types/alerting';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
 
@@ -22,7 +26,7 @@ interface Props {
    * Callback function to delete a subform field. Removal requires side effects
    * like settings and secure fields cleanup.
    */
-  onDelete?: (propertyName: string) => void;
+  onDelete?: (settingsPath: string, option: NotificationChannelOption) => void;
   onResetSecureField?: (propertyName: string) => void;
 }
 
@@ -44,9 +48,9 @@ export const SubformField = ({
   const value = _watchValue === undefined ? defaultValue : _watchValue;
 
   const [show, setShow] = useState(!!value);
-  const { t } = useTranslate();
+
   const onDeleteClick = () => {
-    onDelete?.(option.propertyName);
+    onDelete?.(name, option);
     setShow(false);
   };
 
@@ -71,9 +75,9 @@ export const SubformField = ({
                 readOnly={readOnly}
                 getOptionMeta={getOptionMeta}
                 onResetSecureField={onResetSecureField}
+                onDeleteSubform={onDelete}
                 secureFields={secureFields}
                 defaultValue={defaultValue?.[subOption.propertyName]}
-                parentOption={option}
                 key={subOption.propertyName}
                 option={subOption}
                 pathPrefix={`${name}.`}

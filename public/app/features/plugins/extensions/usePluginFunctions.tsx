@@ -1,57 +1,36 @@
 import { useMemo } from 'react';
-import { useObservable } from 'react-use';
 
-import { usePluginContext, PluginExtensionFunction, PluginExtensionTypes } from '@grafana/data';
-import { UsePluginFunctionsOptions, UsePluginFunctionsResult } from '@grafana/runtime';
+import { usePluginContext, type PluginExtensionFunction, PluginExtensionTypes } from '@grafana/data';
+import { type UsePluginFunctionsOptions, type UsePluginFunctionsResult } from '@grafana/runtime';
 
-import { useAddedFunctionsRegistry } from './ExtensionRegistriesContext';
-import * as errors from './errors';
-import { log } from './logs/log';
+import { useAddedFunctionsRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { generateExtensionId, getExtensionPointPluginDependencies, isGrafanaDevMode } from './utils';
-import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
+import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
+import { validateExtensionPoint } from './validateExtensionPoint';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginFunctions<Signature>({
   limitPerPlugin,
   extensionPointId,
 }: UsePluginFunctionsOptions): UsePluginFunctionsResult<Signature> {
-  const registry = useAddedFunctionsRegistry();
-  const registryState = useObservable(registry.asObservable());
+  const registryItems = useAddedFunctionsRegistrySlice<Signature>(extensionPointId);
   const pluginContext = usePluginContext();
-  const deps = getExtensionPointPluginDependencies(extensionPointId);
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(deps);
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(extensionPointId, getExtensionPointPluginDependencies);
 
   return useMemo(() => {
-    // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
-    const enableRestrictions = isGrafanaDevMode() && pluginContext;
+    const { result } = validateExtensionPoint({ extensionPointId, pluginContext, isLoadingAppPlugins });
+
+    if (result) {
+      return {
+        isLoading: result.isLoading,
+        functions: [],
+      };
+    }
+
     const results: Array<PluginExtensionFunction<Signature>> = [];
     const extensionsByPlugin: Record<string, number> = {};
-    const pluginId = pluginContext?.meta.id ?? '';
-    const pointLog = log.child({
-      pluginId,
-      extensionPointId,
-    });
-    if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-      pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
-    }
 
-    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
-      pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
-      return {
-        isLoading: false,
-        functions: [],
-      };
-    }
-
-    if (isLoadingAppPlugins) {
-      return {
-        isLoading: true,
-        functions: [],
-      };
-    }
-
-    for (const registryItem of registryState?.[extensionPointId] ?? []) {
+    for (const registryItem of registryItems ?? []) {
       const { pluginId } = registryItem;
 
       // Only limit if the `limitPerPlugin` is set
@@ -69,7 +48,7 @@ export function usePluginFunctions<Signature>({
         title: registryItem.title,
         description: registryItem.description ?? '',
         pluginId: pluginId,
-        fn: registryItem.fn as Signature,
+        fn: registryItem.fn,
       });
       extensionsByPlugin[pluginId] += 1;
     }
@@ -78,5 +57,5 @@ export function usePluginFunctions<Signature>({
       isLoading: false,
       functions: results,
     };
-  }, [extensionPointId, limitPerPlugin, pluginContext, registryState, isLoadingAppPlugins]);
+  }, [extensionPointId, limitPerPlugin, pluginContext, registryItems, isLoadingAppPlugins]);
 }

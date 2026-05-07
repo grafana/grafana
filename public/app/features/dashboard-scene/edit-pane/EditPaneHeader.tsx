@@ -1,13 +1,15 @@
-import { css } from '@emotion/css';
-
-import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
-import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { FlexItem } from '@grafana/plugin-ui';
+import { Button, Sidebar } from '@grafana/ui';
 
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { useClipboardState } from '../scene/layouts-shared/useClipboardState';
+import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { DashboardInteractions } from '../utils/interactions';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 
 interface EditPaneHeaderProps {
   element: EditableDashboardElement;
@@ -16,87 +18,83 @@ interface EditPaneHeaderProps {
 
 export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const elementInfo = element.getEditableElementInfo();
-  const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+  const { hasCopiedPanel } = useClipboardState();
+
+  // TODO this type check here is hacky and should be replaced with a more generic solid solution
+  const canPaste = element instanceof RowItem || element instanceof TabItem ? element : undefined;
   const onCopy = element.onCopy?.bind(element);
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
   const onConfirmDelete = element.onConfirmDelete?.bind(element);
-  // temporary simple solution, should select parent element
-  const onGoBack = () => editPane.clearSelection();
-  const canGoBack = editPane.state.selection;
+
+  const onDeleteElement = () => {
+    if (onConfirmDelete) {
+      onConfirmDelete();
+    } else if (onDelete) {
+      onDelete();
+    }
+    DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName);
+  };
 
   return (
-    <div className={styles.wrapper}>
-      <Stack direction="row" gap={0.5}>
-        {canGoBack && (
-          <IconButton
-            name="arrow-left"
-            size="lg"
-            onClick={onGoBack}
-            tooltip={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
-            aria-label={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
-            data-testid={selectors.components.EditPaneHeader.backButton}
-          />
-        )}
-        <Text>{elementInfo.typeName}</Text>
-      </Stack>
-      <Stack direction="row" gap={1}>
-        {element.renderActions && element.renderActions()}
-        {(onCopy || onDuplicate) && (
-          <Dropdown
-            overlay={
-              <Menu>
-                {onCopy ? (
-                  <Menu.Item icon="copy" label={t('dashboard.layout.common.copy', 'Copy')} onClick={onCopy} />
-                ) : null}
-                {onDuplicate ? (
-                  <Menu.Item
-                    icon="file-copy-alt"
-                    label={t('dashboard.layout.common.duplicate', 'Duplicate')}
-                    onClick={onDuplicate}
-                  />
-                ) : null}
-              </Menu>
-            }
-          >
-            <Button
-              tooltip={t('dashboard.layout.common.copy-or-duplicate', 'Copy or Duplicate')}
-              tooltipPlacement="bottom"
-              variant="secondary"
-              size="sm"
-              icon="copy"
-              data-testid={selectors.components.EditPaneHeader.copyDropdown}
-            >
-              <Icon name="angle-down" />
-            </Button>
-          </Dropdown>
-        )}
-
-        {(onDelete || onConfirmDelete) && (
+    <Sidebar.PaneHeader title={elementInfo.typeName}>
+      {element.renderActions && element.renderActions()}
+      {onDuplicate && (
+        <Button
+          tooltip={t('dashboard.layout.common.duplicate', 'Duplicate')}
+          tooltipPlacement="bottom"
+          variant="secondary"
+          size="sm"
+          icon="copy"
+          fill="text"
+          data-testid={selectors.components.EditPaneHeader.duplicate}
+          onClick={onDuplicate}
+        >
+          <Trans i18nKey="dashboard.layout.common.duplicate">Duplicate</Trans>
+        </Button>
+      )}
+      {onCopy && (
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="clipboard-alt"
+          fill="text"
+          data-testid={selectors.components.EditPaneHeader.copy}
+          onClick={onCopy}
+          tooltip={t('dashboard.layout.common.copy-tooltip', 'Copy')}
+          tooltipPlacement="bottom"
+        >
+          <Trans i18nKey="dashboard.layout.common.copy">Copy</Trans>
+        </Button>
+      )}
+      {canPaste && hasCopiedPanel && (
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="clipboard-alt"
+          fill="text"
+          data-testid={selectors.components.EditPaneHeader.paste}
+          onClick={() => editPane.pastePanel(editPane.getSelectedObject(), 'editPaneHeader')}
+        >
+          <Trans i18nKey="dashboard.layout.common.paste">Paste</Trans>
+        </Button>
+      )}
+      {(onDelete || onConfirmDelete) && (
+        <>
+          <FlexItem grow={1} />
           <Button
-            onClick={onConfirmDelete || onDelete}
+            onClick={onDeleteElement}
             size="sm"
-            variant="destructive"
-            fill="outline"
+            variant="secondary"
             icon="trash-alt"
-            tooltip={t('dashboard.layout.common.delete', 'Delete')}
+            fill="text"
             data-testid={selectors.components.EditPaneHeader.deleteButton}
-          />
-        )}
-      </Stack>
-    </div>
+            tooltip={t('dashboard.layout.common.delete', 'Delete')}
+          >
+            <Trans i18nKey="dashboard.layout.common.delete">Delete</Trans>
+          </Button>
+        </>
+      )}
+    </Sidebar.PaneHeader>
   );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    wrapper: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: theme.spacing(1, 2),
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    }),
-  };
 }

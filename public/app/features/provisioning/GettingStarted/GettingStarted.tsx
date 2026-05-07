@@ -1,11 +1,15 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { TFunction, Trans, useTranslate } from '@grafana/i18n';
-import { Alert, Stack, useStyles2 } from '@grafana/ui';
-import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
-import provisioningSvg from 'img/provisioning/provisioning.svg';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { Stack, useStyles2 } from '@grafana/ui';
+import { type Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+
+import { CloudInfoBox } from '../Shared/CloudInfoBox';
+import provisioningSvg from '../img/provisioning.svg';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';
@@ -19,7 +23,6 @@ const featureIni = `# In your custom.ini file
 
 [feature_toggles]
 provisioning = true
-kubernetesDashboards = true ; use k8s from browser
 `;
 
 const ngrokExample = `ngrok http 3000
@@ -45,7 +48,7 @@ HTTP Requests
 const rootUrlExample = `[server]
 root_url = https://d60d-83-33-235-27.ngrok-free.app`;
 
-const getModalContent = (setupType: SetupType, t: TFunction) => {
+const getModalContent = (setupType: SetupType) => {
   switch (setupType) {
     case 'public-access':
       return {
@@ -100,7 +103,7 @@ const getModalContent = (setupType: SetupType, t: TFunction) => {
             ),
             description: t(
               'provisioning.getting-started.step-description-enable-feature-toggles',
-              'Add these settings to your custom.ini file to enable necessary features:'
+              'Add the provisioning feature toggle to your custom.ini file. Note: kubernetesDashboards is enabled by default, but if you have explicitly disabled it, you will need to enable it in your Grafana settings or remove the override from your configuration.'
             ),
             code: featureIni,
           },
@@ -121,42 +124,36 @@ interface Props {
 
 export default function GettingStarted({ items }: Props) {
   const styles = useStyles2(getStyles);
-  const settingsQuery = useGetFrontendSettingsQuery(undefined, { refetchOnMountOrArgChange: true });
-  const legacyStorage = settingsQuery.data?.legacyStorage;
-  const hasItems = Boolean(settingsQuery.data?.items?.length);
+  const settingsArg = config.featureToggles.provisioning ? undefined : skipToken;
+  const settingsQuery = useGetFrontendSettingsQuery(settingsArg, {
+    refetchOnMountOrArgChange: true,
+  });
+  const connectionCount = settingsQuery.data?.items?.length ?? 0;
+  const hasItems = connectionCount > 0;
+  const maxRepositories = settingsQuery.data?.maxRepositories;
+  const isConnectionLimitExceeded = !!maxRepositories && connectionCount >= maxRepositories;
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
   const [showInstructionsModal, setShowModal] = useState(false);
   const [setupType, setSetupType] = useState<SetupType>(null);
-  const { t } = useTranslate();
+
   return (
     <>
-      {legacyStorage && (
-        <Alert
-          severity="info"
-          title={t(
-            'provisioning.getting-started.title-setting-connection-could-cause-temporary-outage',
-            'Setting up this connection could cause a temporary outage'
-          )}
-        >
-          <Trans i18nKey="provisioning.getting-started.alert-temporary-outage">
-            When you connect your whole instance, dashboards will be unavailable while running the migration. We
-            recommend warning your users before starting the process.
-          </Trans>
-        </Alert>
-      )}
       <Stack direction="column" gap={6} wrap="wrap">
+        <CloudInfoBox />
         <Stack gap={10} alignItems="center">
+          <div className={styles.imageContainer}>
+            {/* decorative img, use empty str to skip alt*/}
+            <img src={provisioningSvg} className={styles.image} alt="" />
+          </div>
           <FeaturesList
-            repos={items}
             hasRequiredFeatures={hasRequiredFeatures}
+            isConnectionLimitExceeded={isConnectionLimitExceeded}
+            maxRepositories={maxRepositories}
             onSetupFeatures={() => {
               setSetupType('required-features');
               setShowModal(true);
             }}
           />
-          <div className={styles.imageContainer}>
-            <img src={provisioningSvg} className={styles.image} alt={'Grafana provisioning'} />
-          </div>
         </Stack>
         {(!hasPublicAccess || !hasImageRenderer) && hasItems && (
           <EnhancedFeatures
@@ -171,7 +168,7 @@ export default function GettingStarted({ items }: Props) {
       </Stack>
       {showInstructionsModal && setupType && (
         <SetupModal
-          {...getModalContent(setupType, t)}
+          {...getModalContent(setupType)}
           isOpen={showInstructionsModal}
           onDismiss={() => setShowModal(false)}
         />

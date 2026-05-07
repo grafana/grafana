@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -48,9 +49,9 @@ type googleUserData struct {
 	rawJSON       []byte `json:"-"`
 }
 
-func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
+func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialGoogle {
 	provider := &SocialGoogle{
-		SocialBase: newSocialBase(social.GoogleProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase: newSocialBaseWithCache(social.GoogleProviderName, orgRoleMapper, info, features, cfg, cache),
 		validateHD: MustBool(info.Extra[validateHDKey], true),
 	}
 
@@ -58,9 +59,7 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 		provider.log.Warn("Using legacy Google API URL, please update your configuration")
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.GoogleProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.GoogleProviderName, provider)
 
 	return provider
 }
@@ -80,10 +79,24 @@ func (s *SocialGoogle) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 		return err
 	}
 
-	return validation.Validate(info, requester,
+	err = validation.Validate(info, requester,
 		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
 		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
-		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"))
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
+		loginPromptValidator,
+		validation.ValidateIDTokenValidator)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func loginPromptValidator(info *social.OAuthInfo, requester identity.Requester) error {
+	if info.UseRefreshToken && !slices.Contains([]string{"", "consent"}, info.LoginPrompt) {
+		return ssosettings.ErrInvalidOAuthConfig("If provided, login_prompt must be set to consent when use_refresh_token is enabled.")
+	}
+	return nil
 }
 
 func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
@@ -226,10 +239,11 @@ func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) 
 	if s.info.UseRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
-	return s.Config.AuthCodeURL(state, opts...)
+
+	return s.getAuthCodeURL(state, opts...)
 }
 
-func (s *SocialGoogle) extractFromToken(_ context.Context, _ *http.Client, token *oauth2.Token) (*googleUserData, error) {
+func (s *SocialGoogle) extractFromToken(ctx context.Context, _ *http.Client, token *oauth2.Token) (*googleUserData, error) {
 	s.log.Debug("Extracting user info from OAuth token")
 
 	idToken := token.Extra("id_token")
@@ -238,10 +252,29 @@ func (s *SocialGoogle) extractFromToken(_ context.Context, _ *http.Client, token
 		return nil, nil
 	}
 
-	rawJSON, err := s.retrieveRawIDToken(idToken)
-	if err != nil {
-		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
+	idTokenString, ok := idToken.(string)
+	if !ok {
+		s.log.Warn("ID token is not a string", "token", fmt.Sprintf("%+v", idToken))
 		return nil, nil
+	}
+
+	var rawJSON []byte
+	var err error
+
+	// If JWT validation is enabled, validate the signature
+	if s.info.ValidateIDToken && s.info.JwkSetURL != "" {
+		rawJSON, err = s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.info.JwkSetURL)
+		if err != nil {
+			s.log.Warn("Error validating ID token signature", "error", err)
+			return nil, err
+		}
+	} else {
+		// Otherwise, just extract the payload without signature validation
+		rawJSON, err = s.retrieveRawJWTPayload(idTokenString)
+		if err != nil {
+			s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
+			return nil, nil
+		}
 	}
 
 	if s.cfg.Env == setting.Dev {
