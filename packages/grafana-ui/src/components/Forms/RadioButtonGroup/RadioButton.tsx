@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { forwardRef, type HTMLProps } from 'react';
+import { forwardRef, useId, type HTMLProps } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type StringSelector, selectors } from '@grafana/e2e-selectors';
@@ -18,10 +18,10 @@ export interface RadioButtonProps extends Omit<HTMLProps<HTMLInputElement>, 'siz
   name?: string;
   description?: string;
   active: boolean;
-  id: string;
   onChange: () => void;
   onClick: () => void;
   fullWidth?: boolean;
+  title?: string;
   'aria-label'?: StringSelector;
   children?: React.ReactNode;
 }
@@ -35,16 +35,18 @@ export const RadioButton = forwardRef<HTMLInputElement, RadioButtonProps>(
       size = 'md',
       onChange,
       onClick,
-      id,
       name = undefined,
       description,
       fullWidth,
+      title,
       'aria-label': ariaLabel,
       ...rest
     },
     ref
   ) => {
     const styles = useStyles2(getRadioButtonStyles, size, fullWidth);
+    const id = useId();
+    const adjustedTitle = title ?? ariaLabel;
 
     const inputRadioButton = (
       <input
@@ -58,6 +60,7 @@ export const RadioButton = forwardRef<HTMLInputElement, RadioButtonProps>(
         checked={active}
         name={name}
         aria-label={ariaLabel}
+        title={adjustedTitle}
         ref={ref}
       />
     );
@@ -66,14 +69,14 @@ export const RadioButton = forwardRef<HTMLInputElement, RadioButtonProps>(
         <Tooltip content={description} placement="bottom">
           {inputRadioButton}
         </Tooltip>
-        <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
+        <label className={styles.radioLabel} htmlFor={id} title={adjustedTitle}>
           {children}
         </label>
       </div>
     ) : (
       <div className={styles.radioOption} data-testid={selectors.components.RadioButton.container}>
         {inputRadioButton}
-        <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
+        <label className={styles.radioLabel} htmlFor={id} title={adjustedTitle}>
           {children}
         </label>
       </div>
@@ -96,7 +99,8 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       display: 'flex',
       justifyContent: 'space-between',
       position: 'relative',
-      flex: fullWidth ? `1 0 0` : 'none',
+      flex: fullWidth ? '1 1 0' : '0 1 auto',
+      minWidth: 0,
       textAlign: 'center',
     }),
     radio: css({
@@ -143,6 +147,8 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       userSelect: 'none',
       whiteSpace: 'nowrap',
       flexGrow: 1,
+      minWidth: 0,
+      overflow: 'hidden',
 
       '&:hover': {
         color: textColorHover,

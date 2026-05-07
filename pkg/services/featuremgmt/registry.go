@@ -677,14 +677,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "sceneCsvExport",
-			Description: "Enables CSV export using scenes dashboard architecture",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "drilldownRecommendations",
 			Description: "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
 			Stage:       FeatureStageExperimental,
@@ -3151,6 +3143,15 @@ var (
 			Generate:    Generate{Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
+		},
+		{
+			Name:            "plugins.marketplaceLicensing",
+			Description:     "Enables marketplace plugin licensing",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

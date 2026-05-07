@@ -1,6 +1,8 @@
 import { pickBy } from 'lodash';
 
-import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
+import { type LogContext } from '@grafana/faro-web-sdk';
+import { config, reportInteraction } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { type RuleNamespace } from '../../../types/unified-alerting';
@@ -29,11 +31,20 @@ export const LogMessages = {
   noAlertRuleVersionsFound: 'no alert rule versions found',
 };
 
-const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
-  module: 'Alerting',
-});
+export const logDebug = (message: string, contexts?: LogContext) =>
+  getLogger('features.alerting').logDebug(message, contexts);
 
-export { logError, logInfo, logMeasurement, logWarning };
+export const logInfo = (message: string, contexts?: LogContext) =>
+  getLogger('features.alerting').logInfo(message, contexts);
+
+export const logWarning = (message: string, contexts?: LogContext) =>
+  getLogger('features.alerting').logWarning(message, contexts);
+
+export const logError = (error: Error, contexts?: LogContext) =>
+  getLogger('features.alerting').logError(error, contexts);
+
+export const logMeasurement = (type: string, measurement: Record<string, number>, contexts?: LogContext) =>
+  getLogger('features.alerting').logMeasurement(type, measurement, contexts);
 
 /**
  * Utility function to measure performance of async operations

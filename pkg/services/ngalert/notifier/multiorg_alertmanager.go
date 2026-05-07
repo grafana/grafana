@@ -146,7 +146,7 @@ func NewMultiOrgAlertmanager(
 	receiverResourcePermissions ac.ReceiverPermissionsService,
 	routesResourcePermissions ac.RoutePermissionsService,
 	l log.Logger,
-	s secrets.Service,
+	s secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	featureManager featuremgmt.FeatureToggles,
 	notificationHistorian nfstatus.NotificationHistorian,
 	skipClustering bool,

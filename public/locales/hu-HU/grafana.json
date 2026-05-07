@@ -4462,6 +4462,14 @@
       "resource-detail-dashboards": "{{limit}}/{{usage}} irányítópultot hozott létre ({{percentage}}%).",
       "resource-detail-folders": "{{limit}}/{{usage}} mappát hozott létre ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Előzmények törlése",
       "error": "A legutóbb megtekintett irányítópultokat nem sikerült betölteni.",
@@ -8033,19 +8041,6 @@
       "aria-label-explore-data": "Adatok felfedezése",
       "aria-label-suggested-dashboards": "Javasolt irányítópultok"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "A riasztás nem támogatott",
-      "text-alerting-supported": "A riasztás támogatott"
-    },
-    "basic-serttings": {
-      "tooltip-name": "A név akkor használatos, amikor a paneleken kijelöli az adatforrást. Az alapértelmezett adatforrás előre ki van jelölve az új paneleken."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Adatforrás-beállítások oldalának alapbeállításai",
-      "basic-settings-name-placeholder-name": "Név",
-      "label-default": "Alapértelmezett",
-      "label-name": "Név"
-    },
     "build-a-dashboard-button": {
       "blank": "Üres",
       "build-a-dashboard": "Irányítópult létrehozása",
@@ -11249,7 +11244,7 @@
     "description-order": "A legújabb vagy a legrégebbi naplóbejegyzések megjelenítése először. Ha a Legrégebbiek elöl lehetőség van kiválasztva, a nézet automatikusan a legalsó, legújabb naplókhoz lesz görgetve.",
     "description-prettify-json": "JSON-naplóbejegyzések formázása behúzással és sortörésekkel.",
     "description-show-controls": "Vezérlők megjelenítése az utolsó vagy az első naplósorra ugráshoz, és szűrés naplószint szerint.",
-    "description-show-log-attributes": "Kísérleti. Amikor az OTel-naplók megjelennek, hozzáadhat egy további megjelenített mezőt a címkék és a metaadatok releváns kulcs-érték párjaival.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Az értékek igazítása oszlopok segítségével a megjelenített mezők használatakor.",
     "description-wrap-lines": "A naplóbejegyzések megjelenítése egyetlen sorban, vagy a hosszú naplóbejegyzések tördelése, hogy illeszkedjenek a panelhez.",
     "field-selector": {
@@ -11575,7 +11570,7 @@
       "line-contains-not": "A hozzáadás sorként nem tartalmaz szűrőt",
       "search-text": "Keresés az eredményekben"
     },
-    "show-log-attributes": "Naplóattribútumok megjelenítése az OTel-naplókhoz",
+    "show-log-attributes": "",
     "timestamp-format": "Időbélyeg felbontása",
     "un-themed-log-details": {
       "aria-label-data-links": "Adathivatkozások",
