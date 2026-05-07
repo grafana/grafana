@@ -255,6 +255,13 @@ describe('Render', () => {
     await waitFor(() => expect(getDataSourcePlugin).toHaveBeenCalledWith('CloudWatch'));
   });
 
+  it('should not load the data source when version is not set', async () => {
+    setup({ version: undefined });
+    // Wait for the component to finish rendering before asserting the negative.
+    await waitFor(() => expect(screen.getByText('Namespaces of Custom Metrics')).toBeInTheDocument());
+    expect(getDataSourcePlugin).not.toHaveBeenCalled();
+  });
+
   it('should show error message if Select log group button is clicked when data source is never saved', async () => {
     setup({ version: 1 });
     await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
