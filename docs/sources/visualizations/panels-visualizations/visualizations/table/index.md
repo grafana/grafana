@@ -65,6 +65,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#graph-styles-options
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/#graph-styles-options
+  group-to-nested-tables-transformation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables
 ---
 
 # Table
@@ -206,6 +211,19 @@ If the data queried contains multiple datasets, a table displays a drop-down lis
 This option is only available when you're editing the panel.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-multi-dataset-v11.3.png" max-width="650px" alt="Table visualization with multiple datasets" >}}
+
+## Nested tables
+
+A table can display sub-tables inside expandable rows.
+Nested tables are produced by the [Group to nested tables transformation](ref:group-to-nested-tables-transformation), which groups rows by a field and renders the remaining rows as a nested table on each parent row.
+
+Click the expand icon on a row to reveal its nested table:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-nested-expanded-v12.x.png" max-width="750px" alt="Table with one row expanded showing a nested sub-table" >}}
+
+Sorting and column filters applied to the parent table don't affect nested tables.
+To control the display of fields inside a nested table&mdash;for example, to apply thresholds, units, or a different cell type&mdash;use [field overrides](#field-overrides) with the **Target fields** option set to **Nested**.
+For more information, refer to [Apply overrides to nested table fields](#apply-overrides-to-nested-table-fields).
 
 ## Configuration options
 
@@ -586,3 +604,18 @@ The following image shows the "Info" field with the styling from the "Style" fie
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+#### Apply overrides to nested table fields
+
+{{< admonition type="note" >}}
+This feature is in [public preview](https://grafana.com/docs/release-life-cycle/) and requires the `nestedFramesFieldOverrides` feature toggle.
+{{< /admonition >}}
+
+By default, field overrides apply only to columns in the parent table.
+To target columns inside a nested table, set the **Target fields** option on the override to **Nested**:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v12.x.png" max-width="500px" alt="Field override configuration with the Target fields selector showing Series and Nested options" >}}
+
+All standard override properties&mdash;including thresholds, value mappings, units, data links, and cell type&mdash;apply the same way to nested fields.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-nested-override-applied-v12.x.png" max-width="750px" alt="Nested table with a threshold override applied to a column inside an expanded sub-table" >}}
