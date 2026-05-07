@@ -123,8 +123,8 @@ func WithInternalMinTTL(d time.Duration) ManagerOption {
 	}
 }
 
-// Option configures a single Acquire call.
-type Option func(*acquireOptions)
+// AcquireOption configures a single Acquire call.
+type AcquireOption func(*acquireOptions)
 
 type acquireOptions struct {
 	ttl       time.Duration
@@ -132,14 +132,14 @@ type acquireOptions struct {
 }
 
 // WithTTL overrides the default lease TTL for this acquisition.
-func WithTTL(d time.Duration) Option {
+func WithTTL(d time.Duration) AcquireOption {
 	return func(o *acquireOptions) { o.ttl = d }
 }
 
 // WithAutoRenew enables automatic lease renewal. A background goroutine
 // periodically extends the lease by creating the next generation. Lost()
 // is notified only when a renewal fails with ErrLeaseLost.
-func WithAutoRenew() Option {
+func WithAutoRenew() AcquireOption {
 	return func(o *acquireOptions) { o.autoRenew = true }
 }
 
@@ -149,7 +149,7 @@ func WithAutoRenew() Option {
 // On failure, Acquire returns an error. ErrLeaseAlreadyHeld indicates that
 // an unexpired lease for name is currently owned by some holder (including
 // possibly the caller).
-func (m *Manager) Acquire(ctx context.Context, name string, opts ...Option) (*Lease, error) {
+func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOption) (*Lease, error) {
 	if err := validateLeaseName(name); err != nil {
 		return nil, err
 	}
