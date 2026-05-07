@@ -9,6 +9,12 @@ describe('Switch', () => {
     render(<Switch onChange={() => {}} />);
     expect(screen.getByTestId(selectors.components.Switch.container)).toBeInTheDocument();
   });
+
+  it('lets the consumer override the data-testid', () => {
+    render(<Switch onChange={() => {}} data-testid="custom-switch" />);
+    expect(screen.getByTestId('custom-switch')).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Switch.container)).not.toBeInTheDocument();
+  });
 });
 
 describe('InlineSwitch', () => {
@@ -17,8 +23,8 @@ describe('InlineSwitch', () => {
     expect(screen.getByTestId(selectors.components.InlineSwitch.container)).toBeInTheDocument();
   });
 
-  it('still nests a Switch with its own data-testid', () => {
+  it('does not also carry the Switch container data-testid', () => {
     render(<InlineSwitch onChange={() => {}} />);
-    expect(screen.getByTestId(selectors.components.Switch.container)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Switch.container)).not.toBeInTheDocument();
   });
 });
