@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	iamuser "github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -465,7 +466,7 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 
 	limit := cmd.Limit
 	if limit <= 0 {
-		limit = 100
+		limit = common.DefaultListLimit
 	}
 	page := cmd.Page
 	if page <= 0 {

@@ -1863,7 +1863,7 @@ func TestUserK8sService_Search(t *testing.T) {
 			expectResult: &user.SearchUserQueryResult{
 				TotalCount: 1,
 				Page:       1,
-				PerPage:    100,
+				PerPage:    500,
 				Users: []*user.UserSearchHitDTO{
 					{
 						UID:           "uid-one",
@@ -1907,16 +1907,16 @@ func TestUserK8sService_Search(t *testing.T) {
 			},
 		},
 		{
-			name:           "uses default limit 100 and page 1 when cmd values are zero",
+			name:           "uses default limit 500 and page 1 when cmd values are zero",
 			requesterOrgID: 1,
 			cmd:            &user.SearchUsersQuery{},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "100", r.URL.Query().Get("limit"))
+				assert.Equal(t, "500", r.URL.Query().Get("limit"))
 				assert.Equal(t, "1", r.URL.Query().Get("page"))
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(v0alpha1.GetSearchUsersResponse{})
 			},
-			expectResult: &user.SearchUserQueryResult{Page: 1, PerPage: 100},
+			expectResult: &user.SearchUserQueryResult{Page: 1, PerPage: 500},
 		},
 		{
 			name:           "passes limit and page from cmd to the search endpoint",
@@ -1938,7 +1938,7 @@ func TestUserK8sService_Search(t *testing.T) {
 			expectResult: &user.SearchUserQueryResult{
 				TotalCount: 0,
 				Page:       1,
-				PerPage:    100,
+				PerPage:    500,
 			},
 		},
 		{
