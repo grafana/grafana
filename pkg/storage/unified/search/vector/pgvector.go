@@ -45,7 +45,7 @@ func NewPgvectorBackend(ctx context.Context, database db.DB, promotionThreshold 
 		promoter:    NewPromoter(database, promotionThreshold, promoterInterval),
 		dbKeepAlive: dbKeepAlive,
 	}
-	if ownsSchema {
+	if ownsSchema && b.promoter.interval > 0 {
 		go func() {
 			if err := b.promoter.Run(ctx); err != nil {
 				b.log.Error("vector promoter exited with error", "err", err)
