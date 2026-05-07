@@ -140,6 +140,8 @@ jobs:
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small
     continue-on-error: true
+    env:
+      IMAGE_TAG: ${{ needs.push-docker-image.outputs.IMAGE }}
     permissions:
       actions: write
       contents: read
@@ -160,7 +162,7 @@ jobs:
           environment: 'dev'
 
       - name: Pull image from GAR
-        run: docker pull ${{ needs.push-docker-image.outputs.IMAGE }}
+        run: docker pull "$IMAGE_TAG"
 
       - name: Get vault secrets
         id: vault-secrets
@@ -173,5 +175,5 @@ jobs:
         uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
         with:
           api-token: ${{ env.METICULOUS_API_TOKEN }}
-          image-tag: ${{ needs.push-docker-image.outputs.IMAGE }}
+          image-tag: ${{ env.IMAGE_TAG }}
           container-port: 3000

@@ -4435,6 +4435,14 @@
       "resource-detail-dashboards": "您已创建 {{usage}} 个数据面板，共 {{limit}} 个（{{percentage}}%）。",
       "resource-detail-folders": "您已创建 {{usage}} 个文件夹，共 {{limit}} 个（{{percentage}}%）。"
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "清除历史记录",
       "error": "无法加载近期查看的数据面板。",
@@ -7987,19 +7995,6 @@
       "aria-label-explore-data": "浏览数据",
       "aria-label-suggested-dashboards": "建议的数据面板"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "不支持警报",
-      "text-alerting-supported": "支持警报"
-    },
-    "basic-serttings": {
-      "tooltip-name": "在面板中选择数据源时使用该名称。默认数据源在新面板中已预先选中。"
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "数据源设置页面基本设置",
-      "basic-settings-name-placeholder-name": "名称",
-      "label-default": "默认",
-      "label-name": "名称"
-    },
     "build-a-dashboard-button": {
       "blank": "空白",
       "build-a-dashboard": "构建数据面板",
@@ -11186,7 +11181,7 @@
     "description-order": "首先显示最新或最早的日志。选择“最早的日志优先”时，视图会自动滚动到最底部的最新日志。",
     "description-prettify-json": "使用缩进和换行符来格式化 JSON 日志条目。",
     "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选。",
-    "description-show-log-attributes": "实验性。当显示 OTel 日志时，添加一个额外的显示字段，其中包含来自标签和元数据的相关键值对。",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "使用显示的字段时，通过列对齐值。",
     "description-wrap-lines": "将日志显示为单行，或将较长的日志条目自动换行，以适应面板大小。",
     "field-selector": {
@@ -11509,7 +11504,7 @@
       "line-contains-not": "添加为不包含筛选器的行",
       "search-text": "在结果中搜索"
     },
-    "show-log-attributes": "显示 OTel 日志的日志属性",
+    "show-log-attributes": "",
     "timestamp-format": "时间戳分辨率",
     "un-themed-log-details": {
       "aria-label-data-links": "数据关联",
