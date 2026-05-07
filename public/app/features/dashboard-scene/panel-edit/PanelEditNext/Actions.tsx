@@ -62,12 +62,13 @@ export function Actions({
   const theme = useTheme2();
   const typeConfig = useQueryEditorTypeConfig();
   const styles = useStyles2(getStyles);
-  const { confirmingDeleteItemKey, setConfirmingDeleteItemKey } = useQueryEditorUIContext();
-  const itemKey = getActionItemKey(item);
-  const showDeleteConfirmation = confirmingDeleteItemKey === itemKey;
+  const { confirmingDeleteActionKey, setConfirmingDeleteActionKey } = useQueryEditorUIContext();
   const typeLabel = typeConfig[item.type].getLabel();
   const requiresDeleteConfirmation = typeConfig[item.type].deleteConfirmation;
   const cardActionSource: CardActionSource = contentHeader ? 'content_header' : 'sidebar_card';
+  const itemKey = getActionItemKey(item);
+  const confirmationKey = `${cardActionSource}:${itemKey}`;
+  const showDeleteConfirmation = confirmingDeleteActionKey === confirmationKey;
 
   const labels = useMemo(
     () => ({
@@ -90,7 +91,7 @@ export function Actions({
       }
 
       if (requiresDeleteConfirmation) {
-        setConfirmingDeleteItemKey(itemKey);
+        setConfirmingDeleteActionKey(confirmationKey);
       } else {
         trackCardAction('delete', item.type, cardActionSource);
         onDelete();
@@ -101,10 +102,10 @@ export function Actions({
       requiresDeleteConfirmation,
       onDelete,
       handleResetFocus,
-      itemKey,
+      confirmationKey,
       item.type,
       cardActionSource,
-      setConfirmingDeleteItemKey,
+      setConfirmingDeleteActionKey,
     ]
   );
 
@@ -115,14 +116,14 @@ export function Actions({
 
     trackCardAction('delete', item.type, cardActionSource);
     onDelete();
-    setConfirmingDeleteItemKey(null);
+    setConfirmingDeleteActionKey(null);
     handleResetFocus?.();
-  }, [onDelete, handleResetFocus, item.type, cardActionSource, setConfirmingDeleteItemKey]);
+  }, [onDelete, handleResetFocus, item.type, cardActionSource, setConfirmingDeleteActionKey]);
 
   const handleCancelDelete = useCallback(() => {
-    setConfirmingDeleteItemKey(null);
+    setConfirmingDeleteActionKey(null);
     handleResetFocus?.();
-  }, [handleResetFocus, setConfirmingDeleteItemKey]);
+  }, [handleResetFocus, setConfirmingDeleteActionKey]);
 
   const actionButtons = useMemo<ActionButtonConfig[]>(() => {
     const orderMap: Record<ActionButtonId, number> = {

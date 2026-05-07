@@ -145,8 +145,8 @@ export const mockUIStateBase = {
   toggleTransformationSelection: jest.fn(),
   clearSelection: jest.fn(),
   setMultiSelectMode: jest.fn(),
-  confirmingDeleteItemKey: null,
-  setConfirmingDeleteItemKey: jest.fn(),
+  confirmingDeleteActionKey: null,
+  setConfirmingDeleteActionKey: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -201,7 +201,7 @@ interface CreateQueryEditorProviderOptions {
 
 /**
  * Wires the inline-delete confirmation state with real React state so tests exercise the same
- * flow as production. Tests can still override `confirmingDeleteItemKey` / `setConfirmingDeleteItemKey`
+ * flow as production. Tests can still override `confirmingDeleteActionKey` / `setConfirmingDeleteActionKey`
  * via `uiStateOverrides` for edge cases.
  */
 function StatefulConfirmationProvider({
@@ -213,17 +213,17 @@ function StatefulConfirmationProvider({
   children: ReactNode;
   render: (uiState: QueryEditorUIState, children: ReactNode) => ReactElement;
 }) {
-  const [confirmingDeleteItemKey, setConfirmingDeleteItemKey] = useState<string | null>(
-    uiState.confirmingDeleteItemKey ?? null
+  const [confirmingDeleteActionKey, setConfirmingDeleteActionKey] = useState<string | null>(
+    uiState.confirmingDeleteActionKey ?? null
   );
 
   const wiredUiState = useMemo<QueryEditorUIState>(
     () => ({
       ...uiState,
-      confirmingDeleteItemKey,
-      setConfirmingDeleteItemKey,
+      confirmingDeleteActionKey,
+      setConfirmingDeleteActionKey,
     }),
-    [uiState, confirmingDeleteItemKey]
+    [uiState, confirmingDeleteActionKey]
   );
 
   return render(wiredUiState, children);
@@ -307,8 +307,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingSavedQuery: null,
     setPendingSavedQuery: jest.fn(),
     showVersionBanner: false,
-    confirmingDeleteItemKey: null,
-    setConfirmingDeleteItemKey: jest.fn(),
+    confirmingDeleteActionKey: null,
+    setConfirmingDeleteActionKey: jest.fn(),
     ...uiStateOverrides,
   };
 

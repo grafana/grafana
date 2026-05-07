@@ -202,33 +202,33 @@ describe('QueryEditorContextWrapper - delete confirmation', () => {
     });
   });
 
-  it('starts with no item in the intermediate confirmation state', () => {
+  it('starts with no action in the intermediate confirmation state', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
-    expect(result.current.confirmingDeleteItemKey).toBeNull();
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
   });
 
-  it('records the most recently set item key and clears it on null', () => {
+  it('records the most recently set action key and clears it on null', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    act(() => result.current.setConfirmingDeleteItemKey('query:A'));
-    expect(result.current.confirmingDeleteItemKey).toBe('query:A');
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
 
-    act(() => result.current.setConfirmingDeleteItemKey('query:B'));
-    expect(result.current.confirmingDeleteItemKey).toBe('query:B');
+    act(() => result.current.setConfirmingDeleteActionKey('content_header:query:B'));
+    expect(result.current.confirmingDeleteActionKey).toBe('content_header:query:B');
 
-    act(() => result.current.setConfirmingDeleteItemKey(null));
-    expect(result.current.confirmingDeleteItemKey).toBeNull();
+    act(() => result.current.setConfirmingDeleteActionKey(null));
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
   });
 
   it('dismisses an open confirmation when the selected query changes', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    act(() => result.current.setConfirmingDeleteItemKey('query:A'));
-    expect(result.current.confirmingDeleteItemKey).toBe('query:A');
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
 
     act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
 
-    expect(result.current.confirmingDeleteItemKey).toBeNull();
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
   });
 
   it('dismisses an open confirmation when the selected transformation changes', () => {
@@ -242,12 +242,12 @@ describe('QueryEditorContextWrapper - delete confirmation', () => {
 
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    act(() => result.current.setConfirmingDeleteItemKey('transformation:reduce-0'));
-    expect(result.current.confirmingDeleteItemKey).toBe('transformation:reduce-0');
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:transformation:reduce-0'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:transformation:reduce-0');
 
     act(() => result.current.setSelectedTransformation(mockTransformation));
 
-    expect(result.current.confirmingDeleteItemKey).toBeNull();
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
   });
 
   it('dismisses an open confirmation when the selected alert changes', () => {
@@ -258,23 +258,23 @@ describe('QueryEditorContextWrapper - delete confirmation', () => {
     });
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    act(() => result.current.setConfirmingDeleteItemKey('query:A'));
-    expect(result.current.confirmingDeleteItemKey).toBe('query:A');
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
 
     act(() => result.current.setSelectedAlert(mockAlert));
 
-    expect(result.current.confirmingDeleteItemKey).toBeNull();
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
   });
 
   it('dismisses an open confirmation when selection is cleared', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    act(() => result.current.setConfirmingDeleteItemKey('query:A'));
-    expect(result.current.confirmingDeleteItemKey).toBe('query:A');
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
 
     act(() => result.current.clearSelection());
 
-    expect(result.current.confirmingDeleteItemKey).toBeNull();
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
   });
 });
 

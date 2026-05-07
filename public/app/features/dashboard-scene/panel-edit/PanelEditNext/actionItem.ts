@@ -24,7 +24,10 @@ interface QueryActionItemOptions {
   type?: QueryEditorType;
 }
 
-export function queryToActionItem(query: DataQuery | ExpressionQuery, options: QueryActionItemOptions = {}): ActionItem {
+export function queryToActionItem(
+  query: DataQuery | ExpressionQuery,
+  options: QueryActionItemOptions = {}
+): ActionItem {
   const { error, type = getEditorType(query) } = options;
 
   return {

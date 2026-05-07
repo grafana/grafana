@@ -110,8 +110,9 @@ export interface QueryEditorUIState {
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;
   showVersionBanner: boolean;
-  confirmingDeleteItemKey: string | null;
-  setConfirmingDeleteItemKey: (key: string | null) => void;
+  /** Action surface whose inline delete confirmation is open, so only one Actions instance confirms at a time. */
+  confirmingDeleteActionKey: string | null;
+  setConfirmingDeleteActionKey: (key: string | null) => void;
 }
 
 export interface QueryEditorActions {

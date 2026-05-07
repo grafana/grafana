@@ -175,6 +175,28 @@ describe('Actions', () => {
       expect(screen.getAllByRole('button', { name: 'Confirm' })).toHaveLength(1);
       expect(screen.getAllByRole('button', { name: 'Cancel' })).toHaveLength(1);
     });
+
+    it('does not show the header confirmation when the sidebar confirmation is open for the same item', async () => {
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
+
+      const { user } = renderWithQueryEditorProvider(
+        <>
+          <Actions item={item} onDelete={jest.fn()} />
+          <Actions item={item} onDelete={jest.fn()} contentHeader confirmStyle={ConfirmationStyle.full} />
+        </>
+      );
+
+      const [sidebarDelete] = screen.getAllByRole('button', { name: 'Remove Query' });
+      await user.click(sidebarDelete);
+
+      expect(screen.getAllByRole('button', { name: 'Confirm' })).toHaveLength(1);
+      expect(screen.getByRole('button', { name: 'Confirm' })).not.toHaveTextContent('Delete');
+
+      await user.click(screen.getByRole('button', { name: 'Remove Query' }));
+
+      expect(screen.getAllByRole('button', { name: 'Confirm' })).toHaveLength(1);
+      expect(screen.getByRole('button', { name: 'Confirm' })).toHaveTextContent('Delete');
+    });
   });
 
   describe('confirmStyle', () => {
