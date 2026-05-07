@@ -4,6 +4,7 @@ import { type Scope, type ScopeNode } from '@grafana/data';
 
 import { type StoredRecentScopeSet } from './recentScopesStorage';
 import { useRecentScopes } from './useRecentScopes';
+import { useScopesById, useScopeNodesByName } from './useRecentScopesApi';
 
 // Mock the storage module so tests control what's "in localStorage"
 const mockReadStoredRecentScopes = jest.fn<StoredRecentScopeSet[], []>().mockReturnValue([]);
@@ -16,20 +17,11 @@ jest.mock('./recentScopesStorage', () => ({
 }));
 
 // Mock the API hooks so tests don't need a Redux store
-const mockUseScopesById = jest.fn<Record<string, Scope | undefined>, [string[]]>().mockReturnValue({});
-const mockUseScopeNodesByName = jest.fn<Record<string, ScopeNode | undefined>, [string[]]>().mockReturnValue({});
+jest.mock('./useRecentScopesApi');
+const mockUseScopesById = jest.mocked(useScopesById);
+const mockUseScopeNodesByName = jest.mocked(useScopeNodesByName);
 
-jest.mock('./useRecentScopesApi', () => ({
-  useScopesById: (names: string[]) => mockUseScopesById(names),
-  useScopeNodesByName: (names: string[]) => mockUseScopeNodesByName(names),
-}));
-
-// Mock dynamic import of validation module
-jest.mock('./recentScopesValidation', () => ({
-  validateStoredRecentScopes: jest.fn().mockReturnValue([]),
-}));
-
-// Mock @grafana/data store (used in useEffect for lazy validation)
+// Mock @grafana/data store (used by getSnapshot via readStoredRecentScopes)
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
   store: {
