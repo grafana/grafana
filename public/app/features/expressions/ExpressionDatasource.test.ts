@@ -1,6 +1,6 @@
 import { of, lastValueFrom } from 'rxjs';
 
-import { type DataQueryRequest, type DataSourceInstanceSettings } from '@grafana/data';
+import { dateTime, type DataQueryRequest, type DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -55,8 +55,8 @@ describe('ExpressionDatasourceApi', () => {
         requestId: 'Q1',
         timezone: 'browser',
         range: {
-          from: new Date('2026-01-01T00:00:00Z'),
-          to: new Date('2026-01-01T01:00:00Z'),
+          from: dateTime('2026-01-01T00:00:00Z'),
+          to: dateTime('2026-01-01T01:00:00Z'),
           raw: { from: 'now-1h', to: 'now' },
         },
         targets: [query],
