@@ -42,9 +42,9 @@ jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsM
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getInstanceSettings: jest.fn((uid?: string) =>
-    Promise.resolve(uid ? { uid, type: 'test-datasource', name: 'Test DS' } : undefined)
-  ),
+  getDataSourceSrv: () => ({
+    getInstanceSettings: jest.fn((uid?: string) => (uid ? { uid, type: 'test-datasource', name: 'Test DS' } : null)),
+  }),
 }));
 
 const mockFetchProvisioned = jest.mocked(fetchProvisionedDashboards);

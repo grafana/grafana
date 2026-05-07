@@ -4,7 +4,7 @@ import React, { memo } from 'react';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, useInstanceSettingsList, type ScopesContextValue } from '@grafana/runtime';
+import { type ScopesContextValue } from '@grafana/runtime';
 import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -29,8 +29,6 @@ import { SingleTopBarActions } from './SingleTopBarActions';
 import { TopBarExtensionPoint } from './TopBarExtensionPoint';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { getChromeHeaderLevelHeight } from './useChromeHeaderHeight';
-
-const testDsFilters = { type: 'grafana-testdata-datasource' };
 
 interface Props {
   sectionNav: NavModelItem;
@@ -63,10 +61,6 @@ export const SingleTopBar = memo(function SingleTopBar({
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const isLargeScreen = useMediaQueryMinWidth('lg');
   const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
-  const { items: testDataSources, isLoading: isTestDsLoading } = useInstanceSettingsList(
-    config.featureToggles.dashboardTemplates ? testDsFilters : undefined
-  );
-  const hasTestDataSource = config.featureToggles.dashboardTemplates && !isTestDsLoading && testDataSources.length > 0;
 
   return (
     <>
@@ -100,7 +94,7 @@ export const SingleTopBar = memo(function SingleTopBar({
         >
           <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
-          {!isSmallScreen && <QuickAdd hasTestDataSource={hasTestDataSource} />}
+          {!isSmallScreen && <QuickAdd />}
           <HelpTopBarButton isSmallScreen={isSmallScreen} />
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
