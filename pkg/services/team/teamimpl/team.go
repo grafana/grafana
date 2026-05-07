@@ -154,14 +154,14 @@ func (s *Service) isKubernetesTeamServiceEnabled(ctx context.Context) bool {
 
 // isUserTeamsK8sPathEnabled gates the methods that read membership through
 // the /users/{uid}/teams subresource (GetTeamsByUser, GetTeamIDsByUser,
-// GetUserTeamMemberships). The subresource is gated on FlagKubernetesTeamBindings;
+// GetUserTeamMemberships). The subresource is gated on FlagKubernetesTeamsApi;
 // without it the apiserver returns 403 and these methods would fail. Both
 // flags must be on for the k8s path; otherwise we fall back to legacy.
 func (s *Service) isUserTeamsK8sPathEnabled(ctx context.Context) bool {
 	if !s.isKubernetesTeamServiceEnabled(ctx) {
 		return false
 	}
-	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamBindings, false, openfeature.TransactionContext(ctx))
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
 }
 
 // shouldFallbackToLegacy determines whether to fallback to the legacy service for a given request.
