@@ -251,6 +251,17 @@ func TestSQLKVInsertDataImportBatchUsesLegacyFields(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestSQLKV_Batch_RejectsDataSection(t *testing.T) {
+	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
+
+	err := sqlKV.Batch(context.Background(), DataSection, []BatchOp{
+		{Mode: BatchOpPut, Key: "k", Value: []byte("v")},
+	})
+	require.ErrorIs(t, err, ErrBatchNotSupportedOnDataSection)
+	// Reject must short-circuit before touching the DB.
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestSQLKVInsertDataImportBatchRejectsMixedLegacyRows(t *testing.T) {
 	tests := []struct {
 		name      string

@@ -9,6 +9,13 @@ package v0alpha1
 type MigrateJobOptionsApplyConfiguration struct {
 	// Message to use when committing the changes in a single commit
 	Message *string `json:"message,omitempty"`
+	// Resources to migrate. When empty, every unmanaged resource in the namespace
+	// is migrated (legacy behavior). When non-empty, only the listed resources
+	// are exported to the repository — the folder hierarchy is still emitted so
+	// parent paths resolve, and the subsequent pull phase only takes ownership
+	// of those resources.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRefApplyConfiguration `json:"resources,omitempty"`
 }
 
 // MigrateJobOptionsApplyConfiguration constructs a declarative configuration of the MigrateJobOptions type for use with
@@ -22,5 +29,18 @@ func MigrateJobOptions() *MigrateJobOptionsApplyConfiguration {
 // If called multiple times, the Message field is set to the value of the last call.
 func (b *MigrateJobOptionsApplyConfiguration) WithMessage(value string) *MigrateJobOptionsApplyConfiguration {
 	b.Message = &value
+	return b
+}
+
+// WithResources adds the given value to the Resources field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Resources field.
+func (b *MigrateJobOptionsApplyConfiguration) WithResources(values ...*ResourceRefApplyConfiguration) *MigrateJobOptionsApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithResources")
+		}
+		b.Resources = append(b.Resources, *values[i])
+	}
 	return b
 }

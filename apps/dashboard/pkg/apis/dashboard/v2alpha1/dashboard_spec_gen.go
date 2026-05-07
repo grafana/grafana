@@ -96,14 +96,14 @@ type DashboardAnnotationPanelFilter struct {
 	// Should the specified panels be included or excluded
 	Exclude *bool `json:"exclude,omitempty"`
 	// Panel IDs that should be included or excluded
-	Ids []uint32 `json:"ids"`
+	Ids []int32 `json:"ids"`
 }
 
 // NewDashboardAnnotationPanelFilter creates a new DashboardAnnotationPanelFilter object.
 func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 	return &DashboardAnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
-		Ids:     []uint32{},
+		Ids:     []int32{},
 	}
 }
 
@@ -183,7 +183,7 @@ func (DashboardPanelKind) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardPanelSpec struct {
-	Id          float64                 `json:"id"`
+	Id          int32                   `json:"id"`
 	Title       string                  `json:"title"`
 	Description string                  `json:"description"`
 	Links       []DashboardDataLink     `json:"links"`
@@ -1032,7 +1032,7 @@ func (DashboardLibraryPanelKind) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type DashboardLibraryPanelKindSpec struct {
 	// Panel ID for the library panel in the dashboard
-	Id float64 `json:"id"`
+	Id int32 `json:"id"`
 	// Title for the library panel in the dashboard
 	Title        string                   `json:"title"`
 	LibraryPanel DashboardLibraryPanelRef `json:"libraryPanel"`
@@ -1871,14 +1871,15 @@ func (DashboardVariableOption) OpenAPIModelName() string {
 }
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
 // +k8s:openapi-gen=true
 type DashboardVariableHide string
 
 const (
-	DashboardVariableHideDontHide     DashboardVariableHide = "dontHide"
-	DashboardVariableHideHideLabel    DashboardVariableHide = "hideLabel"
-	DashboardVariableHideHideVariable DashboardVariableHide = "hideVariable"
+	DashboardVariableHideDontHide       DashboardVariableHide = "dontHide"
+	DashboardVariableHideHideLabel      DashboardVariableHide = "hideLabel"
+	DashboardVariableHideHideVariable   DashboardVariableHide = "hideVariable"
+	DashboardVariableHideInControlsMenu DashboardVariableHide = "inControlsMenu"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardVariableHide.

@@ -24,10 +24,11 @@ interface DashboardEditFormSharedFieldsProps {
   readOnly?: boolean;
   repository?: RepositoryView;
   hiddenFields?: SharedFieldName[];
+  allowPathEdit?: boolean;
 }
 
 export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, canPushToConfiguredBranch, repository, isNew, resourceType, hiddenFields }) => {
+  ({ readOnly = false, canPushToConfiguredBranch, repository, isNew, resourceType, hiddenFields, allowPathEdit }) => {
     const {
       control,
       register,
@@ -62,7 +63,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       canPushToNonConfiguredBranch,
     });
 
-    const showFolderFilename = isNew && resourceType === 'dashboard';
+    const showFolderFilename = (isNew || allowPathEdit) && resourceType === 'dashboard';
 
     const { options: folderOptions, loading: isFoldersLoading } = useGetRepositoryFolders({
       repositoryName: showFolderFilename ? repository?.name : undefined,
@@ -175,7 +176,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                       onChange={(option) => {
                         // setValue (not onChange) so folder picks don't dirty the path field,
                         // preserving title→filename auto-sync until the filename is edited.
-                        setValue('path', joinPath(option?.value ?? '', file));
+                        setValue('path', joinPath(option?.value ?? '', file), { shouldDirty: !isNew });
                       }}
                       options={folderOptions}
                       loading={isFoldersLoading}

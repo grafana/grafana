@@ -187,14 +187,14 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesSpec(ref common.ReferenceCa
 					},
 					"theme": {
 						SchemaProps: spec.SchemaProps{
-							Description: "light, dark, empty is default",
+							Description: "user interface theme",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"language": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Selected language (beta)",
+							Description: "Selected language",
 							Type:        []string{"string"},
 							Format:      "",
 						},

@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 
 import * as grafanaData from '@grafana/data';
 import { type DataSourceApi, DataTransformerID, dateTime, type TypedVariableModel } from '@grafana/data';
-import { FrameType, mockTransformationsRegistry } from '@grafana/data/internal';
+import { convertFrameTypeTransformer, FrameType, mockTransformationsRegistry } from '@grafana/data/internal';
 import { type DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
@@ -183,7 +183,6 @@ function describeQueryRunnerScenario(
 
 describe('PanelQueryRunner', () => {
   beforeAll(() => {
-    const { convertFrameTypeTransformer } = grafanaData.standardTransformers;
     mockTransformationsRegistry([convertFrameTypeTransformer]);
   });
 

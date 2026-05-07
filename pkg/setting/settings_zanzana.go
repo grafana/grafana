@@ -80,6 +80,8 @@ type ZanzanaReconcilerSettings struct {
 	WriteBatchSize int
 	// Size of the buffered work queue for namespaces.
 	QueueSize int
+	// Page size when listing CRDs from the Kubernetes API.
+	ListPageSize int
 
 	// --- HA leader election (standalone mode in K8s) ---
 
@@ -121,6 +123,12 @@ type ZanzanaServerSettings struct {
 	// Max unique folder checks per batch-check phase before switching from OpenFGA BatchCheck
 	// to ListObjects. Reduces graph exploration when many distinct folders are checked. Default 20.
 	FolderCheckBatchThreshold int
+	// Max number of concurrent in-flight Check/BatchCheck/List requests.
+	// 0 means no limit (default). When reached, new requests are rejected with ResourceExhausted.
+	MaxConcurrentRequests int
+	// Max number of concurrent in-flight requests per namespace (tenant).
+	// 0 means no limit (default). Prevents a single noisy tenant from starving others.
+	MaxConcurrentRequestsPerNamespace int
 }
 
 type OpenFgaServerSettings struct {
@@ -321,6 +329,8 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.AllowInsecure = serverSec.Key("allow_insecure").MustBool(false)
 	zs.ReadPageSize = int32(serverSec.Key("read_page_size").MustInt(defaultReadPageSize))
 	zs.FolderCheckBatchThreshold = serverSec.Key("folder_check_batch_threshold").MustInt(20)
+	zs.MaxConcurrentRequests = serverSec.Key("max_concurrent_requests").MustInt(0)
+	zs.MaxConcurrentRequestsPerNamespace = serverSec.Key("max_concurrent_requests_per_namespace").MustInt(0)
 
 	// Cache settings
 	zs.CacheSettings.CheckCacheLimit = uint32(serverSec.Key("check_cache_limit").MustUint(10000))
@@ -403,6 +413,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
 	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
 	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
+	zr.ListPageSize = reconcilerSec.Key("list_page_size").MustInt(1000)
 	zr.LeaderElection = leaderelection.Config{
 		Enabled:       reconcilerSec.Key("leader_election_enabled").MustBool(false),
 		LeaseName:     reconcilerSec.Key("leader_election_lease_name").MustString("zanzana-mt-reconciler"),

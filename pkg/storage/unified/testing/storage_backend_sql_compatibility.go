@@ -86,6 +86,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend NewBacken
 		{"last import time cross backend", runTestLastImportTimeCrossBackend},
 		{"cluster scoped resources compatibility", runTestClusterScopedResources},
 		{"cross backend rv list compatibility", runTestCrossBackendRVListCompatibility},
+		{"resource name case mismatch", runTestResourceNameCaseMismatch},
 	}
 
 	for _, tc := range cases {
@@ -122,13 +123,13 @@ func newIntegrationTestContext(t *testing.T) context.Context {
 func runTestIntegrationBackendKeyPathGeneration(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
 	// Test SQL backend with 3 writes, 3 updates, 3 deletes
 	t.Run("SQL Backend Operations", func(t *testing.T) {
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := newIntegrationTestContext(t)
 		runKeyPathTest(t, sqlBackend, nsPrefix+"-sql", db, ctx)
 	})
 
 	// Test SQL KV backend with 3 writes, 3 updates, 3 deletes
 	t.Run("SQL KV Backend Operations", func(t *testing.T) {
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := newIntegrationTestContext(t)
 		runKeyPathTest(t, kvBackend, nsPrefix+"-kv", db, ctx)
 	})
 }
@@ -295,13 +296,13 @@ func runTestSQLBackendFieldsCompatibility(t *testing.T, sqlBackend, kvBackend re
 
 	// Test SQL backend with 3 resources through complete lifecycle
 	t.Run("SQL Backend Operations", func(t *testing.T) {
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := newIntegrationTestContext(t)
 		runSQLBackendFieldsTest(t, sqlBackend, namespace+"-sql", db, ctx)
 	})
 
 	// Test KV backend with 3 resources through complete lifecycle
 	t.Run("KV Backend Operations", func(t *testing.T) {
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := newIntegrationTestContext(t)
 		runSQLBackendFieldsTest(t, kvBackend, namespace+"-kv", db, ctx)
 	})
 }
@@ -2751,5 +2752,91 @@ func runTestCrossBackendRVListCompatibility(t *testing.T, sqlBackend, kvBackend 
 
 	t.Run("KV to SQL", func(t *testing.T) {
 		testCrossBackendList(t, kvServer, sqlServer, true, nsPrefix+"-rv-kv2sql")
+	})
+}
+
+// runTestResourceNameCaseMismatch verifies how the SQL and KV backends behave
+// when a resource is read with a name whose case differs from the stored name.
+// On MySQL the resource table's `name` column uses the default
+// (case-insensitive) collation, so a read against the SQL backend resolves the
+// row even when the case differs; the KV backend's key_path lookup is
+// case-sensitive on every supported database, so the same read against the KV
+// backend does not resolve. The test exercises [resource.IsResourceNameMixedCase]
+// against the actual backend responses in both directions.
+func runTestResourceNameCaseMismatch(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	ctx := newIntegrationTestContext(t)
+
+	// Servers are used for the writes (they handle validation and metadata
+	// plumbing); reads go directly through the backend so the response carries
+	// the stored ResourceKey that IsResourceNameMixedCase needs.
+	sqlServer := createStorageServer(t, sqlBackend)
+	kvServer := createStorageServer(t, kvBackend)
+
+	const (
+		storedName = "MixedCaseName"
+		readName   = "mixedcasename"
+	)
+
+	t.Run("Write KV, Read SQL with mixed case", func(t *testing.T) {
+		ns := nsPrefix + "-write-kv-read-sql"
+		createPlaylistResource(t, kvServer, ctx, PlaylistResourceOptions{
+			Name:       storedName,
+			Namespace:  ns,
+			UID:        "case-mismatch-kv",
+			Generation: 1,
+			Title:      "kv-stored",
+		})
+
+		req := &resourcepb.ReadRequest{Key: createPlaylistKey(ns, readName)}
+		resp := sqlBackend.ReadResource(ctx, req)
+		require.NotNil(t, resp)
+
+		if db.DriverName() == "mysql" {
+			require.Nil(t, resp.Error,
+				"MySQL is case-insensitive on the resource.name column; the row should resolve")
+			require.NotNil(t, resp.Key)
+			require.Equal(t, storedName, resp.Key.Name,
+				"stored name retains its original casing")
+			require.True(t, resource.IsResourceNameMixedCase(req, resp),
+				"helper should detect the case mismatch on a successful cross-case read")
+		} else {
+			require.NotNil(t, resp.Error,
+				"case-sensitive DB should not match across cases")
+			require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+			require.False(t, resource.IsResourceNameMixedCase(req, resp),
+				"helper should not flag a mismatch when the read failed")
+		}
+	})
+
+	t.Run("Write SQL, Read KV with mixed case", func(t *testing.T) {
+		ns := nsPrefix + "-write-sql-read-kv"
+		createPlaylistResource(t, sqlServer, ctx, PlaylistResourceOptions{
+			Name:       storedName,
+			Namespace:  ns,
+			UID:        "case-mismatch-sql",
+			Generation: 1,
+			Title:      "sql-stored",
+		})
+
+		req := &resourcepb.ReadRequest{Key: createPlaylistKey(ns, readName)}
+		resp := kvBackend.ReadResource(ctx, req)
+		require.NotNil(t, resp)
+		// The KV backend looks resources up by key_path with binary
+		// (case-sensitive) comparison on every database, so a mixed-case read
+		// should not resolve regardless of the underlying engine.
+		require.NotNil(t, resp.Error,
+			"KV backend lookup is case-sensitive; mixed-case read should not resolve")
+		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+		require.False(t, resource.IsResourceNameMixedCase(req, resp),
+			"helper should not flag a mismatch when the read failed")
+
+		// Sanity check: reading with the original casing succeeds and the
+		// helper does not flag identical names.
+		matchingReq := &resourcepb.ReadRequest{Key: createPlaylistKey(ns, storedName)}
+		matchingResp := kvBackend.ReadResource(ctx, matchingReq)
+		require.NotNil(t, matchingResp)
+		require.Nil(t, matchingResp.Error)
+		require.False(t, resource.IsResourceNameMixedCase(matchingReq, matchingResp),
+			"helper should not flag identical names")
 	})
 }

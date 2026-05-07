@@ -12,6 +12,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -43,6 +44,22 @@ const (
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 )
+
+// IsResourceNameMixedCase reports whether a successful read returned a
+// resource whose stored name matches the requested name case-insensitively but
+// differs in case. This indicates a case-mismatched lookup, which can occur
+// when the underlying database collation is case-insensitive (for example,
+// MySQL's default collation): the row is found despite the case difference,
+// and the stored name retains its original casing.
+func IsResourceNameMixedCase(req *resourcepb.ReadRequest, res *BackendReadResponse) bool {
+	if req == nil || req.Key == nil || res == nil || res.Error != nil || res.Key == nil {
+		return false
+	}
+	if req.Key.Name == res.Key.Name {
+		return false
+	}
+	return strings.EqualFold(req.Key.Name, res.Key.Name)
+}
 
 type GarbageCollectionConfig struct {
 	Enabled          bool
@@ -509,6 +526,8 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 	totalDeleted := int64(0)
 	totalDryRun := int64(0)
+	deletedPerNamespace := map[string]int64{}
+	dryRunPerNamespace := map[string]int64{}
 
 	// get the start and end keys for the list operation based on the resource prefix
 	// for example, for dashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
@@ -619,6 +638,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				if b.garbageCollection.DryRun {
 					// if in dry run mode, just count the keys to delete
 					totalDryRun += int64(len(keysToDelete))
+					dryRunPerNamespace[dk.Namespace] += int64(len(keysToDelete))
 					continue
 				}
 
@@ -630,6 +650,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 				// update the total number of keys deleted
 				keysDeleted = keysDeleted + int64(len(keysToDelete))
+				deletedPerNamespace[dk.Namespace] += int64(len(keysToDelete))
 			}
 		}
 
@@ -654,6 +675,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			"rows", totalDeleted,
 			"seconds", time.Since(start).Seconds(),
 		)
+		for ns, count := range deletedPerNamespace {
+			b.log.Info("garbage collection deleted history per namespace",
+				"group", group,
+				"resource", resourceName,
+				"namespace", ns,
+				"rows", count,
+			)
+		}
 	}
 
 	if totalDryRun > 0 {
@@ -663,6 +692,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			"rows", totalDryRun,
 			"seconds", time.Since(start).Seconds(),
 		)
+		for ns, count := range dryRunPerNamespace {
+			b.log.Info("garbage collection dry run per namespace",
+				"group", group,
+				"resource", resourceName,
+				"namespace", ns,
+				"rows", count,
+			)
+		}
 	}
 
 	return nil
@@ -828,6 +865,18 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			}
 
 			if err := k.dataStore.applyBackwardsCompatibleChanges(txnCtx, tx, event, dataKey); err != nil {
+				if apierrors.IsConflict(err) {
+					// Log conflict errors when applying compatibility changes to monitor potential
+					// case mismatches between the resource_history's `key_path` column and
+					// the resource table's `name` column.
+					k.log.Warn("conflict when applying compatibility changes",
+						"namespace", event.Key.Namespace,
+						"group", event.Key.Group,
+						"resource", event.Key.Resource,
+						"name", event.Key.Name,
+						"action", action,
+					)
+				}
 				return "", fmt.Errorf("failed to apply backwards compatible updates: %w", err)
 			}
 
@@ -1102,7 +1151,12 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		listRV = listOptions.ResourceVersion
 	}
 
-	// Fetch the latest objects
+	// Fetch the latest objects.
+	// TODO: stream keys into BatchGet instead of materializing the whole list.
+	// For unbounded list calls (e.g. index build with req.Limit == 0) at 1M
+	// rows this allocates ~250 MB of DataKey before any reads start. Pipe
+	// ListResourceKeysAtRevision through a bounded channel into BatchGet so
+	// memory is O(chunk), not O(N).
 	keys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
 	for dataKey, err := range k.dataStore.ListResourceKeysAtRevision(ctx, listOptions) {
 		if err != nil {
@@ -1115,16 +1169,10 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			break
 		}
 	}
-	// Create pull-style iterator from BatchGet
-	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
-	defer stop()
+	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
+	defer iter.stop()
 
-	iter := kvListIterator{
-		listRV:           listRV,
-		isCrossNamespace: req.Options.Key.Namespace == "",
-		next:             next,
-	}
-	err := cb(&iter)
+	err := cb(iter)
 	if err != nil {
 		return 0, err
 	}
@@ -1132,13 +1180,23 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
-// kvListIterator implements ListIterator for KV storage
+// newKvListIterator builds a kvListIterator over dataStore.BatchGet(keys).
+func newKvListIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, isCrossNamespace bool) *kvListIterator {
+	next, stopFn := iter.Pull2(ds.BatchGet(ctx, keys))
+	return &kvListIterator{
+		listRV:           listRV,
+		isCrossNamespace: isCrossNamespace,
+		next:             next,
+		stopFn:           stopFn,
+	}
+}
+
 type kvListIterator struct {
 	listRV           int64
 	isCrossNamespace bool
 
-	// pull-style iterator
-	next func() (DataObj, error, bool)
+	next   func() (DataObj, error, bool)
+	stopFn func()
 
 	// current item state
 	started        bool
@@ -1150,10 +1208,16 @@ type kvListIterator struct {
 	hasMore        bool
 }
 
+// stop closes the underlying pull. Callers should defer this.
+func (i *kvListIterator) stop() {
+	if i.stopFn != nil {
+		i.stopFn()
+	}
+}
+
 func (i *kvListIterator) Next() bool {
 	if !i.started {
 		i.started = true
-
 		i.nextDataObj, i.nextErr, i.hasMore = i.next()
 	}
 
@@ -1172,7 +1236,6 @@ func (i *kvListIterator) Next() bool {
 	}
 
 	i.nextDataObj, i.nextErr, i.hasMore = i.next()
-
 	return true
 }
 
@@ -1600,17 +1663,10 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	// Pagination: filter out items up to and including lastSeenRV
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV)
 
-	// Create pull-style iterator from BatchGet
-	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, pagedKeys))
-	defer stop()
+	iter := newKvHistoryIterator(ctx, k.dataStore, pagedKeys, listRV, false)
+	defer iter.stop()
 
-	iter := kvHistoryIterator{
-		listRV: listRV,
-		next:   next,
-	}
-
-	err := fn(&iter)
-	if err != nil {
+	if err := fn(iter); err != nil {
 		return 0, err
 	}
 
@@ -1687,18 +1743,10 @@ func (k *kvStorageBackend) processTrashEntries(
 	// Apply RV-based pagination: skip candidates already seen on previous pages.
 	candidates = applyPagination(candidates, lastSeenRV)
 
-	// Create pull-style iterator from BatchGet
-	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, candidates))
-	defer stop()
+	iter := newKvHistoryIterator(ctx, k.dataStore, candidates, listRV, true)
+	defer iter.stop()
 
-	iter := kvHistoryIterator{
-		listRV:          listRV,
-		skipProvisioned: true,
-		next:            next,
-	}
-
-	err := fn(&iter)
-	if err != nil {
+	if err := fn(iter); err != nil {
 		return 0, err
 	}
 
@@ -1718,13 +1766,23 @@ func matchesTrashVersionFilter(req *resourcepb.ListRequest, key DataKey) bool {
 	}
 }
 
-// kvHistoryIterator implements ListIterator for KV storage history
+// newKvHistoryIterator builds a kvHistoryIterator over dataStore.BatchGet(keys).
+func newKvHistoryIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, skipProvisioned bool) *kvHistoryIterator {
+	next, stopFn := iter.Pull2(ds.BatchGet(ctx, keys))
+	return &kvHistoryIterator{
+		listRV:          listRV,
+		skipProvisioned: skipProvisioned,
+		next:            next,
+		stopFn:          stopFn,
+	}
+}
+
 type kvHistoryIterator struct {
 	listRV          int64
 	skipProvisioned bool
 
-	// pull-style iterator
-	next func() (DataObj, error, bool)
+	next   func() (DataObj, error, bool)
+	stopFn func()
 
 	// current item state
 	currentDataObj *DataObj
@@ -1733,46 +1791,53 @@ type kvHistoryIterator struct {
 	err            error
 }
 
+// stop closes the underlying pull. Callers should defer this.
+func (i *kvHistoryIterator) stop() {
+	if i.stopFn != nil {
+		i.stopFn()
+	}
+}
+
 func (i *kvHistoryIterator) Next() bool {
-	// Pull next item from the iterator
-	dataObj, err, ok := i.next()
-	if !ok {
-		return false
-	}
-	if err != nil {
-		i.err = err
-		return false
-	}
+	for {
+		dataObj, err, ok := i.next()
+		if !ok {
+			return false
+		}
+		if err != nil {
+			i.err = err
+			return false
+		}
 
-	i.currentDataObj = &dataObj
+		i.currentDataObj = &dataObj
 
-	i.value, err = readAndClose(dataObj.Value)
-	if err != nil {
-		i.err = err
-		return false
+		i.value, err = readAndClose(dataObj.Value)
+		if err != nil {
+			i.err = err
+			return false
+		}
+
+		// Extract the folder from the meta data
+		partial := &metav1.PartialObjectMetadata{}
+		if err := json.Unmarshal(i.value, partial); err != nil {
+			i.err = err
+			return false
+		}
+
+		meta, err := utils.MetaAccessor(partial)
+		if err != nil {
+			i.err = err
+			return false
+		}
+		i.folder = meta.GetFolder()
+
+		// if the resource is provisioned and we are skipping provisioned resources, continue onto the next one
+		if i.skipProvisioned && meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
+			continue
+		}
+
+		return true
 	}
-
-	// Extract the folder from the meta data
-	partial := &metav1.PartialObjectMetadata{}
-	err = json.Unmarshal(i.value, partial)
-	if err != nil {
-		i.err = err
-		return false
-	}
-
-	meta, err := utils.MetaAccessor(partial)
-	if err != nil {
-		i.err = err
-		return false
-	}
-	i.folder = meta.GetFolder()
-
-	// if the resource is provisioned and we are skipping provisioned resources, continue onto the next one
-	if i.skipProvisioned && meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
-		return i.Next()
-	}
-
-	return true
 }
 
 func (i *kvHistoryIterator) Error() error {

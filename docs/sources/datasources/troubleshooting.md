@@ -13,9 +13,9 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Troubleshooting
-title: Troubleshoot general data sources
-weight: 900
+menuTitle: General troubleshooting
+title: Troubleshoot general data source issues
+weight: 2000
 review_date: 2026-03-10
 refs:
   data-source-management:
