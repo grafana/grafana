@@ -1145,7 +1145,8 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if req.ResourceVersion > 0 {
 		// Fetch the latest RV
 		latestRV := k.snowflake.Generate().Int64()
-		if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
+		var lastEventKey EventKey
+		if lastEventKey, err = k.eventStore.LastEventKey(ctx); err == nil {
 			latestRV = lastEventKey.ResourceVersion
 		} else if !errors.Is(err, ErrNotFound) {
 			return &BackendReadResponse{Error: &resourcepb.ErrorResult{
