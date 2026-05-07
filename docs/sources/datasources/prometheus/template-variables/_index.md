@@ -16,6 +16,7 @@ labels:
 menuTitle: Template variables
 title: Prometheus template variables
 weight: 400
+review_date: 2026-05-07
 ---
 
 # Prometheus template variables

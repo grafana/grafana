@@ -16,6 +16,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Prometheus data source issues
 weight: 600
+review_date: 2026-05-07
 ---
 
 # Troubleshoot Prometheus data source issues
@@ -175,6 +176,17 @@ The following errors occur when there are issues with PromQL syntax or query exe
 1. Ensure your Prometheus version supports the function you are using.
 1. Refer to the [PromQL functions documentation](https://prometheus.io/docs/prometheus/latest/querying/functions/) for available functions.
 
+### Aggregation by labels with dots
+
+**Symptom:** Queries that aggregate by label names containing dots (for example, `container.name`) return incorrect or incomplete results.
+
+**Cause:** Prior to Grafana 13, there was a bug where labels with dots in their names were not handled correctly during aggregation operations like `sum by` or `avg by`.
+
+**Solution:**
+
+1. Upgrade to Grafana 13 or later, which correctly handles labels with dots in aggregation queries.
+1. Verify your query uses the correct label name with dots (for example, `sum by (container.name) (metric_name)`).
+
 ## Configuration errors
 
 The following errors occur when the data source is not configured correctly.
@@ -298,6 +310,55 @@ The following issues don't produce specific error messages but are commonly enco
 1. Check that Prometheus has alerting rules configured.
 1. Ensure Grafana can access the Prometheus rules API endpoint.
 1. Note that for Prometheus (unlike Mimir), the Alerting UI only supports viewing existing rules, not creating new ones.
+
+## Annotation errors
+
+The following issues occur when using Prometheus as a data source for annotations.
+
+### Annotations not appearing
+
+**Symptom:** You've configured a Prometheus annotation query, but no annotations appear on your dashboard.
+
+**Possible causes and solutions:**
+
+| Cause | Solution |
+|-------|----------|
+| Query returns no data | Verify the query returns results in Explore for the current time range. |
+| All values are zero | Annotations are only created for non-zero data points. Adjust your query to return non-zero values for events. |
+| Wrong data source selected | Verify the correct Prometheus data source is selected in the annotation configuration. |
+| Time range mismatch | Expand the dashboard time range to include the events you expect to see. |
+
+For more information on configuring annotations, refer to [Prometheus annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/annotations/).
+
+## Alerting errors
+
+The following issues occur when using Prometheus with Grafana Alerting.
+
+### Alert rule fails to evaluate
+
+**Symptom:** An alert rule using a Prometheus query shows evaluation errors or remains in a "No Data" state.
+
+**Possible causes and solutions:**
+
+| Cause | Solution |
+|-------|----------|
+| Template variables in query | Alert queries don't support template variables. Replace variables with hard-coded values. |
+| Query timeout | Simplify the query or increase the evaluation timeout. Use recording rules for complex expressions. |
+| Data source unreachable | Verify the Prometheus data source connection is working (test it in the data source settings). |
+| No data in range | Ensure the metric has recent data. Check that Prometheus is actively scraping the target. |
+
+### Data source-managed rules not visible
+
+**Symptom:** Prometheus alerting rules don't appear in the Grafana Alerting UI.
+
+**Solution:**
+
+1. Verify that **Manage alerts via Alerting UI** is enabled in the data source configuration.
+1. Check that Prometheus has alerting rules configured in its rule files.
+1. Ensure Grafana can access the Prometheus rules API endpoint (`/api/v1/rules`).
+1. For Prometheus (unlike Mimir), the Alerting UI only supports viewing existing rules, not creating new ones.
+
+For more information on alerting with Prometheus, refer to [Prometheus alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/alerting/).
 
 ## Get additional help
 

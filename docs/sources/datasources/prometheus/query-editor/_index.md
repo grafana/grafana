@@ -15,6 +15,7 @@ labels:
 menuTitle: Query editor
 title: Prometheus query editor
 weight: 300
+review_date: 2026-05-07
 ---
 
 # Prometheus query editor
@@ -72,7 +73,7 @@ Click **+ Operations** to select from a list of operations including Aggregation
 **Options:**
 
 - **Legend**- Lets you customize the name for the time series. You can use a predefined or custom format.
-  - **Auto** - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
+  - **Auto** - Displays unique labels only, hiding labels that are common across all returned series. This produces cleaner legends when many series share the same labels. If a series has multiple unique labels, all of them are shown.
   - **Verbose** - Displays all label names.
   - **Custom** - Lets you customize the legend using label templates. For example, `{{hostname}}` is replaced with the value of the `hostname` label. To switch to a different legend mode, clear the input and click outside the field.
 
