@@ -53,29 +53,51 @@ const readOnlyEntity = {
 };
 
 describe('useGlobalContactPointAbility', () => {
-  it('grants View when notifications read permission is held — no alertmanager context needed', () => {
-    grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
+  describe('Grafana AM permissions', () => {
+    it('grants View when notifications read permission is held — no alertmanager context needed', () => {
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
 
-    const { result } = renderHook(() => useGlobalContactPointAbility(ContactPointAction.View));
+      const { result } = renderHook(() => useGlobalContactPointAbility(ContactPointAction.View));
 
-    expect(result.current.granted).toBe(true);
+      expect(result.current.granted).toBe(true);
+    });
+
+    it('denies View when no read permission is held', () => {
+      grantUserPermissions([]);
+
+      const { result } = renderHook(() => useGlobalContactPointAbility(ContactPointAction.View));
+
+      expect(result.current.granted).toBe(false);
+      expect(isInsufficientPermissions(result.current)).toBe(true);
+    });
+
+    it('grants Create when write permission is held', () => {
+      grantUserPermissions([AccessControlAction.AlertingReceiversCreate]);
+
+      const { result } = renderHook(() => useGlobalContactPointAbility(ContactPointAction.Create));
+
+      expect(result.current.granted).toBe(true);
+    });
   });
 
-  it('denies View when no read permission is held', () => {
-    grantUserPermissions([]);
+  describe('external AM permissions do not grant Grafana AM abilities', () => {
+    it('denies View when only external read permission is held', () => {
+      grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingNotificationsExternalRead]);
 
-    const { result } = renderHook(() => useGlobalContactPointAbility(ContactPointAction.View));
+      const { result } = renderHook(() => useGlobalContactPointAbility(ContactPointAction.View));
 
-    expect(result.current.granted).toBe(false);
-    expect(isInsufficientPermissions(result.current)).toBe(true);
-  });
+      expect(result.current.granted).toBe(false);
+      expect(isInsufficientPermissions(result.current)).toBe(true);
+    });
 
-  it('grants Create when write permission is held', () => {
-    grantUserPermissions([AccessControlAction.AlertingReceiversCreate]);
+    it('denies Create when only external write permission is held', () => {
+      grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingNotificationsExternalWrite]);
 
-    const { result } = renderHook(() => useGlobalContactPointAbility(ContactPointAction.Create));
+      const { result } = renderHook(() => useGlobalContactPointAbility(ContactPointAction.Create));
 
-    expect(result.current.granted).toBe(true);
+      expect(result.current.granted).toBe(false);
+      expect(isInsufficientPermissions(result.current)).toBe(true);
+    });
   });
 });
 
@@ -190,7 +212,11 @@ describe('useContactPointAbility', () => {
         expect(result.current.granted).toBe(true);
       });
 
-      it('should NOT grant Delete when only write permission is held (backend separates :write from :delete)', () => {
+      it('should grant Delete when the server annotation confirms access — global RBAC is not re-checked', () => {
+        // The backend sets grafana.com/access/delete based on its own RBAC evaluation.
+        // Once canDeleteEntity is true, we trust the server and return Granted without
+        // re-checking global permissions. This means :write-only is sufficient if the
+        // server determines the user can delete the specific entity.
         const amSource = setupGrafanaAlertmanager();
         grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingReceiversWrite]);
 
@@ -199,7 +225,7 @@ describe('useContactPointAbility', () => {
           { wrapper: createAlertmanagerWrapper(amSource) }
         );
 
-        expect(isInsufficientPermissions(result.current)).toBe(true);
+        expect(result.current.granted).toBe(true);
       });
 
       it('should return Provisioned for Delete when entity is provisioned', () => {
@@ -257,6 +283,10 @@ describe('useContactPointAbility', () => {
   describe('vanilla Prometheus alertmanager', () => {
     it('should return NotSupported for all actions — no configuration API available', () => {
       const amSource = setupVanillaPrometheusAlertmanager();
+      // Intentionally empty: the result is NotSupported regardless of permissions because
+      // vanilla Prometheus has no configuration API (hasConfigurationAPI is false).
+      // Granting the Grafana AM visibility permission would cause the Grafana AM context to
+      // resolve instead of the vanilla Prometheus AM, so we deliberately leave this empty.
       grantUserPermissions([]);
 
       const { result } = renderHook(

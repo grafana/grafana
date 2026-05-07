@@ -13,7 +13,6 @@ exports[`useContactPointAbility external (Mimir) alertmanager should deny View /
   "export": {
     "anyOfPermissions": [
       "alert.notifications:read",
-      "alert.notifications.receivers:read",
     ],
     "cause": "INSUFFICIENT_PERMISSIONS",
     "granted": false,
