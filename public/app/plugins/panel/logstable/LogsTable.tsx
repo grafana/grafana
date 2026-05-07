@@ -327,6 +327,7 @@ export const LogsTable = ({
           />
 
           <LogsTableDetails
+            containerElement={containerElement}
             options={tableOptions}
             onOptionsChange={handleTableOptionsChange}
             timeRange={data.timeRange}

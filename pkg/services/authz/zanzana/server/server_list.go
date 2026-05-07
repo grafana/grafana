@@ -21,6 +21,12 @@ import (
 )
 
 func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	release, err := s.acquireSlot("List", r.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+
 	ctx, span := s.tracer.Start(ctx, "server.List")
 	defer span.End()
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))

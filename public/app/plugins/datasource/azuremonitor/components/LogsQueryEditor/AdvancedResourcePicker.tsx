@@ -88,13 +88,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<str
           </div>
         </div>
       ))}
-      <Button
-        aria-label={t('components.advanced-resource-picker.aria-label-add', 'Add')}
-        icon="plus"
-        variant="secondary"
-        onClick={addResource}
-        type="button"
-      >
+      <Button icon="plus" variant="secondary" onClick={addResource} type="button">
         <Trans i18nKey="components.advanced-resource-picker.button-add-resource-uri">Add resource URI</Trans>
       </Button>
     </>

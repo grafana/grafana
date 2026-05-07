@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2, Badge } from '@grafana/ui';
 
-import { getLatestCompatibleVersion, shouldDisablePluginInstall } from '../helpers';
+import { formatGrafanaDependency, getLatestCompatibleVersion, shouldDisablePluginInstall } from '../helpers';
 import { type CatalogPlugin, PluginUpdateStrategy, type Version } from '../types';
 
 import { VersionInstallButton } from './VersionInstallButton';
@@ -142,7 +142,9 @@ export const VersionList = ({ plugin }: Props) => {
                 {dateTimeFormatTimeAgo(version.updatedAt || version.createdAt)}
               </td>
               {/* Dependency */}
-              <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>
+              <td className={isInstalledVersion ? styles.currentVersion : ''}>
+                {formatGrafanaDependency(version.grafanaDependency)}
+              </td>
             </tr>
           );
         })}

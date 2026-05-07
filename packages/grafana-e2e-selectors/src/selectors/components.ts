@@ -72,8 +72,14 @@ export const versionedComponents = {
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
+    goBack: {
+      '12.4.0': 'data-testid Sidebar go back',
+    },
     dockToggle: {
       '12.4.0': 'data-testid sidebar-dock-toggle',
+    },
+    headerTitle: {
+      '12.4.0': 'data-testid sidebar-pane-header-title',
     },
     showHideToggle: {
       '12.4.0': 'data-testid sidebar-show-hide-toggle',
@@ -962,6 +968,9 @@ export const versionedComponents = {
   Transforms: {
     card: {
       '10.1.0': (name: string) => `data-testid New transform ${name}`,
+    },
+    applicabilityInfo: {
+      '13.1.0': 'data-testid Transformation applicability info',
     },
     disableTransformationButton: {
       '10.4.0': 'data-testid Disable transformation button',

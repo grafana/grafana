@@ -15,6 +15,7 @@ import {
 
 const log1 = createLogLine({ uid: 'uid-1', rowId: 'row-1' });
 const log2 = createLogLine({ uid: 'uid-2', rowId: 'row-2' });
+const log3 = createLogLine({ uid: 'uid-3', rowId: 'row-3' });
 
 const contextValue: LogDetailsContextData = {
   ...emptyContextData,
@@ -153,6 +154,85 @@ describe('LogDetailsContextProvider', () => {
 
     await waitFor(() => {
       expect(result.current.showDetails).toEqual([]);
+    });
+  });
+
+  describe('replaceDetails', () => {
+    test('does nothing when log details are disabled', () => {
+      const { result, setProviderProps } = renderLogDetailsProviderHook([log1, log2, log3]);
+
+      act(() => {
+        result.current.toggleDetails(0);
+      });
+      setProviderProps({ enableLogDetails: false });
+      act(() => {
+        result.current.replaceDetails(log2);
+      });
+
+      expect(result.current.showDetails.map((l) => l.uid)).toEqual([log1.uid]);
+      expect(result.current.currentLog?.uid).toBe(log1.uid);
+    });
+
+    test('does nothing when there is no current expanded log', () => {
+      const { result } = renderLogDetailsProviderHook([log1, log2, log3]);
+
+      act(() => {
+        result.current.replaceDetails(log2);
+      });
+
+      expect(result.current.showDetails).toEqual([]);
+      expect(result.current.currentLog).toBeUndefined();
+    });
+
+    test('replaces the current row details with another log and updates currentLog', () => {
+      const { result } = renderLogDetailsProviderHook([log1, log2, log3]);
+
+      act(() => {
+        result.current.toggleDetails(0);
+      });
+      act(() => {
+        result.current.replaceDetails(log2);
+      });
+
+      expect(result.current.showDetails.map((l) => l.uid)).toEqual([log2.uid]);
+      expect(result.current.currentLog?.uid).toBe(log2.uid);
+    });
+
+    test('when multiple rows are expanded, removes only the previous current log and appends the replacement', () => {
+      const { result } = renderLogDetailsProviderHook([log1, log2, log3]);
+
+      act(() => {
+        result.current.toggleDetails(0);
+      });
+      act(() => {
+        result.current.toggleDetails(1);
+      });
+      expect(result.current.currentLog?.uid).toBe(log2.uid);
+
+      act(() => {
+        result.current.replaceDetails(log3);
+      });
+
+      expect(result.current.showDetails.map((l) => l.uid)).toEqual([log1.uid, log3.uid]);
+      expect(result.current.currentLog?.uid).toBe(log3.uid);
+    });
+
+    test('when the target log is already expanded, only switches currentLog without changing expanded rows', () => {
+      const { result } = renderLogDetailsProviderHook([log1, log2, log3]);
+
+      act(() => {
+        result.current.toggleDetails(0);
+      });
+      act(() => {
+        result.current.toggleDetails(1);
+      });
+
+      act(() => {
+        result.current.replaceDetails(log1);
+      });
+
+      expect(result.current.showDetails.map((l) => l.uid)).toEqual([log1.uid, log2.uid]);
+      expect(result.current.currentLog?.uid).toBe(log1.uid);
     });
   });
 });
