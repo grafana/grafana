@@ -117,7 +117,6 @@ Use these options to refine the visualization.
 | Show values  | Controls whether values are rendered inside the state regions. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
 | Align values | Controls value alignment inside state regions. Choose from **Left**, **Center**, and **Right**. |
 | Row height | Controls bar height as a fraction of each row. `1` fills the row, and lower values leave more space between rows. |
-| Series name position | Controls where series names are displayed. Choose from the following:<ul><li>**Left**: Default, on the y-axis.</li><li>**Above bars**: Above each timeline row, hiding the y-axis. Useful when you want the state timeline to share the same width as adjacent panels or when series names are too long for the y-axis.</li></ul> {{< admonition type="note" >}}This feature is experimental. To try it, and enable the `stateTimeline.nameAboveBars` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).{{< /admonition >}} |
 | [Page size](#page-size-enable-pagination) | The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once.  |
 | Line width | Controls line width of state regions. This is a field option and can be set in field defaults or overrides. |
 | Fill opacity | Controls the fill opacity of state regions. This is a field option and can be set in field defaults or overrides. |
