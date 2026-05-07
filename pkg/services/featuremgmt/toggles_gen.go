@@ -131,6 +131,10 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
+	// FlagKubernetesAnnotationsClient
+	// Enables usage of the new annotations API client
+	FlagKubernetesAnnotationsClient = "kubernetesAnnotationsClient"
+
 	// FlagKubernetesShortURLs
 	// Enables k8s short url api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"

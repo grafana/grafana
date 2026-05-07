@@ -3183,6 +3183,22 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAnnotationsClient",
+        "resourceVersion": "1778163715528",
+        "creationTimestamp": "2026-05-07T00:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-07 14:21:55.528883 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables usage of the new annotations API client",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
         "resourceVersion": "1773696968793",
         "creationTimestamp": "2025-08-29T14:46:39Z",
