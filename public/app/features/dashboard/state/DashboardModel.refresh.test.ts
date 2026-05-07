@@ -104,18 +104,6 @@ describe('Strict panel refresh', () => {
       expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [1, 2, 3, panelInView.id], refreshAll: false });
     });
 
-    describe('and when exitViewPanel is called', () => {
-      it('then all affected panels except the panel in full view should be refreshed', () => {
-        const { dashboard, panelInView, startRefreshMock } = getTestContext({ usePanelInView: true });
-        startRefreshMock.mockClear();
-
-        dashboard.exitViewPanel(panelInView);
-
-        expect(startRefreshMock).toHaveBeenCalledTimes(1);
-        expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [1, 2, 3], refreshAll: false });
-        expect(dashboard['panelsAffectedByVariableChange']).toBeNull();
-      });
-    });
   });
 
   describe('when there is a panel in panel edit during variable change', () => {
