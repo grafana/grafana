@@ -5,27 +5,10 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { DataLinksContextMenu, type DataLinksMenuTriggerProps } from './DataLinksContextMenu';
 
-<<<<<<< HEAD
-const fakeAriaLabel = 'fake aria label';
-
-const multipleLinks = () => [
-  { href: '/link1', title: 'Link1', target: '_blank' as const, origin: {} },
-  { href: '/link2', title: 'Link2', target: '_blank' as const, origin: {} },
-];
-
-const singleLink = () => [{ href: '/link1', title: 'Link1', target: '_blank' as const, origin: {} }];
-
-describe('DataLinksContextMenu', () => {
-  it('renders context menu when there are more than one data links', () => {
-    render(
-      <DataLinksContextMenu links={multipleLinks}>{() => <div aria-label="fake aria label" />}</DataLinksContextMenu>
-    );
-=======
 const twoLinks = () => [
   { href: '/link1', title: 'Link1', target: '_blank' as const, origin: {} },
   { href: '/link2', title: 'Link2', target: '_blank' as const, origin: {} },
 ];
->>>>>>> origin/main
 
 const singleLink = () => [{ href: '/link1', title: 'Link1', target: '_blank' as const, origin: {} }];
 
@@ -42,13 +25,9 @@ describe('DataLinksContextMenu', () => {
 
   it('opens context menu and renders menu items on click', async () => {
     render(
-<<<<<<< HEAD
-      <DataLinksContextMenu links={singleLink}>{() => <div aria-label="fake aria label" />}</DataLinksContextMenu>
-=======
       <DataLinksContextMenu links={twoLinks}>
         {({ openMenu }) => <button aria-label="trigger" onClick={openMenu} />}
       </DataLinksContextMenu>
->>>>>>> origin/main
     );
 
     await userEvent.click(screen.getByLabelText('trigger'));
