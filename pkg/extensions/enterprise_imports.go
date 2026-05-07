@@ -95,6 +95,7 @@ import (
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
+	_ "github.com/grafana/grafana-plugin-sdk-go/config"
 	_ "github.com/grafana/grafana-plugin-sdk-go/data"
 	_ "github.com/grafana/grafana-plugin-sdk-go/data/converters"
 	_ "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
