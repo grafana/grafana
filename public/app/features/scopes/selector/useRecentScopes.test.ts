@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
-import { type Scope, type ScopeNode } from '@grafana/data';
+import { type Scope } from '@grafana/data';
+import { type ScopeNode } from 'app/api/clients/scope/v0alpha1/endpoints.gen';
 
 import { type StoredRecentScopeSet } from './recentScopesStorage';
 import { useRecentScopes } from './useRecentScopes';
@@ -44,7 +45,7 @@ const mockScope = (id: string, title: string, defaultPath?: string[]): Scope => 
 
 const mockScopeNode = (name: string, title: string): ScopeNode => ({
   metadata: { name },
-  spec: { title, nodeType: 'container', linkId: '', linkType: 'scope' },
+  spec: { title, nodeType: 'container', linkId: '', linkType: 'scope', disableMultiSelect: false },
 });
 
 describe('useRecentScopes', () => {
