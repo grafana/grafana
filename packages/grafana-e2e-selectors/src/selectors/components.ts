@@ -1213,11 +1213,6 @@ export const versionedComponents = {
       '13.1.0': 'data-testid Switch container',
     },
   },
-  InlineSwitch: {
-    container: {
-      '13.1.0': 'data-testid InlineSwitch container',
-    },
-  },
   ColorPicker: {
     container: {
       '13.1.0': 'data-testid ColorPicker container',

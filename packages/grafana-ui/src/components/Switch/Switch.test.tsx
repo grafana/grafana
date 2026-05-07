@@ -9,22 +9,11 @@ describe('Switch', () => {
     render(<Switch onChange={() => {}} />);
     expect(screen.getByTestId(selectors.components.Switch.container)).toBeInTheDocument();
   });
-
-  it('lets the consumer override the data-testid', () => {
-    render(<Switch onChange={() => {}} data-testid="custom-switch" />);
-    expect(screen.getByTestId('custom-switch')).toBeInTheDocument();
-    expect(screen.queryByTestId(selectors.components.Switch.container)).not.toBeInTheDocument();
-  });
 });
 
 describe('InlineSwitch', () => {
-  it('exposes the InlineSwitch container data-testid', () => {
+  it('exposes the Switch container data-testid via the inner Switch', () => {
     render(<InlineSwitch onChange={() => {}} />);
-    expect(screen.getByTestId(selectors.components.InlineSwitch.container)).toBeInTheDocument();
-  });
-
-  it('does not also carry the Switch container data-testid', () => {
-    render(<InlineSwitch onChange={() => {}} />);
-    expect(screen.queryByTestId(selectors.components.Switch.container)).not.toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Switch.container)).toBeInTheDocument();
   });
 });

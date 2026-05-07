@@ -13,7 +13,6 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
   /** Show an invalid state around the input */
   invalid?: boolean;
-  'data-testid'?: string;
 }
 
 /**
@@ -31,7 +30,6 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
       label,
       disabled: disabledProp,
       invalid: invalidProp = false,
-      'data-testid': dataTestId,
       ...inputProps
     },
     ref
@@ -48,10 +46,7 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
     const switchId = idProp ?? fieldContext.id ?? generatedId;
 
     return (
-      <div
-        className={cx(styles.switch, invalid && styles.invalid)}
-        data-testid={dataTestId ?? selectors.components.Switch.container}
-      >
+      <div className={cx(styles.switch, invalid && styles.invalid)} data-testid={selectors.components.Switch.container}>
         <input
           type="checkbox"
           role="switch"
@@ -121,7 +116,6 @@ export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
           label={showLabel ? undefined : label}
           ref={ref}
           value={value}
-          data-testid={selectors.components.InlineSwitch.container}
         />
       </div>
     );
