@@ -130,9 +130,29 @@ max($__interval + scrape_interval, 4 * scrape_interval)
 
 Here, `scrape_interval` refers to the `min step` setting (also known as `query_interval`) specified per PromQL query, if set. If not, Grafana falls back to the Prometheus data source’s scrape interval setting.
 
-The `min interval` setting in the panel is modified by the resolution setting, and therefore doesn't have any effect on `scrape interval`.
+The `min interval` setting in the panel is modified by the resolution setting, and therefore doesn't have any effect on `scrape_interval` in this calculation.
 
-For details, refer to the Grafana blog [$\_\_rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
+### Configure `$__rate_interval` correctly
+
+For `$__rate_interval` to produce reliable results, you must configure the scrape interval to match your actual Prometheus scrape configuration:
+
+1. Open the Prometheus data source configuration.
+1. Under **Interval behavior**, set the **Scrape interval** to match the `scrape_interval` in your Prometheus configuration file (for example, `30s` or `1m`).
+1. If different targets have different scrape intervals, set the data source scrape interval to the **longest** interval in use, or use the per-query **Min step** to override on specific panels.
+
+### Common pitfalls
+
+- **Missing or incorrect scrape interval setting:** If the data source scrape interval is left at the default `15s` but your actual Prometheus scrape interval is `60s`, `$__rate_interval` will be too small (minimum `60s` needed, but calculates based on `15s`). This causes `rate()` to return no data because there aren't enough data points in the window.
+
+- **Different values in edit mode versus dashboard:** When editing a query, the panel is displayed at full width. On the dashboard, the panel may be smaller, which increases `$__interval` and therefore `$__rate_interval`. This can cause queries that work in edit mode to produce different results (or gaps) on the dashboard.
+
+- **LBAC-enabled data sources:** Data sources using Label-Based Access Control (LBAC) may not inherit the scrape interval setting from the parent data source. Set the **Min step** explicitly on each query panel to ensure a correct `$__rate_interval` calculation regardless of data source inheritance behavior.
+
+- **Recording rules with fixed intervals:** If you use `$__rate_interval` in a recording rule query, the interval depends on the evaluation context. For recording rules, use a fixed interval (for example, `[5m]`) rather than `$__rate_interval`.
+
+For troubleshooting `$__rate_interval` issues, refer to [Troubleshoot Prometheus data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#rate_interval-returns-no-data-or-incorrect-values).
+
+For additional background, refer to the Grafana blog [$\_\_rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
 
 ## Choose a variable syntax
 

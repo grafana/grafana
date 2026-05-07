@@ -196,6 +196,59 @@ In the **Values** section, there's a single search field that filters across all
 
 When you are satisfied with your query, click **Run query**.
 
+## Query high-cardinality data
+
+High-cardinality metrics (those with many unique label combinations) can cause queries to timeout or exceed memory limits when queried over long time ranges. Follow these practices to query high-cardinality data effectively:
+
+- **Aggregate first, then filter:** Use `sum()`, `avg()`, or `count()` to reduce the number of series before applying other operations. For example, `sum(rate(metric[5m])) by (service)` is far cheaper than querying all individual pod-level series.
+- **Use recording rules for repeated queries:** If a dashboard panel queries the same expensive expression on every load, create a [Prometheus recording rule](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/) to pre-compute the result.
+- **Scope with template variables:** Use dashboard variables to select a specific `namespace`, `cluster`, or `job` rather than querying all labels at once.
+- **Increase Min step for overview panels:** For panels showing trends over days or weeks, set a higher **Min step** (for example, `5m` or `15m`) to reduce the number of data points requested.
+- **Set Max data points:** Use the **Max data points** query option to cap resolution for wide time ranges.
+- **Use Adaptive Metrics (Grafana Cloud):** [Adaptive Metrics](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/reduce-costs/metrics-costs/control-metrics-usage-via-adaptive-metrics/) automatically reduces the cardinality of metrics that aren't queried at full resolution.
+
+If your queries hit memory or sample limits, refer to [Troubleshoot Prometheus data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#memory-limit-exceeded-for-high-cardinality-queries).
+
+## Common PromQL gotchas
+
+The following behaviors are frequently misinterpreted as bugs but are expected Prometheus behavior.
+
+### `increase()` returns fractional values on integer counters
+
+`increase()` uses linear interpolation to estimate the increase over the specified time window. Because scrape timestamps rarely align exactly with the window boundaries, the result is interpolated — which produces fractional values even for integer counters.
+
+This is expected. If you need integer results, wrap the expression in `ceil()` or `floor()`:
+
+```promql
+ceil(increase(http_requests_total[5m]))
+```
+
+### `rate()` appears to grow over time
+
+If `rate()` shows an ever-increasing value instead of a steady per-second rate, the most common cause is multiple instances writing to the same time series without unique distinguishing labels. Prometheus merges these into a single series with an artificially growing counter.
+
+To fix this, ensure every scrape target has unique labels (for example, `instance`, `pod`, or `node`). Then aggregate explicitly:
+
+```promql
+sum(rate(http_requests_total[5m])) by (job)
+```
+
+If you see this after a deployment or scaling event, verify your service discovery is assigning unique `instance` labels to each target.
+
+### Counter reset spikes after pod restarts
+
+When a monitored process restarts, its counters reset to zero. Prometheus handles this with counter reset detection — `rate()` and `increase()` account for resets and don't produce negative values. However, you may still see a brief spike at the reset point because the first scrape after a restart reports the full counter value accumulated since the restart.
+
+To minimize the visual impact:
+
+- Use `rate()` over a window that spans multiple scrape intervals (for example, `$__rate_interval`) so the spike is averaged out.
+- For critical dashboards, apply smoothing with a longer range vector or use `avg_over_time()` on top of `rate()`.
+- If you're seeing large spikes from frequent pod restarts, investigate the restart frequency rather than trying to hide the spikes in queries.
+
+### Label cardinality causes "too many time series" errors
+
+If adding a label filter doesn't reduce the result count, you may have high-cardinality labels (such as `request_id` or `user_id`) on your metrics. Use the Prometheus TSDB status page (`/tsdb-status`) or Grafana's Metrics explorer to identify high-cardinality label combinations, then either drop unnecessary labels at scrape time or use aggregation in your queries.
+
 ## Incremental dashboard queries (beta)
 
 Starting with Grafana v10, the Prometheus data source supports incremental querying for live dashboards. Instead of re-querying the entire time range on each refresh, Grafana can fetch only new data since the last query.

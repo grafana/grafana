@@ -82,6 +82,16 @@ There are three authentication options for the Prometheus data source.
 
 - **No authentication** - Allows access to the data source without any authentication.
 
+Additional authentication methods (Azure AD, AWS SigV4) are available depending on your deployment:
+
+- **Azure AD authentication** - Available in Grafana Enterprise and self-managed instances where `azure_auth_enabled = true` is configured. On Grafana Cloud, this option requires a server-side feature flag that isn't enabled by default — contact [Grafana Support](https://grafana.com/profile/org#support) to request it be enabled for your stack. Refer to [Azure authentication settings](#azure-authentication-settings) for configuration details.
+
+- **AWS SigV4 authentication** - Available in self-managed Grafana instances where `sigv4_auth_enabled = true` is configured. On Grafana Cloud, this option isn't available by default — contact [Grafana Support](https://grafana.com/profile/org#support) to request it be enabled for your stack. For Amazon Managed Service for Prometheus, Grafana recommends using the dedicated [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) instead, which handles AWS authentication natively.
+
+{{< admonition type="note" >}}
+If Azure AD or SigV4 options don't appear in the authentication drop-down, the required feature flag isn't enabled on your instance. For Grafana Cloud, submit a support request. For self-managed instances, update the Grafana configuration file.
+{{< /admonition >}}
+
 **TLS settings:**
 
 {{< admonition type="note" >}}
@@ -130,6 +140,10 @@ Following are optional configuration settings you can configure for more control
 **Performance:**
 
 - **Prometheus type** - Select the type of your Prometheus-compatible database, such as Prometheus, Cortex, Mimir, or Thanos. Changing this setting will save your current configuration. Different database types support different APIs. For example, some allow `regex` matching for label queries to improve performance, while others provide a metadata API. Setting this incorrectly may cause unexpected behavior when querying metrics and labels. Refer to your Prometheus documentation to ensure you select the correct type.
+
+{{< admonition type="note" >}}
+Team-based Label-Based Access Control (LBAC) for the Prometheus data source requires the backend to be **Grafana Cloud Metrics (Mimir)** or **Grafana Enterprise Metrics (GEM)**. LBAC doesn't work with external Prometheus-compatible endpoints such as Google Managed Prometheus, self-hosted Prometheus, or Thanos, even if you enable the `teamHttpHeadersMimir` setting. The LBAC enforcement relies on Mimir-specific HTTP headers that other backends don't support.
+{{< /admonition >}}
 - **Cache level** - Sets the browser caching level for editor queries. There are four options: `Low`, `Medium`, `High`, or `None`. Higher cache settings are recommended for high cardinality data sources.
 - **Incremental querying (beta)** - Toggle on to enable incremental querying. Enabling this feature changes the default behavior of relative queries. Instead of always requesting fresh data from the Prometheus instance, Grafana will cache query results and only fetch new records. This helps reduce database and network load.
   - **Query overlap window** - If you are using incremental querying, specify a duration (e.g., 10m, 120s, or 0s). The default is `10m`. This is a buffer of time added to incremental queries and this value is added to the duration of each incremental request.

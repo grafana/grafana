@@ -146,14 +146,48 @@ Complex queries with many nested functions or large result sets may timeout or f
 - Adding label filters to narrow the data scanned
 - Using recording rules to pre-compute expensive expressions
 
+### OAuth token handling differs between Explore and Alerting
+
+When using OAuth-authenticated Prometheus endpoints (Google Managed Prometheus, Azure Managed Prometheus), queries may succeed in Explore and dashboards but fail intermittently during alert evaluation. This happens because the alerting backend handles token refresh differently from the interactive query path.
+
+If you're using GCP, consider the **datasource-syncer** pattern — a sidecar process that refreshes OAuth tokens and updates the data source credentials on a schedule shorter than the token lifetime.
+
+For detailed troubleshooting steps, refer to [OAuth token expiration errors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#oauth-token-expiration-errors-gcp-and-azure).
+
 ### Data source-managed rules are read-only
 
 Grafana can display Prometheus alerting rules but can't create or modify them through the UI. To manage Prometheus-native alerting rules, edit your Prometheus rule files directly and reload the configuration.
+
+## Configure alert state for execution errors
+
+By default, when a Grafana-managed alert rule encounters an execution error or timeout (such as a network blip, i/o timeout, or a transient 502 from Prometheus), the rule enters an **Error** state — which fires the alert. This can cause false alarms and spam on-call teams when the underlying issue is a brief connectivity interruption rather than a genuine threshold breach.
+
+To prevent false positives from transient errors, configure the **Alert state if execution error or timeout** setting on each alert rule:
+
+1. Open the alert rule for editing.
+1. In the alert conditions section, locate **Alert state if execution error or timeout**.
+1. Change the value from **Alerting** (default) to one of:
+   - **Keep Last State** — The alert retains its previous state (firing or normal) until a successful evaluation occurs. This is the recommended setting for most Prometheus alert rules.
+   - **OK** — The alert is set to normal during the error, preventing it from firing.
+1. Click **Save rule**.
+
+{{< admonition type="note" >}}
+If your alert rules frequently enter an error state, investigate the root cause (network stability, Prometheus resource limits, query timeout settings) rather than relying solely on this setting to suppress notifications.
+{{< /admonition >}}
+
+Common transient errors that trigger this behavior include:
+
+- `sse.dependencyError` or `sse.dataQueryError` in alert state history
+- "context deadline exceeded" or "i/o timeout" messages
+- HTTP 502 or 500 responses from the Prometheus server
+
+For more details on troubleshooting these errors, refer to [Troubleshoot Prometheus data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#transient-alert-errors-triggering-false-alarms).
 
 ## Best practices
 
 Follow these best practices when creating Prometheus alerts:
 
+- **Configure error state handling:** Set **Alert state if execution error or timeout** to **Keep Last State** to prevent transient backend errors from triggering false alarms.
 - **Use `$__rate_interval`:** When using `rate()` or `increase()` in alert queries, use the `$__rate_interval` variable to avoid gaps caused by scrape interval mismatches.
 - **Add label filters:** Include specific label matchers to focus on relevant data and improve query performance.
 - **Set realistic pending periods:** Use the pending period to avoid alerting on brief spikes. For example, set a 5-minute pending period so the condition must persist before firing.
