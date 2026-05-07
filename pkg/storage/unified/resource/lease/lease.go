@@ -127,8 +127,9 @@ func WithInternalMinTTL(d time.Duration) ManagerOption {
 type AcquireOption func(*acquireOptions)
 
 type acquireOptions struct {
-	ttl       time.Duration
-	autoRenew bool
+	ttl           time.Duration
+	autoRenew     bool
+	renewInterval time.Duration
 }
 
 // WithTTL overrides the default lease TTL for this acquisition.
@@ -137,10 +138,14 @@ func WithTTL(d time.Duration) AcquireOption {
 }
 
 // WithAutoRenew enables automatic lease renewal. A background goroutine
-// periodically extends the lease by creating the next generation. Lost()
-// is notified only when a renewal fails with ErrLeaseLost.
-func WithAutoRenew() AcquireOption {
-	return func(o *acquireOptions) { o.autoRenew = true }
+// extends the lease every renewInterval by creating the next generation.
+// Lost() is notified only when a renewal fails with ErrLeaseLost.
+// If renewInterval is zero, it defaults to half the TTL.
+func WithAutoRenew(renewInterval time.Duration) AcquireOption {
+	return func(o *acquireOptions) {
+		o.autoRenew = true
+		o.renewInterval = renewInterval
+	}
 }
 
 // Acquire grabs the lease for `name` on behalf of the manager's holder. On
@@ -219,7 +224,11 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		}
 
 		if cfg.autoRenew {
-			go m.autoRenewLoop(l, cfg.ttl)
+			renewInterval := cfg.renewInterval
+			if renewInterval == 0 {
+				renewInterval = cfg.ttl / 2
+			}
+			go m.autoRenewLoop(l, cfg.ttl, renewInterval)
 		} else {
 			go m.expiryLoop(l, time.Until(expires))
 		}
@@ -312,9 +321,9 @@ func (m *Manager) expiryLoop(lease *Lease, remaining time.Duration) {
 	}
 }
 
-func (m *Manager) autoRenewLoop(lease *Lease, ttl time.Duration) {
+func (m *Manager) autoRenewLoop(lease *Lease, ttl, renewInterval time.Duration) {
 	defer close(lease.done)
-	ticker := time.NewTicker(ttl / 2)
+	ticker := time.NewTicker(renewInterval)
 	defer ticker.Stop()
 
 	for {
