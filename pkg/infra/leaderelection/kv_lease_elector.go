@@ -20,7 +20,6 @@ type KVLeaseElector struct {
 	leaseName     string
 	identity      string
 	leaseDuration time.Duration
-	renewDeadline time.Duration
 	retryPeriod   time.Duration
 	logger        log.Logger
 	managerOpts   []lease.ManagerOption
@@ -63,7 +62,6 @@ func NewKVLeaseElector(
 		leaseName:     cfg.LeaseName,
 		identity:      identity,
 		leaseDuration: cfg.LeaseDuration,
-		renewDeadline: cfg.RenewDeadline,
 		retryPeriod:   cfg.RetryPeriod,
 		logger:        logger,
 	}
@@ -118,7 +116,7 @@ func (k *KVLeaseElector) Run(ctx context.Context, fn func(ctx context.Context), 
 // nil if the lease is held by someone else (after sleeping retryPeriod),
 // or an error if the context is cancelled.
 func (k *KVLeaseElector) tryAcquire(ctx context.Context, mgr *lease.Manager) (*lease.Lease, error) {
-	l, err := mgr.Acquire(ctx, k.leaseName, lease.WithTTL(k.leaseDuration))
+	l, err := mgr.Acquire(ctx, k.leaseName, lease.WithTTL(k.leaseDuration), lease.WithAutoRenew())
 	if err == nil {
 		return l, nil
 	}
@@ -137,7 +135,7 @@ func (k *KVLeaseElector) tryAcquire(ctx context.Context, mgr *lease.Manager) (*l
 	return nil, fmt.Errorf("acquiring lease: %w", err)
 }
 
-// runAsLeader runs the leader work function and renewal loop. Returns when
+// runAsLeader runs the leader work function. Returns when
 // leadership is lost or the context is cancelled.
 func (k *KVLeaseElector) runAsLeader(
 	ctx context.Context,
@@ -157,7 +155,11 @@ func (k *KVLeaseElector) runAsLeader(
 		close(done)
 	}()
 
-	k.renewLoop(ctx, l, mgr)
+	select {
+	case <-l.Lost():
+		k.logger.Warn("Lease lost")
+	case <-ctx.Done():
+	}
 
 	leaderCancel()
 	o.onStoppedLeading()
@@ -171,46 +173,4 @@ func (k *KVLeaseElector) runAsLeader(
 	}
 
 	<-done
-}
-
-// renewLoop periodically extends the lease. Returns when renewal fails for
-// longer than renewDeadline or the parent context is cancelled.
-func (k *KVLeaseElector) renewLoop(ctx context.Context, l *lease.Lease, mgr *lease.Manager) {
-	ticker := time.NewTicker(k.retryPeriod)
-	defer ticker.Stop()
-
-	var firstFailure time.Time
-
-	for {
-		select {
-		case <-ticker.C:
-			err := mgr.Extend(ctx, l, lease.WithTTL(k.leaseDuration))
-			if err == nil {
-				firstFailure = time.Time{}
-				continue
-			}
-
-			if errors.Is(err, lease.ErrLeaseLost) {
-				k.logger.Warn("Lease lost", "error", err)
-				return
-			}
-
-			now := time.Now()
-			if firstFailure.IsZero() {
-				firstFailure = now
-			}
-			if now.Sub(firstFailure) >= k.renewDeadline {
-				k.logger.Warn("Lease renewal exceeded deadline", "deadline", k.renewDeadline, "error", err)
-				return
-			}
-			k.logger.Warn("Lease renewal failed, retrying", "error", err)
-
-		case <-l.Lost():
-			k.logger.Warn("Lease TTL expired")
-			return
-
-		case <-ctx.Done():
-			return
-		}
-	}
 }
