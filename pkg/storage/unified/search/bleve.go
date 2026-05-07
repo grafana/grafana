@@ -586,9 +586,48 @@ type buildInfo struct {
 	SelectableFields []string `json:"selectable_fields,omitempty"` // List of selectable fields used when index was created.
 }
 
+type buildIndexSource int
+
+const (
+	buildIndexSourceNew buildIndexSource = iota
+	buildIndexSourceExistingFile
+	buildIndexSourceDownloadedSnapshot
+)
+
+func (s buildIndexSource) needsBuild() bool {
+	return s == buildIndexSourceNew
+}
+
+// preparedBuildIndex carries the opened index from prepareIndex into the
+// build/cache phase. BuildIndex owns every value returned here: it closes index
+// on failure, removes cleanupDir on failure, and releases coldStartLeaderLock
+// after the optional leader upload.
+type preparedBuildIndex struct {
+	// index is the opened Bleve index. It may be empty, reused from disk, or
+	// downloaded from a remote snapshot.
+	index bleve.Index
+	// indexRV is set only for reusable indexes. BuildIndex copies it into the
+	// cached ResourceIndex without running the builder.
+	indexRV int64
+	// fileIndexName is the resource directory child to keep during old-index
+	// cleanup. Empty means an in-memory index.
+	fileIndexName string
+	// indexStorage is the metric/cache label for this index: memory or file.
+	indexStorage string
+	// source tells BuildIndex whether the index still needs to be populated, or
+	// where a reusable index came from.
+	source buildIndexSource
+	// cleanupDir is deleted if BuildIndex returns before storing the index in the
+	// cache. It is set for newly-created file indexes only.
+	cleanupDir string
+	// coldStartLeaderLock is held when this instance won cold-start coordination.
+	// BuildIndex must keep it through the build and immediate snapshot upload.
+	coldStartLeaderLock IndexStoreLock
+}
+
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
-// Existing index in the file system is reused, if it exists, and if size indicates that we should use file-based index,
+// Existing index in the file system is reused, if it exists, and if docCount indicates that we should use file-based index,
 // and lastImportTime check passes (if the index was built before lastImportTime, it will be rebuilt).
 // The return value of "builder" should be the RV returned from List. This will be stored as the index RV.
 //
@@ -597,12 +636,10 @@ type buildInfo struct {
 // rebuild path. Zero disables the strict same-version fast path; the snapshot
 // store, if configured, is still consulted on the initial-startup path via
 // pickBestSnapshot.
-//
-//nolint:gocyclo
 func (b *bleveBackend) BuildIndex(
 	ctx context.Context,
 	key resource.NamespacedResource,
-	size int64,
+	docCount int64,
 	fields resource.SearchableDocumentFields,
 	indexBuildReason string,
 	builder resource.BuildFn,
@@ -618,7 +655,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("namespace", key.Namespace),
 		attribute.String("group", key.Group),
 		attribute.String("resource", key.Resource),
-		attribute.Int64("size", size),
+		attribute.Int64("doc_count", docCount),
 		attribute.String("reason", indexBuildReason),
 	)
 
@@ -636,247 +673,60 @@ func (b *bleveBackend) BuildIndex(
 		return nil, err
 	}
 
-	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "reason", indexBuildReason)
+	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "doc_count", docCount, "reason", indexBuildReason)
+	resourceDir := b.getResourceDir(key)
+
+	prepared, err := b.prepareIndex(ctx, key, docCount, mapper, selectableFields, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails)
+	if err != nil {
+		return nil, err
+	}
+
+	if prepared.coldStartLeaderLock != nil {
+		defer func() {
+			if releaseErr := prepared.coldStartLeaderLock.Release(); releaseErr != nil {
+				logWithDetails.Warn("Releasing cold-start build lock", "err", releaseErr)
+			}
+		}()
+	}
 
 	// Close the newly created/opened index by default.
 	closeIndex := true
-	// This function is added via defer after new index has been created/opened, to make sure we close it properly when needed.
-	// Whether index needs closing or not is controlled by closeIndex.
-	closeIndexOnExit := func(index bleve.Index, indexDir string) {
+	defer func() {
 		if !closeIndex {
 			return
 		}
-
-		if closeErr := index.Close(); closeErr != nil {
+		if closeErr := prepared.index.Close(); closeErr != nil {
 			logWithDetails.Error("Failed to close index after index build failure", "err", closeErr)
 		}
-		if indexDir != "" {
-			if removeErr := os.RemoveAll(indexDir); removeErr != nil {
+		if prepared.cleanupDir != "" {
+			if removeErr := os.RemoveAll(prepared.cleanupDir); removeErr != nil {
 				logWithDetails.Error("Failed to remove index directory after index build failure", "err", removeErr)
 			}
 		}
+	}()
+
+	switch prepared.source {
+	case buildIndexSourceNew:
+		// New indexes are logged by the create/build path; this switch only adds source-specific reuse logs.
+	case buildIndexSourceDownloadedSnapshot:
+		logWithDetails.Debug("Using index downloaded from remote snapshot", "indexRV", prepared.indexRV, "directory", filepath.Join(resourceDir, prepared.fileIndexName))
+	case buildIndexSourceExistingFile:
+		logWithDetails.Debug("Existing index found on filesystem", "indexRV", prepared.indexRV, "directory", filepath.Join(resourceDir, prepared.fileIndexName))
 	}
 
-	resourceDir := b.getResourceDir(key)
+	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
 
-	var index bleve.Index
-	var indexRV int64
-	cachedIndex := b.getCachedIndex(key, time.Now())
-	fileIndexName := "" // Name of the file-based index, or empty for in-memory indexes.
-	newIndexType := indexStorageMemory
-	build := true
-	// Held across a leader's from-scratch build + immediate upload.
-	// Released by a defer set up when the lock is acquired.
-	var coldStartLeaderLock IndexStoreLock
-
-	// True when remote-snapshot interactions (download, cold-start, upload)
-	// are eligible: a snapshot store is configured and the index is large
-	// enough to justify a round-trip.
-	snapshotEnabled := b.opts.Snapshot.Store != nil && size >= b.opts.Snapshot.MinDocCount
-
-	if size >= b.opts.FileThreshold {
-		newIndexType = indexStorageFile
-
-		// We only check for the existing file-based index if we don't already have an open index for this key,
-		// and if rebuild flag is not set.
-		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
-		// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
-		if cachedIndex == nil && !rebuild {
-			var findErr error
-			index, fileIndexName, indexRV, findErr = b.findPreviousFileBasedIndex(resourceDir)
-			if findErr != nil {
-				return nil, findErr
-			}
-
-			// Check if we need to rebuild based on lastImportTime
-			if index != nil && !lastImportTime.IsZero() {
-				bi, err := getBuildInfo(index)
-				if err != nil {
-					logWithDetails.Warn("failed to get build info from existing index", "error", err)
-					// Continue with existing index despite error
-				} else if bi.BuildTime > 0 {
-					indexBuildTime := time.Unix(bi.BuildTime, 0)
-					if indexBuildTime.Before(lastImportTime) {
-						logWithDetails.Info("File-based index needs rebuild before opening", "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
-						// Close the index and rebuild from scratch
-						_ = index.Close()
-						index = nil
-						fileIndexName = ""
-					}
-				}
-			}
-
-			// No valid local index — if a remote snapshot store is configured
-			// and the index is large enough to justify a round-trip, try
-			// downloading one. First the tiered selection (any usable
-			// snapshot); on miss, cold-start coordination (same-version,
-			// leader builds + uploads while replicas wait to download).
-			if index == nil && snapshotEnabled {
-				dlIdx, dlName, dlRV, dlErr := b.tryDownloadRemoteSnapshot(ctx, key, resourceDir, logWithDetails)
-				if dlErr != nil {
-					if ctxErr := ctx.Err(); ctxErr != nil {
-						return nil, ctxErr
-					}
-					logWithDetails.Warn("Failed to download remote snapshot, will build from scratch", "err", dlErr)
-				} else if dlIdx != nil {
-					index, fileIndexName, indexRV = dlIdx, dlName, dlRV
-				}
-
-				// Cold-start coordination only runs when MaxIndexAge>0; with
-				// MaxIndexAge=0 the probe is a no-op (all freshness filters
-				// reject), so the lock+wait would only serialise N replicas'
-				// from-scratch builds without any snapshot-reuse upside. The
-				// MaxIndexAge=0 semantics deserve a wider revisit (covered by
-				// the follow-up issue), at which point this gate can be removed.
-				if index == nil && b.opts.Snapshot.MaxIndexAge > 0 {
-					dlIdx, dlName, dlRV, lock, coordErr := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logWithDetails)
-					if coordErr != nil {
-						if ctxErr := ctx.Err(); ctxErr != nil {
-							return nil, ctxErr
-						}
-						logWithDetails.Warn("Cold-start coordination failed, will build alone", "err", coordErr)
-					} else if dlIdx != nil {
-						index, fileIndexName, indexRV = dlIdx, dlName, dlRV
-					} else if lock != nil {
-						coldStartLeaderLock = lock
-						defer func() {
-							if coldStartLeaderLock != nil {
-								if releaseErr := coldStartLeaderLock.Release(); releaseErr != nil {
-									logWithDetails.Warn("Releasing cold-start build lock", "err", releaseErr)
-								}
-							}
-						}()
-					}
-				}
-			}
-		} else if rebuild && snapshotEnabled && maxFreshSnapshotAge > 0 {
-			// Rebuild path: before paying the cost of a from-scratch
-			// rebuild, check whether the remote index store holds a same-version snapshot
-			// fresh enough to serve as a drop-in replacement. Strict policy:
-			// exact BuildVersion match, BuildTime within maxFreshSnapshotAge
-			// AND strictly after lastImportTime. On miss, fall through to
-			// rebuild — no tiered fallback (we already have a working index).
-			dlIdx, dlName, dlRV, dlErr := b.tryDownloadFreshSameVersionSnapshot(
-				ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge,
-				snapshotPolicySameVersion, "search.remote_index_snapshot.download_fresh",
-				logWithDetails,
-			)
-			if dlErr != nil {
-				if ctxErr := ctx.Err(); ctxErr != nil {
-					return nil, ctxErr
-				}
-				logWithDetails.Warn("Failed to download fresh remote snapshot, will rebuild from scratch", "err", dlErr)
-			} else if dlIdx != nil {
-				index, fileIndexName, indexRV = dlIdx, dlName, dlRV
-			}
+	if prepared.source.needsBuild() {
+		if err := b.buildIndexFromScratch(idx, indexBuildReason, builder, logWithDetails); err != nil {
+			return nil, err
 		}
-
-		if index != nil {
-			build = false
-			logWithDetails.Debug("Existing index found on filesystem", "indexRV", indexRV, "directory", filepath.Join(resourceDir, fileIndexName))
-			defer closeIndexOnExit(index, "") // Close index, but don't delete directory.
-		} else {
-			// Building index from scratch. Index name has a time component in it to be unique, but if
-			// we happen to create non-unique name, we bump the time and try again.
-
-			indexDir := ""
-			now := time.Now()
-			for index == nil {
-				fileIndexName = formatIndexName(now)
-				indexDir = filepath.Join(resourceDir, fileIndexName)
-				if !isPathWithinRoot(indexDir, b.opts.Root) {
-					return nil, fmt.Errorf("invalid path %s", indexDir)
-				}
-
-				index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields)
-				if errors.Is(err, bleve.ErrorIndexPathExists) {
-					now = now.Add(time.Second) // Bump time for next try
-					index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
-					continue
-				}
-				if err != nil {
-					return nil, fmt.Errorf("error creating new bleve index: %s %w", indexDir, err)
-				}
-			}
-
-			logWithDetails.Info("Building index using filesystem", "directory", indexDir)
-			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
-		}
-	} else {
-		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion, selectableFields)
-		if err != nil {
-			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
-		}
-		logWithDetails.Info("Building index using memory")
-		defer closeIndexOnExit(index, "") // Close index, don't cleanup directory.
-	}
-
-	// Batch all the changes
-	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
-
-	if build {
-		if b.indexMetrics != nil {
-			b.indexMetrics.IndexBuilds.WithLabelValues(indexBuildReason).Inc()
-		}
-
-		start := time.Now()
-		listRV, err := builder(idx)
-		if err != nil {
-			logWithDetails.Error("Failed to build index", "err", err)
-			if b.indexMetrics != nil {
-				b.indexMetrics.IndexBuildFailures.Inc()
-			}
-			return nil, fmt.Errorf("failed to build index: %w", err)
-		}
-		err = idx.updateResourceVersion(listRV)
-		if err != nil {
-			logWithDetails.Error("Failed to persist RV to index", "err", err, "rv", listRV)
-			return nil, fmt.Errorf("failed to persist RV to index: %w", err)
-		}
-
-		elapsed := time.Since(start)
-		logWithDetails.Info("Finished building index", "elapsed", elapsed, "listRV", listRV)
-
-		if b.indexMetrics != nil {
-			b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
-		}
-
-		// Leader path: upload the freshly-built snapshot now so waiting
-		// replicas can download it. Skip the periodic upload's probe (we
-		// just built it) and reuse the held lock. On failure the next
-		// periodic tick retries.
-		if coldStartLeaderLock != nil {
-			switch {
-			case checkSnapshotLock(coldStartLeaderLock) != nil:
-				// Lock lost during the build. Another replica may already
-				// be uploading; skip and let the periodic tick reconcile.
-				logWithDetails.Warn("Cold-start leader lock lost during build; skipping immediate upload")
-				b.recordSnapshotUploadStatus(snapshotUploadStatusSkipLockLost)
-			default:
-				baselineMutations, mErr := idx.getSnapshotMutationCount()
-				if mErr != nil {
-					logWithDetails.Warn("Failed to read snapshot mutation baseline for leader upload", "err", mErr)
-				}
-				uploadKey, uploadRV, upErr := b.snapshotCopyAndUpload(ctx, key, idx, coldStartLeaderLock)
-				if upErr != nil {
-					logWithDetails.Warn("Cold-start leader immediate snapshot upload failed", "err", upErr)
-					b.recordSnapshotUploadStatus(snapshotUploadStatusError)
-				} else {
-					if mErr == nil {
-						if subErr := idx.subtractSnapshotMutationCount(baselineMutations); subErr != nil {
-							logWithDetails.Warn("Failed to advance snapshot mutation baseline after leader upload", "err", subErr)
-						}
-					}
-					b.setUploadTracking(key, time.Now())
-					b.recordSnapshotUploadStatus(snapshotUploadStatusSuccess)
-					logWithDetails.Info("Cold-start leader uploaded freshly-built snapshot", "snapshot_key", uploadKey.String(), "snapshot_rv", uploadRV)
-				}
-			}
+		if prepared.coldStartLeaderLock != nil {
+			b.uploadColdStartLeaderSnapshot(ctx, key, idx, prepared.coldStartLeaderLock, logWithDetails)
 		}
 	} else {
 		logWithDetails.Info("Skipping index build, using existing index")
 
-		idx.resourceVersion.Store(indexRV)
+		idx.resourceVersion.Store(prepared.indexRV)
 
 		if b.indexMetrics != nil {
 			b.indexMetrics.IndexBuildSkipped.Inc()
@@ -884,7 +734,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	// Set expiration after building the index. Only expire in-memory indexes.
-	if fileIndexName == "" && b.opts.IndexCacheTTL > 0 {
+	if prepared.fileIndexName == "" && b.opts.IndexCacheTTL > 0 {
 		idx.expiration = time.Now().Add(b.opts.IndexCacheTTL)
 	}
 
@@ -923,9 +773,276 @@ func (b *bleveBackend) BuildIndex(
 	//
 	// We do the cleanup on the same goroutine as the index building. Using background goroutine could
 	// cleanup new index directory that is being built by new call to BuildIndex.
-	b.cleanOldIndexes(resourceDir, fileIndexName)
+	b.cleanOldIndexes(resourceDir, prepared.fileIndexName)
 
 	return idx, nil
+}
+
+// prepareIndex prepares the Bleve index that BuildIndex will cache.
+// It may reuse a local file index, download a remote snapshot, coordinate a cold-start build, or create an empty index for the builder to populate.
+func (b *bleveBackend) prepareIndex(
+	ctx context.Context,
+	key resource.NamespacedResource,
+	docCount int64,
+	mapper mapping.IndexMapping,
+	selectableFields []string,
+	rebuild bool,
+	lastImportTime time.Time,
+	maxFreshSnapshotAge time.Duration,
+	resourceDir string,
+	logger log.Logger,
+) (preparedBuildIndex, error) {
+	if docCount < b.opts.FileThreshold {
+		return b.createEmptyMemoryIndex(mapper, selectableFields, logger)
+	}
+
+	snapshotEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	cachedIndex := b.getCachedIndex(key, time.Now())
+
+	// We only check for the existing file-based index if we don't already have an open index for this key,
+	// and if rebuild flag is not set.
+	// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
+	// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
+	if cachedIndex == nil && !rebuild {
+		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, lastImportTime, snapshotEnabled, logger)
+	}
+
+	if rebuild && snapshotEnabled && maxFreshSnapshotAge > 0 {
+		// Rebuild path: before paying the cost of a from-scratch rebuild, check
+		// whether the remote index store holds a same-version snapshot fresh enough
+		// to serve as a drop-in replacement. On miss, fall through to rebuild — no
+		// tiered fallback because we already have a working index.
+		idx, name, rv, err := b.tryDownloadFreshSameVersionSnapshot(
+			ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge,
+			snapshotPolicySameVersion, "search.remote_index_snapshot.download_fresh",
+			logger,
+		)
+		if err != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return preparedBuildIndex{}, ctxErr
+			}
+			logger.Warn("Failed to download fresh remote snapshot, will rebuild from scratch", "err", err)
+		} else if idx != nil {
+			return preparedBuildIndex{
+				index:         idx,
+				indexRV:       rv,
+				fileIndexName: name,
+				indexStorage:  indexStorageFile,
+				source:        buildIndexSourceDownloadedSnapshot,
+			}, nil
+		}
+	}
+
+	return b.createEmptyFileIndex(resourceDir, mapper, selectableFields, logger)
+}
+
+func (b *bleveBackend) prepareUncachedFileIndex(
+	ctx context.Context,
+	key resource.NamespacedResource,
+	resourceDir string,
+	mapper mapping.IndexMapping,
+	selectableFields []string,
+	lastImportTime time.Time,
+	snapshotEnabled bool,
+	logger log.Logger,
+) (preparedBuildIndex, error) {
+	idx, name, rv, err := b.tryReuseFileIndex(resourceDir, lastImportTime, logger)
+	if err != nil {
+		return preparedBuildIndex{}, err
+	}
+	if idx != nil {
+		return preparedBuildIndex{
+			index:         idx,
+			indexRV:       rv,
+			fileIndexName: name,
+			indexStorage:  indexStorageFile,
+			source:        buildIndexSourceExistingFile,
+		}, nil
+	}
+
+	if !snapshotEnabled {
+		return b.createEmptyFileIndex(resourceDir, mapper, selectableFields, logger)
+	}
+
+	idx, name, rv, err = b.tryDownloadRemoteSnapshot(ctx, key, resourceDir, logger)
+	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return preparedBuildIndex{}, ctxErr
+		}
+		logger.Warn("Failed to download remote snapshot, will build from scratch", "err", err)
+	} else if idx != nil {
+		return preparedBuildIndex{
+			index:         idx,
+			indexRV:       rv,
+			fileIndexName: name,
+			indexStorage:  indexStorageFile,
+			source:        buildIndexSourceDownloadedSnapshot,
+		}, nil
+	}
+
+	// With MaxIndexAge=0 the cold-start probe cannot find a reusable snapshot,
+	// so coordination would only serialize replicas rebuilding from scratch.
+	if b.opts.Snapshot.MaxIndexAge <= 0 {
+		return b.createEmptyFileIndex(resourceDir, mapper, selectableFields, logger)
+	}
+
+	idx, name, rv, lock, err := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logger)
+	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return preparedBuildIndex{}, ctxErr
+		}
+		logger.Warn("Cold-start coordination failed, will build alone", "err", err)
+	} else if idx != nil {
+		return preparedBuildIndex{
+			index:         idx,
+			indexRV:       rv,
+			fileIndexName: name,
+			indexStorage:  indexStorageFile,
+			source:        buildIndexSourceDownloadedSnapshot,
+		}, nil
+	} else if lock != nil {
+		prepared, err := b.createEmptyFileIndex(resourceDir, mapper, selectableFields, logger)
+		if err != nil {
+			if releaseErr := lock.Release(); releaseErr != nil {
+				logger.Warn("Releasing cold-start build lock", "err", releaseErr)
+			}
+			return preparedBuildIndex{}, err
+		}
+		prepared.coldStartLeaderLock = lock
+		return prepared, nil
+	}
+
+	return b.createEmptyFileIndex(resourceDir, mapper, selectableFields, logger)
+}
+
+func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time.Time, logger log.Logger) (bleve.Index, string, int64, error) {
+	idx, name, rv, err := b.findPreviousFileBasedIndex(resourceDir)
+	if err != nil || idx == nil || lastImportTime.IsZero() {
+		return idx, name, rv, err
+	}
+
+	bi, err := getBuildInfo(idx)
+	if err != nil {
+		logger.Warn("failed to get build info from existing index", "error", err)
+		return idx, name, rv, nil
+	}
+	if bi.BuildTime <= 0 {
+		return idx, name, rv, nil
+	}
+
+	indexBuildTime := time.Unix(bi.BuildTime, 0)
+	if !indexBuildTime.Before(lastImportTime) {
+		return idx, name, rv, nil
+	}
+
+	logger.Info("File-based index needs rebuild before opening", "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
+	_ = idx.Close()
+	return nil, "", 0, nil
+}
+
+func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.IndexMapping, selectableFields []string, logger log.Logger) (preparedBuildIndex, error) {
+	indexDir := ""
+	var idx bleve.Index
+	var err error
+	now := time.Now()
+	fileIndexName := ""
+	for idx == nil {
+		fileIndexName = formatIndexName(now)
+		indexDir = filepath.Join(resourceDir, fileIndexName)
+		if !isPathWithinRoot(indexDir, b.opts.Root) {
+			return preparedBuildIndex{}, fmt.Errorf("invalid path %s", indexDir)
+		}
+
+		idx, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields)
+		if errors.Is(err, bleve.ErrorIndexPathExists) {
+			now = now.Add(time.Second) // Bump time for next try
+			idx = nil                  // Bleve actually returns non-nil value with ErrorIndexPathExists
+			continue
+		}
+		if err != nil {
+			return preparedBuildIndex{}, fmt.Errorf("error creating new bleve index: %s %w", indexDir, err)
+		}
+	}
+
+	logger.Info("Building index using filesystem", "directory", indexDir)
+	return preparedBuildIndex{
+		index:         idx,
+		fileIndexName: fileIndexName,
+		indexStorage:  indexStorageFile,
+		source:        buildIndexSourceNew,
+		cleanupDir:    indexDir,
+	}, nil
+}
+
+func (b *bleveBackend) createEmptyMemoryIndex(mapper mapping.IndexMapping, selectableFields []string, logger log.Logger) (preparedBuildIndex, error) {
+	idx, err := newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion, selectableFields)
+	if err != nil {
+		return preparedBuildIndex{}, fmt.Errorf("error creating new in-memory bleve index: %w", err)
+	}
+	logger.Info("Building index using memory")
+	return preparedBuildIndex{
+		index:        idx,
+		indexStorage: indexStorageMemory,
+		source:       buildIndexSourceNew,
+	}, nil
+}
+
+func (b *bleveBackend) buildIndexFromScratch(idx *bleveIndex, indexBuildReason string, builder resource.BuildFn, logger log.Logger) error {
+	if b.indexMetrics != nil {
+		b.indexMetrics.IndexBuilds.WithLabelValues(indexBuildReason).Inc()
+	}
+
+	start := time.Now()
+	listRV, err := builder(idx)
+	if err != nil {
+		logger.Error("Failed to build index", "err", err)
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexBuildFailures.Inc()
+		}
+		return fmt.Errorf("failed to build index: %w", err)
+	}
+	if err := idx.updateResourceVersion(listRV); err != nil {
+		logger.Error("Failed to persist RV to index", "err", err, "rv", listRV)
+		return fmt.Errorf("failed to persist RV to index: %w", err)
+	}
+
+	elapsed := time.Since(start)
+	logger.Info("Finished building index", "elapsed", elapsed, "listRV", listRV)
+
+	if b.indexMetrics != nil {
+		b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
+	}
+	return nil
+}
+
+func (b *bleveBackend) uploadColdStartLeaderSnapshot(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex, lock IndexStoreLock, logger log.Logger) {
+	if checkSnapshotLock(lock) != nil {
+		// Lock lost during the build. Another replica may already be uploading;
+		// skip and let the periodic tick reconcile.
+		logger.Warn("Cold-start leader lock lost during build; skipping immediate upload")
+		b.recordSnapshotUploadStatus(snapshotUploadStatusSkipLockLost)
+		return
+	}
+
+	baselineMutations, mErr := idx.getSnapshotMutationCount()
+	if mErr != nil {
+		logger.Warn("Failed to read snapshot mutation baseline for leader upload", "err", mErr)
+	}
+	uploadKey, uploadRV, upErr := b.snapshotCopyAndUpload(ctx, key, idx, lock)
+	if upErr != nil {
+		logger.Warn("Cold-start leader immediate snapshot upload failed", "err", upErr)
+		b.recordSnapshotUploadStatus(snapshotUploadStatusError)
+		return
+	}
+
+	if mErr == nil {
+		if subErr := idx.subtractSnapshotMutationCount(baselineMutations); subErr != nil {
+			logger.Warn("Failed to advance snapshot mutation baseline after leader upload", "err", subErr)
+		}
+	}
+	b.setUploadTracking(key, time.Now())
+	b.recordSnapshotUploadStatus(snapshotUploadStatusSuccess)
+	logger.Info("Cold-start leader uploaded freshly-built snapshot", "snapshot_key", uploadKey.String(), "snapshot_rv", uploadRV)
 }
 
 func (b *bleveBackend) getResourceDir(key resource.NamespacedResource) string {

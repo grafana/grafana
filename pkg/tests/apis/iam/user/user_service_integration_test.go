@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -75,7 +75,7 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 			require.NotEmpty(t, secondUser.Result.UID)
 
 			t.Cleanup(func() {
-				if firstUser.Result.ID != 0 {
+				if mode < rest.Mode4 {
 					apis.DoRequest(helper, apis.RequestParams{
 						User:   helper.Org1.Admin,
 						Method: "DELETE",
@@ -180,77 +180,53 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 			require.Equal(t, 200, createRsp.Response.StatusCode, "body: %s", string(createRsp.Body))
 			require.NotEmpty(t, createRsp.Result.UID)
 
-			if mode < rest.Mode4 {
-				// Modes 0–3 write to the legacy SQL database, so the legacy API can verify the updated user.
-				// UserK8sService.Update is exercised via PUT /api/users/{id} → Service.Update →
-				// k8sService.Update (because FlagKubernetesUsersRedirect is enabled).
-				t.Run("should update user via k8s service and verify it using the legacy API", func(t *testing.T) {
-					require.NotZero(t, createRsp.Result.ID)
+			t.Run("should update user via k8s service and verify it using /api/users/:id", func(t *testing.T) {
+				require.NotZero(t, createRsp.Result.ID)
 
-					t.Cleanup(func() {
+				t.Cleanup(func() {
+					if mode < rest.Mode4 {
 						apis.DoRequest(helper, apis.RequestParams{
 							User:   helper.Org1.Admin,
 							Method: "DELETE",
 							Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
 						}, &struct{}{})
-					})
-
-					updateRsp := apis.DoRequest(helper, apis.RequestParams{
-						User:   helper.Org1.Admin,
-						Method: "PUT",
-						Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
-						Body:   []byte(`{"name": "Updated Name", "email": "updated@example.com", "login": "updated-user"}`),
-					}, &struct{}{})
-					require.Equal(t, 200, updateRsp.Response.StatusCode, "body: %s", string(updateRsp.Body))
-
-					type getUserResponse struct {
-						ID    int64  `json:"id"`
-						Name  string `json:"name"`
-						Email string `json:"email"`
-						Login string `json:"login"`
-					}
-
-					getRsp := apis.DoRequest(helper, apis.RequestParams{
-						User:   helper.Org1.Admin,
-						Method: "GET",
-						Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
-					}, &getUserResponse{})
-
-					require.Equal(t, 200, getRsp.Response.StatusCode)
-					require.Equal(t, "Updated Name", getRsp.Result.Name)
-					require.Equal(t, "updated@example.com", getRsp.Result.Email)
-					require.Equal(t, "updated-user", getRsp.Result.Login)
-				})
-			} else {
-				// Modes 4–5 use the kubernetes API as the primary (or only) storage. Since the
-				// internal ID is not populated for these modes, the update is applied directly
-				// via the k8s client and verified with a subsequent Get.
-				t.Run("should update user via k8s service and verify it using the kubernetes API", func(t *testing.T) {
-					ctx := context.Background()
-
-					userClient := helper.GetResourceClient(apis.ResourceClientArgs{
-						User:      helper.Org1.Admin,
-						Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
-						GVR:       gvrUsers,
-					})
-
-					t.Cleanup(func() {
+					} else {
+						ctx := context.Background()
+						userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+							User:      helper.Org1.Admin,
+							Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+							GVR:       gvrUsers,
+						})
 						_ = userClient.Resource.Delete(ctx, createRsp.Result.UID, metav1.DeleteOptions{})
-					})
-
-					patchBody := []byte(`{"spec":{"title":"Updated K8s Name","email":"updated-k8s@example.com","login":"updated-k8s-user"}}`)
-					_, err := userClient.Resource.Patch(ctx, createRsp.Result.UID, types.MergePatchType, patchBody, metav1.PatchOptions{})
-					require.NoError(t, err)
-
-					fetched, err := userClient.Resource.Get(ctx, createRsp.Result.UID, metav1.GetOptions{})
-					require.NoError(t, err)
-
-					userSpec := fetched.Object["spec"].(map[string]interface{})
-					require.Equal(t, "Updated K8s Name", userSpec["title"])
-					require.Equal(t, "updated-k8s@example.com", userSpec["email"])
-					require.Equal(t, "updated-k8s-user", userSpec["login"])
+					}
 				})
-			}
+
+				updateRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "PUT",
+					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
+					Body:   []byte(`{"name": "Updated Name", "email": "updated@example.com", "login": "updated-user"}`),
+				}, &struct{}{})
+				require.Equal(t, 200, updateRsp.Response.StatusCode, "body: %s", string(updateRsp.Body))
+
+				type getUserResponse struct {
+					ID    int64  `json:"id"`
+					Name  string `json:"name"`
+					Email string `json:"email"`
+					Login string `json:"login"`
+				}
+
+				getRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
+				}, &getUserResponse{})
+
+				require.Equal(t, 200, getRsp.Response.StatusCode)
+				require.Equal(t, "Updated Name", getRsp.Result.Name)
+				require.Equal(t, "updated@example.com", getRsp.Result.Email)
+				require.Equal(t, "updated-user", getRsp.Result.Login)
+			})
 		})
 	}
 }
@@ -294,63 +270,250 @@ func TestIntegrationUserService(t *testing.T) {
 			require.Equal(t, 200, createRsp.Response.StatusCode, "body: %s", string(createRsp.Body))
 			require.NotEmpty(t, createRsp.Result.UID)
 
-			if mode <= rest.Mode3 {
-				// Modes 0–3 write to the legacy SQL database, so the legacy API can verify the user.
-				// UserID is only populated in these modes because SetDeprecatedInternalID is only set
-				// by the LegacyStore on the returned k8s object.
-				t.Run("should create user via k8s service and verify it using the legacy API", func(t *testing.T) {
-					require.NotZero(t, createRsp.Result.ID)
+			t.Run("should create user via k8s service and verify it using /api/users/:id", func(t *testing.T) {
+				require.NotZero(t, createRsp.Result.ID)
 
-					type getUserResponse struct {
-						ID    int64  `json:"id"`
-						UID   string `json:"uid"`
-						Name  string `json:"name"`
-						Email string `json:"email"`
-						Login string `json:"login"`
-					}
+				type getUserResponse struct {
+					ID    int64  `json:"id"`
+					UID   string `json:"uid"`
+					Name  string `json:"name"`
+					Email string `json:"email"`
+					Login string `json:"login"`
+				}
 
-					getRsp := apis.DoRequest(helper, apis.RequestParams{
-						User:   helper.Org1.Admin,
-						Method: "GET",
-						Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
-					}, &getUserResponse{})
+				getRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
+				}, &getUserResponse{})
 
-					require.Equal(t, 200, getRsp.Response.StatusCode)
-					require.Equal(t, createRsp.Result.ID, getRsp.Result.ID)
-					require.Equal(t, createRsp.Result.UID, getRsp.Result.UID)
-					require.Equal(t, "K8s Service User", getRsp.Result.Name)
-					require.Equal(t, "k8s-service-user@example.com", getRsp.Result.Email)
-					require.Equal(t, "k8s-service-user", getRsp.Result.Login)
+				require.Equal(t, 200, getRsp.Response.StatusCode)
+				require.Equal(t, createRsp.Result.ID, getRsp.Result.ID)
+				require.Equal(t, createRsp.Result.UID, getRsp.Result.UID)
+				require.Equal(t, "K8s Service User", getRsp.Result.Name)
+				require.Equal(t, "k8s-service-user@example.com", getRsp.Result.Email)
+				require.Equal(t, "k8s-service-user", getRsp.Result.Login)
 
+				if mode <= rest.Mode3 {
 					deleteRsp := apis.DoRequest(helper, apis.RequestParams{
 						User:   helper.Org1.Admin,
 						Method: "DELETE",
 						Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
 					}, &struct{}{})
 					require.Equal(t, 200, deleteRsp.Response.StatusCode)
-				})
-			} else {
-				// Modes 4–5 use the kubernetes API as the primary (or only) storage, so the k8s
-				// client is used for verification and cleanup.
-				t.Run("should create user via k8s service and verify it using the kubernetes API", func(t *testing.T) {
+				} else {
 					ctx := context.Background()
-
 					userClient := helper.GetResourceClient(apis.ResourceClientArgs{
 						User:      helper.Org1.Admin,
 						Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
 						GVR:       gvrUsers,
 					})
-
-					fetched, err := userClient.Resource.Get(ctx, createRsp.Result.UID, metav1.GetOptions{})
+					err := userClient.Resource.Delete(ctx, createRsp.Result.UID, metav1.DeleteOptions{})
 					require.NoError(t, err)
+				}
+			})
+		})
+	}
+}
 
-					userSpec := fetched.Object["spec"].(map[string]interface{})
-					require.Equal(t, "K8s Service User", userSpec["title"])
-					require.Equal(t, "k8s-service-user@example.com", userSpec["email"])
-					require.Equal(t, "k8s-service-user", userSpec["login"])
+// go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceSearch$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
+func TestIntegrationUserServiceSearch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-					err = userClient.Resource.Delete(ctx, createRsp.Result.UID, metav1.DeleteOptions{})
-					require.NoError(t, err)
+	type createUserResponse struct {
+		ID  int64  `json:"id"`
+		UID string `json:"uid"`
+	}
+
+	type searchUserHit struct {
+		UID   string `json:"uid"`
+		Name  string `json:"name"`
+		Login string `json:"login"`
+		Email string `json:"email"`
+	}
+
+	type searchUsersResponse struct {
+		TotalCount int64           `json:"totalCount"`
+		Users      []searchUserHit `json:"users"`
+		Page       int             `json:"page"`
+		PerPage    int             `json:"perPage"`
+	}
+
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
+		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				APIServerStorageType:   "unified",
+				RBACSingleOrganization: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"users.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesUsersApi,
+					featuremgmt.FlagKubernetesUsersRedirect,
+				},
+			})
+
+			alphaUser := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "POST",
+				Path:   "/api/admin/users",
+				Body:   []byte(`{"name": "Alpha User", "email": "alpha@example.com", "login": "alpha-user", "password": "password123"}`),
+			}, &createUserResponse{})
+			require.Equal(t, 200, alphaUser.Response.StatusCode, "body: %s", string(alphaUser.Body))
+			require.NotEmpty(t, alphaUser.Result.UID)
+			require.NotZero(t, alphaUser.Result.ID)
+
+			betaUser := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "POST",
+				Path:   "/api/admin/users",
+				Body:   []byte(`{"name": "Beta User", "email": "beta@example.com", "login": "beta-user", "password": "password123"}`),
+			}, &createUserResponse{})
+			require.Equal(t, 200, betaUser.Response.StatusCode, "body: %s", string(betaUser.Body))
+			require.NotEmpty(t, betaUser.Result.UID)
+			require.NotZero(t, betaUser.Result.ID)
+
+			// Wait for the search index to be populated.
+			time.Sleep(2 * time.Second)
+
+			t.Cleanup(func() {
+				ctx := context.Background()
+				userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+					User:      helper.Org1.Admin,
+					Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+					GVR:       gvrUsers,
+				})
+				_ = userClient.Resource.Delete(ctx, alphaUser.Result.UID, metav1.DeleteOptions{})
+				_ = userClient.Resource.Delete(ctx, betaUser.Result.UID, metav1.DeleteOptions{})
+			})
+
+			t.Run("should return users with correct fields", func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/search?query=alpha",
+				}, &searchUsersResponse{})
+				require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+				require.NotEmpty(t, rsp.Result.Users)
+
+				var hit *searchUserHit
+				for i := range rsp.Result.Users {
+					if rsp.Result.Users[i].Login == "alpha-user" {
+						hit = &rsp.Result.Users[i]
+						break
+					}
+				}
+				require.NotNil(t, hit, "alpha-user not found in search results")
+				require.Equal(t, alphaUser.Result.UID, hit.UID)
+				require.Equal(t, "Alpha User", hit.Name)
+				require.Equal(t, "alpha@example.com", hit.Email)
+			})
+
+			t.Run("should filter results by query", func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/search?query=beta",
+				}, &searchUsersResponse{})
+				require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+
+				foundBeta := false
+				for _, u := range rsp.Result.Users {
+					require.NotEqual(t, "alpha-user", u.Login, "alpha-user should not appear in beta search")
+					if u.Login == "beta-user" {
+						foundBeta = true
+					}
+				}
+				require.True(t, foundBeta, "beta-user should be in search results")
+			})
+
+			t.Run("should return all users when no query given", func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/search",
+				}, &searchUsersResponse{})
+				require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+				require.GreaterOrEqual(t, rsp.Result.TotalCount, int64(2))
+
+				logins := make([]string, 0, len(rsp.Result.Users))
+				for _, u := range rsp.Result.Users {
+					logins = append(logins, u.Login)
+				}
+				require.Contains(t, logins, "alpha-user")
+				require.Contains(t, logins, "beta-user")
+			})
+
+			t.Run("should respect perpage and page parameters", func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/search?perpage=1&page=1",
+				}, &searchUsersResponse{})
+				require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+				require.Len(t, rsp.Result.Users, 1)
+				require.Equal(t, 1, rsp.Result.Page)
+				require.Equal(t, 1, rsp.Result.PerPage)
+				require.GreaterOrEqual(t, rsp.Result.TotalCount, int64(2))
+
+				allLogins := []string{rsp.Result.Users[0].Login}
+				for page := 2; page <= int(rsp.Result.TotalCount); page++ {
+					pageRsp := apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: "GET",
+						Path:   fmt.Sprintf("/api/users/search?perpage=1&page=%d", page),
+					}, &searchUsersResponse{})
+					require.Equal(t, 200, pageRsp.Response.StatusCode, "body: %s", string(pageRsp.Body))
+					if len(pageRsp.Result.Users) == 0 {
+						break
+					}
+					allLogins = append(allLogins, pageRsp.Result.Users[0].Login)
+				}
+				require.Contains(t, allLogins, "alpha-user")
+				require.Contains(t, allLogins, "beta-user")
+			})
+
+			for _, tc := range []struct {
+				sortParam  string
+				alphaFirst bool
+			}{
+				{"login-asc", true},
+				{"login-desc", false},
+				{"name-asc", true},
+				{"name-desc", false},
+				{"email-asc", true},
+				{"email-desc", false},
+			} {
+				tc := tc
+				t.Run(fmt.Sprintf("should sort users by %s", tc.sortParam), func(t *testing.T) {
+					rsp := apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: "GET",
+						Path:   fmt.Sprintf("/api/users/search?sort=%s", tc.sortParam),
+					}, &searchUsersResponse{})
+					require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+
+					alphaIdx, betaIdx := -1, -1
+					for i, u := range rsp.Result.Users {
+						switch u.Login {
+						case "alpha-user":
+							alphaIdx = i
+						case "beta-user":
+							betaIdx = i
+						}
+					}
+					require.NotEqual(t, -1, alphaIdx, "alpha-user not found in results")
+					require.NotEqual(t, -1, betaIdx, "beta-user not found in results")
+					if tc.alphaFirst {
+						require.Less(t, alphaIdx, betaIdx, "alpha-user should come before beta-user")
+					} else {
+						require.Greater(t, alphaIdx, betaIdx, "beta-user should come before alpha-user")
+					}
 				})
 			}
 		})

@@ -5,12 +5,14 @@ export type LoggerDefaults = { context?: Omit<LogContext, 'source'>; logToConsol
 export const Loggers = {
   /* new loggers should follow package/area.feature naming convention */
   'grafana/runtime.plugins.meta': { logToConsole: true },
+  'grafana/runtime.plugins.settings': { logToConsole: true },
   'grafana/runtime.utils.getCachedPromise': {},
 
   /* existing loggers that keep their existing source name */
   sandbox: {},
   'ui-extension-logs': {},
   'features.plugins': {},
+  'features.alerting': { context: { module: 'Alerting' } },
 } satisfies Record<string, LoggerDefaults>;
 
 export type LoggerSource = keyof typeof Loggers;

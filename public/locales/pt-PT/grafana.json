@@ -4462,6 +4462,14 @@
       "resource-detail-dashboards": "Criou {{usage}} de {{limit}} painéis de controlo ({{percentage}}%).",
       "resource-detail-folders": "Criou {{usage}} de {{limit}} pastas ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Limpar histórico",
       "error": "Não foi possível carregar os painéis de controlo vistos recentemente.",
@@ -8033,19 +8041,6 @@
       "aria-label-explore-data": "Explorar dados",
       "aria-label-suggested-dashboards": "Painéis de controlo sugeridos"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alertas não suportados",
-      "text-alerting-supported": "Alertas suportados"
-    },
-    "basic-serttings": {
-      "tooltip-name": "O nome é utilizado quando seleciona a origem de dados nos painéis. A origem de dados predefinida é pré-selecionada em novos painéis."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Definições básicas da página de definições da origem de dados",
-      "basic-settings-name-placeholder-name": "Nome",
-      "label-default": "Predefinição",
-      "label-name": "Nome"
-    },
     "build-a-dashboard-button": {
       "blank": "Em branco",
       "build-a-dashboard": "Criar um painel de controlo",
@@ -11249,7 +11244,7 @@
     "description-order": "Mostrar primeiro os registos mais recentes ou mais antigos. Quando a opção Mais antigos primeiro estiver selecionada, a vista deslocar-se-á automaticamente para os registos mais recentes, na parte inferior.",
     "description-prettify-json": "Formatar entradas de registo JSON com recuo e quebras de linha.",
     "description-show-controls": "Mostrar controlos para aceder à última ou primeira linha de registo e filtrar por nível de registo.",
-    "description-show-log-attributes": "Experimental. Quando os registos OTel são exibidos, adicionar um campo exibido extra com pares de chave-valor relevantes de etiquetas e metadados.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Alinhar os valores usando colunas ao utilizar os campos exibidos.",
     "description-wrap-lines": "Apresentar os registos numa única linha ou quebrar as entradas de registo longas para se ajustarem ao painel.",
     "field-selector": {
@@ -11575,7 +11570,7 @@
       "line-contains-not": "Adicionar, pois a linha não contém filtro",
       "search-text": "Pesquisar nos resultados"
     },
-    "show-log-attributes": "Mostrar atributos de registo para registos OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Resolução do carimbo de data e hora",
     "un-themed-log-details": {
       "aria-label-data-links": "Ligações de dados",

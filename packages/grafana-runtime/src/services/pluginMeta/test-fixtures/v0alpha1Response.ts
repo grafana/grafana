@@ -2,6 +2,94 @@
 import type { PluginMetasResponse } from '../types';
 import type { Meta } from '../types/meta/meta_object_gen';
 
+export const myOrgTestAppMeta: Meta = structuredClone({
+  kind: 'Meta',
+  apiVersion: 'plugins.grafana.app/v0alpha1',
+  metadata: {
+    name: 'myorg-test-app',
+    namespace: 'default',
+  },
+  spec: {
+    aliasIds: ['fake-alias'],
+    pluginJson: {
+      id: 'myorg-test-app',
+      type: 'app',
+      name: 'Test',
+      info: {
+        keywords: ['app'],
+        logos: {
+          small: 'public/plugins/myorg-test-app/img/logo.svg',
+          large: 'public/plugins/myorg-test-app/img/logo.svg',
+        },
+        updated: '2026-04-20',
+        version: '1.0.0',
+        author: {
+          name: 'Myorg',
+        },
+      },
+      dependencies: {
+        grafanaDependency: '\u003e=12.3.0',
+        grafanaVersion: '*',
+      },
+      buildMode: 'production',
+      includes: [
+        {
+          type: 'page',
+          name: 'Page One',
+          role: 'Viewer',
+          action: 'plugins.app:access',
+          path: '/a/myorg-test-app/one',
+          addToNav: true,
+          defaultNav: true,
+        },
+        {
+          type: 'page',
+          name: 'Page Two',
+          role: 'Viewer',
+          action: 'plugins.app:access',
+          path: '/a/myorg-test-app/two',
+          addToNav: true,
+        },
+        {
+          type: 'page',
+          name: 'Page Three',
+          role: 'Viewer',
+          action: 'plugins.app:access',
+          path: '/a/myorg-test-app/three',
+          addToNav: true,
+        },
+        {
+          type: 'page',
+          name: 'Page Four',
+          role: 'Viewer',
+          action: 'plugins.app:access',
+          path: '/a/myorg-test-app/four',
+          addToNav: true,
+        },
+        {
+          type: 'page',
+          name: 'Configuration',
+          role: 'Admin',
+          path: '/plugins/myorg-test-app',
+          addToNav: true,
+          icon: 'cog',
+        },
+      ],
+    },
+    class: 'external',
+    module: {
+      path: 'public/plugins/myorg-test-app/module.js',
+      loadingStrategy: 'script',
+      hash: 'fake hash',
+    },
+    baseURL: 'public/plugins/myorg-test-app',
+    signature: {
+      status: 'unsigned',
+    },
+  },
+  status: {},
+});
+
 export const clockPanelMetaOnPrem: Meta = structuredClone({
   kind: 'Meta',
   apiVersion: 'plugins.grafana.app/v0alpha1',

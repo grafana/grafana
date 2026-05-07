@@ -13,7 +13,7 @@ type grafanaProvider struct {
 	encryption encryption.Internal
 }
 
-func New(cfg *setting.Cfg, encryption encryption.Internal) secrets.Provider {
+func New(cfg *setting.Cfg, encryption encryption.Internal) secrets.Provider { //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	return grafanaProvider{
 		cfg:        cfg,
 		encryption: encryption,
