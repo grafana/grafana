@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import {
   type AbsoluteTimeRange,
@@ -36,6 +37,10 @@ jest.mock('@grafana/runtime', () => ({
   getAppEvents: jest.fn(() => ({
     publish: publishMockFn,
   })),
+  usePluginLinks: jest.fn(() => ({ isLoading: false, links: [] })),
+  getDataSourceSrv: jest.fn(() => ({
+    get: jest.fn().mockResolvedValue(null),
+  })),
 }));
 
 const mockGetUrlSearchParams = jest.fn(() => {
@@ -46,6 +51,13 @@ jest.mock('@grafana/data', () => ({
   urlUtil: {
     getUrlSearchParams: () => mockGetUrlSearchParams(),
   },
+}));
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
 }));
 
 describe('ExploreLogsTable', () => {
@@ -128,6 +140,16 @@ describe('ExploreLogsTable', () => {
     expect(headers[0].textContent).toBe('Time');
     expect(headers[1].textContent).toBe('detected_level');
     expect(headers[2].textContent).toBe('Line');
+  });
+
+  it('opens log details when Show details is clicked', async () => {
+    const user = userEvent.setup();
+    render(setUp());
+    await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+    await user.click(screen.getAllByLabelText('Show details')[0]);
+
+    expect(screen.getByLabelText('Close log details sidebar')).toBeVisible();
   });
 
   describe('options', () => {

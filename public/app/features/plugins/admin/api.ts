@@ -198,7 +198,7 @@ async function getLocalPluginChangelog(id: string): Promise<string> {
 export async function getLocalPlugins(): Promise<LocalPlugin[]> {
   const localPlugins: LocalPlugin[] = await getBackendSrv().get(
     `${API_ROOT}`,
-    accessControlQueryParam({ embedded: 0 })
+    accessControlQueryParam({ embedded: 'include-datasource' })
   );
 
   return localPlugins.filter(isLocalPluginVisibleByConfig);
@@ -228,7 +228,10 @@ export async function installPlugin(id: string, version?: string) {
   try {
     await installPluginMeta(id, version ?? '');
   } catch (error: unknown) {
-    logPluginMetaError(`PluginMeta: Failed to install plugin with id ${id} and version ${version}`, error);
+    logPluginMetaError(`installPluginMeta: Failed to install plugin`, error, {
+      pluginId: id,
+      pluginVersion: version ?? '',
+    });
   }
 
   // Legacy install path — kept until K8s settings API covers all plugin types.
@@ -250,7 +253,9 @@ export async function uninstallPlugin(id: string) {
   try {
     await uninstallPluginMeta(id);
   } catch (error: unknown) {
-    logPluginMetaError(`PluginMeta: Failed to uninstall plugin with id ${id}`, error);
+    logPluginMetaError(`uninstallPluginMeta: Failed to uninstall plugin`, error, {
+      pluginId: id,
+    });
   }
 
   // Legacy uninstall path — kept until K8s settings API covers all plugin types.
@@ -265,6 +270,24 @@ export async function updatePluginSettings(id: string, data: Partial<PluginMeta>
   });
 
   return response?.data;
+}
+
+export async function getPluginEntitlement(id: string): Promise<boolean> {
+  try {
+    await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/entitlement`);
+    return true;
+  } catch (error) {
+    if (isFetchError(error)) {
+      error.isHandled = true;
+      if (error.status === 401 || error.status === 403 || error.status === 404) {
+        return false;
+      }
+      console.warn(`Failed to fetch entitlement for plugin "${id}" (status ${error.status})`);
+    } else {
+      console.warn(`Failed to fetch entitlement for plugin "${id}": unexpected error`);
+    }
+    return false;
+  }
 }
 
 export const api = { getRemotePlugins, getInstalledPlugins: getLocalPlugins, installPlugin, uninstallPlugin };

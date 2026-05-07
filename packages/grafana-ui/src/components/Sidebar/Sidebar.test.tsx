@@ -29,7 +29,7 @@ describe('Sidebar', () => {
     act(() => screen.getByLabelText('Settings').click());
 
     // Verify pane is open
-    expect(screen.getByTestId('sidebar-pane-header-title')).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Sidebar.headerTitle)).toBeInTheDocument();
 
     act(() => screen.getByLabelText('Dock').click());
 
@@ -40,7 +40,7 @@ describe('Sidebar', () => {
     // Close pane
     act(() => screen.getByLabelText('Close').click());
     // Verify pane is closed
-    expect(screen.queryByTestId('sidebar-pane-header-title')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Sidebar.headerTitle)).not.toBeInTheDocument();
   });
 
   it('Can persist docked state', async () => {

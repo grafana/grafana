@@ -13,7 +13,8 @@ import {
 import { transformToOTLP } from '@grafana-plugins/tempo/resultTransformer';
 
 import { transformToJaeger } from '../../../plugins/datasource/jaeger/responseTransform';
-import { transformToZipkin } from '../../../plugins/datasource/zipkin/utils/transforms';
+
+import { transformToZipkin } from './transformToZipkin';
 
 /**
  * Downloads a DataFrame as a TXT file.

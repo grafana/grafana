@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
   type SceneObject,
@@ -16,6 +16,7 @@ import {
 import { Box, Card, Sidebar, Stack, useStyles2 } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { type DashboardSidebarPane } from '../../edit-pane/types';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -40,8 +41,10 @@ export interface VariableAddPaneState extends SceneObjectState {
   sectionOwner: SceneObjectRef<SceneObject>;
 }
 
-export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> {
+export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> implements DashboardSidebarPane {
   public static Component = VariableAddPaneRenderer;
+  public excludeFromHistory = true;
+
   public getId() {
     return 'variable-type-selection' as const;
   }
@@ -63,7 +66,6 @@ export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableA
       const newVar = getVariableScene(type, { name: getNextAvailableId(getVariableNamePrefix(type), sectionVars) });
 
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
-      dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
 
       if (sectionOwner === dashboard) {
         DashboardInteractions.variableTypeSelected({ type });
@@ -88,8 +90,13 @@ export interface VariableTypeChangePaneState extends SceneObjectState {
   variableRef: SceneObjectRef<SceneVariable>;
 }
 
-export class VariableTypeChangePane extends SceneObjectBase<VariableTypeChangePaneState> {
+export class VariableTypeChangePane
+  extends SceneObjectBase<VariableTypeChangePaneState>
+  implements DashboardSidebarPane
+{
   public static Component = VariableTypeChangePaneRenderer;
+  public excludeFromHistory = true;
+
   public getId() {
     return 'variable-type-selection' as const;
   }
@@ -101,22 +108,27 @@ export function openChangeVariableTypePane(variable: SceneVariable) {
 }
 
 function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableTypeChangePane>) {
+  const variable = model.state.variableRef.resolve();
+
   const onChangeVariableType = useCallback(
     (type: EditableVariableType) => {
-      const variable = model.state.variableRef.resolve();
-      const dashboard = getDashboardSceneFor(variable);
       const variableSet = variable.parent;
+      const dashboard = getDashboardSceneFor(variable);
 
       if (!(variableSet instanceof SceneVariableSet)) {
         return;
       }
 
       if (type === variable.state.type) {
-        dashboard.state.editPane.selectObject(variable, { force: true, multi: false });
+        dashboard.state.editPane.goBackToPrevious();
         return;
       }
 
-      const newVariable = getVariableScene(type, { name: variable.state.name, label: variable.state.label });
+      const newVariable = getVariableScene(type, {
+        name: variable.state.name,
+        label: variable.state.label,
+        key: variable.state.key,
+      });
 
       dashboardEditActions.changeVariableType({
         source: variableSet,
@@ -126,7 +138,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
 
       DashboardInteractions.variableTypeChanged({ old: variable.state.type, new: newVariable.state.type });
     },
-    [model]
+    [variable]
   );
 
   return (
@@ -145,9 +157,6 @@ export function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type:
 
   return (
     <Stack direction="column" gap={0}>
-      <Box paddingBottom={1} display={'flex'}>
-        <Trans i18nKey="dashboard.edit-pane.variables.select-type">Choose variable type</Trans>
-      </Box>
       <Stack direction="column" gap={1}>
         {options.map((option) => (
           <Card

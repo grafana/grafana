@@ -76,8 +76,6 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 			assert.Equal(t, models.ProvenanceConvertedPrometheus, recv.Provenance)
 
 			require.Len(t, recv.Integrations, 2)
-			integration := recv.Integrations[0]
-			assert.Equal(t, "", integration.UID)
 		})
 
 		t.Run("falls to only Grafana if cannot read imported receivers", func(t *testing.T) {
@@ -548,6 +546,7 @@ func TestReceiverService_Create(t *testing.T) {
 							UID:                   lineIntegration.UID,
 							Name:                  lineIntegration.Name,
 							Type:                  string(lineIntegration.Config.Type()),
+							Version:               string(lineIntegration.Config.Version),
 							DisableResolveMessage: lineIntegration.DisableResolveMessage,
 							Settings:              definitions.RawMessage(`{}`), // Empty settings, not nil.
 							SecureSettings: map[string]string{
@@ -596,6 +595,20 @@ func TestReceiverService_Create(t *testing.T) {
 			),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 			opts:                []createReceiverServiceSutOpt{withImportedIncluded},
+		},
+		{
+			name:           "with email integration and allowed emails should not fail",
+			user:           writer,
+			receiver:       models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedCreate: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			opts:           []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, nil))},
+		},
+		{
+			name:        "with email integration and not allowed emails should fail",
+			user:        writer,
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedErr: models.ErrReceiverInvalidBase,
+			opts:        []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, fmt.Errorf("email validation failed")))},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -895,6 +908,23 @@ func TestReceiverService_Update(t *testing.T) {
 			expectedUpdate:      models.CopyReceiverWith(baseReceiver, rm.Encrypted(models.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 			opts:                []createReceiverServiceSutOpt{withAllowedIntegrations(schema.SlackType)},
+		},
+		{
+			name:                "update with email integration and allowed emails should not fail",
+			user:                writer,
+			existing:            util.Pointer(baseReceiver.Clone()),
+			receiver:            models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedUpdate:      models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedProvenances: map[string]models.Provenance{emailIntegration.UID: models.ProvenanceNone},
+			opts:                []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, nil))},
+		},
+		{
+			name:        "update with email integration and not allowed emails should fail",
+			user:        writer,
+			existing:    util.Pointer(baseReceiver.Clone()),
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedErr: models.ErrReceiverInvalidBase,
+			opts:        []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, fmt.Errorf("email validation failed")))},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1833,6 +1863,12 @@ func withAllowedIntegrations(types ...schema.IntegrationType) createReceiverServ
 	}
 }
 
+func withEmailValidator(emailValidator EmailIntegrationValidator) createReceiverServiceSutOpt {
+	return func(_ *testing.T, sut *ReceiverService) {
+		sut.emailValidator = emailValidator
+	}
+}
+
 func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...createReceiverServiceSutOpt) *ReceiverService {
 	cfg := createEncryptedConfig(t, encryptSvc, getExtraConfig())
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
@@ -1853,6 +1889,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 		validation.ValidateProvenanceRelaxed,
 		false,
 		nil,
+		&NoopOrgEmailValidator{},
 	)
 	for _, opt := range opts {
 		opt(t, sut)

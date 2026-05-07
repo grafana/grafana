@@ -11,6 +11,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -296,6 +297,10 @@ func SplitFullpath(s string) []string {
 }
 
 func toFolderError(err error) error {
+	if apierrors.IsForbidden(err) {
+		return folder.ErrAccessDenied
+	}
+
 	if errors.Is(err, dashboards.ErrDashboardTitleEmpty) {
 		return folder.ErrTitleEmpty
 	}

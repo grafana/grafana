@@ -322,7 +322,7 @@ func RunTestDelayedWatchDelivery(ctx context.Context, t *testing.T, store storag
 	// closed (as otherwise events would have to be dropped).
 	// For now, this number is smallest for Cacher and it equals 21 for it.
 	totalPods := 21
-	for i := 0; i < totalPods; i++ {
+	for i := range totalPods {
 		out := &example.Pod{}
 		pod := &example.Pod{
 			ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i), Namespace: "test-ns"},
@@ -440,7 +440,7 @@ func RunTestWatcherTimeout(ctx context.Context, t *testing.T, store storage.Inte
 
 	// Create a number of watchers that will not be reading any result.
 	nonReadingWatchers := 50
-	for i := 0; i < nonReadingWatchers; i++ {
+	for range nonReadingWatchers {
 		watcher, err := store.Watch(ctx, KeyFunc("test-ns", ""), options)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
@@ -464,7 +464,7 @@ func RunTestWatcherTimeout(ctx context.Context, t *testing.T, store storage.Inte
 	// Create more events to ensure that we're not blocking other watchers
 	// forever.
 	startTime := time.Now()
-	for i := 0; i < 22; i++ {
+	for i := range 22 {
 		out := &example.Pod{}
 		pod := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i), Namespace: "test-ns"}}
 		if err := store.Create(ctx, computePodKey(pod), pod, out, 0); err != nil {
@@ -1134,7 +1134,7 @@ func RunTestOptionalWatchBookmarksWithCorrectResourceVersion(ctx context.Context
 
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			select {
 			case <-done:
 				return

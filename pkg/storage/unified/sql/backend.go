@@ -147,6 +147,7 @@ func NewStorageBackend(
 			DisableStorageServices:  disableStorageServices,
 			DisablePruner:           cfg.DisablePruner,
 			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
 		})
 	}
 
@@ -199,8 +200,9 @@ func NewStorageBackend(
 
 	if cfg.EnableSQLKVCompatibilityMode {
 		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-			Dialect: dialect,
-			DB:      dbConn,
+			Dialect:                 dialect,
+			DB:                      dbConn,
+			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
@@ -257,6 +259,10 @@ type BackendOptions struct {
 
 	// If not zero, the backend will regularly remove times from resource_last_import_time table older than this.
 	LastImportTimeMaxAge time.Duration
+
+	// BatchTransactionTimeout bounds one batched WithTx in the resource version
+	// manager. Zero selects the rvmanager default.
+	BatchTransactionTimeout time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -293,6 +299,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		migrationParquetBuffer:  opts.MigrationParquetBuffer,
 		tmpDir:                  opts.TmpDir,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
+		batchTxnTimeout:         opts.BatchTransactionTimeout,
 		garbageCollection:       garbageCollection,
 	}
 	if err := backend.Init(ctx); err != nil {
@@ -345,6 +352,7 @@ type backend struct {
 
 	disablePruner           bool
 	dashboardVersionsToKeep int
+	batchTxnTimeout         time.Duration
 	historyPruner           resource.Pruner
 
 	garbageCollection GarbageCollectionConfig
@@ -391,8 +399,9 @@ func (b *backend) initLocked(ctx context.Context) error {
 
 	// Initialize ResourceVersionManager
 	rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-		Dialect: b.dialect,
-		DB:      b.db,
+		Dialect:                 b.dialect,
+		DB:                      b.db,
+		BatchTransactionTimeout: b.batchTxnTimeout,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create resource version manager: %w", err)
@@ -725,9 +734,9 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		folder = event.Object.GetFolder()
 	}
 
-	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
+	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(txnCtx context.Context, tx db.Tx) (string, error) {
 		// 1. Insert into resource
-		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
+		if _, err := dbutil.Exec(txnCtx, tx, sqlResourceInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
@@ -740,7 +749,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		}
 
 		// 2. Insert into resource history
-		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
+		if _, err := dbutil.Exec(txnCtx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
@@ -814,9 +823,9 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 	}
 
 	// Use rvManager.ExecWithRV instead of direct transaction
-	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
+	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(txnCtx context.Context, tx db.Tx) (string, error) {
 		// 1. Update resource
-		res, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
+		res, err := dbutil.Exec(txnCtx, tx, sqlResourceUpdate, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event, // includes the RV
 			Folder:      folder,
@@ -830,7 +839,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		}
 
 		// 2. Insert into resource history
-		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
+		if _, err := dbutil.Exec(txnCtx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
@@ -872,9 +881,9 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	if event.Object != nil {
 		folder = event.Object.GetFolder()
 	}
-	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
+	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(txnCtx context.Context, tx db.Tx) (string, error) {
 		// 1. delete from resource
-		res, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
+		res, err := dbutil.Exec(txnCtx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			GUID:        event.GUID,
@@ -887,7 +896,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		}
 
 		// 2. Add event to resource history
-		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
+		if _, err := dbutil.Exec(txnCtx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
@@ -944,30 +953,38 @@ func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest)
 
 	// TODO: validate key ?
 
-	if req.ResourceVersion > 0 {
-		return b.readHistory(ctx, req.Key, req.ResourceVersion)
-	}
-
-	readReq := &sqlResourceReadRequest{
-		SQLTemplate: sqltemplate.New(b.dialect),
-		Request:     req,
-		Response:    NewReadResponse(),
-	}
 	var res *resource.BackendReadResponse
-	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		var err error
-		res, err = dbutil.QueryRow(ctx, tx, sqlResourceRead, readReq)
-		return err
-	})
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return &resource.BackendReadResponse{
-			Error: resource.NewNotFoundError(req.Key),
+	if req.ResourceVersion > 0 {
+		res = b.readHistory(ctx, req.Key, req.ResourceVersion)
+	} else {
+		readReq := &sqlResourceReadRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Request:     req,
+			Response:    NewReadResponse(),
 		}
-	} else if err != nil {
-		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+		err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+			var err error
+			res, err = dbutil.QueryRow(ctx, tx, sqlResourceRead, readReq)
+			return err
+		})
+
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			res = &resource.BackendReadResponse{Error: resource.NewNotFoundError(req.Key)}
+		case err != nil:
+			res = &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+		}
 	}
 
+	if resource.IsResourceNameMixedCase(req, res) {
+		b.log.Warn("resource name case mismatch in ReadResource",
+			"namespace", req.Key.Namespace,
+			"group", req.Key.Group,
+			"resource", req.Key.Resource,
+			"requested_name", req.Key.Name,
+			"stored_name", res.Key.Name,
+		)
+	}
 	return res
 }
 

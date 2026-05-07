@@ -24,9 +24,9 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-`grafanactl` is being deprecated, and we're bringing all our learnings and experience into the new, improved CLI tool [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx).
+`grafanactl` is being deprecated, and we're bringing all our learning and experience into the new, improved CLI tool [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx). The `grafanactl` repository in GitHub will be archived on June 1, 2026.
 
-To migrate from `grafanctl` to `gcx`, search-and-replace `grafanactl` with `gcx`. For `grafanactl resources serve`, use `gcx dev serve` instead.
+To migrate from `grafanactl` to `gcx`, search-and-replace `grafanactl` with `gcx`. For `grafanactl resources serve`, use `gcx dev serve` instead.
 
 {{< /admonition >}}
 
@@ -53,21 +53,21 @@ This can be configured with the `-p, --path` flags to specify custom paths on di
 1. Pull those resources from the development environment to your local machine:
 
    ```bash
-   grafanactl config use-context YOUR_CONTEXT  # for example "dev"
-   grafanactl resources pull --path ./resources/ -o yaml # or json
+   grafanactl config use-context YOUR_CONTEXT
+   grafanactl resources pull --path ./resources/ -o yaml
    ```
 
 1. (Optional) Preview the resources locally before pushing:
 
    ```bash
-   grafanactl config use-context YOUR_CONTEXT  # for example "prod"
+   grafanactl config use-context YOUR_CONTEXT
    grafanactl resources serve ./resources/
    ```
 
 1. Switch to the **production instance** and push the resources:
 
    ```bash
-   grafanactl config use-context YOUR_CONTEXT  # for example "prod"
+   grafanactl config use-context YOUR_CONTEXT
    grafanactl resources push -p ./resources/
    ```
 
@@ -78,8 +78,8 @@ This workflow helps you back up all Grafana resources from one instance and late
 1. Use `grafanactl` to pull all resources from your target environment:
 
    ```bash
-   grafanactl config use-context YOUR_CONTEXT  # for example "prod"
-   grafanactl resources pull --path ./resources/ -o yaml # or json
+   grafanactl config use-context YOUR_CONTEXT
+   grafanactl resources pull --path ./resources/ -o yaml
    ```
 
 1. Save the exported resources to version control or cloud storage.
@@ -89,14 +89,14 @@ This workflow helps you back up all Grafana resources from one instance and late
 1. (Optional) Preview the backup locally:
 
    ```bash
-   grafanactl config use-context YOUR_CONTEXT  # for example "prod"
+   grafanactl config use-context YOUR_CONTEXT
    grafanactl resources serve ./resources/
    ```
 
 1. To restore the resources later or restore them on another instance, push the saved resources:
 
    ```bash
-   grafanactl config use-context YOUR_CONTEXT  # for example "prod"
+   grafanactl config use-context YOUR_CONTEXT
    grafanactl resources push -p ./resources/
    ```
 
@@ -109,7 +109,7 @@ With this workflow, you can define and manage dashboards as code, saving them to
 1. Serve and preview the output of the dashboard generator locally:
 
    ```bash
-   grafanactl config use-context YOUR_CONTEXT  # for example "dev"
+   grafanactl config use-context YOUR_CONTEXT
    grafanactl resources serve --script 'go run scripts/generate-dashboard.go' --watch './scripts'
    ```
 
@@ -122,7 +122,7 @@ With this workflow, you can define and manage dashboards as code, saving them to
 1. Push the generated resources to your Grafana instance:
 
    ```bash
-   grafanactl config use-context YOUR_CONTEXT  # for example "dev"
+   grafanactl config use-context YOUR_CONTEXT
    grafanactl resources push -p ./resources/
    ```
 
@@ -137,7 +137,7 @@ Use this workflow to identify dashboards that reference incorrect or outdated da
 1. Set the context to the appropriate environment:
 
    ```bash
-   grafanactl config use-context YOUR_CONTEXT  # for example "prod"
+   grafanactl config use-context YOUR_CONTEXT
    ```
 
 1. Find dashboards using specific data sources:
@@ -185,7 +185,7 @@ Use this workflow to locate dashboards using a deprecated API version and mark t
 1. Set the context to the appropriate environment:
 
    ```bash
-   grafanactl config use-context YOUR_CONTEXT  # for example "prod"
+   grafanactl config use-context YOUR_CONTEXT
    ```
 
 1. List all available resources types and versions:

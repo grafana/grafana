@@ -21,13 +21,12 @@ policy:
             - Workflow .github/workflows/feature-toggles-ci.yml succeeded or skipped
             - Workflow .github/workflows/frontend-lint.yml succeeded or skipped
             - Workflow .github/workflows/go-lint.yml succeeded or skipped
+            - Workflow .github/workflows/govulncheck.yml succeeded or skipped
             - Workflow .github/workflows/i18n-verify.yml succeeded or skipped
             - Workflow .github/workflows/lint-build-docs.yml succeeded or skipped
             - Workflow .github/workflows/policybot.yml succeeded or skipped
             - Workflow .github/workflows/pr-build-grafana.yml succeeded or skipped
             - Workflow .github/workflows/pr-checks.yml succeeded or skipped
-            - Workflow .github/workflows/pr-codeql-analysis-javascript.yml succeeded or skipped
-            - Workflow .github/workflows/pr-codeql-analysis-python.yml succeeded or skipped
             - Workflow .github/workflows/pr-commands.yml succeeded or skipped
             - Workflow .github/workflows/pr-dependabot-update-go-workspace.yml succeeded or skipped
             - Workflow .github/workflows/pr-e2e-tests.yml succeeded or skipped
@@ -44,7 +43,6 @@ policy:
             - Workflow .github/workflows/shellcheck.yml succeeded or skipped
             - Workflow .github/workflows/storybook-a11y.yml succeeded or skipped
             - Workflow .github/workflows/swagger-gen.yml succeeded or skipped
-            - Workflow .github/workflows/trivy-scan.yml succeeded or skipped
             - Workflow .github/workflows/trufflehog.yml succeeded or skipped
             - default to approval
         - override policies
@@ -52,6 +50,11 @@ policy:
 approval_rules:
   - name: Workflow .github/workflows/actionlint.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^\.github\/workflows\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actionlint\.yaml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/actionlint\.yml$
@@ -96,6 +99,25 @@ approval_rules:
             - .github/workflows/backend-unit-tests.yml
   - name: Workflow .github/workflows/build-go-matrix.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
+          - ^(?:[^/]*)\.go$
+          - ^pkg\/(?:(?:[^/]*(?:/|$))*)$
+          - ^apps\/(?:(?:[^/]*(?:/|$))*)$
+          - ^Makefile$
+          - ^packaging\/(?:(?:[^/]*(?:/|$))*)$
+          - ^scripts\/build-rpm\.sh$
+          - ^scripts\/build-deb\.sh$
+          - ^scripts\/build-targz\.sh$
+          - ^scripts\/verify-pkg-stig\.sh$
+          - ^\.github\/actions\/setup-go\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/setup-fpm\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/setup-enterprise\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/build-go-matrix\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/build-go-matrix\.yml$
@@ -269,6 +291,25 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/go-lint.yml
+  - name: Workflow .github/workflows/govulncheck.yml succeeded or skipped
+    if:
+      changed_files:
+        paths:
+          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.go$
+          - ^\.github\/workflows\/govulncheck\.yml$
+          - ^\.citools\/src\/govulncheck\/(?:(?:[^/]*(?:/|$))*)$
+          - ^go\.(?:[^/]*)$
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/govulncheck\.yml$
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/govulncheck.yml
   - name: Workflow .github/workflows/i18n-verify.yml succeeded or skipped
     if:
       file_not_deleted:
@@ -348,44 +389,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-checks.yml
-  - name: Workflow .github/workflows/pr-codeql-analysis-javascript.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.js$
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.ts$
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.tsx$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/pr-codeql-analysis-javascript\.yml$
-      targets_branch:
-        pattern: (^main$)
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/pr-codeql-analysis-javascript.yml
-  - name: Workflow .github/workflows/pr-codeql-analysis-python.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.py$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/pr-codeql-analysis-python\.yml$
-      targets_branch:
-        pattern: (^main$)
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/pr-codeql-analysis-python.yml
   - name: Workflow .github/workflows/pr-commands.yml succeeded or skipped
     if:
       file_not_deleted:
@@ -509,7 +512,7 @@ approval_rules:
         paths:
           - ^\.github\/workflows\/pr-mt-service-compatibility\.yml$
       targets_branch:
-        pattern: (^main$|^test\/frontend-backend-separation-action$)
+        pattern: (^main$)
     requires:
       conditions:
         has_workflow_result:
@@ -535,6 +538,35 @@ approval_rules:
             - .github/workflows/pr-patch-check-event.yml
   - name: Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^Makefile$
+          - ^Dockerfile$
+          - ^public\/(?:(?:[^/]*(?:/|$))*)$
+          - ^packages\/(?:(?:[^/]*(?:/|$))*)$
+          - ^apps\/(?:(?:[^/]*(?:/|$))*)$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
+          - ^(?:(?:[^/]*(?:/|$))*)package\.json$
+          - ^(?:(?:[^/]*(?:/|$))*)nx\.json$
+          - ^(?:(?:[^/]*(?:/|$))*)project\.json$
+          - ^(?:(?:[^/]*(?:/|$))*)yarn\.lock$
+          - ^conf\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.yarnrc\.yml$
+          - ^\.yarn\/(?:(?:[^/]*(?:/|$))*)$
+          - ^tsconfig\.json$
+          - ^(?:[^/]*)\.js$
+          - ^(?:[^/]*)\.ts$
+          - ^(?:[^/]*)\.config\.ts$
+          - ^scripts\/(?:(?:[^/]*(?:/|$))*)$
+          - ^emails\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.citools\/(?:(?:[^/]*(?:/|$))*)$
+          - ^kinds\/(?:(?:[^/]*(?:/|$))*)$
+          - ^embed\.go$
+          - ^packaging\/docker\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/pr-test-docker\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/pr-test-docker\.yml$
@@ -548,6 +580,21 @@ approval_rules:
             - .github/workflows/pr-test-docker.yml
   - name: Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^Makefile$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
+          - ^(?:[^/]*)\.go$
+          - ^pkg\/(?:(?:[^/]*(?:/|$))*)$
+          - ^apps\/(?:(?:[^/]*(?:/|$))*)$
+          - ^scripts\/ci\/backend-tests\/(?:(?:[^/]*(?:/|$))*)$
+          - ^devenv\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/setup-go\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/setup-enterprise\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/pr-test-integration\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/pr-test-integration\.yml$
@@ -626,23 +673,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/swagger-gen.yml
-  - name: Workflow .github/workflows/trivy-scan.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^go\.(?:[^/]*)$
-          - ^\.github\/workflows\/trivy-scan\.yml$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/trivy-scan\.yml$
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/trivy-scan.yml
   - name: Workflow .github/workflows/trufflehog.yml succeeded or skipped
     if:
       file_not_deleted:

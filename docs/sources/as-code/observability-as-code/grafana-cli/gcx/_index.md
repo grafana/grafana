@@ -37,7 +37,7 @@ The Grafana Cloud CLI `gcx` is a single CLI that allows you to manage both Grafa
 
 Among other, the `gcx` CLI provides the following benefits:
 
-- **Manage Grafana on-prem and Grafana Cloud:** Use a single tool for dashboards, alerting, SLOs, on-call, synthetic checks, load testing, and more.
+- **Manage Grafana OSS/Enterprise and Grafana Cloud:** Use a single tool for dashboards, alerting, SLOs, on-call, synthetic checks, load testing, and more.
 - **AI agent friendly:** Agent mode auto-detected for Claude Code, Copilot, Cursor, and other.
 - **Automation:** `gcx` uses JSON/YAML output, structured errors, and predictable exit codes.
 - **GitOps**: Pull resources to files, version in Git, or push back with full round-trip fidelity.
@@ -50,7 +50,7 @@ If you want to migrate from `grafanctl` to `gcx`, search-and-replace `grafanactl
 
 ## Learn more
 
-Refer to the [`clx` repository](https://github.com/grafana/gcx) in GitHub for more information on:
+Refer to the [`gcx` repository](https://github.com/grafana/gcx) in GitHub for more information on:
 
 - Installation and configuration
 - How to managing resources, including dashboards-as-code

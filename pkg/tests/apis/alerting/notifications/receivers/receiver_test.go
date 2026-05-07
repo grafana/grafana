@@ -1732,6 +1732,94 @@ func TestIntegrationAllowedIntegrations(t *testing.T) {
 	})
 }
 
+func TestIntegrationEmailValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		UnifiedAlertingEmailsToOrgOnly: true,
+	})
+
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	const emailAddress = "orgmember@example.com"
+
+	emailIntegration := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"`+emailAddress+`"}`)
+
+	newReceiver := func(title string) *v1beta1.Receiver {
+		return &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        title,
+				Integrations: []v1beta1.ReceiverIntegration{emailIntegration},
+			},
+		}
+	}
+
+	t.Run("create with email not in org is rejected", func(t *testing.T) {
+		_, err := adminClient.Create(ctx, newReceiver("email-not-in-org"), resource.CreateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got: %v", err)
+	})
+
+	helper.CreateUser("orgmember", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{})
+
+	t.Run("create with email belonging to an org member succeeds", func(t *testing.T) {
+		created, err := adminClient.Create(ctx, newReceiver("email-in-org"), resource.CreateOptions{})
+		require.NoError(t, err)
+
+		t.Run("update with email not in org is rejected", func(t *testing.T) {
+			updated := created.Copy().(*v1beta1.Receiver)
+			unknownEmail := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"unknown@example.com"}`)
+			updated.Spec.Integrations = []v1beta1.ReceiverIntegration{unknownEmail}
+			_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsBadRequest(err), "expected bad request but got: %v", err)
+		})
+
+		t.Run("update with email belonging to an org member succeeds", func(t *testing.T) {
+			existing, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			_, err = adminClient.Update(ctx, existing, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("create with email belonging to a user in a different org is rejected", func(t *testing.T) {
+		otherOrgUser := helper.CreateUser("otherorguser", apis.Org2, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{})
+		otherOrgEmail := otherOrgUser.Identity.GetEmail()
+		require.NotEmpty(t, otherOrgEmail, "expected Org2 user to have a non-empty email")
+
+		otherOrgIntegration := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"`+otherOrgEmail+`"}`)
+		receiver := &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        "email-in-other-org",
+				Integrations: []v1beta1.ReceiverIntegration{otherOrgIntegration},
+			},
+		}
+		_, err := adminClient.Create(ctx, receiver, resource.CreateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got: %v", err)
+	})
+
+	t.Run("create with email belonging to a user who is a member of both orgs succeeds", func(t *testing.T) {
+		multiOrgUser := helper.CreateUser("multiorguser", apis.Org2, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{})
+		helper.AddUserToOrg(multiOrgUser, apis.Org1, org.RoleViewer)
+		multiOrgEmail := multiOrgUser.Identity.GetEmail()
+		require.NotEmpty(t, multiOrgEmail, "expected multi-org user to have a non-empty email")
+
+		multiOrgIntegration := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"`+multiOrgEmail+`"}`)
+		receiver := &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        "email-in-both-orgs",
+				Integrations: []v1beta1.ReceiverIntegration{multiOrgIntegration},
+			},
+		}
+		_, err := adminClient.Create(ctx, receiver, resource.CreateOptions{})
+		require.NoError(t, err, "expected Org1 admin to be able to use the email of a user who is a member of Org1 (even if Org2 is their default org)")
+	})
+}
+
 func createIntegration(t *testing.T, integrationType schema.IntegrationType) v1beta1.ReceiverIntegration {
 	cfg, ok := notifytest.AllKnownV1ConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)

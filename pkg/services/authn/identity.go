@@ -58,10 +58,9 @@ type Identity struct {
 	HelpFlags1 user.HelpFlags1
 	// LastSeenAt is the time when the entity was last seen.
 	LastSeenAt time.Time
-	// Teams is the list of teams the entity is a member of.
-	Teams []int64
-	// idP Groups that the entity is a member of. This is only populated if the
-	// identity provider supports groups.
+	// Deprecated: Teams is the list of teams the entity is a member of.
+	TeamIDs []int64
+	// Team UIDs (or groups)
 	Groups []string
 	// OAuthToken is the OAuth token used to authenticate the entity.
 	OAuthToken *oauth2.Token
@@ -263,7 +262,7 @@ func (i *Identity) GetGlobalPermissions() map[string][]string {
 }
 
 func (i *Identity) GetTeams() []int64 {
-	return i.Teams
+	return i.TeamIDs
 }
 
 func (i *Identity) HasRole(role org.RoleType) bool {
@@ -309,7 +308,8 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IsDisabled:        i.IsDisabled,
 		HelpFlags1:        i.HelpFlags1,
 		LastSeenAt:        i.LastSeenAt,
-		Teams:             i.Teams,
+		TeamIDs:           i.TeamIDs,
+		TeamUIDs:          i.Groups,
 		Permissions:       i.Permissions,
 		IDToken:           i.IDToken,
 		IDTokenClaims:     i.IDTokenClaims,

@@ -245,12 +245,13 @@ describe('InstallControlsButton', () => {
   });
 
   describe('marketplace plugin', () => {
-    it('should render a link to grafana.com installation tab instead of install button', () => {
+    it('should render a link to grafana.com installation tab instead of install button when not entitled', () => {
       render(
         <TestProvider>
           <InstallControlsButton
             plugin={{ ...plugin, distributionType: 'marketplace' }}
             pluginStatus={PluginStatus.INSTALL}
+            entitlement={{ entitled: false, isLoading: false }}
           />
         </TestProvider>
       );
@@ -258,6 +259,39 @@ describe('InstallControlsButton', () => {
       expect(link).toHaveTextContent(/contact us/i);
       expect(link).toHaveAttribute('href', expect.stringContaining('/plugins/test-plugin?tab=installation'));
       expect(link).toHaveAttribute('target', '_blank');
+    });
+
+    it('should render a disabled install button with a spinner when entitlement is loading', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton
+            plugin={{ ...plugin, distributionType: 'marketplace' }}
+            pluginStatus={PluginStatus.INSTALL}
+            entitlement={{ entitled: false, isLoading: true }}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByRole('button');
+      expect(button).toHaveTextContent(/install/i);
+      expect(button).toBeDisabled();
+      expect(button.querySelector('svg')).toBeInTheDocument();
+      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    });
+
+    it('should render the normal install button when the org is entitled', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton
+            plugin={{ ...plugin, distributionType: 'marketplace' }}
+            pluginStatus={PluginStatus.INSTALL}
+            entitlement={{ entitled: true, isLoading: false }}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByRole('button');
+      expect(button).toHaveTextContent(/install/i);
+      expect(button).not.toBeDisabled();
+      expect(screen.queryByRole('link')).not.toBeInTheDocument();
     });
 
     it('should not render marketplace link when distributionType is not set', () => {

@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataQuery } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { QueryEditorType } from '../../../constants';
 import { ds1SettingsMock, renderWithQueryEditorProvider } from '../../testUtils';
@@ -243,6 +244,81 @@ describe('SidebarCard', () => {
       await user.keyboard('[Enter]');
 
       expect(onSelect).toHaveBeenCalledWith({});
+    });
+
+    it('fires a DOM blur on the focused editor even when mousedown preventDefault blocks focus transfer', async () => {
+      // @hello-pangea/dnd installs a capture-phase mousedown listener that preventDefaults, so the
+      // browser's native focus transfer never fires a blur on the previously focused element.
+      // Without the force-blur in handleMouseDown, Monaco-like editors never see a DOM blur and
+      // their pending value is never flushed through onChange before the editor unmounts.
+      const onSelect = jest.fn();
+      const onEditorBlur = jest.fn();
+      const user = userEvent.setup();
+      renderSidebarCard({ id: 'A', onSelect });
+
+      const suppressFocusTransfer = (e: Event) => e.preventDefault();
+      window.addEventListener('mousedown', suppressFocusTransfer, true);
+
+      const editorLike = document.createElement('input');
+      editorLike.addEventListener('blur', onEditorBlur, true);
+      document.body.appendChild(editorLike);
+      editorLike.focus();
+
+      try {
+        await user.click(screen.getByRole('button', { name: /select card A/i }));
+
+        expect(onEditorBlur).toHaveBeenCalled();
+        expect(onSelect).toHaveBeenCalled();
+      } finally {
+        window.removeEventListener('mousedown', suppressFocusTransfer, true);
+        document.body.removeChild(editorLike);
+      }
+    });
+  });
+
+  describe('multi-select checkbox', () => {
+    const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+    const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+
+    beforeAll(() => {
+      setTestFlags({ queryEditorNextMultiSelect: true });
+    });
+
+    afterAll(() => {
+      setTestFlags();
+    });
+
+    it('does not render the checkbox when multiSelectMode is off', () => {
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries }
+      );
+
+      expect(screen.queryByRole('checkbox', { hidden: true })).not.toBeInTheDocument();
+    });
+
+    it('checks the checkbox when the card is selected', () => {
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={true} item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { multiSelectMode: true } }
+      );
+
+      expect(screen.getByRole('checkbox', { hidden: true })).toBeChecked();
+    });
+
+    it('checks the checkbox when the card is part of a selection', () => {
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} isPartOfSelection={true} item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { multiSelectMode: true } }
+      );
+
+      expect(screen.getByRole('checkbox', { hidden: true })).toBeChecked();
     });
   });
 

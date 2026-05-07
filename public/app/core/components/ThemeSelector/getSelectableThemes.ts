@@ -5,8 +5,8 @@ export function getSelectableThemes() {
   const allowedExtraThemes = [];
 
   if (config.featureToggles.colorblindThemes) {
-    allowedExtraThemes.push('deuteranopia_protanopia_dark');
-    allowedExtraThemes.push('deuteranopia_protanopia_light');
+    allowedExtraThemes.push('deut_prot_dark');
+    allowedExtraThemes.push('deut_prot_light');
     allowedExtraThemes.push('tritanopia_dark');
     allowedExtraThemes.push('tritanopia_light');
   }

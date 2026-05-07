@@ -15,9 +15,10 @@ import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { makeFolderAlertsLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
-import { isUngroupedRuleGroup } from '../utils/rules';
+import { getPromGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
+import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import { DataSourceSection } from './components/DataSourceSection';
 import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
@@ -194,19 +195,37 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
     [group.name, group.folderUid]
   );
 
-  const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
+  if (isUngroupedRuleGroup(group.name)) {
+    // Each `no_group_for_rule_<uid>` group carries exactly one rule by construction on the backend.
+    const rule = group.rules.at(0);
+    if (!rule) {
+      return null;
+    }
+    return (
+      <GrafanaRuleListItem
+        rule={rule}
+        groupIdentifier={groupIdentifier}
+        namespaceName={namespaceName}
+        showLocation={false}
+        evalIntervalSeconds={group.interval}
+      />
+    );
+  }
 
-  const firstRuleName = group.rules[0]?.name ?? t('alerting.rules-group.unknown-rule', 'Unknown Rule');
-  const groupDisplayName = isUngroupedRuleGroup(group.name)
-    ? t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', { ruleName: firstRuleName })
-    : group.name;
+  const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
 
   return (
     <ListGroup
       key={group.name}
-      name={groupDisplayName}
+      name={group.name}
       metaRight={<GroupIntervalIndicator seconds={group.interval} />}
-      actions={<GrafanaGroupActions folderUid={group.folderUid} groupName={group.name} />}
+      actions={
+        <GrafanaGroupActions
+          folderUid={group.folderUid}
+          groupName={group.name}
+          readOnly={getPromGroupReadOnlyStatus(group).readOnly}
+        />
+      }
       href={detailsLink}
       isOpen={false}
     >
@@ -218,15 +237,16 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
 interface GrafanaGroupActionsProps {
   folderUid: string;
   groupName: string;
+  readOnly: boolean;
 }
 
-function GrafanaGroupActions({ folderUid, groupName }: GrafanaGroupActionsProps) {
+function GrafanaGroupActions({ folderUid, groupName, readOnly }: GrafanaGroupActionsProps) {
   const [showExportDrawer, setShowExportDrawer] = useState(false);
 
   const [editRuleSupported, editRuleAllowed] = useAlertingAbility(AlertingAction.UpdateAlertRule);
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
-  const canEdit = editRuleSupported && editRuleAllowed;
+  const canEdit = editRuleSupported && editRuleAllowed && !readOnly;
   const canExport = exportRulesSupported && exportRulesAllowed;
 
   if (!canEdit && !canExport) {

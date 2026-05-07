@@ -58,17 +58,11 @@ jobs:
 
     - name: Check for go mod & workspace changes
       run: |
-        if ! git diff --exit-code --quiet -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum; then
+        if ! git diff --exit-code --quiet -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum pkg/extensions/enterprise_imports*.go; then
           echo "Changes detected:"
-          git diff -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum
+          git diff -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum pkg/extensions/enterprise_imports*.go
           echo ""
           echo "Please run 'make update-workspace' and commit the changes."
-          echo ""
-          echo "If you are adding or removing a dependency used **only** by Enterprise code,"
-          echo "please update pkg/extensions/enterprise_imports.go or pkg/extensions/enterprise_imports_test.go"
-          echo ""
-          echo "You should add blank imports for dependencies that are used in enterprise code but isn't in OSS."
-          echo "If this is a test-only dependency, add it to enterprise_imports_test.go instead"
           exit 1
         fi
 
@@ -134,7 +128,7 @@ jobs:
             echo "Uncomitted changes detected in pkg/server/enterprise_wire_gen.go"
           fi
         fi
-        
+
         if [ "$OSS_WIRE_CHANGED" = "false" ] && [ "$ENTERPRISE_WIRE_CHANGED" = "false" ]; then
           echo "No changes in generated Go files"
         else

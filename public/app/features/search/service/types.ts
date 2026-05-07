@@ -98,7 +98,7 @@ export interface QueryResponse {
   view: DataFrameView<DashboardQueryResult>;
 
   /** Supports lazy loading.  This will mutate the `view` object above, adding rows as needed */
-  loadMoreItems: (startIndex: number, stopIndex: number) => Promise<void>;
+  loadMoreItems: (stopIndex: number) => Promise<void>;
 
   /** Checks if a row in the view needs to be added */
   isItemLoaded: (index: number) => boolean;

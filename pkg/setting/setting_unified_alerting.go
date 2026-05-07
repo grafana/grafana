@@ -158,6 +158,10 @@ type UnifiedAlertingSettings struct {
 	BacktestingMaxEvaluations int
 
 	IgnorePendingForNoDataAndError bool
+
+	// LimitEmailToOrgMembers restricts email contact point recipients to users that belong to the organization (including disabled users).
+	// Applied only during contact point configuration (Create/Update), not at notification send time.
+	LimitEmailToOrgMembers bool
 }
 
 type RecordingRuleSettings struct {
@@ -614,6 +618,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaCfg.BacktestingMaxEvaluations < 0 {
 		uaCfg.BacktestingMaxEvaluations = 100
 	}
+
+	uaCfg.LimitEmailToOrgMembers = ua.Key("limit_email_to_org_members").MustBool(false)
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
