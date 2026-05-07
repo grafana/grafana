@@ -1,5 +1,5 @@
 import { type AnnotationEvent, type DataFrame, toDataFrame } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { annotationK8sClient, resetAnnotationK8sClientForTests } from 'app/api/clients/annotation/v0alpha1';
 import { type StateHistoryItem } from 'app/types/unified-alerting';
 
@@ -88,7 +88,9 @@ let instance: AnnotationServer | null = null;
 
 export function annotationServer(): AnnotationServer {
   if (!instance) {
-    instance = config.featureToggles.kubernetesAnnotationsClient ? new K8sAnnotationServer() : new LegacyAnnotationServer();
+    // TEMP: backend FF PR (mdv/annotations-k8s-feature-flag) still in review, force the new k8s server for local testing.
+    // Restore `config.featureToggles.kubernetesAnnotationsClient ? ... : ...` once the backend lands.
+    instance = new K8sAnnotationServer();
   }
   return instance;
 }

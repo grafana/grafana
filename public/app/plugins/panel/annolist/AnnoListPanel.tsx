@@ -128,7 +128,10 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       : interpolatedTags;
 
     let annotations: AnnotationEvent[];
-    if (config.featureToggles.kubernetesAnnotationsClient) {
+    // TEMP: backend FF PR (mdv/annotations-k8s-feature-flag) still in review, force the new k8s path for local testing.
+    // Restore `if (config.featureToggles.kubernetesAnnotationsClient)` once the backend lands.
+    // eslint-disable-next-line no-constant-condition
+    if (true) {
       // /search hardcodes Type: "annotation" on the backend, so the legacy `type: 'annotation'`
       // filter is implicit. User filter switches from legacy `userId` to k8s `createdBy`.
       const events = await annotationK8sClient.search(
