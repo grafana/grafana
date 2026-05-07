@@ -207,7 +207,7 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
   };
 
   return (
-    <Field label={t('components.dimension-fields.label-dimensions', 'Dimensions')}>
+    <Field useFieldset label={t('components.dimension-fields.label-dimensions', 'Dimensions')}>
       <EditorList items={dimensionFilters} onChange={changedFunc} renderItem={renderFilters} />
     </Field>
   );

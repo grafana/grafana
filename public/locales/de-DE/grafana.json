@@ -4462,6 +4462,14 @@
       "resource-detail-dashboards": "Sie haben {{usage}} von {{limit}} Dashboards erstellt ({{percentage}} %).",
       "resource-detail-folders": "Sie haben {{usage}} von {{limit}} Ordnern erstellt ({{percentage}} %)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Verlauf löschen",
       "error": "Zuletzt angesehene Dashboards konnten nicht geladen werden.",
@@ -5270,7 +5278,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Einstellungen"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5680,7 @@
         "title": "Variablen"
       },
       "variable": {
-        "change-type": "Ändern",
+        "change-type": "",
         "change-type-aria-label": "Variablentyp ändern",
         "custom-options": {
           "apply": "Anwenden",
@@ -5989,7 +5997,7 @@
       "cancel": "Abbrechen",
       "common": {
         "copy": "Kopieren",
-        "copy-or-duplicate": "Kopieren/einfügen oder duplizieren",
+        "copy-tooltip": "",
         "delete": "Löschen",
         "duplicate": "Duplikat",
         "layout": "Layout",
@@ -6028,7 +6036,7 @@
     },
     "new-panel": {
       "aria-label": "Nicht konfiguriertes Panel. Drücken Sie die Tabulatortaste, um die Konfigurationsoptionen anzuzeigen.",
-      "configure-button": "Konfigurieren",
+      "configure-button": "",
       "configure-button-menu": "Menü umschalten",
       "configure-visualization": "Visualisierung konfigurieren",
       "empty-state-message": "Führen Sie eine Abfrage aus, um sie hier zu visualisieren, oder gehen Sie weiter zu allen Visualisierungen, um andere Panel-Typen hinzuzufügen",
@@ -6270,10 +6278,8 @@
       "title-provisioned": "Bereitgestelltes Dashboard"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Ein Dashboard mit demselben Namen im ausgewählten Ordner existiert bereits.<br/><2>Möchten Sie dieses Dashboard trotzdem speichern?</2>",
       "body-version-mismatch": "Eine andere Person hat dieses Dashboard aktualisiert<br/><2>Möchten Sie dieses Dashboard trotzdem speichern?</2>",
       "confirmText-save-and-overwrite": "Speichern und überschreiben",
-      "title-name-exists": "Widerspruch",
       "title-version-mismatch": "Widerspruch"
     },
     "save-dashboard-form": {
@@ -7328,10 +7334,6 @@
       "target-path-label": "Zielpfad",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Ein Dashboard mit demselben Namen im ausgewählten Ordner existiert bereits. Möchten Sie dieses Dashboard trotzdem speichern?",
-      "title-name-already-exists": "Der Name existiert bereits"
-    },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
         "proceed": "Fortfahren"
@@ -8038,19 +8040,6 @@
       "aria-label-create-a-dashboard": "Dashboard erstellen",
       "aria-label-explore-data": "Daten untersuchen",
       "aria-label-suggested-dashboards": "Vorgeschlagene Dashboards"
-    },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Warnung wird nicht unterstützt",
-      "text-alerting-supported": "Warnung wird unterstützt"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Der Name wird verwendet, wenn Sie die Datenquelle in Panels auswählen. Die Standard-Datenquelle ist in neuen Panels vorausgewählt."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Grundeinstellungen der Seite „Datenquelleneinstellungen“",
-      "basic-settings-name-placeholder-name": "Name",
-      "label-default": "Standard",
-      "label-name": "Name"
     },
     "build-a-dashboard-button": {
       "blank": "Leer",
@@ -11255,7 +11244,7 @@
     "description-order": "Neueste oder älteste Logs zuerst anzeigen. Wenn „Älteste zuerst“ ausgewählt ist, scrollt die Ansicht automatisch zu den neuesten Logs am unteren Rand.",
     "description-prettify-json": "JSON-Log-Einträge mit Einrückung und Zeilenumbrüchen formatieren.",
     "description-show-controls": "Anzeige von Steuerelementen für den Sprung zur letzten oder ersten Logzeile und Filtern nach Log-Ebene.",
-    "description-show-log-attributes": "Experimentell. Wenn OTel-Logs angezeigt werden, fügen Sie ein zusätzliches angezeigtes Feld mit relevanten Schlüsselwert-Paaren von Labels und Metadaten hinzu.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Werte mithilfe von Spalten ausrichten, wenn angezeigte Felder verwendet werden.",
     "description-wrap-lines": "Logs in einer einzigen Zeile anzeigen oder lange Log-Einträge so umbrechen, dass sie in das Panel passen.",
     "field-selector": {
@@ -11581,7 +11570,7 @@
       "line-contains-not": "„Als Zeile hinzufügen“ enthält keinen Filter",
       "search-text": "In Ergebnissen suchen"
     },
-    "show-log-attributes": "Log-Attribute für OTel-Logs anzeigen",
+    "show-log-attributes": "",
     "timestamp-format": "Zeitstempelauflösung",
     "un-themed-log-details": {
       "aria-label-data-links": "Datenlinks",

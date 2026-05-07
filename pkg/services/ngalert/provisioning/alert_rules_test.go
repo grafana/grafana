@@ -626,6 +626,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 					require.NoError(t, err)
 				} else {
 					require.Error(t, err)
+					require.True(t, errProvenanceMismatch.Base.Is(err))
 				}
 			})
 		}
@@ -1489,8 +1490,8 @@ func TestDeleteAlertRule(t *testing.T) {
 				return expectedErr
 			}
 
-			_, err := service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
-			require.ErrorIs(t, expectedErr, err)
+			err := service.DeleteAlertRule(context.Background(), u, rule.UID, groupProvenance)
+			require.ErrorIs(t, err, expectedErr)
 
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
