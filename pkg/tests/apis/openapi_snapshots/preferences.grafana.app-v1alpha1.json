@@ -1,6 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
+    "description": "Configure user, team, and org preferences",
     "title": "preferences.grafana.app/v1alpha1"
   },
   "paths": {
