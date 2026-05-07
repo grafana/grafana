@@ -140,7 +140,7 @@ func WithTTL(d time.Duration) AcquireOption {
 // WithAutoRenew enables automatic lease renewal. A background goroutine
 // extends the lease every renewInterval by creating the next generation.
 // Lost() is notified only when a renewal fails with ErrLeaseLost.
-// If renewInterval is zero, it defaults to half the TTL.
+// If renewInterval is zero, or if it's >= TTL, it defaults to 1/3 the TTL.
 func WithAutoRenew(renewInterval time.Duration) AcquireOption {
 	return func(o *acquireOptions) {
 		o.autoRenew = true
@@ -225,8 +225,8 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 
 		if cfg.autoRenew {
 			renewInterval := cfg.renewInterval
-			if renewInterval == 0 {
-				renewInterval = cfg.ttl / 2
+			if renewInterval == 0 || renewInterval >= cfg.ttl {
+				renewInterval = cfg.ttl / 3
 			}
 			go m.autoRenewLoop(l, cfg.ttl, renewInterval)
 		} else {
