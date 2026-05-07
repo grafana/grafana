@@ -372,10 +372,10 @@ var (
 		},
 		{
 			Name:            "kubernetesAnnotationsClient",
-			Description:     "Routes manual annotation create/update/delete and tag autocomplete from /api/annotations to the /apis/annotation.grafana.app endpoint",
+			Description:     "Enables usage of the new annotations API client",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDashboardsSquad,
-			RequiresRestart: true, // changes the API routing
+			RequiresRestart: false,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},

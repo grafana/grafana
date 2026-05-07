@@ -132,7 +132,7 @@ const (
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
 	// FlagKubernetesAnnotationsClient
-	// Routes manual annotation create/update/delete and tag autocomplete from /api/annotations to the /apis/annotation.grafana.app endpoint
+	// Enables usage of the new annotations API client
 	FlagKubernetesAnnotationsClient = "kubernetesAnnotationsClient"
 
 	// FlagKubernetesShortURLs
