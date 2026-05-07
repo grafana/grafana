@@ -12,9 +12,9 @@ export interface StoredRecentScopeSet {
 }
 
 export function readStoredRecentScopes(store: Store): StoredRecentScopeSet[] {
-  const content = store.get(RECENT_SCOPES_KEY);
   let parsed: unknown;
   try {
+    const content = store.get(RECENT_SCOPES_KEY);
     parsed = JSON.parse(content || '[]');
   } catch {
     return [];
@@ -70,6 +70,10 @@ export function writeRecentScope(store: Store, scopes: Scope[], scopeNodeId?: st
   const current = readStoredRecentScopes(store).filter((e) => [...e.scopeIds].sort().join(',') !== fingerprint);
   const updated = [entry, ...current].slice(0, RECENT_SCOPES_MAX);
 
-  store.set(RECENT_SCOPES_KEY, JSON.stringify(updated));
-  window.dispatchEvent(new Event(RECENT_SCOPES_CHANGED_EVENT));
+  try {
+    store.set(RECENT_SCOPES_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new Event(RECENT_SCOPES_CHANGED_EVENT));
+  } catch {
+    // Storage may be unavailable in sandboxed iframes — silently skip
+  }
 }
