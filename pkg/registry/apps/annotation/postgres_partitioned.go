@@ -40,6 +40,7 @@ type PostgreSQLStore struct {
 	config   PostgreSQLStoreConfig
 	tagCache *tagCache
 	logger   log.Logger
+	metrics  *Metrics
 }
 
 var _ Store = (*PostgreSQLStore)(nil)
@@ -47,7 +48,7 @@ var _ TagProvider = (*PostgreSQLStore)(nil)
 var _ LifecycleManager = (*PostgreSQLStore)(nil)
 
 // NewPostgreSQLStore creates a new PostgreSQL-backed annotation store
-func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*PostgreSQLStore, error) {
+func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig, metrics *Metrics) (*PostgreSQLStore, error) {
 	if cfg.MaxConnections == 0 {
 		cfg.MaxConnections = defaultMaxConnections
 	}
@@ -107,6 +108,7 @@ func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*Postgr
 		config:   cfg,
 		tagCache: cache,
 		logger:   logger,
+		metrics:  metrics,
 	}
 
 	return store, nil

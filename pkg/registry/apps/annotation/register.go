@@ -82,7 +82,7 @@ func NewAppInstaller(
 	ctx := context.Background()
 
 	// Create the appropriate store backend
-	store, err := createStore(ctx, cfg, service, cleaner)
+	store, err := createStore(ctx, cfg, service, cleaner, metrics)
 	if err != nil {
 		return nil, err
 	}
@@ -91,13 +91,15 @@ func NewAppInstaller(
 		reg.MustRegister(newPgxPoolCollector(pgStore.pool))
 	}
 
+	instrumentedStore := newInstrumentedStore(store, installer.tracer, installer.metrics, logger)
+
 	// Start background cleanup if the store supports lifecycle management
 	if lifecycleMgr, ok := store.(LifecycleManager); ok {
 		installer.startCleanup(ctx, lifecycleMgr, cfg.RetentionTTL)
 	}
 
 	installer.k8sAdapter = &k8sRESTAdapter{
-		store:        store,
+		store:        instrumentedStore,
 		accessClient: accessClient,
 		installer:    installer,
 		tracer:       installer.tracer,
@@ -136,14 +138,14 @@ func NewAppInstaller(
 }
 
 // createStore creates the appropriate store backend based on configuration
-func createStore(ctx context.Context, cfg Config, service annotations.Repository, cleaner annotations.Cleaner) (Store, error) {
+func createStore(ctx context.Context, cfg Config, service annotations.Repository, cleaner annotations.Cleaner, m *Metrics) (Store, error) {
 	switch cfg.StoreBackend {
 	case "memory":
 		return NewMemoryStore(), nil
 	case "grpc":
 		return newGRPCStore(cfg)
 	case "postgres":
-		return newPostgresStore(ctx, cfg)
+		return newPostgresStore(ctx, cfg, m)
 	case "legacy-sql":
 		// legacy-sql is the default, but we allow explicitly specifying it for clarity
 		fallthrough
@@ -198,7 +200,7 @@ func loadTLSConfig(cfg Config) (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-func newPostgresStore(ctx context.Context, cfg Config) (Store, error) {
+func newPostgresStore(ctx context.Context, cfg Config, m *Metrics) (Store, error) {
 	if cfg.PostgresConnectionString == "" {
 		return nil, fmt.Errorf("postgres connection string is required")
 	}
@@ -213,7 +215,7 @@ func newPostgresStore(ctx context.Context, cfg Config) (Store, error) {
 		TagCacheSize:     cfg.PostgresTagCacheSize,
 	}
 
-	return NewPostgreSQLStore(ctx, pgCfg)
+	return NewPostgreSQLStore(ctx, pgCfg, m)
 }
 
 // GetLegacyStorage returns the K8s REST storage implementation for the annotation resource.
