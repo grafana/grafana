@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
-import { shallowEqual } from 'react-redux';
+import { createSelector } from '@reduxjs/toolkit';
+import { useEffect, useMemo } from 'react';
 
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import { type Scope, type ScopeNode } from 'app/api/clients/scope/v0alpha1/endpoints.gen';
+import { type RootState } from 'app/store/configureStore';
 import { useDispatch, useSelector } from 'app/types/store';
 
 /**
@@ -24,15 +25,24 @@ export function useScopesById(names: string[]): Record<string, Scope | undefined
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, namesKey]);
 
-  return useSelector((state) => {
-    const record: Record<string, Scope | undefined> = {};
-    for (const name of names) {
-      const result = scopeAPIv0alpha1.endpoints.getScope.select({ name })(state);
-      record[name] = result.data;
-    }
-    return record;
+  const selectScopesById = useMemo(
+    () =>
+      createSelector(
+        (state: RootState) => state,
+        (state) => {
+          const record: Record<string, Scope | undefined> = {};
+          for (const name of names) {
+            record[name] = scopeAPIv0alpha1.endpoints.getScope.select({ name })(state).data;
+          }
+          return record;
+        }
+      ),
+    // namesKey is a stable string representation of names; recreate selector only when the set changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, shallowEqual);
+    [namesKey]
+  );
+
+  return useSelector(selectScopesById);
 }
 
 /**
@@ -54,13 +64,22 @@ export function useScopeNodesByName(names: string[]): Record<string, ScopeNode |
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, namesKey]);
 
-  return useSelector((state) => {
-    const record: Record<string, ScopeNode | undefined> = {};
-    for (const name of names) {
-      const result = scopeAPIv0alpha1.endpoints.getScopeNode.select({ name })(state);
-      record[name] = result.data;
-    }
-    return record;
+  const selectScopeNodesById = useMemo(
+    () =>
+      createSelector(
+        (state: RootState) => state,
+        (state) => {
+          const record: Record<string, ScopeNode | undefined> = {};
+          for (const name of names) {
+            record[name] = scopeAPIv0alpha1.endpoints.getScopeNode.select({ name })(state).data;
+          }
+          return record;
+        }
+      ),
+    // namesKey is a stable string representation of names; recreate selector only when the set changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, shallowEqual);
+    [namesKey]
+  );
+
+  return useSelector(selectScopeNodesById);
 }
