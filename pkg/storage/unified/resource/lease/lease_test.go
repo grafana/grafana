@@ -82,39 +82,6 @@ func TestAcquireTTLValidation(t *testing.T) {
 	}
 }
 
-func TestExtendTTLValidation(t *testing.T) {
-	const minTTL = 100 * time.Millisecond
-	m := lease.NewManager(newMapKV(), "holder-extend-ttl", lease.WithInternalMinTTL(minTTL))
-
-	l, err := m.Acquire(t.Context(), "extend-ttl-validation", lease.WithTTL(minTTL))
-	require.NoError(t, err)
-
-	testCases := []struct {
-		d       time.Duration
-		isValid bool
-	}{
-		{d: 0, isValid: false},
-		{d: -10, isValid: false},
-		{d: time.Millisecond, isValid: false},
-		{d: 100 * time.Millisecond, isValid: true},
-		{d: time.Minute, isValid: true},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.d.String(), func(t *testing.T) {
-			err := m.Extend(t.Context(), l, lease.WithTTL(tc.d))
-			if tc.isValid {
-				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
-				require.ErrorContains(t, err, "invalid TTL")
-			}
-		})
-	}
-
-	require.NoError(t, m.Release(t.Context(), l))
-}
-
 // mapKV is a thread-safe, in-memory kv.KV implementation scoped to a single
 // section (the lease package's section). It is the minimum needed to
 // exercise the lease contract: Get, Keys, Save, and Batch (Create only). Any

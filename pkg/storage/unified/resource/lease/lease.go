@@ -44,8 +44,9 @@ var (
 	ErrLeaseAlreadyHeld = errors.New("lease already held")
 
 	// ErrLeaseLost is returned by Release when the lease being released is no
-	// longer owned by the caller — typically because it has expired or has
-	// already been released.
+	// longer owned by the caller — typically because it has expired, has
+	// already been released, or was superseded by another holder. When
+	// auto-renewal is enabled, this error also triggers the Lost() channel.
 	ErrLeaseLost = errors.New("lease lost")
 )
 
@@ -55,14 +56,16 @@ type Lease struct {
 	generation int64
 	lostCh     chan struct{}
 	lostOnce   sync.Once
-	timerMu    sync.Mutex
-	lostTimer  *time.Timer
+	stop       chan struct{}
+	stopOnce   sync.Once
+	done       chan struct{}
 }
 
-// Lost returns a channel that is closed when this lease ends, i.e., when its TTL
-// elapses or when Release succeeds. Calling Lost multiple times returns the
-// same channel; the channel is closed at most once. Safe to call from any
-// goroutine.
+// Lost returns a channel that is closed when this lease ends: when its TTL
+// elapses without auto-renewal, when Release succeeds, or when an
+// auto-renewal fails because another holder has acquired the lease.
+// Calling Lost multiple times returns the same channel; the channel is
+// closed at most once. Safe to call from any goroutine.
 func (l *Lease) Lost() <-chan struct{} {
 	return l.lostCh
 }
@@ -124,12 +127,25 @@ func WithInternalMinTTL(d time.Duration) ManagerOption {
 type AcquireOption func(*acquireOptions)
 
 type acquireOptions struct {
-	ttl time.Duration
+	ttl           time.Duration
+	autoRenew     bool
+	renewInterval time.Duration
 }
 
 // WithTTL overrides the default lease TTL for this acquisition.
 func WithTTL(d time.Duration) AcquireOption {
 	return func(o *acquireOptions) { o.ttl = d }
+}
+
+// WithAutoRenew enables automatic lease renewal. A background goroutine
+// extends the lease every renewInterval by creating the next generation.
+// Lost() is notified only when a renewal fails with ErrLeaseLost.
+// If renewInterval is zero, it defaults to half the TTL.
+func WithAutoRenew(renewInterval time.Duration) AcquireOption {
+	return func(o *acquireOptions) {
+		o.autoRenew = true
+		o.renewInterval = renewInterval
+	}
 }
 
 // Acquire grabs the lease for `name` on behalf of the manager's holder. On
@@ -203,8 +219,19 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 			holder:     m.holder,
 			generation: generation,
 			lostCh:     make(chan struct{}),
+			stop:       make(chan struct{}),
+			done:       make(chan struct{}),
 		}
-		l.lostTimer = time.AfterFunc(time.Until(expires), l.notifyLoss)
+
+		if cfg.autoRenew {
+			renewInterval := cfg.renewInterval
+			if renewInterval == 0 {
+				renewInterval = cfg.ttl / 2
+			}
+			go m.autoRenewLoop(l, cfg.ttl, renewInterval)
+		} else {
+			go m.expiryLoop(l, time.Until(expires))
+		}
 		return l, nil
 	}
 }
@@ -212,6 +239,10 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 // Release releases lease. It is not idempotent: releasing a lease that has
 // already been released — or one that has expired — returns ErrLeaseLost.
 func (m *Manager) Release(ctx context.Context, lease *Lease) error {
+	lease.stopOnce.Do(func() { close(lease.stop) })
+	<-lease.done
+	defer lease.notifyLoss()
+
 	key := leaseKey(lease.name, lease.generation)
 	meta, err := m.read(ctx, key)
 	if err != nil {
@@ -233,48 +264,80 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
 	}
 
-	lease.timerMu.Lock()
-	defer lease.timerMu.Unlock()
-	lease.lostTimer.Stop()
-	lease.notifyLoss()
 	return nil
 }
 
-// Extend extends an active lease's TTL in-place. The lease must still be valid
-// and held by this manager's holder. Returns ErrLeaseLost if the lease has
-// expired, been released, or is held by a different holder.
-func (m *Manager) Extend(ctx context.Context, lease *Lease, opts ...AcquireOption) error {
-	cfg := acquireOptions{ttl: defaultTTL}
-	for _, opt := range opts {
-		opt(&cfg)
-	}
-
-	if cfg.ttl < m.minTTL {
-		return fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, m.minTTL)
-	}
-
+func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.Duration) error {
 	key := leaseKey(lease.name, lease.generation)
 	meta, err := m.read(ctx, key)
 	if err != nil {
 		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
 	}
 
-	if meta.Holder != m.holder || !meta.ValidAsOf(time.Now()) {
+	now := time.Now()
+	if meta.Holder != m.holder || !meta.ValidAsOf(now) {
 		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
 	}
 
-	now := time.Now()
-	expires := now.Add(cfg.ttl)
-	meta.Expires = expires.UnixNano()
-	if err := m.save(ctx, key, meta); err != nil {
+	newGeneration := lease.generation + 1
+	expires := now.Add(ttl)
+	state := leaseMetadata{
+		Holder:  m.holder,
+		Expires: expires.UnixNano(),
+	}
+	value, err := json.Marshal(state)
+	if err != nil {
+		return err
+	}
+
+	newKey := leaseKey(lease.name, newGeneration)
+	err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{{
+		Mode:  kv.BatchOpCreate,
+		Key:   newKey,
+		Value: value,
+	}})
+	if errors.Is(err, kv.ErrKeyAlreadyExists) {
+		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+	}
+	if err != nil {
 		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
 	}
 
-	lease.timerMu.Lock()
-	defer lease.timerMu.Unlock()
-	lease.lostTimer.Stop()
-	lease.lostTimer = time.AfterFunc(time.Until(expires), lease.notifyLoss)
+	meta.Deleted = true
+	_ = m.save(ctx, key, meta)
+
+	lease.generation = newGeneration
 	return nil
+}
+
+func (m *Manager) expiryLoop(lease *Lease, remaining time.Duration) {
+	defer close(lease.done)
+	timer := time.NewTimer(remaining)
+	defer timer.Stop()
+	select {
+	case <-lease.stop:
+	case <-timer.C:
+		lease.notifyLoss()
+	}
+}
+
+func (m *Manager) autoRenewLoop(lease *Lease, ttl, renewInterval time.Duration) {
+	defer close(lease.done)
+	ticker := time.NewTicker(renewInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-lease.stop:
+			return
+		case <-ticker.C:
+			err := m.extendGeneration(context.Background(), lease, ttl)
+			if errors.Is(err, ErrLeaseLost) {
+				lease.notifyLoss()
+				return
+			}
+		}
+	}
 }
 
 func (m *Manager) latest(ctx context.Context, name string) (string, int64, error) {
