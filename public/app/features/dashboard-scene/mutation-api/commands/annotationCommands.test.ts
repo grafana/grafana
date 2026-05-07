@@ -183,7 +183,7 @@ describe('Annotation mutation commands', () => {
   });
 
   describe('UPDATE_ANNOTATION', () => {
-    it('replaces an annotation layer in place', async () => {
+    it('applies a partial spec, preserving untouched fields', async () => {
       await client.execute({
         type: 'ADD_ANNOTATION',
         payload: { annotation: makeAnnotationKind('deploys', { iconColor: 'red' }) },
@@ -197,14 +197,100 @@ describe('Annotation mutation commands', () => {
         type: 'UPDATE_ANNOTATION',
         payload: {
           name: 'deploys',
-          annotation: makeAnnotationKind('deploys', { iconColor: 'green' }),
+          annotation: { spec: { iconColor: 'green' } },
         },
       });
 
       expect(result.success).toBe(true);
       const set = scene.state.$data as DashboardDataLayerSet;
       expect(set.state.annotationLayers.map((l) => l.state.name)).toEqual(['deploys', 'errors']);
-      expect((set.state.annotationLayers[0] as DashboardAnnotationsDataLayer).state.query.iconColor).toBe('green');
+      const layer = set.state.annotationLayers[0] as DashboardAnnotationsDataLayer;
+      expect(layer.state.query.iconColor).toBe('green');
+      expect(layer.state.query.datasource?.type).toBe('prometheus');
+      expect(layer.state.query.target).toMatchObject({ expr: 'changes(deploy_total[5m])' });
+    });
+
+    it('deep-merges a nested query spec', async () => {
+      await client.execute({
+        type: 'ADD_ANNOTATION',
+        payload: { annotation: makeAnnotationKind('deploys') },
+      });
+
+      const result = await client.execute({
+        type: 'UPDATE_ANNOTATION',
+        payload: {
+          name: 'deploys',
+          annotation: { spec: { query: { spec: { expr: 'changes(deploy_total[10m])' } } } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const set = scene.state.$data as DashboardDataLayerSet;
+      const layer = set.state.annotationLayers[0] as DashboardAnnotationsDataLayer;
+      expect(layer.state.query.datasource?.type).toBe('prometheus');
+      expect(layer.state.query.datasource?.uid).toBe('prom-uid');
+      expect(layer.state.query.target).toMatchObject({ expr: 'changes(deploy_total[10m])' });
+    });
+
+    it('replaces array fields wholesale (filter.ids)', async () => {
+      await client.execute({
+        type: 'ADD_ANNOTATION',
+        payload: {
+          annotation: makeAnnotationKind('deploys', { filter: { exclude: false, ids: [1, 2, 3] } }),
+        },
+      });
+
+      const result = await client.execute({
+        type: 'UPDATE_ANNOTATION',
+        payload: {
+          name: 'deploys',
+          annotation: { spec: { filter: { ids: [9] } } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const set = scene.state.$data as DashboardDataLayerSet;
+      const layer = set.state.annotationLayers[0] as DashboardAnnotationsDataLayer;
+      expect(layer.state.query.filter?.ids).toEqual([9]);
+      expect(layer.state.query.filter?.exclude).toBe(false);
+    });
+
+    it('renames via partial spec.name', async () => {
+      await client.execute({
+        type: 'ADD_ANNOTATION',
+        payload: { annotation: makeAnnotationKind('old-name', { iconColor: 'blue' }) },
+      });
+
+      const result = await client.execute({
+        type: 'UPDATE_ANNOTATION',
+        payload: {
+          name: 'old-name',
+          annotation: { spec: { name: 'new-name' } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const set = scene.state.$data as DashboardDataLayerSet;
+      expect(set.state.annotationLayers.map((l) => l.state.name)).toEqual(['new-name']);
+      expect((set.state.annotationLayers[0] as DashboardAnnotationsDataLayer).state.query.iconColor).toBe('blue');
+    });
+
+    it('treats an empty partial spec as a no-op', async () => {
+      await client.execute({
+        type: 'ADD_ANNOTATION',
+        payload: { annotation: makeAnnotationKind('deploys', { iconColor: 'orange' }) },
+      });
+
+      const result = await client.execute({
+        type: 'UPDATE_ANNOTATION',
+        payload: { name: 'deploys', annotation: { spec: {} } },
+      });
+
+      expect(result.success).toBe(true);
+      const set = scene.state.$data as DashboardDataLayerSet;
+      const layer = set.state.annotationLayers[0] as DashboardAnnotationsDataLayer;
+      expect(layer.state.name).toBe('deploys');
+      expect(layer.state.query.iconColor).toBe('orange');
     });
 
     it('returns error when annotation not found', async () => {
@@ -212,7 +298,7 @@ describe('Annotation mutation commands', () => {
         type: 'UPDATE_ANNOTATION',
         payload: {
           name: 'missing',
-          annotation: makeAnnotationKind('missing'),
+          annotation: { spec: { iconColor: 'green' } },
         },
       });
 
@@ -234,7 +320,7 @@ describe('Annotation mutation commands', () => {
         type: 'UPDATE_ANNOTATION',
         payload: {
           name: 'A',
-          annotation: makeAnnotationKind('B'),
+          annotation: { spec: { name: 'B' } },
         },
       });
 
