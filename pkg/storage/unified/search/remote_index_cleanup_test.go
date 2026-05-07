@@ -37,7 +37,7 @@ const (
 
 func mkMeta(version string, rv int64, uploadedAt time.Time) *IndexMeta {
 	return &IndexMeta{
-		GrafanaBuildVersion:   version,
+		BuildVersion:          version,
 		LatestResourceVersion: rv,
 		UploadTimestamp:       uploadedAt,
 	}
@@ -133,6 +133,23 @@ func TestSelectSnapshotsToDelete_RuleAWinsOnLoneOldSnapshot(t *testing.T) {
 
 	got := selectSnapshotsToDelete(metas, now, maxAge, testCleanupGrace)
 	assert.Equal(t, []ulid.ULID{only}, got)
+}
+
+// TestSelectSnapshotsToDelete_ZeroMaxAgeKeepsLoneOldSnapshot pins the
+// "MaxIndexAge=0 means no age limit" semantic for cleanup rule A: an
+// arbitrarily old lone snapshot is not eligible for age-based deletion.
+// Rule B (per-version-group eviction) still applies in the multi-snapshot
+// case — covered by TestSelectSnapshotsToDelete_PerVersionIsolation.
+func TestSelectSnapshotsToDelete_ZeroMaxAgeKeepsLoneOldSnapshot(t *testing.T) {
+	now := time.Date(2026, 4, 22, 12, 0, 0, 0, time.UTC)
+
+	only := makeULID(t, now.Add(-30*24*time.Hour))
+	metas := map[ulid.ULID]*IndexMeta{
+		only: mkMeta("11.5.0", 100, now.Add(-30*24*time.Hour)),
+	}
+
+	got := selectSnapshotsToDelete(metas, now, 0, testCleanupGrace)
+	assert.Empty(t, got, "maxAge=0 must disable age-based deletion (rule A)")
 }
 
 func TestSelectSnapshotsToDelete_PerVersionIsolation(t *testing.T) {
@@ -231,7 +248,7 @@ func TestSelectSnapshotsToDelete_NeverDeletesDownloadPick(t *testing.T) {
 				}},
 				runningBuildVersion: running,
 			}
-			picked, ok := be.pickBestSnapshot(metas, now)
+			picked, ok := be.pickBestSnapshot(metas, now.Add(-testCleanupMaxAge), be.log)
 			require.Truef(t, ok, "test case must yield a pickable snapshot — if a no-pick scenario is needed, add a dedicated test case rather than letting this one short-circuit")
 
 			deleted := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
@@ -519,8 +536,8 @@ func (s *recordingStore) CleanupIncompleteUploads(ctx context.Context, r resourc
 	s.mu.Unlock()
 	return s.inner.CleanupIncompleteUploads(ctx, r, minAge)
 }
-func (s *recordingStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource) (IndexStoreLock, error) {
-	return s.inner.LockBuildIndex(ctx, r)
+func (s *recordingStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
 func (s *recordingStore) UploadIndex(ctx context.Context, r resource.NamespacedResource, dir string, m IndexMeta) (ulid.ULID, error) {
 	return s.inner.UploadIndex(ctx, r, dir, m)
@@ -644,8 +661,8 @@ func (s *controllableLockStore) CleanupIncompleteUploads(ctx context.Context, r 
 	}
 	return out, err
 }
-func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource) (IndexStoreLock, error) {
-	return s.inner.LockBuildIndex(ctx, r)
+func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
 func (s *controllableLockStore) UploadIndex(ctx context.Context, r resource.NamespacedResource, dir string, m IndexMeta) (ulid.ULID, error) {
 	return s.inner.UploadIndex(ctx, r, dir, m)

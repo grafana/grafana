@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -269,31 +270,29 @@ func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
 		name          string
 		config        PostableUserConfig
 		expectedError string
-		expected      MergeResult
+		expected      merge.MergeResult
 	}{
 		{
 			name: "no extra configs",
 			config: PostableUserConfig{
 				AlertmanagerConfig: alertmanagerCfg,
 			},
-			expected: MergeResult{
-				MergeResult: definition.MergeResult{
-					Config: definition.PostableApiAlertingConfig{
-						Config: Config{
-							Route: &Route{
-								Receiver: "default",
-							},
+			expected: merge.MergeResult{
+				Config: definition.PostableApiAlertingConfig{
+					Config: Config{
+						Route: &Route{
+							Receiver: "default",
 						},
-						Receivers: []*PostableApiReceiver{
-							{
-								Receiver: definition.Receiver{
-									Name: "default",
-								},
+					},
+					Receivers: []*PostableApiReceiver{
+						{
+							Receiver: definition.Receiver{
+								Name: "default",
 							},
 						},
 					},
-					RenameResources: definition.RenameResources{},
 				},
+				RenameResources: merge.RenameResources{},
 			},
 		},
 		{
@@ -323,71 +322,69 @@ receivers:
 					},
 				},
 			},
-			expected: MergeResult{
-				MergeResult: definition.MergeResult{
-					Config: definition.PostableApiAlertingConfig{
-						Config: Config{
-							Route: &Route{
-								Receiver: "default",
-								Routes: []*Route{
-									{
-										Matchers: []*labels.Matcher{
-											{
-												Type:  labels.MatchEqual,
-												Name:  "cluster",
-												Value: "prod",
-											},
+			expected: merge.MergeResult{
+				Config: definition.PostableApiAlertingConfig{
+					Config: Config{
+						Route: &Route{
+							Receiver: "default",
+							Routes: []*Route{
+								{
+									Matchers: []*labels.Matcher{
+										{
+											Type:  labels.MatchEqual,
+											Name:  "cluster",
+											Value: "prod",
 										},
-										GroupInterval:  util.Pointer(model.Duration(5 * time.Minute)),
-										GroupWait:      util.Pointer(model.Duration(30 * time.Second)),
-										RepeatInterval: util.Pointer(model.Duration(4 * time.Hour)),
-										Continue:       false,
-										Receiver:       "mimir-receiver",
-										GroupByStr:     []string{"alertname"},
-										GroupBy:        []model.LabelName{"alertname"},
-										Routes: []*Route{
-											{
-												Matchers: []*labels.Matcher{
-													{
-														Type:  labels.MatchEqual,
-														Name:  "severity",
-														Value: "critical",
-													},
+									},
+									GroupInterval:  util.Pointer(model.Duration(5 * time.Minute)),
+									GroupWait:      util.Pointer(model.Duration(30 * time.Second)),
+									RepeatInterval: util.Pointer(model.Duration(4 * time.Hour)),
+									Continue:       false,
+									Receiver:       "mimir-receiver",
+									GroupByStr:     []string{"alertname"},
+									GroupBy:        []model.LabelName{"alertname"},
+									Routes: []*Route{
+										{
+											Matchers: []*labels.Matcher{
+												{
+													Type:  labels.MatchEqual,
+													Name:  "severity",
+													Value: "critical",
 												},
-												Receiver: "defaultmimir-1",
-												Routes:   []*Route{},
 											},
+											Receiver: "defaultmimir-1",
+											Routes:   []*Route{},
 										},
 									},
 								},
 							},
-							InhibitRules:  []InhibitRule{},
-							TimeIntervals: []config.TimeInterval{},
 						},
-						Receivers: []*PostableApiReceiver{
-							{
-								Receiver: definition.Receiver{
-									Name: "default",
-								},
+						InhibitRules:  []InhibitRule{},
+						TimeIntervals: []config.TimeInterval{},
+					},
+					Receivers: []*PostableApiReceiver{
+						{
+							Receiver: definition.Receiver{
+								Name: "default",
 							},
-							{
-								Receiver: definition.Receiver{
-									Name: "mimir-receiver",
-								},
+						},
+						{
+							Receiver: definition.Receiver{
+								Name: "mimir-receiver",
 							},
-							{
-								Receiver: definition.Receiver{
-									Name: "defaultmimir-1",
-								},
+						},
+						{
+							Receiver: definition.Receiver{
+								Name: "defaultmimir-1",
 							},
 						},
 					},
-					RenameResources: definition.RenameResources{
-						Receivers: map[string]string{
-							"default": "defaultmimir-1",
-						},
-						TimeIntervals: map[string]string{},
+				},
+				RenameResources: merge.RenameResources{
+					Receivers: map[string]string{
+						"default": "defaultmimir-1",
 					},
+					TimeIntervals: map[string]string{},
 				},
 				Identifier: "mimir-1",
 				ExtraRoute: &Route{
@@ -430,39 +427,37 @@ receivers:
 					},
 				},
 			},
-			expected: MergeResult{
-				MergeResult: definition.MergeResult{
-					Config: definition.PostableApiAlertingConfig{
-						Config: Config{
-							Route: &Route{
-								Receiver: "default",
-							},
-							TimeIntervals: []config.TimeInterval{},
+			expected: merge.MergeResult{
+				Config: definition.PostableApiAlertingConfig{
+					Config: Config{
+						Route: &Route{
+							Receiver: "default",
 						},
-						Receivers: []*PostableApiReceiver{
-							{
-								Receiver: definition.Receiver{
-									Name: "default",
-								},
+						TimeIntervals: []config.TimeInterval{},
+					},
+					Receivers: []*PostableApiReceiver{
+						{
+							Receiver: definition.Receiver{
+								Name: "default",
 							},
-							{
-								Receiver: definition.Receiver{
-									Name: "mimir-receiver",
-								},
+						},
+						{
+							Receiver: definition.Receiver{
+								Name: "mimir-receiver",
 							},
-							{
-								Receiver: definition.Receiver{
-									Name: "defaultmimir-1",
-								},
+						},
+						{
+							Receiver: definition.Receiver{
+								Name: "defaultmimir-1",
 							},
 						},
 					},
-					RenameResources: definition.RenameResources{
-						Receivers: map[string]string{
-							"default": "defaultmimir-1",
-						},
-						TimeIntervals: map[string]string{},
+				},
+				RenameResources: merge.RenameResources{
+					Receivers: map[string]string{
+						"default": "defaultmimir-1",
 					},
+					TimeIntervals: map[string]string{},
 				},
 				Identifier: "mimir-1",
 				ExtraRoute: &Route{

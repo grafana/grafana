@@ -41,6 +41,8 @@ const maxBatchSize = 1000
 const (
 	defaultVectorSearchLimit = 50
 	maxVectorSearchLimit     = 200
+	// authz BatchCheck enforces a per-request cap; chunk to stay under it.
+	batchCheckChunkSize = 50
 )
 
 type NamespacedResource struct {
@@ -125,6 +127,9 @@ type SearchBackend interface {
 	// Updater function is used to update the index before performing the search.
 	// rebuild forces a full rebuild of the index, regardless of state.
 	// lastImportTime is used to determine if an existing file-based index needs to be rebuilt before opening.
+	// maxFreshSnapshotAge is the freshness window (by snapshot BuildTime) within
+	// which a same-version remote snapshot is preferred over rebuilding from
+	// scratch on the rebuild path. Zero disables that fast path.
 	BuildIndex(
 		ctx context.Context,
 		key NamespacedResource,
@@ -135,6 +140,7 @@ type SearchBackend interface {
 		updater UpdateFn,
 		rebuild bool,
 		lastImportTime time.Time,
+		maxFreshSnapshotAge time.Duration,
 	) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
@@ -179,6 +185,16 @@ type searchServer struct {
 	indexModificationCacheTTL time.Duration
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
+}
+
+// getIndexMaxAge returns the configured rebuild interval for the given
+// resource: dashboards use IndexRebuildInterval (cfg.IndexRebuildInterval),
+// other resources use MaxFileIndexAge. Zero means "no age-based rebuild".
+func (s *searchServer) getIndexMaxAge(key NamespacedResource) time.Duration {
+	if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
+		return s.dashboardIndexMaxAge
+	}
+	return s.maxIndexAge
 }
 
 // maybeInjectFailure returns an error for a configured percentage of calls.
@@ -528,6 +544,13 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		}, nil
 	}
 
+	// TODO decide on appropriate max query length. Using 1k for now.
+	if len(req.Query) > 1000 {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("query exceeds maximum length of 1000 bytes"),
+		}, nil
+	}
+
 	limit := int(req.Limit)
 	switch {
 	case limit <= 0:
@@ -577,38 +600,53 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	if !ok || user == nil {
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
-	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented (matches existing usage in server.go)
-	checker, _, err := s.access.Compile(ctx, user, types.ListRequest{
-		Group:     req.Key.Group,
-		Resource:  req.Key.Resource,
-		Namespace: req.Key.Namespace,
-		Verb:      utils.VerbGet,
-	})
-	if err != nil {
-		s.log.Error("vector search: authz compile", "err", err)
-		return nil, status.Error(codes.Internal, "authz compile")
-	}
-	if checker == nil {
-		// No access to anything — return an empty result set rather than an
-		// error, mirroring how a regular search would surface "no hits."
-		return &resourcepb.VectorSearchResponse{}, nil
+
+	// Dedupe per-(UID, Folder) so sub-resources of the same parent (e.g. dashboard panels) share a single batch-check entry.
+	type checkKey struct{ uid, folder string }
+	correlationIDs := make(map[checkKey]string, len(results))
+	checks := make([]types.BatchCheckItem, 0, len(results))
+	for _, r := range results {
+		key := checkKey{r.UID, r.Folder}
+		if _, ok := correlationIDs[key]; ok {
+			continue
+		}
+		id := fmt.Sprintf("%d", len(checks))
+		correlationIDs[key] = id
+		checks = append(checks, types.BatchCheckItem{
+			CorrelationID: id,
+			Verb:          utils.VerbGet,
+			Group:         req.Key.Group,
+			Resource:      req.Key.Resource,
+			Name:          r.UID,
+			Folder:        r.Folder,
+		})
 	}
 
-	// Memoize per-(UID, Folder) so sub-resources of the same parent (e.g. dashboard panels) reuse a single checker call.
-	type checkKey struct{ uid, folder string }
-	checked := make(map[checkKey]bool, len(results))
+	checkResults := make(map[string]types.BatchCheckResult, len(checks))
+	for start := 0; start < len(checks); start += batchCheckChunkSize {
+		end := min(start+batchCheckChunkSize, len(checks))
+		batchResp, err := s.access.BatchCheck(ctx, user, types.BatchCheckRequest{
+			Namespace: req.Key.Namespace,
+			Checks:    checks[start:end],
+		})
+		if err != nil {
+			s.log.Error("vector search: authz batch check", "err", err)
+			return nil, status.Error(codes.Internal, "authz batch check")
+		}
+		for id, result := range batchResp.Results {
+			checkResults[id] = result
+		}
+	}
 
 	resp := &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
-		key := checkKey{r.UID, r.Folder}
-		allowed, ok := checked[key]
+		id, ok := correlationIDs[checkKey{r.UID, r.Folder}]
 		if !ok {
-			allowed = checker(r.UID, r.Folder)
-			checked[key] = allowed
+			continue
 		}
-		if !allowed {
+		if !checkResults[id].Allowed {
 			continue
 		}
 		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
@@ -831,8 +869,7 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 
 			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			reason := "init"
-			// Use WithIndexBuildRetryBudget so it can retry based on number of keys.
-			_, err := s.build(WithIndexBuildRetryBudget(ctx), info.NamespacedResource, info.Count, reason, false, time.Time{})
+			_, err := s.build(ctx, info.NamespacedResource, info.Count, reason, false, time.Time{})
 			return err
 		})
 	}
@@ -957,10 +994,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			continue
 		}
 
-		maxAge := s.maxIndexAge
-		if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
-			maxAge = s.dashboardIndexMaxAge
-		}
+		maxAge := s.getIndexMaxAge(key)
 
 		var minBuildTime time.Time
 		if maxAge > 0 {
@@ -1088,8 +1122,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
-	// Use WithIndexBuildRetryBudget so it can retry based on number of keys.
-	_, err = s.build(WithIndexBuildRetryBudget(ctx), req.NamespacedResource, size, "rebuild", true, time.Time{})
+	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, time.Time{})
 	if err != nil {
 		span.RecordError(err)
 		l.Error("failed to rebuild index", "error", err)
@@ -1505,7 +1538,12 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		s.builders.clearNamespacedCache(nsr)
 	}
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime)
+	// On the rebuild path, prefer downloading a fresh same-version remote
+	// snapshot over rebuilding from scratch when one exists with BuildTime
+	// within ~10% of the per-resource rebuild interval.
+	maxFreshSnapshotAge := s.getIndexMaxAge(nsr) / 10
+
+	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime, maxFreshSnapshotAge)
 
 	if err != nil {
 		return nil, err

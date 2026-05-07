@@ -43,7 +43,11 @@ type alertmanagerCrypto struct {
 	log     log.Logger
 }
 
-func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logger) Crypto {
+func NewCrypto(
+	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	configs configurationStore,
+	log log.Logger,
+) Crypto {
 	return &alertmanagerCrypto{
 		ExtraConfigsCrypto: NewExtraConfigsCrypto(secrets),
 		configs:            configs,
@@ -85,7 +89,11 @@ func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 					return fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", gr.Type, gr.Name, err)
 				}
 
-				typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(gr.Type), schema.V1)
+				v := schema.V1
+				if gr.Version != "" {
+					v = schema.Version(gr.Version)
+				}
+				typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(gr.Type), v)
 				if !ok {
 					return fmt.Errorf("failed to get secret keys for contact point type %s", gr.Type)
 				}

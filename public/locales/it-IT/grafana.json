@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "Impossibile trovare il repository per la cartella selezionata. Assicurati che la cartella sia stata fornita correttamente.",
         "repository-not-found-title": "Repository non trovato"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Errore durante lo spostamento delle risorse",
       "error-no-target-folder-path": "Il percorso della cartella di destinazione non è valido o è vuoto, prova a selezionarlo di nuovo.",
       "move-total": "In totale, questo influenzerà:",
@@ -4460,6 +4461,14 @@
       "request-extension": "Richiedi l'estensione della quota",
       "resource-detail-dashboards": "Hai creato {{usage}} di {{limit}} dashboard ({{percentage}}%).",
       "resource-detail-folders": "Hai creato {{usage}} di {{limit}} cartelle ({{percentage}}%)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Cancella cronologia",
@@ -5269,7 +5278,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Impostazioni"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5671,7 +5680,7 @@
         "title": "Variabili"
       },
       "variable": {
-        "change-type": "Modifica",
+        "change-type": "",
         "change-type-aria-label": "Modifica il tipo di variabile",
         "custom-options": {
           "apply": "Applica",
@@ -5988,7 +5997,7 @@
       "cancel": "Annulla",
       "common": {
         "copy": "Copia",
-        "copy-or-duplicate": "Copia/incolla o duplica",
+        "copy-tooltip": "",
         "delete": "Elimina",
         "duplicate": "Duplica",
         "layout": "Layout",
@@ -6027,7 +6036,7 @@
     },
     "new-panel": {
       "aria-label": "Pannello non configurato. Premi il tasto Tab per visualizzare le opzioni di configurazione.",
-      "configure-button": "Configura",
+      "configure-button": "",
       "configure-button-menu": "Attiva/disattiva menu",
       "configure-visualization": "Configura la visualizzazione",
       "empty-state-message": "Esegui una query per visualizzarlo qui o vai a tutte le visualizzazioni per aggiungere altri tipi di pannello",
@@ -6269,10 +6278,8 @@
       "title-provisioned": "Dashboard configurata"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata.<br/><2>Salvare comunque questa dashboard?</2>",
       "body-version-mismatch": "Qualcun altro ha aggiornato questa dashboard<br/><2>Salvare comunque questa dashboard?</2>",
       "confirmText-save-and-overwrite": "Salva e sovrascrivi",
-      "title-name-exists": "Conflitto",
       "title-version-mismatch": "Conflitto"
     },
     "save-dashboard-form": {
@@ -7313,6 +7320,7 @@
       "terraform": "Gestito da: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Impossibile spostare la dashboard",
       "cancel-action": "Annulla",
       "current-file-not-found": "Impossibile trovare il file della dashboard corrente",
@@ -7325,10 +7333,6 @@
       "success-message": "Dashboard spostata correttamente",
       "target-path-label": "Percorso di destinazione",
       "title-this-repository-is-read-only": "Questo repository è di sola lettura"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata. Desideri comunque salvare questa dashboard?",
-      "title-name-already-exists": "Nome già in uso"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8036,19 +8040,6 @@
       "aria-label-create-a-dashboard": "Crea una dashboard",
       "aria-label-explore-data": "Esplora i dati",
       "aria-label-suggested-dashboards": "Dashboard suggerite"
-    },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Avvisi non supportati",
-      "text-alerting-supported": "Avvisi supportati"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Il nome viene utilizzato quando si seleziona l'origine dei dati nei pannelli. L'origine dei dati predefinita è preselezionata nei nuovi pannelli."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Impostazioni di base della pagina delle impostazioni dell'origine dei dati",
-      "basic-settings-name-placeholder-name": "Nome",
-      "label-default": "Predefinito",
-      "label-name": "Nome"
     },
     "build-a-dashboard-button": {
       "blank": "Vuota",
@@ -11253,7 +11244,7 @@
     "description-order": "Mostra per primi i registri più recenti o quelli più vecchi. Quando si seleziona l'opzione \"Prima i meno recenti\", la visualizzazione scorre automaticamente fino ai registri più recenti in fondo alla pagina.",
     "description-prettify-json": "Imposta le voci di registro JSON con rientro e ritorno a capo.",
     "description-show-controls": "Visualizza i controlli per passare all'ultima o alla prima riga del registro e filtra per livello di registro.",
-    "description-show-log-attributes": "Sperimentale. Quando vengono visualizzati i registri OTel, aggiungi un campo visualizzato extra con coppie chiave-valore pertinenti da etichette e metadati.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Allinea i valori utilizzando le colonne quando si usano i campi visualizzati.",
     "description-wrap-lines": "Visualizza i registri su una singola riga oppure adatta le voci più lunghe per adattarle al pannello.",
     "field-selector": {
@@ -11579,7 +11570,7 @@
       "line-contains-not": "Aggiungi come riga non contenente filtro",
       "search-text": "Cerca nei risultati"
     },
-    "show-log-attributes": "Visualizza gli attributi del registro per i registri OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Risoluzione marca temporale",
     "un-themed-log-details": {
       "aria-label-data-links": "Collegamenti dati",
@@ -15453,7 +15444,6 @@
       "forwards-time-aria-label": "Usa un intervallo di tempo successivo",
       "to": "a",
       "zoom-out-button": "Riduci l'intervallo di tempo",
-      "zoom-out-tooltip": "Riduci l'intervallo di tempo <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Riduci l'intervallo di tempo <br/> t -"
     },
     "time-range": {

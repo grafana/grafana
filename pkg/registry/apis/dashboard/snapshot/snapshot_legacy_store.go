@@ -14,21 +14,14 @@ import (
 	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
-	_ rest.Scoper               = (*SnapshotLegacyStore)(nil)
-	_ rest.SingularNameProvider = (*SnapshotLegacyStore)(nil)
-	_ rest.Getter               = (*SnapshotLegacyStore)(nil)
-	_ rest.Lister               = (*SnapshotLegacyStore)(nil)
-	_ rest.Creater              = (*SnapshotLegacyStore)(nil)
-	_ rest.Updater              = (*SnapshotLegacyStore)(nil)
-	_ rest.GracefulDeleter      = (*SnapshotLegacyStore)(nil)
-	_ rest.CollectionDeleter    = (*SnapshotLegacyStore)(nil)
-	_ rest.Storage              = (*SnapshotLegacyStore)(nil)
+	_ grafanarest.Storage = (*SnapshotLegacyStore)(nil)
 )
 
 type SnapshotLegacyStore struct {
@@ -208,9 +201,4 @@ func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, cr
 // Update implements rest.Updater - snapshots are immutable, so this returns an error
 func (s *SnapshotLegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	return nil, false, fmt.Errorf("snapshots are immutable and cannot be updated")
-}
-
-// DeleteCollection implements rest.CollectionDeleter
-func (s *SnapshotLegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("delete collection is not supported for snapshots")
 }
