@@ -1,5 +1,6 @@
 import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
 
+import { logPluginMetaWarning } from '../logging';
 import type { DatasourcePluginMetas, DatasourcePluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
@@ -7,7 +8,7 @@ import {
   angularMapper,
   infoMapper,
   loadingStrategyMapper,
-  signatureMapper,
+  signatureStatusMapper,
   stateMapper,
   prependPublicPathToCorePlugins,
   isCorePlugin,
@@ -34,13 +35,13 @@ function specMapper(spec: v0alpha1Spec): DataSourcePluginMeta {
     queryOptions,
     multiValueFilterOperators,
   } = spec.pluginJson;
-  const state = stateMapper(spec);
+  const state = stateMapper(spec, logPluginMetaWarning);
   const info = infoMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);
   const type = PluginType.datasource;
   const module = spec.module.path;
   const baseUrl = spec.baseURL;
-  const signature = signatureMapper(spec);
+  const signature = signatureStatusMapper(spec, logPluginMetaWarning);
   const angular = angularMapper(spec);
   const translations = spec.translations;
   const moduleHash = spec.module.hash;

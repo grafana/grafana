@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	settingservice "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -186,7 +186,7 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	s.routeGet(m, "/-/fe-boot-error", s.handleBootError)
 
 	s.routeGet(m, "/public-dashboards/:accessToken",
-		publicdashboardsapi.SetPublicDashboardAccessToken,
+		publicdashboards.SetPublicDashboardAccessToken,
 		s.index.HandleRequest,
 	)
 

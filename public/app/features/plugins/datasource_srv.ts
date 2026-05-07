@@ -3,7 +3,6 @@ import {
   DataSourceApi,
   type DataSourceInstanceSettings,
   type DataSourceRef,
-  PluginType,
   type ScopedVars,
   isObject,
   matchPluginId,
@@ -234,7 +233,7 @@ export class DatasourceSrv implements DataSourceService {
       if (!meta) {
         logPluginMetaWarning(
           `Plugin meta for datasource ${key} (pluginId: ${pluginId}) was not found, falling back to instanceSettings.meta`,
-          PluginType.datasource
+          { pluginId, key }
         );
         meta = instanceSettings.meta;
       }

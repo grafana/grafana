@@ -309,6 +309,14 @@ describe('NestedFolderPicker', () => {
 
       expect(mockOnChange).not.toHaveBeenCalled();
     });
+
+    it('hides team folders when rootFolderUID is set', async () => {
+      const { user } = render(<NestedFolderPicker rootFolderUID="my-repo" onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Team Folder One')).not.toBeInTheDocument();
+    });
   });
 
   describe('when teamFolders is disabled', () => {

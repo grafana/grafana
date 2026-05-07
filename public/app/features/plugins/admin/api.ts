@@ -228,7 +228,10 @@ export async function installPlugin(id: string, version?: string) {
   try {
     await installPluginMeta(id, version ?? '');
   } catch (error: unknown) {
-    logPluginMetaError(`PluginMeta: Failed to install plugin with id ${id} and version ${version}`, error);
+    logPluginMetaError(`installPluginMeta: Failed to install plugin`, error, {
+      pluginId: id,
+      pluginVersion: version ?? '',
+    });
   }
 
   // Legacy install path — kept until K8s settings API covers all plugin types.
@@ -250,7 +253,9 @@ export async function uninstallPlugin(id: string) {
   try {
     await uninstallPluginMeta(id);
   } catch (error: unknown) {
-    logPluginMetaError(`PluginMeta: Failed to uninstall plugin with id ${id}`, error);
+    logPluginMetaError(`uninstallPluginMeta: Failed to uninstall plugin`, error, {
+      pluginId: id,
+    });
   }
 
   // Legacy uninstall path — kept until K8s settings API covers all plugin types.

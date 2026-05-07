@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -88,7 +88,7 @@ func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 	return legacyGet, nil
 }
 
-func (d *dualWriter) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+func (d *dualWriter) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	readUnified, errorIsOK := d.getMode(ctx)
 	ctx, span := tracer.Start(ctx, "dualwrite.dualWriter.List",
 		trace.WithAttributes(
@@ -443,57 +443,9 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	return objFromLegacy, createdLegacy, nil
 }
 
-// DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
-func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	readUnified, errorIsOK := d.getMode(ctx)
-	ctx, span := tracer.Start(ctx, "dualwrite.dualWriter.DeleteCollection",
-		trace.WithAttributes(
-			attribute.Bool("errorIsOK", errorIsOK),
-			attribute.Bool("readUnified", readUnified)))
-	defer span.End()
-
-	// During dry-run, skip legacy storage and delegate directly to unified storage
-	// which already handles dry-run correctly via DryRunnableStorage.
-	if dryrun.IsDryRun(options.DryRun) {
-		return d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
-	}
-
-	// In unified mode, legacy may be unavailable post-migration — skip it entirely.
-	if readUnified {
-		return d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
-	}
-
-	log := logging.FromContext(ctx).With("method", "DeleteCollection", "resourceVersion", listOptions.ResourceVersion, "resource", d.gr.String())
-
-	// delete from legacy first, and anything that is successful can be deleted in unistore too.
-	//
-	// we want to delete from legacy first, otherwise if the delete from unistore was successful,
-	// but legacy failed, the user would get a failure, but not be able to retry the delete
-	// as they would not be able to see the object in unistore anymore.
-
-	deletedLegacy, err := d.legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
-	if err != nil {
-		log.With("options", options).Error("failed to DELETE collection successfully from legacy storage", "err", err)
-		return nil, err
-	}
-
-	if errorIsOK {
-		// If unified storage is not the primary store and errors are okay, we can just run it in the background.
-		go func(ctxBg context.Context, cancel context.CancelFunc) {
-			defer cancel()
-			if _, err := d.unified.DeleteCollection(ctxBg, deleteValidation, options, listOptions); err != nil {
-				log.With("objectInfo", objectInfo(deletedLegacy)).Error("failed background DELETE collection to unified storage", "err", err)
-				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "DELETE_COLLECTION").Inc()
-			}
-		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
-		return deletedLegacy, nil
-	}
-	// Otherwise we have to check the error and run it in the foreground.
-	if _, err := d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions); err != nil {
-		log.With("objectInfo", objectInfo(deletedLegacy)).Error("failed to DELETE collection successfully from Storage", "err", err)
-		return nil, err
-	}
-	return deletedLegacy, nil
+// DeleteCollection is not supported with dual write
+func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(d.gr, "deletecollection")
 }
 
 func (d *dualWriter) Destroy() {

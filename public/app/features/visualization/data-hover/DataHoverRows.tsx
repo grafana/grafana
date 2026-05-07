@@ -25,7 +25,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
   };
 
   return (
-    <TabContent>
+    <TabContent data-testid="data-hover-rows" data-active-tab={activeTabIndex}>
       {layers.map(
         (geomapLayer, index) =>
           index === activeTabIndex && (
