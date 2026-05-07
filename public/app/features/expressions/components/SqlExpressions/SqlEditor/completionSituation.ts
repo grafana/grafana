@@ -37,13 +37,19 @@ interface TableRef {
   alias?: string;
 }
 
+interface ResolvedQualifiedTable {
+  table: string;
+  // Tracks whether the qualifier came from FROM/JOIN scope so callers do not need a separate table provider.
+  isTableRef: boolean;
+}
+
 export interface CompletionWord {
   from: number;
   to: number;
 }
 
 export type SqlCompletionSituation =
-  | { type: 'qualified-column'; from: number; table: string }
+  | { type: 'qualified-column'; from: number; table: string; isTableRef: boolean }
   | { type: 'table'; from: number }
   | { type: 'general'; from: number; tables: string[] }
   | { type: 'none' };
@@ -60,10 +66,13 @@ export function getSqlCompletionSituation(
   const qualifiedColumnContext = statement ? getQualifiedColumnContext(context, statement) : undefined;
 
   if (qualifiedColumnContext) {
+    const qualifiedTable = resolveQualifiedTable(tableRefs, qualifiedColumnContext.table);
+
     return {
       type: 'qualified-column',
       from: qualifiedColumnContext.from,
-      table: resolveQualifiedTable(tableRefs, qualifiedColumnContext.table),
+      table: qualifiedTable.table,
+      isTableRef: qualifiedTable.isTableRef,
     };
   }
 
@@ -278,16 +287,23 @@ function readAliasAt(
   };
 }
 
-function resolveQualifiedTable(tableRefs: TableRef[], tableOrAlias: string): string {
+function resolveQualifiedTable(tableRefs: TableRef[], tableOrAlias: string): ResolvedQualifiedTable {
   // Prefer exact table refs so aliases cannot shadow real table identifiers.
-  const exactTableRef = tableRefs.find(({ table }) => table === tableOrAlias);
+  const exactTableRef = tableRefs.find(({ table }) => isSameIdentifier(table, tableOrAlias));
 
   if (exactTableRef) {
-    return exactTableRef.table;
+    return { table: exactTableRef.table, isTableRef: true };
   }
 
-  const aliasedTableRef = tableRefs.find(({ alias }) => alias === tableOrAlias);
-  return aliasedTableRef?.table ?? tableOrAlias;
+  const aliasedTableRef = tableRefs.find(({ alias }) => isSameIdentifier(alias, tableOrAlias));
+  return aliasedTableRef
+    ? { table: aliasedTableRef.table, isTableRef: true }
+    : { table: tableOrAlias, isTableRef: false };
+}
+
+function isSameIdentifier(identifier: string | undefined, otherIdentifier: string): boolean {
+  // This parser path only handles unquoted identifiers, which SQL treats as case-insensitive.
+  return identifier?.toLowerCase() === otherIdentifier.toLowerCase();
 }
 
 function getUniqueTables(tableRefs: TableRef[]): string[] {

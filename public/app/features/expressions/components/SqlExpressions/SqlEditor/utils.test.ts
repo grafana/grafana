@@ -103,6 +103,46 @@ describe('SQL editor completion utils', () => {
     );
   });
 
+  it('resolves qualified columns when the table provider is absent', async () => {
+    const columns = jest.fn().mockReturnValue([{ label: 'value', insertText: 'value' }]);
+    const result = await getCompletionResult({ columns }, 'SELECT A. FROM A', 'SELECT A.'.length);
+
+    expect(columns).toHaveBeenCalledWith({ table: 'A' });
+    expect(result).toEqual(
+      expect.objectContaining({
+        options: expect.arrayContaining([expect.objectContaining({ label: 'value' })]),
+      })
+    );
+  });
+
+  it('resolves unquoted table refs case-insensitively in qualified column completions', async () => {
+    const columns = jest.fn().mockReturnValue([{ label: 'value', insertText: 'value' }]);
+    const result = await getCompletionResult({ columns }, 'SELECT a. FROM A', 'SELECT a.'.length);
+
+    expect(columns).toHaveBeenCalledWith({ table: 'A' });
+    expect(result).toEqual(
+      expect.objectContaining({
+        options: expect.arrayContaining([expect.objectContaining({ label: 'value' })]),
+      })
+    );
+  });
+
+  it('resolves global table completions case-insensitively in qualified column completions', async () => {
+    const columns = jest.fn().mockReturnValue([{ label: 'value', insertText: 'value' }]);
+    const result = await getCompletionResult(
+      { tables: () => [{ label: 'A', insertText: 'A' }], columns },
+      'SELECT a.',
+      'SELECT a.'.length
+    );
+
+    expect(columns).toHaveBeenCalledWith({ table: 'A' });
+    expect(result).toEqual(
+      expect.objectContaining({
+        options: expect.arrayContaining([expect.objectContaining({ label: 'value' })]),
+      })
+    );
+  });
+
   it('resolves columns for explicit aliases in qualified column completions', async () => {
     const columns = jest.fn().mockReturnValue([{ label: 'value', insertText: 'value' }]);
     const result = await getCompletionResult(

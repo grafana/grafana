@@ -40,14 +40,20 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
     const situation = getSqlCompletionSituation(context, word);
 
     if (situation.type === 'qualified-column') {
-      const tables = await resolveTables(completionProvider);
-      const isKnownTable = tables.some((t) => getCompletionInsertText(t) === situation.table);
+      let table = situation.table;
 
-      if (!isKnownTable) {
-        return null;
+      // Scoped qualifiers already came from parsed FROM/JOIN refs. Only consult tables() for global table-qualified completions.
+      if (!situation.isTableRef) {
+        const knownTable = await resolveKnownCompletionTable(completionProvider, situation.table);
+
+        if (!knownTable) {
+          return null;
+        }
+
+        table = knownTable;
       }
 
-      const columns = await resolveColumns(completionProvider, { table: situation.table });
+      const columns = await resolveColumns(completionProvider, { table });
 
       return context.aborted
         ? null
@@ -169,6 +175,21 @@ async function resolveTables(completionProvider: SqlCompletionProvider): Promise
   } catch {
     return [];
   }
+}
+
+async function resolveKnownCompletionTable(
+  completionProvider: SqlCompletionProvider,
+  table: string
+): Promise<string | undefined> {
+  const tables = await resolveTables(completionProvider);
+  const tableMatch = tables.find((t) => isSameIdentifier(getCompletionInsertText(t), table));
+
+  return tableMatch ? getCompletionInsertText(tableMatch) : undefined;
+}
+
+function isSameIdentifier(identifier: string, otherIdentifier: string): boolean {
+  // Completion table names are currently unquoted identifiers, so matching should be case-insensitive.
+  return identifier.toLowerCase() === otherIdentifier.toLowerCase();
 }
 
 async function resolveColumns(

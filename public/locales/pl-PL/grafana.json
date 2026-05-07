@@ -4516,6 +4516,14 @@
       "resource-detail-dashboards": "Utworzono {{usage}} z {{limit}} pulpitów ({{percentage}}%).",
       "resource-detail-folders": "Utworzono {{usage}} z {{limit}} folderów ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Wyczyść historię",
       "error": "Nie udało się załadować ostatnio wyświetlanych pulpitów.",
@@ -5330,7 +5338,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Ustawienia"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5732,7 +5740,7 @@
         "title": "Zmienne"
       },
       "variable": {
-        "change-type": "Zmień",
+        "change-type": "",
         "change-type-aria-label": "Zmień typ zmiennej",
         "custom-options": {
           "apply": "Zastosuj",
@@ -6049,7 +6057,7 @@
       "cancel": "Anuluj",
       "common": {
         "copy": "Kopiuj",
-        "copy-or-duplicate": "Kopiuj/wklej lub duplikuj",
+        "copy-tooltip": "",
         "delete": "Usuń",
         "duplicate": "Duplikuj",
         "layout": "Układ",
@@ -6088,7 +6096,7 @@
     },
     "new-panel": {
       "aria-label": "Nieskonfigurowany panel. Użyj klawisza Tab, aby wyświetlić opcje konfiguracji.",
-      "configure-button": "Konfiguruj",
+      "configure-button": "",
       "configure-button-menu": "Przełącz menu",
       "configure-visualization": "Skonfiguruj wizualizację",
       "empty-state-message": "Uruchom zapytanie, aby je tutaj zwizualizować, lub przejdź do wszystkich wizualizacji, aby dodać inne typy paneli",
@@ -6332,10 +6340,8 @@
       "title-provisioned": "Pulpit aprowizowany"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "W wybranym folderze istnieje już pulpit o tej samej nazwie.<br/><2>Czy nadal chcesz zapisać ten pulpit?</2>",
       "body-version-mismatch": "Inna osoba zaktualizowała ten pulpit.<br/><2>Czy nadal chcesz zapisać ten pulpit?</2>",
       "confirmText-save-and-overwrite": "Zapisz i zastąp",
-      "title-name-exists": "Konflikt",
       "title-version-mismatch": "Konflikt"
     },
     "save-dashboard-form": {
@@ -7410,10 +7416,6 @@
       "target-path-label": "Ścieżka docelowa",
       "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
     },
-    "name-already-exists-error": {
-      "body-name-already-exists": "W wybranym folderze istnieje już pulpit o tej samej nazwie. Czy nadal chcesz zapisać ten pulpit?",
-      "title-name-already-exists": "Nazwa już istnieje"
-    },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
         "proceed": "Kontynuuj"
@@ -8130,19 +8132,6 @@
       "aria-label-create-a-dashboard": "Utwórz pulpit",
       "aria-label-explore-data": "Przeglądaj dane",
       "aria-label-suggested-dashboards": "Sugerowane pulpity"
-    },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alerty nie są obsługiwane",
-      "text-alerting-supported": "Alerty są obsługiwane"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Nazwa jest używana podczas wybierania źródła danych w panelach. Domyślne źródło danych jest wstępnie wybrane w nowych panelach."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Strona ustawień źródła danych – ustawienia podstawowe",
-      "basic-settings-name-placeholder-name": "Imię",
-      "label-default": "Domyślny",
-      "label-name": "Imię"
     },
     "build-a-dashboard-button": {
       "blank": "Pusty",
@@ -11381,7 +11370,7 @@
     "description-order": "Wyświetlanie logów od najnowszych lub najstarszych. Po wybraniu opcji „Najpierw najstarsze” widok automatycznie przewija się do najnowszych logów u dołu.",
     "description-prettify-json": "Formatowanie wpisów logów JSON za pomocą znaków wcięcia i podziału wiersza.",
     "description-show-controls": "Wyświetlanie elementów sterujących umożliwiających przejście do ostatniego lub pierwszego wiersza logu i filtrowanie według poziomu logów.",
-    "description-show-log-attributes": "Funkcja eksperymentalna. Gdy wyświetlane są dzienniki OTel, wyświetlane jest dodatkowe pole z odpowiednimi parami klucz-wartość z etykiet i metadanych.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Wyrównywanie wartości za pomocą kolumn podczas korzystania z wyświetlanych pól.",
     "description-wrap-lines": "Wyświetlanie logów w pojedynczym wierszu lub zawijanie długich wpisów, aby zmieściły się w panelu.",
     "field-selector": {
@@ -11713,7 +11702,7 @@
       "line-contains-not": "Dodaj jako wiersz nie zawierający filtra",
       "search-text": "Szukaj w wynikach"
     },
-    "show-log-attributes": "Wyświetl atrybuty logów OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Rozdzielczość znacznika czasu",
     "un-themed-log-details": {
       "aria-label-data-links": "Połączenia danych",
