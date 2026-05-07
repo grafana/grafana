@@ -734,15 +734,16 @@ replace (
 	// lock for mysql tsdb compat
 	github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 
+	// TEMP: pin schemads to merged-but-untagged main commit
+	// (grafana/schemads#30 squash-merged 2026-05-07). Remove this replace
+	// and bump the require above to the new tag once schemads tags.
+	github.com/grafana/schemads => github.com/grafana/schemads v0.1.1-0.20260507125157-3be9e6c981de
+
 	// Use our fork of memberlist which includes some fixes that haven't been merged upstream yet.
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86
 
 	// Use our fork of the upstream Alertmanager.
 	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c
-
-	// TEMP: pin schemads to PR HEAD until grafana/schemads#30 merges and is tagged.
-	// Remove this replace and bump the require above to the new tag before merging.
-	github.com/grafana/schemads => github.com/grafana/schemads v0.1.1-0.20260506133442-188c20484be7
 
 	// Pin OpenTelemetry log packages to v0.12.2 for compatibility with dagger v0.18.8
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc => go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.12.2
