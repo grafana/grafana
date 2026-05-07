@@ -17,6 +17,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/queryheaders"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -74,14 +75,19 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 
 	handleTimeInQuery := c.Req.Header.Get("X-Query-V2") == "true"
 
+	queryCtx := c.Req.Context()
+	if fwd := c.Req.Header.Get(queryheaders.ForwardedFeatureToggles); fwd != "" {
+		queryCtx = queryheaders.WithForwardedFeatureNames(queryCtx, fwd)
+	}
+
 	var resp *backend.QueryDataResponse
 	var err error
 
 	hs.log.Debug("QueryMetricsV2: request received", "time_in_query", handleTimeInQuery)
 	if handleTimeInQuery {
-		resp, err = hs.queryDataService.QueryDataNew(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+		resp, err = hs.queryDataService.QueryDataNew(queryCtx, c.SignedInUser, c.SkipDSCache, reqDTO)
 	} else {
-		resp, err = hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+		resp, err = hs.queryDataService.QueryData(queryCtx, c.SignedInUser, c.SkipDSCache, reqDTO)
 	}
 
 	if err != nil {

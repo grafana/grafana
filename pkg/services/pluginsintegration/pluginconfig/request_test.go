@@ -8,12 +8,26 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/queryheaders"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestRequestConfigProvider_PluginRequestConfig_ForwardedFeatureHeader(t *testing.T) {
+	cfg := setting.NewCfg()
+	pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+	require.NoError(t, err)
+	p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
+
+	ctx := queryheaders.WithForwardedFeatureNames(context.Background(), "dsAbstractionApp")
+
+	m := p.PluginRequestConfig(ctx, "", nil)
+	require.Contains(t, m[featuretoggles.EnabledFeatures], "dsAbstractionApp")
+}
 
 func TestRequestConfigProvider_PluginRequestConfig_Defaults(t *testing.T) {
 	cfg := setting.NewCfg()

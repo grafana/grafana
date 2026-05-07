@@ -273,6 +273,8 @@ func prepareQuery(
 		return nil, err
 	}
 
+	headers = mergeForwardedFeatureTogglesHeader(headers, instance.GetSettings().FeatureToggles, ctx)
+
 	instanceConfig := instance.GetSettings()
 
 	dsQuerierLoggerWithSlug := instance.GetLogger()

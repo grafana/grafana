@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	queryService "github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/queryheaders"
 )
 
 // Set of headers that we want to forward to the datasource api servers. Those are used i.e. for
@@ -46,6 +47,7 @@ var expectedHeaders = map[string]string{
 	strings.ToLower("X-Real-IP"):                       "X-Real-IP",
 	strings.ToLower("X-Forwarded-For"):                 "X-Forwarded-For",
 	strings.ToLower("Cookie"):                          "Cookie",
+	strings.ToLower(queryheaders.ForwardedFeatureToggles): queryheaders.ForwardedFeatureToggles,
 }
 
 func ExtractKnownHeaders(header http.Header) map[string]string {

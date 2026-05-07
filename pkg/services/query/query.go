@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/queryheaders"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -41,6 +42,7 @@ const (
 	HeaderPanelPluginId  = "X-Panel-Plugin-Id"
 	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
 	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
+	HeaderForwardedFeatureToggles = queryheaders.ForwardedFeatureToggles
 )
 
 func ProvideService(

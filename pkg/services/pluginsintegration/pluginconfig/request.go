@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins/auth"
+	"github.com/grafana/grafana/pkg/services/queryheaders"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
@@ -52,6 +53,17 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	}
 
 	enabledFeatures := s.cfg.Features.GetEnabled(ctx)
+	if extra := strings.TrimSpace(queryheaders.ForwardedFeatureNamesCSV(ctx)); extra != "" {
+		for _, part := range strings.Split(extra, ",") {
+			part = strings.TrimSpace(part)
+			if part != "" {
+				if enabledFeatures == nil {
+					enabledFeatures = make(map[string]bool)
+				}
+				enabledFeatures[part] = true
+			}
+		}
+	}
 	if len(enabledFeatures) > 0 {
 		features := make([]string, 0, len(enabledFeatures))
 		for feat := range enabledFeatures {
