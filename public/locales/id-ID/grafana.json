@@ -4435,6 +4435,14 @@
       "resource-detail-dashboards": "Anda telah membuat {{usage}} dari {{limit}} dasbor ({{percentage}}%).",
       "resource-detail-folders": "Anda telah membuat {{usage}} dari {{limit}} folder ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Hapus riwayat",
       "error": "Dasbor yang baru dilihat tidak dapat dimuat.",
@@ -7987,19 +7995,6 @@
       "aria-label-explore-data": "Jelajahi data",
       "aria-label-suggested-dashboards": "Dasbor yang disarankan"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Pemberian peringatan tidak didukung",
-      "text-alerting-supported": "Pemberian peringatan didukung"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Nama ini digunakan saat Anda memilih sumber data di panel. Sumber data default dipilih sebelumnya di panel baru."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Pengaturan dasar halaman pengaturan sumber data",
-      "basic-settings-name-placeholder-name": "Nama",
-      "label-default": "Default",
-      "label-name": "Nama"
-    },
     "build-a-dashboard-button": {
       "blank": "Kosong",
       "build-a-dashboard": "Buat dasbor",
@@ -11186,7 +11181,7 @@
     "description-order": "Tampilkan log terbaru atau terlama terlebih dahulu. Jika opsi Terlama terlebih dahulu dipilih, tampilan akan otomatis menggulir ke log terbaru di bagian bawah.",
     "description-prettify-json": "Format entri log JSON dengan indentasi dan jeda baris.",
     "description-show-controls": "Tampilkan kontrol untuk melompat ke baris log terakhir atau pertama, dan filter berdasarkan level log.",
-    "description-show-log-attributes": "Eksperimental. Saat log OTel ditampilkan, tambahkan bidang tambahan yang ditampilkan dengan pasangan nilai kunci yang relevan dari label dan metadata.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Ratakan nilai menggunakan kolom saat menggunakan bidang yang ditampilkan.",
     "description-wrap-lines": "Tampilkan log sebagai satu baris atau penggal entri log yang panjang agar sesuai dengan panel.",
     "field-selector": {
@@ -11509,7 +11504,7 @@
       "line-contains-not": "Tambahkan sebagai baris tidak berisi filter",
       "search-text": "Cari di hasil"
     },
-    "show-log-attributes": "Tampilkan atribut log untuk log OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Resolusi stempel waktu",
     "un-themed-log-details": {
       "aria-label-data-links": "Tautan data",

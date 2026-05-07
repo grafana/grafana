@@ -11,11 +11,11 @@ awsconfig
 /reports
 /e2e/tmp
 /scripts/grafana-server/tmp
-/scripts/uplot-compare/dist
 vendor/
 /docs/menu.yaml
 /requests
 tsconfig.tsbuildinfo
+.jest-canvas-mock-compare
 __debug_bin*
 *.cov
 

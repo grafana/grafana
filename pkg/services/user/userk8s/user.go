@@ -2,7 +2,9 @@ package userk8s
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
+	iamuser "github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -49,6 +54,13 @@ func (s *UserK8sService) getUserClient() (*iamv0alpha1.UserClient, error) {
 		return nil, errors.New("client generator not initialized")
 	}
 	return iamv0alpha1.NewUserClientFromGenerator(s.clientGenerator)
+}
+
+func (s *UserK8sService) getCustomRouteClient(namespace string) (*iamv0alpha1.CustomRouteClient, error) {
+	if s.clientGenerator == nil {
+		return nil, errors.New("client generator not initialized")
+	}
+	return iamv0alpha1.NewCustomRouteClientFromGenerator(s.clientGenerator, namespace)
 }
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
@@ -422,7 +434,94 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 }
 
 func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
-	return nil, errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.search", trace.WithAttributes(
+		attribute.String("query", cmd.Query),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID := cmd.OrgID
+	if orgID == 0 {
+		var err error
+		orgID, err = s.getOrgID(ctx, ctxLogger)
+		if err != nil {
+			ctxLogger.Error("failed to get orgID from context in Search", "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	routeClient, err := s.getCustomRouteClient(namespace)
+	if err != nil {
+		ctxLogger.Error("failed to get custom route client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	limit := cmd.Limit
+	if limit <= 0 {
+		limit = common.DefaultListLimit
+	}
+	page := cmd.Page
+	if page <= 0 {
+		page = 1
+	}
+
+	params := url.Values{}
+	if cmd.Query != "" {
+		params.Set("query", cmd.Query)
+	}
+	params.Set("limit", strconv.Itoa(limit))
+	params.Set("page", strconv.Itoa(page))
+	for _, sortParam := range legacysort.ConvertToSortParams(cmd.SortOpts, iamuser.UserSortFieldMapping()) {
+		params.Add("sort", sortParam)
+	}
+
+	raw, err := routeClient.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
+		Path:  "/searchUsers",
+		Verb:  "GET",
+		Query: params,
+	})
+	if err != nil {
+		ctxLogger.Error("k8s user search request failed", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	var searchResp iamv0alpha1.GetSearchUsersResponse
+	if err := json.Unmarshal(raw, &searchResp); err != nil {
+		ctxLogger.Error("failed to decode k8s user search response", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	users := make([]*user.UserSearchHitDTO, 0, len(searchResp.Hits))
+	for _, hit := range searchResp.Hits {
+		users = append(users, &user.UserSearchHitDTO{
+			UID:           hit.Name,
+			Name:          hit.Title,
+			Login:         hit.Login,
+			Email:         hit.Email,
+			LastSeenAt:    time.Unix(hit.LastSeenAt, 0),
+			LastSeenAtAge: hit.LastSeenAtAge,
+			IsProvisioned: hit.Provisioned,
+		})
+	}
+
+	return &user.SearchUserQueryResult{
+		TotalCount: searchResp.TotalHits,
+		Users:      users,
+		Page:       page,
+		PerPage:    limit,
+	}, nil
 }
 
 func (s *UserK8sService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
@@ -430,7 +529,40 @@ func (s *UserK8sService) BatchDisableUsers(ctx context.Context, cmd *user.BatchD
 }
 
 func (s *UserK8sService) GetProfile(ctx context.Context, cmd *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
-	return nil, errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.getProfile", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("failed to get orgID from context in GetProfile", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getUserClient()
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	found, err := s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	return toUserProfileDTO(found, orgID), nil
 }
 
 func (s *UserK8sService) GetUsageStats(ctx context.Context) map[string]any {
@@ -528,6 +660,22 @@ func toSignedInUser(u *iamv0alpha1.User, orgID int64) *user.SignedInUser {
 	}
 
 	return signedInUser
+}
+
+func toUserProfileDTO(u *iamv0alpha1.User, orgID int64) *user.UserProfileDTO {
+	return &user.UserProfileDTO{
+		ID:             getUserID(u),
+		UID:            u.Name,
+		Email:          u.Spec.Email,
+		Name:           u.Spec.Title,
+		Login:          u.Spec.Login,
+		OrgID:          orgID,
+		IsGrafanaAdmin: u.Spec.GrafanaAdmin,
+		IsDisabled:     u.Spec.Disabled,
+		IsProvisioned:  u.Spec.Provisioned,
+		UpdatedAt:      u.GetUpdateTimestamp(),
+		CreatedAt:      u.CreationTimestamp.Time,
+	}
 }
 
 func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
