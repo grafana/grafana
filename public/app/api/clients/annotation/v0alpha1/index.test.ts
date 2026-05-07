@@ -1,13 +1,7 @@
 import { type AnnotationEvent } from '@grafana/data';
 import { config, type BackendSrv, setBackendSrv } from '@grafana/runtime';
 
-import {
-  annotationEventToSpec,
-  annotationK8sClient,
-  annotationToEvent,
-  buildCreatePayload,
-  resetAnnotationK8sClientForTests,
-} from './index';
+import { annotationEventToSpec, annotationK8sClient, annotationToEvent, buildCreatePayload } from './index';
 
 const postFn = jest.fn();
 const putFn = jest.fn();
@@ -30,7 +24,6 @@ beforeEach(() => {
   putFn.mockReset();
   deleteFn.mockReset();
   getFn.mockReset();
-  resetAnnotationK8sClientForTests();
 });
 
 describe('annotationEventToSpec', () => {

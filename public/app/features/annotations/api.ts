@@ -1,6 +1,6 @@
 import { type AnnotationEvent, type DataFrame, toDataFrame } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { annotationK8sClient, resetAnnotationK8sClientForTests } from 'app/api/clients/annotation/v0alpha1';
+import { annotationK8sClient } from 'app/api/clients/annotation/v0alpha1';
 import { type StateHistoryItem } from 'app/types/unified-alerting';
 
 import { type AnnotationTagsResponse } from './types';
@@ -98,5 +98,4 @@ export function annotationServer(): AnnotationServer {
 /** @internal exposed for tests so the cached instance is rebuilt against the current config. */
 export function resetAnnotationServerForTests() {
   instance = null;
-  resetAnnotationK8sClientForTests();
 }

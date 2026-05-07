@@ -19,26 +19,15 @@ const ANNOTATIONS_RESOURCE = 'annotations';
 const TAGS_RESOURCE = 'tags';
 const SEARCH_RESOURCE = 'search';
 
-let cachedClient: ScopedResourceClient<AnnotationSpec, object, 'Annotation'> | null = null;
-
-/**
- * Returns the underlying generic k8s resource client. Lazily constructed so that
- * tests / config changes that mutate `config.namespace` are picked up.
- */
-function getResourceClient(): ScopedResourceClient<AnnotationSpec, object, 'Annotation'> {
-  if (!cachedClient) {
-    cachedClient = new ScopedResourceClient<AnnotationSpec, object, 'Annotation'>({
-      group: ANNOTATION_API_GROUP,
-      version: ANNOTATION_API_VERSION,
-      resource: ANNOTATIONS_RESOURCE,
-    });
-  }
-  return cachedClient;
-}
-
-/** @internal exposed for tests so a fresh client is built against the current config. */
-export function resetAnnotationK8sClientForTests() {
-  cachedClient = null;
+// Construction is cheap (one config read + a string concat) and the URL it
+// builds depends on `config.namespace`, so we don't memoize — that lets
+// namespace changes (mid-app or in tests) take effect on the next call.
+function resourceClient(): ScopedResourceClient<AnnotationSpec, object, 'Annotation'> {
+  return new ScopedResourceClient<AnnotationSpec, object, 'Annotation'>({
+    group: ANNOTATION_API_GROUP,
+    version: ANNOTATION_API_VERSION,
+    resource: ANNOTATIONS_RESOURCE,
+  });
 }
 
 /** Build the spec portion of an annotation k8s object from a legacy AnnotationEvent + scope names. */
@@ -176,7 +165,7 @@ export function buildCreatePayload(event: AnnotationEvent, scopes?: string[]): A
 
 export const annotationK8sClient = {
   create(event: AnnotationEvent, scopes?: string[]): Promise<Annotation> {
-    return getResourceClient().create(buildCreatePayload(event, scopes));
+    return resourceClient().create(buildCreatePayload(event, scopes));
   },
 
   // Fetch-then-merge: k8s PUT requires the current resourceVersion for optimistic concurrency.
@@ -185,7 +174,7 @@ export const annotationK8sClient = {
       throw new Error('Annotation id (metadata.name) is required for update');
     }
 
-    const client = getResourceClient();
+    const client = resourceClient();
     const existing = await client.get(toK8sName(event.id));
     const nextSpec = annotationEventToSpec(event, scopes);
 
@@ -200,7 +189,7 @@ export const annotationK8sClient = {
   },
 
   remove(name: string | number): Promise<unknown> {
-    return getResourceClient().delete(toK8sName(name), false);
+    return resourceClient().delete(toK8sName(name), false);
   },
 
   async tags(limit = 1000): Promise<AnnotationTagItem[]> {
