@@ -83,7 +83,7 @@ await sidebar.panelOptions.enableRepeat('c1');
 
 ## Expected Gains
 
-### Measured today
+### Measured today (2026/04/23)
 
 | Metric                                                        | Value                                                         |
 | ------------------------------------------------------------- | ------------------------------------------------------------- |
