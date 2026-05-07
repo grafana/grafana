@@ -303,18 +303,14 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 	require.Equal(t, concurrency-1, alreadyExistsCount, "all other creates should get AlreadyExists")
 }
 
-// TestConcurrentWritesWithLeases verifies that with leases enabled and
-// no RV manager, concurrent writes to the same resource serialize cleanly:
-// exactly one succeeds and the rest get a recognizable conflict-style error.
-func TestConcurrentWritesWithLeases(t *testing.T) {
-	t.Run("Badger", func(t *testing.T) {
-		runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
-			return setupBadgerKV(t)
-		}, "badgerkv-leases")
-	})
+func TestConcurrentWritesWithLeasesBadger(t *testing.T) {
+	runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
+		return setupBadgerKV(t)
+	}, "badgerkv-leases")
+}
 
+func TestIntegrationConcurrentWritesWithLeasesSqlKV(t *testing.T) {
 	t.Run("sqlkv", func(t *testing.T) {
-		t.Skip("not implemented yet")
 		testutil.SkipIntegrationTestInShortMode(t)
 
 		runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
@@ -324,6 +320,9 @@ func TestConcurrentWritesWithLeases(t *testing.T) {
 	})
 }
 
+// runConcurrentWritesWithLeases verifies that with leases enabled and
+// no RV manager, concurrent writes to the same resource serialize cleanly:
+// exactly one succeeds and the rest get a recognizable conflict-style error.
 func runConcurrentWritesWithLeases(t *testing.T, newBackend func() resource.StorageBackend, ns string) {
 	t.Run("concurrent creates", func(t *testing.T) {
 		runConcurrentCreatesWithLeases(t, newBackend(), ns+"-create")
