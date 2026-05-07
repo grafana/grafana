@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -94,6 +95,10 @@ type kvStorageBackend struct {
 	watchOpts WatchOptions
 
 	rvManager *rvmanager.ResourceVersionManager
+
+	// leaseManager, when non-nil, is used to serialize writes to the same
+	// resource via per-resource leases. Ignored when using `rvManager`.
+	leaseManager *lease.Manager
 
 	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
 	dbKeepAlive any
@@ -174,6 +179,13 @@ type KVBackendOptions struct {
 	SearchLookback time.Duration
 
 	DashboardVersionsToKeep int
+
+	// EnableKVLeases enables per-resource leases for serializing writes.
+	EnableKVLeases bool
+
+	// Holder identifies this process for lease ownership. Required when
+	// EnableKVLeases is true.
+	Holder string
 }
 
 var (
@@ -227,6 +239,15 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	metrics := newKVBackendMetrics(opts.Reg)
 
+	var leaseManager *lease.Manager
+	if opts.EnableKVLeases {
+		if opts.Holder == "" {
+			cancel()
+			return nil, errors.New("holder is required when enable_kv_leases is true")
+		}
+		leaseManager = lease.NewManager(kv, opts.Holder)
+	}
+
 	backend := &kvStorageBackend{
 		kv:                      kv,
 		bulkLock:                NewBulkLock(),
@@ -239,6 +260,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		eventRetentionPeriod:    eventRetentionPeriod,
 		eventPruningInterval:    eventPruningInterval,
 		rvManager:               opts.RvManager,
+		leaseManager:            leaseManager,
 		dbKeepAlive:             opts.DBKeepAlive,
 		lastImportStore:         newLastImportStore(kv),
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
@@ -753,6 +775,60 @@ func conflictError(event WriteEvent, message string) error {
 	)
 }
 
+// maybeAcquireWriteLease acquires the per-resource lease that serializes WriteEvent
+// for this resource if leases are enabled. It returns:
+//
+//   - a context derived from ctx that is cancelled if the lease is lost
+//     (e.g. its TTL expires while the write is in flight);
+//   - a boolean indicating whether a lease was acquired;
+//   - a release closure to be deferred — it stops the watcher goroutine and
+//     releases the lease.
+//
+// When leases are not active, it returns ctx unchanged and a no-op release.
+func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, bool, func(), error) {
+	leasesActive := k.leaseManager != nil
+	if !leasesActive {
+		return ctx, false, func() {}, nil
+	}
+
+	name := event.Key.Group + "/" + event.Key.Resource + "/" +
+		event.Key.Namespace + "/" + event.Key.Name
+	if event.Key.Namespace == "" {
+		name = event.Key.Group + "/" + event.Key.Resource + "/" + event.Key.Name
+	}
+
+	l, err := k.leaseManager.Acquire(ctx, name)
+	if err != nil {
+		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+			k.metrics.recordConflict(event)
+			return nil, false, nil, conflictError(event, "concurrent modification on the same resource, please retry")
+		}
+		return nil, false, nil, fmt.Errorf("acquiring write lease: %w", err)
+	}
+
+	leaseCtx, cancel := context.WithCancel(ctx)
+	watcherDone := make(chan struct{})
+	go func() {
+		defer close(watcherDone)
+		select {
+		case <-l.Lost():
+			cancel()
+		case <-leaseCtx.Done():
+		}
+	}()
+
+	release := func() {
+		cancel()
+		<-watcherDone
+		if rerr := k.leaseManager.Release(ctx, l); rerr != nil {
+			k.log.Warn("failed to release write lease",
+				"name", name, "error", rerr)
+		}
+	}
+
+	return leaseCtx, true, release, nil
+}
+
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
 //
 //nolint:gocyclo
@@ -770,6 +846,12 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		attribute.String("namespace", event.Key.Namespace),
 	))
 	defer span.End()
+
+	ctx, leasesActive, releaseLease, err := k.maybeAcquireWriteLease(ctx, event)
+	if err != nil {
+		return 0, err
+	}
+	defer releaseLease()
 
 	rv := k.snowflake.Generate().Int64()
 
@@ -800,7 +882,6 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 
 	obj := event.Object
-	// Write data.
 	var action kv.DataAction
 	switch event.Type {
 	case resourcepb.WatchEvent_ADDED:
@@ -814,6 +895,12 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		})
 		if err == nil {
 			if latestKey.Action == kv.DataActionUpdated {
+				return 0, ErrResourceAlreadyExists
+			}
+
+			if leasesActive {
+				// Holding the lease guarantees no concurrent in-flight writes
+				// for this resource, so a non-deleted latest key is genuine.
 				return 0, ErrResourceAlreadyExists
 			}
 
@@ -896,64 +983,66 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 
 	// Optimistic concurrency control to verify our write is the latest version
-	// and that the resource still had the expected PreviousRV when we wrote it
-	if event.PreviousRV != 0 {
-		// Update operations: verify PreviousRV matches and our write is latest
-		// Get both the latest and predecessor
-		latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
-			Group:     event.Key.Group,
-			Resource:  event.Key.Resource,
-			Namespace: namespace,
-			Name:      event.Key.Name,
-		})
-		if err != nil {
-			// If we can't read the latest version, clean up what we wrote
-			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("failed to check latest version: %w", err)
-		}
+	// and that the resource still had the expected PreviousRV when we wrote it.
+	if !leasesActive {
+		if event.PreviousRV != 0 {
+			// Update operations: verify PreviousRV matches and our write is latest
+			// Get both the latest and predecessor
+			latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
+				Group:     event.Key.Group,
+				Resource:  event.Key.Resource,
+				Namespace: namespace,
+				Name:      event.Key.Name,
+			})
+			if err != nil {
+				// If we can't read the latest version, clean up what we wrote
+				_ = k.dataStore.Delete(ctx, dataKey)
+				return 0, fmt.Errorf("failed to check latest version: %w", err)
+			}
 
-		// Check if the RV we just wrote is the latest. If not, a concurrent write with higher RV happened
-		if latestKey.ResourceVersion != dataKey.ResourceVersion {
-			// Delete the data we just wrote since it's not the latest
-			_ = k.dataStore.Delete(ctx, dataKey)
-			k.metrics.recordConflict(event)
-			return 0, conflictError(event, "concurrent modification detected")
-		}
+			// Check if the RV we just wrote is the latest. If not, a concurrent write with higher RV happened
+			if latestKey.ResourceVersion != dataKey.ResourceVersion {
+				// Delete the data we just wrote since it's not the latest
+				_ = k.dataStore.Delete(ctx, dataKey)
+				k.metrics.recordConflict(event)
+				return 0, conflictError(event, "concurrent modification detected")
+			}
 
-		if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
-			// Another concurrent write happened between our read and write
-			_ = k.dataStore.Delete(ctx, dataKey)
-			k.metrics.recordConflict(event)
-			return 0, conflictError(event, "resource was modified concurrently")
-		}
-	} else if event.Type == resourcepb.WatchEvent_ADDED {
-		// Create operations: verify our write is the latest version
-		latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
-			Group:     event.Key.Group,
-			Resource:  event.Key.Resource,
-			Namespace: namespace,
-			Name:      event.Key.Name,
-		})
-		if err != nil {
-			// If we can't read the latest version, clean up what we wrote
-			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("failed to check latest version: %w", err)
-		}
+			if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
+				// Another concurrent write happened between our read and write
+				_ = k.dataStore.Delete(ctx, dataKey)
+				k.metrics.recordConflict(event)
+				return 0, conflictError(event, "resource was modified concurrently")
+			}
+		} else if event.Type == resourcepb.WatchEvent_ADDED {
+			// Create operations: verify our write is the latest version
+			latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
+				Group:     event.Key.Group,
+				Resource:  event.Key.Resource,
+				Namespace: namespace,
+				Name:      event.Key.Name,
+			})
+			if err != nil {
+				// If we can't read the latest version, clean up what we wrote
+				_ = k.dataStore.Delete(ctx, dataKey)
+				return 0, fmt.Errorf("failed to check latest version: %w", err)
+			}
 
-		// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
-		if latestKey.ResourceVersion != dataKey.ResourceVersion {
-			// Delete the data we just wrote since it's not the latest
-			_ = k.dataStore.Delete(ctx, dataKey)
-			k.metrics.recordConflict(event)
-			return 0, conflictError(event, "concurrent create detected")
-		}
+			// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
+			if latestKey.ResourceVersion != dataKey.ResourceVersion {
+				// Delete the data we just wrote since it's not the latest
+				_ = k.dataStore.Delete(ctx, dataKey)
+				k.metrics.recordConflict(event)
+				return 0, conflictError(event, "concurrent create detected")
+			}
 
-		// Verify that the immediate predecessor is not a create
-		if prevKey.Action == DataActionCreated {
-			// Another concurrent create happened - delete our write and return error
-			_ = k.dataStore.Delete(ctx, dataKey)
-			k.metrics.recordConflict(event)
-			return 0, conflictError(event, "concurrent create attempts detected")
+			// Verify that the immediate predecessor is not a create
+			if prevKey.Action == DataActionCreated {
+				// Another concurrent create happened - delete our write and return error
+				_ = k.dataStore.Delete(ctx, dataKey)
+				k.metrics.recordConflict(event)
+				return 0, conflictError(event, "concurrent create attempts detected")
+			}
 		}
 	}
 
@@ -968,10 +1057,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
 	}
-	err := k.eventStore.Save(ctx, eventData)
-	if err != nil {
-		// Clean up the data we wrote since event save failed
-		_ = k.dataStore.Delete(ctx, dataKey)
+	if err := k.eventStore.Save(ctx, eventData); err != nil {
 		return 0, fmt.Errorf("failed to save event: %w", err)
 	}
 
