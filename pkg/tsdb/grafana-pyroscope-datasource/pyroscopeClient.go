@@ -447,3 +447,15 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSe
 func isPrivateLabel(label string) bool {
 	return strings.HasPrefix(label, "__")
 }
+
+// setUTF8AcceptHeader appends "; allow-utf8-labelnames=true" to the Accept header,
+// signalling to the Pyroscope API that UTF-8 label names are supported.
+// If no Accept header is present, it sets "*/*; allow-utf8-labelnames=true".
+func setUTF8AcceptHeader(h http.Header) {
+	existing := h.Get("Accept")
+	if existing != "" {
+		h.Set("Accept", existing+"; allow-utf8-labelnames=true")
+	} else {
+		h.Set("Accept", "*/*; allow-utf8-labelnames=true")
+	}
+}

@@ -2,6 +2,7 @@ package pyroscope
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -239,4 +240,34 @@ func (f *FakePyroscopeConnectClient) AnalyzeQuery(ctx context.Context, c *connec
 
 func (f *FakePyroscopeConnectClient) GetProfileStats(ctx context.Context, c *connect.Request[typesv1.GetProfileStatsRequest]) (*connect.Response[typesv1.GetProfileStatsResponse], error) {
 	panic("implement me")
+}
+
+func Test_setUTF8AcceptHeader(t *testing.T) {
+	tests := []struct {
+		description    string
+		existingAccept string
+		expectedAccept string
+	}{
+		{
+			description:    "no existing Accept header",
+			existingAccept: "",
+			expectedAccept: "*/*; allow-utf8-labelnames=true",
+		},
+		{
+			description:    "existing Accept header",
+			existingAccept: "application/json",
+			expectedAccept: "application/json; allow-utf8-labelnames=true",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			h := http.Header{}
+			if tt.existingAccept != "" {
+				h.Set("Accept", tt.existingAccept)
+			}
+			setUTF8AcceptHeader(h)
+			require.Equal(t, tt.expectedAccept, h.Get("Accept"))
+		})
+	}
 }
