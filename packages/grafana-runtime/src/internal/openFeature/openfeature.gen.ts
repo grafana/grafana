@@ -67,6 +67,8 @@ export const FlagKeys = {
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
+  /** Enables the Grafana Assistant to provision starter saved queries from the Saved queries modal */
+  SavedQueriesAssistantProvisioning: "savedQueriesAssistantProvisioning",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
   /** Enables option to position series names above bars in the state timeline panel */
@@ -374,6 +376,17 @@ export const useFlagRecentlyViewedDashboards = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reporting.anyPageReporting", false, options).value;
+};
+
+/**
+ * Enables the Grafana Assistant to provision starter saved queries from the Saved queries modal
+ *
+ * **Details:**
+ * - flag key: `savedQueriesAssistantProvisioning`
+ * - default value: `false`
+ */
+export const useFlagSavedQueriesAssistantProvisioning = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("savedQueriesAssistantProvisioning", false, options).value;
 };
 
 /**

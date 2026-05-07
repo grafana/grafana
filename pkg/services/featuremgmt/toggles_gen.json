@@ -5490,6 +5490,20 @@
     },
     {
       "metadata": {
+        "name": "savedQueriesAssistantProvisioning",
+        "resourceVersion": "1778169113224",
+        "creationTimestamp": "2026-05-07T15:51:53Z"
+      },
+      "spec": {
+        "description": "Enables the Grafana Assistant to provision starter saved queries from the Saved queries modal",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "savedQueriesRBAC",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"

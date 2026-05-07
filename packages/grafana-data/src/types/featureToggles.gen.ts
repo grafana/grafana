@@ -609,6 +609,11 @@ export interface FeatureToggles {
   */
   newSavedQueriesExperience?: boolean;
   /**
+  * Enables the Grafana Assistant to provision starter saved queries from the Saved queries modal
+  * @default false
+  */
+  savedQueriesAssistantProvisioning?: boolean;
+  /**
   * Enables the new unconfigured panel experience
   * @default true
   */

@@ -15,6 +15,7 @@ declare module "@openfeature/core" {
     | "provisioningFolderMetadata"
     | "stateTimeline.nameAboveBars"
     | "newSavedQueriesExperience"
+    | "savedQueriesAssistantProvisioning"
     | "grafana.orgDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"

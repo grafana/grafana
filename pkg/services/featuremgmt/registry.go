@@ -1068,6 +1068,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "savedQueriesAssistantProvisioning",
+			Description: "Enables the Grafana Assistant to provision starter saved queries from the Saved queries modal",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{LegacyFrontend: true, React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "newUnconfiguredPanel",
 			Description: "Enables the new unconfigured panel experience",
 			Stage:       FeatureStageGeneralAvailability,
