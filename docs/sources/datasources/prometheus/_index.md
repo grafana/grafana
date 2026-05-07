@@ -47,17 +47,7 @@ The following documents help you set up and use the Prometheus data source:
 
 ## Exemplars
 
-In Prometheus, an **exemplar** is a specific trace that represents a measurement taken within a given time interval. While metrics provide an aggregated view of your system, and traces offer a detailed view of individual requests, exemplars serve as a bridge between the two, linking high-level metrics to specific traces for deeper insights.
-
-Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. Refer to [Introduction to exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/) for detailed information on how they work.
-
-Grafana can display exemplar data alongside a metric both in Explore and in dashboards.
-
-You configure exemplars when you set up the Prometheus data source. For details, refer to the Exemplars section in [Configure the Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/).
-
-## Amazon Managed Service for Prometheus
-
-Grafana has deprecated the Prometheus data source for Amazon Managed Service for Prometheus. Use the [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) instead. The linked documentation outlines the migration steps.
+Prometheus supports exemplars, which link aggregated metric data to specific trace examples. This bridges the gap between metrics and traces, letting you jump from a spike on a graph directly to a relevant trace. For conceptual details, refer to [Introduction to exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/). To set up exemplar links, refer to the Exemplars section in [Configure the Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/).
 
 ## Additional features
 
@@ -67,6 +57,10 @@ After you configure the Prometheus data source, you can:
 - Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results
 - Create [recorded queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/) for pre-aggregated data
 - Build a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
+
+## Amazon Managed Service for Prometheus
+
+Grafana has deprecated the Prometheus data source for Amazon Managed Service for Prometheus. Use the [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) instead. The linked documentation outlines the migration steps.
 
 ## Related resources
 
