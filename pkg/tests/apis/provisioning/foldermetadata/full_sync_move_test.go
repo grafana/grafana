@@ -160,6 +160,72 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderPathReparentsChildBefor
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 }
 
+func TestIntegrationProvisioning_FullSync_DuplicateFolderWithConcurrentFolderRename(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := t.Context()
+
+	const (
+		repo         = "folder-dup-plus-rename"
+		currentUID   = "dup-rename-current-uid"
+		orphanUID    = "dup-rename-orphan-uid"
+		dashboardUID = "dup-rename-dashboard"
+		teamAUID     = "team-a-dup-rename-uid"
+		teamBUID     = "team-b-dup-rename-uid"
+	)
+
+	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON(currentUID, "My Folder"))
+	writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON(dashboardUID, "Dashboard in Dup Folder", 1))
+	writeToProvisioningPath(t, helper, "teamA/_folder.json", folderMetadataJSON(teamAUID, "Team A"))
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "teamA/panel-dashboard.json",
+		},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	common.RequireFolderState(t, helper.Folders, teamAUID, "Team A", "teamA", repo)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dashboard.json":    currentUID,
+		"teamA/panel-dashboard.json": teamAUID,
+	})
+
+	// Inject orphan folder at myfolder/ and move dashboard to it
+	injectManagedFolder(t, helper, repo, orphanUID, "Orphan Folder", "myfolder", repo, "stale-checksum")
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 2)
+	moveManagedDashboardToFolder(t, helper, dashboardUID, orphanUID)
+
+	// Simultaneously rename teamA → teamB (UID change in _folder.json)
+	writeToProvisioningPath(t, helper, "teamB/_folder.json", folderMetadataJSON(teamBUID, "Team B"))
+	moveInProvisioningPath(t, helper, "teamA/panel-dashboard.json", "teamB/panel-dashboard.json")
+	// Remove old teamA folder from provisioning path
+	require.NoError(t, os.RemoveAll(filepath.Join(helper.ProvisioningPath, "teamA")))
+
+	helper.SyncAndWait(t, repo, nil)
+
+	// Duplicate folder cleanup: orphan deleted, dashboard re-parented to current
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	assertNoFolderByUID(t, helper, orphanUID)
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 1)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dashboard.json": currentUID,
+	})
+
+	// Folder rename: teamA gone, teamB created with new UID
+	common.RequireFolderState(t, helper.Folders, teamBUID, "Team B", "teamB", repo)
+	assertNoFolderAtPath(t, helper, repo, "teamA")
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"teamB/panel-dashboard.json": teamBUID,
+	})
+
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
+}
+
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t *testing.T) {
 	helper := sharedHelper(t)
 	const repo = "folder-move-nested"

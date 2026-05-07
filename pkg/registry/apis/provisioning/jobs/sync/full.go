@@ -409,8 +409,12 @@ func applyChanges(
 		}
 	}
 
-	deferredFolderCleanups := make([]ResourceFileChange, 0, len(buckets.folderCreations)+len(buckets.deferredFolderDeletions))
-	deferredFolderCleanups = append(deferredFolderCleanups, buckets.folderCreations...)
+	deferredFolderCleanups := make([]ResourceFileChange, 0, buckets.folderRenames+len(buckets.deferredFolderDeletions))
+	for _, c := range buckets.folderCreations {
+		if c.FolderRenamed {
+			deferredFolderCleanups = append(deferredFolderCleanups, c)
+		}
+	}
 	deferredFolderCleanups = append(deferredFolderCleanups, buckets.deferredFolderDeletions...)
 	return cleanupDeferredFolders(ctx, deferredFolderCleanups, repositoryResources, progress, tracer, metrics)
 }
