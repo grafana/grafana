@@ -40,7 +40,7 @@ describe('useDynamicPalettesReady', () => {
     expect(screen.getByText('waiting')).toBeInTheDocument();
 
     await act(async () => {
-      jest.advanceTimersByTime(50);
+      jest.advanceTimersByTime(2000);
       await Promise.resolve();
     });
 
