@@ -99,9 +99,6 @@ func (f *fakeStorage) onUpdate(obj runtime.Object, err error) {
 func (f *fakeStorage) onDelete(obj runtime.Object, err error) {
 	f.deleteReturns = append(f.deleteReturns, returnVal{obj: obj, err: err})
 }
-func (f *fakeStorage) onDeleteCollection(obj runtime.Object, err error) {
-	f.deleteCollectionReturns = append(f.deleteCollectionReturns, returnVal{obj: obj, err: err})
-}
 
 // pop removes and returns the first element of the slice if there are more than one;
 // otherwise it returns the single remaining element (keeping it for future calls).

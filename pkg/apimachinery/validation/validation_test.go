@@ -77,7 +77,7 @@ func TestValidation(t *testing.T) {
 			input: []string{""},
 		}, {
 			name:   "too long",
-			input:  []string{strings.Repeat("0", 41)},
+			input:  []string{strings.Repeat("0", 64)},
 			expect: []string{"namespace is too long"},
 		}, {
 			name:   "too short",
@@ -87,7 +87,7 @@ func TestValidation(t *testing.T) {
 			name: "ok",
 			input: []string{
 				"hello",
-				strings.Repeat("a", 40), // long... alpha
+				strings.Repeat("a", 63), // long... alpha
 				"hello-world",
 				"hello.world",
 				"hello_world",
@@ -133,7 +133,7 @@ func TestValidation(t *testing.T) {
 		}{{
 			name:   "too long",
 			expect: []string{"group is too long"},
-			input:  []string{strings.Repeat("0", 61)},
+			input:  []string{strings.Repeat("0", 191)},
 		}, {
 			name:   "too short",
 			expect: []string{"group is too short"},
@@ -142,7 +142,7 @@ func TestValidation(t *testing.T) {
 			name: "ok",
 			input: []string{
 				"hello",
-				strings.Repeat("a", 60), // long... alpha
+				strings.Repeat("a", 190), // long... alpha
 				"dashboards.grafana.app",
 				"prometheus-datasource",
 				"1234", // just a numbers
@@ -184,7 +184,7 @@ func TestValidation(t *testing.T) {
 		}{{
 			name:   "too long",
 			expect: []string{"resource is too long"},
-			input:  []string{strings.Repeat("0", 41)},
+			input:  []string{strings.Repeat("0", 191)},
 		}, {
 			name:   "too short",
 			expect: []string{"resource is too short"},
@@ -193,7 +193,7 @@ func TestValidation(t *testing.T) {
 			name: "ok",
 			input: []string{
 				"hello",
-				strings.Repeat("a", 40), // long... alpha
+				strings.Repeat("a", 190), // long... alpha
 				"dashboards",
 				"folders",
 				"folders123",
