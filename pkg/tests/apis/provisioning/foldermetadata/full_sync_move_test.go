@@ -160,6 +160,151 @@ func TestIntegrationProvisioning_FullSync_DuplicateFolderPathReparentsChildBefor
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 }
 
+func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := t.Context()
+
+	const (
+		repo       = "folder-dup-both-children"
+		currentUID = "dup-both-current-uid"
+		orphanUID  = "dup-both-orphan-uid"
+		dash1UID   = "dup-both-dash-1"
+		dash2UID   = "dup-both-dash-2"
+		dash3UID   = "dup-both-dash-3"
+	)
+
+	// Set up repo with 3 dashboards in myfolder/.
+	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON(currentUID, "My Folder"))
+	writeToProvisioningPath(t, helper, "myfolder/dash1.json", common.DashboardJSON(dash1UID, "Dashboard 1", 1))
+	writeToProvisioningPath(t, helper, "myfolder/dash2.json", common.DashboardJSON(dash2UID, "Dashboard 2", 1))
+	writeToProvisioningPath(t, helper, "myfolder/dash3.json", common.DashboardJSON(dash3UID, "Dashboard 3", 1))
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		SyncTarget:             "folder",
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 3)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dash1.json": currentUID,
+		"myfolder/dash2.json": currentUID,
+		"myfolder/dash3.json": currentUID,
+	})
+	before := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
+		"myfolder/dash1.json", "myfolder/dash2.json", "myfolder/dash3.json",
+	})
+
+	// Inject orphan folder at same path.
+	injectManagedFolder(t, helper, repo, orphanUID, "Orphan Folder", "myfolder", repo, "stale-checksum")
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 2)
+
+	// Move dash1 and dash2 to orphan; dash3 stays under current.
+	moveManagedDashboardToFolder(t, helper, dash1UID, orphanUID)
+	moveManagedDashboardToFolder(t, helper, dash2UID, orphanUID)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dash1.json": orphanUID,
+		"myfolder/dash2.json": orphanUID,
+		"myfolder/dash3.json": currentUID,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	// Orphan deleted; orphan's children re-parented; current's child untouched.
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	assertNoFolderByUID(t, helper, orphanUID)
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 1)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dash1.json": currentUID,
+		"myfolder/dash2.json": currentUID,
+		"myfolder/dash3.json": currentUID,
+	})
+	after := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
+		"myfolder/dash1.json", "myfolder/dash2.json", "myfolder/dash3.json",
+	})
+	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{
+		"myfolder/dash1.json", "myfolder/dash2.json", "myfolder/dash3.json",
+	})
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 3)
+}
+
+func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren_Nested(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := t.Context()
+
+	const (
+		repo       = "folder-dup-nested-children"
+		parentUID  = "dup-nested-parent-uid"
+		currentUID = "dup-nested-current-uid"
+		orphanUID  = "dup-nested-orphan-uid"
+		dash1UID   = "dup-nested-dash-1"
+		dash2UID   = "dup-nested-dash-2"
+		dash3UID   = "dup-nested-dash-3"
+	)
+
+	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON(parentUID, "Parent"))
+	writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON(currentUID, "Child"))
+	writeToProvisioningPath(t, helper, "parent/child/dash1.json", common.DashboardJSON(dash1UID, "Dashboard 1", 1))
+	writeToProvisioningPath(t, helper, "parent/child/dash2.json", common.DashboardJSON(dash2UID, "Dashboard 2", 1))
+	writeToProvisioningPath(t, helper, "parent/child/dash3.json", common.DashboardJSON(dash3UID, "Dashboard 3", 1))
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		SyncTarget:             "folder",
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+	common.RequireFolderState(t, helper.Folders, parentUID, "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, currentUID, "Child", "parent/child", parentUID)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 3)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"parent/child/dash1.json": currentUID,
+		"parent/child/dash2.json": currentUID,
+		"parent/child/dash3.json": currentUID,
+	})
+	before := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
+		"parent/child/dash1.json", "parent/child/dash2.json", "parent/child/dash3.json",
+	})
+
+	// Inject orphan folder at same nested path.
+	injectManagedFolder(t, helper, repo, orphanUID, "Orphan Child", "parent/child", parentUID, "stale-checksum")
+	requireFolderSourcePathCount(t, helper, repo, "parent/child", 2)
+
+	// Move dash1 and dash2 to orphan; dash3 stays under current.
+	moveManagedDashboardToFolder(t, helper, dash1UID, orphanUID)
+	moveManagedDashboardToFolder(t, helper, dash2UID, orphanUID)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"parent/child/dash1.json": orphanUID,
+		"parent/child/dash2.json": orphanUID,
+		"parent/child/dash3.json": currentUID,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	// Parent untouched, orphan deleted, all children under surviving folder.
+	common.RequireFolderState(t, helper.Folders, parentUID, "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, currentUID, "Child", "parent/child", parentUID)
+	assertNoFolderByUID(t, helper, orphanUID)
+	requireFolderSourcePathCount(t, helper, repo, "parent/child", 1)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"parent/child/dash1.json": currentUID,
+		"parent/child/dash2.json": currentUID,
+		"parent/child/dash3.json": currentUID,
+	})
+	after := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
+		"parent/child/dash1.json", "parent/child/dash2.json", "parent/child/dash3.json",
+	})
+	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{
+		"parent/child/dash1.json", "parent/child/dash2.json", "parent/child/dash3.json",
+	})
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 3)
+}
+
 func TestIntegrationProvisioning_FullSync_DuplicateFolderWithConcurrentFolderRename(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := t.Context()

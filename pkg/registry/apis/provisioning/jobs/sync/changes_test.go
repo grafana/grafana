@@ -801,11 +801,11 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 		require.Empty(t, buckets.fileDeletions)
 		require.Empty(t, buckets.folderDeletions)
 		require.Empty(t, buckets.folderCreations)
-		require.Len(t, buckets.deferredFolderDeletions, 1)
-		require.Equal(t, repository.FileActionDeleted, buckets.deferredFolderDeletions[0].Action)
-		require.True(t, buckets.deferredFolderDeletions[0].OrphanCleanup)
-		require.Equal(t, "myfolder/", buckets.deferredFolderDeletions[0].Path)
-		require.Equal(t, "orphan-uid", buckets.deferredFolderDeletions[0].Existing.Name)
+		require.Len(t, buckets.orphanFolderCleanups, 1)
+		require.Equal(t, repository.FileActionDeleted, buckets.orphanFolderCleanups[0].Action)
+		require.True(t, buckets.orphanFolderCleanups[0].OrphanCleanup)
+		require.Equal(t, "myfolder/", buckets.orphanFolderCleanups[0].Path)
+		require.Equal(t, "orphan-uid", buckets.orphanFolderCleanups[0].Existing.Name)
 		require.Equal(t, 0, buckets.folderRenames)
 
 		require.Len(t, buckets.fileCreations, 1)
@@ -856,9 +856,9 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 		require.Equal(t, "orphan-dash", buckets.fileDeletions[0].Existing.Name)
 		require.Empty(t, buckets.folderDeletions)
 		require.Empty(t, buckets.folderCreations)
-		require.Len(t, buckets.deferredFolderDeletions, 1)
-		require.True(t, buckets.deferredFolderDeletions[0].OrphanCleanup)
-		require.Equal(t, "orphan-uid", buckets.deferredFolderDeletions[0].Existing.Name)
+		require.Len(t, buckets.orphanFolderCleanups, 1)
+		require.True(t, buckets.orphanFolderCleanups[0].OrphanCleanup)
+		require.Equal(t, "orphan-uid", buckets.orphanFolderCleanups[0].Existing.Name)
 
 		require.Len(t, buckets.fileCreations, 1)
 		require.Equal(t, repository.FileActionUpdated, buckets.fileCreations[0].Action)
@@ -900,8 +900,8 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 		require.Empty(t, invalid)
 
 		buckets := categorizeChanges(DetectRenames(changes))
-		require.Len(t, buckets.deferredFolderDeletions, 1)
-		require.Equal(t, "orphan-uid", buckets.deferredFolderDeletions[0].Existing.Name)
+		require.Len(t, buckets.orphanFolderCleanups, 1)
+		require.Equal(t, "orphan-uid", buckets.orphanFolderCleanups[0].Existing.Name)
 
 		// orphan-dash under orphan-uid should be picked for update (re-parent),
 		// not current-dash, even though neither hash matches source.

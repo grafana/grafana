@@ -361,7 +361,7 @@ func applyChanges(
 		attribute.Int("file_renames", len(buckets.fileRenames)),
 		attribute.Int("file_deletions", len(buckets.fileDeletions)),
 		attribute.Int("folder_deletions", len(buckets.folderDeletions)),
-		attribute.Int("deferred_folder_deletions", len(buckets.deferredFolderDeletions)),
+		attribute.Int("orphan_folder_cleanups", len(buckets.orphanFolderCleanups)),
 		attribute.Int("folder_creations", len(buckets.folderCreations)),
 		attribute.Int("file_creations", len(buckets.fileCreations)),
 	)
@@ -409,25 +409,25 @@ func applyChanges(
 		}
 	}
 
-	deferredFolderCleanups := make([]ResourceFileChange, 0, buckets.folderRenames+len(buckets.deferredFolderDeletions))
+	orphanFolders := make([]ResourceFileChange, 0, buckets.folderRenames+len(buckets.orphanFolderCleanups))
 	for _, c := range buckets.folderCreations {
 		if c.FolderRenamed {
-			deferredFolderCleanups = append(deferredFolderCleanups, c)
+			orphanFolders = append(orphanFolders, c)
 		}
 	}
-	deferredFolderCleanups = append(deferredFolderCleanups, buckets.deferredFolderDeletions...)
-	return cleanupDeferredFolders(ctx, deferredFolderCleanups, repositoryResources, progress, tracer, metrics)
+	orphanFolders = append(orphanFolders, buckets.orphanFolderCleanups...)
+	return cleanupOrphanFolders(ctx, orphanFolders, repositoryResources, progress, tracer, metrics)
 }
 
 // changeBuckets groups resource changes by the phase in which they must be applied.
 type changeBuckets struct {
-	fileDeletions           []ResourceFileChange
-	folderCreations         []ResourceFileChange
-	fileRenames             []ResourceFileChange
-	folderDeletions         []ResourceFileChange
-	fileCreations           []ResourceFileChange
-	deferredFolderDeletions []ResourceFileChange
-	folderRenames           int
+	fileDeletions        []ResourceFileChange
+	folderCreations      []ResourceFileChange
+	fileRenames          []ResourceFileChange
+	folderDeletions      []ResourceFileChange
+	fileCreations        []ResourceFileChange
+	orphanFolderCleanups []ResourceFileChange
+	folderRenames        int
 }
 
 // categorizeChanges separates changes into ordered phases:
@@ -450,7 +450,7 @@ func categorizeChanges(changes []ResourceFileChange) changeBuckets {
 		case change.Action == repository.FileActionDeleted && !isFolder:
 			buckets.fileDeletions = append(buckets.fileDeletions, change)
 		case change.IsOrphanFolderCleanup():
-			buckets.deferredFolderDeletions = append(buckets.deferredFolderDeletions, change)
+			buckets.orphanFolderCleanups = append(buckets.orphanFolderCleanups, change)
 		case change.Action == repository.FileActionDeleted && isFolder:
 			buckets.folderDeletions = append(buckets.folderDeletions, change)
 		case isFolder:
@@ -465,27 +465,27 @@ func categorizeChanges(changes []ResourceFileChange) changeBuckets {
 	return buckets
 }
 
-// cleanupDeferredFolders deletes folders that must survive until all child
+// cleanupOrphanFolders deletes folders that must survive until all child
 // resources have been deleted or re-parented.
-func cleanupDeferredFolders(
+func cleanupOrphanFolders(
 	ctx context.Context,
-	folderChanges []ResourceFileChange,
+	orphanFolders []ResourceFileChange,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
 	metrics jobs.JobMetrics,
 ) error {
-	type deferredFolder struct {
+	type orphanFolder struct {
 		Path         string
 		UID          string
 		Reason       string
 		ErrorContext string
 	}
 
-	var deferredFolders []deferredFolder
-	for _, change := range folderChanges {
+	var orphanFoldersToDelete []orphanFolder
+	for _, change := range orphanFolders {
 		if change.FolderRenamed && change.Existing != nil {
-			deferredFolders = append(deferredFolders, deferredFolder{
+			orphanFoldersToDelete = append(orphanFoldersToDelete, orphanFolder{
 				Path:         change.Path,
 				UID:          change.Existing.Name,
 				Reason:       change.Reason,
@@ -493,7 +493,7 @@ func cleanupDeferredFolders(
 			})
 		}
 		if change.IsOrphanFolderCleanup() {
-			deferredFolders = append(deferredFolders, deferredFolder{
+			orphanFoldersToDelete = append(orphanFoldersToDelete, orphanFolder{
 				Path:         change.Path,
 				UID:          change.Existing.Name,
 				Reason:       change.Reason,
@@ -502,14 +502,14 @@ func cleanupDeferredFolders(
 		}
 	}
 
-	if len(deferredFolders) == 0 {
+	if len(orphanFolders) == 0 {
 		return nil
 	}
 
-	logging.FromContext(ctx).Info("deferred folder cleanup", "count", len(deferredFolders))
+	logging.FromContext(ctx).Info("deferred folder cleanup", "count", len(orphanFolders))
 	return instrumentedFullSyncPhase(jobs.FullSyncPhaseOldFolderCleanup, func() error {
-		safepath.SortByDepth(deferredFolders, func(f deferredFolder) string { return f.Path }, false)
-		for _, folder := range deferredFolders {
+		safepath.SortByDepth(orphanFoldersToDelete, func(f orphanFolder) string { return f.Path }, false)
+		for _, folder := range orphanFoldersToDelete {
 			if ctx.Err() != nil {
 				break
 			}
@@ -522,7 +522,7 @@ func cleanupDeferredFolders(
 				progress.HasDirPathFailedDeletion(folder.Path) ||
 				progress.HasChildPathFailedCreation(folder.Path) ||
 				progress.HasChildPathFailedUpdate(folder.Path) {
-				skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_deferred_folder_deletion")
+				skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_orphan_folder_deletion")
 				progress.Record(skipCtx, jobs.NewFolderResult(folder.Path).
 					WithName(folder.UID).
 					WithReason(folder.Reason).
