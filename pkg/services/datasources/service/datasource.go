@@ -50,7 +50,7 @@ var (
 type Service struct {
 	SQLStore                  Store
 	SecretsStore              kvstore.SecretsKVStore
-	SecretsService            secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	SecretsService            secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	cfg                       *setting.Cfg
 	features                  featuremgmt.FeatureToggles
 	permissionsService        accesscontrol.DatasourcePermissionsService
@@ -76,7 +76,7 @@ type cachedRoundTripper struct {
 
 func ProvideService(
 	db db.DB,
-	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,

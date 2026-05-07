@@ -12,7 +12,7 @@ import (
 )
 
 func ProvideService(db db.DB,
-	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 ) *Service {
 	s := &Service{
 		db: db,
@@ -29,7 +29,7 @@ func ProvideService(db db.DB,
 type Service struct {
 	db              db.DB
 	decryptionCache secureJSONDecryptionCache
-	secretsService  secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsService  secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 
 	logger log.Logger
 }

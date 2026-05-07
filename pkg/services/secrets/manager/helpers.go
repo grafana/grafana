@@ -17,13 +17,13 @@ import (
 )
 
 func SetupTestService(tb testing.TB,
-	store secrets.Store, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	store secrets.Store, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 ) *SecretsService {
 	return setupTestService(tb, store, featuremgmt.WithFeatures())
 }
 
 func setupTestService(tb testing.TB,
-	store secrets.Store, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	store secrets.Store, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	features featuremgmt.FeatureToggles,
 ) *SecretsService {
 	tb.Helper()

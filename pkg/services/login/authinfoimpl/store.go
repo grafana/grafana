@@ -17,12 +17,12 @@ var GetTime = time.Now
 
 type Store struct {
 	sqlStore       db.DB
-	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	logger         log.Logger
 }
 
 func ProvideStore(sqlStore db.DB,
-	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 ) (login.Store, error) {
 	store := &Store{
 		sqlStore:       sqlStore,

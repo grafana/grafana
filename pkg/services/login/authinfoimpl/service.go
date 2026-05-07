@@ -19,7 +19,7 @@ type Service struct {
 	authInfoStore login.Store
 	logger        log.Logger
 	remoteCache   remotecache.CacheStorage
-	secretService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 }
 
 const remoteCachePrefix = "authinfo-"
@@ -29,7 +29,7 @@ var errMissingParameters = errutil.NewBase(errutil.StatusBadRequest, "auth-missi
 
 func ProvideService(authInfoStore login.Store,
 	remoteCache remotecache.CacheStorage,
-	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 ) *Service {
 	s := &Service{
 		authInfoStore: authInfoStore,

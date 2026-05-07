@@ -37,7 +37,7 @@ type ExtSvcAccountsService struct {
 }
 
 func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bus, db db.DB, features featuremgmt.FeatureToggles, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService,
-	secretsSvc secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsSvc secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	tracer tracing.Tracer,
 ) *ExtSvcAccountsService {
 	logger := log.New("serviceauth.extsvcaccounts")

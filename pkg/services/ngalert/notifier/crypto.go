@@ -44,7 +44,7 @@ type alertmanagerCrypto struct {
 }
 
 func NewCrypto(
-	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	configs configurationStore,
 	log log.Logger,
 ) Crypto {

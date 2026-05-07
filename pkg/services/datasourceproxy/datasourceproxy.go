@@ -28,7 +28,7 @@ func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValid
 	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
 	tracer tracing.Tracer,
-	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	features featuremgmt.FeatureToggles,
 ) *DataSourceProxyService {
 	return &DataSourceProxyService{
@@ -54,7 +54,7 @@ type DataSourceProxyService struct {
 	OAuthTokenService          *oauthtoken.Service
 	DataSourcesService         datasources.DataSourceService
 	tracer                     tracing.Tracer
-	secretsService             secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsService             secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	features                   featuremgmt.FeatureToggles
 }
 

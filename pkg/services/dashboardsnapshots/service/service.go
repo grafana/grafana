@@ -11,7 +11,7 @@ import (
 
 type ServiceImpl struct {
 	store            dashboardsnapshots.Store
-	secretsService   secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsService   secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	dashboardService dashboards.DashboardService
 }
 
@@ -19,7 +19,7 @@ type ServiceImpl struct {
 var _ dashboardsnapshots.Service = (*ServiceImpl)(nil)
 
 func ProvideService(store dashboardsnapshots.Store,
-	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	dashboardService dashboards.DashboardService,
 ) *ServiceImpl {
 	s := &ServiceImpl{

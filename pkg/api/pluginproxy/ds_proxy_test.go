@@ -1238,7 +1238,7 @@ func createAuthTest(t *testing.T, secretsStore secretskvs.SecretsKVStore, dsType
 }
 
 func runDatasourceAuthTest(t *testing.T,
-	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase,
 ) {
 	ctx := &contextmodel.ReqContext{}

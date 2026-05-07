@@ -1915,7 +1915,7 @@ receivers:
 `
 
 func newRemoteMOA(t *testing.T, cfg AlertmanagerConfig, notificationSettings map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, features featuremgmt.FeatureToggles,
-	secretsService *secretsManager.SecretsService, //nolint:staticcheck // SA1019: Legacy envelope encryption stack for core Grafana wiring.
+	secretsService *secretsManager.SecretsService, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 ) (*notifier.MultiOrgAlertmanager, *Alertmanager) {
 	cfgStore := notifier.NewFakeNotificationStore(t, notificationSettings)
 	testCrypto := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
