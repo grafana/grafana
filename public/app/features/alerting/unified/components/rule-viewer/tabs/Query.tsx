@@ -56,7 +56,7 @@ const QueryResults = ({ rule }: Props) => {
       });
   }, [queries]);
 
-  const { allDataSourcesAvailable, isLoading: isDsLoading } = useAlertQueriesStatus(queries);
+  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
 
   // Tracks whether a run has been initiated but both runners have not yet emitted their first
   // LoadingState.Loading value. Without this, isPreviewLoading is transiently false between the
@@ -64,7 +64,7 @@ const QueryResults = ({ rule }: Props) => {
   const [isRunning, setIsRunning] = useState(false);
 
   const onRunQueries = useCallback(() => {
-    if (queries.length > 0 && !isDsLoading && allDataSourcesAvailable) {
+    if (queries.length > 0 && allDataSourcesAvailable) {
       let condition;
       if (rule && rulerRuleType.grafana.rule(rule.rulerRule)) {
         condition = rule.rulerRule.grafana_alert.condition;
@@ -75,21 +75,13 @@ const QueryResults = ({ rule }: Props) => {
       // Run range-converted data source queries for visualization
       runVisualizationQueries(visualizationQueries, '');
     }
-  }, [
-    queries,
-    visualizationQueries,
-    isDsLoading,
-    allDataSourcesAvailable,
-    rule,
-    runExpressionQueries,
-    runVisualizationQueries,
-  ]);
+  }, [queries, visualizationQueries, allDataSourcesAvailable, rule, runExpressionQueries, runVisualizationQueries]);
 
   useEffect(() => {
-    if (!isDsLoading && allDataSourcesAvailable) {
+    if (allDataSourcesAvailable) {
       onRunQueries();
     }
-  }, [isDsLoading, allDataSourcesAvailable, onRunQueries]);
+  }, [allDataSourcesAvailable, onRunQueries]);
 
   // Clear isRunning once both runners have settled (neither is in a loading state anymore).
   // isExpressionLoading and isVisualizationLoading stay false until the runners emit their first
@@ -106,7 +98,7 @@ const QueryResults = ({ rule }: Props) => {
   }, [expressionData, visualizationData]);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
-  const isPreviewLoading = isDsLoading || isRunning || isExpressionLoading || isVisualizationLoading;
+  const isPreviewLoading = isRunning || isExpressionLoading || isVisualizationLoading;
 
   if (isPreviewLoading) {
     return <Trans i18nKey="alerting.common.loading">Loading...</Trans>;
@@ -143,7 +135,7 @@ const QueryResults = ({ rule }: Props) => {
             })}
           </Stack>
         )}
-      {!isFederatedRule && !isDsLoading && !allDataSourcesAvailable && (
+      {!isFederatedRule && !allDataSourcesAvailable && (
         <Alert title={t('alerting.rule-view.query.datasources-na.title', 'Query not available')} severity="warning">
           <Trans i18nKey="alerting.rule-view.query.datasources-na.description">
             Cannot display the query preview. Some of the data sources used in the queries are not available.
