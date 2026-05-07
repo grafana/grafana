@@ -1,8 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { selectors } from '@grafana/e2e-selectors';
-
 import { ColorPicker } from './ColorPicker';
 
 describe('ColorPicker', () => {
@@ -32,10 +30,5 @@ describe('ColorPicker', () => {
       </ColorPicker>
     );
     expect(screen.getByText('Custom trigger')).toBeInTheDocument();
-  });
-
-  it('exposes the container data-testid on the default trigger', () => {
-    render(<ColorPicker color="#EAB839" onChange={() => {}} />);
-    expect(screen.getByTestId(selectors.components.ColorPicker.container)).toBeInTheDocument();
   });
 });
