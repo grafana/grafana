@@ -448,7 +448,17 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
   );
 
   await click();
-  await responsePromise;
+
+  // Wait for either a network response (first fetch) or the drawer closing.
+  // When scope data is already in the RTK Query cache from a previous selection in the same
+  // session, no HTTP request is made and waitForResponse would time out. Racing against the
+  // UI update handles both cases correctly.
+  const uiClosed = page
+    .waitForSelector('[data-testid="scopes-selector-apply"]', { state: 'hidden', timeout: 5000 })
+    .catch(() => null);
+
+  await Promise.race([responsePromise, uiClosed]);
+
   // Wait for the apply button to disappear (selector closed)
   await page.waitForSelector('[data-testid="scopes-selector-apply"]', { state: 'hidden', timeout: 5000 });
   // Wait for any resulting API calls to complete
