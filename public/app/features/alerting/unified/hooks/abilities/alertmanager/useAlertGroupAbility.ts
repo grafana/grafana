@@ -19,7 +19,7 @@ const GLOBAL_PERMISSIONS: Record<AlertGroupAction, AccessControlAction[]> = {
  * Grants access if the user has read permission on *any* alertmanager instance source.
  */
 export function useGlobalAlertGroupAbility(action: AlertGroupAction): Ability {
-  return makeAbility(true, GLOBAL_PERMISSIONS[action]);
+  return useMemo(() => makeAbility(true, GLOBAL_PERMISSIONS[action]), [action]);
 }
 
 /**

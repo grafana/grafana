@@ -43,7 +43,7 @@ const PERMISSIONS: Record<NotificationTemplateAction, AccessControlAction[]> = {
  * RBAC check with no alertmanager-type gate. Scoped provenance checks are omitted.
  */
 export function useGlobalNotificationTemplateAbility(action: NotificationTemplateAction): Ability {
-  return makeAbility(true, PERMISSIONS[action]);
+  return useMemo(() => makeAbility(true, PERMISSIONS[action]), [action]);
 }
 
 export function useNotificationTemplateAbility(payload: NotificationTemplateAbilityParam): Ability {

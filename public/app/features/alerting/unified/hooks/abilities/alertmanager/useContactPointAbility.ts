@@ -36,7 +36,7 @@ export const PERMISSIONS_CONTACT_POINTS: AccessControlAction[] = Object.values(P
  * rule-list filter). Performs a pure RBAC check with no alertmanager-type gate.
  */
 export function useGlobalContactPointAbility(action: ContactPointAction): Ability {
-  return makeAbility(true, PERMISSIONS[action]);
+  return useMemo(() => makeAbility(true, PERMISSIONS[action]), [action]);
 }
 
 export function useContactPointAbility(payload: ContactPointAbilityParam): Ability {
