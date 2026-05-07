@@ -58,6 +58,11 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   style = getStyles(config.theme2);
   subs = new Subscription();
   tagListRef = createRef<HTMLUListElement>();
+  // ScopesContext exposes a stable Provider value; consumers must subscribe to
+  // stateObservable to react to scope changes (the React render path won't fire).
+  // Tracks the scope-name key from the last doSearch so the observable can skip
+  // its replay-on-subscribe and only re-query when the names actually differ.
+  private lastScopeKey = '';
 
   constructor(props: Props) {
     super(props);
@@ -82,6 +87,23 @@ export class AnnoListPanel extends PureComponent<Props, State> {
         },
       })
     );
+
+    // ScopesContext stateObservable is BehaviorSubject-shaped (replays current
+    // value on subscribe). Compare the joined scope-name key against the last
+    // one we ran with, so the replayed initial value is a no-op and only real
+    // changes trigger a re-query.
+    if (this.context) {
+      this.subs.add(
+        this.context.stateObservable.subscribe({
+          next: (state) => {
+            const key = state.value.map((s) => s.metadata.name).join(',');
+            if (key !== this.lastScopeKey) {
+              this.doSearch();
+            }
+          },
+        })
+      );
+    }
   }
 
   componentWillUnmount() {
@@ -133,6 +155,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       : interpolatedTags;
 
     const scopeNames = this.context?.state.value?.map((s) => s.metadata.name);
+    this.lastScopeKey = scopeNames?.join(',') ?? '';
 
     let annotations: AnnotationEvent[];
     if (config.annotationAppPlatformEnabled) {
