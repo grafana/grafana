@@ -92,7 +92,6 @@ export class DashboardModel implements TimeModel {
   gnetId: any;
   panels: PanelModel[];
   panelInEdit?: PanelModel;
-  panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
   scopeMeta?: ScopeMeta;
   private panelsAffectedByVariableChange: number[] | null;
@@ -119,7 +118,6 @@ export class DashboardModel implements TimeModel {
     originalTemplating: true,
     originalLibraryPanels: true,
     panelInEdit: true,
-    panelInView: true,
     getVariablesFromState: true,
     formatDate: true,
     appEventsSubscription: true,
@@ -364,7 +362,7 @@ export class DashboardModel implements TimeModel {
     this.events.publish(new TimeRangeUpdatedEvent(timeRange));
     dispatch(onTimeRangeUpdated(this.uid, timeRange));
 
-    if (this.panelInEdit || this.panelInView) {
+    if (this.panelInEdit) {
       this.timeRangeUpdatedDuringEditOrView = true;
     }
   }
@@ -403,16 +401,8 @@ export class DashboardModel implements TimeModel {
     }
   }
 
-  panelInitialized(panel: PanelModel) {
-    const lastResult = panel.getQueryRunner().getLastResult();
-
-    if (!this.otherPanelInFullscreen(panel) && !lastResult) {
-      panel.refresh();
-    }
-  }
-
   otherPanelInFullscreen(panel: PanelModel) {
-    return (this.panelInEdit || this.panelInView) && !(panel.isViewing || panel.isEditing);
+    return Boolean(this.panelInEdit && !panel.isEditing);
   }
 
   initEditPanel(sourcePanel: PanelModel): PanelModel {
@@ -638,7 +628,7 @@ export class DashboardModel implements TimeModel {
   }
 
   processRepeats() {
-    if (this.isSnapshotTruthy() || !this.hasVariables() || this.panelInView) {
+    if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
     }
 
@@ -1076,14 +1066,6 @@ export class DashboardModel implements TimeModel {
     this.events.off(event, callback);
   }
 
-  sharedTooltipModeEnabled() {
-    return this.graphTooltip > 0;
-  }
-
-  sharedCrosshairModeOnly() {
-    return this.graphTooltip === 1;
-  }
-
   getRelativeTime(date: DateTimeInput) {
     return dateTimeFormatTimeAgo(date, {
       timeZone: this.getTimezone(),
@@ -1269,10 +1251,8 @@ export class DashboardModel implements TimeModel {
       return;
     }
 
-    if (this.panelInEdit || this.panelInView) {
-      this.panelsAffectedByVariableChange = event.payload.panelIds.filter(
-        (id) => id !== (this.panelInEdit?.id ?? this.panelInView?.id)
-      );
+    if (this.panelInEdit) {
+      this.panelsAffectedByVariableChange = event.payload.panelIds.filter((id) => id !== this.panelInEdit?.id);
     }
 
     this.startRefresh(event.payload);

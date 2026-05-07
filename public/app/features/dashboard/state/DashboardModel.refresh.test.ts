@@ -7,29 +7,23 @@ import { createDashboardModelFixture } from './__fixtures__/dashboardFixtures';
 
 function getTestContext({
   usePanelInEdit,
-  usePanelInView,
   refreshAll = false,
-}: { usePanelInEdit?: boolean; usePanelInView?: boolean; refreshAll?: boolean } = {}) {
+}: { usePanelInEdit?: boolean; refreshAll?: boolean } = {}) {
   jest.clearAllMocks();
 
   const dashboard = createDashboardModelFixture();
   const startRefreshMock = jest.fn();
   dashboard.startRefresh = startRefreshMock;
-  const panelInView = new PanelModel({ id: 99 });
   const panelInEdit = new PanelModel({ id: 100 });
   const panelIds = [1, 2, 3];
   if (usePanelInEdit) {
     dashboard.panelInEdit = panelInEdit;
     panelIds.push(panelInEdit.id);
   }
-  if (usePanelInView) {
-    dashboard.panelInView = panelInView;
-    panelIds.push(panelInView.id);
-  }
 
   appEvents.publish(new VariablesChanged({ panelIds, refreshAll }));
 
-  return { dashboard, startRefreshMock, panelInEdit, panelInView };
+  return { dashboard, startRefreshMock, panelInEdit };
 }
 
 describe('Strict panel refresh', () => {
@@ -94,16 +88,6 @@ describe('Strict panel refresh', () => {
         expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [], refreshAll: true });
       });
     });
-  });
-
-  describe('when there is a panel in full view during variable change', () => {
-    it('then all affected panels should be refreshed', () => {
-      const { panelInView, startRefreshMock } = getTestContext({ usePanelInView: true });
-
-      expect(startRefreshMock).toHaveBeenCalledTimes(1);
-      expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [1, 2, 3, panelInView.id], refreshAll: false });
-    });
-
   });
 
   describe('when there is a panel in panel edit during variable change', () => {

@@ -46,7 +46,6 @@ export interface GridPos {
 
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
-  isViewing: true,
   isEditing: true,
   isInView: true,
   hasRefreshed: true,
@@ -89,7 +88,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   links: true,
   fullscreen: true,
   isEditing: true,
-  isViewing: true,
   hasRefreshed: true,
   events: true,
   cacheTimeout: true,
@@ -177,7 +175,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   autoMigrateFrom?: string;
 
   // non persisted
-  isViewing = false;
   isEditing = false;
   isInView = false;
   configRev = 0; // increments when configs change
