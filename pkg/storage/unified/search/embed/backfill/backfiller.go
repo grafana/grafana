@@ -234,11 +234,6 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 			}
 			// Another Next()==true confirms the prior item's peek
 			// pointed at a real row. Promote pendingTok and persist it.
-			// Backends like kvStorageBackend build ContinueToken from
-			// the peeked-ahead row; a token captured after the final
-			// item has Name="" and is rejected on the next call. Only
-			// promoting after a confirming Next() guarantees we never
-			// stamp such a token into last_seen_key.
 			if pendingTok != "" {
 				encoded := encodeCursor(builder.Resource(), pendingTok)
 				if cerr := b.vectorBackend.UpdateBackfillJobCheckpoint(ctx, job.ID, encoded, ""); cerr != nil {
