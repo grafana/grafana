@@ -17,7 +17,7 @@ import {
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
-import { makeAbility } from '../hooks/abilities/abilityUtils';
+import { hasAnyPermission } from '../hooks/abilities/abilityUtils';
 import { PERMISSIONS_CONTACT_POINTS } from '../hooks/abilities/alertmanager/useContactPointAbility';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from '../hooks/abilities/alertmanager/useNotificationPolicyAbility';
 import { PERMISSIONS_TEMPLATES } from '../hooks/abilities/alertmanager/useNotificationTemplateAbility';
@@ -187,13 +187,13 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
   ];
 
   // anyOf: can access the internal alertmanager if any one of the bundled permissions is held
-  const hasPermissionsForInternalAlertmanager = makeAbility(true, builtinAlertmanagerPermissions).granted;
+  const hasPermissionsForInternalAlertmanager = hasAnyPermission(builtinAlertmanagerPermissions);
 
   if (hasPermissionsForInternalAlertmanager) {
     availableInternalDataSources.push(grafanaAlertManagerDataSource);
   }
 
-  if (makeAbility(true, [permissions[permission].external]).granted) {
+  if (hasAnyPermission([permissions[permission].external])) {
     const cloudSources = getAlertManagerDataSources().map<AlertManagerDataSource>((ds) => ({
       name: ds.name,
       displayName: ds.name,

@@ -4,6 +4,14 @@ import { type AccessControlAction } from 'app/types/accessControl';
 import { type Ability, type AsyncAbility, Granted, InsufficientPermissions, NotSupported } from './types';
 
 /**
+ * Returns `true` when the current user holds **any** of the listed RBAC permissions.
+ * Use this as a plain boolean predicate where you do not need a full {@link Ability} value.
+ */
+export function hasAnyPermission(anyOfPermissions: AccessControlAction[]): boolean {
+  return anyOfPermissions.some((p) => p && ctx.hasPermission(p));
+}
+
+/**
  * Builds a synchronous {@link Ability} from a supported flag and an explicit list of
  * `AccessControlActions`. The user is considered allowed if they hold ANY of the listed
  * permissions. Never returns `LOADING`.
@@ -12,8 +20,7 @@ export function makeAbility(supported: boolean, anyOfPermissions: AccessControlA
   if (!supported) {
     return NotSupported;
   }
-  const hasAny = anyOfPermissions.some((p) => p && ctx.hasPermission(p));
-  return hasAny ? Granted : InsufficientPermissions(anyOfPermissions);
+  return hasAnyPermission(anyOfPermissions) ? Granted : InsufficientPermissions(anyOfPermissions);
 }
 
 /**
