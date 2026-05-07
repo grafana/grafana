@@ -3,6 +3,8 @@ package annotation
 import (
 	"context"
 	"time"
+
+	"go.opentelemetry.io/otel/codes"
 )
 
 // startCleanup starts a background goroutine that periodically runs cleanup on the store
@@ -37,14 +39,31 @@ func (a *AppInstaller) startCleanup(parentCtx context.Context, lifecycleMgr Life
 // runCleanup executes the cleanup operation with a timeout
 func (a *AppInstaller) runCleanup(ctx context.Context, lifecycleMgr LifecycleManager) {
 	// Set a 5-minute timeout for the cleanup
-	cleanupCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
+	ctx, span := a.tracer.Start(ctx, "annotation.cleanup")
+	defer span.End()
+
 	start := time.Now()
-	deleted, err := lifecycleMgr.Cleanup(cleanupCtx)
+	deleted, err := lifecycleMgr.Cleanup(ctx)
+	dur := time.Since(start)
+
+	result := "success"
 	if err != nil {
-		a.logger.Error("Annotation cleanup failed", "error", err, "duration", time.Since(start))
+		result = "failure"
+	}
+	a.metrics.CleanupRuns.WithLabelValues(result).Inc()
+	if err == nil {
+		a.metrics.CleanupDuration.Observe(dur.Seconds())
+		a.metrics.CleanupRowsDeleted.Add(float64(deleted))
+	}
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		a.logger.Error("Annotation cleanup failed", "error", err, "duration", dur)
 	} else if deleted > 0 {
-		a.logger.Info("Annotation cleanup completed", "rows_deleted", deleted, "duration", time.Since(start))
+		a.logger.Info("Annotation cleanup completed", "rows_deleted", deleted, "duration", dur)
 	}
 }

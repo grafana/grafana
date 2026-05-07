@@ -62,7 +62,8 @@ func RegisterAppInstaller(
 // NewAppInstaller Layers (from bottom to top):
 //  1. annotations.Repository - old Grafana annotation service
 //  2. sqlAdapter - Bridges annotations.Repository → Store interface (apps/annotation/Store), converts ItemDTO ↔ v0alpha1.Annotation
-//  3. k8sRESTAdapter - Bridges Store → K8s REST interface, handles K8s API conventions
+//  3. instrumentedStore - Tracing/metrics/logging decorator
+//  4. k8sRESTAdapter - Bridges Store → K8s REST interface, handles K8s API conventions
 func NewAppInstaller(
 	cfg Config,
 	service annotations.Repository,
@@ -106,7 +107,6 @@ func NewAppInstaller(
 		metrics:      installer.metrics,
 		logger:       logger,
 	}
-
 	// Create the tags handler
 	tagProvider, ok := store.(TagProvider)
 	if !ok {
@@ -116,7 +116,7 @@ func NewAppInstaller(
 	tagHandler := newTagsHandler(tagProvider)
 
 	// Create the search handler
-	searchHandler := newSearchHandler(store, accessClient)
+	searchHandler := newSearchHandler(instrumentedStore, accessClient, installer.tracer, installer.metrics, logger)
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
