@@ -1,9 +1,10 @@
 import { Chance } from 'chance';
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 
 import { treeViewersCanEdit, wellFormedTree } from '../../../fixtures/folders';
 
 const [mockTree, { folderB }] = wellFormedTree();
+// folderD is included in mockTree and will be returned by the handlers with managedBy: 'repo'
 const [mockTreeThatViewersCanEdit] = treeViewersCanEdit();
 const collator = new Intl.Collator();
 
@@ -28,6 +29,17 @@ const additionalProperties = {
   version: 1,
 };
 
+// from public/app/features/search/service/types.ts
+interface NestedFolderDTO {
+  uid: string;
+  title: string;
+}
+
+export const minimalCustomFoldersHandler = (folders: NestedFolderDTO[]) =>
+  http.get('/api/folders', ({ request }) => {
+    return HttpResponse.json(folders);
+  });
+
 const listFoldersHandler = () =>
   http.get('/api/folders', ({ request }) => {
     const url = new URL(request.url);
@@ -48,6 +60,7 @@ const listFoldersHandler = () =>
           id: random.integer({ min: 1, max: 1000 }),
           uid: folder.item.uid,
           title: folder.item.kind === 'folder' ? folder.item.title : "invalid - this shouldn't happen",
+          ...('managedBy' in folder.item && folder.item.managedBy ? { managedBy: folder.item.managedBy } : {}),
         };
       })
       .sort((a, b) => collator.compare(a.title, b.title)) // API always sorts by title
@@ -76,6 +89,7 @@ const getFolderHandler = () =>
       uid: folder?.item.uid,
       ...additionalProperties,
       ...(accessControlQueryParam ? { accessControl: mockAccessControl } : {}),
+      ...('managedBy' in folder.item && folder.item.managedBy ? { managedBy: folder.item.managedBy } : {}),
     });
   });
 
@@ -122,17 +136,20 @@ const saveFolderHandler = () =>
     return HttpResponse.json({ ...folder.item, title: body.title });
   });
 
-const getMockFolderCounts = (folder: number, dashboard: number, librarypanel: number, alertrule: number) => {
+const getMockFolderCounts = (folders: number, dashboards: number, library_elements: number, alertrules: number) => {
   return {
-    folder,
-    dashboard,
-    librarypanel,
-    alertrule,
+    folders,
+    dashboards,
+    library_elements,
+    alertrules,
   };
 };
 
+export const customFolderCountsHandler = (resolver: HttpResponseResolver) =>
+  http.get('/api/folders/:uid/counts', resolver);
+
 const folderCountsHandler = () =>
-  http.get<{ uid: string }, { title: string; version: number }>('/api/folders/:uid/counts', async ({ params }) => {
+  customFolderCountsHandler(async ({ params }) => {
     const { uid } = params;
     const folder = mockTree.find((v) => v.item.uid === uid);
 
@@ -147,6 +164,8 @@ const folderCountsHandler = () =>
 
     return HttpResponse.json(getMockFolderCounts(1, 1, 1, 1));
   });
+
+export const customCreateFolderHandler = (resolver: HttpResponseResolver) => http.post('/api/folders', resolver);
 
 const handlers = [
   listFoldersHandler(),

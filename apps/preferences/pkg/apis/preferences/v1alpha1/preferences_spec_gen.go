@@ -13,16 +13,9 @@ func NewPreferencesQueryHistoryPreference() *PreferencesQueryHistoryPreference {
 	return &PreferencesQueryHistoryPreference{}
 }
 
-// +k8s:openapi-gen=true
-type PreferencesCookiePreferences struct {
-	Analytics   interface{} `json:"analytics,omitempty"`
-	Performance interface{} `json:"performance,omitempty"`
-	Functional  interface{} `json:"functional,omitempty"`
-}
-
-// NewPreferencesCookiePreferences creates a new PreferencesCookiePreferences object.
-func NewPreferencesCookiePreferences() *PreferencesCookiePreferences {
-	return &PreferencesCookiePreferences{}
+// OpenAPIModelName returns the OpenAPI model name for PreferencesQueryHistoryPreference.
+func (PreferencesQueryHistoryPreference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesQueryHistoryPreference"
 }
 
 // +k8s:openapi-gen=true
@@ -37,25 +30,28 @@ func NewPreferencesNavbarPreference() *PreferencesNavbarPreference {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for PreferencesNavbarPreference.
+func (PreferencesNavbarPreference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesNavbarPreference"
+}
+
 // +k8s:openapi-gen=true
 type PreferencesSpec struct {
 	// UID for the home dashboard
 	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 	// The timezone selection
-	// TODO: this should use the timezone defined in common
 	Timezone *string `json:"timezone,omitempty"`
 	// day of the week (sunday, monday, etc)
 	WeekStart *string `json:"weekStart,omitempty"`
-	// light, dark, empty is default
+	// user interface theme
 	Theme *string `json:"theme,omitempty"`
-	// Selected language (beta)
+	// Selected language
 	Language *string `json:"language,omitempty"`
 	// Selected locale (beta)
+	// TODO: Will be removed
 	RegionalFormat *string `json:"regionalFormat,omitempty"`
 	// Explore query history preferences
 	QueryHistory *PreferencesQueryHistoryPreference `json:"queryHistory,omitempty"`
-	// Cookie preferences
-	CookiePreferences *PreferencesCookiePreferences `json:"cookiePreferences,omitempty"`
 	// Navigation preferences
 	Navbar *PreferencesNavbarPreference `json:"navbar,omitempty"`
 }
@@ -63,4 +59,9 @@ type PreferencesSpec struct {
 // NewPreferencesSpec creates a new PreferencesSpec object.
 func NewPreferencesSpec() *PreferencesSpec {
 	return &PreferencesSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for PreferencesSpec.
+func (PreferencesSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec"
 }

@@ -8,7 +8,7 @@ import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, CodeEditor, DeleteButton, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import {
-  ResourceWrapper,
+  type ResourceWrapper,
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryFilesWithPathQuery,
   useReplaceRepositoryFilesWithPathMutation,
@@ -16,7 +16,7 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { PROVISIONING_URL } from '../constants';
+import { PROVISIONING_PREVIEW_URL, PROVISIONING_URL } from '../constants';
 import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { usePRBranch } from '../hooks/usePRBranch';
 
@@ -115,7 +115,7 @@ function ResourceView({ wrap, repo, repoRef, tab, isReadOnlyRepo }: Props) {
     <div>
       <Stack>
         {isDashboard && (
-          <LinkButton target={'_blank'} href={`${PROVISIONING_URL}/${repo}/dashboard/preview/${wrap.path}`}>
+          <LinkButton target={'_blank'} href={`${PROVISIONING_PREVIEW_URL}/${repo}/preview/${wrap.path}`}>
             <Trans i18nKey="provisioning.resource-view.dashboard-preview">Dashboard Preview</Trans>
           </LinkButton>
         )}

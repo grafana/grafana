@@ -844,7 +844,7 @@
        "clientKey": "[REDACTED]",
        "insecureSkipVerify": false
       },
-      "url": "http://localhost",
+      "url": "grafana://noop",
       "username": "test-user"
      },
      "disableResolveMessage": true

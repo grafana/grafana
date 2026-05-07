@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, LanguageProvider, SelectableValue, TimeRange } from '@grafana/data';
+import { type AdHocVariableFilter, LanguageProvider, type SelectableValue, type TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
@@ -10,10 +10,10 @@ import {
   getUnscopedTags,
 } from './SearchTraceQLEditor/utils';
 import { DEFAULT_TIME_RANGE_FOR_TAGS } from './configuration/TagsTimeRangeSettings';
-import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
-import { TempoDatasource } from './datasource';
+import { type TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
+import { type TempoDatasource } from './datasource';
 import { enumIntrinsics, intrinsicsV1 } from './traceql/traceql';
-import { Scope } from './types';
+import { type Scope } from './types';
 
 // Limit maximum tags retrieved from the backend
 export const TAGS_LIMIT = 5000;
@@ -171,7 +171,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
         }
       });
     }
-    return options;
+    return options.sort((a, b) => (a.value?.toLowerCase()! < b.value?.toLowerCase()! ? -1 : 1));
   }
 
   getTimeRangeForTags = (timeRangeForTags: number, range: TimeRange) => {
@@ -190,9 +190,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
    * @returns the encoded tag
    */
   private encodeTag = (tag: string): string => {
-    // If we call `encodeURIComponent` only once, we still get an error when issuing a request to the backend
-    // Reference: https://stackoverflow.com/a/37456192
-    return encodeURIComponent(encodeURIComponent(tag));
+    return encodeURIComponent(tag);
   };
 
   generateQueryFromFilters({

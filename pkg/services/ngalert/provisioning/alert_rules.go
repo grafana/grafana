@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -81,17 +82,57 @@ func NewAlertRuleService(ruleStore RuleStore,
 	}
 }
 
+// ListRuleStringFilter provides filtering options for string fields in rules such as group and namespace (folder) uid
+type ListRuleStringFilter struct {
+	Exists  *bool
+	Include []string
+	Exclude []string
+}
+
+type ListRuleBoolFilter struct {
+	Value *bool
+}
+
 type ListAlertRulesOptions struct {
-	RuleType      models.RuleTypeFilter
-	Limit         int64
-	ContinueToken string
-	// TODO: plumb more options
+	RuleType        models.RuleTypeFilter
+	Limit           int64
+	ContinueToken   string
+	GroupFilter     ListRuleStringFilter
+	FolderFilter    ListRuleStringFilter
+	TitleFilter     ListRuleStringFilter
+	PausedFilter    ListRuleBoolFilter
+	DashboardFilter ListRuleStringFilter
+	PanelIDFilter   ListRuleStringFilter
+	// TODO: add the following filters
+	// receiver filter - string
+	// metric filter - string
+	// targetDatasourceUID filter - string
 }
 
 func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {
+	titleExact := ""
+	if len(opts.TitleFilter.Include) > 0 {
+		titleExact = opts.TitleFilter.Include[0]
+	}
+	dashboardUID := ""
+	if len(opts.DashboardFilter.Include) > 0 {
+		dashboardUID = opts.DashboardFilter.Include[0]
+	}
+	panelID := int64(0)
+	if len(opts.PanelIDFilter.Include) > 0 {
+		panelID, _ = strconv.ParseInt(opts.PanelIDFilter.Include[0], 10, 64)
+	}
 	q := models.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: models.ListAlertRulesQuery{
-			OrgID: user.GetOrgID(),
+			OrgID:                user.GetOrgID(),
+			RuleGroups:           opts.GroupFilter.Include,
+			ExcludeRuleGroups:    opts.GroupFilter.Exclude,
+			RuleGroupExists:      opts.GroupFilter.Exists,
+			ExcludeNamespaceUIDs: opts.FolderFilter.Exclude,
+			TitleExact:           titleExact,
+			IsPaused:             opts.PausedFilter.Value,
+			DashboardUID:         dashboardUID,
+			PanelID:              panelID,
 		},
 		RuleType:      opts.RuleType,
 		Limit:         opts.Limit,
@@ -114,7 +155,7 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 		}
 		folderUIDs := make([]string, 0, len(folders))
 		for _, f := range folders {
-			access, err := service.authz.HasAccessInFolder(ctx, user, models.Namespace(*f.ToFolderReference()))
+			access, err := service.authz.HasAccessInFolder(ctx, user, models.NewNamespace(f))
 			if err != nil {
 				return nil, nil, "", err
 			}
@@ -122,13 +163,31 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 				folderUIDs = append(folderUIDs, f.UID)
 			}
 		}
-		q.NamespaceUIDs = folderUIDs
+		// Intersect accessible folders with any requested folder filter
+		if len(opts.FolderFilter.Include) > 0 {
+			requestedSet := make(map[string]struct{}, len(opts.FolderFilter.Include))
+			for _, uid := range opts.FolderFilter.Include {
+				requestedSet[uid] = struct{}{}
+			}
+			filtered := folderUIDs[:0]
+			for _, uid := range folderUIDs {
+				if _, ok := requestedSet[uid]; ok {
+					filtered = append(filtered, uid)
+				}
+			}
+			q.NamespaceUIDs = filtered
+		} else {
+			q.NamespaceUIDs = folderUIDs
+		}
+	} else if len(opts.FolderFilter.Include) > 0 {
+		q.NamespaceUIDs = opts.FolderFilter.Include
 	}
 
 	rules, nextToken, err = service.ruleStore.ListAlertRulesPaginated(ctx, &q)
 	if err != nil {
 		return nil, nil, "", err
 	}
+
 	provenances = make(map[string]models.Provenance)
 	if len(rules) > 0 {
 		resourceType := rules[0].ResourceType()
@@ -292,15 +351,13 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
-	if len(rule.NotificationSettings) > 0 {
+	if rule.NotificationSettings != nil {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
 		}
-		for _, setting := range rule.NotificationSettings {
-			if err := validator.Validate(setting); err != nil {
-				return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
-			}
+		if err := validator.Validate(*rule.NotificationSettings); err != nil {
+			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
 		}
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -407,6 +464,9 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 	if err := models.ValidateRuleGroupInterval(intervalSeconds, service.baseIntervalSeconds); err != nil {
 		return err
 	}
+	if err := service.ensureNamespace(ctx, user, user.GetOrgID(), namespaceUID); err != nil {
+		return err
+	}
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		query := &models.ListAlertRulesQuery{
 			OrgID:         user.GetOrgID(),
@@ -468,6 +528,10 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 
 func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user identity.Requester, group models.AlertRuleGroup, provenance models.Provenance, versionMessage string) error {
 	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
+		return err
+	}
+
+	if err := service.ensureNamespace(ctx, user, user.GetOrgID(), group.FolderUID); err != nil {
 		return err
 	}
 
@@ -756,17 +820,21 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
+		return models.AlertRule{}, errProvenanceMismatch.Build(errutil.TemplateData{
+			Public: map[string]interface{}{
+				"ProvidedProvenance": provenance,
+				"StoredProvenance":   storedProvenance,
+				"Operation":          "update",
+			},
+		})
 	}
-	if len(rule.NotificationSettings) > 0 {
+	if rule.NotificationSettings != nil {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
 		}
-		for _, setting := range rule.NotificationSettings {
-			if err := validator.Validate(setting); err != nil {
-				return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
-			}
+		if err := validator.Validate(*rule.NotificationSettings); err != nil {
+			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
 		}
 	}
 	rule.Updated = time.Now()
@@ -812,7 +880,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return err
 	}
-	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+	if canUpdate := validation.CanUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
 		return errProvenanceMismatch.Build(errutil.TemplateData{
 			Public: map[string]interface{}{
 				"ProvidedProvenance": provenance,
@@ -1025,6 +1093,7 @@ func (service *AlertRuleService) checkGroupLimits(group models.AlertRuleGroup) e
 
 // ensureNamespace ensures that the rule has a valid namespace UID.
 // If the rule does not have a namespace UID or the namespace (folder) does not exist it will return an error.
+// If the folder is managed by a manager, it will also return an error.
 func (service *AlertRuleService) ensureNamespace(ctx context.Context, user identity.Requester, orgID int64, namespaceUID string) error {
 	if namespaceUID == "" {
 		return fmt.Errorf("%w: folderUID must be set", models.ErrAlertRuleFailedValidation)
@@ -1037,16 +1106,21 @@ func (service *AlertRuleService) ensureNamespace(ctx context.Context, user ident
 	}
 
 	// ensure the namespace exists
-	_, err := service.folderService.Get(ctx, &folder.GetFolderQuery{
+	f, err := service.folderService.Get(ctx, &folder.GetFolderQuery{
 		OrgID:        orgID,
 		UID:          &namespaceUID,
 		SignedInUser: user,
 	})
-	if err != nil {
+	if err != nil || f == nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			return fmt.Errorf("%w: folder does not exist", models.ErrAlertRuleFailedValidation)
 		}
 		return err
+	}
+
+	// check if the folder is managed by a manager
+	if err := models.NewNamespace(f).ValidateForRuleStorage(); err != nil {
+		return fmt.Errorf("%w: %s", models.ErrAlertRuleFailedValidation, err)
 	}
 
 	return nil

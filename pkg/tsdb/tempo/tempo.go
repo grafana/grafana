@@ -280,7 +280,15 @@ func (s *Service) handleTagValues(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tempoPath := fmt.Sprintf("api/v2/search/tag/%s/values", encodedTag)
+	// escape tag
+	tag, err := url.PathUnescape(encodedTag)
+	if err != nil {
+		s.logger.Error("Failed to unescape", "error", err, "tag", encodedTag)
+		http.Error(rw, "Invalid 'tag' parameter", http.StatusBadRequest)
+		return
+	}
+
+	tempoPath := fmt.Sprintf("api/v2/search/tag/%s/values", tag)
 	s.proxyToTempo(rw, req, tempoPath)
 }
 

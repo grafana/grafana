@@ -8,10 +8,8 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -33,6 +31,7 @@ type AuthService struct {
 	features                  featuremgmt.FeatureToggles
 	dashSvc                   dashboards.DashboardService
 	searchDashboardsPageLimit int64
+	maxDepth                  int
 }
 
 func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, cfg *setting.Cfg) *AuthService {
@@ -44,6 +43,7 @@ func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashb
 		features:                  features,
 		dashSvc:                   dashSvc,
 		searchDashboardsPageLimit: searchDashboardsPageLimit,
+		maxDepth:                  cfg.MaxNestedFolderDepth,
 	}
 }
 
@@ -60,33 +60,22 @@ func (authz *AuthService) Authorize(ctx context.Context, query annotations.ItemQ
 	}
 	scopeTypes := annotationScopeTypes(scopes)
 	_, canAccessOrgAnnotations := scopeTypes[annotations.Organization.String()]
-	_, canAccessDashAnnotations := scopeTypes[annotations.Dashboard.String()]
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if authz.features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
-		canAccessDashAnnotations = true
+	if query.AnnotationID != 0 {
+		annotationDashboardUID, err := authz.getAnnotationDashboard(ctx, query)
+		if err != nil {
+			return nil, ErrAccessControlInternal.Errorf("failed to fetch annotations: %w", err)
+		}
+		query.DashboardUID = annotationDashboardUID
 	}
 
-	var visibleDashboards map[string]int64
-	var err error
-	if canAccessDashAnnotations {
-		if query.AnnotationID != 0 {
-			annotationDashboardUID, err := authz.getAnnotationDashboard(ctx, query)
-			if err != nil {
-				return nil, ErrAccessControlInternal.Errorf("failed to fetch annotations: %w", err)
-			}
-			query.DashboardUID = annotationDashboardUID
-		}
-
-		visibleDashboards, err = authz.dashboardsWithVisibleAnnotations(ctx, query)
-		if err != nil {
-			return nil, ErrAccessControlInternal.Errorf("failed to fetch dashboards: %w", err)
-		}
+	visibleDashboards, err := authz.dashboardsWithVisibleAnnotations(ctx, query)
+	if err != nil {
+		return nil, ErrAccessControlInternal.Errorf("failed to fetch dashboards: %w", err)
 	}
 
 	return &AccessResources{
-		Dashboards:               visibleDashboards,
-		CanAccessDashAnnotations: canAccessDashAnnotations,
-		CanAccessOrgAnnotations:  canAccessOrgAnnotations,
+		Dashboards:              visibleDashboards,
+		CanAccessOrgAnnotations: canAccessOrgAnnotations,
 	}, nil
 }
 
@@ -117,37 +106,17 @@ func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query anno
 }
 
 func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, query annotations.ItemQuery) (map[string]int64, error) {
-	recursiveQueriesSupported, err := authz.db.RecursiveQueriesAreSupported()
-	if err != nil {
-		return nil, err
-	}
-
-	filterType := searchstore.TypeDashboard
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if authz.features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
-		filterType = searchstore.TypeAnnotation
-	}
-
-	filters := []any{
-		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, dashboardaccess.PERMISSION_VIEW, filterType, authz.features, recursiveQueriesSupported, authz.db.GetDialect()),
-		searchstore.OrgFilter{OrgId: query.OrgID},
-	}
-
 	var dashboardUIDs []string
 	if query.DashboardUID != "" {
-		dashboardUIDs = append(dashboardUIDs, query.DashboardUID)
-		filters = append(filters, searchstore.DashboardFilter{
-			UIDs: []string{query.DashboardUID},
-		})
+		dashboardUIDs = []string{query.DashboardUID}
 	}
 
 	dashs, err := authz.dashSvc.SearchDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
 		DashboardUIDs: dashboardUIDs,
 		OrgId:         query.SignedInUser.GetOrgID(),
-		Filters:       filters,
 		SignedInUser:  query.SignedInUser,
 		Page:          query.Page,
-		Type:          filterType,
+		Type:          model.TypeAnnotation,
 		Limit:         authz.searchDashboardsPageLimit,
 	})
 	if err != nil {

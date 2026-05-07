@@ -5,8 +5,7 @@ const DASHBOARD_NAME = 'Templating - Nested Template Variables';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
-    kubernetesDashboardsV2: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 
@@ -54,7 +53,13 @@ test.describe(
       await expect(descriptionInput).toHaveAttribute('placeholder', 'Descriptive text');
       await expect(descriptionInput).toHaveValue('');
 
-      await expect(page.locator('label').filter({ hasText: 'Hide' })).toBeVisible();
+      // Display
+      await expect(page.locator('label', { hasText: /^Display$/ })).toBeVisible();
+      const displaySelect = dashboardPage.getByGrafanaSelector(
+        selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect
+      );
+      await expect(displaySelect).toBeVisible();
+      await expect(displaySelect).toHaveValue('Above dashboard');
 
       // Check datasource selector
       const datasourceSelect = dashboardPage.getByGrafanaSelector(
@@ -63,7 +68,7 @@ test.describe(
       await expect(datasourceSelect).toBeVisible();
       await expect(datasourceSelect).toHaveAttribute('placeholder', 'gdev-testdata');
 
-      await expect(page.locator('label').filter({ hasText: 'Refresh' })).toBeVisible();
+      await expect(page.getByRole('group', { name: 'Refresh' })).toBeVisible();
       await expect(page.locator('label').filter({ hasText: 'On dashboard load' })).toBeVisible();
 
       const regexInput = dashboardPage.getByGrafanaSelector(
@@ -72,6 +77,16 @@ test.describe(
       await expect(regexInput).toBeVisible();
       await expect(regexInput).toHaveAttribute('placeholder', '/.*-(?<text>.*)-(?<value>.*)-.*/');
       await expect(regexInput).toHaveValue('');
+
+      // Check regex apply to field - should default to "Variable value"
+      const regexApplyToField = dashboardPage.getByGrafanaSelector(
+        selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExApplyToSelectV2
+      );
+      await expect(regexApplyToField).toBeVisible();
+      const variableValueRadio = page.getByRole('radio', { name: 'Variable value' });
+      await expect(variableValueRadio).toBeChecked();
+      const displayTextRadio = page.getByRole('radio', { name: 'Display text' });
+      await expect(displayTextRadio).not.toBeChecked();
 
       const sortSelect = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2

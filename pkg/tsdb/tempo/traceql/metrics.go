@@ -125,7 +125,7 @@ func transformLabelsAndGetName(seriesLabels []v1.KeyValue) (string, data.Labels)
 			}
 			sort.Strings(keys)
 
-			var labelStrings []string
+			labelStrings := make([]string, 0, len(keys))
 			for _, key := range keys {
 				labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", key, labels[key]))
 			}

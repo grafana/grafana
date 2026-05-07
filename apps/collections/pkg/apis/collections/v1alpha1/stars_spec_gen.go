@@ -18,6 +18,11 @@ func NewStarsResource() *StarsResource {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for StarsResource.
+func (StarsResource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsResource"
+}
+
 // +k8s:openapi-gen=true
 type StarsSpec struct {
 	Resource []StarsResource `json:"resource"`
@@ -28,4 +33,9 @@ func NewStarsSpec() *StarsSpec {
 	return &StarsSpec{
 		Resource: []StarsResource{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for StarsSpec.
+func (StarsSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsSpec"
 }

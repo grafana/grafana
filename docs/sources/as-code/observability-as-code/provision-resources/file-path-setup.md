@@ -18,23 +18,23 @@ aliases:
 
 # Set up file provisioning
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
-Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions, but it's **not available in Grafana Cloud**. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
+On-prem file provisioning is available in Grafana v12 and later for open source and Enterprise editions. It's **not available in Grafana Cloud**. This new file provisioning feature is only available for dashboards and doesn't replace classic provisioning for the time being.
+
+For classic provisioning using configuration files refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
 
 {{< /admonition >}}
 
-Use local file provisioning to include in your Grafana instance resources (such as folders and dashboard JSON files) that are stored in a local file system.
+Use local file provisioning to include in your Grafana instance resources that you store in your local file system.
 
-This page explains how to set up local file provisioning.
-
-The local path mount is referred to as a repository.
+The local path mount is referred to as a `repository`.
 
 Using the local path lets you also use it with a tool like `fuse`, allowing you to mount S3 buckets as local paths. You can also use tools like `restic` to automatically back up your dashboards to your preferred backup storage solution.
 
 To set up file sync with local with local files, you need to:
 
-1. Enable feature toggles and paths in Grafana configuration file (first time set up).
+1. Configure permitted paths in Grafana configuration file (first time set up).
 1. Set the local path.
 1. Choose what content to sync with Grafana.
 
@@ -46,29 +46,18 @@ Local file provisioning using **Administration** > **Provisioning** will eventua
 For production systems, use the `folderFromFilesStructure` capability instead of **Administration** > **Provisioning** to include dashboards from a local file system in your Grafana instance. Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-folders-structure-from-filesystem-to-grafana) for more information.
 {{< /admonition >}}
 
-### Limitations
-
-- A provisioned dashboard can't be deleted from within Grafana UI. The dashboard has to be deleted at the local file system and those changes synced to Grafana.
-- Changes from the local file system are one way: you can't save changes from the Grafana UI to GitHub.
-
 ## Before you begin
-
-{{< admonition type="note" >}}
-Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature.
-{{< /admonition >}}
 
 To set up file provisioning, you need:
 
 - Administration rights in your Grafana organization.
-- A local directory where your dashboards will be stored.
-  - If you want to use a GitHub repository, refer to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
+- A local directory to store your dashboards. If you want to use a GitHub repository, refer to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
 - To update the `permitted_provisioning_paths` section of `custom.ini`.
-- To enable the required feature toggles in your Grafana instance.
+- To understand the limitations of local file provisioning. Refer to [How it works](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources#how-it-works) for more details.
 
-## Enable required feature toggles and configure permitted paths
+## Configure permitted paths
 
-To activate local file provisioning in Grafana, you need to enable the `provisioning` and `kubernetesDashboards` feature toggles.
-For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles).
+The `provisioning` feature toggle is enabled by default in Grafana Cloud and, starting in Grafana v13, for OSS and Enterprise as well. No manual configuration of the feature toggle is required.
 
 The local setting must be a relative path and its relative path must be configured in the `permitted_provisioned_paths` configuration option.
 The configuration option is relative to your working directory, i.e. where you are running Grafana from; this is usually `/usr/share/grafana` or similar.
@@ -81,15 +70,7 @@ Any subdirectories are automatically included.
 
 The values that you enter for the `permitted_provisioning_paths` become the base paths for those entered when you enter a local path in the **Connect to local storage** wizard.
 
-1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. For file location based on operating system, refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
-1. Locate or add a `[feature_toggles]` section. Add these values:
-
-   ```ini
-   [feature_toggles]
-   provisioning = true
-   kubernetesDashboards = true ; use k8s from browser
-   ```
-
+1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. For file location based on operating system, refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
 1. Locate or add a `[paths]` section. To add more than one location, use the pipe character (`|`) to separate the paths. The list should not include empty paths or trailing pipes. Add these values:
 
    ```ini
@@ -113,7 +94,7 @@ To start setting up file-based provisioning:
 ### Connect to local storage
 
 The local path can point to any directory that is permitted by the configuration.
-Refer to [Enabled required feature toggles and paths](#enable-required-feature-toggles-and-configure-permitted-paths) for information.
+Refer to [Configure permitted paths](#configure-permitted-paths) for information.
 
 The starting path is always your working `grafana` directory.
 The prefix that must be entered is determined by the locations configured in `permitted_provisioning_paths`.
@@ -129,34 +110,41 @@ The set up process verifies the path and provides an error message if a problem 
 
 #### Synchronization limitations
 
-Full instance sync is not available in Grafana Cloud.
+To have access to full instance sync you must explicitly enable the option.
 
-In Grafana OSS/Enterprise:
+The following applies:
 
-- If you try to perform a full instance sync with resources that contain alerts or panels, the connection will be blocked.
 - You won't be able to create new alerts or library panels after setup is completed.
 - If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the provisioned repository and connect again with folder sync.
 
 #### Set up synchronization
 
-Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
+You can sync external resources into a new folder without affecting the rest of your instance.
 
-- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
+To set up synchronization:
 
-- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
+1. Select which resources you want to sync.
 
-Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+1. Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
 
-Click **Synchronize** to continue.
+1. Click **Synchronize** to continue.
+
+1. You can repeat this process for up to 10 connections.
+
+{{< admonition type="note" >}}
+
+Optionally, you can export any unmanaged resources into the provisioned folder. See how in [Synchronize with external storage](#synchronize-with-external-storage).
+
+{{< /admonition >}}
 
 ### Synchronize with external storage
 
-After this one time step, all future updates are automatically saved to the local file path and provisioned back to the instance.
+In this step you proceed to synchronize the resources selected in the previous step. Optionally, you can check the **Migrate existing resources** box to migrate your unmanaged dashboards to the provisioned folder.
 
-During the initial synchronization, your dashboards will be temporarily unavailable. No data or configurations will be lost.
+Select **Begin synchronization** to start the process. After this one time step, all future updates are automatically saved to the local file path and provisioned back to the instance.
+
+Note that during the initial synchronization, your dashboards will be temporarily unavailable. No data or configurations will be lost.
 How long the process takes depends upon the number of resources involved.
-
-Select **Begin synchronization** to start the process.
 
 ### Choose additional settings
 

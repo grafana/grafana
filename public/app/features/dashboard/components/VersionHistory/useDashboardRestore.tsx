@@ -4,16 +4,17 @@ import { useAsyncFn } from 'react-use';
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { historySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useSelector } from 'app/types/store';
 
 import { dashboardWatcher } from '../../../live/dashboard/dashboardWatcher';
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 const restoreDashboard = async (version: number, dashboard: DashboardModel) => {
   // Skip the watcher logic for this save since it's handled by the hook
   dashboardWatcher.ignoreNextSave();
-  return await historySrv.restoreDashboard(dashboard.uid, version);
+  const api = await getDashboardAPI();
+  return await api.restoreDashboardVersion(dashboard.uid, version);
 };
 
 export const useDashboardRestore = (id: number, version: number) => {

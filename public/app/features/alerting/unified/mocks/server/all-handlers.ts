@@ -9,16 +9,21 @@ import datasourcesHandlers from 'app/features/alerting/unified/mocks/server/hand
 import evalHandlers from 'app/features/alerting/unified/mocks/server/handlers/eval';
 import folderHandlers from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import grafanaRulerHandlers from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
+import historianHandlers from 'app/features/alerting/unified/mocks/server/handlers/historian';
+import inhibitionRulesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/inhibitionRules.k8s';
+import integrationTypeSchemasK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/integrationTypeSchemas.k8s';
 import receiverK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/receivers.k8s';
 import routingTreeK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/routingtrees.k8s';
 import templatesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/templates.k8s';
 import timeIntervalK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
+import receiverTestK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8sReceiverTest';
 import mimirRulerHandlers from 'app/features/alerting/unified/mocks/server/handlers/mimirRuler';
 import pluginsHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import allPluginHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins/all-plugin-handlers';
 import provisioningHandlers from 'app/features/alerting/unified/mocks/server/handlers/provisioning';
 import searchHandlers from 'app/features/alerting/unified/mocks/server/handlers/search';
 import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers/silences';
+import userStorageHandlers from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
 
 /**
  * All alerting-specific handlers that are required across tests
@@ -27,14 +32,18 @@ import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers
 export const alertingHandlers = [
   ...alertNotifierHandlers,
   ...grafanaRulerHandlers,
+  ...historianHandlers,
   ...mimirRulerHandlers,
   ...alertmanagerHandlers,
   ...silenceHandlers,
   ...provisioningHandlers,
 
   // Kubernetes-style handlers
+  ...inhibitionRulesK8sHandlers,
+  ...integrationTypeSchemasK8sHandlers,
   ...timeIntervalK8sHandlers,
   ...receiverK8sHandlers,
+  ...receiverTestK8sHandlers,
   ...templatesK8sHandlers,
   ...routingTreeK8sHandlers,
 ];
@@ -55,6 +64,7 @@ const allHandlers = [
   ...datasourcesHandlers,
   ...evalHandlers,
   ...pluginsHandlers,
+  ...userStorageHandlers,
 ];
 
 export default allHandlers;

@@ -1,6 +1,9 @@
 package conversion
 
 import (
+	"context"
+
+	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/conversion"
 
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
@@ -39,14 +42,41 @@ import (
 // the data model to move datasource references from DataQueryKind to spec level.
 
 func ConvertDashboard_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
+	// if available, use parent context from scope so tracing works
+	ctx := context.Background()
+	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
+		if scopeCtx, ok := scope.Meta().Context.(context.Context); ok {
+			ctx = scopeCtx
+		}
+	}
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v2beta1_to_v2alpha1",
+		attribute.String("dashboard.uid", in.Name),
+		attribute.String("dashboard.namespace", in.Namespace),
+	)
+	defer span.End()
+
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv2alpha1.APIVERSION
 	out.Kind = in.Kind
 
-	return convertDashboardSpec_V2beta1_to_V2alpha1(&in.Spec, &out.Spec, scope)
+	if err := convertDashboardSpec_V2beta1_to_V2alpha1(ctx, &in.Spec, &out.Spec, scope); err != nil {
+		return err
+	}
+
+	span.SetAttributes(
+		attribute.Int("conversion.elements_count", len(out.Spec.Elements)),
+		attribute.Int("conversion.variables_count", len(out.Spec.Variables)),
+		attribute.Int("conversion.annotations_count", len(out.Spec.Annotations)),
+		attribute.Int("conversion.links_count", len(out.Spec.Links)),
+	)
+
+	return nil
 }
 
-func convertDashboardSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope) error {
+func convertDashboardSpec_V2beta1_to_V2alpha1(ctx context.Context, in *dashv2beta1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope) error {
+	_, span := TracingStart(ctx, "dashboard.conversion.spec_v2beta1_to_v2alpha1")
+	defer span.End()
+
 	// Convert annotations
 	out.Annotations = make([]dashv2alpha1.DashboardAnnotationQueryKind, len(in.Annotations))
 	for i := range in.Annotations {
@@ -113,6 +143,11 @@ func convertAnnotationQuery_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardAnnotat
 	out.Spec.BuiltIn = in.Spec.BuiltIn
 	out.Spec.Filter = (*dashv2alpha1.DashboardAnnotationPanelFilter)(in.Spec.Filter)
 	out.Spec.LegacyOptions = in.Spec.LegacyOptions
+
+	// Convert mappings
+	if in.Spec.Mappings != nil {
+		out.Spec.Mappings = convertAnnotationMappings_V2beta1_to_V2alpha1(in.Spec.Mappings)
+	}
 
 	// Convert query - move datasource from query back to annotation spec
 	query, datasource, err := convertDataQuery_V2beta1_to_V2alpha1(&in.Spec.Query, scope)
@@ -268,7 +303,7 @@ func convertTransformation_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardTransfor
 	out.Kind = in.Kind
 	out.Spec.Id = in.Spec.Id
 	out.Spec.Disabled = in.Spec.Disabled
-	out.Spec.Filter = (*dashv2alpha1.DashboardMatcherConfig)(in.Spec.Filter)
+	out.Spec.Filter = convertMatcherConfigPtr_V2beta1_to_V2alpha1(in.Spec.Filter)
 	out.Spec.Topic = (*dashv2alpha1.DashboardDataTopic)(in.Spec.Topic)
 	out.Spec.Options = in.Spec.Options
 }
@@ -357,13 +392,29 @@ func convertFieldConfig_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardFieldConfig
 	}
 }
 
+func convertMatcherScopePtr_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardMatcherScope) *dashv2alpha1.DashboardMatcherScope {
+	if in == nil {
+		return nil
+	}
+	s := dashv2alpha1.DashboardMatcherScope(*in)
+	return &s
+}
+
+func convertMatcherConfigPtr_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardMatcherConfig) *dashv2alpha1.DashboardMatcherConfig {
+	if in == nil {
+		return nil
+	}
+	return &dashv2alpha1.DashboardMatcherConfig{
+		Id:      in.Id,
+		Scope:   convertMatcherScopePtr_V2beta1_to_V2alpha1(in.Scope),
+		Options: in.Options,
+	}
+}
+
 func convertFieldConfigOverride_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardV2beta1FieldConfigSourceOverrides, out *dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides) {
 	out.SystemRef = in.SystemRef
 
-	out.Matcher = dashv2alpha1.DashboardMatcherConfig{
-		Id:      in.Matcher.Id,
-		Options: in.Matcher.Options,
-	}
+	out.Matcher = *convertMatcherConfigPtr_V2beta1_to_V2alpha1(&in.Matcher)
 
 	out.Properties = make([]dashv2alpha1.DashboardDynamicConfigValue, len(in.Properties))
 	for i, prop := range in.Properties {
@@ -696,6 +747,7 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 				SkipUrlSync:      in.CustomVariableKind.Spec.SkipUrlSync,
 				Description:      in.CustomVariableKind.Spec.Description,
 				AllowCustomValue: in.CustomVariableKind.Spec.AllowCustomValue,
+				ValuesFormat:     convertCustomValuesFormat_V2beta1_to_V2alpha1(in.CustomVariableKind.Spec.ValuesFormat),
 			},
 		}
 	}
@@ -767,6 +819,7 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 				SkipUrlSync:      in.AdhocVariableKind.Spec.SkipUrlSync,
 				Description:      in.AdhocVariableKind.Spec.Description,
 				AllowCustomValue: in.AdhocVariableKind.Spec.AllowCustomValue,
+				EnableGroupBy:    in.AdhocVariableKind.Spec.EnableGroupBy,
 				Datasource:       datasource,
 			},
 		}
@@ -801,6 +854,7 @@ func convertQueryVariableSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardQuery
 	out.SkipUrlSync = in.SkipUrlSync
 	out.Description = in.Description
 	out.Regex = in.Regex
+	out.RegexApplyTo = (*dashv2alpha1.DashboardVariableRegexApplyTo)(in.RegexApplyTo)
 	out.Sort = dashv2alpha1.DashboardVariableSort(in.Sort)
 	out.Definition = in.Definition
 	out.Options = convertVariableOptions_V2beta1_to_V2alpha1(in.Options)
@@ -937,6 +991,23 @@ func convertTabRepeatOptions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardTabRep
 	}
 }
 
+func convertCustomValuesFormat_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardCustomVariableSpecValuesFormat) *dashv2alpha1.DashboardCustomVariableSpecValuesFormat {
+	if in == nil {
+		return nil
+	}
+
+	switch *in {
+	case dashv2beta1.DashboardCustomVariableSpecValuesFormatJson:
+		v := dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson
+		return &v
+	case dashv2beta1.DashboardCustomVariableSpecValuesFormatCsv:
+		v := dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv
+		return &v
+	default:
+		return nil
+	}
+}
+
 func convertConditionalRenderingGroupKind_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardConditionalRenderingGroupKind) *dashv2alpha1.DashboardConditionalRenderingGroupKind {
 	if in == nil {
 		return nil
@@ -1022,4 +1093,19 @@ func convertRowLayout_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutKin
 
 func convertTabLayout_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
 	return convertLayout_V2beta1_to_V2alpha1(in, out, scope)
+}
+
+func convertAnnotationMappings_V2beta1_to_V2alpha1(in map[string]dashv2beta1.DashboardAnnotationEventFieldMapping) map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping, len(in))
+	for key, mapping := range in {
+		out[key] = dashv2alpha1.DashboardAnnotationEventFieldMapping{
+			Source: mapping.Source,
+			Value:  mapping.Value,
+			Regex:  mapping.Regex,
+		}
+	}
+	return out
 }

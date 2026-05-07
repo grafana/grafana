@@ -2,7 +2,14 @@ import { setBackendSrv } from '@grafana/runtime';
 
 import { API_ROOT, GCOM_API_ROOT } from '../constants';
 import * as permissions from '../permissions';
-import { CatalogPlugin, LocalPlugin, RemotePlugin, Version, ReducerState, RequestStatus } from '../types';
+import {
+  type CatalogPlugin,
+  type LocalPlugin,
+  type RemotePlugin,
+  type Version,
+  type ReducerState,
+  RequestStatus,
+} from '../types';
 
 import catalogPluginMock from './catalogPlugin.mock';
 import localPluginMock from './localPlugin.mock';
@@ -29,6 +36,9 @@ export const getPluginsStateMock = (plugins: CatalogPlugin[] = []): ReducerState
       status: RequestStatus.Fulfilled,
     },
     'plugins/fetchDetails': {
+      status: RequestStatus.Fulfilled,
+    },
+    'plugins/fetchPluginInsights': {
       status: RequestStatus.Fulfilled,
     },
   },
@@ -73,6 +83,11 @@ export const mockPluginApis = ({
       // Mock versions
       if (versions && path === `${GCOM_API_ROOT}/plugins/${remote.slug}/versions`) {
         return Promise.resolve({ items: versions });
+      }
+
+      // Mock plugin insights - return empty insights to avoid API call errors
+      if (path.includes('/insights')) {
+        return Promise.resolve({ id: 1, name: '', version: '', insights: [] });
       }
 
       // Mock local plugin settings (installed) if necessary

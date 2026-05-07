@@ -1,5 +1,5 @@
 import { GoToSnapshotOriginButton } from '../../GoToSnapshotOriginButton';
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 export const OpenSnapshotOriginButton = ({ dashboard }: ToolbarActionProps) => (
   <GoToSnapshotOriginButton originalURL={dashboard.getSnapshotUrl()} />

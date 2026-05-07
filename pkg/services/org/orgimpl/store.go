@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -41,6 +43,7 @@ type store interface {
 	GetByID(context.Context, *org.GetOrgByIDQuery) (*org.Org, error)
 	GetByName(context.Context, *org.GetOrgByNameQuery) (*org.Org, error)
 	SearchOrgUsers(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
+	SearchOrgUsersByEmails(context.Context, *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error)
 	RemoveOrgUser(context.Context, *org.RemoveOrgUserCommand) error
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
@@ -50,9 +53,10 @@ type store interface {
 type sqlStore struct {
 	db      db.DB
 	dialect migrator.Dialect
-	//TODO: moved to service
+	// TODO: moved to service
 	log     log.Logger
 	deletes []string
+	cfg     *setting.Cfg
 }
 
 func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
@@ -201,10 +205,8 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			return org.ErrOrgNotFound.Errorf("failed to delete organisation with ID: %d", cmd.ID)
 		}
 
-		deletes := []string{
+		deletes := []string{ //nolint:prealloc
 			"DELETE FROM star WHERE org_id = ?",
-			"DELETE FROM playlist_item WHERE playlist_id IN (SELECT id FROM playlist WHERE org_id = ?)",
-			"DELETE FROM playlist WHERE org_id = ?",
 			"DELETE FROM dashboard_tag WHERE org_id = ?",
 			"DELETE FROM api_key WHERE org_id = ?",
 			"DELETE FROM data_source WHERE org_id = ?",
@@ -229,12 +231,10 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			"DELETE FROM builtin_role WHERE org_id = ?",
 		}
 
-		// Add registered deletes
 		deletes = append(deletes, ss.deletes...)
 
 		for _, sql := range deletes {
-			_, err := sess.Exec(sql, cmd.ID)
-			if err != nil {
+			if _, err := sess.Exec(sql, cmd.ID); err != nil {
 				return err
 			}
 		}
@@ -560,6 +560,14 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			whereParams = append(whereParams, acFilter.Args...)
 		}
 
+		if query.ExcludeHiddenUsers {
+			cond, params := buildHiddenUsersFilter(query.User, ss.cfg.HiddenUsers)
+			if cond != "" {
+				whereConditions = append(whereConditions, cond)
+				whereParams = append(whereParams, params...)
+			}
+		}
+
 		if query.Query != "" {
 			sql1, param1 := ss.dialect.LikeOperator("email", true, query.Query, true)
 			sql2, param2 := ss.dialect.LikeOperator("name", true, query.Query, true)
@@ -631,6 +639,62 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 		return nil, err
 	}
 	return &result, nil
+}
+
+func (ss *sqlStore) SearchOrgUsersByEmails(ctx context.Context, query *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
+	result := make([]*org.OrgUserDTO, 0)
+	if len(query.Emails) == 0 {
+		return result, nil
+	}
+	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		emailArgs := make([]any, len(query.Emails))
+		for i, e := range query.Emails {
+			emailArgs[i] = strings.ToLower(e)
+		}
+		placeholders := strings.Repeat("?,", len(query.Emails))
+		placeholders = placeholders[:len(placeholders)-1]
+
+		whereConditions := []string{
+			"org_user.org_id = ?",
+			fmt.Sprintf("u.email IN (%s)", placeholders),
+			"u.is_service_account = ?",
+		}
+		whereParams := append([]any{query.OrgID}, emailArgs...)
+		whereParams = append(whereParams, ss.dialect.BooleanValue(false))
+
+		if query.ExcludeHiddenUsers && ss.cfg != nil {
+			cond, params := buildHiddenUsersFilter(nil, ss.cfg.HiddenUsers)
+			if cond != "" {
+				whereConditions = append(whereConditions, cond)
+				whereParams = append(whereParams, params...)
+			}
+		}
+
+		sess := dbSession.Table("org_user").
+			Join("INNER", []string{ss.dialect.Quote("user"), "u"}, "org_user.user_id=u.id").
+			Where(strings.Join(whereConditions, " AND "), whereParams...).
+			Cols(
+				"org_user.org_id",
+				"org_user.user_id",
+				"u.email",
+				"u.uid",
+				"u.name",
+				"u.login",
+				"org_user.role",
+				"u.last_seen_at",
+				"u.created",
+				"u.updated",
+				"u.is_disabled",
+				"u.is_provisioned",
+			).Asc("u.login", "u.email")
+
+		return sess.Find(&result)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (ss *sqlStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
@@ -824,4 +888,24 @@ func removeUserOrg(sess *db.Session, userID int64) error {
 // RegisterDelete registers a delete query to be executed when an org is deleted, used to delete enterprise data.
 func (ss *sqlStore) RegisterDelete(query string) {
 	ss.deletes = append(ss.deletes, query)
+}
+
+func buildHiddenUsersFilter(requester identity.Requester, hiddenUsersMap map[string]struct{}) (string, []any) {
+	if requester != nil && requester.GetIsGrafanaAdmin() {
+		return "", nil
+	}
+
+	hiddenUsers := make([]any, 0)
+	for user := range hiddenUsersMap {
+		if requester != nil && user == requester.GetLogin() {
+			continue
+		}
+		hiddenUsers = append(hiddenUsers, user)
+	}
+
+	if len(hiddenUsers) > 0 {
+		return "u.login NOT IN (?" + strings.Repeat(",?", len(hiddenUsers)-1) + ")", hiddenUsers
+	}
+
+	return "", nil
 }

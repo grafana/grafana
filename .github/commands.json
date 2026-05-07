@@ -173,18 +173,10 @@
   },
   {
     "type": "label",
-    "name": "datasource/Zipkin",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/explore",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/111"
+      "url": "https://github.com/orgs/grafana/projects/908"
     }
   },
   {
@@ -544,7 +536,7 @@
     "name": "area/provisioning",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/599"
+      "url": "https://github.com/orgs/grafana/projects/835"
     }
   },
   {
@@ -744,7 +736,7 @@
     "name": "area/backend/db/sql",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/599"
+      "url": "https://github.com/orgs/grafana/projects/835"
     }
   },
   {
@@ -960,7 +952,7 @@
     "name": "area/backend/db/sqlite",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/599"
+      "url": "https://github.com/orgs/grafana/projects/835"
     }
   },
   {
@@ -985,14 +977,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/78"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Zipkin",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -1029,26 +1013,10 @@
   },
   {
     "type": "label",
-    "name": "area/panel/datagrid",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/panel/dashboard-list",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/911"
-    }
-  },
-  {
-    "type": "label",
-    "name": "team/grafana-aws-datasources",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/97"
     }
   },
   {
@@ -1225,6 +1193,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/69"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/suggestions",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
     }
   }
 ]

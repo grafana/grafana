@@ -1,6 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SortOrder } from '@grafana/schema/dist/esm/index';
+import { SortOrder } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 
@@ -8,7 +8,7 @@ import { addStandardDataReduceOptions } from '../stat/common';
 
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartPanelChangedHandler } from './migrations';
-import { Options, FieldConfig, PieChartType, PieChartLabels, PieChartLegendValues } from './panelcfg.gen';
+import { type Options, type FieldConfig, PieChartType, PieChartLabels, PieChartLegendValues } from './panelcfg.gen';
 import { piechartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
@@ -21,9 +21,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
           byValueSupport: false,
           bySeriesSupport: true,
           preferThresholdsMode: false,
+          gradientSupport: true,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
+          // Seed fixedColor so switching to Single color, Shades, or Gradient
+          // on a fresh panel shows a meaningful color instead of an empty picker.
+          fixedColor: '#73BF69',
         },
       },
     },
@@ -77,7 +81,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
       });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder, false);
+    commonOptionsBuilder.addLegendOptions(builder, false, true);
 
     builder.addMultiSelect({
       name: t('piechart.name-legend-values', 'Legend values'),

@@ -7,11 +7,9 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
-
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -21,9 +19,10 @@ const QueryRequestSchemaKey = "QueryRequestSchema"
 // const QuerySaveModelSchemaKey = "QuerySaveModelSchema"
 
 type OASQueryOptions struct {
-	Swagger    *spec3.OpenAPI
-	PluginJSON *plugins.JSONData
-	QueryTypes *query.QueryTypeDefinitionList
+	Swagger             *spec3.OpenAPI
+	PluginJSON          *plugins.JSONData
+	QueryTypes          *dsV0.QueryTypeDefinitionList
+	QueryExamplesConfig *data.QueryExamples
 
 	Root             string
 	QueryPath        string // eg "namespaces/{namespace}/query/{name}"
@@ -35,7 +34,7 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	oas := options.Swagger
 	root := options.Root
 	examples := options.QueryExamples
-	resourceName := query.QueryTypeDefinitionResourceInfo.GroupResource().Resource
+	resourceName := dsV0.QueryTypeDefinitionResourceInfo.GroupResource().Resource
 
 	builder := schemabuilder.QuerySchemaOptions{
 		PluginID:   []string{""},
@@ -59,7 +58,7 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 		}
 
 		if examples == nil {
-			examples = getExamples(options.QueryTypes)
+			examples = getExamples(options.QueryExamplesConfig, options.QueryTypes)
 		}
 	}
 
@@ -145,36 +144,43 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	return nil
 }
 
-func getExamples(queryTypes *query.QueryTypeDefinitionList) map[string]*spec3.Example {
-	if queryTypes == nil {
+func getExamples(queryExamples *data.QueryExamples, queryTypes *dsV0.QueryTypeDefinitionList) map[string]*spec3.Example {
+	if queryExamples == nil {
 		return nil
+	}
+
+	byQueryType := make(map[string][]data.DiscriminatorFieldValue, 0)
+	for _, qt := range queryTypes.Items {
+		if len(qt.Spec.Discriminators) > 0 {
+			byQueryType[qt.Name] = qt.Spec.Discriminators
+		}
 	}
 
 	tr := data.TimeRange{From: "now-1h", To: "now"}
 	examples := map[string]*spec3.Example{}
-	for _, queryType := range queryTypes.Items {
-		for idx, example := range queryType.Spec.Examples {
-			q := data.NewDataQuery(example.SaveModel.Object)
-			q.RefID = "A"
-			for _, dis := range queryType.Spec.Discriminators {
-				_ = q.Set(dis.Field, dis.Value)
-			}
-			if q.MaxDataPoints < 1 {
-				q.MaxDataPoints = 1000
-			}
-			if q.IntervalMS < 1 {
-				q.IntervalMS = 5000 // 5s
-			}
-			examples[fmt.Sprintf("%s-%d", example.Name, idx)] = &spec3.Example{
-				ExampleProps: spec3.ExampleProps{
-					Summary:     example.Name,
-					Description: example.Description,
-					Value: data.QueryDataRequest{
-						TimeRange: tr,
-						Queries:   []data.DataQuery{q},
-					},
+	for idx, example := range queryExamples.Examples {
+		q := data.NewDataQuery(example.SaveModel.Object)
+		q.RefID = "A"
+
+		discriminators := byQueryType[example.QueryType]
+		for _, dis := range discriminators {
+			_ = q.Set(dis.Field, dis.Value)
+		}
+		if q.MaxDataPoints < 1 {
+			q.MaxDataPoints = 1000
+		}
+		if q.IntervalMS < 1 {
+			q.IntervalMS = 5000 // 5s
+		}
+		examples[fmt.Sprintf("%s-%d", example.Name, idx)] = &spec3.Example{
+			ExampleProps: spec3.ExampleProps{
+				Summary:     example.Name,
+				Description: example.Description,
+				Value: data.QueryDataRequest{
+					TimeRange: tr,
+					Queries:   []data.DataQuery{q},
 				},
-			}
+			},
 		}
 	}
 	return examples

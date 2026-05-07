@@ -2,13 +2,13 @@ import { Observable, of, lastValueFrom, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';
 
-import { AppEvents, DataQueryErrorType, EventBusExtended, PathValidationError } from '@grafana/data';
-import { BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
+import { AppEvents, DataQueryErrorType, type EventBusExtended, PathValidationError } from '@grafana/data';
+import { type BackendSrvRequest, type FetchError, type FetchResponse } from '@grafana/runtime';
 
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
 import { ShowModalReactEvent } from '../../types/events';
-import { BackendSrv, BackendSrvDependencies } from '../services/backend_srv';
-import { ContextSrv, User } from '../services/context_srv';
+import { BackendSrv, type BackendSrvDependencies } from '../services/backend_srv';
+import { type ContextSrv, type User } from '../services/context_srv';
 
 const getTestContext = (overides?: object, mockFromFetch = true) => {
   const defaults = {
@@ -323,6 +323,66 @@ describe('backendSrv', () => {
             } as FetchError
           );
           expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, ['Failed to fetch', '']);
+        });
+      });
+    });
+
+    describe('when error response body is HTML', () => {
+      it('should replace HTML body with status-based message', async () => {
+        jest.useFakeTimers();
+        const htmlBody = '<!DOCTYPE html><html><body><h1>502 Bad Gateway</h1></body></html>';
+        const { backendSrv, appEventsMock, expectRequestCallChain } = getTestContext({
+          ok: false,
+          status: 502,
+          statusText: 'Bad Gateway',
+          data: htmlBody,
+        });
+        const url = '/api/dashboard/';
+
+        await backendSrv
+          .request({ url, method: 'GET' })
+          .catch((error) => {
+            expect(error.data.message).toBe('502 Bad Gateway');
+            expect(error.data.response).toBe(htmlBody);
+            expectRequestCallChain({ url, method: 'GET' });
+            jest.advanceTimersByTime(50);
+          })
+          .catch((error) => {
+            expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, ['502 Bad Gateway', '', undefined]);
+          });
+      });
+
+      it('should replace HTML body starting with <html> tag', async () => {
+        jest.useFakeTimers();
+        const htmlBody = '<html><body>503 Service Unavailable</body></html>';
+        const { backendSrv, expectRequestCallChain } = getTestContext({
+          ok: false,
+          status: 503,
+          statusText: 'Service Unavailable',
+          data: htmlBody,
+        });
+        const url = '/api/dashboard/';
+
+        await backendSrv.request({ url, method: 'GET' }).catch((error) => {
+          expect(error.data.message).toBe('503 Service Unavailable');
+          expect(error.data.response).toBe(htmlBody);
+          expectRequestCallChain({ url, method: 'GET' });
+        });
+      });
+
+      it('should not replace non-HTML string error bodies', async () => {
+        jest.useFakeTimers();
+        const { backendSrv, expectRequestCallChain } = getTestContext({
+          ok: false,
+          status: 500,
+          statusText: 'Internal Server Error',
+          data: 'some plain text error',
+        });
+        const url = '/api/dashboard/';
+
+        await backendSrv.request({ url, method: 'GET' }).catch((error) => {
+          expect(error.data.message).toBe('some plain text error');
+          expectRequestCallChain({ url, method: 'GET' });
         });
       });
     });

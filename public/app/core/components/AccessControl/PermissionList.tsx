@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Trans } from '@grafana/i18n';
 
 import { PermissionListItem } from './PermissionListItem';
-import { ResourcePermission } from './types';
+import { type ResourcePermission } from './types';
 
 interface Props {
   title: string;

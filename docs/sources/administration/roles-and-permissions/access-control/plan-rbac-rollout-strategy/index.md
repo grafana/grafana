@@ -10,7 +10,7 @@ labels:
     - enterprise
 menuTitle: Plan your RBAC rollout strategy
 title: Plan your Grafana RBAC rollout strategy
-weight: 20
+weight: 10
 refs:
   api-rbac-update-a-role:
     - pattern: /docs/grafana/
@@ -57,7 +57,7 @@ Your rollout strategy should help you answer the following questions:
 
 ## Review basic role and fixed role definitions
 
-As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use. Keep in mind that `No Basic Role`, which is a role without permissions, cannot be modified or updated.
+As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use. Keep in mind that the `None` basic role, which is a role without permissions, cannot be modified or updated.
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
 
@@ -162,7 +162,7 @@ The following request creates a custom role that includes permissions to access 
 
 ```
 curl --location --request POST '<grafana_url>/api/access-control/roles/' \
---header 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+--header 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "version": 1,
@@ -208,13 +208,13 @@ By default, only a Grafana Server Admin can create and manage custom roles. If y
 
   ```bash
   # Fetch the role, modify it to add the desired permissions and increment its version
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
     -X GET '<grafana_url>/api/access-control/roles/basic_editor' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq '.permissions += [{"action": "roles:read", "scope": "roles:*"}, {"action": "roles:write", "scope": "permissions:type:delegate"}, {"action": "roles:delete", "scope": "permissions:type:delegate"}]' > /tmp/basic_editor.json
 
   # Update the role
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' -H 'Content-Type: application/json' \
     -X PUT-d @/tmp/basic_editor.json '<grafana_url>/api/access-control/roles/basic_editor'
   ```
 
@@ -253,13 +253,13 @@ If you want your `Viewers` to create reports, [update the `Viewer` basic role pe
 
   ```bash
   # Fetch the role, modify it to add the desired permissions and increment its version
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
     -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq '.permissions += [{"action": "reports:create"}, {"action": "reports:read", "scope": "reports:*"}, {"action": "reports:write", "scope": "reports:*"}, {"action": "reports:send", "scope": "reports:*"}]' > /tmp/basic_viewer.json
 
   # Update the role
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' -H 'Content-Type: application/json' \
     -X PUT-d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
 
@@ -299,13 +299,13 @@ There are two ways to achieve this:
 
   ```bash
   # Fetch the role, modify it to remove the undesired permissions and increment its version
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
     -X GET '<grafana_url>/api/access-control/roles/basic_grafana_admin' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq 'del(.permissions[] | select (.action == "users:create")) | del(.permissions[] | select (.action == "org.users:add" and .scope == "users:*"))' > /tmp/basic_grafana_admin.json
 
   # Update the role
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' -H 'Content-Type: application/json' \
     -X PUT-d @/tmp/basic_grafana_admin.json '<grafana_url>/api/access-control/roles/basic_grafana_admin'
   ```
 
@@ -361,14 +361,14 @@ Here are two ways to achieve this:
 
   ```bash
   # Fetch the role, modify it to remove the undesired permissions, add the new permission and increment its version
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
     -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq 'del(.permissions[] | select (.action == "plugins.app:access" and .scope == "plugins:*"))' | \
     jq '.permissions += [{"action": "plugins.app:access", "scope": "plugins:id:kentik-connect-app"}]' > /tmp/basic_viewer.json
 
   # Update the role
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' -H 'Content-Type: application/json' \
     -X PUT -d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
 
@@ -400,13 +400,13 @@ Here are two ways to achieve this:
 
   ```bash
   # Fetch the role, modify it to remove permissions to kentik-connect-app and increment role version
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
     -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq 'del(.permissions[] | select (.action == "plugins.app:access" and .scope == "plugins:id:kentik-connect-app"))'
 
   # Update the role
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' -H 'Content-Type: application/json' \
     -X PUT -d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
 
@@ -437,10 +437,10 @@ A user will be added to the default organization automatically but won't have an
 
 ### Reduce scope of service accounts
 
-Using Service Accounts is an efficient way to facilitate M2M communications. However, they can pose a security threat if not scoped appropriately. To limit the scope of a service account, you can begin by creating a Service Account with `No Basic Role` and then assign the necessary permissions for the account.
+Using Service Accounts is an efficient way to facilitate M2M communications. However, they can pose a security threat if not scoped appropriately. To limit the scope of a service account, you can begin by creating a Service Account with `None` basic role and then assign the necessary permissions for the account.
 
 1. Refer to [Service Accounts](ref:service-accounts) and add a new Service Account.
-1. Set the basic role to `No Basic Role`.
+1. Set the basic role to `None`.
 1. Set the fixed roles needed for the Service Account.
 
 This will reduce the required permissions for the Service Account and minimize the risk of compromise.

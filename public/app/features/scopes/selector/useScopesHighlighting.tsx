@@ -4,7 +4,7 @@ import { useScopesServices } from '../ScopesContextProvider';
 
 import { getTreeItemElementId } from './ScopesTreeItem';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
-import { NodesMap, SelectedScope, TreeNode } from './types';
+import { type NodesMap, type SelectedScope, type TreeNode } from './types';
 import { KeyboardAction, useKeyboardInteraction } from './useKeyboardInteractions';
 
 interface UseScopesHighlightingParams {
@@ -62,7 +62,7 @@ export function useScopesHighlighting({
         : undefined;
 
       if (parentNode?.spec.disableMultiSelect && changeScopes && scopeNodes[nodeId]?.spec.linkId) {
-        changeScopes([scopeNodes[nodeId].spec.linkId], parentNode.metadata.name);
+        changeScopes([scopeNodes[nodeId].spec.linkId], undefined, nodeId);
         return;
       }
 

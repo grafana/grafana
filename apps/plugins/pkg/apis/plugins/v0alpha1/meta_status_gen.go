@@ -1,0 +1,59 @@
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
+package v0alpha1
+
+// +k8s:openapi-gen=true
+type MetastatusOperatorState struct {
+	// lastEvaluation is the ResourceVersion last evaluated
+	LastEvaluation string `json:"lastEvaluation"`
+	// state describes the state of the lastEvaluation.
+	// It is limited to three possible states for machine evaluation.
+	State MetaStatusOperatorStateState `json:"state"`
+	// descriptiveState is an optional more descriptive state field which has no requirements on format
+	DescriptiveState *string `json:"descriptiveState,omitempty"`
+	// details contains any extra information that is operator-specific
+	Details map[string]interface{} `json:"details,omitempty"`
+}
+
+// NewMetastatusOperatorState creates a new MetastatusOperatorState object.
+func NewMetastatusOperatorState() *MetastatusOperatorState {
+	return &MetastatusOperatorState{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetastatusOperatorState.
+func (MetastatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetastatusOperatorState"
+}
+
+// +k8s:openapi-gen=true
+type MetaStatus struct {
+	// operatorStates is a map of operator ID to operator state evaluations.
+	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+	OperatorStates map[string]MetastatusOperatorState `json:"operatorStates,omitempty"`
+	// additionalFields is reserved for future use
+	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
+}
+
+// NewMetaStatus creates a new MetaStatus object.
+func NewMetaStatus() *MetaStatus {
+	return &MetaStatus{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaStatus.
+func (MetaStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaStatus"
+}
+
+// +k8s:openapi-gen=true
+type MetaStatusOperatorStateState string
+
+const (
+	MetaStatusOperatorStateStateSuccess    MetaStatusOperatorStateState = "success"
+	MetaStatusOperatorStateStateInProgress MetaStatusOperatorStateState = "in_progress"
+	MetaStatusOperatorStateStateFailed     MetaStatusOperatorStateState = "failed"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for MetaStatusOperatorStateState.
+func (MetaStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaStatusOperatorStateState"
+}

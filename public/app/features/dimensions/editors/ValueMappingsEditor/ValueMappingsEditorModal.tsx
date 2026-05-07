@@ -1,13 +1,19 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { uniqueId } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2, MappingType, SelectableValue, SpecialValueMatch, ValueMapping } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  MappingType,
+  type SelectableValue,
+  SpecialValueMatch,
+  type ValueMapping,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
 
-import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEditRow';
+import { ValueMappingEditRow, type ValueMappingEditRowModel } from './ValueMappingEditRow';
 
 export interface Props {
   value: ValueMapping[];

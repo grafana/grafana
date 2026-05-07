@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
@@ -13,6 +14,10 @@ type RepoGetter interface {
 
 	// This will return a healthy repository, or an error saying the repository is not healthy
 	GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error)
+}
+
+type ConnectionGetter interface {
+	GetConnection(ctx context.Context, name string) (connection.Connection, error)
 }
 
 type ClientGetter interface {

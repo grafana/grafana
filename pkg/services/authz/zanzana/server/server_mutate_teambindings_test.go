@@ -8,6 +8,7 @@ import (
 
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func setupMutateTeamBindings(t *testing.T, srv *Server) *Server {
@@ -21,11 +22,14 @@ func setupMutateTeamBindings(t *testing.T, srv *Server) *Server {
 	return setupOpenFGADatabase(t, srv, tuples)
 }
 
-func testMutateTeamBindings(t *testing.T, srv *Server) {
+func TestIntegrationServerMutateTeamBindings(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	srv := setupOpenFGAServer(t)
 	setupMutateTeamBindings(t, srv)
 
 	t.Run("should update user team binding and delete old team binding", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{

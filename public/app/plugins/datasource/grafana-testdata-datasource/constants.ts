@@ -1,4 +1,4 @@
-import { CSVWave, PulseWaveQuery, TestDataDataQuery, TestDataQueryType } from './dataquery';
+import { type CSVWave, type PulseWaveQuery, type TestDataDataQuery, TestDataQueryType } from './dataquery';
 
 export const defaultPulseQuery: PulseWaveQuery = {
   timeStep: 60,
@@ -19,3 +19,6 @@ export const defaultQuery: TestDataDataQuery = {
   scenarioId: TestDataQueryType.RandomWalk,
   refId: '',
 };
+
+// @todo export from logs model
+export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';

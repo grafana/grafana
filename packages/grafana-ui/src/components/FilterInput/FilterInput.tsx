@@ -1,4 +1,4 @@
-import { forwardRef, useRef, HTMLProps } from 'react';
+import { forwardRef, useRef, type HTMLProps } from 'react';
 
 import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -6,7 +6,7 @@ import { Trans } from '@grafana/i18n';
 import { useCombinedRefs } from '../../utils/useCombinedRefs';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
-import { Input, Props as InputProps } from '../Input/Input';
+import { Input, type Props as InputProps } from '../Input/Input';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
   value: string | undefined;

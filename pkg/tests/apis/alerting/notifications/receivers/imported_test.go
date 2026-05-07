@@ -10,22 +10,23 @@ import (
 
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
-	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationReadImported_Snapshot(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -34,7 +35,8 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 		},
 	})
 
-	receiverClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
+	receiverClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
@@ -58,9 +60,9 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	response := alertingApi.ConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
 	require.Equal(t, "success", response.Status)
 
-	receiversRaw, err := receiverClient.Client.List(ctx, v1.ListOptions{})
+	receiversRaw, err := receiverClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 	require.NoError(t, err)
-	raw, err := receiversRaw.MarshalJSON()
+	raw, err := json.Marshal(receiversRaw)
 	require.NoError(t, err)
 
 	expectedBytes, err := os.ReadFile(path.Join("test-data", "imported-expected-snapshot.json"))
@@ -74,11 +76,11 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	receivers, err := receiverClient.List(ctx, v1.ListOptions{})
+	receivers, err := receiverClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 	require.NoError(t, err)
 	t.Run("secure fields should be properly masked", func(t *testing.T) {
 		for _, receiver := range receivers.Items {
-			if receiver.Spec.Title == "grafana-default-email" {
+			if receiver.Spec.Title == "empty" {
 				continue
 			}
 			for _, integration := range receiver.Spec.Integrations {
@@ -98,15 +100,15 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	})
 	t.Run("should set the correct annotations", func(t *testing.T) {
 		for _, receiver := range receivers.Items {
-			if receiver.Spec.Title == "grafana-default-email" {
+			if receiver.Spec.Title == "empty" {
 				continue
 			}
 			assert.EqualValuesf(t, models.ProvenanceConvertedPrometheus, receiver.GetProvenanceStatus(), "receiver %s has unexpected provenance", receiver.Name)
-			assert.Equalf(t, "false", receiver.Annotations[v0alpha1.CanUseAnnotationKey], "receiver %s has unexpected can use annotation", receiver.Name)
-			assert.Equalf(t, "", receiver.Annotations[v0alpha1.AccessControlAnnotation("canAdmin")], "receiver %s has unexpected can admin annotation", receiver.Name)
-			assert.Equalf(t, "", receiver.Annotations[v0alpha1.AccessControlAnnotation("canDelete")], "receiver %s has unexpected can delete annotation", receiver.Name)
-			assert.Equalf(t, "true", receiver.Annotations[v0alpha1.AccessControlAnnotation("canReadSecrets")], "receiver %s has unexpected can read secrets annotation", receiver.Name)
-			assert.Equalf(t, "", receiver.Annotations[v0alpha1.AccessControlAnnotation("canWrite")], "receiver %s has unexpected can write annotation", receiver.Name)
+			assert.Equalf(t, "false", receiver.Annotations[v1beta1.CanUseAnnotationKey], "receiver %s has unexpected can use annotation", receiver.Name)
+			assert.Equalf(t, "", receiver.Annotations[v1beta1.AccessControlAnnotation("canAdmin")], "receiver %s has unexpected can admin annotation", receiver.Name)
+			assert.Equalf(t, "", receiver.Annotations[v1beta1.AccessControlAnnotation("canDelete")], "receiver %s has unexpected can delete annotation", receiver.Name)
+			assert.Equalf(t, "true", receiver.Annotations[v1beta1.AccessControlAnnotation("canReadSecrets")], "receiver %s has unexpected can read secrets annotation", receiver.Name)
+			assert.Equalf(t, "", receiver.Annotations[v1beta1.AccessControlAnnotation("canWrite")], "receiver %s has unexpected can write annotation", receiver.Name)
 		}
 	})
 
@@ -114,14 +116,14 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 		toUpdate := receivers.Items[1]
 		toUpdate.Spec.Title = "another title"
 
-		_, err = receiverClient.Update(ctx, &toUpdate, v1.UpdateOptions{})
+		_, err = receiverClient.Update(ctx, &toUpdate, resource.UpdateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
 	})
 
 	t.Run("should not be able to delete", func(t *testing.T) {
 		toDelete := receivers.Items[1]
 
-		err = receiverClient.Delete(ctx, toDelete.Name, v1.DeleteOptions{})
+		err = receiverClient.Delete(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: toDelete.Name}, resource.DeleteOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
 	})
 }

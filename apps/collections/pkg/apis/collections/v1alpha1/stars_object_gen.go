@@ -23,6 +23,12 @@ type Stars struct {
 	Spec StarsSpec `json:"spec" yaml:"spec"`
 }
 
+func NewStars() *Stars {
+	return &Stars{
+		Spec: *NewStarsSpec(),
+	}
+}
+
 func (o *Stars) GetSpec() any {
 	return o.Spec
 }
@@ -222,6 +228,10 @@ func (o *Stars) DeepCopyInto(dst *Stars) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (Stars) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Stars{}
 
@@ -273,6 +283,10 @@ func (o *StarsList) DeepCopy() *StarsList {
 
 func (o *StarsList) DeepCopyInto(dst *StarsList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (StarsList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsList"
 }
 
 // Interface compliance compile-time check

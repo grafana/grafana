@@ -8,6 +8,7 @@ import (
 
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func setupMutateFolders(t *testing.T, srv *Server) *Server {
@@ -26,11 +27,14 @@ func setupMutateFolders(t *testing.T, srv *Server) *Server {
 	return setupOpenFGADatabase(t, srv, tuples)
 }
 
-func testMutateFolders(t *testing.T, srv *Server) {
+func TestIntegrationServerMutateFolders(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	srv := setupOpenFGAServer(t)
 	setupMutateFolders(t, srv)
 
 	t.Run("should create new folder parent relation", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{
@@ -61,7 +65,7 @@ func testMutateFolders(t *testing.T, srv *Server) {
 	})
 
 	t.Run("should delete folder parent relation", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{
@@ -88,7 +92,7 @@ func testMutateFolders(t *testing.T, srv *Server) {
 	})
 
 	t.Run("should clean up all parent relations", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{
@@ -115,7 +119,7 @@ func testMutateFolders(t *testing.T, srv *Server) {
 	})
 
 	t.Run("should perform batch mutate if multiple operations are provided", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{

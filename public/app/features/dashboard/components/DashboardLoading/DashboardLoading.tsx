@@ -1,10 +1,10 @@
 import { css, keyframes } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
-import { DashboardInitPhase } from 'app/types/dashboard';
+import { type DashboardInitPhase } from 'app/types/dashboard';
 
 export interface Props {
   initPhase: DashboardInitPhase;

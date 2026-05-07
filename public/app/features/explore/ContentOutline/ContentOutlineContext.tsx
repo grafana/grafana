@@ -1,8 +1,8 @@
 import { uniqueId } from 'lodash';
-import { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
-import { SetOptional } from 'type-fest';
+import { useState, useContext, createContext, type ReactNode, useCallback, useRef, useEffect } from 'react';
+import { type SetOptional } from 'type-fest';
 
-import { ContentOutlineItemBaseProps, ITEM_TYPES } from './ContentOutlineItem';
+import { type ContentOutlineItemBaseProps, type ITEM_TYPES } from './ContentOutlineItem';
 
 export interface ContentOutlineItemContextProps extends ContentOutlineItemBaseProps {
   id: string;

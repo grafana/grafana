@@ -5,21 +5,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/client-go/rest"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	advisorapi "github.com/grafana/grafana/apps/advisor/pkg/apis"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -86,32 +97,46 @@ func New(cfg app.Config) (app.App, error) {
 								go func() {
 									logger := log.WithContext(ctx).With("check", check.ID())
 									logger.Debug("Processing check", "namespace", req.Object.GetNamespace())
+									start := time.Now()
+									checkType := check.ID()
 									orgID, err := getOrgIDFromNamespace(req.Object.GetNamespace())
 									if err != nil {
 										logger.Error("Error getting org ID from namespace", "error", err)
+										metrics.OrgIDErrorsTotal.Inc()
 										return
 									}
 									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), orgID)
 									err = processCheck(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check", "error", err)
+										metrics.CheckProcessingTotal.WithLabelValues("process", "error", checkType).Inc()
+									} else {
+										metrics.CheckProcessingTotal.WithLabelValues("process", "success", checkType).Inc()
 									}
+									metrics.CheckProcessingDurationSeconds.WithLabelValues("process", checkType).Observe(time.Since(start).Seconds())
 								}()
 							}
 							if req.Action == resource.AdmissionActionUpdate && retryAnnotationChanged(req.OldObject, req.Object) {
 								go func() {
 									logger := log.WithContext(ctx).With("check", check.ID())
 									logger.Debug("Updating check", "namespace", req.Object.GetNamespace(), "name", req.Object.GetName())
+									start := time.Now()
+									checkType := check.ID()
 									orgID, err := getOrgIDFromNamespace(req.Object.GetNamespace())
 									if err != nil {
 										logger.Error("Error getting org ID from namespace", "error", err)
+										metrics.OrgIDErrorsTotal.Inc()
 										return
 									}
 									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), orgID)
 									err = processCheckRetry(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check retry", "error", err)
+										metrics.CheckProcessingTotal.WithLabelValues("retry", "error", checkType).Inc()
+									} else {
+										metrics.CheckProcessingTotal.WithLabelValues("retry", "success", checkType).Inc()
 									}
+									metrics.CheckProcessingDurationSeconds.WithLabelValues("retry", checkType).Observe(time.Since(start).Seconds())
 								}()
 							}
 						}
@@ -137,13 +162,15 @@ func New(cfg app.Config) (app.App, error) {
 					err := ctr.RegisterCheckTypesInNamespace(ctx, logger, namespace)
 					if err != nil {
 						logger.Error("Failed to register check types", "namespace", namespace, "error", err)
+						metrics.CheckRegistrationTotal.WithLabelValues("error").Inc()
 						w.WriteHeader(http.StatusInternalServerError)
 						_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 						return err
 					}
 
+					metrics.CheckRegistrationTotal.WithLabelValues("success").Inc()
 					// Return typed response matching the manifest
-					return json.NewEncoder(w).Encode(advisorv0alpha1.CreateRegister{
+					return json.NewEncoder(w).Encode(advisorv0alpha1.CreateRegisterResponse{
 						TypeMeta: metav1.TypeMeta{
 							APIVersion: fmt.Sprintf("%s/%s", advisorv0alpha1.APIGroup, advisorv0alpha1.APIVersion),
 						},
@@ -187,4 +214,48 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 			advisorv0alpha1.CheckTypeKind(),
 		},
 	}
+}
+
+func ProvideAppInstaller(
+	authorizer authorizer.Authorizer,
+	checkRegistry checkregistry.CheckService,
+	cfg *setting.Cfg,
+	orgService org.Service,
+	registerer prometheus.Registerer,
+) (*AdvisorAppInstaller, error) {
+	metrics.MustRegister(registerer)
+	provider := simple.NewAppProvider(advisorapi.LocalManifest(), nil, New)
+	pluginConfig := cfg.PluginSettings["grafana-advisor-app"]
+	specificConfig := checkregistry.AdvisorAppConfig{
+		CheckRegistry: checkRegistry,
+		PluginConfig:  pluginConfig,
+		StackID:       cfg.StackID,
+		OrgService:    orgService,
+	}
+	appCfg := app.Config{
+		KubeConfig:     rest.Config{},
+		ManifestData:   *advisorapi.LocalManifest().ManifestData,
+		SpecificConfig: specificConfig,
+	}
+
+	defaultInstaller, err := appsdkapiserver.NewDefaultAppInstaller(provider, appCfg, advisorapi.NewGoTypeAssociator())
+	if err != nil {
+		return nil, err
+	}
+
+	installer := &AdvisorAppInstaller{
+		AppInstaller: defaultInstaller,
+		authorizer:   authorizer,
+	}
+
+	return installer, nil
+}
+
+type AdvisorAppInstaller struct {
+	appsdkapiserver.AppInstaller
+	authorizer authorizer.Authorizer
+}
+
+func (a *AdvisorAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return a.authorizer
 }

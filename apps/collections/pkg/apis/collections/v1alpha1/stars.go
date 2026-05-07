@@ -8,9 +8,8 @@ import (
 func (stars *StarsSpec) Add(group, kind, name string) {
 	for i, r := range stars.Resource {
 		if r.Group == group && r.Kind == kind {
-			r.Names = append(r.Names, name)
-			slices.Sort(r.Names)
-			stars.Resource[i].Names = slices.Compact(r.Names)
+			stars.Resource[i].Names = append(r.Names, name)
+			stars.Normalize()
 			return
 		}
 	}
@@ -46,8 +45,15 @@ func (stars *StarsSpec) Normalize() {
 	resources := make([]StarsResource, 0, len(stars.Resource))
 	for _, r := range stars.Resource {
 		if len(r.Names) > 0 {
-			slices.Sort(r.Names)
-			r.Names = slices.Compact(r.Names) // removes any duplicates
+			unique := make([]string, 0, len(r.Names))
+			found := make(map[string]bool, len(r.Names))
+			for _, name := range r.Names {
+				if !found[name] {
+					unique = append(unique, name)
+					found[name] = true
+				}
+			}
+			r.Names = unique
 			resources = append(resources, r)
 		}
 	}

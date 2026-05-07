@@ -360,20 +360,7 @@ func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, 
 			}
 		}
 		if qm.FillMissing != nil {
-			// we align the start-time
-			startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
-			alignedTimeRange := backend.TimeRange{
-				From: time.Unix(startUnixTime, 0),
-				To:   qm.TimeRange.To,
-			}
-
-			var err error
-			frame, err = sqlutil.ResampleWideFrame(frame, qm.FillMissing, alignedTimeRange, qm.Interval) //nolint:staticcheck
-			if err != nil {
-				logger.Error("Failed to resample dataframe", "err", err)
-				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
-				return
-			}
+			frame = e.applyFill(frame, qm)
 		}
 	}
 
@@ -547,16 +534,18 @@ func convertSQLTimeColumnsToEpochMS(frame *data.Frame, qm *dataQueryModel) error
 func convertResultsToFrame(results []*pgconn.Result, rowLimit int64) (*data.Frame, error) {
 	m := pgtype.NewMap()
 
-	// Find the first SELECT result to establish the frame structure
+	// Find the first result that returns rows (has field descriptions).
+	// We check FieldDescriptions rather than CommandTag.Select() because commands
+	// like EXPLAIN and EXPLAIN ANALYZE return rows but have a non-SELECT command tag.
 	var firstSelectResult *pgconn.Result
 	for _, result := range results {
-		if result.CommandTag.Select() {
+		if len(result.FieldDescriptions) > 0 {
 			firstSelectResult = result
 			break
 		}
 	}
 
-	// If no SELECT results found, return empty frame
+	// If no row-returning results found, return empty frame
 	if firstSelectResult == nil {
 		return data.NewFrame(""), nil
 	}
@@ -574,10 +563,10 @@ func convertResultsToFrame(results []*pgconn.Result, rowLimit int64) (*data.Fram
 	}
 	frame := *data.NewFrame("", fields...)
 
-	// Process all SELECT results, but validate column compatibility
+	// Process all row-returning results, but validate column compatibility
 	for _, result := range results {
-		// Skip non-select statements
-		if !result.CommandTag.Select() {
+		// Skip statements that don't return rows (e.g. INSERT, UPDATE, DELETE)
+		if len(result.FieldDescriptions) == 0 {
 			continue
 		}
 
@@ -819,6 +808,38 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 	frame.Fields[Index] = newField
 
 	return frame, nil
+}
+
+// applyFill resamples frame using the fill configuration in qm. If the number
+// of fill points would exceed the row limit the fill is skipped and a warning
+// notice is appended to the frame instead.
+func (e *DataSourceHandler) applyFill(frame *data.Frame, qm *dataQueryModel) *data.Frame {
+	startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
+	alignedTimeRange := backend.TimeRange{
+		From: time.Unix(startUnixTime, 0),
+		To:   qm.TimeRange.To,
+	}
+
+	// Guard against excessive memory allocation from fill operations that span
+	// a very large time range relative to the fill interval.
+	numFillPoints := int64(alignedTimeRange.To.Sub(alignedTimeRange.From) / qm.Interval)
+	if numFillPoints > e.rowLimit {
+		e.log.Warn("Skipping fill: number of fill points exceeds row limit",
+			"numFillPoints", numFillPoints, "rowLimit", e.rowLimit)
+		frame.AppendNotices(data.Notice{
+			Text:     "Fill operation skipped: time range and interval would require more points than the configured row limit",
+			Severity: data.NoticeSeverityWarning,
+		})
+		return frame
+	}
+
+	var err error
+	frame, err = sqlutil.ResampleWideFrame(frame, qm.FillMissing, alignedTimeRange, qm.Interval) //nolint:staticcheck
+	if err != nil {
+		e.log.Error("Failed to resample dataframe", "err", err)
+		frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
+	}
+	return frame
 }
 
 func SetupFillmode(query *backend.DataQuery, interval time.Duration, fillmode string) error {

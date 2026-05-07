@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { createElement, CSSProperties } from 'react';
+import { type CSSObject } from '@emotion/serialize';
+import { createElement } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -25,7 +26,7 @@ export interface TextProps extends Omit<React.HTMLAttributes<HTMLElement>, 'clas
   /** If true, numbers will have fixed width, useful for displaying tabular data. False by default */
   tabular?: boolean;
   /** Whether to align the text to left, center or right */
-  textAlignment?: CSSProperties['textAlign'];
+  textAlignment?: CSSObject['textAlign'];
   children: NonNullable<React.ReactNode>;
 }
 

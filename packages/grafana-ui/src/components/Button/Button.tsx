@@ -1,17 +1,17 @@
 import { css, cx } from '@emotion/css';
-import { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
+import { type AnchorHTMLAttributes, type ButtonHTMLAttributes } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { IconName, IconSize, IconType } from '../../types/icon';
-import { ComponentSize } from '../../types/size';
+import { type IconName, type IconSize, type IconType } from '../../types/icon';
+import { type ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { PopoverContent, TooltipPlacement } from '../Tooltip/types';
+import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'success';
 export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
@@ -22,7 +22,7 @@ type BaseProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
   fill?: ButtonFill;
-  icon?: IconName | React.ReactElement;
+  icon?: IconName | React.ReactElement<IconElementProps>;
   className?: string;
   fullWidth?: boolean;
   type?: string;
@@ -207,8 +207,13 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 
 LinkButton.displayName = 'LinkButton';
 
+type IconElementProps = {
+  className?: string;
+  size?: IconSize;
+};
+
 interface IconRendererProps {
-  icon?: IconName | React.ReactElement<{ className?: string; size?: IconSize }>;
+  icon?: IconName | React.ReactElement<IconElementProps>;
   size?: IconSize;
   className?: string;
   iconType?: IconType;
@@ -279,6 +284,8 @@ export const getButtonStyles = (props: StyleProps) => {
     }),
     disabled: css(disabledStyles, {
       '&:hover': css(disabledStyles),
+      '&:focus': css(disabledStyles),
+      '&:focus-visible': css(disabledStyles),
     }),
     img: css({
       width: '16px',

@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { CustomVariable } from '@grafana/scenes';
+import { type CustomVariable } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
 import { ModalEditor } from './ModalEditor';
@@ -31,7 +31,7 @@ export function PaneItem({ variable }: PaneItemProps) {
           <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
         </Button>
       </Box>
-      <ModalEditor variable={variable} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      {isOpen && <ModalEditor variable={variable} onClose={() => setIsOpen(false)} />}
     </>
   );
 }

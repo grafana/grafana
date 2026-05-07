@@ -26,8 +26,15 @@ export {
   type ConvertFieldTypeTransformerOptions,
   convertFieldType,
 } from '../transformations/transformers/convertFieldType';
-export { type ConvertFrameTypeTransformerOptions, FrameType } from '../transformations/transformers/convertFrameType';
-export { type FilterFieldsByNameTransformerOptions } from '../transformations/transformers/filterByName';
+export {
+  convertFrameTypeTransformer,
+  type ConvertFrameTypeTransformerOptions,
+  FrameType,
+} from '../transformations/transformers/convertFrameType';
+export {
+  filterFieldsByNameTransformer,
+  type FilterFieldsByNameTransformerOptions,
+} from '../transformations/transformers/filterByName';
 export { type FilterFramesByRefIdTransformerOptions } from '../transformations/transformers/filterByRefId';
 export { FormatStringOutput, type FormatStringTransformerOptions } from '../transformations/transformers/formatString';
 export { organizeFieldsTransformer } from '../transformations/transformers/organize';
@@ -40,7 +47,11 @@ export {
 } from '../transformations/transformers/groupBy';
 export {
   type GroupToNestedTableTransformerOptions,
+  type GroupToNestedTableTransformerOptionsV2,
+  type GroupToNestedTableMatcherConfig,
   SHOW_NESTED_HEADERS_DEFAULT,
+  migrateGroupToNestedTableOptions,
+  isV1GroupToNestedTableOptions,
 } from '../transformations/transformers/groupToNestedTable';
 export {
   type BinaryValue,
@@ -59,11 +70,15 @@ export {
 } from '../transformations/transformers/calculateField';
 export { type SeriesToRowsTransformerOptions } from '../transformations/transformers/seriesToRows';
 export { histogramFieldInfo, type HistogramTransformerInputs } from '../transformations/transformers/histogram';
-export { type JoinByFieldOptions, JoinMode } from '../transformations/transformers/joinByField';
+export { joinByFieldTransformer, type JoinByFieldOptions, JoinMode } from '../transformations/transformers/joinByField';
 export { LabelsToFieldsMode, type LabelsToFieldsOptions } from '../transformations/transformers/labelsToFields';
 export { type LimitTransformerOptions } from '../transformations/transformers/limit';
 export { type MergeTransformerOptions } from '../transformations/transformers/merge';
-export { ReduceTransformerMode, type ReduceTransformerOptions } from '../transformations/transformers/reduce';
+export {
+  reduceTransformer,
+  ReduceTransformerMode,
+  type ReduceTransformerOptions,
+} from '../transformations/transformers/reduce';
 export {
   createOrderFieldsComparer,
   Order,
@@ -93,7 +108,6 @@ export { DataTransformerID } from '../transformations/transformers/ids';
 
 export { mergeTransformer } from '../transformations/transformers/merge';
 export { getThemeById } from '../themes/registry';
-export * as experimentalThemeDefinitions from '../themes/themeDefinitions';
 export { GrafanaEdition } from '../types/config';
 export { SIPrefix } from '../valueFormats/symbolFormatters';
 
@@ -106,3 +120,4 @@ export { findNumericFieldMinMax } from '../field/fieldOverrides';
 export { type PanelOptionsSupplier } from '../panel/PanelPlugin';
 export { sanitize, sanitizeUrl } from '../text/sanitize';
 export { type NestedValueAccess, type NestedPanelOptions, isNestedPanelOptions } from '../utils/OptionsUIBuilders';
+export { NewThemeOptionsSchema } from '../themes/createTheme';

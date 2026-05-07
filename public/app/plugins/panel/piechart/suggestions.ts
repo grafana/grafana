@@ -2,26 +2,26 @@ import { defaultsDeep } from 'lodash';
 
 import {
   FieldType,
-  VisualizationSuggestion,
+  type VisualizationSuggestion,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplier,
+  type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LegendDisplayMode } from '@grafana/schema';
-import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
+import { defaultNumericVizOptions, SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
-import { PieChartLabels, Options, PieChartType } from './panelcfg.gen';
+import { PieChartLabels, type Options, PieChartType } from './panelcfg.gen';
 
 const withDefaults = (suggestion: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
   defaultsDeep(suggestion, {
     options: {
       displayLabels: [PieChartLabels.Percent],
-      legend: {
-        calcs: [],
-        displayMode: LegendDisplayMode.Hidden,
-        placement: 'right',
-        values: [],
-        showLegend: false,
+    },
+    cardOptions: {
+      previewModifier: (s) => {
+        s.options!.legend = {
+          ...SUGGESTIONS_LEGEND_OPTIONS,
+          values: [],
+        };
       },
     },
   } satisfies VisualizationSuggestion<Options>);

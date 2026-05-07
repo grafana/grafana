@@ -19,7 +19,7 @@ type Service struct {
 	authInfoStore login.Store
 	logger        log.Logger
 	remoteCache   remotecache.CacheStorage
-	secretService secrets.Service
+	secretService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 }
 
 const remoteCachePrefix = "authinfo-"
@@ -29,7 +29,8 @@ var errMissingParameters = errutil.NewBase(errutil.StatusBadRequest, "auth-missi
 
 func ProvideService(authInfoStore login.Store,
 	remoteCache remotecache.CacheStorage,
-	secretService secrets.Service) *Service {
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) *Service {
 	s := &Service{
 		authInfoStore: authInfoStore,
 		logger:        log.New("login.authinfo"),
@@ -155,8 +156,8 @@ func (s *Service) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoC
 }
 
 func (s *Service) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
-	// Only set auth info if we have an (user id + auth module)
-	if cmd.UserId == 0 || cmd.AuthModule == "" {
+	// Only set auth info if we have an (user id + user uid + auth module)
+	if cmd.UserId == 0 || cmd.UserUID == "" || cmd.AuthModule == "" {
 		return errMissingParameters.Errorf("missing parameters for auth info %v", cmd)
 	}
 

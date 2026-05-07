@@ -11,10 +11,10 @@ import (
 )
 
 // ChannelPublisher writes data into a channel. Note that permissions are not checked.
-type ChannelPublisher func(orgID int64, channel string, data []byte) error
+type ChannelPublisher func(ns string, channel string, data []byte) error
 
 // ChannelClientCount will return the number of clients for a channel
-type ChannelClientCount func(orgID int64, channel string) (int, error)
+type ChannelClientCount func(ns string, channel string) (int, error)
 
 // SubscribeEvent contains subscription data.
 type SubscribeEvent struct {
@@ -67,21 +67,9 @@ type ChannelHandlerFactory interface {
 	GetHandlerForPath(path string) (ChannelHandler, error)
 }
 
-type LiveMessage struct {
-	ID        int64 `xorm:"pk autoincr 'id'"`
-	OrgID     int64 `xorm:"org_id"`
-	Channel   string
-	Data      json.RawMessage
-	Published time.Time
+type LivePublishCmd struct {
+	Channel string          `json:"channel"`
+	Data    json.RawMessage `json:"data,omitempty"`
 }
 
-type SaveLiveMessageQuery struct {
-	OrgID   int64 `xorm:"org_id"`
-	Channel string
-	Data    json.RawMessage
-}
-
-type GetLiveMessageQuery struct {
-	OrgID   int64 `xorm:"org_id"`
-	Channel string
-}
+type LivePublishResponse struct{}

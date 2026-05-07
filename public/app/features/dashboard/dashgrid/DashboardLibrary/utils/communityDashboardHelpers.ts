@@ -1,13 +1,32 @@
+import { type PanelModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
+import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
+import { type DataSourceInput, type DashboardJson } from 'app/features/manage-dashboards/types';
+import { dispatch } from 'app/types/store';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
-import { MappingContext } from '../SuggestedDashboardsModal';
-import { fetchCommunityDashboard, GnetDashboardDependency } from '../api/dashboardLibraryApi';
-import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENTRY_POINTS } from '../interactions';
-import { GnetDashboard, Link } from '../types';
+import type { MappingContext } from '../SuggestedDashboardsModal';
+import { fetchCommunityDashboard, type GnetDashboardDependency } from '../api/dashboardLibraryApi';
+import {
+  CONTENT_KINDS,
+  type ContentKind,
+  CREATION_ORIGINS,
+  type EventLocation,
+  type SourceEntryPoint,
+} from '../constants';
+import { type GnetDashboard, type Link } from '../types';
 
-import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
+import { type InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
+import type { AssistantSource } from './templateDashboardHelpers';
+
+export const SEARCH_DEBOUNCE_MS = 500;
+export const DEFAULT_SORT_ORDER = 'downloads';
+export const DEFAULT_SORT_DIRECTION = 'desc';
+export const INCLUDE_LOGO = true;
+export const INCLUDE_SCREENSHOTS = true;
 
 /**
  * Extract thumbnail URL from dashboard screenshots
@@ -40,20 +59,10 @@ export function formatDate(dateString?: string): string {
 }
 
 /**
- * Create URL-friendly slug from dashboard name
- */
-export function createSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-/**
  * Build Grafana.com URL for a dashboard
  */
 export function buildGrafanaComUrl(dashboard: GnetDashboard): string {
-  return `https://grafana.com/grafana/dashboards/${dashboard.id}-${createSlug(dashboard.name)}/`;
+  return `https://grafana.com/grafana/dashboards/${dashboard.id}-${dashboard.slug}/`;
 }
 
 /**
@@ -87,24 +96,31 @@ export function navigateToTemplate(
   gnetId: number,
   datasourceUid: string,
   mappings: InputMapping[],
+  sourceEntryPoint: SourceEntryPoint,
   eventLocation: EventLocation,
   contentKind: ContentKind,
-  datasourceTypes?: string[]
+  datasourceTypes?: string[],
+  assistantSource?: AssistantSource
 ): void {
   const searchParams = new URLSearchParams({
     datasource: datasourceUid,
     title: dashboardTitle,
     gnetId: String(gnetId),
-    sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+    sourceEntryPoint,
     creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD,
     contentKind,
     eventLocation,
     mappings: JSON.stringify(mappings),
+    suggestedDashboardBanner: 'true',
   });
 
   // Add datasource types for tracking if available
   if (datasourceTypes && datasourceTypes.length > 0) {
     searchParams.set('datasourceTypes', JSON.stringify(datasourceTypes));
+  }
+
+  if (assistantSource) {
+    searchParams.set('assistantSource', assistantSource);
   }
 
   locationService.push({
@@ -116,24 +132,124 @@ export function navigateToTemplate(
 interface UseCommunityDashboardParams {
   dashboard: GnetDashboard;
   datasourceUid: string;
-  datasourceType: string;
-  eventLocation: 'empty_dashboard' | 'suggested_dashboards_modal_community_tab';
+  sourceEntryPoint: SourceEntryPoint;
+  eventLocation: EventLocation;
   onShowMapping?: (context: MappingContext) => void;
+  assistantSource?: AssistantSource;
 }
+
+/**
+ * Check if a panel contains JavaScript code using heuristic pattern matching.
+ *
+ * IMPORTANT: This is a heuristic-based detection, not a perfect mechanism.
+ *
+ * Patterns checked:
+ * - HTML/Script tags: Direct XSS attack vectors
+ * - Event handlers: Common JS injection points (onclick, onload, etc.)
+ * - Function declarations: Actual executable code patterns
+ * - eval/Function constructor: Dynamic code execution
+ * - setTimeout/setInterval: Deferred code execution
+ *
+ * What we DON'T check:
+ * - Panel title and description are excluded (already sanitized by Grafana's rendering layer)
+ * - Only the panel's options and configuration are scanned
+ *
+ * @param panel - The panel model to check
+ * @returns true if the panel might contain JavaScript code, false otherwise
+ */
+function canPanelContainJS(panel: PanelModel): boolean {
+  // Create a copy of the panel without title and description, as they are already sanitized
+  // This reduces false positives while still checking all other properties for JavaScript code
+  const { title, description, ...panelWithoutSanitizedFields } = panel;
+
+  let panelJson: string;
+  try {
+    panelJson = JSON.stringify(panelWithoutSanitizedFields);
+  } catch (e) {
+    console.warn('Failed to stringify panel', e);
+    return true;
+  }
+
+  // Patterns that indicate actual JavaScript code in values
+  const valuePatterns = [
+    /<script\b/i, // HTML script tags
+    /\bon\w+\s*=\s*/i, // HTML event handlers: onclick=, onload=, etc.
+    /\bjavascript\s*:/i,
+    /\bfunction\s*\(/, // Anonymous function declarations: function(
+    /\bfunction\s+[\w$]+\s*\(/, // Named function declarations: function name(
+    /=>\s*\{[^}]*\breturn\b/, // Arrow function with return statement: () => { return ... }
+    /\beval\s*\(/i, // eval() calls
+    /\bnew\s+Function\s*\(/i, // new Function() constructor
+    /\bsetTimeout\s*\(/i, // setTimeout calls
+    /\bsetInterval\s*\(/i, // setInterval calls
+  ];
+
+  // Patterns for suspicious JSON keys that might indicate JS hooks
+  const keyPatterns = [
+    /"on[a-zA-Z]+"\s*:/, // Event handlers as keys (both camelCase and lowercase): "onClick": or "onclick":
+    /"beforeRender"\s*:/i, // beforeRender hook as JSON key
+    /"afterRender"\s*:/i, // afterRender hook as JSON key
+    /"javascript"\s*:/i, // "javascript" as a key
+    /"customCode"\s*:/i, // Common pattern for custom code injection
+    /"script"\s*:/i, // "script" as a JSON key
+    /"handler"\s*:/i, // "handler" as a JSON key - common for event handlers
+  ];
+
+  const hasSuspiciousValue = valuePatterns.some((pattern) => {
+    if (pattern.test(panelJson)) {
+      console.warn('Panel contains JavaScript code in value');
+      return true;
+    }
+    return false;
+  });
+
+  const hasSuspiciousKey = keyPatterns.some((pattern) => {
+    if (pattern.test(panelJson)) {
+      console.warn('Panel contains JavaScript code in key');
+      return true;
+    }
+    return false;
+  });
+
+  return hasSuspiciousValue || hasSuspiciousKey;
+}
+
+function isPanelModel(panel: unknown): panel is PanelModel {
+  if (!panel || typeof panel !== 'object') {
+    return false;
+  }
+  return 'options' in panel && 'type' in panel;
+}
+
+/**
+ * Check if a dashboard contains JavaScript code. This is not a perfect check, but good enough
+ * Used as a second filter after the first filter of panel types (see api/dashboardLibraryApi.ts)
+ */
+const canDashboardContainJS = (dashboard: DashboardJson): boolean => {
+  return dashboard.panels?.some((panel) => {
+    // Skip library panels - they don't have options/type and are already validated
+    if (isPanelModel(panel)) {
+      return canPanelContainJS(panel);
+    }
+    return false;
+  });
+};
 
 /**
  * Handles the flow when a user selects a community dashboard:
  * 1. Tracks analytics
  * 2. Fetches full dashboard JSON with __inputs
- * 3. Attempts auto-mapping of datasources
- * 4. Either navigates directly or shows mapping form
+ * 3. Filters out dashboards that contain JavaScript code due to security reasons
+ * 4. Attempts auto-mapping of datasources
+ * 5. Either navigates directly or shows mapping form
  */
 export async function onUseCommunityDashboard({
   dashboard,
   datasourceUid,
-  datasourceType,
+  sourceEntryPoint,
   eventLocation,
   onShowMapping,
+  assistantSource,
 }: UseCommunityDashboardParams): Promise<void> {
   // Note: item_clicked tracking is done by the caller (CommunityDashboardSection or SuggestedDashboards)
   // with the correct discoveryMethod before calling this function
@@ -141,6 +257,10 @@ export async function onUseCommunityDashboard({
     // Fetch full dashboard from Gcom, this is the JSON with __inputs
     const fullDashboard = await fetchCommunityDashboard(dashboard.id);
     const dashboardJson = fullDashboard.json;
+
+    if (canDashboardContainJS(dashboardJson)) {
+      throw new Error(`Community dashboard ${dashboard.id} "${dashboard.name}" might contain JavaScript code`);
+    }
 
     // Parse datasource requirements from __inputs
     const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
@@ -169,9 +289,11 @@ export async function onUseCommunityDashboard({
         dashboard.id,
         datasourceUid,
         mappingResult.mappings,
+        sourceEntryPoint,
         eventLocation,
         CONTENT_KINDS.COMMUNITY_DASHBOARD,
-        datasourceTypes
+        datasourceTypes,
+        assistantSource
       );
     } else {
       // Show mapping form for unmapped datasources and/or constants
@@ -182,7 +304,6 @@ export async function onUseCommunityDashboard({
           unmappedDsInputs: mappingResult.unmappedDsInputs,
           constantInputs,
           existingMappings: mappingResult.mappings,
-          eventLocation,
           contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
           onInterpolateAndNavigate: (mappings) =>
             navigateToTemplate(
@@ -190,15 +311,64 @@ export async function onUseCommunityDashboard({
               dashboard.id,
               datasourceUid,
               mappings,
+              sourceEntryPoint,
               eventLocation,
               CONTENT_KINDS.COMMUNITY_DASHBOARD,
-              datasourceTypes
+              datasourceTypes,
+              assistantSource
             ),
         });
       }
     }
   } catch (err) {
     console.error('Error loading community dashboard:', err);
-    // TODO: Show error notification
+    dispatch(
+      notifyApp(
+        createErrorNotification(t('dashboard-library.community-error-title', 'Error loading community dashboard'))
+      )
+    );
+    throw err;
   }
+}
+
+/**
+ * Interpolate a community dashboard for compatibility checking.
+ *
+ * This function fetches the dashboard from Grafana.com, auto-maps datasource inputs,
+ * and returns the interpolated dashboard with template variables resolved.
+ *
+ * @throws Error if auto-mapping fails - compatibility check requires all datasource inputs to be resolved
+ * @param dashboardId - The Grafana.com dashboard ID
+ * @param datasourceUid - The UID of the datasource to map to
+ * @returns Promise<DashboardJson> - The interpolated dashboard with resolved template variables
+ */
+export async function interpolateDashboardForCompatibilityCheck(
+  dashboardId: number,
+  datasourceUid: string
+): Promise<DashboardJson> {
+  // 1. Fetch full dashboard JSON from Grafana.com
+  const gnetResponse = await fetchCommunityDashboard(dashboardId);
+  const dashboardJson = gnetResponse.json;
+
+  // 2. Extract datasource inputs from dashboard's __inputs array
+  const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
+
+  // 3. Auto-map datasources using existing utility
+  const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid);
+
+  // 4. Check if auto-mapping was successful
+  // Compatibility check requires all datasource variables to be resolved
+  if (!mappingResult.allMapped) {
+    throw new Error(
+      t(
+        'dashboard-library.compatibility-auto-map-failed',
+        'Unable to automatically map all datasource inputs for this dashboard. Compatibility check requires all datasource variables to be resolved.'
+      )
+    );
+  }
+
+  // 5. Interpolate in the frontend — no backend round-trip needed
+  const inputs: InputMapping[] = mappingResult.mappings;
+
+  return interpolateV1Dashboard(dashboardJson, inputs);
 }

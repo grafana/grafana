@@ -1,8 +1,14 @@
 package migration
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/openfga/openfga/pkg/storage/migrate"
+	"github.com/pressly/goose/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -10,7 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	"github.com/openfga/openfga/pkg/storage/migrate"
+)
+
+var (
+	openFGATables = []string{"tuple", "authorization_model", "store", "assertion", "changelog", "goose_db_version"}
 )
 
 func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConfig, logger log.Logger) error {
@@ -43,7 +52,7 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConf
 		Engine: dbType,
 	}
 
-	if err := migrate.RunMigrations(migrationConfig); err != nil {
+	if err := runOpenFGAMigrationsLocked(engine, m.Dialect, cfg, migrationConfig, logger); err != nil {
 		return fmt.Errorf("failed to run openfga migrations: %w", err)
 	}
 
@@ -54,9 +63,106 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConf
 	return nil
 }
 
+// runOpenFGAMigrationsLocked acquires the same advisory lock that Grafana's
+// main migrator uses for this database and runs the openfga migrations under
+// it. openfga's goose migrator has no cross-process locking of its own, so
+// without this wrapper concurrent pod startups race on schema creation.
+//
+// The lock is server-wide (MySQL GET_LOCK / Postgres pg_advisory_lock), so it
+// serializes correctly even though the openfga goose driver opens its own
+// database connection. For SQLite Dialect.Lock is a no-op, which is fine
+// because SQLite deployments are single-process.
+func runOpenFGAMigrationsLocked(
+	engine *xorm.Engine,
+	dialect migrator.Dialect,
+	cfg *setting.Cfg,
+	migrationConfig migrate.MigrationConfig,
+	logger log.Logger,
+) error {
+	sec := cfg.Raw.Section("database")
+	if !sec.Key("migration_locking").MustBool(true) {
+		return runOpenFGAMigrations(migrationConfig, logger)
+	}
+
+	dbName, err := dialect.GetDBName(engine.DataSourceName())
+	if err != nil {
+		return fmt.Errorf("failed to derive db name for advisory lock: %w", err)
+	}
+	// Reuse the same key as Grafana's main migrator (no additional name) so
+	// openfga and Grafana migrations are mutually exclusive per database.
+	key, err := migrator.GenerateAdvisoryLockID(dbName)
+	if err != nil {
+		return fmt.Errorf("failed to generate advisory lock id: %w", err)
+	}
+
+	lockCfg := migrator.LockCfg{
+		Session: engine.NewSession(),
+		Key:     key,
+		Timeout: sec.Key("locking_attempt_timeout_sec").MustInt(30),
+	}
+	defer lockCfg.Session.Close()
+
+	logger.Info("Locking database for openfga migrations", "key", key)
+	if err := dialect.Lock(lockCfg); err != nil {
+		return fmt.Errorf("failed to acquire openfga migration lock: %w", err)
+	}
+	defer func() {
+		logger.Info("Unlocking database after openfga migrations")
+		if err := dialect.Unlock(lockCfg); err != nil {
+			logger.Warn("failed to release openfga migration lock", "error", err)
+		}
+	}()
+
+	return runOpenFGAMigrations(migrationConfig, logger)
+}
+
+func runOpenFGAMigrations(migrationConfig migrate.MigrationConfig, logger log.Logger) error {
+	err := migrate.RunMigrations(migrationConfig)
+	if err == nil {
+		return nil
+	}
+
+	// if an error occurs during migrations, it means that the goose schema is inconsistent with the openfga schema.
+	// since zanzana is a derived state, we can reset the schema state and retry.
+	logger.Warn("openfga migrations failed due to inconsistent goose schema/version state; resetting and retrying migrations", "error", err)
+
+	if resetErr := resetOpenFGASchema(migrationConfig.Engine, migrationConfig.URI); resetErr != nil {
+		return fmt.Errorf("schema reset failed: %w", errors.Join(err, resetErr))
+	}
+
+	if retryErr := migrate.RunMigrations(migrationConfig); retryErr != nil {
+		return retryErr
+	}
+
+	return nil
+}
+
+// resetOpenFGASchema drops the openfga tables to ensure migrations will run from a clean state.
+// openfga tables are derived state and state will be rebuilt from reconciliation.
+func resetOpenFGASchema(engine, uri string) (retErr error) {
+	db, err := openDB(engine, uri)
+	if err != nil {
+		return fmt.Errorf("failed to open db for openfga schema reset: %w", err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil && retErr == nil {
+			retErr = fmt.Errorf("failed to close db: %w", err)
+		}
+	}()
+
+	for _, table := range openFGATables {
+		// strings are hard-coded, so this is safe.
+		// #nosec G201 nosemgrep: gosec.G201
+		if _, err := db.ExecContext(context.Background(), fmt.Sprintf("DROP TABLE IF EXISTS %s", table)); err != nil {
+			return fmt.Errorf("failed to drop openfga table %s: %w", table, err)
+		}
+	}
+
+	return nil
+}
+
 func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
-	openfgaTables := []string{"tuple", "authorization_model", "store", "assertion", "changelog"}
-	for _, table := range openfgaTables {
+	for _, table := range openFGATables {
 		m.AddMigration(fmt.Sprintf("Drop existing openfga table %s", table), migrator.NewDropTableMigration(table))
 	}
 
@@ -66,6 +172,17 @@ func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
 		sec.Key("migration_locking").MustBool(true),
 		sec.Key("locking_attempt_timeout_sec").MustInt(30),
 	)
+}
+
+func openDB(engine, uri string) (*sql.DB, error) {
+	db, err := goose.OpenDBWithDriver(engine, uri)
+	if err == nil {
+		return db, nil
+	}
+	if engine == "sqlite" {
+		return goose.OpenDBWithDriver("sqlite3", uri)
+	}
+	return nil, err
 }
 
 // constructPostgresConnStrForOpenFGA parses a PostgreSQL connection string into a map of key-value pairs

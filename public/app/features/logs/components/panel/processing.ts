@@ -1,27 +1,26 @@
 import ansicolor from 'ansicolor';
 import { LosslessNumber, parse, stringify } from 'lossless-json';
-import Prism, { Grammar, Token } from 'prismjs';
+import Prism, { type Grammar, type Token } from 'prismjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   dateTimeFormat,
-  Labels,
+  type Labels,
   LogLevel,
-  LogRowModel,
-  LogsSortOrder,
+  type LogRowModel,
+  type LogsSortOrder,
   systemDateFormats,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { FieldDef, getAllFields } from '../logParser';
-import { identifyOTelLanguage, getOtelAttributesField, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
+import { type FieldDef, getAllFields } from '../logParser';
+import { identifyOTelLanguage, getOtelAttributesField } from '../otel/formats';
 
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
-import { LogLineVirtualization } from './virtualization';
+import { type LogLineVirtualization } from './virtualization';
 
 const TRUNCATION_DEFAULT_LENGTH = 50000;
 export const NEWLINES_REGEX = /(\r\n|\n|\r)/g;
@@ -72,7 +71,16 @@ export class LogListModel implements LogRowModel {
 
   constructor(
     log: LogRowModel,
-    { escape, getFieldLinks, grammar, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
+    {
+      escape,
+      getFieldLinks,
+      grammar,
+      otelLogsFormattingEnabled = false,
+      prettifyJSON,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    }: PreProcessLogOptions
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -117,7 +125,7 @@ export class LogListModel implements LogRowModel {
     }
     this.raw = log.raw;
 
-    if (config.featureToggles.otelLogsFormatting && this.otelLanguage) {
+    if (otelLogsFormattingEnabled && this.otelLanguage) {
       this.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME] = getOtelAttributesField(this, wrapLogMessage);
     }
   }
@@ -135,7 +143,9 @@ export class LogListModel implements LogRowModel {
   get body(): string {
     if (this._body === undefined) {
       try {
-        const parsed = parse(this.raw);
+        const parsed = parse(this.raw, undefined, {
+          onDuplicateKey: ({ newValue }) => newValue,
+        });
         if (typeof parsed === 'object' && parsed !== null && !(parsed instanceof LosslessNumber)) {
           this._json = true;
         }
@@ -143,10 +153,12 @@ export class LogListModel implements LogRowModel {
         if (reStringified) {
           this.raw = reStringified;
         }
-        if (this._escapeUnescapedString) {
-          this.raw = escapeUnescapedString(this.raw);
-        }
       } catch (error) {}
+
+      // always escape for literal \n, \t, \r sequences so "Escape newlines" works for all log types.
+      if (this._escapeUnescapedString) {
+        this.raw = escapeUnescapedString(this.raw);
+      }
       const raw = this.raw;
       this._body = this.collapsed
         ? raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
@@ -280,6 +292,7 @@ export class LogListModel implements LogRowModel {
 export interface PreProcessOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
+  otelLogsFormattingEnabled?: boolean;
   order: LogsSortOrder;
   prettifyJSON?: boolean;
   timeZone: string;
@@ -289,7 +302,16 @@ export interface PreProcessOptions {
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessOptions,
+  {
+    escape,
+    getFieldLinks,
+    otelLogsFormattingEnabled,
+    order,
+    prettifyJSON,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  }: PreProcessOptions,
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
@@ -298,6 +320,7 @@ export const preProcessLogs = (
       escape,
       getFieldLinks,
       grammar,
+      otelLogsFormattingEnabled,
       prettifyJSON,
       timeZone,
       virtualization,
@@ -310,6 +333,7 @@ interface PreProcessLogOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   grammar?: Grammar;
+  otelLogsFormattingEnabled?: boolean;
   prettifyJSON?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;
@@ -336,7 +360,7 @@ function countNewLines(log: string, limit = Infinity) {
   let count = 0;
   for (let i = 0; i < log.length; ++i) {
     // No need to iterate further
-    if (count > Infinity) {
+    if (count > limit) {
       return count;
     }
     if (log[i] === '\n') {
@@ -364,7 +388,7 @@ export function getNormalizedFieldName(field: string) {
   if (field === LOG_LINE_BODY_FIELD_NAME) {
     return t('logs.log-line-details.log-line-field', 'Log line');
   } else if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME) {
-    return t('logs.log-line-details.log-attributes-field', 'OTel attributes');
+    return t('logs.log-line-details.log-attributes-field', 'Log attributes');
   }
   return field;
 }

@@ -1,26 +1,26 @@
-import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { type Observable, type SubscriptionLike, type Unsubscribable } from 'rxjs';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
-  DataQuery,
-  DataQueryRequest,
-  DataSourceApi,
-  HistoryItem,
-  LogsModel,
-  PanelData,
-  RawTimeRange,
-  TimeRange,
-  EventBusExtended,
-  DataQueryResponse,
-  ExplorePanelsState,
-  SupplementaryQueryType,
-  UrlQueryMap,
-  ExploreCorrelationHelperData,
-  DataLinkTransformationConfig,
+  type AbsoluteTimeRange,
+  type DataFrame,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type HistoryItem,
+  type LogsModel,
+  type PanelData,
+  type RawTimeRange,
+  type TimeRange,
+  type EventBusExtended,
+  type DataQueryResponse,
+  type ExplorePanelsState,
+  type SupplementaryQueryType,
+  type UrlQueryMap,
+  type ExploreCorrelationHelperData,
+  type DataLinkTransformationConfig,
 } from '@grafana/data';
-import { CorrelationData } from '@grafana/runtime';
-import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+import { type CorrelationData } from '@grafana/runtime';
+import { type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 export type ExploreQueryParams = UrlQueryMap;
 
@@ -135,6 +135,19 @@ export interface ExploreItemState {
    * converted to a query row.
    */
   queries: DataQuery[];
+
+  /**
+   * Index increased when queries change.
+   * Required to derive queriesChangedIndexAtRun correctly.
+   */
+  queriesChangedIndex: number;
+
+  /**
+   * Index updated after running the query. Changes if new query was run.
+   * Used to reset legend in the main graph to match Dashboard's behavior (#113975)
+   */
+  queriesChangedIndexAtRun: number;
+
   /**
    * True if this Explore area has been initialized.
    * Used to distinguish URL state injection versus split view state injection.

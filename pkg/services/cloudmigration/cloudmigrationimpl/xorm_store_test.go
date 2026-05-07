@@ -3,7 +3,6 @@ package cloudmigrationimpl
 import (
 	"bytes"
 	"context"
-	cryptoRand "crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"strconv"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/nacl/box"
 )
 
 func Test_GetAllCloudMigrationSessions(t *testing.T) {
@@ -629,7 +627,7 @@ func TestGetSnapshotList(t *testing.T) {
 		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 1, Limit: 100})
 		require.NoError(t, err)
 
-		ids := make([]string, 0)
+		ids := make([]string, 0) //nolint:prealloc
 		for _, snapshot := range snapshots {
 			ids = append(ids, snapshot.UID)
 		}
@@ -654,7 +652,7 @@ func TestGetSnapshotList(t *testing.T) {
 		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 2, Limit: 1})
 		require.NoError(t, err)
 
-		ids := make([]string, 0)
+		ids := make([]string, 0) //nolint:prealloc
 		for _, snapshot := range snapshots {
 			ids = append(ids, snapshot.UID)
 		}
@@ -667,7 +665,7 @@ func TestGetSnapshotList(t *testing.T) {
 		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 1, Limit: 100, Sort: "latest"})
 		require.NoError(t, err)
 
-		ids := make([]string, 0)
+		ids := make([]string, 0) //nolint:prealloc
 		for _, snapshot := range snapshots {
 			ids = append(ids, snapshot.UID)
 		}
@@ -811,17 +809,19 @@ func encodeToken(t string) string {
 }
 
 func TestEncodeDecode(t *testing.T) {
-	gmsPublicKey, gmsPrivateKey, err := box.GenerateKey(cryptoRand.Reader)
+	nacl := crypto.NewNacl()
+
+	gmsKeys, err := nacl.GenerateKeys()
 	require.NoError(t, err)
 
-	grafanaPublicKey, grafanaPrivateKey, err := box.GenerateKey(cryptoRand.Reader)
+	grafanaKeys, err := nacl.GenerateKeys()
 	require.NoError(t, err)
 
 	snapshotWriter, err := snapshot.NewSnapshotWriter(contracts.AssymetricKeys{
-		Public:  gmsPublicKey[:],
-		Private: grafanaPrivateKey[:],
+		Public:  gmsKeys.Public,
+		Private: grafanaKeys.Private,
 	},
-		crypto.NewNacl(),
+		nacl,
 		t.TempDir(),
 	)
 	require.NoError(t, err)
@@ -838,10 +838,10 @@ func TestEncodeDecode(t *testing.T) {
 	require.NoError(t, snapshotWriter.Write("RESOURCE_TYPE", chunk))
 
 	reader := snapshot.NewSnapshotReader(contracts.AssymetricKeys{
-		Public:  grafanaPublicKey[:],
-		Private: gmsPrivateKey[:],
+		Public:  grafanaKeys.Public,
+		Private: gmsKeys.Private,
 	},
-		crypto.NewNacl())
+		nacl)
 
 	partition, err := reader.ReadFile(bytes.NewReader(encoded))
 	require.NoError(t, err)

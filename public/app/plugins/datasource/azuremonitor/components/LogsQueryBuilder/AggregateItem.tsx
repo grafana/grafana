@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { InputGroup, AccessoryButton } from '@grafana/plugin-ui';
 import { Select, Label, Input } from '@grafana/ui';
@@ -8,7 +8,8 @@ import { Select, Label, Input } from '@grafana/ui';
 import {
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
-  BuilderQueryEditorReduceExpression,
+  type BuilderQueryEditorReduceExpression,
+  BuilderQueryEditorReduceParameterTypes,
 } from '../../dataquery.gen';
 
 import { aggregateOptions, inputFieldSize } from './utils';
@@ -29,7 +30,7 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
   templateVariableOptions,
 }) => {
   const isPercentile = aggregate.reduce?.name === 'percentile';
-  const isCountAggregate = aggregate.reduce?.name?.includes('count');
+  const isCountAggregate = aggregate.reduce?.name === 'count';
 
   const [percentileValue, setPercentileValue] = useState(aggregate.parameters?.[0]?.value || '');
   const [columnValue, setColumnValue] = useState(
@@ -65,8 +66,16 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
   };
 
   const handleAggregateChange = (funcName?: string) => {
+    const functionParameterType =
+      aggregateOptions.find((option) => option.value === (funcName || ''))?.parameterType ||
+      BuilderQueryEditorReduceParameterTypes.Generic;
+
     updateAggregate({
-      reduce: { name: funcName || '', type: BuilderQueryEditorPropertyType.Function },
+      reduce: {
+        name: funcName || '',
+        type: BuilderQueryEditorPropertyType.Function,
+        parameterType: functionParameterType,
+      },
     });
   };
 

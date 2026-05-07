@@ -4,13 +4,13 @@ import { useAsync } from 'react-use';
 
 import { isGrafanaRulesSource } from 'app/features/alerting/unified/utils/datasource';
 import {
-  CombinedRule,
-  RuleGroupIdentifierV2,
-  RuleIdentifier,
-  RuleWithLocation,
-  RulesSource,
+  type CombinedRule,
+  type RuleGroupIdentifierV2,
+  type RuleIdentifier,
+  type RuleWithLocation,
+  type RulesSource,
 } from 'app/types/unified-alerting';
-import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
@@ -68,6 +68,9 @@ export function useCloudCombinedRulesMatching(
             rulerConfig: rulerConfig,
             namespace: nsGroup.namespace.name,
             group: nsGroup.group.name,
+            // Suppress error notifications for 404s - the group may not exist yet (new group)
+            // or may have been deleted (last rule removed)
+            notificationOptions: { showErrorAlert: false },
           }).unwrap();
           rulerGroups.push(rulerGroup);
         })
@@ -145,6 +148,9 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
       rulerConfig: dsFeatures.rulerConfig,
       namespace: ruleLocation.namespace,
       group: ruleLocation.group,
+      // Suppress error notifications for 404s - the group may not exist yet (new group)
+      // or may have been deleted (last rule removed)
+      notificationOptions: { showErrorAlert: false },
     });
   }, [dsFeatures, fetchRulerRuleGroup, ruleLocation]);
 

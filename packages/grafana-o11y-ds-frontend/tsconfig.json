@@ -4,11 +4,13 @@
     "declaration": true,
     "jsx": "react-jsx",
     "baseUrl": "./",
-    "declarationDir": "./compiled",
+    "declarationDir": "./dist/types",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "allowJs": true,
-    "rootDirs": ["."]
+    "rootDir": "../../",
+    "rootDirs": ["."],
+    "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
   "include": [

@@ -1,9 +1,14 @@
 package v0alpha1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // +k8s:deepcopy-gen=true
@@ -20,6 +25,84 @@ type DataSource struct {
 	// Secure values allows setting values that are never shown to users
 	// The returned properties are only the names of the configured values
 	Secure common.InlineSecureValues `json:"secure,omitzero,omitempty"`
+}
+
+func (DataSource) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSource"
+}
+
+func (ds DataSource) ToUnstructured() (*unstructured.Unstructured, error) {
+	metadata, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&ds.ObjectMeta)
+	if err != nil {
+		return nil, err
+	}
+	obj := &unstructured.Unstructured{
+		Object: map[string]any{
+			"metadata": metadata,
+			"spec":     ds.Spec.Object,
+		},
+	}
+	if len(ds.Secure) > 0 {
+		secure := map[string]any{}
+		for k, v := range ds.Secure {
+			sv := map[string]any{}
+			if !v.Create.IsZero() {
+				sv["create"] = string(v.Create)
+			}
+			if v.Name != "" {
+				sv["name"] = v.Name
+			}
+			if v.Remove {
+				sv["remove"] = true
+			}
+			secure[k] = sv
+		}
+		obj.Object["secure"] = secure
+	}
+	if ds.APIVersion != "" {
+		obj.SetAPIVersion(ds.APIVersion)
+	}
+	if ds.Kind != "" {
+		obj.SetKind(ds.Kind)
+	}
+	return obj, nil
+}
+
+func FromUnstructured(obj *unstructured.Unstructured) (*DataSource, error) {
+	ds := &DataSource{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: obj.GetAPIVersion(),
+			Kind:       obj.GetKind(),
+		},
+		Spec: UnstructuredSpec{},
+	}
+	metadata, _, err := unstructured.NestedMap(obj.Object, "metadata")
+	if err != nil {
+		return nil, err
+	}
+
+	if err = runtime.DefaultUnstructuredConverter.FromUnstructured(metadata, &ds.ObjectMeta); err != nil {
+		return nil, fmt.Errorf("failed to convert unstructured to ObjectMeta: %w", err)
+	}
+	ds.Spec.Object, _, err = unstructured.NestedMap(obj.Object, "spec")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read spec from unstructured object")
+	}
+
+	// Read secure values
+	_, ok := obj.Object["secure"]
+	if ok {
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		sv, err := meta.GetSecureValues()
+		if err != nil {
+			return nil, err
+		}
+		ds.Secure = sv
+	}
+	return ds, nil
 }
 
 // DsAccess represents how the datasource connects to the remote service
@@ -62,6 +145,10 @@ type GenericDataSourceSpec struct {
 	JsonData common.Unstructured `json:"jsonData,omitzero"`
 }
 
+func (GenericDataSourceSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "GenericDataSourceSpec"
+}
+
 // +k8s:deepcopy-gen=true
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -70,4 +157,8 @@ type DataSourceList struct {
 	metav1.ListMeta `json:"metadata"`
 
 	Items []DataSource `json:"items"`
+}
+
+func (DataSourceList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceList"
 }

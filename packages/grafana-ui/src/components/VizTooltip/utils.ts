@@ -1,8 +1,14 @@
-import { FALLBACK_COLOR, Field, FieldType, formattedValueToString, getFieldColorModeForField } from '@grafana/data';
+import {
+  FALLBACK_COLOR,
+  type Field,
+  FieldType,
+  formattedValueToString,
+  getFieldColorModeForField,
+} from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
-import { ColorIndicatorStyles } from './VizTooltipColorIndicator';
-import { ColorIndicator, ColorPlacement, VizTooltipItem } from './types';
+import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
+import { ColorIndicator, ColorPlacement, type VizTooltipItem } from './types';
 
 export const calculateTooltipPosition = (
   xPos = 0,
@@ -74,6 +80,30 @@ const numberCmp = (a: VizTooltipItem, b: VizTooltipItem) => a.numeric! - b.numer
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 const stringCmp = (a: VizTooltipItem, b: VizTooltipItem) => collator.compare(`${a.value}`, `${b.value}`);
 
+export const getTooltipDisplayValue = (
+  value: unknown,
+  field: Field
+): {
+  text: string;
+  numeric: number;
+  color?: string;
+} => {
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return { text: '', numeric: NaN };
+    }
+
+    return { text: JSON.stringify(value), numeric: NaN };
+  }
+
+  if (value && typeof value === 'object') {
+    return { text: JSON.stringify(value), numeric: NaN };
+  }
+
+  const display = field.display!(value); // super expensive :(
+  return { text: formattedValueToString(display), numeric: display.numeric, color: display.color };
+};
+
 export const getContentItems = (
   fields: Field[],
   xField: Field,
@@ -123,7 +153,7 @@ export const getContentItems = (
       continue;
     }
 
-    const display = field.display!(v); // super expensive :(
+    const display = getTooltipDisplayValue(v, field);
 
     // sort NaN and non-numeric to bottom (regardless of sort order)
     const numeric = !Number.isNaN(display.numeric)
@@ -136,7 +166,7 @@ export const getContentItems = (
 
     rows.push({
       label: field.state?.displayName ?? field.name,
-      value: formattedValueToString(display),
+      value: display.text,
       color: display.color ?? FALLBACK_COLOR,
       colorIndicator,
       colorPlacement,
@@ -149,11 +179,12 @@ export const getContentItems = (
   _restFields?.forEach((field) => {
     if (!field.config.custom?.hideFrom?.tooltip) {
       const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
-      const display = field.display!(field.values[dataIdxs[0]!]);
+      const rawValue = field.values[dataIdxs[0]!];
+      const display = getTooltipDisplayValue(rawValue, field);
 
       rows.push({
         label: field.state?.displayName ?? field.name,
-        value: formattedValueToString(display),
+        value: display.text,
         color: FALLBACK_COLOR,
         colorIndicator,
         colorPlacement,

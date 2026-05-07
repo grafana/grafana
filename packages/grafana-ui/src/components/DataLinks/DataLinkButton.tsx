@@ -1,6 +1,6 @@
-import { Field, LinkModel } from '@grafana/data';
+import { type Field, type LinkModel } from '@grafana/data';
 
-import { ButtonProps, Button } from '../Button/Button';
+import { type ButtonProps, Button } from '../Button/Button';
 
 type DataLinkButtonProps = {
   link: LinkModel<Field>;

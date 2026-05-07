@@ -1,10 +1,13 @@
-import { ScopeDashboardBinding } from '@grafana/data';
+import { type ScopeDashboardBinding } from '@grafana/data';
 
 // TODO: replace with generate API client types
 export interface ScopeNavigationSpec {
   url: string;
   scope: string;
   subScope?: string;
+  preLoadSubScopeChildren?: boolean;
+  expandOnLoad?: boolean;
+  disableSubScopeSelection?: boolean;
 }
 
 export interface ScopeNavigationStatus {
@@ -40,6 +43,8 @@ export interface SuggestedNavigationsFolder {
   suggestedNavigations: SuggestedNavigationsMap;
   subScopeName?: string;
   loading?: boolean;
+  disableSubScopeSelection?: boolean;
+  preLoadSubScopeChildren?: boolean;
 }
 
 export type SuggestedNavigationsFoldersMap = Record<string, SuggestedNavigationsFolder>;

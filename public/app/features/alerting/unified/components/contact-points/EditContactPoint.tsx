@@ -5,6 +5,7 @@ import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useGetContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
+import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -48,8 +49,10 @@ const EditContactPoint = () => {
 };
 
 function EditContactPointPage() {
+  const { navId, pageNav } = useContactPointsNav();
+
   return (
-    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+    <AlertmanagerPageWrapper navId={navId} pageNav={pageNav} accessType="notification">
       <EditContactPoint />
     </AlertmanagerPageWrapper>
   );

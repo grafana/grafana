@@ -14,35 +14,39 @@ userKind: {
 }
 
 userv0alpha1: userKind & {
-	// TODO: Uncomment this when User will be added to ManagedKinds 
-	// validation: {
-	// 	operations: [
-	// 		"CREATE",
-	// 		"UPDATE",
-	// 	]
-	// }
-	// mutation: {
-	// 	operations: [
-	// 		"CREATE",
-	// 		"UPDATE",
-	// 	]
-	// }
 	schema: {
-		spec: v0alpha1.UserSpec
+		spec:   v0alpha1.UserSpec
+		status: UserStatus
 	}
-	// TODO: Uncomment when the custom routes implementation is done
-	// routes: {
-	// 	"/teams": {
-	// 		"GET": {
-	// 			response: {
-	// 				#UserTeam: {
-	// 					title: string
-	// 					teamRef: v0alpha1.TeamRef
-	// 					permission: v0alpha1.TeamPermission
-	// 				}
-	// 				items: [...#UserTeam]
-	// 			}
-	// 		}
-	// 	}
-	// }
+	selectableFields: [
+		"spec.email",
+		"spec.login",
+	]
+	routes: {
+		"/teams": {
+			"GET": {
+				name: "getUserTeams"
+				response: {
+					#UserTeam: {
+						user:       string
+						team:       string
+						permission: string
+						external:   bool
+					}
+					items: [...#UserTeam]
+				}
+				responseMetadata: listMeta: true
+			}
+		}
+	}
+}
+
+UserStatus: {
+	lastSeenAt: int64 | 0
+	teamSync?:  TeamSyncStatus
+}
+
+TeamSyncStatus: {
+	state:      "syncing" | "success" | "error" @cog(kind="enum",memberNames="Syncing|Success|Error")
+	lastSyncAt: int64 | 0
 }

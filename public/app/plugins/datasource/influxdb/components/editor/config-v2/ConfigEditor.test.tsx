@@ -36,9 +36,4 @@ describe('ConfigEditor', () => {
     expect(screen.getByTestId('url-auth-section')).toBeInTheDocument();
     expect(screen.getByTestId('db-connection-section')).toBeInTheDocument();
   });
-
-  it('shows the informational alert', () => {
-    render(<ConfigEditor {...defaultProps} />);
-    expect(screen.getByText(/You are viewing a new design/i)).toBeInTheDocument();
-  });
 });

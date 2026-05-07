@@ -1,14 +1,14 @@
-import { Registry, RegistryItem } from '@grafana/data';
+import { Registry, type RegistryItem } from '@grafana/data';
 import {
-  ConditionalRenderingDataKind,
-  ConditionalRenderingTimeRangeSizeKind,
-  ConditionalRenderingVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+  type ConditionalRenderingDataKind,
+  type ConditionalRenderingTimeRangeSizeKind,
+  type ConditionalRenderingVariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { ConditionalRenderingData } from './ConditionalRenderingData';
 import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
-import { ConditionalRenderingConditions } from './types';
+import { type ConditionalRenderingConditions } from './types';
 
 export type ConditionalRenderingConditionsKindTypes =
   | ConditionalRenderingVariableKind

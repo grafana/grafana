@@ -1,24 +1,43 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { createComponentWithMeta, usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 
-import { InviteUserButton } from './InviteUserButton';
+import { NavRightButton } from './InviteUserButton';
 
-// Mock dependencies
+// Mock the API hook
+const mockUseGetCurrentOrgQuotaQuery = jest.fn(() => ({ data: undefined }));
+
+jest.mock('app/api/clients/legacy', () => {
+  const actual = jest.requireActual('app/api/clients/legacy');
+  return {
+    ...actual,
+    useGetCurrentOrgQuotaQuery: () => mockUseGetCurrentOrgQuotaQuery(),
+  };
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  config: {
-    externalUserMngLinkUrl: 'https://example.com/invite',
-  },
   reportInteraction: jest.fn(),
+}));
+
+jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
+  ...jest.requireActual('app/features/plugins/extensions/usePluginComponents'),
+  usePluginComponents: jest.fn(),
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: jest.fn(),
+    user: {
+      orgId: 1,
+      timezone: 'browser',
+      weekStart: '',
+    },
   },
 }));
 
@@ -26,10 +45,15 @@ jest.mock('app/features/users/utils', () => ({
   getExternalUserMngLinkUrl: jest.fn(),
 }));
 
+const mockUsePluginComponents = jest.mocked(usePluginComponents);
 const mockContextSrv = jest.mocked(contextSrv);
-const mockConfig = jest.mocked(config);
 const mockReportInteraction = jest.mocked(reportInteraction);
 const mockGetExternalUserMngLinkUrl = jest.mocked(getExternalUserMngLinkUrl);
+
+const MockPluginComponent = createComponentWithMeta(
+  { pluginId: 'grafana-setupguide-app', title: 'Invite', component: () => <div>plugin-invite-button</div> },
+  'grafana/singletopbar/invite-user/v1'
+);
 
 // Mock window.open
 const mockWindowOpen = jest.fn();
@@ -50,31 +74,36 @@ const mockMatchMedia = (matches: boolean) => {
   });
 };
 
-describe('InviteUserButton', () => {
+describe('NavRightButton', () => {
   const mockInviteUrl = 'https://example.com/invite?cnt=invite-user-top-bar';
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetExternalUserMngLinkUrl.mockReturnValue(mockInviteUrl);
+    mockUsePluginComponents.mockReturnValue({ components: [], isLoading: false });
+    config.externalUserMngLinkUrl = 'https://example.com/invite';
+    config.externalUserUpgradeLinkUrl = '';
+    config.namespace = 'org-1';
   });
 
   describe('Business Logic - When button should appear', () => {
     it('should not render when user lacks permission', () => {
-      mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
       mockContextSrv.hasPermission.mockReturnValue(false);
       mockMatchMedia(true);
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
     it('should not render when external user management URL is not configured', () => {
-      mockConfig.externalUserMngLinkUrl = '';
+      config.externalUserMngLinkUrl = '';
+      config.externalUserUpgradeLinkUrl = '';
       mockContextSrv.hasPermission.mockReturnValue(true);
       mockMatchMedia(true);
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
@@ -82,14 +111,14 @@ describe('InviteUserButton', () => {
 
   describe('User Experience - Responsive behavior', () => {
     beforeEach(() => {
-      mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
       mockContextSrv.hasPermission.mockReturnValue(true);
     });
 
     it('should show text on large screens', () => {
       mockMatchMedia(true); // Large screen (≥lg)
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       const button = screen.getByRole('button', { name: /invite user/i });
       expect(button).toHaveTextContent('Invite');
@@ -98,7 +127,7 @@ describe('InviteUserButton', () => {
     it('should show icon only on small screens', () => {
       mockMatchMedia(false); // Small screen (<lg)
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       const button = screen.getByRole('button', { name: /invite user/i });
       expect(button).not.toHaveTextContent('Invite');
@@ -107,7 +136,7 @@ describe('InviteUserButton', () => {
 
   describe('Core Functionality - Click behavior', () => {
     beforeEach(() => {
-      mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
       mockContextSrv.hasPermission.mockReturnValue(true);
       mockMatchMedia(true);
     });
@@ -115,7 +144,7 @@ describe('InviteUserButton', () => {
     it('should track analytics and open invite URL when clicked', async () => {
       const user = userEvent.setup();
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       await user.click(screen.getByRole('button', { name: /invite user/i }));
 
@@ -128,9 +157,31 @@ describe('InviteUserButton', () => {
     });
   });
 
+  describe('Extension point - grafana-setupguide-app override', () => {
+    it('should render the plugin component when grafana-setupguide-app registers one', () => {
+      mockUsePluginComponents.mockReturnValue({ components: [MockPluginComponent], isLoading: false });
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      mockMatchMedia(true);
+
+      render(<NavRightButton />);
+
+      expect(screen.getByText('plugin-invite-button')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /invite user/i })).not.toBeInTheDocument();
+    });
+
+    it('should fall back to the default button when no plugin component is registered', () => {
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      mockMatchMedia(true);
+
+      render(<NavRightButton />);
+
+      expect(screen.getByRole('button', { name: /invite user/i })).toBeInTheDocument();
+    });
+  });
+
   describe('Error Handling - Preventing crashes', () => {
     beforeEach(() => {
-      mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
       mockContextSrv.hasPermission.mockReturnValue(true);
       mockMatchMedia(true);
     });
@@ -143,12 +194,12 @@ describe('InviteUserButton', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const user = userEvent.setup();
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       // Should not crash when URL generation fails
       await user.click(screen.getByRole('button', { name: /invite user/i }));
 
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite user click:', expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite/upgrade user click:', expect.any(Error));
 
       consoleSpy.mockRestore();
     });
@@ -161,12 +212,12 @@ describe('InviteUserButton', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const user = userEvent.setup();
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       // Should not crash when popup is blocked
       await user.click(screen.getByRole('button', { name: /invite user/i }));
 
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite user click:', expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite/upgrade user click:', expect.any(Error));
 
       consoleSpy.mockRestore();
     });

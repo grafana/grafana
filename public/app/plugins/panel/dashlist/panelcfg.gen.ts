@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/dashlist/panelcfg.cue file.
+
 export interface Options {
   /**
    * folderId is deprecated, and migrated to folderUid on panel init

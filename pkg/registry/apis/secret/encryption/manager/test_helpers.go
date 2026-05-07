@@ -1,12 +1,14 @@
 package manager
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -47,8 +49,30 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 		usageStats,
 		enc,
 		ossProviders,
+		&NoopDataKeyCache{},
+		cfg,
 	)
 	require.NoError(tb, err)
 
 	return encMgr.(*EncryptionManager)
 }
+
+type NoopDataKeyCache struct {
+}
+
+func (c *NoopDataKeyCache) GetById(_ context.Context, namespace, id string) (encryption.DataKeyCacheEntry, bool, error) {
+	return encryption.DataKeyCacheEntry{}, false, nil
+}
+
+func (c *NoopDataKeyCache) GetByLabel(_ context.Context, namespace, label string) (encryption.DataKeyCacheEntry, bool, error) {
+	return encryption.DataKeyCacheEntry{}, false, nil
+}
+
+func (c *NoopDataKeyCache) Set(_ context.Context, namespace string, entry encryption.DataKeyCacheEntry) error {
+	return nil
+}
+
+func (c *NoopDataKeyCache) RemoveExpired(_ context.Context) {
+}
+
+func (c *NoopDataKeyCache) Flush(_ context.Context, namespace string) {}

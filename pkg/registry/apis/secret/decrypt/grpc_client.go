@@ -9,10 +9,13 @@ import (
 	"maps"
 	"os"
 	"slices"
+	"time"
 
 	"github.com/fullstorydev/grpchan"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -72,6 +75,15 @@ func NewGRPCDecryptClientWithTLS(
 		opts = append(opts, grpc.WithDisableServiceConfig())
 	}
 
+	// Add retry interceptor to retry on transient connection issues.
+	// Retries on ResourceExhausted (per-RPC limits reached) and Unavailable (system unavailable).
+	retryInterceptor := grpc_retry.UnaryClientInterceptor(
+		grpc_retry.WithMax(3),
+		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
+	)
+	opts = append(opts, grpc.WithUnaryInterceptor(retryInterceptor))
+
 	conn, err := grpc.NewClient(address, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to grpc decrypt server at %s: %w", address, err)
@@ -118,10 +130,10 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		return nil, err
 	}
 
-	unique := make(map[string]bool, len(names))
+	unique := make(map[string]struct{}, len(names))
 	for _, v := range names {
 		if v != "" {
-			unique[v] = true
+			unique[v] = struct{}{}
 		}
 	}
 	if len(unique) < 1 {
@@ -163,6 +175,11 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 	results := make(map[string]decrypt.DecryptResult, len(resp.GetDecryptedValues()))
 
 	for name, result := range resp.GetDecryptedValues() {
+		// Only accept results for names that were actually requested.
+		if _, ok := unique[name]; !ok {
+			continue
+		}
+
 		if result.GetErrorMessage() != "" {
 			results[name] = decrypt.NewDecryptResultErr(errors.New(result.GetErrorMessage()))
 		} else {

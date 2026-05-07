@@ -1,15 +1,15 @@
 import { useEffect } from 'react';
 import * as React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Select, TextLink } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../../../datasource';
+import { type MetricStat } from '../../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../../datasource';
 import { useAccountOptions, useMetrics, useNamespaces } from '../../../hooks';
 import { standardStatistics } from '../../../standardStatistics';
-import { MetricStat } from '../../../types';
 import { appendTemplateVariables, toOption } from '../../../utils/utils';
 import { Account } from '../Account';
 import { Dimensions } from '../Dimensions/Dimensions';

@@ -73,7 +73,7 @@ The `apps` directory structure is Grafana's intended future for defining APIs an
 
 - `(plugin)/kinds/playlist.cue`: CUE schema for the `Playlist` resource kind and its `spec`.
 - `(plugin)/kinds/manifest.cue`: App and resource kind metadata.
-- `(plugin)/pkg/apis/playlist/v0alpha1/`: Generated Go types from the CUE schema.
+- `(plugin)/pkg/apis/playlist/v1/`: Generated Go types from the CUE schema.
 - `(plugin)/pkg/reconcilers/reconciler_playlist.go`: Reconciler acting on `Playlist` resources.
 - `(root)/pkg/registry/apps/playlist/register.go`: Registers the `Playlist` kind and API endpoints using the App SDK.
 
@@ -259,7 +259,7 @@ The easiest way to use `kubectl` is under a dev-mode-only, experimental `grafana
 export KUBECONFIG=../../data/grafana-apiserver/grafana.kubeconfig
 
 cat <<EOF | kubectl create -f -
-apiVersion: folder.grafana.app/v1beta1
+apiVersion: folder.grafana.app/v1
 kind: Folder
 metadata:
   name: kubectl-folder
@@ -269,7 +269,7 @@ status: {}
 EOF
 
 cat <<EOF | kubectl create -f -
-apiVersion: dashboard.grafana.app/v1beta1
+apiVersion: dashboard.grafana.app/v1
 kind: Dashboard
 metadata:
   name: kubectl-dash

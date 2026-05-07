@@ -1,19 +1,20 @@
 import { css, cx } from '@emotion/css';
-import { FC, useCallback, useMemo } from 'react';
+import { type FC, useCallback, useMemo } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ComboboxOption, Field, InlineLabel, Input, Space, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, type ComboboxOption, Field, InlineLabel, Input, Space, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../types/pluginBridges';
-import { KBObjectArray, RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../../types/rule-form';
+import { DOCS_URL_ANNOTATION_LABEL } from '../../../utils/docs';
 import { isPrivateLabelKey } from '../../../utils/labels';
 import { isRecordingRuleByType } from '../../../utils/rules';
-import AlertLabelDropdown, { AsyncOptionsLoader } from '../../AlertLabelDropdown';
+import AlertLabelDropdown, { type AsyncOptionsLoader } from '../../AlertLabelDropdown';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 import { useGetLabelsFromDataSourceName } from '../useAlertRuleSuggestions';
 
@@ -39,11 +40,12 @@ function mapLabelsToOptions(
 }
 
 export interface LabelsInRuleProps {
-  labels: Array<{ key: string; value: string }>;
+  labels: Array<{ key: string; value: string }> | undefined | null;
 }
 
 export const LabelsInRule = ({ labels }: LabelsInRuleProps) => {
-  const labelsObj: Record<string, string> = labels.reduce((acc: Record<string, string>, label) => {
+  const safeLabels = Array.isArray(labels) ? labels : [];
+  const labelsObj: Record<string, string> = safeLabels.reduce((acc: Record<string, string>, label) => {
     if (label.key) {
       acc[label.key] = label.value;
     }
@@ -162,7 +164,7 @@ export function useCombinedLabels(
   // This is called by Combobox when the dropdown menu opens
   const createAsyncValuesLoader = useCallback(
     (key: string): AsyncOptionsLoader => {
-      return async (_inputValue: string): Promise<Array<ComboboxOption<string>>> => {
+      return async (valueQuery: string): Promise<Array<ComboboxOption<string>>> => {
         if (!isKeyAllowed(key) || !key) {
           return [];
         }
@@ -188,7 +190,10 @@ export function useCombinedLabels(
         // Combine: existing values first, then unique ops values (Set preserves first occurrence)
         const combinedValues = [...new Set([...existingValues, ...opsValues])];
 
-        return mapLabelsToOptions(combinedValues);
+        const valueQueryLowerCase = valueQuery.toLowerCase();
+        const filteredValues = combinedValues.filter((value) => value.toLowerCase().includes(valueQueryLowerCase));
+
+        return mapLabelsToOptions(filteredValues);
       };
     },
     [labelsByKeyFromExisingAlerts, labelsPluginInstalled, opsLabelKeysSet, fetchLabelValues]
@@ -404,7 +409,7 @@ function LabelsField() {
             {getLabelText(type)}
           </Text>
           <NeedHelpInfo
-            externalLink={'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/'}
+            externalLink={DOCS_URL_ANNOTATION_LABEL}
             linkText={`Read about labels`}
             contentText="The dropdown only displays labels that you have previously used for alerts.
             Select a label from the options below or type in a new one."

@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
 import { isLibraryPanel } from '../../utils/utils';
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
 import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';

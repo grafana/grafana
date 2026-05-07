@@ -1,17 +1,16 @@
-import { ReactElement, useEffect, useRef, useState, ReactNode } from 'react';
+import { type ReactElement, useEffect, useRef, useState, type ReactNode } from 'react';
 import * as React from 'react';
 import uPlot from 'uplot';
 
 import {
-  ActionModel,
-  DataFrameType,
-  Field,
+  type ActionModel,
+  type Field,
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
-  InterpolateFunction,
-  LinkModel,
-  PanelData,
+  type InterpolateFunction,
+  type LinkModel,
+  type PanelData,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
@@ -20,22 +19,28 @@ import {
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
-  VizTooltipItem,
+  type VizTooltipItem,
   ColorIndicator,
   ColorPlacement,
 } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
 import { getDataLinks, getFieldActions } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
 
-import { HeatmapData } from './fields';
+import { type HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
-import { formatMilliseconds, getFieldFromData, getHoverCellColor, getSparseCellMinMax } from './tooltip/utils';
+import {
+  formatMilliseconds,
+  getFieldFromData,
+  getHoverCellColor,
+  getSparseCellMinMax,
+  isHeatmapSparse,
+} from './tooltip/utils';
 
 interface HeatmapTooltipProps {
   mode: TooltipDisplayMode;
@@ -99,9 +104,7 @@ const HeatmapHoverCell = ({
   const index = dataIdxs[1]!;
   const data = dataRef.current;
 
-  const [isSparse] = useState(
-    () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
-  );
+  const [isSparse] = useState(() => isHeatmapSparse(data.heatmap));
 
   const xField = getFieldFromData(data.heatmap!, 'x', isSparse)!;
   const yField = getFieldFromData(data.heatmap!, 'y', isSparse)!;

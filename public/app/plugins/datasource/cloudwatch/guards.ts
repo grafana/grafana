@@ -1,13 +1,13 @@
-import { AnnotationQuery } from '@grafana/data';
+import { type AnnotationQuery } from '@grafana/data';
 
 import {
-  CloudWatchAnnotationQuery,
-  CloudWatchLogsAnomaliesQuery,
-  CloudWatchLogsQuery,
-  CloudWatchMetricsQuery,
-  CloudWatchQuery,
+  type CloudWatchAnnotationQuery,
+  type CloudWatchLogsAnomaliesQuery,
+  type CloudWatchLogsQuery,
+  type CloudWatchMetricsQuery,
   LogsMode,
-} from './types';
+} from './dataquery.gen';
+import { type CloudWatchQuery } from './types';
 
 export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
   cloudwatchQuery.queryMode === 'Logs';

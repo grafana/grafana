@@ -137,6 +137,23 @@ On the **Contact Points** tab, you can:
 Contact points are assigned to a [specific Alertmanager](ref:configure-alertmanager) and cannot be used by notification policies in other Alertmanagers.
 {{< /admonition >}}
 
+## Grafana Cloud Protected fields
+
+For Grafana Cloud users, contact points may contain protected fields that require admin permissions to modify. Protected fields are sensitive configuration settings that affect where notifications are sent, such as:
+
+- Target URLs for integrations (webhooks, PagerDuty, Opsgenie, or other integrations.)
+- API endpoints
+- Other destination-related settings
+
+These fields are protected to prevent unauthorized users from redirecting notifications to compromised servers, which could expose sensitive information such as authorization tokens, API keys, or alert data.
+
+Users with edit permissions can modify most contact point settings and can add or remove integrations, but cannot change protected fields in existing integrations. Only users with admin permissions to the contact point can update protected fields.
+
+The ability to modify protected fields is controlled by the RBAC action `alert.notifications.receivers.protected:write`. This role is granted by default to:
+
+- Users with the fixed "Alerting Admin" role
+- Users with admin permissions for the specific contact point
+
 ## Supported contact point integrations
 
 Each contact point integration has its own configuration options and setup process. The following list shows the contact point integrations supported by Grafana.
@@ -176,9 +193,9 @@ Some of the integrations above are not supported by Prometheus Alertmanager. For
 Complete the following steps to add a contact point.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
-1. Click **Contact points**.
+1. Click **Notification configuration**, then select the **Contact points** tab.
 1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, **Grafana Alertmanager** is selected.
-1. On the **Contact Points** tab, click **+ Add contact point**.
+1. Click **+ New contact point**.
 1. Enter a descriptive name for the contact point.
 1. From **Integration**, select a type and fill out mandatory fields. For example, if you choose email, enter the email addresses. Or if you choose Slack, enter the Slack channel and users who should be contacted.
 1. Some [contact point integrations](#supported-contact-point-integrations), like email or Webhook, have optional settings. In **Optional settings**, specify additional settings for the selected contact point integration.
@@ -205,15 +222,15 @@ By default, notification messages include common alert details, which are usuall
 
 If necessary, you can customize the content and format of notification messages. You can create a custom notification template, which can then be applied to one or more contact points.
 
-On the **Notification templates** tab, you can view, edit, copy or delete notification templates. Refer to [manage notification templates](ref:manage-notification-templates) for instructions on selecting or creating a template for a contact point.
+On the **Templates** tab under **Notification configuration**, you can view, edit, copy or delete notification templates. Refer to [manage notification templates](ref:manage-notification-templates) for instructions on selecting or creating a template for a contact point.
 
 ## Test a contact point
 
 Testing a contact point is only available for Grafana Alertmanager. Complete the following steps to test a contact point.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
-1. Click **Contact points** to view a list of existing contact points.
-1. On the **Contact Points** tab, find the contact point you want to test, then click **Edit**. You can also create a new contact point if needed.
+1. Click **Notification configuration**, then select the **Contact points** tab to view a list of existing contact points.
+1. Find the contact point you want to test, then click **Edit**. You can also create a new contact point if needed.
 1. Click **Test** to open the contact point testing dialog box.
 1. Choose whether to send a predefined test notification or choose custom to add your own custom annotations and labels to include in the notification.
 1. Click **Send test notification** to fire the alert.

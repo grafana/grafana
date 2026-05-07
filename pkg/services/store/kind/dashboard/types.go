@@ -1,5 +1,7 @@
 package dashboard
 
+import "iter"
+
 type PanelSummaryInfo struct {
 	ID            int64           `json:"id"`
 	Title         string          `json:"title"`
@@ -29,4 +31,21 @@ type DashboardSummaryInfo struct {
 	TimeZone      string             `json:"timezone"`
 	Refresh       string             `json:"refresh,omitempty"`
 	ReadOnly      bool               `json:"readOnly,omitempty"` // editable = false
+}
+
+func (d *DashboardSummaryInfo) PanelIterator() iter.Seq[PanelSummaryInfo] {
+	return func(yield func(PanelSummaryInfo) bool) {
+		for _, p := range d.Panels {
+			if len(p.Collapsed) > 0 {
+				for _, c := range p.Collapsed {
+					if !yield(c) { // NOTE, rows can only be one level deep!
+						return
+					}
+				}
+			}
+			if !yield(p) {
+				return
+			}
+		}
+	}
 }

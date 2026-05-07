@@ -44,7 +44,7 @@ func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
 				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
 				return
 			}
-			r.URL.Path = "/apis/query.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.GetOrgID()) + "/query"
+			r.URL.Path = "/apis/datasource.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.GetOrgID()) + "/query"
 			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
 		}
 	}

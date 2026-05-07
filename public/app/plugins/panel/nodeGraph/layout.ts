@@ -3,11 +3,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUnmount } from 'react-use';
 import useMountedState from 'react-use/lib/useMountedState';
 
-import { Field } from '@grafana/data';
+import { type Field } from '@grafana/data';
 
 import { createWorker, createMsaglWorker } from './createLayoutWorker';
 import { LayoutAlgorithm } from './panelcfg.gen';
-import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
+import { type EdgeDatum, type EdgeDatumLayout, type NodeDatum } from './types';
 import { useNodeLimit } from './useNodeLimit';
 import { graphBounds } from './utils';
 
@@ -70,7 +70,7 @@ export function useLayout(
   const currentSignature = createDataSignature(rawNodes, rawEdges);
 
   const isMounted = useMountedState();
-  const layoutWorkerCancelRef = useRef<(() => void) | undefined>();
+  const layoutWorkerCancelRef = useRef<(() => void) | undefined>(undefined);
 
   useUnmount(() => {
     if (layoutWorkerCancelRef.current) {

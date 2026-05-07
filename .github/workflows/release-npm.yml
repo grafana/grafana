@@ -38,13 +38,17 @@ on:
 permissions: {}
 
 jobs:
-  # If called with version_type 'canary' or 'stable', build + publish to NPM
-  # If called with version_type 'nightly', do nothing (we're not yet tagging them with the nightly tag)
+  # If called with version_type 'nightly' or 'stable', build + publish to NPM
+  # If called with version_type 'canary', do nothing (temporarily stopping canary releases)
 
   publish:
     name: Publish NPM packages
+
+    # MUST use GitHub-hosted runners, as Trusted Publishing currently doesn't support self-hosted runners.cancel-timeout-minutes.
+    # https://docs.npmjs.com/trusted-publishers#supported-cicd-providers
     runs-on: github-hosted-ubuntu-x64-small
-    if: inputs.version_type == 'canary' || inputs.version_type == 'stable'
+
+    if: inputs.version_type == 'nightly' || inputs.version_type == 'stable'
     # Required for this workflow to have permission to publish NPM packages
     environment: npm-publish
     permissions:
@@ -90,6 +94,7 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ inputs.grafana_commit }}
+          fetch-depth: 2  # Need HEAD~1 for e2e-selectors change detection
 
       - name: Setup Node
         uses: ./.github/actions/setup-node
@@ -98,8 +103,10 @@ jobs:
       - name: Update npm
         run: npm install -g npm@^11.5.1
 
-      - name: Install dependencies
-        run: yarn install --immutable
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+        with:
+          hardened-mode: 'true'
 
       - name: Typecheck packages
         run: yarn run packages:typecheck
@@ -127,3 +134,4 @@ jobs:
         env:
           NPM_TAG: ${{ steps.npm-tag.outputs.NPM_TAG }}
         run: ./scripts/publish-npm-packages.sh --dist-tag "$NPM_TAG" --registry 'https://registry.npmjs.org/'
+

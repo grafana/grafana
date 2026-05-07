@@ -54,6 +54,34 @@ describe('getPanelDataSummary', () => {
       expect(summary.hasFieldType(FieldType.string)).toBe(false);
       expect(summary.hasFieldType(FieldType.boolean)).toBe(false);
     });
+
+    it('sets isInstant to true for instant data', () => {
+      const frames = [
+        createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 1, 1] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ];
+      const summary = getPanelDataSummary(frames);
+
+      expect(summary.isInstant).toBe(true);
+    });
+
+    it('sets isInstant to false for non-instant data', () => {
+      const frames = [
+        createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ];
+      const summary = getPanelDataSummary(frames);
+
+      expect(summary.isInstant).toBe(false);
+    });
   });
 
   describe('when called with multiple dataframes', () => {
@@ -89,6 +117,46 @@ describe('getPanelDataSummary', () => {
       expect(summary.hasFieldType(FieldType.number)).toBe(true);
       expect(summary.hasFieldType(FieldType.string)).toBe(true);
       expect(summary.hasFieldType(FieldType.boolean)).toBe(false);
+    });
+
+    it('sets isInstant to true for instant data', () => {
+      const frames = [
+        createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 1, 1] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+        createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 1, 1] },
+            { name: 'value', type: FieldType.number, values: [15, 25, 5] },
+          ],
+        }),
+      ];
+      const summary = getPanelDataSummary(frames);
+
+      expect(summary.isInstant).toBe(true);
+    });
+
+    it('sets isInstant to false for non-instant data (across all frames)', () => {
+      const frames = [
+        createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 1, 1] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+        createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [2, 2, 2] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ];
+      const summary = getPanelDataSummary(frames);
+
+      expect(summary.isInstant).toBe(false);
     });
   });
 });

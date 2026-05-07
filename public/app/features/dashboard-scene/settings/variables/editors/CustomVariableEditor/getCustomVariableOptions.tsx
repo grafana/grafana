@@ -1,5 +1,4 @@
-import { t } from '@grafana/i18n';
-import { CustomVariable, SceneVariable } from '@grafana/scenes';
+import { CustomVariable, type SceneVariable } from '@grafana/scenes';
 
 import { OptionsPaneItemDescriptor } from '../../../../../dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -12,7 +11,6 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
 
   return [
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.edit-pane.variable.custom-options.values', 'Values separated by comma'),
       id: 'custom-variable-values',
       render: ({ props }) => <PaneItem id={props.id} variable={variable} />,
     }),

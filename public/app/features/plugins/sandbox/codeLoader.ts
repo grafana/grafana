@@ -1,11 +1,12 @@
 import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getAppPluginMetas, getDatasourcePluginMeta, getPanelPluginMetas } from '@grafana/runtime/internal';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolvePluginUrlWithCache } from '../loader/pluginInfoCache';
 import { isHostedOnCDN, resolveModulePath } from '../loader/utils';
 
-import { SandboxEnvironment, SandboxPluginMeta } from './types';
+import { type SandboxEnvironment, type SandboxPluginMeta } from './types';
 
 function isSameDomainAsHost(url: string): boolean {
   const locationUrl = new URL(window.location.href);
@@ -121,16 +122,16 @@ export function patchSandboxEnvironmentPrototype(sandboxEnvironment: SandboxEnvi
   );
 }
 
-export function getPluginLoadData(pluginId: string): SandboxPluginMeta {
+export async function getPluginLoadData(pluginId: string): Promise<SandboxPluginMeta> {
   // find it in datasources
-  for (const datasource of Object.values(config.datasources)) {
-    if (datasource.type === pluginId) {
-      return datasource.meta;
-    }
+  const dsMeta = await getDatasourcePluginMeta(pluginId);
+  if (dsMeta) {
+    return dsMeta;
   }
 
   //find it in panels
-  for (const panel of Object.values(config.panels)) {
+  const panels = await getPanelPluginMetas();
+  for (const panel of panels) {
     if (panel.id === pluginId) {
       return panel;
     }
@@ -138,7 +139,8 @@ export function getPluginLoadData(pluginId: string): SandboxPluginMeta {
 
   //find it in apps
   //the information inside the apps object is more limited
-  for (const app of Object.values(config.apps)) {
+  const apps = await getAppPluginMetas();
+  for (const app of apps) {
     if (app.id === pluginId) {
       return {
         id: pluginId,

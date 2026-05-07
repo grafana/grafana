@@ -97,6 +97,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 	}
 
 	ctx = log.IncDBCallCounter(ctx)
+	ctx = log.IncDBQueryTimer(ctx, elapsed.Milliseconds())
 
 	// timestamp overridden and recorded AFTER query is run
 	_, span := h.tracer.Start(ctx, "database query", trace.WithTimestamp(begin))

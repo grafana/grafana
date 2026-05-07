@@ -15,6 +15,11 @@ func NewCheckTypeStep() *CheckTypeStep {
 	return &CheckTypeStep{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for CheckTypeStep.
+func (CheckTypeStep) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStep"
+}
+
 // +k8s:openapi-gen=true
 type CheckTypeSpec struct {
 	Name  string          `json:"name"`
@@ -26,4 +31,9 @@ func NewCheckTypeSpec() *CheckTypeSpec {
 	return &CheckTypeSpec{
 		Steps: []CheckTypeStep{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for CheckTypeSpec.
+func (CheckTypeSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeSpec"
 }

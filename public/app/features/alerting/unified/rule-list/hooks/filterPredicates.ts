@@ -1,16 +1,17 @@
 import { attempt, compact, isString } from 'lodash';
 import memoize from 'micro-memoize';
 
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import type { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import type { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { RulesFilter } from '../../search/rulesSearchParser';
+import { type RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid } from '../../utils/datasource';
 import { fuzzyMatches } from '../../utils/fuzzySearch';
 import { parseMatcher } from '../../utils/matchers';
-import { isPluginProvidedRule, prometheusRuleType } from '../../utils/rules';
+import { isPluginProvidedRule, prometheusRuleType, ruleUsesDefaultPolicy } from '../../utils/rules';
 import { normalizeHealth } from '../components/util';
 
 export type RuleFilterHandler = (rule: PromRuleDTO, filterState: RulesFilter) => boolean;
@@ -74,6 +75,10 @@ export function ruleMatches(rule: PromRuleDTO, filterState: RulesFilter, filterC
   }
 
   if (filterConfig.contactPoint && filterConfig.contactPoint(rule, filterState) === false) {
+    return false;
+  }
+
+  if (filterConfig.policy && filterConfig.policy(rule, filterState) === false) {
     return false;
   }
 
@@ -200,6 +205,31 @@ export function contactPointFilter(rule: PromRuleDTO, filterState: RulesFilter):
   return true;
 }
 
+export function policyFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+  if (filterState.policy) {
+    if (!prometheusRuleType.grafana.alertingRule(rule)) {
+      return false;
+    }
+
+    const isDefaultPolicyFilter = filterState.policy === USER_DEFINED_TREE_NAME;
+
+    if (isDefaultPolicyFilter) {
+      if (!ruleUsesDefaultPolicy(rule.notificationSettings)) {
+        return false;
+      }
+    } else {
+      if (!rule.notificationSettings) {
+        return false;
+      }
+      if (filterState.policy !== rule.notificationSettings.policy) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 export function dashboardUidFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
   if (filterState.dashboardUid) {
     if (!prometheusRuleType.alertingRule(rule)) {
@@ -259,7 +289,7 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
 }
 
 // Memoize the function to avoid calling getDatasourceAPIUid for the filter values multiple times
-const mapDataSourceNamesToUids = memoize(
+export const mapDataSourceNamesToUids = memoize(
   (names: string[]): string[] => {
     return names.map((name) => attempt(getDatasourceAPIUid, name)).filter(isString);
   },

@@ -1,4 +1,4 @@
-import { Point } from 'ol/geom';
+import { type Point } from 'ol/geom';
 import { toLonLat } from 'ol/proj';
 
 import { toDataFrame, FieldType } from '@grafana/data';
@@ -10,6 +10,18 @@ const longitude = [0, -74.1];
 const latitude = [0, 40.7];
 const geohash = ['9q94r', 'dr5rs'];
 const names = ['A', 'B'];
+
+/** WGS84 [lon, lat] pairs for `geohash` column values above — stable `toEqual` target (see location.ts + geohash decode). */
+const EXPECTED_WGS84_FROM_GEOHASH_FIELDS = [
+  [-122.01416015625001, 36.979980468750014],
+  [-73.98193359375, 40.71533203125],
+] as const;
+
+/** WGS84 [lon, lat] pairs for the shared `latitude` / `longitude` (or aliases) column values above. */
+const EXPECTED_WGS84_FROM_LAT_LON_FIELDS = [
+  [0, 0],
+  [-74.1, 40.69999999999999],
+] as const;
 const geojsonObject = {
   type: 'FeatureCollection',
   features: [
@@ -76,18 +88,9 @@ describe('handle location parsing', () => {
 
     const info = getGeometryField(frame, matchers);
     expect(info.field!.type).toBe(FieldType.geo);
-    expect(info.field!.values.map((p) => toLonLat((p as Point).getCoordinates()))).toMatchInlineSnapshot(`
-      [
-        [
-          -122.01416015625001,
-          36.979980468750014,
-        ],
-        [
-          -73.98193359375,
-          40.71533203125,
-        ],
-      ]
-    `);
+    expect(info.field!.values.map((p) => toLonLat((p as Point).getCoordinates()))).toEqual(
+      EXPECTED_WGS84_FROM_GEOHASH_FIELDS
+    );
   });
 
   it('auto should find coordinate fields', async () => {
@@ -102,21 +105,63 @@ describe('handle location parsing', () => {
 
     const matchers = await getLocationMatchers();
     const geo = getGeometryField(frame, matchers).field!;
-    expect(geo.values.map((p) => toLonLat((p as Point).getCoordinates()))).toMatchInlineSnapshot(`
-      [
-        [
-          0,
-          0,
-        ],
-        [
-          -74.1,
-          40.69999999999999,
-        ],
-      ]
-    `);
+    expect(geo.values.map((p) => toLonLat((p as Point).getCoordinates()))).toEqual(EXPECTED_WGS84_FROM_LAT_LON_FIELDS);
   });
 
-  it('auto support geohash fields', async () => {
+  it('auto should find coordinate fields using lat and lon aliases', async () => {
+    const frame = toDataFrame({
+      name: 'simple',
+      fields: [
+        { name: 'name', type: FieldType.string, values: names },
+        { name: 'lat', type: FieldType.number, values: latitude },
+        { name: 'lon', type: FieldType.number, values: longitude },
+      ],
+    });
+
+    const matchers = await getLocationMatchers({ mode: FrameGeometrySourceMode.Auto });
+    const fields = getLocationFields(frame, matchers);
+    expect(fields.mode).toEqual(FrameGeometrySourceMode.Coords);
+    expect(fields.latitude?.name).toEqual('lat');
+    expect(fields.longitude?.name).toEqual('lon');
+
+    const geo = getGeometryField(frame, matchers).field!;
+    expect(geo.values.map((p) => toLonLat((p as Point).getCoordinates()))).toEqual(EXPECTED_WGS84_FROM_LAT_LON_FIELDS);
+  });
+
+  it('auto should find coordinate fields using lng alias for longitude', async () => {
+    const frame = toDataFrame({
+      name: 'simple',
+      fields: [
+        { name: 'lat', type: FieldType.number, values: latitude },
+        { name: 'lng', type: FieldType.number, values: longitude },
+      ],
+    });
+
+    const matchers = await getLocationMatchers({ mode: FrameGeometrySourceMode.Auto });
+    const fields = getLocationFields(frame, matchers);
+    expect(fields.mode).toEqual(FrameGeometrySourceMode.Coords);
+    expect(fields.latitude?.name).toEqual('lat');
+    expect(fields.longitude?.name).toEqual('lng');
+
+    const geo = getGeometryField(frame, matchers).field!;
+    expect(geo.values.map((p) => toLonLat((p as Point).getCoordinates()))).toEqual(EXPECTED_WGS84_FROM_LAT_LON_FIELDS);
+  });
+
+  it('auto should find lookup field when latitude, geohash, and geo fields are absent', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'gdp', type: FieldType.number, values: [1, 2] },
+        { name: 'lookup', type: FieldType.string, values: ['MEX', 'USA'] },
+      ],
+    });
+
+    const matchers = await getLocationMatchers({ mode: FrameGeometrySourceMode.Auto });
+    const fields = getLocationFields(frame, matchers);
+    expect(fields.mode).toEqual(FrameGeometrySourceMode.Lookup);
+    expect(fields.lookup?.name).toEqual('lookup');
+  });
+
+  it('auto should find geohash field when values are strings', async () => {
     const frame = toDataFrame({
       name: 'simple',
       fields: [
@@ -129,17 +174,6 @@ describe('handle location parsing', () => {
       mode: FrameGeometrySourceMode.Auto,
     });
     const geo = getGeometryField(frame, matchers).field!;
-    expect(geo.values.map((p) => toLonLat((p as Point).getCoordinates()))).toMatchInlineSnapshot(`
-      [
-        [
-          -122.01416015625001,
-          36.979980468750014,
-        ],
-        [
-          -73.98193359375,
-          40.71533203125,
-        ],
-      ]
-    `);
+    expect(geo.values.map((p) => toLonLat((p as Point).getCoordinates()))).toEqual(EXPECTED_WGS84_FROM_GEOHASH_FIELDS);
   });
 });

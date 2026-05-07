@@ -9,10 +9,12 @@ import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfig
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
 import { isGitProvider } from '../utils/repositoryTypes';
 
+import { useStepStatus } from './StepStatusContext';
 import { getGitProviderFields } from './fields';
-import { WizardFormData } from './types';
+import { type WizardFormData } from './types';
 
 export const FinishStep = memo(function FinishStep() {
+  const { setStepStatusInfo, hasStepError } = useStepStatus();
   const {
     register,
     watch,
@@ -33,6 +35,18 @@ export const FinishStep = memo(function FinishStep() {
   useEffect(() => {
     setValue('repository.sync.enabled', true);
   }, [setValue]);
+
+  useEffect(() => {
+    if (!hasStepError) {
+      return;
+    }
+    const subscription = watch((_value, { name }) => {
+      if (name) {
+        setStepStatusInfo({ status: 'idle' });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, hasStepError, setStepStatusInfo]);
 
   // Get field configurations for git-based providers
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
@@ -127,6 +141,22 @@ export const FinishStep = memo(function FinishStep() {
               </>
             }
             disabled={!isPublic || !hasImageRenderer}
+          />
+        </Field>
+      )}
+
+      {isGithub && (
+        <Field
+          noMargin
+          label={t('provisioning.finish-step.label-webhook-url', 'Webhook URL')}
+          description={t(
+            'provisioning.finish-step.description-webhook-url',
+            'Overrides the auto-detected URL for registering webhooks.'
+          )}
+        >
+          <Input
+            {...register('repository.webhook.baseUrl')}
+            placeholder={t('provisioning.finish-step.placeholder-webhook-url', 'https://grafana.example.com')}
           />
         </Field>
       )}

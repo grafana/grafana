@@ -83,10 +83,6 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 			if p.JSONData.Navbar.BookmarkUrls != nil {
 				res.JSONData.Navbar.BookmarkUrls = p.JSONData.Navbar.BookmarkUrls
 			}
-
-			if p.JSONData.CookiePreferences != nil {
-				res.JSONData.CookiePreferences = p.JSONData.CookiePreferences
-			}
 		}
 	}
 
@@ -224,18 +220,6 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.HomeDashboardUID = *cmd.HomeDashboardUID
 	}
 
-	if cmd.CookiePreferences != nil {
-		cookies, err := parseCookiePreferences(cmd.CookiePreferences)
-		if err != nil {
-			return err
-		}
-
-		if preference.JSONData == nil {
-			preference.JSONData = &pref.PreferenceJSONData{}
-		}
-		preference.JSONData.CookiePreferences = cookies
-	}
-
 	if cmd.Timezone != nil {
 		preference.Timezone = *cmd.Timezone
 	}
@@ -276,24 +260,6 @@ func (s *Service) Delete(ctx context.Context, cmd *pref.DeleteCommand) error {
 	return s.store.Delete(ctx, cmd)
 }
 
-func parseCookiePreferences(prefs []pref.CookieType) (map[string]struct{}, error) {
-	allowed := map[pref.CookieType]struct{}{
-		"analytics":   {},
-		"performance": {},
-		"functional":  {},
-	}
-
-	m := map[string]struct{}{}
-	for _, c := range prefs {
-		if _, ok := allowed[c]; !ok {
-			return nil, pref.ErrUnknownCookieType.Errorf("'%s' is not an allowed cookie type", c)
-		}
-
-		m[string(c)] = struct{}{}
-	}
-	return m, nil
-}
-
 func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, error) {
 	jsonData := &pref.PreferenceJSONData{
 		Language:       cmd.Language,
@@ -304,13 +270,6 @@ func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, 
 	}
 	if cmd.QueryHistory != nil {
 		jsonData.QueryHistory = *cmd.QueryHistory
-	}
-	if cmd.CookiePreferences != nil {
-		cookies, err := parseCookiePreferences(cmd.CookiePreferences)
-		if err != nil {
-			return nil, err
-		}
-		jsonData.CookiePreferences = cookies
 	}
 
 	return jsonData, nil

@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -24,7 +23,8 @@ const (
 
 	ManagedRolePrefix = "managed:"
 
-	PluginRolePrefix = "plugins:"
+	PluginRolePrefix    = "plugins:"
+	PluginRoleUIDPrefix = "plugins_"
 
 	BasicRoleNoneUID  = "basic_none"
 	BasicRoleNoneName = "basic:none"
@@ -312,8 +312,8 @@ var (
 	}
 )
 
-// Declare OSS roles to the accesscontrol service
-func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
+// FixedRoleRegistrations returns all OSS core role registrations declared by this package.
+func FixedRoleRegistrations() []RoleRegistration {
 	ldapReader := RoleRegistration{
 		Role:   ldapReaderRole,
 		Grants: []string{RoleGrafanaAdmin},
@@ -361,11 +361,16 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
-	return service.DeclareFixedRoles(
+	return []RoleRegistration{
 		ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
 		settingsReader, statsReader, usersReader, usersWriter,
 		authenticationConfigWriter, generalAuthConfigWriter, usageStatsReader,
-	)
+	}
+}
+
+// Declare OSS roles to the accesscontrol service
+func DeclareFixedRoles(service Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {

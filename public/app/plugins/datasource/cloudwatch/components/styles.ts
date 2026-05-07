@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   table: css({
@@ -10,7 +10,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   selectedLogGroupsContainer: css({
     marginLeft: theme.spacing(0.5),
-    marginBottom: theme.spacing(0.5),
     display: 'flex',
     flexFlow: 'wrap',
     gap: theme.spacing(1),

@@ -1,20 +1,20 @@
 import { map } from 'rxjs/operators';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
-  DataTransformerInfo,
+  type DataTransformerInfo,
   FieldMatcherID,
   getFieldDisplayName,
   getFieldMatcher,
-  MatcherConfig,
+  type MatcherConfig,
   reduceField,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import {
   evaluateFieldMappings,
-  FieldToConfigMapping,
+  type FieldToConfigMapping,
   getFieldConfigFromFrame,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
@@ -65,9 +65,8 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
     }
 
     const outputFrame: DataFrame = {
+      ...frame,
       fields: [],
-      length: frame.length,
-      refId: frame.refId,
     };
 
     for (const field of frame.fields) {

@@ -11,13 +11,8 @@ failed_checks=()
 for file in "$ARTIFACTS_DIR"/*.tgz; do
   echo "🔍 Checking NPM package: $file"
 
-  # TODO: Fix the error with @grafana/i18n/eslint-resolution
-  if [[ "$file" == *"@grafana-i18n"* ]]; then
-    ATTW_FLAGS="--profile node16"
-  fi
-
-  # shellcheck disable=SC2086
-  if ! yarn attw "$file" --ignore-rules "false-cjs" $ATTW_FLAGS; then
+  # If you need to debug ATTW issues, pass "--format json" to get verbose output.
+  if ! NODE_OPTIONS="-C @grafana-app/source" yarn attw "$file" --ignore-rules "false-cjs" --profile "node16"; then
     echo "attw check failed for $file"
     echo ""
     failed_checks+=("$file - yarn attw")

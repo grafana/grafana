@@ -1,12 +1,12 @@
-import { AnnotationQuery, getDataSourceRef, NavModelItem } from '@grafana/data';
+import { type AnnotationQuery, getDataSourceRef, type NavModelItem } from '@grafana/data';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 import { AnnotationSettingsEdit, newAnnotationName } from '../AnnotationSettings/AnnotationSettingsEdit';
 import { AnnotationSettingsList } from '../AnnotationSettings/AnnotationSettingsList';
 
-import { SettingsPageProps } from './types';
+import { type SettingsPageProps } from './types';
 
 export function AnnotationsSettings({ dashboard, editIndex, sectionNav }: SettingsPageProps) {
   const onNew = () => {

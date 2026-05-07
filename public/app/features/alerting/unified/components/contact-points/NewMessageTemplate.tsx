@@ -1,17 +1,21 @@
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 
+import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { createRelativeUrl } from '../../utils/url';
+import { getTemplateParentUrl } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { TemplateForm } from '../receivers/TemplateForm';
 
-import { ActiveTab } from './ContactPoints';
-
 function NewMessageTemplatePage() {
+  const { navId } = useTemplatesNav();
+  const useV2Nav = config.featureToggles.alertingNavigationV2;
+  const parentUrl = getTemplateParentUrl(useV2Nav);
+
   return (
     <AlertmanagerPageWrapper
-      navId="receivers"
+      navId={navId}
       accessType="notification"
       pageNav={{
         id: 'templates',
@@ -19,9 +23,7 @@ function NewMessageTemplatePage() {
         subTitle: t('alerting.notification-templates.new.subTitle', 'Create a new group of notification templates'),
         parentItem: {
           text: t('alerting.common.titles.notification-templates', 'Notification Templates'),
-          url: createRelativeUrl('/alerting/notifications', {
-            tab: ActiveTab.NotificationTemplates,
-          }),
+          url: parentUrl,
         },
       }}
     >

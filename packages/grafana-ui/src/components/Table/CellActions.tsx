@@ -3,13 +3,13 @@ import * as React from 'react';
 
 import { t } from '@grafana/i18n';
 
-import { IconSize } from '../../types/icon';
+import { type IconSize } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
-import { TooltipPlacement } from '../Tooltip/types';
+import { type TooltipPlacement } from '../Tooltip/types';
 
 import { TableCellInspectorMode } from './TableCellInspector';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type TableCellProps } from './types';
 import { getTextAlign } from './utils';
 
 interface CellActionProps extends TableCellProps {
@@ -63,7 +63,23 @@ export function CellActions({
             tooltip={t('grafana-ui.table.cell-inspect', 'Inspect value')}
             onClick={() => {
               if (setInspectCell) {
-                setInspectCell({ value: cell.value, mode: previewMode });
+                let mode = TableCellInspectorMode.text;
+                let inspectValue = cell.value;
+                try {
+                  const parsed = typeof inspectValue === 'string' ? JSON.parse(inspectValue) : inspectValue;
+                  const isPlainObj =
+                    typeof parsed === 'object' &&
+                    parsed !== null &&
+                    !Array.isArray(parsed) &&
+                    (Object.getPrototypeOf(parsed) === Object.prototype || Object.getPrototypeOf(parsed) === null);
+                  if (Array.isArray(parsed) || isPlainObj) {
+                    inspectValue = JSON.stringify(parsed, null, 2);
+                    mode = TableCellInspectorMode.code;
+                  }
+                } catch {
+                  // do nothing
+                }
+                setInspectCell({ value: inspectValue, mode });
               }
             }}
             {...commonButtonProps}

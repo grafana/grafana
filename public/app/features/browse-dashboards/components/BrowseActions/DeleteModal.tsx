@@ -1,11 +1,12 @@
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
-import { Alert, ConfirmModal, Text, Space } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { Alert, ConfirmModal, Space, Text } from '@grafana/ui';
 import { useGetAffectedItems, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
-import { DashboardTreeSelection } from '../../types';
+import { type DashboardTreeSelection } from '../../types';
+import { DeletedDashboardsInfo } from '../DeletedDashboardsInfo';
 
 import { DescendantCount } from './DescendantCount';
 
@@ -38,7 +39,6 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
         folder: Object.keys(selectedItems.folder).length,
       },
       source: 'browse_dashboards',
-      restore_enabled: Boolean(config.featureToggles.restoreDashboards),
     });
     setIsDeleting(true);
     try {
@@ -54,19 +54,8 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
     <ConfirmModal
       body={
         <>
-          {config.featureToggles.restoreDashboards && (
-            <>
-              <Text element="p">
-                <Trans i18nKey="browse-dashboards.action.delete-modal-restore-dashboards-text">
-                  This action will delete the selected folders immediately. Deleted dashboards will be kept in the
-                  history for up to 12 months and can be restored by your organization administrator during that time.
-                  The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached.
-                  Folders cannot be restored.
-                </Trans>
-              </Text>
-              <Space v={2} />
-            </>
-          )}
+          <DeletedDashboardsInfo target="folder" />
+          <Space v={2} />
           <Text element="p">
             {onlyOneFolderSelected ? (
               <Trans

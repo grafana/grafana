@@ -5,6 +5,8 @@ keywords:
   - dashboard provisioning
   - CI/CD
   - GitHub Actions
+  - gcx
+  - CLI
 labels:
   products:
     - cloud
@@ -19,26 +21,40 @@ aliases:
 
 # Automate dashboard provisioning with CI/CD
 
-## Introduction
+Managing Grafana dashboards manually can be inefficient and error-prone. With the Grafana Foundation SDK you can define dashboards using strongly typed code, commit them to version control systems, and automatically deploy them using GitHub Actions.
 
-Managing Grafana dashboards manually can be inefficient and error-prone. As you saw in the Getting Started guide, we can define dashboards using strongly typed code with the Grafana Foundation SDK. We can then commit them to version controls, and automatically deploy them using GitHub Actions.
+## Why automate?
 
-This guide walks through:
+Automating Grafana dashboard deployment eliminates the need for manual dashboard creation and updates, ensuring that dashboards remain consistent across environments.
 
-- Generating a Grafana dashboard as code
-- Formatting it for Kubernetes-style deployment
-- Using GitHub Actions to deploy the dashboard
-- Checking if the dashboard exists and updating it if needed
+By defending dashboards as code and managing them through CI/CD such as GitHub Actions, you will gain full version control, making it easy to track changes over time and roll back if needed. This also prevents duplication, as the workflow intelligently checks whether a dashboard exists before deciding to create or update it.
 
-By the end, every change to your dashboard code will be automatically created or updated in your Grafana instance without manual intervention.
+With this fully automated CI/CD pipeline, you can focus on improving your dashboards rather than manually uploading JSON files to Grafana.
 
 {{< youtube id="cFnO8kVOaAI" >}}
 
-You can find the full example source code in the [intro-to-foundation-sdk repository](https://github.com/grafana/intro-to-foundation-sdk/tree/main/github-actions-example).
+You can find the full example source code in the [Introduction to the Foundation SDK](https://github.com/grafana/intro-to-foundation-sdk/tree/main/github-actions-example) GitHub repository.
 
-## 1. Generating the dashboard JSON
+## Overview
 
-Before deploying a dashboard, we need to define it in code using the Grafana Foundation SDK. We ran through an example of this in the Getting Started guide, however, in order to comply with the Kubernetes resource compatible API that Grafana exposes, we’ll make some changes to the code to output the dashboard JSON in the appropriate format.
+This guide shows you how to:
+
+1. Generate a Grafana dashboard as code and format it for Kubernetes-style deployment
+2. Use GitHub Actions to deploy, verify, and update the dashboard
+
+By the end, you'll be able to provision your dashboard as code, and every change to your dashboard will be automatically created or updated in your Grafana instance without manual intervention.
+
+## 1. Generate the dashboard JSON
+
+Before deploying a dashboard, [define it as code using the Grafana Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/foundation-sdk/#create-a-dashboard/).
+
+Since Grafana exposes a Kubernetes resource compatible API, you need to make some changes to the code to output the dashboard JSON in the appropriate format.
+
+This script:
+
+- Generates a Grafana dashboard JSON file
+- Wraps it in a Kubernetes-style API format (`apiVersion`, `kind`, `metadata`, `spec`)
+- Saves it as `dashboard.json` for deployment
 
 {{< code >}}
 
@@ -81,7 +97,7 @@ func main() {
 	}
 
 	dashboardWrapper := DashboardWrapper{
-		APIVersion: "dashboard.grafana.app/v1beta1",
+		APIVersion: "dashboard.grafana.app/v1",
 		Kind:       "Dashboard",
 		Metadata: Metadata{
 			Name: *dashboard.Uid,
@@ -119,7 +135,7 @@ const dashboard = new DashboardBuilder('My Dashboard')
 
 // Convert to Kubernetes-style format
 const dashboardWrapper = {
-  apiVersion: "dashboard.grafana.app/v1beta1",
+  apiVersion: "dashboard.grafana.app/v1",
   kind: "Dashboard",
   metadata: {
     name: dashboard.uid!
@@ -136,24 +152,19 @@ console.log(`Dashboard JSON:\n${}`);
 
 {{< /code >}}
 
-This script:
+## 2. Automate deployment with GitHub Actions
 
-- Generates a Grafana dashboard JSON file
-- Wraps it in a Kubernetes-style API format (`apiVersion`, `kind`, `metadata`, `spec`)
-- Saves it as `dashboard.json` for deployment
+Next, set up GitHub Actions to automate the deployment of a Grafana dashboard using the Foundation SDK and the [`gcx` CLI tool](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) to:
 
-## 2. Automating deployment with GitHub Actions
-
-Next, we’ll set up GitHub Actions to:
-Extract the dashboard name from `dashboard.json`
-Check if the dashboard already exists within our Grafana instance
-Update it if it does, create it if it doesn’t
+- Extract the dashboard name from `dashboard.json`
+- Check if the dashboard already exists within our Grafana instance
+- Update it if it does, create it if it doesn’t
 
 {{< admonition type="note" >}}
-The following GitHub Action configuration assumes you are using a Go-based dashboard generator. If you are using one of the other languages that the Foundation SDK supports, please modify the **Generate Dashboard JSON** step accordingly.
+The following GitHub Action configuration assumes you are using a Go-based dashboard generator. If you're using one of the other languages that the Foundation SDK supports, modify the **Generate Dashboard JSON** step accordingly.
 {{< /admonition >}}
 
-`.github/workflows/deploy-dashboard.yml`
+The `.github/workflows/deploy-dashboard.yml` deploy workflow looks like:
 
 ```yaml
 name: Deploy Grafana Dashboard
@@ -179,18 +190,18 @@ jobs:
       - name: Verify Go version
         run: go version
 
-      - name: Download and Extract grafanactl
+      - name: Download and Extract gcx
         run: |
-          curl -L -o grafanactl-x86_64.tar.gz "https://github.com/grafana/grafanactl/releases/download/${{ vars.GRAFANACTL_VERSION }}/grafanactl_Linux_x86_64.tar.gz"
-          tar -xzf grafanactl-x86_64.tar.gz
-          chmod +x grafanactl
-          sudo mv grafanactl /usr/local/bin/grafanactl
+          curl -L -o gcx-x86_64.tar.gz "https://github.com/grafana/gcx/releases/download/${{ vars.GCX_VERSION }}/gcx_Linux_x86_64.tar.gz"
+          tar -xzf gcx-x86_64.tar.gz
+          chmod +x gcx
+          sudo mv gcx /usr/local/bin/gcx
 
       - name: Generate Dashboard JSON
         working-directory: ./github-actions-example
         run: go run main.go
 
-      - name: Deploy Dashboard with grafanactl
+      - name: Deploy Dashboard with gcx
         env:
           GRAFANA_SERVER: ${{ vars.GRAFANA_SERVER }}
           GRAFANA_STACK_ID: ${{ vars.GRAFANA_STACK_ID }}
@@ -198,7 +209,7 @@ jobs:
         run: |
           if [ -f dashboard.json ]; then
             echo "dashboard.json exists, deploying dashboard."
-            grafanactl resources push dashboards --path ./dashboard.json
+            gcx resources push dashboards --path ./dashboard.json
           else
             echo "dashboard.json does not exist."
             exit 1
@@ -206,32 +217,28 @@ jobs:
         working-directory: ./github-actions-example
 ```
 
-## 3. Explaining this GitHub Action
-
-This GitHub Action automates the deployment of a Grafana dashboard using the Foundation SDK and the `grafanactl` CLI tool.
-
 ### 1. Checkout and set up Go
 
-The first few steps:
+To set up Go:
 
 - Check out the repository to access the project code.
 - Install Go 1.24.6 using the `actions/setup-go` action.
 - Verify Go is properly installed.
 
-### 2. Download and install `grafanactl`
+### 2. Download and install `gcx`
 
-This step downloads the `grafanactl` CLI from GitHub using a version defined in `vars.GRAFANACTL_VERSION`. It unpacks the tarball, makes it executable, and moves it to a location in the system `PATH`.
+Next, download the `gcx` CLI from GitHub using the version defined in `vars.GCX_VERSION`. It unpacks the tarball, makes it executable, and moves it to a location in the system `PATH`.
 
 ### 3. Generate the dashboard JSON
 
-Runs the dashboard generator (`main.go`) from the `./github-actions-example` directory. This should produce a `dashboard.json` file that contains the Grafana dashboard definition.
+Next, run the dashboard generator (`main.go`) from the `./github-actions-example` director to produce a `dashboard.json` file that contains the Grafana dashboard definition.
 
-### 4. Deploy the dashboard with `grafanactl`
+### 4. Deploy the dashboard with `gcx`
 
-If `dashboard.json` exists, it is deployed to your Grafana instance using:
+If `dashboard.json` already exists, it is deployed to your Grafana instance using:
 
 ```bash
-grafanactl resources push dashboards --path ./dashboard.json
+gcx resources push dashboards --path ./dashboard.json
 ```
 
 This command authenticates against Grafana using the following environment variables:
@@ -242,19 +249,11 @@ This command authenticates against Grafana using the following environment varia
 
 ### GitHub variables and secrets used
 
-These are configured in your repository under **Settings → Security → Secrets and variables → Actions**:
+Verify these variables are configured in your repository under **Settings > Security > Secrets and variables > Actions**:
 
-- `vars.GRAFANACTL_VERSION`: Version of `grafanactl` to install
+- `vars.GCX_VERSION`: Version of `gcx` to install
 - `vars.GRAFANA_SERVER`: The URL of your Grafana instance
 - `vars.GRAFANA_STACK_ID`: The stack ID in Grafana
 - `secrets.GRAFANA_TOKEN`: Grafana API token
 
 This action ensures that every push to `main` will regenerate and deploy your latest dashboard definition to Grafana.
-
-### Why automate this?
-
-Automating Grafana dashboard deployment eliminates the need for manual dashboard creation and updates, ensuring that dashboards remain consistent across environments. By defending dashboards as code and managing them through CI/CD such as GitHub Actions, we gain full version control, making it easy to track changes over time and roll back if needed. This also prevents duplication, as the workflow intelligently checks whether a dashboard exists before deciding to create or update it. With this fully automated CI/CD pipeline, developers can focus on improving their dashboards rather than manually uploading JSON files to Grafana.
-
-### Conclusion
-
-By integrating the Grafana Foundation SDK with GitHub Actions, we have successfully automated the entire lifecycle of Grafana dashboards. This setup allows us to define dashboards programmatically, convert them into a Kubernetes-compatible format, and deploy them automatically. With each push to the repository, the workflow ensures that dashboards are either created or updated as needed. This not only improves the efficiency but also guarantees that all deployed dashboards are always in sync with the latest code changes, reducing manual effort and potential errors.

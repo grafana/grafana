@@ -11,9 +11,14 @@ import (
 // SyncOptionsApplyConfiguration represents a declarative configuration of the SyncOptions type for use
 // with apply.
 type SyncOptionsApplyConfiguration struct {
-	Enabled         *bool                                `json:"enabled,omitempty"`
-	Target          *provisioningv0alpha1.SyncTargetType `json:"target,omitempty"`
-	IntervalSeconds *int64                               `json:"intervalSeconds,omitempty"`
+	// Enabled must be saved as true before any sync job will run
+	Enabled *bool `json:"enabled,omitempty"`
+	// Where values should be saved
+	Target *provisioningv0alpha1.SyncTargetType `json:"target,omitempty"`
+	// The interval between sync runs.
+	// The system defines a default value for this field, which will overwrite the
+	// user-defined one in case the latter is zero or lower than the system-defined one.
+	IntervalSeconds *int64 `json:"intervalSeconds,omitempty"`
 }
 
 // SyncOptionsApplyConfiguration constructs a declarative configuration of the SyncOptions type for use with

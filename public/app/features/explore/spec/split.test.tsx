@@ -1,7 +1,7 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { type ComponentProps } from 'react';
+import type AutoSizer from 'react-virtualized-auto-sizer';
 
 import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 
@@ -122,7 +122,7 @@ describe('Handles open/close splits and related events in UI and URL', () => {
 
     // Make sure we render the logs panel
     await waitFor(() => {
-      const logsPanels = screen.getAllByText(/^Logs$/);
+      const logsPanels = screen.getAllByRole('heading', { name: /^Logs$/ });
       expect(logsPanels.length).toBe(2);
     });
 

@@ -3,12 +3,12 @@ import { useEffectOnce } from 'react-use';
 import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 import { Tooltip, useForceUpdate } from '@grafana/ui';
 import { LINK_ICON_MAP } from 'app/features/dashboard-scene/settings/links/utils';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 import { DashboardLinkButton, DashboardLinksDashboard } from './DashboardLinksDashboard';
 

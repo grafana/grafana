@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { FormEvent, HTMLProps, useEffect, useRef, type JSX } from 'react';
+import { type FormEvent, type HTMLProps, useEffect, useRef, type JSX } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, getInputStyles, sharedInputStyle, Tooltip, Icon, Spinner } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
-import { Role } from 'app/types/accessControl';
+import { type Role } from 'app/types/accessControl';
 
 import { ValueContainer } from './ValueContainer';
 import { ROLE_PICKER_WIDTH } from './constants';

@@ -92,9 +92,9 @@ The data is converted as follows:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-candles-volume-v11.6.png" max-width="750px" alt="A candlestick visualization showing the price movements of specific asset." >}}
 
-## Zoom panel time range
+## Pan and zoom panel time range
 
-{{< docs/shared lookup="visualizations/panel-zoom.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/panel-pan-zoom.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Configuration options
 
@@ -189,6 +189,10 @@ The following screen recording shows this option in a time series visualization:
 ### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Annotation options
+
+{{< docs/shared lookup="visualizations/annotations/options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Graph styles options
 

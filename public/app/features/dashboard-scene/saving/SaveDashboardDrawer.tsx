@@ -1,11 +1,11 @@
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
@@ -102,7 +102,14 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     }
 
     if (isProvisionedNG) {
-      return <SaveProvisionedDashboard dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+      return (
+        <SaveProvisionedDashboard
+          dashboard={dashboard}
+          changeInfo={changeInfo}
+          drawer={model}
+          saveAsCopy={saveAsCopy}
+        />
+      );
     }
 
     if (saveAsCopy || changeInfo.isNew) {

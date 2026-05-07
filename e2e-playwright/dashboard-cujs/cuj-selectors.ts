@@ -1,6 +1,6 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
-import { expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 export function getAdHocFilterPills(page: Page) {
   return page.getByLabel(/^Edit filter with key/);
@@ -64,6 +64,17 @@ export function getScopeTreeCheckboxes(page: Page) {
 
 export function getScopesDashboards(page: Page) {
   return page.locator('[data-testid^="scopes-dashboards-"][role="treeitem"]');
+}
+
+/**
+ * Clicks the first available dashboard in the scopes dashboard list.
+ */
+export async function clickFirstScopesDashboard(page: Page) {
+  const dashboards = getScopesDashboards(page);
+  // Wait for at least one dashboard to be visible
+  await expect(dashboards.first()).toBeVisible({ timeout: 10000 });
+  // Click - Playwright will automatically wait for the element to be actionable
+  await dashboards.first().click();
 }
 
 export function getScopesDashboardsSearchInput(page: Page) {

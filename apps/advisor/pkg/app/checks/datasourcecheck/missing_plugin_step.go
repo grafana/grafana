@@ -15,7 +15,7 @@ import (
 
 type missingPluginStep struct {
 	PluginStore    pluginstore.Store
-	PluginRepo     repo.Service
+	PluginRepo     checks.PluginInfoGetter
 	GrafanaVersion string
 }
 
@@ -50,7 +50,7 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 			},
 		}
 		plugins, err := s.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
-			IncludeDeprecated: true,
+			IncludeDeprecated: false, // Deprecated plugins are not visible in the catalog
 			Plugins:           []string{ds.Type},
 		}, repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH))
 		if err != nil {

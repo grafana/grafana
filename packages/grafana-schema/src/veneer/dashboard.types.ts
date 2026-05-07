@@ -1,7 +1,7 @@
-import { DataSourceRef as CommonDataSourceRef, DataSourceRef, DataTopic } from '../common/common.gen';
-import * as raw from '../raw/dashboard/x/dashboard_types.gen';
+import { type DataSourceRef as CommonDataSourceRef, type DataSourceRef, type DataTopic } from '../common/common.gen';
+import * as raw from '../raw/dashboard/x/types.gen';
 
-import { DataQuery } from './common.types';
+import { type DataQuery } from './common.types';
 
 export type { CommonDataSourceRef as DataSourceRef };
 

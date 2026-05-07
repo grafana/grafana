@@ -113,12 +113,11 @@ func TestRenderErrorImage(t *testing.T) {
 
 func TestRenderUnavailableError(t *testing.T) {
 	rs := RenderingService{
-		Cfg:                   &setting.Cfg{},
-		log:                   log.New("test"),
-		RendererPluginManager: &dummyPluginManager{},
+		Cfg: &setting.Cfg{},
+		log: log.New("test"),
 	}
 	opts := Opts{ErrorOpts: ErrorOpts{ErrorRenderUnavailable: true}}
-	result, err := rs.Render(context.Background(), RenderPNG, opts, nil)
+	result, err := rs.Render(context.Background(), RenderPNG, opts)
 	assert.Equal(t, ErrRenderUnavailable, err)
 	assert.Nil(t, result)
 }
@@ -132,9 +131,14 @@ func TestRenderLimitImage(t *testing.T) {
 			HomePath:          path,
 			RendererServerUrl: "http://localhost:8081/render",
 		},
-		inProgressCount: 2,
-		log:             log.New("test"),
+		log: log.New("test"),
+		perRequestRenderKeyProvider: &jwtRenderKeyProvider{
+			authToken: []byte("test"),
+			keyExpiry: time.Hour,
+			log:       log.New("test"),
+		},
 	}
+	rs.inProgressCount.Store(2)
 
 	tests := []struct {
 		name     string
@@ -161,8 +165,8 @@ func TestRenderLimitImage(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := Opts{Theme: tc.theme, CommonOpts: CommonOpts{ConcurrentLimit: 1}}
-			result, err := rs.Render(context.Background(), RenderPNG, opts, nil)
-			assert.NoError(t, err)
+			result, err := rs.Render(t.Context(), RenderPNG, opts)
+			require.NoError(t, err)
 			assert.Equal(t, tc.expected, result.FilePath)
 		})
 	}
@@ -173,15 +177,21 @@ func TestRenderLimitImageError(t *testing.T) {
 		Cfg: &setting.Cfg{
 			RendererServerUrl: "http://localhost:8081/render",
 		},
-		inProgressCount: 2,
-		log:             log.New("test"),
+		log: log.New("test"),
+		perRequestRenderKeyProvider: &jwtRenderKeyProvider{
+			authToken: []byte("test"),
+			keyExpiry: time.Hour,
+			log:       log.New("test"),
+		},
 	}
+	rs.inProgressCount.Store(2)
+
 	opts := Opts{
 		CommonOpts: CommonOpts{ConcurrentLimit: 1},
 		ErrorOpts:  ErrorOpts{ErrorConcurrentLimitReached: true},
 		Theme:      models.ThemeDark,
 	}
-	result, err := rs.Render(context.Background(), RenderPNG, opts, nil)
+	result, err := rs.Render(t.Context(), RenderPNG, opts)
 	assert.Equal(t, ErrConcurrentLimitReached, err)
 	assert.Nil(t, result)
 }
@@ -189,8 +199,9 @@ func TestRenderLimitImageError(t *testing.T) {
 func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 	cfg := setting.NewCfg()
 	rs := &RenderingService{
-		Cfg: cfg,
-		log: log.New("rendering-test"),
+		Cfg:       cfg,
+		log:       log.New("rendering-test"),
+		netClient: &http.Client{},
 	}
 
 	t.Run("When renderer responds with correct version should return that version", func(t *testing.T) {
@@ -220,6 +231,18 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, version, "1.0.0")
+	})
+
+	t.Run("When renderer responds with 408 it returns a ErrServerTimeout error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusRequestTimeout)
+		}))
+		defer server.Close()
+
+		rs.Cfg.RendererServerUrl = server.URL + "/render"
+
+		_, err := rs.getRemotePluginVersion()
+		require.ErrorIs(t, err, ErrServerTimeout)
 	})
 
 	t.Run("When renderer responds with 500 should retry until success", func(t *testing.T) {
@@ -259,7 +282,7 @@ func TestProvideService(t *testing.T) {
 	cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
 
 	t.Run("Default configuration values", func(t *testing.T) {
-		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, "", rs.Cfg.RendererServerUrl)
@@ -271,7 +294,7 @@ func TestProvideService(t *testing.T) {
 		cfg.RendererServerUrl = "http://custom-renderer:8081"
 		cfg.RendererCallbackUrl = ""
 
-		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, "http://custom-renderer:8081", rs.Cfg.RendererServerUrl)
@@ -283,7 +306,7 @@ func TestProvideService(t *testing.T) {
 		cfg.RendererServerUrl = "http://custom-renderer:8081"
 		cfg.RendererCallbackUrl = "http://public-grafana.com/"
 
-		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, "http://custom-renderer:8081", rs.Cfg.RendererServerUrl)
@@ -295,7 +318,7 @@ func TestProvideService(t *testing.T) {
 		cfg.RendererServerUrl = ""
 		cfg.RendererCallbackUrl = "https://public-grafana.com/"
 
-		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, "", rs.Cfg.RendererServerUrl)
@@ -307,7 +330,7 @@ func TestProvideService(t *testing.T) {
 		cfg.RendererServerUrl = ""
 		cfg.RendererCallbackUrl = "https://public-grafana.com"
 
-		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, "", rs.Cfg.RendererServerUrl)
@@ -319,7 +342,78 @@ func TestProvideService(t *testing.T) {
 		cfg.RendererServerUrl = ""
 		cfg.RendererCallbackUrl = "http://public{grafana"
 
-		_, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+		_, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
 		require.Error(t, err)
+	})
+
+	t.Run("renderAuthJWT", func(t *testing.T) {
+		t.Run("with an empty renderer auth token", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AppURL = "http://app-url"
+			cfg.RendererServerUrl = "https://public-grafana.com/"
+			cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
+			cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
+			cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
+			cfg.RendererAuthToken = "   "
+
+			t.Run("in dev mode returns an error", func(t *testing.T) {
+				cfg.Env = setting.Dev
+				_, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				require.Error(t, err)
+			})
+
+			t.Run("in prod mode returns an error", func(t *testing.T) {
+				cfg.Env = setting.Prod
+				_, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				require.Error(t, err)
+			})
+		})
+
+		t.Run("with the default renderer auth token", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AppURL = "http://app-url"
+			cfg.RendererServerUrl = "https://public-grafana.com/"
+			cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
+			cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
+			cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
+			cfg.RendererAuthToken = setting.DefaultRendererAuthToken
+
+			t.Run("in dev mode does not return an error", func(t *testing.T) {
+				cfg.Env = setting.Dev
+				rs, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				require.NoError(t, err)
+				require.NotNil(t, rs)
+			})
+
+			t.Run("in prod mode returns an error", func(t *testing.T) {
+				cfg.Env = setting.Prod
+				_, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				require.Error(t, err)
+			})
+		})
+
+		t.Run("with non-default renderer auth token", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AppURL = "http://app-url"
+			cfg.RendererServerUrl = "https://public-grafana.com/"
+			cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
+			cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
+			cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
+			cfg.RendererAuthToken = "some-value"
+
+			t.Run("in dev mode does not return an error", func(t *testing.T) {
+				cfg.Env = setting.Env
+				rs, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				require.NoError(t, err)
+				require.NotNil(t, rs)
+			})
+
+			t.Run("in prod mode does not return an error", func(t *testing.T) {
+				cfg.Env = setting.Prod
+				rs, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				require.NoError(t, err)
+				require.NotNil(t, rs)
+			})
+		})
 	})
 }

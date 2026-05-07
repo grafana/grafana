@@ -1,19 +1,21 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { useSceneObjectState, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
-import { PanelEditor } from './PanelEditor';
+import { type PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
@@ -113,7 +115,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       )}
       <div {...containerProps}>
         <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
-          <VizWrapper panel={panel} tableView={tableView} />
+          <VizWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
         </div>
         {showLibraryPanelSaveModal && libraryPanel && (
           <SaveLibraryVizPanelModal
@@ -150,6 +152,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
                   />
                 </div>
               )}
+              {/* @ts-expect-error - dataPane is a union type of PanelDataPane and PanelDataPaneNext */}
               {!splitterState.collapsed && <dataPane.Component model={dataPane} />}
             </div>
           </>
@@ -162,15 +165,30 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 interface VizWrapperProps {
   panel: VizPanel;
   tableView?: VizPanel;
+  dashboard: DashboardScene;
 }
 
-function VizWrapper({ panel, tableView }: VizWrapperProps) {
+function VizWrapper({ panel, tableView, dashboard }: VizWrapperProps) {
   const styles = useStyles2(getStyles);
-  const panelToShow = tableView ?? panel;
+  const soloPanelContext = useDefineSoloPanelContext(panel.getPathId());
+
+  // This is to make sure the panel always remains active even when tableView is
+  // rendered as the queries tab and other things subscribe / update panel state
+  useSceneObjectState(panel, { shouldActivateOrKeepAlive: true });
+
+  if (tableView) {
+    return (
+      <div className={styles.vizWrapper}>
+        <tableView.Component model={tableView} />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.vizWrapper}>
-      <panelToShow.Component model={panelToShow} />
+      <SoloPanelContextProvider value={soloPanelContext!} singleMatch={true} dashboard={dashboard}>
+        <dashboard.state.body.Component model={dashboard.state.body} />
+      </SoloPanelContextProvider>
     </div>
   );
 }

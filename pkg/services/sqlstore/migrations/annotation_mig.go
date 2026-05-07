@@ -261,8 +261,8 @@ func RunDashboardUIDMigrations(sess *xorm.Session, driverName string, logger log
 	logger.Info("Starting batched dashboard_uid migration for annotations (newest first)", "batchSize", batchSize)
 	updateSQL := `UPDATE annotation
 		SET dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = annotation.dashboard_id)
-		WHERE dashboard_uid IS NULL 
-		  AND dashboard_id != 0 
+		WHERE dashboard_uid IS NULL
+		  AND dashboard_id != 0
 		  AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = annotation.dashboard_id)
 		  AND annotation.id IN (
 			SELECT id FROM annotation
@@ -285,19 +285,19 @@ func RunDashboardUIDMigrations(sess *xorm.Session, driverName string, logger log
 			LIMIT $1
 		 )`
 	case MySQL:
-		updateSQL = `UPDATE annotation
-		INNER JOIN dashboard ON annotation.dashboard_id = dashboard.id
-		SET annotation.dashboard_uid = dashboard.uid
-		WHERE annotation.dashboard_uid IS NULL 
-		  AND annotation.dashboard_id != 0
-		  AND annotation.id IN (
-			SELECT id FROM (
-				SELECT id FROM annotation
-				WHERE dashboard_uid IS NULL AND dashboard_id != 0
-				ORDER BY id DESC
-				LIMIT ?
-			) AS batch
-		  )`
+		updateSQL = `UPDATE annotation AS a
+		JOIN dashboard AS d ON a.dashboard_id = d.id
+		JOIN (
+		  SELECT id
+		  FROM annotation
+		  WHERE dashboard_uid IS NULL
+		  AND dashboard_id != 0
+		  ORDER BY id DESC
+		  LIMIT ?
+		) AS batch ON batch.id = a.id
+		SET a.dashboard_uid = d.uid
+		  WHERE a.dashboard_uid IS NULL
+		  AND a.dashboard_id != 0`
 	}
 
 	updatedTotal := int64(0)

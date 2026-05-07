@@ -23,6 +23,12 @@ type Team struct {
 	Spec TeamSpec `json:"spec" yaml:"spec"`
 }
 
+func NewTeam() *Team {
+	return &Team{
+		Spec: *NewTeamSpec(),
+	}
+}
+
 func (o *Team) GetSpec() any {
 	return o.Spec
 }
@@ -222,6 +228,10 @@ func (o *Team) DeepCopyInto(dst *Team) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (Team) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Team{}
 
@@ -273,6 +283,10 @@ func (o *TeamList) DeepCopy() *TeamList {
 
 func (o *TeamList) DeepCopyInto(dst *TeamList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (TeamList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamList"
 }
 
 // Interface compliance compile-time check

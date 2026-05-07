@@ -1,78 +1,86 @@
+import { useCallback } from 'react';
+
 import { t } from '@grafana/i18n';
 import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 
-import { isGitProvider } from '../../utils/repositoryTypes';
-import { RepoType, StepStatusInfo } from '../types';
+import { type StepStatusInfo } from '../types';
 
 export interface UseCreateSyncJobParams {
   repoName: string;
-  requiresMigration: boolean;
-  repoType: RepoType;
-  isLegacyStorage?: boolean;
   setStepStatusInfo?: (info: StepStatusInfo) => void;
 }
 
-export function useCreateSyncJob({
-  repoName,
-  requiresMigration,
-  repoType,
-  isLegacyStorage,
-  setStepStatusInfo,
-}: UseCreateSyncJobParams) {
+export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJobParams) {
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
-  const supportsHistory = isGitProvider(repoType) && isLegacyStorage;
 
-  const createSyncJob = async (options?: { history?: boolean }) => {
-    if (!repoName) {
-      setStepStatusInfo?.({
-        status: 'error',
-        error: t('provisioning.sync-job.error-no-repository-name', 'No repository name provided'),
-      });
-      return null;
-    }
+  const createSyncJob = useCallback(
+    async (requiresMigration: boolean, options?: { skipStatusUpdates?: boolean }) => {
+      const { skipStatusUpdates = false } = options || {};
 
-    try {
-      setStepStatusInfo?.({ status: 'running' });
-
-      const jobSpec = requiresMigration
-        ? {
-            migrate: {
-              history: (options?.history || false) && supportsHistory,
-            },
-          }
-        : {
-            pull: {
-              incremental: false,
-            },
-          };
-
-      const response = await createJob({
-        name: repoName,
-        jobSpec,
-      }).unwrap();
-
-      if (!response?.metadata?.name) {
-        setStepStatusInfo?.({
-          status: 'error',
-          error: t('provisioning.sync-job.error-no-job-id', 'Failed to start job'),
-        });
+      if (!repoName) {
+        if (!skipStatusUpdates) {
+          setStepStatusInfo?.({
+            status: 'error',
+            error: t('provisioning.sync-job.error-no-repository-name', 'No repository name provided'),
+          });
+        }
         return null;
       }
 
-      setStepStatusInfo?.({ status: 'success' });
-      return response;
-    } catch (error) {
-      setStepStatusInfo?.({
-        status: 'error',
-        error: t('provisioning.sync-job.error-starting-job', 'Error starting job'),
-      });
-      return null;
-    }
-  };
+      try {
+        if (!skipStatusUpdates) {
+          setStepStatusInfo?.({ status: 'running' });
+        }
+
+        const jobSpec = requiresMigration
+          ? {
+              action: 'migrate' as const,
+              migrate: {},
+            }
+          : {
+              action: 'pull' as const,
+              pull: {
+                incremental: false,
+              },
+            };
+
+        const response = await createJob({
+          name: repoName,
+          jobSpec,
+        }).unwrap();
+
+        if (!response?.metadata?.name) {
+          if (!skipStatusUpdates) {
+            setStepStatusInfo?.({
+              status: 'error',
+              error: t('provisioning.sync-job.error-no-job-id', 'Failed to start job'),
+            });
+          }
+          return null;
+        }
+
+        // Job status will be tracked by JobStatus component, keep status as 'running'
+        return response;
+      } catch (error) {
+        if (!skipStatusUpdates) {
+          const errorMessage = extractErrorMessage(error);
+          setStepStatusInfo?.({
+            status: 'error',
+            error: {
+              title: t('provisioning.sync-job.error-starting-job', 'Error starting job'),
+              message: errorMessage,
+            },
+          });
+        }
+        return null;
+      }
+    },
+    [createJob, repoName, setStepStatusInfo]
+  );
 
   return {
     createSyncJob,
     isLoading,
-    supportsHistory,
   };
 }

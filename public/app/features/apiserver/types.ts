@@ -8,7 +8,7 @@
  *
  */
 
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 /** The object type and version */
 export interface TypeMeta<K = string> {
@@ -288,4 +288,14 @@ export interface GeneratedResource<T = object, S = object, K = string> extends P
 export interface GeneratedResourceList<Spec, Status, K = string> {
   metadata?: Partial<ListMeta>;
   items?: Array<GeneratedResource<Spec, Status, K>>;
+}
+
+/**
+ * Base Kubernetes StatusCause interface.
+ * Client-specific StatusCause types (from generated API clients) extend this shape.
+ */
+export interface K8sStatusCause {
+  field?: string;
+  message?: string;
+  reason?: string;
 }

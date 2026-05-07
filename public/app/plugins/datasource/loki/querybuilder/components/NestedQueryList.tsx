@@ -1,7 +1,7 @@
 import { Stack } from '@grafana/ui';
 
-import { LokiDatasource } from '../../datasource';
-import { LokiVisualQuery, LokiVisualQueryBinary } from '../types';
+import { type LokiDatasource } from '../../datasource';
+import { type LokiVisualQuery, type LokiVisualQueryBinary } from '../types';
 
 import { NestedQuery } from './NestedQuery';
 

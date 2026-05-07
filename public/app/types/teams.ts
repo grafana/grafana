@@ -1,6 +1,6 @@
-import { TeamDto as TeamDtoLegacy } from 'app/api/clients/legacy';
+import { type TeamDto as TeamDtoLegacy } from 'app/api/clients/legacy';
 
-import { Role } from './accessControl';
+import { type Role } from './accessControl';
 
 export interface TeamDTO {
   /**
@@ -36,8 +36,4 @@ export interface TeamMember {
 export interface TeamGroup {
   groupId: string;
   teamId: number;
-}
-
-export interface TeamState {
-  groups: TeamGroup[];
 }

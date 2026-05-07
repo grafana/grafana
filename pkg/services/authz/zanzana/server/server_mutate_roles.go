@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
@@ -11,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
-func (s *Server) mutateRoles(ctx context.Context, store *storeInfo, operations []*authzextv1.MutateOperation) error {
+func (s *Server) mutateRoles(ctx context.Context, store *zanzana.StoreInfo, operations []*authzextv1.MutateOperation) error {
 	ctx, span := s.tracer.Start(ctx, "server.mutateRoles")
 	defer span.End()
 
@@ -21,13 +20,13 @@ func (s *Server) mutateRoles(ctx context.Context, store *storeInfo, operations [
 	for _, operation := range operations {
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_CreateRole:
-			tuples, err := convertRoleToTuples(op.CreateRole.RoleName, op.CreateRole.Permissions)
+			tuples, err := zanzana.RoleToTuples(op.CreateRole.RoleName, op.CreateRole.Permissions)
 			if err != nil {
 				return err
 			}
 			writeTuples = append(writeTuples, tuples...)
 		case *authzextv1.MutateOperation_DeleteRole:
-			tuples, err := convertRoleToTuples(op.DeleteRole.RoleName, op.DeleteRole.Permissions)
+			tuples, err := zanzana.RoleToTuples(op.DeleteRole.RoleName, op.DeleteRole.Permissions)
 			if err != nil {
 				return err
 			}
@@ -41,68 +40,11 @@ func (s *Server) mutateRoles(ctx context.Context, store *storeInfo, operations [
 		}
 	}
 
-	writeReq := &openfgav1.WriteRequest{
-		StoreId:              store.ID,
-		AuthorizationModelId: store.ModelID,
-	}
-	if len(writeTuples) > 0 {
-		writeReq.Writes = &openfgav1.WriteRequestWrites{
-			TupleKeys:   writeTuples,
-			OnDuplicate: "ignore",
-		}
-	}
-	if len(deleteTuples) > 0 {
-		writeReq.Deletes = &openfgav1.WriteRequestDeletes{
-			TupleKeys: deleteTuples,
-			OnMissing: "ignore",
-		}
-	}
-
-	_, err := s.openfga.Write(ctx, writeReq)
+	err := s.writeTuples(ctx, store, writeTuples, deleteTuples)
 	if err != nil {
 		s.logger.Error("failed to write resource role binding tuples", "error", err)
 		return err
 	}
 
 	return nil
-}
-
-// convertRoleToTuples converts role and its permissions (action/scope) to v1 TupleKey format
-// using the shared zanzana.ConvertRolePermissionsToTuples utility and common.ToAuthzExtTupleKeys
-func convertRoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*openfgav1.TupleKey, error) {
-	// Convert to zanzana.RolePermission
-	rolePerms := make([]zanzana.RolePermission, 0, len(permissions))
-	for _, perm := range permissions {
-		// Split the scope to get kind, attribute, identifier
-		kind, _, identifier := splitScope(perm.Scope)
-		rolePerms = append(rolePerms, zanzana.RolePermission{
-			Action:     perm.Action,
-			Kind:       kind,
-			Identifier: identifier,
-		})
-	}
-
-	// Translate to Zanzana tuples
-	tuples, err := zanzana.ConvertRolePermissionsToTuples(roleUID, rolePerms)
-	if err != nil {
-		return nil, err
-	}
-
-	return tuples, nil
-}
-
-func splitScope(scope string) (string, string, string) {
-	if scope == "" {
-		return "", "", ""
-	}
-
-	fragments := strings.Split(scope, ":")
-	switch l := len(fragments); l {
-	case 1: // Splitting a wildcard scope "*" -> kind: "*"; attribute: "*"; identifier: "*"
-		return fragments[0], fragments[0], fragments[0]
-	case 2: // Splitting a wildcard scope with specified kind "dashboards:*" -> kind: "dashboards"; attribute: "*"; identifier: "*"
-		return fragments[0], fragments[1], fragments[1]
-	default: // Splitting a scope with all fields specified "dashboards:uid:my_dash" -> kind: "dashboards"; attribute: "uid"; identifier: "my_dash"
-		return fragments[0], fragments[1], strings.Join(fragments[2:], ":")
-	}
 }

@@ -1,36 +1,28 @@
-import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import { AnyAction } from 'redux';
+import { createAction, type PayloadAction } from '@reduxjs/toolkit';
+import { type AnyAction } from 'redux';
 
 import {
-  TimeRange,
-  HistoryItem,
-  DataSourceApi,
-  ExplorePanelsState,
-  PreferredVisualisationType,
-  RawTimeRange,
-  ExploreCorrelationHelperData,
-  EventBusExtended,
+  type TimeRange,
+  type HistoryItem,
+  type DataSourceApi,
+  type ExplorePanelsState,
+  type PreferredVisualisationType,
+  type RawTimeRange,
+  type ExploreCorrelationHelperData,
+  type EventBusExtended,
 } from '@grafana/data';
-import { CorrelationData } from '@grafana/runtime';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type CorrelationData } from '@grafana/runtime';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';
-import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { ExploreItemState } from 'app/types/explore';
-import { createAsyncThunk, ThunkResult } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { createAsyncThunk, type ThunkResult } from 'app/types/store';
 
 import { datasourceReducer } from './datasource';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
-import {
-  makeExplorePaneState,
-  loadAndInitDatasource,
-  createEmptyQueryResponse,
-  getRange,
-  getDatasourceUIDs,
-} from './utils';
-// Types
-
+import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, getRange } from './utils';
 //
 // Actions and Payloads
 //
@@ -212,8 +204,7 @@ export const initializeExplore = createAsyncThunk(
     dispatch(updateTime({ exploreId }));
 
     if (instance) {
-      const datasourceUIDs = getDatasourceUIDs(instance.uid, queries);
-      const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+      const correlations = await getCorrelationsFromStorage(dispatch, queries, instance.uid);
       dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
 
       dispatch(runQueries({ exploreId }));

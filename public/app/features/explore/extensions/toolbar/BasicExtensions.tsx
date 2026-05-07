@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -7,7 +8,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { ToolbarExtensionPointMenu } from '../ToolbarExtensionPointMenu';
 
-import { ExtensionDropdownProps } from './types';
+import { type ExtensionDropdownProps } from './types';
 
 const AddToDashboard = lazy(() =>
   import('./../AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
@@ -40,6 +41,7 @@ export function BasicExtensions(props: ExtensionDropdownProps) {
       <Dropdown onVisibleChange={setIsModalOpen} placement="bottom-start" overlay={menu}>
         <ToolbarButton
           aria-label={t('explore.basic-extensions.aria-label-add', 'Add')}
+          data-testid={selectors.pages.Explore.toolbar.addTo}
           disabled={!Boolean(noQueriesInPane)}
           variant="canvas"
           isOpen={isModalOpen}

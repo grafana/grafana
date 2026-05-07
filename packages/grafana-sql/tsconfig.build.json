@@ -1,0 +1,7 @@
+{
+  "exclude": ["dist", "node_modules", "test", "**/*.test.ts*", "../../public/test/setupTests.ts"],
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declarationDir": "./dist/types"
+  }
+}

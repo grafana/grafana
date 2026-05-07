@@ -1,7 +1,8 @@
-import { UrlQueryMap, urlUtil } from '@grafana/data';
+import { type UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
+import { sceneUtils } from '@grafana/scenes';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 export const PRESERVED_SCENE_STATE_KEY = `grafana.dashboard.preservedUrlFiltersState`;
 
@@ -30,14 +31,17 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
       }
     });
 
+    const validVariableUrlKeys = getValidVariableUrlKeys(dashboard);
+
     for (const key of Array.from(cleanedQueryParams.keys())) {
       // preserve non-variable query params, i.e. time range
       if (!key.startsWith('var-')) {
         continue;
       }
 
-      // remove params for variables that are not present on the target dashboard
-      if (!dashboard.state.$variables?.getByName(key.replace('var-', ''))) {
+      // Remove params for variable keys that are not present on the target dashboard scene tree.
+      // This is collision-aware and preserves suffixed keys like var-x-2.
+      if (!validVariableUrlKeys.has(key)) {
         cleanedQueryParams.delete(key);
       }
     }
@@ -47,6 +51,12 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
       locationService.replace({ search: finalParams });
     }
   }
+}
+
+function getValidVariableUrlKeys(root: DashboardScene): Set<string> {
+  const sceneUrlState = sceneUtils.getUrlState(root);
+  const variableKeys = Object.keys(sceneUrlState).filter((key) => key.startsWith('var-'));
+  return new Set(variableKeys);
 }
 
 /**

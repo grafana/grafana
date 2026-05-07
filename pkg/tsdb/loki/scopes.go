@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-prometheus-datasource/pkg/promlib/models"
 	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
-	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 	"github.com/grafana/loki/v3/pkg/logql/syntax"
 	"github.com/prometheus/prometheus/promql/parser"
@@ -96,13 +96,14 @@ func ApplyScopes(rawExpr string, scopeFilters []scope.ScopeFilter) (string, erro
 		return "", fmt.Errorf("failed to parse raw expression: %w", err)
 	}
 
-	syntaxTree.Walk(func(e syntax.Expr) {
+	syntaxTree.Walk(func(e syntax.Expr) bool {
 		switch e := e.(type) {
 		case *syntax.MatchersExpr:
 			// TODO: Key Collisions?
 			e.Mts = append(e.Mts, scopeMatchers...)
 		default:
 		}
+		return true
 	})
 	return syntaxTree.String(), nil
 }

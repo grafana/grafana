@@ -1,21 +1,21 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { PureComponent } from 'react';
-import { Unsubscribable, PartialObserver } from 'rxjs';
+import { type Unsubscribable, type PartialObserver } from 'rxjs';
 
 import {
-  GrafanaTheme2,
-  PanelProps,
-  LiveChannelStatusEvent,
+  type GrafanaTheme2,
+  type PanelProps,
+  type LiveChannelStatusEvent,
   isValidLiveChannelAddress,
-  LiveChannelEvent,
+  type LiveChannelEvent,
   isLiveChannelStatusEvent,
   isLiveChannelMessageEvent,
   LiveChannelConnectionState,
-  PanelData,
+  type PanelData,
   LoadingState,
   applyFieldOverrides,
-  LiveChannelAddress,
+  type LiveChannelAddress,
   StreamingDataFrame,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -25,7 +25,7 @@ import { Alert, stylesFactory, JSONFormatter, CustomScrollbar } from '@grafana/u
 import { TablePanel } from '../table/TablePanel';
 
 import { LivePublish } from './LivePublish';
-import { LivePanelOptions, MessageDisplayMode, MessagePublishMode } from './types';
+import { type LivePanelOptions, MessageDisplayMode, MessagePublishMode } from './types';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 
@@ -148,7 +148,7 @@ export class LivePanel extends PureComponent<Props, State> {
           <h4>
             <Trans i18nKey="live.live-panel.waiting-for-data">Waiting for data:</Trans>
           </h4>
-          {options.channel?.scope}/{options.channel?.namespace}/{options.channel?.path}
+          {options.channel?.scope}/{options.channel?.stream}/{options.channel?.path}
         </div>
       );
     }

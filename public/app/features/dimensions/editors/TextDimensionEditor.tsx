@@ -1,18 +1,18 @@
 import { useCallback, useId } from 'react';
 
 import {
-  FieldNamePickerConfigSettings,
-  StandardEditorProps,
-  StandardEditorsRegistryItem,
-  StringFieldConfigSettings,
+  type FieldNamePickerConfigSettings,
+  type StandardEditorProps,
+  type StandardEditorsRegistryItem,
+  type StringFieldConfigSettings,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
+import { type TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 
-import { TextDimensionOptions } from '../types';
+import { type TextDimensionOptions } from '../types';
 
 const dummyFieldSettings = {
   settings: {},

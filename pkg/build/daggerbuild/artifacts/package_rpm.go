@@ -154,6 +154,10 @@ func (d *RPM) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *d
 	panic("not implemented") // TODO: Implement
 }
 
+func (d *RPM) String() string {
+	return "rpm"
+}
+
 func NewRPMFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	tarball, err := NewTarballFromString(ctx, log, artifact, state)
 	if err != nil {

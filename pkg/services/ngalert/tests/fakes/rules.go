@@ -2,6 +2,7 @@ package fakes
 
 import (
 	"context"
+	"maps"
 	"math/rand"
 	"slices"
 	"strings"
@@ -219,12 +220,16 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 		RuleUIDs:                    q.RuleUIDs,
 		ReceiverName:                q.ReceiverName,
 		HasPrometheusRuleDefinition: q.HasPrometheusRuleDefinition,
+		LabelMatchers:               q.LabelMatchers,
 	}
 
 	ruleList, err := f.listAlertRules(query)
 	if err != nil {
 		return nil, "", err
 	}
+
+	// Filter by PluginOriginFilter if specified
+	ruleList = applyPluginOriginFilter(ruleList, q.PluginOriginFilter)
 
 	// < group limit logic >
 
@@ -302,6 +307,10 @@ func (f *RuleStore) ListAlertRulesPaginated(_ context.Context, q *models.ListAle
 	if err != nil {
 		return nil, "", err
 	}
+
+	// Filter by PluginOriginFilter if specified
+	rules = applyPluginOriginFilter(rules, q.PluginOriginFilter)
+
 	return rules, "", nil
 }
 
@@ -317,24 +326,24 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 	return f.listAlertRules(q)
 }
 
+//nolint:gocyclo // this function is intentionally not split to keep the logic in one place, making it easier to maintain the filtering logic in tests
 func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
-	hasDashboard := func(r *models.AlertRule, dashboardUID string, panelID int64) bool {
-		if dashboardUID != "" {
-			if r.DashboardUID == nil || *r.DashboardUID != dashboardUID {
-				return false
-			}
-			if panelID > 0 {
-				if r.PanelID == nil || *r.PanelID != panelID {
-					return false
-				}
-			}
-		}
-		return true
-	}
-
 	ruleList := models.RulesGroup{}
 	for _, r := range f.Rules[q.OrgID] {
-		if !hasDashboard(r, q.DashboardUID, q.PanelID) {
+		if q.DashboardUID != "" {
+			if r.DashboardUID == nil || *r.DashboardUID != q.DashboardUID {
+				continue
+			}
+		}
+		if q.PanelID != 0 {
+			if r.PanelID == nil || *r.PanelID != q.PanelID {
+				continue
+			}
+		}
+		if q.IsPaused != nil && r.IsPaused != *q.IsPaused {
+			continue
+		}
+		if q.TitleExact != "" && r.Title != q.TitleExact {
 			continue
 		}
 		if len(q.NamespaceUIDs) > 0 && !slices.Contains(q.NamespaceUIDs, r.NamespaceUID) {
@@ -352,9 +361,36 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 			}
 		}
 
-		if q.ReceiverName != "" && (len(r.NotificationSettings) < 1 || r.NotificationSettings[0].Receiver != q.ReceiverName) {
+		if cpr := r.ContactPointRouting(); q.ReceiverName != "" && (cpr == nil || cpr.Receiver != q.ReceiverName) {
 			continue
 		}
+
+		if len(q.LabelMatchers) > 0 {
+			matches := true
+			for _, m := range q.LabelMatchers {
+				if !m.Matches(r.Labels[m.Name]) {
+					matches = false
+					break
+				}
+			}
+			if !matches {
+				continue
+			}
+		}
+
+		if len(q.ExcludeNamespaceUIDs) > 0 && slices.Contains(q.ExcludeNamespaceUIDs, r.NamespaceUID) {
+			continue
+		}
+		if len(q.ExcludeRuleGroups) > 0 && slices.Contains(q.ExcludeRuleGroups, r.RuleGroup) {
+			continue
+		}
+		if q.RuleGroupExists != nil {
+			hasGroup := r.RuleGroup != ""
+			if *q.RuleGroupExists != hasGroup {
+				continue
+			}
+		}
+
 		copyR := models.CopyRule(r)
 		ruleList = append(ruleList, copyR)
 	}
@@ -549,6 +585,36 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespaces(_ context.Context, or
 	return result, nil
 }
 
+func (f *RuleStore) UpdateFolderFullpathsForFolders(_ context.Context, orgID int64, folderUIDs []string) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "UpdateFolderFullpathsForFolders",
+		Params: []any{orgID, folderUIDs},
+	})
+
+	// Build map of folder UID -> fullpath from fake folders
+	folderPaths := make(map[string]string)
+	for _, folder := range f.Folders[orgID] {
+		for _, uid := range folderUIDs {
+			if folder.UID == uid {
+				folderPaths[uid] = folder.Fullpath
+				break
+			}
+		}
+	}
+
+	// Update folder_fullpath for all rules in these folders
+	for _, rule := range f.Rules[orgID] {
+		if fullpath, ok := folderPaths[rule.NamespaceUID]; ok {
+			rule.FolderFullpath = fullpath
+		}
+	}
+
+	return nil
+}
+
 func (f *RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
 	return 0, nil
 }
@@ -597,6 +663,30 @@ func (f *RuleStore) GetAlertRuleVersions(_ context.Context, orgID int64, guid st
 	return f.History[guid], nil
 }
 
+func (f *RuleStore) GetAlertRuleVersionFolders(_ context.Context, orgID int64, guid string) ([]string, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	q := GenericRecordedQuery{
+		Name:   "GetAlertRuleVersionFolders",
+		Params: []any{orgID, guid},
+	}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+
+	if err := f.Hook(q); err != nil {
+		return nil, err
+	}
+
+	folderSet := make(map[string]struct{})
+	for _, rule := range f.History[guid] {
+		folderSet[rule.NamespaceUID] = struct{}{}
+	}
+
+	return slices.Collect(maps.Keys(folderSet)), nil
+}
+
 func (f *RuleStore) ListDeletedRules(_ context.Context, orgID int64) ([]*models.AlertRule, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -607,4 +697,29 @@ func (f *RuleStore) ListDeletedRules(_ context.Context, orgID int64) ([]*models.
 		return nil, err
 	}
 	return f.Deleted[orgID], nil
+}
+
+// applyPluginOriginFilter filters rules based on the presence of the __grafana_origin label.
+func applyPluginOriginFilter(rules []*models.AlertRule, filter models.PluginOriginFilter) []*models.AlertRule {
+	if filter == models.PluginOriginFilterNone {
+		return rules
+	}
+
+	filteredList := make([]*models.AlertRule, 0, len(rules))
+	for _, r := range rules {
+		_, hasOriginLabel := r.Labels[models.PluginGrafanaOriginLabel]
+		switch filter {
+		case models.PluginOriginFilterHide:
+			if !hasOriginLabel {
+				filteredList = append(filteredList, r)
+			}
+		case models.PluginOriginFilterOnly:
+			if hasOriginLabel {
+				filteredList = append(filteredList, r)
+			}
+		default:
+			filteredList = append(filteredList, r)
+		}
+	}
+	return filteredList
 }

@@ -5,3 +5,4 @@ export { getReceiverHandler } from './ReceiverHandlers/getReceiverHandler';
 export { listReceiverHandler } from './ReceiverHandlers/listReceiverHandler';
 export { replaceReceiverHandler } from './ReceiverHandlers/replaceReceiverHandler';
 export { updateReceiverHandler } from './ReceiverHandlers/updateReceiverHandler';
+export { listRoutingTreeHandler } from './RoutingTreeHandlers/listRoutingTreeHandler';

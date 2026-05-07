@@ -1,6 +1,6 @@
-import { CellProps, Column, HeaderProps } from 'react-table';
+import { type CellProps, type Column, type HeaderProps } from 'react-table';
 
-import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
+import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
 /**
  * Object of what is selected in the tree. It is record where keys are categories from DashboardViewItemKind and
@@ -33,7 +33,7 @@ export interface BrowseDashboardsState {
 
 export interface UIDashboardViewItem {
   kind: 'ui';
-  uiKind: 'empty-folder' | 'pagination-placeholder' | 'divider';
+  uiKind: 'empty-folder' | 'pagination-placeholder' | 'divider' | 'readme';
   uid: string;
 }
 
@@ -44,6 +44,7 @@ export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = Das
   level: number;
   isOpen: boolean;
   parentUID?: string;
+  disabled?: boolean;
 }
 
 interface RendererUserProps {
@@ -73,3 +74,18 @@ export interface BrowseDashboardsPermissions {
   canDeleteDashboards?: boolean;
   isReadOnlyRepo?: boolean;
 }
+
+interface NotificationEventData {
+  alertType: string;
+  message: string;
+}
+
+interface NotificationActionData {
+  title: string;
+  buttonLabel: string;
+  targetUrl: string;
+}
+
+export type RestoreNotificationData =
+  | { kind: 'action'; data: NotificationActionData }
+  | { kind: 'event'; data: NotificationEventData };

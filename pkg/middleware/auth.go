@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/url"
@@ -22,13 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/open-feature/go-sdk/openfeature"
-)
-
-var openfeatureClient = openfeature.NewDefaultClient()
-
-const (
-	pluginPageFeatureFlagPrefix = "plugin-page-visible."
 )
 
 type AuthOptions struct {
@@ -56,7 +48,8 @@ func notAuthorized(c *contextmodel.ReqContext) {
 		writeRedirectCookie(c)
 	}
 
-	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+	var tokenRotationErr authn.TokenNeedsRotationError
+	if errors.As(c.LookupTokenErr, &tokenRotationErr) {
 		if !c.UseSessionStorageRedirect {
 			c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
 			return
@@ -151,12 +144,6 @@ func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, log
 		p, exists := ps.Plugin(c.Req.Context(), pluginID)
 		if !exists {
 			// The frontend will handle app not found appropriately
-			return
-		}
-
-		if !PageIsFeatureToggleEnabled(c.Req.Context(), c.Req.URL.Path) {
-			logger.Debug("Forbidden experimental plugin page", "plugin", pluginID, "path", c.Req.URL.Path)
-			accessForbidden(c)
 			return
 		}
 
@@ -307,19 +294,4 @@ func shouldForceLogin(c *contextmodel.ReqContext) bool {
 	}
 
 	return forceLogin
-}
-
-// PageIsFeatureToggleEnabled checks if a page is enabled via OpenFeature feature flags.
-// It returns false if the feature flag is set and set to false.
-// The feature flag key format is: "plugin-page-visible.<path>"
-func PageIsFeatureToggleEnabled(ctx context.Context, path string) bool {
-	flagKey := pluginPageFeatureFlagPrefix + filepath.Clean(path)
-	enabled := openfeatureClient.Boolean(
-		ctx,
-		flagKey,
-		true,
-		openfeature.TransactionContext(ctx),
-	)
-
-	return enabled
 }

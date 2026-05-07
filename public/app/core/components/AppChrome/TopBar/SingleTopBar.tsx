@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import React, { memo } from 'react';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { ScopesContextValue } from '@grafana/runtime';
+import { type ScopesContextValue } from '@grafana/runtime';
 import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
@@ -15,16 +14,15 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 import { useSelector } from 'app/types/store';
 
-import { Branding } from '../../Branding/Branding';
+import { HomeLink } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
-import { HistoryContainer } from '../History/HistoryContainer';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
 import { HelpTopBarButton } from './HelpTopBarButton';
-import { InviteUserButton } from './InviteUserButton';
+import { NavRightButton } from './InviteUserButton';
 import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
@@ -60,7 +58,6 @@ export const SingleTopBar = memo(function SingleTopBar({
   const profileNode = useSelector((state) => state.navIndex['profile']);
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
-  const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const isLargeScreen = useMediaQueryMinWidth('lg');
   const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
@@ -74,14 +71,15 @@ export const SingleTopBar = memo(function SingleTopBar({
               narrow
               id={MEGA_MENU_TOGGLE_ID}
               onClick={onToggleMegaMenu}
-              tooltip={t('navigation.megamenu.open', 'Open menu')}
+              tooltip={t('navigation.megamenu.open', 'Main menu')}
+              aria-expanded={state.megaMenuOpen}
             >
               <Stack gap={0} alignItems="center">
-                <Branding.MenuLogo className={styles.img} />
-                <Icon size="sm" name="angle-down" />
+                <Icon name="bars" size="xl" />
               </Stack>
             </ToolbarButton>
           )}
+          {!menuDockedAndOpen && <HomeLink homeNav={homeNav} />}
           {topLevelScopes ? <ScopesSelector /> : undefined}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
           {!showToolbarLevel && breadcrumbActions}
@@ -93,18 +91,16 @@ export const SingleTopBar = memo(function SingleTopBar({
           justifyContent={'flex-end'}
           flex={1}
           data-testid={!showToolbarLevel ? Components.NavToolbar.container : undefined}
-          minWidth={{ xs: 'unset', lg: 0 }}
         >
           <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
-          {unifiedHistoryEnabled && !isSmallScreen && <HistoryContainer />}
           {!isSmallScreen && <QuickAdd />}
           <HelpTopBarButton isSmallScreen={isSmallScreen} />
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
           {!showToolbarLevel && actions}
           {!contextSrv.user.isSignedIn && <SignInLink />}
-          <InviteUserButton />
+          <NavRightButton />
           {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
         </Stack>
       </div>

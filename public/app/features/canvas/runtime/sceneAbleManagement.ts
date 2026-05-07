@@ -2,7 +2,7 @@ import InfiniteViewer from 'infinite-viewer';
 import Moveable from 'moveable';
 import Selecto from 'selecto';
 
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
 import {
   CONNECTION_VERTEX_ID,
@@ -11,9 +11,9 @@ import {
 import { VerticalConstraint, HorizontalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 import { dimensionViewable, constraintViewable, settingsViewable } from './ables';
-import { ElementState } from './element';
+import { type ElementState } from './element';
 import { FrameState } from './frame';
-import { Scene } from './scene';
+import { type Scene } from './scene';
 import { findElementByTarget } from './sceneElementManagement';
 
 const ZOOM_RANGE = [0.1, 4]; // Minimum zoom 0.1x (10%), maximum zoom 4x (400%)

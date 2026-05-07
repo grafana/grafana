@@ -5,15 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 
+	_ "github.com/microsoft/go-mssqldb/integratedauth/krb5"
+
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	_ "github.com/microsoft/go-mssqldb/integratedauth/krb5"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/sqleng"
 )
 
@@ -22,10 +22,10 @@ type Service struct {
 	logger log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg) *Service {
+func ProvideService() *Service {
 	logger := backend.NewLoggerWith("logger", "tsdb.mssql")
 	return &Service{
-		im:     datasource.NewInstanceManager(NewInstanceSettings(cfg, logger)),
+		im:     datasource.NewInstanceManager(NewInstanceSettings(logger)),
 		logger: logger,
 	}
 }
@@ -48,9 +48,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return dsHandler.QueryData(azusercontext.WithUserFromQueryReq(ctx, req), req)
 }
 
-func NewInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		grafCfg := backend.GrafanaConfigFromContext(ctx)
+		grafCfg := config.GrafanaConfigFromContext(ctx)
 		sqlCfg, err := grafCfg.SQL()
 		if err != nil {
 			return nil, err
@@ -91,7 +91,7 @@ func NewInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			Updated:                 settings.Updated,
 			UID:                     settings.UID,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
-			OrgID:                   pluginCfg.OrgID,
+			OrgID:                   pluginCfg.OrgID, // nolint:staticcheck
 		}
 
 		userFacingDefaultError, err := grafCfg.UserFacingDefaultError()

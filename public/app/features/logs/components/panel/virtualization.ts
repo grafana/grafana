@@ -1,11 +1,10 @@
 import ansicolor from 'ansicolor';
 
-import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
+import { BusEventWithPayload, type GrafanaTheme2 } from '@grafana/data';
 
-import { LogLineTimestampResolution } from './LogLine';
-import { LOG_LINE_DETAILS_HEIGHT, LogLineDetailsMode } from './LogLineDetails';
-import { LogListFontSize } from './LogList';
-import { LogListModel } from './processing';
+import { type LogLineTimestampResolution } from './LogLine';
+import { type LogListFontSize } from './LogList';
+import { type LogListModel } from './processing';
 
 export const LOG_LIST_MIN_WIDTH = 35 * 8;
 // Controls the space between fields in the log line, timestamp, level, displayed fields, and log line body
@@ -158,7 +157,7 @@ export class LogLineVirtualization {
           testLogLine = textLine.substring(start, start + logLineCharsLength - delta);
           let measuredLine = testLogLine;
           if (logLines > 0) {
-            measuredLine.trimStart();
+            measuredLine = measuredLine.trimStart();
           }
           width = this.measureTextWidth(measuredLine);
           delta += 1;
@@ -182,8 +181,9 @@ export class LogLineVirtualization {
   calculateFieldDimensions = (
     logs: LogListModel[],
     displayedFields: string[] = [],
-    timestampResolution: LogLineTimestampResolution,
-    showUniqueLabels?: boolean
+    timestampResolution?: LogLineTimestampResolution,
+    showUniqueLabels?: boolean,
+    showLevel?: boolean
   ) => {
     if (!logs.length) {
       return [];
@@ -192,32 +192,43 @@ export class LogLineVirtualization {
     let levelWidth = 0;
     const fieldWidths: Record<string, number> = {};
     for (let i = 0; i < logs.length; i++) {
-      let width = this.measureTextWidth(timestampResolution === 'ms' ? logs[i].timestamp : logs[i].timestampNs);
-      if (width > timestampWidth) {
-        timestampWidth = Math.round(width);
+      let width = 0;
+      if (timestampResolution) {
+        width = this.measureTextWidth(timestampResolution === 'ms' ? logs[i].timestamp : logs[i].timestampNs);
+        if (width > timestampWidth) {
+          timestampWidth = Math.round(width);
+        }
       }
-      width = this.measureTextWidth(logs[i].displayLevel);
-      if (width > levelWidth) {
-        levelWidth = Math.round(width);
+      if (showLevel) {
+        width = this.measureTextWidth(logs[i].displayLevel);
+        if (width > levelWidth) {
+          levelWidth = Math.round(width);
+        }
       }
       for (const field of displayedFields) {
         width = this.measureTextWidth(logs[i].getDisplayedFieldValue(field, true));
         fieldWidths[field] = !fieldWidths[field] || width > fieldWidths[field] ? Math.round(width) : fieldWidths[field];
       }
     }
-    const dimensions: LogFieldDimension[] = [
-      {
+    const dimensions: LogFieldDimension[] = [];
+    if (timestampResolution) {
+      dimensions.push({
         field: 'timestamp',
+        internal: true,
         width: timestampWidth,
-      },
-      {
+      });
+    }
+    if (showLevel) {
+      dimensions.push({
         field: 'level',
+        internal: true,
         width: levelWidth,
-      },
-    ];
+      });
+    }
     if (showUniqueLabels) {
       dimensions.push({
         field: 'unique-labels',
+        internal: true,
         width: 0,
       });
     }
@@ -246,10 +257,8 @@ export class LogLineVirtualization {
 }
 
 export interface DisplayOptions {
-  detailsMode: LogLineDetailsMode;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
-  showDetails: LogListModel[];
   showDuplicates: boolean;
   showTime: boolean;
   wrap: boolean;
@@ -260,30 +269,33 @@ export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
   displayedFields: string[],
-  { detailsMode, hasLogsWithErrors, hasSampledLogs, showDuplicates, showDetails, showTime, wrap }: DisplayOptions,
+  { hasLogsWithErrors, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
   index: number
 ) {
   if (!container) {
     return 0;
   }
-  const gap = virtualization.getGridSize() * FIELD_GAP_MULTIPLIER;
-  const detailsHeight =
-    detailsMode === 'inline' && logs[index] && showDetails.findIndex((log) => log.uid === logs[index].uid) >= 0
-      ? window.innerHeight * (LOG_LINE_DETAILS_HEIGHT / 100) + gap / 2
-      : 0;
   // !logs[index] means the line is not yet loaded by infinite scrolling
-  if (!wrap || !logs[index]) {
-    return virtualization.getLineHeight() + virtualization.getPaddingBottom() + detailsHeight;
-  }
-  // If a long line is collapsed, we show the line count + an extra line for the expand/collapse control
-  logs[index].updateCollapsedState(displayedFields, container);
-  if (logs[index].collapsed) {
-    return (virtualization.getTruncationLineCount() + 1) * virtualization.getLineHeight() + detailsHeight;
+  if (!logs[index]) {
+    return virtualization.getLineHeight() + virtualization.getPaddingBottom();
   }
 
   const storedSize = virtualization.retrieveLogLineSize(logs[index].uid, container);
   if (storedSize) {
     return storedSize;
+  }
+
+  // Unwrapped logs always measure 1 line
+  if (!wrap) {
+    return virtualization.getLineHeight() + virtualization.getPaddingBottom();
+  }
+
+  const gap = virtualization.getGridSize() * FIELD_GAP_MULTIPLIER;
+
+  // If a long line is collapsed, we show the line count + an extra line for the expand/collapse control
+  logs[index].updateCollapsedState(displayedFields, container);
+  if (logs[index].collapsed) {
+    return (virtualization.getTruncationLineCount() + 1) * virtualization.getLineHeight();
   }
 
   let textToMeasure = '';
@@ -316,44 +328,21 @@ export function getLogLineSize(
 
   const { height } = virtualization.measureTextHeight(textToMeasure, getLogContainerWidth(container), optionsWidth);
   // When the log is collapsed, add an extra line for the expand/collapse control
-  return logs[index].collapsed === false
-    ? height + virtualization.getLineHeight() + detailsHeight
-    : height + detailsHeight;
+  return logs[index].collapsed === false ? height + virtualization.getLineHeight() : height;
 }
 
 export interface LogFieldDimension {
+  internal?: boolean;
   field: string;
   width: number;
 }
 
-export function getLogLineDOMHeight(
-  virtualization: LogLineVirtualization,
-  element: HTMLDivElement,
-  calculatedHeight?: number,
-  collapsed?: boolean
-): number | null {
-  if (collapsed !== undefined && calculatedHeight) {
-    calculatedHeight -= virtualization.getLineHeight();
-  }
-  const inlineDetails = element.parentElement
-    ? Array.from(element.parentElement.children).filter((element) =>
-        element.classList.contains('log-line-inline-details')
-      )
-    : undefined;
-  const detailsHeight = inlineDetails?.length ? inlineDetails[0].clientHeight : 0;
-
-  // Line overflows container
-  let measuredHeight = element.scrollHeight + detailsHeight;
-  const height = calculatedHeight ?? element.clientHeight;
-  if (measuredHeight > height) {
-    return collapsed !== undefined ? measuredHeight + virtualization.getLineHeight() : measuredHeight;
-  }
-
-  // Line is smaller than container
-  const child = element.children[1];
-  measuredHeight = child.clientHeight + detailsHeight;
-  if (child instanceof HTMLDivElement && measuredHeight < height) {
-    return collapsed !== undefined ? measuredHeight + virtualization.getLineHeight() : measuredHeight;
+export function getLogLineDOMHeight(element: HTMLDivElement, calculatedHeight?: number): number | null {
+  // Line overflows or is smaller than container
+  let measuredHeight = element.scrollHeight;
+  const height = calculatedHeight ?? element.scrollHeight;
+  if (measuredHeight > 0 && measuredHeight !== height) {
+    return measuredHeight;
   }
 
   // No overflow or undermeasurement

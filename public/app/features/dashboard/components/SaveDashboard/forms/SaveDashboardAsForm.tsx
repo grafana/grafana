@@ -1,15 +1,15 @@
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, Label, TextArea, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { GenAIDashDescriptionButton } from '../../GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from '../../GenAI/GenAIDashTitleButton';
-import { SaveDashboardFormProps } from '../types';
+import { type SaveDashboardFormProps } from '../types';
 
 interface SaveDashboardAsFormDTO {
   title: string;
@@ -27,7 +27,7 @@ const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
 
   // remove alerts if source dashboard is already persisted
   // do not want to create alert dupes
-  if (dashboard.id > 0 && clone.panels) {
+  if (dashboard.uid?.length && clone.panels) {
     clone.panels.forEach((panel) => {
       // @ts-expect-error
       if (panel.type === 'graph' && panel.alert) {

@@ -69,6 +69,23 @@ describe('useOptions', () => {
     ]);
   });
 
+  it('should use custom description when provided', () => {
+    const options = [
+      { label: 'Apple', value: 'apple' },
+      { label: 'Carrot', value: 'carrot' },
+    ];
+    const { result } = renderHook(() => useOptions(options, true, 'Create new item'));
+
+    act(() => {
+      result.current.updateOptions('car');
+    });
+
+    expect(result.current.options).toEqual([
+      { label: 'car', value: 'car', description: 'Create new item' },
+      { label: 'Carrot', value: 'carrot' },
+    ]);
+  });
+
   it('should not add a custom value if it already exists', () => {
     const options = [
       { label: 'Apple', value: 'apple' },
@@ -99,6 +116,27 @@ describe('useOptions', () => {
 
     expect(result.current.asyncLoading).toBe(false);
     expect(result.current.asyncError).toBe(true);
+  });
+
+  it('should be able to reset search', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+
+    const options = Array.from({ length: 100 }, (_, i) => ({ label: `Option ${i}`, value: i }));
+    const { result } = renderHook(() => useOptions(options, false));
+
+    expect(result.current.options).toEqual(options);
+
+    act(() => {
+      result.current.updateOptions('Option 50');
+    });
+
+    expect(result.current.options).toEqual([{ label: 'Option 50', value: 50 }]);
+
+    act(() => {
+      result.current.resetSearch();
+    });
+
+    expect(result.current.options).toEqual(options);
   });
 });
 

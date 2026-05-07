@@ -5,18 +5,18 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider, disableDashboardsFallback bool, disableFoldersFallback bool) resource.ResourceClient {
+func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg) resource.ResourceClient {
 	return &federatedClient{
 		ResourceClient: base,
 		stats: &LegacyStatsGetter{
-			SQL:                          sql,
-			DisableSQLFallbackDashboards: disableDashboardsFallback,
-			DisableSQLFallbackFolders:    disableFoldersFallback,
+			SQL: sql,
+			Cfg: cfg,
 		},
 	}
 }

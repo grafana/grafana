@@ -12,6 +12,7 @@ type GitRepository interface {
 	repository.Writer
 	repository.Reader
 	repository.StageableRepository
+	repository.BranchHandler
 	URL() string
 	Branch() string
 }

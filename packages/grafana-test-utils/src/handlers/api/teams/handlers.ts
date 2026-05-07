@@ -1,6 +1,6 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 
-import { MOCK_TEAMS, mockTeamsMap } from '../../../fixtures/teams';
+import { type MOCK_TEAMS, mockTeamsMap } from '../../../fixtures/teams';
 
 const k8sTeamToLegacyTeam = (k8sTeam: (typeof MOCK_TEAMS)[number], addAccessControl?: boolean) => {
   return {
@@ -79,7 +79,7 @@ const teamsGroupsHandler = () =>
     return HttpResponse.json(team.groups);
   });
 
-const teamsUpdateGroupsHandler = () =>
+const teamsAddGroupHandler = () =>
   http.post<{ uid: string }, { groupId: string }>('/api/teams/:uid/groups', async ({ params, request }) => {
     const teamData = mockTeamsMap.get(params.uid);
     const body = await request.json();
@@ -93,6 +93,29 @@ const teamsUpdateGroupsHandler = () =>
     mockTeamsMap.set(params.uid, updatedTeam);
 
     return HttpResponse.json({ message: 'Group added to Team' });
+  });
+
+const teamsRemoveGroupHandler = () =>
+  http.delete<{ uid: string }>('/api/teams/:uid/groups', async ({ params, request }) => {
+    const teamData = mockTeamsMap.get(params.uid);
+    const url = new URL(request.url);
+    const groupId = url.searchParams.get('groupId');
+
+    if (!teamData) {
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 });
+    }
+
+    if (!groupId) {
+      return HttpResponse.json({ message: 'Missing groupId' }, { status: 400 });
+    }
+
+    const updatedTeam = {
+      ...teamData,
+      groups: teamData.groups.filter((g) => g.groupId !== groupId),
+    };
+    mockTeamsMap.set(params.uid, updatedTeam);
+
+    return HttpResponse.json({ message: 'Group removed from Team' });
   });
 
 const searchTeamsHandler = () =>
@@ -109,6 +132,39 @@ const searchTeamsHandler = () =>
       page,
       perPage,
     });
+  });
+
+type SearchTeam = {
+  name: string;
+  email?: string;
+  id?: number;
+  uid: string;
+  orgId?: number;
+  externalUID?: string;
+  isProvisioned?: boolean;
+  avatarUrl?: string;
+  memberCount?: number;
+  permission?: number;
+  accessControl?: Record<string, boolean> | null;
+};
+
+export const getSearchTeamsHandler = (teams: SearchTeam[], totalCount = teams.length) =>
+  http.get('/api/teams/search', async ({ request }) => {
+    const url = new URL(request.url);
+    const page = url.searchParams.get('page') ?? '1';
+    const perPage = url.searchParams.get('perpage') ?? '1000';
+
+    return HttpResponse.json({
+      totalCount,
+      teams,
+      page,
+      perPage,
+    });
+  });
+
+export const getSearchTeamsErrorHandler = (message = 'Failed to load teams', status = 500) =>
+  http.get('/api/teams/search', async () => {
+    return HttpResponse.json({ message }, { status });
   });
 
 const createTeamHandler = () =>
@@ -147,10 +203,13 @@ const updateTeamHandler = () =>
     return HttpResponse.json({ message: 'Team updated' });
   });
 
+export const customCreateTeamHandler = (resolver: HttpResponseResolver) => http.post('/api/teams', resolver);
+
 const handlers = [
   teamsPreferencesHandler(),
   teamsGroupsHandler(),
-  teamsUpdateGroupsHandler(),
+  teamsAddGroupHandler(),
+  teamsRemoveGroupHandler(),
   searchTeamsHandler(),
   getTeamHandler(),
   deleteTeamHandler(),

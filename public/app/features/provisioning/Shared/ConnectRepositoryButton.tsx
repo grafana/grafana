@@ -2,10 +2,11 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t, Trans } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
-import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { useGetFrontendSettingsQuery, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { CONNECT_URL, DEFAULT_REPOSITORY_TYPES } from '../constants';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
+import { isOnPrem } from '../utils/isOnPrem';
 import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
 interface Props {
@@ -13,9 +14,9 @@ interface Props {
 }
 
 export function ConnectRepositoryButton({ items }: Props) {
-  const state = checkSyncSettings(items);
   const navigate = useNavigate();
   const { data: frontendSettings } = useGetFrontendSettingsQuery();
+  const state = checkSyncSettings(items, frontendSettings?.maxRepositories);
 
   const isButtonDisabled = state.instanceConnected || state.maxReposReached;
 
@@ -76,10 +77,15 @@ export function getConfigureRepoTooltip({
   }
 
   if (maxReposReached) {
-    return t(
-      'provisioning.connect-repository-button.free-tier-limit-tooltip',
-      'Free-tier accounts are restricted to one connection'
-    );
+    return isOnPrem()
+      ? t(
+          'provisioning.connect-repository-button.max-repos-reached-tooltip-onprem',
+          'Your instance has reached the maximum number of connected repositories. You can increase the limit in your Grafana configuration.'
+        )
+      : t(
+          'provisioning.connect-repository-button.max-repos-reached-tooltip',
+          'Your account has reached the maximum number of connected repositories'
+        );
   }
 
   return '';

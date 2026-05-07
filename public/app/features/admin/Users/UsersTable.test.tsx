@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { UserDTO } from 'app/types/user';
+import { type UserDTO } from 'app/types/user';
 
-import { UsersTable, UsersTableProps } from './UsersTable';
+import { UsersTable, type UsersTableProps } from './UsersTable';
 
 const setup = (propOverrides?: object) => {
   const props: UsersTableProps = {
@@ -26,7 +26,10 @@ const setup = (propOverrides?: object) => {
 
 describe('Render', () => {
   it('should render component', () => {
+    //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
     expect(() => setup()).not.toThrow();
+    jest.spyOn(console, 'warn').mockRestore();
   });
 
   it('should render when user has licensed role None', () => {

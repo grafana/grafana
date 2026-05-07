@@ -1,10 +1,10 @@
-import { createContext, ReactNode, useContext } from 'react';
+import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext } from 'react';
 
-import { CoreApp } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
-import { SavedQuery } from 'app/features/explore/QueryLibrary/types';
+import { type CoreApp } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
+import { type SavedQuery } from 'app/features/explore/QueryLibrary/types';
 
-import { OnSelectQueryType, QueryLibraryEventsPropertyMap, QueryLibraryTab } from './types';
+import { type OnSelectQueryType, type QueryLibraryEventsPropertyMap, QueryLibraryTab } from './types';
 
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
@@ -30,7 +30,13 @@ export type QueryLibraryContextType = {
    * @param newQuery New query to be added to the library.
    */
   openDrawer: (options: QueryLibraryDrawerOptions) => void;
-  closeDrawer: (isSelectingQuery?: boolean) => void;
+  /**
+   * @param isSelectingQuery Selection flow — affects close analytics.
+   * @param closedToEditInExplore e.g. "Edit in Explore" — resets details form and emits explore-specific analytics.
+   */
+  closeDrawer: (isSelectingQuery?: boolean, closedToEditInExplore?: boolean) => void;
+  /** Call after the user confirmed leaving unsaved edits so closeDrawer is not blocked by the stale guard. */
+  clearCloseGuard: () => void;
   isDrawerOpen: boolean;
   onSave?: () => void;
 
@@ -40,10 +46,12 @@ export type QueryLibraryContextType = {
    */
   renderSavedQueryButtons: (
     query: DataQuery,
-    app?: CoreApp,
+    app?: CoreApp | string,
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void,
-    datasourceFilters?: string[]
+    datasourceFilters?: string[],
+    parentRef?: React.RefObject<HTMLDivElement | null>,
+    showAsButtonHeader?: boolean
   ) => ReactNode;
 
   /**
@@ -72,10 +80,11 @@ export type QueryLibraryContextType = {
     contextOverride?: string
   ) => void;
   setNewQuery: (query?: SavedQuery) => void;
-  onSelectQuery: (query: DataQuery) => void;
+  onSelectQuery: OnSelectQueryType;
   onFavorite: (uid: string) => void;
   onUnfavorite: (uid: string) => void;
   userFavorites: { [key: string]: boolean };
+  setUserFavorites: Dispatch<SetStateAction<{ [key: string]: boolean }>>;
   isEditingQuery: boolean;
   setIsEditingQuery: (isEditingQuery: boolean) => void;
   onAddHistoryQueryToLibrary: (newQuery: SavedQuery) => void;
@@ -87,11 +96,17 @@ export type QueryLibraryContextType = {
   activeDatasources: string[];
   /** Set a guard function that returns true to allow closing, false to prevent closing */
   setCloseGuard: (shouldAllowClose: () => boolean) => void;
+  /** Template variable overrides keyed by unresolved variable string (for example `${var}`) */
+  templateVariableOverrides: Record<string, string>;
+  setTemplateVariableOverrides: (overrides: Record<string, string>) => void;
+  /** True when the modal was opened from outside (e.g. "Save query" from panel editor/Explore) to save a new query */
+  openedToSaveQuery: boolean;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   openDrawer: () => {},
   closeDrawer: () => {},
+  clearCloseGuard: () => {},
   isDrawerOpen: false,
 
   setNewQuery: () => {},
@@ -112,6 +127,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   onFavorite: () => {},
   onUnfavorite: () => {},
   userFavorites: {},
+  setUserFavorites: (_favorites) => {},
   isEditingQuery: false,
   setIsEditingQuery: () => {},
   onAddHistoryQueryToLibrary: () => {},
@@ -122,6 +138,9 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   newQuery: undefined,
   activeDatasources: [],
   setCloseGuard: () => {},
+  templateVariableOverrides: {},
+  setTemplateVariableOverrides: () => {},
+  openedToSaveQuery: false,
 });
 
 export function useQueryLibraryContext() {

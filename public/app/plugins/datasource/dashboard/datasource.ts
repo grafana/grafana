@@ -1,26 +1,26 @@
-import { Observable, debounce, debounceTime, defer, finalize, first, interval, map, of } from 'rxjs';
+import { type Observable, debounce, debounceTime, defer, finalize, first, interval, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  TestDataSourceResponse,
-  ScopedVar,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type TestDataSourceResponse,
+  type ScopedVar,
   DataTopic,
-  PanelData,
-  DataFrame,
+  type PanelData,
+  type DataFrame,
   LoadingState,
-  Field,
+  type Field,
   FieldType,
-  AdHocVariableFilter,
-  MetricFindValue,
+  type AdHocVariableFilter,
+  type MetricFindValue,
   getValueMatcher,
   ValueMatcherID,
-  DataSourceGetDrilldownsApplicabilityOptions,
-  DrilldownsApplicability,
+  type DataSourceGetDrilldownsApplicabilityOptions,
+  type DrilldownsApplicability,
 } from '@grafana/data';
-import { isSceneObject, SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
+import { isSceneObject, type SceneDataProvider, SceneDataTransformer, type SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
   findVizPanelByKey,
@@ -29,7 +29,7 @@ import {
 
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
-import { DashboardQuery } from './types';
+import { type DashboardQuery } from './types';
 
 /**
  * This should not really be called
@@ -122,8 +122,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     query: DashboardQuery,
     filters: AdHocVariableFilter[]
   ): DataFrame[] {
-    const annotations = data.annotations ?? [];
+    // When querying for annotations topic, return the source panel's annotations as series data
     if (query.topic === DataTopic.Annotations) {
+      const annotations = data.annotations ?? [];
       return annotations.map((frame) => ({
         ...frame,
         meta: {
@@ -131,34 +132,34 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           dataTopic: DataTopic.Series,
         },
       }));
-    } else {
-      const series = data.series.map((s) => {
-        return {
-          ...s,
-          fields: s.fields.map((field: Field) => ({
-            ...field,
-            config: {
-              ...field.config,
-              // Enable AdHoc filtering for string and numeric fields only when per-panel setting is enabled
-              filterable: query.adHocFiltersEnabled
-                ? field.type === FieldType.string || field.type === FieldType.number
-                : field.config.filterable,
-            },
-            state: {
-              ...field.state,
-            },
-          })),
-        };
-      });
-
-      if (!query.adHocFiltersEnabled || filters.length === 0) {
-        return [...series, ...annotations];
-      }
-
-      // Apply AdHoc filters to series data
-      const filteredSeries = series.map((frame) => this.applyAdHocFilters(frame, filters));
-      return [...filteredSeries, ...annotations];
     }
+
+    // For regular queries, only return series data
+    const series = data.series.map((s) => {
+      return {
+        ...s,
+        fields: s.fields.map((field: Field) => ({
+          ...field,
+          config: {
+            ...field.config,
+            // Enable AdHoc filtering for string and numeric fields only when per-panel setting is enabled
+            filterable: query.adHocFiltersEnabled
+              ? field.type === FieldType.string || field.type === FieldType.number
+              : field.config.filterable,
+          },
+          state: {
+            ...field.state,
+          },
+        })),
+      };
+    });
+
+    if (!query.adHocFiltersEnabled || filters.length === 0) {
+      return series;
+    }
+
+    // Apply AdHoc filters to series data
+    return series.map((frame) => this.applyAdHocFilters(frame, filters));
   }
 
   /**

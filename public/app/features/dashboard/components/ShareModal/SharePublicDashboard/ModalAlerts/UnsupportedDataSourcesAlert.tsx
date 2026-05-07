@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, useStyles2 } from '@grafana/ui';
 

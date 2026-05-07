@@ -1,8 +1,8 @@
-import { ReactNode, useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { usePrevious } from 'react-use';
-import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
+import { type ListChildComponentProps, type ListOnItemsRenderedProps } from 'react-window';
 
-import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
+import { type AbsoluteTimeRange, LogsSortOrder, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
@@ -11,8 +11,8 @@ import { canScrollBottom, canScrollTop, getVisibleRange, ScrollDirection, should
 
 import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
-import { LogListModel } from './processing';
-import { LogLineVirtualization } from './virtualization';
+import { type LogListModel } from './processing';
+import { type LogLineVirtualization } from './virtualization';
 
 interface ChildrenProps {
   itemCount: number;
@@ -72,7 +72,7 @@ export const InfiniteScroll = ({
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
   const lastLogOfPage = useRef<string[]>([]);
-  const styles = useStyles2(getStyles, virtualization);
+  const styles = useStyles2(getStyles, virtualization, displayedFields);
   const resetStateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollToLogLineRef = useRef<LogListModel | undefined>(undefined);
   const noScrollRef = useRef<undefined | boolean>(undefined);
@@ -256,7 +256,11 @@ export const InfiniteScroll = ({
       if (props.visibleStartIndex === 0) {
         noScrollRef.current = scrollElement.scrollHeight <= scrollElement.clientHeight;
       }
-      if (noScrollRef.current || infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
+      if (noScrollRef.current) {
+        setInfiniteLoaderState('idle');
+        return;
+      }
+      if (infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
         return;
       }
       const lastLogIndex = logs.length - 1;
@@ -267,7 +271,7 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('idle');
       }
     },
-    [infiniteLoaderState, logs.length, scrollElement]
+    [infiniteLoaderState, logs, scrollElement]
   );
 
   const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uid : index.toString()), [logs]);

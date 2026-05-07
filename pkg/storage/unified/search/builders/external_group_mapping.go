@@ -1,12 +1,9 @@
 package builders
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -56,19 +53,11 @@ type extGroupMappingDocumentBuilder struct{}
 // BuildDocument implements resource.DocumentBuilder.
 func (u *extGroupMappingDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	extGroupMapping := &iamv0.ExternalGroupMapping{}
-	err := json.NewDecoder(bytes.NewReader(value)).Decode(extGroupMapping)
+	doc, err := NewIndexableDocumentFromValue(key, rv, value, extGroupMapping, iamv0.ExternalGroupMappingKind())
 	if err != nil {
 		return nil, err
 	}
 
-	obj, err := utils.MetaAccessor(extGroupMapping)
-	if err != nil {
-		return nil, err
-	}
-
-	doc := resource.NewIndexableDocument(key, rv, obj)
-
-	doc.Fields = make(map[string]any)
 	if extGroupMapping.Spec.TeamRef.Name != "" {
 		doc.Fields[EXTERNAL_GROUP_MAPPING_TEAM] = extGroupMapping.Spec.TeamRef.Name
 	}

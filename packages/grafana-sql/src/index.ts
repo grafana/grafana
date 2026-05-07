@@ -6,6 +6,7 @@ export type {
   SQLQuery,
   SqlQueryModel,
   SQLSelectableValue,
+  SQLDialect,
   Func,
   FuncParameter,
 } from './types';
@@ -16,11 +17,14 @@ export { formatSQL } from './utils/formatSQL';
 export { ConnectionLimits } from './components/configuration/ConnectionLimits';
 export { MaxLifetimeField } from './components/configuration/MaxLifetimeField';
 export { MaxOpenConnectionsField } from './components/configuration/MaxOpenConnectionsField';
+export { NumberInput } from './components/configuration/NumberInput';
 export { Divider } from './components/configuration/Divider';
 export { TLSSecretsConfig } from './components/configuration/TLSSecretsConfig';
 export { useMigrateDatabaseFields } from './components/configuration/useMigrateDatabaseFields';
+export { Preview } from './components/visual-query-builder/Preview';
 export { SqlQueryEditorLazy } from './components/QueryEditorLazy';
 export type { QueryHeaderProps } from './components/QueryHeader';
+export { SQLVariableSupport } from './SQLVariableSupport';
 export { createSelectClause, haveColumns } from './utils/sql.utils';
 export { applyQueryDefaults } from './defaults';
 export { makeVariable } from './utils/testHelpers';

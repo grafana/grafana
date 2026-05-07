@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -133,6 +134,55 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 				require.Equal(t, models.ProvenanceAPI, p[rule2.UID])
 			})
 
+			t.Run("Store should return provenances by UIDs", func(t *testing.T) {
+				const orgID = 124
+				rule1 := models.AlertRule{UID: "uid-1", OrgID: orgID}
+				rule2 := models.AlertRule{UID: "uid-2", OrgID: orgID}
+				rule3 := models.AlertRule{UID: "uid-3", OrgID: orgID}
+
+				err := store.SetProvenance(context.Background(), &rule1, orgID, models.ProvenanceFile)
+				require.NoError(t, err)
+				err = store.SetProvenance(context.Background(), &rule2, orgID, models.ProvenanceAPI)
+				require.NoError(t, err)
+				err = store.SetProvenance(context.Background(), &rule3, orgID, models.ProvenanceFile)
+				require.NoError(t, err)
+
+				// Fetch only rule1 and rule2
+				p, err := store.GetProvenancesByUIDs(context.Background(), orgID, rule1.ResourceType(), []string{rule1.UID, rule2.UID})
+				require.NoError(t, err)
+				require.Len(t, p, 2)
+				require.Equal(t, models.ProvenanceFile, p[rule1.UID])
+				require.Equal(t, models.ProvenanceAPI, p[rule2.UID])
+				_, exists := p[rule3.UID]
+				require.False(t, exists)
+			})
+
+			t.Run("GetProvenancesByUIDs returns empty map for empty UIDs", func(t *testing.T) {
+				p, err := store.GetProvenancesByUIDs(context.Background(), 1, "alertRule", []string{})
+				require.NoError(t, err)
+				require.Empty(t, p)
+			})
+
+			t.Run("GetProvenancesByUIDs respects org ID", func(t *testing.T) {
+				const orgID1 = 125
+				const orgID2 = 126
+				rule := models.AlertRule{UID: "cross-org-uid"}
+
+				err := store.SetProvenance(context.Background(), &rule, orgID1, models.ProvenanceFile)
+				require.NoError(t, err)
+
+				// Should not find in different org
+				p, err := store.GetProvenancesByUIDs(context.Background(), orgID2, rule.ResourceType(), []string{rule.UID})
+				require.NoError(t, err)
+				require.Empty(t, p)
+
+				// Should find in correct org
+				p, err = store.GetProvenancesByUIDs(context.Background(), orgID1, rule.ResourceType(), []string{rule.UID})
+				require.NoError(t, err)
+				require.Len(t, p, 1)
+				require.Equal(t, models.ProvenanceFile, p[rule.UID])
+			})
+
 			t.Run("Store should delete provenance correctly", func(t *testing.T) {
 				const orgID = 1234
 				ruleOrg := models.AlertRule{
@@ -158,6 +208,15 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 
 func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+
+	// The deadlock class this test targets is specific to MySQL's gap/insert-intention locks
+	// (see setProvenanceWithLocking, gated by FlagAlertingProvenanceLockWrites). On SQLite,
+	// SELECT ... FOR UPDATE is a no-op and the single-writer model makes 20 concurrent
+	// transactions contend on busy_timeout, producing SQLITE_BUSY rather than exercising
+	// the fix.
+	if db.IsTestDbSQLite() {
+		t.Skip("DeadlockScenarios targets MySQL gap-lock semantics; skipped on SQLite")
+	}
 
 	ng, dbStore := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
 	dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)

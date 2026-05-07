@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -57,9 +58,7 @@ func ProvideDefaultPluginConfigs(
 		dsService:       dsService,
 		dsCache:         dsCache,
 		contextProvider: contextProvider,
-		converter: &converter{
-			mapper: request.GetNamespaceMapper(cfg),
-		},
+		converter:       converter.NewConverter(request.GetNamespaceMapper(cfg), "", "", nil),
 	}
 }
 
@@ -67,22 +66,16 @@ type cachingDatasourceProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
-	converter       *converter
+	converter       *converter.Converter
 }
 
 func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider {
-	group, _ := plugins.GetDatasourceGroupNameFromPluginID(pluginJson.ID)
 	return &scopedDatasourceProvider{
 		plugin:          pluginJson,
 		dsService:       q.dsService,
 		dsCache:         q.dsCache,
 		contextProvider: q.contextProvider,
-		converter: &converter{
-			mapper: q.converter.mapper,
-			plugin: pluginJson.ID,
-			alias:  pluginJson.AliasIDs,
-			group:  group,
-		},
+		converter:       converter.NewConverter(q.converter.Mapper(), pluginJson.ID, pluginJson.ID, pluginJson.AliasIDs),
 	}
 }
 
@@ -91,7 +84,7 @@ type scopedDatasourceProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
-	converter       *converter
+	converter       *converter.Converter
 }
 
 var (
@@ -108,7 +101,7 @@ func (q *scopedDatasourceProvider) GetInstanceSettings(ctx context.Context, uid 
 
 // CreateDataSource implements PluginDatasourceProvider.
 func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error) {
-	cmd, err := q.converter.toAddCommand(ds)
+	cmd, err := q.converter.ToAddCommand(ds)
 	if err != nil {
 		return nil, err
 	}
@@ -116,12 +109,12 @@ func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *dat
 	if err != nil {
 		return nil, err
 	}
-	return q.converter.asDataSource(out)
+	return q.converter.AsDataSource(out)
 }
 
 // UpdateDataSource implements PluginDatasourceProvider.
 func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error) {
-	cmd, err := q.converter.toUpdateCommand(ds)
+	cmd, err := q.converter.ToUpdateCommand(ds)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +122,16 @@ func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *dat
 	if err != nil {
 		return nil, err
 	}
-	return q.converter.asDataSource(out)
+
+	// Don't return secret references in the response if the update just
+	// told us to remove them.
+	for k, v := range ds.Secure {
+		if v.Remove {
+			delete(out.SecureJsonData, k)
+		}
+	}
+
+	return q.converter.AsDataSource(out)
 }
 
 // Delete implements PluginDatasourceProvider.
@@ -138,7 +140,7 @@ func (q *scopedDatasourceProvider) DeleteDataSource(ctx context.Context, uid str
 	if err != nil {
 		return err
 	}
-	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, false)
+	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, true)
 	if err != nil {
 		return err
 	}
@@ -159,11 +161,24 @@ func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string
 	if err != nil {
 		return nil, err
 	}
-	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, false)
+	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, true)
 	if err != nil {
 		return nil, err
 	}
-	return q.converter.asDataSource(ds)
+
+	// The old api skips returning secrets with empty values.
+	// See pkg/api/datasources.go
+	secrets, err := q.dsService.DecryptedValues(ctx, ds)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range secrets {
+		if len(v) == 0 {
+			delete(ds.SecureJsonData, k)
+		}
+	}
+
+	return q.converter.AsDataSource(ds)
 }
 
 // ListDataSource implements PluginDatasourceProvider.
@@ -185,7 +200,7 @@ func (q *scopedDatasourceProvider) ListDataSources(ctx context.Context) (*dataso
 		Items: []datasourceV0.DataSource{},
 	}
 	for _, ds := range dss {
-		v, _ := q.converter.asDataSource(ds)
+		v, _ := q.converter.AsDataSource(ds)
 		result.Items = append(result.Items, *v)
 	}
 	return result, nil

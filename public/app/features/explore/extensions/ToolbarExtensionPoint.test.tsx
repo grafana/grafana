@@ -1,14 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
-import { ExplorePanelsState, PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data';
+import { type ExplorePanelsState, PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
-import { DataQuery, LogsSortOrder } from '@grafana/schema';
+import { type DataQuery, LogsSortOrder } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
-import { ExplorePanelData, ExploreState } from 'app/types/explore';
+import { type ExplorePanelData, type ExploreState } from 'app/types/explore';
 
 import { createEmptyQueryResponse } from '../state/utils';
 

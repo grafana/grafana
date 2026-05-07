@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { OpenTsdbQuery } from '../types';
+import { type OpenTsdbQuery } from '../types';
 
-import { FilterSection, FilterSectionProps, testIds } from './FilterSection';
+import { FilterSection, type FilterSectionProps, testIds } from './FilterSection';
 
 const onRunQuery = jest.fn();
 const onChange = jest.fn();

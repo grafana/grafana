@@ -10,9 +10,15 @@ type AnnotationSpec struct {
 	DashboardUID *string  `json:"dashboardUID,omitempty"`
 	PanelID      *int64   `json:"panelID,omitempty"`
 	Tags         []string `json:"tags,omitempty"`
+	Scopes       []string `json:"scopes,omitempty"`
 }
 
 // NewAnnotationSpec creates a new AnnotationSpec object.
 func NewAnnotationSpec() *AnnotationSpec {
 	return &AnnotationSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for AnnotationSpec.
+func (AnnotationSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.AnnotationSpec"
 }

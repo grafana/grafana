@@ -11,59 +11,13 @@ labels:
 title: InfluxDB query Editor
 menuTitle: Query editor
 weight: 400
-refs:
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
-  panel-inspector:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-inspector/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-inspector/
-  logs:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/logs/
-  query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#query-editors
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
-  configure-influxdb-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure-influxdb-data-source/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure-influxdb-data-source/
 ---
 
 # InfluxDB query editor
 
-Grafana's query editors are unique to each data source. For general information on Grafana query editors, refer to [Query editors](ref:query-editor). For general information on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
+Grafana's query editors are unique to each data source. For general information on Grafana query editors, refer to [Query editors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors). For general information on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
-The InfluxDB query editor is located on the [Explore page](ref:explore). You can also access the InfluxDB query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
+The InfluxDB query editor is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the InfluxDB query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
 You can also use the query editor to retrieve [log data](#query-logs) and [annotate](#apply-annotations) visualizations.
 
@@ -195,7 +149,7 @@ Examples:
 ## Flux query editor
 
 Grafana supports Flux when running InfluxDB v1.8 and higher.
-If your data source is [configured for Flux](ref:configure-influxdb-data-source), you can use
+If your data source is [configured for Flux](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure-influxdb-data-source/), you can use
 the [Flux](https://docs.influxdata.com/flux/v0/) in the query editor, which serves as
 a text editor for raw Flux queries with macro support.
 
@@ -237,11 +191,11 @@ from(bucket: "grafana")
   |> yield(name: "mean")
 ```
 
-To view the interpolated version of a query with the Query inspector, refer to [Panel Inspector](ref:panel-inspector).
+To view the interpolated version of a query with the Query inspector, refer to [Panel Inspector](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-inspector/).
 
 ## Query logs
 
-You can query and display log data from InfluxDB in [Explore](ref:explore) and in the dashboard [Logs panel](ref:logs).
+You can query and display log data from InfluxDB in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) and in the dashboard [Logs panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/).
 
 Select an InfluxDB data source in the Query editor. Under the **Select measurement field** next to the **FROM** section, choose a measurement containing your log data, then choose the appropriate fields that will display the log message. Add any additional filters by clicking the **+ sign** next to the **WHERE** field. Add additional conditions in the GROUP BY, ORDER BY and the rest of the options.
 
@@ -249,7 +203,7 @@ After InfluxDB returns the results, the log panel displays log rows along with a
 
 ## Apply annotations
 
-[Annotations](ref:annotations) overlay rich event information on top of graphs.
+[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs.
 You can add annotation queries in the dashboard menu's **Annotations view**.
 
 For InfluxDB, your query **must** include `WHERE $timeFilter`.

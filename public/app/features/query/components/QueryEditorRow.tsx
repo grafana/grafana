@@ -1,27 +1,27 @@
 import classNames from 'classnames';
 import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import { PureComponent, ReactNode, type JSX } from 'react';
+import { PureComponent, type ReactNode, type JSX, createRef } from 'react';
 
 import {
   CoreApp,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
-  PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
-  EventBusExtended,
-  HistoryItem,
+  type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
+  type EventBusExtended,
+  type HistoryItem,
   LoadingState,
-  PanelData,
-  QueryResultMetaNotice,
-  TimeRange,
+  type PanelData,
+  type QueryResultMetaNotice,
+  type TimeRange,
   getDataSourceRef,
   PluginExtensionPoints,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -30,13 +30,13 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import {
   QueryOperationRow,
-  QueryOperationRowRenderProps,
+  type QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 import { ExpressionDatasourceUID } from '../../expressions/types';
 
-import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
+import { type QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 import { QueryLibraryEditingContainer } from './QueryLibraryEditingContainer';
@@ -88,6 +88,7 @@ interface State<TQuery extends DataQuery> {
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
   dataSourceSrv = getDataSourceSrv();
   id = '';
+  editorRef = createRef<HTMLDivElement>();
 
   state: State<TQuery> = {
     datasource: null,
@@ -419,6 +420,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
             onSelectQuery={this.onSelectQueryFromLibrary}
             datasourceFilters={datasource?.name ? [datasource.name] : []}
+            parentRef={this.editorRef}
           />
         )}
 
@@ -475,7 +477,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         hidden={query.hide}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
-        renderExtras={renderHeaderExtras}
+        renderExtras={() => <>{renderHeaderExtras && renderHeaderExtras()}</>}
         alerting={app === CoreApp.UnifiedAlerting}
         hideRefId={hideRefId}
       />
@@ -535,14 +537,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             )}
             {editor}
           </ErrorBoundaryAlert>
-          {error && <QueryErrorAlert error={error} />}
+          {error && <QueryErrorAlert error={error} query={query} />}
           {visualization}
         </div>
       </QueryOperationRow>
     );
 
     return (
-      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
+      <div data-testid={selectors.components.QueryEditorRows.rows} ref={this.editorRef}>
         {queryLibraryRef && (
           <MaybeQueryLibraryEditingHeader
             query={query}
@@ -611,9 +613,17 @@ function SavedQueryButtons(props: {
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
   datasourceFilters: string[];
+  parentRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
-  return renderSavedQueryButtons(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
+  return renderSavedQueryButtons(
+    props.query,
+    props.app,
+    props.onUpdateSuccess,
+    props.onSelectQuery,
+    undefined,
+    props.parentRef
+  );
 }
 
 // Will render editing header only if query library is enabled

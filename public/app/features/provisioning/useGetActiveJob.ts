@@ -6,10 +6,11 @@ export function useGetActiveJob(name?: string) {
   const activeQuery = useListJobQuery(
     name
       ? {
-          fieldSelector: `metadata.name=${name}`,
+          labelSelector: `provisioning.grafana.app/repository=${name}`,
           watch: true,
         }
       : skipToken
   );
-  return activeQuery?.data?.items?.[0];
+  const items = activeQuery?.data?.items;
+  return items?.find((j) => j.status?.state === 'working') ?? items?.[0];
 }

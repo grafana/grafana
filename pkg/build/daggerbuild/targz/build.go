@@ -42,7 +42,7 @@ func Build(packager *dagger.Container, opts *Opts) *dagger.File {
 	packager = packager.
 		WithWorkdir("/src")
 
-	paths := []string{}
+	paths := make([]string, 0, len(opts.Files)+len(opts.Directories))
 	for _, v := range opts.Files {
 		path := path.Join(root, v.path)
 		packager = packager.WithMountedFile(path, v.file)

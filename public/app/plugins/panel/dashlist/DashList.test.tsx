@@ -9,7 +9,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { getPanelProps } from '../test-utils';
 
 import { DashList } from './DashList';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 const [_, { folderA, folderA_dashbdD, dashbdE }] = getFolderFixtures();
 
@@ -40,7 +40,7 @@ const fixtures: Array<
     Parameters<typeof testWithFeatureToggles>[0],
   ]
 > = [
-  ['DashList - app platform APIs enabled', { enable: ['unifiedStorageSearchUI', 'starsFromAPIServer'] }],
+  ['DashList - app platform APIs enabled', { enable: ['starsFromAPIServer'] }],
   ['DashList - app platform APIs disabled', {}],
 ];
 describe.each(fixtures)('%s', (_title, featureTogglesSetup) => {
@@ -56,7 +56,7 @@ describe.each(fixtures)('%s', (_title, featureTogglesSetup) => {
     });
     render(<DashList {...props} />);
 
-    const headings = (await screen.findAllByRole('heading')).map((heading) => heading.textContent);
+    const headings = (await screen.findAllByTestId('dashlist-header')).map((heading) => heading.textContent);
     expect(headings).toEqual(['Starred dashboards', 'Recently viewed dashboards', 'Search']);
   });
 

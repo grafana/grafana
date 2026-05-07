@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 )
 
 var logger = backend.NewLoggerWith("logger", "tsdb.jaeger")
@@ -83,7 +84,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	client, err := s.getDSInfo(ctx, backend.PluginConfigFromContext(ctx))
-	cfg := backend.GrafanaConfigFromContext(ctx)
+	cfg := config.GrafanaConfigFromContext(ctx)
 	if err != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
@@ -93,9 +94,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	var servicesErr error
 	if cfg.FeatureToggles().IsEnabled("jaegerEnableGrpcEndpoint") {
-		_, servicesErr = client.JaegerClient.GrpcServices()
+		_, servicesErr = client.JaegerClient.GrpcServices(ctx)
 	} else {
-		_, servicesErr = client.JaegerClient.Services()
+		_, servicesErr = client.JaegerClient.Services(ctx)
 	}
 
 	if servicesErr != nil {

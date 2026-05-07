@@ -8,9 +8,12 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/logs/panelcfg.cue file.
+
 import * as common from '@grafana/schema';
 
 export interface Options {
+  allowDownload?: boolean;
   controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
   detailsMode?: ('inline' | 'sidebar');
@@ -18,6 +21,7 @@ export interface Options {
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
   fontSize?: ('default' | 'small');
+  grammar?: unknown;
   isFilterLabelActive?: unknown;
   logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
@@ -40,12 +44,14 @@ export interface Options {
   showControls?: boolean;
   showFieldSelector?: boolean;
   showLabels: boolean;
+  showLevel?: boolean;
   showLogAttributes?: boolean;
   showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
   syntaxHighlighting?: boolean;
   timestampResolution?: ('ms' | 'ns');
+  unwrappedColumns?: boolean;
   wrapLogMessage: boolean;
 }
 

@@ -9,8 +9,6 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
 service AuthzExtentionService {
-  rpc BatchCheck(BatchCheckRequest) returns (BatchCheckResponse);
-
   rpc Read(ReadRequest) returns (ReadResponse);
   rpc Write(WriteRequest) returns (WriteResponse);
 
@@ -40,6 +38,9 @@ message MutateOperation {
     DeleteTeamBindingOperation delete_team_binding = 11;
     CreateRoleOperation create_role = 12;
     DeleteRoleOperation delete_role = 13;
+    UpdateServiceAccountOrgRoleOperation update_service_account_org_role = 14;
+    DeleteServiceAccountOrgRoleOperation delete_service_account_org_role = 15;
+    AddServiceAccountOrgRoleOperation add_service_account_org_role = 16;
   }
 }
 
@@ -93,8 +94,30 @@ message DeleteUserOrgRoleOperation {
   string role = 2;
 }
 
+message AddServiceAccountOrgRoleOperation {
+  // Service account UID
+  string service_account = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
+// UpdateServiceAccountOrgRoleOperation assigns the service account's basic role and deletes existing basic role assignments.
+message UpdateServiceAccountOrgRoleOperation {
+  // Service account UID
+  string service_account = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
+message DeleteServiceAccountOrgRoleOperation {
+  // Service account UID
+  string service_account = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
 message CreateRoleBindingOperation {
-  // kind of the identity getting the permission (User/Team/ServiceAccount/BasicRole)
+  // kind of the identity getting the permission (User/Team/ServiceAccount)
   string subject_kind = 1;
   // uid of the identity
   string subject_name = 2;
@@ -105,7 +128,7 @@ message CreateRoleBindingOperation {
 }
 
 message DeleteRoleBindingOperation {
-  // kind of the identity getting the permission (User/Team/ServiceAccount/BasicRole)
+  // kind of the identity getting the permission (User/Team/ServiceAccount)
   string subject_kind = 1;
   // uid of the identity
   string subject_name = 2;
@@ -230,29 +253,6 @@ message WriteRequest {
 }
 
 message WriteResponse {}
-
-message BatchCheckRequest {
-  string subject = 1;
-  string namespace = 2;
-  repeated BatchCheckItem items = 3;
-}
-
-message BatchCheckItem {
-  string verb = 1;
-  string group = 2;
-  string resource = 3;
-  string name = 4;
-  string subresource = 5;
-  string folder = 6;
-}
-
-message BatchCheckResponse {
-  map<string, BatchCheckGroupResource> groups = 1;
-}
-
-message BatchCheckGroupResource {
-  map<string, bool> items = 1;
-}
 
 message QueryRequest {
   string namespace = 1;

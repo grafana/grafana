@@ -128,4 +128,4 @@ Additionally, Grafana provides an [alert list panel](ref:alert-list-panel) that 
 
 You can configure the alert list panel with various visualization options and filters to control how alerts are displayed. For more details, refer to the [Alert list documentation](ref:alert-list-panel).
 
-{{< docs/play title="this demo dashboard with alert list panels and linked alert rules" url="https://play.grafana.org/d/000000074/" >}}
+{{< docs/play title="this demo dashboard with alert list panels and linked alert rules" url="https://play.grafana.org/d/000000074/alerting?tech=docs&pg=alerting-demo&plcmt=callout-play&cta=alert-demo-dashboard" >}}

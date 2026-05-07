@@ -121,6 +121,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&LibraryPanelList{},
 		&Snapshot{},
 		&SnapshotList{},
+		&DashboardSnapshotWithDeleteKey{},
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 		&metav1.Table{},

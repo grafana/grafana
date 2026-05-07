@@ -1,23 +1,23 @@
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
   FieldType,
   MutableDataFrame,
-  ScopedVars,
+  type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { createNodeGraphFrames, NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { createNodeGraphFrames, type NodeGraphOptions, type SpanBarOptions } from '@grafana/o11y-ds-frontend';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
-import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
+import { type TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
 import { createGraphFrames } from './graphTransform';
 import { createTraceFrame } from './responseTransform';
-import { JaegerQuery } from './types';
+import { type JaegerQuery } from './types';
 
 export interface JaegerJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;
@@ -106,6 +106,7 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       ...expandedQuery,
       service: this.templateSrv.replace(query.service ?? '', scopedVars),
       operation: this.templateSrv.replace(query.operation ?? '', scopedVars),
+      query: this.templateSrv.replace(query.query ?? '', scopedVars),
       minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
       maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
     };

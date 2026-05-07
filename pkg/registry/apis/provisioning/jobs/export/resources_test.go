@@ -69,7 +69,7 @@ func runExportTest(t *testing.T, mockItems []unstructured.Unstructured, setupPro
 		Branch: "feature/branch",
 	}
 
-	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress)
+	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, false)
 
 	mockProgress.AssertExpectations(t)
 	repoResources.AssertExpectations(t)
@@ -88,10 +88,10 @@ func TestExportResources_Dashboards_Success(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-1" && result.Action == repository.FileActionCreated
+			return result.Name() == "dashboard-1" && result.Action() == repository.FileActionCreated
 		})).Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-2" && result.Action == repository.FileActionCreated
+			return result.Name() == "dashboard-2" && result.Action() == repository.FileActionCreated
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 		progress.On("TooManyErrors").Return(nil)
@@ -141,10 +141,10 @@ func TestExportResources_Dashboards_WithErrors(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-1" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "writing resource file for dashboard-1: failed to export dashboard"
+			return result.Name() == "dashboard-1" && result.Action() == repository.FileActionIgnored && result.Error() != nil && result.Error().Error() == "writing resource file for dashboard-1: failed to export dashboard"
 		})).Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-2" && result.Action == repository.FileActionCreated
+			return result.Name() == "dashboard-2" && result.Action() == repository.FileActionCreated
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 		progress.On("TooManyErrors").Return(nil)
@@ -179,7 +179,7 @@ func TestExportResources_Dashboards_TooManyErrors(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-1" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "writing resource file for dashboard-1: failed to export dashboard"
+			return result.Name() == "dashboard-1" && result.Action() == repository.FileActionIgnored && result.Error() != nil && result.Error().Error() == "writing resource file for dashboard-1: failed to export dashboard"
 		})).Return()
 		progress.On("TooManyErrors").Return(fmt.Errorf("too many errors encountered"))
 	}
@@ -209,7 +209,7 @@ func TestExportResources_Dashboards_IgnoresExisting(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "existing-dashboard" && result.Action == repository.FileActionIgnored
+			return result.Name() == "existing-dashboard" && result.Action() == repository.FileActionIgnored
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 	}
@@ -256,7 +256,7 @@ func TestExportResources_Dashboards_SavedVersion(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "existing-dashboard" && result.Action == repository.FileActionIgnored
+			return result.Name() == "existing-dashboard" && result.Action() == repository.FileActionIgnored
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 	}
@@ -320,9 +320,9 @@ func TestExportResources_Dashboards_FailedConversionNoStoredVersion(t *testing.T
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-no-stored-version" &&
-				result.Action == repository.FileActionIgnored &&
-				result.Error != nil
+			return result.Name() == "dashboard-no-stored-version" &&
+				result.Action() == repository.FileActionIgnored &&
+				result.Error() != nil
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 	}
@@ -469,20 +469,20 @@ func TestExportResources_Dashboards_Versions(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 				if tt.expectSuccess {
 					progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-						return result.Name == tt.dashboardName && result.Action == repository.FileActionCreated
+						return result.Name() == tt.dashboardName && result.Action() == repository.FileActionCreated
 					})).Return()
 				} else {
 					progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-						if result.Name != tt.dashboardName {
+						if result.Name() != tt.dashboardName {
 							return false
 						}
-						if result.Action != repository.FileActionIgnored {
+						if result.Action() != repository.FileActionIgnored {
 							return false
 						}
-						if result.Error == nil {
+						if result.Error() == nil {
 							return false
 						}
-						return result.Error.Error() == tt.expectedError
+						return result.Error().Error() == tt.expectedError
 					})).Return()
 				}
 				progress.On("TooManyErrors").Return(nil)
@@ -540,7 +540,7 @@ func TestExportResources_Dashboards_SkipsManagedResources(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "managed-dashboard" && result.Action == repository.FileActionIgnored
+			return result.Name() == "managed-dashboard" && result.Action() == repository.FileActionIgnored
 		})).Return()
 		progress.On("TooManyErrors").Return(nil).Maybe()
 	}
@@ -552,6 +552,99 @@ func TestExportResources_Dashboards_SkipsManagedResources(t *testing.T) {
 
 	err = runExportTest(t, mockItems, setupProgress, setupResources)
 	require.NoError(t, err)
+}
+
+func TestExportResources_GenerateNewUIDs(t *testing.T) {
+	mockItems := []unstructured.Unstructured{
+		createDashboardObject("original-name-1"),
+		createDashboardObject("original-name-2"),
+	}
+
+	mockClient := &mockDynamicInterface{items: mockItems}
+	resourceClients := resources.NewMockResourceClients(t)
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+
+	mockProgress.On("SetMessage", mock.Anything, "start resource export").Return()
+	mockProgress.On("SetMessage", mock.Anything, "export dashboards").Return()
+
+	// The result builder should still record the original names
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Name() == "original-name-1" && result.Action() == repository.FileActionCreated
+	})).Return()
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Name() == "original-name-2" && result.Action() == repository.FileActionCreated
+	})).Return()
+	mockProgress.On("TooManyErrors").Return(nil).Times(2)
+
+	resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, schema.GroupVersionKind{
+		Group:   resources.DashboardResource.Group,
+		Version: resources.DashboardResource.Version,
+		Kind:    "DashboardList",
+	}, nil)
+
+	// The object written should have a NEW name (not the original)
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+		name := obj.GetName()
+		return name != "original-name-1" && name != "original-name-2" && name != ""
+	}), resources.WriteOptions{Path: "grafana", Ref: "feature/branch"}).Return("exported.json", nil).Times(2)
+
+	options := provisioningV0.ExportJobOptions{
+		Path:   "grafana",
+		Branch: "feature/branch",
+	}
+
+	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, true)
+	require.NoError(t, err)
+
+	mockProgress.AssertExpectations(t)
+	repoResources.AssertExpectations(t)
+	resourceClients.AssertExpectations(t)
+}
+
+func TestExportResources_GenerateNewUIDs_UniquePerResource(t *testing.T) {
+	mockItems := []unstructured.Unstructured{
+		createDashboardObject("dash-a"),
+		createDashboardObject("dash-b"),
+	}
+
+	mockClient := &mockDynamicInterface{items: mockItems}
+	resourceClients := resources.NewMockResourceClients(t)
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+
+	mockProgress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	mockProgress.On("Record", mock.Anything, mock.Anything).Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+
+	resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, schema.GroupVersionKind{
+		Group:   resources.DashboardResource.Group,
+		Version: resources.DashboardResource.Version,
+		Kind:    "DashboardList",
+	}, nil)
+
+	// Collect generated names to verify uniqueness
+	var generatedNames []string
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			obj := args.Get(1).(*unstructured.Unstructured)
+			generatedNames = append(generatedNames, obj.GetName())
+		}).Return("exported.json", nil)
+
+	options := provisioningV0.ExportJobOptions{
+		Path:   "grafana",
+		Branch: "feature/branch",
+	}
+
+	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, true)
+	require.NoError(t, err)
+
+	require.Len(t, generatedNames, 2, "should have written 2 resources")
+	require.NotEqual(t, generatedNames[0], generatedNames[1], "generated names should be unique")
+	require.NotEqual(t, generatedNames[0], "dash-a")
+	require.NotEqual(t, generatedNames[0], "dash-b")
+	require.NotEqual(t, generatedNames[1], "dash-a")
+	require.NotEqual(t, generatedNames[1], "dash-b")
 }
 
 func TestExportResources_Dashboards_MultipleVersions(t *testing.T) {
@@ -608,8 +701,8 @@ func TestExportResources_Dashboards_MultipleVersions(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return (result.Name == "v2alpha-dashboard" || result.Name == "v2beta-dashboard" || result.Name == "v3-dashboard") &&
-				result.Action == repository.FileActionCreated
+			return (result.Name() == "v2alpha-dashboard" || result.Name() == "v2beta-dashboard" || result.Name() == "v3-dashboard") &&
+				result.Action() == repository.FileActionCreated
 		})).Return().Times(3)
 		progress.On("TooManyErrors").Return(nil).Times(3)
 	}

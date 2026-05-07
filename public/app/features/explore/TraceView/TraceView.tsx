@@ -1,28 +1,28 @@
 import { css } from '@emotion/css';
-import { RefObject, useMemo, useState } from 'react';
+import { type RefObject, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
   CoreApp,
-  DataFrame,
-  DataLink,
-  DataSourceApi,
-  DataSourceJsonData,
-  Field,
-  GrafanaTheme2,
-  LinkModel,
+  type DataFrame,
+  type DataLink,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  type Field,
+  type GrafanaTheme2,
+  type LinkModel,
   mapInternalLinkToExplore,
-  SplitOpen,
-  TimeRange,
-  TraceSearchProps,
+  type SplitOpen,
+  type TimeRange,
+  type TraceSearchProps,
   useDataLinksContext,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
+import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { TempoQuery } from '@grafana-plugins/tempo/types';
+import { type TempoQuery } from '@grafana-plugins/tempo/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -32,11 +32,11 @@ import { changePanelState } from '../state/explorePane';
 import memoizedTraceCriticalPath from './components/CriticalPath';
 import { TracePageHeader } from './components/TracePageHeader/TracePageHeader';
 import TraceTimelineViewer from './components/TraceTimelineViewer';
-import { TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
-import { SpanBarOptionsData } from './components/settings/SpanBarSettings';
-import TTraceTimeline from './components/types/TTraceTimeline';
-import { SpanLinkFunc } from './components/types/links';
-import { Trace } from './components/types/trace';
+import { type TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
+import { type SpanBarOptionsData } from './components/settings/SpanBarSettings';
+import type TTraceTimeline from './components/types/TTraceTimeline';
+import { type SpanLinkFunc } from './components/types/links';
+import { type Trace } from './components/types/trace';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
@@ -63,12 +63,13 @@ type Props = {
   scrollElementClass?: string;
   traceProp: Trace;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
-  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement | null>;
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
   spanFilters?: TraceSearchProps;
   timeRange: TimeRange;
+  hideHeaderDetails?: boolean;
 };
 
 export function TraceView(props: Props) {
@@ -81,6 +82,7 @@ export function TraceView(props: Props) {
     focusedSpanId: focusedSpanIdFromProps,
     createFocusSpanLink: createFocusSpanLinkFromProps,
     spanFilters,
+    hideHeaderDetails = false,
   } = props;
 
   const {
@@ -202,6 +204,7 @@ export function TraceView(props: Props) {
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
             viewRange={viewRange}
+            hideHeaderDetails={hideHeaderDetails}
           />
 
           <TraceTimelineViewer

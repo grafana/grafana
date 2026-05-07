@@ -1,11 +1,11 @@
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldType,
   getFieldDisplayName,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   outerJoinDataFrames,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
@@ -13,7 +13,7 @@ import { findField } from 'app/features/dimensions/utils';
 
 import { prepareGraphableFields } from '../timeseries/utils';
 
-import { Options, CandlestickFieldMap, VizDisplayMode } from './types';
+import { type Options, type CandlestickFieldMap, VizDisplayMode } from './panelcfg.gen';
 
 export interface FieldPickerInfo {
   /** property name */

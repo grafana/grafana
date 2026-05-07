@@ -1,20 +1,20 @@
-package coreplugin_test
+package coreplugin
 
 import (
 	"context"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCorePlugin(t *testing.T) {
 	t.Run("New core plugin with empty opts should return expected values", func(t *testing.T) {
-		factory := coreplugin.New(backend.ServeOpts{})
+		factory := New(backend.ServeOpts{})
 		p, err := factory("plugin", log.New("test"), pluginfakes.InitializeNoopTracerForTest(), nil)
 		require.NoError(t, err)
 		require.NotNil(t, p)
@@ -36,7 +36,7 @@ func TestCorePlugin(t *testing.T) {
 	t.Run("New core plugin with handlers set in opts should return expected values", func(t *testing.T) {
 		checkHealthCalled := false
 		callResourceCalled := false
-		factory := coreplugin.New(backend.ServeOpts{
+		factory := New(backend.ServeOpts{
 			CheckHealthHandler: backend.CheckHealthHandlerFunc(func(ctx context.Context,
 				req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 				checkHealthCalled = true

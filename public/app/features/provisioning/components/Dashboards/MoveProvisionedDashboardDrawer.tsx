@@ -1,8 +1,12 @@
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { Spinner } from '@grafana/ui';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
 
+import { FormLoadingErrorAlert } from './FormLoadingErrorAlert';
 import { MoveProvisionedDashboardForm } from './MoveProvisionedDashboardForm';
+import { OrphanedProvisionedDrawerNotice } from './OrphanedProvisionedDrawerNotice';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -19,11 +23,27 @@ export function MoveProvisionedDashboardDrawer({
   onDismiss,
   onSuccess,
 }: Props) {
-  const { defaultValues, loadedFromRef, readOnly, workflowOptions, isNew, repository } =
-    useProvisionedDashboardData(dashboard);
+  const {
+    defaultValues,
+    loadedFromRef,
+    readOnly,
+    canPushToConfiguredBranch,
+    isNew,
+    repository,
+    repoDataStatus,
+    error,
+  } = useProvisionedDashboardData(dashboard);
 
-  if (!defaultValues) {
-    return null;
+  if (repoDataStatus === RepoViewStatus.Loading) {
+    return <Spinner />;
+  }
+
+  if (repoDataStatus === RepoViewStatus.Orphaned) {
+    return <OrphanedProvisionedDrawerNotice />;
+  }
+
+  if (repoDataStatus === RepoViewStatus.Error || !defaultValues) {
+    return <FormLoadingErrorAlert error={error} />;
   }
 
   return (
@@ -34,7 +54,7 @@ export function MoveProvisionedDashboardDrawer({
       readOnly={readOnly}
       repository={repository}
       isNew={isNew}
-      workflowOptions={workflowOptions}
+      canPushToConfiguredBranch={canPushToConfiguredBranch}
       targetFolderUID={targetFolderUID}
       targetFolderTitle={targetFolderTitle}
       onDismiss={onDismiss}

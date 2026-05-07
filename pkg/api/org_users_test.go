@@ -52,7 +52,7 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
@@ -171,10 +171,15 @@ func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 			orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 				OrgUsers: []*org.OrgUserDTO{
 					{Login: testUserLogin, Email: "testUser@grafana.com"},
-					{Login: "user1", Email: "user1@grafana.com"},
 					{Login: "user2", Email: "user2@grafana.com"},
 				},
 			}
+
+			orgService.SearchOrgUsersFn = func(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+				require.True(t, query.ExcludeHiddenUsers)
+				return orgService.ExpectedSearchOrgUsersResult, nil
+			}
+			defer func() { orgService.SearchOrgUsersFn = nil }()
 
 			sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -191,6 +196,18 @@ func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		loggedInUserScenarioWithRole(t, "When calling GET as an admin on", "GET", "api/org/users/lookup",
 			"api/org/users/lookup", org.RoleAdmin, func(sc *scenarioContext) {
+				orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
+					OrgUsers: []*org.OrgUserDTO{
+						{Login: testUserLogin, Email: "testUser@grafana.com"},
+						{Login: "user2", Email: "user2@grafana.com"},
+					},
+				}
+				orgService.SearchOrgUsersFn = func(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+					require.True(t, query.ExcludeHiddenUsers)
+					return orgService.ExpectedSearchOrgUsersResult, nil
+				}
+				defer func() { orgService.SearchOrgUsersFn = nil }()
+
 				sc.handlerFunc = hs.GetOrgUsersForCurrentOrgLookup
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 

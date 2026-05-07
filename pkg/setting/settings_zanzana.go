@@ -2,7 +2,10 @@ package setting
 
 import (
 	"slices"
+	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 )
 
 type ZanzanaMode string
@@ -10,6 +13,21 @@ type ZanzanaMode string
 const (
 	ZanzanaModeClient   ZanzanaMode = "client"
 	ZanzanaModeEmbedded ZanzanaMode = "embedded"
+)
+
+// ZanzanaPrimaryEngine controls which engine is on the hot path when the shadow
+// client is active (i.e. the Zanzana feature flag is enabled but
+// ZanzanaNoLegacyClient is not). The other engine runs in the background for
+// comparison only.
+type ZanzanaPrimaryEngine string
+
+const (
+	// ZanzanaPrimaryEngineRBAC uses legacy RBAC as the primary engine and runs
+	// Zanzana checks in the background (default – preserves existing behaviour).
+	ZanzanaPrimaryEngineRBAC ZanzanaPrimaryEngine = "rbac"
+	// ZanzanaPrimaryEngineZanzana uses Zanzana as the primary engine and runs
+	// legacy RBAC checks in the background.
+	ZanzanaPrimaryEngineZanzana ZanzanaPrimaryEngine = "zanzana"
 )
 
 type ZanzanaClientSettings struct {
@@ -29,25 +47,176 @@ type ZanzanaClientSettings struct {
 	TokenExchangeURL string
 	// Namespace to use for the token.
 	TokenNamespace string
+	// PrimaryEngine selects which engine is on the hot path when the shadow
+	// client is active. Accepted values: "rbac" (default) and "zanzana".
+	PrimaryEngine ZanzanaPrimaryEngine
+}
+
+type ZanzanaReconcilerMode string
+
+const (
+	ZanzanaReconcilerModeLegacy   ZanzanaReconcilerMode = "legacy"
+	ZanzanaReconcilerModeMT       ZanzanaReconcilerMode = "mt"
+	ZanzanaReconcilerModeDisabled ZanzanaReconcilerMode = "disabled"
+)
+
+type ZanzanaReconcilerSettings struct {
+	// Mode selects which reconciler to run: "legacy", "mt", or "disabled".
+	Mode ZanzanaReconcilerMode
+
+	// --- MT reconciler settings (only used when Mode == "mt") ---
+
+	// URL of the folder apiserver (standalone mode only, not needed for embedded).
+	FolderAPIServerURL string
+	// URL of the IAM apiserver (standalone mode only, not needed for embedded).
+	IAMAPIServerURL string
+	// Skip TLS verification when connecting to apiservers.
+	TLSInsecure bool
+	// Number of worker goroutines.
+	Workers int
+	// Interval between reconciliation cycles.
+	Interval time.Duration
+	// Batch size for writing tuples to Zanzana.
+	WriteBatchSize int
+	// Size of the buffered work queue for namespaces.
+	QueueSize int
+	// Page size when listing CRDs from the Kubernetes API.
+	ListPageSize int
+
+	// --- HA leader election (standalone mode in K8s) ---
+
+	LeaderElection leaderelection.Config
+}
+
+type ZanzanaStoreType string
+
+const (
+	ZanzanaStoreTypeSQL  ZanzanaStoreType = "sql"
+	ZanzanaStoreTypeGRPC ZanzanaStoreType = "grpc"
+)
+
+type ZanzanaGRPCStoreSettings struct {
+	Addr        string
+	TLSCertPath string
+	TLSKeyPath  string
 }
 
 type ZanzanaServerSettings struct {
+	StoreType ZanzanaStoreType
 	// OpenFGA http server address which allows to connect with fga cli.
 	// Can only be used in dev mode.
 	OpenFGAHttpAddr string
 	// Cache settings
 	CacheSettings OpenFgaCacheSettings
+	// OpenFGA server settings
+	OpenFgaServerSettings OpenFgaServerSettings
 	// Max number of results returned by ListObjects() query. Default is 1000.
 	ListObjectsMaxResults uint32
 	// Deadline for the ListObjects() query. Default is 3 seconds.
 	ListObjectsDeadline time.Duration
-	// Use streamed version of list objects.
-	// Returns full list of objects, but takes more time.
-	UseStreamedListObjects bool
 	// URL for fetching signing keys.
 	SigningKeysURL string
 	// Allow insecure connections to the server for development purposes.
 	AllowInsecure bool
+	// Page size for Read queries in reconciler. Default is 100.
+	ReadPageSize int32
+	// Max unique folder checks per batch-check phase before switching from OpenFGA BatchCheck
+	// to ListObjects. Reduces graph exploration when many distinct folders are checked. Default 20.
+	FolderCheckBatchThreshold int
+	// Max number of concurrent in-flight Check/BatchCheck/List requests.
+	// 0 means no limit (default). When reached, new requests are rejected with ResourceExhausted.
+	MaxConcurrentRequests int
+	// Max number of concurrent in-flight requests per namespace (tenant).
+	// 0 means no limit (default). Prevents a single noisy tenant from starving others.
+	MaxConcurrentRequestsPerNamespace int
+}
+
+type OpenFgaServerSettings struct {
+	// ListObjects settings
+	// Max number of concurrent datastore reads for ListObjects queries
+	MaxConcurrentReadsForListObjects uint32
+	// Enable dispatch throttling for ListObjects queries
+	ListObjectsDispatchThrottlingEnabled bool
+	// Frequency for dispatch throttling in ListObjects queries
+	ListObjectsDispatchThrottlingFrequency time.Duration
+	// Threshold for dispatch throttling in ListObjects queries
+	ListObjectsDispatchThrottlingThreshold uint32
+	// Max threshold for dispatch throttling in ListObjects queries
+	ListObjectsDispatchThrottlingMaxThreshold uint32
+	// Database throttle threshold for ListObjects queries
+	ListObjectsDatabaseThrottleThreshold int
+	// Database throttle duration for ListObjects queries
+	ListObjectsDatabaseThrottleDuration time.Duration
+
+	// ListUsers settings
+	// Deadline for ListUsers queries
+	ListUsersDeadline time.Duration
+	// Max number of results returned by ListUsers queries
+	ListUsersMaxResults uint32
+	// Max number of concurrent datastore reads for ListUsers queries
+	MaxConcurrentReadsForListUsers uint32
+	// Enable dispatch throttling for ListUsers queries
+	ListUsersDispatchThrottlingEnabled bool
+	// Frequency for dispatch throttling in ListUsers queries
+	ListUsersDispatchThrottlingFrequency time.Duration
+	// Threshold for dispatch throttling in ListUsers queries
+	ListUsersDispatchThrottlingThreshold uint32
+	// Max threshold for dispatch throttling in ListUsers queries
+	ListUsersDispatchThrottlingMaxThreshold uint32
+	// Database throttle threshold for ListUsers queries
+	ListUsersDatabaseThrottleThreshold int
+	// Database throttle duration for ListUsers queries
+	ListUsersDatabaseThrottleDuration time.Duration
+
+	// Check settings
+	// Max number of concurrent datastore reads for Check queries
+	MaxConcurrentReadsForCheck uint32
+	// Database throttle threshold for Check queries
+	CheckDatabaseThrottleThreshold int
+	// Database throttle duration for Check queries
+	CheckDatabaseThrottleDuration time.Duration
+
+	// Batch check settings
+	// Max number of concurrent checks per batch check request
+	MaxConcurrentChecksPerBatchCheck uint32
+	// Max number of checks per batch check request
+	MaxChecksPerBatchCheck uint32
+
+	// Resolve node settings
+	// Max number of nodes that can be resolved in a single query
+	ResolveNodeLimit uint32
+	// Max breadth of nodes that can be resolved in a single query
+	ResolveNodeBreadthLimit uint32
+
+	// Dispatch throttling settings for Check resolver
+	// Enable dispatch throttling for Check resolver
+	DispatchThrottlingCheckResolverEnabled bool
+	// Frequency for dispatch throttling in Check resolver
+	DispatchThrottlingCheckResolverFrequency time.Duration
+	// Threshold for dispatch throttling in Check resolver
+	DispatchThrottlingCheckResolverThreshold uint32
+	// Max threshold for dispatch throttling in Check resolver
+	DispatchThrottlingCheckResolverMaxThreshold uint32
+
+	// Shadow check/query settings
+	// Timeout for shadow check resolver
+	ShadowCheckResolverTimeout time.Duration
+	// Timeout for shadow ListObjects query
+	ShadowListObjectsQueryTimeout time.Duration
+	// Max delta items for shadow ListObjects query
+	ShadowListObjectsQueryMaxDeltaItems int
+
+	// Request settings
+	// Global request timeout
+	RequestTimeout time.Duration
+	// Max size in bytes for authorization model
+	MaxAuthorizationModelSizeInBytes int
+	// Size of the authorization model cache
+	AuthorizationModelCacheSize int
+	// Size of the typesystem cache (controls how many resolved typesystems are kept in memory)
+	TypesystemCacheSize int
+	// Offset for changelog horizon
+	ChangelogHorizonOffset int
 }
 
 // Parameters to configure OpenFGA cache.
@@ -98,6 +267,18 @@ type OpenFgaCacheSettings struct {
 	SharedIteratorTTL time.Duration
 }
 
+// ZanzanaRolloutSettings controls per-resource tenant routing to Zanzana.
+// Keys are "group/resource" (e.g. "dashboard.grafana.app/dashboards"),
+// values are fractions in [0.0, 1.0]. Tenants are assigned deterministically
+// via a hash of namespace+resource; the same tenant always lands in the same bucket.
+type ZanzanaRolloutSettings struct {
+	ResourcePercentages map[string]float64
+}
+
+const (
+	defaultReadPageSize = 100
+)
+
 func (cfg *Cfg) readZanzanaSettings() {
 	zc := ZanzanaClientSettings{}
 	clientSec := cfg.SectionWithEnvOverrides("zanzana.client")
@@ -110,26 +291,46 @@ func (cfg *Cfg) readZanzanaSettings() {
 		zc.Mode = "embedded"
 	}
 
-	zc.Token = clientSec.Key("token").MustString("")
-	zc.TokenExchangeURL = clientSec.Key("token_exchange_url").MustString("")
 	zc.Addr = clientSec.Key("address").MustString("")
 	zc.ServerCertFile = clientSec.Key("tls_cert").MustString("")
 
-	// TODO: read Token and TokenExchangeURL from grpc_client_authentication section
 	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	zc.Token = grpcClientAuthSection.Key("token").MustString("")
+	zc.TokenExchangeURL = grpcClientAuthSection.Key("token_exchange_url").MustString("")
 	zc.TokenNamespace = grpcClientAuthSection.Key("token_namespace").MustString("stacks-" + cfg.StackID)
+
+	// TODO: remove old settings when migrated
+	token := clientSec.Key("token").MustString("")
+	tokenExchangeURL := clientSec.Key("token_exchange_url").MustString("")
+	if token != "" {
+		zc.Token = token
+	}
+	if tokenExchangeURL != "" {
+		zc.TokenExchangeURL = tokenExchangeURL
+	}
+
+	zc.PrimaryEngine = ZanzanaPrimaryEngine(clientSec.Key("primary_engine").MustString(string(ZanzanaPrimaryEngineRBAC)))
+	validEngines := []ZanzanaPrimaryEngine{ZanzanaPrimaryEngineRBAC, ZanzanaPrimaryEngineZanzana}
+	if !slices.Contains(validEngines, zc.PrimaryEngine) {
+		cfg.Logger.Warn("Invalid zanzana primary_engine", "expected", validEngines, "got", zc.PrimaryEngine)
+		zc.PrimaryEngine = ZanzanaPrimaryEngineRBAC
+	}
 
 	cfg.ZanzanaClient = zc
 
 	zs := ZanzanaServerSettings{}
 	serverSec := cfg.SectionWithEnvOverrides("zanzana.server")
 
-	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("127.0.0.1:8080")
+	zs.StoreType = ZanzanaStoreType(serverSec.Key("store_type").MustString(string(ZanzanaStoreTypeSQL)))
+	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("")
 	zs.ListObjectsDeadline = serverSec.Key("list_objects_deadline").MustDuration(3 * time.Second)
 	zs.ListObjectsMaxResults = uint32(serverSec.Key("list_objects_max_results").MustUint(1000))
-	zs.UseStreamedListObjects = serverSec.Key("use_streamed_list_objects").MustBool(false)
 	zs.SigningKeysURL = serverSec.Key("signing_keys_url").MustString("")
 	zs.AllowInsecure = serverSec.Key("allow_insecure").MustBool(false)
+	zs.ReadPageSize = int32(serverSec.Key("read_page_size").MustInt(defaultReadPageSize))
+	zs.FolderCheckBatchThreshold = serverSec.Key("folder_check_batch_threshold").MustInt(20)
+	zs.MaxConcurrentRequests = serverSec.Key("max_concurrent_requests").MustInt(0)
+	zs.MaxConcurrentRequestsPerNamespace = serverSec.Key("max_concurrent_requests_per_namespace").MustInt(0)
 
 	// Cache settings
 	zs.CacheSettings.CheckCacheLimit = uint32(serverSec.Key("check_cache_limit").MustUint(10000))
@@ -147,5 +348,104 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.CacheSettings.SharedIteratorLimit = uint32(serverSec.Key("shared_iterator_limit").MustUint(1000))
 	zs.CacheSettings.SharedIteratorTTL = serverSec.Key("shared_iterator_ttl").MustDuration(10 * time.Second)
 
+	openfgaSec := cfg.SectionWithEnvOverrides("openfga")
+
+	// ListObjects settings
+	zs.OpenFgaServerSettings.MaxConcurrentReadsForListObjects = uint32(openfgaSec.Key("max_concurrent_reads_for_list_objects").MustUint(0))
+	zs.OpenFgaServerSettings.ListObjectsDispatchThrottlingEnabled = openfgaSec.Key("list_objects_dispatch_throttling_enabled").MustBool(false)
+	zs.OpenFgaServerSettings.ListObjectsDispatchThrottlingFrequency = openfgaSec.Key("list_objects_dispatch_throttling_frequency").MustDuration(0)
+	zs.OpenFgaServerSettings.ListObjectsDispatchThrottlingThreshold = uint32(openfgaSec.Key("list_objects_dispatch_throttling_threshold").MustUint(0))
+	zs.OpenFgaServerSettings.ListObjectsDispatchThrottlingMaxThreshold = uint32(openfgaSec.Key("list_objects_dispatch_throttling_max_threshold").MustUint(0))
+	zs.OpenFgaServerSettings.ListObjectsDatabaseThrottleThreshold = openfgaSec.Key("list_objects_database_throttle_threshold").MustInt(0)
+	zs.OpenFgaServerSettings.ListObjectsDatabaseThrottleDuration = openfgaSec.Key("list_objects_database_throttle_duration").MustDuration(0)
+
+	// ListUsers settings
+	zs.OpenFgaServerSettings.ListUsersDeadline = openfgaSec.Key("list_users_deadline").MustDuration(0)
+	zs.OpenFgaServerSettings.ListUsersMaxResults = uint32(openfgaSec.Key("list_users_max_results").MustUint(0))
+	zs.OpenFgaServerSettings.MaxConcurrentReadsForListUsers = uint32(openfgaSec.Key("max_concurrent_reads_for_list_users").MustUint(0))
+	zs.OpenFgaServerSettings.ListUsersDispatchThrottlingEnabled = openfgaSec.Key("list_users_dispatch_throttling_enabled").MustBool(false)
+	zs.OpenFgaServerSettings.ListUsersDispatchThrottlingFrequency = openfgaSec.Key("list_users_dispatch_throttling_frequency").MustDuration(0)
+	zs.OpenFgaServerSettings.ListUsersDispatchThrottlingThreshold = uint32(openfgaSec.Key("list_users_dispatch_throttling_threshold").MustUint(0))
+	zs.OpenFgaServerSettings.ListUsersDispatchThrottlingMaxThreshold = uint32(openfgaSec.Key("list_users_dispatch_throttling_max_threshold").MustUint(0))
+	zs.OpenFgaServerSettings.ListUsersDatabaseThrottleThreshold = openfgaSec.Key("list_users_database_throttle_threshold").MustInt(0)
+	zs.OpenFgaServerSettings.ListUsersDatabaseThrottleDuration = openfgaSec.Key("list_users_database_throttle_duration").MustDuration(0)
+
+	// Check settings
+	zs.OpenFgaServerSettings.MaxConcurrentReadsForCheck = uint32(openfgaSec.Key("max_concurrent_reads_for_check").MustUint(0))
+	zs.OpenFgaServerSettings.CheckDatabaseThrottleThreshold = openfgaSec.Key("check_database_throttle_threshold").MustInt(0)
+	zs.OpenFgaServerSettings.CheckDatabaseThrottleDuration = openfgaSec.Key("check_database_throttle_duration").MustDuration(0)
+
+	// Batch check settings
+	zs.OpenFgaServerSettings.MaxConcurrentChecksPerBatchCheck = uint32(openfgaSec.Key("max_concurrent_checks_per_batch_check").MustUint(0))
+	zs.OpenFgaServerSettings.MaxChecksPerBatchCheck = uint32(openfgaSec.Key("max_checks_per_batch_check").MustUint(0))
+
+	// Resolve node settings
+	zs.OpenFgaServerSettings.ResolveNodeLimit = uint32(openfgaSec.Key("resolve_node_limit").MustUint(0))
+	zs.OpenFgaServerSettings.ResolveNodeBreadthLimit = uint32(openfgaSec.Key("resolve_node_breadth_limit").MustUint(0))
+
+	// Dispatch throttling settings for Check resolver
+	zs.OpenFgaServerSettings.DispatchThrottlingCheckResolverEnabled = openfgaSec.Key("dispatch_throttling_check_resolver_enabled").MustBool(false)
+	zs.OpenFgaServerSettings.DispatchThrottlingCheckResolverFrequency = openfgaSec.Key("dispatch_throttling_check_resolver_frequency").MustDuration(0)
+	zs.OpenFgaServerSettings.DispatchThrottlingCheckResolverThreshold = uint32(openfgaSec.Key("dispatch_throttling_check_resolver_threshold").MustUint(0))
+	zs.OpenFgaServerSettings.DispatchThrottlingCheckResolverMaxThreshold = uint32(openfgaSec.Key("dispatch_throttling_check_resolver_max_threshold").MustUint(0))
+
+	// Shadow check/query settings
+	zs.OpenFgaServerSettings.ShadowCheckResolverTimeout = openfgaSec.Key("shadow_check_resolver_timeout").MustDuration(0)
+	zs.OpenFgaServerSettings.ShadowListObjectsQueryTimeout = openfgaSec.Key("shadow_list_objects_query_timeout").MustDuration(0)
+	zs.OpenFgaServerSettings.ShadowListObjectsQueryMaxDeltaItems = openfgaSec.Key("shadow_list_objects_query_max_delta_items").MustInt(0)
+
+	zs.OpenFgaServerSettings.RequestTimeout = openfgaSec.Key("request_timeout").MustDuration(0)
+	zs.OpenFgaServerSettings.MaxAuthorizationModelSizeInBytes = openfgaSec.Key("max_authorization_model_size_in_bytes").MustInt(0)
+	zs.OpenFgaServerSettings.AuthorizationModelCacheSize = openfgaSec.Key("authorization_model_cache_size").MustInt(0)
+	zs.OpenFgaServerSettings.TypesystemCacheSize = openfgaSec.Key("typesystem_cache_size").MustInt(0)
+	zs.OpenFgaServerSettings.ChangelogHorizonOffset = openfgaSec.Key("changelog_horizon_offset").MustInt(0)
+
 	cfg.ZanzanaServer = zs
+
+	// Reconciler settings
+	reconcilerSec := cfg.SectionWithEnvOverrides("zanzana.reconciler")
+	zr := ZanzanaReconcilerSettings{}
+	zr.Mode = ZanzanaReconcilerMode(reconcilerSec.Key("mode").MustString("legacy"))
+	zr.FolderAPIServerURL = reconcilerSec.Key("folder_apiserver_url").MustString("")
+	zr.IAMAPIServerURL = reconcilerSec.Key("iam_apiserver_url").MustString("")
+	zr.TLSInsecure = reconcilerSec.Key("tls_insecure").MustBool(false)
+	zr.Workers = reconcilerSec.Key("workers").MustInt(4)
+	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
+	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
+	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
+	zr.ListPageSize = reconcilerSec.Key("list_page_size").MustInt(1000)
+	zr.LeaderElection = leaderelection.Config{
+		Enabled:       reconcilerSec.Key("leader_election_enabled").MustBool(false),
+		LeaseName:     reconcilerSec.Key("leader_election_lease_name").MustString("zanzana-mt-reconciler"),
+		Namespace:     reconcilerSec.Key("leader_election_namespace").MustString(""),
+		Identity:      reconcilerSec.Key("leader_election_identity").MustString(""),
+		LeaseDuration: reconcilerSec.Key("lease_duration").MustDuration(15 * time.Second),
+		RenewDeadline: reconcilerSec.Key("renew_deadline").MustDuration(10 * time.Second),
+		RetryPeriod:   reconcilerSec.Key("retry_period").MustDuration(2 * time.Second),
+	}
+	cfg.ZanzanaReconciler = zr
+
+	// gRPC store settings
+	grpcStoreSec := cfg.SectionWithEnvOverrides("zanzana.store.grpc")
+	cfg.ZanzanaGRPCStore = ZanzanaGRPCStoreSettings{
+		Addr:        grpcStoreSec.Key("address").MustString(""),
+		TLSCertPath: grpcStoreSec.Key("tls_cert_path").MustString(""),
+		TLSKeyPath:  grpcStoreSec.Key("tls_key_path").MustString(""),
+	}
+
+	// Rollout settings
+	rolloutSec := cfg.SectionWithEnvOverrides("zanzana.rollout")
+	rollout := ZanzanaRolloutSettings{ResourcePercentages: make(map[string]float64)}
+	for resource, value := range rolloutSec.KeysHash() {
+		if resource == "" {
+			continue
+		}
+		pct, err := strconv.ParseFloat(value, 64)
+		if err != nil || pct < 0 || pct > 1 {
+			cfg.Logger.Warn("invalid zanzana.rollout percentage, skipping", "resource", resource, "value", value)
+			continue
+		}
+		rollout.ResourcePercentages[resource] = pct
+	}
+	cfg.ZanzanaRollout = rollout
 }

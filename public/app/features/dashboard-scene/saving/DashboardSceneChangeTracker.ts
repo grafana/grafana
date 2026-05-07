@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
 import {
   SceneDataLayerSet,
@@ -34,7 +34,7 @@ import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
-import { DashboardChangeInfo } from './shared';
+import { type DashboardChangeInfo } from './shared';
 
 export class DashboardSceneChangeTracker {
   private _changeTrackerSub: Unsubscribable | undefined;
@@ -206,6 +206,10 @@ export class DashboardSceneChangeTracker {
     }
 
     this._changesWorker!.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
+      if (!this._dashboard.state.isEditing) {
+        return;
+      }
+
       this.updateIsDirty(!!e.data.hasChanges);
     };
 

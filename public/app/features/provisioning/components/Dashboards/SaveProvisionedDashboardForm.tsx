@@ -1,39 +1,43 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents, locationUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
-import { RepositoryView, Unstructured } from 'app/api/clients/provisioning/v0alpha1';
+import { locationService, reportInteraction } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
+import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
+import { type RepositoryView, type Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
-import { Resource } from 'app/features/apiserver/types';
+import { type Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { PROVISIONING_URL } from 'app/features/provisioning/constants';
+import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 import {
-  ProvisionedOperationInfo,
+  type ProvisionedOperationInfo,
   useProvisionedRequestHandler,
 } from 'app/features/provisioning/hooks/useProvisionedRequestHandler';
-import { SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { ProvisionedDashboardFormData } from '../../types/form';
+import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { type ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { getProvisionedRequestError } from '../utils/errors';
 import { getProvisionedMeta } from '../utils/getProvisionedMeta';
+import { joinPath, slugifyForFilename, splitPath } from '../utils/path';
 
-import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
+import { type SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   readOnly: boolean;
   repository?: RepositoryView;
 }
@@ -44,15 +48,14 @@ export function SaveProvisionedDashboardForm({
   drawer,
   changeInfo,
   isNew,
-  workflowOptions,
+  canPushToConfiguredBranch,
   readOnly,
   repository,
+  saveAsCopy,
 }: Props) {
   const navigate = useNavigate();
-  const appEvents = getAppEvents();
-  const { isDirty, editPanel: panelEditor } = dashboard.useState();
-
-  const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
+  const { isDirty } = dashboard.useState();
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const {
@@ -61,22 +64,60 @@ export function SaveProvisionedDashboardForm({
     control,
     reset,
     register,
+    setValue,
+    getValues,
     formState: { dirtyFields },
   } = methods;
-  // button enabled if form comment is dirty or dashboard state is dirty
-  const isDirtyState = Boolean(dirtyFields.comment) || isDirty;
-  const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
+
+  const path = watch('path');
+  const originalPath = isNew ? undefined : defaultValues.path;
+  const isRename = Boolean(originalPath && path !== originalPath);
+
+  const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isRename ? undefined : originalPath);
+
+  // button enabled if form comment is dirty or dashboard state is dirty or raw JSON was provided from editor
+  const rawDashboardJSON = dashboard.getRawJsonFromEditor();
+  const isDirtyState =
+    Boolean(dirtyFields.comment) || Boolean(dirtyFields.path) || isDirty || Boolean(rawDashboardJSON);
+  const [workflow, ref] = watch(['workflow', 'ref']);
+  const title = watch('title');
+
+  // Clear indefinite save-event suppression on unmount (covers cancel, error, navigation away).
+  useEffect(() => {
+    return () => {
+      dashboardWatcher.clearIgnoreSave();
+    };
+  }, []);
 
   // Update the form if default values change
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const onRequestError = (error: unknown) => {
-    appEvents.publish({
-      type: AppEvents.alertError.name,
-      payload: [t('dashboard-scene.save-provisioned-dashboard-form.api-error', 'Error saving dashboard'), error],
-    });
+  // Sync filename from title for new dashboards.
+  // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
+  // and becomes true when the user manually types in the filename input (Controller onChange marks it dirty).
+  // This lets us stop auto-syncing once the user has intentionally customised the filename.
+  useEffect(() => {
+    if (!isNew || dirtyFields.path) {
+      return;
+    }
+    const slugified = slugifyForFilename(title);
+    if (slugified) {
+      const currentPath = getValues('path');
+      const { directory } = splitPath(currentPath);
+      setValue('path', joinPath(directory, `${slugified}.json`));
+    }
+  }, [title, isNew, dirtyFields.path, setValue, getValues]);
+
+  const showError = (error: unknown) => {
+    setError(
+      getProvisionedRequestError(
+        error,
+        'dashboard',
+        t('dashboard-scene.save-provisioned-dashboard-form.error-saving', 'An error occurred while saving.')
+      )
+    );
   };
 
   const handleNewDashboard = useCallback(
@@ -97,7 +138,7 @@ export function SaveProvisionedDashboardForm({
   const navigateToPreview = useCallback(
     (ref: string, path: string, repoType?: string) => {
       const url = buildResourceBranchRedirectUrl({
-        baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+        baseUrl: `${PROVISIONING_PREVIEW_URL}/${defaultValues.repo}/preview/${path}`,
         paramName: 'ref',
         paramValue: ref,
         repoType,
@@ -108,15 +149,12 @@ export function SaveProvisionedDashboardForm({
   );
 
   const handleDismiss = useCallback(() => {
-    panelEditor?.onDiscard();
-
     const model = dashboard.getSaveModel();
     const resourceData = request?.data?.resource.upsert || request?.data?.resource.dryRun;
     const saveResponse = createSaveResponseFromResource(resourceData);
     dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
-
-    drawer.onClose();
-  }, [dashboard, defaultValues.folder?.uid, drawer, panelEditor, request?.data?.resource]);
+    dashboardWatcher.clearIgnoreSave();
+  }, [dashboard, defaultValues.folder?.uid, request?.data?.resource]);
 
   const onWriteSuccess = useCallback(
     (upsert: Resource<Dashboard>) => {
@@ -161,15 +199,31 @@ export function SaveProvisionedDashboardForm({
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
-      onError: onRequestError,
+      onError: (err) => {
+        // Release suppression so later live save/conflict events from other sessions
+        // aren't hidden while the user retries or abandons the save.
+        dashboardWatcher.clearIgnoreSave();
+        showError(err);
+      },
     },
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({
+    title,
+    description,
+    repo,
+    path,
+    comment,
+    ref,
+    copyTags,
+  }: ProvisionedDashboardFormData) => {
+    setError(undefined);
     // Validate required fields
     if (!repo || !path) {
-      console.error('Missing required fields for saving:', { repo, path });
+      showError(
+        t('dashboard-scene.save-provisioned-dashboard-form.repo-path-required', 'Missing required fields for saving')
+      );
       return;
     }
 
@@ -181,18 +235,25 @@ export function SaveProvisionedDashboardForm({
 
     const message = comment || `Save dashboard: ${dashboard.state.title}`;
 
-    const body = dashboard.getSaveResource({
-      isNew,
-      title,
-      description,
-      copyTags: true,
-    });
+    const body = rawDashboardJSON
+      ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
+      : dashboard.getSaveResource({
+          isNew,
+          title,
+          description,
+          copyTags,
+          saveAsCopy,
+        });
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
       workflow,
       repositoryName: repo,
       repositoryType: repository?.type ?? 'unknown',
     });
+
+    // Suppress live save events for the duration of the provisioned save.
+    // Git operations can exceed the default 5s ignoreNextSave window.
+    dashboardWatcher.ignoreSaveIndefinitely();
 
     createOrUpdateFile({
       // Skip adding ref to the default branch request
@@ -201,6 +262,7 @@ export function SaveProvisionedDashboardForm({
       path,
       message,
       body,
+      originalPath: isRename ? originalPath : undefined,
     });
   };
 
@@ -281,11 +343,19 @@ export function SaveProvisionedDashboardForm({
           <ResourceEditFormSharedFields
             resourceType="dashboard"
             readOnly={readOnly}
-            workflow={workflow}
-            workflowOptions={workflowOptions}
+            canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             isNew={isNew}
+            allowPathEdit={!isNew && !readOnly}
           />
+
+          {saveAsCopy && (
+            <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
+              <Switch {...register('copyTags')} />
+            </Field>
+          )}
+
+          {error && <ProvisioningAlert error={error} />}
 
           <Stack gap={2}>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
@@ -351,7 +421,6 @@ function createSaveResponseFromResource(resource?: Unstructured): SaveDashboardR
     uid,
     // Use the current dashboard state version to maintain consistency
     version: resource?.metadata?.generation,
-    id: resource?.spec?.id || 0,
     status: 'success',
     url: locationUtil.assureBaseUrl(
       getDashboardUrl({

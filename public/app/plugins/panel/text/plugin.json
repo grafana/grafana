@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Text",
   "id": "text",
-
+  "suggestions": true,
   "skipDataQuery": true,
 
   "info": {

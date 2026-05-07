@@ -2,9 +2,9 @@ import { t } from '@grafana/i18n';
 
 import { InlineField } from '../Forms/InlineField';
 import { InlineSwitch } from '../Switch/Switch';
-import { PopoverContentProps } from '../Tooltip/types';
+import { type PopoverContentProps } from '../Tooltip/types';
 
-import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
+import { ColorPickerPopover, type ColorPickerProps } from './ColorPickerPopover';
 
 export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopoverContentProps {
   yaxis?: number;

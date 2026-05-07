@@ -2,7 +2,7 @@ import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Field, Icon, Label, Stack, Tooltip } from '@grafana/ui';
 
-import { SQLOptions } from '../../types';
+import { type SQLOptions } from '../../types';
 
 import { NumberInput } from './NumberInput';
 
@@ -15,6 +15,7 @@ interface Props {
 export function MaxOpenConnectionsField({ labelWidth, onMaxConnectionsChanged, jsonData }: Props) {
   return (
     <Field
+      noMargin
       label={
         <Label>
           <Stack gap={0.5}>

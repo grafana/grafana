@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 
-import { ScopesService } from '../../ScopesService';
+import { type ScopesService } from '../../ScopesService';
 
 const selectors = {
   tree: {
@@ -73,6 +73,8 @@ export const queryResultApplicationsGrafanaSelect = () =>
   screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
 export const getResultApplicationsGrafanaSelect = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
+export const findResultApplicationsGrafanaSelect = () =>
+  screen.findByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
 export const queryPersistedApplicationsGrafanaSelect = () =>
   screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
 export const getPersistedApplicationsGrafanaSelect = () =>

@@ -12,13 +12,8 @@ const (
 )
 
 // ProvideService is a Metrics factory.
-func ProvideService() *NGAlert {
-	return NewNGAlert(prometheus.DefaultRegisterer)
-}
-
-// ProvideServiceForTest is a Metrics factory used for test.
-func ProvideServiceForTest() *NGAlert {
-	return NewNGAlert(prometheus.NewRegistry())
+func ProvideService(r prometheus.Registerer) *NGAlert {
+	return NewNGAlert(r)
 }
 
 type NGAlert struct {
@@ -33,6 +28,7 @@ type NGAlert struct {
 	notificationHistorianMetrics *NotificationHistorian
 	remoteAlertmanagerMetrics    *RemoteAlertmanager
 	remoteWriterMetrics          *RemoteWriter
+	senderMetrics                *Sender
 }
 
 // NewNGAlert manages the metrics of all the alerting components.
@@ -47,6 +43,7 @@ func NewNGAlert(r prometheus.Registerer) *NGAlert {
 		notificationHistorianMetrics: NewNotificationHistorianMetrics(r),
 		remoteAlertmanagerMetrics:    NewRemoteAlertmanagerMetrics(r),
 		remoteWriterMetrics:          NewRemoteWriterMetrics(r),
+		senderMetrics:                NewSenderMetrics(r),
 	}
 }
 
@@ -80,4 +77,8 @@ func (ng *NGAlert) GetRemoteAlertmanagerMetrics() *RemoteAlertmanager {
 
 func (ng *NGAlert) GetRemoteWriterMetrics() *RemoteWriter {
 	return ng.remoteWriterMetrics
+}
+
+func (ng *NGAlert) GetSenderMetrics() *Sender {
+	return ng.senderMetrics
 }

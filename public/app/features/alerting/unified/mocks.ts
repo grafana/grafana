@@ -2,63 +2,63 @@ import { produce } from 'immer';
 import { isEmpty, pick } from 'lodash';
 
 import {
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourcePluginMeta,
-  PluginExtensionLink,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourcePluginMeta,
+  type PluginExtensionLink,
   PluginExtensionTypes,
   ReducerID,
 } from '@grafana/data';
-import { DataQuery, defaultDashboard } from '@grafana/schema';
+import { type DataQuery, defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
-import { NotifiersState, ReceiversState } from 'app/features/alerting/unified/types/alerting';
-import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
+import { type NotifiersState, type ReceiversState } from 'app/features/alerting/unified/types/alerting';
+import { type ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import {
-  AlertManagerCortexConfig,
+  type AlertManagerCortexConfig,
   AlertState,
-  AlertmanagerAlert,
-  AlertmanagerGroup,
-  AlertmanagerStatus,
-  GrafanaManagedReceiverConfig,
+  type AlertmanagerAlert,
+  type AlertmanagerGroup,
+  type AlertmanagerStatus,
+  type GrafanaManagedReceiverConfig,
   MatcherOperator,
-  Silence,
+  type Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types/accessControl';
-import { DashboardDTO } from 'app/types/dashboard';
-import { FolderDTO } from 'app/types/folders';
-import { StoreState } from 'app/types/store';
+import { type AccessControlAction } from 'app/types/accessControl';
+import { type DashboardDTO } from 'app/types/dashboard';
+import { type FolderDTO } from 'app/types/folders';
+import { type StoreState } from 'app/types/store';
 import {
-  Alert,
-  AlertingRule,
-  CombinedRule,
-  CombinedRuleGroup,
-  CombinedRuleNamespace,
-  RecordingRule,
-  RuleGroup,
-  RuleNamespace,
-  RuleWithLocation,
+  type Alert,
+  type AlertingRule,
+  type CombinedRule,
+  type CombinedRuleGroup,
+  type CombinedRuleNamespace,
+  type RecordingRule,
+  type RuleGroup,
+  type RuleNamespace,
+  type RuleWithLocation,
 } from 'app/types/unified-alerting';
 import {
-  AlertDataQuery,
-  AlertQuery,
-  GrafanaAlertState,
+  type AlertDataQuery,
+  type AlertQuery,
+  type GrafanaAlertState,
   GrafanaAlertStateDecision,
-  GrafanaPromAlertingRuleDTO,
-  GrafanaRuleDefinition,
+  type GrafanaPromAlertingRuleDTO,
+  type GrafanaRuleDefinition,
   PromAlertingRuleState,
   PromRuleType,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
-  RulerRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type RulerAlertingRuleDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerRecordingRuleDTO,
+  type RulerRuleDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
+import { type DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';

@@ -14,6 +14,10 @@ type FakeProvisioningV0alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakeProvisioningV0alpha1) Connections(namespace string) v0alpha1.ConnectionInterface {
+	return newFakeConnections(c, namespace)
+}
+
 func (c *FakeProvisioningV0alpha1) HistoricJobs(namespace string) v0alpha1.HistoricJobInterface {
 	return newFakeHistoricJobs(c, namespace)
 }

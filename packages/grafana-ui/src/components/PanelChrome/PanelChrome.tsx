@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, PropsWithChildren, ReactElement, ReactNode, useId, useState } from 'react';
+import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
-import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -115,11 +115,6 @@ interface HoverHeader {
   hoverHeaderOffset?: number;
 }
 
-const MaybeWrap = ({ children }: PropsWithChildren<{}>) => {
-  const styles = useStyles2(getStyles);
-  return getFeatureToggle('preventPanelChromeOverflow') ? <div className={styles.container}>{children}</div> : children;
-};
-
 /**
  * @internal
  */
@@ -227,7 +222,6 @@ export function PanelChrome({
       ) {
         return;
       }
-
       // setTimeout is needed here because onSelect stops the event propagation
       // By doing so, the event won't get to the document and drag will never be stopped
       setTimeout(() => onSelect?.(evt));
@@ -250,7 +244,17 @@ export function PanelChrome({
     (evt: React.PointerEvent) => {
       // Ignore clicks inside buttons, links, canvas and svg elments
       // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
-      if (evt.target instanceof Element && evt.target.closest('button,a,canvas,svg')) {
+      // '[role="columnheader"]' targets table column headers (e.g. react-data-grid), preventing sort clicks
+      // and column resize drags from selecting the panel in edit mode.
+      // '.u-axis' targets uPlot axis elements, preventing axis interactions from selecting the panel.
+      if (
+        evt.target instanceof Element &&
+        (evt.target.closest('button,a,canvas,svg,[role="button"],#grafana-portal-container,[role="columnheader"]') ||
+          evt.target.classList.contains('u-over') ||
+          evt.target.classList.contains('u-axis'))
+      ) {
+        // Stop propagation otherwise row config editor will get selected
+        evt.stopPropagation();
         return;
       }
 
@@ -350,7 +354,7 @@ export function PanelChrome({
   const hasHeaderContent = title || description || titleItems || menu || dragClass || actions;
 
   return (
-    <MaybeWrap>
+    <div className={styles.container}>
       {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
       <section
         className={cx(
@@ -384,6 +388,7 @@ export function PanelChrome({
                 menu={menu}
                 title={typeof title === 'string' ? title : undefined}
                 dragClass={dragClass}
+                onDragStart={onDragStart}
                 offset={hoverHeaderOffset}
                 onOpenMenu={onOpenMenu}
               >
@@ -433,6 +438,7 @@ export function PanelChrome({
                   placement="bottom-end"
                   menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
                   onOpenMenu={onOpenMenu}
+                  dragClassCancel={dragClassCancel}
                 />
               )}
             </div>
@@ -456,7 +462,7 @@ export function PanelChrome({
           </div>
         )}
       </section>
-    </MaybeWrap>
+    </div>
   );
 }
 
@@ -525,12 +531,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-container',
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
-      position: getFeatureToggle('preventPanelChromeOverflow') ? 'unset' : 'relative',
+      position: 'unset',
       borderRadius: theme.shape.radius.default,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      overflow: getFeatureToggle('preventPanelChromeOverflow') ? 'hidden' : 'initial',
+      overflow: 'hidden',
 
       '.always-show': {
         background: 'none',
@@ -594,7 +600,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       // remove logic after newPanelPadding feature toggle is removed
-      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
+      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1) : theme.spacing(0, 0.5, 0, 1),
       gap: theme.spacing(1),
     }),
     subHeader: css({
@@ -622,6 +628,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-title',
       display: 'flex',
       minWidth: 0,
+      paddingLeft: theme.spacing.x0_5,
       '& > h2': {
         minWidth: 0,
       },

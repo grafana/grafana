@@ -29,29 +29,29 @@ refs:
 
 # View alert rules
 
-The Alert rules list view page lists all existing recording and alert rules, including those created in Grafana and those available in configured data sources.
+The Alert rules list view page lists all existing recording and alert rules. The rules are organized in a hierarchical structure, from folder -> rule group -> rules.
 
 To access the Alert rules page, click **Alerts & IRM** -> **Alerting** -> **Alert rules**.
-
-By default, alert rules are grouped in separate sections—one for Grafana-managed alerts, and another for data source-managed alerts.
-Inside the Grafana-managed alert rules section, the rules are organized in a hierarchical structure, from folder -> rule group -> rules.
-Inside the data source-managed alert rules section, the rules are organized from namespace ->rule group -> rules.
 
 Select a group to expand it and view the list of alert rules within that group.
 
 The list view includes a number of filters to simplify managing large volumes of alerts.
 
+## Filter and save searches
+
 Click the **Filter** button to open the filter popup. You can filter by name, label, folder/namespace, evaluation group, data source, contact point, rule source, rule state, rule type, and the health of the alert rule from the popup menu. Click **Apply** at the bottom of the filter popup to enact the filters as you search.
 
-{{< figure src="/media/docs/alerting/alerting-list-view-filter.png" max-width="750px" alt="Alert rule filter options" >}}
+Click the **Saved searches** button to open the list of previously saved searches, or click **+ Save current search** to add your current search to the saved searches list. You can also rename a saved search or set it as a default search. When you set a saved search as the default search, the Alert rules page opens with the search applied.
+
+{{< figure src="/media/docs/alerting/alerting-saved-searches.png" max-width="750px" alt="Alert rule filter options" >}}
 
 ## Change alert rules list view
 
 You can also change how the rule list is displayed using the **View as** option.
 
-- **Grouped**: Displays Grafana rules grouped in a hierarchical structure, from folder/namespace, to evaluation group, to the individual rules. This is the default view.
+- **Grouped**: Displays rules grouped in a hierarchical structure, from folder/namespace, to evaluation group, to the individual rules. This is the default view.
 
-- **List**: Displays all rules from all data sources in a flat, unpaginated list.
+- **List**: Displays all rules in a flat, unpaginated list.
 
 {{< figure src="/media/docs/alerting/view-alert-rule-list-with-actions-2.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
 
@@ -87,7 +87,7 @@ Admin users can delete all of the alert rules within a folder. To delete all the
 
 Only users with an Admin role can restore deleted Grafana-managed alert rules. After an alert rule is restored, it is restored with a new, different UID from the one it had before.
 
-1. Go to **Alerts & IRM** -> **Alerting** -> **Recently deleted**.
+1. Go to **Alerts & IRM** -> **Alerting** -> **Alert rules**, then click the **Recently deleted** tab.
 1. Click the **Restore** button to restore the alert rule or click **Delete permanently** to delete the alert rule.
 
 {{< admonition type="note" >}}

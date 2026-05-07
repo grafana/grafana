@@ -2,12 +2,11 @@ import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { AlertErrorPayload, AlertPayload, AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { type AlertErrorPayload, type AlertPayload, AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack } from '@grafana/ui';
-import { notifyApp, hideAppNotification } from 'app/core/actions';
 import { appEvents } from 'app/core/app_events';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { selectVisible } from 'app/core/reducers/appNotification';
+import { hideAppNotification, notifyApp, selectVisible } from 'app/core/reducers/appNotification';
 import { useSelector, useDispatch } from 'app/types/store';
 
 import {
@@ -85,8 +84,11 @@ export function AppNotificationList() {
     dispatch(hideAppNotification(id));
   };
 
+  const liveRegionMessage = appNotifications.map((n) => [n.title, n.text].filter(Boolean).join('. ')).join('. ');
+
   return (
     <div className={styles.wrapper}>
+      <div className="sr-only" role="log" aria-live="polite" aria-atomic="true" aria-label={liveRegionMessage} />
       <Stack direction="column">
         {appNotifications.map((appNotification, index) => {
           return (

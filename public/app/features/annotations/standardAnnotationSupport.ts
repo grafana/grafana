@@ -1,24 +1,25 @@
 import { isString } from 'lodash';
-import { Observable, of, OperatorFunction } from 'rxjs';
+import { from, type Observable, of, type OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
-  AnnotationEvent,
+  type AnnotationEvent,
   AnnotationEventFieldSource,
-  AnnotationEventMappings,
-  AnnotationQuery,
-  AnnotationSupport,
-  DataFrame,
-  DataSourceApi,
-  DataTransformContext,
-  Field,
+  type AnnotationEventMappings,
+  type AnnotationQuery,
+  type AnnotationSupport,
+  type DataFrame,
+  type DataSourceApi,
+  type DataTransformContext,
+  type Field,
+  DataTransformerID,
   FieldType,
   getFieldDisplayName,
-  KeyValue,
-  standardTransformers,
+  type KeyValue,
+  standardTransformersRegistry,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**
@@ -72,9 +73,13 @@ export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFr
           interpolate: (v: string) => v,
         };
 
-        return of(data).pipe(
-          standardTransformers.mergeTransformer.operator({}, ctx),
-          map((d) => d[0])
+        return from(standardTransformersRegistry.get(DataTransformerID.merge).transformation()).pipe(
+          mergeMap((t) =>
+            of(data).pipe(
+              t.operator({}, ctx),
+              map((d) => d[0])
+            )
+          )
         );
       })
     );

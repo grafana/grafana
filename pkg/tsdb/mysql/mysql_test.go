@@ -11,11 +11,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/mysql/sqleng"
 )
 
@@ -75,7 +76,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		},
 	}
 
-	cfg := backend.NewGrafanaCfg(map[string]string{
+	cfg := config.NewGrafanaCfg(map[string]string{
 		backend.SQLMaxOpenConnsDefault:           "0",
 		backend.SQLMaxIdleConnsDefault:           "2",
 		backend.SQLMaxConnLifetimeSecondsDefault: "14400",
@@ -83,7 +84,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		backend.UserFacingDefaultError:           "",
 	})
 
-	ctx := backend.WithGrafanaConfig(context.Background(), cfg)
+	ctx := config.WithGrafanaConfig(context.Background(), cfg)
 
 	exe := &Service{
 		im:     datasource.NewInstanceManager(NewInstanceSettings(logger)),
@@ -222,9 +223,9 @@ func TestIntegrationMySQL(t *testing.T) {
 		_, err = db.Exec("CREATE TABLE IF NOT EXISTS metric (time DATETIME NULL, value BIGINT(20) NULL)")
 		require.NoError(t, err)
 
-		series := []*metric{}
 		firstRange := genTimeRangeByInterval(fromStart, 10*time.Minute, 10*time.Second)
 		secondRange := genTimeRangeByInterval(fromStart.Add(20*time.Minute), 10*time.Minute, 10*time.Second)
+		series := make([]*metric, 0, len(firstRange)+len(secondRange))
 
 		for _, t := range firstRange {
 			series = append(series, &metric{
@@ -488,7 +489,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 		var tInitial time.Time
 
-		series := []*metric_values{}
+		series := []*metric_values{} //nolint:prealloc
 		for i, t := range genTimeRangeByInterval(fromStart.Add(-30*time.Minute), 90*time.Minute, 5*time.Minute) {
 			if i == 0 {
 				tInitial = t
@@ -948,7 +949,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		_, err = db.Exec("CREATE TABLE IF NOT EXISTS event (time_sec BIGINT(20) NULL, description VARCHAR(255) NULL, tags VARCHAR(255) NULL)")
 		require.NoError(t, err)
 
-		events := []*event{}
+		events := []*event{} //nolint:prealloc
 		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), time.Hour, 25*time.Minute) {
 			events = append(events, &event{
 				TimeSec:     t.Unix(),
@@ -1353,5 +1354,5 @@ func mySQLTestDBConnStr() string {
 	if port == "" {
 		port = "3306"
 	}
-	return fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_ds_tests?collation=utf8mb4_unicode_ci&sql_mode='ANSI_QUOTES'&parseTime=true&loc=UTC", host, port)
+	return fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_ds_tests?collation=utf8mb4_unicode_ci&sql_mode=ANSI_QUOTES&parseTime=true&loc=UTC", host, port)
 }

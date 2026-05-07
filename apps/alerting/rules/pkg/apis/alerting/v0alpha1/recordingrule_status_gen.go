@@ -20,6 +20,11 @@ func NewRecordingRulestatusOperatorState() *RecordingRulestatusOperatorState {
 	return &RecordingRulestatusOperatorState{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for RecordingRulestatusOperatorState.
+func (RecordingRulestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRulestatusOperatorState"
+}
+
 // +k8s:openapi-gen=true
 type RecordingRuleStatus struct {
 	// operatorStates is a map of operator ID to operator state evaluations.
@@ -34,6 +39,11 @@ func NewRecordingRuleStatus() *RecordingRuleStatus {
 	return &RecordingRuleStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for RecordingRuleStatus.
+func (RecordingRuleStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleStatus"
+}
+
 // +k8s:openapi-gen=true
 type RecordingRuleStatusOperatorStateState string
 
@@ -42,3 +52,8 @@ const (
 	RecordingRuleStatusOperatorStateStateInProgress RecordingRuleStatusOperatorStateState = "in_progress"
 	RecordingRuleStatusOperatorStateStateFailed     RecordingRuleStatusOperatorStateState = "failed"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for RecordingRuleStatusOperatorStateState.
+func (RecordingRuleStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleStatusOperatorStateState"
+}

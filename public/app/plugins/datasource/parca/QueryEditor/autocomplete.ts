@@ -1,4 +1,4 @@
-import { monacoTypes, Monaco } from '@grafana/ui';
+import { type monacoTypes, type Monaco } from '@grafana/ui';
 
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco

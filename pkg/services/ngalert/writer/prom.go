@@ -303,7 +303,7 @@ func (w PrometheusWriter) WriteDatasource(ctx context.Context, dsUID string, nam
 // Write writes the given frames to the Prometheus remote write endpoint.
 func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
-	lvs := []string{fmt.Sprint(orgID), string(w.backendType)}
+	lvs := []string{fmt.Sprint(orgID), string(w.backendType)} //nolint:prealloc
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {

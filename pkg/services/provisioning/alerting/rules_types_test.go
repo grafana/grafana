@@ -197,8 +197,8 @@ func TestRules(t *testing.T) {
 		}
 		ruleMapped, err := rule.mapToModel(1)
 		require.NoError(t, err)
-		require.Len(t, ruleMapped.NotificationSettings, 1)
-		require.Equal(t, models.NotificationSettings{Receiver: "test-receiver"}, ruleMapped.NotificationSettings[0])
+		require.NotNil(t, ruleMapped.NotificationSettings)
+		require.Equal(t, models.NotificationSettingsFromContact(models.ContactPointRouting{Receiver: "test-receiver"}), *ruleMapped.NotificationSettings)
 	})
 }
 
@@ -207,6 +207,15 @@ func TestRecordingRules(t *testing.T) {
 		rule := validRecordingRuleV1(t)
 		_, err := rule.mapToModel(1)
 		require.NoError(t, err)
+	})
+
+	t.Run("a valid rule with empty targetDatasourceUid should not error", func(t *testing.T) {
+		rule := validRecordingRuleV1(t)
+		rule.Record.TargetDatasourceUID = stringToStringValue("")
+		model, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.NotNil(t, model.Record)
+		require.Equal(t, "", model.Record.TargetDatasourceUID)
 	})
 }
 
@@ -228,7 +237,7 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 				MuteTimeIntervals:   []values.StringValue{stringToStringValue("test-mute")},
 				ActiveTimeIntervals: []values.StringValue{stringToStringValue("test-active")},
 			},
-			expected: models.NotificationSettings{
+			expected: models.NotificationSettingsFromContact(models.ContactPointRouting{
 				Receiver:            "test-receiver",
 				GroupBy:             []string{"test-group_by"},
 				GroupWait:           util.Pointer(model.Duration(1 * time.Second)),
@@ -236,7 +245,7 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 				RepeatInterval:      util.Pointer(model.Duration(3 * time.Second)),
 				MuteTimeIntervals:   []string{"test-mute"},
 				ActiveTimeIntervals: []string{"test-active"},
-			},
+			}),
 		},
 		{
 			name: "Skips empty elements in group_by",
@@ -244,10 +253,10 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 				Receiver: stringToStringValue("test-receiver"),
 				GroupBy:  []values.StringValue{stringToStringValue("test-group_by1"), stringToStringValue(""), stringToStringValue("test-group_by2")},
 			},
-			expected: models.NotificationSettings{
+			expected: models.NotificationSettingsFromContact(models.ContactPointRouting{
 				Receiver: "test-receiver",
 				GroupBy:  []string{"test-group_by1", "test-group_by2"},
-			},
+			}),
 		},
 		{
 			name: "Skips empty elements in mute timings",
@@ -255,10 +264,10 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 				Receiver:          stringToStringValue("test-receiver"),
 				MuteTimeIntervals: []values.StringValue{stringToStringValue("test-mute1"), stringToStringValue(""), stringToStringValue("test-mute2")},
 			},
-			expected: models.NotificationSettings{
+			expected: models.NotificationSettingsFromContact(models.ContactPointRouting{
 				Receiver:          "test-receiver",
 				MuteTimeIntervals: []string{"test-mute1", "test-mute2"},
-			},
+			}),
 		},
 		{
 			name: "Empty Receiver",
@@ -307,80 +316,43 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 
 func validRuleGroupV1(t *testing.T) AlertRuleGroupV1 {
 	t.Helper()
-	var (
-		orgID    values.Int64Value
-		name     values.StringValue
-		folder   values.StringValue
-		interval values.StringValue
-	)
+
+	var orgID values.Int64Value
 	err := yaml.Unmarshal([]byte("1"), &orgID)
 	require.NoError(t, err)
-	err = yaml.Unmarshal([]byte("Test"), &name)
-	require.NoError(t, err)
-	err = yaml.Unmarshal([]byte("Test"), &folder)
-	require.NoError(t, err)
-	err = yaml.Unmarshal([]byte("10s"), &interval)
-	require.NoError(t, err)
+
 	return AlertRuleGroupV1{
 		OrgID:    orgID,
-		Name:     name,
-		Folder:   folder,
-		Interval: interval,
+		Name:     stringToStringValue("Test"),
+		Folder:   stringToStringValue("Test"),
+		Interval: stringToStringValue("10s"),
 		Rules:    []AlertRuleV1{},
 	}
 }
 
 func validRuleV1(t *testing.T) AlertRuleV1 {
 	t.Helper()
-	var (
-		title       values.StringValue
-		uid         values.StringValue
-		forDuration values.StringValue
-		condition   values.StringValue
-	)
-	err := yaml.Unmarshal([]byte("test"), &title)
-	require.NoError(t, err)
-	err = yaml.Unmarshal([]byte("test_uid"), &uid)
-	require.NoError(t, err)
-	err = yaml.Unmarshal([]byte("10s"), &forDuration)
-	require.NoError(t, err)
-	err = yaml.Unmarshal([]byte("A"), &condition)
-	require.NoError(t, err)
+
 	return AlertRuleV1{
-		Title:     title,
-		UID:       uid,
-		For:       forDuration,
-		Condition: condition,
+		Title:     stringToStringValue("test"),
+		UID:       stringToStringValue("test_uid"),
+		For:       stringToStringValue("10s"),
+		Condition: stringToStringValue("A"),
 		Data:      []QueryV1{{}},
 	}
 }
 
 func validRecordingRuleV1(t *testing.T) AlertRuleV1 {
 	t.Helper()
-	var (
-		title       values.StringValue
-		uid         values.StringValue
-		forDuration values.StringValue
-		metric      values.StringValue
-		from        values.StringValue
-	)
-	err := yaml.Unmarshal([]byte("test"), &title)
-	require.NoError(t, err)
-	err = yaml.Unmarshal([]byte("test_uid"), &uid)
-	require.NoError(t, err)
-	err = yaml.Unmarshal([]byte("10s"), &forDuration)
-	require.NoError(t, err)
-	err = yaml.Unmarshal([]byte("test_metric"), &metric)
-	require.NoError(t, err)
-	err = yaml.Unmarshal([]byte("A"), &from)
-	require.NoError(t, err)
+
 	return AlertRuleV1{
-		Title: title,
-		UID:   uid,
-		For:   forDuration,
+		Title: stringToStringValue("test"),
+		UID:   stringToStringValue("test_uid"),
+		For:   stringToStringValue("10s"),
 		Record: &RecordV1{
-			Metric: metric,
-			From:   from,
+			Metric:              stringToStringValue("test_metric"),
+			From:                stringToStringValue("A"),
+			TargetDatasourceUID: stringToStringValue("test_target_datasource"),
 		},
 		Data: []QueryV1{{}},
 	}

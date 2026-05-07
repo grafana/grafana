@@ -343,7 +343,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 		}, result.AffectedGroups)
 		require.Equal(t, ch.New, result.New)
 		require.Equal(t, rules[5:7], result.Delete)
-		var expected []RuleDelta
+		var expected []RuleDelta //nolint:prealloc
 		expected = append(expected, updates...)
 		// all rules that were not updated directly by user should be added to the
 		for _, rule := range rules[7:] {

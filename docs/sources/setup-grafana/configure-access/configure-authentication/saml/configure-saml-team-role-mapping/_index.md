@@ -108,3 +108,64 @@ Example configuration:
 [auth.saml]
 skip_org_role_sync = true
 ```
+
+## Configure role sync with Okta
+
+This section shows how to configure Okta to send group memberships in the SAML assertion, then use those groups to assign roles in Grafana.
+
+### Step 1: Configure Okta to send groups
+
+1. In Okta Admin, go to **Applications** > **Applications** and open your Grafana SAML app.
+1. Open the **Sign On** tab, then click **Edit** in the SAML 2.0 section.
+1. Scroll to **GROUP ATTRIBUTE STATEMENTS**.
+1. Add a group attribute with the following settings:
+
+   | Field      | Value                      |
+   | ---------- | -------------------------- |
+   | **Name**   | `Group`                    |
+   | **Filter** | Matches regular expression |
+   | **Value**  | `.*`                       |
+
+1. Click **Save**.
+
+This configuration sends all Okta groups the user belongs to in the SAML assertion under the `Group` attribute.
+
+{{< admonition type="note" >}}
+To send only specific groups, change the regular expression filter. For example, `grafana-.*` sends only groups starting with `grafana-`.
+{{< /admonition >}}
+
+### Step 2: Configure Grafana to map groups to roles
+
+Use the group attribute for role assignment by setting `assertion_attribute_role` to your group attribute's name:
+
+```ini
+[auth.saml]
+# Use the Group attribute (sent from Okta) for role assignment
+assertion_attribute_groups = Group
+assertion_attribute_role = Group
+
+# Map Okta group names to Grafana roles
+role_values_admin = grafana-admins
+role_values_editor = grafana-editors
+role_values_viewer = grafana-viewers
+```
+
+With this configuration:
+
+- Users in the `grafana-admins` Okta group receive the Admin role
+- Users in the `grafana-editors` Okta group receive the Editor role
+- Users in the `grafana-viewers` Okta group receive the Viewer role
+- Users not matching any group receive the role specified by `auto_assign_org_role` (defaults to Viewer)
+
+{{< admonition type="note" >}}
+Group names are case-sensitive. Ensure the group names in Grafana configuration match exactly with the Okta group names.
+{{< /admonition >}}
+
+If you're a Grafana Cloud user and want to configure SAML through the UI:
+
+1. Go to **Administration** > **Authentication** > **Configure SAML**.
+1. In the **User mapping** section, set:
+   - **Groups attribute**: `Group`
+   - **Role attribute**: `Group`
+1. In the **Role mapping** section, enter your Okta group names for each role.
+1. Click **Save**.

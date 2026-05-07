@@ -320,29 +320,6 @@
             }
           }
         }
-      },
-      "delete": {
-        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-        "tags": [
-          "alertmanager"
-        ],
-        "summary": "deletes the Alerting config for a tenant",
-        "operationId": "RouteDeleteGrafanaAlertingConfig",
-        "deprecated": true,
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
       }
     },
     "/alertmanager/grafana/config/api/v1/receivers": {
@@ -361,62 +338,16 @@
     },
     "/alertmanager/grafana/config/api/v1/receivers/test": {
       "post": {
+        "description": "This endpoint has been removed. Please use `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{uid}/test` instead.",
         "tags": [
           "alertmanager"
         ],
         "summary": "Test Grafana managed receivers without saving them.",
         "operationId": "RoutePostTestGrafanaReceivers",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestReceiversConfigBodyParams"
-            }
-          }
-        ],
+        "deprecated": true,
         "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "207": {
-            "description": "MultiStatus",
-            "schema": {
-              "$ref": "#/definitions/MultiStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          },
-          "404": {
-            "description": "NotFound",
-            "schema": {
-              "$ref": "#/definitions/NotFound"
-            }
-          },
-          "408": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "409": {
-            "description": "AlertManagerNotReady",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotReady"
-            }
+          "410": {
+            "$ref": "#/responses/Gone"
           }
         }
       }
@@ -933,9 +864,9 @@
         ],
         "responses": {
           "200": {
-            "description": "GettableStatus",
+            "description": "ExternalAlertmanagerStatus",
             "schema": {
-              "$ref": "#/definitions/GettableStatus"
+              "$ref": "#/definitions/ExternalAlertmanagerStatus"
             }
           },
           "400": {
@@ -971,9 +902,9 @@
         ],
         "responses": {
           "200": {
-            "description": "GettableUserConfig",
+            "description": "ExternalAlertmanagerConfig",
             "schema": {
-              "$ref": "#/definitions/GettableUserConfig"
+              "$ref": "#/definitions/ExternalAlertmanagerConfig"
             }
           },
           "400": {
@@ -1001,7 +932,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/PostableUserConfig"
+              "$ref": "#/definitions/ExternalAlertmanagerConfig"
             }
           },
           {
@@ -1946,6 +1877,15 @@
             },
             "description": "Filter by label matchers encoded as JSON representations of Prometheus matchers (for example, {\"type\":0,\"name\":\"severity\",\"value\":\"critical\"}). Provide one matcher per query string value.",
             "name": "matcher",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter rules by their static labels (not alert instance labels). Each value is a JSON-encoded Prometheus-like matcher (for example, {\"type\":0,\"name\":\"severity\",\"value\":\"critical\"}).\nFor equality matchers with empty string values (e.g., name=\"\"), rules that have the label with an empty value OR rules without the label will match (standard Prometheus behavior).",
+            "name": "rule_matcher",
             "in": "query"
           }
         ],
@@ -3020,11 +2960,18 @@
         ],
         "summary": "Get all the alert rules.",
         "operationId": "RouteGetAlertRules",
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "ProvisionedAlertRules",
             "schema": {
               "$ref": "#/definitions/ProvisionedAlertRules"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -3039,6 +2986,7 @@
         ],
         "summary": "Create a new alert rule.",
         "operationId": "RoutePostAlertRule",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -3064,6 +3012,12 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -3133,6 +3087,12 @@
               "$ref": "#/definitions/AlertingFileExport"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -3147,6 +3107,7 @@
         ],
         "summary": "Get a specific alert rule by UID.",
         "operationId": "RouteGetAlertRule",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3161,6 +3122,12 @@
             "description": "ProvisionedAlertRule",
             "schema": {
               "$ref": "#/definitions/ProvisionedAlertRule"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           },
           "404": {
@@ -3178,6 +3145,7 @@
         ],
         "summary": "Update an existing alert rule.",
         "operationId": "RoutePutAlertRule",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3211,6 +3179,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -3221,6 +3195,7 @@
         ],
         "summary": "Delete a specific alert rule by UID.",
         "operationId": "RouteDeleteAlertRule",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3238,6 +3213,12 @@
         "responses": {
           "204": {
             "description": " The alert rule was deleted successfully."
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       }
@@ -3292,6 +3273,12 @@
               "$ref": "#/definitions/AlertingFileExport"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -3306,6 +3293,7 @@
         ],
         "summary": "Get all the contact points.",
         "operationId": "RouteGetContactpoints",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3320,6 +3308,12 @@
             "schema": {
               "$ref": "#/definitions/ContactPoints"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -3333,6 +3327,7 @@
         ],
         "summary": "Create a contact point.",
         "operationId": "RoutePostContactpoints",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -3358,6 +3353,12 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -3439,6 +3440,7 @@
         ],
         "summary": "Update an existing contact point.",
         "operationId": "RoutePutContactpoint",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3472,6 +3474,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -3485,6 +3493,7 @@
         ],
         "summary": "Delete a contact point.",
         "operationId": "RouteDeleteContactpoints",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3497,6 +3506,12 @@
         "responses": {
           "202": {
             "description": " The contact point was deleted successfully."
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       }
@@ -3509,6 +3524,7 @@
         ],
         "summary": "Get a rule group.",
         "operationId": "RouteGetAlertRuleGroup",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3530,6 +3546,12 @@
               "$ref": "#/definitions/AlertRuleGroup"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -3545,6 +3567,7 @@
         ],
         "summary": "Create or update alert rule group.",
         "operationId": "RoutePutAlertRuleGroup",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3583,6 +3606,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -3593,6 +3622,7 @@
           "stable"
         ],
         "operationId": "RouteDeleteAlertRuleGroup",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3681,6 +3711,12 @@
               "$ref": "#/definitions/AlertingFileExport"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -3695,11 +3731,18 @@
         ],
         "summary": "Get all the mute timings.",
         "operationId": "RouteGetMuteTimings",
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "MuteTimings",
             "schema": {
               "$ref": "#/definitions/MuteTimings"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -3714,6 +3757,7 @@
         ],
         "summary": "Create a new mute timing.",
         "operationId": "RoutePostMuteTiming",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -3739,6 +3783,12 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -3804,6 +3854,7 @@
         ],
         "summary": "Get a mute timing.",
         "operationId": "RouteGetMuteTiming",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3818,6 +3869,12 @@
             "description": "MuteTimeInterval",
             "schema": {
               "$ref": "#/definitions/MuteTimeInterval"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           },
           "404": {
@@ -3835,6 +3892,7 @@
         ],
         "summary": "Replace an existing mute timing.",
         "operationId": "RoutePutMuteTiming",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3869,6 +3927,12 @@
               "$ref": "#/definitions/ValidationError"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "409": {
             "description": "PublicError",
             "schema": {
@@ -3884,6 +3948,7 @@
         ],
         "summary": "Delete a mute timing.",
         "operationId": "RouteDeleteMuteTiming",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3907,6 +3972,12 @@
         "responses": {
           "204": {
             "description": " The mute timing was deleted successfully."
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           },
           "409": {
             "description": "PublicError",
@@ -3984,11 +4055,18 @@
         ],
         "summary": "Get the notification policy tree.",
         "operationId": "RouteGetPolicyTree",
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "Route",
             "schema": {
               "$ref": "#/definitions/Route"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -4003,6 +4081,7 @@
         ],
         "summary": "Sets the notification policy tree.",
         "operationId": "RoutePutPolicyTree",
+        "deprecated": true,
         "parameters": [
           {
             "description": "The new notification routing tree to use",
@@ -4030,6 +4109,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -4043,11 +4128,18 @@
         ],
         "summary": "Clears the notification policy tree.",
         "operationId": "RouteResetPolicyTree",
+        "deprecated": true,
         "responses": {
           "202": {
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -4075,6 +4167,12 @@
               "$ref": "#/definitions/AlertingFileExport"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": "NotFound",
             "schema": {
@@ -4092,11 +4190,18 @@
         ],
         "summary": "Get all notification template groups.",
         "operationId": "RouteGetTemplates",
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "NotificationTemplates",
             "schema": {
               "$ref": "#/definitions/NotificationTemplates"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -4110,6 +4215,7 @@
         ],
         "summary": "Get a notification template group.",
         "operationId": "RouteGetTemplate",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -4124,6 +4230,12 @@
             "description": "NotificationTemplate",
             "schema": {
               "$ref": "#/definitions/NotificationTemplate"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           },
           "404": {
@@ -4144,6 +4256,7 @@
         ],
         "summary": "Updates an existing notification template group.",
         "operationId": "RoutePutTemplate",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -4178,6 +4291,12 @@
               "$ref": "#/definitions/PublicError"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "409": {
             "description": "PublicError",
             "schema": {
@@ -4193,6 +4312,7 @@
         ],
         "summary": "Delete a notification template group.",
         "operationId": "RouteDeleteTemplate",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -4211,6 +4331,12 @@
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           },
           "409": {
             "description": "PublicError",
@@ -5063,12 +5189,6 @@
     "BacktestConfig": {
       "type": "object",
       "properties": {
-        "annotations": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
         "condition": {
           "type": "string"
         },
@@ -5078,8 +5198,16 @@
             "$ref": "#/definitions/AlertQuery"
           }
         },
+        "exec_err_state": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "Alerting",
+            "Error"
+          ]
+        },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "from": {
           "type": "string",
@@ -5088,11 +5216,21 @@
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "keep_firing_for": {
+          "type": "string"
+        },
         "labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "missing_series_evals_to_resolve": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "namespace_uid": {
+          "type": "string"
         },
         "no_data_state": {
           "type": "string",
@@ -5102,12 +5240,18 @@
             "OK"
           ]
         },
+        "rule_group": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
         "to": {
           "type": "string",
           "format": "date-time"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -5540,6 +5684,45 @@
         },
         "wechat_configs": {
           "$ref": "#/definitions/WechatConfig"
+        }
+      }
+    },
+    "ExternalAlertmanagerConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/Config"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ExternalAlertmanagerStatus": {
+      "type": "object",
+      "required": [
+        "cluster",
+        "config",
+        "uptime",
+        "versionInfo"
+      ],
+      "properties": {
+        "cluster": {
+          "$ref": "#/definitions/clusterStatus"
+        },
+        "config": {
+          "$ref": "#/definitions/Config"
+        },
+        "uptime": {
+          "description": "uptime",
+          "type": "string",
+          "format": "date-time"
+        },
+        "versionInfo": {
+          "$ref": "#/definitions/versionInfo"
         }
       }
     },
@@ -6230,6 +6413,12 @@
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "limit": {
           "type": "integer",
           "format": "int64"
@@ -6239,6 +6428,12 @@
         },
         "query_offset": {
           "type": "string"
+        },
+        "remote_write": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RemoteWriteConfig"
+          }
         },
         "rules": {
           "type": "array",
@@ -6397,6 +6592,9 @@
           "$ref": "#/definitions/URL"
         }
       }
+    },
+    "Gone": {
+      "type": "object"
     },
     "HTTPClientConfig": {
       "type": "object",
@@ -6653,17 +6851,6 @@
           "type": "string"
         }
       }
-    },
-    "LabelSet": {
-      "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/LabelValue"
-      }
-    },
-    "LabelValue": {
-      "type": "string",
-      "title": "A LabelValue is an associated value for a LabelName."
     },
     "Labels": {
       "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
@@ -7560,6 +7747,12 @@
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "limit": {
           "type": "integer",
           "format": "int64"
@@ -7569,6 +7762,12 @@
         },
         "query_offset": {
           "type": "string"
+        },
+        "remote_write": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RemoteWriteConfig"
+          }
         },
         "rules": {
           "type": "array",
@@ -8234,6 +8433,14 @@
         }
       }
     },
+    "RemoteWriteConfig": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      }
+    },
     "ResponseDetails": {
       "type": "object",
       "properties": {
@@ -8511,6 +8718,12 @@
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "limit": {
           "type": "integer",
           "format": "int64"
@@ -8520,6 +8733,12 @@
         },
         "query_offset": {
           "type": "string"
+        },
+        "remote_write": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RemoteWriteConfig"
+          }
         },
         "rules": {
           "type": "array",
@@ -8930,80 +9149,6 @@
         },
         "token_file": {
           "type": "string"
-        }
-      }
-    },
-    "TestReceiverConfigResult": {
-      "type": "object",
-      "properties": {
-        "error": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "TestReceiverResult": {
-      "type": "object",
-      "properties": {
-        "grafana_managed_receiver_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TestReceiverConfigResult"
-          }
-        },
-        "name": {
-          "type": "string"
-        }
-      }
-    },
-    "TestReceiversConfigAlertParams": {
-      "type": "object",
-      "properties": {
-        "annotations": {
-          "$ref": "#/definitions/LabelSet"
-        },
-        "labels": {
-          "$ref": "#/definitions/LabelSet"
-        }
-      }
-    },
-    "TestReceiversConfigBodyParams": {
-      "type": "object",
-      "properties": {
-        "alert": {
-          "$ref": "#/definitions/TestReceiversConfigAlertParams"
-        },
-        "receivers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PostableApiReceiver"
-          }
-        }
-      }
-    },
-    "TestReceiversResult": {
-      "type": "object",
-      "properties": {
-        "alert": {
-          "$ref": "#/definitions/TestReceiversConfigAlertParams"
-        },
-        "notified_at": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "receivers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TestReceiverResult"
-          }
         }
       }
     },

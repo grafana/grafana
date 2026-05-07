@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaSecureValue = resource.NewSimpleSchema("secret.grafana.app", "v1beta1", &SecureValue{}, &SecureValueList{}, resource.WithKind("SecureValue"),
+	schemaSecureValue = resource.NewSimpleSchema("secret.grafana.app", "v1beta1", NewSecureValue(), &SecureValueList{}, resource.WithKind("SecureValue"),
 		resource.WithPlural("securevalues"), resource.WithScope(resource.NamespacedScope))
 	kindSecureValue = resource.Kind{
 		Schema: schemaSecureValue,

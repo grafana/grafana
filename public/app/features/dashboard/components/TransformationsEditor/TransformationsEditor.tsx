@@ -1,16 +1,16 @@
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
-import { ChangeEvent, createRef, RefObject } from 'react';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { type ChangeEvent, createRef, type RefObject } from 'react';
 import * as React from 'react';
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
 import {
-  DataFrame,
-  DataQueryRequest,
-  DataTransformerConfig,
-  PanelData,
-  SelectableValue,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataTransformerConfig,
+  type PanelData,
+  type SelectableValue,
   standardTransformersRegistry,
-  TransformerCategory,
+  type TransformerCategory,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -19,7 +19,7 @@ import {
   Button,
   ConfirmModal,
   Container,
-  Themeable,
+  type Themeable,
   withTheme,
   IconButton,
   ButtonGroup,
@@ -27,12 +27,12 @@ import {
 } from '@grafana/ui';
 import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
-import { PanelModel } from '../../state/PanelModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
 import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationPickerNg } from './TransformationPickerNg';
-import { TransformationsEditorTransformation } from './types';
+import { type TransformationsEditorTransformation } from './types';
 
 interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
@@ -61,7 +61,7 @@ interface State {
 
 class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
   subscription?: Unsubscribable;
-  ref: RefObject<HTMLDivElement>;
+  ref: RefObject<HTMLDivElement | null>;
 
   constructor(props: TransformationsEditorProps) {
     super(props);
@@ -256,7 +256,8 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
         onShowPicker={() => {
           this.setState({ showPicker: true });
         }}
-      ></EmptyTransformationsMessage>
+        data={this.state.data.series}
+      />
     );
   };
 
@@ -289,7 +290,10 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     const noTransforms = !transformations?.length;
     const hasTransforms = transformations.length > 0;
     let suffix: React.ReactNode = null;
-    let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
+    let xforms = standardTransformersRegistry
+      .list()
+      .filter((t) => !t.excludeFromPicker)
+      .sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
 
     if (this.state.selectedFilter !== VIEW_ALL_VALUE) {
       xforms = xforms.filter(

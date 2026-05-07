@@ -10,7 +10,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-func Mutate(ctx context.Context, obj runtime.Object) error {
+func Mutate(_ context.Context, obj runtime.Object) error {
 	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil
@@ -27,12 +27,7 @@ func Mutate(ctx context.Context, obj runtime.Object) error {
 	if repo.Spec.Git.URL != "" {
 		url := strings.TrimSpace(repo.Spec.Git.URL)
 		if url != "" {
-			// Remove any trailing slashes
 			url = strings.TrimRight(url, "/")
-			// Only add .git if it's not already present
-			if !strings.HasSuffix(url, ".git") {
-				url = url + ".git"
-			}
 			repo.Spec.Git.URL = url
 		}
 	}

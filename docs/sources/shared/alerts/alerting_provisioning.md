@@ -8,9 +8,11 @@ title: 'Alerting Provisioning HTTP API '
 
 The Alerting Provisioning HTTP API can be used to create, modify, and delete resources relevant to Grafana-managed alerts. This API is the one used by our [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
-For more information on the differences between Grafana-managed and data source-managed alerts, refer to [Introduction to alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/).
-
 > If you are running Grafana Enterprise, you need to add specific permissions for some endpoints. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
+
+{{< admonition type="warning" >}}
+The contact points, notification policies, notification template groups, and mute timings endpoints in this API are deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead.
+{{< /admonition >}}
 
 ## Grafana-managed endpoints
 
@@ -23,6 +25,8 @@ The `export` endpoints allow you to export alerting resources in a JSON format s
 
 ### Alert rules
 
+The following endpoints can be used to manage both alert rules and recording rules. To create a recording rule, include a `record` block in your request instead of a `condition` field.
+
 | Method | URI                                                              | Name                                                                    | Summary                                                 |
 | ------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------- |
 | DELETE | /api/v1/provisioning/alert-rules/:uid                            | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                    |
@@ -30,6 +34,7 @@ The `export` endpoints allow you to export alerting resources in a JSON format s
 | POST   | /api/v1/provisioning/alert-rules                                 | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                |
 | PUT    | /api/v1/provisioning/alert-rules/:uid                            | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                          |
 | GET    | /api/v1/provisioning/alert-rules/:uid/export                     | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.       |
+| DELETE | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route delete alert rule group](#route-delete-alert-rule-group)         | Delete a rule group.                                    |
 | GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                       |
 | PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Create or update a rule group.                          |
 | GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format. |
@@ -51,6 +56,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "noDataState": "OK",
   "execErrState": "OK",
   "for": "5m",
+  "keepFiringFor": "2m",
   "orgId": 1,
   "uid": "",
   "condition": "B",
@@ -200,6 +206,7 @@ Content-Type: application/json
   "noDataState": "OK",
   "execErrState": "OK",
   "for": "5m",
+  "keepFiringFor": "2m",
   "annotations": {
     "summary": "test_api_1"
   },
@@ -212,6 +219,106 @@ Content-Type: application/json
   "record": null
 }
 ```
+
+#### Recording rules
+
+Recording rules allow you to pre-compute frequently used or computationally expensive queries and save the results as a new time series metric. The same alert rule provisioning endpoints support creating recording rules by including the `record` field instead of alert-specific fields like `condition`, `noDataState`, or `execErrState`.
+
+**Example request for new recording rule:**
+
+```http
+POST /api/v1/provisioning/alert-rules
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "title": "my_recording_rule",
+  "ruleGroup": "recording_rules_group",
+  "folderUID": "SET_FOLDER_UID",
+  "for": "0s",
+  "orgId": 1,
+  "uid": "",
+  "labels": {
+    "team": "backend"
+  },
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "PROMETHEUS_DATASOURCE_UID",
+      "model": {
+        "expr": "sum(rate(http_requests_total[5m]))",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "A"
+      }
+    }
+  ],
+  "record": {
+    "metric": "http_requests:rate5m:sum",
+    "from": "A",
+    "target_datasource_uid": "TARGET_PROMETHEUS_UID"
+  }
+}
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": 2,
+  "uid": "YYYYYYYYY",
+  "orgID": 1,
+  "folderUID": "SET_FOLDER_UID",
+  "ruleGroup": "recording_rules_group",
+  "title": "my_recording_rule",
+  "for": "0s",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "PROMETHEUS_DATASOURCE_UID",
+      "model": {
+        "expr": "sum(rate(http_requests_total[5m]))",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "A"
+      }
+    }
+  ],
+  "updated": "2024-08-02T14:30:15.123456789Z",
+  "labels": {
+    "team": "backend"
+  },
+  "provenance": "api",
+  "isPaused": false,
+  "record": {
+    "metric": "http_requests:rate5m:sum",
+    "from": "A",
+    "target_datasource_uid": "TARGET_PROMETHEUS_UID"
+  }
+}
+```
+
+**Important notes for recording rules:**
+
+- The `metric` field must be a valid Prometheus metric name and contain no whitespace.
+- The `from` field specifies which query reference (refId) to use as the source for the recorded metric.
+- The `target_datasource_uid` specifies which Prometheus-compatible data source to write the results to. If not specified, the default data source configured in `[recording_rules].default_datasource_uid` is used.
+- Recording rules do not support `condition`, `noDataState`, `execErrState`, or `notification_settings` fields.
+- Set `for` to `0s` for recording rules as they do not have a pending state.
 
 ### Contact points
 
@@ -250,6 +357,105 @@ Content-Type: application/json
   }
 ]
 ```
+
+### Receiver permissions
+
+The receiver permissions endpoints manage access control for contact point receivers. These endpoints allow you to assign permissions to users, teams, or built-in roles for specific receivers.
+
+| Method | URI                                                          | Name                                                                            | Summary                                                     |
+| ------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| POST   | /api/access-control/receivers/:uid/users/:userID             | [route set user receiver permission](#route-set-user-receiver-permission)       | Set permissions for a user on a specific receiver.          |
+| POST   | /api/access-control/receivers/:uid/teams/:teamID             | [route set team receiver permission](#route-set-team-receiver-permission)       | Set permissions for a team on a specific receiver.          |
+| POST   | /api/access-control/receivers/:uid/builtInRoles/:builtInRole | [route set builtin receiver permission](#route-set-builtin-receiver-permission) | Set permissions for a built-in role on a specific receiver. |
+
+**Example Request to assign permissions to a user:**
+
+```http
+POST /api/access-control/receivers/abc123/users/5
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "permission": "Edit"
+}
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "message": "Permission updated"
+}
+```
+
+**Example Request to remove permissions from a team:**
+
+```http
+POST /api/access-control/receivers/abc123/teams/3
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "permission": ""
+}
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "message": "Permission removed"
+}
+```
+
+**Example Request to assign permissions to a built-in role:**
+
+```http
+POST /api/access-control/receivers/abc123/builtInRoles/Viewer
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "permission": "View"
+}
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "message": "Permission updated"
+}
+```
+
+**Available Permissions sets:**
+
+- `View` - Read-only access to the receiver.
+  - Grants `alert.notifications.receivers:read`.
+- `Edit` - Ability to update and test the receiver.
+  - Grants `View` actions plus:
+    - `alert.notifications.receivers:write`
+    - `alert.notifications.receivers:delete`
+    - `alert.notifications.receivers.test:create`
+- `Admin` - Full access including managing permissions and reading secrets.
+  - Grants `Edit` actions plus:
+    - `alert.notifications.receivers.secrets:read`
+    - `receivers.permissions:read`
+    - `receivers.permissions:write`
+    - `alert.notifications.receivers.protected:write`
+- Empty string (`""`) - Removes the permission.
 
 ### Notification policies
 
@@ -395,15 +601,14 @@ To reset the notification policy tree to the default and unlock it for editing i
 
 ## Data source-managed resources
 
-The Alerting Provisioning HTTP API can only be used to manage Grafana-managed alert resources. To manage resources related to [data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/), consider the following tools:
+{{< admonition type="caution" >}}
+Pre-provisioned Loki and Prometheus data source-managed alerts have been deprecated in Grafana Cloud and can not be created in new stacks.
+New Grafana Cloud stacks will use Grafana-managed alerting (GMA) by default. Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
 
-- [mimirtool](https://grafana.com/docs/mimir/<MIMIR_VERSION>/manage/tools/mimirtool/): to interact with the Mimir alertmanager and ruler configuration.
-- [cortex-tools](https://github.com/grafana/cortex-tools#cortextool): to interact with the Cortex alertmanager and ruler configuration.
-- [lokitool](https://grafana.com/docs/loki/<LOKI_VERSION>/alert/#lokitool): to configure the Loki Ruler.
+This applies to the default Loki and Prometheus Grafana Cloud data sources managed by Grafana Labs and Cloud Alertmanager, which will not be available nor will Grafana provision the data source for it. If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts.
 
-Alternatively, the [Grafana Alerting API](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json) can be used to access data from data source-managed alerts. This API is primarily intended for internal usage, with the exception of the `/api/v1/provisioning/` endpoints. It's important to note that internal APIs may undergo changes without prior notice and are not officially supported for user consumption.
-
-For Prometheus, `amtool` can also be used to interact with the [AlertManager API](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/prometheus/alertmanager/main/api/v2/openapi.yaml#/).
+Cloud users can import DMA rules into GMA rules with the import tool. See the [import data source-managed alerts to Grafana-managed alerts documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/) for information on how to do this.
+{{< /admonition >}}
 
 ## Paths
 
@@ -412,6 +617,10 @@ For Prometheus, `amtool` can also be used to interact with the [AlertManager API
 ```
 DELETE /api/v1/provisioning/alert-rules/:uid
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -438,11 +647,69 @@ Status: No Content
 
 ###### <span id="route-delete-alert-rule-204-schema"></span> Schema
 
+### <span id="route-delete-alert-rule-group"></span> Delete a rule group. (_RouteDeleteAlertRuleGroup_)
+
+```
+DELETE /api/v1/provisioning/folder/:folderUid/rule-groups/:group
+```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+{{< /admonition >}}
+
+#### Parameters
+
+{{% responsive-table %}}
+
+| Name                         | Source | Type   | Go type | Required | Default | Description                                               |
+| ---------------------------- | ------ | ------ | ------- | :------: | ------- | --------------------------------------------------------- |
+| `FolderUID`                  | path   | string | string  |    ✓     |         |                                                           |
+| `Group`                      | path   | string | string  |    ✓     |         |                                                           |
+| `X-Disable-Provenance: true` | header | string | string  |          |         | Allows editing of provisioned resources in the Grafana UI |
+
+{{% /responsive-table %}}
+
+#### All responses
+
+| Code                                      | Status     | Description                                    | Has headers | Schema                                              |
+| ----------------------------------------- | ---------- | ---------------------------------------------- | :---------: | --------------------------------------------------- |
+| [204](#route-delete-alert-rule-group-204) | No Content | The alert rule group was deleted successfully. |             | [schema](#route-delete-alert-rule-group-204-schema) |
+| [403](#route-delete-alert-rule-group-403) | Forbidden  | ForbiddenError                                 |             | [schema](#route-delete-alert-rule-group-403-schema) |
+| [404](#route-delete-alert-rule-group-404) | Not Found  | NotFound                                       |             | [schema](#route-delete-alert-rule-group-404-schema) |
+
+#### Responses
+
+##### <span id="route-delete-alert-rule-group-204"></span> 204 - The alert rule group was deleted successfully.
+
+Status: No Content
+
+###### <span id="route-delete-alert-rule-group-204-schema"></span> Schema
+
+##### <span id="route-delete-alert-rule-group-403"></span> 403 - ForbiddenError
+
+Status: Forbidden
+
+###### <span id="route-delete-alert-rule-group-403-schema"></span> Schema
+
+[ForbiddenError](#forbidden-error)
+
+##### <span id="route-delete-alert-rule-group-404"></span> 404 - NotFound
+
+Status: Not Found
+
+###### <span id="route-delete-alert-rule-group-404-schema"></span> Schema
+
+[NotFound](#not-found)
+
 ### <span id="route-delete-contactpoints"></span> Delete a contact point. (_RouteDeleteContactpoints_)
 
 ```
 DELETE /api/v1/provisioning/contact-points/:uid
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}` for receivers.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -469,6 +736,10 @@ Status: No Content
 ```
 DELETE /api/v1/provisioning/mute-timings/:name
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}` for mute timings.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -506,6 +777,10 @@ Status: Conflict
 DELETE /api/v1/provisioning/templates/:name
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}` for notification template groups.
+{{< /admonition >}}
+
 #### Parameters
 
 | Name      | Source | Type   | Go type | Required | Default | Description                                                                                                   |
@@ -541,6 +816,10 @@ Status: Conflict
 ```
 GET /api/v1/provisioning/alert-rules/:uid
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -615,6 +894,10 @@ Status: Not Found
 ```
 GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -692,6 +975,10 @@ Status: Not Found
 GET /api/v1/provisioning/alert-rules
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+{{< /admonition >}}
+
 #### All responses
 
 | Code                              | Status | Description           | Has headers | Schema                                      |
@@ -751,6 +1038,10 @@ Status: Not Found
 ```
 GET /api/v1/provisioning/contact-points
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers` for receivers.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -816,11 +1107,183 @@ Status: Forbidden
 
 [PermissionDenied](#permission-denied)
 
+### <span id="route-set-user-receiver-permission"></span> Set permissions for a user on a specific receiver. (_RouteSetUserReceiverPermission_)
+
+```
+POST /api/access-control/receivers/:uid/users/:userID
+```
+
+This endpoint sets or removes permissions for a specific user on a receiver. To remove a permission, send an empty string as the permission value.
+
+{{< admonition type="note" >}}
+This endpoint requires Grafana Enterprise and the user must have the `receivers.permissions:write` permission for the specified receiver.
+{{< /admonition >}}
+
+#### Parameters
+
+| Name     | Source | Type   | Go type | Required | Default | Description                                                                           |
+| -------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------------------------- |
+| `uid`    | path   | string | string  |    ✓     |         | UID of the receiver                                                                   |
+| `userID` | path   | int64  | int64   |    ✓     |         | ID of the user to assign permissions to                                               |
+| `body`   | body   | object | object  |    ✓     |         | JSON body with `permission` field: `View`, `Edit`, `Admin`, or `""` (empty to remove) |
+
+#### All responses
+
+| Code                                           | Status      | Description        | Has headers | Schema                                                   |
+| ---------------------------------------------- | ----------- | ------------------ | :---------: | -------------------------------------------------------- |
+| [200](#route-set-user-receiver-permission-200) | OK          | Permission updated |             | [schema](#route-set-user-receiver-permission-200-schema) |
+| [400](#route-set-user-receiver-permission-400) | Bad Request | Invalid request    |             | [schema](#route-set-user-receiver-permission-400-schema) |
+| [403](#route-set-user-receiver-permission-403) | Forbidden   | Permission denied  |             | [schema](#route-set-user-receiver-permission-403-schema) |
+
+#### Responses
+
+##### <span id="route-set-user-receiver-permission-200"></span> 200 - Permission updated
+
+Status: OK
+
+###### <span id="route-set-user-receiver-permission-200-schema"></span> Schema
+
+```json
+{
+  "message": "Permission updated"
+}
+```
+
+##### <span id="route-set-user-receiver-permission-400"></span> 400 - Invalid request
+
+Status: Bad Request
+
+###### <span id="route-set-user-receiver-permission-400-schema"></span> Schema
+
+##### <span id="route-set-user-receiver-permission-403"></span> 403 - Permission denied
+
+Status: Forbidden
+
+###### <span id="route-set-user-receiver-permission-403-schema"></span> Schema
+
+[PermissionDenied](#permission-denied)
+
+### <span id="route-set-team-receiver-permission"></span> Set permissions for a team on a specific receiver. (_RouteSetTeamReceiverPermission_)
+
+```
+POST /api/access-control/receivers/:uid/teams/:teamID
+```
+
+This endpoint sets or removes permissions for a specific team on a receiver. To remove a permission, send an empty string as the permission value.
+
+{{< admonition type="note" >}}
+This endpoint requires Grafana Enterprise and the user must have the `receivers.permissions:write` permission for the specified receiver.
+{{< /admonition >}}
+
+#### Parameters
+
+| Name     | Source | Type   | Go type | Required | Default | Description                                                                           |
+| -------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------------------------- |
+| `uid`    | path   | string | string  |    ✓     |         | UID of the receiver                                                                   |
+| `teamID` | path   | int64  | int64   |    ✓     |         | ID of the team to assign permissions to                                               |
+| `body`   | body   | object | object  |    ✓     |         | JSON body with `permission` field: `View`, `Edit`, `Admin`, or `""` (empty to remove) |
+
+#### All responses
+
+| Code                                           | Status      | Description        | Has headers | Schema                                                   |
+| ---------------------------------------------- | ----------- | ------------------ | :---------: | -------------------------------------------------------- |
+| [200](#route-set-team-receiver-permission-200) | OK          | Permission updated |             | [schema](#route-set-team-receiver-permission-200-schema) |
+| [400](#route-set-team-receiver-permission-400) | Bad Request | Invalid request    |             | [schema](#route-set-team-receiver-permission-400-schema) |
+| [403](#route-set-team-receiver-permission-403) | Forbidden   | Permission denied  |             | [schema](#route-set-team-receiver-permission-403-schema) |
+
+#### Responses
+
+##### <span id="route-set-team-receiver-permission-200"></span> 200 - Permission updated
+
+Status: OK
+
+###### <span id="route-set-team-receiver-permission-200-schema"></span> Schema
+
+```json
+{
+  "message": "Permission updated"
+}
+```
+
+##### <span id="route-set-team-receiver-permission-400"></span> 400 - Invalid request
+
+Status: Bad Request
+
+###### <span id="route-set-team-receiver-permission-400-schema"></span> Schema
+
+##### <span id="route-set-team-receiver-permission-403"></span> 403 - Permission denied
+
+Status: Forbidden
+
+###### <span id="route-set-team-receiver-permission-403-schema"></span> Schema
+
+[PermissionDenied](#permission-denied)
+
+### <span id="route-set-builtin-receiver-permission"></span> Set permissions for a built-in role on a specific receiver. (_RouteSetBuiltinReceiverPermission_)
+
+```
+POST /api/access-control/receivers/:uid/builtInRoles/:builtInRole
+```
+
+This endpoint sets or removes permissions for a built-in role on a receiver. To remove a permission, send an empty string as the permission value.
+
+{{< admonition type="note" >}}
+This endpoint requires Grafana Enterprise and the user must have the `receivers.permissions:write` permission for the specified receiver.
+{{< /admonition >}}
+
+#### Parameters
+
+| Name          | Source | Type   | Go type | Required | Default | Description                                                                           |
+| ------------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------------------------- |
+| `uid`         | path   | string | string  |    ✓     |         | UID of the receiver                                                                   |
+| `builtInRole` | path   | string | string  |    ✓     |         | Built-in role name: `Viewer`, `Editor`, or `Admin`                                    |
+| `body`        | body   | object | object  |    ✓     |         | JSON body with `permission` field: `View`, `Edit`, `Admin`, or `""` (empty to remove) |
+
+#### All responses
+
+| Code                                              | Status      | Description        | Has headers | Schema                                                      |
+| ------------------------------------------------- | ----------- | ------------------ | :---------: | ----------------------------------------------------------- |
+| [200](#route-set-builtin-receiver-permission-200) | OK          | Permission updated |             | [schema](#route-set-builtin-receiver-permission-200-schema) |
+| [400](#route-set-builtin-receiver-permission-400) | Bad Request | Invalid request    |             | [schema](#route-set-builtin-receiver-permission-400-schema) |
+| [403](#route-set-builtin-receiver-permission-403) | Forbidden   | Permission denied  |             | [schema](#route-set-builtin-receiver-permission-403-schema) |
+
+#### Responses
+
+##### <span id="route-set-builtin-receiver-permission-200"></span> 200 - Permission updated
+
+Status: OK
+
+###### <span id="route-set-builtin-receiver-permission-200-schema"></span> Schema
+
+```json
+{
+  "message": "Permission updated"
+}
+```
+
+##### <span id="route-set-builtin-receiver-permission-400"></span> 400 - Invalid request
+
+Status: Bad Request
+
+###### <span id="route-set-builtin-receiver-permission-400-schema"></span> Schema
+
+##### <span id="route-set-builtin-receiver-permission-403"></span> 403 - Permission denied
+
+Status: Forbidden
+
+###### <span id="route-set-builtin-receiver-permission-403-schema"></span> Schema
+
+[PermissionDenied](#permission-denied)
+
 ### <span id="route-get-mute-timing"></span> Get a mute timing. (_RouteGetMuteTiming_)
 
 ```
 GET /api/v1/provisioning/mute-timings/:name
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}` for mute timings.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -856,6 +1319,10 @@ Status: Not Found
 ```
 GET /api/v1/provisioning/mute-timings
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals` for mute timings.
+{{< /admonition >}}
 
 #### All responses
 
@@ -960,6 +1427,10 @@ Status: Forbidden
 GET /api/v1/provisioning/policies
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees` for notification policies.
+{{< /admonition >}}
+
 #### All responses
 
 | Code                              | Status | Description | Has headers | Schema                                      |
@@ -1022,6 +1493,10 @@ Status: Not Found
 GET /api/v1/provisioning/templates/:name
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}` for notification template groups.
+{{< /admonition >}}
+
 #### Parameters
 
 | Name   | Source | Type   | Go type | Required | Default | Description                |
@@ -1057,6 +1532,10 @@ Status: OK
 GET /api/v1/provisioning/templates
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups` for notification template groups.
+{{< /admonition >}}
+
 #### All responses
 
 | Code                            | Status | Description           | Has headers | Schema                                    |
@@ -1078,6 +1557,10 @@ Status: OK
 ```
 POST /api/v1/provisioning/alert-rules
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+{{< /admonition >}}
 
 This action creates a new alert rule.
 
@@ -1125,6 +1608,10 @@ Status: Bad Request
 POST /api/v1/provisioning/contact-points
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers` for receivers.
+{{< /admonition >}}
+
 When creating a contact point, the `EmbeddedContactPoint.name` property determines if the new contact point is added to an existing one. In the UI, contact points with the same name are grouped together under a single contact point.
 
 #### Parameters
@@ -1169,6 +1656,10 @@ Status: Bad Request
 POST /api/v1/provisioning/mute-timings
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals` for mute timings.
+{{< /admonition >}}
+
 #### Parameters
 
 {{% responsive-table %}}
@@ -1210,6 +1701,10 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/alert-rules/:uid
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -1253,6 +1748,10 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+{{< /admonition >}}
 
 This action also changes the provenance setting (`X-Disable-Provenance`) for all alert rules in the alert group.
 
@@ -1300,6 +1799,10 @@ Status: Bad Request
 PUT /api/v1/provisioning/contact-points/:uid
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}` for receivers.
+{{< /admonition >}}
+
 #### Parameters
 
 {{% responsive-table %}}
@@ -1342,6 +1845,10 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/mute-timings/:name
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}` for mute timings.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -1397,6 +1904,10 @@ Status: Conflict
 PUT /api/v1/provisioning/policies
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees` for notification policies.
+{{< /admonition >}}
+
 #### Parameters
 
 {{% responsive-table %}}
@@ -1438,6 +1949,10 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/templates/:name
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}` for notification template groups.
+{{< /admonition >}}
 
 {{% responsive-table %}}
 
@@ -1490,6 +2005,10 @@ Status: Conflict
 ```
 DELETE /api/v1/provisioning/policies
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees` for notification policies.
+{{< /admonition >}}
 
 #### All responses
 
@@ -1551,20 +2070,21 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name           | Type                                      | Go type               | Required | Default | Description | Example |
-| -------------- | ----------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
-| `annotations`  | map of string                             | `map[string]string`   |          |         |             |         |
-| `condition`    | string                                    | string                |          |         |             |         |
-| `dashboardUid` | string                                    | string                |          |         |             |         |
-| `data`         | [][AlertQueryExport](#alert-query-export) | `[]*AlertQueryExport` |          |         |             |         |
-| `execErrState` | string                                    | string                |          |         |             |         |
-| `for`          | [Duration](#duration)                     | Duration              |          |         |             |         |
-| `isPaused`     | boolean                                   | `bool`                |          |         |             |         |
-| `labels`       | map of string                             | `map[string]string`   |          |         |             |         |
-| `noDataState`  | string                                    | string                |          |         |             |         |
-| `panelId`      | int64 (formatted integer)                 | int64                 |          |         |             |         |
-| `title`        | string                                    | string                |          |         |             |         |
-| `uid`          | string                                    | string                |          |         |             |         |
+| Name            | Type                                      | Go type               | Required | Default | Description                                                                                         | Example |
+| --------------- | ----------------------------------------- | --------------------- | :------: | ------- | --------------------------------------------------------------------------------------------------- | ------- |
+| `annotations`   | map of string                             | `map[string]string`   |          |         |                                                                                                     |         |
+| `condition`     | string                                    | string                |          |         |                                                                                                     |         |
+| `dashboardUid`  | string                                    | string                |          |         |                                                                                                     |         |
+| `data`          | [][AlertQueryExport](#alert-query-export) | `[]*AlertQueryExport` |          |         |                                                                                                     |         |
+| `execErrState`  | string                                    | string                |          |         |                                                                                                     |         |
+| `for`           | [Duration](#duration)                     | Duration              |          |         |                                                                                                     |         |
+| `keepFiringFor` | [Duration](#duration)                     | Duration              |          |         | How long the alert continues to fire after the condition is no longer met. Prevents alert flapping. | `2m`    |
+| `isPaused`      | boolean                                   | `bool`                |          |         |                                                                                                     |         |
+| `labels`        | map of string                             | `map[string]string`   |          |         |                                                                                                     |         |
+| `noDataState`   | string                                    | string                |          |         |                                                                                                     |         |
+| `panelId`       | int64 (formatted integer)                 | int64                 |          |         |                                                                                                     |         |
+| `title`         | string                                    | string                |          |         |                                                                                                     |         |
+| `uid`           | string                                    | string                |          |         |                                                                                                     |         |
 
 {{% /responsive-table %}}
 
@@ -1798,6 +2318,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 | `noDataState` | string                       | string                    |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `orgID`       | int64 (formatted integer)    | `int64                    |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `provenance`  | [Provenance](#provenance)    | [Provenance](#provenance) |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `record`      | [Record](#record)            | [Record](#record)         |          |         | Recording rule configuration. If present, this is a recording rule instead of an alert rule.                              | `{"metric":"http_requests:rate5m:sum","from":"A","target_datasource_uid":"my-prom"}`                                                                                                                                                                                                                                                                                                                                             |
 | `ruleGroup`   | string                       | string                    |    ✓     |         |                                                                                                                           | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `title`       | string                       | string                    |    ✓     |         |                                                                                                                           | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `uid`         | string                       | string                    |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -1812,6 +2333,22 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 ### <span id="raw-message"></span> RawMessage
 
 [interface{}](#interface)
+
+### <span id="record"></span> Record
+
+> Record defines the configuration for a recording rule, which pre-computes query results and saves them as a new time series metric.
+
+**Properties**
+
+{{% responsive-table %}}
+
+| Name                    | Type   | Go type | Required | Default | Description                                                                                                          | Example                        |
+| ----------------------- | ------ | ------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `metric`                | string | string  |    ✓     |         | The name of the new metric to create. Must be a valid Prometheus metric name with no whitespace.                     | `http_requests:rate5m:sum`     |
+| `from`                  | string | string  |    ✓     |         | The query reference ID (refId) to use as the source for the recorded metric.                                         | `A`                            |
+| `target_datasource_uid` | string | string  |          |         | UID of the Prometheus-compatible data source to write results to. Falls back to configured default if not specified. | `my-prometheus-datasource-uid` |
+
+{{% /responsive-table %}}
 
 ### <span id="receiver-export"></span> ReceiverExport
 

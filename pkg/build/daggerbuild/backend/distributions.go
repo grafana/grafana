@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"fmt"
 	"log/slog"
 	"strings"
 
@@ -183,159 +182,14 @@ func Platform(d Distribution) dagger.Platform {
 
 type DistroBuildOptsFunc func(distro Distribution, experiments []string, tags []string) *GoBuildOpts
 
-func LDFlagsStatic(info *VCSInfo) []LDFlag {
-	return []LDFlag{
-		{"-w", nil},
-		{"-s", nil},
-		{"-X", info.X()},
-		{"-linkmode=external", nil},
-		{"-extldflags=-static", nil},
-	}
-}
-
 func LDFlagsDynamic(info *VCSInfo) []LDFlag {
 	return []LDFlag{
 		{"-X", info.X()},
 	}
 }
 
-func ZigCC(distro Distribution) string {
-	target, ok := ZigTargets[distro]
-	if !ok {
-		target = "x86_64-linux-musl" // best guess? should probably retun an error but i don't want to
-	}
-
-	return fmt.Sprintf("zig cc -target %s", target)
-}
-
-func ZigCXX(distro Distribution) string {
-	target, ok := ZigTargets[distro]
-	if !ok {
-		target = "x86_64-linux-musl" // best guess? should probably retun an error but i don't want to
-	}
-
-	return fmt.Sprintf("zig c++ -target %s", target)
-}
-
 var DefaultBuildOpts = func(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
-	os, arch := OSAndArch(distro)
-
-	return &GoBuildOpts{
-		CC:                ZigCC(distro),
-		CXX:               ZigCXX(distro),
-		ExperimentalFlags: experiments,
-		OS:                os,
-		Arch:              arch,
-		CGOEnabled:        true,
-	}
-}
-
-// BuildOptsStaticARM builds Grafana statically for the armv6/v7 architectures (not aarch64/arm64)
-func BuildOptsStaticARM(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
-	var (
-		os, _ = OSAndArch(distro)
-		arm   = ArchVersion(distro)
-	)
-
-	return &GoBuildOpts{
-		CC:                "/toolchain/arm-linux-musleabihf-cross/bin/arm-linux-musleabihf-gcc",
-		CXX:               "/toolchain/arm-linux-musleabihf-cross/bin/arm-linux-musleabihf-cpp",
-		ExperimentalFlags: experiments,
-		OS:                os,
-		Arch:              "arm",
-		GoARM:             GoARM(arm),
-		CGOEnabled:        true,
-	}
-}
-
-// BuildOptsStaticS390X builds Grafana statically for the s390x arch
-func BuildOptsStaticS390X(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
-	var (
-		os, _ = OSAndArch(distro)
-	)
-
-	return &GoBuildOpts{
-		CC:                "/toolchain/s390x-linux-musl-cross/bin/s390x-linux-musl-gcc",
-		CXX:               "/toolchain/s390x-linux-musl-cross/bin/s390x-linux-musl-cpp",
-		ExperimentalFlags: experiments,
-		OS:                os,
-		Arch:              "s390x",
-		CGOEnabled:        true,
-	}
-}
-
-// BuildOptsStaticRiscv64 builds Grafana statically for the riscv64 arch
-func BuildOptsStaticRiscv64(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
-	var (
-		os, _ = OSAndArch(distro)
-	)
-
-	return &GoBuildOpts{
-		CC:                "/toolchain/riscv64-linux-musl-cross/bin/riscv64-linux-musl-gcc",
-		CXX:               "/toolchain/riscv64-linux-musl-cross/bin/riscv64-linux-musl-cpp",
-		ExperimentalFlags: experiments,
-		OS:                os,
-		Arch:              "riscv64",
-		CGOEnabled:        true,
-	}
-}
-
-// BuildOptsStaticWindows builds Grafana statically for Windows on amd64
-func BuildOptsStaticWindows(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
-	var (
-		os, _ = OSAndArch(distro)
-	)
-
-	return &GoBuildOpts{
-		CC:                "/toolchain/x86_64-w64-mingw32-cross/bin/x86_64-w64-mingw32-gcc",
-		CXX:               "/toolchain/x86_64-w64-mingw32-cross/bin/x86_64-w64-mingw32-cpp",
-		ExperimentalFlags: experiments,
-		OS:                os,
-		Arch:              "amd64",
-		CGOEnabled:        true,
-	}
-}
-
-func StdZigBuildOpts(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
-	var (
-		os, arch = OSAndArch(distro)
-	)
-
-	return &GoBuildOpts{
-		CC:                ZigCC(distro),
-		CXX:               ZigCXX(distro),
-		ExperimentalFlags: experiments,
-		OS:                os,
-		Arch:              arch,
-		CGOEnabled:        true,
-	}
-}
-
-func BuildOptsWithoutZig(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
-	var (
-		os, arch = OSAndArch(distro)
-	)
-
-	return &GoBuildOpts{
-		ExperimentalFlags: experiments,
-		OS:                os,
-		Arch:              arch,
-		CGOEnabled:        true,
-	}
-}
-
-func ViceroyBuildOpts(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
-	var (
-		os, arch = OSAndArch(distro)
-	)
-
-	return &GoBuildOpts{
-		CC:                "viceroycc",
-		ExperimentalFlags: experiments,
-		OS:                os,
-		Arch:              arch,
-		CGOEnabled:        true,
-	}
+	return BuildOptsNoCGO(distro, experiments, tags)
 }
 
 func BuildOptsNoCGO(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
@@ -347,51 +201,13 @@ func BuildOptsNoCGO(distro Distribution, experiments []string, tags []string) *G
 		ExperimentalFlags: experiments,
 		OS:                os,
 		Arch:              arch,
-		CGOEnabled:        false,
 	}
-}
-
-var ZigTargets = map[Distribution]string{
-	DistLinuxAMD64:            "x86_64-linux-musl",
-	DistLinuxAMD64Dynamic:     "x86_64-linux-gnu",
-	DistLinuxAMD64DynamicMusl: "x86_64-linux-musl",
-	DistLinuxARM64:            "aarch64-linux-musl",
-	DistLinuxARM64Dynamic:     "aarch64-linux-musl",
-	DistLinuxARM:              "arm-linux-musleabihf",
-	DistLinuxARMv6:            "arm-linux-musleabihf",
-	DistLinuxARMv7:            "arm-linux-musleabihf",
-	DistLinuxRISCV64:          "riscv64-linux-musl",
-	DistWindowsAMD64:          "x86_64-windows-gnu",
-	DistWindowsARM64:          "aarch64-windows-gnu",
-}
-
-var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
-	// The Linux distros should all have an equivalent zig target in the ZigTargets map
-	DistLinuxARM:          BuildOptsStaticARM,
-	DistLinuxARMv6:        BuildOptsStaticARM,
-	DistLinuxARMv7:        BuildOptsStaticARM,
-	DistLinuxS390X:        BuildOptsStaticS390X,
-	DistLinuxARM64:        StdZigBuildOpts,
-	DistLinuxARM64Dynamic: StdZigBuildOpts,
-	DistLinuxAMD64:        StdZigBuildOpts,
-	DistLinuxAMD64Dynamic: StdZigBuildOpts,
-	DistPlan9AMD64:        StdZigBuildOpts,
-	DistLinuxRISCV64:      BuildOptsStaticRiscv64,
-
-	// Non-Linux distros can have whatever they want in CC and CXX; it'll get overridden
-	// but it's probably not best to rely on that.
-	DistWindowsAMD64: BuildOptsStaticWindows,
-	DistWindowsARM64: StdZigBuildOpts,
-	DistDarwinAMD64:  ViceroyBuildOpts,
-	DistDarwinARM64:  ViceroyBuildOpts,
-
-	DistLinuxAMD64DynamicMusl: BuildOptsWithoutZig,
 }
 
 func DistroOptsLogger(log *slog.Logger, fn DistroBuildOptsFunc) func(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
 	return func(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
 		opts := fn(distro, experiments, tags)
-		log.Debug("Building with options", "distribution", distro, "experiments", experiments, "tags", tags, "os", opts.OS, "arch", opts.Arch, "arm", opts.GoARM, "CGO", opts.CGOEnabled, "386", opts.Go386, "CC", opts.CC, "CXX", opts.CXX)
+		log.Debug("Building with options", "distribution", distro, "experiments", experiments, "tags", tags, "os", opts.OS, "arch", opts.Arch, "arm", opts.GoARM, "386", opts.Go386)
 		return opts
 	}
 }

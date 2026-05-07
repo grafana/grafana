@@ -46,6 +46,16 @@ const config: StorybookConfig = {
       })
     );
 
+    // Tell storybook to resolve imports with the @grafana-app/source condition for
+    // the packages in this repo.
+    if (config && config.resolve) {
+      if (Array.isArray(config.resolve.conditionNames)) {
+        config.resolve.conditionNames.unshift('@grafana-app/source');
+      } else {
+        config.resolve.conditionNames = ['@grafana-app/source', '...'];
+      }
+    }
+
     return config;
   },
 };

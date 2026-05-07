@@ -1,19 +1,19 @@
 import { xor } from 'lodash';
 
 import {
-  DataFrame,
+  type DataFrame,
   LoadingState,
-  PanelData,
-  ThresholdsConfig,
+  type PanelData,
+  type ThresholdsConfig,
   ThresholdsMode,
   isTimeSeriesFrames,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
-import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { createDagFromQueries, getOriginOfRefId } from './dag';
 

@@ -1,8 +1,15 @@
 import { uniqBy } from 'lodash';
 
-import { AppEvents, DateTime, LocalStorageValueProvider, TimeRange, isDateTime, rangeUtil } from '@grafana/data';
+import {
+  AppEvents,
+  type DateTime,
+  LocalStorageValueProvider,
+  type TimeRange,
+  isDateTime,
+  rangeUtil,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
+import { type TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';

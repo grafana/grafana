@@ -23,6 +23,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -146,6 +147,29 @@ export type ListPreferencesApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -166,7 +190,15 @@ export type CreatePreferencesApiArg = {
   fieldValidation?: string;
   preferences: Preferences;
 };
-export type MergedPreferencesApiResponse = /** status 200 undefined */ any;
+export type MergedPreferencesApiResponse = /** status 200 undefined */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: any;
+  /** Spec is the spec of the Preferences */
+  spec: any;
+};
 export type MergedPreferencesApiArg = void;
 export type GetPreferencesApiResponse = /** status 200 OK */ Preferences;
 export type GetPreferencesApiArg = {
@@ -336,11 +368,6 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type PreferencesCookiePreferences = {
-  analytics?: object;
-  functional?: object;
-  performance?: object;
-};
 export type PreferencesNavbarPreference = {
   bookmarkUrls: string[];
 };
@@ -349,11 +376,9 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
-  /** Cookie preferences */
-  cookiePreferences?: PreferencesCookiePreferences;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
-  /** Selected language (beta) */
+  /** Selected language */
   language?: string;
   /** Navigation preferences */
   navbar?: PreferencesNavbarPreference;
@@ -361,7 +386,7 @@ export type PreferencesSpec = {
   queryHistory?: PreferencesQueryHistoryPreference;
   /** Selected locale (beta) */
   regionalFormat?: string;
-  /** light, dark, empty is default */
+  /** user interface theme */
   theme?: string;
   /** The timezone selection */
   timezone?: string;

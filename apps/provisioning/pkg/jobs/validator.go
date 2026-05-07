@@ -1,12 +1,18 @@
 package jobs
 
 import (
+	"context"
+	"fmt"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/admission"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails
@@ -48,8 +54,9 @@ func ValidateJob(job *provisioning.Job) error {
 	case provisioning.JobActionMigrate:
 		if job.Spec.Migrate == nil {
 			list = append(list, field.Required(field.NewPath("spec", "migrate"), "migrate options required for migrate action"))
+		} else {
+			list = append(list, validateMigrateJobOptions(job.Spec.Migrate)...)
 		}
-		// Migrate options are simple - no further validation needed
 
 	case provisioning.JobActionDelete:
 		if job.Spec.Delete == nil {
@@ -64,6 +71,15 @@ func ValidateJob(job *provisioning.Job) error {
 		} else {
 			list = append(list, validateMoveJobOptions(job.Spec.Move)...)
 		}
+
+	case provisioning.JobActionFixFolderMetadata:
+		// No required options for fix-folder-metadata; it's a no-op placeholder
+
+	case provisioning.JobActionReleaseResources,
+		provisioning.JobActionDeleteResources:
+		// No additional options required; validation is handled by the jobs connector
+		// via inverted repo validation (only allowed when repo is missing or Terminating).
+
 	default:
 		list = append(list, field.Invalid(field.NewPath("spec", "action"), job.Spec.Action, "invalid action"))
 	}
@@ -99,6 +115,45 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 		}
 	}
 
+	// Empty Resources is valid: the worker falls back to exporting every
+	// unmanaged resource (legacy behavior).
+	list = append(list, validateExportResourceRefs(field.NewPath("spec", "push", "resources"), opts.Resources)...)
+
+	return list
+}
+
+// validateMigrateJobOptions validates migrate job options
+func validateMigrateJobOptions(opts *provisioning.MigrateJobOptions) field.ErrorList {
+	list := field.ErrorList{}
+
+	// Empty Resources is valid: the worker falls back to migrating every
+	// unmanaged resource (legacy behavior).
+	list = append(list, validateExportResourceRefs(field.NewPath("spec", "migrate", "resources"), opts.Resources)...)
+
+	return list
+}
+
+// validateExportResourceRefs enforces the rules shared by export-style
+// resource lists (push and migrate): name + kind required, only Dashboard is
+// supported, and a non-empty group must match the dashboard group.
+func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRef) field.ErrorList {
+	list := field.ErrorList{}
+	for i, r := range refs {
+		path := base.Index(i)
+		if r.Name == "" {
+			list = append(list, field.Required(path.Child("name"), "resource name is required"))
+		}
+		if r.Kind == "" {
+			list = append(list, field.Required(path.Child("kind"), "resource kind is required"))
+		} else if r.Kind != resources.DashboardKind.Kind {
+			list = append(list, field.Invalid(path.Child("kind"), r.Kind,
+				fmt.Sprintf("only %s is supported for export", resources.DashboardKind.Kind)))
+		}
+		if r.Group != "" && r.Group != resources.DashboardResource.Group {
+			list = append(list, field.Invalid(path.Child("group"), r.Group,
+				fmt.Sprintf("only %s is supported for export", resources.DashboardResource.Group)))
+		}
+	}
 	return list
 }
 
@@ -169,4 +224,89 @@ func validateMoveJobOptions(opts *provisioning.MoveJobOptions) field.ErrorList {
 	}
 
 	return list
+}
+
+// AdmissionValidator handles validation for Job resources during admission
+type AdmissionValidator struct{}
+
+// NewAdmissionValidator creates a new job admission validator
+func NewAdmissionValidator() *AdmissionValidator {
+	return &AdmissionValidator{}
+}
+
+// Validate validates Job resources during admission
+func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+	if obj == nil {
+		return nil
+	}
+
+	// Do not validate objects we are trying to delete
+	meta, _ := utils.MetaAccessor(obj)
+	if meta.GetDeletionTimestamp() != nil {
+		return nil
+	}
+
+	job, ok := obj.(*provisioning.Job)
+	if !ok {
+		return fmt.Errorf("expected job, got %T", obj)
+	}
+
+	return ValidateJob(job)
+}
+
+// HistoricJobAdmissionValidator handles validation for HistoricJob resources during admission.
+// HistoricJobs are read-only records of completed jobs, so validation is minimal.
+type HistoricJobAdmissionValidator struct{}
+
+// NewHistoricJobAdmissionValidator creates a new historic job admission validator
+func NewHistoricJobAdmissionValidator() *HistoricJobAdmissionValidator {
+	return &HistoricJobAdmissionValidator{}
+}
+
+// Validate validates HistoricJob resources during admission.
+// Since HistoricJobs are system-created records of completed jobs,
+// we only perform basic structural validation.
+func (v *HistoricJobAdmissionValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+	if obj == nil {
+		return nil
+	}
+
+	// Do not validate objects we are trying to delete
+	meta, _ := utils.MetaAccessor(obj)
+	if meta.GetDeletionTimestamp() != nil {
+		return nil
+	}
+
+	historicJob, ok := obj.(*provisioning.HistoricJob)
+	if !ok {
+		return fmt.Errorf("expected historic job, got %T", obj)
+	}
+
+	// HistoricJobs share the same spec structure as Jobs, so we can reuse validation
+	// This ensures that any historic job stored is well-formed
+	return validateHistoricJob(historicJob)
+}
+
+// validateHistoricJob performs basic validation on historic job records
+func validateHistoricJob(job *provisioning.HistoricJob) error {
+	list := field.ErrorList{}
+
+	// Validate that required fields are present
+	if job.Spec.Action == "" {
+		list = append(list, field.Required(field.NewPath("spec", "action"), "action must be specified"))
+	}
+
+	if job.Spec.Repository == "" {
+		list = append(list, field.Required(field.NewPath("spec", "repository"), "repository must be specified"))
+	}
+
+	if len(list) == 0 {
+		return nil
+	}
+
+	return apierrors.NewInvalid(
+		provisioning.HistoricJobResourceInfo.GroupVersionKind().GroupKind(),
+		job.Name, list)
 }

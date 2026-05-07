@@ -1,8 +1,9 @@
-import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, ScopedVars } from '@grafana/data';
+import { AbstractLabelOperator, type DataFrame, type TimeRange, dateTime, type ScopedVars } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';
-import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
+import { LokiQueryType } from './dataquery.gen';
+import { DEFAULT_MAX_LINES_SAMPLE, type LokiDatasource } from './datasource';
 import { createDetectedFieldValuesMetadataRequest } from './mocks/createDetectedFieldValuesMetadataRequest';
 import { createDetectedFieldsMetadataRequest } from './mocks/createDetectedFieldsMetadataRequest';
 import { createLokiDatasource } from './mocks/datasource';
@@ -12,7 +13,7 @@ import {
   extractLabelKeysFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LabelType, LokiQueryType } from './types';
+import { type DetectedFieldsResult, LabelType } from './types';
 
 jest.mock('./responseUtils');
 
@@ -287,6 +288,14 @@ describe('Language completion provider', () => {
       expect(values2).not.toStrictEqual(values3);
       expect(requestSpy).toHaveBeenCalledTimes(2);
     });
+
+    it('should return empty array when request returns non-array', async () => {
+      const datasource = setup({});
+      const provider = await getLanguageProvider(datasource);
+      jest.spyOn(provider, 'request').mockResolvedValue(null);
+      const labelValues = await provider.fetchLabelValues('testkey');
+      expect(labelValues).toEqual([]);
+    });
   });
 
   describe('fetchDetectedLabelValues', () => {
@@ -379,6 +388,16 @@ describe('Language completion provider', () => {
       expect(values2).not.toStrictEqual(values3);
       expect(requestSpy).toHaveBeenCalledTimes(1);
       expect(requestSpy2).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return empty array when request returns non-array', async () => {
+      const datasource = detectedLabelValuesSetup(null as unknown as string[], {
+        end: mockTimeRange.to.valueOf(),
+        start: mockTimeRange.from.valueOf(),
+      });
+      const provider = await getLanguageProvider(datasource, false);
+      const labelValues = await provider.fetchDetectedLabelValues('testkey', options);
+      expect(labelValues).toEqual([]);
     });
   });
   describe('fetchDetectedFields', () => {
@@ -557,6 +576,23 @@ describe('Language completion provider', () => {
           end: 1560163909000,
           query: '{foo="bar"}',
           start: 1560153109000,
+        });
+      });
+
+      it('should interpolate variables in stream selector', async () => {
+        const datasource = setup({});
+        jest.spyOn(datasource, 'getTimeRangeParams').mockReturnValue({ start: 0, end: 1 });
+        jest
+          .spyOn(datasource, 'interpolateString')
+          .mockImplementation((string: string) => string.replace(/\$test_var/g, 'age'));
+
+        const languageProvider = new LanguageProvider(datasource);
+        languageProvider.request = jest.fn().mockResolvedValue([]);
+        await languageProvider.fetchLabels({ streamSelector: '{age="new", $test_var="new"}' });
+        expect(languageProvider.request).toHaveBeenCalledWith('labels', {
+          end: 1,
+          query: '{age="new", age="new"}',
+          start: 0,
         });
       });
     });

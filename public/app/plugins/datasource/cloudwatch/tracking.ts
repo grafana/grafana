@@ -1,19 +1,19 @@
-import { DashboardLoadedEvent } from '@grafana/data';
+import { type DashboardLoadedEvent } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
+import {
+  type CloudWatchLogsQuery,
+  type CloudWatchLogsAnomaliesQuery,
+  type CloudWatchMetricsQuery,
+  LogsMode,
+  LogsQueryLanguage,
+  MetricQueryType,
+  MetricEditorMode,
+} from './dataquery.gen';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery, isLogsAnomaliesQuery } from './guards';
 import { migrateMetricQuery } from './migrations/metricQueryMigrations';
 import pluginJson from './plugin.json';
-import {
-  CloudWatchLogsAnomaliesQuery,
-  CloudWatchLogsQuery,
-  CloudWatchMetricsQuery,
-  CloudWatchQuery,
-  LogsMode,
-  LogsQueryLanguage,
-  MetricEditorMode,
-  MetricQueryType,
-} from './types';
+import { type CloudWatchQuery } from './types';
 import { filterMetricsQuery } from './utils/utils';
 
 type CloudWatchOnDashboardLoadedTrackingEvent = {

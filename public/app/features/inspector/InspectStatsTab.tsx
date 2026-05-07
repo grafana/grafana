@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
+import { type PanelData, type QueryResultMetaStat, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -62,7 +62,7 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   const traceIdsStatsTableName = t('dashboard.inspect-stats.data-traceids', 'Trace IDs');
 
   return (
-    <div aria-label={selectors.components.PanelInspector.Stats.content} className={containerStyles}>
+    <div data-testid={selectors.components.PanelInspector.Stats.content} className={containerStyles}>
       <InspectStatsTable timeZone={timeZone} name={statsTableName} stats={stats} />
       <InspectStatsTable timeZone={timeZone} name={dataStatsTableName} stats={dataStats} />
       <InspectStatsTraceIdsTable name={traceIdsStatsTableName} traceIds={data.traceIds ?? []} />

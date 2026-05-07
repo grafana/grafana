@@ -94,6 +94,42 @@ func TestDashboardQueries(t *testing.T) {
 						Order:         "ASC",
 					}),
 				},
+				{
+					// Tests that MaxRows generates LIMIT clause for regular dashboard queries
+					Name: "dashboard_with_max_rows",
+					Data: getQuery(&DashboardQuery{
+						OrgID:   2,
+						MaxRows: 100,
+					}),
+				},
+				{
+					// Tests that MaxRows generates LIMIT clause for history queries
+					Name: "history_with_max_rows",
+					Data: getQuery(&DashboardQuery{
+						OrgID:      1,
+						GetHistory: true,
+						MaxRows:    50,
+					}),
+				},
+				{
+					// Tests that MaxRows + LastID generates correct pagination query
+					Name: "dashboard_with_max_rows_last_id",
+					Data: getQuery(&DashboardQuery{
+						OrgID:   2,
+						MaxRows: 100,
+						LastID:  500,
+					}),
+				},
+				{
+					// Tests that MaxRows + LastID generates correct pagination query
+					Name: "history_with_max_rows_last_id",
+					Data: getQuery(&DashboardQuery{
+						OrgID:      2,
+						MaxRows:    100,
+						GetHistory: true,
+						LastID:     500,
+					}),
+				},
 			},
 			sqlQueryPanels: {
 				{

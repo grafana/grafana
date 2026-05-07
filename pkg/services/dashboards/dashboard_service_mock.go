@@ -5,8 +5,9 @@ package dashboards
 import (
 	context "context"
 
-	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
 	mock "github.com/stretchr/testify/mock"
+
+	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	model "github.com/grafana/grafana/pkg/services/search/model"
 
@@ -72,6 +73,34 @@ func (_m *FakeDashboardService) CountDashboardsInOrg(ctx context.Context, orgID 
 
 	if len(ret) == 0 {
 		panic("no return value specified for CountDashboardsInOrg")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (int64, error)); ok {
+		return rf(ctx, orgID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) int64); ok {
+		r0 = rf(ctx, orgID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// CountProvisionedDashboardsInOrg provides a mock function with given fields: ctx, orgID
+func (_m *FakeDashboardService) CountProvisionedDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
+	ret := _m.Called(ctx, orgID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountProvisionedDashboardsInOrg")
 	}
 
 	var r0 int64
@@ -527,6 +556,11 @@ func (_m *FakeDashboardService) ValidateDashboardRefreshInterval(minRefreshInter
 	}
 
 	return r0
+}
+
+// CanViewDashboard uses the access control service to check if the requested user can see a dashboard
+func (_m *FakeDashboardService) HasDashboardAccess(ctx context.Context, user identity.Requester, verb string, namespace string, name string) (bool, error) {
+	return true, nil
 }
 
 // NewFakeDashboardService creates a new instance of FakeDashboardService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

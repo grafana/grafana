@@ -25,6 +25,34 @@ The Grafana API and frontend-service containers are configured in two places:
 
 - `configs/{frontend-service,grafana-api}.local.ini` file is where you can set your own personal config values, such as feature toggles. This file is git-ignored.
 
+### Frontend Observability (Faro)
+
+The frontend-service setup includes Grafana Alloy configured to receive Faro (Grafana JavaScript Agent) data directly from the frontend. Faro is **enabled by default** and configured via environment variables in `docker-compose.yaml`:
+
+- `GF_LOG_FRONTEND_ENABLED=true` - Enables Faro data collection
+- `GF_LOG_FRONTEND_CUSTOM_ENDPOINT=http://localhost:12347/collect` - Sends data to Alloy's Faro receiver
+
+Faro data (logs, measurements, exceptions) will be sent directly to Alloy's Faro receiver on port 12347, which forwards:
+
+- **Logs** → Loki (queryable with `{job="faro"}`)
+- **Traces** → Tempo
+
+You can query Faro logs in Grafana using LogQL:
+
+```
+{job="faro"} | json
+```
+
+**To enable Faro after configuration changes:** If you've just added or modified the Faro configuration, you need to restart the services. If Tilt is running, it should automatically detect the changes and restart the affected services (`frontend-service` and `alloy`). If not, restart Tilt by stopping (`Ctrl+C`) and running `make frontend-service` again.
+
+To disable Faro or customize the endpoint, you can override these settings in `configs/frontend-service.local.ini`:
+
+```ini
+[log.frontend]
+enabled = false  # Set to false to disable
+custom_endpoint = http://your-custom-endpoint/collect  # Override endpoint
+```
+
 ### Bootdata unavailable
 
 To simulate the `/bootdata` endpoint being available, there are special control URLs you can visit that use cookies to control behaviour:

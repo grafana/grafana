@@ -1,24 +1,24 @@
 import { css, cx } from '@emotion/css';
-import { ReactElement, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   TextBoxVariable,
   VariableDependencyConfig,
-  VariableValue,
+  type VariableValue,
   sceneGraph,
 } from '@grafana/scenes';
 import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
 import {
-  GrafanaAlertStateWithReason,
+  type GrafanaAlertStateWithReason,
   isAlertStateWithReason,
   isGrafanaAlertState,
   mapStateWithReasonToBaseState,
@@ -29,17 +29,18 @@ import { trackUseCentralHistoryFilterByClicking, trackUseCentralHistoryMaxEvents
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { AITriageButtonComponent } from '../../../enterprise-components/AI/AIGenTriageButton/addAITriageButton';
 import { usePagination } from '../../../hooks/usePagination';
+import { useSlowQuery } from '../../../hooks/useSlowQuery';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { createRelativeUrl } from '../../../utils/url';
 import { CollapseToggle } from '../../CollapseToggle';
-import { LogRecord } from '../state-history/common';
+import { type LogRecord } from '../state-history/common';
 
 import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAlertHistoryScene';
 import { EventDetails } from './EventDetails';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
 import { useRuleHistoryRecords } from './useRuleHistoryRecords';
-import { parseBackendLabelFilters } from './utils';
+import { toMatchersParam } from './utils';
 
 export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
 const PAGE_SIZE = 100;
@@ -69,8 +70,6 @@ export const HistoryEventsList = ({
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
 
-  const labelFilters = parseBackendLabelFilters(valueInLabelFilter.toString());
-
   const stateTo = valueInStateToFilter.toString();
   const stateFrom = valueInStateFromFilter.toString();
 
@@ -83,10 +82,12 @@ export const HistoryEventsList = ({
     from: from,
     to: to,
     limit: LIMIT_EVENTS,
-    labels: labelFilters,
+    matchers: toMatchersParam(valueInLabelFilter.toString()),
     current: stateTo !== 'all' ? stateTo : undefined,
     previous: stateFrom !== 'all' ? stateFrom : undefined,
   });
+
+  const isSlowQuery = useSlowQuery(isLoading, { threshold: 5_000 });
 
   const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(stateHistory, {
     labels: valueInLabelFilter.toString(),
@@ -113,6 +114,17 @@ export const HistoryEventsList = ({
           {t(
             'alerting.central-alert-history.too-many-events.text',
             'The selected time period has too many events to display. Displaying the latest 5000 events. Try using a shorter time period.'
+          )}
+        </Alert>
+      )}
+      {isSlowQuery && (
+        <Alert
+          severity="warning"
+          title={t('alerting.central-alert-history.slow-query.title', 'Query is taking longer than expected')}
+        >
+          {t(
+            'alerting.central-alert-history.slow-query.text',
+            'This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.'
           )}
         </Alert>
       )}

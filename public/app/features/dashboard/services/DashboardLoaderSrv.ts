@@ -2,20 +2,20 @@ import $ from 'jquery';
 import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
-import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
+import { AppEvents, dateMath, type UrlQueryMap, type UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDTO } from 'app/types/dashboard';
 
 import { appEvents } from '../../../core/app_events';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
-import { DashboardVersionError, DashboardWithAccessInfo } from '../api/types';
+import { DashboardVersionError, type DashboardWithAccessInfo } from '../api/types';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -138,12 +138,10 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
         }
       }
 
-      promise = getDashboardAPI('v1')
-        .getDashboardDTO(uid, params)
-        .then((result) => {
-          return result;
-        })
-        .catch((e) => {
+      promise = getDashboardAPI('v1').then(async (api) => {
+        try {
+          return await api.getDashboardDTO(uid, params);
+        } catch (e) {
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             console.error('Failed to load dashboard', e);
             e.isHandled = true;
@@ -153,7 +151,8 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
           }
 
           throw e;
-        });
+        }
+      });
     } else {
       throw new Error('Dashboard uid or slug required');
     }
@@ -204,12 +203,10 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
         }
       }
 
-      promise = getDashboardAPI('v2')
-        .getDashboardDTO(uid, params)
-        .then((result) => {
-          return result;
-        })
-        .catch((e) => {
+      promise = getDashboardAPI('v2').then(async (api) => {
+        try {
+          return await api.getDashboardDTO(uid, params);
+        } catch (e) {
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             console.error('Failed to load dashboard', e);
             e.isHandled = true;
@@ -219,7 +216,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
           }
 
           throw e;
-        });
+        }
+      });
     } else {
       throw new Error('Dashboard uid or slug required');
     }

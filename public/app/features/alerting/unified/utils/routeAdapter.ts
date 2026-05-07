@@ -1,4 +1,4 @@
-import { Route as AlertingRoute, RouteWithID as AlertingRouteWithID } from '@grafana/alerting';
+import { type Route as AlertingRoute, type RouteWithID as AlertingRouteWithID } from '@grafana/alerting';
 import { type LabelMatcher } from '@grafana/alerting/unstable';
 import {
   MatcherOperator,
@@ -143,8 +143,7 @@ function convertToMatcherOperator(type: LabelMatcher['type']): MatcherOperator {
     case '!~':
       return MatcherOperator.notRegex;
     default:
-      const exhaustiveCheck: never = type;
-      throw new Error(`Unknown matcher type: ${exhaustiveCheck}`);
+      throw new Error(`Unknown matcher type: ${type}`);
   }
 }
 

@@ -1,18 +1,18 @@
 import { cx, css } from '@emotion/css';
-import { ReactElement, useEffect, useRef, useState } from 'react';
+import { type ReactElement, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { ComponentSize } from '../../types/size';
-import { Button, ButtonVariant } from '../Button/Button';
+import { type ComponentSize } from '../../types/size';
+import { Button, type ButtonVariant } from '../Button/Button';
 
 export interface Props {
   /** Confirm action callback */
   onConfirm(): void;
-  children: string | ReactElement;
+  children: string | ReactElement<Record<string, unknown>>;
   /** Custom button styles */
   className?: string;
   /** Button size */

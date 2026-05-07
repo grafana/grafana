@@ -1,10 +1,18 @@
 import { useCallback, useId, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { type MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Input, Switch } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+
+function useVariableHasMultiProps(variable: MultiValueVariable) {
+  const state = variable.useState();
+  const hasMultiProps =
+    config.featureToggles.multiPropsVariables && 'valuesFormat' in state && state.valuesFormat === 'json';
+  return hasMultiProps;
+}
 
 export function useVariableSelectionOptionsCategory(variable: MultiValueVariable): OptionsPaneCategoryDescriptor {
   const multiValueId = useId();
@@ -45,7 +53,9 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
             'A wildcard regex or other value to represent All'
           ),
           useShowIf: () => {
-            return variable.useState().includeAll ?? false;
+            const state = variable.useState();
+            const hasMultiProps = useVariableHasMultiProps(variable);
+            return hasMultiProps ? false : (state.includeAll ?? false);
           },
           render: (descriptor) => <CustomAllValueInput id={descriptor.props.id} variable={variable} />,
         })
@@ -58,6 +68,10 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
             'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
             'Enables users to enter values'
           ),
+          useShowIf: () => {
+            const hasMultiProps = useVariableHasMultiProps(variable);
+            return !hasMultiProps;
+          },
           render: (descriptor) => <AllowCustomSwitch id={descriptor.props.id} variable={variable} />,
         })
       );
@@ -73,7 +87,11 @@ function MultiValueSwitch({ variable, id }: InputProps) {
   const { isMulti } = variable.useState();
 
   return (
-    <Switch id={id} value={isMulti} onChange={(evt) => variable.setState({ isMulti: evt.currentTarget.checked })} />
+    <Switch
+      id={id}
+      value={Boolean(isMulti)}
+      onChange={(evt) => variable.setState({ isMulti: evt.currentTarget.checked })}
+    />
   );
 }
 
@@ -83,7 +101,7 @@ function IncludeAllSwitch({ variable, id }: InputProps) {
   return (
     <Switch
       id={id}
-      value={includeAll}
+      value={Boolean(includeAll)}
       onChange={(evt) => variable.setState({ includeAll: evt.currentTarget.checked })}
     />
   );
@@ -95,7 +113,7 @@ function AllowCustomSwitch({ variable, id }: InputProps) {
   return (
     <Switch
       id={id}
-      value={allowCustomValue}
+      value={allowCustomValue ?? true}
       onChange={(evt) => variable.setState({ allowCustomValue: evt.currentTarget.checked })}
     />
   );

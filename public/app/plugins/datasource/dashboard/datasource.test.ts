@@ -2,14 +2,15 @@ import { first } from 'rxjs';
 
 import {
   arrayToDataFrame,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   getDefaultTimeRange,
   LoadingState,
   standardTransformersRegistry,
   FieldType,
-  DataFrame,
-  AdHocVariableFilter,
+  type DataFrame,
+  type AdHocVariableFilter,
+  DataTopic,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -19,7 +20,7 @@ import {
   SceneDataTransformer,
   SceneFlexItem,
   SceneFlexLayout,
-  SceneObject,
+  type SceneObject,
   VizPanel,
 } from '@grafana/scenes';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
@@ -28,7 +29,7 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
 import { DashboardDatasource } from './datasource';
-import { DashboardQuery } from './types';
+import { type DashboardQuery } from './types';
 
 jest.mock('rxjs', () => {
   const original = jest.requireActual('rxjs');
@@ -70,15 +71,13 @@ describe('DashboardDatasource', () => {
   });
 
   it('Can subscribe to panel data + transforms', async () => {
-    jest.useFakeTimers();
-
     const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
-    let rsp: DataQueryResponse | undefined;
-
-    observable.subscribe({ next: (data) => (rsp = data) });
-
-    jest.runAllTimers();
+    const rsp = await new Promise<DataQueryResponse | undefined>((r) =>
+      observable.subscribe({
+        next: r,
+      })
+    );
 
     expect(rsp?.data[0].fields[1].values).toEqual([3]);
   });
@@ -111,29 +110,27 @@ describe('DashboardDatasource', () => {
     expect(first).not.toHaveBeenCalled();
   });
 
-  it('Should not mutate field state in dataframe', () => {
-    jest.useFakeTimers();
+  it('Should not mutate field state in dataframe', async () => {
     const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
-    let rsp: DataQueryResponse | undefined;
-
-    const test = observable.subscribe({ next: (data) => (rsp = data) });
-
-    jest.runAllTimers();
+    const r = await new Promise<DataQueryResponse | undefined>((resolve) => {
+      const test = observable.subscribe({
+        next: (data) => {
+          test.unsubscribe();
+          resolve(data);
+        },
+      });
+    });
 
     // modifying series in dashboard DS should not affect the original dataframe
-    rsp!.data[0].fields[0].state = {
+    r!.data[0].fields[0].state = {
       calcs: { sum: 3 },
     };
 
-    test.unsubscribe();
-
-    observable.subscribe({ next: (data) => (rsp = data) });
-
-    jest.runAllTimers();
+    const r2 = await new Promise<DataQueryResponse | undefined>((resolve) => observable.subscribe({ next: resolve }));
 
     // on further emissions the result should be the unmodified original dataframe
-    expect(rsp!.data[0].fields[0].state).toEqual({});
+    expect(r2!.data[0].fields[0].state).toEqual({});
   });
 
   describe('AdHoc Filtering', () => {
@@ -774,7 +771,123 @@ describe('DashboardDatasource', () => {
       });
     });
   });
+
+  describe('Annotation Handling', () => {
+    it('should NOT include annotations from source panel in regular query response', async () => {
+      const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1 });
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      // Should only have series data, no annotations
+      expect(rsp?.data.length).toBe(1);
+      expect(rsp?.data[0].fields[0].values).toEqual([1, 2, 3]);
+
+      // Verify no annotation frames are included
+      const annotationFrames = rsp?.data.filter((frame) => frame.meta?.dataTopic === DataTopic.Annotations);
+      expect(annotationFrames?.length).toBe(0);
+    });
+
+    it('should return annotations as series when query topic is DataTopic.Annotations', async () => {
+      const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1, topic: DataTopic.Annotations });
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      // Should return annotation data as series (with dataTopic changed to Series)
+      expect(rsp?.data.length).toBe(1);
+      expect(rsp?.data[0].name).toBe('Test Annotation');
+      // The dataTopic should be changed to Series when querying for annotations
+      expect(rsp?.data[0].meta?.dataTopic).toBe(DataTopic.Series);
+    });
+
+    it('should not leak annotations when source panel has annotations and toggle is off', async () => {
+      // This test ensures that when annotations are toggled off at the dashboard level,
+      // DashboardDS panels don't continue showing them from the source panel's cached data
+      const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1 });
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      // Verify that annotations from source panel are NOT included in response
+      // This is critical for annotation toggle to work correctly on DashboardDS panels
+      const hasAnnotations = rsp?.data.some(
+        (frame) => frame.meta?.dataTopic === DataTopic.Annotations || frame.name === 'Test Annotation'
+      );
+      expect(hasAnnotations).toBe(false);
+    });
+
+    it('should only return series data even when source has both series and annotations', async () => {
+      const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1 });
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      // All returned frames should be series data, not annotations
+      rsp?.data.forEach((frame) => {
+        expect(frame.meta?.dataTopic).not.toBe(DataTopic.Annotations);
+      });
+
+      // Should have the series data from the source panel
+      expect(rsp?.data[0].fields[0].values).toEqual([1, 2, 3]);
+    });
+  });
 });
+
+function setupWithAnnotations(query: DashboardQuery, requestId?: string) {
+  const annotationFrame: DataFrame = {
+    name: 'Test Annotation',
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+      { name: 'text', type: FieldType.string, values: ['Annotation 1', 'Annotation 2'], config: {} },
+    ],
+    length: 2,
+    meta: {
+      dataTopic: DataTopic.Annotations,
+    },
+  };
+
+  const sourceData = new SceneDataTransformer({
+    $data: new SceneDataNode({
+      data: {
+        series: [arrayToDataFrame([1, 2, 3])],
+        annotations: [annotationFrame],
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+      },
+    }),
+    transformations: [],
+  });
+
+  const scene = new SceneFlexLayout({
+    children: [
+      new SceneFlexItem({
+        body: new VizPanel({
+          key: getVizPanelKeyForPanelId(1),
+          $data: sourceData,
+        }),
+      }),
+    ],
+  });
+
+  const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+
+  const observable = ds.query({
+    timezone: 'utc',
+    targets: [query],
+    requestId: requestId ?? '',
+    interval: '',
+    intervalMs: 0,
+    range: getDefaultTimeRange(),
+    scopedVars: {
+      __sceneObject: new SafeSerializableSceneObject(scene),
+    },
+    app: '',
+    startTime: 0,
+  });
+
+  return { observable, sourceData };
+}
 
 function setup(query: DashboardQuery, requestId?: string) {
   const sourceData = new SceneDataTransformer({

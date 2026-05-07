@@ -6,14 +6,13 @@ import (
 	"strconv"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apiserver/pkg/admission"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/codes"
-
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -90,10 +89,21 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.Secur
 		s.metrics.SecureValueCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	// Secure value creation uses the active keeper
-	keeperName, keeperCfg, err := s.keeperMetadataStorage.GetActiveKeeperConfig(ctx, sv.Namespace)
-	if err != nil {
-		return nil, fmt.Errorf("fetching active keeper config: namespace=%+v %w", sv.Namespace, err)
+	var (
+		keeperName                            = contracts.SystemKeeperName
+		keeperCfg  secretv1beta1.KeeperConfig = secretv1beta1.NewNamedKeeperConfig(contracts.SystemKeeperName, &secretv1beta1.SystemKeeperConfig{})
+	)
+
+	// Secure value creation for non-inline secure values uses the active keeper
+	// Inline secure values always use the `system` keeper.
+	if isInline := len(sv.OwnerReferences) > 0; !isInline {
+		activeKeeperName, activeKeeperCfg, err := s.keeperMetadataStorage.GetActiveKeeperConfig(ctx, sv.Namespace)
+		if err != nil {
+			return nil, fmt.Errorf("fetching active keeper config: namespace=%+v %w", sv.Namespace, err)
+		}
+
+		keeperName = activeKeeperName
+		keeperCfg = activeKeeperCfg
 	}
 
 	return s.createNewVersion(ctx, keeperName, keeperCfg, sv, actorUID)
@@ -136,12 +146,16 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 		return nil, false, fmt.Errorf("reading secure value secret: %+w", err)
 	}
 
+	// only service identities are allowed to mutate owner references after a secure value is created.
+	// for any other identity, preserve the existing ones to prevent unauthorized changes.
+	s.preserveOwnerReferencesForNonAccessPolicy(ctx, currentVersion, newSecureValue)
+
 	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currentVersion.Namespace, currentVersion.Status.Keeper, contracts.ReadOpts{})
 	if err != nil {
 		return nil, false, fmt.Errorf("fetching keeper config: namespace=%+v keeper: %q %w", newSecureValue.Namespace, currentVersion.Status.Keeper, err)
 	}
 
-	if newSecureValue.Spec.Value == nil {
+	if newSecureValue.Spec.Value == nil && newSecureValue.Spec.Ref == nil {
 		keeper, err := s.keeperService.KeeperForConfig(keeperCfg)
 		if err != nil {
 			return nil, false, fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", newSecureValue.Namespace, newSecureValue.Status.Keeper, err)
@@ -150,7 +164,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 
 		secret, err := keeper.Expose(ctx, keeperCfg, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, currentVersion.Status.Version)
 		if err != nil {
-			return nil, false, fmt.Errorf("reading secret value from keeper: %w", err)
+			return nil, false, fmt.Errorf("reading secret value from keeper: %w %w", contracts.ErrSecureValueMissingSecretAndRef, err)
 		}
 
 		newSecureValue.Spec.Value = &secret
@@ -174,6 +188,10 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName st
 		return nil, contracts.NewErrValidateSecureValue(errorList)
 	}
 
+	if sv.Spec.Ref != nil && keeperCfg.Type() == secretv1beta1.SystemKeeperType {
+		return nil, contracts.ErrReferenceWithSystemKeeper
+	}
+
 	createdSv, err := s.secureValueMetadataStorage.Create(ctx, keeperName, sv, actorUID)
 	if err != nil {
 		return nil, fmt.Errorf("creating secure value: %w", err)
@@ -189,18 +207,28 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName st
 		return nil, fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", createdSv.Namespace, keeperName, err)
 	}
 	logging.FromContext(ctx).Debug("retrieved keeper", "namespace", createdSv.Namespace, "type", keeperCfg.Type())
-
 	// TODO: can we stop using external id?
 	// TODO: store uses only the namespace and returns and id. It could be a kv instead.
 	// TODO: check that the encrypted store works with multiple versions
-	externalID, err := keeper.Store(ctx, keeperCfg, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
-	if err != nil {
-		return nil, fmt.Errorf("storing secure value in keeper: %w", err)
-	}
-	createdSv.Status.ExternalID = string(externalID)
+	switch {
+	case sv.Spec.Value != nil:
+		externalID, err := keeper.Store(ctx, keeperCfg, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
+		if err != nil {
+			return nil, fmt.Errorf("storing secure value in keeper: %w", err)
+		}
+		createdSv.Status.ExternalID = string(externalID)
 
-	if err := s.secureValueMetadataStorage.SetExternalID(ctx, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, externalID); err != nil {
-		return nil, fmt.Errorf("setting secure value external id: %w", err)
+		if err := s.secureValueMetadataStorage.SetExternalID(ctx, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, externalID); err != nil {
+			return nil, fmt.Errorf("setting secure value external id: %w", err)
+		}
+
+	case sv.Spec.Ref != nil:
+		// No-op, there's nothing to store in the keeper since the
+		// secret is already stored in the 3rd party secret store
+		// and it's being referenced.
+
+	default:
+		return nil, fmt.Errorf("secure value doesn't specify either a secret value or a reference")
 	}
 
 	if err := s.secureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version); err != nil {
@@ -288,6 +316,7 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	hasPermissionFor, _, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
 		Group:     secretv1beta1.APIGroup,
 		Resource:  secretv1beta1.SecureValuesResourceInfo.GetName(),
@@ -365,4 +394,65 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 	}
 
 	return sv, nil
+}
+
+func (s *SecureValueService) DeleteAllFromGroup(ctx context.Context, namespace xkube.Namespace, apiGroup string) (deleteAllErr error) {
+	start := time.Now()
+
+	ctx, span := s.tracer.Start(ctx, "SecureValueService.DeleteAllFromGroup", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+		attribute.String("apiGroup", apiGroup),
+	))
+	defer span.End()
+
+	defer func() {
+		args := []any{
+			"namespace", namespace.String(),
+			"apiGroup", apiGroup,
+		}
+
+		success := deleteAllErr == nil
+		args = append(args, "success", success)
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueService.DeleteAllFromGroup failed")
+			span.RecordError(deleteAllErr)
+			args = append(args, "error", deleteAllErr)
+		}
+
+		logging.FromContext(ctx).Debug("SecureValueService.DeleteAllFromGroup finished", args...)
+
+		s.metrics.SecureValueDeleteAllFromGroupDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
+	if err := s.secureValueMetadataStorage.SetInactiveAllFromGroup(ctx, namespace, apiGroup); err != nil {
+		return fmt.Errorf("deleting all secure values from group %q in namespace %q: %w", apiGroup, namespace, err)
+	}
+
+	return nil
+}
+
+func (s *SecureValueService) SetKeeperAsActive(ctx context.Context, namespace xkube.Namespace, name string) error {
+	// The system keeper is not in the database, so skip checking it exists.
+	// TODO: should the system keeper be in the database?
+	if name != contracts.SystemKeeperName {
+		// Check keeper exists. No need to worry about time of check to time of use
+		// since trying to activate a just deleted keeper will result in all
+		// keepers being inactive and defaulting to the system keeper.
+		if _, err := s.keeperMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{}); err != nil {
+			return fmt.Errorf("reading keeper before setting as active: %w", err)
+		}
+	}
+	if err := s.keeperMetadataStorage.SetAsActive(ctx, namespace, name); err != nil {
+		return fmt.Errorf("calling keeper metadata storage to set keeper as active: %w", err)
+	}
+	return nil
+}
+
+func (s *SecureValueService) preserveOwnerReferencesForNonAccessPolicy(ctx context.Context, currentSecureValue, newSecureValue *secretv1beta1.SecureValue) {
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if ok && authInfo.GetIdentityType() == claims.TypeAccessPolicy {
+		return
+	}
+
+	newSecureValue.OwnerReferences = currentSecureValue.OwnerReferences
 }

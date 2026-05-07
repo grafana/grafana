@@ -1,12 +1,12 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
-import { VariableModel } from '@grafana/data';
+import { type VariableModel } from '@grafana/data';
 
-import CloudMonitoringDatasource from '../datasource';
-import { MetricFindQueryTypes } from '../types/query';
-import { CloudMonitoringVariableQuery } from '../types/types';
+import { MetricFindQueryTypes } from '../dataquery.gen';
+import type CloudMonitoringDatasource from '../datasource';
+import { type CloudMonitoringVariableQuery } from '../types/types';
 
-import { CloudMonitoringVariableQueryEditor, Props } from './VariableQueryEditor';
+import { CloudMonitoringVariableQueryEditor, type Props } from './VariableQueryEditor';
 
 jest.mock('../functions', () => ({
   getMetricTypes: () => ({ metricTypes: [], selectedMetricType: '' }),
@@ -41,10 +41,7 @@ const props: Props = {
 describe('VariableQueryEditor', () => {
   it('renders correctly', async () => {
     const { container } = render(<CloudMonitoringVariableQueryEditor {...props} />);
-    const select = await screen.findByRole('combobox');
-    waitFor(() => {
-      expect(select).toHaveValue('projects');
-    });
+    await screen.findByText('Projects');
     expect(container).toMatchSnapshot();
   });
 

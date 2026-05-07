@@ -978,7 +978,7 @@ func TestCloudMonitoring(t *testing.T) {
 func getCloudMonitoringListFromInterface(t *testing.T, qes []cloudMonitoringQueryExecutor) []*cloudMonitoringTimeSeriesList {
 	t.Helper()
 
-	queries := make([]*cloudMonitoringTimeSeriesList, 0)
+	queries := make([]*cloudMonitoringTimeSeriesList, 0, len(qes))
 	for _, qi := range qes {
 		q, ok := qi.(*cloudMonitoringTimeSeriesList)
 		require.Truef(t, ok, "Received wrong type %T", qi)
@@ -990,7 +990,7 @@ func getCloudMonitoringListFromInterface(t *testing.T, qes []cloudMonitoringQuer
 func getCloudMonitoringSLOFromInterface(t *testing.T, qes []cloudMonitoringQueryExecutor) []*cloudMonitoringSLO {
 	t.Helper()
 
-	queries := make([]*cloudMonitoringSLO, 0)
+	queries := make([]*cloudMonitoringSLO, 0, len(qes))
 	for _, qi := range qes {
 		q, ok := qi.(*cloudMonitoringSLO)
 		require.Truef(t, ok, "Received wrong type %T", qi)
@@ -1002,7 +1002,7 @@ func getCloudMonitoringSLOFromInterface(t *testing.T, qes []cloudMonitoringQuery
 func getCloudMonitoringQueryFromInterface(t *testing.T, qes []cloudMonitoringQueryExecutor) []*cloudMonitoringTimeSeriesQuery {
 	t.Helper()
 
-	queries := make([]*cloudMonitoringTimeSeriesQuery, 0)
+	queries := make([]*cloudMonitoringTimeSeriesQuery, 0, len(qes))
 	for _, qi := range qes {
 		q, ok := qi.(*cloudMonitoringTimeSeriesQuery)
 		require.Truef(t, ok, "Received wrong type %T", qi)

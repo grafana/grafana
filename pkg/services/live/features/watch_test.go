@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func TestParseWatchRqeust(t *testing.T) {
+func TestParseWatchRequest(t *testing.T) {
 	userid := "userid" // dummy
 	tests := []struct {
 		testCase string

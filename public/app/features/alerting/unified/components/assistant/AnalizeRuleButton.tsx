@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 
-import { OpenAssistantProps, createAssistantContextItem, useAssistant } from '@grafana/assistant';
+import { type OpenAssistantProps, createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
-import { GrafanaAlertingRule, GrafanaRecordingRule, GrafanaRule } from 'app/types/unified-alerting';
+import { type GrafanaAlertingRule, type GrafanaRecordingRule, type GrafanaRule } from 'app/types/unified-alerting';
 
 import { prometheusRuleType } from '../../utils/rules';
 
@@ -59,7 +59,7 @@ function AnalyzeRuleButtonView({
     });
 
     openAssistant({
-      origin: 'alerting',
+      origin: 'alerting/analyze-rule-menu-item',
       mode: 'assistant',
       prompt: analyzeRulePrompt,
       context: [alertContext],
@@ -99,7 +99,7 @@ function buildAnalyzeAlertingRulePrompt(rule: GrafanaAlertingRule): string {
   const state = rule.state || 'firing';
   const timeInfo = rule.activeAt ? ` starting at ${new Date(rule.activeAt).toISOString()}` : '';
   const alertsNavigationPrompt = config.featureToggles.alertingTriage
-    ? '\n- Include navigation to follow up on the alerts page'
+    ? '\n- Include navigation to the alerts page ONLY if the alert is firing or pending'
     : '';
 
   let prompt = `

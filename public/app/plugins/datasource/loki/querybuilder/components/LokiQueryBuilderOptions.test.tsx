@@ -4,10 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
 import { config, getAppEvents } from '@grafana/runtime';
 
+import { LokiQueryType, LokiQueryDirection } from '../../dataquery.gen';
 import { createLokiDatasource } from '../../mocks/datasource';
-import { LokiQuery, LokiQueryDirection, LokiQueryType } from '../../types';
+import { type LokiQuery } from '../../types';
 
-import { LokiQueryBuilderOptions, Props } from './LokiQueryBuilderOptions';
+import { LokiQueryBuilderOptions, type Props } from './LokiQueryBuilderOptions';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

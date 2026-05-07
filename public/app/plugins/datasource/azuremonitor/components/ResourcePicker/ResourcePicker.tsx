@@ -16,7 +16,7 @@ import {
   Space,
   Stack,
   Field,
-  ComboboxOption,
+  type ComboboxOption,
   MultiCombobox,
   TabsBar,
   TabContent,
@@ -24,18 +24,21 @@ import {
 } from '@grafana/ui';
 
 import { resourceTypeDisplayNames } from '../../azureMetadata/resourceTypes';
-import { AzureMonitorResource } from '../../dataquery.gen';
-import Datasource from '../../datasource';
+import { type AzureMonitorResource } from '../../dataquery.gen';
+import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { ResourceGraphFilters } from '../../types/types';
+import {
+  type default as ResourcePickerData,
+  type ResourcePickerQueryType,
+} from '../../resourcePicker/resourcePickerData';
+import { type ResourceGraphFilters } from '../../types/types';
 import messageFromError from '../../utils/messageFromError';
 
 import AdvancedMulti from './AdvancedMulti';
 import NestedRow from './NestedRow';
 import Search from './Search';
 import getStyles from './styles';
-import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
+import { type ResourceRow, type ResourceRowGroup, type ResourceRowType } from './types';
 import { findRows, parseMultipleResourceDetails, resourcesToStrings, matchURI, resourceToString } from './utils';
 
 interface ResourcePickerProps<T> {

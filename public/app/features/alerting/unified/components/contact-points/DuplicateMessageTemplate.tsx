@@ -1,20 +1,21 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
 import { isNotFoundError } from '../../api/util';
+import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { generateCopiedName } from '../../utils/duplicate';
 import { stringifyErrorLike } from '../../utils/misc';
+import { getTemplateParentUrl } from '../../utils/navigation';
 import { updateDefinesWithUniqueValue } from '../../utils/templates';
-import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { TemplateForm } from '../receivers/TemplateForm';
 
-import { ActiveTab } from './ContactPoints';
 import { useGetNotificationTemplate, useNotificationTemplates } from './useNotificationTemplates';
 
 const notFoundComponent = <EntityNotFound entity="Notification template" />;
@@ -89,9 +90,13 @@ const DuplicateMessageTemplateComponent = () => {
 };
 
 function DuplicateMessageTemplate() {
+  const { navId } = useTemplatesNav();
+  const useV2Nav = config.featureToggles.alertingNavigationV2;
+  const parentUrl = getTemplateParentUrl(useV2Nav);
+
   return (
     <AlertmanagerPageWrapper
-      navId="receivers"
+      navId={navId}
       accessType="notification"
       pageNav={{
         id: 'templates',
@@ -102,9 +107,7 @@ function DuplicateMessageTemplate() {
         ),
         parentItem: {
           text: t('alerting.common.titles.notification-templates', 'Notification Templates'),
-          url: createRelativeUrl('/alerting/notifications', {
-            tab: ActiveTab.NotificationTemplates,
-          }),
+          url: parentUrl,
         },
       }}
     >

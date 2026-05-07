@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2, Stack, Text, Icon, Box } from '@grafana/ui';
 
-import { RecentScope } from './types';
+import { type RecentScope } from './types';
 
 interface RecentScopesProps {
   recentScopes: RecentScope[][];
-  onSelect: (scopeIds: string[], parentNodeId?: string) => void;
+  onSelect: (scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => void;
 }
 
 export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
@@ -29,7 +29,7 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
         >
           <Icon name={expanded ? 'angle-down' : 'angle-right'} />
           <Text variant="body">
-            <Trans i18nKey="command-palette.section.recent-scopes" />
+            <Trans i18nKey="command-palette.section.recent-scopes">Recent scopes</Trans>
           </Text>
         </button>
       </legend>
@@ -45,7 +45,8 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
                 onClick={() => {
                   onSelect(
                     recentScopeSet.map((s) => s.metadata.name),
-                    recentScopeSet[0]?.parentNode?.metadata?.name
+                    recentScopeSet[0]?.parentNode?.metadata?.name,
+                    recentScopeSet[0]?.scopeNodeId
                   );
                 }}
               >

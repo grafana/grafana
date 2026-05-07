@@ -31,22 +31,28 @@ type WebhookExtraBuilder struct {
 
 // FIXME: separate the URL provider from connector to simplify operators
 func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Repository) string {
+	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseURL != "" {
+		return buildWebhookURL(r.Spec.Webhook.BaseURL, r)
+	}
+
 	if !b.isPublic {
 		return ""
 	}
 
+	return buildWebhookURL(b.urlProvider(ctx, r.GetNamespace()), r)
+}
+
+func buildWebhookURL(baseURL string, r *provisioning.Repository) string {
 	gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-	webhookURL := fmt.Sprintf(
-		"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-		b.urlProvider(ctx, r.GetNamespace()),
+	return fmt.Sprintf(
+		"%s/apis/%s/%s/namespaces/%s/%s/%s/webhook",
+		strings.TrimRight(baseURL, "/"),
 		gvr.Group,
 		gvr.Version,
 		r.GetNamespace(),
 		gvr.Resource,
 		r.GetName(),
 	)
-
-	return webhookURL
 }
 
 // HACK: assume that the URL is public if it starts with "https://" and does not contain any local IP ranges
@@ -66,17 +72,27 @@ func ProvideWebhooksWithImages(
 	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
-	urlProvider := func(_ context.Context, _ string) string {
-		return cfg.AppURL
+	// Webhook callbacks and screenshot images embedded in PR comments must be
+	// reachable from the public internet (the Git provider fetches them
+	// server-side). Prefer [provisioning] public_root_url when set; fall back
+	// to AppURL. Clickable links stay on AppURL so internal reviewers reach
+	// Grafana via the canonical, corp-network-friendly URL.
+	publicURL := cfg.AppURL
+	if cfg.ProvisioningPublicRootURL != "" {
+		publicURL = cfg.ProvisioningPublicRootURL
 	}
-	isPublic := isPublicURL(urlProvider(context.Background(), ""))
+	urls := pullrequest.URLProvider{
+		Internal: func(_ context.Context, _ string) string { return cfg.AppURL },
+		Public:   func(_ context.Context, _ string) string { return publicURL },
+	}
+	isPublic := isPublicURL(publicURL)
 
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
-		urlProvider: urlProvider,
+		urlProvider: urls.Public,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			clients := resources.NewClientFactory(configProvider)
-			parsers := resources.NewParserFactory(clients)
+			parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
 			render := NewRenderConnector(blobstore, b)
@@ -87,14 +103,14 @@ func ProvideWebhooksWithImages(
 				registry,
 			)
 
-			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
+			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urls, registry)
 			commenter := pullrequest.NewCommenter(cfg.ProvisioningAllowImageRendering)
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
 			return NewWebhookExtraWithImages(
 				render,
 				webhook,
-				urlProvider,
+				urls.Public,
 				[]jobs.Worker{pullRequestWorker},
 			)
 		},

@@ -1,26 +1,33 @@
 import {
   AppEvents,
   DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  DataSourceSelectItem,
-  ScopedVars,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+  type ScopedVars,
   isObject,
   matchPluginId,
 } from '@grafana/data';
 import {
-  DataSourceSrv as DataSourceService,
+  type DataSourceSrv as DataSourceService,
   getBackendSrv,
-  GetDataSourceListFilters,
+  type GetDataSourceListFilters,
   getDataSourceSrv as getDataSourceService,
   getTemplateSrv,
-  RuntimeDataSourceRegistration,
-  RuntimeDataSource,
-  TemplateSrv,
+  type RuntimeDataSourceRegistration,
+  type RuntimeDataSource,
+  type TemplateSrv,
   isExpressionReference,
 } from '@grafana/runtime';
-import { ExpressionDatasourceRef, UserStorage } from '@grafana/runtime/internal';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import {
+  ExpressionDatasourceRef,
+  getPluginIdFromDatasourceInstanceType,
+  getDatasourcePluginMeta,
+  logPluginMetaError,
+  logPluginMetaWarning,
+  refetchDatasourcePluginMetas,
+  UserStorage,
+} from '@grafana/runtime/internal';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
 import {
@@ -53,7 +60,9 @@ export class DatasourceSrv implements DataSourceService {
       }
 
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
-      this.settingsMapById[dsSettings.id] = dsSettings;
+      if (dsSettings.id) {
+        this.settingsMapById[dsSettings.id] = dsSettings;
+      }
     }
 
     for (const ds of Object.values(this.runtimeDataSources)) {
@@ -215,7 +224,20 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     try {
-      const dsPlugin = await pluginImporter.importDataSource(instanceSettings.meta);
+      // check if we're dealing with a builtin default frontend data sources as // -- Grafana --, -- Mixed etc
+      const pluginId = getPluginIdFromDatasourceInstanceType(instanceSettings.type, instanceSettings.name);
+
+      // Fall back to instanceSettings.meta when the plugin meta lookup misses so that
+      // runtime-registered datasources (which aren't in the plugin meta map) still load.
+      let meta = await getDatasourcePluginMeta(pluginId);
+      if (!meta) {
+        logPluginMetaWarning(
+          `Plugin meta for datasource ${key} (pluginId: ${pluginId}) was not found, falling back to instanceSettings.meta`,
+          { pluginId, key }
+        );
+        meta = instanceSettings.meta;
+      }
+      const dsPlugin = await pluginImporter.importDataSource(meta);
       // check if its in cache now
       if (this.datasources[key]) {
         return this.datasources[key];
@@ -234,8 +256,8 @@ export class DatasourceSrv implements DataSourceService {
         const anyInstance: any = instance;
         anyInstance.name = instanceSettings.name;
         anyInstance.id = instanceSettings.id;
-        anyInstance.type = instanceSettings.type;
-        anyInstance.meta = instanceSettings.meta;
+        anyInstance.type = pluginId;
+        anyInstance.meta = meta;
         anyInstance.uid = instanceSettings.uid;
         anyInstance.getRef = DataSourceApi.prototype.getRef;
       }
@@ -367,44 +389,16 @@ export class DatasourceSrv implements DataSourceService {
     return sorted;
   }
 
-  /**
-   * @deprecated use getList
-   * */
-  getExternal(): DataSourceInstanceSettings[] {
-    return this.getList();
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getAnnotationSources() {
-    return this.getList({ annotations: true, variables: true }).map((x) => {
-      return {
-        name: x.name,
-        value: x.name,
-        meta: x.meta,
-      };
-    });
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getMetricSources(options?: { skipVariables?: boolean }): DataSourceSelectItem[] {
-    return this.getList({ metrics: true, variables: !options?.skipVariables }).map((x) => {
-      return {
-        name: x.name,
-        value: x.name,
-        meta: x.meta,
-      };
-    });
-  }
-
   async reload() {
     const settings = await getBackendSrv().get('/api/frontend/settings');
     config.datasources = settings.datasources;
     config.defaultDatasource = settings.defaultDatasource;
     this.init(settings.datasources, settings.defaultDatasource);
+    // Refresh the deduplicated plugin metadata cache in the background.
+    // This does not need to block reload since init() already has the full data.
+    refetchDatasourcePluginMetas(settings).catch((error) => {
+      logPluginMetaError('Failed to refresh datasource plugin metadata', error);
+    });
   }
 }
 

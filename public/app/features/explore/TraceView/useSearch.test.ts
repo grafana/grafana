@@ -1,13 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { act, renderHook } from '@testing-library/react';
-import React, { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
-import { TraceSearchProps } from '@grafana/data';
+import { type TraceSearchProps } from '@grafana/data';
 
 import { DEFAULT_SPAN_FILTERS, randomId } from '../state/constants';
 
-import { TraceSpan } from './components/types/trace';
+import { type TraceSpan } from './components/types/trace';
 import { useSearch } from './useSearch';
 
 // Create a mock store with the necessary structure
@@ -99,7 +99,7 @@ describe('useSearch', () => {
       // Check that adhoc filter was created
       expect(result.current.search.adhocFilters).toHaveLength(1);
       expect(result.current.search.adhocFilters?.[0]).toMatchObject({
-        key: 'serviceName',
+        key: 'service.name',
         operator: '=',
         value: 'my-service',
       });
@@ -120,7 +120,7 @@ describe('useSearch', () => {
       // Check that adhoc filter was created
       expect(result.current.search.adhocFilters).toHaveLength(1);
       expect(result.current.search.adhocFilters?.[0]).toMatchObject({
-        key: 'spanName',
+        key: 'span.name',
         operator: '!=',
         value: 'my-operation',
       });
@@ -195,13 +195,13 @@ describe('useSearch', () => {
 
       // Verify each filter
       const filters = result.current.search.adhocFilters || [];
-      expect(filters.find((f) => f.key === 'serviceName')).toMatchObject({
-        key: 'serviceName',
+      expect(filters.find((f) => f.key === 'service.name')).toMatchObject({
+        key: 'service.name',
         operator: '=',
         value: 'my-service',
       });
-      expect(filters.find((f) => f.key === 'spanName')).toMatchObject({
-        key: 'spanName',
+      expect(filters.find((f) => f.key === 'span.name')).toMatchObject({
+        key: 'span.name',
         operator: '!=',
         value: 'my-operation',
       });
@@ -306,7 +306,7 @@ describe('useSearch', () => {
       expect(result.current.search.adhocFilters).toHaveLength(5);
 
       const filters = result.current.search.adhocFilters || [];
-      expect(filters.find((f) => f.key === 'serviceName')?.operator).toBe('!=');
+      expect(filters.find((f) => f.key === 'service.name')?.operator).toBe('!=');
       expect(filters.find((f) => f.key === 'tag1')?.operator).toBe('=');
       expect(filters.find((f) => f.key === 'tag2')?.operator).toBe('!=');
       expect(filters.find((f) => f.key === 'tag3')?.operator).toBe('=~');

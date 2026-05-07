@@ -2,10 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { QueryEditorProps } from '@grafana/data';
+import { type QueryEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CloudWatchDatasource } from '../../datasource';
+import { MetricEditorMode, MetricQueryType, LogsQueryLanguage } from '../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../datasource';
 import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../defaultQueries';
 import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
 import {
@@ -15,7 +16,7 @@ import {
   validMetricSearchBuilderQuery,
   validMetricSearchCodeQuery,
 } from '../../mocks/queries';
-import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType, LogsQueryLanguage } from '../../types';
+import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 
 import { QueryEditor } from './QueryEditor';
 

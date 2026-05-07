@@ -1,6 +1,7 @@
 package mathexp
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -18,6 +19,7 @@ func TestResampleSeries(t *testing.T) {
 		timeRange        backend.TimeRange
 		seriesToResample Series
 		series           Series
+		expectedError    string
 	}{
 		{
 			name:        "resample series: time range shorter than the rule interval",
@@ -277,12 +279,32 @@ func TestResampleSeries(t *testing.T) {
 				time.Unix(9, 0), float64Pointer(0),
 			}),
 		},
+		{
+			name:        "resample series: upsampling, result too big",
+			interval:    time.Microsecond,
+			downsampler: "mean",
+			upsampler:   "backfilling",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(11, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), float64Pointer(2),
+			}, tp{
+				time.Unix(7, 0), float64Pointer(1),
+			}),
+			series:        Series{},
+			expectedError: fmt.Sprintf("Resample series length to large, max allowed %d, wanted 11000000", MaxNewSeriesLength),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			series, err := tt.seriesToResample.Resample("", tt.interval, tt.downsampler, tt.upsampler, tt.timeRange.From, tt.timeRange.To)
 			if tt.series.Frame == nil {
 				require.Error(t, err)
+				if tt.expectedError != "" {
+					require.EqualError(t, err, tt.expectedError)
+				}
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.series, series)

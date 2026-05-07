@@ -16,5 +16,9 @@
     "kind": "repo",
     "id": "MyGIT"
   },
-  "managedBy": "repo:MyGIT"
+  "managedBy": "repo:MyGIT",
+  "ownerReferences": [
+    "iam.grafana.app/Team/engineering",
+    "iam.grafana.app/User/test"
+  ]
 }

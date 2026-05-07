@@ -1,4 +1,4 @@
-import { ScopedVars, TimeRange, TypedVariableModel } from '@grafana/data';
+import { type ScopedVars, type TimeRange, type TypedVariableModel } from '@grafana/data';
 
 /**
  * Can be used to gain more information about an interpolation operation

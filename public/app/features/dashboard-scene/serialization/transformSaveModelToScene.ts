@@ -1,6 +1,6 @@
 import { uniqueId } from 'lodash';
 
-import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
+import { type DataFrameDTO, type DataFrameJSON } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -10,18 +10,18 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   SceneRefreshPicker,
-  SceneObject,
+  type SceneObject,
   VizPanelMenu,
   behaviors,
-  VizPanelState,
-  SceneGridItemLike,
-  SceneDataLayerProvider,
+  type VizPanelState,
+  type SceneGridItemLike,
+  type SceneDataLayerProvider,
   UserActionEvent,
-  SceneObjectState,
+  type SceneObjectState,
   LocalValueVariable,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
-import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
+import { getK8sV1DashboardApiConfig } from 'app/features/dashboard/api/v1';
 import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
@@ -29,17 +29,17 @@ import {
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDTO, type DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
-import { shouldForceV2API } from '../pages/DashboardScenePageStateManager';
+import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
+import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
-// DashboardPanelProfilingBehavior removed - now using composed SceneRenderProfiler
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -48,7 +48,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
-import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
+import { DashboardGridItem, type RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
@@ -57,7 +57,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getIsLazy } from '../scene/layouts-shared/utils';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
@@ -76,23 +76,64 @@ export interface SaveModelToSceneOptions {
   isEmbedded?: boolean;
 }
 
-export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
+type LayoutCreator = (panels: PanelModel[], preload?: boolean) => DashboardLayoutManager;
+
+export interface SceneCreationOptions {
+  /**
+   * When provided, this function is used to create the dashboard body/layout instead of the default v1 behavior.
+   * This allows callers to inject v2 layout strategy.
+   */
+  createLayout?: LayoutCreator;
+  /**
+   * Determines how the dashboard scene is serialized.
+   * @default 'v1'
+   */
+  targetVersion?: 'v1' | 'v2';
+}
+
+// Rows as SceneGridRow within the grid.
+const createDefaultGridLayout: LayoutCreator = (panels, preload) => {
+  return new DefaultGridLayoutManager({
+    grid: new SceneGridLayout({
+      isLazy: getIsLazy(preload),
+      children: createSceneObjectsForPanels(panels),
+    }),
+  });
+};
+
+/**
+ * V2 layout creator - uses RowsLayoutManager when dashboard has rows.
+ * This creates a layout that can be properly serialized to v2 format.
+ */
+export const createV2RowsLayout: LayoutCreator = (panels, preload) => {
+  const hasRows = panels.some((p) => p.type === 'row');
+  if (hasRows) {
+    return createRowsFromPanels(panels);
+  }
+  // Fall back to default grid layout when no rows
+  return createDefaultGridLayout(panels, preload);
+};
+
+export function transformSaveModelToScene(
+  rsp: DashboardDTO,
+  options?: LoadDashboardOptions,
+  sceneOptions?: SceneCreationOptions
+): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
+  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, options, sceneOptions);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
 
-  const apiVersion = config.featureToggles.kubernetesDashboards
-    ? `${K8S_V1_DASHBOARD_API_CONFIG.group}/${K8S_V1_DASHBOARD_API_CONFIG.version}`
-    : undefined;
+  const v1Config = getK8sV1DashboardApiConfig();
+  const apiVersion = config.featureToggles.kubernetesDashboards ? `${v1Config.group}/${v1Config.version}` : undefined;
 
   scene.setInitialSaveModel(rsp.dashboard, rsp.meta, apiVersion);
 
   return scene;
 }
 
-export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager {
+function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager {
   const rowItems: RowItem[] = [];
 
   let currentLegacyRow: PanelModel | null = null;
@@ -108,7 +149,8 @@ export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager
         rowItems.push(
           new RowItem({
             title: '',
-            collapse: panel.collapsed,
+            // Hidden header rows must stay expanded; collapsing them would hide the panels entirely.
+            collapse: false,
             layout: new DefaultGridLayoutManager({
               grid: new SceneGridLayout({
                 children: currentRowPanels,
@@ -142,7 +184,7 @@ export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager
   });
 }
 
-export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
+function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
   // collects all panels and rows
   const panels: SceneGridItemLike[] = [];
 
@@ -255,17 +297,22 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
   return rowItem;
 }
 
-export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel, dto: DashboardDataDTO) {
+export function createDashboardSceneFromDashboardModel(
+  oldModel: DashboardModel,
+  dto: DashboardDataDTO,
+  options?: LoadDashboardOptions,
+  sceneOptions?: SceneCreationOptions
+) {
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
   const uid = oldModel.uid;
-  const serializerVersion = shouldForceV2API() && !oldModel.meta.isSnapshot ? 'v2' : 'v1';
+  const targetVersion = sceneOptions?.targetVersion ?? 'v1';
 
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
   } else {
-    variables = createVariablesForDashboard(oldModel);
+    variables = createVariablesForDashboard(oldModel, options?.defaultVariables);
   }
 
   if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
@@ -344,13 +391,18 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
     behaviorList.push(dashboardAnalyticsInitializer);
   }
+
+  behaviorList.push(new DefaultControlsBehavior());
+
   // Will be enabled in the dashboard creation below
 
   let body: DashboardLayoutManager;
 
-  if (config.featureToggles.dashboardNewLayouts && oldModel.panels.some((p) => p.type === 'row')) {
-    body = createRowsFromPanels(oldModel.panels);
+  if (sceneOptions?.createLayout) {
+    // Use injected layout creator (allows callers to specify v2 or custom layout strategy)
+    body = sceneOptions.createLayout(oldModel.panels, dto.preload);
   } else {
+    // Default v1 layout: DefaultGridLayoutManager
     body = new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         isLazy: getIsLazy(dto.preload),
@@ -365,9 +417,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       description: oldModel.description,
       editable: oldModel.editable,
       preload: dto.preload ?? false,
-      id: oldModel.id,
       isDirty: false,
-      links: oldModel.links || [],
+      links: [...(options?.defaultLinks ?? []), ...(oldModel.links ?? [])],
       meta: oldModel.meta,
       tags: oldModel.tags || [],
       title: oldModel.title,
@@ -398,7 +449,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         hideTimeControls: oldModel.timepicker.hidden,
       }),
     },
-    serializerVersion
+    targetVersion
   );
 
   // Enable panel profiling for this dashboard using the composed SceneRenderProfiler
@@ -432,19 +483,20 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title?.substring(0, 5000),
     description: panel.description,
-    pluginId: panel.type ?? 'timeseries',
+    pluginId: panel.type ?? 'timeseries', // TODO: should this be `getDefaultPluginId()`?
     options: panel.options ?? {},
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
     seriesLimit: config.panelSeriesLimit,
     displayMode: panel.transparent ? 'transparent' : undefined,
-    // To be replaced with it's own option persited option instead derived
+    // To be replaced with its own option persited option instead derived
     hoverHeader: !panel.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.panelGroupBy,
+      hideGroupByAction:
+        !config.featureToggles.panelGroupBy && !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     subHeader: new VizPanelSubHeader({
       hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
@@ -491,6 +543,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
       ),
     });
   }
+
+  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
 
   const body = new VizPanel(vizPanelState);
 

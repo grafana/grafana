@@ -2,45 +2,26 @@ package notifier
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/secrets"
-)
-
-var (
-	ErrReceiverInUse = errutil.Conflict("alerting.notifications.receivers.used").MustTemplate(
-		"Receiver is used by '{{ .Public.UsedBy }}'",
-		errutil.WithPublic("Receiver is used by {{ .Public.UsedBy }}"),
-	)
-	ErrReceiverVersionConflict = errutil.Conflict("alerting.notifications.receivers.conflict").MustTemplate(
-		"Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'",
-		errutil.WithPublic("Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'"),
-	)
-
-	ErrReceiverDependentResourcesProvenance = errutil.Conflict("alerting.notifications.receivers.usedProvisioned").MustTemplate(
-		"Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
-		errutil.WithPublic(`Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
-	)
-
-	ErrReceiverOrigin = errutil.BadRequest("alerting.notifications.receivers.originInvalid").MustTemplate(
-		"Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
-		errutil.WithPublic("Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
-	)
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -49,6 +30,7 @@ type ReceiverService struct {
 	provisioningStore      provisoningStore
 	cfgStore               alertmanagerConfigStore
 	ruleNotificationsStore alertRuleNotificationSettingsStore
+	routeService           routeService
 	encryptionService      secretService
 	xact                   transactionManager
 	log                    log.Logger
@@ -56,11 +38,19 @@ type ReceiverService struct {
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
 	includeImported        bool
+	allowedIntegrations    map[schema.IntegrationType]struct{}
+	emailValidator         EmailIntegrationValidator
+}
+
+type routeService interface {
+	ReceiverUseByName(ctx context.Context, rev *legacy_storage.ConfigRevision) map[string]int
+	ReceiverNameUsedByRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) bool
+	RenameReceiverInRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, oldName, newName string) map[*definitions.Route]int
 }
 
 type alertRuleNotificationSettingsStore interface {
 	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+	ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
 }
 
 type secretService interface {
@@ -79,6 +69,9 @@ type receiverAccessControlService interface {
 	AuthorizeCreate(context.Context, identity.Requester) error
 	AuthorizeUpdate(context.Context, identity.Requester, *models.Receiver) error
 	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
+
+	HasUpdateProtected(context.Context, identity.Requester, *models.Receiver) (bool, error)
+	AuthorizeUpdateProtected(context.Context, identity.Requester, *models.Receiver) error
 
 	Access(ctx context.Context, user identity.Requester, receivers ...*models.Receiver) (map[string]models.ReceiverPermissionSet, error)
 }
@@ -104,56 +97,79 @@ func NewReceiverService(
 	cfgStore alertmanagerConfigStore,
 	provisioningStore provisoningStore,
 	ruleNotificationsStore alertRuleNotificationSettingsStore,
+	routeService routeService,
 	encryptionService secretService,
 	xact transactionManager,
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	provenanceValidator validation.ProvenanceStatusTransitionValidator,
 	includeStaged bool,
+	allowedIntegrations map[schema.IntegrationType]struct{},
+	emailValidator EmailIntegrationValidator,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
 		provisioningStore:      provisioningStore,
 		cfgStore:               cfgStore,
 		ruleNotificationsStore: ruleNotificationsStore,
+		routeService:           routeService,
 		encryptionService:      encryptionService,
 		xact:                   xact,
 		log:                    log,
-		provenanceValidator:    validation.ValidateProvenanceRelaxed,
+		provenanceValidator:    provenanceValidator,
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
 		includeImported:        includeStaged,
+		allowedIntegrations:    allowedIntegrations,
+		emailValidator:         emailValidator,
 	}
+}
+
+func (rs *ReceiverService) checkAllowedIntegrations(r *models.Receiver) error {
+	if rs.allowedIntegrations == nil {
+		return nil
+	}
+	for _, integration := range r.Integrations {
+		iType := integration.Config.Type()
+		if _, allowed := rs.allowedIntegrations[iType]; !allowed {
+			return fmt.Errorf("integration type %s is not allowed", iType)
+		}
+	}
+	return nil
 }
 
 func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
 	return rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
 }
 
-// GetReceiver returns a receiver by name.
+// GetReceiver returns a receiver by its UID.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
-func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (*models.Receiver, error) {
+func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error) {
+	if user == nil {
+		return nil, errors.New("user is required")
+	}
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.get", trace.WithAttributes(
-		attribute.Int64("query_org_id", q.OrgID),
-		attribute.String("query_name", q.Name),
-		attribute.Bool("query_decrypt", q.Decrypt),
+		attribute.Int64("query_org_id", user.GetOrgID()),
+		attribute.String("query_uid", uid),
+		attribute.Bool("query_decrypt", decrypt),
 	))
 	defer span.End()
 
-	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
+	revision, err := rs.cfgStore.Get(ctx, user.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
-	prov, err := rs.loadProvenances(ctx, q.OrgID)
+	prov, err := rs.loadProvenances(ctx, user.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
-	rcv, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name), prov)
+	rcv, err := revision.GetReceiver(uid, prov)
 	if err != nil {
-		if errors.Is(err, legacy_storage.ErrReceiverNotFound) && rs.includeImported {
-			imported := rs.getImportedReceivers(ctx, span, []string{legacy_storage.NameToUid(q.Name)}, revision)
+		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
+			imported := rs.getImportedReceivers(ctx, span, []string{uid}, revision)
 			if len(imported) > 0 {
 				rcv = imported[0]
 			}
@@ -168,14 +184,14 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	))
 
 	auth := rs.authz.AuthorizeReadDecrypted
-	if !q.Decrypt {
+	if !decrypt {
 		auth = rs.authz.AuthorizeRead
 	}
 	if err := auth(ctx, user, rcv); err != nil {
 		return nil, err
 	}
 
-	if q.Decrypt {
+	if decrypt {
 		err := rcv.Decrypt(rs.decryptor(ctx))
 		if err != nil {
 			rs.log.FromContext(ctx).Warn("Failed to decrypt secure settings", "name", rcv.Name, "error", err)
@@ -286,7 +302,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 
 	existing, err := revision.GetReceiver(uid, prov)
 	if err != nil {
-		if !errors.Is(err, legacy_storage.ErrReceiverNotFound) {
+		if !errors.Is(err, models.ErrReceiverNotFound) {
 			return err
 		}
 		if rs.includeImported {
@@ -312,11 +328,11 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		logger.Debug("Ignoring optimistic concurrency check because version was not provided", "operation", "delete")
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, callerProvenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance, callerProvenance); err != nil {
 		return err
 	}
 
-	usedByRoutes := revision.ReceiverNameUsedByRoutes(existing.Name)
+	usedByRoutes := rs.routeService.ReceiverNameUsedByRoutes(ctx, revision, existing.Name)
 	usedByRules, err := rs.UsedByRules(ctx, orgID, existing.Name)
 	if err != nil {
 		return err
@@ -360,6 +376,15 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "create")
 	}
+	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
+		return nil, err
+	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
+	}
+
+	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "integrations", r.GetIntegrationTypes())
+
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -373,9 +398,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	if err := createdReceiver.Validate(rs.decryptor(ctx)); err != nil {
+	if err := rs.validateReceiver(ctx, orgID, createdReceiver, logger); err != nil {
 		span.RecordError(err)
-		return nil, legacy_storage.MakeErrReceiverInvalid(err)
+		return nil, models.ErrReceiverInvalid(err)
 	}
 
 	// Generate UID from name.
@@ -402,7 +427,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		attribute.String("uid", result.UID),
 		attribute.String("version", result.Version),
 	))
-	rs.log.FromContext(ctx).Info("Created a new receiver", "receiver", result.Name, "uid", result.UID, "fingerprint", result.Version, "integrations", result.GetIntegrationTypes())
+	logger.Info("Created a new receiver", "uid", result.UID, "fingerprint", result.Version)
 	return result, nil
 }
 
@@ -422,6 +447,9 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
 	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
+	}
 
 	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "uid", r.UID, "version", r.Version, "integrations", r.GetIntegrationTypes())
 	logger.Debug("Updating receiver")
@@ -438,7 +466,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 
 	existing, err := revision.GetReceiver(r.GetUID(), prov)
 	if err != nil {
-		if errors.Is(err, legacy_storage.ErrReceiverNotFound) && rs.includeImported {
+		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
 			// try to get the imported receiver and return a specific error if it exists
 			result := rs.getImportedReceivers(ctx, span, []string{r.GetUID()}, revision)
 			if len(result) > 0 {
@@ -470,8 +498,20 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, r.Provenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance, r.Provenance); err != nil {
 		return nil, err
+	}
+
+	// if user does not have permissions to update protected, check the diff and return error if there is a change in protected fields
+	canUpdateProtected, _ := rs.authz.HasUpdateProtected(ctx, user, r)
+	if !canUpdateProtected {
+		diff := models.HasReceiversDifferentProtectedFields(existing, r)
+		if len(diff) > 0 {
+			err = rs.authz.AuthorizeUpdateProtected(ctx, user, r)
+			if err != nil {
+				return nil, makeProtectedFieldsAuthzError(err, diff)
+			}
+		}
 	}
 
 	// We need to perform two important steps to process settings on an updated integration:
@@ -487,8 +527,8 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		updatedReceiver.WithExistingSecureFields(existing, storedSecureFields)
 	}
 
-	if err := updatedReceiver.Validate(rs.decryptor(ctx)); err != nil {
-		return nil, legacy_storage.MakeErrReceiverInvalid(err)
+	if err := rs.validateReceiver(ctx, orgID, updatedReceiver, logger); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
 	}
 
 	result, err := revision.UpdateReceiver(&updatedReceiver)
@@ -535,12 +575,12 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 }
 
 func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name string) ([]models.AlertRuleKey, error) {
-	keys, err := rs.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, ReceiverName: name})
+	keys, err := rs.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, ReceiverName: name})
 	if err != nil {
 		return nil, err
 	}
 
-	return maps.Keys(keys), nil
+	return slices.Collect(maps.Keys(keys)), nil
 }
 
 // AccessControlMetadata returns access control metadata for the given Receivers.
@@ -557,6 +597,7 @@ func (rs *ReceiverService) AccessControlMetadata(ctx context.Context, user ident
 		perms.Set(models.ReceiverPermissionAdmin, false)
 		perms.Set(models.ReceiverPermissionWrite, false)
 		perms.Set(models.ReceiverPermissionDelete, false)
+		perms.Set(models.ReceiverPermissionTest, false)
 		permissions[m.GetUID()] = perms
 	}
 	return permissions, nil
@@ -586,21 +627,19 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 	var importedUsesInRoutes map[string]int
 	receiverUsesInRules := map[string][]models.AlertRuleKey{}
 	if hasGrafanaOrigin {
-		receiverUsesInRoutes = revision.ReceiverUseByName()
-		q := models.ListNotificationSettingsQuery{OrgID: orgID}
+		receiverUsesInRoutes = rs.routeService.ReceiverUseByName(ctx, revision)
+		q := models.ListContactPointRoutingsQuery{OrgID: orgID}
 		if len(receivers) == 1 {
 			q.ReceiverName = receivers[0].Name
 		}
-		keys, err := rs.ruleNotificationsStore.ListNotificationSettings(ctx, q)
+		keys, err := rs.ruleNotificationsStore.ListContactPointRoutings(ctx, q)
 		if err != nil {
 			return nil, err
 		}
 
 		for key, settings := range keys {
-			for _, s := range settings {
-				if s.Receiver != "" {
-					receiverUsesInRules[s.Receiver] = append(receiverUsesInRules[s.Receiver], key)
-				}
+			if settings.Receiver != "" {
+				receiverUsesInRules[settings.Receiver] = append(receiverUsesInRules[settings.Receiver], key)
 			}
 		}
 	}
@@ -669,28 +708,12 @@ func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, i
 
 // decryptor returns a models.DecryptFn that decrypts a secure setting. If decryption fails, the fallback value is used.
 func (rs *ReceiverService) decryptor(ctx context.Context) models.DecryptFn {
-	return func(value string) (string, error) {
-		decoded, err := base64.StdEncoding.DecodeString(value)
-		if err != nil {
-			return "", err
-		}
-		decrypted, err := rs.encryptionService.Decrypt(ctx, decoded)
-		if err != nil {
-			return "", err
-		}
-		return string(decrypted), nil
-	}
+	return DecryptIntegrationSettings(ctx, rs.encryptionService)
 }
 
 // encryptor creates an encrypt function that delegates to secrets.Service and returns the base64 encoded result.
 func (rs *ReceiverService) encryptor(ctx context.Context) models.EncryptFn {
-	return func(payload string) (string, error) {
-		s, err := rs.encryptionService.Encrypt(ctx, []byte(payload), secrets.WithoutScope())
-		if err != nil {
-			return "", err
-		}
-		return base64.StdEncoding.EncodeToString(s), nil
-	}
+	return EncryptIntegrationSettings(ctx, rs.encryptionService)
 }
 
 // checkOptimisticConcurrency checks if the existing receiver's version matches the desired version.
@@ -738,7 +761,7 @@ func makeReceiverInUseErr(usedByRoutes bool, rules []models.AlertRuleKey) error 
 		data["UsedBy"] = strings.Join(usedBy, ", ")
 	}
 
-	return ErrReceiverInUse.Build(errutil.TemplateData{
+	return models.ErrReceiverInUse.Build(errutil.TemplateData{
 		Public: data,
 		Error:  nil,
 	})
@@ -752,7 +775,7 @@ func makeErrReceiverVersionConflict(current *models.Receiver, desiredVersion str
 			"Name":           current.Name,
 		},
 	}
-	return ErrReceiverVersionConflict.Build(data)
+	return models.ErrReceiverVersionConflict.Build(data)
 }
 
 func makeErrReceiverDependentResourcesProvenance(usedByRoutes bool, rules []models.AlertRuleKey) error {
@@ -768,13 +791,13 @@ func makeErrReceiverDependentResourcesProvenance(usedByRoutes bool, rules []mode
 		data["UsedByRoutes"] = true
 	}
 
-	return ErrReceiverDependentResourcesProvenance.Build(errutil.TemplateData{
+	return models.ErrReceiverDependentResourcesProvenance.Build(errutil.TemplateData{
 		Public: data,
 	})
 }
 
 func makeErrReceiverOrigin(r *models.Receiver, action string) error {
-	return ErrReceiverOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": r.Name}})
+	return models.ErrReceiverOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": r.Name}})
 }
 
 func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
@@ -787,14 +810,19 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 
 	validate := validation.ValidateProvenanceOfDependentResources(receiverProvenance)
 	// if there are no references to the old time interval, exit
-	updatedRoutes := revision.RenameReceiverInRoutes(oldName, newName)
 	canUpdate := true
-	if updatedRoutes > 0 {
-		routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, revision.Config.AlertmanagerConfig.Route, orgID)
-		if err != nil {
-			return err
+	updatedRouteCnt := 0
+	if updatedRoutes := rs.routeService.RenameReceiverInRoutes(ctx, revision, oldName, newName); len(updatedRoutes) > 0 {
+		for route, updatedCnt := range updatedRoutes {
+			if updatedCnt > 0 {
+				updatedRouteCnt += updatedCnt
+				routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, route, orgID)
+				if err != nil {
+					return err
+				}
+				canUpdate = canUpdate && validate(routeProvenance)
+			}
 		}
-		canUpdate = validate(routeProvenance)
 	}
 	dryRun := !canUpdate
 	affected, invalidProvenance, err := rs.ruleNotificationsStore.RenameReceiverInNotificationSettings(ctx, orgID, oldName, newName, validate, dryRun)
@@ -802,17 +830,21 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 		return err
 	}
 	if !canUpdate || len(invalidProvenance) > 0 {
-		err := makeErrReceiverDependentResourcesProvenance(updatedRoutes > 0, invalidProvenance)
+		err := makeErrReceiverDependentResourcesProvenance(updatedRouteCnt > 0, invalidProvenance)
 		span.RecordError(err, trace.WithAttributes(
 			attribute.Bool("invalid_route_provenance", canUpdate),
 			attribute.Int("invalid_rule_provenances", len(invalidProvenance)),
 		))
 		return err
 	}
-	if len(affected) > 0 || updatedRoutes > 0 {
-		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
+	if len(affected) > 0 || updatedRouteCnt > 0 {
+		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRouteCnt)
 	}
 	return nil
+}
+
+func (rs *ReceiverService) ReceiverNameUsedByRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) bool {
+	return rs.routeService.ReceiverNameUsedByRoutes(ctx, rev, name)
 }
 
 func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.Span, uids []string, revision *legacy_storage.ConfigRevision) []*models.Receiver {
@@ -833,4 +865,19 @@ func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.
 		))
 	}
 	return result
+}
+
+func (rs *ReceiverService) validateReceiver(ctx context.Context, orgID int64, receiver models.Receiver, l log.Logger) error {
+	if err := receiver.Validate(rs.decryptor(ctx)); err != nil {
+		return err
+	}
+	for idx, integration := range receiver.Integrations {
+		if integration == nil || integration.Config.Type() != schema.EmailType {
+			continue
+		}
+		if err := rs.emailValidator.ValidateIntegration(ctx, orgID, *integration, l); err != nil {
+			return fmt.Errorf("invalid email integration[%d]: %w", idx, err)
+		}
+	}
+	return nil
 }

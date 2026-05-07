@@ -19,7 +19,7 @@ import {
 import { VizLegendOptions } from '@grafana/schema';
 
 import { PanelContext, PanelContextRoot } from '../../components/PanelChrome/PanelContext';
-import { VizLayout } from '../../components/VizLayout/VizLayout';
+import { VizLayout, VizLayoutLegendProps } from '../../components/VizLayout/VizLayout';
 import { UPlotChart } from '../../components/uPlot/Plot';
 import { AxisProps } from '../../components/uPlot/config/UPlotAxisBuilder';
 import { Renderers, UPlotConfigBuilder } from '../../components/uPlot/config/UPlotConfigBuilder';
@@ -54,7 +54,7 @@ export interface GraphNGProps extends Themeable2 {
   prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame | null;
-  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
+  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement<VizLayoutLegendProps> | null;
 
   /**
    * needed for propsToDiff to re-init the plot & config
@@ -96,7 +96,7 @@ export interface GraphNGState {
 export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
-  private plotInstance: React.RefObject<uPlot>;
+  private plotInstance: React.RefObject<uPlot | null>;
 
   private subscription = new Subscription();
 

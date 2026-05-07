@@ -239,7 +239,7 @@ func TestRecordingRuleAfterEval(t *testing.T) {
 		ruleStore.PutRule(context.Background(), rule)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 
 		evalDoneChan := make(chan time.Time, 1) // Buffer to avoid blocking
 		afterEvalCh := make(chan struct{}, 1)   // Buffer to avoid blocking
@@ -444,7 +444,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -583,7 +583,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -609,13 +609,19 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			folderTitle: folderTitle,
 		})
 
-		// Because we are using a mock clock, first we need to wait until the rule evaluation
-		// reaches the point where it sleeps for the duration of the retry interval.
-		time.Sleep(200 * time.Millisecond)
-		// Then advance the mock clock to trigger the retry.
-		clk.Add(2 * time.Second)
-
-		_ = waitForTimeChannel(t, evalDoneChan)
+		// Advance the mock clock to trigger retries. We poll WaitForAllTimers
+		// which advances the clock just enough to fire each registered timer.
+		// This avoids the race of a fixed time.Sleep before clk.Add, where the
+		// goroutine may not have registered its timer yet.
+		require.Eventually(t, func() bool {
+			clk.WaitForAllTimers()
+			select {
+			case <-evalDoneChan:
+				return true
+			default:
+				return false
+			}
+		}, 10*time.Second, 10*time.Millisecond)
 
 		t.Run("reports basic evaluation metrics", func(t *testing.T) {
 			expectedMetric := fmt.Sprintf(
@@ -714,7 +720,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 
 			require.Equal(t, "error", status.Health)
 			require.NotNil(t, status.LastError)
-			require.ErrorContains(t, status.LastError, "unable to find dependent node")
+			require.ErrorContains(t, status.LastError, "could not find dependent node")
 		})
 
 		t.Run("no write was performed", func(t *testing.T) {
@@ -728,7 +734,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -754,13 +760,19 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			folderTitle: folderTitle,
 		})
 
-		// Because we are using a mock clock, first we need to wait until the rule evaluation
-		// reaches the point where it sleeps for the duration of the retry interval.
-		time.Sleep(200 * time.Millisecond)
-		// Then advance the mock clock to trigger the retry.
-		clk.Add(2 * time.Second)
-
-		_ = waitForTimeChannel(t, evalDoneChan)
+		// Advance the mock clock to trigger retries. We poll WaitForAllTimers
+		// which advances the clock just enough to fire each registered timer.
+		// This avoids the race of a fixed time.Sleep before clk.Add, where the
+		// goroutine may not have registered its timer yet.
+		require.Eventually(t, func() bool {
+			clk.WaitForAllTimers()
+			select {
+			case <-evalDoneChan:
+				return true
+			default:
+				return false
+			}
+		}, 10*time.Second, 10*time.Millisecond)
 
 		t.Run("status shows evaluation", func(t *testing.T) {
 			status := process.(*recordingRule).Status()
@@ -787,7 +799,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t

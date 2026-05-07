@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo, useRef } from 'react';
 
-import { EventBusSrv, GrafanaTheme2 } from '@grafana/data';
+import { EventBusSrv, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { LogsTableWrap } from '../../explore/Logs/LogsTableWrap';
 
-import { LogRowsComponentProps } from './ControlledLogRows';
+import { type LogRowsComponentProps } from './ControlledLogRows';
 import { useLogListContext } from './panel/LogListContext';
 import { CONTROLS_WIDTH_EXPANDED, LogListControls } from './panel/LogListControls';
 import { LOG_LIST_CONTROLS_WIDTH } from './panel/virtualization';
@@ -25,6 +25,10 @@ export const ControlledLogsTable = ({
   width,
   logsTableFrames,
   visualisationType,
+  displayedFields,
+  exploreId,
+  absoluteRange,
+  logRows,
   ...rest
 }: LogRowsComponentProps) => {
   const { sortOrder, controlsExpanded } = useLogListContext();
@@ -58,6 +62,10 @@ export const ControlledLogsTable = ({
           panelState={panelState}
           updatePanelState={updatePanelState}
           datasourceType={datasourceType}
+          displayedFields={displayedFields}
+          exploreId={exploreId}
+          absoluteRange={absoluteRange}
+          logRows={logRows}
         />
       </div>
     </div>

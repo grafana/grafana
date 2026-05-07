@@ -11,12 +11,11 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 var (
-	glog = log.New("tsdb.influx_flightsql")
+	glog = backend.NewLoggerWith("logger", "tsdb.influx_flightsql")
 )
 
 type SQLOptions struct {
@@ -65,6 +64,8 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.Query
 					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(backend.StatusNotFound, backend.ErrorSourceDownstream, errStr)
 				case codes.Unavailable:
 					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(http.StatusServiceUnavailable, backend.ErrorSourceDownstream, errStr)
+				case codes.Unauthenticated:
+					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(backend.StatusUnauthorized, backend.ErrorSourceDownstream, errStr)
 				default:
 					tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, errStr)
 				}

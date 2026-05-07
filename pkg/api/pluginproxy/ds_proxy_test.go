@@ -673,6 +673,199 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			runDatasourceAuthTest(t, secretsService, secretsStore, cfg, test)
 		}
 	})
+
+	t.Run("Regression of 116273: Fallback routes should apply fallback route roles", func(t *testing.T) {
+		for _, tc := range []struct {
+			InputPath         string
+			ConfigurationPath string
+			ExpectError       bool
+		}{
+			{
+				InputPath:         "api/v2/leak-ur-secrets",
+				ConfigurationPath: "",
+				ExpectError:       true,
+			},
+			{
+				InputPath:         "",
+				ConfigurationPath: "",
+				ExpectError:       true,
+			},
+			{
+				InputPath:         ".",
+				ConfigurationPath: ".",
+				ExpectError:       true,
+			},
+			{
+				InputPath:         "",
+				ConfigurationPath: ".",
+				ExpectError:       false,
+			},
+			{
+				InputPath:         "api",
+				ConfigurationPath: ".",
+				ExpectError:       false,
+			},
+		} {
+			orEmptyStr := func(s string) string {
+				if s == "" {
+					return "<empty>"
+				}
+				return s
+			}
+			t.Run(
+				fmt.Sprintf("with inputPath=%s, configurationPath=%s, expectError=%v",
+					orEmptyStr(tc.InputPath), orEmptyStr(tc.ConfigurationPath), tc.ExpectError),
+				func(t *testing.T) {
+					ds := &datasources.DataSource{
+						UID:      "dsUID",
+						JsonData: simplejson.New(),
+					}
+					routes := []*plugins.Route{
+						{
+							Path:    tc.ConfigurationPath,
+							ReqRole: org.RoleAdmin,
+							Method:  "GET",
+						},
+						{
+							Path:    tc.ConfigurationPath,
+							ReqRole: org.RoleAdmin,
+							Method:  "POST",
+						},
+						{
+							Path:    tc.ConfigurationPath,
+							ReqRole: org.RoleAdmin,
+							Method:  "PUT",
+						},
+						{
+							Path:    tc.ConfigurationPath,
+							ReqRole: org.RoleAdmin,
+							Method:  "DELETE",
+						},
+					}
+
+					req, err := http.NewRequestWithContext(t.Context(), "GET", "http://localhost/"+tc.InputPath, nil)
+					require.NoError(t, err, "failed to create HTTP request")
+					ctx := &contextmodel.ReqContext{
+						Context:      &web.Context{Req: req},
+						SignedInUser: &user.SignedInUser{OrgRole: org.RoleViewer},
+					}
+					proxy, err := setupDSProxyTest(t, ctx, ds, routes, tc.InputPath)
+					require.NoError(t, err, "failed to setup proxy test")
+					err = proxy.validateRequest()
+					if tc.ExpectError {
+						require.ErrorIs(t, err, errPluginProxyRouteAccessDenied, "request was not denied due to access denied?")
+					} else {
+						require.NoError(t, err, "request was unexpectedly denied access")
+					}
+				},
+			)
+		}
+	})
+}
+
+func TestDataSourceProxy_userAgentHeader(t *testing.T) {
+	ds := &datasources.DataSource{Type: datasources.DS_GRAPHITE, URL: "http://graphite:8080"}
+	var routes []*plugins.Route
+
+	t.Run("When DataProxyForwardUserAgent config is disabled", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "Grafana/5.3.0",
+				DataProxyForwardUserAgent: false,
+			}
+		})
+		require.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		req.Header.Set("User-Agent", "original-client/1.0")
+
+		proxy.director(req)
+
+		assert.Equal(t, "Grafana/5.3.0", req.Header.Get("User-Agent"))
+	})
+
+	t.Run("When DataProxyForwardUserAgent config is enabled", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "Grafana/5.3.0",
+				DataProxyForwardUserAgent: true,
+			}
+		})
+		require.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		req.Header.Set("User-Agent", "original-client/1.0")
+
+		proxy.director(req)
+
+		assert.Equal(t, "Grafana/5.3.0 original-client/1.0", req.Header.Get("User-Agent"))
+	})
+
+	t.Run("When DataProxyForwardUserAgent config is enabled but the client User-Agent is empty", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "Grafana/5.3.0",
+				DataProxyForwardUserAgent: true,
+			}
+		})
+		require.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		// no User-Agent header set
+
+		proxy.director(req)
+
+		assert.Equal(t, "Grafana/5.3.0", req.Header.Get("User-Agent"))
+	})
+
+	t.Run("When DataProxyForwardUserAgent config is enabled with a custom DataProxyUserAgent", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "MyCorp/1.0",
+				DataProxyForwardUserAgent: true,
+			}
+		})
+		require.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		req.Header.Set("User-Agent", "original-client/1.0")
+
+		proxy.director(req)
+
+		assert.Equal(t, "MyCorp/1.0 original-client/1.0", req.Header.Get("User-Agent"))
+	})
+
+	t.Run("When DataProxyForwardUserAgent config is enabled and DataProxyUserAgent is empty", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "",
+				DataProxyForwardUserAgent: true,
+			}
+		})
+		require.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		req.Header.Set("User-Agent", "original-client/1.0")
+
+		proxy.director(req)
+
+		assert.Equal(t, "original-client/1.0", req.Header.Get("User-Agent"))
+	})
 }
 
 // test DataSourceProxy request handling.
@@ -928,9 +1121,10 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, cfg
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
+	dsRetriever := datasourceservice.ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
 	require.NoError(t, err)
 	proxy, err := NewDataSourceProxy(ds, routes, ctx, "", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features)
 	require.NoError(t, err)
@@ -1043,16 +1237,21 @@ func createAuthTest(t *testing.T, secretsStore secretskvs.SecretsKVStore, dsType
 	return test
 }
 
-func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase) {
+func runDatasourceAuthTest(t *testing.T,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase,
+) {
 	ctx := &contextmodel.ReqContext{}
 	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
-	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
+	var sqlStore db.DB = nil
+	dsRetriever := datasourceservice.ProvideDataSourceRetriever(sqlStore, features)
+	dsService, err := datasourceservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
 	require.NoError(t, err)
 	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, "", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features)
 	require.NoError(t, err)
@@ -1106,9 +1305,11 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(dbtest.NewFakeDB(), secretsService, log.NewNopLogger())
 	features := featuremgmt.WithFeatures()
-	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
+	var sqlStore db.DB = nil
+	dsRetriever := datasourceservice.ProvideDataSourceRetriever(sqlStore, features)
+	dsService, err := datasourceservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
 		&actest.FakePermissionsService{}, quotatest.New(false, nil), &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
 	require.NoError(t, err)
 
 	tracer := tracing.InitializeTracerForTest()

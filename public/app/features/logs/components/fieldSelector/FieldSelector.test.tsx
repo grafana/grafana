@@ -1,21 +1,37 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataFrame, FieldType, store, toDataFrame } from '@grafana/data';
-import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { type DataFrame, FieldType, store, toDataFrame } from '@grafana/data';
+import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 
 import { createLogLine } from '../mocks/logRow';
 import { LogListContext } from '../panel/LogListContext';
 import { defaultValue } from '../panel/__mocks__/LogListContext';
-import { LogListModel } from '../panel/processing';
+import { type LogListModel } from '../panel/processing';
 
-import { LogListFieldSelector, LogsTableFieldSelector, MIN_WIDTH } from './FieldSelector';
+import { FIELD_SELECTOR_MIN_WIDTH } from './FieldSelector';
+import { LogListFieldSelector } from './LogListFieldSelector';
+import { LogsTableFieldSelector } from './LogsTableFieldSelector';
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
 
 let containerElement: HTMLDivElement;
 let logs: LogListModel[];
 let dataFrames: DataFrame[];
 
 beforeEach(() => {
+  setBooleanFlags({});
   containerElement = document.createElement('div');
   containerElement.style.height = '500px';
   containerElement.style.width = '1000px';
@@ -76,7 +92,7 @@ describe('LogListFieldSelector', () => {
   });
 
   test('should render collapsed button when width is too small', async () => {
-    jest.spyOn(store, 'get').mockReturnValue(String(MIN_WIDTH));
+    jest.spyOn(store, 'get').mockReturnValue(String(FIELD_SELECTOR_MIN_WIDTH));
 
     render(
       <LogListContext.Provider value={defaultContextValue}>
@@ -139,7 +155,7 @@ describe('LogListFieldSelector', () => {
     const collapseButton = screen.getByLabelText('Collapse sidebar');
     await userEvent.click(collapseButton);
 
-    expect(storeSpy).toHaveBeenCalledWith(`${storageKey}.fieldSelector.width`, MIN_WIDTH);
+    expect(storeSpy).toHaveBeenCalledWith(`${storageKey}.fieldSelector.width`, FIELD_SELECTOR_MIN_WIDTH);
   });
 
   test('should show selected fields and available fields', async () => {
@@ -160,6 +176,55 @@ describe('LogListFieldSelector', () => {
 
     expect(onClickShowField).toHaveBeenCalledWith('level');
     expect(onClickHideField).toHaveBeenCalledWith('service');
+  });
+
+  test('should show suggested fields for any logging source when feature toggle is on', () => {
+    setBooleanFlags({ otelLogsFormatting: true });
+
+    const logsWithGenericFields: LogListModel[] = [
+      createLogLine({
+        uid: '1',
+        entry: 'log 1',
+        labels: { service_name: 'frontend', message: 'hello', app: 'web' },
+      }),
+      createLogLine({
+        uid: '2',
+        entry: 'log 2',
+        labels: { service_name: 'backend', message: 'world' },
+      }),
+    ];
+
+    const dataFramesWithGenericFields: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          { name: 'timestamp', type: FieldType.time, values: [1, 2] },
+          { name: 'body', type: FieldType.string, values: ['log 1', 'log 2'] },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              { service_name: 'frontend', message: 'hello', app: 'web' },
+              { service_name: 'backend', message: 'world' },
+            ],
+          },
+        ],
+      }),
+    ];
+
+    render(
+      <LogListContext.Provider value={{ ...defaultContextValue, displayedFields: [] }}>
+        <LogListFieldSelector
+          containerElement={containerElement}
+          logs={logsWithGenericFields}
+          dataFrames={dataFramesWithGenericFields}
+        />
+      </LogListContext.Provider>
+    );
+
+    expect(screen.getByText('Suggested')).toBeInTheDocument();
+    expect(screen.getAllByText('service_name').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('message').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('app').length).toBeGreaterThan(0);
   });
 });
 
@@ -189,10 +254,9 @@ describe('LogsTableFieldSelector', () => {
         columnsWithMeta={columnsWithMeta}
         clear={clear}
         dataFrames={dataFrames}
-        logs={logs}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );
@@ -208,10 +272,9 @@ describe('LogsTableFieldSelector', () => {
         columnsWithMeta={columnsWithMeta}
         clear={clear}
         dataFrames={dataFrames}
-        logs={logs}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={MIN_WIDTH}
+        setWidth={setSidebarWidth}
+        width={FIELD_SELECTOR_MIN_WIDTH}
         toggle={toggle}
       />
     );
@@ -233,10 +296,9 @@ describe('LogsTableFieldSelector', () => {
         columnsWithMeta={columnsWithMeta}
         clear={clear}
         dataFrames={dataFrames}
-        logs={logs}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );
@@ -261,10 +323,9 @@ describe('LogsTableFieldSelector', () => {
         columnsWithMeta={columnsWithMeta}
         clear={clear}
         dataFrames={dataFrames}
-        logs={logs}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );
@@ -282,17 +343,16 @@ describe('LogsTableFieldSelector', () => {
         columnsWithMeta={columnsWithMeta}
         clear={clear}
         dataFrames={dataFrames}
-        logs={logs}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );
 
     await userEvent.click(screen.getByLabelText('Collapse sidebar'));
 
-    expect(setSidebarWidth).toHaveBeenCalledWith(MIN_WIDTH);
+    expect(setSidebarWidth).toHaveBeenCalledWith(FIELD_SELECTOR_MIN_WIDTH);
     expect(storeSpy).toHaveBeenCalled();
   });
 });

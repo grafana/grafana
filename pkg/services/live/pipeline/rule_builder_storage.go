@@ -16,7 +16,7 @@ type StorageRuleBuilder struct {
 	FrameStorage         *FrameStorage
 	Storage              Storage
 	ChannelHandlerGetter ChannelHandlerGetter
-	SecretsService       secrets.Service
+	SecretsService       secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 }
 
 func (f *StorageRuleBuilder) extractSubscriber(config *SubscriberConfig) (Subscriber, error) {
@@ -299,13 +299,13 @@ func (f *StorageRuleBuilder) getWriteConfig(uid string, writeConfigs []WriteConf
 	return WriteConfig{}, false
 }
 
-func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*LiveChannelRule, error) {
-	channelRules, err := f.Storage.ListChannelRules(ctx, orgID)
+func (f *StorageRuleBuilder) BuildRules(ctx context.Context, ns string) ([]*LiveChannelRule, error) {
+	channelRules, err := f.Storage.ListChannelRules(ctx, ns)
 	if err != nil {
 		return nil, err
 	}
 
-	writeConfigs, err := f.Storage.ListWriteConfigs(ctx, orgID)
+	writeConfigs, err := f.Storage.ListWriteConfigs(ctx, ns)
 	if err != nil {
 		return nil, err
 	}
@@ -314,8 +314,8 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 
 	for _, ruleConfig := range channelRules {
 		rule := &LiveChannelRule{
-			OrgId:   orgID,
-			Pattern: ruleConfig.Pattern,
+			Namespace: ns,
+			Pattern:   ruleConfig.Pattern,
 		}
 
 		if ruleConfig.Settings.Auth != nil && ruleConfig.Settings.Auth.Subscribe != nil {

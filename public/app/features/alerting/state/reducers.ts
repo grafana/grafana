@@ -1,13 +1,13 @@
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { type PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { dateTime } from '@grafana/data';
 import {
-  AlertRule,
-  AlertRuleDTO,
-  AlertRulesState,
-  NotificationChannelOption,
-  NotificationChannelState,
-  NotifierDTO,
+  type AlertRule,
+  type AlertRuleDTO,
+  type AlertRulesState,
+  type NotificationChannelOption,
+  type NotificationChannelState,
+  type NotifierDTO,
 } from 'app/features/alerting/unified/types/alerting';
 
 import unifiedAlertingReducer from '../unified/state/reducers';
@@ -85,7 +85,7 @@ const notificationChannelSlice = createSlice({
     notificationChannelLoaded: (state, action: PayloadAction<any>): NotificationChannelState => {
       const notificationChannel = action.payload;
       const selectedType: NotifierDTO = state.notifiers.find((t) => t.type === notificationChannel.type)!;
-      const secureChannelOptions = selectedType.options.filter((o: NotificationChannelOption) => o.secure);
+      const secureChannelOptions = (selectedType.options ?? []).filter((o: NotificationChannelOption) => o.secure);
       /*
         If any secure field is in plain text we need to migrate it to use secure field instead.
        */
@@ -157,6 +157,7 @@ function transformNotifiers(notifiers: NotifierDTO[]) {
         label: option.name,
         ...option,
         typeName: option.type,
+        options: option.options ?? [],
       };
     })
     .sort((o1, o2) => {

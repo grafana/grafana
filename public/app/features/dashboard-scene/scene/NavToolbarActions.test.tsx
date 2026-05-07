@@ -8,7 +8,7 @@ import { LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { DashboardMeta } from 'app/types/dashboard';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
@@ -186,6 +186,17 @@ describe('NavToolbarActions', () => {
         });
       });
     });
+
+    describe('where dashboard is not editable', () => {
+      it('should set dashboard to editable on make editable button press', async () => {
+        const { dashboard } = setup({}, true);
+        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
+
+        expect(dashboard.state.editable).toBe(true);
+        expect(dashboard.state.meta.canEdit).toBe(true);
+        expect(dashboard.state.meta.canSave).toBe(true);
+      });
+    });
   });
 
   describe('Given new sharing button', () => {
@@ -214,7 +225,7 @@ describe('NavToolbarActions', () => {
   });
 });
 
-function setup(meta?: DashboardMeta) {
+function setup(meta?: DashboardMeta, editable?: boolean) {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     meta: {
@@ -229,6 +240,7 @@ function setup(meta?: DashboardMeta) {
       ...meta,
     },
     title: 'hello',
+    editable: editable || true,
     uid: 'dash-1',
     body: DefaultGridLayoutManager.fromVizPanels([
       new VizPanel({

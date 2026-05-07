@@ -159,6 +159,8 @@ type fakeAccessControl struct {
 	evaluateFunc func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error)
 }
 
+var _ accesscontrol.AccessControl = new(fakeAccessControl)
+
 func (f *fakeAccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	if f.evaluateFunc != nil {
 		return f.evaluateFunc(ctx, user, evaluator)
@@ -172,4 +174,8 @@ func (f *fakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolv
 
 func (f *fakeAccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	return f
+}
+
+func (f *fakeAccessControl) InvalidateResolverCache(orgID int64, scope string) {
+	// no-op for testing
 }

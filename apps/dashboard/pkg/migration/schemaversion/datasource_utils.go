@@ -2,7 +2,6 @@ package schemaversion
 
 import (
 	"context"
-	"sync"
 	"time"
 )
 
@@ -11,65 +10,41 @@ import (
 // string names/UIDs to structured reference objects with uid, type, and apiVersion.
 
 // cachedIndexProvider wraps a DataSourceIndexProvider with time-based caching.
-// This prevents multiple DB queries and index builds during operations that may call
-// provider.Index() multiple times (e.g., dashboard conversions with many datasource lookups).
-// The cache expires after 10 seconds, allowing it to be used as a long-lived singleton
-// while still refreshing periodically.
-//
-// Thread-safe: Uses sync.RWMutex to guarantee safe concurrent access.
 type cachedIndexProvider struct {
-	provider DataSourceIndexProvider
-	mu       sync.RWMutex
-	index    *DatasourceIndex
-	cachedAt time.Time
-	cacheTTL time.Duration
+	*cachedProvider[*DatasourceIndex]
 }
 
-// Index returns the cached index if it's still valid (< 10s old), otherwise rebuilds it.
-// Uses RWMutex for efficient concurrent reads when cache is valid.
+// Index returns the cached index if it's still valid (< TTL old), otherwise rebuilds it.
 func (p *cachedIndexProvider) Index(ctx context.Context) *DatasourceIndex {
-	// Fast path: check if cache is still valid using read lock
-	p.mu.RLock()
-	if p.index != nil && time.Since(p.cachedAt) < p.cacheTTL {
-		idx := p.index
-		p.mu.RUnlock()
-		return idx
-	}
-	p.mu.RUnlock()
-
-	// Slow path: cache expired or not yet built, acquire write lock
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	// Double-check: another goroutine might have refreshed the cache
-	// while we were waiting for the write lock
-	if p.index != nil && time.Since(p.cachedAt) < p.cacheTTL {
-		return p.index
-	}
-
-	// Rebuild the cache
-	p.index = p.provider.Index(ctx)
-	p.cachedAt = time.Now()
-	return p.index
+	return p.Get(ctx)
 }
 
-// WrapIndexProviderWithCache wraps a provider to cache the index with a 10-second TTL.
-// Useful for conversions or migrations that may call provider.Index() multiple times.
-// The cache expires after 10 seconds, making it suitable for use as a long-lived singleton
-// at the top level of dependency injection while still refreshing periodically.
-//
-// Example usage in dashboard conversion:
-//
-//	cachedDsIndexProvider := schemaversion.WrapIndexProviderWithCache(dsIndexProvider)
-//	// Now all calls to cachedDsIndexProvider.Index(ctx) return the same cached index
-//	// for up to 10 seconds before refreshing
-func WrapIndexProviderWithCache(provider DataSourceIndexProvider) DataSourceIndexProvider {
-	if provider == nil {
-		return nil
+// cachedLibraryElementProvider wraps a LibraryElementIndexProvider with time-based caching.
+type cachedLibraryElementProvider struct {
+	*cachedProvider[[]LibraryElementInfo]
+}
+
+func (p *cachedLibraryElementProvider) GetLibraryElementInfo(ctx context.Context) []LibraryElementInfo {
+	return p.Get(ctx)
+}
+
+// WrapIndexProviderWithCache wraps a DataSourceIndexProvider to cache indexes with a configurable TTL.
+func WrapIndexProviderWithCache(provider DataSourceIndexProvider, cacheTTL time.Duration) DataSourceIndexProvider {
+	if provider == nil || cacheTTL <= 0 {
+		return provider
 	}
 	return &cachedIndexProvider{
-		provider: provider,
-		cacheTTL: 10 * time.Second,
+		newCachedProvider[*DatasourceIndex](provider.Index, defaultCacheSize, cacheTTL),
+	}
+}
+
+// WrapLibraryElementProviderWithCache wraps a LibraryElementIndexProvider to cache library elements with a configurable TTL.
+func WrapLibraryElementProviderWithCache(provider LibraryElementIndexProvider, cacheTTL time.Duration) LibraryElementIndexProvider {
+	if provider == nil || cacheTTL <= 0 {
+		return provider
+	}
+	return &cachedLibraryElementProvider{
+		newCachedProvider[[]LibraryElementInfo](provider.GetLibraryElementInfo, defaultCacheSize, cacheTTL),
 	}
 }
 
@@ -174,6 +149,20 @@ func isDataSourceRef(ref interface{}) bool {
 	return hasUID || hasType
 }
 
+// ResolveDatasourceRef resolves a bare-string datasource name/UID via the index.
+// "default" resolves to the configured default, otherwise falls through to Lookup.
+func ResolveDatasourceRef(name string, index *DatasourceIndex) *DataSourceInfo {
+	if index == nil || name == "" {
+		return nil
+	}
+	if name == "default" {
+		if ds := index.GetDefault(); ds != nil {
+			return ds
+		}
+	}
+	return index.Lookup(name)
+}
+
 // MigrateDatasourceNameToRef converts a datasource name/uid string to a reference object
 // Matches the frontend migrateDatasourceNameToRef function in DashboardMigrator.ts
 // Options:
@@ -189,87 +178,28 @@ func MigrateDatasourceNameToRef(nameOrRef interface{}, options map[string]bool, 
 		return nameOrRef.(map[string]interface{})
 	}
 
-	// Look up datasource by name/UID
-	if nameOrRef == nil || nameOrRef == "default" {
+	if nameOrRef == nil {
 		if ds := index.GetDefault(); ds != nil {
 			return GetDataSourceRef(ds)
 		}
-	}
-
-	// Check if it's a string name/UID
-	if str, ok := nameOrRef.(string); ok {
-		// Handle empty string case
-		if str == "" {
-			// Empty string should return {} (frontend behavior)
-			return map[string]interface{}{}
-		}
-
-		if ds := index.Lookup(str); ds != nil {
-			return GetDataSourceRef(ds)
-		}
-
-		// Unknown datasource name should be preserved as UID-only reference
-		return map[string]interface{}{
-			"uid": str,
-		}
-	}
-
-	return nil
-}
-
-// cachedLibraryElementProvider wraps a LibraryElementIndexProvider with time-based caching.
-// This prevents multiple DB queries during operations that may call GetLibraryElementInfo()
-// multiple times (e.g., dashboard conversions with many library panel lookups).
-// The cache expires after 10 seconds, allowing it to be used as a long-lived singleton
-// while still refreshing periodically.
-//
-// Thread-safe: Uses sync.RWMutex to guarantee safe concurrent access.
-type cachedLibraryElementProvider struct {
-	provider LibraryElementIndexProvider
-	mu       sync.RWMutex
-	elements []LibraryElementInfo
-	cachedAt time.Time
-	cacheTTL time.Duration
-}
-
-// GetLibraryElementInfo returns the cached library elements if they're still valid (< 10s old), otherwise rebuilds the cache.
-// Uses RWMutex for efficient concurrent reads when cache is valid.
-func (p *cachedLibraryElementProvider) GetLibraryElementInfo(ctx context.Context) []LibraryElementInfo {
-	// Fast path: check if cache is still valid using read lock
-	p.mu.RLock()
-	if p.elements != nil && time.Since(p.cachedAt) < p.cacheTTL {
-		elements := p.elements
-		p.mu.RUnlock()
-		return elements
-	}
-	p.mu.RUnlock()
-
-	// Slow path: cache expired or not yet built, acquire write lock
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	// Double-check: another goroutine might have refreshed the cache
-	// while we were waiting for the write lock
-	if p.elements != nil && time.Since(p.cachedAt) < p.cacheTTL {
-		return p.elements
-	}
-
-	// Rebuild the cache
-	p.elements = p.provider.GetLibraryElementInfo(ctx)
-	p.cachedAt = time.Now()
-	return p.elements
-}
-
-// WrapLibraryElementProviderWithCache wraps a provider to cache library elements with a 10-second TTL.
-// Useful for conversions or migrations that may call GetLibraryElementInfo() multiple times.
-// The cache expires after 10 seconds, making it suitable for use as a long-lived singleton
-// at the top level of dependency injection while still refreshing periodically.
-func WrapLibraryElementProviderWithCache(provider LibraryElementIndexProvider) LibraryElementIndexProvider {
-	if provider == nil {
 		return nil
 	}
-	return &cachedLibraryElementProvider{
-		provider: provider,
-		cacheTTL: 10 * time.Second,
+
+	str, ok := nameOrRef.(string)
+	if !ok {
+		return nil
+	}
+
+	if str == "" {
+		return map[string]interface{}{}
+	}
+
+	if ds := ResolveDatasourceRef(str, index); ds != nil {
+		return GetDataSourceRef(ds)
+	}
+
+	// Unknown name is preserved as a UID-only ref.
+	return map[string]interface{}{
+		"uid": str,
 	}
 }

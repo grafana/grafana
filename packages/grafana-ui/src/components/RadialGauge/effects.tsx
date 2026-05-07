@@ -1,14 +1,22 @@
-import { GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
-import { GaugeDimensions } from './utils';
+import { ARC_END } from './constants';
+import { type RadialGaugeDimensions, type RadialShape } from './types';
+
+// some utility transparent white colors for gradients
+const TRANSPARENT_WHITE = '#ffffff00';
+
+const MIN_GLOW_SIZE = 0.75;
+const GLOW_FACTOR = 0.08;
 
 export interface GlowGradientProps {
   id: string;
-  radius: number;
+  barWidth: number;
 }
 
-export function GlowGradient({ id, radius }: GlowGradientProps) {
-  const glowSize = 0.03 * radius;
+export function GlowGradient({ id, barWidth }: GlowGradientProps) {
+  // 0.75 is the minimum glow size, and it scales with bar width
+  const glowSize = MIN_GLOW_SIZE + barWidth * GLOW_FACTOR;
 
   return (
     <filter id={id} filterUnits="userSpaceOnUse">
@@ -21,74 +29,82 @@ export function GlowGradient({ id, radius }: GlowGradientProps) {
   );
 }
 
-export function SpotlightGradient({
-  id,
-  dimensions,
-  roundedBars,
-  angle,
-  theme,
-}: {
-  id: string;
-  dimensions: GaugeDimensions;
-  angle: number;
-  roundedBars: boolean;
-  theme: GrafanaTheme2;
-}) {
-  const angleRadian = ((angle - 90) * Math.PI) / 180;
-
-  let x1 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian - 0.2);
-  let y1 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian - 0.2);
-  let x2 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian);
-  let y2 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian);
-
-  if (theme.isLight) {
-    return (
-      <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor={'black'} stopOpacity={0.0} />
-        <stop offset="90%" stopColor={'black'} stopOpacity={0.0} />
-        <stop offset="91%" stopColor={'black'} stopOpacity={1} />
-      </linearGradient>
-    );
-  }
-
-  return (
-    <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor={'white'} stopOpacity={0.0} />
-      <stop offset="95%" stopColor={'white'} stopOpacity={0.5} />
-      {roundedBars && <stop offset="100%" stopColor={'white'} stopOpacity={roundedBars ? 0.7 : 1} />}
-    </linearGradient>
-  );
-}
-
-export function CenterGlowGradient({ gaugeId, color }: { gaugeId: string; color: string }) {
-  return (
-    <radialGradient id={`circle-glow-${gaugeId}`} r={'50%'} fr={'0%'}>
-      <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-      <stop offset="90%" stopColor={color} stopOpacity={0} />
-    </radialGradient>
-  );
-}
+const CENTER_GLOW_OPACITY = 0.25;
 
 export interface CenterGlowProps {
-  dimensions: GaugeDimensions;
+  dimensions: RadialGaugeDimensions;
   gaugeId: string;
   color?: string;
+  shape?: RadialShape;
 }
 
-export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps) {
+export function MiddleCircleGlow({ dimensions, gaugeId, color, shape }: CenterGlowProps) {
   const gradientId = `circle-glow-${gaugeId}`;
+  const clipId = `circle-glow-clip-${gaugeId}`;
+  const transparentColor = color ? colorManipulator.alpha(color, CENTER_GLOW_OPACITY) : color;
+
+  // Clip the glow to the gauge arc's flat-bottom opening (arc endpoints sit at centerY + radius * sin(20°)).
+  const isGaugeShape = shape === 'gauge';
+  const arcEndOffsetY = Math.sin(((ARC_END - 90) * Math.PI) / 180);
 
   return (
     <>
       <defs>
-        <radialGradient id={gradientId} r={'50%'} fr={'0%'}>
-          <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-          <stop offset="90%" stopColor={color} stopOpacity={0} />
+        <radialGradient id={gradientId} r="50%" fr="0%">
+          <stop offset="0%" stopColor={transparentColor} />
+          <stop offset="90%" stopColor={TRANSPARENT_WHITE} />
         </radialGradient>
+        {isGaugeShape && (
+          <clipPath id={clipId}>
+            <rect
+              x={dimensions.centerX - dimensions.radius}
+              y={dimensions.centerY - dimensions.radius}
+              width={dimensions.radius * 2}
+              height={dimensions.radius * (1 + arcEndOffsetY)}
+            />
+          </clipPath>
+        )}
       </defs>
       <g>
-        <circle cx={dimensions.centerX} cy={dimensions.centerY} r={dimensions.radius} fill={`url(#${gradientId})`} />
+        <circle
+          cx={dimensions.centerX}
+          cy={dimensions.centerY}
+          r={dimensions.radius}
+          fill={`url(#${gradientId})`}
+          clipPath={isGaugeShape ? `url(#${clipId})` : undefined}
+        />
       </g>
     </>
+  );
+}
+
+interface SpotlightGradientProps {
+  id: string;
+  dimensions: RadialGaugeDimensions;
+  angle: number;
+  roundedBars: boolean;
+  theme: GrafanaTheme2;
+  color: string;
+}
+
+export function SpotlightGradient({ id, dimensions, roundedBars, angle, theme, color }: SpotlightGradientProps) {
+  if (theme.isLight) {
+    return null;
+  }
+
+  // Shift the centre forward by the endcap's angular half-width so the bloom sits over the visual tip.
+  const endcapOffsetRad = roundedBars ? dimensions.barWidth / (2 * dimensions.radius) : 0;
+  const angleRadian = ((angle - 90) * Math.PI) / 180 + endcapOffsetRad;
+
+  const cx = dimensions.centerX + dimensions.radius * Math.cos(angleRadian);
+  const cy = dimensions.centerY + dimensions.radius * Math.sin(angleRadian);
+  const glowRadius = dimensions.barWidth * 1.5;
+  const tintTip = colorManipulator.alpha(colorManipulator.lighten(color, 0.8), 0.85);
+
+  return (
+    <radialGradient id={id} cx={cx} cy={cy} r={glowRadius} fx={cx} fy={cy} gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor={tintTip} />
+      <stop offset="100%" stopColor={TRANSPARENT_WHITE} />
+    </radialGradient>
   );
 }

@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
+import { FixedSizeList as List, type ListChildComponentProps } from 'react-window';
 
-import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, formattedValueToString, getValueFormat, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
@@ -23,6 +23,7 @@ interface Props {
   setSearchFilter: (value: string) => void;
   operator: SelectableValue<string>;
   setOperator: (item: SelectableValue<string>) => void;
+  referenceElement: HTMLElement;
 }
 
 const ITEM_HEIGHT = 28;
@@ -81,6 +82,7 @@ export const FilterList = ({
   setSearchFilter,
   operator,
   setOperator,
+  referenceElement,
 }: Props) => {
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
@@ -186,6 +188,7 @@ export const FilterList = ({
       {showOperators && (
         <Stack direction="row" gap={0}>
           <ButtonSelect
+            root={referenceElement}
             variant="canvas"
             options={OPERATORS}
             onChange={setOperator}

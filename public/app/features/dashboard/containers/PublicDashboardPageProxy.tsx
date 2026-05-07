@@ -1,17 +1,9 @@
-import { config } from '@grafana/runtime';
-
-import { PublicDashboardScenePage } from '../../dashboard-scene/pages/PublicDashboardScenePage';
-
-import PublicDashboardPage, { type Props } from './PublicDashboardPage';
+import { PublicDashboardScenePage, type Props } from '../../dashboard-scene/pages/PublicDashboardScenePage';
 
 export type PublicDashboardPageProxyProps = Props;
 
 function PublicDashboardPageProxy(props: PublicDashboardPageProxyProps) {
-  if (config.featureToggles.publicDashboardsScene) {
-    return <PublicDashboardScenePage {...props} />;
-  }
-
-  return <PublicDashboardPage {...props} />;
+  return <PublicDashboardScenePage {...props} />;
 }
 
 export default PublicDashboardPageProxy;

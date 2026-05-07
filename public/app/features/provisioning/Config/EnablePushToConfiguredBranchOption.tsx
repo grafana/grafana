@@ -1,4 +1,4 @@
-import { FieldValues, UseFormRegister, Path } from 'react-hook-form';
+import { type FieldValues, type UseFormRegister, type Path } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Checkbox, Field } from '@grafana/ui';
@@ -17,10 +17,10 @@ export function EnablePushToConfiguredBranchOption<T extends FieldValues>({
       <Checkbox
         disabled={readOnly}
         {...register(registerName)}
-        label={t('provisioning.enable-push-to-configured-branch-label', 'Enable push to configured branch')}
+        label={t('provisioning.enable-push-to-configured-branch-label', 'Enable push to synchronized branch')}
         description={t(
           'provisioning.enable-push-to-configured-branch-description',
-          'Allow direct commits to the configured branch.'
+          'Allow direct commits to the synchronized branch.'
         )}
       />
     </Field>

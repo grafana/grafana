@@ -5,20 +5,34 @@ import {
   FieldType,
   LogRowContextQueryDirection,
   LogsSortOrder,
-  SplitOpenOptions,
+  type SplitOpenOptions,
 } from '@grafana/data';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataFrameToLogsModel } from '../../logsModel';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
+import {
+  getDisplayedFieldsForLogs,
+  getOtelAttributesField,
+  identifyOTelLanguage,
+  identifyOTelLanguages,
+} from '../otel/formats';
 
 import { DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext';
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  setTestFlags(flags);
+};
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
     isAvailable: true,
     openAssistant: jest.fn(),
   }),
 }));
+jest.mock('../otel/formats');
 
 const dfBefore = createDataFrame({
   fields: [
@@ -79,12 +93,19 @@ jest.mock('app/features/explore/state/main', () => ({
   },
 }));
 
+jest.mocked(getDisplayedFieldsForLogs).mockReturnValue([]);
+jest.mocked(identifyOTelLanguages).mockReturnValue([]);
+
 const logs = dataFrameToLogsModel([dfNow]);
 const row = logs.rows[0];
 
 const timeZone = 'UTC';
 
 describe('LogLineContext', () => {
+  beforeEach(() => {
+    setBooleanFlags({});
+  });
+
   let uniqueRefIdCounter = 1;
 
   beforeEach(() => {
@@ -571,5 +592,180 @@ describe('LogLineContext', () => {
       direction: LogRowContextQueryDirection.Backward,
       timeWindowMs: DEFAULT_TIME_WINDOW,
     });
+  });
+
+  test('Should show and clear displayed fields', async () => {
+    const displayedFields = ['level', 'label'];
+
+    render(
+      <LogLineContext
+        log={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+        displayedFields={displayedFields}
+      />
+    );
+
+    expect(screen.getByText('Log context')).toBeInTheDocument();
+    expect(screen.queryByText('foo123')).not.toBeInTheDocument();
+
+    const showOriginalLogsButton = screen.getByRole('button', {
+      name: /show original logs/i,
+    });
+
+    expect(showOriginalLogsButton).toBeInTheDocument();
+
+    await userEvent.click(showOriginalLogsButton);
+
+    expect(
+      screen.queryByRole('button', {
+        name: /show original logs/i,
+      })
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText('foo123')).toHaveLength(3);
+  });
+
+  test('Should hide "Show original logs" button when there are no displayed fields', async () => {
+    render(
+      <LogLineContext
+        log={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+        displayedFields={[]}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Log context')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.queryByRole('button', {
+        name: /show original logs/i,
+      })
+    ).not.toBeInTheDocument();
+  });
+
+  test('Should show "Show original logs" button when displayed fields are provided', async () => {
+    const displayedFields = ['level', 'label'];
+
+    render(
+      <LogLineContext
+        log={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+        displayedFields={displayedFields}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Log context')).toBeInTheDocument();
+    });
+
+    // Button should be visible when displayedFields are provided and differ from defaultDisplayedFields
+    expect(
+      screen.getByRole('button', {
+        name: /show original logs/i,
+      })
+    ).toBeInTheDocument();
+  });
+
+  describe('Default displayed fields', () => {
+    beforeEach(() => {
+      setBooleanFlags({ otelLogsFormatting: true });
+      jest
+        .mocked(getDisplayedFieldsForLogs)
+        .mockReturnValue([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
+    });
+
+    test('Should show "Show original logs" button when displayed fields are different than the default fields', async () => {
+      const displayedFields = ['level', 'label'];
+
+      render(
+        <LogLineContext
+          log={row}
+          open={true}
+          onClose={() => {}}
+          getRowContext={getRowContext}
+          timeZone={timeZone}
+          sortOrder={LogsSortOrder.Descending}
+          displayedFields={displayedFields}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Log context')).toBeInTheDocument();
+      });
+
+      expect(
+        screen.getByRole('button', {
+          name: /show original logs/i,
+        })
+      ).toBeInTheDocument();
+    });
+
+    test('Should not show "Show original logs" button when displayed fields match the default fields', async () => {
+      const displayedFields = [LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME];
+
+      render(
+        <LogLineContext
+          log={row}
+          open={true}
+          onClose={() => {}}
+          getRowContext={getRowContext}
+          timeZone={timeZone}
+          sortOrder={LogsSortOrder.Descending}
+          displayedFields={displayedFields}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Log context')).toBeInTheDocument();
+      });
+
+      expect(
+        screen.queryByRole('button', {
+          name: /show original logs/i,
+        })
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  test('uses otelLogsFormatting flag when building reference log model', async () => {
+    setBooleanFlags({ otelLogsFormatting: true });
+    jest.mocked(identifyOTelLanguage).mockReturnValue('go');
+    jest.mocked(getOtelAttributesField).mockReturnValue('foo=bar');
+
+    const otelLog = {
+      ...row,
+      labels: {
+        ...row.labels,
+        severity_number: '9',
+        foo: 'bar',
+      },
+      entry: 'otel test log',
+    };
+
+    render(
+      <LogLineContext
+        log={otelLog}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => expect(getOtelAttributesField).toHaveBeenCalled());
   });
 });

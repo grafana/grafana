@@ -60,7 +60,7 @@ fi
 readarray -t PACKAGES <<< "$(go list -f '{{.Dir}}' -e "${dirs[@]}")"
 
 for i in "${!PACKAGES[@]}"; do
-    readarray -t PKG_FILES <<< "$(find "${PACKAGES[$i]}" -type f -name '*_test.go')"
+    readarray -t PKG_FILES <<< "$(find "${PACKAGES[$i]}" -maxdepth 1 -type f -name '*_test.go')"
     if [ ${#PKG_FILES[@]} -eq 0 ] || [ ${#PKG_FILES[@]} -eq 1 ] && [ -z "${PKG_FILES[0]}" ]; then
         unset "PACKAGES[$i]"
         continue

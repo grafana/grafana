@@ -1,6 +1,6 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
-import { test, expect, E2ESelectorGroups, DashboardPage, DashboardPageArgs } from '@grafana/plugin-e2e';
+import { test, expect, type E2ESelectorGroups, type DashboardPage, type DashboardPageArgs } from '@grafana/plugin-e2e';
 
 import testDashboard from '../dashboards/DashboardWithAllConditionalRendering.json';
 
@@ -8,7 +8,6 @@ import { checkRepeatedPanelTitles } from './utils';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
@@ -432,11 +431,11 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     test('Hide when equals, hide when no data', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await loadDashboard(page, gotoDashboardPage);
 
-      await getTab(dashboardPage, selectors, 'repeated items').click();
-
       const optionForHiddenPanels = repeatOptions[0];
 
       await failTestDataRequestForOption(page, optionForHiddenPanels);
+
+      await getTab(dashboardPage, selectors, 'repeated items').click();
 
       await checkRepeatedPanelTitles(
         dashboardPage,

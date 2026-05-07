@@ -6,7 +6,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 import { locationService } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { AccessControlAction } from 'app/types/accessControl';
-import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
@@ -323,6 +323,20 @@ describe('GroupEditPage', () => {
 
       expect(ui.successMessage.query()).not.toBeInTheDocument();
       expect(ui.errorMessage.query()).toBeInTheDocument();
+    });
+  });
+
+  describe('Ungrouped rules', () => {
+    it('shows EntityNotFound for ungrouped artificial group names', async () => {
+      const ruleUid = 'dfkgj15gwrawwa';
+      const artificialGroupName = `no_group_for_rule_${ruleUid}`.padEnd(200, '*');
+
+      renderGroupEditPage('grafana', 'test-folder-uid', artificialGroupName);
+
+      expect(await screen.findByText('Group not found')).toBeInTheDocument();
+      expect(ui.nameInput.query()).not.toBeInTheDocument();
+      expect(ui.intervalInput.query()).not.toBeInTheDocument();
+      expect(ui.saveButton.query()).not.toBeInTheDocument();
     });
   });
 });

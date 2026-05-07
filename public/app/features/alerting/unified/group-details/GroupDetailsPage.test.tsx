@@ -1,13 +1,13 @@
 import { uniqueId } from 'lodash';
 import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { Props } from 'react-virtualized-auto-sizer';
+import { type Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
-import { GrafanaPromRuleGroupDTO, GrafanaPromRulesResponse } from 'app/types/unified-alerting-dto';
+import { type GrafanaPromRuleGroupDTO, type GrafanaPromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockGrafanaPromAlertingRule, mockRulerGrafanaRule, mockRulerRuleGroup } from '../mocks';
@@ -47,7 +47,7 @@ const ui = {
   exportButton: byRole('button', { name: 'Export' }),
   ruleItem: byRole('treeitem'),
   export: {
-    dialog: byRole('dialog', { name: /Drawer title Export .* rules/ }),
+    dialog: byRole('dialog', { name: /Export .* rules/ }),
     jsonTab: byRole('tab', { name: /JSON/ }),
     yamlTab: byRole('tab', { name: /YAML/ }),
     editor: byTestId('code-editor'),
@@ -347,6 +347,19 @@ describe('GroupDetailsPage', () => {
         'href',
         `/alerting/mimir/namespaces/test-mimir-namespace/groups/test-group-cpu/edit?returnTo=%2Falerting%2Fmimir%2Fnamespaces%2Ftest-mimir-namespace%2Fgroups%2Ftest-group-cpu%2Fview`
       );
+      expect(ui.exportButton.query()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Ungrouped rules', () => {
+    it('shows EntityNotFound for ungrouped artificial group names', async () => {
+      const ruleUid = 'dfkgj15gwrawwa';
+      const artificialGroupName = `no_group_for_rule_${ruleUid}`.padEnd(200, '*');
+
+      renderGroupDetailsPage('grafana', 'test-folder-uid', artificialGroupName);
+
+      expect(await screen.findByText('Group not found')).toBeInTheDocument();
+      expect(ui.editLink.query()).not.toBeInTheDocument();
       expect(ui.exportButton.query()).not.toBeInTheDocument();
     });
   });

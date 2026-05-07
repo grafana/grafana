@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { DataFrame, DataTransformerID, getFrameDisplayName, SelectableValue } from '@grafana/data';
+import { type DataFrame, DataTransformerID, getFrameDisplayName, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, Select, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { DetailText } from 'app/features/inspector/DetailText';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { getPanelInspectorStyles2 } from './styles';
 
@@ -69,17 +69,12 @@ export const InspectDataOptions = ({
       parts.push(getFrameDisplayName(data[selectedDataFrame as number]));
     }
 
-    if (options.withTransforms || options.withFieldConfig) {
-      if (options.withTransforms) {
-        parts.push(t('dashboard.inspect-data.panel-transforms', 'Panel transforms'));
-      }
+    if (options.withTransforms) {
+      parts.push(t('dashboard.inspect-data.panel-transforms', 'Panel transforms'));
+    }
 
-      if (options.withTransforms && options.withFieldConfig) {
-      }
-
-      if (options.withFieldConfig) {
-        parts.push(t('dashboard.inspect-data.formatted', 'Formatted data'));
-      }
+    if (options.withFieldConfig) {
+      parts.push(t('dashboard.inspect-data.formatted', 'Formatted data'));
     }
 
     return parts.join(', ');

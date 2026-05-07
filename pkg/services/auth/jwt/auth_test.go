@@ -363,7 +363,7 @@ func TestIntegrationCachingJWKHTTPResponse(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	jwkCachingScenario(t, "caches the jwk response", func(t *testing.T, sc cachingScenarioContext) {
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject}, nil)
 			_, err := sc.authJWTSvc.Verify(sc.ctx, token)
 			require.NoError(t, err, "verify call %d", i+1)
@@ -582,8 +582,9 @@ func TestIntegrationBase64Paddings(t *testing.T) {
 		token := sign(t, key, jwt.Claims{
 			Subject: subject,
 		}, nil)
-		var tokenParts []string
-		for i, part := range strings.Split(token, ".") {
+		parts := strings.Split(token, ".")
+		tokenParts := make([]string, 0, len(parts))
+		for i, part := range parts {
 			// Create parts with different padding numbers to test multiple cases.
 			tokenParts = append(tokenParts, part+strings.Repeat(string(base64.StdPadding), i))
 		}

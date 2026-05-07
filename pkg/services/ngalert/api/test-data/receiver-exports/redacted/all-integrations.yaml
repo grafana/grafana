@@ -997,7 +997,7 @@ contactPoints:
                 clientCertificate: '[REDACTED]'
                 clientKey: '[REDACTED]'
                 insecureSkipVerify: false
-            url: http://localhost
+            url: grafana://noop
             username: test-user
           disableResolveMessage: true
         - uid: wecom-uid

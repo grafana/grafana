@@ -73,6 +73,7 @@ The following are compatible data sources:
 - Graphite
 - Google Sheets
 - Amazon Athena
+- PostgreSQL
 
 **Partial support:** The following data sources have limited or conditional support. Some support multiple query types depending on the service. For example, Azure Monitor can query multiple services, each with its own query format. In some cases, you can also switch the query type within a panel.
 
@@ -115,7 +116,7 @@ Use the following workflow to create a SQL expression:
    **Inspect inputs**. Start with simple test queries to understand the shape of your input frames.
 
    ```sql
-   SELECT * FROM A LIMIT 10.
+   SELECT * FROM A LIMIT 10
    ```
 
    This lets you see the available columns and sample rows from `query A`. Repeat this for each input query you want to use (e.g., `SELECT * FROM B LIMIT 10`).
@@ -238,6 +239,20 @@ During conversion:
 - Currently, only one SQL expression is supported per panel or alert.
 - Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
 - Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
+
+### Regular expression limitations in SQL expressions
+
+SQL expressions depend on a third-party SQL engine that uses `cgo` by default for full regular expression compatibility with MySQL. However, Grafana is built without `cgo`, which limits regular expression support.
+
+SQL expressions that use regular expression functions have limitations such as:
+
+- Lack of back-references.
+- No before/after text matching.
+- Differences in handling carriage return (`\r`) characters.
+
+There may be other minor differences as well.
+
+For implementation context, refer to the [`go-mysql-server` regular expression compatibility notes](https://github.com/grafana/go-mysql-server/blob/main/README.md).
 
 ### Schema changes and missing data
 

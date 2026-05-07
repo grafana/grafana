@@ -1,11 +1,15 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { Button, Menu, Stack, Dropdown, Icon, Sidebar } from '@grafana/ui';
-import { trackDeleteDashboardElement } from 'app/features/dashboard-scene/utils/tracking';
+import { t, Trans } from '@grafana/i18n';
+import { FlexItem } from '@grafana/plugin-ui';
+import { Button, Sidebar } from '@grafana/ui';
 
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { useClipboardState } from '../scene/layouts-shared/useClipboardState';
+import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { DashboardInteractions } from '../utils/interactions';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 
 interface EditPaneHeaderProps {
   element: EditableDashboardElement;
@@ -14,7 +18,10 @@ interface EditPaneHeaderProps {
 
 export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const elementInfo = element.getEditableElementInfo();
+  const { hasCopiedPanel } = useClipboardState();
 
+  // TODO this type check here is hacky and should be replaced with a more generic solid solution
+  const canPaste = element instanceof RowItem || element instanceof TabItem ? element : undefined;
   const onCopy = element.onCopy?.bind(element);
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
@@ -26,55 +33,68 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
     } else if (onDelete) {
       onDelete();
     }
-    trackDeleteDashboardElement(elementInfo);
+    DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName);
   };
 
   return (
     <Sidebar.PaneHeader title={elementInfo.typeName}>
-      <Stack direction="row" gap={1}>
-        {element.renderActions && element.renderActions()}
-        {(onCopy || onDuplicate) && (
-          <Dropdown
-            overlay={
-              <Menu>
-                {onCopy ? (
-                  <Menu.Item icon="copy" label={t('dashboard.layout.common.copy', 'Copy')} onClick={onCopy} />
-                ) : null}
-                {onDuplicate ? (
-                  <Menu.Item
-                    icon="file-copy-alt"
-                    label={t('dashboard.layout.common.duplicate', 'Duplicate')}
-                    onClick={onDuplicate}
-                  />
-                ) : null}
-              </Menu>
-            }
-          >
-            <Button
-              tooltip={t('dashboard.layout.common.copy-or-duplicate', 'Copy or Duplicate')}
-              tooltipPlacement="bottom"
-              variant="secondary"
-              size="sm"
-              icon="copy"
-              data-testid={selectors.components.EditPaneHeader.copyDropdown}
-            >
-              <Icon name="angle-down" />
-            </Button>
-          </Dropdown>
-        )}
-
-        {(onDelete || onConfirmDelete) && (
+      {element.renderActions && element.renderActions()}
+      {onDuplicate && (
+        <Button
+          tooltip={t('dashboard.layout.common.duplicate', 'Duplicate')}
+          tooltipPlacement="bottom"
+          variant="secondary"
+          size="sm"
+          icon="copy"
+          fill="text"
+          data-testid={selectors.components.EditPaneHeader.duplicate}
+          onClick={onDuplicate}
+        >
+          <Trans i18nKey="dashboard.layout.common.duplicate">Duplicate</Trans>
+        </Button>
+      )}
+      {onCopy && (
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="clipboard-alt"
+          fill="text"
+          data-testid={selectors.components.EditPaneHeader.copy}
+          onClick={onCopy}
+          tooltip={t('dashboard.layout.common.copy-tooltip', 'Copy')}
+          tooltipPlacement="bottom"
+        >
+          <Trans i18nKey="dashboard.layout.common.copy">Copy</Trans>
+        </Button>
+      )}
+      {canPaste && hasCopiedPanel && (
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="clipboard-alt"
+          fill="text"
+          data-testid={selectors.components.EditPaneHeader.paste}
+          onClick={() => editPane.pastePanel(editPane.getSelectedObject(), 'editPaneHeader')}
+        >
+          <Trans i18nKey="dashboard.layout.common.paste">Paste</Trans>
+        </Button>
+      )}
+      {(onDelete || onConfirmDelete) && (
+        <>
+          <FlexItem grow={1} />
           <Button
             onClick={onDeleteElement}
             size="sm"
-            variant="destructive"
-            fill="outline"
+            variant="secondary"
             icon="trash-alt"
-            tooltip={t('dashboard.layout.common.delete', 'Delete')}
+            fill="text"
             data-testid={selectors.components.EditPaneHeader.deleteButton}
-          />
-        )}
-      </Stack>
+            tooltip={t('dashboard.layout.common.delete', 'Delete')}
+          >
+            <Trans i18nKey="dashboard.layout.common.delete">Delete</Trans>
+          </Button>
+        </>
+      )}
     </Sidebar.PaneHeader>
   );
 }

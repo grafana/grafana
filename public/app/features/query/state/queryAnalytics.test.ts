@@ -1,13 +1,13 @@
 import {
   CoreApp,
-  DataFrame,
-  DataQueryError,
+  type DataFrame,
+  type DataQueryError,
   getDefaultTimeRange,
-  DataSourceApi,
+  type DataSourceApi,
   dateTime,
   LoadingState,
-  PanelData,
-  DataQueryRequest,
+  type PanelData,
+  type DataQueryRequest,
 } from '@grafana/data';
 import { MetaAnalyticsEventName, reportMetaAnalytics } from '@grafana/runtime';
 
@@ -21,7 +21,6 @@ beforeEach(() => {
 
 const datasource = {
   name: 'test',
-  id: 1,
   uid: 'test',
 } as DataSourceApi;
 

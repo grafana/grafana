@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneVariable, SceneVariableState, TestVariable } from '@grafana/scenes';
+import { type SceneVariable, type SceneVariableState, TestVariable } from '@grafana/scenes';
 
 import { DashboardInteractions } from '../../utils/interactions';
 

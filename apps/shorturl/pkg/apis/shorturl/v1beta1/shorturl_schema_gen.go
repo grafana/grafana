@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaShortURL = resource.NewSimpleSchema("shorturl.grafana.app", "v1beta1", &ShortURL{}, &ShortURLList{}, resource.WithKind("ShortURL"),
+	schemaShortURL = resource.NewSimpleSchema("shorturl.grafana.app", "v1beta1", NewShortURL(), &ShortURLList{}, resource.WithKind("ShortURL"),
 		resource.WithPlural("shorturls"), resource.WithScope(resource.NamespacedScope))
 	kindShortURL = resource.Kind{
 		Schema: schemaShortURL,

@@ -1,14 +1,16 @@
-import { ReactNode } from 'react';
+import { css } from '@emotion/css';
+import { type ReactNode } from 'react';
 
+import { type GrafanaTheme2, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
-import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import { Badge, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
-import { getRepoHrefForProvider } from '../utils/git';
+import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 
 import { SyncRepository } from './SyncRepository';
@@ -21,24 +23,34 @@ export function RepositoryListItem({ repository }: Props) {
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
+  const styles = useStyles2(getStyles);
 
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
 
-    if (spec?.type === 'github') {
-      const { url = '', branch } = spec.github ?? {};
-      const branchUrl = branch ? `${url}/tree/${branch}` : url;
-      const href = getRepoHrefForProvider(spec) || branchUrl;
-
-      meta.push(
-        <TextLink key="link" external href={href}>
-          {href.split('/').slice(3).join('/')}
-        </TextLink>
-      );
-    } else if (spec?.type === 'local') {
+    if (spec?.type === 'local') {
       meta.push(
         <Text variant="bodySmall" key="path">
           {spec.local?.path ?? ''}
+        </Text>
+      );
+    } else {
+      const href = getRepoHrefForProvider(spec);
+      if (href) {
+        meta.push(
+          <TextLink key="link" external href={href}>
+            {formatRepoUrl(href)}
+          </TextLink>
+        );
+      }
+    }
+
+    if (status?.sync?.finished) {
+      meta.push(
+        <Text variant="bodySmall" color="secondary" key="last-sync">
+          {t('provisioning.repository-card.last-sync', 'Last sync: {{date}}', {
+            date: dateTimeFormatTimeAgo(status.sync.finished),
+          })}
         </Text>
       );
     }
@@ -47,12 +59,12 @@ export function RepositoryListItem({ repository }: Props) {
   };
 
   return (
-    <Card noMargin key={name}>
-      <Card.Figure>
+    <Card noMargin key={name} className={styles.card}>
+      <Card.Figure className={styles.figure}>
         <RepoIcon type={spec?.type} />
       </Card.Figure>
       <Card.Heading>
-        <Stack gap={2} direction="row" alignItems="center">
+        <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
           {isReadOnlyRepo && (
@@ -82,11 +94,7 @@ export function RepositoryListItem({ repository }: Props) {
         </Stack>
       </Card.Description>
 
-      <Card.Meta>
-        <Stack gap={2} direction="row" wrap>
-          {getRepositoryMeta()}
-        </Stack>
-      </Card.Meta>
+      <Card.Meta className={styles.meta}>{getRepositoryMeta()}</Card.Meta>
 
       <Card.Actions>
         <Stack gap={1} direction="row">
@@ -124,3 +132,30 @@ function getListURL(repo: Repository, stats: ResourceCount): string {
   }
   return '/dashboards';
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    [theme.breakpoints.down('md')]: {
+      '&&': {
+        gridTemplate: `
+          "Figure"
+          "Heading"
+          "Meta"
+          "Description" 1fr
+          "Actions" / 1fr
+        `,
+      },
+    },
+  }),
+  figure: css({
+    [theme.breakpoints.down('md')]: {
+      '&&': {
+        marginRight: 0,
+        marginBottom: theme.spacing(1),
+      },
+    },
+  }),
+  meta: css({
+    flexWrap: 'wrap',
+  }),
+});

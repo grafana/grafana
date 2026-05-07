@@ -7,8 +7,10 @@ import (
 	"strings"
 	"time"
 
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"go.opentelemetry.io/otel/codes"
+
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
 func (s *Server) Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
@@ -16,7 +18,7 @@ func (s *Server) Query(ctx context.Context, req *authzextv1.QueryRequest) (*auth
 	defer span.End()
 
 	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("server.Query", req.GetNamespace()).Observe(time.Since(t).Seconds())
+		s.metrics.requestDurationSeconds.WithLabelValues("Query").Observe(time.Since(t).Seconds())
 	}(time.Now())
 
 	res, err := s.query(ctx, req)
@@ -52,7 +54,7 @@ func (s *Server) query(ctx context.Context, req *authzextv1.QueryRequest) (*auth
 	}
 }
 
-func (s *Server) queryFolderParents(ctx context.Context, store *storeInfo, req *authzextv1.GetFolderParentsQuery) (*authzextv1.QueryResponse, error) {
+func (s *Server) queryFolderParents(ctx context.Context, store *zanzana.StoreInfo, req *authzextv1.GetFolderParentsQuery) (*authzextv1.QueryResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.queryFolderParents")
 	defer span.End()
 

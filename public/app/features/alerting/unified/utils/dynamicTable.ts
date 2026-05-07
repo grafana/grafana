@@ -1,4 +1,4 @@
-import { DynamicTableItemProps } from '../components/DynamicTable';
+import { type DynamicTableItemProps } from '../components/DynamicTable';
 
 export const prepareItems = <T = unknown>(
   items: T[],

@@ -22,15 +22,36 @@ export const MOCK_TEAMS = [
     },
     status: {},
   },
+  {
+    metadata: {
+      name: 'team-a',
+      namespace: 'default',
+      resourceVersion: '1737038862000',
+      creationTimestamp: '2025-01-16T14:47:42Z',
+      labels: {
+        'grafana.app/deprecatedInternalID': '1234567',
+      },
+      annotations: {
+        'grafana.app/updatedTimestamp': '2025-01-16T14:47:42Z',
+      },
+    },
+    spec: {
+      title: 'Team A',
+      email: 'teama@example.com',
+    },
+    status: {},
+  },
 ];
+
+export const MOCK_TEAM_GROUPS = [{ groupId: 'cn=users,ou=groups,dc=grafana,dc=org' }, { groupId: 'another-group' }];
 
 export const setupMockTeams = () => {
   mockTeamsMap.clear();
   MOCK_TEAMS.forEach((team) => {
-    mockTeamsMap.set(team.metadata.name, { team, groups: [] });
+    mockTeamsMap.set(team.metadata.name, { team, groups: [...MOCK_TEAM_GROUPS] });
   });
 };
 
 export const mockTeamsMap = new Map<string, { team: (typeof MOCK_TEAMS)[number]; groups: Array<{ groupId: string }> }>(
-  MOCK_TEAMS.map((team) => [team.metadata.name, { team, groups: [] }])
+  MOCK_TEAMS.map((team) => [team.metadata.name, { team, groups: [...MOCK_TEAM_GROUPS] }])
 );

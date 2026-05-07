@@ -1,8 +1,8 @@
-import { DataQuery, LogsSortOrder } from '@grafana/schema';
+import { type DataQuery, type LogsSortOrder } from '@grafana/schema';
 
-import { PreferredVisualisationType } from './data';
-import { SelectableValue } from './select';
-import { TimeRange } from './time';
+import { type PreferredVisualisationType } from './data';
+import { type SelectableValue } from './select';
+import { type TimeRange } from './time';
 
 type AnyQuery = DataQuery & Record<string, any>;
 
@@ -78,6 +78,7 @@ export interface ExploreTracePanelState {
 
 export interface ExploreLogsPanelState {
   id?: string;
+  // @deprecated - only used in tableRT
   columns?: Record<number, string>;
   visualisationType?: 'table' | 'logs';
   labelFieldName?: string;
@@ -85,6 +86,9 @@ export interface ExploreLogsPanelState {
   refId?: string;
   displayedFields?: string[];
   sortOrder?: LogsSortOrder;
+  // Column sort state for table view. Persists between query changes.
+  tableSortBy?: string;
+  tableSortDir?: 'asc' | 'desc';
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {

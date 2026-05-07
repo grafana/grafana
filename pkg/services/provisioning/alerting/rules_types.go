@@ -169,7 +169,7 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 		}
-		alertRule.NotificationSettings = append(alertRule.NotificationSettings, ns)
+		alertRule.NotificationSettings = &ns
 	}
 	if rule.Record != nil {
 		record, err := rule.Record.mapToModel()
@@ -291,7 +291,7 @@ func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, e
 		}
 	}
 
-	return models.NotificationSettings{
+	return models.NotificationSettingsFromContact(models.ContactPointRouting{
 		Receiver:            nsV1.Receiver.Value(),
 		GroupBy:             groupBy,
 		GroupWait:           gw,
@@ -299,17 +299,19 @@ func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, e
 		RepeatInterval:      ri,
 		MuteTimeIntervals:   mute,
 		ActiveTimeIntervals: active,
-	}, nil
+	}), nil
 }
 
 type RecordV1 struct {
-	Metric values.StringValue `json:"metric" yaml:"metric"`
-	From   values.StringValue `json:"from" yaml:"from"`
+	Metric              values.StringValue `json:"metric" yaml:"metric"`
+	From                values.StringValue `json:"from" yaml:"from"`
+	TargetDatasourceUID values.StringValue `json:"targetDatasourceUid" yaml:"targetDatasourceUid"`
 }
 
 func (record *RecordV1) mapToModel() (models.Record, error) {
 	return models.Record{
-		Metric: record.Metric.Value(),
-		From:   record.From.Value(),
+		Metric:              record.Metric.Value(),
+		From:                record.From.Value(),
+		TargetDatasourceUID: record.TargetDatasourceUID.Value(),
 	}, nil
 }

@@ -1,13 +1,13 @@
 import { of } from 'rxjs';
 
 import {
-  DataSourceApi,
+  type DataSourceApi,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
+  type PanelData,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
@@ -24,7 +24,7 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
+import { type DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
 
 import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
@@ -74,7 +74,6 @@ const fakeDsMock: DataSourceApi = {
     getType: () => VariableSupportType.Standard,
     toDataQuery: (q) => ({ ...q, refId: 'FakeDataSource-refId' }),
   },
-  id: 1,
   uid: 'fake-uid',
 };
 
@@ -141,6 +140,7 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "regexApplyTo": "value",
       "staticOptions": [
         {
           "text": "test",
@@ -205,6 +205,7 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "regexApplyTo": "value",
       "staticOptions": [
         {
           "text": "test",
@@ -374,8 +375,38 @@ describe('sceneVariablesSetToVariables', () => {
       "options": [],
       "query": "test,test1,test2",
       "type": "custom",
+      "valuesFormat": "csv",
     }
     `);
+  });
+
+  it('should handle Custom variable when sceneVariablesSetToVariables should keep options', () => {
+    const variable = new CustomVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
+      value: ['test'],
+      text: ['test'],
+      query: 'test,test1,test2',
+      options: [
+        { label: 'test', value: 'test' },
+        { label: 'test1', value: 'test1' },
+        { label: 'test2', value: 'test2' },
+      ],
+      includeAll: true,
+      allValue: 'test-all',
+      isMulti: true,
+    });
+
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+    const keepQueryOptions = true;
+    const result = sceneVariablesSetToVariables(set, keepQueryOptions);
+    expect(result).toHaveLength(1);
+    expect(result[0].options).not.toEqual([]);
+    expect(result[0].options?.length).toEqual(3);
   });
 
   it('should handle ConstantVariable', () => {
@@ -557,6 +588,7 @@ describe('sceneVariablesSetToVariables', () => {
       },
       "defaultKeys": undefined,
       "description": "test-desc",
+      "enableGroupBy": false,
       "filters": [
         {
           "key": "filterTest",
@@ -608,6 +640,7 @@ describe('sceneVariablesSetToVariables', () => {
         },
         "defaultKeys": undefined,
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [],
         "hide": 3,
         "label": "test-label",
@@ -658,12 +691,18 @@ describe('sceneVariablesSetToVariables', () => {
         },
         "defaultKeys": undefined,
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [
           {
             "key": "filterTest",
+            "keyLabel": "filterTest",
             "operator": "=",
             "origin": "dashboard",
             "value": "test",
+            "valueLabels": [
+              "test",
+            ],
+            "values": undefined,
           },
           {
             "key": "filterTest2",
@@ -753,6 +792,7 @@ describe('sceneVariablesSetToVariables', () => {
         },
       ],
       "description": "test-desc",
+      "enableGroupBy": false,
       "filters": [
         {
           "key": "filterTest",
@@ -1084,6 +1124,7 @@ describe('sceneVariablesSetToVariables', () => {
             },
             "refresh": "onDashboardLoad",
             "regex": "",
+            "regexApplyTo": "value",
             "skipUrlSync": false,
             "sort": "disabled",
             "staticOptions": [
@@ -1148,6 +1189,7 @@ describe('sceneVariablesSetToVariables', () => {
         "options": [],
         "query": "test,test1,test2",
         "skipUrlSync": false,
+        "valuesFormat": "csv",
       },
     }
     `);
@@ -1385,6 +1427,7 @@ describe('sceneVariablesSetToVariables', () => {
         ],
         "defaultKeys": [],
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [
           {
             "key": "filterTest",
@@ -1475,6 +1518,7 @@ describe('sceneVariablesSetToVariables', () => {
           },
         ],
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [
           {
             "key": "filterTest",
@@ -1489,6 +1533,57 @@ describe('sceneVariablesSetToVariables', () => {
       },
     }
     `);
+    });
+
+    describe('when the dashboardUnifiedDrilldownControls feature toggle is enabled', () => {
+      beforeAll(() => {
+        config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      });
+
+      afterAll(() => {
+        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      });
+
+      it('should persist enableGroupBy as enableGroupBy', () => {
+        const variable = new AdHocFiltersVariable({
+          name: 'test',
+          label: 'test-label',
+          description: 'test-desc',
+          hide: VariableHide.inControlsMenu,
+          datasource: { uid: 'fake-uid', type: 'fake-type' },
+          filters: [],
+          baseFilters: [],
+          enableGroupBy: true,
+        });
+        const set = new SceneVariableSet({
+          variables: [variable],
+        });
+
+        const result = sceneVariablesSetToSchemaV2Variables(set);
+
+        expect(result).toHaveLength(1);
+        expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(true);
+      });
+
+      it('should persist enableGroupBy as false when enableGroupBy is not set', () => {
+        const variable = new AdHocFiltersVariable({
+          name: 'test',
+          label: 'test-label',
+          description: 'test-desc',
+          hide: VariableHide.inControlsMenu,
+          datasource: { uid: 'fake-uid', type: 'fake-type' },
+          filters: [],
+          baseFilters: [],
+        });
+        const set = new SceneVariableSet({
+          variables: [variable],
+        });
+
+        const result = sceneVariablesSetToSchemaV2Variables(set);
+
+        expect(result).toHaveLength(1);
+        expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(false);
+      });
     });
 
     describe('when the groupByVariable feature toggle is enabled', () => {

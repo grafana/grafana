@@ -3,12 +3,14 @@ package builders
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	dashV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -18,6 +20,7 @@ import (
 const DASHBOARD_SCHEMA_VERSION = "schema_version"
 const DASHBOARD_LINK_COUNT = "link_count"
 const DASHBOARD_PANEL_TYPES = "panel_types"
+const DASHBOARD_PANEL_TITLE = "panel_title"
 const DASHBOARD_DS_TYPES = "ds_types"
 const DASHBOARD_TRANSFORMATIONS = "transformation"
 const DASHBOARD_LIBRARY_PANEL_REFERENCE = "reference.LibraryPanel"
@@ -54,10 +57,20 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 			Description: "How many links appear on the page",
 		},
 		{
+			Name:        DASHBOARD_PANEL_TITLE,
+			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+			IsArray:     true,
+			Description: "The panel title text",
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
+				Filterable: false, // full text
+				FreeText:   true,
+			},
+		},
+		{
 			Name:        DASHBOARD_PANEL_TYPES,
 			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 			IsArray:     true,
-			Description: "How many links appear on the page",
+			Description: "The panel types used in this dashboard",
 			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
@@ -230,8 +243,8 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		return nil, fmt.Errorf("invalid namespace")
 	}
 
-	tmp := &unstructured.Unstructured{}
-	err := tmp.UnmarshalJSON(value)
+	// Do not unmarshal spec, ReadDashboardWithLogContext already does that for the fields we need
+	tmp, err := unmarshalMetadataOnly(value)
 	if err != nil {
 		return nil, err
 	}
@@ -264,18 +277,26 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	summary.UID = obj.GetName()
 	summary.ID = obj.GetDeprecatedInternalID() // nolint:staticcheck
 
-	doc := resource.NewIndexableDocument(key, rv, obj)
-	doc.Title = summary.Title
+	doc := resource.NewIndexableDocument(key, rv, obj, summary.Title)
+	// TODO: add selectable fields
 	doc.Description = summary.Description
 	doc.Tags = summary.Tags
 
+	panelTitles := []string{}
 	panelTypes := []string{}
 	transformations := []string{}
 	dsTypes := []string{}
 
-	for _, p := range summary.Panels {
-		if p.Type != "" {
+	for p := range summary.PanelIterator() {
+		switch p.Type {
+		case "": // ignore
+		case "row": // row should map to a layout type when we support v2 constructs
+		default:
 			panelTypes = append(panelTypes, p.Type)
+		}
+
+		if len(p.Title) > 0 {
+			panelTitles = append(panelTitles, p.Title)
 		}
 		if len(p.Transformer) > 0 {
 			transformations = append(transformations, p.Transformer...)
@@ -309,17 +330,20 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		resource.SEARCH_FIELD_LEGACY_ID: summary.ID,
 	}
 
+	if len(panelTitles) > 0 {
+		doc.Fields[DASHBOARD_PANEL_TITLE] = panelTitles
+	}
 	if len(panelTypes) > 0 {
 		sort.Strings(panelTypes)
-		doc.Fields[DASHBOARD_PANEL_TYPES] = panelTypes
+		doc.Fields[DASHBOARD_PANEL_TYPES] = slices.Compact(panelTypes) // distinct values
 	}
 	if len(dsTypes) > 0 {
 		sort.Strings(dsTypes)
-		doc.Fields[DASHBOARD_DS_TYPES] = dsTypes
+		doc.Fields[DASHBOARD_DS_TYPES] = slices.Compact(dsTypes) // distinct values
 	}
 	if len(transformations) > 0 {
 		sort.Strings(transformations)
-		doc.Fields[DASHBOARD_TRANSFORMATIONS] = transformations
+		doc.Fields[DASHBOARD_TRANSFORMATIONS] = slices.Compact(transformations) // distinct values
 	}
 
 	for k, v := range s.Stats[summary.UID] {
@@ -339,6 +363,27 @@ func DashboardFields() []string {
 	}
 
 	return append(baseFields, UsageInsightsFields()...)
+}
+
+// unmarshalMetadataOnly parses a K8s resource JSON and returns an
+// unstructured.Unstructured with only metadata populated (spec is omitted).
+// This avoids the cost of recursively parsing the (potentially huge) dashboard specs.
+func unmarshalMetadataOnly(data []byte) (*unstructured.Unstructured, error) {
+	var partial struct {
+		APIVersion string                 `json:"apiVersion"`
+		Kind       string                 `json:"kind"`
+		Metadata   map[string]interface{} `json:"metadata"`
+	}
+	if err := json.Unmarshal(data, &partial); err != nil {
+		return nil, err
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": partial.APIVersion,
+			"kind":       partial.Kind,
+			"metadata":   partial.Metadata,
+		},
+	}, nil
 }
 
 func UsageInsightsFields() []string {

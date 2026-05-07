@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
-import { ReactElement, useEffect, useState } from 'react';
+import { type ReactElement, useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { SceneVariable, SceneVariableState } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
-import { CollapsableSection, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { type SceneVariable, type SceneVariableState } from '@grafana/scenes';
+import { type Dashboard } from '@grafana/schema';
+import { CollapsableSection, Icon, Spinner, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { VariableUsagesButton } from '../../variables/VariableUsagesButton';
-import { getUnknownsNetwork, UsagesToNetwork } from '../../variables/utils';
+import { getUnknownsNetwork, type UsagesToNetwork } from '../../variables/utils';
 
 export const SLOW_VARIABLES_EXPANSION_THRESHOLD = 1000;
 
@@ -78,7 +78,7 @@ function CollapseLabel(): ReactElement {
   const style = useStyles2(getStyles);
 
   return (
-    <h5>
+    <Text variant="h5">
       <Trans i18nKey="variables.unknown-table.renamed-or-missing-variables">Renamed or missing variables</Trans>
       <Tooltip
         content={t(
@@ -88,7 +88,7 @@ function CollapseLabel(): ReactElement {
       >
         <Icon name="info-circle" className={style.infoIcon} />
       </Tooltip>
-    </h5>
+    </Text>
   );
 }
 

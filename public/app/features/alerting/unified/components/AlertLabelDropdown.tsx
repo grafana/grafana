@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { FC, forwardRef } from 'react';
+import { type FC, forwardRef } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Combobox, ComboboxOption, Field, useStyles2 } from '@grafana/ui';
+import { Combobox, type ComboboxOption, Field, useStyles2 } from '@grafana/ui';
 
 export type AsyncOptionsLoader = (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
 

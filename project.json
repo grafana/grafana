@@ -39,7 +39,8 @@
       "inputs": [
         "{workspaceRoot}/scripts/cli/generateSassVariableFiles.ts",
         "{workspaceRoot}/packages/grafana-data/src/themes/**",
-        "{workspaceRoot}/packages/grafana-ui/src/themes/**"
+        "{workspaceRoot}/packages/grafana-ui/src/themes/**",
+        "{workspaceRoot}/package.json"
       ],
       "outputs": [
         "{workspaceRoot}/public/sass/_variables.generated.scss",

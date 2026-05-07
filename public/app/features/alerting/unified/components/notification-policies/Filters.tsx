@@ -1,12 +1,17 @@
-import { css } from '@emotion/css';
-import { debounce, isEqual } from 'lodash';
-import { useCallback, useEffect, useRef } from 'react';
+import { compact, isEqual } from 'lodash';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useDebounce } from 'react-use';
 
-import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
+import {
+  ContactPointSelector as GrafanaManagedContactPointSelector,
+  RoutingTreeSelector,
+} from '@grafana/alerting/unstable';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
-import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { type ObjectMatcher, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -23,40 +28,39 @@ import { ExternalAlertmanagerContactPointSelector } from './ContactPointSelector
 interface NotificationPoliciesFilterProps {
   onChangeMatchers: (labels: ObjectMatcher[]) => void;
   onChangeReceiver: (receiver: string | undefined) => void;
-  matchingCount: number;
 }
 
-const NotificationPoliciesFilter = ({
-  onChangeReceiver,
-  onChangeMatchers,
-  matchingCount,
-}: NotificationPoliciesFilterProps) => {
+const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: NotificationPoliciesFilterProps) => {
   const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
   const { isGrafanaAlertmanager } = useAlertmanager();
   const [searchParams, setSearchParams] = useURLSearchParams();
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
-  const styles = useStyles2(getStyles);
+  const { hasFilters, clearFilters, selectedPolicyTreeNames } = useNotificationPoliciesFilters();
 
-  const handleChangeLabels = useCallback(() => debounce(onChangeMatchers, 500), [onChangeMatchers]);
+  const matchers = useMemo(
+    () => parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher),
+    [queryString]
+  );
+
+  useDebounce(
+    () => {
+      onChangeMatchers(matchers);
+    },
+    500,
+    [matchers, onChangeMatchers]
+  );
 
   useEffect(() => {
     onChangeReceiver(contactPoint);
   }, [contactPoint, onChangeReceiver]);
 
-  useEffect(() => {
-    const matchers = parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher);
-    handleChangeLabels()(matchers);
-  }, [handleChangeLabels, queryString]);
-
-  const clearFilters = useCallback(() => {
-    if (searchInputRef.current) {
-      searchInputRef.current.value = '';
-    }
-    setSearchParams({ contactPoint: '', queryString: undefined });
-  }, [setSearchParams]);
-
-  const hasFilters = queryString || contactPoint;
+  const handlePolicyTreeFilterChange = useCallback(
+    (trees: RoutingTree[]) => {
+      const names = compact(trees.map((tree) => tree.metadata.name));
+      setSearchParams({ includeTree: names.length > 0 ? names : undefined });
+    },
+    [setSearchParams]
+  );
 
   let inputValid = Boolean(queryString && queryString.length > 3);
   try {
@@ -72,7 +76,7 @@ const NotificationPoliciesFilter = ({
   return (
     <Stack direction="row" alignItems="flex-end" gap={1}>
       <Field
-        className={styles.noBottom}
+        noMargin
         label={
           <Label>
             <Stack gap={0.5}>
@@ -80,7 +84,7 @@ const NotificationPoliciesFilter = ({
               <Tooltip
                 content={
                   <Trans i18nKey="alerting.policies.filter-description">
-                    Filter notification policies by using a comma separated list of matchers, e.g.:
+                    Filter routes by using a comma separated list of matchers, e.g.:
                     <pre>severity=critical, region=EMEA</pre>
                   </Trans>
                 }
@@ -94,7 +98,6 @@ const NotificationPoliciesFilter = ({
         error={!inputValid ? 'Query must use valid matcher syntax' : null}
       >
         <Input
-          ref={searchInputRef}
           data-testid="search-query-input"
           placeholder={t('alerting.notification-policies-filter.search-query-input-placeholder-search', 'Search')}
           width={46}
@@ -102,13 +105,13 @@ const NotificationPoliciesFilter = ({
           onChange={(event) => {
             setSearchParams({ queryString: event.currentTarget.value });
           }}
-          defaultValue={queryString}
+          value={queryString ?? ''}
         />
       </Field>
       {contactPointsSupported && canSeeContactPoints && (
         <Field
-          label={t('alerting.notification-policies-filter.label-search-by-contact-point', 'Search by contact point')}
-          style={{ marginBottom: 0 }}
+          label={t('alerting.notification-policies-filter.label-search-by-contact-point', 'Contact point')}
+          noMargin
         >
           {isGrafanaAlertmanager ? (
             <GrafanaManagedContactPointSelector
@@ -149,17 +152,21 @@ const NotificationPoliciesFilter = ({
           )}
         </Field>
       )}
+      {isGrafanaAlertmanager && config.featureToggles.alertingMultiplePolicies && (
+        <Field label={t('alerting.multiple-policies-view.policy-tree-filter-label', 'Policy')} noMargin>
+          <RoutingTreeSelector
+            multi
+            value={selectedPolicyTreeNames}
+            onChange={handlePolicyTreeFilterChange}
+            placeholder={t('alerting.multiple-policies-view.policy-tree-filter-placeholder', 'Select policy trees')}
+            width={40}
+          />
+        </Field>
+      )}
       {hasFilters && (
-        <Stack alignItems="center">
-          <Button variant="secondary" icon="times" onClick={clearFilters}>
-            <Trans i18nKey="alerting.common.clear-filters">Clear filters</Trans>
-          </Button>
-          <Text variant="bodySmall" color="secondary">
-            {matchingCount === 0 && 'No policies matching filters.'}
-            {matchingCount === 1 && `${matchingCount} policy matches the filters.`}
-            {matchingCount > 1 && `${matchingCount} policies match the filters.`}
-          </Text>
-        </Stack>
+        <Button variant="secondary" icon="times" onClick={clearFilters}>
+          <Trans i18nKey="alerting.common.clear-filters">Clear filters</Trans>
+        </Button>
       )}
     </Stack>
   );
@@ -226,10 +233,24 @@ const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => ({
   contactPoint: searchParams.get('contactPoint') ?? undefined,
 });
 
-const getStyles = () => ({
-  noBottom: css({
-    marginBottom: 0,
-  }),
-});
+export function useNotificationPoliciesFilters() {
+  const [searchParams, setSearchParams] = useURLSearchParams();
+  const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
+
+  const selectedPolicyTreeNames = useMemo(() => searchParams.getAll('includeTree').filter(Boolean), [searchParams]);
+
+  const labelMatchers = useMemo(
+    () => parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher),
+    [queryString]
+  );
+
+  const hasFilters = Boolean(queryString || contactPoint || selectedPolicyTreeNames.length > 0);
+
+  const clearFilters = useCallback(() => {
+    setSearchParams({ contactPoint: undefined, queryString: undefined, includeTree: undefined });
+  }, [setSearchParams]);
+
+  return { hasFilters, clearFilters, selectedPolicyTreeNames, contactPoint, labelMatchers };
+}
 
 export { NotificationPoliciesFilter };

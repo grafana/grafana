@@ -37,6 +37,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+  fixed-role-definitions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
 ---
 
 # Externally shared dashboards
@@ -48,6 +53,8 @@ This feature was previously called **Public dashboards**.
 Externally shared dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization.
 
 If you change a dashboard, ensure that you save the changes before sharing.
+
+In order to create public dashboards, you need to be an Admin, have the `dashboards.public:write` permission, or the `fixed:dashboards.public:write` [RBAC role](ref:fixed-role-definitions).
 
 {{< admonition type="warning" >}}
 Sharing your dashboard externally could result in a large number of queries to the data sources used by your dashboard.
@@ -107,7 +114,7 @@ To share a dashboard with specific people, follow these steps:
 
 1. (Optional) Set the following options:
    - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
-   - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
+   - **Display annotations** - Allow people accessing the link to view the dashboard annotations. If the dashboard uses tag-based annotation queries, annotations from other dashboards in your organization might also be visible. Refer to [Limitations](#limitations).
 1. (Optional) Click **Copy external link** and send the copied URL to any external user.
 1. Click the **X** at the top-right corner to close the share drawer.
 
@@ -185,7 +192,7 @@ To share your dashboard so that anyone with the link can access it, follow these
 1. Click **Accept**.
 1. (Optional) Set the following options:
    - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
-   - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
+   - **Display annotations** - Allow people accessing the link to view the dashboard annotations. If the dashboard uses tag-based annotation queries, annotations from other dashboards in your organization might also be visible. Refer to [Limitations](#limitations).
 1. Click the **X** at the top-right corner to close the share drawer.
 
 Now anyone with the link can access the dashboard until you pause or revoke access to it.
@@ -250,6 +257,7 @@ guaranteed because plugin developers can override this functionality. The follow
 - Graphite
 - Google Sheets
 - Tempo
+- Zabbix
 
 ### Unconfirmed
 
@@ -306,6 +314,7 @@ guaranteed because plugin developers can override this functionality. The follow
 - Exemplars will be omitted from the panel.
 - Only annotations that query the `-- Grafana --` data source and use the query type `Annotations & Alerts` are supported.
 - Organization annotations are not supported.
+- Tag-based annotation queries, using the `-- Grafana --` data source with **Filter by Tags**, return matching annotations from _all dashboards_ in the organization, not only the shared dashboard. This means annotations from dashboards that are not shared externally can be visible to anyone viewing the shared dashboard. This is by design. If you use tag-based annotation queries on a shared dashboard, ensure you are comfortable with the annotations from other dashboards in your organization being exposed to external viewers.
 - Grafana Live and real-time event streams are not supported.
 - Library panels are not supported.
 - Data sources using Reverse Proxy functionality are not supported.

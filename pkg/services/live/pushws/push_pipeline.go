@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/pipeline"
@@ -44,8 +45,8 @@ func (s *PipelinePushHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	user, ok := livecontext.GetContextSignedUser(r.Context())
-	if !ok {
+	user, err := identity.GetRequester(r.Context())
+	if err != nil {
 		logger.Error("No user found in context")
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -71,7 +72,7 @@ func (s *PipelinePushHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 			"bodyLength", len(body),
 		)
 
-		ruleFound, err := s.pipeline.ProcessInput(r.Context(), user.GetOrgID(), channelID, body)
+		ruleFound, err := s.pipeline.ProcessInput(r.Context(), user.GetNamespace(), channelID, body)
 		if err != nil {
 			logger.Error("Pipeline input processing error", "error", err, "body", string(body))
 			return

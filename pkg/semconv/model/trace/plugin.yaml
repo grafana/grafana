@@ -6,3 +6,4 @@ groups:
     attributes:
       - ref: grafana.plugin.id
       - ref: grafana.plugin.type
+      - ref: grafana.plugin.source.class

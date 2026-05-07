@@ -4,7 +4,6 @@ import { flows } from './utils';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
@@ -14,7 +13,7 @@ test.use({
 const PAGE_UNDER_TEST = '5SdHCadmz/panel-tests-graph';
 
 test.describe(
-  'Dashboard',
+  'Dashboard edit - Panel title and description',
   {
     tag: ['@dashboards'],
   },
@@ -48,14 +47,8 @@ test.describe(
 
       // Reveal description tooltip and check that its value is as expected
       const descriptionIcon = page.locator('[data-testid="title-items-container"] > span').first();
-      await descriptionIcon.click({ force: true });
-
-      // Get the tooltip ID from the aria-describedby attribute
-      const tooltipId = await descriptionIcon.getAttribute('aria-describedby');
-      await expect(async () => {
-        const tooltip = page.locator(`[id="${tooltipId}"]`);
-        await expect(tooltip).toHaveText(`${newDescription}\n`);
-      }).toPass();
+      await descriptionIcon.hover();
+      await expect(page.getByRole('tooltip')).toHaveText(newDescription);
     });
   }
 );

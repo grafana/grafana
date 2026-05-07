@@ -2,19 +2,19 @@ import { omit } from 'lodash';
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { DataFrame, Labels, findCommonLabels } from '@grafana/data';
+import { type DataFrame, type Labels, findCommonLabels } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 import { Box } from '@grafana/ui';
 
 import { useWorkbenchContext } from '../WorkbenchContext';
-import { METRIC_NAME } from '../constants';
 import { GenericRow } from '../rows/GenericRow';
 import { InstanceRow } from '../rows/InstanceRow';
 
-import { getDataQuery, useQueryFilter } from './utils';
+import { alertRuleInstancesQuery } from './queries';
+import { useQueryFilter } from './utils';
 
-function extractInstancesFromData(series: DataFrame[] | undefined) {
+export function extractInstancesFromData(series: DataFrame[] | undefined) {
   if (!series) {
     return [];
   }
@@ -42,20 +42,15 @@ function extractInstancesFromData(series: DataFrame[] | undefined) {
 type AlertRuleInstancesProps = {
   ruleUID: string;
   depth?: number;
+  groupLabels?: Record<string, string>;
 };
 
-export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesProps) {
+export function AlertRuleInstances({ ruleUID, depth = 0, groupLabels }: AlertRuleInstancesProps) {
   const { leftColumnWidth } = useWorkbenchContext();
   const [timeRange] = useTimeRange();
   const queryFilter = useQueryFilter();
 
-  const filters = queryFilter ? `grafana_rule_uid="${ruleUID}",${queryFilter}` : `grafana_rule_uid="${ruleUID}"`;
-  const query = getDataQuery(
-    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${METRIC_NAME}{${filters}})`,
-    { format: 'timeseries', legendFormat: '{{alertstate}}' }
-  );
-
-  const queryRunner = useQueryRunner({ queries: [query] });
+  const queryRunner = useQueryRunner({ queries: [alertRuleInstancesQuery(ruleUID, queryFilter, groupLabels)] });
 
   const isLoading = !queryRunner.isDataReadyToDisplay();
   const { data } = queryRunner.useState();
@@ -70,13 +65,12 @@ export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesPro
     return (
       <GenericRow
         width={leftColumnWidth}
-        title={<Trans i18nKey="alerting.triage.alert-instances">Alert instances</Trans>}
-        depth={depth}
-      >
-        <div>
+        title={
           <Trans i18nKey="alerting.triage.no-instances-found">No alert instances found for rule: {{ ruleUID }}</Trans>
-        </div>
-      </GenericRow>
+        }
+        depth={depth}
+        showIndentBorder
+      />
     );
   }
 

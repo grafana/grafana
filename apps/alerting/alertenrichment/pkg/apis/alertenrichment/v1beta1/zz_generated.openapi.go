@@ -8,32 +8,33 @@
 package v1beta1
 
 import (
+	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichment":          schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichment(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichmentJSONCodec": schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentJSONCodec(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichmentList":      schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentList(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichmentSpec":      schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AssertsEnricher":          schema_pkg_apis_alertenrichment_v1beta1_AssertsEnricher(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AssignEnricher":           schema_pkg_apis_alertenrichment_v1beta1_AssignEnricher(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Assignment":               schema_pkg_apis_alertenrichment_v1beta1_Assignment(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AssistantEnricher":        schema_pkg_apis_alertenrichment_v1beta1_AssistantEnricher(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Condition":                schema_pkg_apis_alertenrichment_v1beta1_Condition(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Conditional":              schema_pkg_apis_alertenrichment_v1beta1_Conditional(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.DataSourceEnricher":       schema_pkg_apis_alertenrichment_v1beta1_DataSourceEnricher(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.EnricherConfig":           schema_pkg_apis_alertenrichment_v1beta1_EnricherConfig(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.ExplainEnricher":          schema_pkg_apis_alertenrichment_v1beta1_ExplainEnricher(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.ExternalEnricher":         schema_pkg_apis_alertenrichment_v1beta1_ExternalEnricher(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.LogsDataSourceQuery":      schema_pkg_apis_alertenrichment_v1beta1_LogsDataSourceQuery(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.LoopEnricher":             schema_pkg_apis_alertenrichment_v1beta1_LoopEnricher(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Matcher":                  schema_pkg_apis_alertenrichment_v1beta1_Matcher(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.RawDataSourceQuery":       schema_pkg_apis_alertenrichment_v1beta1_RawDataSourceQuery(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.SiftEnricher":             schema_pkg_apis_alertenrichment_v1beta1_SiftEnricher(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Step":                     schema_pkg_apis_alertenrichment_v1beta1_Step(ref),
+		AlertEnrichment{}.OpenAPIModelName():     schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichment(ref),
+		AlertEnrichmentList{}.OpenAPIModelName(): schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentList(ref),
+		AlertEnrichmentSpec{}.OpenAPIModelName(): schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref),
+		AssertsEnricher{}.OpenAPIModelName():     schema_pkg_apis_alertenrichment_v1beta1_AssertsEnricher(ref),
+		AssignEnricher{}.OpenAPIModelName():      schema_pkg_apis_alertenrichment_v1beta1_AssignEnricher(ref),
+		Assignment{}.OpenAPIModelName():          schema_pkg_apis_alertenrichment_v1beta1_Assignment(ref),
+		AssistantEnricher{}.OpenAPIModelName():   schema_pkg_apis_alertenrichment_v1beta1_AssistantEnricher(ref),
+		Condition{}.OpenAPIModelName():           schema_pkg_apis_alertenrichment_v1beta1_Condition(ref),
+		Conditional{}.OpenAPIModelName():         schema_pkg_apis_alertenrichment_v1beta1_Conditional(ref),
+		DataSourceEnricher{}.OpenAPIModelName():  schema_pkg_apis_alertenrichment_v1beta1_DataSourceEnricher(ref),
+		EnricherConfig{}.OpenAPIModelName():      schema_pkg_apis_alertenrichment_v1beta1_EnricherConfig(ref),
+		ExplainEnricher{}.OpenAPIModelName():     schema_pkg_apis_alertenrichment_v1beta1_ExplainEnricher(ref),
+		ExternalEnricher{}.OpenAPIModelName():    schema_pkg_apis_alertenrichment_v1beta1_ExternalEnricher(ref),
+		LogsDataSourceQuery{}.OpenAPIModelName(): schema_pkg_apis_alertenrichment_v1beta1_LogsDataSourceQuery(ref),
+		LoopEnricher{}.OpenAPIModelName():        schema_pkg_apis_alertenrichment_v1beta1_LoopEnricher(ref),
+		Matcher{}.OpenAPIModelName():             schema_pkg_apis_alertenrichment_v1beta1_Matcher(ref),
+		QuerySampleEnricher{}.OpenAPIModelName(): schema_pkg_apis_alertenrichment_v1beta1_QuerySampleEnricher(ref),
+		RawDataSourceQuery{}.OpenAPIModelName():  schema_pkg_apis_alertenrichment_v1beta1_RawDataSourceQuery(ref),
+		SiftEnricher{}.OpenAPIModelName():        schema_pkg_apis_alertenrichment_v1beta1_SiftEnricher(ref),
+		Step{}.OpenAPIModelName():                schema_pkg_apis_alertenrichment_v1beta1_Step(ref),
 	}
 }
 
@@ -60,31 +61,20 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichment(ref common.Referenc
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichmentSpec"),
+							Ref:     ref(AlertEnrichmentSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichmentSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentJSONCodec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "AlertEnrichmentJSONCodec is a JSON codec for AlertEnrichment resources",
-				Type:        []string{"object"},
-			},
-		},
+			AlertEnrichmentSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -111,7 +101,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentList(ref common.Refe
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -121,7 +111,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentList(ref common.Refe
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichment"),
+										Ref:     ref(AlertEnrichment{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -131,7 +121,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentList(ref common.Refe
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichment", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			AlertEnrichment{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -185,7 +175,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref common.Refe
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Matcher"),
+										Ref:     ref(Matcher{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -199,7 +189,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref common.Refe
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Matcher"),
+										Ref:     ref(Matcher{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -233,7 +223,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref common.Refe
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Step"),
+										Ref:     ref(Step{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -244,7 +234,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref common.Refe
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Matcher", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Step"},
+			Matcher{}.OpenAPIModelName(), Step{}.OpenAPIModelName()},
 	}
 }
 
@@ -282,7 +272,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AssignEnricher(ref common.Reference
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Assignment"),
+										Ref:     ref(Assignment{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -293,7 +283,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AssignEnricher(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Assignment"},
+			Assignment{}.OpenAPIModelName()},
 	}
 }
 
@@ -351,7 +341,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_Condition(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Matcher"),
+										Ref:     ref(Matcher{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -365,7 +355,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_Condition(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Matcher"),
+										Ref:     ref(Matcher{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -374,14 +364,14 @@ func schema_pkg_apis_alertenrichment_v1beta1_Condition(ref common.ReferenceCallb
 					"dataSourceQuery": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DataSourceQuery is a data source query to run. If the query returns a non-zero value, then the condition is taken to be true.",
-							Ref:         ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.RawDataSourceQuery"),
+							Ref:         ref(RawDataSourceQuery{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Matcher", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.RawDataSourceQuery"},
+			Matcher{}.OpenAPIModelName(), RawDataSourceQuery{}.OpenAPIModelName()},
 	}
 }
 
@@ -395,7 +385,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_Conditional(ref common.ReferenceCal
 						SchemaProps: spec.SchemaProps{
 							Description: "If is the condition to evaluate.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Condition"),
+							Ref:         ref(Condition{}.OpenAPIModelName()),
 						},
 					},
 					"then": {
@@ -406,7 +396,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_Conditional(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Step"),
+										Ref:     ref(Step{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -420,7 +410,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_Conditional(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Step"),
+										Ref:     ref(Step{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -431,7 +421,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_Conditional(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Condition", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Step"},
+			Condition{}.OpenAPIModelName(), Step{}.OpenAPIModelName()},
 	}
 }
 
@@ -453,12 +443,12 @@ func schema_pkg_apis_alertenrichment_v1beta1_DataSourceEnricher(ref common.Refer
 					},
 					"raw": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.RawDataSourceQuery"),
+							Ref: ref(RawDataSourceQuery{}.OpenAPIModelName()),
 						},
 					},
 					"logs": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.LogsDataSourceQuery"),
+							Ref: ref(LogsDataSourceQuery{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -466,7 +456,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_DataSourceEnricher(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.LogsDataSourceQuery", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.RawDataSourceQuery"},
+			LogsDataSourceQuery{}.OpenAPIModelName(), RawDataSourceQuery{}.OpenAPIModelName()},
 	}
 }
 
@@ -479,51 +469,56 @@ func schema_pkg_apis_alertenrichment_v1beta1_EnricherConfig(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"asserts\"`\n - `\"assign\"`\n - `\"assistant\"`\n - `\"dsquery\"`\n - `\"explain\"`\n - `\"external\"`\n - `\"loop\"`\n - `\"sift\"`",
+							Description: "Possible enum values:\n - `\"asserts\"`\n - `\"assign\"`\n - `\"assistant\"`\n - `\"dsquery\"`\n - `\"explain\"`\n - `\"external\"`\n - `\"loop\"`\n - `\"querySample\"`\n - `\"sift\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"asserts", "assign", "assistant", "dsquery", "explain", "external", "loop", "sift"},
+							Enum:        []interface{}{"asserts", "assign", "assistant", "dsquery", "explain", "external", "loop", "querySample", "sift"},
 						},
 					},
 					"assign": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AssignEnricher"),
+							Ref: ref(AssignEnricher{}.OpenAPIModelName()),
 						},
 					},
 					"external": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.ExternalEnricher"),
+							Ref: ref(ExternalEnricher{}.OpenAPIModelName()),
 						},
 					},
 					"dataSource": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.DataSourceEnricher"),
+							Ref: ref(DataSourceEnricher{}.OpenAPIModelName()),
 						},
 					},
 					"sift": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.SiftEnricher"),
+							Ref: ref(SiftEnricher{}.OpenAPIModelName()),
 						},
 					},
 					"asserts": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AssertsEnricher"),
+							Ref: ref(AssertsEnricher{}.OpenAPIModelName()),
 						},
 					},
 					"explain": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.ExplainEnricher"),
+							Ref: ref(ExplainEnricher{}.OpenAPIModelName()),
 						},
 					},
 					"loop": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.LoopEnricher"),
+							Ref: ref(LoopEnricher{}.OpenAPIModelName()),
 						},
 					},
 					"assistant": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AssistantEnricher"),
+							Ref: ref(AssistantEnricher{}.OpenAPIModelName()),
+						},
+					},
+					"querySample": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(QuerySampleEnricher{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -531,7 +526,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_EnricherConfig(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AssertsEnricher", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AssignEnricher", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AssistantEnricher", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.DataSourceEnricher", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.ExplainEnricher", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.ExternalEnricher", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.LoopEnricher", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.SiftEnricher"},
+			AssertsEnricher{}.OpenAPIModelName(), AssignEnricher{}.OpenAPIModelName(), AssistantEnricher{}.OpenAPIModelName(), DataSourceEnricher{}.OpenAPIModelName(), ExplainEnricher{}.OpenAPIModelName(), ExternalEnricher{}.OpenAPIModelName(), LoopEnricher{}.OpenAPIModelName(), QuerySampleEnricher{}.OpenAPIModelName(), SiftEnricher{}.OpenAPIModelName()},
 	}
 }
 
@@ -670,6 +665,17 @@ func schema_pkg_apis_alertenrichment_v1beta1_Matcher(ref common.ReferenceCallbac
 	}
 }
 
+func schema_pkg_apis_alertenrichment_v1beta1_QuerySampleEnricher(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "QuerySampleEnricher configures an enricher that samples data from the queries used in the alert rule definition, such as logs.",
+				Type:        []string{"object"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_alertenrichment_v1beta1_RawDataSourceQuery(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -680,7 +686,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_RawDataSourceQuery(ref common.Refer
 					"request": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The data source request to perform.",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+							Ref:         ref(v0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
 					"refId": {
@@ -694,7 +700,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_RawDataSourceQuery(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+			v0alpha1.Unstructured{}.OpenAPIModelName()},
 	}
 }
 
@@ -728,19 +734,19 @@ func schema_pkg_apis_alertenrichment_v1beta1_Step(ref common.ReferenceCallback) 
 					"timeout": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Timeout is the maximum about of time this specific enrichment is allowed to take.",
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Duration"),
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.Duration"),
 						},
 					},
 					"enricher": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Enricher specifies what enricher to run and it's configuration.",
-							Ref:         ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.EnricherConfig"),
+							Ref:         ref(EnricherConfig{}.OpenAPIModelName()),
 						},
 					},
 					"conditional": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Conditional allows branching to specifies what enricher to run and it's configuration.",
-							Ref:         ref("github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Conditional"),
+							Ref:         ref(Conditional{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -748,6 +754,6 @@ func schema_pkg_apis_alertenrichment_v1beta1_Step(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Conditional", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.EnricherConfig", "k8s.io/apimachinery/pkg/apis/meta/v1.Duration"},
+			Conditional{}.OpenAPIModelName(), EnricherConfig{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Duration"},
 	}
 }

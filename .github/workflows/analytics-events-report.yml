@@ -17,13 +17,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'yarn'
+        uses: ./.github/actions/setup-node
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
 
       - name: Generate analytics report
         run: yarn analytics-report

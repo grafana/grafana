@@ -1,13 +1,14 @@
 import { cloneDeep, merge } from 'lodash';
 import { useEffect, useMemo, useCallback, useState } from 'react';
 
-import { InterpolateFunction, SelectableValue, TraceSearchProps } from '@grafana/data';
+import { type InterpolateFunction, type SelectableValue, type TraceSearchProps } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { DEFAULT_SPAN_FILTERS, randomId } from '../state/constants';
 import { changePanelState } from '../state/explorePane';
 
-import { TraceSpan, CriticalPathSection } from './components/types/trace';
+import { SPAN_NAME, SERVICE_NAME } from './components/constants/span';
+import { type TraceSpan, type CriticalPathSection } from './components/types/trace';
 import { filterSpans } from './components/utils/filter-spans';
 
 /**
@@ -25,7 +26,7 @@ export function migrateToAdhocFilters(search: TraceSearchProps): TraceSearchProp
   // Migrate serviceName
   if (search.serviceName && search.serviceName.trim() !== '') {
     adhocFilters.push({
-      key: 'serviceName',
+      key: SERVICE_NAME,
       operator: search.serviceNameOperator || '=',
       value: search.serviceName,
     });
@@ -34,7 +35,7 @@ export function migrateToAdhocFilters(search: TraceSearchProps): TraceSearchProp
   // Migrate spanName
   if (search.spanName && search.spanName.trim() !== '') {
     adhocFilters.push({
-      key: 'spanName',
+      key: SPAN_NAME,
       operator: search.spanNameOperator || '=',
       value: search.spanName,
     });

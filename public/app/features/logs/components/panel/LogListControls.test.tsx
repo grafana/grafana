@@ -2,12 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, EventBusSrv, LogLevel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { downloadLogs } from '../../utils';
 import { createLogLine, createLogRow } from '../mocks/logRow';
 
-import { LogListFontSize } from './LogList';
+import { type LogListFontSize } from './LogList';
 import { LogListContextProvider } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { ScrollToLogsEvent } from './virtualization';
@@ -19,6 +18,12 @@ const OLDEST_LOGS_LABEL_COPY = 'Oldest logs first';
 const DEDUPE_LABEL_COPY = 'Deduplication';
 const SHOW_TIMESTAMP_LABEL_COPY = 'Show timestamps';
 const WRAP_LINES_LABEL_COPY = 'Wrap lines';
+const ENABLE_UNWRAPPED_COLUMNS_COPY = 'Enable columns';
+const DISABLE_UNWRAPPED_COLUMNS_COPY = 'Disable columns';
+const COLUMNS_NOT_SUPPORTED_COPY = 'Columns not supported';
+const COLUMNS_ENABLED_COPY = 'Columns enabled';
+const COLUMNS_DISABLED_COPY = 'Columns disabled';
+const COLUMNS_DISABLED_TOOLTIP_COPY = 'Columns are not supported with line wrapping enabled';
 const WRAP_JSON_TOOLTIP_COPY = 'Enable line wrapping and prettify JSON';
 const WRAP_JSON_LABEL_COPY = 'Wrap JSON';
 const WRAP_DISABLE_LABEL_COPY = 'Disable line wrapping';
@@ -50,10 +55,24 @@ jest.mock('@grafana/assistant', () => {
   return {
     ...jest.requireActual('@grafana/assistant'),
     useAssistant: jest.fn().mockReturnValue({
+      isLoading: false,
       isAvailable: true,
     }),
   };
 });
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
 
 const fontSize: LogListFontSize = 'default';
 const contextProps = {
@@ -65,12 +84,14 @@ const contextProps = {
   fontSize,
   logs: [],
   showControls: true,
+  showLevel: true,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: false,
   wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
+  unwrappedColumns: false,
 };
 
 const assertExpandedOptionsCopyVisible = () => {
@@ -81,6 +102,10 @@ const assertExpandedOptionsCopyVisible = () => {
   expect(screen.getByText(SCROLL_TOP_LABEL_COPY)).toBeVisible();
 };
 describe('LogListControls', () => {
+  beforeEach(() => {
+    setBooleanFlags({ newLogsPanel: false });
+  });
+
   test('Renders without errors', () => {
     render(
       <LogListContextProvider {...contextProps}>
@@ -99,6 +124,8 @@ describe('LogListControls', () => {
     expect(screen.queryByLabelText(EXPAND_JSON_LOGS_LABEL_COPY)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(ESCAPE_NEWLINES_TOOLTIP_COPY)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(REMOVE_ESCAPE_NEWLINES_LABEL_COPY)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(ENABLE_UNWRAPPED_COLUMNS_COPY)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(DISABLE_UNWRAPPED_COLUMNS_COPY)).not.toBeInTheDocument();
   });
 
   test('Renders legacy controls', () => {
@@ -127,6 +154,19 @@ describe('LogListControls', () => {
       expect(screen.queryByLabelText(SHOW_TIMESTAMP_LABEL_COPY)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(WRAP_LINES_LABEL_COPY)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(DOWNLOAD_LOGS_LABEL_COPY)).not.toBeInTheDocument();
+    }
+  );
+
+  test.each([CoreApp.Dashboard, CoreApp.PanelEditor, CoreApp.PanelViewer])(
+    'Allows download in Dashboards when enabled',
+    (app: CoreApp) => {
+      render(
+        <LogListContextProvider {...contextProps} app={app} allowDownload>
+          <LogListControls eventBus={new EventBusSrv()} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY)).toBeInTheDocument();
     }
   );
 
@@ -304,8 +344,7 @@ describe('LogListControls', () => {
   });
 
   test('Controls line wrapping and prettify JSON', async () => {
-    const originalFlagState = config.featureToggles.newLogsPanel;
-    config.featureToggles.newLogsPanel = true;
+    setBooleanFlags({ newLogsPanel: true });
 
     const onLogOptionsChange = jest.fn();
     render(
@@ -339,13 +378,49 @@ describe('LogListControls', () => {
     expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', false);
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(6);
-
-    config.featureToggles.newLogsPanel = originalFlagState;
   });
 
-  test('Controls line wrapping and prettify JSON', async () => {
-    const originalFlagState = config.featureToggles.newLogsPanel;
-    config.featureToggles.newLogsPanel = true;
+  test('Enables column controls with unwrapped logs', async () => {
+    setBooleanFlags({ newLogsPanel: true });
+
+    const { rerender } = render(
+      <LogListContextProvider {...contextProps} wrapLogMessage={false} unwrappedColumns>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    expect(screen.getByLabelText(DISABLE_UNWRAPPED_COLUMNS_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(DISABLE_UNWRAPPED_COLUMNS_COPY)).toBeEnabled();
+    expect(screen.getByText(COLUMNS_ENABLED_COPY)).toBeInTheDocument();
+    expect(screen.queryByText(COLUMNS_DISABLED_COPY)).not.toBeInTheDocument();
+
+    rerender(
+      <LogListContextProvider {...contextProps} wrapLogMessage={false} unwrappedColumns={false}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    expect(screen.getByLabelText(ENABLE_UNWRAPPED_COLUMNS_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(ENABLE_UNWRAPPED_COLUMNS_COPY)).toBeEnabled();
+    expect(screen.getByText(COLUMNS_DISABLED_COPY)).toBeInTheDocument();
+    expect(screen.queryByText(COLUMNS_ENABLED_COPY)).not.toBeInTheDocument();
+  });
+
+  test('Disables column controls for wrapped logs', async () => {
+    setBooleanFlags({ newLogsPanel: true });
+
+    render(
+      <LogListContextProvider {...contextProps} wrapLogMessage unwrappedColumns>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    expect(screen.getByLabelText(COLUMNS_DISABLED_TOOLTIP_COPY)).toBeDisabled();
+    expect(screen.getByText(COLUMNS_NOT_SUPPORTED_COPY)).toBeInTheDocument();
+  });
+
+  test('Controls timestamp resolution', async () => {
+    setBooleanFlags({ newLogsPanel: true });
 
     const onLogOptionsChange = jest.fn();
     render(
@@ -370,8 +445,6 @@ describe('LogListControls', () => {
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(3);
     expect(onLogOptionsChange).toHaveBeenCalledWith('showTime', false);
-
-    config.featureToggles.newLogsPanel = originalFlagState;
   });
 
   test('Controls syntax highlighting', async () => {
@@ -417,8 +490,7 @@ describe('LogListControls', () => {
   });
 
   test('Controls font size', async () => {
-    const originalValue = config.featureToggles.newLogsPanel;
-    config.featureToggles.newLogsPanel = true;
+    setBooleanFlags({ newLogsPanel: true });
 
     render(
       <LogListContextProvider {...contextProps}>
@@ -430,8 +502,6 @@ describe('LogListControls', () => {
 
     await userEvent.click(screen.getByLabelText(FONT_SIZE_SMALL_LABEL_COPY));
     await screen.findByLabelText(FONT_SIZE_SMALL_TOOLTIP_COPY);
-
-    config.featureToggles.newLogsPanel = originalValue;
   });
 
   test.each([

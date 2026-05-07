@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -77,7 +78,7 @@ type Dialect interface {
 	// CreateDatabaseFromSnapshot is called when migration log table is not found.
 	// Dialect can recreate all tables from existing snapshot. After successful (nil error) return,
 	// migrator will list migrations from the log, and apply all missing migrations.
-	CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, migrationLogTableName string) error
+	CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, migrationLogTableName string, logger log.Logger) error
 
 	IsUniqueConstraintViolation(err error) bool
 	ErrorMessage(err error) string
@@ -201,7 +202,7 @@ func (b *BaseDialect) CreateTableSQL(table *Table) string {
 	}
 
 	if len(pkList) > 1 {
-		quotedCols := []string{}
+		quotedCols := make([]string, 0, len(pkList))
 		for _, col := range pkList {
 			quotedCols = append(quotedCols, b.dialect.Quote(col))
 		}
@@ -231,7 +232,7 @@ func (b *BaseDialect) CreateIndexSQL(tableName string, index *Index) string {
 
 	idxName := index.XName(tableName)
 
-	quotedCols := []string{}
+	quotedCols := make([]string, 0, len(index.Cols))
 	for _, col := range index.Cols {
 		quotedCols = append(quotedCols, b.dialect.Quote(col))
 	}
@@ -253,7 +254,7 @@ func (b *BaseDialect) CopyTableData(sourceTable string, targetTable string, sour
 	targetColsSQL := b.QuoteColList(targetCols)
 
 	quote := b.dialect.Quote
-	return fmt.Sprintf("INSERT INTO %s (%s) SELECT %s FROM %s", quote(targetTable), targetColsSQL, sourceColsSQL, quote(sourceTable))
+	return fmt.Sprintf("INSERT INTO %s (%s)\nSELECT %s\nFROM %s", quote(targetTable), targetColsSQL, sourceColsSQL, quote(sourceTable))
 }
 
 func (b *BaseDialect) DropTable(tableName string) string {
@@ -355,7 +356,7 @@ func (b *BaseDialect) CleanDB(engine *xorm.Engine) error {
 	return nil
 }
 
-func (b *BaseDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, tableName string) error {
+func (b *BaseDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, migrationLogTableName string, logger log.Logger) error {
 	return nil
 }
 

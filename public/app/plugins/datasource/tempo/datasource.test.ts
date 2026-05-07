@@ -1,9 +1,9 @@
-import { lastValueFrom, Observable, of } from 'rxjs';
+import { lastValueFrom, type Observable, of } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   dataFrameToJSON,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   dateTime,
   FieldType,
   getDefaultTimeRange,
@@ -11,24 +11,24 @@ import {
   createDataFrame,
   PluginType,
   CoreApp,
-  DataSourceApi,
-  DataQueryRequest,
+  type DataSourceApi,
+  type DataQueryRequest,
   getTimeZone,
-  PluginMetaInfo,
-  DataLink,
+  type PluginMetaInfo,
+  type DataLink,
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 import {
-  BackendDataSourceResponse,
+  type BackendDataSourceResponse,
   config,
-  FetchResponse,
+  type FetchResponse,
   setBackendSrv,
   setDataSourceSrv,
-  TemplateSrv,
-  DataSourceSrv,
-  BackendSrv,
+  type TemplateSrv,
+  type DataSourceSrv,
+  type BackendSrv,
 } from '@grafana/runtime';
-import { BarGaugeDisplayMode, DataQuery, TableCellDisplayMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, type DataQuery, TableCellDisplayMode } from '@grafana/schema';
 
 import { TempoVariableQueryType } from './VariableQueryEditor';
 import { createFetchResponse } from './_importedDependencies/test/helpers/createFetchResponse';
@@ -50,7 +50,7 @@ import mockJson from './test/mockJsonResponse.json';
 import mockServiceGraph from './test/mockServiceGraph.json';
 import { createTempoDatasource } from './test/mocks';
 import { initTemplateSrv } from './test/test_utils';
-import { TempoJsonData, TempoQuery } from './types';
+import { type TempoJsonData, type TempoQuery } from './types';
 
 describe('Tempo data source', () => {
   // Mock the console error so that running the test suite doesnt throw the error
@@ -61,7 +61,6 @@ describe('Tempo data source', () => {
 
   describe('runs correctly', () => {
     const handleStreamingQuery = jest.spyOn(TempoDatasource.prototype, 'handleStreamingQuery');
-    const request = jest.spyOn(TempoDatasource.prototype, '_request');
     const templateSrv: TemplateSrv = { replace: (s: string) => s } as unknown as TemplateSrv;
 
     const range = {
@@ -97,7 +96,6 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
       expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
-      expect(request).toHaveBeenCalledTimes(0);
     });
 
     it('for traceqlSearch queries when live is enabled', async () => {
@@ -105,7 +103,6 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
       expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
-      expect(request).toHaveBeenCalledTimes(0);
     });
 
     it('for traceql queries when live is not enabled', async () => {
@@ -113,7 +110,6 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
       expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
-      expect(request).toHaveBeenCalledTimes(1);
     });
 
     it('for traceqlSearch queries when live is not enabled', async () => {
@@ -121,7 +117,6 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
       expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
-      expect(request).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -762,6 +757,19 @@ describe('Tempo service graph view', () => {
     ]);
   });
 
+  it('should escape span with multi line content correctly', () => {
+    const spanContent = [
+      `
+      SELECT * from "my_table"
+      WHERE "data_enabled" = 1
+      ORDER BY "name" ASC`,
+    ];
+    let escaped = getEscapedRegexValues(getEscapedValues(spanContent));
+    expect(escaped).toEqual([
+      '\\n      SELECT \\\\* from \\"my_table\\"\\n      WHERE \\"data_enabled\\" = 1\\n      ORDER BY \\"name\\" ASC',
+    ]);
+  });
+
   it('should get field config correctly', () => {
     let datasourceUid = 's4Jvz8Qnk';
     let tempoDatasourceUid = 'EbPO1fYnz';
@@ -1305,7 +1313,6 @@ function setupBackendSrv(frame: DataFrame) {
 }
 
 export const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
-  id: 0,
   uid: 'gdev-tempo',
   type: 'tracing',
   name: 'tempo',

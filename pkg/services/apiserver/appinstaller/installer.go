@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"time"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,13 +20,12 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
-
-type LegacyStorageGetterFunc func(schema.GroupVersionResource) grafanarest.Storage
 
 type LegacyStorageProvider interface {
 	GetLegacyStorage(schema.GroupVersionResource) grafanarest.Storage
@@ -42,14 +41,37 @@ type AuthorizerProvider interface {
 	GetAuthorizer() authorizer.Authorizer
 }
 
+// ClusterScopedStorageAuthorizerProvider allows apps to provide custom storage-level
+// authorizers for cluster-scoped resources.
+// Apps with cluster-scoped resources MUST implement this interface to explicitly
+// opt-in to cluster-scoped storage handling.
+type ClusterScopedStorageAuthorizerProvider interface {
+	// GetClusterScopedStorageAuthorizer returns the storage-level authorizer
+	// for a given cluster-scoped GroupResource.
+	// Return nil to use the default deny authorizer.
+	GetClusterScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer
+}
+
+// NamespaceScopedStorageAuthorizerProvider allows apps to provide custom authorizers on the storage layer,
+// specifically when they are needing to authorize based on the name of the resource (and need to filter lists accordingly)
+// or if they need the spec of the object.
+// Optional to implement.
+type NamespaceScopedStorageAuthorizerProvider interface {
+	// return nil to skip
+	GetNamespaceScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer
+}
+
+// StorageOptionsProvider allows app installers to configure per-resource
+// storage options (such as folder support) for unified storage. This is
+// needed for resources that use unified storage exclusively (nil legacy
+// storage) and need to opt in to storage features that are off by default.
+type StorageOptionsProvider interface {
+	GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions
+}
+
 type AppInstallerConfig struct {
 	CustomConfig             any
 	AllowedV0Alpha1Resources []string
-}
-
-// serverLock interface defines a lock mechanism for executing actions with a timeout
-type serverLock interface {
-	LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
 }
 
 // AddToScheme adds app installer schemas to the runtime scheme
@@ -108,9 +130,14 @@ func RegisterAuthorizers(
 		if authorizerProvider, ok := installer.(AuthorizerProvider); ok {
 			authorizer := authorizerProvider.GetAuthorizer()
 			for _, gv := range installer.GroupVersions() {
+				if authorizer == nil {
+					panic("authorizer cannot be nil for api group: " + gv.String())
+				}
 				registrar.Register(gv, authorizer)
 				logger.Debug("Registered authorizer", "group", gv.Group, "version", gv.Version, "app")
 			}
+		} else {
+			panic("authorizer cannot be nil for api group: " + installer.GroupVersions()[0].Group)
 		}
 	}
 }
@@ -134,32 +161,35 @@ func InstallAPIs(
 	server *genericapiserver.GenericAPIServer,
 	restOpsGetter generic.RESTOptionsGetter,
 	storageOpts *grafanaapiserveroptions.StorageOptions,
-	kvStore grafanarest.NamespacedKVStore,
-	lock serverLock,
-	namespaceMapper request.NamespaceMapper,
 	dualWriteService dualwrite.Service,
-	dualWriterMetrics *grafanarest.DualWriterMetrics,
 	builderMetrics *builder.BuilderMetrics,
 	apiResourceConfig *serverstore.ResourceConfig,
 ) error {
 	logger := logging.FromContext(ctx)
+	effectiveOptsGetter := restOpsGetter
+	if effectiveOptsGetter == nil {
+		logger.Warn("no RESTOptionsGetter configured, using noop; unified storage will not be available")
+		effectiveOptsGetter = &noopRESTOptionsGetter{}
+	}
 	for _, installer := range appInstallers {
 		logger.Debug("Installing APIs for app installer", "app", installer.ManifestData().AppName)
+
+		// Register per-resource storage options (e.g. folder support).
+		// Must happen before InstallAPIs so the RESTOptionsGetter has
+		// the options when it creates the underlying storage.
+		registerStorageOptions(installer, restOpsGetter, logger)
+
 		wrapper := &serverWrapper{
 			ctx:               ctx,
-			GenericAPIServer:  server,
+			GenericAPIServer:  appsdkapiserver.NewKubernetesGenericAPIServer(server),
 			installer:         installer,
 			storageOpts:       storageOpts,
-			restOptionsGetter: restOpsGetter,
-			kvStore:           kvStore,
-			lock:              lock,
-			namespaceMapper:   namespaceMapper,
+			restOptionsGetter: effectiveOptsGetter,
 			dualWriteService:  dualWriteService,
-			dualWriterMetrics: dualWriterMetrics,
 			builderMetrics:    builderMetrics,
 			apiResourceConfig: apiResourceConfig,
 		}
-		if err := installer.InstallAPIs(wrapper, restOpsGetter); err != nil {
+		if err := installer.InstallAPIs(wrapper, effectiveOptsGetter); err != nil {
 			return fmt.Errorf("failed to install APIs for app %s: %w", installer.ManifestData().AppName, err)
 		}
 		logger.Info("Installed APIs for app", "app", installer.ManifestData().AppName)
@@ -212,5 +242,44 @@ func createPostStartHook(
 			}
 		}()
 		return nil
+	}
+}
+
+// registerStorageOptions checks if the installer implements StorageOptionsProvider
+// and registers per-resource storage options on the RESTOptionsGetter.
+func registerStorageOptions(
+	installer appsdkapiserver.AppInstaller,
+	restOpsGetter generic.RESTOptionsGetter,
+	logger logging.Logger,
+) {
+	provider, ok := installer.(StorageOptionsProvider)
+	if !ok {
+		return
+	}
+	reg, ok := restOpsGetter.(*apistore.RESTOptionsGetter)
+	if !ok {
+		logger.Warn("StorageOptionsProvider is implemented but RESTOptionsGetter is not the expected type, storage options will not be applied",
+			"app", installer.ManifestData().AppName)
+		return
+	}
+	md := installer.ManifestData()
+	registered := make(map[string]struct{})
+	for _, v := range md.Versions {
+		for _, k := range v.Kinds {
+			if k.Plural == "" {
+				continue
+			}
+			gr := schema.GroupResource{
+				Group:    md.Group,
+				Resource: strings.ToLower(k.Plural),
+			}
+			if _, done := registered[gr.String()]; done {
+				continue
+			}
+			if opts := provider.GetStorageOptions(gr); opts != nil {
+				reg.RegisterOptions(gr, *opts)
+				registered[gr.String()] = struct{}{}
+			}
+		}
 	}
 }

@@ -1,5 +1,6 @@
-import { t } from '@grafana/i18n';
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+
+import { generateNewBranchName } from './utils/newBranchName';
 
 export function getDefaultWorkflow(config?: RepositoryView, loadedFromRef?: string) {
   if (loadedFromRef && loadedFromRef !== config?.branch) {
@@ -8,29 +9,11 @@ export function getDefaultWorkflow(config?: RepositoryView, loadedFromRef?: stri
   return config?.workflows?.[0];
 }
 
-export function getWorkflowOptions(config?: RepositoryView) {
-  if (!config) {
-    return [];
-  }
+export function getCanPushToConfiguredBranch(repository?: RepositoryView) {
+  return repository?.workflows?.includes('write') ?? false;
+}
 
-  if (config.type === 'local') {
-    return [{ label: `Save`, value: 'write' }];
-  }
-
-  // Return the workflows in the configured order
-  return config.workflows.map((value) => {
-    switch (value) {
-      case 'write':
-        return {
-          label: t('provisioning.workflow-options-label.push-to-existing-branch', 'Push to an existing branch'),
-          value,
-        };
-      case 'branch':
-        return {
-          label: t('provisioning.workflow-options-label.push-to-a-new-branch', 'Push to a new branch'),
-          value,
-        };
-    }
-    return { label: value, value };
-  });
+export function getDefaultRef(repository: RepositoryView | undefined, branchPrefix: string, loadedFromRef?: string) {
+  const workflow = getDefaultWorkflow(repository, loadedFromRef);
+  return workflow === 'branch' ? generateNewBranchName(branchPrefix) : (repository?.branch ?? '');
 }

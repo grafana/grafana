@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Icon, Input, Tooltip, Label, Button, useStyles2, TextLink } from '@grafana/ui';
@@ -45,7 +45,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<str
     <>
       <Label>
         <h6>
-          <Trans i18nKey="components.advanced-resource-picker.label-resource-uri">Resource URI(s) </Trans>
+          <Trans i18nKey="components.advanced-resource-picker.label-resource-uri">Resource URI(s)</Trans>
           <Tooltip
             content={
               <Trans i18nKey="components.advanced-resource-picker.tooltip-resource-uri">

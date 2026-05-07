@@ -7,8 +7,8 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -58,6 +58,13 @@ const (
 	RelationGetPermissions string = "get_permissions"
 	RelationSetPermissions string = "set_permissions"
 
+	RelationCanGet            string = "can_get"
+	RelationCanCreate         string = "can_create"
+	RelationCanUpdate         string = "can_update"
+	RelationCanDelete         string = "can_delete"
+	RelationCanGetPermissions string = "can_get_permissions"
+	RelationCanSetPermissions string = "can_set_permissions"
+
 	RelationSubresourceSetView  string = "resource_" + RelationSetView
 	RelationSubresourceSetEdit  string = "resource_" + RelationSetEdit
 	RelationSubresourceSetAdmin string = "resource_" + RelationSetAdmin
@@ -68,6 +75,13 @@ const (
 	RelationSubresourceDelete         string = "resource_" + RelationDelete
 	RelationSubresourceGetPermissions string = "resource_" + RelationGetPermissions
 	RelationSubresourceSetPermissions string = "resource_" + RelationSetPermissions
+
+	RelationCanSubresourceGet            string = "can_resource_" + RelationGet
+	RelationCanSubresourceCreate         string = "can_resource_" + RelationCreate
+	RelationCanSubresourceUpdate         string = "can_resource_" + RelationUpdate
+	RelationCanSubresourceDelete         string = "can_resource_" + RelationDelete
+	RelationCanSubresourceGetPermissions string = "can_resource_" + RelationGetPermissions
+	RelationCanSubresourceSetPermissions string = "can_resource_" + RelationSetPermissions
 )
 
 // RelationsGroupResource are relations that can be added on type "group_resource".
@@ -132,6 +146,46 @@ var RelationToVerbMapping = map[string]string{
 	RelationDelete:         utils.VerbDelete,
 	RelationGetPermissions: utils.VerbGetPermissions,
 	RelationSetPermissions: utils.VerbSetPermissions,
+}
+
+// FolderPermissionRelation returns the optimized folder relation for permission management.
+func FolderPermissionRelation(relation string) string {
+	switch relation {
+	case RelationGet:
+		return RelationCanGet
+	case RelationCreate:
+		return RelationCanCreate
+	case RelationUpdate:
+		return RelationCanUpdate
+	case RelationDelete:
+		return RelationCanDelete
+	case RelationGetPermissions:
+		return RelationCanGetPermissions
+	case RelationSetPermissions:
+		return RelationCanSetPermissions
+	default:
+		return relation
+	}
+}
+
+// SubresourcePermissionRelation returns computed subresource relations that include escalation.
+func SubresourcePermissionRelation(relation string) string {
+	switch relation {
+	case RelationSubresourceGet:
+		return RelationCanSubresourceGet
+	case RelationSubresourceCreate:
+		return RelationCanSubresourceCreate
+	case RelationSubresourceUpdate:
+		return RelationCanSubresourceUpdate
+	case RelationSubresourceDelete:
+		return RelationCanSubresourceDelete
+	case RelationSubresourceGetPermissions:
+		return RelationCanSubresourceGetPermissions
+	case RelationSubresourceSetPermissions:
+		return RelationCanSubresourceSetPermissions
+	default:
+		return relation
+	}
 }
 
 func IsGroupResourceRelation(relation string) bool {
@@ -228,6 +282,9 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	if name == "*" {
+		if m.group != "" && m.resource != "" {
+			return NewGroupResourceTuple(subject, m.relation, m.group, m.resource, m.subresource), true
+		}
 		return NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
 	}
 

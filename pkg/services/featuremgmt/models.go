@@ -23,9 +23,7 @@ type FeatureToggles interface {
 	// a full server restart for a change to take place.
 	//
 	// Deprecated: FeatureToggles.IsEnabledGlobally is deprecated and will be removed in a future release.
-	// Toggles that must be reliably evaluated at the service startup should be
-	// changed to settings (see setting.StartupSettings), and/or removed entirely.
-	// For app registration please use `grafana-apiserver.runtime_config` in settings.ini
+	// Toggles that must be reliably evaluated at the service startup should be changed to settings and/or removed entirely.
 	IsEnabledGlobally(flag string) bool
 
 	// Get the enabled flags -- this *may* also include disabled flags (with value false)
@@ -128,6 +126,13 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+type Generate struct {
+	LegacyGo       bool
+	LegacyFrontend bool
+	Go             bool
+	React          bool
+}
+
 // These are properties about the feature, but not the current state or value for it
 type FeatureFlag struct {
 	Name        string           `json:"name" yaml:"name"` // Unique name
@@ -135,16 +140,25 @@ type FeatureFlag struct {
 	Stage       FeatureFlagStage `json:"stage,omitempty"`
 	Owner       codeowner        `json:"-"` // Owner person or team that owns this feature flag
 
-	// CEL-GO expression.  Using the value "true" will mean this is on by default
-	Expression string `json:"expression,omitempty"`
+	// Expression defined by the feature_toggles configuration.
+	// Supports multiple types including boolean, string, integer, float,
+	// and structured values following the OpenFeature specification.
+	// Empty values are not allowed.
+	//
+	// Using the value "true" means the feature flag is enabled by default,
+	// Using the value "false" means the feature flag is disabled by default,
+	// Using the value "1.0" means the default value of the feature flag is 1.0
+	Expression string `json:"expression"`
 
 	// Special behavior properties
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
-	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
 
 	// The server must be initialized with the value
 	RequiresRestart bool `json:"requiresRestart,omitempty"`
+
+	// Generate instructs codegen on what clients to generate for this feature flag.
+	Generate Generate `json:"-"`
 }
 
 type FeatureToggleWebhookPayload struct {

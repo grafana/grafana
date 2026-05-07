@@ -13,18 +13,18 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-cod
 
 # Install plugins in Grafana Cloud using Terraform
 
-This guide shows you how to install plugins in Grafana Cloud using Terraform. For more information about Grafana plugins see [Find and use Grafana plugins](/docs/grafana-cloud/introduction/find-and-use-plugins/).
+This guide shows you how to install plugins in Grafana Cloud using Terraform. For more information about Grafana plugins, refer to the [Find and use Grafana plugins](/docs/grafana-cloud/introduction/find-and-use-plugins/) documentation.
 
 ## Before you begin
 
-Before you begin, you should have the following available:
+Before you begin, ensure you have the following:
 
 - A Grafana Cloud account; for more information on setting up a Grafana Cloud account, refer to [Get started](https://grafana.com/docs/grafana-cloud/get-started/).
 - Terraform installed on your machine; for more information on how to install Terraform, refer to the [Terraform install documentation](https://developer.hashicorp.com/terraform/install).
 - Administrator permissions in your Grafana instance; for more information on assigning Grafana RBAC roles, refer to [Assign RBAC roles](/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/assign-rbac-roles/).
 
 {{< admonition type="note" >}}
-All of the following Terraform configuration files should be saved in the same directory.
+Save all of the following Terraform configuration files in the same directory.
 {{< /admonition >}}
 
 ## Configure the Grafana provider
@@ -74,8 +74,8 @@ resource "grafana_cloud_plugin_installation" "grafana-clock-panel" {
 }
 ```
 
-## Conclusion
+## Summary
 
 In this guide, you learned how to install a plugin in Grafana Cloud using Terraform.
 
-To learn more about plugin installation, refer to [Grafana provider's documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_plugin_installation).
+To learn more about plugin installation, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_plugin_installation).

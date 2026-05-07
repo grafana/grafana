@@ -23,6 +23,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -61,6 +62,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
@@ -170,6 +172,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -208,6 +211,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
@@ -353,6 +357,29 @@ export type ListCheckApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -421,6 +448,29 @@ export type DeletecollectionCheckApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
@@ -555,6 +605,29 @@ export type ListCheckTypeApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -623,6 +696,29 @@ export type DeletecollectionCheckTypeApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
@@ -717,7 +813,7 @@ export type UpdateCheckTypeStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type CreateRegisterApiResponse = /** status 200 OK */ CreateRegister;
+export type CreateRegisterApiResponse = /** status 200 OK */ CreateRegisterResponse;
 export type CreateRegisterApiArg = void;
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -844,9 +940,7 @@ export type CheckOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -883,9 +977,7 @@ export type CheckReport = {
 export type CheckStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
@@ -981,9 +1073,7 @@ export type CheckTypeOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -994,9 +1084,7 @@ export type CheckTypeOperatorState = {
 export type CheckTypeStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
@@ -1021,7 +1109,7 @@ export type CheckTypeList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type CreateRegister = {
+export type CreateRegisterResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */

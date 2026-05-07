@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { TableCellDisplayMode } from '../../types';
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
-import { ImageCellProps, TableCellStyles } from '../types';
+import { type ImageCellProps, type TableCellStyles } from '../types';
 
 export const ImageCell = ({ cellOptions, field, value, rowIdx }: ImageCellProps) => {
   const [error, setError] = useState(false);
@@ -22,13 +22,14 @@ export const ImageCell = ({ cellOptions, field, value, rowIdx }: ImageCellProps)
   );
 };
 
-export const getStyles: TableCellStyles = () =>
-  css({
-    '&, a, img': {
-      width: '100%',
-      height: '100%',
-    },
-    img: {
-      objectFit: 'contain',
-    },
-  });
+const styles = css({
+  '&, a, img': {
+    width: '100%',
+    height: '100%',
+  },
+  img: {
+    objectFit: 'contain',
+  },
+});
+
+export const getStyles: TableCellStyles = () => styles;

@@ -4,10 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/conversion"
-
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
@@ -121,6 +120,14 @@ func countPanelsV0V1(spec map[string]interface{}) int {
 	return count
 }
 
+// countTargetsFromPanel counts the number of targets/queries in a panel.
+func countTargetsFromPanel(panelMap map[string]interface{}) int {
+	if targets, ok := panelMap["targets"].([]interface{}); ok {
+		return len(targets)
+	}
+	return 0
+}
+
 // countQueriesV0V1 counts data queries in v0alpha1 or v1beta1 dashboard spec
 // Note: Row panels are layout containers and should not have queries.
 // We ignore any queries on row panels themselves, but count queries in their collapsed panels.
@@ -145,9 +152,7 @@ func countQueriesV0V1(spec map[string]interface{}) int {
 
 		// Count queries in regular panels (NOT row panels)
 		if panelType != "row" {
-			if targets, ok := panelMap["targets"].([]interface{}); ok {
-				count += len(targets)
-			}
+			count += countTargetsFromPanel(panelMap)
 		}
 
 		// Count queries in collapsed panels inside row panels
@@ -155,9 +160,7 @@ func countQueriesV0V1(spec map[string]interface{}) int {
 			if collapsedPanels, ok := panelMap["panels"].([]interface{}); ok {
 				for _, cp := range collapsedPanels {
 					if cpMap, ok := cp.(map[string]interface{}); ok {
-						if targets, ok := cpMap["targets"].([]interface{}); ok {
-							count += len(targets)
-						}
+						count += countTargetsFromPanel(cpMap)
 					}
 				}
 			}
@@ -178,12 +181,15 @@ func countAnnotationsV0V1(spec map[string]interface{}) int {
 		return 0
 	}
 
-	annotationList, ok := annotations["list"].([]interface{})
-	if !ok {
-		return 0
+	// Handle both []interface{} (from JSON unmarshaling) and []map[string]interface{} (from programmatic creation)
+	if annotationList, ok := annotations["list"].([]interface{}); ok {
+		return len(annotationList)
+	}
+	if annotationList, ok := annotations["list"].([]map[string]interface{}); ok {
+		return len(annotationList)
 	}
 
-	return len(annotationList)
+	return 0
 }
 
 // countLinksV0V1 counts dashboard links in v0alpha1 or v1beta1 dashboard spec
@@ -192,12 +198,15 @@ func countLinksV0V1(spec map[string]interface{}) int {
 		return 0
 	}
 
-	links, ok := spec["links"].([]interface{})
-	if !ok {
-		return 0
+	// Handle both []interface{} (from JSON unmarshaling) and []map[string]interface{} (from programmatic creation)
+	if links, ok := spec["links"].([]interface{}); ok {
+		return len(links)
+	}
+	if links, ok := spec["links"].([]map[string]interface{}); ok {
+		return len(links)
 	}
 
-	return len(links)
+	return 0
 }
 
 // countVariablesV0V1 counts template variables in v0alpha1 or v1beta1 dashboard spec
@@ -211,12 +220,15 @@ func countVariablesV0V1(spec map[string]interface{}) int {
 		return 0
 	}
 
-	variableList, ok := templating["list"].([]interface{})
-	if !ok {
-		return 0
+	// Handle both []interface{} (from JSON unmarshaling) and []map[string]interface{} (from programmatic creation)
+	if variableList, ok := templating["list"].([]interface{}); ok {
+		return len(variableList)
+	}
+	if variableList, ok := templating["list"].([]map[string]interface{}); ok {
+		return len(variableList)
 	}
 
-	return len(variableList)
+	return 0
 }
 
 // collectStatsV0V1 collects statistics from v0alpha1 or v1beta1 dashboard
@@ -230,8 +242,8 @@ func collectStatsV0V1(spec map[string]interface{}) dashboardStats {
 	}
 }
 
-// countPanelsV2 counts panels in v2alpha1 or v2beta1 dashboard spec (structured)
-func countPanelsV2(elements map[string]dashv2alpha1.DashboardElement) int {
+// countPanelsV2alpha1 counts panels in v2alpha1 dashboard spec (structured)
+func countPanelsV2alpha1(elements map[string]dashv2alpha1.DashboardElement) int {
 	count := 0
 	for _, element := range elements {
 		// Check if element is a Panel (not a LibraryPanel)
@@ -244,8 +256,8 @@ func countPanelsV2(elements map[string]dashv2alpha1.DashboardElement) int {
 	return count
 }
 
-// countQueriesV2 counts data queries in v2alpha1 or v2beta1 dashboard spec
-func countQueriesV2(elements map[string]dashv2alpha1.DashboardElement) int {
+// countQueriesV2alpha1 counts data queries in v2alpha1 dashboard spec
+func countQueriesV2alpha1(elements map[string]dashv2alpha1.DashboardElement) int {
 	count := 0
 	for _, element := range elements {
 		if element.PanelKind != nil {
@@ -255,29 +267,29 @@ func countQueriesV2(elements map[string]dashv2alpha1.DashboardElement) int {
 	return count
 }
 
-// countAnnotationsV2 counts annotations in v2alpha1 or v2beta1 dashboard spec
-func countAnnotationsV2(annotations []dashv2alpha1.DashboardAnnotationQueryKind) int {
+// countAnnotationsV2alpha1 counts annotations in v2alpha1 dashboard spec
+func countAnnotationsV2alpha1(annotations []dashv2alpha1.DashboardAnnotationQueryKind) int {
 	return len(annotations)
 }
 
-// countLinksV2 counts dashboard links in v2alpha1 or v2beta1 dashboard spec
-func countLinksV2(links []dashv2alpha1.DashboardDashboardLink) int {
+// countLinksV2alpha1 counts dashboard links in v2alpha1 dashboard spec
+func countLinksV2alpha1(links []dashv2alpha1.DashboardDashboardLink) int {
 	return len(links)
 }
 
-// countVariablesV2 counts template variables in v2alpha1 or v2beta1 dashboard spec
-func countVariablesV2(variables []dashv2alpha1.DashboardVariableKind) int {
+// countVariablesV2alpha1 counts template variables in v2alpha1 dashboard spec
+func countVariablesV2alpha1(variables []dashv2alpha1.DashboardVariableKind) int {
 	return len(variables)
 }
 
 // collectStatsV2alpha1 collects statistics from v2alpha1 dashboard
 func collectStatsV2alpha1(spec dashv2alpha1.DashboardSpec) dashboardStats {
 	return dashboardStats{
-		panelCount:      countPanelsV2(spec.Elements),
-		queryCount:      countQueriesV2(spec.Elements),
-		annotationCount: countAnnotationsV2(spec.Annotations),
-		linkCount:       countLinksV2(spec.Links),
-		variableCount:   countVariablesV2(spec.Variables),
+		panelCount:      countPanelsV2alpha1(spec.Elements),
+		queryCount:      countQueriesV2alpha1(spec.Elements),
+		annotationCount: countAnnotationsV2alpha1(spec.Annotations),
+		linkCount:       countLinksV2alpha1(spec.Links),
+		variableCount:   countVariablesV2alpha1(spec.Variables),
 	}
 }
 
@@ -329,6 +341,38 @@ func collectStatsV2beta1(spec dashv2beta1.DashboardSpec) dashboardStats {
 		annotationCount: countAnnotationsV2beta1(spec.Annotations),
 		linkCount:       countLinksV2beta1(spec.Links),
 		variableCount:   countVariablesV2beta1(spec.Variables),
+	}
+}
+
+func countPanelsV2(elements map[string]dashv2.DashboardElement) int {
+	count := 0
+	for _, element := range elements {
+		if element.PanelKind != nil {
+			count++
+		} else if element.LibraryPanelKind != nil {
+			count++
+		}
+	}
+	return count
+}
+
+func countQueriesV2(elements map[string]dashv2.DashboardElement) int {
+	count := 0
+	for _, element := range elements {
+		if element.PanelKind != nil {
+			count += len(element.PanelKind.Spec.Data.Spec.Queries)
+		}
+	}
+	return count
+}
+
+func collectStatsV2(spec dashv2.DashboardSpec) dashboardStats {
+	return dashboardStats{
+		panelCount:      countPanelsV2(spec.Elements),
+		queryCount:      countQueriesV2(spec.Elements),
+		annotationCount: len(spec.Annotations),
+		linkCount:       len(spec.Links),
+		variableCount:   len(spec.Variables),
 	}
 }
 
@@ -439,80 +483,8 @@ func collectDashboardStats(dashboard interface{}) dashboardStats {
 		return collectStatsV2alpha1(d.Spec)
 	case *dashv2beta1.Dashboard:
 		return collectStatsV2beta1(d.Spec)
+	case *dashv2.Dashboard:
+		return collectStatsV2(d.Spec)
 	}
 	return dashboardStats{}
-}
-
-// withConversionDataLossDetection wraps a conversion function to detect data loss
-func withConversionDataLossDetection(sourceFuncName, targetFuncName string, conversionFunc func(a, b interface{}, scope conversion.Scope) error) func(a, b interface{}, scope conversion.Scope) error {
-	return func(a, b interface{}, scope conversion.Scope) error {
-		// Collect source statistics
-		var sourceStats dashboardStats
-		switch source := a.(type) {
-		case *dashv0.Dashboard:
-			if source.Spec.Object != nil {
-				sourceStats = collectStatsV0V1(source.Spec.Object)
-			}
-		case *dashv1.Dashboard:
-			if source.Spec.Object != nil {
-				sourceStats = collectStatsV0V1(source.Spec.Object)
-			}
-		case *dashv2alpha1.Dashboard:
-			sourceStats = collectStatsV2alpha1(source.Spec)
-		case *dashv2beta1.Dashboard:
-			sourceStats = collectStatsV2beta1(source.Spec)
-		}
-
-		// Execute the conversion
-		err := conversionFunc(a, b, scope)
-		if err != nil {
-			return err
-		}
-
-		// Collect target statistics
-		var targetStats dashboardStats
-		switch target := b.(type) {
-		case *dashv0.Dashboard:
-			if target.Spec.Object != nil {
-				targetStats = collectStatsV0V1(target.Spec.Object)
-			}
-		case *dashv1.Dashboard:
-			if target.Spec.Object != nil {
-				targetStats = collectStatsV0V1(target.Spec.Object)
-			}
-		case *dashv2alpha1.Dashboard:
-			targetStats = collectStatsV2alpha1(target.Spec)
-		case *dashv2beta1.Dashboard:
-			targetStats = collectStatsV2beta1(target.Spec)
-		}
-
-		// Detect if data was lost
-		if dataLossErr := detectConversionDataLoss(sourceStats, targetStats, sourceFuncName, targetFuncName); dataLossErr != nil {
-			logger.Error("Dashboard conversion data loss detected",
-				"sourceFunc", sourceFuncName,
-				"targetFunc", targetFuncName,
-				"sourcePanels", sourceStats.panelCount,
-				"targetPanels", targetStats.panelCount,
-				"sourceQueries", sourceStats.queryCount,
-				"targetQueries", targetStats.queryCount,
-				"sourceAnnotations", sourceStats.annotationCount,
-				"targetAnnotations", targetStats.annotationCount,
-				"sourceLinks", sourceStats.linkCount,
-				"targetLinks", targetStats.linkCount,
-				"error", dataLossErr,
-			)
-			return dataLossErr
-		}
-
-		logger.Debug("Dashboard conversion completed without data loss",
-			"sourceFunc", sourceFuncName,
-			"targetFunc", targetFuncName,
-			"panels", targetStats.panelCount,
-			"queries", targetStats.queryCount,
-			"annotations", targetStats.annotationCount,
-			"links", targetStats.linkCount,
-		)
-
-		return nil
-	}
 }

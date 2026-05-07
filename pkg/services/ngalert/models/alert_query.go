@@ -110,6 +110,12 @@ func (aq *AlertQuery) String() string {
 }
 
 func (aq *AlertQuery) setModelProps() error {
+	if aq.Model == nil {
+		// No data to extract, use an empty map.
+		aq.modelProps = map[string]any{}
+		return nil
+	}
+
 	aq.modelProps = make(map[string]any)
 	err := json.Unmarshal(aq.Model, &aq.modelProps)
 	if err != nil {

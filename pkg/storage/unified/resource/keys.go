@@ -35,7 +35,7 @@ func verifyRequestKeyNamespaceGroupResource(key *resourcepb.ResourceKey) *resour
 	if key.Resource == "" {
 		return NewBadRequestError("request key is missing resource")
 	}
-	if key.Namespace != clusterScopeNamespace {
+	if key.Namespace != "" {
 		if err := validation.IsValidNamespace(key.Namespace); err != nil {
 			return NewBadRequestError(err[0])
 		}

@@ -1,4 +1,4 @@
-import { PanelModel } from '@grafana/data';
+import { type PanelModel } from '@grafana/data';
 
 import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
 

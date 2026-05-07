@@ -1,15 +1,23 @@
 import { useCallback, useId, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-import { SelectableValue } from '@grafana/data';
+import { QueryWithAssistantButton } from '@grafana/assistant';
+import { CoreApp, type DataSourceInstanceSettings, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect } from '@grafana/plugin-ui';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, config } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip, Space } from '@grafana/ui';
 
-import { QueryWithDefaults } from '../defaults';
-import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB, SQLDialect } from '../types';
+import { type QueryWithDefaults } from '../defaults';
+import {
+  type SQLQuery,
+  QueryFormat,
+  type QueryRowFilter,
+  QUERY_FORMAT_OPTIONS,
+  type DB,
+  type SQLDialect,
+} from '../types';
 
 import { ConfirmModal } from './ConfirmModal';
 import { DatasetSelector } from './DatasetSelector';
@@ -25,6 +33,10 @@ export interface QueryHeaderProps {
   preconfiguredDataset: string;
   query: QueryWithDefaults;
   queryRowFilter: QueryRowFilter;
+  hideFormatSelector?: boolean;
+  hideRunButton?: boolean;
+  dataSourceInstanceSettings?: DataSourceInstanceSettings;
+  app?: CoreApp;
 }
 
 export function QueryHeader({
@@ -37,6 +49,10 @@ export function QueryHeader({
   preconfiguredDataset,
   query,
   queryRowFilter,
+  hideFormatSelector,
+  hideRunButton,
+  dataSourceInstanceSettings,
+  app,
 }: QueryHeaderProps) {
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -44,6 +60,12 @@ export function QueryHeader({
   const toRawSql = db.toRawSql;
 
   const htmlId = useId();
+
+  const showAssistant =
+    config.featureToggles.queryWithAssistant &&
+    (dataSourceInstanceSettings?.type === 'mysql' ||
+      dataSourceInstanceSettings?.type === 'grafana-postgresql-datasource') &&
+    (app === CoreApp.Explore || app === CoreApp.Dashboard || app === CoreApp.PanelEditor);
 
   const editorModes = [
     {
@@ -123,14 +145,26 @@ export function QueryHeader({
   return (
     <>
       <EditorHeader>
-        <InlineSelect
-          label={t('grafana-sql.components.query-header.label-format', 'Format')}
-          value={query.format}
-          placeholder={t('grafana-sql.components.query-header.placeholder-select-format', 'Select format')}
-          menuShouldPortal
-          onChange={onFormatChange}
-          options={QUERY_FORMAT_OPTIONS}
-        />
+        {showAssistant && (
+          <QueryWithAssistantButton
+            currentQuery={query}
+            queries={[query]}
+            dataSourceInstanceSettings={dataSourceInstanceSettings!}
+            datasourceApi={null}
+            app={app}
+          />
+        )}
+
+        {!hideFormatSelector && (
+          <InlineSelect
+            label={t('grafana-sql.components.query-header.label-format', 'Format')}
+            value={query.format}
+            placeholder={t('grafana-sql.components.query-header.placeholder-select-format', 'Select format')}
+            menuShouldPortal
+            onChange={onFormatChange}
+            options={QUERY_FORMAT_OPTIONS}
+          />
+        )}
 
         {editorMode === EditorMode.Builder && (
           <>
@@ -222,26 +256,27 @@ export function QueryHeader({
 
         <FlexItem grow={1} />
 
-        {isQueryRunnable ? (
-          <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
-            <Trans i18nKey="grafana-sql.components.query-header.run-query">Run query</Trans>
-          </Button>
-        ) : (
-          <Tooltip
-            theme="error"
-            content={
-              <Trans i18nKey="grafana-sql.components.query-header.content-invalid-query">
-                Your query is invalid. Check below for details. <br />
-                However, you can still run this query.
-              </Trans>
-            }
-            placement="top"
-          >
-            <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
+        {!hideRunButton &&
+          (isQueryRunnable ? (
+            <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
               <Trans i18nKey="grafana-sql.components.query-header.run-query">Run query</Trans>
             </Button>
-          </Tooltip>
-        )}
+          ) : (
+            <Tooltip
+              theme="error"
+              content={
+                <Trans i18nKey="grafana-sql.components.query-header.content-invalid-query">
+                  Your query is invalid. Check below for details. <br />
+                  However, you can still run this query.
+                </Trans>
+              }
+              placement="top"
+            >
+              <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
+                <Trans i18nKey="grafana-sql.components.query-header.run-query">Run query</Trans>
+              </Button>
+            </Tooltip>
+          ))}
 
         <RadioButtonGroup options={editorModes} size="sm" value={editorMode} onChange={onEditorModeChange} />
 

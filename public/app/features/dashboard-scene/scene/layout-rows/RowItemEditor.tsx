@@ -1,8 +1,10 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Input, Switch, TextLink, Field } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Alert, Field, Input, Switch, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -10,12 +12,14 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../edit-pane/SectionFiltersList';
+import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../edit-pane/SectionVariablesList';
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
-import { RowItem } from './RowItem';
+import { type RowItem } from './RowItem';
 
 export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
@@ -71,7 +75,60 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const editOptions = [rowCategory, ...layoutCategory, repeatCategory];
+  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  const sectionVariablesCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
+      id: 'dash-row-section-variables',
+      isOpenDefault: true,
+      renderTitle: (isExpanded: boolean) => (
+        <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
+      ),
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: 'dash-row-section-variables-list',
+        skipField: true,
+        render: () => <SectionVariablesList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
+  const sectionFiltersCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.rows-layout.row-options.section-filters.title', 'Filters'),
+      id: 'dash-row-section-filters',
+      isOpenDefault: true,
+      renderTitle: (isExpanded: boolean) => (
+        <SectionFiltersCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
+      ),
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: 'dash-row-section-filters-list',
+        skipField: true,
+        render: () => <SectionFiltersList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
+  const editOptions = sectionVariablesEnabled
+    ? [
+        rowCategory,
+        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
+        sectionVariablesCategory,
+        ...layoutCategory,
+        repeatCategory,
+      ]
+    : [rowCategory, ...layoutCategory, repeatCategory];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),
@@ -128,7 +185,6 @@ function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
 
 function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
   const { layout } = row.useState();
-  const dashboard = useDashboard(row);
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);
@@ -143,7 +199,7 @@ function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
     <>
       <RepeatRowSelect2
         id={id}
-        sceneContext={dashboard}
+        sceneContext={row}
         repeat={row.state.repeatByVariable}
         onChange={(repeat) => row.onChangeRepeat(repeat)}
       />

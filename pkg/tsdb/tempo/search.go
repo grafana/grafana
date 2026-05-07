@@ -99,34 +99,31 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 		return nil, err
 	}
 
-	if *model.TableType == dataquery.SearchTableTypeTraces {
-		frames, err := transformTraceSearchResponse(pCtx, &response)
-		if err != nil {
-			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
-			return nil, err
-		}
-		result.Frames = frames
-		return result, nil
+	// Match frontend behavior: when tableType isn't set, default to the "table" view (traces).
+	tableType := dataquery.SearchTableTypeTraces
+	if model.TableType != nil {
+		tableType = *model.TableType
 	}
 
-	if *model.TableType == dataquery.SearchTableTypeSpans {
+	switch tableType {
+	case dataquery.SearchTableTypeSpans:
 		frames, err := transformSpanSearchResponse(pCtx, &response)
 		if err != nil {
-			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
 			return nil, err
 		}
 		result.Frames = frames
-		return result, nil
-	}
-
-	if *model.TableType == dataquery.SearchTableTypeRaw {
+	case dataquery.SearchTableTypeRaw:
 		frames, err := transformRawSearchResponse(&response)
 		if err != nil {
-			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
 			return nil, err
 		}
 		result.Frames = frames
-		return result, nil
+	default:
+		frames, err := transformTraceSearchResponse(pCtx, &response)
+		if err != nil {
+			return nil, err
+		}
+		result.Frames = frames
 	}
 
 	return result, nil
@@ -369,7 +366,7 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 			if attribute, ok := traceData.attributes[attributeName]; ok {
 				frame.Fields[attributeIndex].Append(attribute)
 			} else {
-				frame.Fields[attributeIndex].Append("")
+				frame.Fields[attributeIndex].Append(nil)
 			}
 			attributeIndex++
 		}
@@ -542,8 +539,10 @@ func transformSpanToTraceData(span *tempopb.Span, spanSet *tempopb.SpanSet, trac
 			val := attribute.Value.GetStringValue()
 			attributes[attribute.Key] = &val
 		case *v1.AnyValue_IntValue:
-			val := attribute.Value.GetIntValue()
-			attributes[attribute.Key] = &val
+			// Use float64 for int tags so dynamic columns stay consistent when the same key
+			// appears as IntValue on some spans and DoubleValue on others (see getTypeForAttribute).
+			v := float64(attribute.Value.GetIntValue())
+			attributes[attribute.Key] = &v
 		case *v1.AnyValue_DoubleValue:
 			val := attribute.Value.GetDoubleValue()
 			attributes[attribute.Key] = &val
@@ -574,7 +573,9 @@ func getTypeForAttribute(attribute *v1.KeyValue) interface{} {
 	case *v1.AnyValue_StringValue:
 		return []*string{}
 	case *v1.AnyValue_IntValue:
-		return []*int64{}
+		// Match transformSpanToTraceData: ints are stored as *float64 so one column can
+		// hold both OTLP integer and double values for the same attribute key.
+		return []*float64{}
 	case *v1.AnyValue_DoubleValue:
 		return []*float64{}
 	case *v1.AnyValue_BoolValue:

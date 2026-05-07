@@ -20,6 +20,11 @@ func NewDummystatusOperatorState() *DummystatusOperatorState {
 	return &DummystatusOperatorState{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DummystatusOperatorState.
+func (DummystatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummystatusOperatorState"
+}
+
 // +k8s:openapi-gen=true
 type DummyStatus struct {
 	// operatorStates is a map of operator ID to operator state evaluations.
@@ -34,6 +39,11 @@ func NewDummyStatus() *DummyStatus {
 	return &DummyStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DummyStatus.
+func (DummyStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyStatus"
+}
+
 // +k8s:openapi-gen=true
 type DummyStatusOperatorStateState string
 
@@ -42,3 +52,8 @@ const (
 	DummyStatusOperatorStateStateInProgress DummyStatusOperatorStateState = "in_progress"
 	DummyStatusOperatorStateStateFailed     DummyStatusOperatorStateState = "failed"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for DummyStatusOperatorStateState.
+func (DummyStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyStatusOperatorStateState"
+}

@@ -1,0 +1,116 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TableNG hooks useNestedRows should return the nested rows 1`] = `
+[
+  {
+    "filterResult": {
+      "crossFilterOrder": [],
+      "crossFilterRows": {},
+      "crossFilterTailRows": [
+        {
+          "__depth": 0,
+          "__index": 0,
+          "__parentIndex": 0,
+          "active": true,
+          "age": 30,
+          "name": "Alice",
+        },
+        {
+          "__depth": 0,
+          "__index": 1,
+          "__parentIndex": 0,
+          "active": false,
+          "age": 25,
+          "name": "Bob",
+        },
+        {
+          "__depth": 0,
+          "__index": 2,
+          "__parentIndex": 0,
+          "active": true,
+          "age": 35,
+          "name": "Charlie",
+        },
+      ],
+      "filteredRows": [
+        {
+          "__depth": 0,
+          "__index": 0,
+          "__parentIndex": 0,
+          "active": true,
+          "age": 30,
+          "name": "Alice",
+        },
+        {
+          "__depth": 0,
+          "__index": 1,
+          "__parentIndex": 0,
+          "active": false,
+          "age": 25,
+          "name": "Bob",
+        },
+        {
+          "__depth": 0,
+          "__index": 2,
+          "__parentIndex": 0,
+          "active": true,
+          "age": 35,
+          "name": "Charlie",
+        },
+      ],
+    },
+    "final": [
+      {
+        "__depth": 0,
+        "__index": 0,
+        "__parentIndex": 0,
+        "active": true,
+        "age": 30,
+        "name": "Alice",
+      },
+      {
+        "__depth": 0,
+        "__index": 1,
+        "__parentIndex": 0,
+        "active": false,
+        "age": 25,
+        "name": "Bob",
+      },
+      {
+        "__depth": 0,
+        "__index": 2,
+        "__parentIndex": 0,
+        "active": true,
+        "age": 35,
+        "name": "Charlie",
+      },
+    ],
+    "raw": [
+      {
+        "__depth": 0,
+        "__index": 0,
+        "__parentIndex": 0,
+        "active": true,
+        "age": 30,
+        "name": "Alice",
+      },
+      {
+        "__depth": 0,
+        "__index": 1,
+        "__parentIndex": 0,
+        "active": false,
+        "age": 25,
+        "name": "Bob",
+      },
+      {
+        "__depth": 0,
+        "__index": 2,
+        "__parentIndex": 0,
+        "active": true,
+        "age": 35,
+        "name": "Charlie",
+      },
+    ],
+  },
+]
+`;

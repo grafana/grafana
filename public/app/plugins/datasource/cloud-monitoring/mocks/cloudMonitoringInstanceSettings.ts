@@ -1,13 +1,12 @@
-import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 import { GoogleAuthType } from '@grafana/google-sdk';
 
-import { CloudMonitoringOptions } from '../types/types';
+import { type CloudMonitoringOptions } from '../types/types';
 
 export const createMockInstanceSetttings = (
   overrides?: Partial<DataSourceInstanceSettings<CloudMonitoringOptions>>
 ): DataSourceInstanceSettings<CloudMonitoringOptions> => ({
   url: '/ds/1',
-  id: 1,
   uid: 'abc',
   type: 'stackdriver',
   access: 'proxy',

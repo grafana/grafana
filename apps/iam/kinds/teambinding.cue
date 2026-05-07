@@ -8,8 +8,8 @@ teambindingKind: {
 	kind:       "TeamBinding"
 	pluralName: "TeamBindings"
 	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
+		ts: {enabled: false}
+		go: {enabled: true}
 	}
 }
 
@@ -17,4 +17,9 @@ teambindingv0alpha1: teambindingKind & {
 	schema: {
 		spec: v0alpha1.TeamBindingSpec
 	}
+	selectableFields: [
+		"spec.teamRef.name",
+		"spec.subject.name",
+		"spec.external",
+	]
 }

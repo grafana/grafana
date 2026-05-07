@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export const getModalStyles = (theme: GrafanaTheme2) => {
   return {
@@ -79,7 +79,7 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     modalContent: css({
       overflow: 'auto',
       padding: theme.spacing(3, 3, 0, 3),
-      marginBottom: theme.spacing(3),
+      marginBottom: theme.spacing(2.5),
       scrollbarWidth: 'thin',
       width: '100%',
 

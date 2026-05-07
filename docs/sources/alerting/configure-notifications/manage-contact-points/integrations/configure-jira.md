@@ -38,7 +38,7 @@ Before you begin, ensure you have the following:
 
 To create a contact point with a Jira integration, complete the following steps:
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 2. Click **+ Add contact point**.
 3. Enter a name for the contact point.
 4. From the **Integration** list, select **Jira**.
@@ -51,7 +51,7 @@ For more details on contact points, including how to test them and enable notifi
 
 | Key                 | Description                                                                                                                                                                                                                            |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| URL                 | The URL of the REST API of your Jira instance. Supported versions: `2` and `3` (e.g., `https://your-domain.atlassian.net/rest/api/3`).                                                                                                 |
+| URL                 | The URL of the REST API of your Jira instance. Supported versions: `2` and `3` (e.g., `https://your-domain.atlassian.net/rest/api/3`). This field is [protected](ref:configure-contact-points) from modification in Grafana Cloud.     |
 | Basic Auth User     | Username for authentication. For Jira Cloud, use your email address.                                                                                                                                                                   |
 | Basic Auth Password | Password or personal token. For Jira Cloud, you need to obtain a personal token [here](https://id.atlassian.com/manage-profile/security/api-tokens) and use it as the password.                                                        |
 | API Token           | An alternative to basic authentication, a bearer token is used to authorize the API requests. See [Jira documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) for more information. |

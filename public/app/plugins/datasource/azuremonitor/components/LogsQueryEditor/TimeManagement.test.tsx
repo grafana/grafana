@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import FakeSchemaData from '../../azure_log_analytics/mocks/schema';
+import { LogsEditorMode } from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
 
@@ -206,5 +207,24 @@ describe('LogsQueryEditor.TimeManagement', () => {
 
     expect(screen.getByLabelText('Query')).toBeDisabled();
     expect(screen.getByLabelText('Dashboard')).toBeChecked();
+  });
+
+  it('should hide time-range toggle for builder queries', async () => {
+    const mockDatasource = createMockDatasource();
+    const query = createMockQuery({ azureLogAnalytics: { mode: LogsEditorMode.Builder } });
+    const onChange = jest.fn();
+
+    render(
+      <TimeManagement
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={() => {}}
+        schema={FakeSchemaData.getLogAnalyticsFakeEngineSchema()}
+      />
+    );
+
+    expect(screen.queryByText('Time-range')).not.toBeInTheDocument();
   });
 });

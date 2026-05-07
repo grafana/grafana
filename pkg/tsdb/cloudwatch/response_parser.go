@@ -33,11 +33,11 @@ func (ds *DataSource) parseResponse(ctx context.Context, metricDataOutputs []*cl
 		dataRes := backend.DataResponse{}
 
 		if response.HasArithmeticError {
-			dataRes.Error = fmt.Errorf("ArithmeticError in query %q: %s", queryRow.RefId, response.ArithmeticErrorMessage)
+			dataRes.Error = backend.DownstreamErrorf("ArithmeticError in query %q: %s", queryRow.RefId, response.ArithmeticErrorMessage)
 		}
 
 		if response.HasPermissionError {
-			dataRes.Error = fmt.Errorf("PermissionError in query %q: %s", queryRow.RefId, response.PermissionErrorMessage)
+			dataRes.Error = backend.DownstreamErrorf("PermissionError in query %q: %s", queryRow.RefId, response.PermissionErrorMessage)
 		}
 
 		var err error

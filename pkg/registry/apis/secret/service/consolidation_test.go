@@ -70,8 +70,8 @@ func TestConsolidation(t *testing.T) {
 			{"test-secret-4", "namespace2", "test-value-4"},
 		}
 
-		var originalDecryptedValues []string
-		var originalEncryptedData [][]byte
+		originalDecryptedValues := make([]string, 0, len(testCases))
+		originalEncryptedData := make([][]byte, 0, len(testCases))
 
 		// Create secure values and store their original decrypted values and encrypted data
 		for _, tc := range testCases {
@@ -104,7 +104,7 @@ func TestConsolidation(t *testing.T) {
 		}
 
 		// Run consolidation
-		err := sut.ConsolidationService.Consolidate(ctx)
+		err := sut.ConsolidationService.Consolidate(ctx, &contracts.ConsolidateOptions{Workers: 1})
 		require.NoError(t, err)
 
 		for i, tc := range testCases {
@@ -118,6 +118,31 @@ func TestConsolidation(t *testing.T) {
 			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
 			require.NoError(t, err)
 			require.NotEqual(t, originalEncryptedData[i], encryptedValue.EncryptedData)
+		}
+	})
+
+	t.Run("consolidation with multiple workers preserves decrypted content", func(t *testing.T) {
+		t.Parallel()
+		sut := testutils.Setup(t)
+		ctx := context.Background()
+
+		// Create values in multiple namespaces so multiple finalize goroutines run
+		for _, ns := range []string{"pw-ns1", "pw-ns2", "pw-ns3"} {
+			payload, err := sut.EncryptionManager.Encrypt(ctx, xkube.Namespace(ns), []byte("secret-"+ns), contracts.EncryptionOption{})
+			require.NoError(t, err)
+			_, err = sut.EncryptedValueStorage.Create(ctx, xkube.Namespace(ns), "single", 1, payload)
+			require.NoError(t, err)
+		}
+
+		err := sut.ConsolidationService.Consolidate(ctx, &contracts.ConsolidateOptions{Workers: 2})
+		require.NoError(t, err)
+
+		for _, ns := range []string{"pw-ns1", "pw-ns2", "pw-ns3"} {
+			ev, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(ns), "single", 1)
+			require.NoError(t, err)
+			plain, err := sut.EncryptionManager.Decrypt(ctx, xkube.Namespace(ns), ev.EncryptedPayload, contracts.EncryptionOption{})
+			require.NoError(t, err)
+			require.Equal(t, "secret-"+ns, string(plain))
 		}
 	})
 
@@ -149,8 +174,8 @@ func TestConsolidation(t *testing.T) {
 			{"initial-secret-2", "namespace2", "initial-value-2"},
 		}
 
-		var initialDecryptedValues []string
-		var initialEncryptedData [][]byte
+		initialDecryptedValues := make([]string, 0, len(initialSecrets))
+		initialEncryptedData := make([][]byte, 0, len(initialSecrets))
 
 		for _, tc := range initialSecrets {
 			sv := &secretv1beta1.SecureValue{
@@ -241,7 +266,7 @@ func TestConsolidation(t *testing.T) {
 		)
 
 		// Run consolidation
-		err := customConsolidationService.Consolidate(ctx)
+		err := customConsolidationService.Consolidate(ctx, &contracts.ConsolidateOptions{Workers: 1})
 		require.NoError(t, err)
 
 		for i, tc := range initialSecrets {

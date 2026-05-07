@@ -1,8 +1,8 @@
-import { renderHook, RenderHookResult } from '@testing-library/react';
+import { renderHook, type RenderHookResult } from '@testing-library/react';
 
 import {
   RestrictedGrafanaApisContextProvider,
-  RestrictedGrafanaApisContextType,
+  type RestrictedGrafanaApisContextType,
   useRestrictedGrafanaApis,
 } from './RestrictedGrafanaApis';
 
@@ -12,9 +12,16 @@ const mockAlertRuleFormSchema = {
   safeParse: jest.fn((data: unknown) => ({ success: true, data })),
 };
 
+const mockDashboardMutationAPI = {
+  execute: jest.fn(async () => ({ success: true, changes: [] })),
+  getPayloadSchema: jest.fn(() => null),
+  getAvailableCommands: jest.fn(() => []),
+};
+
 describe('RestrictedGrafanaApis', () => {
   const apis: RestrictedGrafanaApisContextType = {
     alertingAlertRuleFormSchema: mockAlertRuleFormSchema,
+    dashboardMutationAPI: mockDashboardMutationAPI,
   };
 
   beforeEach(() => {

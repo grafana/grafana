@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { CloudWatchMetricsQuery } from '../types';
+import { type CloudWatchMetricsQuery } from '../dataquery.gen';
 
 import { migrateMetricQuery } from './metricQueryMigrations';
 

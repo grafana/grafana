@@ -1,5 +1,10 @@
-import { QueryEditorExpressionType } from '../expressions';
-import { CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode, CloudWatchLogsQuery } from '../types';
+import {
+  type CloudWatchMetricsQuery,
+  MetricQueryType,
+  MetricEditorMode,
+  type CloudWatchLogsQuery,
+  QueryEditorExpressionType,
+} from '../dataquery.gen';
 
 export const validMetricSearchCodeQuery: CloudWatchMetricsQuery = {
   id: '',

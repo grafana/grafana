@@ -17,26 +17,23 @@ preferencesV1alpha1: {
 			homeDashboardUID?: string
 
 			// The timezone selection
-			// TODO: this should use the timezone defined in common
 			timezone?: string
 
 			// day of the week (sunday, monday, etc)
 			weekStart?: string
 
-			// light, dark, empty is default
+			// user interface theme
 			theme?: string
 
-			// Selected language (beta)
+			// Selected language
 			language?: string
 
 			// Selected locale (beta)
+			// TODO: Will be removed
 			regionalFormat?: string
 
 			// Explore query history preferences
 			queryHistory?: #QueryHistoryPreference
-
-			// Cookie preferences
-			cookiePreferences?: #CookiePreferences
 
 			// Navigation preferences
 			navbar?: #NavbarPreference
@@ -47,14 +44,8 @@ preferencesV1alpha1: {
 			homeTab?: string
 		}
 
-		#CookiePreferences: {
-			analytics?: {}
-			performance?: {}
-			functional?: {}
-		}
-
 		#NavbarPreference: {
 			bookmarkUrls: [...string]
-		} 
+		}
 	}
 }

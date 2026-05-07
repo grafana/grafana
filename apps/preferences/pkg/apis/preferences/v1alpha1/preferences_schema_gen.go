@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaPreferences = resource.NewSimpleSchema("preferences.grafana.app", "v1alpha1", &Preferences{}, &PreferencesList{}, resource.WithKind("Preferences"),
+	schemaPreferences = resource.NewSimpleSchema("preferences.grafana.app", "v1alpha1", NewPreferences(), &PreferencesList{}, resource.WithKind("Preferences"),
 		resource.WithPlural("preferences"), resource.WithScope(resource.NamespacedScope))
 	kindPreferences = resource.Kind{
 		Schema: schemaPreferences,

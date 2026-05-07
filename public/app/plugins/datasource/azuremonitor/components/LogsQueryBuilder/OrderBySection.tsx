@@ -1,20 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Select, Label } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
-  BuilderQueryEditorOrderByExpression,
+  type BuilderQueryEditorOrderByExpression,
   BuilderQueryEditorOrderByOptions,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
 
-import { BuildAndUpdateOptions, inputFieldSize } from './utils';
+import { type BuildAndUpdateOptions, inputFieldSize } from './utils';
 
 interface OrderBySectionProps {
   query: AzureMonitorQuery;
@@ -45,16 +45,35 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
   const aggregateColumns = builderQuery?.reduce?.expressions?.map((r) => r.property?.name) || [];
   const selectedColumns = builderQuery?.columns?.columns || [];
 
-  const allAvailableColumns =
-    groupByColumns.length > 0
-      ? groupByColumns
-      : aggregateColumns.length > 0
-        ? aggregateColumns
-        : selectedColumns.length > 0
-          ? selectedColumns
-          : allColumns.map((col) => col.name);
+  const allAvailableColumns = new Set<string>();
+  if (groupByColumns.length > 0) {
+    groupByColumns.forEach((col) => {
+      if (col) {
+        allAvailableColumns.add(col);
+      }
+    });
+  }
+  if (aggregateColumns.length > 0) {
+    aggregateColumns.forEach((col) => {
+      if (col) {
+        allAvailableColumns.add(col);
+      }
+    });
+  }
+  if (allAvailableColumns.size === 0 && selectedColumns.length > 0) {
+    selectedColumns.forEach((col) => {
+      if (col) {
+        allAvailableColumns.add(col);
+      }
+    });
+  }
+  if (allAvailableColumns.size === 0) {
+    allColumns.forEach((col) => {
+      allAvailableColumns.add(col.name);
+    });
+  }
 
-  const columnOptions = allAvailableColumns.map((col) => ({
+  const columnOptions = Array.from(allAvailableColumns).map((col) => ({
     label: col,
     value: col,
   }));

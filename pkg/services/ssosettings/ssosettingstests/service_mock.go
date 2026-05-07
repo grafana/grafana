@@ -186,17 +186,17 @@ func (_m *MockService) ListWithRedactedSecrets(ctx context.Context) ([]*models.S
 	return r0, r1
 }
 
-// Patch provides a mock function with given fields: ctx, provider, data
-func (_m *MockService) Patch(ctx context.Context, provider string, data map[string]interface{}) error {
-	ret := _m.Called(ctx, provider, data)
+// Patch provides a mock function with given fields: ctx, provider, data, requester
+func (_m *MockService) Patch(ctx context.Context, provider string, data map[string]interface{}, requester identity.Requester) error {
+	ret := _m.Called(ctx, provider, data, requester)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Patch")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]interface{}) error); ok {
-		r0 = rf(ctx, provider, data)
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]interface{}, identity.Requester) error); ok {
+		r0 = rf(ctx, provider, data, requester)
 	} else {
 		r0 = ret.Error(0)
 	}

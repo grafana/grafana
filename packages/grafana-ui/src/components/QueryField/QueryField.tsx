@@ -3,11 +3,11 @@ import classnames from 'classnames';
 import { debounce } from 'lodash';
 import { PureComponent } from 'react';
 import * as React from 'react';
-import { Value } from 'slate';
+import { type Value } from 'slate';
 import Plain from 'slate-plain-serializer';
-import { Editor, EventHook, Plugin } from 'slate-react';
+import { Editor, type EventHook, type Plugin } from 'slate-react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { ClearPlugin } from '../../slate-plugins/clear';
@@ -19,12 +19,18 @@ import { SelectionShortcutsPlugin } from '../../slate-plugins/selection_shortcut
 import { SuggestionsPlugin } from '../../slate-plugins/suggestions';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { CompletionItemGroup, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../../types/completion';
-import { Themeable2 } from '../../types/theme';
+import {
+  type CompletionItemGroup,
+  type SuggestionsState,
+  type TypeaheadInput,
+  type TypeaheadOutput,
+} from '../../types/completion';
+import { type Themeable2 } from '../../types/theme';
 import { makeValue, SCHEMA } from '../../utils/slate';
 
 export interface QueryFieldProps extends Themeable2 {
   additionalPlugins?: Plugin[];
+  ['aria-labelledby']?: string;
   cleanText?: (text: string) => string;
   disabled?: boolean;
   // We have both value and local state. This is usually an antipattern but we need to keep local state
@@ -201,7 +207,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
   }
 
   render() {
-    const { disabled, theme } = this.props;
+    const { disabled, theme, ['aria-labelledby']: ariaLabelledby } = this.props;
     const wrapperClassName = classnames('slate-query-field__wrapper', {
       'slate-query-field__wrapper--disabled': disabled,
     });
@@ -212,14 +218,14 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
         <div className="slate-query-field" data-testid={selectors.components.QueryField.container}>
           <Editor
             ref={(editor) => {
-              this.editor = editor!;
+              this.editor = editor;
             }}
+            aria-labelledby={ariaLabelledby}
             schema={SCHEMA}
             autoCorrect={false}
             readOnly={this.props.disabled}
             onBlur={this.handleBlur}
             onClick={this.props.onClick}
-            // onKeyDown={this.onKeyDown}
             onChange={(change: { value: Value }) => {
               this.onChange(change.value, false);
             }}

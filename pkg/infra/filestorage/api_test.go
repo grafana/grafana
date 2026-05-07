@@ -38,7 +38,7 @@ func TestFilestorageApi_Join(t *testing.T) {
 
 func pathPart(length int) string {
 	sb := strings.Builder{}
-	for i := 0; i < length; i++ {
+	for range length {
 		sb.WriteString("a")
 	}
 	return sb.String()

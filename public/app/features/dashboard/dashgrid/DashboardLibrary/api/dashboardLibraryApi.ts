@@ -1,8 +1,21 @@
-import { getBackendSrv } from '@grafana/runtime';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { PluginDashboard } from 'app/types/plugins';
+import { getBackendSrv, logInfo, logWarning } from '@grafana/runtime';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboardsResponse, Link } from '../types';
+import { type GnetDashboard, type GnetDashboardsResponse, type Link } from '../types';
+
+/**
+ * Panel types that are known to allow JavaScript code execution.
+ * These panels are filtered out due to security concerns.
+ */
+const UNSAFE_PANEL_TYPE_SLUGS = [
+  'aceiot-svg-panel',
+  'ae3e-plotly-panel',
+  'gapit-htmlgraphics-panel',
+  'marcusolsson-dynamictext-panel',
+  'volkovlabs-echarts-panel',
+  'volkovlabs-form-panel',
+];
 
 /**
  * Parameters for fetching community dashboards from Grafana.com
@@ -56,6 +69,7 @@ export async function fetchCommunityDashboards(
     pageSize: params.pageSize.toString(),
     includeLogo: params.includeLogo ? '1' : '0',
     includeScreenshots: params.includeScreenshots ? 'true' : 'false',
+    includePanelTypeSlugs: 'true',
   });
 
   if (params.dataSourceSlugIn) {
@@ -69,13 +83,21 @@ export async function fetchCommunityDashboards(
     showErrorAlert: false,
   });
 
-  // Grafana.com API returns format: { page: number, pages: number, items: GnetDashboard[] }
-  // We normalize it to use "dashboards" instead of "items" for consistency
   if (result && Array.isArray(result.items)) {
+    logInfo('Fetched community dashboards', {
+      searchParams: searchParams.toString(),
+      dataSourceType: params.dataSourceSlugIn ?? '',
+      total: result.items.length,
+      page: result.page,
+      pages: result.pages,
+    });
+
+    const dashboards = filterNonSafeDashboards(result.items, params.dataSourceSlugIn);
+
     return {
       page: result.page || params.page,
       pages: result.pages || 1,
-      items: result.items,
+      items: dashboards,
     };
   }
 
@@ -103,9 +125,46 @@ export async function fetchProvisionedDashboards(datasourceType: string): Promis
     const dashboards = await getBackendSrv().get(`api/plugins/${datasourceType}/dashboards`, undefined, undefined, {
       showErrorAlert: false,
     });
-    return Array.isArray(dashboards) ? dashboards : [];
+    return Array.isArray(dashboards) ? dashboards.filter((dashboard) => !dashboard.removed) : [];
   } catch (error) {
     console.error('Error loading provisioned dashboards', error);
     return [];
   }
 }
+
+// We filter out dashboards with unsafe panel types that can execute JavaScript
+// They are previously ordered by downloads amount
+const filterNonSafeDashboards = (dashboards: GnetDashboard[], dataSourceType?: string): GnetDashboard[] => {
+  let unsafeDashboardsCount = 0;
+
+  const filteredDashboards = dashboards.filter((item: GnetDashboard) => {
+    const unsafePanelTypes =
+      item.panelTypeSlugs?.filter((slug: string) => UNSAFE_PANEL_TYPE_SLUGS.includes(slug)) ?? [];
+
+    if (unsafePanelTypes.length > 0) {
+      unsafeDashboardsCount++;
+
+      console.warn(
+        `Community dashboard ${item.id} ${item.name} filtered out due to panel types ${item.panelTypeSlugs?.join(', ')} that can embed JavaScript`
+      );
+
+      logWarning('Community dashboard filtered out due to unsafe panel types', {
+        dashboardId: item.id.toString(),
+        dashboardName: item.name,
+        panelTypes: item.panelTypeSlugs?.join(', ') ?? '',
+        unsafePanelTypes: unsafePanelTypes.join(', '),
+      });
+      return false;
+    }
+    return true;
+  });
+
+  if (filteredDashboards.length === 0) {
+    logWarning('No community dashboards found after safe filtering', {
+      dataSourceType: dataSourceType ?? '',
+      unsafeDashboardsCount: unsafeDashboardsCount.toString(),
+    });
+  }
+
+  return filteredDashboards;
+};

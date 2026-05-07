@@ -39,7 +39,7 @@ func TestStarsWrite(t *testing.T) {
 				Resource: []StarsResource{{
 					Group: "g",
 					Kind:  "k",
-					Names: []string{"a", "b", "c", "x"}, // added "b" (and sorted)
+					Names: []string{"a", "b", "x", "c"}, // added c to the end
 				}},
 			},
 		}, {

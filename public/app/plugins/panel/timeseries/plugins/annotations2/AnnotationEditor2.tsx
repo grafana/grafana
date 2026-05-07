@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsyncFn, useClickAway } from 'react-use';
 
-import { AnnotationEventUIModel, GrafanaTheme2, dateTimeFormat, systemDateFormats } from '@grafana/data';
+import { type AnnotationEventUIModel, type GrafanaTheme2, dateTimeFormat, systemDateFormats } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Stack, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { annotationServer } from 'app/features/annotations/api';
+
+import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';
 
 interface Props {
   annoVals: Record<string, any[]>;
@@ -25,10 +27,15 @@ interface AnnotationEditFormDTO {
 export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...otherProps }: Props) => {
   const styles = useStyles2(getStyles);
   const { onAnnotationCreate, onAnnotationUpdate } = usePanelContext();
-
+  const focusRef = useRef<HTMLButtonElement | null>(null);
   const clickAwayRef = useRef(null);
 
   useClickAway(clickAwayRef, dismiss);
+
+  // focus text area on render
+  useEffect(() => {
+    focusRef.current?.focus();
+  }, []);
 
   const [createAnnotationState, createAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
     const result = await onAnnotationCreate!(event);
@@ -71,12 +78,22 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
     <div ref={clickAwayRef} className={styles.editor} {...otherProps}>
       <div className={styles.header}>
         <Stack justifyContent={'space-between'} alignItems={'center'}>
-          <div>
-            {isUpdatingAnnotation
-              ? t('timeseries.annotation-editor2.edit-annotation', 'Edit annotation')
-              : t('timeseries.annotation-editor2.add-annotation', 'Add annotation')}
-          </div>
-          <div>{time}</div>
+          <Stack gap={0} width="100%" justifyContent={'space-between'} alignItems={'center'}>
+            <div>
+              {isUpdatingAnnotation
+                ? t('timeseries.annotation-editor2.edit-annotation', 'Edit annotation')
+                : t('timeseries.annotation-editor2.add-annotation', 'Add annotation')}
+            </div>
+            <div>{time}</div>
+          </Stack>
+          <AnnotationTooltipHeaderCloseIcon
+            forwardRef={focusRef}
+            onClick={(e) => {
+              // Don't trigger onClick
+              e.stopPropagation();
+              dismiss();
+            }}
+          />
         </Stack>
       </div>
       <Form<AnnotationEditFormDTO>
@@ -93,6 +110,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
                   error={errors?.description?.message}
                 >
                   <TextArea
+                    data-testid={'annotation-editor-description'}
                     className={styles.textarea}
                     {...register('description', {
                       required: 'Annotation description is required',

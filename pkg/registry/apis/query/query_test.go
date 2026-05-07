@@ -13,18 +13,19 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	dataapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	dataapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	queryapi "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	queryapi "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func loadTestdataFrames(t *testing.T, filename string) *backend.QueryDataResponse {
@@ -178,9 +179,10 @@ func TestQueryAPI(t *testing.T) {
 				tracer:                 tracing.InitializeTracerForTest(),
 				log:                    log.New("test"),
 				legacyDatasourceLookup: &mockLegacyDataSourceLookup{},
+				reportStatus:           func(context.Context, int) {},
 			}
 
-			reqCtx := identity.WithRequester(context.Background(), mockUser{})
+			reqCtx := claims.WithAuthInfo(identity.WithRequester(context.Background(), mockUser{}), &mockAuthInfo{})
 
 			req := httptest.NewRequestWithContext(reqCtx, http.MethodPost, "/some-path", bytes.NewReader([]byte(tc.queryJSON)))
 			req.Header.Set("Content-Type", "application/json")
@@ -190,22 +192,21 @@ func TestQueryAPI(t *testing.T) {
 				req.Header.Set(key, value)
 			}
 
-			ctx := context.Background()
-			mr := &mockResponder{}
-			qr := newQueryREST(builder)
-
-			handler, err := qr.Connect(ctx, "name", nil, mr)
-			require.NoError(t, err)
 			rr := httptest.NewRecorder()
-			handler.ServeHTTP(rr, req)
+			builder.QueryDatasources(rr, req)
+			result := rr.Result()
 
-			require.NoError(t, mr.err, "Should not have error in responder")
-			require.Equal(t, tc.expectedStatus, mr.statusCode, "Should return expected status code")
-			require.NotNil(t, mr.response, "Should have a response object")
+			defer func() {
+				_ = result.Body.Close()
+			}()
+
+			require.Equal(t, tc.expectedStatus, result.StatusCode, "Should return expected status code")
 
 			// Verify the response is the expected type
-			qdr, ok := mr.response.(*queryapi.QueryDataResponse)
-			require.True(t, ok, "Response should be QueryDataResponse type")
+			qdr := &queryapi.QueryDataResponse{}
+			err := json.NewDecoder(result.Body).Decode(qdr)
+			require.NoError(t, err, "Failed to decode response body")
+
 			require.NotNil(t, qdr.Responses, "Should have responses")
 
 			// Load expected frames from testdata if provided
@@ -242,23 +243,6 @@ func TestQueryAPI(t *testing.T) {
 			t.Logf("Test case '%s' completed successfully", tc.name)
 		})
 	}
-}
-
-type mockResponder struct {
-	statusCode int
-	response   runtime.Object
-	err        error
-}
-
-// Object writes the provided object to the response. Invoking this method multiple times is undefined.
-func (m *mockResponder) Object(statusCode int, obj runtime.Object) {
-	m.statusCode = statusCode
-	m.response = obj
-}
-
-// Error writes the provided error to the response. This method may only be invoked once.
-func (m *mockResponder) Error(err error) {
-	m.err = err
 }
 
 type mockClient struct {
@@ -438,4 +422,12 @@ func TestMergeHeaders(t *testing.T) {
 			require.Equal(t, tt.expected, h1)
 		})
 	}
+}
+
+type mockAuthInfo struct {
+	claims.AuthInfo
+}
+
+func (main mockAuthInfo) GetExtra() map[string][]string {
+	return nil
 }

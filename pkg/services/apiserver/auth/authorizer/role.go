@@ -19,7 +19,8 @@ var orgRoleNoneAsViewerAPIGroups = []string{
 
 type roleAuthorizer struct{}
 
-func newRoleAuthorizer() *roleAuthorizer {
+// Deprecated: NewRoleAuthorizer exists for apps that were launched with simplistic authorization requirements. Consider using NewResourceAuthorizer instead.
+func NewRoleAuthorizer() *roleAuthorizer {
 	return &roleAuthorizer{}
 }
 
@@ -48,6 +49,10 @@ func (auth roleAuthorizer) Authorize(ctx context.Context, a authorizer.Attribute
 			return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole, a), nil
 		}
 	case org.RoleNone:
+		// allow api discovery endpoints (i.e. non resource requests)
+		if !a.IsResourceRequest() && a.GetVerb() == "get" {
+			return authorizer.DecisionAllow, "", nil
+		}
 		// HOTFIX: granting Viewer actions to None roles to a fixed group of APIs,
 		//  while we work on a proper fix.
 		if slices.Contains(orgRoleNoneAsViewerAPIGroups, a.GetAPIGroup()) {

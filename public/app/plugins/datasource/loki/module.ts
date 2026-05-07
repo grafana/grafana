@@ -6,7 +6,7 @@ import LokiQueryEditorByApp from './components/LokiQueryEditorByApp';
 import { ConfigEditor } from './configuration/ConfigEditor';
 import { LokiDatasource } from './datasource';
 import { onDashboardLoadedHandler } from './tracking';
-import { LokiQuery } from './types';
+import { type LokiQuery } from './types';
 
 export const plugin = new DataSourcePlugin(LokiDatasource)
   .setQueryEditor(LokiQueryEditorByApp)

@@ -1,17 +1,17 @@
 import { useCallback } from 'react';
 
 import { useDispatch } from 'app/types/store';
-import { RuleHealth } from 'app/types/unified-alerting';
+import { type RuleHealth } from 'app/types/unified-alerting';
 import {
-  GrafanaPromRuleGroupDTO,
-  PromAlertingRuleState,
-  PromRuleDTO,
-  PromRuleGroupDTO,
+  type GrafanaPromRuleGroupDTO,
+  type PromAlertingRuleState,
+  type PromRuleDTO,
+  type PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import { WithNotificationOptions, alertingApi } from './alertingApi';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
 import { normalizeRuleGroup } from './prometheus';
 
 export interface PromRulesResponse<TRuleGroup> {
@@ -37,6 +37,7 @@ type PromRulesOptions = WithNotificationOptions<{
 export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace' | 'excludeAlerts'> & {
   folderUid?: string;
   dashboardUid?: string;
+  datasources?: string[];
   panelId?: number;
   limitAlerts?: number;
   ruleLimit?: number;
@@ -45,7 +46,10 @@ export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'nam
   state?: PromAlertingRuleState[];
   title?: string;
   searchGroupName?: string;
+  searchFolder?: string;
   type?: 'alerting' | 'recording';
+  ruleMatchers?: string[];
+  plugins?: 'hide' | 'only';
 };
 
 export const prometheusApi = alertingApi.injectEndpoints({
@@ -98,8 +102,12 @@ export const prometheusApi = alertingApi.injectEndpoints({
         limitAlerts,
         groupNextToken,
         title,
+        datasources,
         searchGroupName,
+        searchFolder,
         dashboardUid,
+        ruleMatchers,
+        plugins,
       }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
@@ -114,9 +122,13 @@ export const prometheusApi = alertingApi.injectEndpoints({
           rule_limit: ruleLimit?.toFixed(0),
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
+          datasource_uid: datasources,
           'search.rule_name': title,
           'search.rule_group': searchGroupName,
+          'search.folder': searchFolder,
           dashboard_uid: dashboardUid,
+          rule_matcher: ruleMatchers,
+          plugins: plugins,
         },
       }),
       providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {

@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -52,9 +53,9 @@ type userData struct {
 	raw           []byte
 }
 
-func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGitlab {
+func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialGitlab {
 	provider := &SocialGitlab{
-		SocialBase: newSocialBase(social.GitlabProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase: newSocialBaseWithCache(social.GitlabProviderName, orgRoleMapper, info, features, cfg, cache),
 	}
 
 	ssoSettings.RegisterReloadable(social.GitlabProviderName, provider)
@@ -78,10 +79,16 @@ func (s *SocialGitlab) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 		return err
 	}
 
-	return validation.Validate(info, requester,
+	err = validation.Validate(info, requester,
 		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
 		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
-		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"))
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
+		validation.ValidateIDTokenValidator)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
@@ -275,10 +282,29 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 		return nil, nil
 	}
 
-	rawJSON, err := s.retrieveRawJWTPayload(idToken)
-	if err != nil {
-		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
+	idTokenString, ok := idToken.(string)
+	if !ok {
+		s.log.Warn("ID token is not a string", "token", fmt.Sprintf("%+v", idToken))
 		return nil, nil
+	}
+
+	var rawJSON []byte
+	var err error
+
+	// If JWT validation is enabled, validate the signature
+	if s.info.ValidateIDToken && s.info.JwkSetURL != "" {
+		rawJSON, err = s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.info.JwkSetURL)
+		if err != nil {
+			s.log.Warn("Error validating ID token signature", "error", err)
+			return nil, err
+		}
+	} else {
+		// Otherwise, just extract the payload without signature validation
+		rawJSON, err = s.retrieveRawJWTPayload(idTokenString)
+		if err != nil {
+			s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
+			return nil, nil
+		}
 	}
 
 	s.log.Debug("Received id_token", "raw_json", string(rawJSON))

@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
-import { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from 'react';
+import { type FormEventHandler, type KeyboardEventHandler, type ReactNode, useCallback, useId } from 'react';
 
-import { DataFrame, GrafanaTheme2, TransformerRegistryItem, SelectableValue } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type TransformerRegistryItem, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Drawer, FilterPill, Grid, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { Drawer, FilterPill, Grid, InlineLabel, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { getCategoriesLabels } from 'app/features/transformers/utils';
 
 import { SqlExpressionsBanner } from './SqlExpressions/SqlExpressionsBanner';
 import { TransformationCard } from './TransformationCard';
-import { FilterCategory } from './TransformationsEditor';
+import { type FilterCategory } from './TransformationsEditor';
 
 const VIEW_ALL_VALUE = 'viewAll';
 
@@ -47,6 +47,7 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
     onShowIllustrationsChange,
     onSelectedFilterChange,
   } = props;
+  const showImagesId = useId();
 
   const filterCategoriesLabels: Array<[FilterCategory, string]> = [
     [VIEW_ALL_VALUE, t('dashboard.transformation-picker-ng.view-all', 'View all')],
@@ -86,10 +87,11 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
             autoFocus={true}
           />
           <Stack direction="row" alignItems="center" gap={0.5}>
-            <span className={styles.switchLabel}>
+            <InlineLabel htmlFor={showImagesId} transparent width="auto">
               <Trans i18nKey="dashboard.transformation-picker-ng.show-images">Show images</Trans>
-            </span>
+            </InlineLabel>
             <Switch
+              id={showImagesId}
               value={showIllustrations}
               onChange={() => onShowIllustrationsChange && onShowIllustrationsChange(!showIllustrations)}
             />
@@ -115,8 +117,9 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           data={data}
           onClick={(id) => {
             reportInteraction('grafana_panel_transformations_clicked', {
-              type: id,
               context: 'transformations_drawer',
+              type: id,
+              action: 'add',
             });
             onTransformationAdd({ value: id });
           }}
@@ -147,9 +150,6 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
       flexGrow: '1',
       width: 'initial',
     }),
-    switchLabel: css({
-      whiteSpace: 'nowrap',
-    }),
   };
 }
 
@@ -165,11 +165,12 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
     <Grid columns={3} gap={1}>
       {transformations.map((transform) => (
         <TransformationCard
-          key={transform.id}
-          transform={transform}
-          showIllustrations={showIllustrations}
-          onClick={onClick}
           data={data}
+          fullWidth
+          key={transform.id}
+          onClick={onClick}
+          showIllustrations={showIllustrations}
+          transform={transform}
         />
       ))}
     </Grid>

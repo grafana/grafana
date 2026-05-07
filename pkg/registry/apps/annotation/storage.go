@@ -2,9 +2,13 @@ package annotation
 
 import (
 	"context"
+	"errors"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 )
+
+// ErrNotFound is returned by Store implementations when the requested annotation does not exist.
+var ErrNotFound = errors.New("annotation not found")
 
 type Store interface {
 	Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error)
@@ -21,6 +25,12 @@ type ListOptions struct {
 	To           int64
 	Limit        int64
 	Continue     string
+	// CreatedBy filters by the uid of the user who created the annotation
+	CreatedBy      string
+	Tags           []string
+	TagsMatchAny   bool
+	Scopes         []string
+	ScopesMatchAny bool
 }
 
 type AnnotationList struct {

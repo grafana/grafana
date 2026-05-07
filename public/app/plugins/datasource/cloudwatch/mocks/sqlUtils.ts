@@ -1,14 +1,14 @@
 import {
-  QueryEditorExpression,
+  type QueryEditorExpression,
   QueryEditorExpressionType,
-  QueryEditorArrayExpression,
-  QueryEditorOperatorExpression,
+  type QueryEditorArrayExpression,
   QueryEditorPropertyType,
-  QueryEditorGroupByExpression,
-  QueryEditorFunctionExpression,
-  QueryEditorFunctionParameterExpression,
-  QueryEditorPropertyExpression,
-} from '../expressions';
+  type QueryEditorGroupByExpression,
+  type QueryEditorFunctionExpression,
+  type QueryEditorFunctionParameterExpression,
+  type QueryEditorPropertyExpression,
+} from '../dataquery.gen';
+import { type QueryEditorOperatorExpression } from '../expressions';
 
 export function createArray(
   expressions: QueryEditorExpression[],

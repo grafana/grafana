@@ -1,7 +1,8 @@
-import { CoreApp, DashboardLoadedEvent, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { CoreApp, type DashboardLoadedEvent, type DataQueryRequest, type DataQueryResponse } from '@grafana/data';
 import { QueryEditorMode } from '@grafana/plugin-ui';
 import { reportInteraction, config } from '@grafana/runtime';
 
+import { LokiQueryType } from './dataquery.gen';
 import {
   REF_ID_STARTER_ANNOTATION,
   REF_ID_DATA_SAMPLES,
@@ -12,7 +13,7 @@ import {
 import pluginJson from './plugin.json';
 import { getNormalizedLokiQuery, isLogsQuery, obfuscate } from './queryUtils';
 import { variableRegex } from './querybuilder/parsingUtils';
-import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
+import { type LokiGroupedRequest, type LokiQuery } from './types';
 
 type LokiOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;

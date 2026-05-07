@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Card, Icon, TagList, useTheme2 } from '@grafana/ui';
 
 interface DataSourceCardProps {
@@ -54,7 +54,7 @@ export function DataSourceCard({
         </div>
       </Card.Heading>
       <Card.Figure className={styles.logo}>
-        <img src={ds.meta.info.logos.small} alt={`${ds.meta.name} Logo`} />
+        <img src={ds.meta.info.logos.small || undefined} alt={`${ds.meta.name} Logo`} />
       </Card.Figure>
     </Card>
   );
@@ -67,6 +67,9 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       cursor: 'pointer',
       backgroundColor: 'transparent',
       padding: theme.spacing(1),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'none',
+      },
 
       '&:hover': {
         backgroundColor: theme.colors.action.hover,

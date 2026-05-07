@@ -198,6 +198,37 @@ To enable the `Refresh Token` head over the Okta application settings and:
 
 At the configuration file, extend the `scopes` in `[auth.okta]` section with `offline_access` and set `use_refresh_token` to `true`.
 
+### Configure JWT ID token validation
+
+By default, Grafana extracts user information from ID tokens without validating their cryptographic signatures. To enhance security, you can enable JWT signature validation to ensure that ID tokens are authentic and have not been tampered with.
+
+To enable JWT ID token validation:
+
+1. Set `validate_id_token` to `true` in the `[auth.okta]` section of the Grafana configuration file.
+2. Configure `jwk_set_url` with the URL of your Okta tenant's JSON Web Key Set (JWKS) endpoint. This endpoint provides the public keys used to verify JWT signatures.
+
+   For Okta, the JWKS endpoint is: `https://<tenant-id>.okta.com/oauth2/v1/keys`
+
+Example configuration:
+
+```ini
+[auth.okta]
+enabled = true
+validate_id_token = true
+jwk_set_url = https://<tenant-id>.okta.com/oauth2/v1/keys
+client_id = <client id>
+client_secret = <client secret>
+scopes = openid profile email groups
+```
+
+{{< admonition type="note" >}}
+When JWT validation is enabled, Grafana caches the JWKS keys to improve performance. The cache respects the `Cache-Control` header from the JWKS endpoint response. If no cache expiration is specified, keys are cached for 5 minutes by default.
+{{< /admonition >}}
+
+{{< admonition type="caution" >}}
+If `validate_id_token` is set to `true`, you must configure `jwk_set_url`. Authentication will fail if the JWK Set URL is not provided or if the ID token signature cannot be verified.
+{{< /admonition >}}
+
 ### Configure role mapping
 
 {{< admonition type="note" >}}
@@ -280,4 +311,6 @@ If the configuration option requires a JMESPath expression that includes a colon
 | `allowed_domains`       | No       | Yes                | List of comma- or space-separated domains. The user should belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                                                 |                               |
 | `use_pkce`              | No       | Yes                | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                  | `true`                        |
 | `use_refresh_token`     | No       | Yes                | Set to `true` to use refresh token and check access token expiration.                                                                                                                                                                                                                                                                                                                                                                                                                                               | `false`                       |
+| `validate_id_token`     | No       | Yes                | If enabled, Grafana will validate the JWT signature of ID tokens using the JWKS endpoint. This enhances security by ensuring tokens are authentic and have not been tampered with.                                                                                                                                                                                                                                                                                                                                  | `false`                       |
+| `jwk_set_url`           | No       | Yes                | URL of the JSON Web Key Set (JWKS) endpoint used to verify JWT ID token signatures. Required when ID token validation is enabled. For Okta, use `https://<tenant-id>.okta.com/oauth2/v1/keys`.                                                                                                                                                                                                                                                                                                                      |                               |
 | `signout_redirect_url`  | No       | Yes                | URL to redirect to after the user logs out.                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |                               |

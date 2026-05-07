@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import impressionSrv from 'app/core/services/impression_srv';
+import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { extractManagerKind } from 'app/features/search/service/utils';
 
-import { CommandPaletteAction } from '../types';
+import { type CommandPaletteAction } from '../types';
 import { RECENT_DASHBOARDS_PRIORITY, SEARCH_RESULTS_PRIORITY } from '../values';
 
 const MAX_SEARCH_RESULTS = 100;
@@ -20,29 +21,17 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
     return [];
   }
 
-  const recentUids = (await impressionSrv.getDashboardOpened()).slice(0, MAX_RECENT_DASHBOARDS);
-  const resultsDataFrame = await getGrafanaSearcher().search({
-    kind: ['dashboard'],
-    limit: MAX_RECENT_DASHBOARDS,
-    uid: recentUids,
-  });
-
-  // Search results are alphabetical, so reorder them according to recently viewed
-  const recentResults = resultsDataFrame.view.toArray();
-  recentResults.sort((resultA, resultB) => {
-    const orderA = recentUids.indexOf(resultA.uid);
-    const orderB = recentUids.indexOf(resultB.uid);
-    return orderA - orderB;
-  });
+  const recentResults = await getRecentlyViewedDashboards(MAX_RECENT_DASHBOARDS);
 
   const recentDashboardActions: CommandPaletteAction[] = recentResults.map((item) => {
-    const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    const { url, name, managedBy } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
       id: `recent-dashboards${url}`,
       name: `${name}`,
       section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
       priority: RECENT_DASHBOARDS_PRIORITY,
       url,
+      managedBy: extractManagerKind(managedBy),
     };
   });
 
@@ -62,7 +51,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
   });
 
   const goToSearchResultActions: CommandPaletteAction[] = data.view.map((item) => {
-    const { url, name, kind, location } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    const { url, name, kind, location, managedBy } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
       id: `go/${kind}${url}`,
       name: `${name}`,
@@ -73,6 +62,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
       priority: SEARCH_RESULTS_PRIORITY,
       url,
       subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
+      managedBy: extractManagerKind(managedBy),
     };
   });
 

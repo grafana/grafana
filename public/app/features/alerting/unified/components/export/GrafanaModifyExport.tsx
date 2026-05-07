@@ -5,8 +5,9 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
-import { RuleIdentifier } from '../../../../../types/unified-alerting';
+import { type RuleIdentifier } from '../../../../../types/unified-alerting';
 import { useRuleWithLocation } from '../../hooks/useCombinedRule';
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { formValuesFromExistingRule } from '../../rule-editor/formDefaults';
 import { stringifyErrorLike } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
@@ -93,7 +94,7 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
 function GrafanaModifyExportPage() {
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={getAlertRulesNavId()}
       pageNav={{
         text: t('alerting.grafana-modify-export-page.text.modify-export', 'Modify export'),
         subTitle:

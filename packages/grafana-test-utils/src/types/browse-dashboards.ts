@@ -3,7 +3,7 @@
 // @grafana/schema?
 // New package @grafana/core? @grafana/types?
 
-enum ManagerKind {
+export enum ManagerKind {
   Repo = 'repo',
   Terraform = 'terraform',
   Kubectl = 'kubectl',

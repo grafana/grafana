@@ -1,8 +1,5 @@
 name: Run commands when issues are labeled or comments added
 
-# important: this workflow uses a github app that is strictly limited
-# to issues. If you want to change the triggers for this workflow,
-# please review if the permissions are still sufficient.
 on:
   issues:
     types: [labeled, unlabeled]
@@ -36,11 +33,10 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: "Get vault secrets"
+      - name: Get vault secrets
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
-          # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
           repo_secrets: |
             GITHUB_APP_ID=grafana_pr_automation_app:app_id
             GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
@@ -52,18 +48,8 @@ jobs:
           app-id: ${{ env.GITHUB_APP_ID }}
           private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
 
-      - name: Checkout Actions
-        uses: actions/checkout@v5
-        with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-          persist-credentials: false
-
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
-      - name: Run Commands
-        uses: ./actions/commands
+      - name: Run commands
+        uses: grafana/grafana-github-actions/commands@main
         with:
           metricsWriteAPIKey: ""
           token: ${{ steps.generate_token.outputs.token }}

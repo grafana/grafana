@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { ReactElement, useCallback, useRef } from 'react';
+import { type ReactElement, useCallback, useRef } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -16,17 +16,22 @@ interface Props {
   title?: string;
   offset?: number;
   dragClass?: string;
+  onDragStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
   onOpenMenu?: () => void;
 }
 
-export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu }: Props) {
+export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu, onDragStart }: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
   const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
   // Capture the pointer to keep the widget visible while dragging
-  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    draggableRef.current?.setPointerCapture(e.pointerId);
-  }, []);
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      draggableRef.current?.setPointerCapture(e.pointerId);
+      onDragStart?.(e);
+    },
+    [onDragStart]
+  );
 
   const onPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     draggableRef.current?.releasePointerCapture(e.pointerId);

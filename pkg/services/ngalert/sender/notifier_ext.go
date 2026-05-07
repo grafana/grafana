@@ -17,11 +17,98 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/prometheus/config"
+	"github.com/prometheus/prometheus/discovery/targetgroup"
 	"github.com/prometheus/prometheus/model/labels"
 
 	"github.com/grafana/grafana/pkg/util/httpclient"
 )
+
+// String constants for instrumentation.
+const (
+	// Extension: Changed namespace and subsystem from upstream values ("prometheus", "notifications")
+	// so that metrics are exposed as grafana_alerting_sender_*
+	namespace         = "grafana_alerting"
+	subsystem         = "sender"
+	alertmanagerLabel = "alertmanager"
+	// Extension: New "data_source_uid" label for external Alertmanagers.
+	dataSourceUIDLabel = "data_source_uid"
+)
+
+func newAlertMetrics(r prometheus.Registerer, queueCap int, queueLen, alertmanagersDiscovered func() float64) *alertMetrics {
+	m := &alertMetrics{
+		latency: prometheus.NewSummaryVec(prometheus.SummaryOpts{
+			Namespace:  namespace,
+			Subsystem:  subsystem,
+			Name:       "latency_seconds",
+			Help:       "Latency quantiles for sending alert notifications.",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+			// Extension: Added "data_source_uid" label.
+			[]string{alertmanagerLabel, dataSourceUIDLabel},
+		),
+		errors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "errors_total",
+			Help:      "Total number of sent alerts affected by errors.",
+		},
+			// Extension: Added "data_source_uid" label.
+			[]string{alertmanagerLabel, dataSourceUIDLabel},
+		),
+		sent: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "sent_total",
+			Help:      "Total number of alerts sent.",
+		},
+			// Extension: Added "data_source_uid" label.
+			[]string{alertmanagerLabel, dataSourceUIDLabel},
+		),
+		dropped: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "dropped_total",
+			Help:      "Total number of alerts dropped due to errors when sending to Alertmanager.",
+		}),
+		queueLength: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "queue_length",
+			Help:      "The number of alert notifications in the queue.",
+		}, queueLen),
+		queueCapacity: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "queue_capacity",
+			Help:      "The capacity of the alert notifications queue.",
+		}),
+		alertmanagersDiscovered: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			// Extension: Now using 'namespace' and 'subsystem' instead of full string in 'Name'.
+			Name: "alertmanagers_discovered",
+			Help: "The number of alertmanagers discovered and active.",
+		}, alertmanagersDiscovered),
+	}
+
+	m.queueCapacity.Set(float64(queueCap))
+
+	if r != nil {
+		r.MustRegister(
+			m.latency,
+			m.errors,
+			m.sent,
+			m.dropped,
+			m.queueLength,
+			m.queueCapacity,
+			m.alertmanagersDiscovered,
+		)
+	}
+
+	return m
+}
 
 func do(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
 	if client == nil {
@@ -31,8 +118,8 @@ func do(ctx context.Context, client *http.Client, req *http.Request) (*http.Resp
 }
 
 // ApplyConfig updates the status state as the new config requires.
-// Extension: add new parameter headers.
-func (n *Manager) ApplyConfig(conf *config.Config, headers map[string]http.Header) error {
+// Extension: add new parameters headers and dataSourceUIDs.
+func (n *Manager) ApplyConfig(conf *config.Config, headers map[string]http.Header, dataSourceUIDs map[string]string) error {
 	n.mtx.Lock()
 	defer n.mtx.Unlock()
 
@@ -71,6 +158,10 @@ func (n *Manager) ApplyConfig(conf *config.Config, headers map[string]http.Heade
 		if headers, ok := headers[k]; ok {
 			ams.headers = headers
 		}
+		// Extension: set the data source UID to the alertmanager set.
+		if uid, ok := dataSourceUIDs[k]; ok {
+			ams.dataSourceUID = uid
+		}
 		amSets[k] = ams
 	}
 
@@ -87,6 +178,8 @@ type alertmanagerSet struct {
 
 	// Extension: headers that should be used for the http requests to the alertmanagers.
 	headers http.Header
+	// Extension: dataSourceUID is the UID of the data source this alertmanager set was configured from.
+	dataSourceUID string
 
 	metrics *alertMetrics
 
@@ -183,21 +276,21 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(ams.cfg.Timeout))
 			defer cancel()
 
-			// Extension: added headers parameter.
-			go func(ctx context.Context, k string, client *http.Client, url string, payload []byte, count int, headers http.Header) {
+			// Extension: added headers and dataSourceUID parameters/labels.
+			go func(ctx context.Context, k string, client *http.Client, url string, payload []byte, count int, headers http.Header, dsUID string) {
 				err := n.sendOne(ctx, client, url, payload, headers)
 				if err != nil {
-					n.logger.Error("Error sending alerts", "alertmanager", url, "count", count, "err", err)
-					n.metrics.errors.WithLabelValues(url).Add(float64(count))
+					n.logger.Error("Error sending alerts", "alertmanager", url, "data_source_uid", dsUID, "count", count, "err", err)
+					n.metrics.errors.WithLabelValues(url, dsUID).Add(float64(count))
 				} else {
 					amSetCovered.CompareAndSwap(k, false, true)
 				}
 
-				n.metrics.latency.WithLabelValues(url).Observe(time.Since(begin).Seconds())
-				n.metrics.sent.WithLabelValues(url).Add(float64(count))
+				n.metrics.latency.WithLabelValues(url, dsUID).Observe(time.Since(begin).Seconds())
+				n.metrics.sent.WithLabelValues(url, dsUID).Add(float64(count))
 
 				wg.Done()
-			}(ctx, k, ams.client, am.url().String(), payload, len(amAlerts), ams.headers)
+			}(ctx, k, ams.client, am.url().String(), payload, len(amAlerts), ams.headers, ams.dataSourceUID)
 		}
 
 		ams.mtx.RUnlock()
@@ -248,4 +341,57 @@ func (n *Manager) sendOne(ctx context.Context, c *http.Client, url string, b []b
 	}
 
 	return nil
+}
+
+// sync extracts a deduplicated set of Alertmanager endpoints from a list
+// of target groups definitions.
+func (s *alertmanagerSet) sync(tgs []*targetgroup.Group) {
+	allAms := []alertmanager{}
+	allDroppedAms := []alertmanager{}
+
+	for _, tg := range tgs {
+		ams, droppedAms, err := AlertmanagerFromGroup(tg, s.cfg)
+		if err != nil {
+			s.logger.Error("Creating discovered Alertmanagers failed", "err", err)
+			continue
+		}
+		allAms = append(allAms, ams...)
+		allDroppedAms = append(allDroppedAms, droppedAms...)
+	}
+
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	previousAms := s.ams
+	// Set new Alertmanagers and deduplicate them along their unique URL.
+	s.ams = []alertmanager{}
+	s.droppedAms = []alertmanager{}
+	s.droppedAms = append(s.droppedAms, allDroppedAms...)
+	seen := map[string]struct{}{}
+
+	for _, am := range allAms {
+		us := am.url().String()
+		if _, ok := seen[us]; ok {
+			continue
+		}
+
+		// This will initialize the Counters for the AM to 0.
+		// Extension: Add "data_source_uid" label.
+		s.metrics.sent.WithLabelValues(us, s.dataSourceUID)
+		s.metrics.errors.WithLabelValues(us, s.dataSourceUID)
+
+		seen[us] = struct{}{}
+		s.ams = append(s.ams, am)
+	}
+	// Now remove counters for any removed Alertmanagers.
+	for _, am := range previousAms {
+		us := am.url().String()
+		if _, ok := seen[us]; ok {
+			continue
+		}
+		// Extension: Add "data_source_uid" label.
+		s.metrics.latency.DeleteLabelValues(us, s.dataSourceUID)
+		s.metrics.sent.DeleteLabelValues(us, s.dataSourceUID)
+		s.metrics.errors.DeleteLabelValues(us, s.dataSourceUID)
+		seen[us] = struct{}{}
+	}
 }

@@ -1,13 +1,14 @@
-import * as React from 'react';
+import type * as React from 'react';
 
-import { CloudNotifierType, NotifierType } from 'app/features/alerting/unified/types/alerting';
-import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
+import { type CloudNotifierType, type NotifierType } from 'app/features/alerting/unified/types/alerting';
+import { type GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 
-import { ControlledField } from '../hooks/useControlledFieldArray';
+import { type ControlledField } from '../hooks/useControlledFieldArray';
 
 export interface ChannelValues {
   __id: string; // used to correlate form values to original DTOs
   type: string;
+  version?: string; // Integration version (e.g. "v0" for Mimir legacy, "v1" for Grafana)
   settings: Record<string, any>;
   secureFields: Record<string, boolean | ''>;
 }

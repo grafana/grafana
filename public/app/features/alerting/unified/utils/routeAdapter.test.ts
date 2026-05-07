@@ -1,8 +1,13 @@
 import { Factory } from 'fishery';
 
-import { RouteWithID as AlertingRouteWithID } from '@grafana/alerting';
+import { type RouteWithID as AlertingRouteWithID } from '@grafana/alerting';
 import { RouteFactory } from '@grafana/alerting/testing';
-import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import {
+  MatcherOperator,
+  type ObjectMatcher,
+  type Route,
+  type RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { routeAdapter } from './routeAdapter';
 

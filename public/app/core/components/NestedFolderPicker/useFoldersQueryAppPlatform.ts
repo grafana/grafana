@@ -2,23 +2,28 @@ import { createSelector } from '@reduxjs/toolkit';
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
-import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { getMessageFromError } from 'app/core/utils/errors';
+import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { ManagerKind } from '../../../features/apiserver/types';
-import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
+import { type ManagerKind } from '../../../features/apiserver/types';
+import { PAGE_SIZE } from '../../../features/browse-dashboards/api/constants';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
-import { UseFoldersQueryProps } from './useFoldersQuery';
+import { type UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
-type GetFolderChildrenQuery = ReturnType<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>;
+type GetFolderChildrenQuery = ReturnType<
+  ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>
+>;
 type GetFolderChildrenRequest = {
   unsubscribe: () => void;
 };
 
 const rootFolderToken = 'general';
+const sharedWithMeFolderToken = 'sharedwithme';
 const collator = new Intl.Collator();
 
 /**
@@ -26,7 +31,6 @@ const collator = new Intl.Collator();
  * This version uses the getFolderChildren API from the folder v1beta1 API. Compared to legacy API, the v1beta1 API
  * does not have pagination at the moment.
  */
-
 export function useFoldersQueryAppPlatform({
   isBrowsing,
   openFolders,
@@ -42,11 +46,14 @@ export function useFoldersQueryAppPlatform({
 
   // Set of UIDs for which children were requested but were empty.
   const [emptyFolders, setEmptyFolders] = useState<Set<string>>(new Set());
+  function addEmptyFolder(folderUid: string) {
+    setEmptyFolders((prev) => new Set(prev).add(folderUid));
+  }
 
   // Keep a list of selectors for dynamic state selection
-  const [selectors, setSelectors] = useState<Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>>(
-    []
-  );
+  const [selectors, setSelectors] = useState<
+    Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>>
+  >([]);
 
   // This is an aggregated dynamic selector of all the selectors for all the request issued while loading the folder
   // tree and returns the whole tree that was loaded so far.
@@ -54,12 +61,17 @@ export function useFoldersQueryAppPlatform({
     return createSelector(selectors, (...responses) => {
       // Returns loading true if any of the responses is still loading
       let isLoading = false;
+      let error: unknown = undefined;
 
       const responseByParent: Record<string, GetFolderChildrenQuery> = {};
 
       for (const response of responses) {
         if (response.status === QueryStatus.pending) {
           isLoading = true;
+        }
+
+        if (!error && response.error) {
+          error = response.error;
         }
 
         const parentName = response.originalArgs?.folder;
@@ -70,6 +82,7 @@ export function useFoldersQueryAppPlatform({
 
       return {
         isLoading,
+        error,
         responseByParent,
       };
     });
@@ -92,10 +105,10 @@ export function useFoldersQueryAppPlatform({
       const args = { folder: finalParentUid, type: 'folder', permission } as const;
 
       // Make a request
-      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.getSearch.initiate(args));
+      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(args));
 
       // Add selector for the response to the list so we can then have an aggregated selector for all the folders
-      const selector = dashboardAPIv0alpha1.endpoints.getSearch.select(args);
+      const selector = dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select(args);
       setSelectors((selectors) => selectors.concat(selector));
 
       // the subscriptions are saved in a ref so they can be unsubscribed on unmount
@@ -128,12 +141,20 @@ export function useFoldersQueryAppPlatform({
       let folders = response?.data?.hits ? [...response.data.hits] : [];
       folders.sort((a, b) => collator.compare(a.title, b.title));
 
-      const list = folders.flatMap((item) => {
+      // Add virtual "Shared with me" folder under the top-level "Dashboards" root.
+      // This is backed by the same search endpoint, using `folder=sharedwithme`.
+      // Should show whatever folders are not accessible by traversing from the general/root folder.
+      if (parentUid === rootFolderToken && rootFolderUID === undefined) {
+        folders = [makeSharedWithMeFolder(), ...folders];
+      }
+
+      const list: DashboardsTreeItem[] = folders.flatMap((item) => {
         const name = item.name;
         const folderIsOpen = openFolders[name];
-        const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
+        const flatItem: DashboardsTreeItem = {
           isOpen: Boolean(folderIsOpen),
           level: level,
+          disabled: item.name === sharedWithMeFolderToken,
           item: {
             kind: 'folder' as const,
             title: item.title,
@@ -148,13 +169,10 @@ export function useFoldersQueryAppPlatform({
 
         const childResponse = folderIsOpen && state.responseByParent[name];
         if (childResponse) {
-          // If we finished loading and there are no children add to empty list
-          if (
-            childResponse.data &&
-            childResponse.status !== QueryStatus.pending &&
-            childResponse.data.hits.length === 0
-          ) {
-            setEmptyFolders((prev) => new Set(prev).add(name));
+          // If we finished loading and there are no children add folder to empty folders list so we don't show
+          // the caret next to the folder anymore
+          if (isEmptyResponse(childResponse)) {
+            addEmptyFolder(name);
           }
           const childFlatItems = createFlatList(name, childResponse, level + 1);
           return [flatItem, ...childFlatItems];
@@ -163,6 +181,8 @@ export function useFoldersQueryAppPlatform({
         return flatItem;
       });
 
+      // We could return early but we are adding the "shared with me" folder statically, so even if response is empty
+      // there could be a folder to process
       if (!response) {
         // The pagination placeholders are what actually triggers the call to the next page. So if there is no response,
         // meaning to request for some children, we add these placeholders, and they will trigger the load.
@@ -182,6 +202,20 @@ export function useFoldersQueryAppPlatform({
     emptyFolders,
     items: treeList,
     isLoading: state.isLoading,
+    error: state.error ? new Error(getMessageFromError(state.error)) : undefined,
     requestNextPage,
   };
+}
+
+function makeSharedWithMeFolder() {
+  return {
+    name: sharedWithMeFolderToken,
+    title: t('browse-dashboards.folder-picker.shared-with-me', 'Shared with me'),
+    folder: rootFolderToken,
+    resource: 'folder',
+  };
+}
+
+function isEmptyResponse(response: { data?: { hits: unknown[] }; status: QueryStatus }) {
+  return response.data && response.status !== QueryStatus.pending && response.data.hits.length === 0;
 }

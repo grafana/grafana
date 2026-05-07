@@ -1,12 +1,12 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldType,
   formattedValueToString,
-  InterpolateFunction,
-  LinkModel,
+  type InterpolateFunction,
+  type LinkModel,
   usePluginContext,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
@@ -16,8 +16,9 @@ import {
   VizTooltipHeader,
   VizTooltipWrapper,
   getContentItems,
-  VizTooltipItem,
-  AdHocFilterModel,
+  type VizTooltipItem,
+  type AdHocFilterModel,
+  type FilterByGroupedLabelsModel,
 } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
@@ -50,6 +51,7 @@ export interface TimeSeriesTooltipProps {
   dataLinks: LinkModel[];
   hideZeros?: boolean;
   adHocFilters?: AdHocFilterModel[];
+  filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
 }
@@ -70,8 +72,10 @@ export const TimeSeriesTooltip = ({
   adHocFilters,
   canExecuteActions,
   compareDiffMs,
+  filterByGroupedLabels,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
+
   const xField = series.fields[0];
   let xVal = xField.values[dataIdxs[0]!];
 
@@ -107,7 +111,13 @@ export const TimeSeriesTooltip = ({
         : [];
 
       footer = (
-        <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} adHocFilters={adHocFilters} />
+        <VizTooltipFooter
+          dataLinks={dataLinks}
+          actions={actions}
+          annotate={annotate}
+          adHocFilters={adHocFilters}
+          filterByGroupedLabels={filterByGroupedLabels}
+        />
       );
     }
   }

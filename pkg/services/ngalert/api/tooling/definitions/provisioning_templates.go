@@ -1,23 +1,33 @@
 package definitions
 
+import "github.com/grafana/alerting/definition"
+
 // swagger:route GET /v1/provisioning/templates provisioning stable RouteGetTemplates
 //
 // Get all notification template groups.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: NotificationTemplates
+//       403: ForbiddenError
 
 // swagger:route GET /v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
 // Get a notification template group.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: NotificationTemplate
+//       403: ForbiddenError
 //       404: PublicError
 
 // swagger:route PUT /v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
 // Updates an existing notification template group.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -25,14 +35,18 @@ package definitions
 //     Responses:
 //       202: NotificationTemplate
 //       400: PublicError
+//       403: ForbiddenError
 //       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
 //
 // Delete a notification template group.
 //
+// Deprecated: true
+//
 //     Responses:
 //       204: description: The template was deleted successfully.
+//       403: ForbiddenError
 //       409: PublicError
 
 // swagger:parameters RouteGetTemplate RoutePutTemplate RouteDeleteTemplate
@@ -55,11 +69,12 @@ type RouteDeleteTemplateParam struct {
 
 // swagger:model
 type NotificationTemplate struct {
-	UID             string     `json:"-" yaml:"-"`
-	Name            string     `json:"name"`
-	Template        string     `json:"template"`
-	Provenance      Provenance `json:"provenance,omitempty"`
-	ResourceVersion string     `json:"version,omitempty"`
+	UID             string                  `json:"-" yaml:"-"`
+	Name            string                  `json:"name"`
+	Template        string                  `json:"template"`
+	Provenance      Provenance              `json:"provenance,omitempty"`
+	ResourceVersion string                  `json:"version,omitempty"`
+	Kind            definition.TemplateKind `json:"-" yaml:"-"`
 }
 
 // swagger:model

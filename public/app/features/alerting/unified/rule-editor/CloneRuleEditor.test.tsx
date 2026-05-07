@@ -7,7 +7,7 @@ import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
+import { type ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder, mockRulerAlertingRule } from '../mocks';
 import { grafanaRulerRule, mockPreviewApiResponse } from '../mocks/grafanaRulerApi';
@@ -15,7 +15,7 @@ import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from '../mo
 import { setFolderResponse } from '../mocks/server/configure';
 import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
 import { setupDataSources } from '../testSetup/datasources';
-import { RuleFormValues } from '../types/rule-form';
+import { type RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { hashRulerRule } from '../utils/rule-id';
 
@@ -165,10 +165,10 @@ describe('CloneRuleEditor', function () {
       );
 
       await waitFor(() => {
-        expect(ui.inputs.name.get()).toHaveValue('First Ruler Rule (copy)');
+        expect(ui.inputs.namespace.get()).toHaveTextContent('namespace-one');
       });
+      expect(ui.inputs.name.get()).toHaveValue('First Ruler Rule (copy)');
       expect(ui.inputs.expr.get()).toHaveValue('vector(1) > 0');
-      expect(ui.inputs.namespace.get()).toHaveTextContent('namespace-one');
       expect(ui.inputs.group.get()).toHaveTextContent('group1');
       expect(
         byRole('listitem', {

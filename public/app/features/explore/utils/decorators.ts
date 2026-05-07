@@ -1,35 +1,36 @@
 import { groupBy, mapValues } from 'lodash';
-import { Observable, of } from 'rxjs';
+import { from, type Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
+  type AbsoluteTimeRange,
+  type DataFrame,
+  DataTransformerID,
   FieldType,
   getDisplayProcessor,
-  PanelData,
-  standardTransformers,
+  type PanelData,
+  standardTransformersRegistry,
   preProcessPanelData,
   DataLinkConfigOrigin,
   getRawDisplayProcessor,
-  DataSourceApi,
+  type DataSourceApi,
 } from '@grafana/data';
-import { config, CorrelationData } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { ExplorePanelData } from 'app/types/explore';
+import { config, type CorrelationData } from '@grafana/runtime';
+import { getPanelPluginMetas, type PanelPluginMetas } from '@grafana/runtime/internal';
+import { type DataQuery } from '@grafana/schema';
+import { type ExplorePanelData } from 'app/types/explore';
 
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';
 import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { sortLogsResult } from '../../logs/utils';
-import { hasPanelPlugin } from '../../plugins/importPanelPlugin';
 
 /**
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
  * dataFrames with different type of data. This is later used for type specific processing. As we use this in
  * Observable pipeline, it decorates the existing panelData to pass the results to later processing stages.
  */
-export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData => {
+export const decorateWithFrameTypeMetadata = async (data: PanelData): Promise<ExplorePanelData> => {
   const graphFrames: DataFrame[] = [];
   const tableFrames: DataFrame[] = [];
   const rawPrometheusFrames: DataFrame[] = [];
@@ -38,9 +39,14 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const nodeGraphFrames: DataFrame[] = [];
   const flameGraphFrames: DataFrame[] = [];
   const customFrames: DataFrame[] = [];
+  const panels = await getPanelPluginMetas();
+  const panelsById: PanelPluginMetas = {};
+  for (const p of panels) {
+    panelsById[p.id] = p;
+  }
 
   for (const frame of data.series) {
-    if (canFindPanel(frame)) {
+    if (canFindPanel(frame, panelsById)) {
       customFrames.push(frame);
       continue;
     }
@@ -180,27 +186,30 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   // If we have only timeseries we do join on default time column which makes more sense. If we are showing
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
-  const transformer = hasOnlyTimeseries
-    ? of(data.tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}, transformContext))
-    : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}, transformContext));
+  const registryItem = hasOnlyTimeseries
+    ? standardTransformersRegistry.get(DataTransformerID.joinByField)
+    : standardTransformersRegistry.get(DataTransformerID.merge);
 
-  return transformer.pipe(
-    map((frames) => {
-      for (const frame of frames) {
-        // set display processor
-        for (const field of frame.fields) {
-          field.display =
-            field.display ??
-            getDisplayProcessor({
-              field,
-              theme: config.theme2,
-              timeZone: data.request?.timezone ?? 'browser',
-            });
-        }
-      }
-
-      return { ...data, tableResult: frames };
-    })
+  return from(registryItem.transformation()).pipe(
+    mergeMap((t) =>
+      of(data.tableFrames).pipe(
+        t.operator({}, transformContext),
+        map((frames) => {
+          for (const frame of frames) {
+            for (const field of frame.fields) {
+              field.display =
+                field.display ??
+                getDisplayProcessor({
+                  field,
+                  theme: config.theme2,
+                  timeZone: data.request?.timezone ?? 'browser',
+                });
+            }
+          }
+          return { ...data, tableResult: frames };
+        })
+      )
+    )
   );
 };
 
@@ -233,27 +242,31 @@ export const decorateWithRawPrometheusResult = (data: ExplorePanelData): Observa
   // If we have only timeseries we do join on default time column which makes more sense. If we are showing
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
-  const transformer = hasOnlyTimeseries
-    ? of(tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}, transformContext))
-    : of(tableFrames).pipe(standardTransformers.mergeTransformer.operator({}, transformContext));
+  const registryItem = hasOnlyTimeseries
+    ? standardTransformersRegistry.get(DataTransformerID.joinByField)
+    : standardTransformersRegistry.get(DataTransformerID.merge);
 
-  return transformer.pipe(
-    map((frames) => {
-      const frame = frames[0];
+  return from(registryItem.transformation()).pipe(
+    mergeMap((t) =>
+      of(tableFrames).pipe(
+        t.operator({}, transformContext),
+        map((frames) => {
+          const frame = frames[0];
 
-      // set display processor
-      for (const field of frame.fields) {
-        field.display =
-          field.display ??
-          getDisplayProcessor({
-            field,
-            theme: config.theme2,
-            timeZone: data.request?.timezone ?? 'browser',
-          });
-      }
+          for (const field of frame.fields) {
+            field.display =
+              field.display ??
+              getDisplayProcessor({
+                field,
+                theme: config.theme2,
+                timeZone: data.request?.timezone ?? 'browser',
+              });
+          }
 
-      return { ...data, rawPrometheusResult: frame };
-    })
+          return { ...data, rawPrometheusResult: frame };
+        })
+      )
+    )
   );
 };
 
@@ -308,7 +321,7 @@ export function decorateData(
         correlations,
       })
     ),
-    map(decorateWithFrameTypeMetadata),
+    mergeMap(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(logsResultDecorator),
     mergeMap(decorateWithRawPrometheusResult),
@@ -331,9 +344,9 @@ function isTimeSeries(frame: DataFrame): boolean {
  *
  * @param frame
  */
-function canFindPanel(frame: DataFrame): boolean {
+function canFindPanel(frame: DataFrame, panelsById: PanelPluginMetas): boolean {
   if (!!frame.meta?.preferredVisualisationPluginId) {
-    return hasPanelPlugin(frame.meta?.preferredVisualisationPluginId);
+    return Boolean(panelsById[frame.meta?.preferredVisualisationPluginId]);
   }
   return false;
 }

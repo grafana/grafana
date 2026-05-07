@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { NewRuleFromPanelButton } from './components/panel-alerts-tab/NewRuleFromPanelButton';
 import { RulesTable } from './components/rules/RulesTable';

@@ -28,6 +28,7 @@ export type RichHistorySearchFilters = {
   // so the resulting timerange from this will be [now - from, now - to].
   from?: number;
   to?: number;
+  // true if only starred entries should be returned, false if ALL entries should be returned,
   starred: boolean;
   page?: number;
 };

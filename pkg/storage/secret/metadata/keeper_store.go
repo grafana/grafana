@@ -194,6 +194,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 	err = res.Scan(
 		&keeper.GUID, &keeper.Name, &keeper.Namespace, &keeper.Annotations, &keeper.Labels, &keeper.Created,
 		&keeper.CreatedBy, &keeper.Updated, &keeper.UpdatedBy, &keeper.Description, &keeper.Type, &keeper.Payload,
+		&keeper.Active,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan keeper row: %w", err)
@@ -404,6 +405,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		err = rows.Scan(
 			&row.GUID, &row.Name, &row.Namespace, &row.Annotations, &row.Labels, &row.Created,
 			&row.CreatedBy, &row.Updated, &row.UpdatedBy, &row.Description, &row.Type, &row.Payload,
+			&row.Active,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error reading keeper row: %w", err)
@@ -557,7 +559,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		thirdPartyKeepers = append(thirdPartyKeepers, name)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err := keepersRows.Err(); err != nil {
 		return fmt.Errorf("third party keeper rows error: %w", err)
 	}
 
@@ -609,7 +611,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 
 	// Check if keeper is the systemwide one.
 	if name == contracts.SystemKeeperName {
-		return &secretv1beta1.SystemKeeperConfig{}, nil
+		return secretv1beta1.NewNamedKeeperConfig(contracts.SystemKeeperName, &secretv1beta1.SystemKeeperConfig{}), nil
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
@@ -618,7 +620,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 		return nil, err
 	}
 
-	keeperConfig := toProvider(secretv1beta1.KeeperType(kp.Type), kp.Payload)
+	keeperConfig := parseKeeperConfigJson(kp.Name, secretv1beta1.KeeperType(kp.Type), kp.Payload)
 
 	// TODO: this would be a good place to check if credentials are secure values and load them.
 	return keeperConfig, nil
@@ -634,13 +636,6 @@ func (s *keeperMetadataStorage) SetAsActive(ctx context.Context, namespace xkube
 	query, err := sqltemplate.Execute(sqlKeeperSetAsActive, req)
 	if err != nil {
 		return fmt.Errorf("template %q: %w", sqlKeeperSetAsActive.Name(), err)
-	}
-
-	// Check keeper exists. No need to worry about time of check to time of use
-	// since trying to activate a just deleted keeper will result in all
-	// keepers being inactive and defaulting to the system keeper.
-	if _, err := s.read(ctx, namespace.String(), name, contracts.ReadOpts{}); err != nil {
-		return fmt.Errorf("reading keeper before setting as active: %w", err)
 	}
 
 	_, err = s.db.ExecContext(ctx, query, req.GetArgs()...)
@@ -726,7 +721,7 @@ func (s *keeperMetadataStorage) GetActiveKeeperConfig(ctx context.Context, names
 	if err != nil {
 		// When there are not active keepers, default to the system keeper
 		if errors.Is(err, contracts.ErrKeeperNotFound) {
-			return contracts.SystemKeeperName, &secretv1beta1.SystemKeeperConfig{}, nil
+			return contracts.SystemKeeperName, secretv1beta1.NewNamedKeeperConfig(contracts.SystemKeeperName, &secretv1beta1.SystemKeeperConfig{}), nil
 		}
 		return "", nil, fmt.Errorf("fetching active keeper from db: %w", err)
 	}

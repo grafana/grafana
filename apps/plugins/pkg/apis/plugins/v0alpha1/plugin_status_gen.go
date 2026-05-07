@@ -20,6 +20,11 @@ func NewPluginstatusOperatorState() *PluginstatusOperatorState {
 	return &PluginstatusOperatorState{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for PluginstatusOperatorState.
+func (PluginstatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.PluginstatusOperatorState"
+}
+
 // +k8s:openapi-gen=true
 type PluginStatus struct {
 	// operatorStates is a map of operator ID to operator state evaluations.
@@ -34,6 +39,11 @@ func NewPluginStatus() *PluginStatus {
 	return &PluginStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for PluginStatus.
+func (PluginStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.PluginStatus"
+}
+
 // +k8s:openapi-gen=true
 type PluginStatusOperatorStateState string
 
@@ -42,3 +52,8 @@ const (
 	PluginStatusOperatorStateStateInProgress PluginStatusOperatorStateState = "in_progress"
 	PluginStatusOperatorStateStateFailed     PluginStatusOperatorStateState = "failed"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for PluginStatusOperatorStateState.
+func (PluginStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.PluginStatusOperatorStateState"
+}

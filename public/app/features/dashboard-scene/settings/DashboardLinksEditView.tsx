@@ -1,18 +1,19 @@
-import { NavModel, NavModelItem, PageLayoutType, arrayUtils } from '@grafana/data';
+import { type NavModel, type NavModelItem, PageLayoutType, arrayUtils } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import { type DashboardLink } from '@grafana/schema';
 import { Page } from 'app/core/components/Page/Page';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { DashboardLinkForm } from '../settings/links/DashboardLinkForm';
 import { DashboardLinkList } from '../settings/links/DashboardLinkList';
-import { NEW_LINK } from '../settings/links/utils';
+import { ProvisionedLinksSection } from '../settings/links/ProvisionedLinksSection';
+import { NEW_LINK, isLinkEditable } from '../settings/links/utils';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
-import { DashboardEditView, DashboardEditListViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditListViewState, useDashboardEditPageNav } from './utils';
 
 export interface DashboardLinksEditViewState extends DashboardEditListViewState {}
 
@@ -42,9 +43,12 @@ export class DashboardLinksEditView extends SceneObjectBase<DashboardLinksEditVi
     this.setState({ editIndex: this.links.length - 1 });
   };
 
-  public onDelete = (idx: number) => {
-    this.links = [...this.links.slice(0, idx), ...this.links.slice(idx + 1)];
-
+  public onDelete = (editableIndex: number) => {
+    const index = this.convertEditableIndexToIndex(editableIndex);
+    if (index === -1) {
+      return;
+    }
+    this.links = [...this.links.slice(0, index), ...this.links.slice(index + 1)];
     this.setState({ editIndex: undefined });
   };
 
@@ -52,8 +56,13 @@ export class DashboardLinksEditView extends SceneObjectBase<DashboardLinksEditVi
     this.links = [...this.links, { ...link }];
   };
 
-  public onOrderChange = (idx: number, direction: number) => {
-    this.links = arrayUtils.moveItemImmutably(this.links, idx, idx + direction);
+  public onOrderChange = (editableIndex: number, direction: number) => {
+    const index = this.convertEditableIndexToIndex(editableIndex);
+    const targetIndex = this.convertEditableIndexToIndex(editableIndex + direction);
+    if (index === -1 || targetIndex === -1) {
+      return;
+    }
+    this.links = arrayUtils.moveItemImmutably(this.links, index, targetIndex);
   };
 
   public onEdit = (editIndex: number) => {
@@ -61,14 +70,30 @@ export class DashboardLinksEditView extends SceneObjectBase<DashboardLinksEditVi
   };
 
   public onUpdateLink = (link: DashboardLink) => {
-    const idx = this.state.editIndex;
-
-    if (idx === undefined) {
+    const editableIndex = this.state.editIndex;
+    if (editableIndex === undefined) {
       return;
     }
-
-    this.links = [...this.links.slice(0, idx), link, ...this.links.slice(idx + 1)];
+    const index = this.convertEditableIndexToIndex(editableIndex);
+    if (index === -1) {
+      return;
+    }
+    this.links = [...this.links.slice(0, index), link, ...this.links.slice(index + 1)];
   };
+
+  private convertEditableIndexToIndex(editableIndex: number): number {
+    const links = this.links;
+    let count = 0;
+    for (let i = 0; i < links.length; i++) {
+      if (isLinkEditable(links[i])) {
+        if (count === editableIndex) {
+          return i;
+        }
+        count++;
+      }
+    }
+    return -1;
+  }
 
   public onGoBack = () => {
     this.setState({ editIndex: undefined });
@@ -80,7 +105,9 @@ function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Dashboard
   const dashboard = getDashboardSceneFor(model);
   const { links } = dashboard.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  const linkToEdit = editIndex !== undefined ? links[editIndex] : undefined;
+  const defaultLinks = links.filter((link) => !isLinkEditable(link));
+  const editableLinks = links.filter(isLinkEditable);
+  const linkToEdit = editIndex !== undefined ? editableLinks[editIndex] : undefined;
 
   if (linkToEdit) {
     return (
@@ -99,13 +126,14 @@ function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Dashboard
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
       <DashboardLinkList
-        links={links}
+        links={editableLinks}
         onNew={model.onNewLink}
         onEdit={model.onEdit}
         onDelete={model.onDelete}
         onDuplicate={model.onDuplicate}
         onOrderChange={model.onOrderChange}
       />
+      {defaultLinks.length > 0 && <ProvisionedLinksSection links={defaultLinks} />}
     </Page>
   );
 }

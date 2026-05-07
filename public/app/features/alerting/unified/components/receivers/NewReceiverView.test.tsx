@@ -1,7 +1,8 @@
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen } from 'test/test-utils';
-import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
+import { byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -19,10 +20,13 @@ const Index = () => {
 
 const renderForm = () =>
   render(
-    <Routes>
-      <Route path="/alerting/notifications" element={<Index />} />
-      <Route path="/alerting/notifications/new" element={<NewReceiverView />} />
-    </Routes>,
+    <>
+      <AppNotificationList />
+      <Routes>
+        <Route path="/alerting/notifications" element={<Index />} />
+        <Route path="/alerting/notifications/new" element={<NewReceiverView />} />
+      </Routes>
+    </>,
     {
       historyOptions: { initialEntries: ['/alerting/notifications/new'] },
     }
@@ -79,18 +83,23 @@ describe('new receiver', () => {
     // click test
     await user.click(ui.testContactPoint.get());
 
+    // close the modal
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
     // we shouldn't be testing implementation details but when the request is successful
     // it can't seem to assert on the success toast
     await user.click(ui.saveContactButton.get());
 
     const requests = await capture;
-    const testRequest = requests.find((r) => r.url.endsWith('/config/api/v1/receivers/test'));
+    const testRequest = requests.find(
+      (r) => r.url.includes('/apis/notifications.alerting.grafana.app/') && r.url.endsWith('/test')
+    );
     const saveRequest = requests.find((r) => r.url.endsWith('/receivers') && r.method === 'POST');
 
-    const testBody = await testRequest?.json();
-    const saveBody = await saveRequest?.json();
+    expect(testRequest).toBeDefined();
+    expect(testRequest?.url).toContain('/receivers/-/test');
 
-    expect([testBody]).toMatchSnapshot();
+    const saveBody = await saveRequest?.clone().json();
     expect([saveBody]).toMatchSnapshot();
   });
 
@@ -108,6 +117,26 @@ describe('new receiver', () => {
 
     expect(screen.queryByText(/redirected/i)).not.toBeInTheDocument();
   });
+
+  it('shows the backend error message when contact point creation fails', async () => {
+    const { user } = renderForm();
+
+    await user.type(await ui.inputs.name.find(), 'receiver that should fail');
+    const email = ui.inputs.email.addresses.get();
+    await user.clear(email);
+    await user.type(email, 'test@test.com');
+
+    makeAllK8sEndpointsFail(
+      'alerting.notifications.receivers.invalid',
+      'Invalid receiver: \'invalid email integration[0]: failed to check if email address "test@test.com" exists: user not found\'',
+      400
+    );
+
+    await user.click(ui.saveContactButton.get());
+
+    expect(await screen.findByText(/failed to save the contact point/i)).toBeInTheDocument();
+    expect(await screen.findByText(/user not found/i)).toBeInTheDocument();
+  });
 });
 
 const ui = {
@@ -122,7 +151,7 @@ const ui = {
   inputs: {
     name: byPlaceholderText('Name'),
     email: {
-      addresses: byLabelText(/Addresses/),
+      addresses: byRole('textbox', { name: /^Addresses/ }),
     },
   },
 };

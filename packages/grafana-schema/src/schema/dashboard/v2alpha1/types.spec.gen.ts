@@ -19,6 +19,8 @@ export interface AnnotationQuerySpec {
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?: Record<string, AnnotationEventFieldMapping>;
 	// Catch-all field for datasource-specific properties
 	legacyOptions?: Record<string, any>;
 }
@@ -62,6 +64,20 @@ export interface AnnotationPanelFilter {
 export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 	exclude: false,
 	ids: [],
+});
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+export interface AnnotationEventFieldMapping {
+	// Source type for the field value
+	source?: string;
+	// Constant value to use when source is "text"
+	value?: string;
+	// Regular expression to apply to the field value
+	regex?: string;
+}
+
+export const defaultAnnotationEventFieldMapping = (): AnnotationEventFieldMapping => ({
+	source: "field",
 });
 
 // "Off" for no shared crosshair or tooltip (default).
@@ -200,6 +216,8 @@ export const defaultDataTransformerConfig = (): DataTransformerConfig => ({
 export interface MatcherConfig {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	id: string;
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	scope?: MatcherScope;
 	// The matcher options. This is specific to the matcher implementation.
 	options?: any;
 }
@@ -207,6 +225,10 @@ export interface MatcherConfig {
 export const defaultMatcherConfig = (): MatcherConfig => ({
 	id: "",
 });
+
+export type MatcherScope = "series" | "nested" | "annotation" | "exemplar";
+
+export const defaultMatcherScope = (): MatcherScope => ("series");
 
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
@@ -293,7 +315,7 @@ export interface FieldConfig {
 	// True if data source field supports ad-hoc filters
 	filterable?: boolean;
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -327,6 +349,11 @@ export interface FieldConfig {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	custom?: Record<string, any>;
+	// Calculate min max per field
+	fieldMinMax?: boolean;
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	nullValueMode?: NullValueMode;
 }
 
 export const defaultFieldConfig = (): FieldConfig => ({
@@ -589,6 +616,11 @@ export const defaultActionVariable = (): ActionVariable => ({
 
 // Action variable type
 export const ActionVariableType = "string";
+
+// How null values should be handled
+export type NullValueMode = "null" | "connected" | "null as zero";
+
+export const defaultNullValueMode = (): NullValueMode => ("null");
 
 export interface DynamicConfigValue {
 	id: string;
@@ -1089,6 +1121,7 @@ export interface QueryVariableSpec {
 	datasource?: DataSourceRef;
 	query: DataQueryKind;
 	regex: string;
+	regexApplyTo?: VariableRegexApplyTo;
 	sort: VariableSort;
 	definition?: string;
 	options: VariableOption[];
@@ -1109,6 +1142,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	skipUrlSync: false,
 	query: defaultDataQueryKind(),
 	regex: "",
+	regexApplyTo: "value",
 	sort: "disabled",
 	options: [],
 	multi: false,
@@ -1124,6 +1158,8 @@ export interface VariableOption {
 	text: string | string[];
 	// Value of the option
 	value: string | string[];
+	// Additional properties for multi-props variables
+	properties?: Record<string, string>;
 }
 
 export const defaultVariableOption = (): VariableOption => ({
@@ -1132,8 +1168,8 @@ export const defaultVariableOption = (): VariableOption => ({
 });
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-export type VariableHide = "dontHide" | "hideLabel" | "hideVariable";
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
+export type VariableHide = "dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu";
 
 export const defaultVariableHide = (): VariableHide => ("dontHide");
 
@@ -1144,6 +1180,12 @@ export const defaultVariableHide = (): VariableHide => ("dontHide");
 export type VariableRefresh = "never" | "onDashboardLoad" | "onTimeRangeChanged";
 
 export const defaultVariableRefresh = (): VariableRefresh => ("never");
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+export type VariableRegexApplyTo = "value" | "text";
+
+export const defaultVariableRegexApplyTo = (): VariableRegexApplyTo => ("value");
 
 // Sort variable options
 // Accepted values are:
@@ -1329,6 +1371,7 @@ export interface CustomVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	valuesFormat?: "csv" | "json";
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
@@ -1400,6 +1443,8 @@ export interface AdhocVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	enableGroupBy?: boolean;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
@@ -1410,6 +1455,7 @@ export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	hide: "dontHide",
 	skipUrlSync: false,
 	allowCustomValue: true,
+	enableGroupBy: false,
 });
 
 // Define the AdHocFilterWithLabels type

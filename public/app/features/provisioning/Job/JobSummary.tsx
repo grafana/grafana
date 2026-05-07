@@ -1,5 +1,5 @@
 import { InteractiveTable, Stack } from '@grafana/ui';
-import { JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
+import { type JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
 
 type SummaryCell<T extends keyof JobResourceSummary = keyof JobResourceSummary> = {
   row: {
@@ -32,6 +32,11 @@ const getSummaryColumns = () => [
     id: 'unchanged',
     header: 'Unchanged',
     cell: ({ row: { original: item } }: SummaryCell) => item.noop?.toString() || '-',
+  },
+  {
+    id: 'warnings',
+    header: 'Warnings',
+    cell: ({ row: { original: item } }: SummaryCell) => item.warning?.toString() || '-',
   },
   {
     id: 'errors',

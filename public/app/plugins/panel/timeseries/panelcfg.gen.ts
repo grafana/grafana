@@ -8,10 +8,21 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/timeseries/panelcfg.cue file.
+
 import * as common from '@grafana/schema';
 
+export interface TimeSeriesLegendOptions extends common.VizLegendOptions {
+  enableFacetedFilter?: boolean;
+}
+
+export const defaultTimeSeriesLegendOptions: Partial<TimeSeriesLegendOptions> = {
+  enableFacetedFilter: true,
+};
+
 export interface Options extends common.OptionsWithTimezones, common.OptionsWithAnnotations {
-  legend: common.VizLegendOptions;
+  disableKeyboardEvents?: boolean;
+  legend: TimeSeriesLegendOptions;
   orientation?: common.VizOrientation;
   timeCompare?: common.TimeCompareOptions;
   tooltip: common.VizTooltipOptions;

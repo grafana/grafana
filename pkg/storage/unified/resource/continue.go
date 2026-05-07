@@ -18,6 +18,10 @@ type ContinueToken struct {
 	ResourceVersion int64 `json:"v"`
 	// SortAscending indicates the sort order (used by list history).
 	SortAscending bool `json:"s,omitempty"`
+	// SearchAfter is a []string of sort values for search pagination.
+	SearchAfter []string `json:"sa,omitempty"`
+	// SearchBefore is a []string of sort values for search pagination.
+	SearchBefore []string `json:"sb,omitempty"`
 }
 
 func (c ContinueToken) String() string {
@@ -38,4 +42,9 @@ func GetContinueToken(token string) (*ContinueToken, error) {
 	}
 
 	return t, nil
+}
+
+// NewSearchContinueToken encodes SearchAfter values into a continue token string.
+func NewSearchContinueToken(searchAfter []string, rv int64) (string, error) {
+	return ContinueToken{SearchAfter: searchAfter, ResourceVersion: rv}.String(), nil
 }

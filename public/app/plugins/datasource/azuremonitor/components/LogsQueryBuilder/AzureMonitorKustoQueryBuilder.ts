@@ -1,8 +1,8 @@
 import {
-  BuilderQueryEditorWhereExpression,
-  BuilderQueryEditorWhereExpressionArray,
-  BuilderQueryEditorWhereExpressionItems,
-  BuilderQueryExpression,
+  type BuilderQueryEditorWhereExpression,
+  type BuilderQueryEditorWhereExpressionArray,
+  type BuilderQueryEditorWhereExpressionItems,
+  type BuilderQueryExpression,
 } from '../../dataquery.gen';
 
 const isNestedExpression = (
@@ -61,7 +61,7 @@ export const appendWhere = (
 
 const appendProject = (builderQuery: BuilderQueryExpression, phrases: string[]) => {
   const selectedColumns = builderQuery.columns?.columns || [];
-  if (selectedColumns.length > 0) {
+  if (selectedColumns.length > 0 && selectedColumns[0] !== '__all_columns__') {
     phrases.push(`project ${selectedColumns.join(', ')}`);
   }
 };

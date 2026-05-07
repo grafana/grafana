@@ -1,9 +1,9 @@
-import { sceneGraph, SceneObject } from '@grafana/scenes';
+import { sceneGraph, type SceneObject } from '@grafana/scenes';
 
 import { ConditionalRenderingGroup } from '../group/ConditionalRenderingGroup';
-import { extractObjectType, ObjectsWithConditionalRendering } from '../object';
+import { extractObjectType, type ObjectsWithConditionalRendering } from '../object';
 
-import { ConditionalRenderingConditions } from './types';
+import { type ConditionalRenderingConditions } from './types';
 
 export function getGroup(condition: ConditionalRenderingConditions): ConditionalRenderingGroup {
   if (condition.parent instanceof ConditionalRenderingGroup) {

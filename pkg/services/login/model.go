@@ -15,6 +15,7 @@ import (
 type UserAuth struct {
 	Id                int64
 	UserId            int64
+	UserUID           string `xorm:"user_uid"`
 	AuthModule        string
 	AuthId            string
 	Created           time.Time
@@ -76,6 +77,7 @@ type SetAuthInfoCommand struct {
 	AuthModule  string
 	AuthId      string
 	UserId      int64
+	UserUID     string
 	OAuthToken  *oauth2.Token
 	ExternalUID string
 }

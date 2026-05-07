@@ -660,6 +660,10 @@ func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester
 		return externalSessions[0], nil
 	}
 
+	if sessionToken == nil {
+		return nil, auth.ErrExternalSessionTokenNotFound
+	}
+
 	// For regular users, we use the session token ID to fetch the external session
 	return o.sessionService.GetExternalSession(ctx, sessionToken.ExternalSessionId)
 }

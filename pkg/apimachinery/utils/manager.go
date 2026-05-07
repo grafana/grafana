@@ -31,6 +31,7 @@ const (
 	ManagerKindTerraform ManagerKind = "terraform"
 	ManagerKindKubectl   ManagerKind = "kubectl"
 	ManagerKindPlugin    ManagerKind = "plugin"
+	ManagerKindGrafana   ManagerKind = "grafana"
 
 	// Deprecated: this is used as a shim/migration path for legacy file provisioning
 	// Previously this was a "file:" prefix
@@ -50,6 +51,8 @@ func ParseManagerKindString(v string) ManagerKind {
 		return ManagerKindKubectl
 	case string(ManagerKindPlugin):
 		return ManagerKindPlugin
+	case string(ManagerKindGrafana):
+		return ManagerKindGrafana
 	case string(ManagerKindClassicFP): // nolint:staticcheck
 		return ManagerKindClassicFP // nolint:staticcheck
 	default:

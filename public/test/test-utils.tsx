@@ -1,8 +1,9 @@
-import { Store } from '@reduxjs/toolkit';
-import { render, RenderOptions } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { type Store } from '@reduxjs/toolkit';
+import { render, type RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createMemoryHistory, MemoryHistoryBuildOptions } from 'history';
-import { Fragment, PropsWithChildren } from 'react';
+import { createMemoryHistory, type MemoryHistoryBuildOptions } from 'history';
+import { Fragment, type PropsWithChildren } from 'react';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 // eslint-disable-next-line no-restricted-imports
@@ -10,7 +11,7 @@ import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { FeatureToggles } from '@grafana/data';
+import { type FeatureToggles } from '@grafana/data';
 import {
   config,
   HistoryWrapper,
@@ -18,10 +19,11 @@ import {
   setChromeHeaderHeightHook,
   setLocationService,
 } from '@grafana/runtime';
-import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 interface ExtendedRenderOptions extends RenderOptions {
   /**
@@ -86,15 +88,17 @@ const getWrapper = ({
   return function Wrapper({ children }: PropsWithChildren) {
     return (
       <Provider store={reduxStore}>
-        <GrafanaContext.Provider value={context}>
-          <PotentialRouter>
-            <LocationServiceProvider service={locationService}>
-              <PotentialCompatRouter>
-                <ModalsContextProvider>{children}</ModalsContextProvider>
-              </PotentialCompatRouter>
-            </LocationServiceProvider>
-          </PotentialRouter>
-        </GrafanaContext.Provider>
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <GrafanaContext.Provider value={context}>
+            <PotentialRouter>
+              <LocationServiceProvider service={locationService}>
+                <PotentialCompatRouter>
+                  <ModalsContextProvider>{children}</ModalsContextProvider>
+                </PotentialCompatRouter>
+              </LocationServiceProvider>
+            </PotentialRouter>
+          </GrafanaContext.Provider>
+        </OpenFeatureProvider>
       </Provider>
     );
   };

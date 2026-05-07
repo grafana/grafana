@@ -1,5 +1,4 @@
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
-import { KioskMode } from 'app/types/dashboard';
 
 import { DashboardScene } from './DashboardScene';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
@@ -21,25 +20,6 @@ describe('DashboardSceneUrlSync', () => {
       const layout = scene.state.body as DefaultGridLayoutManager;
       layout.state.grid.setState({ UNSAFE_fitPanels: true });
       expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
-    });
-
-    it('Should set kiosk mode when url has kiosk', () => {
-      const scene = buildTestScene();
-
-      scene.urlSync?.updateFromUrl({ kiosk: 'invalid' });
-      expect(scene.state.kioskMode).toBe(undefined);
-      scene.urlSync?.updateFromUrl({ kiosk: '' });
-      expect(scene.state.kioskMode).toBe(KioskMode.Full);
-      scene.urlSync?.updateFromUrl({ kiosk: 'true' });
-      expect(scene.state.kioskMode).toBe(KioskMode.Full);
-    });
-
-    it('Should get the kiosk mode from the scene state', () => {
-      const scene = buildTestScene();
-
-      expect(scene.urlSync?.getUrlState().kiosk).toBe(undefined);
-      scene.setState({ kioskMode: KioskMode.Full });
-      expect(scene.urlSync?.getUrlState().kiosk).toBe('true');
     });
   });
 

@@ -50,7 +50,7 @@ The webhook integration is a flexible way to integrate alerts into your system. 
 
 To create a contact point with webhook integration, complete the following steps.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 1. Click **+ Add contact point**.
 1. Enter a name for the contact point.
 1. From the **Integration** list, select **Webhook**.
@@ -62,9 +62,9 @@ For more details on contact points, including how to test them and enable notifi
 
 ## Webhook settings
 
-| Option | Description      |
-| ------ | ---------------- |
-| URL    | The Webhook URL. |
+| Option | Description                                                                                                  |
+| ------ | ------------------------------------------------------------------------------------------------------------ |
+| URL    | The Webhook URL. This field is [protected](ref:configure-contact-points) from modification in Grafana Cloud. |
 
 #### Optional settings
 

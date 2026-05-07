@@ -1,6 +1,11 @@
 import { Chance } from 'chance';
 
-import { DashboardsTreeItem, DashboardViewItem, UIDashboardViewItem } from '../types/browse-dashboards';
+import {
+  type DashboardsTreeItem,
+  type DashboardViewItem,
+  ManagerKind,
+  type UIDashboardViewItem,
+} from '../types/browse-dashboards';
 
 function wellFormedEmptyFolder(
   seed = 1,
@@ -64,13 +69,14 @@ function wellFormedFolder(
 }
 
 export function treeViewersCanEdit() {
-  const [, { folderA, folderC }] = wellFormedTree();
+  const [, { folderA, folderC, folderD }] = wellFormedTree();
 
   return [
-    [folderA, folderC],
+    [folderA, folderC, folderD],
     {
       folderA,
       folderC,
+      folderD,
     },
   ] as const;
 }
@@ -90,6 +96,8 @@ export function wellFormedTree() {
   const folderB = wellFormedFolder(seed++);
   const folderB_empty = wellFormedEmptyFolder(seed++);
   const folderC = wellFormedFolder(seed++);
+  // folderD is marked as managed by repo (git-synced) for testing disabled folder behavior
+  const folderD = wellFormedFolder(seed++, {}, { managedBy: ManagerKind.Repo });
   const dashbdD = wellFormedDashboard(seed++);
   const dashbdE = wellFormedDashboard(seed++);
 
@@ -107,6 +115,7 @@ export function wellFormedTree() {
       folderB,
       folderB_empty,
       folderC,
+      folderD,
       dashbdD,
       dashbdE,
     ],
@@ -123,6 +132,7 @@ export function wellFormedTree() {
       folderB,
       folderB_empty,
       folderC,
+      folderD,
       dashbdD,
       dashbdE,
     },

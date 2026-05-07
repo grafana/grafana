@@ -1,20 +1,20 @@
+import { firstValueFrom } from 'rxjs';
+
 import {
   getTimeZone,
-  InterpolateFunction,
-  LinkModel,
+  type InterpolateFunction,
+  type LinkModel,
   locationUtil,
-  PanelMenuItem,
-  PanelPlugin,
-  PluginExtensionLink,
-  PluginExtensionPanelContext,
+  type PanelMenuItem,
+  type PanelPlugin,
+  type PluginExtensionPanelContext,
   PluginExtensionPoints,
-  PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
-import { LocalValueVariable, sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
-import { DataQuery, OptionsWithLegend } from '@grafana/schema';
+import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
+import { LocalValueVariable, sceneGraph, VizPanel, type VizPanelMenu } from '@grafana/scenes';
+import { type DataQuery, type OptionsWithLegend } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -23,12 +23,9 @@ import { getMessageFromError } from 'app/core/utils/errors';
 import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
-import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
-import { GetPluginExtensions } from 'app/features/plugins/extensions/types';
-import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -37,28 +34,14 @@ import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
+import { getPanelStyleConfig } from '../utils/panelStyleConfigs';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
+import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
-
-let getPluginExtensions: GetPluginExtensions;
-
-function setupGetPluginExtensions() {
-  if (getPluginExtensions) {
-    return getPluginExtensions;
-  }
-
-  getPluginExtensions = createPluginExtensionsGetter(pluginExtensionRegistries);
-
-  return getPluginExtensions;
-}
-
-// Define the category for metrics drilldown links
-const METRICS_DRILLDOWN_CATEGORY = 'metrics-drilldown';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -300,49 +283,74 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    setupGetPluginExtensions();
-
-    const { extensions } = getPluginExtensions({
-      extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
-      context: createExtensionContext(panel, dashboard),
-      limitPerPlugin: 3,
-    });
+    const extensions = await firstValueFrom(
+      getObservablePluginLinks({
+        extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
+        context: createExtensionContext(panel, dashboard),
+        limitPerPlugin: 3,
+      })
+    );
 
     if (extensions.length > 0 && !dashboard.state.isEditing) {
-      const linkExtensions = extensions.filter((extension) => extension.type === PluginExtensionTypes.link);
+      const extensionsSubmenuName = t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions');
+      const reservedNames = new Set<string>(items.map((m) => m.text));
+      reservedNames.add(t('panel.header-menu.styles', `Styles`));
+      reservedNames.add(t('panel.header-menu.more', `More...`));
+      reservedNames.add(t('panel.header-menu.remove', `Remove`));
+      reservedNames.add(extensionsSubmenuName);
 
-      // Separate metrics drilldown links from other links
-      const [metricsDrilldownLinks, otherLinks] = linkExtensions.reduce<[PluginExtensionLink[], PluginExtensionLink[]]>(
-        ([metricsDrilldownLinks, otherLinks], link) => {
-          if (link.category === METRICS_DRILLDOWN_CATEGORY) {
-            metricsDrilldownLinks.push(link);
-          } else {
-            otherLinks.push(link);
-          }
-          return [metricsDrilldownLinks, otherLinks];
+      appendExtensionsToPanelMenu({
+        extensions,
+        extensionsSubmenuName,
+        rootMenu: items,
+        reservedNames,
+      });
+    }
+
+    if (
+      getPanelStyleConfig(panel.state.pluginId) &&
+      config.featureToggles.panelStyleActions &&
+      dashboard.state.isEditing
+    ) {
+      const stylesSubMenu: PanelMenuItem[] = [];
+
+      stylesSubMenu.push({
+        text: t('panel.header-menu.copy-styles', `Copy styles`),
+        iconClassName: 'copy',
+        onClick: () => {
+          DashboardInteractions.panelStylesMenuClicked(
+            'copy',
+            panel.state.pluginId,
+            getPanelIdForVizPanel(panel) ?? -1
+          );
+          dashboard.copyPanelStyles(panel);
         },
-        [[], []]
-      );
+      });
 
-      // Add specific "Metrics drilldown" menu
-      if (metricsDrilldownLinks.length > 0) {
-        items.push({
-          text: t('dashboard-scene.panel-menu-behavior.async-func.text.metrics-drilldown', 'Metrics drilldown'),
-          iconClassName: 'code-branch',
-          type: 'submenu',
-          subMenu: createExtensionSubMenu(metricsDrilldownLinks),
+      if (DashboardScene.hasPanelStylesToPaste(panel.state.pluginId)) {
+        stylesSubMenu.push({
+          text: t('panel.header-menu.paste-styles', `Paste styles`),
+          iconClassName: 'clipboard-alt',
+          onClick: () => {
+            DashboardInteractions.panelStylesMenuClicked(
+              'paste',
+              panel.state.pluginId,
+              getPanelIdForVizPanel(panel) ?? -1
+            );
+            dashboard.pastePanelStyles(panel);
+          },
         });
       }
 
-      // Add generic "Extensions" menu for other links
-      if (otherLinks.length > 0) {
-        items.push({
-          text: t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions'),
-          iconClassName: 'plug',
-          type: 'submenu',
-          subMenu: createExtensionSubMenu(otherLinks),
-        });
-      }
+      items.push({
+        type: 'submenu',
+        text: t('panel.header-menu.styles', `Styles`),
+        iconClassName: 'palette',
+        subMenu: stylesSubMenu,
+        onClick: (e) => {
+          e.preventDefault();
+        },
+      });
     }
 
     if (moreSubMenu.length) {
@@ -486,7 +494,7 @@ export function getPanelLinks(panel: VizPanel) {
 function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
   const timeRange = sceneGraph.getTimeRange(panel);
   let queryRunner = getQueryRunnerFor(panel);
-  const targets: DataQuery[] = queryRunner?.state.queries as DataQuery[];
+  const targets: DataQuery[] = queryRunner?.state.queries ?? [];
   const id = getPanelIdForVizPanel(panel);
 
   let scopedVars = {};
@@ -527,7 +535,6 @@ export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
     new ShowConfirmModalEvent({
       title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
       text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
-      icon: 'trash-alt',
       yesText: 'Remove',
       onConfirm: () => dashboard.removePanel(panel),
     })

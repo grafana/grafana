@@ -26,11 +26,6 @@ export type UpdateUserPreferencesApiResponse =
 export type UpdateUserPreferencesApiArg = {
   updatePrefsCmd: UpdatePrefsCmd;
 };
-export type PreferencesCookiePreferences = {
-  analytics?: any;
-  functional?: any;
-  performance?: any;
-};
 export type PreferencesNavbarPreference = {
   bookmarkUrls?: string[];
 };
@@ -39,19 +34,18 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
-  cookiePreferences?: PreferencesCookiePreferences;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
-  /** Selected language (beta) */
+  /** Selected language */
   language?: string;
   navbar?: PreferencesNavbarPreference;
   queryHistory?: PreferencesQueryHistoryPreference;
-  /** Selected locale (beta) */
+  /** Selected locale (beta)
+    TODO: Will be removed */
   regionalFormat?: string;
-  /** light, dark, empty is default */
+  /** user interface theme */
   theme?: string;
-  /** The timezone selection
-    TODO: this should use the timezone defined in common */
+  /** The timezone selection */
   timezone?: string;
   /** day of the week (sunday, monday, etc) */
   weekStart?: string;
@@ -69,7 +63,6 @@ export type ErrorResponseBody = {
 export type SuccessResponseBody = {
   message?: string;
 };
-export type CookieType = string;
 export type NavbarPreference = {
   bookmarkUrls?: string[];
 };
@@ -77,7 +70,6 @@ export type QueryHistoryPreference = {
   homeTab?: string;
 };
 export type PatchPrefsCmd = {
-  cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
@@ -86,11 +78,11 @@ export type PatchPrefsCmd = {
   queryHistory?: QueryHistoryPreference;
   regionalFormat?: string;
   theme?: 'light' | 'dark';
-  timezone?: 'utc' | 'browser';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
   weekStart?: string;
 };
 export type UpdatePrefsCmd = {
-  cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
@@ -99,7 +91,8 @@ export type UpdatePrefsCmd = {
   queryHistory?: QueryHistoryPreference;
   regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
-  timezone?: 'utc' | 'browser';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
   weekStart?: string;
 };
 export const {

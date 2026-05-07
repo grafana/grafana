@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"errors"
 
 	restclient "k8s.io/client-go/rest"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	rulesAppConfig "github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -29,12 +31,12 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*AlertingRulesAppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider    = (*AlertingRulesAppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*AlertingRulesAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider    = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
 )
 
-type AlertingRulesAppInstaller struct {
+type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg *setting.Cfg
 	ng  *ngalert.AlertNG
@@ -43,13 +45,13 @@ type AlertingRulesAppInstaller struct {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
-) (*AlertingRulesAppInstaller, error) {
+) (*AppInstaller, error) {
 	if ng.IsDisabled() {
 		log.New("app-registry").Info("Skipping Kubernetes Alerting Rules apiserver (rules.alerting.grafana.app): Unified Alerting is disabled")
 		return nil, nil
 	}
 
-	installer := &AlertingRulesAppInstaller{
+	installer := &AppInstaller{
 		cfg: cfg,
 		ng:  ng,
 	}
@@ -79,10 +81,23 @@ func RegisterAppInstaller(
 		BaseEvaluationInterval: ng.Cfg.UnifiedAlerting.BaseInterval,
 		ReservedLabelKeys:      ngmodels.LabelsUserCannotSpecify,
 		// Validate that the configured notification receiver exists in the Alertmanager config
-		NotificationSettingsValidator: func(ctx context.Context, receiver string) (bool, error) {
-			if receiver == "" {
-				return false, nil
+		NotificationSettingsValidator: func(ctx context.Context, notificationSettings v0alpha1.AlertRuleNotificationSettings) error {
+			if notificationSettings.SimplifiedRouting != nil {
+				if notificationSettings.SimplifiedRouting.Receiver == "" {
+					return errors.New("receiver is empty")
+				}
 			}
+
+			if notificationSettings.NamedRoutingTree != nil {
+				if notificationSettings.NamedRoutingTree.RoutingTree == "" {
+					return errors.New("routing tree is empty")
+				}
+			}
+
+			if notificationSettings.NamedRoutingTree == nil && notificationSettings.SimplifiedRouting == nil {
+				return errors.New("empty notification settings")
+			}
+
 			orgID, err := reqns.OrgIDForList(ctx)
 			if err != nil || orgID < 1 {
 				if user, _ := identity.GetRequester(ctx); user != nil {
@@ -91,20 +106,26 @@ func RegisterAppInstaller(
 			}
 			if orgID < 1 {
 				// Without org context, skip validation rather than block
-				return true, nil
+				return nil
 			}
 			provider := notifier.NewCachedNotificationSettingsValidationService(ng.Api.AlertingStore)
 			vd, err := provider.Validator(ctx, orgID)
 			if err != nil {
 				log.New("alerting.rules.app").Error("failed to create notification settings validator", "error", err)
 				// If we cannot build a validator, don't block admission
-				return true, nil
+				return nil
 			}
-			// Only validate receiver presence; construct minimal settings
-			if err := vd.Validate(ngmodels.NotificationSettings{Receiver: receiver}); err != nil {
-				return false, nil
+
+			settingsModel, err := alertrule.ConvertNotificationSettings(&notificationSettings)
+			if err != nil {
+				return err
 			}
-			return true, nil
+
+			if err := vd.Validate(settingsModel); err != nil {
+				return err
+			}
+
+			return nil
 		},
 	}
 
@@ -124,7 +145,7 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-func (a *AlertingRulesAppInstaller) GetAuthorizer() authorizer.Authorizer {
+func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -139,7 +160,7 @@ func (a *AlertingRulesAppInstaller) GetAuthorizer() authorizer.Authorizer {
 	)
 }
 
-func (a *AlertingRulesAppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
+func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
 	switch gvr {
 	case recordingrule.ResourceInfo.GroupVersionResource():

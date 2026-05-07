@@ -1,5 +1,5 @@
+import { store } from '@grafana/data';
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from '@grafana/i18n';
-import store from 'app/core/store';
 
 import { sendAppNotification } from './core/copy/appNotification';
 import { PreferencesService } from './core/services/PreferencesService';

@@ -1,6 +1,6 @@
 import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
-import { GrafanaConfig, locationUtil } from '@grafana/data';
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';

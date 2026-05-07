@@ -1,12 +1,19 @@
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { AnnotationQuery, CoreApp, DataQueryRequest, DataSourceApi, rangeUtil, ScopedVars } from '@grafana/data';
+import {
+  type AnnotationQuery,
+  CoreApp,
+  type DataQueryRequest,
+  type DataSourceApi,
+  rangeUtil,
+  type ScopedVars,
+} from '@grafana/data';
 
 import { runRequest } from '../query/state/runRequest';
 
 import { standardAnnotationSupport } from './standardAnnotationSupport';
-import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
+import { type AnnotationQueryOptions, type AnnotationQueryResponse } from './types';
 
 let counter = 100;
 function getNextRequestId() {

@@ -11,16 +11,43 @@ import (
 // RepositorySpecApplyConfiguration represents a declarative configuration of the RepositorySpec type for use
 // with apply.
 type RepositorySpecApplyConfiguration struct {
-	Title       *string                                      `json:"title,omitempty"`
-	Description *string                                      `json:"description,omitempty"`
-	Workflows   []provisioningv0alpha1.Workflow              `json:"workflows,omitempty"`
-	Sync        *SyncOptionsApplyConfiguration               `json:"sync,omitempty"`
-	Type        *provisioningv0alpha1.RepositoryType         `json:"type,omitempty"`
-	Local       *LocalRepositoryConfigApplyConfiguration     `json:"local,omitempty"`
-	GitHub      *GitHubRepositoryConfigApplyConfiguration    `json:"github,omitempty"`
-	Git         *GitRepositoryConfigApplyConfiguration       `json:"git,omitempty"`
-	Bitbucket   *BitbucketRepositoryConfigApplyConfiguration `json:"bitbucket,omitempty"`
-	GitLab      *GitLabRepositoryConfigApplyConfiguration    `json:"gitlab,omitempty"`
+	// The repository display name (shown in the UI)
+	Title *string `json:"title,omitempty"`
+	// Repository description
+	Description *string `json:"description,omitempty"`
+	// Commit message options. Currently only contains the template used by
+	// single-resource UI operations; future siblings (bulk, sync) can live here.
+	Commit *CommitOptionsApplyConfiguration `json:"commit,omitempty"`
+	// UI driven Workflow that allow changes to the contends of the repository.
+	// The order is relevant for defining the precedence of the workflows.
+	// When empty, the repository does not support any edits (eg, readonly)
+	Workflows []provisioningv0alpha1.Workflow `json:"workflows,omitempty"`
+	// Sync settings -- how values are pulled from the repository into grafana
+	Sync *SyncOptionsApplyConfiguration `json:"sync,omitempty"`
+	// The repository type.  When selected oneOf the values below should be non-nil
+	Type *provisioningv0alpha1.RepositoryType `json:"type,omitempty"`
+	// Webhook settings for the repository.
+	// When specified, the base URL overrides the auto-detected Grafana public URL
+	// used to register webhooks with the external Git provider.
+	Webhook *WebhookConfigApplyConfiguration `json:"webhook,omitempty"`
+	// The repository on the local file system.
+	// Mutually exclusive with local | github.
+	Local *LocalRepositoryConfigApplyConfiguration `json:"local,omitempty"`
+	// The repository on GitHub.
+	// Mutually exclusive with local | github | git.
+	GitHub *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
+	// The repository on Git.
+	// Mutually exclusive with local | github | git.
+	Git *GitRepositoryConfigApplyConfiguration `json:"git,omitempty"`
+	// The repository on Bitbucket.
+	// Mutually exclusive with local | github | git.
+	Bitbucket *BitbucketRepositoryConfigApplyConfiguration `json:"bitbucket,omitempty"`
+	// The repository on GitLab.
+	// Mutually exclusive with local | github | git.
+	GitLab *GitLabRepositoryConfigApplyConfiguration `json:"gitlab,omitempty"`
+	// The connection the repository references.
+	// This means the Repository is interacting with git via a Connection.
+	Connection *ConnectionInfoApplyConfiguration `json:"connection,omitempty"`
 }
 
 // RepositorySpecApplyConfiguration constructs a declarative configuration of the RepositorySpec type for use with
@@ -42,6 +69,14 @@ func (b *RepositorySpecApplyConfiguration) WithTitle(value string) *RepositorySp
 // If called multiple times, the Description field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithDescription(value string) *RepositorySpecApplyConfiguration {
 	b.Description = &value
+	return b
+}
+
+// WithCommit sets the Commit field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Commit field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithCommit(value *CommitOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Commit = value
 	return b
 }
 
@@ -68,6 +103,14 @@ func (b *RepositorySpecApplyConfiguration) WithSync(value *SyncOptionsApplyConfi
 // If called multiple times, the Type field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithType(value provisioningv0alpha1.RepositoryType) *RepositorySpecApplyConfiguration {
 	b.Type = &value
+	return b
+}
+
+// WithWebhook sets the Webhook field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Webhook field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithWebhook(value *WebhookConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Webhook = value
 	return b
 }
 
@@ -108,5 +151,13 @@ func (b *RepositorySpecApplyConfiguration) WithBitbucket(value *BitbucketReposit
 // If called multiple times, the GitLab field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithGitLab(value *GitLabRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.GitLab = value
+	return b
+}
+
+// WithConnection sets the Connection field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Connection field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithConnection(value *ConnectionInfoApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Connection = value
 	return b
 }

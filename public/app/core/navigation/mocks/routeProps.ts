@@ -1,6 +1,6 @@
 import { merge } from 'lodash';
 
-import { GrafanaRouteComponentProps } from '../types';
+import { type GrafanaRouteComponentProps } from '../types';
 
 export function getRouteComponentProps<T extends {} = {}, Q extends Record<string, string | null | undefined> = {}>(
   overrides: Partial<GrafanaRouteComponentProps> = {}

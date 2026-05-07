@@ -1,10 +1,11 @@
 import { FieldColorModeId, FieldConfigProperty, FieldType, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AxisPlacement, VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, LegendDisplayMode, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
+import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 
 import { StatusHistoryPanel } from './StatusHistoryPanel';
-import { Options, FieldConfig, defaultFieldConfig } from './panelcfg.gen';
+import { type Options, type FieldConfig, defaultFieldConfig } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
   .useFieldConfig({
@@ -109,8 +110,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         },
       });
 
-    commonOptionsBuilder.addLegendOptions(builder, false);
+    commonOptionsBuilder.addLegendOptions(builder, false, true);
     commonOptionsBuilder.addTooltipOptions(builder);
+    addAnnotationOptions(builder);
   })
   .setSuggestionsSupplier((ds) => {
     if (!ds.hasData) {
@@ -144,6 +146,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
       {
         cardOptions: {
           previewModifier: (s) => {
+            s.options!.legend = {
+              displayMode: LegendDisplayMode.Hidden,
+              placement: 'bottom',
+              calcs: [],
+              showLegend: false,
+            };
             s.options!.colWidth = 0.7;
           },
         },

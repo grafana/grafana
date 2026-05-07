@@ -26,7 +26,7 @@ const ui = {
   statusReceiving: byText(/receiving grafana-managed alerts/i),
   statusNotReceiving: byText(/not receiving/i),
 
-  configurationDrawer: byRole('dialog', { name: 'Drawer title Grafana built-in Alertmanager' }),
+  configurationDrawer: byRole('dialog', { name: 'Grafana built-in Alertmanager' }),
   editConfigurationButton: byRole('button', { name: /edit configuration/i }),
   viewConfigurationButton: byRole('button', { name: /view configuration/i }),
   saveConfigurationButton: byRole('button', { name: /save/i }),

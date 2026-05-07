@@ -1,21 +1,21 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
-import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
-import { TemplateSrv, getTemplateSrv } from '@grafana/runtime';
-import { COMMON_FNS, DB, FuncParameter, SQLQuery, SqlDatasource, formatSQL } from '@grafana/sql';
+import { type DataSourceInstanceSettings, type TimeRange } from '@grafana/data';
+import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
+import { type TemplateSrv, getTemplateSrv } from '@grafana/runtime';
+import { COMMON_FNS, type DB, type FuncParameter, type SQLQuery, SqlDatasource, formatSQL } from '@grafana/sql';
 
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery } from './flightsqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
 import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from './sqlUtil';
-import { FlightSQLOptions } from './types';
+import { type FlightSQLOptions } from './types';
 
 export class FlightSQLDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<FlightSQLOptions>,
+    instanceSettings: DataSourceInstanceSettings<FlightSQLOptions>,
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
@@ -144,7 +144,6 @@ export class FlightSQLDatasource extends SqlDatasource {
       fields: (query: SQLQuery) => this.fetchFields(query),
       validateQuery: (query: SQLQuery, range?: TimeRange) =>
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
-      dsID: () => this.id,
       toRawSql,
       functions: () => this.getFunctions(),
       getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(),

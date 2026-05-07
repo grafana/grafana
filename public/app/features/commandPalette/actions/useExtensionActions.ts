@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
-import { PluginExtensionCommandPaletteContext, PluginExtensionPoints } from '@grafana/data';
+import { type PluginExtensionCommandPaletteContext, PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 
-import { CommandPaletteAction } from '../types';
+import { type CommandPaletteAction } from '../types';
 import { EXTENSIONS_PRIORITY } from '../values';
 
 // NOTE: we are defining this here, as if we would define it in the hook, it would be recreated on every render, which would cause unnecessary re-renders.

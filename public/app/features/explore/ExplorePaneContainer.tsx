@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { EventBusSrv, getTimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { stopQueryState } from 'app/core/utils/explore';
-import { StoreState, useSelector } from 'app/types/store';
+import { type StoreState, useSelector } from 'app/types/store';
 
 import Explore from './Explore';
 import ExploreQueryInspector from './ExploreQueryInspector';
@@ -74,7 +74,7 @@ export const ExplorePaneContainer = connector(ExplorePaneContainerUnconnected);
 
 function useStopQueries(exploreId: string) {
   const paneSelector = useMemo(() => getExploreItemSelector(exploreId), [exploreId]);
-  const paneRef = useRef<ReturnType<typeof paneSelector>>();
+  const paneRef = useRef<ReturnType<typeof paneSelector>>(undefined);
   paneRef.current = useSelector(paneSelector);
 
   useEffect(() => {

@@ -1,9 +1,9 @@
-import { LinkModel } from '@grafana/data';
+import { type LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   VizTooltipContent,
   VizTooltipFooter,
-  VizTooltipItem,
+  type VizTooltipItem,
   VizTooltipHeader,
   VizTooltipWrapper,
 } from '@grafana/ui/internal';

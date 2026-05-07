@@ -1,25 +1,25 @@
-import { Observable, Subscriber, Subscription } from 'rxjs';
+import { Observable, type Subscriber, type Subscription } from 'rxjs';
 
 import {
-  CoreApp,
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
+  type CoreApp,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
   DataTopic,
   dateTime,
   LoadingState,
-  PanelData,
+  type PanelData,
 } from '@grafana/data';
 import { setEchoSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';
 import { Echo } from '../../../core/services/echo/Echo';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 
-import { getMockDataSource, TestQuery } from './mocks/mockDataSource';
+import { getMockDataSource, type TestQuery } from './mocks/mockDataSource';
 import { callQueryMethodWithMigration, runRequest } from './runRequest';
 
 jest.mock('app/core/services/backend_srv');

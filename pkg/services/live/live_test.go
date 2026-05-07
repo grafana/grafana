@@ -11,20 +11,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/centrifugal/centrifuge"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
 
-	"github.com/centrifugal/centrifuge"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -243,21 +239,26 @@ func Test_handleOnPublish_IDTokenExpiration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("expired token", func(t *testing.T) {
+		// When the token is expired we trigger a refresh. If the refresh
+		// trigger succeeds we let the op proceed instead of failing with
+		// ErrorExpired (which centrifuge-js treats as fatal and would tear
+		// down the subscription with no retry).
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnPublish(ctx, client, centrifuge.PublishEvent{
 			Channel: "test",
 			Data:    []byte("test"),
 		})
-		require.ErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, errorExpiredTemporary)
 		require.Empty(t, reply)
 	})
 
 	t.Run("unexpired token", func(t *testing.T) {
 		expiration := time.Now().Add(time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnPublish(ctx, client, centrifuge.PublishEvent{
 			Channel: "test",
 			Data:    []byte("test"),
@@ -278,21 +279,25 @@ func Test_handleOnRPC_IDTokenExpiration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("expired token", func(t *testing.T) {
+		// See the matching note in Test_handleOnPublish_IDTokenExpiration —
+		// successful refresh trigger should let the op continue rather than
+		// returning ErrorExpired.
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnRPC(ctx, client, centrifuge.RPCEvent{
 			Method: "grafana.query",
 			Data:   []byte("test"),
 		})
-		require.ErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, errorExpiredTemporary)
 		require.Empty(t, reply)
 	})
 
 	t.Run("unexpired token", func(t *testing.T) {
 		expiration := time.Now().Add(time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnRPC(ctx, client, centrifuge.RPCEvent{
 			Method: "grafana.query",
 			Data:   []byte("test"),
@@ -313,20 +318,22 @@ func Test_handleOnSubscribe_IDTokenExpiration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("expired token", func(t *testing.T) {
+		// See the matching note in Test_handleOnPublish_IDTokenExpiration.
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnSubscribe(ctx, client, centrifuge.SubscribeEvent{
 			Channel: "test",
 		})
-		require.ErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, errorExpiredTemporary)
 		require.Empty(t, reply)
 	})
 
 	t.Run("unexpired token", func(t *testing.T) {
 		expiration := time.Now().Add(time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnSubscribe(ctx, client, centrifuge.SubscribeEvent{
 			Channel: "test",
 		})
@@ -343,25 +350,26 @@ func setupLiveService(cfg *setting.Cfg, t *testing.T) (*GrafanaLive, error) {
 		cfg = setting.NewCfg()
 	}
 
-	return ProvideService(nil,
-		cfg,
+	return ProvideService(cfg,
 		routing.NewRouteRegister(),
-		nil, nil, nil, nil,
-		db.InitTestDB(t),
+		nil, nil, nil,
 		nil,
 		&usagestats.UsageStatsMock{T: t},
-		nil,
 		featuremgmt.WithFeatures(),
-		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		&dashboards.FakeDashboardService{},
-		nil, nil)
+		nil)
 }
 
 type dummyTransport struct {
 	name string
 }
 
+var (
+	_ centrifuge.Transport = (*dummyTransport)(nil)
+)
+
 func (t *dummyTransport) Name() string                      { return t.name }
+func (t *dummyTransport) AcceptProtocol() string            { return "" }
 func (t *dummyTransport) Protocol() centrifuge.ProtocolType { return centrifuge.ProtocolTypeJSON }
 func (t *dummyTransport) ProtocolVersion() centrifuge.ProtocolVersion {
 	return centrifuge.ProtocolVersion2

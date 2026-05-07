@@ -33,7 +33,7 @@ lineage: schemas: [{
 			revision?: int64
 
 			// ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
-			gnetId?: string
+			gnetId?: int64
 
 			// Tags associated with dashboard.
 			tags?: [...string]
@@ -205,6 +205,8 @@ lineage: schemas: [{
 			multi?: bool | *false
 			// Allow custom values to be entered in the variable
 			allowCustomValue?: bool | *true
+			// Whether the group-by operator is enabled in the ad hoc filter combobox.
+			enableGroupBy?: bool | *false
 			// Options that can be selected for a variable.
 			options?: [...#VariableOption]
 			// Options to config when to refresh a variable
@@ -218,6 +220,10 @@ lineage: schemas: [{
 			// Optional field, if you want to extract part of a series name or metric node segment.
 			// Named capture groups can be used to separate the display text and value.
 			regex?: string
+			// Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+			valuesFormat?: "csv" | "json" | *"csv"
+			// Determine whether regex applies to variable value or display text
+			regexApplyTo?: #VariableRegexApplyTo
 			// Additional static options for query variable
 			staticOptions?: [...#VariableOption]
 			// Ordering of static options in relation to options returned from data source for query variable
@@ -233,6 +239,8 @@ lineage: schemas: [{
 			text: string | [...string]
 			// Value of the option
 			value: string | [...string]
+			// Additional properties for multi-props variables
+			properties?: {[string]: string}
 		} @cuetsy(kind="interface")
 
 		// Options to config when to refresh a variable
@@ -244,6 +252,10 @@ lineage: schemas: [{
 		// Determine if the variable shows on dashboard
 		// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing), 3 (show under the controls dropdown menu).
 		#VariableHide: 0 | 1 | 2 | 3 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable|inControlsMenu") @grafana(TSVeneer="type")
+
+		// Determine whether regex applies to variable value or display text
+		// Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+		#VariableRegexApplyTo: "value" | "text" @cuetsy(kind="type")
 
 		// Sort variable options
 		// Accepted values are:
@@ -291,7 +303,8 @@ lineage: schemas: [{
 			includeVars: bool | *false
 			// If true, includes current time range in the link as query params
 			keepTime: bool | *false
-
+			// The source that registered the link (if any)
+			origin?: #ControlSourceRef
 		} @cuetsy(kind="interface")
 
 		// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
@@ -311,8 +324,8 @@ lineage: schemas: [{
 		// Fetch options
 		#FetchOptions: {
 			method: #HttpRequestMethod
-			url: string
-			body?: string
+			url:    string
+			body?:  string
 			// These are 2D arrays of strings, each representing a key-value pair
 			// We are defining this way because we can't generate a go struct that
 			// that would have exactly two strings in each sub-array
@@ -323,8 +336,8 @@ lineage: schemas: [{
 		// Infinity options
 		#InfinityOptions: {
 			method: #HttpRequestMethod
-			url: string
-			body?: string
+			url:    string
+			body?:  string
 			// These are 2D arrays of strings, each representing a key-value pair
 			// We are defining them this way because we can't generate a go struct that
 			// that would have exactly two strings in each sub-array
@@ -339,19 +352,19 @@ lineage: schemas: [{
 		#ActionVariableType: "string" @cuetsy(kind="type")
 
 		#ActionVariable: {
-			key: string
+			key:  string
 			name: string
 			type: #ActionVariableType
 		} @cuetsy(kind="interface")
 
 		// Dashboard action
 		#Action: {
-			type: #ActionType
-			title: string
-			fetch?: #FetchOptions
-			infinity?: #InfinityOptions
+			type:          #ActionType
+			title:         string
+			fetch?:        #FetchOptions
+			infinity?:     #InfinityOptions
 			confirmation?: string
-			oneClick?: bool
+			oneClick?:     bool
 			variables?: [...#ActionVariable]
 			style?: {
 				backgroundColor?: string
@@ -696,6 +709,10 @@ lineage: schemas: [{
 
 			// Field options allow you to change how the data is displayed in your visualizations.
 			fieldConfig?: #FieldConfigSource
+
+			// When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+			// This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+			autoMigrateFrom?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
@@ -721,11 +738,15 @@ lineage: schemas: [{
 			uid: string
 		} @cuetsy(kind="interface")
 
+		#MatcherScope: "series" | "nested" | "annotation" | "exemplar" @cuetsy(kind="type")
+
 		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 		// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 		#MatcherConfig: {
 			// The matcher id. This is used to find the matcher implementation from registry.
 			id: string | *"" @grafanamaturity(NeedsExpertReview)
+			// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+			scope?: #MatcherScope
 			// The matcher options. This is specific to the matcher implementation.
 			options?: _ @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
@@ -763,7 +784,7 @@ lineage: schemas: [{
 			filterable?: bool @grafanamaturity(NeedsExpertReview)
 
 			// Unit a field should use. The unit you select is applied to all fields except time.
-			// You can use the units ID availables in Grafana or a custom unit.
+			// You can use the units ID available in Grafana or a custom unit.
 			// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 			// As custom unit, you can use the following formats:
 			// `suffix:<suffix>` for custom unit that should go after value.
@@ -834,6 +855,14 @@ lineage: schemas: [{
 			// Name of template variable to repeat for.
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+		#DatasourceControlSourceRef: {
+			type: "datasource"
+			// The plugin type-id
+			group: string
+		}
+
+		#ControlSourceRef: #DatasourceControlSourceRef
 	}
 },
 ]

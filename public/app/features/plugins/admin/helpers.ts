@@ -1,18 +1,21 @@
 import uFuzzy from '@leeoniya/ufuzzy';
+import { Range } from 'semver';
 
-import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
+import { PluginSignatureStatus, dateTimeParse, type PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import {
-  CatalogPlugin,
-  InstancePlugin,
-  LocalPlugin,
-  ProvisionedPlugin,
-  RemotePlugin,
+  type CatalogPlugin,
+  type InstancePlugin,
+  type LocalPlugin,
+  PluginUpdateStrategy,
+  type ProvisionedPlugin,
+  type RemotePlugin,
   RemotePluginStatus,
-  Version,
+  type Version,
 } from './types';
 
 export function mergeLocalsAndRemotes({
@@ -111,6 +114,8 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
   } = plugin;
 
   const isDisabled = !!error;
+  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.ManagedPluginsV2, false);
+
   return {
     description,
     downloads,
@@ -134,7 +139,6 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isPublished: true,
     isInstalled: isDisabled,
     isDisabled: isDisabled,
-    isManaged: isManagedPlugin(id),
     isPreinstalled: isPreinstalledPlugin(id),
     isDeprecated: status === RemotePluginStatus.Deprecated,
     isCore: plugin.internal,
@@ -146,6 +150,15 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isFullyInstalled: isDisabled,
     latestVersion: plugin.version,
     url,
+    managed: {
+      enabled: managedPluginsV2Enabled ? Boolean(plugin.managed?.enabled) : isManagedPlugin(id),
+      strategy: managedPluginsV2Enabled
+        ? plugin.managed?.strategy
+        : isManagedPlugin(id)
+          ? PluginUpdateStrategy.Assigned
+          : undefined,
+    },
+    distributionType: plugin.versionDistributionType,
   };
 }
 
@@ -165,6 +178,9 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
   } = plugin;
 
   const isDisabled = !!error;
+  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.ManagedPluginsV2, false);
+  const isV1Managed = !managedPluginsV2Enabled && isManagedPlugin(id);
+
   return {
     description,
     downloads: 0,
@@ -187,7 +203,6 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isDeprecated: false,
     isDev: Boolean(dev),
     isEnterprise: false,
-    isManaged: isManagedPlugin(id),
     isPreinstalled: isPreinstalledPlugin(id),
     type,
     error: error?.errorCode,
@@ -196,6 +211,10 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isFullyInstalled: true,
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
+    managed: {
+      enabled: isV1Managed,
+      strategy: isV1Managed ? PluginUpdateStrategy.Assigned : undefined,
+    },
   };
 }
 
@@ -221,6 +240,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     logos = local.info.logos;
   }
 
+  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.ManagedPluginsV2, false);
+
   return {
     description: local?.info.description || remote?.description || '',
     downloads: remote?.downloads || 0,
@@ -237,7 +258,6 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isDisabled: isDisabled,
     isDeprecated: remote?.status === RemotePluginStatus.Deprecated,
     isPublished: true,
-    isManaged: isManagedPlugin(id),
     isPreinstalled: isPreinstalledPlugin(id),
     // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',
@@ -260,10 +280,23 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     iam: local?.iam,
     latestVersion: local?.latestVersion || remote?.version || '',
     url: remote?.url || '',
+    managed: {
+      enabled: managedPluginsV2Enabled ? Boolean(remote?.managed?.enabled) : isManagedPlugin(id),
+      strategy: managedPluginsV2Enabled
+        ? remote?.managed?.strategy
+        : isManagedPlugin(id)
+          ? PluginUpdateStrategy.Assigned
+          : undefined,
+    },
+    distributionType: remote?.versionDistributionType,
   };
 }
 
 export const getExternalManageLink = (pluginId: string) => `${config.pluginCatalogURL}${pluginId}`;
+
+export function isMarketplacePlugin(plugin: CatalogPlugin): boolean {
+  return plugin.distributionType === 'marketplace';
+}
 
 export enum Sorters {
   nameAsc = 'nameAsc',
@@ -367,6 +400,12 @@ function isNotHiddenByConfig(id: string) {
   return !pluginCatalogHiddenPlugins.includes(id);
 }
 
+/**
+ * isManagedPlugin checks if the plugin is managed according to the instances config
+ * this will be removed when managed plugins v2 is fully enabled
+ * @param id - The plugin ID
+ * @returns True if the plugin is managed
+ */
 export function isManagedPlugin(id: string) {
   const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
 
@@ -412,9 +451,13 @@ function isPluginModifiable(plugin: CatalogPlugin) {
     plugin.isProvisioned || //provisioned plugins cannot be modified
     plugin.isCore || //core plugins cannot be modified
     plugin.type === PluginType.renderer || // currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall
-    plugin.isPreinstalled.withVersion || // Preinstalled plugins (with specified version) cannot be modified
-    plugin.isManaged // Managed plugins cannot be modified
+    plugin.isPreinstalled.withVersion // Preinstalled plugins (with specified version) cannot be modified
   ) {
+    return false;
+  }
+
+  // Managed plugins with 'assigned' strategy cannot be modified
+  if (plugin.managed.enabled && plugin.managed.strategy === PluginUpdateStrategy.Assigned) {
     return false;
   }
 
@@ -463,6 +506,48 @@ export function isNonAngularVersion(version?: Version) {
 
 export function isDisabledAngularPlugin(plugin: CatalogPlugin) {
   return plugin.isDisabled && plugin.error === PluginErrorCode.angular;
+}
+
+/**
+ * Formats a semver range string (e.g. ">= 8.5.20 < 9 || >= 9.1.0")
+ * into a human-readable string (e.g. "8.5.20 – 9.0.0, 9.1.0 or later").
+ */
+export function formatGrafanaDependency(dependency: string | null): string {
+  if (!dependency) {
+    return 'N/A';
+  }
+
+  try {
+    const range = new Range(dependency);
+    const parts: string[] = [];
+
+    for (const comparators of range.set) {
+      const lowerBound = comparators.find((c) => c.operator === '>=');
+      const upperBound = comparators.find((c) => c.operator === '<');
+
+      if (lowerBound && upperBound) {
+        const from = formatVersion(lowerBound.semver.major, lowerBound.semver.minor, lowerBound.semver.patch);
+        const to = formatVersion(upperBound.semver.major, upperBound.semver.minor, upperBound.semver.patch);
+        parts.push(`${from} – ${to}`);
+      } else if (lowerBound) {
+        const from = formatVersion(lowerBound.semver.major, lowerBound.semver.minor, lowerBound.semver.patch);
+        parts.push(`${from} or later`);
+      } else if (upperBound) {
+        const to = formatVersion(upperBound.semver.major, upperBound.semver.minor, upperBound.semver.patch);
+        parts.push(`before ${to}`);
+      } else {
+        return dependency;
+      }
+    }
+
+    return parts.join(', ');
+  } catch {
+    return dependency;
+  }
+}
+
+function formatVersion(major: number, minor: number, patch: number): string {
+  return `${major}.${minor}.${patch}`;
 }
 
 export function mergeCloudState(

@@ -1,8 +1,8 @@
-import { DataSourceInstanceSettings, PluginType, toUtc } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, PluginType, toUtc } from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
 
 import { TempoDatasource } from '../datasource';
-import { TempoJsonData } from '../types';
+import { type TempoJsonData } from '../types';
 
 const rawRange = {
   from: toUtc('2018-04-25 10:00'),
@@ -28,7 +28,6 @@ export function createTempoDatasource(
 ): TempoDatasource {
   const customSettings: DataSourceInstanceSettings<TempoJsonData> = {
     url: 'myloggingurl',
-    id: 0,
     uid: '',
     type: '',
     name: '',

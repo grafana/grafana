@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -22,18 +21,7 @@ import (
 //
 // Gets all existing permissions for the given dashboard.
 //
-// Responses:
-// 200: getDashboardPermissionsListResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
-// swagger:route GET /dashboards/id/{DashboardID}/permissions dashboards permissions getDashboardPermissionsListByID
-//
-// Gets all existing permissions for the given dashboard.
-//
-// Please refer to [updated API](#/dashboards/getDashboardPermissionsListByUID) instead
+// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access
 //
 // Deprecated: true
 //
@@ -48,17 +36,13 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	var dashID int64
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "uid is required", nil)
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -95,22 +79,6 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 //
 // This operation will remove existing permissions if they’re not included in the request.
 //
-// Responses:
-// 200: okResponse
-// 400: badRequestError
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
-// swagger:route POST /dashboards/id/{DashboardID}/permissions dashboards permissions updateDashboardPermissionsByID
-//
-// Updates permissions for a dashboard.
-//
-// Please refer to [updated API](#/dashboards/updateDashboardPermissionsByUID) instead
-//
-// This operation will remove existing permissions if they’re not included in the request.
-//
 // Deprecated: true
 //
 // Responses:
@@ -125,7 +93,6 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	var dashID int64
 	var err error
 	apiCmd := dtos.UpdateDashboardACLCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
@@ -137,13 +104,10 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 
 	dashUID := web.Params(c.Req)[":uid"]
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "uid is required", nil)
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -152,7 +116,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 	for _, item := range apiCmd.Items {
 		items = append(items, &dashboards.DashboardACL{
 			OrgID:       c.GetOrgID(),
-			DashboardID: dashID,
+			DashboardID: dash.ID,
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
 			Role:        item.Role,
