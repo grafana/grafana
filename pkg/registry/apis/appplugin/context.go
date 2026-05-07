@@ -73,7 +73,7 @@ func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Set
 		for k, sv := range settings.Secure {
 			v, ok := lookup[sv.Name]
 			if !ok {
-				continue // or error?
+				return nil, fmt.Errorf("unable to find secure value: %s for key: %s", sv.Name, k)
 			}
 			if v.Error() != nil {
 				return nil, fmt.Errorf("error decrypting secure value: %s / %w", k, v.Error())

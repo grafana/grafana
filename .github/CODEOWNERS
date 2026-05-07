@@ -186,7 +186,7 @@
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
 /pkg/services/provisioning/alerting/ @grafana/alerting-backend
 /pkg/services/query/ @grafana/grafana-datasources-core-services
-/pkg/services/queryhistory/ @grafana/observability-traces-and-profiling
+/pkg/services/queryhistory/ @grafana/datapro
 /pkg/services/quota/ @grafana/grafana-search-and-storage
 /pkg/services/screenshot/ @grafana/grafana-backend-group
 /pkg/services/search/ @grafana/grafana-search-and-storage
@@ -938,7 +938,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/navBarItem-translations.ts @grafana/grafana-frontend-navigation
 /public/app/core/utils/object* @grafana/grafana-frontend-platform
 /public/app/core/utils/query* @grafana/grafana-datasources-core-services
-/public/app/core/utils/richHistory* @grafana/observability-traces-and-profiling
+/public/app/core/utils/richHistory* @grafana/datapro
 /public/app/core/utils/set.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/shortLinks* @grafana/sharing-squad
 /public/app/core/utils/ticks.ts @grafana/plugins-platform-frontend
@@ -969,7 +969,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/dataviz-squad
-/public/app/features/explore/ @grafana/observability-traces-and-profiling
+/public/app/features/explore/ @grafana/datapro
 /public/app/features/expressions/ @grafana/grafana-datasources-core-services
 /public/app/features/folders/ @grafana/grafana-frontend-navigation
 /public/app/features/inspector/ @grafana/dashboards-squad

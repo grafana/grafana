@@ -4462,6 +4462,14 @@
       "resource-detail-dashboards": "Du har skapat {{usage}} av {{limit}} instrumentpaneler ({{percentage}} %).",
       "resource-detail-folders": "Du har skapat {{usage}} av {{limit}} mappar ({{percentage}} %)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Rensa historik",
       "error": "Nyligen visade instrumentpaneler kunde inte laddas.",
@@ -8033,19 +8041,6 @@
       "aria-label-explore-data": "Utforska data",
       "aria-label-suggested-dashboards": "Föreslagna instrumentpaneler"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Larm stöds inte",
-      "text-alerting-supported": "Larm stöds"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Namnet används när du väljer datakälla i paneler. Standarddatakällan är förvald i nya paneler."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Grundinställningar för datakällans inställningssida",
-      "basic-settings-name-placeholder-name": "Namn",
-      "label-default": "Standard",
-      "label-name": "Namn"
-    },
     "build-a-dashboard-button": {
       "blank": "Tomt",
       "build-a-dashboard": "Bygg en instrumentpanel",
@@ -11249,7 +11244,7 @@
     "description-order": "Visa de senaste eller äldsta loggarna först. När Äldsta först har valts bläddrar vyn automatiskt till de senaste loggarna längst ner.",
     "description-prettify-json": "Formatera JSON-loggposter med indrag och radbrytningar.",
     "description-show-controls": "Visa kontroller för att hoppa till den sista eller första loggraden och filtrera efter loggnivå.",
-    "description-show-log-attributes": "Experimentellt. När OTel-loggar visas lägger du till ett extra visningsfält med relevanta nyckelvärdespar från etiketter och metadata.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Justera värden med hjälp av kolumner när du använder visade fält.",
     "description-wrap-lines": "Visa loggar som en enda rad eller radbryt långa loggposter så att de passar in i panelen.",
     "field-selector": {
@@ -11575,7 +11570,7 @@
       "line-contains-not": "Lägg till som rad innehåller inte filter",
       "search-text": "Sök i resultat"
     },
-    "show-log-attributes": "Visa loggattribut för OTel-loggar",
+    "show-log-attributes": "",
     "timestamp-format": "Tidsstämpelupplösning",
     "un-themed-log-details": {
       "aria-label-data-links": "Datalänkar",
