@@ -51,13 +51,17 @@ function getPanelEditVariables(
   dashboard: DashboardScene,
   sectionVariablesEnabled: boolean
 ): SceneVariable[] | undefined {
+  if (!sectionVariablesEnabled) {
+    return undefined;
+  }
+
   const viewPanelKey = dashboard.state.viewPanel;
   const panel =
-    dashboard.state.editPanel?.state.panelRef.resolve() ??
+    dashboard.state.editPanel?.state.panelRef?.resolve() ??
     (viewPanelKey ? findVizPanelByPathId(dashboard, viewPanelKey) : null) ??
     undefined;
 
-  if (!panel || !sectionVariablesEnabled) {
+  if (!panel) {
     return undefined;
   }
 
@@ -84,6 +88,38 @@ function getPanelEditVariables(
   }
 
   return result;
+}
+
+/**
+ * Panel edit passes a narrowed variable list into VariableControls. That list excludes variables with
+ * `UNSAFE_renderAsHidden` (see `keepOnlyUserDefinedVariables`). Dashboard-level hidden-render
+ * variables such as ScopesVariable must still mount so they sync React context into the scene.
+ */
+function mergeDashboardHiddenRenderVariables(
+  dashboard: DashboardScene,
+  panelEditVariables: SceneVariable[] | undefined
+): SceneVariable[] | undefined {
+  if (panelEditVariables === undefined) {
+    return undefined;
+  }
+
+  const hiddenRender = sceneGraph.getVariables(dashboard).state.variables.filter((v) => v.UNSAFE_renderAsHidden);
+
+  if (hiddenRender.length === 0) {
+    return panelEditVariables;
+  }
+
+  const keys = new Set(panelEditVariables.map((v) => v.state.key));
+  const merged = [...panelEditVariables];
+
+  for (const variable of hiddenRender) {
+    if (!keys.has(variable.state.key)) {
+      keys.add(variable.state.key);
+      merged.push(variable);
+    }
+  }
+
+  return merged;
 }
 
 export interface DashboardControlsState extends SceneObjectState {
@@ -274,7 +310,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {!hideVariableControls && (
         <>
-          <VariableControls dashboard={dashboard} variablesOverride={panelEditVariables} />
+          <VariableControls
+            dashboard={dashboard}
+            variablesOverride={mergeDashboardHiddenRenderVariables(dashboard, panelEditVariables)}
+          />
           <DashboardDataLayerControls dashboard={dashboard} />
         </>
       )}

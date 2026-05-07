@@ -8,6 +8,7 @@ import {
   CustomVariable,
   LocalValueVariable,
   SceneGridLayout,
+  type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
   TextBoxVariable,
@@ -282,6 +283,36 @@ describe('DashboardControls', () => {
         expectedHidden,
         expectedUnique,
       });
+    });
+
+    it('still mounts ScopesVariable.Component when panel edit variables override is active', async () => {
+      setTestFlags({ dashboardSectionVariables: true });
+
+      const scopeVariable = new ScopesVariable({ enable: true });
+
+      jest
+        .spyOn(scopeVariable as unknown as { Component: unknown }, 'Component', 'get')
+        .mockReturnValue(() => <div data-testid="scopes-variable-mounted-for-sync">scopes-sync</div>);
+
+      const { controls } = buildPanelEditControlsScene({
+        uid: 'panel-edit-scopes-sync',
+        editedPanelKey: 'edited-panel',
+        rows: [
+          new RowItem({
+            title: 'Ancestor row',
+            $variables: new SceneVariableSet({
+              variables: [new TextBoxVariable({ name: 'ancestorVar', value: 'from-ancestor' })],
+            }),
+          }),
+        ],
+        dashboardVariables: [new TextBoxVariable({ name: 'dashboardVar', value: 'from-dashboard' }), scopeVariable],
+      });
+
+      render(<controls.Component model={controls} />);
+
+      expect(await screen.findByTestId('scopes-variable-mounted-for-sync')).toBeInTheDocument();
+
+      jest.restoreAllMocks();
     });
   });
 
@@ -744,7 +775,7 @@ function buildPanelEditControlsScene({
   uid: string;
   editedPanelKey: string;
   rows: RowItem[];
-  dashboardVariables: Array<TextBoxVariable | CustomVariable>;
+  dashboardVariables: SceneVariable[];
 }) {
   const editedPanel = new VizPanel({ key: editedPanelKey, pluginId: 'text' });
   const rowItems = rows.map((row, index) => {
