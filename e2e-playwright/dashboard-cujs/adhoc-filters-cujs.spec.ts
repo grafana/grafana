@@ -175,7 +175,8 @@ test.describe(
 
         expect(await adHocFilterPills.count()).toBe(2);
 
-        await setScopes(page);
+        // Use the current dashboard UID so scope navigation stays on this dashboard (no redirect)
+        await setScopes(page, { uid: DASHBOARD_UNDER_TEST, title: 'CUJ Dashboard 1' });
 
         await expect(scopesSelectorInput).toHaveAttribute('data-value', /.+/);
 
