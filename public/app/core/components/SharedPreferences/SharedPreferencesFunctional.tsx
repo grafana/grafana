@@ -28,9 +28,16 @@ import { changeTheme } from 'app/core/services/theme';
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
-import { languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
+import { languageChanged, regionalFormatChanged, saveButtonClicked, themeChanged } from './analytics/main';
 import { useSharedPreferences } from './useSharedPreferences';
-import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState, type Props } from './utils';
+import {
+  getLanguageOptions,
+  getRegionalFormatOptions,
+  getStyles,
+  getTranslatedThemeName,
+  type PrefsState,
+  type Props,
+} from './utils';
 
 export const SharedPreferencesFunctional = memo((props: Props) => {
   const { resourceUri } = props;
@@ -44,6 +51,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     timezone: '',
     weekStart: '',
     language: '',
+    regionalFormat: '',
     queryHistory: { homeTab: '' },
     navbar: { bookmarkUrls: [] },
     homeDashboardUID: '',
@@ -60,6 +68,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     group: theme.isExtra ? t('shared-preferences.theme.experimental', 'Experimental') : undefined,
   }));
   const languageOptions: ComboboxOption[] = getLanguageOptions();
+  const regionalFormatOptions: ComboboxOption[] = getRegionalFormatOptions();
 
   // Add default option
   themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
@@ -148,6 +157,21 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     } else {
       reportInteraction('grafana_preferences_language_changed', {
         toLanguage: language,
+        preferenceType: props.preferenceType,
+      });
+    }
+  };
+
+  const handleRegionalFormatChanged = (regionalFormat: string) => {
+    setState((prev) => ({ ...prev, regionalFormat }));
+    if (isAnalyticsFrameworkEnabled) {
+      regionalFormatChanged({
+        toRegionalFormat: regionalFormat,
+        preferenceType: props.preferenceType,
+      });
+    } else {
+      reportInteraction('grafana_preferences_regional_format_changed', {
+        toRegionalFormat: regionalFormat,
         preferenceType: props.preferenceType,
       });
     }
@@ -269,6 +293,34 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
               id="language-preference-select"
             />
           </Field>
+          {config.featureToggles.localeFormatPreference && (
+            <Field
+              noMargin
+              loading={isLoading}
+              disabled={isLoading}
+              label={
+                <Label htmlFor="locale-preference-select">
+                  <span className={styles.labelText}>
+                    <Trans i18nKey="shared-preferences.fields.locale-preference-label">Region format</Trans>
+                  </span>
+                  <FeatureBadge featureState={FeatureState.preview} />
+                </Label>
+              }
+              description={t(
+                'shared-preferences.fields.locale-preference-description',
+                'Choose your region to see the corresponding date, time, and number format'
+              )}
+              data-testid="User preferences locale drop down"
+            >
+              <Combobox
+                value={regionalFormatOptions.find((loc) => loc.value === state.regionalFormat)?.value || ''}
+                onChange={(locale: ComboboxOption | null) => handleRegionalFormatChanged(locale?.value ?? '')}
+                options={regionalFormatOptions}
+                placeholder={t('shared-preferences.fields.locale-preference-placeholder', 'Choose region')}
+                id="locale-preference-select"
+              />
+            </Field>
+          )}
         </Stack>
       </FieldSet>
       <Box marginTop={6}>

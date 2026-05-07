@@ -19,6 +19,7 @@ const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>)
               weekStart: 'monday',
               homeDashboardUID: dashbdD.item.uid,
               language: '',
+              regionalFormat: '',
               queryHistory: { homeTab: '' },
               navbar: { bookmarkUrls: [] },
             },

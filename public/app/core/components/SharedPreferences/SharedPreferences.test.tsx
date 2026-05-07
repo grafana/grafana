@@ -135,6 +135,7 @@ describe('SharedPreferences', () => {
         homeTab: '',
       },
       language: 'fr-FR',
+      regionalFormat: '',
       navbar: {
         bookmarkUrls: [],
       },
@@ -169,6 +170,7 @@ describe('SharedPreferences', () => {
         homeTab: '',
       },
       language: '',
+      regionalFormat: '',
       navbar: {
         bookmarkUrls: [],
       },
