@@ -1,7 +1,6 @@
-import { locationUtil, urlUtil } from '@grafana/data';
-import { locationService, navigationLogger } from '@grafana/runtime';
+import { navigationLogger } from '@grafana/runtime';
 
-import { contextSrv } from '../../services/context_srv';
+import { navigateToHref } from '../navigateToHref';
 
 export function interceptLinkClicks(e: MouseEvent) {
   const anchor = e.target instanceof Element && getParentAnchor(e.target);
@@ -12,34 +11,13 @@ export function interceptLinkClicks(e: MouseEvent) {
   }
 
   if (anchor) {
-    let href = anchor.getAttribute('href');
+    const href = anchor.getAttribute('href');
     const target = anchor.getAttribute('target');
 
     if (href && !target) {
-      const params = urlUtil.parseKeyValue(href.split('?')[1]);
-      const orgIdChange = params.orgId && Number(params.orgId) !== contextSrv.user.orgId;
       navigationLogger('utils', false, 'intercepting link click', e);
       e.preventDefault();
-
-      href = locationUtil.stripBaseFromUrl(href);
-
-      // Ensure old angular urls with no starting '/' are handled the same as before
-      // Make sure external links are handled correctly
-      // That is they where seen as being absolute from app root
-      if (href[0] !== '/' || orgIdChange) {
-        // if still contains protocol or is a mailto link, it's an absolute link to another domain or web application
-        if (href.indexOf('://') > 0 || href.indexOf('mailto:') === 0 || orgIdChange) {
-          window.location.href = href;
-          return;
-        } else if (href.indexOf('#') === 0) {
-          // If it is a hash click, update the hash instead of trying to update the history
-          window.location.hash = href;
-          return;
-        } else {
-          href = `/${href}`;
-        }
-      }
-      locationService.push(href);
+      navigateToHref(href);
     }
   }
 }

@@ -18,6 +18,7 @@ import {
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
+import { navigateToOneClickLink } from 'app/core/navigation/navigateToHref';
 
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
@@ -116,6 +117,7 @@ export const StateTimelinePanel = ({
                   getDataLinks={(seriesIdx, dataIdx) =>
                     alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                   }
+                  onOneClickLink={navigateToOneClickLink}
                   render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                     if (enableAnnotationCreation && timeRange2 != null) {
                       setNewAnnotationRange(timeRange2);

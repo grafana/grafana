@@ -18,6 +18,7 @@ import { config } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { ConfirmModal, VariablesInputModal } from '@grafana/ui';
 import { type LayerElement } from 'app/core/components/Layers/types';
+import { navigateToHref } from 'app/core/navigation/navigateToHref';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { type DimensionContext } from 'app/features/dimensions/context';
 import {
@@ -986,7 +987,11 @@ export class ElementState implements LayerElement {
     if (this.oneClickMode === OneClickMode.Link) {
       let primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
-        window.open(primaryDataLink.href, primaryDataLink.target ?? '_self');
+        if (primaryDataLink.onClick) {
+          primaryDataLink.onClick(event.nativeEvent);
+        } else {
+          navigateToHref(primaryDataLink.href, primaryDataLink.target);
+        }
       }
     } else if (this.oneClickMode === OneClickMode.Action) {
       const primaryAction = this.getPrimaryAction();

@@ -19,6 +19,7 @@ import {
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
+import { navigateToOneClickLink } from 'app/core/navigation/navigateToHref';
 
 import { StateTimelineTooltip } from '../state-timeline/StateTimelineTooltip';
 import { usePagination } from '../state-timeline/hooks';
@@ -128,6 +129,7 @@ export const StatusHistoryPanel = ({
                   getDataLinks={(seriesIdx, dataIdx) =>
                     alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                   }
+                  onOneClickLink={navigateToOneClickLink}
                   render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                     if (enableAnnotationCreation && timeRange2 != null) {
                       setNewAnnotationRange(timeRange2);

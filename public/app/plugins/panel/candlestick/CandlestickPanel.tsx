@@ -18,6 +18,7 @@ import {
 } from '@grafana/ui';
 import { type AxisProps, type ScaleProps, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
+import { navigateToOneClickLink } from 'app/core/navigation/navigateToHref';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
@@ -280,6 +281,7 @@ export const CandlestickPanel = ({
                 getDataLinks={(seriesIdx, dataIdx) =>
                   alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                 }
+                onOneClickLink={navigateToOneClickLink}
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
