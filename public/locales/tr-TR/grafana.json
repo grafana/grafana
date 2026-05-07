@@ -4462,6 +4462,14 @@
       "resource-detail-dashboards": "{{usage}}/{{limit}} pano oluşturdunuz (%{{percentage}}).",
       "resource-detail-folders": "{{usage}}/{{limit}} klasör oluşturdunuz (%{{percentage}})."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Geçmişi temizle",
       "error": "Son görüntülenen panolar yüklenemedi.",
@@ -8033,19 +8041,6 @@
       "aria-label-explore-data": "Verileri keşfedin",
       "aria-label-suggested-dashboards": "Önerilen panolar"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Uyarı desteği yok",
-      "text-alerting-supported": "Uyarı desteği var"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Ad, panellerde veri kaynağı seçerken kullanılır. Yeni panellerde varsayılan veri kaynağı önceden seçili olur."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Veri kaynağı ayarları sayfası temel ayarlar",
-      "basic-settings-name-placeholder-name": "Ad",
-      "label-default": "Varsayılan",
-      "label-name": "Ad"
-    },
     "build-a-dashboard-button": {
       "blank": "Boş",
       "build-a-dashboard": "Pano oluştur",
@@ -11249,7 +11244,7 @@
     "description-order": "Önce en yeni veya en eski günlük kayıtlarını gösterin. Önce en eski seçildiğinde, görünüm otomatik olarak en alttaki en yeni günlük kayıtlarına kaydırılır.",
     "description-prettify-json": "JSON günlük kaydı girişlerini girinti ve satır sonlarıyla biçimlendirin.",
     "description-show-controls": "Son veya ilk günlük kaydı satırına atlamak için kontrolleri ve günlük kaydı düzeyine göre filtreleri görüntüleyin.",
-    "description-show-log-attributes": "Deneysel. OTel günlükleri görüntülendiğinde, etiketler ve meta verilerden alınan ilgili anahtar-değer çiftleriyle ekstra bir alan gösterilir.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Görüntülenen alanları kullanırken değerleri sütunları kullanarak hizalayın.",
     "description-wrap-lines": "Günlük kayıtlarını tek bir satır olarak görüntüleyin veya uzun günlük kaydı girişlerini panele sığacak şekilde alt satıra kaydırın.",
     "field-selector": {
@@ -11575,7 +11570,7 @@
       "line-contains-not": "Satır içermez filtresi olarak ekle",
       "search-text": "Sonuçlarda ara"
     },
-    "show-log-attributes": "OTel günlük kayıtları için günlük kaydı özniteliklerini göster",
+    "show-log-attributes": "",
     "timestamp-format": "Zaman damgası çözünürlüğü",
     "un-themed-log-details": {
       "aria-label-data-links": "Veri bağlantıları",
