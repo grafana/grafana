@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { useParams } from 'react-router-dom-v5-compat';
+import { getWrapper } from 'test/test-utils';
 
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
@@ -84,11 +85,15 @@ describe('SoloPanelPage', () => {
     (useParams as jest.Mock).mockReturnValue({ uid: 'test-uid', type: undefined, slug: undefined });
   });
 
+  const Providers = getWrapper({});
+
   describe('reload behavior', () => {
     function renderSoloPanelPage(queryParams: Props['queryParams']) {
       // SoloPanelPage only destructures queryParams from props; route and location are unused
       return render(
-        <SoloPanelPage queryParams={queryParams} route={{} as Props['route']} location={{} as Props['location']} />
+        <Providers>
+          <SoloPanelPage queryParams={queryParams} route={{} as Props['route']} location={{} as Props['location']} />
+        </Providers>
       );
     }
 
@@ -98,12 +103,14 @@ describe('SoloPanelPage', () => {
       expect(mockStateManager.loadDashboard).toHaveBeenCalledTimes(1);
 
       rerender(
-        <SoloPanelPage
-          // @ts-ignore
-          queryParams={{ panelId: '1', 'var-foo': 'bar' }}
-          route={{} as Props['route']}
-          location={{} as Props['location']}
-        />
+        <Providers>
+          <SoloPanelPage
+            // @ts-ignore
+            queryParams={{ panelId: '1', 'var-foo': 'bar' }}
+            route={{} as Props['route']}
+            location={{} as Props['location']}
+          />
+        </Providers>
       );
       expect(mockStateManager.loadDashboard).toHaveBeenCalledTimes(1);
       expect(mockStateManager.clearState).not.toHaveBeenCalled();
@@ -118,7 +125,13 @@ describe('SoloPanelPage', () => {
 
       (useParams as jest.Mock).mockReturnValue({ uid: 'other-uid', type: undefined, slug: undefined });
       rerender(
-        <SoloPanelPage queryParams={{ panelId: '1' }} route={{} as Props['route']} location={{} as Props['location']} />
+        <Providers>
+          <SoloPanelPage
+            queryParams={{ panelId: '1' }}
+            route={{} as Props['route']}
+            location={{} as Props['location']}
+          />
+        </Providers>
       );
 
       expect(mockStateManager.clearState).toHaveBeenCalledTimes(1);

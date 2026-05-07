@@ -830,9 +830,13 @@ const (
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
-	// FlagAppPluginAPIServer
+	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
-	FlagAppPluginAPIServer = "appPluginAPIServer"
+	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
+
+	// FlagApppluginsHandleProxyRequests
+	// Register the proxy endpoints
+	FlagApppluginsHandleProxyRequests = "appplugins.handleProxyRequests"
 
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without 'pending' stage
@@ -974,7 +978,7 @@ const (
 	// Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model
 	FlagAlertingDisableV0ReceiverConversion = "alerting.disableV0ReceiverConversion"
 
-	// FlagPluginsMarketplaceLicensing
-	// Enables marketplace plugin licensing
-	FlagPluginsMarketplaceLicensing = "plugins.marketplaceLicensing"
+	// FlagPreferencesRerouteLegacyAPIs
+	// Use K8s client implementation for legacy preferences API
+	FlagPreferencesRerouteLegacyAPIs = "preferences.rerouteLegacyAPIs"
 )
