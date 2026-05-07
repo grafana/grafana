@@ -6,8 +6,7 @@ import { type Ability, type AsyncAbility, Granted, InsufficientPermissions, NotS
 /**
  * Builds a synchronous {@link Ability} from a supported flag and an explicit list of
  * `AccessControlActions`. The user is considered allowed if they hold ANY of the listed
- * permissions. Never returns `LOADING` — use the async builder functions in
- * `ruleAbilities.utils.ts` when a loading state is needed.
+ * permissions. Never returns `LOADING`.
  */
 export function makeAbility(supported: boolean, anyOfPermissions: AccessControlAction[]): Ability {
   if (!supported) {
