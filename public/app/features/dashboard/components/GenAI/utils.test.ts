@@ -32,13 +32,7 @@ describe('getDashboardChanges', () => {
     });
 
     // Update title for the first panel
-    dashboard.updatePanels([
-      {
-        ...dashboard.panels[0],
-        title: 'New title',
-      },
-      ...dashboard.panels.slice(1),
-    ]);
+    dashboard.panels[0].title = 'New title';
 
     // Call the function to test
     const result = getDashboardChanges(dashboard);

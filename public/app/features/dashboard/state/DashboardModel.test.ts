@@ -1,7 +1,7 @@
 import { keys as _keys } from 'lodash';
 
-import { dateTime, type TimeRange, VariableHide } from '@grafana/data';
-import { type Dashboard, defaultVariableModel, type RowPanel } from '@grafana/schema';
+import { dateTime, type TimeRange } from '@grafana/data';
+import { type Dashboard, type RowPanel } from '@grafana/schema';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { variableAdapters } from '../../variables/adapters';
@@ -12,12 +12,7 @@ import { setTimeSrv, type TimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 
-import {
-  createAnnotationJSONFixture,
-  createDashboardModelFixture,
-  createPanelSaveModel,
-  createVariableJSONFixture,
-} from './__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture, createPanelSaveModel } from './__fixtures__/dashboardFixtures';
 
 jest.mock('app/core/services/context_srv');
 
@@ -331,102 +326,6 @@ describe('DashboardModel', () => {
 
     it('Should format timestamp with millisecond resolution if format is passed as parameter', () => {
       expect(dashboard.formatDate(1234567890007, 'YYYY-MM-DD HH:mm:ss.SSS')).toBe('2009-02-13 23:31:30.007');
-    });
-  });
-
-  describe('isSubMenuVisible with empty lists', () => {
-    let model: DashboardModel;
-
-    beforeEach(() => {
-      model = createDashboardModelFixture();
-    });
-
-    it('should not show submenu', () => {
-      expect(model.isSubMenuVisible()).toBe(false);
-    });
-  });
-
-  describe('isSubMenuVisible with annotation', () => {
-    let model: DashboardModel;
-
-    beforeEach(() => {
-      model = createDashboardModelFixture({
-        schemaVersion: 30,
-        annotations: {
-          list: [
-            {
-              datasource: { uid: 'fake-uid', type: 'prometheus' },
-              name: 'Fake annotation',
-              type: 'dashboard',
-              iconColor: 'rgba(0, 211, 255, 1)',
-              enable: true,
-              hide: false,
-            },
-          ],
-        },
-      });
-    });
-
-    it('should show submmenu', () => {
-      expect(model.isSubMenuVisible()).toBe(true);
-    });
-  });
-
-  describe('isSubMenuVisible with template var', () => {
-    let model: DashboardModel;
-
-    beforeEach(() => {
-      model = createDashboardModelFixture(
-        {
-          templating: {
-            list: [createVariableJSONFixture({})],
-          },
-        },
-        {},
-        // getVariablesFromState stub to return a variable
-        jest.fn().mockImplementation(() => [{}])
-      );
-    });
-
-    it('should enable submmenu', () => {
-      expect(model.isSubMenuVisible()).toBe(true);
-    });
-  });
-
-  describe('isSubMenuVisible with hidden template var', () => {
-    let model: DashboardModel;
-
-    beforeEach(() => {
-      model = createDashboardModelFixture({
-        templating: {
-          list: [
-            {
-              ...defaultVariableModel,
-              hide: VariableHide.hideVariable,
-            },
-          ],
-        },
-      });
-    });
-
-    it('should not enable submmenu', () => {
-      expect(model.isSubMenuVisible()).toBe(false);
-    });
-  });
-
-  describe('isSubMenuVisible with hidden annotation toggle', () => {
-    let dashboard: DashboardModel;
-
-    beforeEach(() => {
-      dashboard = createDashboardModelFixture({
-        annotations: {
-          list: [createAnnotationJSONFixture({ hide: true })],
-        },
-      });
-    });
-
-    it('should not enable submmenu', () => {
-      expect(dashboard.isSubMenuVisible()).toBe(false);
     });
   });
 
@@ -1180,42 +1079,6 @@ describe('DashboardModel', () => {
   });
 });
 
-describe('exitViewPanel', () => {
-  function getTestContext() {
-    const panel = new PanelModel({ setIsViewing: jest.fn() });
-    const dashboard = createDashboardModelFixture();
-    dashboard.startRefresh = jest.fn();
-    dashboard.panelInView = panel;
-
-    return { dashboard, panel };
-  }
-
-  describe('when called', () => {
-    it('then panelInView is set to undefined', () => {
-      const { dashboard, panel } = getTestContext();
-
-      dashboard.exitViewPanel(panel);
-
-      expect(dashboard.panelInView).toBeUndefined();
-    });
-
-    it('then setIsViewing is called on panel', () => {
-      const { dashboard, panel } = getTestContext();
-
-      dashboard.exitViewPanel(panel);
-
-      expect(panel.setIsViewing).toHaveBeenCalledWith(false);
-    });
-
-    it('then startRefresh is not called', () => {
-      const { dashboard, panel } = getTestContext();
-
-      dashboard.exitViewPanel(panel);
-
-      expect(dashboard.startRefresh).not.toHaveBeenCalled();
-    });
-  });
-});
 
 describe('when initEditPanel is called', () => {
   function getTestContext() {

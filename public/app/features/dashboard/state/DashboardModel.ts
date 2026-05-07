@@ -11,7 +11,6 @@ import {
   type DateTimeInput,
   type EventBusExtended,
   EventBusSrv,
-  type PanelModel as IPanelModel,
   type TimeRange,
   type TimeZone,
   type TypedVariableModel,
@@ -45,7 +44,6 @@ import {
 } from '../../variables/types';
 import { isAllVariable } from '../../variables/utils';
 import { getTimeSrv } from '../services/TimeSrv';
-import { mergePanels, type PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
 import { PanelModel } from './PanelModel';
@@ -280,28 +278,6 @@ export class DashboardModel implements TimeModel {
     return cloneSafe;
   }
 
-  /**
-   * This will load a new dashboard, but keep existing panels unchanged
-   *
-   * This function can be used to implement:
-   * 1. potentially faster loading dashboard loading
-   * 2. dynamic dashboard behavior
-   * 3. "live" dashboard editing
-   *
-   * @internal and experimental
-   */
-  // TODO: remove this as it's not being used anymore
-  // Also remove public/app/features/dashboard/utils/panelMerge.ts
-  updatePanels(panels: IPanelModel[]): PanelMergeInfo {
-    const info = mergePanels(this.panels, panels ?? []);
-    if (info.changed) {
-      this.panels = info.panels ?? [];
-      this.sortPanelsByGridPos();
-      this.events.publish(new DashboardPanelsChangedEvent());
-    }
-    return info;
-  }
-
   private getPanelSaveModels() {
     return this.panels
       .filter((panel) => this.isSnapshotTruthy() || !(panel.repeatPanelId || panel.repeatedByRow))
@@ -452,18 +428,6 @@ export class DashboardModel implements TimeModel {
 
     getTimeSrv().resumeAutoRefresh();
 
-    this.refreshIfPanelsAffectedByVariableChangeOrTimeRangeChanged();
-  }
-
-  initViewPanel(panel: PanelModel) {
-    this.panelInView = panel;
-    this.timeRangeUpdatedDuringEditOrView = false;
-    panel.setIsViewing(true);
-  }
-
-  exitViewPanel(panel: PanelModel) {
-    this.panelInView = undefined;
-    panel.setIsViewing(false);
     this.refreshIfPanelsAffectedByVariableChangeOrTimeRangeChanged();
   }
 
@@ -737,11 +701,6 @@ export class DashboardModel implements TimeModel {
     clone.repeatPanelId = sourcePanel.id;
     clone.repeat = undefined;
 
-    if (this.panelInView?.id === clone.id) {
-      clone.setIsViewing(true);
-      this.panelInView = clone;
-    }
-
     return clone;
   }
 
@@ -959,14 +918,6 @@ export class DashboardModel implements TimeModel {
     }
   }
 
-  isSubMenuVisible() {
-    return (
-      this.links.length > 0 ||
-      this.getVariables().some((variable) => variable.hide !== 2) ||
-      this.annotations.list.some((annotation) => !annotation.hide)
-    );
-  }
-
   getPanelInfoById(panelId: number) {
     const panelIndex = this.panels.findIndex((p) => p.id === panelId);
     return panelIndex >= 0 ? { panel: this.panels[panelIndex], index: panelIndex } : null;
@@ -1123,10 +1074,6 @@ export class DashboardModel implements TimeModel {
   off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
     console.log('DashboardModel.off is deprecated');
     this.events.off(event, callback);
-  }
-
-  cycleGraphTooltip() {
-    this.graphTooltip = (this.graphTooltip + 1) % 3;
   }
 
   sharedTooltipModeEnabled() {
