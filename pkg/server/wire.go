@@ -327,9 +327,9 @@ var wireBasicSet = wire.NewSet(
 	encryptionservice.ProvideEncryptionService,
 	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,
-	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
+	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsDatabase.ProvideSecretsStore,
-	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
+	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsgarbagecollectionworker.ProvideWorker,
 	grafanads.ProvideService,
 	wire.Bind(new(dashboardsnapshots.Store), new(*dashsnapstore.DashboardSnapshotStore)),

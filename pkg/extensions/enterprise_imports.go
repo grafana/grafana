@@ -580,6 +580,7 @@ import (
 	_ "github.com/prometheus/common/model"
 	_ "github.com/prometheus/prometheus/promql/parser"
 	_ "github.com/puzpuzpuz/xsync/v4"
+	_ "github.com/redis/go-redis/extra/redisotel/v9"
 	_ "github.com/redis/go-redis/v9"
 	_ "github.com/robfig/cron/v3"
 	_ "github.com/russellhaering/goxmldsig"

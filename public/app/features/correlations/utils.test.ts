@@ -141,7 +141,7 @@ describe('correlations utils', () => {
     config.featureToggles.lokiLogsDataplane = originalDataplaneState;
   });
 
-  it('generates a partial spec with config only when nothing is edited', () => {
+  it('generates a partial spec with config and nulled target only when nothing is edited and the correlation is external', () => {
     const correlation: Correlation = {
       uid: 'test',
       sourceUID: 'test',
@@ -152,7 +152,7 @@ describe('correlations utils', () => {
     };
     const editForm: EditFormDTO = { ...correlation, label: correlation.label! };
     const partialSpec = generatePartialEditSpec(editForm, correlation);
-    expect(partialSpec).toStrictEqual({ config: { field: 'test', target: { url: 'test' } } });
+    expect(partialSpec).toStrictEqual({ config: { field: 'test', target: { url: 'test' } }, target: null });
   });
 
   it('generates a partial spec as expected when things are edited', () => {
