@@ -30,10 +30,9 @@ export const AnnotationListItem = ({ options, annotation, formatDate, onClick, o
   const showTimeStampEnd = timeEnd && timeEnd !== time && showTime;
 
   return (
-    // Plain-div row instead of <Card> — Card's internal grid layout (Description
-    // gets its own row, Heading spans across columns) fights every override we
-    // tried in single-row form. Keeping the visual styling close to the
-    // surrounding cards.
+    // Plain-div row rather than <Card>: Card's grid layout puts Description on its
+    // own row and makes Heading span across columns, which the panel's single-row
+    // layout can't override cleanly. Visual styling kept close to a Card.
     <div role="button" tabIndex={0} className={styles.row} onClick={onItemClick}>
       <RenderUserContentAsHTML
         className={styles.heading}
@@ -143,8 +142,6 @@ function getStyles(theme: GrafanaTheme2) {
       fontSize: theme.typography.size.md,
       fontWeight: theme.typography.fontWeightMedium,
       a: {
-        zIndex: 1,
-        position: 'relative',
         color: theme.colors.text.link,
         '&:hover': {
           textDecoration: 'underline',
@@ -153,13 +150,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     meta: css({
       margin: 0,
-      position: 'relative',
       justifySelf: 'end',
     }),
     timestamp: css({
       margin: 0,
-      color: theme.colors.text.secondary,
-      lineHeight: theme.typography.body.lineHeight,
     }),
     tagList: css({
       justifySelf: 'end',
