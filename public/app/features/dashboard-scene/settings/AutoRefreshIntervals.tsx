@@ -3,7 +3,6 @@ import * as React from 'react';
 
 import { t } from '@grafana/i18n';
 import { Input, defaultIntervals, Field } from '@grafana/ui';
-
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export interface Props {
