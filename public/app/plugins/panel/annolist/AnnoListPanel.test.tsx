@@ -311,7 +311,7 @@ describe('AnnoListPanel', () => {
     });
   });
 
-  describe('with kubernetesAnnotations toggle ON', () => {
+  describe('with kubernetesAnnotationsClient toggle ON', () => {
     const SEARCH_URL = '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/search';
     const DISPLAY_URL = '/apis/iam.grafana.app/v0alpha1/namespaces/stack-1/display';
     const USER_URL = '/apis/iam.grafana.app/v0alpha1/namespaces/stack-1/users/u-001';
@@ -344,7 +344,7 @@ describe('AnnoListPanel', () => {
 
     const setupK8sContext = async (options: Options = defaultOptions) => {
       jest.clearAllMocks();
-      config.featureToggles.kubernetesAnnotations = true;
+      config.featureToggles.kubernetesAnnotationsClient = true;
       config.namespace = 'stack-1';
 
       const getMock = jest.spyOn(backendSrv, 'get');
@@ -394,7 +394,7 @@ describe('AnnoListPanel', () => {
     };
 
     afterEach(() => {
-      config.featureToggles.kubernetesAnnotations = false;
+      config.featureToggles.kubernetesAnnotationsClient = false;
     });
 
     it('hits the k8s /search endpoint with translated params', async () => {
@@ -426,7 +426,7 @@ describe('AnnoListPanel', () => {
 
     it('falls back to displayName when the User resource fetch fails (e.g. RBAC)', async () => {
       jest.clearAllMocks();
-      config.featureToggles.kubernetesAnnotations = true;
+      config.featureToggles.kubernetesAnnotationsClient = true;
       config.namespace = 'stack-1';
 
       const getMock = jest.spyOn(backendSrv, 'get');

@@ -24,9 +24,9 @@ beforeEach(() => {
   resetAnnotationServerForTests();
 });
 
-describe('annotationServer with kubernetesAnnotations toggle OFF', () => {
+describe('annotationServer with kubernetesAnnotationsClient toggle OFF', () => {
   beforeAll(() => {
-    config.featureToggles.kubernetesAnnotations = false;
+    config.featureToggles.kubernetesAnnotationsClient = false;
     config.namespace = 'stack-1';
   });
 
@@ -53,16 +53,16 @@ describe('annotationServer with kubernetesAnnotations toggle OFF', () => {
   });
 });
 
-describe('annotationServer with kubernetesAnnotations toggle ON', () => {
+describe('annotationServer with kubernetesAnnotationsClient toggle ON', () => {
   const baseURL = '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1';
 
   beforeAll(() => {
-    config.featureToggles.kubernetesAnnotations = true;
+    config.featureToggles.kubernetesAnnotationsClient = true;
     config.namespace = 'stack-1';
   });
 
   afterAll(() => {
-    config.featureToggles.kubernetesAnnotations = false;
+    config.featureToggles.kubernetesAnnotationsClient = false;
   });
 
   it('save POSTs to the k8s endpoint and includes spec.scopes', async () => {

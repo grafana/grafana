@@ -48,7 +48,7 @@ class LegacyAnnotationServer implements AnnotationServer {
   }
 }
 
-// When kubernetesAnnotations is enabled, CRUD/tags/query (dashboard annotations) go
+// When kubernetesAnnotationsClient is enabled, CRUD/tags/query (dashboard annotations) go
 // to annotation.grafana.app. forAlert stays on legacy because the new /search
 // endpoint cannot filter by alertUID/type=alert (ListOptions has no Type/AlertUID).
 class K8sAnnotationServer implements AnnotationServer {
@@ -88,7 +88,7 @@ let instance: AnnotationServer | null = null;
 
 export function annotationServer(): AnnotationServer {
   if (!instance) {
-    instance = config.featureToggles.kubernetesAnnotations ? new K8sAnnotationServer() : new LegacyAnnotationServer();
+    instance = config.featureToggles.kubernetesAnnotationsClient ? new K8sAnnotationServer() : new LegacyAnnotationServer();
   }
   return instance;
 }
