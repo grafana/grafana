@@ -153,18 +153,11 @@ export class GrafanaApp {
         }
       }
 
-      const regionalFormat = config.featureToggles.localeFormatPreference
-        ? config.regionalFormat
-        : contextSrv.user.language;
-
-      const initI18nPromise = initializeI18n(
-        {
-          language: contextSrv.user.language,
-          ns: NAMESPACES,
-          module: loadTranslations,
-        },
-        regionalFormat
-      );
+      const initI18nPromise = initializeI18n({
+        language: contextSrv.user.language,
+        ns: NAMESPACES,
+        module: loadTranslations,
+      });
 
       // This is a placeholder so we can put a 'comment' in the message json files.
       // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
@@ -181,7 +174,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      setLocale(config.regionalFormat);
+      setLocale(contextSrv.user.language);
       setWeekStart(contextSrv.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
