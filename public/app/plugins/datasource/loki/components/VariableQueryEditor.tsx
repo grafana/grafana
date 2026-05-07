@@ -5,7 +5,7 @@ import { type QueryEditorProps, type SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
 import { type LokiDatasource } from '../datasource';
-import { migrateVariableQuery } from '../migrations/variableQueryMigrations';
+import { ensureStreamSelectorBraces, migrateVariableQuery } from '../migrations/variableQueryMigrations';
 import { type LokiOptions, type LokiQuery, type LokiVariableQuery, LokiVariableQueryType as QueryType } from '../types';
 
 const variableOptions = [
@@ -68,7 +68,11 @@ export const LokiVariableQueryEditor = ({ onChange, query, datasource, range }: 
 
   const handleBlur = () => {
     if (type !== undefined) {
-      onChange({ type, label, stream, refId: 'LokiVariableQueryEditor-VariableQuery' });
+      const normalizedStream = stream ? ensureStreamSelectorBraces(stream) : stream;
+      if (normalizedStream !== stream) {
+        setStream(normalizedStream);
+      }
+      onChange({ type, label, stream: normalizedStream, refId: 'LokiVariableQueryEditor-VariableQuery' });
     }
   };
 
