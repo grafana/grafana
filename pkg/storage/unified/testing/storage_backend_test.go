@@ -153,8 +153,13 @@ func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBa
 	// All creates should have received `AlreadyExists`
 	for _, e := range createErrors {
 		require.Error(t, e, "all creates should have failed")
-		require.ErrorIs(t, e, resource.ErrResourceAlreadyExists,
-			"should receive ErrResourceAlreadyExists after resource is created")
+
+		// TODO: once leases graduates from being optional (i.e., it's should
+		// eventually be always enabled), then we can acquire the lease only
+		// after doing validations, and that should allow us to enforce that
+		// all clients get an "already exists" error here.
+		validError := errors.Is(e, resource.ErrResourceAlreadyExists) || apierrors.IsConflict(e)
+		require.True(t, validError, "should receive ErrResourceAlreadyExists after resource is created")
 	}
 }
 
