@@ -2,7 +2,6 @@ import { type AdHocVariableModel, EventBusSrv, type GroupByVariableModel, type S
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
-import { resetAnnotationServerForTests } from 'app/features/annotations/api';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
@@ -91,10 +90,6 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationCreate', () => {
-    beforeEach(() => {
-      resetAnnotationServerForTests();
-    });
-
     it('should create annotation', () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
@@ -138,7 +133,6 @@ describe('setDashboardPanelContext', () => {
         );
       } finally {
         config.annotationAppPlatformEnabled = false;
-        resetAnnotationServerForTests();
       }
     });
 
@@ -159,16 +153,11 @@ describe('setDashboardPanelContext', () => {
       } finally {
         jest.restoreAllMocks();
         config.annotationAppPlatformEnabled = false;
-        resetAnnotationServerForTests();
       }
     });
   });
 
   describe('onAnnotationUpdate', () => {
-    beforeEach(() => {
-      resetAnnotationServerForTests();
-    });
-
     it('should update annotation', () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
@@ -212,7 +201,6 @@ describe('setDashboardPanelContext', () => {
         );
       } finally {
         config.annotationAppPlatformEnabled = false;
-        resetAnnotationServerForTests();
       }
     });
 
@@ -239,16 +227,11 @@ describe('setDashboardPanelContext', () => {
       } finally {
         jest.restoreAllMocks();
         config.annotationAppPlatformEnabled = false;
-        resetAnnotationServerForTests();
       }
     });
   });
 
   describe('onAnnotationDelete', () => {
-    beforeEach(() => {
-      resetAnnotationServerForTests();
-    });
-
     it('should update annotation', () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
@@ -276,7 +259,6 @@ describe('setDashboardPanelContext', () => {
         );
       } finally {
         config.annotationAppPlatformEnabled = false;
-        resetAnnotationServerForTests();
       }
     });
   });

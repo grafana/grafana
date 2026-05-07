@@ -1,6 +1,6 @@
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 
-import { annotationServer, resetAnnotationServerForTests } from './api';
+import { annotationServer } from './api';
 
 const postFn = jest.fn();
 const putFn = jest.fn();
@@ -21,7 +21,6 @@ beforeEach(() => {
   putFn.mockReset();
   deleteFn.mockReset();
   getFn.mockReset();
-  resetAnnotationServerForTests();
 });
 
 describe('annotationServer with annotationAppPlatformEnabled OFF', () => {
