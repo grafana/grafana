@@ -46,7 +46,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 			decrypter,
 			ghFactory,
 			webhooksBuilder,
-			folderMetadataEnabled,
+			repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges),
 		),
 	}
 }

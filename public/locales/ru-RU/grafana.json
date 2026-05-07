@@ -4516,6 +4516,14 @@
       "resource-detail-dashboards": "Вы создали {{usage}} из {{limit}} дашбордов ({{percentage}}%).",
       "resource-detail-folders": "Вы создали {{usage}} из {{limit}} папок ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Очистить историю",
       "error": "Не удалось загрузить последние просмотренные дашборды.",
@@ -8125,19 +8133,6 @@
       "aria-label-explore-data": "Просмотреть данные",
       "aria-label-suggested-dashboards": "Рекомендуемые дашборды"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Оповещения не поддерживаются",
-      "text-alerting-supported": "Оповещения поддерживаются"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Имя используется при выборе источника данных на панелях. Источник данных по умолчанию предварительно выбран на новых панелях."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Основные настройки страницы параметров источника данных",
-      "basic-settings-name-placeholder-name": "Имя",
-      "label-default": "По умолчанию",
-      "label-name": "Имя"
-    },
     "build-a-dashboard-button": {
       "blank": "Пусто",
       "build-a-dashboard": "Создать дашборд",
@@ -11375,7 +11370,7 @@
     "description-order": "Сначала отображаются самые новые или самые старые журналы. Если выбран параметр «Сначала самые старые», представление автоматически прокручивается вниз до самых новых журналов.",
     "description-prettify-json": "Позволяет форматировать записи журнала JSON с отступами и разрывами строк.",
     "description-show-controls": "Отображаются элементы управления для перехода к последней или первой строке журнала, а также фильтры по уровню журнала.",
-    "description-show-log-attributes": "Экспериментальная функция. При отображении журналов OTel вы можете добавить дополнительное поле с соответствующими парами «ключ — значение» из меток и метаданных.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Выравнивайте значения по столбцам при использовании отображаемых полей.",
     "description-wrap-lines": "Отображает журналы в виде одной строки или переносит длинные записи так, чтобы они помещались на панели.",
     "field-selector": {
@@ -11707,7 +11702,7 @@
       "line-contains-not": "Добавить, поскольку строка не содержит фильтр",
       "search-text": "Поиск в результатах"
     },
-    "show-log-attributes": "Показывать атрибуты для журналов OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Разрешение метки времени",
     "un-themed-log-details": {
       "aria-label-data-links": "Ссылки на данные",

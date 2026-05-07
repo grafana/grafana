@@ -260,7 +260,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     }),
     content: css({
       label: 'content',
-      marginLeft: theme.spacing(0.5),
+      padding: theme.spacing(0, 0.5),
       top: 0,
     }),
     buttonStyles: css({

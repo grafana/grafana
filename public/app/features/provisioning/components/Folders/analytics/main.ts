@@ -1,4 +1,4 @@
-import { defineFeatureEvents } from '@grafana/runtime/internal';
+import { defineFeatureEvents } from '@grafana/runtime/unstable';
 
 import {
   type ReadmeCreateClickedProperties,

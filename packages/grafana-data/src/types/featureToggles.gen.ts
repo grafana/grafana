@@ -229,6 +229,11 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
+  * Enables usage of the new annotations API client
+  * @default false
+  */
+  kubernetesAnnotationsClient?: boolean;
+  /**
   * Enables k8s short url api and uses it under the hood when handling legacy /api
   * @default false
   */
@@ -388,11 +393,6 @@ export interface FeatureToggles {
   * @default false
   */
   unlimitedLayoutsNesting?: boolean;
-  /**
-  * Enables CSV export using scenes dashboard architecture
-  * @default true
-  */
-  sceneCsvExport?: boolean;
   /**
   * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
   * @default false
@@ -1247,7 +1247,7 @@ export interface FeatureToggles {
   newLogContext?: boolean;
   /**
   * Enables new design for the Clickhouse data source configuration page
-  * @default false
+  * @default true
   */
   newClickhouseConfigPageDesign?: boolean;
   /**
