@@ -47,6 +47,8 @@ const (
 	OpWatchFilter       = "watch_filter"
 	OpFilterWatchEvents = "filter_watch_events"
 	OpSendWatchEvents   = "send_watch_events"
+
+	defaultWatchSendTimeout = 1 * time.Second
 )
 
 // WatchEventFilter is a batch filter for watch events. Given a slice of
@@ -118,6 +120,7 @@ type Wrapper struct {
 	observer           Observer
 	resource           schema.GroupResource
 	watchFlushInterval time.Duration
+	watchSendTimeout   time.Duration
 }
 
 // Option configures a Wrapper.
@@ -141,6 +144,15 @@ func WithPreserveIdentity() Option {
 func WithWatchFlushInterval(d time.Duration) Option {
 	return func(w *Wrapper) {
 		w.watchFlushInterval = d
+	}
+}
+
+// WithWatchSendTimeout configures how long to wait when sending an event to the caller.
+// If the caller fails to receive the event within this timeframe (default 1s),
+// it is considered too slow, which will stop the watcher and return an error.
+func WithWatchSendTimeout(d time.Duration) Option {
+	return func(w *Wrapper) {
+		w.watchSendTimeout = d
 	}
 }
 
@@ -179,11 +191,12 @@ var _ k8srest.Watcher = (*Wrapper)(nil)
 // injecting the original user's UID for createdBy/updatedBy annotations.
 func New(store K8sStorage, resource schema.GroupResource, authz ResourceStorageAuthorizer, opts ...Option) *Wrapper {
 	w := &Wrapper{
-		inner:      store,
-		authorizer: authz,
-		resource:   resource,
-		tracer:     noop.NewTracerProvider().Tracer(tracerName),
-		observer:   noopObserver{},
+		inner:            store,
+		authorizer:       authz,
+		resource:         resource,
+		tracer:           noop.NewTracerProvider().Tracer(tracerName),
+		observer:         noopObserver{},
+		watchSendTimeout: defaultWatchSendTimeout,
 	}
 	for _, opt := range opts {
 		opt(w)
@@ -446,6 +459,8 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 
 	authzStart := time.Now()
 	err = a.authorizer.BeforeUpdate(authzCtx, oldObj, updatedObj)
+	// OpUpdate includes OpBeforeUpdate latency (BeforeUpdate runs inside the inner
+	// store via UpdatedObject). We'll need to subtract OpBeforeUpdate for pure storage time.
 	a.observer.Observe(LayerAuthz, OpBeforeUpdate, a.resource, time.Since(authzStart), statusFromError(err))
 	if err != nil {
 		return nil, err
@@ -498,7 +513,7 @@ func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOption
 
 	// Return a new filtered watcher that runs the filter over the buffered events
 	// and forwards the events to the caller.
-	result = newFilteredWatcher(ctx, w.tracer, w.observer, w.resource, inner, filter, w.watchFlushInterval)
+	result = newFilteredWatcher(ctx, w.tracer, w.observer, w.resource, inner, filter, w.watchFlushInterval, w.watchSendTimeout)
 	span.SetAttributes(attribute.Bool("filtered", true))
 	return result, nil
 }
@@ -522,14 +537,12 @@ type filteredWatcher struct {
 	stopOnce      sync.Once        // Ensures Stop() is called only once to prevent race conditions.
 	done          chan struct{}    // Closed when the watcher Stop() method is called.
 	pending       []watch.Event    // Buffered events awaiting flush; only accessed from run goroutine.
+	sendTimeout   time.Duration    // The timeout for sending an event to the caller.
 }
 
 // watchBatchSize is the maximum number of events buffered before a forced flush.
 // Matches watch.DefaultChanSize so the batch can never exceed the inner channel capacity.
 const watchBatchSize = 100
-
-// defaultSendTimeout is the timeout for sending an event to the caller.
-var defaultSendTimeout = 1 * time.Second
 
 func newFilteredWatcher(ctx context.Context,
 	tracer trace.Tracer,
@@ -537,7 +550,8 @@ func newFilteredWatcher(ctx context.Context,
 	resource schema.GroupResource,
 	inner watch.Interface,
 	filter WatchEventFilter,
-	flushInterval time.Duration) *filteredWatcher {
+	flushInterval time.Duration,
+	sendTimeout time.Duration) *filteredWatcher {
 	fw := &filteredWatcher{
 		tracer:        tracer,
 		observer:      observer,
@@ -547,6 +561,7 @@ func newFilteredWatcher(ctx context.Context,
 		flushInterval: flushInterval,
 		result:        make(chan watch.Event, watch.DefaultChanSize),
 		done:          make(chan struct{}),
+		sendTimeout:   sendTimeout,
 	}
 	go fw.run(ctx)
 	return fw
@@ -565,7 +580,7 @@ const (
 func (fw *filteredWatcher) sendEvent(ctx context.Context, event watch.Event) sendEventResult {
 	// If we could not send the event on time, emit an Error
 	// and shut down to release backpressure on the inner storage.
-	timer := time.NewTimer(defaultSendTimeout)
+	timer := time.NewTimer(fw.sendTimeout)
 	select {
 	case <-ctx.Done(): // User context is done.
 		return sendEventStopped

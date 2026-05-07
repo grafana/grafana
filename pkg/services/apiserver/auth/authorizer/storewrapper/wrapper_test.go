@@ -815,11 +815,7 @@ func TestWrapper_Watch(t *testing.T) {
 
 	t.Run("blocked consumer automatically shuts down the watch", func(t *testing.T) {
 		setup := newTestSetup(t)
-
-		defaultSendTimeout = 10 * time.Millisecond
-		defer func() {
-			defaultSendTimeout = 1 * time.Second
-		}()
+		setup.wrapper.watchSendTimeout = 10 * time.Millisecond
 
 		// Inner watcher has enough room to buffer the events without blocking.
 		inner := newPumpedWatcher(int(watch.DefaultChanSize) * 3)
@@ -828,14 +824,14 @@ func TestWrapper_Watch(t *testing.T) {
 
 		setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
 
-		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
-		require.NoError(t, err)
-
 		// Fill the inner channel buffer without ever reading from w.ResultChan().
 		// Wrapper watcher result channel will be blocked at DefaultChanSize.
 		for i := int32(0); i < watch.DefaultChanSize*2; i++ {
 			inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}})
 		}
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
 
 		// Wait for the send timeout to trigger. Use a generous overall timeout
 		// because the run goroutine must first process ~100 events through the
