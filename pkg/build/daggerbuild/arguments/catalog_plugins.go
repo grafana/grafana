@@ -30,6 +30,7 @@ type CatalogPluginsManifest struct {
 var DefaultCatalogPlugins = []CatalogPluginSpec{
 	{ID: "elasticsearch"},
 	{ID: "zipkin"},
+	// Any plugins added here must also be added to scripts/catalog-plugins-defaults!
 }
 
 var flagBundleCatalogPlugins = &cli.StringSliceFlag{

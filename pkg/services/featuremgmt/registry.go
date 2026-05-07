@@ -379,6 +379,15 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:            "kubernetesAnnotationsClient",
+			Description:     "Enables usage of the new annotations API client",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:            "kubernetesShortURLs",
 			Description:     "Enables k8s short url api and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageExperimental,
@@ -675,14 +684,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "sceneCsvExport",
-			Description: "Enables CSV export using scenes dashboard architecture",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "drilldownRecommendations",
@@ -3151,6 +3152,15 @@ var (
 			Generate:    Generate{Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
+		},
+		{
+			Name:            "plugins.marketplaceLicensing",
+			Description:     "Enables marketplace plugin licensing",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

@@ -4462,6 +4462,14 @@
       "resource-detail-dashboards": "Je hebt {{usage}} van de {{limit}} dashboards aangemaakt ({{percentage}}%).",
       "resource-detail-folders": "Je hebt {{usage}} van de {{limit}} mappen aangemaakt ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Geschiedenis wissen",
       "error": "Recent bekeken dashboards konden niet worden geladen.",
@@ -8033,19 +8041,6 @@
       "aria-label-explore-data": "Gegevens verkennen",
       "aria-label-suggested-dashboards": "Voorgestelde dashboards"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Waarschuwingen worden niet ondersteund",
-      "text-alerting-supported": "Waarschuwingen worden ondersteund"
-    },
-    "basic-serttings": {
-      "tooltip-name": "De naam wordt gebruikt wanneer je de gegevensbron in panelen selecteert. De standaardgegevensbron is vooraf geselecteerd in nieuwe panelen."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Basisinstellingen voor de instellingenpagina van de gegevensbron",
-      "basic-settings-name-placeholder-name": "Naam",
-      "label-default": "Standaard",
-      "label-name": "Naam"
-    },
     "build-a-dashboard-button": {
       "blank": "Leeg",
       "build-a-dashboard": "Maak een dashboard",
@@ -11249,7 +11244,7 @@
     "description-order": "Nieuwste of oudste logboeken eerst weergeven. Als 'Oudste eerst' is geselecteerd, scrolt de weergave automatisch naar de nieuwste logboeken onderaan.",
     "description-prettify-json": "JSON-logboekvermeldingen opmaken met inspringing en regelafbrekingen.",
     "description-show-controls": "Weergavebesturingselementen om naar de laatste of eerste logregel te gaan en filters op logniveau.",
-    "description-show-log-attributes": "Experimenteel. Wanneer OTel-logboeken worden weergegeven, voeg je een extra weergegeven veld toe met relevante sleutel-waardeparen van labels en metadata.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Waarden uitlijnen met behulp van kolommen bij het gebruik van weergegeven velden.",
     "description-wrap-lines": "Logboeken als één regel weergeven of lange logboekvermeldingen terug laten lopen zodat ze in het paneel passen.",
     "field-selector": {
@@ -11575,7 +11570,7 @@
       "line-contains-not": "Toevoegen als regel geen filter bevat",
       "search-text": "Zoeken in resultaten"
     },
-    "show-log-attributes": "Logattributen weergeven voor OTel-logs",
+    "show-log-attributes": "",
     "timestamp-format": "Tijdstempelresolutie",
     "un-themed-log-details": {
       "aria-label-data-links": "Gegevenslinks",
