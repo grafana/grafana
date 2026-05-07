@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -258,6 +259,17 @@ func TestVectorSearch_EmptyQueryReturnsBadRequestError(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, resp.Error)
+}
+
+func TestVectorSearch_QueryTooLongReturnsBadRequestError(t *testing.T) {
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
+	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key:   validKey(),
+		Query: strings.Repeat("a", 1001),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.Error)
+	assert.Equal(t, int32(400), resp.Error.Code)
 }
 
 func TestVectorSearch_MissingKeyReturnsBadRequestError(t *testing.T) {
