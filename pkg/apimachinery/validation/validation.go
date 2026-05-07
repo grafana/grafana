@@ -6,21 +6,16 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
-// Limits are derived from k8s.io/apimachinery/pkg/util/validation:
-//   - DNS1123SubdomainMaxLength = 253 (RFC 1123 subdomain): applies to name
-//   - DNS1123LabelMaxLength     = 63  (RFC 1123 label):     applies to namespace
-//
-// group and resource are capped at 190 (below the RFC 1123 subdomain max of 253)
-// because the composite unique index (namespace, group, resource, name) is stored
-// in MySQL with utf8mb4 (4 bytes/char). At 253 each, the index would be
-// 63×4 + 253×4 + 253×4 + 253×4 = 3288 bytes, exceeding InnoDB's 3072-byte limit.
-// At 190 each the total is 63×4 + 190×4 + 190×4 + 253×4 = 2784 bytes, which fits.
+// maxGroupLength is set conservatively below the DB column size of 190 (chosen to
+// fit MySQL's InnoDB index limit; see pkg/storage/unified/sql/db/migrations/resource_mig.go).
+// 128 comfortably covers all known group name patterns (longest observed: ~62 chars)
+// while leaving headroom before the DB constraint.
 const maxNameLength = 253
-const maxNamespaceLength = 63
+const maxNamespaceLength = 40
 const minNamespaceLength = 3
-const maxGroupLength = 190
+const maxGroupLength = 128
 const minGroupLength = 3
-const maxResourceLength = 190
+const maxResourceLength = 40
 const minResourceLength = 3
 
 const grafanaNameFmt = `^[a-zA-Z0-9:\-\_\.]*$`

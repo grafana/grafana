@@ -6,14 +6,7 @@ import {
   type CorrelationSpec,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { type DataFrame, DataLinkConfigOrigin } from '@grafana/data';
-import {
-  config,
-  type CorrelationData,
-  type CorrelationsData,
-  createMonitoringLogger,
-  getBackendSrv,
-  getDataSourceSrv,
-} from '@grafana/runtime';
+import { config, type CorrelationData, type CorrelationsData, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type ExploreItemState } from 'app/types/explore';
@@ -202,8 +195,6 @@ export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> =
     },
   };
 };
-
-export const correlationsLogger = createMonitoringLogger('features.correlations');
 
 // legacy just needs uid for lookup, remote storage needs name/group
 export const getCorrelationsFromStorage = async (

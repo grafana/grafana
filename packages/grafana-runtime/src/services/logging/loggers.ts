@@ -13,6 +13,7 @@ export const Loggers = {
   'ui-extension-logs': {},
   'features.plugins': {},
   'features.alerting': { context: { module: 'Alerting' } },
+  'features.correlations': {},
 } satisfies Record<string, LoggerDefaults>;
 
 export type LoggerSource = keyof typeof Loggers;
