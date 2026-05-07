@@ -723,6 +723,7 @@ type Cfg struct {
 
 	EnableSQLKVBackend                bool
 	EnableSQLKVCompatibilityMode      bool
+	EnableKVLeases                    bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
