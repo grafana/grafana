@@ -65,12 +65,8 @@ func TestIntegrationPreferences_LegacyBridge(t *testing.T) {
 			})
 
 			if len(tc.flags) == 0 {
-				// The K8s authorizer for team preferences requires membership in
-				// user.GetGroups() for reads but uses AccessClient.Check for
-				// writes. The test fixture's Admin user passes the write check
-				// but not the membership read check, so the bridge GET fails
-				// with 403 even though the legacy GET succeeds. Tracking issue
-				// for the asymmetry: grafana/grafana#123657.
+				// Teams permissions are not yet available yet due to https://github.com/grafana/grafana/pull/123657
+				// Should be un-skipped once groups are reworked
 				t.Run("team preferences read", func(t *testing.T) {
 					teamID := helper.Org1.Staff.ID
 					putResult := putTeamPrefs(t, helper, teamID, `{"theme":"light","weekStart":"sunday"}`)
