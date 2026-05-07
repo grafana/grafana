@@ -199,7 +199,7 @@ func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.Resource
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test"), prometheus.NewPedanticRegistry(), "test")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, log.NewNopLogger(), reg, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, grpcService,
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, log.NewNopLogger(), reg, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, grpcService,
 		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
 			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
 			return auth.Authenticate(ctx)

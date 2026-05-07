@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Combobox, Field, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Alert, Combobox, Field, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
 import { type ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
@@ -24,6 +26,7 @@ interface GitHubAppFieldsProps {
 }
 
 export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
+  const styles = useStyles2(getStyles);
   const {
     control,
     watch,
@@ -131,6 +134,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
           // RadioButtonGroup doesn't support refs, so we need to remove it from fields
           render={({ field: { ref, onChange, ...field } }) => (
             <RadioButtonGroup
+              className={styles.appModeRadios}
               options={[
                 {
                   value: 'existing',
@@ -222,3 +226,10 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     </Stack>
   );
 }
+
+const getStyles = (_theme: GrafanaTheme2) => ({
+  appModeRadios: css({
+    maxWidth: '100%',
+    overflowX: 'auto',
+  }),
+});

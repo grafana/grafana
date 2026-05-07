@@ -16,6 +16,7 @@ const (
 	InstrumentationServer   string = "instrumentation-server"
 	GRPCServer              string = "grpc-server"
 	UnifiedBackend          string = "unified-backend"
+	UnifiedVectorBackend    string = "unified-vector-backend"
 	FrontendServer          string = "frontend-server"
 	OperatorServer          string = "operator"
 )
@@ -26,8 +27,8 @@ var dependencyMap = map[string][]string{
 	GrafanaAPIServer: {InstrumentationServer},
 
 	// TODO: remove SearchServerRing once we only use sharding in SearchServer
-	StorageServer: {UnifiedBackend, InstrumentationServer, GRPCServer, SearchServerRing},
-	SearchServer:  {UnifiedBackend, InstrumentationServer, GRPCServer, SearchServerRing},
+	StorageServer: {UnifiedBackend, UnifiedVectorBackend, InstrumentationServer, GRPCServer, SearchServerRing},
+	SearchServer:  {UnifiedBackend, UnifiedVectorBackend, InstrumentationServer, GRPCServer, SearchServerRing},
 
 	ZanzanaServer:           {InstrumentationServer},
 	AuthnServer:             {InstrumentationServer},

@@ -53,6 +53,7 @@ export const InlineField = ({
   transparent,
   interactive,
   validationMessageHorizontalOverflow,
+  useFieldset: useFieldsetProp,
   ...htmlProps
 }: Props) => {
   const theme = useTheme2();
@@ -61,7 +62,7 @@ export const InlineField = ({
   const labelId = useId();
   const errorId = useId();
   const inputId = htmlFor ?? getChildId(children) ?? fieldId;
-  const useFieldset = children.type === RadioButtonGroup;
+  const useFieldset = useFieldsetProp ?? children.type === RadioButtonGroup;
 
   const labelElement =
     typeof label === 'string' ? (

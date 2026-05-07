@@ -1,6 +1,6 @@
 import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getRepoFileUrl, getRepoHrefForProvider } from './git';
+import { getRepoEditFileUrl, getRepoFileUrl, getRepoHrefForProvider, getRepoNewFileUrl } from './git';
 
 // Partial specs for testing; getRepoHrefForProvider only reads type and provider url/branch/path.
 function spec(s: Partial<RepositorySpec>): RepositorySpec {
@@ -209,6 +209,221 @@ describe('getRepoFileUrl', () => {
   it('returns undefined when filePath is missing', () => {
     expect(
       getRepoFileUrl({
+        repoType: 'github',
+        url: 'https://github.com/owner/repo',
+        filePath: undefined,
+      })
+    ).toBeUndefined();
+  });
+
+  it('uses tree segment for GitHub directory paths (trailing slash)', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'github',
+        url: 'https://github.com/owner/repo',
+        branch: 'main',
+        filePath: 'dashboards/team-a/',
+      })
+    ).toBe('https://github.com/owner/repo/tree/main/dashboards/team-a');
+  });
+
+  it('uses tree segment for GitLab directory paths (trailing slash)', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'gitlab',
+        url: 'https://gitlab.com/group/repo',
+        branch: 'main',
+        filePath: 'docs/',
+      })
+    ).toBe('https://gitlab.com/group/repo/-/tree/main/docs');
+  });
+
+  it('keeps the src segment for Bitbucket directory paths', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'bitbucket',
+        url: 'https://bitbucket.org/workspace/repo',
+        branch: 'main',
+        filePath: 'docs/',
+      })
+    ).toBe('https://bitbucket.org/workspace/repo/src/main/docs');
+  });
+});
+
+describe('getRepoEditFileUrl', () => {
+  it('builds a GitHub edit URL', () => {
+    expect(
+      getRepoEditFileUrl({
+        repoType: 'github',
+        url: 'https://github.com/owner/repo',
+        branch: 'main',
+        filePath: 'README.md',
+      })
+    ).toBe('https://github.com/owner/repo/edit/main/README.md');
+  });
+
+  it('builds a GitLab edit URL', () => {
+    expect(
+      getRepoEditFileUrl({
+        repoType: 'gitlab',
+        url: 'https://gitlab.com/group/repo',
+        branch: 'main',
+        filePath: 'docs/README.md',
+      })
+    ).toBe('https://gitlab.com/group/repo/-/edit/main/docs/README.md');
+  });
+
+  it('falls back to the source view for Bitbucket', () => {
+    expect(
+      getRepoEditFileUrl({
+        repoType: 'bitbucket',
+        url: 'https://bitbucket.org/workspace/repo',
+        branch: 'develop',
+        filePath: 'README.md',
+      })
+    ).toBe('https://bitbucket.org/workspace/repo/src/develop/README.md');
+  });
+
+  it('joins the repository pathPrefix with the filePath', () => {
+    expect(
+      getRepoEditFileUrl({
+        repoType: 'github',
+        url: 'https://github.com/owner/repo',
+        branch: 'main',
+        filePath: 'README.md',
+        pathPrefix: 'dashboards/team-a',
+      })
+    ).toBe('https://github.com/owner/repo/edit/main/dashboards/team-a/README.md');
+  });
+
+  it('defaults to main when branch is missing', () => {
+    expect(
+      getRepoEditFileUrl({
+        repoType: 'github',
+        url: 'https://github.com/owner/repo',
+        branch: undefined,
+        filePath: 'README.md',
+      })
+    ).toBe('https://github.com/owner/repo/edit/main/README.md');
+  });
+
+  it('returns undefined for repository types without a known edit URL', () => {
+    expect(
+      getRepoEditFileUrl({
+        repoType: 'git',
+        url: 'https://example.com/some/repo.git',
+        filePath: 'README.md',
+      })
+    ).toBeUndefined();
+    expect(
+      getRepoEditFileUrl({
+        repoType: 'local',
+        url: '/data/repo',
+        filePath: 'README.md',
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when url or filePath is missing', () => {
+    expect(
+      getRepoEditFileUrl({
+        repoType: 'github',
+        url: undefined,
+        filePath: 'README.md',
+      })
+    ).toBeUndefined();
+    expect(
+      getRepoEditFileUrl({
+        repoType: 'github',
+        url: 'https://github.com/owner/repo',
+        filePath: undefined,
+      })
+    ).toBeUndefined();
+  });
+});
+
+describe('getRepoNewFileUrl', () => {
+  it('builds a GitHub new-file URL with filename and prefilled template', () => {
+    const url = getRepoNewFileUrl({
+      repoType: 'github',
+      url: 'https://github.com/owner/repo',
+      branch: 'main',
+      filePath: 'README.md',
+      template: '# Hello',
+    });
+
+    expect(url).toBeDefined();
+    const parsed = new URL(url!);
+    expect(parsed.origin + parsed.pathname).toBe('https://github.com/owner/repo/new/main');
+    expect(parsed.searchParams.get('filename')).toBe('README.md');
+    expect(parsed.searchParams.get('value')).toBe('# Hello');
+  });
+
+  it('joins pathPrefix with filename in the GitHub new-file URL', () => {
+    const url = getRepoNewFileUrl({
+      repoType: 'github',
+      url: 'https://github.com/owner/repo',
+      branch: 'main',
+      filePath: 'README.md',
+      pathPrefix: 'dashboards/team-a',
+    });
+
+    expect(new URL(url!).searchParams.get('filename')).toBe('dashboards/team-a/README.md');
+  });
+
+  it('builds a GitLab new-file URL with file_name and content', () => {
+    const url = getRepoNewFileUrl({
+      repoType: 'gitlab',
+      url: 'https://gitlab.com/group/repo',
+      branch: 'main',
+      filePath: 'docs/README.md',
+      template: '# Hello',
+    });
+
+    const parsed = new URL(url!);
+    expect(parsed.origin + parsed.pathname).toBe('https://gitlab.com/group/repo/-/new/main');
+    expect(parsed.searchParams.get('file_name')).toBe('docs/README.md');
+    expect(parsed.searchParams.get('content')).toBe('# Hello');
+  });
+
+  it('falls back to the parent directory source view for Bitbucket', () => {
+    const url = getRepoNewFileUrl({
+      repoType: 'bitbucket',
+      url: 'https://bitbucket.org/workspace/repo',
+      branch: 'develop',
+      filePath: 'docs/README.md',
+    });
+
+    expect(url).toBe('https://bitbucket.org/workspace/repo/src/develop/docs');
+  });
+
+  it('returns undefined for repository types without a known new-file URL', () => {
+    expect(
+      getRepoNewFileUrl({
+        repoType: 'git',
+        url: 'https://example.com/some/repo.git',
+        filePath: 'README.md',
+      })
+    ).toBeUndefined();
+    expect(
+      getRepoNewFileUrl({
+        repoType: 'local',
+        url: '/data/repo',
+        filePath: 'README.md',
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when url or filePath is missing', () => {
+    expect(
+      getRepoNewFileUrl({
+        repoType: 'github',
+        url: undefined,
+        filePath: 'README.md',
+      })
+    ).toBeUndefined();
+    expect(
+      getRepoNewFileUrl({
         repoType: 'github',
         url: 'https://github.com/owner/repo',
         filePath: undefined,

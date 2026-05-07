@@ -87,6 +87,7 @@ export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, def
       path: 'scaleDistribution',
       name: t('grafana-ui.builder.axis.name-scale', 'Scale'),
       category,
+      useFieldset: true,
       editor: ScaleDistributionEditor,
       override: ScaleDistributionEditor,
       defaultValue: { type: ScaleDistribution.Linear },

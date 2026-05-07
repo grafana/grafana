@@ -43,7 +43,11 @@ jobs:
 
   publish:
     name: Publish NPM packages
+
+    # MUST use GitHub-hosted runners, as Trusted Publishing currently doesn't support self-hosted runners.cancel-timeout-minutes.
+    # https://docs.npmjs.com/trusted-publishers#supported-cicd-providers
     runs-on: github-hosted-ubuntu-x64-small
+
     if: inputs.version_type == 'nightly' || inputs.version_type == 'stable'
     # Required for this workflow to have permission to publish NPM packages
     environment: npm-publish

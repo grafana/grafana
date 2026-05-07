@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-const DASHBOARD_UID = 'panel-tests-barchart';
+const DASHBOARD_UID = 'WFlOM-jM1';
 
 test.use({
   viewport: { width: 1280, height: 2000 },
@@ -10,7 +10,7 @@ test.describe('Panels test: BarChart no data', { tag: ['@panels', '@barchart'] }
   test('handles no data', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '6' }),
+      queryParams: new URLSearchParams({ editPanel: '21' }),
     });
 
     // locate the panel by its title
