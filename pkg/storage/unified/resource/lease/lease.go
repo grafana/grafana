@@ -44,8 +44,9 @@ var (
 	ErrLeaseAlreadyHeld = errors.New("lease already held")
 
 	// ErrLeaseLost is returned by Release when the lease being released is no
-	// longer owned by the caller — typically because it has expired or has
-	// already been released.
+	// longer owned by the caller — typically because it has expired, has
+	// already been released, or was superseded by another holder. When
+	// auto-renewal is enabled, this error also triggers the Lost() channel.
 	ErrLeaseLost = errors.New("lease lost")
 )
 
@@ -60,10 +61,11 @@ type Lease struct {
 	done       chan struct{}
 }
 
-// Lost returns a channel that is closed when this lease ends, i.e., when its TTL
-// elapses or when Release succeeds. Calling Lost multiple times returns the
-// same channel; the channel is closed at most once. Safe to call from any
-// goroutine.
+// Lost returns a channel that is closed when this lease ends: when its TTL
+// elapses without auto-renewal, when Release succeeds, or when an
+// auto-renewal fails because another holder has acquired the lease.
+// Calling Lost multiple times returns the same channel; the channel is
+// closed at most once. Safe to call from any goroutine.
 func (l *Lease) Lost() <-chan struct{} {
 	return l.lostCh
 }
