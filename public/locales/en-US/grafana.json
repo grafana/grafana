@@ -16343,7 +16343,32 @@
       "usage-title": "Showing usages for: {{variableId}}"
     }
   },
+  "variable": {
+    "adhoc": {
+      "placeholder": "Select value"
+    },
+    "dropdown": {
+      "placeholder": "Enter variable value"
+    },
+    "picker": {
+      "link-all": "All",
+      "option-all": "All",
+      "option-selected-values": "Selected ({{numSelected}})",
+      "option-tooltip": "Clear selections"
+    },
+    "textbox": {
+      "placeholder": "Enter variable value"
+    }
+  },
   "variables": {
+    "ad-hoc-filter": {
+      "label-and": "AND"
+    },
+    "ad-hoc-filter-key": {
+      "plus-segment": {
+        "aria-label-add-filter": "Add Filter"
+      }
+    },
     "create-ad-hoc-variable-adapter": {
       "description": {
         "add-keyvalue-filters-on-the-fly": "Add key/value filters on the fly."
@@ -16434,6 +16459,9 @@
       "renamed-or-missing-variables": "Renamed or missing variables",
       "tooltip-renamed-or-missing-variables": "Click to expand a list with all variable references that have been renamed or are missing from the dashboard.",
       "variable": "Variable"
+    },
+    "variable-options": {
+      "aria-label-toggle-all-values": "Toggle all values"
     },
     "variable-usages-button": {
       "tooltip-show-usages": "Show usages"
