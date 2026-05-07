@@ -45,9 +45,9 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
       suggestion.cardOptions.previewModifier(preview);
     }
 
-    const maxSeries = cardOptions.maxSeries ?? config.panelSeriesLimit;
+    const maxSeries = Math.min(cardOptions.maxSeries ?? Infinity, config.panelSeriesLimit || Infinity);
     const maxRows = cardOptions.maxRows;
-    let previewData = maxSeries ? { ...data, series: data.series.slice(0, maxSeries) } : data;
+    let previewData = Number.isFinite(maxSeries) ? { ...data, series: data.series.slice(0, maxSeries) } : data;
 
     if (maxRows && previewData.series.some((frame) => frame.length > maxRows)) {
       previewData = {

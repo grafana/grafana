@@ -157,15 +157,37 @@ describe('VisualizationSuggestionCard', () => {
       expect(data.series).toHaveLength(1);
     });
 
-    it('uses cardOptions.maxSeries over config.panelSeriesLimit when explicitly set', () => {
+    it('uses cardOptions.maxSeries when it is smaller than config.panelSeriesLimit', () => {
+      config.panelSeriesLimit = 5;
+
+      const suggestion: PanelPluginVisualizationSuggestion = {
+        ...baseSuggestion,
+        cardOptions: { maxSeries: 1 },
+      };
+
+      render(<VisualizationSuggestionCard data={twoSeriesData} suggestion={suggestion} width={100} />);
+      const { data } = mockPanelRendererProps.mock.calls[0][0] as { data: PanelData };
+      expect(data.series).toHaveLength(1);
+    });
+
+    it('uses config.panelSeriesLimit when it is smaller than cardOptions.maxSeries', () => {
       config.panelSeriesLimit = 1;
 
       const suggestion: PanelPluginVisualizationSuggestion = {
         ...baseSuggestion,
-        cardOptions: { maxSeries: 2 },
+        cardOptions: { maxSeries: 5 },
       };
 
       render(<VisualizationSuggestionCard data={twoSeriesData} suggestion={suggestion} width={100} />);
+      const { data } = mockPanelRendererProps.mock.calls[0][0] as { data: PanelData };
+      expect(data.series).toHaveLength(1);
+    });
+
+    it('does not slice when neither cardOptions.maxSeries nor config.panelSeriesLimit is set', () => {
+      // when this number is 0, that actually means no limit
+      config.panelSeriesLimit = 0;
+
+      render(<VisualizationSuggestionCard data={twoSeriesData} suggestion={baseSuggestion} width={100} />);
       const { data } = mockPanelRendererProps.mock.calls[0][0] as { data: PanelData };
       expect(data.series).toHaveLength(2);
     });
