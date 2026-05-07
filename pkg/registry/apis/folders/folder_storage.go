@@ -154,11 +154,6 @@ func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidatio
 	return obj, async, err
 }
 
-// GracefulDeleter
-func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for folders not implemented")
-}
-
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
 	var permissions []accesscontrol.SetResourcePermissionCommand
 

@@ -37,7 +37,7 @@ const (
 
 func mkMeta(version string, rv int64, uploadedAt time.Time) *IndexMeta {
 	return &IndexMeta{
-		GrafanaBuildVersion:   version,
+		BuildVersion:          version,
 		LatestResourceVersion: rv,
 		UploadTimestamp:       uploadedAt,
 	}
@@ -133,6 +133,23 @@ func TestSelectSnapshotsToDelete_RuleAWinsOnLoneOldSnapshot(t *testing.T) {
 
 	got := selectSnapshotsToDelete(metas, now, maxAge, testCleanupGrace)
 	assert.Equal(t, []ulid.ULID{only}, got)
+}
+
+// TestSelectSnapshotsToDelete_ZeroMaxAgeKeepsLoneOldSnapshot pins the
+// "MaxIndexAge=0 means no age limit" semantic for cleanup rule A: an
+// arbitrarily old lone snapshot is not eligible for age-based deletion.
+// Rule B (per-version-group eviction) still applies in the multi-snapshot
+// case — covered by TestSelectSnapshotsToDelete_PerVersionIsolation.
+func TestSelectSnapshotsToDelete_ZeroMaxAgeKeepsLoneOldSnapshot(t *testing.T) {
+	now := time.Date(2026, 4, 22, 12, 0, 0, 0, time.UTC)
+
+	only := makeULID(t, now.Add(-30*24*time.Hour))
+	metas := map[ulid.ULID]*IndexMeta{
+		only: mkMeta("11.5.0", 100, now.Add(-30*24*time.Hour)),
+	}
+
+	got := selectSnapshotsToDelete(metas, now, 0, testCleanupGrace)
+	assert.Empty(t, got, "maxAge=0 must disable age-based deletion (rule A)")
 }
 
 func TestSelectSnapshotsToDelete_PerVersionIsolation(t *testing.T) {
@@ -231,7 +248,7 @@ func TestSelectSnapshotsToDelete_NeverDeletesDownloadPick(t *testing.T) {
 				}},
 				runningBuildVersion: running,
 			}
-			picked, ok := be.pickBestSnapshot(metas, now)
+			picked, ok := be.pickBestSnapshot(metas, now.Add(-testCleanupMaxAge), be.log)
 			require.Truef(t, ok, "test case must yield a pickable snapshot — if a no-pick scenario is needed, add a dedicated test case rather than letting this one short-circuit")
 
 			deleted := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
@@ -312,7 +329,7 @@ func TestRunCleanup_ReplicaVersionAgnostic(t *testing.T) {
 
 // seedSnapshot writes a minimal but valid snapshot at indexKey under ns,
 // matching the layout BucketRemoteIndexStore expects: a single placeholder file
-// plus meta.json declaring it. Bypasses store.UploadIndex so tests can pin
+// plus a snapshot manifest declaring it. Bypasses store.UploadIndex so tests can pin
 // arbitrary UploadTimestamps without being tied to wall-clock or ULID.Time().
 // Takes *IndexMeta so callers can use mkMeta directly.
 func seedSnapshot(t *testing.T, ctx context.Context, bucket *blob.Bucket, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
@@ -324,7 +341,7 @@ func seedSnapshot(t *testing.T, ctx context.Context, bucket *blob.Bucket, ns res
 	}
 	metaBytes, err := json.Marshal(meta)
 	require.NoError(t, err)
-	require.NoError(t, bucket.WriteAll(ctx, pfx+metaJSONFile, metaBytes, nil))
+	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
 }
 
 // listSeededIndexKeys returns the index keys still present at ns in the bucket.
@@ -412,7 +429,7 @@ func TestRunCleanup_IncompleteUploadsCounted(t *testing.T) {
 	ns := newTestNsResource()
 	old := makeULID(t, time.Now().Add(-48*time.Hour))
 	pfx := indexPrefix(ns, old.String())
-	// Stale prefix without meta.json — older than CleanupIncompleteUploads' minAge.
+	// Stale prefix without a snapshot manifest — older than CleanupIncompleteUploads' minAge.
 	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/data.bin", []byte("partial"), nil))
 
 	be, metrics := newCleanupTestBackend(t, store, nil)
@@ -501,6 +518,12 @@ func (s *recordingStore) ListIndexes(ctx context.Context, r resource.NamespacedR
 	s.mu.Unlock()
 	return s.inner.ListIndexes(ctx, r)
 }
+func (s *recordingStore) ListIndexKeys(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.inner.ListIndexKeys(ctx, r)
+}
+func (s *recordingStore) GetIndexMeta(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	return s.inner.GetIndexMeta(ctx, r, k)
+}
 func (s *recordingStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
 	s.mu.Lock()
 	s.deleteIndex[r.Namespace]++
@@ -513,8 +536,8 @@ func (s *recordingStore) CleanupIncompleteUploads(ctx context.Context, r resourc
 	s.mu.Unlock()
 	return s.inner.CleanupIncompleteUploads(ctx, r, minAge)
 }
-func (s *recordingStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource) (IndexStoreLock, error) {
-	return s.inner.LockBuildIndex(ctx, r)
+func (s *recordingStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
 func (s *recordingStore) UploadIndex(ctx context.Context, r resource.NamespacedResource, dir string, m IndexMeta) (ulid.ULID, error) {
 	return s.inner.UploadIndex(ctx, r, dir, m)
@@ -622,6 +645,12 @@ func (s *controllableLockStore) LockNamespaceForCleanup(_ context.Context, ns st
 func (s *controllableLockStore) ListIndexes(ctx context.Context, r resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
 	return s.inner.ListIndexes(ctx, r)
 }
+func (s *controllableLockStore) ListIndexKeys(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.inner.ListIndexKeys(ctx, r)
+}
+func (s *controllableLockStore) GetIndexMeta(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	return s.inner.GetIndexMeta(ctx, r, k)
+}
 func (s *controllableLockStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
 	return s.inner.DeleteIndex(ctx, r, k)
 }
@@ -632,8 +661,8 @@ func (s *controllableLockStore) CleanupIncompleteUploads(ctx context.Context, r 
 	}
 	return out, err
 }
-func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource) (IndexStoreLock, error) {
-	return s.inner.LockBuildIndex(ctx, r)
+func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
 func (s *controllableLockStore) UploadIndex(ctx context.Context, r resource.NamespacedResource, dir string, m IndexMeta) (ulid.ULID, error) {
 	return s.inner.UploadIndex(ctx, r, dir, m)

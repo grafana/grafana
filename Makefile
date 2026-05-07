@@ -61,7 +61,8 @@ endif
 GIT_BASE = remotes/origin/main
 
 CUE_VERSION = v0.16.0
-CUE = $(shell go env GOPATH)/bin/cue
+CUE_DIR     = $(shell go env GOPATH)/bin/cue-$(CUE_VERSION)
+CUE         = $(CUE_DIR)/cue
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
@@ -291,8 +292,14 @@ gen-app-manifests-unistore: ## Generate unified storage app manifests list
 	fi
 
 .PHONY: install-cue
-install-cue:
-	go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
+install-cue: $(CUE)
+
+$(CUE):
+	@echo "Installing CUE version $(CUE_VERSION)"
+	@rm -rf $(dir $(CUE_DIR))cue-v*/
+	@mkdir -p $(CUE_DIR)
+	GOBIN=$(CUE_DIR) go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
+	@touch $@
 
 .PHONY: fix-cue
 fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specific app.
@@ -323,8 +330,18 @@ gen-themes:
 pkg/services/preference/themes_generated.go:
 	$(MAKE) gen-themes
 
+.PHONY: generate-enterprise-imports
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
+generate-enterprise-imports:
+	@echo "skipping generating enterprise imports file"
+else
+generate-enterprise-imports: ## Generate Enterprise imports file
+	@echo "re-generating enterprise imports file"
+	$(GO) run ./scripts/ci/generate-enterprise-imports/main.go
+endif
+
 .PHONY: update-workspace
-update-workspace: gen-go
+update-workspace: gen-go generate-enterprise-imports
 	@echo "updating workspace"
 	bash scripts/go-workspace/update-workspace.sh
 

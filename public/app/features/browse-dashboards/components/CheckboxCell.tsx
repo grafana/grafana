@@ -24,7 +24,7 @@ export default function CheckboxCell({
 
   // Get current selection state for repository validation
   const selectedItems = useSelector((state) => state.browseDashboards.selectedItems);
-  const { selectedItemsRepoUID, isInLockedRepo, isUidInReadOnlyRepo } = useSelectionRepoValidation(selectedItems);
+  const { isInLockedRepo, isUidInReadOnlyRepo } = useSelectionRepoValidation(selectedItems);
   const isProvisionedInstance = useIsProvisionedInstance();
 
   // Early returns for cases where we should show a spacer instead of checkbox
@@ -67,7 +67,7 @@ export default function CheckboxCell({
   }
 
   // check if current item uid has different repo uid than selected items
-  if (selectedItemsRepoUID && !isInLockedRepo(item.uid)) {
+  if (!isInLockedRepo(item.uid)) {
     return (
       <Tooltip
         content={t(

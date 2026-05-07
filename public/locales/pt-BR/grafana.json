@@ -4322,6 +4322,7 @@
         "repository-not-found-message": "Não foi possível encontrar o repositório para a pasta selecionada. Confira se a pasta está provisionada corretamente.",
         "repository-not-found-title": "Repositório não encontrado"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Erro ao mover recursos",
       "error-no-target-folder-path": "O caminho da pasta de destino é inválido ou está vazio. Selecione outra.",
       "move-total": "No total, isso afetará:",
@@ -4460,6 +4461,14 @@
       "request-extension": "Solicitar aumento da cota",
       "resource-detail-dashboards": "Você criou {{usage}} de {{limit}} painéis ({{percentage}}%).",
       "resource-detail-folders": "Você criou {{usage}} de {{limit}} pastas ({{percentage}}%)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Limpar histórico",
@@ -5269,7 +5278,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Configurações"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5671,7 +5680,7 @@
         "title": "Variáveis"
       },
       "variable": {
-        "change-type": "Alterar",
+        "change-type": "",
         "change-type-aria-label": "Alterar tipo de variável",
         "custom-options": {
           "apply": "Aplicar",
@@ -5988,7 +5997,7 @@
       "cancel": "Cancelar",
       "common": {
         "copy": "Copiar",
-        "copy-or-duplicate": "Copiar/colar ou duplicar",
+        "copy-tooltip": "",
         "delete": "Excluir",
         "duplicate": "Duplicar",
         "layout": "Layout",
@@ -6027,7 +6036,7 @@
     },
     "new-panel": {
       "aria-label": "Painel não configurado. Pressione Tab para ver as opções de configuração.",
-      "configure-button": "Configuração",
+      "configure-button": "",
       "configure-button-menu": "Ativar ou desativar o menu",
       "configure-visualization": "Configurar visualização",
       "empty-state-message": "Execute uma consulta para visualizá-la aqui ou acesse todas as visualizações para adicionar outros tipos de painel",
@@ -6269,10 +6278,8 @@
       "title-provisioned": "Painel provisionado"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Já existe um painel com o mesmo nome na pasta selecionada.<br/><2>Deseja salvar este painel mesmo assim?</2>",
       "body-version-mismatch": "Outra pessoa atualizou este painel<br/><2>Deseja salvar este painel mesmo assim?</2>",
       "confirmText-save-and-overwrite": "Salvar e substituir",
-      "title-name-exists": "Conflito",
       "title-version-mismatch": "Conflito"
     },
     "save-dashboard-form": {
@@ -7313,6 +7320,7 @@
       "terraform": "Gerenciado por: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Falha ao mover o painel de controle",
       "cancel-action": "Cancelar",
       "current-file-not-found": "Não foi possível encontrar o arquivo do painel de controle atual",
@@ -7325,10 +7333,6 @@
       "success-message": "Painel de controle movido com sucesso",
       "target-path-label": "Caminho de destino",
       "title-this-repository-is-read-only": "Este repositório é somente leitura"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Já existe um painel com o mesmo nome na pasta selecionada. Deseja salvar este painel mesmo assim?",
-      "title-name-already-exists": "O nome já existe"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8037,19 +8041,6 @@
       "aria-label-explore-data": "Explorar dados",
       "aria-label-suggested-dashboards": "Painéis sugeridos"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alerta incompatível",
-      "text-alerting-supported": "Alerta compatível"
-    },
-    "basic-serttings": {
-      "tooltip-name": "O nome é usado quando você seleciona a fonte de dados nos painéis. A fonte de dados padrão é pré-selecionada em novos painéis."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Configurações básicas da página de configurações da fonte de dados",
-      "basic-settings-name-placeholder-name": "Nome",
-      "label-default": "Padrão",
-      "label-name": "Nome"
-    },
     "build-a-dashboard-button": {
       "blank": "Em branco",
       "build-a-dashboard": "Criar um painel",
@@ -8144,6 +8135,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Adicionar aos favoritos",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Explorar dados",
       "open-in-explore": "Abrir na visualização do Explore",
       "remove-favorite": "Remover dos favoritos"
@@ -11247,7 +11244,7 @@
     "description-order": "Exibir os logs mais recentes ou mais antigos primeiro. Quando a opção \"Mais antigos primeiro\" é selecionada, a visualização é direcionada automaticamente para os logs mais recentes na parte inferior.",
     "description-prettify-json": "Formatar entradas de log JSON com recuo e quebras de linha.",
     "description-show-controls": "Exibir controles para pular para a última ou primeira linha do log e filtros por nível de log.",
-    "description-show-log-attributes": "Em teste. Quando os logs do OTel forem exibidos, adicione um campo extra exibido com pares de valores-chave relevantes de rótulos e metadados.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Alinhar valores usando colunas ao usar os campos exibidos.",
     "description-wrap-lines": "Exiba os logs em uma única linha ou quebre as entradas de log longas para que caibam no painel.",
     "field-selector": {
@@ -11573,7 +11570,7 @@
       "line-contains-not": "Adicionar como linha não contém filtro",
       "search-text": "Buscar nos resultados"
     },
-    "show-log-attributes": "Exibir atributos de log para logs OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Resolução de data e hora",
     "un-themed-log-details": {
       "aria-label-data-links": "Links de dados",
@@ -15447,7 +15444,6 @@
       "forwards-time-aria-label": "Avançar intervalo de tempo",
       "to": "até",
       "zoom-out-button": "Diminuir o intervalo de tempo",
-      "zoom-out-tooltip": "Diminuir o zoom do intervalo de tempo <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Diminuir o zoom do intervalo de tempo <br/> t -"
     },
     "time-range": {
