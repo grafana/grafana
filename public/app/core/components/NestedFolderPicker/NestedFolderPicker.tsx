@@ -242,9 +242,9 @@ export function NestedFolderPicker({
       }
 
       // Only show team folders when browsing the full tree (no rootFolderUID scope)
-      const treeWithTeamFolders = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...flatTree];
+      const fullTree = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...flatTree];
       // Add "Team folders" at the top of the tree list.
-      return filterExcludedItems(treeWithTeamFolders, excludeUIDs);
+      return filterExcludedItems(fullTree, excludeUIDs);
     } else {
       flatTree = searchResultsToTreeItems(searchResults?.items || []);
       return filterExcludedItems(flatTree, excludeUIDs);
