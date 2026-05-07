@@ -4462,6 +4462,14 @@
       "resource-detail-dashboards": "Vous avez créé {{usage}} tableaux de bord sur {{limit}} ({{percentage}} %).",
       "resource-detail-folders": "Vous avez créé {{usage}} dossiers sur {{limit}} ({{percentage}} %)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Effacer l’historique",
       "error": "Impossible de charger les tableaux de bord consultés récemment.",
@@ -8033,19 +8041,6 @@
       "aria-label-explore-data": "Explorer les données",
       "aria-label-suggested-dashboards": "Tableaux de bord suggérés"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alertes non prises en charge",
-      "text-alerting-supported": "Alertes prises en charge"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Le nom est utilisé lorsque vous sélectionnez la source de données dans les panneaux. La source de données par défaut est présélectionnée dans les nouveaux panneaux."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Paramètres de base de la page des paramètres de la source de données",
-      "basic-settings-name-placeholder-name": "Nom",
-      "label-default": "Par défaut",
-      "label-name": "Nom"
-    },
     "build-a-dashboard-button": {
       "blank": "Vide",
       "build-a-dashboard": "Créer un tableau de bord",
@@ -11249,7 +11244,7 @@
     "description-order": "Afficher les journaux les plus récents ou les plus anciens en premier. Lorsque l’option Les plus anciens en premier est sélectionnée, la vue défile automatiquement vers les journaux les plus récents, situés en bas.",
     "description-prettify-json": "Formater les entrées de journal JSON avec retraits et retours à la ligne.",
     "description-show-controls": "Afficher les commandes pour accéder à la première ou à la dernière ligne du journal et filtrer par niveau de journal.",
-    "description-show-log-attributes": "En phase de test. Lorsque les journaux OTel sont affichés, ajouter un champ supplémentaire contenant les paires clé-valeur pertinentes issues des étiquettes et des métadonnées.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Aligner les valeurs à l’aide de colonnes lorsque les champs affichés sont utilisés.",
     "description-wrap-lines": "Afficher les journaux sur une seule ligne ou retourner à la ligne pour les entrées de journal longues afin de les adapter au panneau.",
     "field-selector": {
@@ -11575,7 +11570,7 @@
       "line-contains-not": "Ajouter car la ligne ne contient pas de filtre",
       "search-text": "Rechercher dans les résultats"
     },
-    "show-log-attributes": "Afficher les attributs de journal pour les journaux OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Résolution des horodatages",
     "un-themed-log-details": {
       "aria-label-data-links": "Données de liaison",
