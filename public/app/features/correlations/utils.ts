@@ -10,7 +10,6 @@ import {
   config,
   type CorrelationData,
   type CorrelationsData,
-  createMonitoringLogger,
   getBackendSrv,
   getDataSourceSrv,
 } from '@grafana/runtime';
@@ -202,8 +201,6 @@ export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> =
     },
   };
 };
-
-export const correlationsLogger = createMonitoringLogger('features.correlations');
 
 // legacy just needs uid for lookup, remote storage needs name/group
 export const getCorrelationsFromStorage = async (
