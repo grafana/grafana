@@ -1079,7 +1079,6 @@ describe('DashboardModel', () => {
   });
 });
 
-
 describe('when initEditPanel is called', () => {
   function getTestContext() {
     const dashboard = createDashboardModelFixture();
