@@ -500,9 +500,10 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 
 					alphaIdx, betaIdx := -1, -1
 					for i, u := range rsp.Result.Users {
-						if u.Login == "alpha-user" {
+						switch u.Login {
+						case "alpha-user":
 							alphaIdx = i
-						} else if u.Login == "beta-user" {
+						case "beta-user":
 							betaIdx = i
 						}
 					}
