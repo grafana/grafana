@@ -100,11 +100,12 @@ describe('api', () => {
         expect(logger.logError).toHaveBeenCalledTimes(1);
         expect(logger.logError).toHaveBeenCalledWith(
           expect.objectContaining({
-            message: 'PluginMeta: Failed to install plugin with id myorg-test-panel and version 1.5.0',
+            message: 'installPluginMeta: Failed to install plugin',
             cause: expect.objectContaining({
               message: 'Network Error',
             }),
-          })
+          }),
+          { pluginId: 'myorg-test-panel', pluginVersion: '1.5.0' }
         );
       });
     });
@@ -135,11 +136,12 @@ describe('api', () => {
         expect(logger.logError).toHaveBeenCalledTimes(1);
         expect(logger.logError).toHaveBeenCalledWith(
           expect.objectContaining({
-            message: 'PluginMeta: Failed to uninstall plugin with id myorg-test-panel',
+            message: 'uninstallPluginMeta: Failed to uninstall plugin',
             cause: expect.objectContaining({
               message: 'Network Error',
             }),
-          })
+          }),
+          { pluginId: 'myorg-test-panel' }
         );
       });
     });
