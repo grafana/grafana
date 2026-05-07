@@ -50,15 +50,14 @@ export const Page: PageType = ({
     }
   }, [navModel, pageNav, chrome, layout]);
 
-  const isPrimaryBg = (background ?? getDefaultBackgroundForLayout(layout)) === 'primary';
-  const isGradientBg = (background ?? getDefaultBackgroundForLayout(layout)) === 'gradient';
+  const resolvedBg = background ?? getDefaultBackgroundForLayout(layout);
 
   return (
     <div
       className={cx(
         styles.wrapper,
-        isPrimaryBg && styles.wrapperPrimary,
-        isGradientBg && styles.wrapperGradient,
+        resolvedBg === 'primary' && styles.wrapperPrimary,
+        resolvedBg === 'gradient' && styles.wrapperGradient,
         className
       )}
       {...otherProps}
