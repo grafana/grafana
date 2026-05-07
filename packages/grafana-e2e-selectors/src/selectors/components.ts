@@ -1179,6 +1179,8 @@ export const versionedComponents = {
   Select: {
     container: {
       '13.1.0': 'data-testid Select container',
+      [MIN_GRAFANA_VERSION]: () =>
+        '[class*="-grafana-select-value-container"]:not([class*="-grafana-select-value-container-multi"])',
     },
     menu: {
       '11.5.0': 'data-testid Select menu',
@@ -1201,21 +1203,27 @@ export const versionedComponents = {
   MultiSelect: {
     container: {
       '13.1.0': 'data-testid MultiSelect container',
+      [MIN_GRAFANA_VERSION]: () => '[class*="-grafana-select-value-container-multi"]',
     },
   },
   RadioGroup: {
     container: {
       '13.1.0': 'data-testid RadioGroup container',
+      '10.0.0': () => '[role="radiogroup"]',
+      [MIN_GRAFANA_VERSION]: () => 'div:has(> div > input[type="radio"][name^="radiogroup-"])',
     },
   },
   Switch: {
     container: {
       '13.1.0': 'data-testid Switch container',
+      '12.0.0': () => 'input[type="checkbox"][role="switch"]',
+      [MIN_GRAFANA_VERSION]: () => 'div:has(> input[type="checkbox"] + label)',
     },
   },
   UnitPicker: {
     container: {
       '13.1.0': 'data-testid UnitPicker container',
+      [MIN_GRAFANA_VERSION]: () => 'div:has(> div > [data-testid="input-wrapper"] input[placeholder="Choose"])',
     },
   },
   FieldConfigEditor: {

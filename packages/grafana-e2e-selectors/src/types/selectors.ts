@@ -41,12 +41,15 @@ export type VersionedCssSelector = Record<string, CssSelector>;
 
 export type VersionedUrlSelector = Record<string, UrlSelector>;
 
+export type VersionedStringOrCssSelector = Record<string, StringSelector | CssSelector>;
+
 export type VersionedSelectors =
   | VersionedFunctionSelector1
   | VersionedFunctionSelector2
   | VersionedStringSelector
   | VersionedCssSelector
-  | VersionedUrlSelector;
+  | VersionedUrlSelector
+  | VersionedStringOrCssSelector;
 
 export type VersionedSelectorGroup = {
   [property: string]: VersionedSelectors | VersionedSelectorGroup;
@@ -63,5 +66,7 @@ export type SelectorsOf<T> = {
           ? CssSelector
           : T[Property] extends VersionedUrlSelector
             ? UrlSelector
-            : SelectorsOf<T[Property]>;
+            : T[Property] extends VersionedStringOrCssSelector
+              ? StringSelector | CssSelector
+              : SelectorsOf<T[Property]>;
 };
