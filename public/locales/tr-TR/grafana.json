@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML düzenle",
         "save": "Kaydet"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "ad",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Tüm kuralları sil"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Sil",
       "delete-modal-delete-button": "Sil",
@@ -1573,8 +1575,14 @@
         "update-error": "Kural grubu güncellenemedi ",
         "update-success": "Kural grubu başarıyla güncellendi"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Seçilen grup düzenlenemez",
       "group-not-editable-description": "Bu grup, düzenlemeyi desteklemeyen bir veri kaynağına aittir.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Kural grubunu düzenle",
       "rule-group-error": "Kural grubu yüklenirken hata oluştu"
     },
@@ -4314,6 +4322,7 @@
         "repository-not-found-message": "Seçili klasöre ait depo bulunamadı. Lütfen klasörün doğru şekilde sağlandığından emin olun.",
         "repository-not-found-title": "Depo bulunamadı"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Kaynaklar taşınırken hata oluştu",
       "error-no-target-folder-path": "Hedef klasör yolu geçersiz veya boş, lütfen tekrar seçin.",
       "move-total": "Bu işlem toplamda şunları etkileyecektir:",
@@ -4453,6 +4462,14 @@
       "resource-detail-dashboards": "{{usage}}/{{limit}} pano oluşturdunuz (%{{percentage}}).",
       "resource-detail-folders": "{{usage}}/{{limit}} klasör oluşturdunuz (%{{percentage}})."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Geçmişi temizle",
       "error": "Son görüntülenen panolar yüklenemedi.",
@@ -4491,6 +4508,8 @@
       "label": {
         "alphabetically-az": "Alfabetik (A-Z)",
         "alphabetically-za": "Alfabetik (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Silindi (yeniden eskiye)",
         "deleted-oldest": "Silindi (eskiden yeniye)"
       }
@@ -5259,7 +5278,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Ayarlar"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5661,7 +5680,7 @@
         "title": "Değişkenler"
       },
       "variable": {
-        "change-type": "Değiştir",
+        "change-type": "",
         "change-type-aria-label": "Değişken türünü değiştir",
         "custom-options": {
           "apply": "Uygula",
@@ -5978,7 +5997,7 @@
       "cancel": "İptal et",
       "common": {
         "copy": "Kopyala",
-        "copy-or-duplicate": "Kopyala/yapıştır veya çoğalt",
+        "copy-tooltip": "",
         "delete": "Sil",
         "duplicate": "Çoğalt",
         "layout": "Düzen",
@@ -6017,7 +6036,7 @@
     },
     "new-panel": {
       "aria-label": "Yapılandırılmamış panel. Yapılandırma seçeneklerini görmek için sekmeye gidin.",
-      "configure-button": "Yapılandır",
+      "configure-button": "",
       "configure-button-menu": "Menüyü aç/kapat",
       "configure-visualization": "Görselleştirmeyi yapılandır",
       "empty-state-message": "Burada görselleştirmek için bir sorgu çalıştırın ya da diğer panel türlerini eklemek için tüm görselleştirmelere gidin.",
@@ -6259,10 +6278,8 @@
       "title-provisioned": "Sağlanan pano"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Seçilen klasörde aynı adı taşıyan bir pano zaten var.<br/><2>Bu panoyu yine de kaydetmek istiyor musunuz?</2>",
       "body-version-mismatch": "Bir başkası bu panoyu güncelledi.<br/><2>Bu panoyu yine de kaydetmek istiyor musunuz?</2>",
       "confirmText-save-and-overwrite": "Kaydet ve üzerine yaz",
-      "title-name-exists": "Çakışma",
       "title-version-mismatch": "Çakışma"
     },
     "save-dashboard-form": {
@@ -6488,6 +6505,7 @@
     },
     "transformation-editor": {
       "input-data": "Girdi verisi",
+      "loading": "",
       "output-data": "Çıktı verileri",
       "title-debug-transformation": "Dönüşümde hata ayıklama"
     },
@@ -7302,6 +7320,7 @@
       "terraform": "Yöneten: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Pano taşınamadı",
       "cancel-action": "İptal et",
       "current-file-not-found": "Geçerli pano dosyası bulunamadı",
@@ -7314,10 +7333,6 @@
       "success-message": "Pano başarıyla taşındı",
       "target-path-label": "Hedef yol",
       "title-this-repository-is-read-only": "Bu depo salt okunur"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Seçilen klasörde aynı isimde bir pano zaten mevcut. Yine de bu panoyu kaydetmek istiyor musunuz?",
-      "title-name-already-exists": "Bu ad zaten mevcut"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8026,19 +8041,6 @@
       "aria-label-explore-data": "Verileri keşfedin",
       "aria-label-suggested-dashboards": "Önerilen panolar"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Uyarı desteği yok",
-      "text-alerting-supported": "Uyarı desteği var"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Ad, panellerde veri kaynağı seçerken kullanılır. Yeni panellerde varsayılan veri kaynağı önceden seçili olur."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Veri kaynağı ayarları sayfası temel ayarlar",
-      "basic-settings-name-placeholder-name": "Ad",
-      "label-default": "Varsayılan",
-      "label-name": "Ad"
-    },
     "build-a-dashboard-button": {
       "blank": "Boş",
       "build-a-dashboard": "Pano oluştur",
@@ -8133,6 +8135,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Favorilere ekle",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Verileri keşfedin",
       "open-in-explore": "Keşfet Görünümünde aç",
       "remove-favorite": "Favorilerden çıkar"
@@ -8269,6 +8277,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Ara"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10129,12 @@
     "cascader": {
       "clear-button": "Seçimi temizle"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA değeri"
     },
@@ -10465,6 +10480,7 @@
     "sidebar": {
       "close": "Kapat",
       "dock": "Yerleştir",
+      "go-back": "",
       "hide": "Gizle",
       "show": "Göster",
       "undock": "Çıkar"
@@ -11228,7 +11244,7 @@
     "description-order": "Önce en yeni veya en eski günlük kayıtlarını gösterin. Önce en eski seçildiğinde, görünüm otomatik olarak en alttaki en yeni günlük kayıtlarına kaydırılır.",
     "description-prettify-json": "JSON günlük kaydı girişlerini girinti ve satır sonlarıyla biçimlendirin.",
     "description-show-controls": "Son veya ilk günlük kaydı satırına atlamak için kontrolleri ve günlük kaydı düzeyine göre filtreleri görüntüleyin.",
-    "description-show-log-attributes": "Deneysel. OTel günlükleri görüntülendiğinde, etiketler ve meta verilerden alınan ilgili anahtar-değer çiftleriyle ekstra bir alan gösterilir.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Görüntülenen alanları kullanırken değerleri sütunları kullanarak hizalayın.",
     "description-wrap-lines": "Günlük kayıtlarını tek bir satır olarak görüntüleyin veya uzun günlük kaydı girişlerini panele sığacak şekilde alt satıra kaydırın.",
     "field-selector": {
@@ -11554,7 +11570,7 @@
       "line-contains-not": "Satır içermez filtresi olarak ekle",
       "search-text": "Sonuçlarda ara"
     },
-    "show-log-attributes": "OTel günlük kayıtları için günlük kaydı özniteliklerini göster",
+    "show-log-attributes": "",
     "timestamp-format": "Zaman damgası çözünürlüğü",
     "un-themed-log-details": {
       "aria-label-data-links": "Veri bağlantıları",
@@ -11908,8 +11924,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Tümü",
-      "title-filtered": "Tümü (filtrelenmiş)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Tümünü temizle"
@@ -13566,6 +13584,7 @@
       "contact-admin": "Bu kaynağı yerele dönüştürmek veya eksik depodaki tüm kaynakları silmek için Grafana yöneticinizle iletişime geçin.",
       "convert-to-local-button": "Yerele dönüştür",
       "delete-button": "Sil",
+      "go-to-dashboards": "",
       "job-error": "Sahibi olmayan kaynaklar işlenirken bir hata oluştu",
       "job-success": "Sahibi olmayan kaynaklar başarıyla işlendi",
       "job-warning": "Bazı kaynaklar işlendi ancak göz atmanız gereken uyarılar var. Lütfen sonuçları gözden geçirin.",
@@ -13812,7 +13831,8 @@
       "make-sure": "Bu izinlere sahip bir belirteç oluşturun"
     },
     "validation": {
-      "hidden-characters": "Bu alan, kopyalama ve yapıştırma işlemiyle eklenmiş olabilecek gizli karakterler içeriyor. Lütfen değeri yeniden yazın veya temizleyip tekrar deneyin."
+      "hidden-characters": "Bu alan, kopyalama ve yapıştırma işlemiyle eklenmiş olabilecek gizli karakterler içeriyor. Lütfen değeri yeniden yazın veya temizleyip tekrar deneyin.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Uyarı",
     "watch-stream": {
@@ -14220,6 +14240,8 @@
       "alerts-loading": "Uyarılar",
       "card-click": "{{id}} kartını seçin",
       "data": "Veri",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Yeni {{type}}",
       "queries-expressions": "Sorgular ve İfadeler",
       "toggle-size": "Kenar çubuğu boyutunu değiştir",
@@ -14273,6 +14295,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Geri yükle"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Yakın zamanda bir pano silmediniz.",
@@ -14435,6 +14461,10 @@
     },
     "results-table": {
       "datasource-header": "Veri kaynağı",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 dk",
       "deleted-remaining-header": "Kalan süre",
       "location-header": "Konum",
@@ -14928,10 +14958,13 @@
       "title": "Öneriler ve şablonlarla pano kullanımına kolay bir başlangıç yapın"
     },
     "nav": {
+      "counter": "",
       "go-to": "{{number}}. slayda git",
-      "next": "İleri",
-      "prev": "Önceki"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Sorguyu açıkla",
@@ -15411,7 +15444,6 @@
       "forwards-time-aria-label": "Zaman aralığını ileri al",
       "to": "bitiş",
       "zoom-out-button": "Zaman aralığını büyüt",
-      "zoom-out-tooltip": "Zaman aralığını küçült <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Zaman aralığını küçült <br/> t -"
     },
     "time-range": {
@@ -16008,6 +16040,9 @@
         "grouping-to-matrix": "Matrise gruplandırma"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Giriş verilerinden bir histogram hesaplayın."
@@ -16342,6 +16377,9 @@
       "label-time-field": "Zaman alanı",
       "tooltip-statistic-should-calculated-series": "Bu zaman serisi için hesaplanacak istatistik.",
       "tooltip-time-field": "Zaman serisi için kullanılacak zaman alanı. Seçilmezse bulunan ilk alan kullanılır."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "İlk alan adı",

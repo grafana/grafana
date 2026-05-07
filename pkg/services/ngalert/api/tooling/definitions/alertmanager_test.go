@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -269,31 +270,29 @@ func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
 		name          string
 		config        PostableUserConfig
 		expectedError string
-		expected      MergeResult
+		expected      merge.MergeResult
 	}{
 		{
 			name: "no extra configs",
 			config: PostableUserConfig{
 				AlertmanagerConfig: alertmanagerCfg,
 			},
-			expected: MergeResult{
-				MergeResult: definition.MergeResult{
-					Config: definition.PostableApiAlertingConfig{
-						Config: Config{
-							Route: &Route{
-								Receiver: "default",
-							},
+			expected: merge.MergeResult{
+				Config: definition.PostableApiAlertingConfig{
+					Config: Config{
+						Route: &Route{
+							Receiver: "default",
 						},
-						Receivers: []*PostableApiReceiver{
-							{
-								Receiver: definition.Receiver{
-									Name: "default",
-								},
+					},
+					Receivers: []*PostableApiReceiver{
+						{
+							Receiver: definition.Receiver{
+								Name: "default",
 							},
 						},
 					},
-					RenameResources: definition.RenameResources{},
 				},
+				RenameResources: merge.RenameResources{},
 			},
 		},
 		{
@@ -323,71 +322,69 @@ receivers:
 					},
 				},
 			},
-			expected: MergeResult{
-				MergeResult: definition.MergeResult{
-					Config: definition.PostableApiAlertingConfig{
-						Config: Config{
-							Route: &Route{
-								Receiver: "default",
-								Routes: []*Route{
-									{
-										Matchers: []*labels.Matcher{
-											{
-												Type:  labels.MatchEqual,
-												Name:  "cluster",
-												Value: "prod",
-											},
+			expected: merge.MergeResult{
+				Config: definition.PostableApiAlertingConfig{
+					Config: Config{
+						Route: &Route{
+							Receiver: "default",
+							Routes: []*Route{
+								{
+									Matchers: []*labels.Matcher{
+										{
+											Type:  labels.MatchEqual,
+											Name:  "cluster",
+											Value: "prod",
 										},
-										GroupInterval:  util.Pointer(model.Duration(5 * time.Minute)),
-										GroupWait:      util.Pointer(model.Duration(30 * time.Second)),
-										RepeatInterval: util.Pointer(model.Duration(4 * time.Hour)),
-										Continue:       false,
-										Receiver:       "mimir-receiver",
-										GroupByStr:     []string{"alertname"},
-										GroupBy:        []model.LabelName{"alertname"},
-										Routes: []*Route{
-											{
-												Matchers: []*labels.Matcher{
-													{
-														Type:  labels.MatchEqual,
-														Name:  "severity",
-														Value: "critical",
-													},
+									},
+									GroupInterval:  util.Pointer(model.Duration(5 * time.Minute)),
+									GroupWait:      util.Pointer(model.Duration(30 * time.Second)),
+									RepeatInterval: util.Pointer(model.Duration(4 * time.Hour)),
+									Continue:       false,
+									Receiver:       "mimir-receiver",
+									GroupByStr:     []string{"alertname"},
+									GroupBy:        []model.LabelName{"alertname"},
+									Routes: []*Route{
+										{
+											Matchers: []*labels.Matcher{
+												{
+													Type:  labels.MatchEqual,
+													Name:  "severity",
+													Value: "critical",
 												},
-												Receiver: "defaultmimir-1",
-												Routes:   []*Route{},
 											},
+											Receiver: "defaultmimir-1",
+											Routes:   []*Route{},
 										},
 									},
 								},
 							},
-							InhibitRules:  []InhibitRule{},
-							TimeIntervals: []config.TimeInterval{},
 						},
-						Receivers: []*PostableApiReceiver{
-							{
-								Receiver: definition.Receiver{
-									Name: "default",
-								},
+						InhibitRules:  []InhibitRule{},
+						TimeIntervals: []config.TimeInterval{},
+					},
+					Receivers: []*PostableApiReceiver{
+						{
+							Receiver: definition.Receiver{
+								Name: "default",
 							},
-							{
-								Receiver: definition.Receiver{
-									Name: "mimir-receiver",
-								},
+						},
+						{
+							Receiver: definition.Receiver{
+								Name: "mimir-receiver",
 							},
-							{
-								Receiver: definition.Receiver{
-									Name: "defaultmimir-1",
-								},
+						},
+						{
+							Receiver: definition.Receiver{
+								Name: "defaultmimir-1",
 							},
 						},
 					},
-					RenameResources: definition.RenameResources{
-						Receivers: map[string]string{
-							"default": "defaultmimir-1",
-						},
-						TimeIntervals: map[string]string{},
+				},
+				RenameResources: merge.RenameResources{
+					Receivers: map[string]string{
+						"default": "defaultmimir-1",
 					},
+					TimeIntervals: map[string]string{},
 				},
 				Identifier: "mimir-1",
 				ExtraRoute: &Route{
@@ -430,39 +427,37 @@ receivers:
 					},
 				},
 			},
-			expected: MergeResult{
-				MergeResult: definition.MergeResult{
-					Config: definition.PostableApiAlertingConfig{
-						Config: Config{
-							Route: &Route{
-								Receiver: "default",
-							},
-							TimeIntervals: []config.TimeInterval{},
+			expected: merge.MergeResult{
+				Config: definition.PostableApiAlertingConfig{
+					Config: Config{
+						Route: &Route{
+							Receiver: "default",
 						},
-						Receivers: []*PostableApiReceiver{
-							{
-								Receiver: definition.Receiver{
-									Name: "default",
-								},
+						TimeIntervals: []config.TimeInterval{},
+					},
+					Receivers: []*PostableApiReceiver{
+						{
+							Receiver: definition.Receiver{
+								Name: "default",
 							},
-							{
-								Receiver: definition.Receiver{
-									Name: "mimir-receiver",
-								},
+						},
+						{
+							Receiver: definition.Receiver{
+								Name: "mimir-receiver",
 							},
-							{
-								Receiver: definition.Receiver{
-									Name: "defaultmimir-1",
-								},
+						},
+						{
+							Receiver: definition.Receiver{
+								Name: "defaultmimir-1",
 							},
 						},
 					},
-					RenameResources: definition.RenameResources{
-						Receivers: map[string]string{
-							"default": "defaultmimir-1",
-						},
-						TimeIntervals: map[string]string{},
+				},
+				RenameResources: merge.RenameResources{
+					Receivers: map[string]string{
+						"default": "defaultmimir-1",
 					},
+					TimeIntervals: map[string]string{},
 				},
 				Identifier: "mimir-1",
 				ExtraRoute: &Route{
@@ -711,4 +706,96 @@ receivers:
 			}
 		})
 	}
+}
+
+// Regression test: upstream Mimir/Cortex-compat Alertmanagers return an empty,
+// null, or missing `alertmanager_config` when no config has been saved. Before
+// the fix, UnmarshalYAML/UnmarshalJSON left amSimple nil, which made the
+// subsequent MarshalJSON return a 500 on GET config requests.
+func Test_ExternalAlertmanagerConfig_EmptyUpstreamConfig_RoundTrip(t *testing.T) {
+	t.Run("YAML", func(t *testing.T) {
+		for _, tc := range []struct {
+			desc  string
+			input string
+		}{
+			{
+				desc: "empty string",
+				input: `
+template_files: {}
+alertmanager_config: ""
+`,
+			},
+			{
+				desc: "null",
+				input: `
+template_files: {}
+alertmanager_config: null
+`,
+			},
+			{
+				desc: "missing",
+				input: `
+template_files: {}
+`,
+			},
+		} {
+			t.Run(tc.desc, func(t *testing.T) {
+				var cfg ExternalAlertmanagerConfig
+				require.NoError(t, yaml.Unmarshal([]byte(tc.input), &cfg))
+				require.NotNil(t, cfg.amSimple, "amSimple must be non-nil so Marshal does not error")
+
+				out, err := yaml.Marshal(&cfg)
+				require.NoError(t, err, "YAML round-trip must not error for empty upstream config")
+				require.NotEmpty(t, out)
+
+				jsonOut, err := json.Marshal(&cfg)
+				require.NoError(t, err, "JSON re-encode must not error for empty upstream config")
+				require.NotEmpty(t, jsonOut)
+			})
+		}
+	})
+
+	t.Run("JSON", func(t *testing.T) {
+		for _, tc := range []struct {
+			desc  string
+			input string
+		}{
+			{
+				desc:  "null",
+				input: `{"template_files":{},"alertmanager_config":null}`,
+			},
+			{
+				desc:  "missing",
+				input: `{"template_files":{}}`,
+			},
+			{
+				desc:  "empty object",
+				input: `{"template_files":{},"alertmanager_config":{}}`,
+			},
+		} {
+			t.Run(tc.desc, func(t *testing.T) {
+				var cfg ExternalAlertmanagerConfig
+				require.NoError(t, json.Unmarshal([]byte(tc.input), &cfg))
+				require.NotNil(t, cfg.amSimple, "amSimple must be non-nil so Marshal does not error")
+
+				jsonOut, err := json.Marshal(&cfg)
+				require.NoError(t, err, "JSON round-trip must not error for empty upstream config")
+				require.NotEmpty(t, jsonOut)
+
+				yamlOut, err := yaml.Marshal(&cfg)
+				require.NoError(t, err, "YAML re-encode must not error for empty upstream config")
+				require.NotEmpty(t, yamlOut)
+			})
+		}
+	})
+
+	// Guard against accidental removal of the nil-check in Marshal: a
+	// zero-value struct that was never decoded must still error out.
+	t.Run("undecoded struct still errors on marshal", func(t *testing.T) {
+		var cfg ExternalAlertmanagerConfig
+		_, err := json.Marshal(&cfg)
+		require.Error(t, err)
+		_, err = yaml.Marshal(&cfg)
+		require.Error(t, err)
+	})
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/debouncer"
 )
 
@@ -115,6 +116,9 @@ type SearchBackend interface {
 	// Updater function is used to update the index before performing the search.
 	// rebuild forces a full rebuild of the index, regardless of state.
 	// lastImportTime is used to determine if an existing file-based index needs to be rebuilt before opening.
+	// maxFreshSnapshotAge is the freshness window (by snapshot BuildTime) within
+	// which a same-version remote snapshot is preferred over rebuilding from
+	// scratch on the rebuild path. Zero disables that fast path.
 	BuildIndex(
 		ctx context.Context,
 		key NamespacedResource,
@@ -125,6 +129,7 @@ type SearchBackend interface {
 		updater UpdateFn,
 		rebuild bool,
 		lastImportTime time.Time,
+		maxFreshSnapshotAge time.Duration,
 	) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
@@ -136,14 +141,15 @@ type SearchBackend interface {
 
 // searchServer supports indexing+search regardless of implementation.
 type searchServer struct {
-	log          log.Logger
-	storage      StorageBackend
-	search       SearchBackend
-	indexMetrics *BleveIndexMetrics
-	access       types.AccessClient
-	builders     *builderCache
-	initWorkers  int
-	initMinSize  int
+	log           log.Logger
+	storage       StorageBackend
+	vectorBackend vector.VectorBackend
+	search        SearchBackend
+	indexMetrics  *BleveIndexMetrics
+	access        types.AccessClient
+	builders      *builderCache
+	initWorkers   int
+	initMinSize   int
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -169,6 +175,16 @@ type searchServer struct {
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
 
+// getIndexMaxAge returns the configured rebuild interval for the given
+// resource: dashboards use IndexRebuildInterval (cfg.IndexRebuildInterval),
+// other resources use MaxFileIndexAge. Zero means "no age-based rebuild".
+func (s *searchServer) getIndexMaxAge(key NamespacedResource) time.Duration {
+	if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
+		return s.dashboardIndexMaxAge
+	}
+	return s.maxIndexAge
+}
+
 // maybeInjectFailure returns an error for a configured percentage of calls.
 // Returns nil when failure injection is disabled or the call is not selected.
 func (s *searchServer) maybeInjectFailure() error {
@@ -185,7 +201,7 @@ var (
 )
 
 // newSearchServer creates a new search server implementation.
-func newSearchServer(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
+func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -208,6 +224,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
+		vectorBackend:  vectorBackend,
 		search:         opts.Backend,
 		log:            log.New("resource-search"),
 		initWorkers:    opts.InitWorkerThreads,
@@ -800,10 +817,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			continue
 		}
 
-		maxAge := s.maxIndexAge
-		if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
-			maxAge = s.dashboardIndexMaxAge
-		}
+		maxAge := s.getIndexMaxAge(key)
 
 		var minBuildTime time.Time
 		if maxAge > 0 {
@@ -930,7 +944,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		}
 	}
 
-	// Pass rebuild=true to force rebuild of any existing file-based index
+	// Pass rebuild=true to force rebuild of any existing file-based index.
 	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, time.Time{})
 	if err != nil {
 		span.RecordError(err)
@@ -1347,7 +1361,12 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		s.builders.clearNamespacedCache(nsr)
 	}
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime)
+	// On the rebuild path, prefer downloading a fresh same-version remote
+	// snapshot over rebuilding from scratch when one exists with BuildTime
+	// within ~10% of the per-resource rebuild interval.
+	maxFreshSnapshotAge := s.getIndexMaxAge(nsr) / 10
+
+	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime, maxFreshSnapshotAge)
 
 	if err != nil {
 		return nil, err

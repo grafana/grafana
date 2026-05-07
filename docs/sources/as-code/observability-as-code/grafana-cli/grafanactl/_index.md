@@ -27,13 +27,13 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-`grafanactl` is being deprecated, and we're bringing all our learnings and experience into the new, improved CLI tool [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx).
+`grafanactl` is being deprecated, and we're bringing all our learning and experience into the new, improved CLI tool [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx). The `grafanactl` repository in GitHub will be archived on June 1, 2026.
 
 To migrate from `grafanactl` to `gcx`, search-and-replace `grafanactl` with `gcx`. For `grafanactl resources serve`, use `gcx dev serve` instead.
 
 {{< /admonition >}}
 
-The `grafanactl` command-line tool allows you to authenticate, manage multiple environments, and perform administrative tasks through Grafana’s REST API, all from the terminal. It is available for Grafana OSS, Enterprise, and Cloud.
+The `grafanactl` command-line tool allows you to authenticate, manage multiple environments, and perform administrative tasks through the Grafana REST API, all from the terminal. It's available for Grafana OSS, Enterprise, and Cloud.
 
 ## Install the Grafana CLI `grafanactl`
 
@@ -66,18 +66,18 @@ go install github.com/grafana/grafanactl/cmd/grafanactl@latest
 
 ## Configure `grafanactl`
 
-You can configure Grafana CLI in two ways: using environment variables or through a configuration file.
+You can configure `grafanactl` in two ways: using environment variables or through a configuration file.
 
 - **Environment variables** are ideal for CI environments and support a single context. A full list of supported environment variables is available in the [reference documentation](https://github.com/grafana/grafanactl/blob/main/docs/reference/environment-variables/index.md#environment-variables-reference).
 - **Configuration files** can manage multiple contexts, making it easier to switch between different Grafana instances.
 
 {{< admonition type="note" >}}
-Configuration items may change depending on your set-up. For example, use `org-id` for Grafana on-prem, but use `stack-id` for Grafana Cloud.
+Configuration items may change depending on your set-up. For example, use `org-id` for self-managed Grafana, but use `stack-id` for Grafana Cloud.
 {{< /admonition >}}
 
 ### Configure Grafana CLI with environment variables
 
-Grafana CLI communicates with Grafana via its REST API, which requires authentication credentials.
+Grafana CLI communicates with Grafana via the REST API, which requires authentication credentials.
 
 At a minimum, set the URL of your Grafana instance and the organization ID:
 
@@ -101,11 +101,17 @@ By default, the CLI uses a context named `default`. To configure it use:
 ```bash
 grafanactl config set contexts.default.grafana.server http://localhost:3000
 grafanactl config set contexts.default.grafana.org-id 1
+```
 
-# Authenticate with a service account token
+Authenticate with a service account token:
+
+```bash
 grafanactl config set contexts.default.grafana.token service-account-token
+```
 
-# Or use basic authentication
+Or use basic authentication:
+
+```bash
 grafanactl config set contexts.default.grafana.user admin
 grafanactl config set contexts.default.grafana.password admin
 ```

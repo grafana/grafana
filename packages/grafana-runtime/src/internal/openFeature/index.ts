@@ -6,6 +6,9 @@ import { type FeatureToggles } from '@grafana/data';
 import { config } from '../../config';
 import { logError } from '../../utils/logging';
 
+// Ensure the module augmentation is pulled in
+import './openfeature-types.gen.d.ts';
+
 function checkDefaultProvider(event?: EventDetails) {
   if (event?.domain) {
     return;

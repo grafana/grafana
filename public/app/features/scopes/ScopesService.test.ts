@@ -534,7 +534,7 @@ describe('ScopesService', () => {
     });
 
     describe('defaultPath support', () => {
-      it('should not write scope_node to URL when defaultPath is available', () => {
+      it('should extract scope_node from defaultPath when available', () => {
         if (!selectorStateSubscription) {
           throw new Error('selectorStateSubscription not set');
         }
@@ -559,12 +559,11 @@ describe('ScopesService', () => {
           }
         );
 
-        // When defaultPath is available, scope_node is redundant (it is re-derived
-        // from defaultPath on load), so the URL param is cleared.
+        // Should use 'correct-node' from defaultPath, not 'old-node' from appliedScopes
         expect(locationService.partial).toHaveBeenCalledWith(
           {
             scopes: ['scope1'],
-            scope_node: null,
+            scope_node: 'correct-node',
             scope_parent: null,
           },
           true
@@ -642,12 +641,10 @@ describe('ScopesService', () => {
         );
       });
 
-      it('should not update URL when only defaultPath changes and scopes are unchanged', () => {
+      it('should detect changes in defaultPath-derived scopeNodeId', () => {
         if (!selectorStateSubscription) {
           throw new Error('selectorStateSubscription not set');
         }
-
-        jest.clearAllMocks();
 
         selectorStateSubscription(
           {
@@ -678,9 +675,15 @@ describe('ScopesService', () => {
           }
         );
 
-        // scope_node is no longer synced when defaultPath is present, so a
-        // defaultPath-only change does not trigger a URL update.
-        expect(locationService.partial).not.toHaveBeenCalled();
+        // Should detect the change in defaultPath-derived scopeNodeId
+        expect(locationService.partial).toHaveBeenCalledWith(
+          {
+            scopes: ['scope1'],
+            scope_node: 'new-node',
+            scope_parent: null,
+          },
+          true
+        );
       });
     });
 
@@ -928,7 +931,7 @@ describe('ScopesService', () => {
       );
     });
 
-    it('should clear scope_node when enabling scopes for a scope with defaultPath', () => {
+    it('should use defaultPath for scope_node when enabling scopes', () => {
       selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'old-node' }];
       selectorService.state.scopes = {
         scope1: {
@@ -943,11 +946,10 @@ describe('ScopesService', () => {
 
       service.setEnabled(true);
 
-      // When defaultPath is available, scope_node is redundant and should be
-      // cleared from the URL (passing null removes any stale value).
+      // Should use defaultPath instead of scopeNodeId from appliedScopes
       expect(locationService.partial).toHaveBeenCalledWith(
         expect.objectContaining({
-          scope_node: null,
+          scope_node: 'correct-node-from-defaultPath',
         }),
         true
       );

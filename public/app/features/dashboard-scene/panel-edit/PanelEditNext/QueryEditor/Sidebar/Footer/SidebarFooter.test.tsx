@@ -1,7 +1,9 @@
 import { screen } from '@testing-library/react';
 
 import { AlertState } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { QueryEditorType } from '../../../constants';
 import { renderWithQueryEditorProvider } from '../../testUtils';
@@ -9,11 +11,30 @@ import { type AlertRule, EMPTY_ALERT, type Transformation } from '../../types';
 
 import { SidebarFooter } from './SidebarFooter';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+const mockReportInteraction = jest.mocked(reportInteraction);
+
 function createAlertRule(overrides: Partial<AlertRule> = {}): AlertRule {
   return { ...EMPTY_ALERT, alertId: `alert-${Math.random()}`, state: AlertState.OK, ...overrides };
 }
 
 describe('SidebarFooter', () => {
+  beforeAll(() => {
+    setTestFlags({ queryEditorNextMultiSelect: true });
+  });
+
+  afterAll(() => {
+    setTestFlags();
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('data view', () => {
     it('should show correct counts when all items are visible', () => {
       const queries: DataQuery[] = [
@@ -61,6 +82,44 @@ describe('SidebarFooter', () => {
       expect(screen.getByText('0 items')).toBeInTheDocument();
       expect(screen.getAllByText('0')).toHaveLength(2); // both visible and hidden are 0
     });
+
+    it('should show the select button next to the item count', () => {
+      renderWithQueryEditorProvider(<SidebarFooter />);
+
+      expect(screen.getByText('0 items')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /select multiple items/i })).toHaveTextContent('Select...');
+    });
+
+    it('should enable multi-select mode and track when select is clicked', async () => {
+      const setMultiSelectMode = jest.fn();
+      const { user } = renderWithQueryEditorProvider(<SidebarFooter />, {
+        uiStateOverrides: { setMultiSelectMode },
+      });
+
+      await user.click(screen.getByRole('button', { name: /select multiple items/i }));
+
+      expect(setMultiSelectMode).toHaveBeenCalledWith(true);
+      expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
+        action: 'click_multi_select',
+      });
+    });
+  });
+
+  describe('with queryEditorNextMultiSelect flag off', () => {
+    beforeAll(() => {
+      setTestFlags({ queryEditorNextMultiSelect: false });
+    });
+
+    afterAll(() => {
+      setTestFlags({ queryEditorNextMultiSelect: true });
+    });
+
+    it('should hide the select button', () => {
+      renderWithQueryEditorProvider(<SidebarFooter />);
+
+      expect(screen.getByText('0 items')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /select multiple items/i })).not.toBeInTheDocument();
+    });
   });
 
   describe('alert view', () => {
@@ -73,6 +132,7 @@ describe('SidebarFooter', () => {
       });
 
       expect(screen.getByText('2 alerts')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /select multiple items/i })).not.toBeInTheDocument();
       expect(screen.queryByTestId('icon-eye')).not.toBeInTheDocument();
       expect(screen.queryByTestId('icon-eye-slash')).not.toBeInTheDocument();
     });
