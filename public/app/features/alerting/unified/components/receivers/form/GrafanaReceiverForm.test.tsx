@@ -19,12 +19,19 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { logError, logWarning } from '../../../Analytics';
 import { AlertmanagerConfigBuilder, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
 import { alertingFactory } from '../../../mocks/server/db';
 import { captureRequests } from '../../../mocks/server/events';
 
 import { GrafanaReceiverForm } from './GrafanaReceiverForm';
+
+jest.mock('../../../Analytics', () => ({
+  ...jest.requireActual('../../../Analytics'),
+  logError: jest.fn(),
+  logWarning: jest.fn(),
+}));
 
 const renderWithProvider = (
   children: ReactNode,
@@ -1080,6 +1087,11 @@ describe('GrafanaReceiverForm', () => {
   });
 
   describe('error handling', () => {
+    beforeEach(() => {
+      jest.mocked(logError).mockClear();
+      jest.mocked(logWarning).mockClear();
+    });
+
     it('surfaces the backend message and details.causes in the toast on save failure', async () => {
       const capturedRequests = captureRequests(
         (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
@@ -1126,6 +1138,53 @@ describe('GrafanaReceiverForm', () => {
       const toast = await screen.findByRole('alert', { name: /failed to save the contact point/i });
       expect(within(toast).getByText(/receiver is invalid/i)).toBeInTheDocument();
       expect(within(toast).getByText(/URL must be valid/i)).toBeInTheDocument();
+
+      // 4xx responses are the user's invalid payload, not an app failure → warn, not error
+      await waitFor(() => {
+        expect(jest.mocked(logWarning)).toHaveBeenCalledWith(
+          'Failed to save the contact point',
+          expect.objectContaining({ status: '400' })
+        );
+      });
+      expect(jest.mocked(logError)).not.toHaveBeenCalled();
+    });
+
+    it('logs 5xx save failures at error level', async () => {
+      const capturedRequests = captureRequests(
+        (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
+      );
+
+      server.use(
+        http.post('/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers', () =>
+          HttpResponse.json({ message: 'database unavailable' }, { status: 500 })
+        )
+      );
+
+      const { user } = renderWithProvider(
+        <>
+          <AppNotificationList />
+          <GrafanaReceiverForm />
+        </>
+      );
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      await clickSelectOption(ui.typeSelector.get(), 'MQTT');
+      await user.type(screen.getByLabelText(/^name/i), 'broken-mqtt-5xx');
+      await user.type(screen.getByLabelText(/broker url/i), 'tcp://example.com:1883');
+      await user.type(screen.getByLabelText(/topic/i), 'alerts');
+      await user.click(ui.saveButton.get());
+
+      await capturedRequests;
+
+      await screen.findByRole('alert', { name: /failed to save the contact point/i });
+
+      await waitFor(() => {
+        expect(jest.mocked(logError)).toHaveBeenCalledTimes(1);
+      });
+      expect(jest.mocked(logError).mock.calls[0][0]).toBeInstanceOf(Error);
+      expect(jest.mocked(logError).mock.calls[0][0].message).toBe('Failed to save the contact point');
+      expect(jest.mocked(logWarning)).not.toHaveBeenCalled();
     });
   });
 });

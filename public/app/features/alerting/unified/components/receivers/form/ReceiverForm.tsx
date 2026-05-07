@@ -11,7 +11,7 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { ManagePermissions } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 
-import { logError } from '../../../Analytics';
+import { logError, logWarning } from '../../../Analytics';
 import { isOnCallFetchError } from '../../../api/onCallApi';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import {
@@ -106,11 +106,19 @@ export function ReceiverForm<R extends ChannelValues>({
       });
     } catch (e) {
       if (e instanceof Error || isFetchError(e)) {
-        notifyApp.error('Failed to save the contact point', getErrorMessage(e));
+        const message = getErrorMessage(e);
+        notifyApp.error('Failed to save the contact point', message);
 
-        const error = new Error('Failed to save the contact point');
-        error.cause = e;
-        logError(error);
+        if (isFetchError(e) && e.status >= 400 && e.status < 500) {
+          logWarning('Failed to save the contact point', {
+            status: String(e.status),
+            message,
+          });
+        } else {
+          const error = new Error('Failed to save the contact point');
+          error.cause = e;
+          logError(error);
+        }
       }
     }
   };
