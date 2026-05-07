@@ -59,20 +59,24 @@ export function annotationEventToSpec(event: AnnotationEvent, scopes?: string[])
   return spec;
 }
 
-// Legacy query responses return numeric IDs (number or string, e.g. 23 or "23");
-// the k8s backend requires the "a-{id}" prefix. Already-prefixed names pass through.
+// The legacy-sql store returns numeric IDs (e.g. 23) and the k8s adapter wraps
+// them as `a-{id}` because metadata.name must start with a letter. Other store
+// backends (memory, postgres) use string ids that are already valid k8s names,
+// so the `a-` prefix only round-trips when the underlying id is numeric — for
+// non-numeric ids, name and legacy id are the same string.
 function toK8sName(id: string | number): string {
   const s = String(id);
-  return s.startsWith('a-') ? s : `a-${s}`;
+  if (s.startsWith('a-')) {
+    return s;
+  }
+  return /^\d+$/.test(s) ? `a-${s}` : s;
 }
 
-// Inverse of toK8sName: strip the "a-" prefix from the resource name so callers
-// see the same id shape the legacy /api/annotations response used.
 function nameToLegacyId(name: string | undefined): string | undefined {
   if (!name) {
     return undefined;
   }
-  return name.startsWith('a-') ? name.slice(2) : name;
+  return /^a-\d+$/.test(name) ? name.slice(2) : name;
 }
 
 /** AnnotationEvent extended with the raw `createdBy` identity ref ("user:<uid>") so
