@@ -55,14 +55,13 @@ var (
 )
 
 type Lease struct {
-	name       string
-	holder     string
-	generation int64
-	lostCh     chan struct{}
-	lostOnce   sync.Once
-	stop       chan struct{}
-	stopOnce   sync.Once
-	done       chan struct{}
+	key      leaseKey
+	holder   string
+	lostCh   chan struct{}
+	lostOnce sync.Once
+	stop     chan struct{}
+	stopOnce sync.Once
+	done     chan struct{}
 }
 
 // Lost returns a channel that is closed when this lease ends: when its TTL
@@ -92,27 +91,64 @@ func (meta *leaseMetadata) ValidAsOf(ts time.Time) bool {
 	return !meta.Deleted && meta.ReleasedAt == 0 && ts.Before(time.Unix(0, meta.Expires))
 }
 
+type leaseKey struct {
+	name       string
+	generation int64
+}
+
+func newLeaseKey(name string, generation int64) leaseKey {
+	return leaseKey{name: name, generation: generation}
+}
+
+// String generates a 20-digit generation suffix so leases sort lexicographically
+// in generation order.
+func (k leaseKey) String() string {
+	return fmt.Sprintf("%s%s%020d", k.name, generationSeparator, k.generation)
+}
+
+func parseLeaseKey(key string) (leaseKey, error) {
+	idx := strings.Index(key, generationSeparator)
+	if idx < 0 {
+		return leaseKey{}, fmt.Errorf("invalid lease key %q: missing %q", key, generationSeparator)
+	}
+	name := key[:idx]
+	gen, err := strconv.ParseInt(key[idx+len(generationSeparator):], 10, 64)
+	if err != nil {
+		return leaseKey{}, fmt.Errorf("parsing lease key %q: %w", key, err)
+	}
+	return newLeaseKey(name, gen), nil
+}
+
 // Manager acquires and releases leases backed by a KV store.
 type Manager struct {
-	store        kv.KV
-	holder       string
-	minTTL       time.Duration
-	maxClockSkew time.Duration
-	log          logging.Logger
+	store            kv.KV
+	holder           string
+	minTTL           time.Duration
+	maxClockSkew     time.Duration
+	log              logging.Logger
+	garbageCollector *garbageCollector
+	now              func() time.Time
 }
 
 // NewManager returns a Manager that uses store for persistence and identifies
 // itself as holder.
 func NewManager(store kv.KV, holder string, opts ...ManagerOption) *Manager {
+	log := logging.DefaultLogger.With("logger", "lease-manager")
 	m := &Manager{
 		store:        store,
 		holder:       holder,
 		minTTL:       defaultMinTTL,
 		maxClockSkew: defaultMaxClockSkew,
-		log:          logging.DefaultLogger.With("logger", "lease-manager"),
+		log:          log,
+		now:          time.Now,
 	}
+	m.garbageCollector = newGarbageCollector(store, log, m.now)
 	for _, opt := range opts {
 		opt(m)
+	}
+
+	if m.garbageCollector != nil {
+		m.garbageCollector.Start()
 	}
 	return m
 }
@@ -128,6 +164,27 @@ func WithInternalMinTTL(d time.Duration) ManagerOption {
 		m.minTTL = d
 		m.maxClockSkew = 0
 	}
+}
+
+// WithInternalNowFunc overrides the clock used by a Manager. This is intended
+// only for tests that to control lease timestamps.
+func WithInternalNowFunc(now func() time.Time) ManagerOption {
+	return func(m *Manager) {
+		if now == nil {
+			now = time.Now
+		}
+		m.now = now
+		if m.garbageCollector != nil {
+			m.garbageCollector.now = now
+		}
+	}
+}
+
+// WithGarbageCollectionDisabled allows the caller to opt-out of the automated
+// garbage collection of leases that were released or expired longer than a
+// grace period.
+func WithGarbageCollectionDisabled(m *Manager) {
+	m.garbageCollector = nil
 }
 
 // AcquireOption configures a single Acquire call.
@@ -177,13 +234,14 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 	}
 
 	for attempt := 0; ; attempt++ {
-		latestKey, latestGeneration, err := m.latest(ctx, name)
+		latestKey, err := m.latest(ctx, name)
 		if err != nil {
 			return nil, fmt.Errorf("acquiring %s: %w", name, err)
 		}
 
-		now := time.Now()
-		if latestKey != "" {
+		now := m.now()
+		var latestRaw []byte
+		if latestKey.name != "" {
 			latest, err := m.read(ctx, latestKey)
 			if err != nil {
 				return nil, err
@@ -193,9 +251,13 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 			if latest.ValidAsOf(now.Add(-m.maxClockSkew)) {
 				return nil, ErrLeaseAlreadyHeld
 			}
+			latestRaw, err = json.Marshal(latest)
+			if err != nil {
+				return nil, fmt.Errorf("acquiring %s: %w", name, err)
+			}
 		}
 
-		generation := latestGeneration + 1
+		generation := latestKey.generation + 1
 		expires := now.Add(cfg.ttl)
 		state := leaseMetadata{
 			Holder:  m.holder,
@@ -206,13 +268,25 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 			return nil, err
 		}
 
-		key := leaseKey(name, generation)
-		err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{{
+		key := newLeaseKey(name, generation)
+		ops := []kv.BatchOp{{
 			Mode:  kv.BatchOpCreate,
-			Key:   key,
+			Key:   key.String(),
 			Value: value,
-		}})
-		if errors.Is(err, kv.ErrKeyAlreadyExists) {
+		}}
+		if latestKey.name != "" {
+			// Fail the Batch atomically if the previous generation we observed
+			// has been deleted by GC. Without this, acquisition could race
+			// with a background GC process and another caller could then
+			// re-acquire this lease at generation=1.
+			ops = append(ops, kv.BatchOp{
+				Mode:  kv.BatchOpUpdate,
+				Key:   latestKey.String(),
+				Value: latestRaw,
+			})
+		}
+		err = m.store.Batch(ctx, kv.LeasesSection, ops)
+		if errors.Is(err, kv.ErrKeyAlreadyExists) || errors.Is(err, kv.ErrNotFound) {
 			if attempt >= maxAcquireAttempts-1 {
 				return nil, fmt.Errorf("%w: exhausted retries acquiring %s", ErrLeaseAlreadyHeld, name)
 			}
@@ -223,19 +297,18 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		}
 
 		l := &Lease{
-			name:       name,
-			holder:     m.holder,
-			generation: generation,
-			lostCh:     make(chan struct{}),
-			stop:       make(chan struct{}),
-			done:       make(chan struct{}),
+			key:    key,
+			holder: m.holder,
+			lostCh: make(chan struct{}),
+			stop:   make(chan struct{}),
+			done:   make(chan struct{}),
 		}
 
 		if cfg.autoRenew {
 			renewInterval := cfg.ttl / 3
 			go m.autoRenewLoop(l, expires, cfg.ttl, renewInterval)
 		} else {
-			go m.expiryLoop(l, time.Until(expires))
+			go m.expiryLoop(l, expires.Sub(now))
 		}
 		return l, nil
 	}
@@ -248,10 +321,9 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 	<-lease.done
 	defer lease.notifyLoss()
 
-	key := leaseKey(lease.name, lease.generation)
-	meta, err := m.read(ctx, key)
+	meta, err := m.read(ctx, lease.key)
 	if err != nil {
-		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
+		return fmt.Errorf("releasing %s~%d: %w", lease.key.name, lease.key.generation, err)
 	}
 
 	// Note that we're not guaranteed to return ErrLeaseLost if two managers for
@@ -260,32 +332,46 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 	//
 	// Given that this use-case is quite contrived, this is an acceptable tradeoff
 	// at this time.
-	if meta.Holder != m.holder || !meta.ValidAsOf(time.Now()) {
-		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+	now := m.now()
+	if meta.Holder != m.holder || !meta.ValidAsOf(now) {
+		return fmt.Errorf("releasing %s~%d: %w", lease.key.name, lease.key.generation, ErrLeaseLost)
 	}
 
 	meta.Deleted = true
-	meta.ReleasedAt = time.Now().UnixNano()
-	if err := m.save(ctx, key, meta); err != nil {
-		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
+	meta.ReleasedAt = now.UnixNano()
+	if err := m.save(ctx, lease.key, meta); err != nil {
+		return fmt.Errorf("releasing %s~%d: %w", lease.key.name, lease.key.generation, err)
 	}
 
 	return nil
 }
 
+// Stop stops the garbage collection goroutine. Blocks until garbage collection
+// stops running.
+func (m *Manager) Stop() {
+	if m.garbageCollector != nil {
+		m.garbageCollector.Stop()
+	}
+}
+
+// RunGarbageCollection runs one garbage collection attempt synchronously.
+// Used for testing.
+func (m *Manager) RunGarbageCollection(ctx context.Context) (int, error) {
+	return newGarbageCollector(m.store, m.log, m.now).runOnce(ctx)
+}
+
 func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.Duration) (time.Time, error) {
-	key := leaseKey(lease.name, lease.generation)
-	meta, err := m.read(ctx, key)
+	meta, err := m.read(ctx, lease.key)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
+		return time.Time{}, fmt.Errorf("extending %s~%d: %w", lease.key.name, lease.key.generation, err)
 	}
 
-	now := time.Now()
+	now := m.now()
 	if meta.Holder != m.holder || !meta.ValidAsOf(now) {
-		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+		return time.Time{}, fmt.Errorf("extending %s~%d: %w", lease.key.name, lease.key.generation, ErrLeaseLost)
 	}
 
-	newGeneration := lease.generation + 1
+	newGeneration := lease.key.generation + 1
 	expires := now.Add(ttl)
 	state := leaseMetadata{
 		Holder:  m.holder,
@@ -297,25 +383,25 @@ func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.D
 	}
 
 	meta.Deleted = true
-	meta.ReleasedAt = time.Now().UnixNano()
+	meta.ReleasedAt = now.UnixNano()
 	tombstone, err := json.Marshal(meta)
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	newKey := leaseKey(lease.name, newGeneration)
+	newKey := newLeaseKey(lease.key.name, newGeneration)
 	err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{
-		{Mode: kv.BatchOpCreate, Key: newKey, Value: value},
-		{Mode: kv.BatchOpUpdate, Key: key, Value: tombstone},
+		{Mode: kv.BatchOpCreate, Key: newKey.String(), Value: value},
+		{Mode: kv.BatchOpUpdate, Key: lease.key.String(), Value: tombstone},
 	})
 	if errors.Is(err, kv.ErrKeyAlreadyExists) {
-		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+		return time.Time{}, fmt.Errorf("extending %s~%d: %w", lease.key.name, lease.key.generation, ErrLeaseLost)
 	}
 	if err != nil {
-		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
+		return time.Time{}, fmt.Errorf("extending %s~%d: %w", lease.key.name, lease.key.generation, err)
 	}
 
-	lease.generation = newGeneration
+	lease.key = newKey
 	return expires, nil
 }
 
@@ -337,7 +423,7 @@ func (m *Manager) autoRenewLoop(lease *Lease, expiry time.Time, ttl, renewInterv
 	defer ticker.Stop()
 
 	for {
-		log := m.log.With("lease", lease.name, "holder", lease.holder, "generation", lease.generation)
+		log := m.log.With("lease", lease.key.name, "holder", lease.holder, "generation", lease.key.generation)
 
 		select {
 		case <-lease.stop:
@@ -350,12 +436,12 @@ func (m *Manager) autoRenewLoop(lease *Lease, expiry time.Time, ttl, renewInterv
 				return
 			}
 			if err != nil {
-				if time.Now().After(expiry) {
+				if m.now().After(expiry) {
 					log.Error("lease lost: renewal retries exhausted before expiry", "err", err)
 					lease.notifyLoss()
 					return
 				}
-				log.Warn("lease renewal failed, will retry", "time_until_expiry", time.Until(expiry), "err", err)
+				log.Warn("lease renewal failed, will retry", "time_until_expiry", expiry.Sub(m.now()), "err", err)
 				continue
 			}
 			expiry = newExpiry
@@ -369,7 +455,7 @@ func (m *Manager) renewOnce(lease *Lease, ttl, renewInterval time.Duration) (tim
 	return m.extendGeneration(ctx, lease, ttl)
 }
 
-func (m *Manager) latest(ctx context.Context, name string) (string, int64, error) {
+func (m *Manager) latest(ctx context.Context, name string) (leaseKey, error) {
 	prefix := name + generationSeparator
 	opts := kv.ListOptions{
 		Sort:     kv.SortOrderDesc,
@@ -378,22 +464,18 @@ func (m *Manager) latest(ctx context.Context, name string) (string, int64, error
 		Limit:    1,
 	}
 
-	for key, err := range m.store.Keys(ctx, kv.LeasesSection, opts) {
+	for k, err := range m.store.Keys(ctx, kv.LeasesSection, opts) {
 		if err != nil {
-			return "", 0, err
+			return leaseKey{}, err
 		}
-		generation, err := parseGeneration(name, key)
-		if err != nil {
-			return "", 0, err
-		}
-		return key, generation, nil
+		return parseLeaseKey(k)
 	}
 
-	return "", 0, nil
+	return leaseKey{}, nil
 }
 
-func (m *Manager) read(ctx context.Context, key string) (leaseMetadata, error) {
-	r, err := m.store.Get(ctx, kv.LeasesSection, key)
+func (m *Manager) read(ctx context.Context, key leaseKey) (leaseMetadata, error) {
+	r, err := m.store.Get(ctx, kv.LeasesSection, key.String())
 	if err != nil {
 		return leaseMetadata{}, fmt.Errorf("fetching lease key: %w", err)
 	}
@@ -411,13 +493,13 @@ func (m *Manager) read(ctx context.Context, key string) (leaseMetadata, error) {
 	return state, nil
 }
 
-func (m *Manager) save(ctx context.Context, key string, state leaseMetadata) error {
+func (m *Manager) save(ctx context.Context, key leaseKey, state leaseMetadata) error {
 	data, err := json.Marshal(state)
 	if err != nil {
 		return err
 	}
 
-	w, err := m.store.Save(ctx, kv.LeasesSection, key)
+	w, err := m.store.Save(ctx, kv.LeasesSection, key.String())
 	if err != nil {
 		return err
 	}
@@ -434,32 +516,15 @@ func (m *Manager) save(ctx context.Context, key string, state leaseMetadata) err
 	return nil
 }
 
-// leaseKey generates a 20-digit generation suffix so leases sort
-// lexicographically in generation order.
-func leaseKey(name string, generation int64) string {
-	return fmt.Sprintf("%s%s%020d", name, generationSeparator, generation)
-}
-
 func validateLeaseName(name string) error {
 	if !kv.IsValidKey(name) {
 		return fmt.Errorf("invalid lease name %q", name)
 	}
 	if strings.Contains(name, generationSeparator) {
-		return fmt.Errorf("invalid lease name %q: %q is reserved", name, generationSeparator)
+		return fmt.Errorf("invalid lease name %q: %q not allowed", name, generationSeparator)
+	}
+	if strings.HasPrefix(name, internalPrefix) {
+		return fmt.Errorf("cannot use reserved lease name %q", gcKey)
 	}
 	return nil
-}
-
-func parseGeneration(name, key string) (int64, error) {
-	suffix, ok := strings.CutPrefix(key, name+generationSeparator)
-	if !ok {
-		// Should not happen in practice unless we get an invalid key from
-		// the underlying KV store.
-		return 0, fmt.Errorf("lease key %q does not match lease name %q", key, name)
-	}
-	generation, err := strconv.ParseInt(suffix, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("parse lease generation from %q: %w", key, err)
-	}
-	return generation, nil
 }

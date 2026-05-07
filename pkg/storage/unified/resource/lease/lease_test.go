@@ -39,7 +39,14 @@ func TestAcquireNameValidation(t *testing.T) {
 	t.Run("tilde is rejected", func(t *testing.T) {
 		l, err := m.Acquire(t.Context(), "validation/with~tilde")
 		require.Error(t, err)
-		require.ErrorContains(t, err, "is reserved")
+		require.ErrorContains(t, err, "not allowed")
+		require.Nil(t, l)
+	})
+
+	t.Run("using a name in the internal prefix", func(t *testing.T) {
+		l, err := m.Acquire(t.Context(), "lease-internal/test")
+		require.ErrorContains(t, err, "cannot use reserved lease name")
+		require.Error(t, err)
 		require.Nil(t, l)
 	})
 
@@ -240,15 +247,61 @@ func (w *mapKVWriter) Close() error {
 }
 
 func (m *mapKV) Delete(ctx context.Context, section, key string) error {
-	panic("mapKV: Delete not implemented")
+	m.checkSection(section)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.data, key)
+	return nil
 }
 
 func (m *mapKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
-	panic("mapKV: BatchGet not implemented")
+	m.checkSection(section)
+
+	type item struct {
+		key   string
+		value []byte
+	}
+
+	m.mu.Lock()
+	items := make([]item, 0, len(keys))
+	for _, key := range keys {
+		v, ok := m.data[key]
+		if !ok {
+			continue
+		}
+		copied := make([]byte, len(v))
+		copy(copied, v)
+		items = append(items, item{key: key, value: copied})
+	}
+	m.mu.Unlock()
+
+	return func(yield func(kv.KeyValue, error) bool) {
+		for _, item := range items {
+			if err := ctx.Err(); err != nil {
+				yield(kv.KeyValue{}, err)
+				return
+			}
+			if !yield(kv.KeyValue{Key: item.key, Value: io.NopCloser(bytes.NewReader(item.value))}, nil) {
+				return
+			}
+		}
+	}
 }
 
 func (m *mapKV) BatchDelete(ctx context.Context, section string, keys []string) error {
-	panic("mapKV: BatchDelete not implemented")
+	m.checkSection(section)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, key := range keys {
+		delete(m.data, key)
+	}
+	return nil
 }
 
 func (m *mapKV) UnixTimestamp(ctx context.Context) (int64, error) {
