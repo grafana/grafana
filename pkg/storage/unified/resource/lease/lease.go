@@ -55,8 +55,9 @@ type Lease struct {
 	generation int64
 	lostCh     chan struct{}
 	lostOnce   sync.Once
-	timerMu    sync.Mutex
-	lostTimer  *time.Timer
+	stop       chan struct{}
+	stopOnce   sync.Once
+	done       chan struct{}
 }
 
 // Lost returns a channel that is closed when this lease ends, i.e., when its TTL
@@ -120,16 +121,24 @@ func WithInternalMinTTL(d time.Duration) ManagerOption {
 	}
 }
 
-// Option configures a single Acquire or Extend call.
+// Option configures a single Acquire call.
 type Option func(*acquireOptions)
 
 type acquireOptions struct {
-	ttl time.Duration
+	ttl       time.Duration
+	autoRenew bool
 }
 
 // WithTTL overrides the default lease TTL for this acquisition.
 func WithTTL(d time.Duration) Option {
 	return func(o *acquireOptions) { o.ttl = d }
+}
+
+// WithAutoRenew enables automatic lease renewal. A background goroutine
+// periodically extends the lease by creating the next generation. Lost()
+// is notified only when a renewal fails with ErrLeaseLost.
+func WithAutoRenew() Option {
+	return func(o *acquireOptions) { o.autoRenew = true }
 }
 
 // Acquire grabs the lease for `name` on behalf of the manager's holder. On
@@ -203,8 +212,15 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...Option) (*Le
 			holder:     m.holder,
 			generation: generation,
 			lostCh:     make(chan struct{}),
+			stop:       make(chan struct{}),
+			done:       make(chan struct{}),
 		}
-		l.lostTimer = time.AfterFunc(time.Until(expires), l.notifyLoss)
+
+		if cfg.autoRenew {
+			go m.autoRenewLoop(l, cfg.ttl)
+		} else {
+			go m.expiryLoop(l, time.Until(expires))
+		}
 		return l, nil
 	}
 }
@@ -212,6 +228,9 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...Option) (*Le
 // Release releases lease. It is not idempotent: releasing a lease that has
 // already been released — or one that has expired — returns ErrLeaseLost.
 func (m *Manager) Release(ctx context.Context, lease *Lease) error {
+	lease.stopOnce.Do(func() { close(lease.stop) })
+	<-lease.done
+
 	key := leaseKey(lease.name, lease.generation)
 	meta, err := m.read(ctx, key)
 	if err != nil {
@@ -233,41 +252,11 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
 	}
 
-	lease.timerMu.Lock()
-	defer lease.timerMu.Unlock()
-	lease.lostTimer.Stop()
 	lease.notifyLoss()
 	return nil
 }
 
-// Extend extends an active lease's TTL in-place. The lease must still be valid
-// and held by this manager's holder. Returns ErrLeaseLost if the lease has
-// expired, been released, or is held by a different holder.
-//
-// Note: like Release, the sequence latest → read → validate → save is
-// not atomic. A competing Acquire could create a newer generation
-// between the latest-check and the save, leading to a brief split-brain
-// where both the old and new holder believe they hold the lease.
-// In practice this is mitigated by extending well before expiry so the lease
-// is never close to lapsing when the save occurs.
-func (m *Manager) Extend(ctx context.Context, lease *Lease, opts ...Option) error {
-	cfg := acquireOptions{ttl: defaultTTL}
-	for _, opt := range opts {
-		opt(&cfg)
-	}
-
-	if cfg.ttl < m.minTTL {
-		return fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, m.minTTL)
-	}
-
-	_, latestGeneration, err := m.latest(ctx, lease.name)
-	if err != nil {
-		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
-	}
-	if latestGeneration != lease.generation {
-		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
-	}
-
+func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.Duration) error {
 	key := leaseKey(lease.name, lease.generation)
 	meta, err := m.read(ctx, key)
 	if err != nil {
@@ -279,17 +268,65 @@ func (m *Manager) Extend(ctx context.Context, lease *Lease, opts ...Option) erro
 		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
 	}
 
-	expires := now.Add(cfg.ttl)
-	meta.Expires = expires.UnixNano()
-	if err := m.save(ctx, key, meta); err != nil {
+	newGeneration := lease.generation + 1
+	expires := now.Add(ttl)
+	state := leaseMetadata{
+		Holder:  m.holder,
+		Expires: expires.UnixNano(),
+	}
+	value, err := json.Marshal(state)
+	if err != nil {
+		return err
+	}
+
+	newKey := leaseKey(lease.name, newGeneration)
+	err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{{
+		Mode:  kv.BatchOpCreate,
+		Key:   newKey,
+		Value: value,
+	}})
+	if errors.Is(err, kv.ErrKeyAlreadyExists) {
+		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+	}
+	if err != nil {
 		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
 	}
 
-	lease.timerMu.Lock()
-	defer lease.timerMu.Unlock()
-	lease.lostTimer.Stop()
-	lease.lostTimer = time.AfterFunc(time.Until(expires), lease.notifyLoss)
+	meta.Deleted = true
+	_ = m.save(ctx, key, meta)
+
+	lease.generation = newGeneration
 	return nil
+}
+
+func (m *Manager) expiryLoop(lease *Lease, remaining time.Duration) {
+	defer close(lease.done)
+	timer := time.NewTimer(remaining)
+	defer timer.Stop()
+	select {
+	case <-lease.stop:
+	case <-timer.C:
+		lease.notifyLoss()
+	}
+}
+
+func (m *Manager) autoRenewLoop(lease *Lease, ttl time.Duration) {
+	defer close(lease.done)
+	ticker := time.NewTicker(ttl / 2)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-lease.stop:
+			return
+		case <-ticker.C:
+			err := m.extendGeneration(context.Background(), lease, ttl)
+			if errors.Is(err, ErrLeaseLost) {
+				lease.notifyLoss()
+				return
+			}
+		}
+	}
 }
 
 func (m *Manager) latest(ctx context.Context, name string) (string, int64, error) {
