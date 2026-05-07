@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { dispatch } from '../../../store/store';
 import { type VariableAdapter } from '../adapters';
 import { ALL_VARIABLE_TEXT } from '../constants';
+import { optionPickerFactory } from '../pickers/OptionsPicker/OptionsPicker';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
 
@@ -22,6 +23,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
     name: 'Custom',
     initialState: initialCustomVariableModelState,
     reducer: customVariableReducer,
+    picker: optionPickerFactory<CustomVariableModel>(),
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variableToTest.name);
     },
