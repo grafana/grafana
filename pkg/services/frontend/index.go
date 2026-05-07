@@ -83,7 +83,7 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 
 	bootScriptRaw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, "build", "boot.js"))
 	if err != nil {
-		bootScriptRaw = []byte{}
+		return nil, fmt.Errorf("read boot.js: %w", err)
 	}
 
 	logger := logging.DefaultLogger.With("logger", "index-provider")
