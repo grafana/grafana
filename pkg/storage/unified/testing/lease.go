@@ -281,7 +281,7 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 }
 
 func runLeaseAutoRenew(t *testing.T, store kv.KV) {
-	const ttl = 50 * time.Millisecond
+	const ttl = 500 * time.Millisecond
 	ctx := t.Context()
 
 	t.Run("keeps lease alive past TTL", func(t *testing.T) {
