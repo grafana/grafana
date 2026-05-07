@@ -373,19 +373,10 @@ func TestVectorSearch_AuthzFiltersUnauthorizedRows(t *testing.T) {
 	assert.Equal(t, "u3", resp.Results[1].Name)
 }
 
-func TestVectorSearch_AuthzNilCheckerReturnsEmpty(t *testing.T) {
-	// A nil checker from Compile means "no access to anything" — handler
-	// should return an empty result set (not an error).
-	type denyAll struct{ *fakeAccessClient }
-	denyAccess := &denyAll{
-		fakeAccessClient: &fakeAccessClient{
-			allow: func(string, string) bool { return false },
-		},
-	}
-	// Override Compile to return nil checker to exercise that branch.
-	access := &nilCheckerClient{}
-	_ = denyAccess
-
+func TestVectorSearch_AuthzDenyAllReturnsEmpty(t *testing.T) {
+	// When BatchCheck denies every row, the handler should return an empty
+	// result set (not an error).
+	access := &fakeAccessClient{allow: func(string, string) bool { return false }}
 	backend := &fakeVectorBackend{
 		results: []vector.VectorSearchResult{{UID: "u1", Title: "T1", Score: 0.1}},
 	}
@@ -396,14 +387,6 @@ func TestVectorSearch_AuthzNilCheckerReturnsEmpty(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, resp.Results)
-}
-
-// nilCheckerClient.Compile returns (nil, nil, nil) to exercise the
-// "no access to anything" branch in VectorSearch.
-type nilCheckerClient struct{ fakeAccessClient }
-
-func (n *nilCheckerClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
-	return nil, nil, nil
 }
 
 func TestVectorSearch_NoUserInContextReturnsUnauthenticated(t *testing.T) {
@@ -469,13 +452,6 @@ func (c *countingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo,
 }
 func (c *countingAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	return func(string, string) bool { return true }, nil, nil
-	return func(name, folder string) bool {
-		c.calls++
-		if c.allow == nil {
-			return true
-		}
-		return c.allow(name, folder)
-	}, nil, nil
 }
 
 func TestVectorSearch_AuthzDedupForSubresources(t *testing.T) {

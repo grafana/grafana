@@ -219,8 +219,10 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 	}
 
 	var (
-		processed int
-		nextToken string
+		processed  int
+		pendingTok string // continue token from prior processed item; peek not yet confirmed
+		nextToken  string // last confirmed-valid token
+		hasMore    bool   // set when a size+1 Next()==true confirms another page exists
 	)
 	_, err := b.storage.ListIterator(ctx, req, func(iter resource.ListIterator) error {
 		for iter.Next() {
@@ -230,28 +232,39 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
+			// Another Next()==true confirms the prior item's peek
+			// pointed at a real row. Promote pendingTok and persist it.
+			// Backends like kvStorageBackend build ContinueToken from
+			// the peeked-ahead row; a token captured after the final
+			// item has Name="" and is rejected on the next call. Only
+			// promoting after a confirming Next() guarantees we never
+			// stamp such a token into last_seen_key.
+			if pendingTok != "" {
+				encoded := encodeCursor(builder.Resource(), pendingTok)
+				if cerr := b.vectorBackend.UpdateBackfillJobCheckpoint(ctx, job.ID, encoded, ""); cerr != nil {
+					return fmt.Errorf("checkpoint: %w", cerr)
+				}
+				nextToken = pendingTok
+				pendingTok = ""
+			}
 			if processed == backfillPageSize {
+				// We took an extra Next()==true past the page; that's
+				// the proof there's another page worth requesting.
+				hasMore = true
 				return nil
 			}
 			if err := b.processBackfillItem(ctx, job, builder, iter); err != nil {
 				return err
 			}
 			processed++
-			// Per-item checkpoint. Encode the cursor with the current
-			// Builder's resource so resume picks the correct Builder.
-			tok := iter.ContinueToken()
-			encoded := encodeCursor(builder.Resource(), tok)
-			if cerr := b.vectorBackend.UpdateBackfillJobCheckpoint(ctx, job.ID, encoded, ""); cerr != nil {
-				return fmt.Errorf("checkpoint: %w", cerr)
-			}
-			nextToken = tok
+			pendingTok = iter.ContinueToken()
 		}
 		return nil
 	})
 	if err != nil {
 		return "", err
 	}
-	if processed < backfillPageSize {
+	if !hasMore {
 		return "", nil
 	}
 	return nextToken, nil

@@ -113,8 +113,11 @@ func TestRunBackfillJob_HappyPath_EmbedsAndCompletes(t *testing.T) {
 	require.Len(t, vec.completedJobIDs, 1)
 	assert.Equal(t, int64(42), vec.completedJobIDs[0])
 
-	// One checkpoint per processed item.
-	require.Len(t, vec.checkpoints, 3)
+	// Checkpoint is deferred by one item: each item's continue token is
+	// only persisted after the next Next()==true confirms its peek was
+	// valid. The final item's token is never confirmed (iterator is
+	// exhausted), so we get N-1 checkpoints for N items.
+	require.Len(t, vec.checkpoints, 2)
 	for _, c := range vec.checkpoints {
 		assert.Empty(t, c.LastError, "happy path leaves last_error empty")
 	}
@@ -307,6 +310,38 @@ func TestRunBackfillJob_PaginatedAcrossPages(t *testing.T) {
 
 	assert.Len(t, vec.upserts, total, "every item across all pages is embedded")
 	require.Len(t, vec.completedJobIDs, 1)
+}
+
+// TestRunBackfillJob_ExactPageMultiple exercises the boundary where total
+// item count is exactly N * backfillPageSize. A naive implementation would
+// emit a continue token built from the post-last-item peek (Name="") and
+// re-feed it through ListIterator on the next page call, which the kv
+// backend rejects with "name is required". The fix defers the per-item
+// checkpoint by one Next()==true so the last item of a page is only
+// persisted after a confirming peek.
+func TestRunBackfillJob_ExactPageMultiple(t *testing.T) {
+	const total = backfillPageSize
+
+	storage := newFakeStorage()
+	storage.listItems = make([]listItem, total)
+	for i := range storage.listItems {
+		storage.listItems[i] = makeListItem("ns", uniqName(i), int64(i+1))
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{
+		ID: 9, Model: "test-model", StoppingRV: int64(total + 100),
+	}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Len(t, vec.upserts, total, "every item is embedded")
+	require.Len(t, vec.completedJobIDs, 1, "job completes despite hitting the page boundary")
+	assert.Empty(t, vec.errorMarks, "no error path on a clean exact-page run")
+	// Final item's continue token is never confirmed by a follow-up
+	// Next()==true, so we persist N-1 checkpoints, never the broken one.
+	require.Len(t, vec.checkpoints, total-1)
 }
 
 func uniqName(i int) string {
