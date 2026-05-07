@@ -5,7 +5,6 @@ import { type ThemeRegistryItem } from '@grafana/data';
 import { LANGUAGES, PSEUDO_LOCALE, t } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
 import { type UpdatePrefsCmd } from 'app/api/clients/legacy';
-import { LOCALES } from 'app/core/internationalization/locales';
 
 export interface Props {
   resourceUri: string;
