@@ -314,6 +314,7 @@ describe('AnnoListPanel', () => {
   describe('with kubernetesAnnotations toggle ON', () => {
     const SEARCH_URL = '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/search';
     const DISPLAY_URL = '/apis/iam.grafana.app/v0alpha1/namespaces/stack-1/display';
+    const USER_URL = '/apis/iam.grafana.app/v0alpha1/namespaces/stack-1/users/u-001';
 
     const k8sAnnotation = {
       apiVersion: 'annotation.grafana.app/v0alpha1',
@@ -353,6 +354,9 @@ describe('AnnoListPanel', () => {
         }
         if (typeof url === 'string' && url.includes('/display')) {
           return { display: [display] };
+        }
+        if (typeof url === 'string' && url.includes('/users/u-001')) {
+          return { spec: { email: 'jane@example.com' } };
         }
         return [];
       });
@@ -412,8 +416,62 @@ describe('AnnoListPanel', () => {
       const { getMock } = await setupK8sContext();
 
       expect(getMock).toHaveBeenCalledWith(DISPLAY_URL, { key: ['user:u-001'] });
+      expect(getMock).toHaveBeenCalledWith(USER_URL);
 
-      // displayName substitutes for both login (gates avatar) and email (tooltip text)
+      // displayName gates the avatar, email comes from the User resource
+      const avatar = await screen.findByRole('img');
+      expect(avatar).toBeInTheDocument();
+      expect(await screen.findByText(/result text/i)).toBeInTheDocument();
+    });
+
+    it('falls back to displayName when the User resource fetch fails (e.g. RBAC)', async () => {
+      jest.clearAllMocks();
+      config.featureToggles.kubernetesAnnotations = true;
+      config.namespace = 'stack-1';
+
+      const getMock = jest.spyOn(backendSrv, 'get');
+      getMock.mockImplementation(async (url) => {
+        if (typeof url === 'string' && url.includes('/search')) {
+          return { items: [k8sAnnotation] };
+        }
+        if (typeof url === 'string' && url.includes('/display')) {
+          return { display: [display] };
+        }
+        if (typeof url === 'string' && url.includes('/users/u-001')) {
+          throw new Error('forbidden');
+        }
+        return [];
+      });
+
+      const dash = { uid: 'srx16xR4z', formatDate: (time: number) => new Date(time).toISOString() };
+      setDashboardSrv({ getCurrent: () => dash } as DashboardSrv);
+
+      const props: Props = {
+        data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
+        eventBus: {
+          subscribe: jest.fn(),
+          getStream: jest.fn().mockImplementation(() => ({ subscribe: jest.fn() })),
+          publish: jest.fn(),
+          removeAllListeners: jest.fn(),
+          newScopedBus: jest.fn(),
+        },
+        fieldConfig: {} as unknown as FieldConfigSource,
+        height: 400,
+        id: 1,
+        onChangeTimeRange: jest.fn(),
+        onFieldConfigChange: jest.fn(),
+        onOptionsChange: jest.fn(),
+        options: defaultOptions,
+        renderCounter: 1,
+        replaceVariables: (str: string) => str,
+        timeRange: getDefaultTimeRange(),
+        timeZone: 'utc',
+        title: 'Test Title',
+        transparent: false,
+        width: 320,
+      };
+      render(<AnnoListPanel {...props} />);
+
       const avatar = await screen.findByRole('img');
       expect(avatar).toBeInTheDocument();
       expect(await screen.findByText(/result text/i)).toBeInTheDocument();
@@ -429,6 +487,9 @@ describe('AnnoListPanel', () => {
         }
         if (typeof url === 'string' && url.includes('/display')) {
           return { display: [display] };
+        }
+        if (typeof url === 'string' && url.includes('/users/u-001')) {
+          return { spec: { email: 'jane@example.com' } };
         }
         return [];
       });

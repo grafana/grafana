@@ -147,7 +147,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       const params: Record<string, unknown> = {
         tags,
         limit: options.limit,
-        type: 'annotation', // Skip the Annotations that are really alerts.  (Use the alerts panel!)
+        type: 'annotation',
         dashboardUID,
         from,
         to,
@@ -163,23 +163,40 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     });
   }
 
-  // Hydrate identity-derived fields (userId/login/email/avatarUrl) on each event by
-  // batching one IAM /display lookup per unique createdBy key. The k8s AnnotationSpec
-  // does not carry identity, so we read it from metadata.annotations and resolve
-  // display info via the IAM API. Email is unavailable from /display; we substitute
-  // displayName so the existing "Created by" tooltip still has a meaningful label.
+  // Hydrate identity-derived fields on each event. /display is a batch lookup
+  // (one call for all keys) but doesn't expose email, so we fetch each unique
+  // User resource in parallel to read spec.email. A per-user fetch may 403 for
+  // viewers without iam:users:get; on failure we fall back to displayName so
+  // the tooltip still has a label.
   private hydrateIdentities = async (events: AnnotationEventResource[]): Promise<AnnotationEvent[]> => {
-    const keys = Array.from(
-      new Set(events.map((e) => e.createdBy).filter((k): k is string => Boolean(k)))
-    );
+    const keys = Array.from(new Set(events.map((e) => e.createdBy).filter((k): k is string => Boolean(k))));
     if (keys.length === 0) {
       return events;
     }
 
-    const url = `/apis/iam.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/display`;
-    const response = await getBackendSrv().get<{ display?: DisplayItem[] }>(url, { key: keys });
+    const ns = getAPINamespace();
+    const userUids = keys.filter((k) => k.startsWith('user:')).map((k) => k.slice('user:'.length));
+
+    const [displayResp, emailByUid] = await Promise.all([
+      getBackendSrv().get<{ display?: DisplayItem[] }>(`/apis/iam.grafana.app/v0alpha1/namespaces/${ns}/display`, {
+        key: keys,
+      }),
+      Promise.all(
+        userUids.map(async (uid): Promise<[string, string | undefined]> => {
+          try {
+            const u = await getBackendSrv().get<{ spec?: { email?: string } }>(
+              `/apis/iam.grafana.app/v0alpha1/namespaces/${ns}/users/${uid}`
+            );
+            return [uid, u.spec?.email];
+          } catch {
+            return [uid, undefined];
+          }
+        })
+      ).then((entries) => new Map(entries)),
+    ]);
+
     const byKey = new Map<string, DisplayItem>();
-    for (const d of response.display ?? []) {
+    for (const d of displayResp.display ?? []) {
       byKey.set(`${d.identity.type}:${d.identity.name}`, d);
     }
 
@@ -188,11 +205,13 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       if (!display) {
         return event;
       }
+      const uid = event.createdBy?.startsWith('user:') ? event.createdBy.slice('user:'.length) : undefined;
+      const email = uid ? emailByUid.get(uid) : undefined;
       return {
         ...event,
         userId: display.internalId,
         login: display.displayName,
-        email: display.displayName,
+        email: email ?? display.displayName,
         avatarUrl: display.avatarURL,
       };
     });
