@@ -312,6 +312,7 @@ func (m *Manager) expiryLoop(lease *Lease, remaining time.Duration) {
 	defer timer.Stop()
 	select {
 	case <-lease.stop:
+		return
 	case <-timer.C:
 		lease.notifyLoss()
 	}
