@@ -25,23 +25,23 @@ export function PreviewRule(): React.ReactElement | null {
   const [preview, onPreview] = usePreview();
   const { watch } = useFormContext<RuleFormValues>();
   const [type, condition, queries] = watch(['type', 'condition', 'queries']);
-  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
+  const { allDataSourcesAvailable, isLoading: isDsLoading } = useAlertQueriesStatus(queries);
 
   if (!type || isDataSourceManagedRuleByType(type)) {
     return null;
   }
 
-  const isPreviewAvailable = Boolean(condition) && allDataSourcesAvailable;
+  const isPreviewAvailable = Boolean(condition) && !isDsLoading && allDataSourcesAvailable;
 
   return (
     <div className={styles.container}>
       <Stack>
-        {allDataSourcesAvailable && (
+        {(isDsLoading || allDataSourcesAvailable) && (
           <Button disabled={!isPreviewAvailable} type="button" variant="primary" onClick={onPreview}>
             <Trans i18nKey="alerting.preview-rule.preview-alerts">Preview alerts</Trans>
           </Button>
         )}
-        {!allDataSourcesAvailable && (
+        {!isDsLoading && !allDataSourcesAvailable && (
           <Alert
             title={t('alerting.preview-rule.title-preview-is-not-available', 'Preview is not available')}
             severity="warning"
