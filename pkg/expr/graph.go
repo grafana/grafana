@@ -147,10 +147,9 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 			inputRefIDs := node.NeedsVars()
 			span.SetAttributes(attribute.StringSlice("node.inputRefIDs", inputRefIDs))
 		}
-		defer span.End()
-
 		execNode, ok := node.(ExecutableNode)
 		if !ok {
+			span.End()
 			return vars, makeUnexpectedNodeTypeError(node.RefID(), node.NodeType().String())
 		}
 
@@ -160,6 +159,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		}
 
 		vars[node.RefID()] = res
+		span.End()
 	}
 	return vars, nil
 }
