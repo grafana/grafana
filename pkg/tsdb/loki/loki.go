@@ -225,7 +225,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer trace.Tracer, plog log.Logger, runInParallel bool, logQLScopes bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	req, schemadsRefIDs, sqlErrs := normalizeGrafanaSQLRequest(ctx, req, dsInfo)
+	req, logSQLRefIDs, metricSQLRefIDs, sqlErrs := normalizeGrafanaSQLRequest(ctx, req, dsInfo)
 	for refID, e := range sqlErrs {
 		result.Responses[refID] = backend.DataResponse{
 			Error:       e,
@@ -280,13 +280,20 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 	}
 	plog.Debug("Executed queries", "duration", time.Since(start), "queriesLength", len(queries), "runInParallel", runInParallel)
 
-	if len(schemadsRefIDs) > 0 {
+	if len(logSQLRefIDs) > 0 || len(metricSQLRefIDs) > 0 {
 		for refID, dr := range result.Responses {
-			if _, ok := schemadsRefIDs[refID]; !ok || dr.Error != nil {
+			if dr.Error != nil {
 				continue
 			}
-			dr.Frames = flattenLogsToTabular(dr.Frames, responseOpts.logsDataplane, plog)
-			result.Responses[refID] = dr
+			if _, ok := metricSQLRefIDs[refID]; ok {
+				dr.Frames = flattenMetricsToTabular(dr.Frames)
+				result.Responses[refID] = dr
+				continue
+			}
+			if _, ok := logSQLRefIDs[refID]; ok {
+				dr.Frames = flattenLogsToTabular(dr.Frames, responseOpts.logsDataplane, plog)
+				result.Responses[refID] = dr
+			}
 		}
 	}
 

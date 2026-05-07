@@ -17,6 +17,20 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
+// grafanaSQLQuery extends schemas.Query with fields from the dsabstraction tabular model
+// that are not on schemas.Query (same pattern as grafana-prometheus-datasource/pkg/promlib).
+type grafanaSQLQuery struct {
+	schemas.Query
+	Aggregation *aggregationHint `json:"aggregation,omitempty"`
+}
+
+// aggregationHint describes an aggregation pushed down from the SQL engine.
+type aggregationHint struct {
+	Function string   `json:"function"` // e.g. "SUM", "AVG", "COUNT", "MIN", "MAX"
+	Column   string   `json:"column"`   // e.g. "value", "bytes", "line"
+	GroupBy  []string `json:"groupBy"`  // label names; timestamp/time excluded from LogQL grouping
+}
+
 // normalizeGrafanaSQLRequest rewrites schemads tabular queries into native Loki queries.
 // Queries without GrafanaSql=true are unchanged.
 //
@@ -28,25 +42,46 @@ import (
 //	Log stream selectors always use Loki's range API (/query_range); the instant API does not support log queries.
 //	STEP('30s')      — range query step / resolution (must parse as a Grafana duration; invalid values fail the query)
 //	DIRECTION('forward'|'backward')
+//	RATE('5m')       — parseable Grafana duration; wraps metric expr with rate() or bytes_rate() (see buildGrafanaSQLMetricExpr)
+//	INSTANT          — metric queries only: use Loki's instant API (/query) instead of query_range (invalid with pure log selectors)
 //
 // Row count uses schemas.Query.limit (SQL LIMIT pushdown), not a table hint.
-func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataRequest, map[string]struct{}, map[string]error) {
+//
+// When `aggregation` is present (dsabstraction pushdown), the query is compiled to LogQL metric expressions
+// (range API only); responses are flattened with flattenMetricsToTabular instead of log flattening.
+//
+// dsAbstractionSQLRewriteEnabled runs Grafana SQL normalization when dsAbstractionApp is enabled on
+// PluginContext.GrafanaConfig (from plugin request config, including stack toggles forwarded by the query API).
+func dsAbstractionSQLRewriteEnabled(req *backend.QueryDataRequest) bool {
+	if req == nil {
+		return false
+	}
+	gc := req.PluginContext.GrafanaConfig
+	if gc == nil {
+		return false
+	}
+	return gc.FeatureToggles().IsEnabled(flagDsAbstractionApp)
+}
+
+// logSQLRefIDs and metricSQLRefIDs partition successful Grafana SQL rewrites so callers can
+// choose flattenLogsToTabular vs flattenMetricsToTabular.
+func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataRequest, map[string]struct{}, map[string]struct{}, map[string]error) {
 	if req == nil || len(req.Queries) == 0 {
-		return req, nil, nil
+		return req, nil, nil, nil
 	}
 
-	grafanaConfig := req.PluginContext.GrafanaConfig
-	if grafanaConfig == nil || !grafanaConfig.FeatureToggles().IsEnabled(flagDsAbstractionApp) {
-		return req, nil, nil
+	if !dsAbstractionSQLRewriteEnabled(req) {
+		return req, nil, nil, nil
 	}
 
 	out := make([]backend.DataQuery, 0, len(req.Queries))
-	schemadsRefIDs := make(map[string]struct{})
+	logSQLRefIDs := make(map[string]struct{})
+	metricSQLRefIDs := make(map[string]struct{})
 	sqlErrors := make(map[string]error)
 
 	var tableLabel string
 	for _, q := range req.Queries {
-		var sq schemas.Query
+		var sq grafanaSQLQuery
 		if err := json.Unmarshal(q.JSON, &sq); err != nil {
 			out = append(out, q)
 			continue
@@ -74,15 +109,12 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 			}
 		}
 
-		// Aggregation hints (if present) are ignored here: we fetch raw log rows and let dsabstraction
-		// apply aggregates on the tabular result unless/until LogQL metric pushdown is implemented.
-
 		hints := sq.TableHintValues
 		if hints == nil {
 			hints = map[string]string{}
 		}
 
-		expr, err := buildLogQLExpr(tableLabel, sq.Table, sq.Filters)
+		selector, err := buildLogQLExpr(tableLabel, sq.Table, sq.Filters)
 		if err != nil {
 			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: failed to build LogQL: %w", err)
 			continue
@@ -91,34 +123,62 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 		stepStr := hintGet(hints, "STEP")
 		dirStr := strings.ToLower(hintGet(hints, "DIRECTION"))
 
-		qt := "range"
-
-		maxLines := int64(0)
-		if sq.Limit != nil && *sq.Limit > 0 {
-			maxLines = *sq.Limit
-		}
-
 		stepForModel := ""
 		var stepDur time.Duration
 		if stepStr != "" {
-			var err error
-			stepDur, err = gtime.ParseIntervalStringToTimeDuration(stepStr)
-			if err != nil {
-				sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: failed to parse STEP hint %q: %w", stepStr, err)
+			var perr error
+			stepDur, perr = gtime.ParseIntervalStringToTimeDuration(stepStr)
+			if perr != nil {
+				sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: failed to parse STEP hint %q: %w", stepStr, perr)
 				continue
 			}
 			stepForModel = stepStr
 		}
 
-		model := QueryJSONModel{
-			LokiDataQuery: dataqueryFromExpr(q.RefID, expr, qt, maxLines, stepForModel),
-			Direction:     directionPtr(dirStr),
+		rateStr := hintGet(hints, "RATE")
+		var rateDur time.Duration
+		if rateStr != "" {
+			var rerr error
+			rateDur, rerr = gtime.ParseIntervalStringToTimeDuration(rateStr)
+			if rerr != nil {
+				sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: failed to parse RATE hint %q: %w", rateStr, rerr)
+				continue
+			}
 		}
 
-		raw, err := json.Marshal(model)
-		if err != nil {
-			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: marshal query model: %w", err)
+		isMetric := sq.Aggregation != nil || rateStr != ""
+		instantOn := instantHintEnabled(hints)
+
+		if instantOn && !isMetric {
+			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: INSTANT hint requires a metric query (aggregation or RATE)")
 			continue
+		}
+
+		var expr string
+		if !isMetric {
+			expr = selector
+		} else {
+			win := metricRangeWindow(stepDur, q.TimeRange.Duration())
+			var berr error
+			expr, berr = buildGrafanaSQLMetricExpr(selector, sq.Aggregation, win, rateDur)
+			if berr != nil {
+				sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: %w", berr)
+				continue
+			}
+			if !instantOn && stepForModel == "" && stepDur == 0 {
+				if rateStr != "" {
+					stepDur = rateDur
+					stepForModel = gtime.FormatInterval(rateDur)
+				} else {
+					stepDur = win
+					stepForModel = gtime.FormatInterval(win)
+				}
+			}
+		}
+
+		qt := "range"
+		if isMetric && instantOn {
+			qt = "instant"
 		}
 
 		if stepForModel != "" && stepDur > 0 {
@@ -129,13 +189,40 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 			}
 		}
 
+		if isMetric && instantOn {
+			stepForModel = ""
+		}
+
+		maxLines := int64(0)
+		if !isMetric && sq.Limit != nil && *sq.Limit > 0 {
+			maxLines = *sq.Limit
+		}
+
+		model := QueryJSONModel{
+			LokiDataQuery: dataqueryFromExpr(q.RefID, expr, qt, maxLines, stepForModel),
+			Direction:     directionPtr(dirStr),
+		}
+		if isMetric {
+			model.Direction = nil
+		}
+
+		raw, err := json.Marshal(model)
+		if err != nil {
+			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: marshal query model: %w", err)
+			continue
+		}
+
 		q.JSON = raw
 		out = append(out, q)
-		schemadsRefIDs[q.RefID] = struct{}{}
+		if isMetric {
+			metricSQLRefIDs[q.RefID] = struct{}{}
+		} else {
+			logSQLRefIDs[q.RefID] = struct{}{}
+		}
 	}
 
 	req.Queries = out
-	return req, schemadsRefIDs, sqlErrors
+	return req, logSQLRefIDs, metricSQLRefIDs, sqlErrors
 }
 
 func dataqueryFromExpr(refID, expr, queryType string, maxLines int64, step string) dataquery.LokiDataQuery {
@@ -166,6 +253,131 @@ func directionPtr(dir string) *string {
 	default:
 		return nil
 	}
+}
+
+func metricRangeWindow(stepDur time.Duration, queryDur time.Duration) time.Duration {
+	if stepDur > 0 {
+		return stepDur
+	}
+	if queryDur > 0 && queryDur < time.Minute {
+		return queryDur
+	}
+	return time.Minute
+}
+
+// instantHintEnabled reports whether TableHintValues include INSTANT (key presence only; same as promlib).
+func instantHintEnabled(hints map[string]string) bool {
+	if hints == nil {
+		return false
+	}
+	for k := range hints {
+		if strings.EqualFold(k, "INSTANT") {
+			return true
+		}
+	}
+	return false
+}
+
+// buildGrafanaSQLMetricExpr builds LogQL for Grafana SQL metric pushdown.
+// When rateDur > 0, the RATE table hint is applied (rate or bytes_rate); otherwise range-vector
+// helpers like count_over_time are used (compare promlib buildPromQLExpr ordering).
+func buildGrafanaSQLMetricExpr(selector string, agg *aggregationHint, window time.Duration, rateDur time.Duration) (string, error) {
+	if agg == nil {
+		if rateDur <= 0 {
+			return "", fmt.Errorf("metric expression requires an aggregation hint or RATE table hint")
+		}
+		return wrapLogQLRate(selector, "", rateDur), nil
+	}
+
+	fn := strings.ToUpper(strings.TrimSpace(agg.Function))
+	switch fn {
+	case "SUM", "AVG", "MIN", "MAX", "COUNT":
+	default:
+		return "", fmt.Errorf("unsupported aggregation function %q", agg.Function)
+	}
+
+	var inner string
+	var err error
+	if rateDur > 0 {
+		inner = wrapLogQLRate(selector, agg.Column, rateDur)
+	} else {
+		inner, err = innerMetricRangeVector(selector, fn, agg.Column, window)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	grouping := aggregationGroupLabels(agg)
+	switch fn {
+	case "COUNT":
+		return wrapLogQLAggregate("sum", grouping, inner), nil
+	case "SUM":
+		return wrapLogQLAggregate("sum", grouping, inner), nil
+	case "AVG":
+		return wrapLogQLAggregate("avg", grouping, inner), nil
+	case "MIN":
+		return wrapLogQLAggregate("min", grouping, inner), nil
+	case "MAX":
+		return wrapLogQLAggregate("max", grouping, inner), nil
+	default:
+		return "", fmt.Errorf("unsupported aggregation function %q", agg.Function)
+	}
+}
+
+func wrapLogQLRate(selector string, column string, d time.Duration) string {
+	w := gtime.FormatInterval(d)
+	bracket := "[" + w + "]"
+	col := strings.ToLower(strings.TrimSpace(column))
+	if col == "bytes" {
+		return fmt.Sprintf("bytes_rate(%s%s)", selector, bracket)
+	}
+	return fmt.Sprintf("rate(%s%s)", selector, bracket)
+}
+
+func aggregationGroupLabels(agg *aggregationHint) []string {
+	if agg == nil {
+		return nil
+	}
+	var grouping []string
+	for _, g := range agg.GroupBy {
+		gl := strings.ToLower(strings.TrimSpace(g))
+		if gl == "timestamp" || gl == "time" {
+			continue
+		}
+		if strings.EqualFold(g, agg.Column) {
+			continue
+		}
+		grouping = append(grouping, g)
+	}
+	sort.Strings(grouping)
+	return grouping
+}
+
+func innerMetricRangeVector(selector string, sqlFunc string, column string, window time.Duration) (string, error) {
+	w := gtime.FormatInterval(window)
+	bracket := "[" + w + "]"
+
+	switch strings.ToUpper(strings.TrimSpace(sqlFunc)) {
+	case "COUNT":
+		return fmt.Sprintf("count_over_time(%s%s)", selector, bracket), nil
+	}
+
+	col := strings.ToLower(strings.TrimSpace(column))
+	switch col {
+	case "", "*", "line", "value", "count":
+		return fmt.Sprintf("count_over_time(%s%s)", selector, bracket), nil
+	case "bytes":
+		return fmt.Sprintf("bytes_over_time(%s%s)", selector, bracket), nil
+	default:
+		return "", fmt.Errorf("unsupported aggregation column %q for loki metric pushdown", column)
+	}
+}
+
+func wrapLogQLAggregate(logqlOp string, grouping []string, inner string) string {
+	if len(grouping) == 0 {
+		return fmt.Sprintf("%s(%s)", logqlOp, inner)
+	}
+	return fmt.Sprintf("%s by (%s) (%s)", logqlOp, strings.Join(grouping, ", "), inner)
 }
 
 func hintGet(hints map[string]string, upperKey string) string {
