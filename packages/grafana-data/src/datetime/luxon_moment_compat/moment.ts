@@ -1,4 +1,4 @@
-import { type DateTimeUnit, type DurationLikeObject, type DurationUnit, DateTime, Duration } from 'luxon';
+import { type DateTimeUnit, type DurationLikeObject, type DurationUnit, DateTime, Duration, Settings } from 'luxon';
 
 import { convertMomentToLuxonWithOrdinal, formatWithOrdinal } from './format';
 
@@ -231,6 +231,7 @@ const DEFAULT_LOCALE = 'en';
 const ISO_8601 = 'ISO_8601' as unknown as MomentBuiltinFormat;
 
 let currentLocale = DEFAULT_LOCALE;
+Settings.defaultLocale = currentLocale;
 const localeWeekStart: Record<string, number> = {};
 const intlFormatterCache = new Map<string, Intl.DateTimeFormat>();
 let cachedGuessedZone: string | null = null;
@@ -509,7 +510,7 @@ function createTimeZoneInfo(name: string): MomentTimeZoneInfo | null {
   return {
     name,
     abbr(timestamp: number) {
-      const dt = DateTime.fromMillis(timestamp, { zone: name });
+      const dt = DateTime.fromMillis(timestamp, { zone: name, locale: currentLocale });
       return dt.offsetNameShort ?? '';
     },
     utcOffset(timestamp: number) {
@@ -1074,6 +1075,7 @@ moment.locale = (locale?: string): string => {
   const normalizedLocale = normalizeLocale(locale);
   if (normalizedLocale != null) {
     currentLocale = normalizedLocale;
+    Settings.defaultLocale = normalizedLocale;
   }
   return currentLocale;
 };
