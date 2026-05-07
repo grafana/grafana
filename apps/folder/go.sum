@@ -46,10 +46,10 @@ github.com/go-openapi/swag/typeutils v0.26.0 h1:2kdEwdiNWy+JJdOvu5MA2IIg2SylWAFu
 github.com/go-openapi/swag/typeutils v0.26.0/go.mod h1:oovDuIUvTrEHVMqWilQzKzV4YlSKgyZmFh7AlfABNVE=
 github.com/go-openapi/swag/yamlutils v0.26.0 h1:H7O8l/8NJJQ/oiReEN+oMpnGMyt8G0hl460nRZxhLMQ=
 github.com/go-openapi/swag/yamlutils v0.26.0/go.mod h1:1evKEGAtP37Pkwcc7EWMF0hedX0/x3Rkvei2wtG/TbU=
-github.com/go-openapi/testify/enable/yaml/v2 v2.4.2 h1:5zRca5jw7lzVREKCZVNBpysDNBjj74rBh0N2BGQbSR0=
-github.com/go-openapi/testify/enable/yaml/v2 v2.4.2/go.mod h1:XVevPw5hUXuV+5AkI1u1PeAm27EQVrhXTTCPAF85LmE=
-github.com/go-openapi/testify/v2 v2.4.2 h1:tiByHpvE9uHrrKjOszax7ZvKB7QOgizBWGBLuq0ePx4=
-github.com/go-openapi/testify/v2 v2.4.2/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
+github.com/go-openapi/testify/enable/yaml/v2 v2.5.0 h1:3hZD1fwydvCx/cc1R2uYNQirHqf2s6lqpKV3FcNTURA=
+github.com/go-openapi/testify/enable/yaml/v2 v2.5.0/go.mod h1:TvDZKBH7ZbMaF3EqH2AwTvNQCmzyZq8K1agRjf1B+Nk=
+github.com/go-openapi/testify/v2 v2.5.0 h1:UOCr63aAsMIDydZbZGqo5Ev01D4eydItRbekDuZMJLw=
+github.com/go-openapi/testify/v2 v2.5.0/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
 github.com/go-test/deep v1.1.1 h1:0r/53hagsehfO4bzD2Pgr/+RgHqhmf+k1Bpse2cTu1U=
 github.com/go-test/deep v1.1.1/go.mod h1:5C2ZWiW0ErCdrYzpqxLbTX7MG14M9iiw8DgHncVwcsE=
 github.com/google/gnostic-models v0.7.1 h1:SisTfuFKJSKM5CPZkffwi6coztzzeYUhc3v4yxLWH8c=
