@@ -6,6 +6,8 @@ import { type FeatureToggles } from '@grafana/data';
 import { config } from '../../config';
 import { logError } from '../../utils/logging';
 
+import { createProxyableProvider, type ProxyableProvider } from './proxy';
+
 // Ensure the module augmentation is pulled in
 import './openfeature-types.gen.d.ts';
 
@@ -37,20 +39,21 @@ export type FeatureFlagName = keyof FeatureToggles;
 // to ensure tests work correctly.
 export const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 
+// Allow internal direct access to the OFREP provider to expose a proxy to plugins.
+let ofrepWebProvider: ProxyableProvider<OFREPWebProvider> | undefined;
+export function getOFREPWebProvider() {
+  return (ofrepWebProvider ??= new (createProxyableProvider(OFREPWebProvider))({
+    baseUrl: `${config.appSubUrl || ''}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`,
+    pollInterval: -1, // disable polling
+    timeoutMs: 5_000,
+  }));
+}
+
 export async function initOpenFeature() {
   OpenFeature.addHandler(ProviderEvents.Ready, checkDefaultProvider);
   OpenFeature.addHandler(ProviderEvents.Error, checkDefaultProvider);
 
-  const subPath = config.appSubUrl || '';
-  const baseUrl = `${subPath}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`;
-
-  const ofProvider = new OFREPWebProvider({
-    baseUrl: baseUrl,
-    pollInterval: -1, // disable polling
-    timeoutMs: 5_000,
-  });
-
-  await OpenFeature.setProviderAndWait(GRAFANA_CORE_OPEN_FEATURE_DOMAIN, ofProvider, {
+  await OpenFeature.setProviderAndWait(GRAFANA_CORE_OPEN_FEATURE_DOMAIN, getOFREPWebProvider(), {
     targetingKey: config.namespace,
     ...config.openFeatureContext,
   });
