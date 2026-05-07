@@ -2,7 +2,6 @@ package backfill
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"iter"
 	"sync"
@@ -80,18 +79,6 @@ func newFakeStorage() *fakeStorage {
 		resources: map[string]storedResource{},
 		notFound:  map[string]struct{}{},
 	}
-}
-
-func (f *fakeStorage) put(ns, group, res, name string, value []byte, rv int64) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.resources[storeKey(ns, group, res, name)] = storedResource{Value: value, RV: rv}
-}
-
-func (f *fakeStorage) markNotFound(ns, group, res, name string) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.notFound[storeKey(ns, group, res, name)] = struct{}{}
 }
 
 func storeKey(ns, group, res, name string) string {
@@ -347,6 +334,3 @@ func newFakeEmbedder(text *fakeText) *embedder.Embedder {
 		Dimensions:   uint32(text.dim),
 	}
 }
-
-// errBoom is the canonical "something went wrong" sentinel for tests.
-var errBoom = errors.New("boom")
