@@ -81,7 +81,7 @@ func TestVerifyRequestKey(t *testing.T) {
 	invalidNamespace := "(((((default"
 	invalidName := "    " // only spaces
 
-	namespaceTooLong := strings.Repeat("a", 64)
+	namespaceTooLong := strings.Repeat("a", 41)
 	nameTooLong := strings.Repeat("a", 300)
 
 	tests := []struct {
@@ -192,7 +192,7 @@ func TestVerifyRequestKeyCollection(t *testing.T) {
 	invalidResource := "##resource"
 	invalidNamespace := "(((((default"
 
-	namespaceTooLong := strings.Repeat("a", 64)
+	namespaceTooLong := strings.Repeat("a", 41)
 
 	tests := []struct {
 		name         string

@@ -72,7 +72,8 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	// failures fall through to today's upload path — the probe is an
 	// optimisation, not a correctness check.
 	if interval := b.opts.Snapshot.UploadInterval; interval > 0 {
-		k, _, err := findFreshSnapshotByUploadTime(ctx, b.opts.Snapshot.Store, key, interval, b.opts.BuildVersion)
+		notOlderThan := time.Now().Add(-interval)
+		k, _, err := findFreshSnapshotByUploadTime(ctx, b.opts.Snapshot.Store, key, notOlderThan, b.opts.BuildVersion)
 		if err != nil {
 			logger.Warn("Snapshot upload-time probe failed; proceeding with upload", "err", err)
 		} else if k != (ulid.ULID{}) {
