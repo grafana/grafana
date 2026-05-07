@@ -279,7 +279,7 @@ describe('SidebarCard', () => {
 
   describe('multi-select checkbox', () => {
     const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-    const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+    const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
 
     beforeAll(() => {
       setTestFlags({ queryEditorNextMultiSelect: true });
