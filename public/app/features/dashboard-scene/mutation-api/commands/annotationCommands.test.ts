@@ -219,6 +219,30 @@ describe('Annotation mutation commands', () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain("Annotation 'missing' not found");
     });
+
+    it('rejects renaming to a name that already exists', async () => {
+      await client.execute({
+        type: 'ADD_ANNOTATION',
+        payload: { annotation: makeAnnotationKind('A') },
+      });
+      await client.execute({
+        type: 'ADD_ANNOTATION',
+        payload: { annotation: makeAnnotationKind('B') },
+      });
+
+      const result = await client.execute({
+        type: 'UPDATE_ANNOTATION',
+        payload: {
+          name: 'A',
+          annotation: makeAnnotationKind('B'),
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Annotation 'B' already exists");
+      const set = scene.state.$data as DashboardDataLayerSet;
+      expect(set.state.annotationLayers.map((l) => l.state.name)).toEqual(['A', 'B']);
+    });
   });
 
   describe('REMOVE_ANNOTATION', () => {

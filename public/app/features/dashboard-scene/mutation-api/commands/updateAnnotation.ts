@@ -43,6 +43,11 @@ export const updateAnnotationCommand: MutationCommand<UpdateAnnotationPayload> =
         throw new Error(`Annotation '${name}' not found`);
       }
 
+      const newName = annotation.spec.name;
+      if (newName !== name && findAnnotationLayer(set, newName)) {
+        throw new Error(`Annotation '${newName}' already exists`);
+      }
+
       const previousState = found.layer.state;
       const newLayer = buildAnnotationLayer(annotation);
       const updated = [...set.state.annotationLayers];
