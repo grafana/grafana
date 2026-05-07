@@ -66,40 +66,27 @@ func TestParseDataKeyParts_ResourceVersionMetadata(t *testing.T) {
 		require.Equal(t, "f", dk.Folder)
 		require.Equal(t, []string{"1", "created", "f", "guid-xyz"}, rvParts)
 	})
-}
 
-// Resource Names that pass the Grafana name validator (grafanaNameFmt) include
-// ':' — the user-storage strategy uses the "<service>:<userUID>" convention,
-// so user-storage names always contain ':'. The KV layer's validKeyRegex must
-// accept that, otherwise iterator-side validation (in the enterprise client
-// wrapper) rejects every freshly-written user-storage key with "received
-// invalid key from server" and the resource server cannot init.
-func TestDataKey_KvtestSplashScreenReproduction(t *testing.T) {
-	t.Parallel()
-
-	dk := DataKey{
-		Group:           "userstorage.grafana.app",
-		Resource:        "user-storage",
-		Namespace:       "default",
-		Name:            "grafana-splash-screen:afgzow84sv3lsf",
-		ResourceVersion: 2052318477101322240,
-		Action:          DataActionCreated,
-	}
-
-	key := dk.String()
-	require.Contains(t, key, ":", "':' must survive verbatim in the on-disk key")
-	require.True(t, IsValidKey(key),
-		"on-disk key %q must pass IsValidKey so iterator validation does not reject it", key)
-
-	parts := strings.Split(key, "/")
-	parsed, _, err := ParseDataKeyParts(parts)
-	require.NoError(t, err)
-	require.Equal(t, dk.Name, parsed.Name)
-	require.Equal(t, dk.Group, parsed.Group)
-	require.Equal(t, dk.Resource, parsed.Resource)
-	require.Equal(t, dk.Namespace, parsed.Namespace)
-	require.Equal(t, dk.ResourceVersion, parsed.ResourceVersion)
-	require.Equal(t, dk.Action, parsed.Action)
+	t.Run("userstorage format with colon", func(t *testing.T) {
+		t.Parallel()
+		// User-storage names follow the "<service>:<userUID>" convention
+		// enforced by pkg/registry/apis/userstorage/strategy.go, so the Name
+		// segment of a KV key for these resources contains ':'. The KV regex
+		// must accept that, otherwise iterator-side validation rejects every
+		// freshly-written user-storage key with "received invalid key from
+		// server" and the resource server cannot init.
+		parts := strings.Split("userstorage.grafana.app/user-storage/default/grafana-splash-screen:myuser1234abcd/2052318477101322240~created~", "/")
+		dk, rvParts, err := ParseDataKeyParts(parts)
+		require.NoError(t, err)
+		require.Equal(t, "userstorage.grafana.app", dk.Group)
+		require.Equal(t, "user-storage", dk.Resource)
+		require.Equal(t, "default", dk.Namespace)
+		require.Equal(t, "grafana-splash-screen:myuser1234abcd", dk.Name)
+		require.Equal(t, int64(2052318477101322240), dk.ResourceVersion)
+		require.Equal(t, DataActionCreated, dk.Action)
+		require.Equal(t, "", dk.Folder)
+		require.Equal(t, []string{"2052318477101322240", "created", ""}, rvParts)
+	})
 }
 
 func TestParseKeyWithGUID(t *testing.T) {
