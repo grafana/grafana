@@ -343,6 +343,7 @@ describe('StateTimeline uPlot integration', () => {
         const { drawClear, drawPaths } = getConfig(
           buildTestCoreOptions({
             namePosition: 'top',
+            rowHeight: 0.9,
             formatValue: () => 'foo',
           })
         );
@@ -365,6 +366,7 @@ describe('StateTimeline uPlot integration', () => {
         const { drawClear, drawPaths } = getConfig(
           buildTestCoreOptions({
             namePosition: 'left',
+            rowHeight: 0.9,
             formatValue: () => 'foo',
           })
         );
