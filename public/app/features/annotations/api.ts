@@ -84,9 +84,6 @@ class K8sAnnotationServer implements AnnotationServer {
   }
 }
 
-// Both server implementations are stateless wrappers, so we don't memoize:
-// constructing on each call lets `config.annotationAppPlatformEnabled` flips
-// (mid-app or in tests) take effect on the next caller without a reset hatch.
 export function annotationServer(): AnnotationServer {
   return config.annotationAppPlatformEnabled ? new K8sAnnotationServer() : new LegacyAnnotationServer();
 }

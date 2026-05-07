@@ -19,9 +19,6 @@ const ANNOTATIONS_RESOURCE = 'annotations';
 const TAGS_RESOURCE = 'tags';
 const SEARCH_RESOURCE = 'search';
 
-// Construction is cheap (one config read + a string concat) and the URL it
-// builds depends on `config.namespace`, so we don't memoize — that lets
-// namespace changes (mid-app or in tests) take effect on the next call.
 function resourceClient(): ScopedResourceClient<AnnotationSpec, object, 'Annotation'> {
   return new ScopedResourceClient<AnnotationSpec, object, 'Annotation'>({
     group: ANNOTATION_API_GROUP,
