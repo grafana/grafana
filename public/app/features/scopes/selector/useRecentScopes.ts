@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 
 import { store } from '@grafana/data';
 import { type Scope, type ScopeNode } from 'app/api/clients/scope/v0alpha1/endpoints.gen';
@@ -13,8 +13,17 @@ import { type RecentScopeSet } from './types';
 import { useScopesById, useScopeNodesByName } from './useRecentScopesApi';
 
 function subscribe(callback: () => void) {
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === RECENT_SCOPES_KEY) {
+      callback();
+    }
+  };
   window.addEventListener(RECENT_SCOPES_CHANGED_EVENT, callback);
-  return () => window.removeEventListener(RECENT_SCOPES_CHANGED_EVENT, callback);
+  window.addEventListener('storage', onStorage);
+  return () => {
+    window.removeEventListener(RECENT_SCOPES_CHANGED_EVENT, callback);
+    window.removeEventListener('storage', onStorage);
+  };
 }
 
 // Cache by serialized value to ensure stable references from useSyncExternalStore.
@@ -102,23 +111,6 @@ export function useRecentScopes(appliedScopeIds: string[]): RecentScopeSet[] {
   ];
 
   const parentNodesById = useScopeNodesByName(parentNodeIds);
-
-  // Lazy Zod validation — prune any entries that fail the schema check.
-  // We write directly here (bypassing writeRecentScope) because we already have
-  // StoredRecentScopeSet[] from the validator, not raw Scope objects.
-  useEffect(() => {
-    import('./recentScopesValidation')
-      .then(({ validateStoredRecentScopes }) => validateStoredRecentScopes(storedScopes))
-      .then((valid) => {
-        if (valid.length !== storedScopes.length) {
-          store.set(RECENT_SCOPES_KEY, JSON.stringify(valid));
-          window.dispatchEvent(new Event(RECENT_SCOPES_CHANGED_EVENT));
-        }
-      })
-      .catch(() => {
-        // Validation is best-effort; failures are non-fatal
-      });
-  }, [storedScopes]);
 
   return filteredScopes.map((set) => {
     const scopes = set.scopeIds.flatMap((id) => {
