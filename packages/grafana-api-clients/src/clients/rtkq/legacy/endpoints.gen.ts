@@ -4508,16 +4508,16 @@ export type PreferencesQueryHistoryPreference = {
 export type PreferencesSpec = {
   /** UID for the home dashboard */
   homeDashboardUID?: string;
-  /** Selected language (beta) */
+  /** Selected language */
   language?: string;
   navbar?: PreferencesNavbarPreference;
   queryHistory?: PreferencesQueryHistoryPreference;
-  /** Selected locale (beta) */
+  /** Selected locale (beta)
+    TODO: Will be removed */
   regionalFormat?: string;
-  /** light, dark, empty is default */
+  /** user interface theme */
   theme?: string;
-  /** The timezone selection
-    TODO: this should use the timezone defined in common */
+  /** The timezone selection */
   timezone?: string;
   /** day of the week (sunday, monday, etc) */
   weekStart?: string;

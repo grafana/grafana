@@ -1,5 +1,8 @@
+import Prism from 'prismjs';
+
 import { createAssistantContextItem } from '@grafana/assistant';
 import {
+  AbstractLabelOperator,
   type DataFrame,
   type DataQueryResponse,
   type DataQueryRequest,
@@ -10,7 +13,159 @@ import {
 } from '@grafana/data';
 
 import { type GrafanaPyroscopeDataQuery } from './dataquery.gen';
-import { enrichDataFrameWithAssistantContentMapper } from './utils';
+import {
+  addLabelToQuery,
+  enrichDataFrameWithAssistantContentMapper,
+  extractLabelMatchers,
+  formatLabelName,
+  grammar,
+  labelNameNeedsQuoting,
+  toPromLikeExpr,
+} from './utils';
+
+describe('labelNameNeedsQuoting', () => {
+  it.each([
+    ['service', false],
+    ['_private', false],
+    ['__name__', false],
+    ['k8s.namespace', true],
+    ['some-label', true],
+    ['http/url', true],
+    ['9lives', true],
+    ['', true],
+  ])('%s => %s', (name, expected) => {
+    expect(labelNameNeedsQuoting(name)).toBe(expected);
+  });
+});
+
+describe('formatLabelName', () => {
+  it('returns plain name unchanged', () => {
+    expect(formatLabelName('service')).toBe('service');
+  });
+
+  it('wraps name containing dot in double quotes', () => {
+    expect(formatLabelName('k8s.namespace')).toBe('"k8s.namespace"');
+  });
+
+  it('wraps name containing hyphen in double quotes', () => {
+    expect(formatLabelName('some-label')).toBe('"some-label"');
+  });
+
+  it('escapes double quotes in label names', () => {
+    expect(formatLabelName('has"quote')).toBe('"has\\"quote"');
+  });
+
+  it('escapes backslashes in label names', () => {
+    expect(formatLabelName('has\\backslash')).toBe('"has\\\\backslash"');
+  });
+
+  it('escapes both double quotes and backslashes', () => {
+    expect(formatLabelName('both"and\\')).toBe('"both\\"and\\\\"');
+  });
+});
+
+describe('toPromLikeExpr', () => {
+  it('serialises plain label names without quoting', () => {
+    expect(toPromLikeExpr([{ name: 'service', operator: AbstractLabelOperator.Equal, value: 'foo' }])).toBe(
+      '{service="foo"}'
+    );
+  });
+
+  it('double-quotes UTF-8 label names', () => {
+    expect(toPromLikeExpr([{ name: 'k8s.namespace', operator: AbstractLabelOperator.Equal, value: 'prod' }])).toBe(
+      '{"k8s.namespace"="prod"}'
+    );
+  });
+
+  it('handles mixed plain and UTF-8 label names', () => {
+    expect(
+      toPromLikeExpr([
+        { name: 'service', operator: AbstractLabelOperator.Equal, value: 'foo' },
+        { name: 'k8s.pod', operator: AbstractLabelOperator.Equal, value: 'bar' },
+      ])
+    ).toBe('{service="foo", "k8s.pod"="bar"}');
+  });
+
+  it('returns empty string for empty matchers', () => {
+    expect(toPromLikeExpr([])).toBe('');
+  });
+});
+
+describe('extractLabelMatchers + grammar round-trip', () => {
+  it('parses plain label name', () => {
+    const tokens = Prism.tokenize('{service="foo"}', grammar);
+    const matchers = extractLabelMatchers(tokens);
+    expect(matchers).toHaveLength(1);
+    expect(matchers[0].name).toBe('service');
+    expect(matchers[0].value).toBe('foo');
+  });
+
+  it('parses double-quoted UTF-8 label name and strips quotes', () => {
+    const tokens = Prism.tokenize('{"k8s.namespace"="prod"}', grammar);
+    const matchers = extractLabelMatchers(tokens);
+    expect(matchers).toHaveLength(1);
+    expect(matchers[0].name).toBe('k8s.namespace');
+    expect(matchers[0].value).toBe('prod');
+  });
+
+  it('parses mixed plain and UTF-8 label names', () => {
+    const tokens = Prism.tokenize('{service="foo", "k8s.pod"="bar"}', grammar);
+    const matchers = extractLabelMatchers(tokens);
+    expect(matchers).toHaveLength(2);
+    expect(matchers[0].name).toBe('service');
+    expect(matchers[1].name).toBe('k8s.pod');
+  });
+
+  it('round-trips a UTF-8 label name through parse and serialise', () => {
+    const input = '{"k8s.namespace"="prod"}';
+    const tokens = Prism.tokenize(input, grammar);
+    const matchers = extractLabelMatchers(tokens);
+    expect(toPromLikeExpr(matchers)).toBe(input);
+  });
+
+  it('parses label name with escaped double quote', () => {
+    const tokens = Prism.tokenize('{"has\\"quote"="val"}', grammar);
+    const matchers = extractLabelMatchers(tokens);
+    expect(matchers).toHaveLength(1);
+    expect(matchers[0].name).toBe('has"quote');
+    expect(matchers[0].value).toBe('val');
+  });
+
+  it('parses label name with escaped backslash', () => {
+    const tokens = Prism.tokenize('{"has\\\\backslash"="val"}', grammar);
+    const matchers = extractLabelMatchers(tokens);
+    expect(matchers).toHaveLength(1);
+    expect(matchers[0].name).toBe('has\\backslash');
+    expect(matchers[0].value).toBe('val');
+  });
+
+  it('round-trips label name with escaped characters', () => {
+    const matchers = [{ name: 'has"quote', operator: AbstractLabelOperator.Equal, value: 'val' }];
+    const expr = toPromLikeExpr(matchers);
+    expect(expr).toBe('{"has\\"quote"="val"}');
+    const tokens = Prism.tokenize(expr, grammar);
+    const parsed = extractLabelMatchers(tokens);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0].name).toBe('has"quote');
+  });
+});
+
+describe('addLabelToQuery', () => {
+  it('adds a UTF-8 key with double-quoted name', () => {
+    const result = addLabelToQuery('{}', 'k8s.namespace', 'prod');
+    expect(result).toBe('{"k8s.namespace"="prod"}');
+  });
+
+  it('replaces an existing UTF-8 key', () => {
+    const result = addLabelToQuery('{"k8s.namespace"="old"}', 'k8s.namespace', 'new');
+    expect(result).toBe('{"k8s.namespace"="new"}');
+  });
+
+  it('adds a UTF-8 key alongside a plain key', () => {
+    const result = addLabelToQuery('{service="foo"}', 'k8s.namespace', 'prod');
+    expect(result).toBe('{service="foo", "k8s.namespace"="prod"}');
+  });
+});
 
 // Mock the createContext function
 jest.mock('@grafana/assistant', () => ({
