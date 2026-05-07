@@ -228,7 +228,18 @@ export async function openScopesSelector(page: Page, scopes?: TestScope[]) {
   const responsePromise = scopeNodeChildrenRequest(page, scopes);
 
   await click();
-  await responsePromise;
+
+  // Wait for either a network response (first fetch) or tree items appearing in the UI.
+  // When scope node children are already in the RTK Query cache from a previous open in
+  // the same session, no HTTP request is made and waitForResponse would time out. Racing
+  // against the UI update handles both cases correctly.
+  const uiLoaded = page
+    .getByTestId(/^scopes-tree-.*-(checkbox|radio|link|expand)/)
+    .first()
+    .waitFor({ timeout: 5000 })
+    .catch(() => null);
+
+  await Promise.race([responsePromise, uiLoaded]);
 }
 
 /**
@@ -245,7 +256,18 @@ export async function expandScopesSelection(page: Page, parentScope: string, sco
   const responsePromise = scopeNodeChildrenRequest(page, scopes, parentScope);
 
   await click();
-  await responsePromise;
+
+  // Wait for either a network response (first fetch) or the expand button gaining
+  // aria-expanded="true". When scope node children are already in the RTK Query cache,
+  // no HTTP request is made and waitForResponse would time out. Racing against the UI
+  // update handles both cases correctly.
+  const uiExpanded = page
+    .getByTestId(`scopes-tree-${parentScope}-expand`)
+    .and(page.locator('[aria-expanded="true"]'))
+    .waitFor({ timeout: 5000 })
+    .catch(() => null);
+
+  await Promise.race([responsePromise, uiExpanded]);
 }
 
 /**
@@ -480,7 +502,17 @@ export async function searchScopes(page: Page, value: string, resultScopes?: Tes
   const responsePromise = scopeNodeChildrenRequest(page, resultScopes);
 
   await click();
-  await responsePromise;
+
+  // Wait for either a network response (first fetch) or tree items updating in the UI.
+  // When scope node children are already in the RTK Query cache, no HTTP request is made
+  // and waitForResponse would time out. Racing against the UI update handles both cases.
+  const uiUpdated = page
+    .getByTestId(/^scopes-tree-.*-(checkbox|radio|link|expand)/)
+    .first()
+    .waitFor({ timeout: 5000 })
+    .catch(() => null);
+
+  await Promise.race([responsePromise, uiUpdated]);
 }
 
 export async function getScopeTreeName(page: Page, nth: number): Promise<string> {
