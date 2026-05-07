@@ -66,7 +66,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   const { items: testDataSources, isLoading: isTestDsLoading } = useInstanceSettingsList(
     config.featureToggles.dashboardTemplates ? testDsFilters : undefined
   );
-  const hasTestDataSource = !isTestDsLoading && testDataSources.length > 0;
+  const hasTestDataSource = config.featureToggles.dashboardTemplates && !isTestDsLoading && testDataSources.length > 0;
 
   return (
     <>
