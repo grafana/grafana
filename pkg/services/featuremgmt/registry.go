@@ -1985,6 +1985,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "megaMenuControls",
+			Description: "Enables search filtering and expand/collapse controls in the mega menu",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Generate:    Generate{React: true},
+			Expression:  "false",
+		},
+		{
 			Name:         "experimentRecentlyViewedDashboards",
 			Description:  "A/A test for recently viewed dashboards feature",
 			Stage:        FeatureStageExperimental,
