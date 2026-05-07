@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+	v0alpha1 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var (
@@ -245,16 +247,22 @@ func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context,
 }
 
 func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
-	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{Limit: cmd.Limit})
+	//get all correlations up to the last page asked for
+	fetchAmt := cmd.Limit * cmd.Page
+	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{Limit: fetchAmt})
 	if err != nil {
 		return GetCorrelationsResponseBody{
 			Correlations: []Correlation{},
 		}, err
 	}
 
-	correlations := make([]Correlation, len(appPlatformCorrs.Items))
+	listLength := int64(len(appPlatformCorrs.Items))     // the actual amount of correlations returned, may be less if its the last page
+	actualPageStartIndex := max(listLength-cmd.Limit, 0) // returned results will be the page size to the end of the fetched results, or return the whole thing
+	actualResults := appPlatformCorrs.Items[actualPageStartIndex:]
 
-	for i, val := range appPlatformCorrs.Items {
+	correlations := make([]Correlation, len(actualResults))
+
+	for i, val := range actualResults {
 		legacyCorr, _ := convertUnstructuredToCorrelation(val)
 		if err != nil {
 			return GetCorrelationsResponseBody{
@@ -264,12 +272,26 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 		correlations[i] = *legacyCorr
 	}
 
-	// TODO pagination
+	metadata := &v0alpha1.CorrelationList{} // CorrelationList has both the metadata and the items, but the items are located somewhere different in this response, so we only get the metadata
+	err2 := runtime.DefaultUnstructuredConverter.FromUnstructured(appPlatformCorrs.Object, metadata)
+	if err2 != nil {
+		return GetCorrelationsResponseBody{
+			Correlations: []Correlation{},
+		}, err2
+	}
+
+	var remainingItemCount int64
+	if metadata.RemainingItemCount != nil {
+		remainingItemCount = *metadata.RemainingItemCount
+	} else {
+		remainingItemCount = 0
+	}
+
 	return GetCorrelationsResponseBody{
 		Correlations: correlations,
-		TotalCount:   int64(len(correlations)),
-		Page:         0,
-		Limit:        100000,
+		TotalCount:   remainingItemCount + listLength,
+		Page:         cmd.Page,
+		Limit:        cmd.Limit,
 	}, nil
 }
 
