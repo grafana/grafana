@@ -10,7 +10,6 @@ import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../utils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { buildColumnsFromFields, type ColumnBuildConfig } from './columnBuilder';
 import { TABLE } from './constants';
 import {
   useColumnResize,
@@ -23,10 +22,9 @@ import {
   useScrollbarWidth,
   useSortedRows,
 } from './hooks';
-import { renderRowFactory } from './rowBuilder';
+import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
 import {
   type CellRootRenderer,
-  type FromFieldsResult,
   type InspectCellProps,
   type TableColumn,
   type TableNGProps,
@@ -46,6 +44,11 @@ import {
 } from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
+
+// Flat tables have no depth-1 rows, so expandedRows is never consulted.
+// Stable references avoid invalidating useDataGridRows' memo on every render.
+const EMPTY_EXPANDED_ROWS: Set<string> = new Set();
+const NOOP_STABLE_KEY = () => '';
 
 export function TableFlat(props: TableNGProps) {
   const {
@@ -210,10 +213,12 @@ export function TableFlat(props: TableNGProps) {
     return () => rowHeight;
   }, [rowHeight]);
 
-  // Flat tables have no depth-1 rows, so the expandedRows Set is never consulted.
-  const renderRow = useMemo(
-    () => renderRowFactory(data.fields, panelContext, new Set(), enableSharedCrosshair, () => ''),
-    [data.fields, panelContext, enableSharedCrosshair]
+  const renderRow = useDataGridRows(
+    data.fields,
+    panelContext,
+    EMPTY_EXPANDED_ROWS,
+    enableSharedCrosshair,
+    NOOP_STABLE_KEY
   );
 
   const columnBuildConfig = useMemo(
@@ -259,17 +264,7 @@ export function TableFlat(props: TableNGProps) {
     ]
   );
 
-  const fromFields = useCallback(
-    (
-      f: Field[],
-      colWidths: number[],
-      frame: typeof data,
-      rawRows: TableRow[],
-      visibleRows: TableRow[]
-    ): FromFieldsResult =>
-      buildColumnsFromFields(f, colWidths, frame, rawRows, visibleRows, filterResult, columnBuildConfig),
-    [filterResult, columnBuildConfig]
-  );
+  const fromFields = useColumnBuilderFromFields(filterResult, columnBuildConfig);
 
   const { columns, cellRootRenderers } = useMemo(
     () => fromFields(visibleFields, widths, data, rows, sortedRows),

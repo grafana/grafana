@@ -7,10 +7,21 @@ import {
   type ReactNode,
   type RefObject,
   type SetStateAction,
+  useCallback,
+  useMemo,
 } from 'react';
-import { Cell, type CellRendererProps, type DataGridHandle, type RenderCellProps } from 'react-data-grid';
+import {
+  Cell,
+  type CellRendererProps,
+  type DataGridHandle,
+  type RenderCellProps,
+  type RenderRowProps,
+  Row,
+} from 'react-data-grid';
 
 import {
+  DataHoverClearEvent,
+  DataHoverEvent,
   FALLBACK_COLOR,
   type DataFrame,
   type Field,
@@ -25,6 +36,8 @@ import {
   TableCellTooltipPlacement,
   type TableFooterOptions,
 } from '@grafana/schema';
+
+import { type PanelContext } from '../../PanelChrome';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
 import { HeaderCell } from './components/HeaderCell';
@@ -47,6 +60,7 @@ import {
   type FromFieldsResult,
   type GetActionsFunctionLocal,
   type InspectCellProps,
+  type NestedRowEntry,
   type TableCellStyleOptions,
   type TableFilterActionCallback,
   type TableRow,
@@ -67,6 +81,67 @@ import {
   shouldTextOverflow,
   shouldTextWrap,
 } from './utils';
+
+// -----------------------------------------------------------------------------
+// useDataGridRows
+// -----------------------------------------------------------------------------
+
+/**
+ * @internal
+ * Memoized renderer for the `renderRow` prop on DataGrid. Applies aria attributes and
+ * shared-crosshair event handlers.
+ */
+export function useDataGridRows(
+  fields: Field[],
+  panelContext: PanelContext,
+  expandedRows: Set<string>,
+  enableSharedCrosshair: boolean,
+  getStableKey: (rowIdx: number) => string
+): (key: Key, props: RenderRowProps<TableRow, TableSummaryRow>) => ReactNode {
+  return useMemo(
+    () =>
+      // eslint-disable-next-line react/display-name
+      (key: Key, props: RenderRowProps<TableRow, TableSummaryRow>): ReactNode => {
+        const { row } = props;
+        const rowIdx = row.__index;
+        const isExpanded = expandedRows.has(getStableKey(rowIdx));
+
+        // Don't render non-expanded child rows
+        if (row.__depth === 1) {
+          if (!isExpanded) {
+            return null;
+          }
+          return <Row key={key} aria-level={row.__index + 1} aria-expanded={isExpanded} {...props} />;
+        }
+
+        const handlers: Partial<typeof props> = {};
+        if (enableSharedCrosshair) {
+          const timeField = fields.find((f) => f.type === FieldType.time);
+          if (timeField) {
+            handlers.onMouseEnter = () => {
+              panelContext.eventBus.publish(
+                new DataHoverEvent({
+                  point: {
+                    time: timeField?.values[rowIdx],
+                  },
+                })
+              );
+            };
+            handlers.onMouseLeave = () => {
+              panelContext.eventBus.publish(new DataHoverClearEvent());
+            };
+          }
+        }
+
+        return <Row key={key} {...props} {...handlers} />;
+      },
+    [fields, panelContext, expandedRows, enableSharedCrosshair, getStableKey]
+  );
+}
+
+// -----------------------------------------------------------------------------
+// useColumnBuilderFromFields
+// -----------------------------------------------------------------------------
 
 export interface ColumnBuildConfig {
   applyToRowBgFn: ((rowIdx: number) => Partial<CSSProperties>) | undefined;
@@ -90,12 +165,21 @@ export interface ColumnBuildConfig {
   timeRange?: TimeRange;
 }
 
+export type FromFieldsFn = (
+  fields: Field[],
+  widths: number[],
+  frame: DataFrame,
+  rawRows: TableRow[],
+  visibleRows: TableRow[]
+) => FromFieldsResult;
+
 /**
  * Builds column definitions and cell root renderers from a set of fields.
- * The caller is responsible for resolving the correct `resolvedFilterResult` —
- * flat tables pass their `filterResult` directly; nested tables resolve via parentIndex.
+ * Internal: callers should use `useColumnBuilderFromFields`, which memoizes the
+ * per-call closure and resolves `resolvedFilterResult` (flat → top-level filterResult,
+ * nested → per-parent via `parentIndex`).
  */
-export function buildColumnsFromFields(
+function buildColumnsFromFields(
   fields: Field[],
   widths: number[],
   frame: DataFrame,
@@ -454,4 +538,26 @@ export function buildColumnsFromFields(
   }
 
   return result;
+}
+
+/**
+ * @internal
+ * Memoized factory for the per-call `fromFields` function consumed by TableFlat / TableNested.
+ * When `nestedRows` is provided, the filter result is resolved per-call from the parent index;
+ * otherwise the top-level `filterResult` is used directly.
+ */
+export function useColumnBuilderFromFields(
+  filterResult: ApplyFilterResult,
+  config: ColumnBuildConfig,
+  nestedRows?: NestedRowEntry[]
+): FromFieldsFn {
+  return useCallback(
+    (fields, widths, frame, rawRows, visibleRows) => {
+      const parentIndex = visibleRows[0]?.__parentIndex;
+      const resolvedFilterResult =
+        parentIndex == null || nestedRows == null ? filterResult : nestedRows[parentIndex].filterResult;
+      return buildColumnsFromFields(fields, widths, frame, rawRows, visibleRows, resolvedFilterResult, config);
+    },
+    [filterResult, nestedRows, config]
+  );
 }

@@ -19,7 +19,6 @@ import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../utils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { buildColumnsFromFields, type ColumnBuildConfig } from './columnBuilder';
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
 import { RowExpander } from './components/RowExpander';
 import { COLUMN, TABLE } from './constants';
@@ -36,7 +35,7 @@ import {
   useScrollbarWidth,
   useSortedRows,
 } from './hooks';
-import { renderRowFactory } from './rowBuilder';
+import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,
@@ -64,7 +63,7 @@ import {
 const EXPANDED_COLUMN_KEY = 'expanded';
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
 
-export function TableNested(props: TableNGProps) {
+export function TableNested(props: TableNGProps & { nestedFramesField: Field<DataFrame[]> }) {
   const {
     cellHeight,
     data,
@@ -76,6 +75,7 @@ export function TableNested(props: TableNGProps) {
     getActions = () => [],
     height,
     maxRowHeight: _maxRowHeight,
+    nestedFramesField,
     noHeader,
     noValue,
     onCellFilterAdded,
@@ -120,13 +120,8 @@ export function TableNested(props: TableNGProps) {
   const resizeHandler = useColumnResize(onColumnResize);
   const nestedResizeHandler = useColumnResize(onColumnResize, 'nested');
 
-  const nestedFramesFieldName = useMemo(() => {
-    const firstNestedField = data.fields.find((f) => f.type === FieldType.nestedFrames);
-    if (!firstNestedField) {
-      return;
-    }
-    return getDisplayName(firstNestedField);
-  }, [data]);
+  const nestedFramesFieldName = useMemo(() => getDisplayName(nestedFramesField), [nestedFramesField]);
+  const nestedData: DataFrame[] = useMemo(() => nestedFramesField.values.map((v) => v[0]), [nestedFramesField]);
 
   const frameToRecords = useMemo(
     () => compileFrameToRecords(data, nestedFramesFieldName),
@@ -134,19 +129,13 @@ export function TableNested(props: TableNGProps) {
   );
   const rows = useMemo(() => frameToRecords(data), [frameToRecords, data]);
 
-  const nestedData = useMemo(
-    (): DataFrame[] | undefined =>
-      data.fields.find((f) => getDisplayName(f) === nestedFramesFieldName)?.values.map((v) => v[0]),
-    [data, nestedFramesFieldName]
-  );
-
   const getRowStableKeyForRowIdx = useCallback(
-    (rowIdx: number): string => getStableRowKey(rowIdx, nestedData?.[rowIdx]),
+    (rowIdx: number): string => getStableRowKey(rowIdx, nestedData[rowIdx]),
     [nestedData]
   );
 
-  const firstRowNestedData = useMemo(() => (nestedData ? nestedData[0] : undefined), [nestedData]);
-  const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
+  const firstRowNestedData = nestedData[0];
+  const nestedFields = firstRowNestedData.fields;
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
   const nestedHasFooter = useMemo(
     () => nestedVisibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
@@ -247,7 +236,7 @@ export function TableNested(props: TableNGProps) {
     structureRev,
   });
 
-  const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
+  const hasNestedHeaders = useMemo(() => firstRowNestedData.meta?.custom?.noHeader !== true, [firstRowNestedData]);
   const nestedHeaderHeight = useHeaderHeight({
     columnWidths: nestedFieldWidths,
     fields: nestedVisibleFields,
@@ -318,9 +307,20 @@ export function TableNested(props: TableNGProps) {
     return () => rowHeight;
   }, [rowHeight, defaultNestedRowHeight, expandedRows, getRowStableKeyForRowIdx]);
 
-  const renderRow = useMemo(
-    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair, getRowStableKeyForRowIdx),
-    [data.fields, panelContext, expandedRows, enableSharedCrosshair, getRowStableKeyForRowIdx]
+  const renderRow = useDataGridRows(
+    data.fields,
+    panelContext,
+    expandedRows,
+    enableSharedCrosshair,
+    getRowStableKeyForRowIdx
+  );
+
+  const renderRowNested = useDataGridRows(
+    nestedFields,
+    panelContext,
+    expandedRows,
+    enableSharedCrosshair,
+    getRowStableKeyForRowIdx
   );
 
   const commonDataGridProps = useMemo(
@@ -401,20 +401,7 @@ export function TableNested(props: TableNGProps) {
     ]
   );
 
-  const fromFields = useCallback(
-    (
-      f: Field[],
-      colWidths: number[],
-      frame: DataFrame,
-      rawRows: TableRow[],
-      visibleRows: TableRow[]
-    ): FromFieldsResult => {
-      const parentIndex = visibleRows[0]?.__parentIndex;
-      const resolvedFilterResult = parentIndex == null ? filterResult : nestedRows[parentIndex].filterResult;
-      return buildColumnsFromFields(f, colWidths, frame, rawRows, visibleRows, resolvedFilterResult, columnBuildConfig);
-    },
-    [filterResult, nestedRows, columnBuildConfig]
-  );
+  const fromFields = useColumnBuilderFromFields(filterResult, columnBuildConfig, nestedRows);
 
   const buildNestedTableExpanderColumn = useCallback(
     (
@@ -528,18 +515,16 @@ export function TableNested(props: TableNGProps) {
   );
 
   const nestedColumnsMatrix = useMemo(() => {
-    const result: FromFieldsResult[] = [];
+    const result: FromFieldsResult[] = Array.from({ length: nestedData.length });
     for (const row of rows) {
       if (row.__depth > 0) {
-        const rowNestedFrame = nestedData![row.__index]!;
-        result.push(
-          fromFields(
-            getVisibleFields(rowNestedFrame.fields),
-            nestedFieldWidths,
-            rowNestedFrame,
-            nestedRows[row.__index].raw,
-            nestedRows[row.__index].final
-          )
+        const rowNestedFrame = nestedData[row.__index]!;
+        result[row.__index] = fromFields(
+          getVisibleFields(rowNestedFrame.fields),
+          nestedFieldWidths,
+          rowNestedFrame,
+          nestedRows[row.__index].raw,
+          nestedRows[row.__index].final
         );
       }
     }
@@ -552,14 +537,6 @@ export function TableNested(props: TableNGProps) {
     if (!firstRowNestedData) {
       return result;
     }
-
-    const renderRowNested = renderRowFactory(
-      firstRowNestedData.fields,
-      panelContext,
-      expandedRows,
-      enableSharedCrosshair,
-      getRowStableKeyForRowIdx
-    );
 
     const expanderCellRenderer: CellRootRenderer = (key, cellProps) => <Cell key={key} {...cellProps} />;
     result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
@@ -583,17 +560,14 @@ export function TableNested(props: TableNGProps) {
   }, [
     buildNestedTableExpanderColumn,
     data,
-    enableSharedCrosshair,
-    expandedRows,
     firstRowNestedData,
     fromFields,
-    getRowStableKeyForRowIdx,
     hasNestedHeaders,
     nestedColumnsMatrix,
     nestedFooterHeight,
     nestedHasFooter,
     nestedHeaderHeight,
-    panelContext,
+    renderRowNested,
     rows,
     sortedRows,
     visibleFields,
