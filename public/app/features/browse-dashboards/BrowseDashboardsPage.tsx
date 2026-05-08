@@ -171,13 +171,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           />
         </div>
 
-        {hasSelection ? (
-          <BrowseActions folderDTO={folderDTO} />
-        ) : (
-          <div className={styles.filters}>
-            <BrowseFilters />
-          </div>
-        )}
+        {hasSelection ? <BrowseActions folderDTO={folderDTO} /> : <BrowseFilters />}
 
         <div className={styles.subView}>
           <AutoSizer>
@@ -210,6 +204,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css({
+    label: 'pageContents',
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
@@ -218,15 +213,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   // AutoSizer needs an element to measure the full height available
   subView: css({
+    label: 'subView',
     height: '100%',
-  }),
-
-  filters: css({
-    display: 'none',
-
-    [theme.breakpoints.up('md')]: {
-      display: 'block',
-    },
+    minHeight: '300px',
   }),
 });
 
