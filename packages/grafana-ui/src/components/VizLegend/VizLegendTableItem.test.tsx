@@ -26,9 +26,14 @@ describe('LegendTableItem', () => {
     expect(screen.getByRole('button')).toHaveAttribute('title', 'CPU usage');
   });
 
-  it('shows "(right y-axis)" indicator for yAxis 2', () => {
-    renderInTable({ item: makeItem({ yAxis: 2 }) });
+  it('shows "(right y-axis)" indicator for yAxis 2 when hasMixedAxes is true', () => {
+    renderInTable({ item: makeItem({ yAxis: 2 }), hasMixedAxes: true });
     expect(screen.getByText('(right y-axis)')).toBeInTheDocument();
+  });
+
+  it('does not show "(right y-axis)" indicator when hasMixedAxes is false', () => {
+    renderInTable({ item: makeItem({ yAxis: 2 }), hasMixedAxes: false });
+    expect(screen.queryByText('(right y-axis)')).not.toBeInTheDocument();
   });
 
   it('renders stat values from getDisplayValues', () => {

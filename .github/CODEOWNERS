@@ -175,6 +175,7 @@
 /pkg/services/folder/ @grafana/grafana-search-and-storage
 /pkg/services/frontend/ @grafana/grafana-frontend-platform
 /pkg/services/apiserver @grafana/grafana-app-platform-squad
+/pkg/services/apiserver/auth/authorizer/storewrapper @grafana/access-squad
 /pkg/services/hooks/ @grafana/grafana-backend-group
 /pkg/services/kmsproviders/ @grafana/grafana-operator-experience-squad
 /pkg/services/licensing/ @grafana/grafana-operator-experience-squad
