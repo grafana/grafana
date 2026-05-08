@@ -1148,6 +1148,9 @@
         "rule-viewer-section-extension": "ルールビューアのエンリッチメントセクションの読み込みに失敗しました"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "設定の更新に失敗しました：",
       "title-something-went-wrong": "エラーが発生しました"
@@ -3155,9 +3158,7 @@
       "deleting": "削除しています",
       "text-federated": "フェデレーション",
       "text-provisioned": "プロビジョニング済み",
-      "ungrouped": "グループ化なし",
-      "ungrouped-suffix": "{{ruleName}}（グループ化なし）",
-      "unknown-rule": "不明なルール"
+      "ungrouped": "グループ化なし"
     },
     "saved-searches": {
       "actions-aria-label": "アクション",

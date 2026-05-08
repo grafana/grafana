@@ -4,7 +4,6 @@
       "label-advanced": "高度な設定"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "追加",
       "aria-label-remove": "削除",
       "button-add-resource": "リソースを追加",
       "button-add-resource-uri": "リソースURIを追加",
