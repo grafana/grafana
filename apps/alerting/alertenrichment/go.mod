@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/alerting/alertenrichment
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6

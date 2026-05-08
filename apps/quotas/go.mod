@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/quotas
 
-go 1.26.2
+go 1.26.3
 
 // transitive dependencies that need replaced
 // TODO: stop depending on grafana core(

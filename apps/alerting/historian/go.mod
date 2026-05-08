@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/alerting/historian
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/go-kit/log v0.2.1

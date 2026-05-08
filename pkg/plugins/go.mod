@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/plugins
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/Machiel/slugify v1.0.1

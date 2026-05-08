@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/storage/unified/resourcepb
 
-go 1.26.2
+go 1.26.3
 
 require (
 	google.golang.org/grpc v1.80.0

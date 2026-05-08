@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/dashvalidator
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2
