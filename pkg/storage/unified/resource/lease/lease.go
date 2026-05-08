@@ -284,10 +284,15 @@ func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.D
 		return time.Time{}, err
 	}
 
+	tombstone, err := json.Marshal(leaseMetadata{Holder: m.holder, Deleted: true})
+	if err != nil {
+		return time.Time{}, err
+	}
+
 	newKey := leaseKey(lease.name, newGeneration)
 	err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{
 		{Mode: kv.BatchOpCreate, Key: newKey, Value: value},
-		{Mode: kv.BatchOpDelete, Key: key},
+		{Mode: kv.BatchOpUpdate, Key: key, Value: tombstone},
 	})
 	if errors.Is(err, kv.ErrKeyAlreadyExists) {
 		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
