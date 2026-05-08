@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Berikningssektionen i regelvisaren kunde inte läsas in"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Misslyckades med att uppdatera din konfiguration:",
       "title-something-went-wrong": "Något gick fel"
@@ -3174,9 +3177,7 @@
       "deleting": "Raderar",
       "text-federated": "Federerade",
       "text-provisioned": "Provisionerad",
-      "ungrouped": "Ogrupperad",
-      "ungrouped-suffix": "{{ruleName}} (ogrupperad)",
-      "unknown-rule": "Okänd regel"
+      "ungrouped": "Ogrupperad"
     },
     "saved-searches": {
       "actions-aria-label": "Åtgärder",

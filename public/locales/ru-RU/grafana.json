@@ -1163,6 +1163,9 @@
         "rule-viewer-section-extension": "Не удалось загрузить раздел для просмотра правил пополнения информацией"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Не удалось обновить конфигурацию:",
       "title-something-went-wrong": "Неизвестная ошибка"
@@ -3212,9 +3215,7 @@
       "deleting": "Удаляется",
       "text-federated": "Федеративная",
       "text-provisioned": "Подготовлено",
-      "ungrouped": "Без группирования",
-      "ungrouped-suffix": "{{ruleName}} (без группирования)",
-      "unknown-rule": "Неизвестное правило"
+      "ungrouped": "Без группирования"
     },
     "saved-searches": {
       "actions-aria-label": "Действия",

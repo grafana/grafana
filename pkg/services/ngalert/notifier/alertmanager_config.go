@@ -88,14 +88,14 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
 	}
 
-	mergeResult, err := prepared.GetMergedAlertmanagerConfig()
+	mergeResult, err := merge.MergeExtraConfig(ctx, prepared)
 	if err != nil {
 		return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to get full alertmanager configuration: %w", err)
 	}
 	if logInfo := mergeResult.LogContext(); len(logInfo) > 0 {
 		moa.logger.Info("Configurations merged successfully but some resources were renamed", logInfo...)
 	}
-	preparedConfig := mergeResult.Config
+	preparedConfig := mergeResult.Config.AlertmanagerConfig
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingDisableV0ReceiverConversion) {
 		moa.logger.Info("Skipping converting Mimir receivers to Grafana receivers", "identifier", mergeResult.Identifier)
@@ -341,11 +341,11 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	var alertmanagerConfig definitions.PostableApiAlertingConfig
 	var templateFiles map[string]string
 	if withMergedExtraConfig && len(cfg.ExtraConfigs) > 0 {
-		mergeResult, err := cfg.GetMergedAlertmanagerConfig()
+		mergeResult, err := merge.MergeExtraConfig(ctx, cfg)
 		if err != nil {
 			return definitions.GettableUserConfig{}, fmt.Errorf("failed to merge configuration: %w", err)
 		}
-		alertmanagerConfig = mergeResult.Config
+		alertmanagerConfig = mergeResult.Config.AlertmanagerConfig
 
 		mergedTemplates := cfg.GetMergedTemplateDefinitions()
 		templateFiles = make(map[string]string, len(mergedTemplates))
@@ -447,7 +447,7 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		}
 	}
 
-	mergeResult, err := cfg.GetMergedAlertmanagerConfig()
+	mergeResult, err := merge.MergeExtraConfig(ctx, cfg)
 	if err != nil {
 		return merge.RenameResources{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
 	}

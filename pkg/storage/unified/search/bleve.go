@@ -158,6 +158,14 @@ type bleveBackend struct {
 
 	uploadTrackingMu sync.Mutex
 	lastUploadTime   map[resource.NamespacedResource]time.Time
+
+	// inFlightBuildDirs is a refcount of absolute directory paths that belong
+	// to BuildIndex calls (or their helpers) which haven't returned yet.
+	// cleanOldIndexes must not delete these. Helpers that allocate or open a
+	// directory under resourceDir are responsible for registering the path,
+	// and BuildIndex unregisters it after the call completes.
+	inFlightBuildDirsMu sync.Mutex
+	inFlightBuildDirs   map[string]int
 }
 
 func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -215,6 +223,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		selectableFields:    opts.SelectableFieldsForKinds,
 		runningBuildVersion: runningBuildVersion,
 		lastUploadTime:      map[resource.NamespacedResource]time.Time{},
+		inFlightBuildDirs:   map[string]int{},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -684,6 +693,15 @@ func (b *bleveBackend) BuildIndex(
 		return nil, err
 	}
 
+	// prepareIndex's helpers register the working directory before returning;
+	// release that registration when BuildIndex returns, regardless of success
+	// or failure path. cleanOldIndexes still runs before this defer fires, so
+	// our own dir is protected via skipName during the cleanup.
+	if prepared.fileIndexName != "" {
+		inFlightDir := filepath.Join(resourceDir, prepared.fileIndexName)
+		defer b.unregisterInFlightBuildDir(inFlightDir)
+	}
+
 	if prepared.coldStartLeaderLock != nil {
 		defer func() {
 			if releaseErr := prepared.coldStartLeaderLock.Release(); releaseErr != nil {
@@ -934,6 +952,10 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 
 	logger.Info("File-based index needs rebuild before opening", "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
 	_ = idx.Close()
+	// Release the registration findPreviousFileBasedIndex installed on this
+	// directory: we are discarding the reused index, so cleanOldIndexes is
+	// allowed to remove its directory once the rebuild finishes.
+	b.unregisterInFlightBuildDir(filepath.Join(resourceDir, name))
 	return nil, "", 0, nil
 }
 
@@ -962,6 +984,7 @@ func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.I
 	}
 
 	logger.Info("Building index using filesystem", "directory", indexDir)
+	b.registerInFlightBuildDir(indexDir)
 	return preparedBuildIndex{
 		index:         idx,
 		fileIndexName: fileIndexName,
@@ -1059,7 +1082,20 @@ func cleanFileSegment(input string) string {
 }
 
 // cleanOldIndexes deletes all subdirectories inside dir, skipping directory with "skipName".
-// "skipName" can be empty.
+// "skipName" can be empty. Directories belonging to other in-flight BuildIndex
+// calls are also skipped: concurrent rebuilds for the same resource each have
+// their own working directory, and deleting another build's directory would
+// corrupt its index.
+//
+// MAINTAINER NOTE: any code that allocates or opens a directory under a
+// resource's directory before BuildIndex has finished must call
+// registerInFlightBuildDir on that absolute path; otherwise a concurrent
+// BuildIndex call (for the same key) can wipe it from disk while it is still
+// being populated. The matching unregister is owned by BuildIndex (deferred
+// after prepareIndex returns successfully) for paths that flow through
+// preparedBuildIndex.fileIndexName, and by the helper itself on its own
+// failure paths. If you add a new directory-allocating helper, follow the
+// same pattern.
 func (b *bleveBackend) cleanOldIndexes(resourceDir string, skipName string) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
@@ -1077,6 +1113,11 @@ func (b *bleveBackend) cleanOldIndexes(resourceDir string, skipName string) {
 				continue
 			}
 
+			if b.isInFlightBuildDir(entryDir) {
+				b.log.Info("Skipping cleanup of in-flight build directory", "directory", entryDir)
+				continue
+			}
+
 			err = os.RemoveAll(entryDir)
 			if err != nil {
 				b.log.Error("Unable to remove old index folder", "directory", entryDir, "error", err)
@@ -1085,6 +1126,48 @@ func (b *bleveBackend) cleanOldIndexes(resourceDir string, skipName string) {
 			}
 		}
 	}
+}
+
+// registerInFlightBuildDir marks an absolute directory path as actively used
+// by an in-flight BuildIndex call. cleanOldIndexes will skip such paths.
+// Must be paired with a call to unregisterInFlightBuildDir; the refcount
+// allows the same path to be registered more than once if multiple callers
+// happen to land on the same name (rare, but cheap insurance).
+func (b *bleveBackend) registerInFlightBuildDir(path string) {
+	if path == "" {
+		return
+	}
+	b.inFlightBuildDirsMu.Lock()
+	defer b.inFlightBuildDirsMu.Unlock()
+	b.inFlightBuildDirs[path]++
+}
+
+func (b *bleveBackend) unregisterInFlightBuildDir(path string) {
+	if path == "" {
+		return
+	}
+	b.inFlightBuildDirsMu.Lock()
+	defer b.inFlightBuildDirsMu.Unlock()
+	c, ok := b.inFlightBuildDirs[path]
+	if !ok {
+		// A missing entry means a registration was never installed for this
+		// path, or that the path is being unregistered twice. Both indicate a
+		// pairing bug in a helper; log so it surfaces in tests and prod logs.
+		b.log.Error("unregisterInFlightBuildDir called with unknown path; missing register or double unregister", "path", path)
+		return
+	}
+	if c > 1 {
+		b.inFlightBuildDirs[path] = c - 1
+	} else {
+		delete(b.inFlightBuildDirs, path)
+	}
+}
+
+func (b *bleveBackend) isInFlightBuildDir(path string) bool {
+	b.inFlightBuildDirsMu.Lock()
+	defer b.inFlightBuildDirsMu.Unlock()
+	_, ok := b.inFlightBuildDirs[path]
+	return ok
 }
 
 // isPathWithinRoot verifies that path is within given absoluteRoot.
@@ -1160,6 +1243,7 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 			continue
 		}
 
+		b.registerInFlightBuildDir(indexDir)
 		return idx, indexName, indexRV, nil
 	}
 

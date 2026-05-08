@@ -182,6 +182,15 @@ type searchServer struct {
 	rebuildQueue   *debouncer.Queue[rebuildRequest]
 	rebuildWorkers int
 
+	// inFlightRebuilds tracks rebuilds currently being executed by a worker.
+	// Presence of a key means a worker is rebuilding the index for that key,
+	// so other workers that pick up requests for the same key should defer
+	// their work to a follow-up rebuild rather than running concurrently.
+	// Concurrent rebuilds for the same key would corrupt each other's on-disk
+	// index directories via cleanOldIndexes.
+	inFlightRebuildsMu sync.Mutex
+	inFlightRebuilds   map[NamespacedResource]*rebuildState
+
 	injectFailuresPercent     int
 	indexModificationCacheTTL time.Duration
 
@@ -257,6 +266,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
+	s.inFlightRebuilds = map[NamespacedResource]*rebuildState{}
 
 	info, err := opts.Resources.GetDocumentBuilders()
 	if err != nil {
@@ -1095,6 +1105,52 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		return
 	}
 
+	// Coordinate with any other worker that is already rebuilding this key.
+	// Concurrent rebuilds for the same key would race in cleanOldIndexes and
+	// delete each other's on-disk directories.
+	s.inFlightRebuildsMu.Lock()
+	if state, inFlight := s.inFlightRebuilds[req.NamespacedResource]; inFlight {
+		// Another worker is already rebuilding. Stash this request as a follow-up
+		// so its conditions (e.g. a newer lastImportTime) are re-evaluated against
+		// the just-built index when the in-flight rebuild finishes.
+		if state.deferred == nil {
+			// new(req), not &req: we mutate req.completeChannels = nil below,
+			// and state.deferred must observe the values seen here, not those.
+			state.deferred = new(req)
+		} else {
+			merged, _ := combineRebuildRequests(*state.deferred, req)
+			state.deferred = &merged
+		}
+		// The follow-up rebuild will close these completion channels (or close
+		// them as a no-op via the recheck path); clear them here so the top-level
+		// defer in this function does not close them prematurely.
+		req.completeChannels = nil
+		s.inFlightRebuildsMu.Unlock()
+		span.AddEvent("rebuild already in flight, deferring as follow-up")
+		l.Info("rebuild already in flight for key, deferring as follow-up")
+		return
+	}
+	state := &rebuildState{}
+	s.inFlightRebuilds[req.NamespacedResource] = state
+	s.inFlightRebuildsMu.Unlock()
+
+	defer func() {
+		s.inFlightRebuildsMu.Lock()
+		deferred := state.deferred
+		delete(s.inFlightRebuilds, req.NamespacedResource)
+		s.inFlightRebuildsMu.Unlock()
+
+		if deferred != nil {
+			// Re-enqueue the follow-up. The worker that picks it up will re-check
+			// shouldRebuildIndex against the just-built BuildTime and either run
+			// another rebuild or close the deferred completion channels as a no-op.
+			s.rebuildQueue.Add(*deferred)
+			if s.indexMetrics != nil {
+				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
+			}
+		}
+	}()
+
 	if req.Resource == dashboardv1.DASHBOARD_RESOURCE {
 		// we need to clear the cache to make sure we get the latest usage insights data
 		s.builders.clearNamespacedCache(req.NamespacedResource)
@@ -1192,6 +1248,13 @@ func newSelectableFieldsAdded(indexSelectableFields, selectableFields []string) 
 		}
 	}
 	return false
+}
+
+// rebuildState tracks an in-flight rebuild for a single key. The deferred
+// field accumulates requests that arrived while this rebuild was running, so
+// they can be re-enqueued as a follow-up once it finishes.
+type rebuildState struct {
+	deferred *rebuildRequest
 }
 
 type rebuildRequest struct {
