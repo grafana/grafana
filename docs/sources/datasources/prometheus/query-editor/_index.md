@@ -144,7 +144,7 @@ The following options are available under **Additional Settings**:
 - **Include description in search** — Search by both name and description.
 - **Include results with no metadata** — Include metrics that lack type or description metadata.
 - **Disable text wrap** — Disable text wrapping for long metric names.
-- **Enable regex search** — Filter metric names by regex, which uses an additional API call.
+- **Enable regex search** — Filter metric names by regular expression, which uses an additional API call.
 
 {{< admonition type="note" >}}
 The Metrics explorer (Builder mode) and [Metrics browser (Code mode)](#metrics-browser) are separate components. The Metrics explorer does not browse labels, but the Metrics browser can display all labels on a metric.
