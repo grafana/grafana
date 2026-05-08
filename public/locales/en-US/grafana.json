@@ -1164,6 +1164,9 @@
       "content-show-all-errors": "Show all errors"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": "{{-baseMessage}}: {{-causes}}"
+      },
       "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10850,6 +10853,11 @@
     "name-gradient-mode": "Gradient mode",
     "name-line-width": "Line width",
     "name-stacking": "Stacking"
+  },
+  "home": {
+    "home-page": {
+      "placeholder": "Welcome to Grafana"
+    }
   },
   "inspector": {
     "inspect-data-tab": {
