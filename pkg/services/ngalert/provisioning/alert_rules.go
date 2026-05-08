@@ -94,45 +94,146 @@ type ListRuleBoolFilter struct {
 }
 
 type ListAlertRulesOptions struct {
-	RuleType        models.RuleTypeFilter
-	Limit           int64
-	ContinueToken   string
-	GroupFilter     ListRuleStringFilter
-	FolderFilter    ListRuleStringFilter
-	TitleFilter     ListRuleStringFilter
-	PausedFilter    ListRuleBoolFilter
-	DashboardFilter ListRuleStringFilter
-	PanelIDFilter   ListRuleStringFilter
-	// TODO: add the following filters
-	// receiver filter - string
-	// metric filter - string
-	// targetDatasourceUID filter - string
+	RuleType                  models.RuleTypeFilter
+	Limit                     int64
+	ContinueToken             string
+	GroupFilter               ListRuleStringFilter
+	FolderFilter              ListRuleStringFilter
+	TitleFilter               ListRuleStringFilter
+	PausedFilter              ListRuleBoolFilter
+	DashboardFilter           ListRuleStringFilter
+	PanelIDFilter             ListRuleStringFilter
+	NotificationTypeFilter    ListRuleStringFilter
+	ReceiverFilter            ListRuleStringFilter
+	RoutingTreeFilter         ListRuleStringFilter
+	MetricFilter              ListRuleStringFilter
+	TargetDatasourceUIDFilter ListRuleStringFilter
+}
+
+// extractSingleValue returns the single value from a ListRuleStringFilter's Include or Exclude slice,
+// returning an error when the slice has more than one entry. Field selectors only support
+// equality and inequality, so multiple `=` or multiple `!=` requirements for the same field are
+// not meaningful for field-selector-derived filters. Empty slice returns an empty string.
+func extractSingleValue(values []string, field, side string) (string, error) {
+	switch len(values) {
+	case 0:
+		return "", nil
+	case 1:
+		return values[0], nil
+	default:
+		return "", fmt.Errorf("%s only accepts a single %s value, got %d", field, side, len(values))
+	}
+}
+
+// unwrapSingleStringFilter resolves a ListRuleStringFilter to scalar (include, exclude) string values,
+// returning an error when either side has more than one entry.
+func unwrapSingleStringFilter(filter ListRuleStringFilter, field string) (include, exclude string, err error) {
+	include, err = extractSingleValue(filter.Include, field, "include")
+	if err != nil {
+		return "", "", err
+	}
+	exclude, err = extractSingleValue(filter.Exclude, field, "exclude")
+	if err != nil {
+		return "", "", err
+	}
+	return include, exclude, nil
+}
+
+// unwrapSingleInt64Filter resolves a ListRuleStringFilter to scalar (include, exclude) int64 values,
+// returning an error when either side has more than one entry or fails to parse as int64.
+func unwrapSingleInt64Filter(filter ListRuleStringFilter, field string) (include, exclude int64, err error) {
+	includeStr, excludeStr, err := unwrapSingleStringFilter(filter, field)
+	if err != nil {
+		return 0, 0, err
+	}
+	if includeStr != "" {
+		include, err = strconv.ParseInt(includeStr, 10, 64)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid include value for %s: %w", field, err)
+		}
+	}
+	if excludeStr != "" {
+		exclude, err = strconv.ParseInt(excludeStr, 10, 64)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid exclude value for %s: %w", field, err)
+		}
+	}
+	return include, exclude, nil
+}
+
+// scalarFieldSelectorFilters collapses every field-selector-backed filter on opts into the
+// scalar query fields the rule store accepts. It enforces the single-value rule for each
+// (filter, side) pair.
+type scalarFieldSelectorFilters struct {
+	titleInclude, titleExclude         string
+	dashboardInclude, dashboardExclude string
+	panelIDInclude, panelIDExclude     int64
+	notifTypeInclude, notifTypeExclude string
+	receiverInclude, receiverExclude   string
+	routingInclude, routingExclude     string
+	metricInclude, metricExclude       string
+	targetDSInclude, targetDSExclude   string
+}
+
+func resolveFieldSelectorFilters(opts ListAlertRulesOptions) (scalarFieldSelectorFilters, error) {
+	var f scalarFieldSelectorFilters
+	var err error
+	if f.titleInclude, f.titleExclude, err = unwrapSingleStringFilter(opts.TitleFilter, "spec.title"); err != nil {
+		return f, err
+	}
+	if f.dashboardInclude, f.dashboardExclude, err = unwrapSingleStringFilter(opts.DashboardFilter, "spec.panelRef.dashboardUID"); err != nil {
+		return f, err
+	}
+	if f.panelIDInclude, f.panelIDExclude, err = unwrapSingleInt64Filter(opts.PanelIDFilter, "spec.panelRef.panelID"); err != nil {
+		return f, err
+	}
+	if f.notifTypeInclude, f.notifTypeExclude, err = unwrapSingleStringFilter(opts.NotificationTypeFilter, "spec.notificationSettings.type"); err != nil {
+		return f, err
+	}
+	if f.receiverInclude, f.receiverExclude, err = unwrapSingleStringFilter(opts.ReceiverFilter, "spec.notificationSettings.receiver"); err != nil {
+		return f, err
+	}
+	if f.routingInclude, f.routingExclude, err = unwrapSingleStringFilter(opts.RoutingTreeFilter, "spec.notificationSettings.routingTree"); err != nil {
+		return f, err
+	}
+	if f.metricInclude, f.metricExclude, err = unwrapSingleStringFilter(opts.MetricFilter, "spec.metric"); err != nil {
+		return f, err
+	}
+	if f.targetDSInclude, f.targetDSExclude, err = unwrapSingleStringFilter(opts.TargetDatasourceUIDFilter, "spec.targetDatasourceUID"); err != nil {
+		return f, err
+	}
+	return f, nil
 }
 
 func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {
-	titleExact := ""
-	if len(opts.TitleFilter.Include) > 0 {
-		titleExact = opts.TitleFilter.Include[0]
-	}
-	dashboardUID := ""
-	if len(opts.DashboardFilter.Include) > 0 {
-		dashboardUID = opts.DashboardFilter.Include[0]
-	}
-	panelID := int64(0)
-	if len(opts.PanelIDFilter.Include) > 0 {
-		panelID, _ = strconv.ParseInt(opts.PanelIDFilter.Include[0], 10, 64)
+	f, err := resolveFieldSelectorFilters(opts)
+	if err != nil {
+		return nil, nil, "", err
 	}
 	q := models.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: models.ListAlertRulesQuery{
-			OrgID:                user.GetOrgID(),
-			RuleGroups:           opts.GroupFilter.Include,
-			ExcludeRuleGroups:    opts.GroupFilter.Exclude,
-			RuleGroupExists:      opts.GroupFilter.Exists,
-			ExcludeNamespaceUIDs: opts.FolderFilter.Exclude,
-			TitleExact:           titleExact,
-			IsPaused:             opts.PausedFilter.Value,
-			DashboardUID:         dashboardUID,
-			PanelID:              panelID,
+			OrgID:                            user.GetOrgID(),
+			RuleGroups:                       opts.GroupFilter.Include,
+			ExcludeRuleGroups:                opts.GroupFilter.Exclude,
+			RuleGroupExists:                  opts.GroupFilter.Exists,
+			ExcludeNamespaceUIDs:             opts.FolderFilter.Exclude,
+			TitleExact:                       f.titleInclude,
+			ExcludeTitle:                     f.titleExclude,
+			IsPaused:                         opts.PausedFilter.Value,
+			DashboardUID:                     f.dashboardInclude,
+			ExcludeDashboardUID:              f.dashboardExclude,
+			PanelID:                          f.panelIDInclude,
+			ExcludePanelID:                   f.panelIDExclude,
+			NotificationSettingsType:         models.NotificationSettingsType(f.notifTypeInclude),
+			ExcludeNotificationSettingsType:  models.NotificationSettingsType(f.notifTypeExclude),
+			ReceiverName:                     f.receiverInclude,
+			ExcludeReceiverName:              f.receiverExclude,
+			RoutingPolicyExact:               f.routingInclude,
+			ExcludeRoutingPolicy:             f.routingExclude,
+			RecordMetricExact:                f.metricInclude,
+			ExcludeRecordMetric:              f.metricExclude,
+			RecordTargetDatasourceUIDExact:   f.targetDSInclude,
+			ExcludeRecordTargetDatasourceUID: f.targetDSExclude,
 		},
 		RuleType:      opts.RuleType,
 		Limit:         opts.Limit,

@@ -928,13 +928,8 @@ func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor, orgID
 
 func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsMap map[string]struct{}) bool {
 	settings := rule.ContactPointRouting()
-	if query.ReceiverName != "" {
-		if settings == nil {
-			return false
-		}
-		if settings.Receiver != query.ReceiverName {
-			return false
-		}
+	if !matchesReceiverFilters(settings, query) {
+		return false
 	}
 
 	if query.TimeIntervalName != "" {
@@ -945,6 +940,10 @@ func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesE
 			!slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName) {
 			return false
 		}
+	}
+
+	if !matchesRecordFilters(rule, query) {
+		return false
 	}
 
 	if query.HasPrometheusRuleDefinition != nil {
@@ -959,6 +958,51 @@ func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesE
 		}
 	}
 
+	return true
+}
+
+// matchesReceiverFilters verifies the ReceiverName / ExcludeReceiverName scalar filters exactly
+// against the rule's contact-point routing. The SQL pre-filter uses substring matching on the
+// notification_settings JSON, so this post-filter removes false positives.
+func matchesReceiverFilters(settings *ngmodels.ContactPointRouting, query *ngmodels.ListAlertRulesExtendedQuery) bool {
+	receiver := ""
+	if settings != nil {
+		receiver = settings.Receiver
+	}
+	if query.ReceiverName != "" && receiver != query.ReceiverName {
+		return false
+	}
+	if query.ExcludeReceiverName != "" && receiver == query.ExcludeReceiverName {
+		return false
+	}
+	return true
+}
+
+// matchesRecordFilters verifies the record-related scalar filters exactly against the rule's
+// Record. The SQL pre-filter uses substring matching on the record JSON column, so this
+// post-filter removes false positives.
+func matchesRecordFilters(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery) bool {
+	if query.RecordMetricExact == "" && query.ExcludeRecordMetric == "" &&
+		query.RecordTargetDatasourceUIDExact == "" && query.ExcludeRecordTargetDatasourceUID == "" {
+		return true
+	}
+	metric, target := "", ""
+	if rule.Record != nil {
+		metric = rule.Record.Metric
+		target = rule.Record.TargetDatasourceUID
+	}
+	if query.RecordMetricExact != "" && metric != query.RecordMetricExact {
+		return false
+	}
+	if query.ExcludeRecordMetric != "" && metric == query.ExcludeRecordMetric {
+		return false
+	}
+	if query.RecordTargetDatasourceUIDExact != "" && target != query.RecordTargetDatasourceUIDExact {
+		return false
+	}
+	if query.ExcludeRecordTargetDatasourceUID != "" && target == query.ExcludeRecordTargetDatasourceUID {
+		return false
+	}
 	return true
 }
 
@@ -1134,14 +1178,69 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	if query.DashboardUID != "" {
 		q = q.Where("dashboard_uid = ?", query.DashboardUID)
 	}
+	if query.ExcludeDashboardUID != "" {
+		// dashboard_uid is nullable, so a NULL value should also satisfy `!=`.
+		q = q.Where("(dashboard_uid IS NULL OR dashboard_uid <> ?)", query.ExcludeDashboardUID)
+	}
 	if query.PanelID != 0 {
 		q = q.Where("panel_id = ?", query.PanelID)
+	}
+	if query.ExcludePanelID != 0 {
+		q = q.Where("(panel_id IS NULL OR panel_id <> ?)", query.ExcludePanelID)
 	}
 	if query.IsPaused != nil {
 		q = q.Where("is_paused = ?", *query.IsPaused)
 	}
 	if query.TitleExact != "" {
 		q = q.Where("title = ?", query.TitleExact)
+	}
+	if query.ExcludeTitle != "" {
+		q = q.Where("title <> ?", query.ExcludeTitle)
+	}
+	if t := query.NotificationSettingsType; t != "" {
+		clause, err := notificationSettingsTypeClause(t)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where(clause)
+	}
+	if t := query.ExcludeNotificationSettingsType; t != "" {
+		clause, err := notificationSettingsTypeClause(t)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where("NOT (" + clause + ")")
+	}
+	if query.RoutingPolicyExact != "" {
+		q = q.Where("alert_routing_policy = ?", query.RoutingPolicyExact)
+	}
+	if query.ExcludeRoutingPolicy != "" {
+		// alert_routing_policy is nullable; NULL should satisfy `!=` to match k8s field-selector semantics.
+		q = q.Where("(alert_routing_policy IS NULL OR alert_routing_policy <> ?)", query.ExcludeRoutingPolicy)
+	}
+	if query.RecordMetricExact != "" {
+		q, err = st.filterByContentInRecord("Metric", query.RecordMetricExact, false, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+	if query.ExcludeRecordMetric != "" {
+		q, err = st.filterByContentInRecord("Metric", query.ExcludeRecordMetric, true, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+	if query.RecordTargetDatasourceUIDExact != "" {
+		q, err = st.filterByContentInRecord("TargetDatasourceUID", query.RecordTargetDatasourceUIDExact, false, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+	if query.ExcludeRecordTargetDatasourceUID != "" {
+		q, err = st.filterByContentInRecord("TargetDatasourceUID", query.ExcludeRecordTargetDatasourceUID, true, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
 	}
 
 	if len(query.NamespaceUIDs) > 0 {
@@ -1183,6 +1282,9 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 			return nil, groupsSet, err
 		}
 	}
+	// ExcludeReceiverName has no SQL pre-filter (LIKE-based exclusion would over-exclude rules
+	// that contain the value as a substring of an unrelated JSON field). The exact-match check
+	// happens in matchesReceiverFilters in the post-query filter.
 
 	if query.TimeIntervalName != "" {
 		q, err = st.filterByContentInNotificationSettings(query.TimeIntervalName, q)
@@ -1291,13 +1393,8 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 		return nil, false
 	}
 	settings := converted.ContactPointRouting()
-	if query.ReceiverName != "" { // remove false-positive hits from the result
-		if settings == nil {
-			return nil, false
-		}
-		if settings.Receiver != query.ReceiverName {
-			return nil, false
-		}
+	if !matchesReceiverFilters(settings, query) { // remove false-positive hits from the result
+		return nil, false
 	}
 	if query.TimeIntervalName != "" {
 		if settings == nil {
@@ -1307,6 +1404,9 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 			!slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName) {
 			return nil, false
 		}
+	}
+	if !matchesRecordFilters(&converted, query) { // remove false-positive hits from the result
+		return nil, false
 	}
 	if query.HasPrometheusRuleDefinition != nil { // remove false-positive hits from the result
 		if *query.HasPrometheusRuleDefinition != converted.HasPrometheusRuleDefinition() {
@@ -1686,6 +1786,50 @@ func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm
 		search = strings.ReplaceAll(strings.ReplaceAll(search, `\`, `\\`), `"`, `\"`)
 	}
 	sql, param := st.SQLStore.GetDialect().LikeOperator("notification_settings", true, search, true)
+	return sess.And(sql, param), nil
+}
+
+// notificationSettingsTypeClause returns a SQL predicate matching rules whose effective
+// notification settings type equals t. Effective type is SimplifiedRouting when
+// notification_settings is set, otherwise NamedRoutingTree when alert_routing_policy is set.
+// SimplifiedRouting takes precedence on rules that have both columns populated.
+func notificationSettingsTypeClause(t ngmodels.NotificationSettingsType) (string, error) {
+	const simplifiedSet = "notification_settings IS NOT NULL AND notification_settings <> '' AND notification_settings <> 'null' AND notification_settings <> '[]'"
+	const simplifiedUnset = "(notification_settings IS NULL OR notification_settings = '' OR notification_settings = 'null' OR notification_settings = '[]')"
+	switch t {
+	case ngmodels.NotificationSettingsTypeSimplifiedRouting:
+		return simplifiedSet, nil
+	case ngmodels.NotificationSettingsTypeNamedRoutingTree:
+		return "alert_routing_policy IS NOT NULL AND " + simplifiedUnset, nil
+	default:
+		return "", fmt.Errorf("unsupported notification settings type %q", t)
+	}
+}
+
+// filterByContentInRecord adds a LIKE filter to the query for the given key/value pair in the
+// `record` JSON column. When exclude is true, the rule must not match. Callers should still
+// verify the match by parsing the column after the query runs, as LIKE matches the raw JSON
+// serialization and may include false positives.
+func (st DBstore) filterByContentInRecord(key, value string, exclude bool, sess *xorm.Session) (*xorm.Session, error) {
+	if value == "" {
+		return sess, nil
+	}
+	keyBytes, err := json.Marshal(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshall key for record content filter: %w", err)
+	}
+	valueBytes, err := json.Marshal(value)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshall value for record content filter: %w", err)
+	}
+	search := string(keyBytes) + ":" + string(valueBytes)
+	if st.SQLStore.GetDialect().DriverName() != migrator.SQLite {
+		search = strings.ReplaceAll(strings.ReplaceAll(search, `\`, `\\`), `"`, `\"`)
+	}
+	sql, param := st.SQLStore.GetDialect().LikeOperator("record", true, search, true)
+	if exclude {
+		return sess.And("NOT ("+sql+")", param), nil
+	}
 	return sess.And(sql, param), nil
 }
 

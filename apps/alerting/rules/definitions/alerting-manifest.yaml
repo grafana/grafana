@@ -268,6 +268,9 @@ spec:
       - spec.paused
       - spec.panelRef.dashboardUID
       - spec.panelRef.panelID
+      - spec.notificationSettings.type
+      - spec.notificationSettings.receiver
+      - spec.notificationSettings.routingTree
     - admission:
         mutation:
           operations:
@@ -429,5 +432,7 @@ spec:
       selectableFields:
       - spec.title
       - spec.paused
+      - spec.metric
+      - spec.targetDatasourceUID
     name: v0alpha1
     served: true
