@@ -405,6 +405,66 @@ describe('prepConfig', () => {
       expect(result[0]).toBe(8);
       expect(result[1]).toBe(22);
     });
+
+    describe('uPlot config hardening when xBucketSize is non-positive', () => {
+      function buildBuilderWithInvalidBucketSize(xBucketSize: number) {
+        const dataRef = {
+          current: createNonTimeHeatmapData({ xLayout: HeatmapCellLayout.unknown, xBucketSize }),
+        };
+        return prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        });
+      }
+
+      function getXAxisIncrs(builder: ReturnType<typeof prepConfig>): uPlot.Axis.Incrs | undefined {
+        const config = builder.getConfig();
+        const xAxis = config.axes?.find((a) => a.scale === 'x');
+        return xAxis?.incrs;
+      }
+
+      function getHeatmapSeriesXFacetSorted(builder: ReturnType<typeof prepConfig>): number | undefined {
+        const config = builder.getConfig();
+        const heatmapSeries = config.series?.[1];
+        const xFacet = heatmapSeries?.facets?.[0];
+        return xFacet?.sorted;
+      }
+
+      it('does not declare the x facet as sorted when xBucketSize is negative', () => {
+        const builder = buildBuilderWithInvalidBucketSize(-50);
+        expect(getHeatmapSeriesXFacetSorted(builder)).not.toBe(1);
+      });
+
+      it('does not declare the x facet as sorted when xBucketSize is zero', () => {
+        const builder = buildBuilderWithInvalidBucketSize(0);
+        expect(getHeatmapSeriesXFacetSorted(builder)).not.toBe(1);
+      });
+
+      it('does declare the x facet as sorted when xBucketSize is positive', () => {
+        const builder = buildBuilderWithInvalidBucketSize(4);
+        expect(getHeatmapSeriesXFacetSorted(builder)).toBe(1);
+      });
+
+      it('does not push non-positive axis increments when xBucketSize is negative', () => {
+        const builder = buildBuilderWithInvalidBucketSize(-50);
+        const incrs = getXAxisIncrs(builder);
+        if (Array.isArray(incrs)) {
+          incrs.forEach((incr) => expect(incr).toBeGreaterThan(0));
+        }
+      });
+
+      it('does not push non-positive axis increments when xBucketSize is zero', () => {
+        const builder = buildBuilderWithInvalidBucketSize(0);
+        const incrs = getXAxisIncrs(builder);
+        if (Array.isArray(incrs)) {
+          incrs.forEach((incr) => expect(incr).toBeGreaterThan(0));
+        }
+      });
+    });
   });
 
   describe('y-scale range callback', () => {
