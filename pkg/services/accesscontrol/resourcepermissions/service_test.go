@@ -10,13 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -699,7 +702,84 @@ func TestIsActionSetEnabledResource_ServiceAccount(t *testing.T) {
 	})
 }
 
+func TestIntegrationService_SetPermissionsClearsUserCache(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		desc                  string
+		resource              string
+		identity              identity.Requester
+		expectCacheClearCalls int
+	}{
+		{
+			desc:                  "should clear user cache when folder permissions change for a user",
+			resource:              "folders",
+			identity:              &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, OrgID: 1},
+			expectCacheClearCalls: 1,
+		},
+		{
+			desc:                  "should clear user cache when folder permissions change for a service account",
+			resource:              "folders",
+			identity:              &identity.StaticRequester{Type: authlib.TypeServiceAccount, UserID: 1, OrgID: 1},
+			expectCacheClearCalls: 1,
+		},
+		{
+			desc:                  "should not clear user cache when dashboard permissions change",
+			resource:              "dashboards",
+			identity:              &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, OrgID: 1},
+			expectCacheClearCalls: 0,
+		},
+		{
+			desc:                  "should not clear user cache when no requester is in context",
+			resource:              "folders",
+			identity:              nil,
+			expectCacheClearCalls: 0,
+		},
+		{
+			desc:                  "should not clear user cache for non-user/service-account identities",
+			resource:              "folders",
+			identity:              &identity.StaticRequester{Type: authlib.TypeAnonymous, OrgID: 1},
+			expectCacheClearCalls: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			acService := acmock.New()
+			service, usrSvc, _ := setupTestEnvironmentWithService(t, Options{
+				Resource:    tt.resource,
+				Assignments: Assignments{Users: true},
+				PermissionsToActions: map[string][]string{
+					"View": {tt.resource + ":read"},
+				},
+			}, acService)
+
+			// seed user that the permission will be assigned to
+			usr, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
+			require.NoError(t, err)
+
+			ctx := context.Background()
+			if tt.identity != nil {
+				ctx = identity.WithRequester(ctx, tt.identity)
+			}
+
+			_, err = service.SetPermissions(ctx, usr.OrgID, "1", accesscontrol.SetResourcePermissionCommand{
+				UserID:     usr.ID,
+				Permission: "View",
+			})
+			require.NoError(t, err)
+
+			assert.Len(t, acService.Calls.ClearUserPermissionCache, tt.expectCacheClearCalls)
+		})
+	}
+}
+
 func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
+	t.Helper()
+	return setupTestEnvironmentWithService(t, ops, &actest.FakeService{})
+}
+
+func setupTestEnvironmentWithService(t *testing.T, ops Options, acService accesscontrol.Service) (*Service, user.Service, team.Service) {
 	t.Helper()
 
 	sql := db.InitTestDB(t)
@@ -720,7 +800,6 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	acService := &actest.FakeService{}
 	features := featuremgmt.WithFeatures()
 	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
