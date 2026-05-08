@@ -1,3 +1,4 @@
+import { omit } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import {
@@ -26,15 +27,15 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
       return;
     }
     if (options.jsonData.dbName) {
-      setFieldErrors(({ dbName: _, ...rest }) => rest);
+      setFieldErrors((prev) => omit(prev, 'dbName'));
       validation.clearError('dbName');
     }
     if (options.user) {
-      setFieldErrors(({ user: _, ...rest }) => rest);
+      setFieldErrors((prev) => omit(prev, 'user'));
       validation.clearError('user');
     }
     if (passwordConfigured || passwordEntered) {
-      setFieldErrors(({ password: _, ...rest }) => rest);
+      setFieldErrors((prev) => omit(prev, 'password'));
       validation.clearError('password');
     }
     return validation.registerValidation(() => {

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { omit } from 'lodash';
 import { useEffect, useState } from 'react';
 import { firstValueFrom } from 'rxjs';
 
@@ -48,15 +49,15 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       return;
     }
     if (options.url) {
-      setFieldErrors(({ url: _, ...rest }) => rest);
+      setFieldErrors((prev) => omit(prev, 'url'));
       validation.clearError('url');
     }
     if (options.jsonData.product) {
-      setFieldErrors(({ product: _, ...rest }) => rest);
+      setFieldErrors((prev) => omit(prev, 'product'));
       validation.clearError('product');
     }
     if (options.jsonData.version) {
-      setFieldErrors(({ version: _, ...rest }) => rest);
+      setFieldErrors((prev) => omit(prev, 'version'));
       validation.clearError('version');
     }
     return validation.registerValidation(() => {

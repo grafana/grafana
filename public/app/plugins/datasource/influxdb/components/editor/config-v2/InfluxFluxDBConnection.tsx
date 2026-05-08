@@ -1,3 +1,4 @@
+import { omit } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import {
@@ -29,15 +30,15 @@ export const InfluxFluxDBConnection = (props: Props) => {
       return;
     }
     if (jsonData.organization) {
-      setFieldErrors(({ organization: _, ...rest }) => rest);
+      setFieldErrors((prev) => omit(prev, 'organization'));
       validation.clearError('organization');
     }
     if (jsonData.defaultBucket) {
-      setFieldErrors(({ defaultBucket: _, ...rest }) => rest);
+      setFieldErrors((prev) => omit(prev, 'defaultBucket'));
       validation.clearError('defaultBucket');
     }
     if (tokenConfigured || tokenEntered) {
-      setFieldErrors(({ token: _, ...rest }) => rest);
+      setFieldErrors((prev) => omit(prev, 'token'));
       validation.clearError('token');
     }
     return validation.registerValidation(() => {

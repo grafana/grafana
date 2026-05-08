@@ -1,3 +1,4 @@
+import { omit } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import {
@@ -25,11 +26,11 @@ export const InfluxSQLDBConnection = (props: Props) => {
       return;
     }
     if (options.jsonData.dbName) {
-      setFieldErrors(({ dbName: _, ...rest }) => rest);
+      setFieldErrors((prev) => omit(prev, 'dbName'));
       validation.clearError('dbName');
     }
     if (tokenConfigured || tokenEntered) {
-      setFieldErrors(({ token: _, ...rest }) => rest);
+      setFieldErrors((prev) => omit(prev, 'token'));
       validation.clearError('token');
     }
     return validation.registerValidation(() => {
