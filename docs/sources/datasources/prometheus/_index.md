@@ -49,6 +49,7 @@ The following documents help you set up and use the Prometheus data source:
 
 After you configure the Prometheus data source, you can:
 
+- Use [Metrics Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/metrics/) to browse and explore your Prometheus metrics without writing PromQL
 - Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to query data without building a dashboard
 - Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results
 - Create [recorded queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/) for pre-aggregated data

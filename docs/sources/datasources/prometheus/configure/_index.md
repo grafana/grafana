@@ -140,7 +140,19 @@ Pass along additional information and metadata about the request or response.
 
 ### Performance
 
-- **Prometheus type** - Select the type of your Prometheus-compatible database: Prometheus, Mimir, Cortex, or Thanos. Cortex is end-of-life; if you're running Cortex, consider migrating to [Mimir](https://grafana.com/oss/mimir/). Different database types support different APIs. For example, some allow `regex` matching for label queries to improve performance, while others provide a metadata API. Setting this incorrectly may cause unexpected behavior when querying metrics and labels.
+- **Prometheus type** - Select the type of your Prometheus-compatible database. Setting this incorrectly may cause unexpected behavior when querying metrics and labels. Cortex is end-of-life; if you're running Cortex, consider migrating to [Mimir](https://grafana.com/oss/mimir/).
+
+  | Capability | Prometheus | Mimir | Thanos | Cortex |
+  | --- | --- | --- | --- | --- |
+  | Regex label matching in variable queries | No | Yes | No | Yes |
+  | Metadata API (metric type/help) | Yes (2.4+) | Yes | No | Yes |
+  | Exemplars | Yes (2.26+) | Yes | No | No |
+  | Data source-managed alert rules (read/write) | Read only | Read/Write | Read only | Read/Write |
+  | Recording rules target (write-back) | Yes | Yes | No | Yes |
+  | LBAC (Team-based access control) | No | Yes (Cloud/GEM) | No | No |
+  | Native histograms | Yes (2.40+) | Yes | No | No |
+
+  Grafana uses this setting to determine which API endpoints and features to enable. For example, when set to Mimir, Grafana uses regex-optimized label queries that significantly improve autocomplete and variable loading performance for large metric sets.
 
 {{< admonition type="note" >}}
 Team-based Label-Based Access Control (LBAC) for the Prometheus data source requires the backend to be **Grafana Cloud Metrics (Mimir)** or **Grafana Enterprise Metrics (GEM)**. LBAC doesn't work with external Prometheus-compatible endpoints such as Google Managed Prometheus, self-hosted Prometheus, or Thanos, even if you enable the `teamHttpHeadersMimir` setting. The LBAC enforcement relies on Mimir-specific HTTP headers that other backends don't support.

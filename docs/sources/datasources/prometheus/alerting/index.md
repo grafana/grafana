@@ -177,11 +177,54 @@ $A > 2 && $B > 100
 
 **Condition:** Alert when **C** has a value (it only returns data when both latency exceeds 2 seconds AND request rate exceeds 100 req/s).
 
-## Recording rules as alert targets
+## Recording rules
 
-Prometheus supports [Grafana-managed recording rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/) that pre-compute expensive queries. If **Allow as recording rules target** is enabled in the data source configuration, Grafana can write recording rule results back to this Prometheus instance.
+[Grafana-managed recording rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/) pre-compute expensive PromQL expressions on a schedule and write the results back to a Prometheus-compatible data source as a new metric. This lets you query the pre-aggregated metric instead of re-evaluating the expensive expression on every dashboard load or alert evaluation.
 
-This is useful for pre-aggregating complex expressions that you then use in alert rules, improving evaluation performance.
+### When to use recording rules
+
+- **Dashboard panels that query the same expensive expression repeatedly** — pre-compute it once and query the result.
+- **Alert rules on complex expressions** — simplify the alert query by alerting on the pre-aggregated metric.
+- **High-cardinality aggregations** — reduce thousands of series to a handful of pre-computed series.
+
+### Set up Grafana-managed recording rules for Prometheus
+
+1. **Enable the data source as a recording rules target:** In the Prometheus data source configuration, verify that **Allow as recording rules target** is toggled on (it's on by default). This allows Grafana to write recording rule results back to this instance.
+
+1. **Verify write access:** The Prometheus-compatible backend must support remote write. Grafana Cloud Metrics (Mimir) and self-hosted Mimir support this natively. Standard Prometheus requires the `--web.enable-remote-write-receiver` flag (Prometheus 2.33+).
+
+1. **Create a recording rule:**
+   1. Navigate to **Alerting** > **Alert rules**.
+   1. Click **New alert rule**.
+   1. Select **Recording rule** as the rule type (under the Grafana-managed section).
+   1. Enter the PromQL expression you want to pre-compute:
+
+      ```promql
+      sum(rate(http_requests_total[$__rate_interval])) by (service)
+      ```
+
+   1. Enter a metric name for the result (for example, `service:http_requests:rate5m`). Follow the Prometheus [recording rule naming convention](https://prometheus.io/docs/practices/rules/#naming-and-aggregation): `level:metric:operations`.
+   1. Select the **Target data source** — the Prometheus instance where results will be written.
+   1. Set the evaluation interval (for example, every 1 minute).
+   1. Click **Save rule**.
+
+1. **Query the recorded metric:** After the first evaluation, the new metric is available for dashboards and alerts:
+
+   ```promql
+   service:http_requests:rate5m{service="api"}
+   ```
+
+### Recording rules with PDC
+
+If your Prometheus instance is behind [Private data source connect (PDC)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/#private-data-source-connect), Grafana can write recording rule results through the PDC tunnel. No additional configuration is needed — PDC supports both reads and writes.
+
+### Limitations
+
+- Recording rules require the target data source to support remote write. Standard Prometheus needs the `--web.enable-remote-write-receiver` flag.
+- Thanos does not support recording rules as a write target (refer to the [Prometheus type comparison](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/#performance)).
+- Recording rule evaluation uses the configured evaluation interval, not dashboard time ranges. Use a fixed range vector (for example, `[5m]`) rather than `$__rate_interval`.
+
+For more information, refer to [Create Grafana-managed recording rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/).
 
 ## Limitations
 
