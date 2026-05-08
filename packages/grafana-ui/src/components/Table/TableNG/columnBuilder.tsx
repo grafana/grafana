@@ -19,7 +19,12 @@ import {
   getDisplayProcessor,
   type TimeRange,
 } from '@grafana/data';
-import { FieldColorModeId, TableCellDisplayMode, TableCellTooltipPlacement, type TableFooterOptions } from '@grafana/schema';
+import {
+  FieldColorModeId,
+  TableCellDisplayMode,
+  TableCellTooltipPlacement,
+  type TableFooterOptions,
+} from '@grafana/schema';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
 import { HeaderCell } from './components/HeaderCell';
@@ -147,10 +152,7 @@ export function buildColumnsFromFields(
     }
 
     // for all other viable footer configs, check to see if the reducers match the first one we encountered.
-    if (
-      reducers.length !== firstFooterReducers.length ||
-      reducers.some((r, idx) => firstFooterReducers?.[idx] !== r)
-    ) {
+    if (reducers.length !== firstFooterReducers.length || reducers.some((r, idx) => firstFooterReducers?.[idx] !== r)) {
       isFieldUniformFooter = false;
       break;
     }
@@ -237,7 +239,10 @@ export function buildColumnsFromFields(
     // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
     // this fires first
-    const renderCellRoot: CellRootRenderer = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
+    const renderCellRoot: CellRootRenderer = (
+      key: Key,
+      props: CellRendererProps<TableRow, TableSummaryRow>
+    ): ReactNode => {
       const rowIdx = props.row.__index;
 
       // meh, this should be cached by the renderRow() call?
@@ -400,12 +405,7 @@ export function buildColumnsFromFields(
           }
 
           return (
-            <TableCellTooltip
-              {...tooltipProps}
-              height={tooltipHeight}
-              rowIdx={props.row.__index}
-              style={tooltipStyle}
-            >
+            <TableCellTooltip {...tooltipProps} height={tooltipHeight} rowIdx={props.row.__index} style={tooltipStyle}>
               {renderBasicCellContent(props)}
             </TableCellTooltip>
           );

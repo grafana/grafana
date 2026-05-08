@@ -98,15 +98,7 @@ describe('buildColumnsFromFields', () => {
 
   it('marks columns frozen when index is within frozen range', () => {
     const config = makeConfig({ frozenColumns: 1, numFrozenColsFullyInView: 2 });
-    const result = buildColumnsFromFields(
-      frame.fields,
-      [100, 100],
-      frame,
-      rows,
-      rows,
-      makeFilterResult(),
-      config
-    );
+    const result = buildColumnsFromFields(frame.fields, [100, 100], frame, rows, rows, makeFilterResult(), config);
     expect(result.columns[0].frozen).toBe(true);
     expect(result.columns[1].frozen).toBe(false);
   });

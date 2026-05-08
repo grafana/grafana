@@ -10,7 +10,7 @@ import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../utils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { buildColumnsFromFields } from './columnBuilder';
+import { buildColumnsFromFields, type ColumnBuildConfig } from './columnBuilder';
 import { TABLE } from './constants';
 import {
   useColumnResize,
