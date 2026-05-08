@@ -733,6 +733,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.CanEdit = c.HasRole(org.RoleEditor)
 	dash.Meta.FolderTitle = "General"
+	dash.Meta.IsDefaultHome = hs.Cfg.DefaultHomeDashboardPath == ""
 	dash.Dashboard = doc
 
 	hs.addGettingStartedPanelToHomeDashboard(c, dash.Dashboard)

@@ -4625,6 +4625,7 @@ export type DashboardMeta = {
   folderUid?: string;
   folderUrl?: string;
   hasAcl?: boolean;
+  isDefaultHome?: boolean;
   isFolder?: boolean;
   isSnapshot?: boolean;
   provisioned?: boolean;

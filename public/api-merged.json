@@ -14922,6 +14922,9 @@
         "hasAcl": {
           "type": "boolean"
         },
+        "isDefaultHome": {
+          "type": "boolean"
+        },
         "isFolder": {
           "type": "boolean"
         },

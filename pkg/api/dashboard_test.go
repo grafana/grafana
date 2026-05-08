@@ -165,6 +165,7 @@ func TestGetHomeDashboard(t *testing.T) {
 				require.NoError(t, err)
 				wrapper := dtos.DashboardFullWithMeta{}
 				wrapper.Meta.FolderTitle = "General"
+				wrapper.Meta.IsDefaultHome = true
 				wrapper.Dashboard = j
 				out, err := json.Marshal(wrapper)
 				require.NoError(t, err)
