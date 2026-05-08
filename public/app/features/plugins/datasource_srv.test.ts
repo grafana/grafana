@@ -388,7 +388,7 @@ describe('datasource_srv', () => {
         expect(importDataSourceMock).toHaveBeenCalledWith(dataSourceInit.ZZZ.meta);
         expect(logPluginMetaWarning).toHaveBeenCalledWith(
           expect.stringContaining('falling back to instanceSettings.meta'),
-          'datasource'
+          { key: 'ZZZ', pluginId: 'test-db' }
         );
       });
     });

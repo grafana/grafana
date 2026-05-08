@@ -37,9 +37,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Home,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPageProxy" */ '../features/dashboard/containers/DashboardPageProxy')
-      ),
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "HomeRoute" */ '../features/home/HomeRoute')),
     },
     {
       path: '/d/:uid/:slug?',
@@ -544,7 +542,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "ThemePlayground"*/ 'app/features/theme-playground/ThemePlayground')
       ),
     },
-    config.featureToggles.restoreDashboards && {
+    {
       path: '/dashboard/recently-deleted',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')

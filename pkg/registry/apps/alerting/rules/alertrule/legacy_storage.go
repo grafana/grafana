@@ -195,7 +195,13 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, err
 	}
 
-	return convertToK8sResource(info.OrgID, &created, provenance, s.namespacer)
+	// perform the get after to ensure we return the object with all the system filled fields set
+	rule, provenance, err := s.service.GetAlertRule(ctx, user, created.UID)
+	if err != nil {
+		return nil, err
+	}
+
+	return convertToK8sResource(info.OrgID, &rule, provenance, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -285,9 +291,4 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	}
 
 	return old, false, nil
-}
-
-func (s *legacyStorage) DeleteCollection(ctx context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	// TODO: support this once a pattern is established for bulk delete operations
-	return nil, k8serrors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
 }

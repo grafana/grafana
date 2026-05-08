@@ -131,6 +131,10 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
+	// FlagKubernetesAnnotationsClient
+	// Enables usage of the new annotations API client
+	FlagKubernetesAnnotationsClient = "kubernetesAnnotationsClient"
+
 	// FlagKubernetesShortURLs
 	// Enables k8s short url api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
@@ -238,10 +242,6 @@ const (
 	// FlagDashboardPulse
 	// Enables Pulse, threaded conversations attached to dashboards and panels (Slack-style threads with @user and #panel mentions, subscriptions, and notifications)
 	FlagDashboardPulse = "dashboardPulse"
-
-	// FlagSceneCsvExport
-	// Enables CSV export using scenes dashboard architecture
-	FlagSceneCsvExport = "sceneCsvExport"
 
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
@@ -646,10 +646,6 @@ const (
 	// Enables datasource resource permissions via the K8s IAM resource permission APIs
 	FlagKubernetesAuthzDatasourceResourcePermissions = "kubernetesAuthzDatasourceResourcePermissions"
 
-	// FlagRestoreDashboards
-	// Enables restore deleted dashboards feature
-	FlagRestoreDashboards = "restoreDashboards"
-
 	// FlagAlertEnrichment
 	// Enable configuration of alert enrichments in Grafana Cloud.
 	FlagAlertEnrichment = "alertEnrichment"
@@ -730,6 +726,10 @@ const (
 	// Enable syncing plugin installations to the installs API
 	FlagPluginInstallAPISync = "pluginInstallAPISync"
 
+	// FlagGrafanaDedicatedGrafanaComProxyAPIToken
+	// Use a dedicated auth token for Grafana.com proxy requests and plugin installs
+	FlagGrafanaDedicatedGrafanaComProxyAPIToken = "grafana.dedicatedGrafanaComProxyAPIToken"
+
 	// FlagJaegerEnableGrpcEndpoint
 	// Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
 	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"
@@ -781,6 +781,10 @@ const (
 	// FlagProfilesExemplars
 	// Enables profiles exemplars support in profiles drilldown
 	FlagProfilesExemplars = "profilesExemplars"
+
+	// FlagPyroscopeUTF8LabelNames
+	// Enables support for UTF-8 label names in Pyroscope label selectors
+	FlagPyroscopeUTF8LabelNames = "pyroscopeUTF8LabelNames"
 
 	// FlagAlertingSyncDispatchTimer
 	// Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
@@ -834,9 +838,13 @@ const (
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
-	// FlagAppPluginAPIServer
+	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
-	FlagAppPluginAPIServer = "appPluginAPIServer"
+	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
+
+	// FlagApppluginsHandleProxyRequests
+	// Register the proxy endpoints
+	FlagApppluginsHandleProxyRequests = "appplugins.handleProxyRequests"
 
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without 'pending' stage
@@ -973,4 +981,16 @@ const (
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
+
+	// FlagAlertingDisableV0ReceiverConversion
+	// Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model
+	FlagAlertingDisableV0ReceiverConversion = "alerting.disableV0ReceiverConversion"
+
+	// FlagPreferencesRerouteLegacyAPIs
+	// Use K8s client implementation for legacy preferences API
+	FlagPreferencesRerouteLegacyAPIs = "preferences.rerouteLegacyAPIs"
+
+	// FlagPluginsMarketplaceLicensing
+	// Enables marketplace plugin licensing
+	FlagPluginsMarketplaceLicensing = "plugins.marketplaceLicensing"
 )

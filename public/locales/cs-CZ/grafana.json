@@ -1163,6 +1163,9 @@
         "rule-viewer-section-extension": "Sekci pro rozšiřující modul prohlížeče pravidel se nepodařilo načíst"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Konfiguraci se nepodařilo aktualizovat:",
       "title-something-went-wrong": "Došlo k chybě"
@@ -3212,9 +3215,7 @@
       "deleting": "Odstraňování",
       "text-federated": "Federované",
       "text-provisioned": "Zajištěno",
-      "ungrouped": "Neseskupené",
-      "ungrouped-suffix": "{{ruleName}} (neseskupené)",
-      "unknown-rule": "Neznámé pravidlo"
+      "ungrouped": "Neseskupené"
     },
     "saved-searches": {
       "actions-aria-label": "Akce",
@@ -4366,6 +4367,7 @@
         "repository-not-found-message": "Úložiště pro vybranou složku se nepodařilo najít. Ujistěte se, že je složka správně nastavena.",
         "repository-not-found-title": "Úložiště nebylo nalezeno"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Chyba při přesouvání zdrojů",
       "error-no-target-folder-path": "Cesta k cílové složce je neplatná nebo prázdná, vyberte ji znovu.",
       "move-total": "Celkově to ovlivní:",
@@ -4514,6 +4516,14 @@
       "request-extension": "Požádat o navýšení limitu",
       "resource-detail-dashboards": "Vytvořili jste {{usage}} z {{limit}} nástěnek ({{percentage}} %).",
       "resource-detail-folders": "Vytvořili jste {{usage}} z {{limit}} složek ({{percentage}} %)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Vymazat historii",
@@ -5329,7 +5339,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Nastavení"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5731,7 +5741,7 @@
         "title": "Proměnné"
       },
       "variable": {
-        "change-type": "Změnit",
+        "change-type": "",
         "change-type-aria-label": "Změnit typ proměnné",
         "custom-options": {
           "apply": "Použít",
@@ -6048,7 +6058,7 @@
       "cancel": "Zrušit",
       "common": {
         "copy": "Kopírovat",
-        "copy-or-duplicate": "Kopírovat/vložit nebo duplikovat",
+        "copy-tooltip": "",
         "delete": "Odstranit",
         "duplicate": "Duplikovat",
         "layout": "Rozvržení",
@@ -6087,7 +6097,7 @@
     },
     "new-panel": {
       "aria-label": "Nekonfigurovaný panel. Stisknutím klávesy Tab zobrazíte možnosti konfigurace.",
-      "configure-button": "Konfigurovat",
+      "configure-button": "",
       "configure-button-menu": "Přepnout nabídku",
       "configure-visualization": "Konfigurovat vizualizaci",
       "empty-state-message": "Spusťte dotaz a vizualizujte jej zde nebo přejděte na všechny vizualizace a přidejte další typy panelů",
@@ -6331,10 +6341,8 @@
       "title-provisioned": "Zajištěná nástěnka"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem.<br/><2>Chcete přesto nástěnku uložit?</2>",
       "body-version-mismatch": "Tuto nástěnku aktualizoval jiný uživatel<br/><2>Chcete přesto nástěnku uložit?</2>",
       "confirmText-save-and-overwrite": "Uložit a přepsat",
-      "title-name-exists": "Konflikt",
       "title-version-mismatch": "Konflikt"
     },
     "save-dashboard-form": {
@@ -7395,6 +7403,7 @@
       "terraform": "Spravuje: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Nástěnku se nepodařilo přesunout",
       "cancel-action": "Zrušit",
       "current-file-not-found": "Aktuální soubor nástěnky se nepodařilo najít",
@@ -7407,10 +7416,6 @@
       "success-message": "Nástěnka byla úspěšně přesunuta",
       "target-path-label": "Cílová cesta",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem. Chcete přesto tuto nástěnku uložit?",
-      "title-name-already-exists": "Název již existuje"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8129,19 +8134,6 @@
       "aria-label-explore-data": "Prozkoumat data",
       "aria-label-suggested-dashboards": "Navrhované nástěnky"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Upozorňování není podporováno",
-      "text-alerting-supported": "Upozorňování je podporováno"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Název se použije při výběru zdroje dat v panelech. Výchozí zdroj dat se předvolí v nových panelech."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Základní nastavení stránky nastavení zdroje dat",
-      "basic-settings-name-placeholder-name": "Název",
-      "label-default": "Výchozí",
-      "label-name": "Název"
-    },
     "build-a-dashboard-button": {
       "blank": "Prázdné",
       "build-a-dashboard": "Vytvořit nástěnku",
@@ -8236,6 +8228,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Přidat do oblíbených",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Prozkoumat data",
       "open-in-explore": "Otevřít v zobrazení Prozkoumat",
       "remove-favorite": "Odebrat z oblíbených"
@@ -11373,7 +11371,7 @@
     "description-order": "Zobrazit nejdříve nejnovější nebo nejstarší protokoly. Pokud je vybrána možnost Nejstarší nejdříve, zobrazení se automaticky posune na nejnovější protokoly ve spodní části.",
     "description-prettify-json": "Formátovat záznamy protokolu JSON pomocí odsazení a zalomení řádků.",
     "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu.",
-    "description-show-log-attributes": "Experimentální. Když se zobrazí protokoly OTel, přidejte další zobrazené pole s relevantními páry klíč-hodnota ze štítků a metadat.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Při používání zobrazených polí zarovnat hodnoty pomocí sloupců.",
     "description-wrap-lines": "Zobrazujte protokoly jako jeden řádek nebo zalomte dlouhé záznamy protokolu tak, aby se vešly do panelu.",
     "field-selector": {
@@ -11705,7 +11703,7 @@
       "line-contains-not": "Přidat jako řádek neobsahuje filtr",
       "search-text": "Hledat ve výsledcích"
     },
-    "show-log-attributes": "Zobrazit atributy protokolu pro protokoly OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Rozlišení časového razítka",
     "un-themed-log-details": {
       "aria-label-data-links": "Propojení dat",
@@ -14415,6 +14413,8 @@
       "alerts-loading": "Výstrahy",
       "card-click": "Vybrat kartu {{id}}",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nový {{type}}",
       "queries-expressions": "Dotazy a výrazy",
       "toggle-size": "Přepnout velikost postranního panelu",
@@ -15143,10 +15143,13 @@
       "title": "Vytvářejte nástěnky rychleji díky návrhům a šablonám"
     },
     "nav": {
+      "counter": "",
       "go-to": "Přejít na snímek {{number}}",
-      "next": "Další",
-      "prev": "Předchozí"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Vysvětlit dotaz",
@@ -15628,7 +15631,6 @@
       "forwards-time-aria-label": "Přesunout časový rozsah dopředu",
       "to": "do",
       "zoom-out-button": "Oddálit časový rozsah",
-      "zoom-out-tooltip": "Oddálení časového rozsahu <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Oddálení časového rozsahu <br/> t -"
     },
     "time-range": {

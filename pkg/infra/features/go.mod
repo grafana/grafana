@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/infra/features
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0
@@ -8,7 +8,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.292.0
 	github.com/open-feature/go-sdk v1.17.1
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7
-	github.com/puzpuzpuz/xsync/v4 v4.4.0
+	github.com/puzpuzpuz/xsync/v4 v4.5.0
 	github.com/stretchr/testify v1.11.1
 )
 

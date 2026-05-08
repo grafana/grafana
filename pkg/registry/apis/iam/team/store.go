@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,24 +17,16 @@ import (
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/util"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 var (
-	_ rest.Scoper               = (*LegacyStore)(nil)
-	_ rest.SingularNameProvider = (*LegacyStore)(nil)
-	_ rest.Getter               = (*LegacyStore)(nil)
-	_ rest.Lister               = (*LegacyStore)(nil)
-	_ rest.Storage              = (*LegacyStore)(nil)
-	_ rest.Creater              = (*LegacyStore)(nil)
-	_ rest.CollectionDeleter    = (*LegacyStore)(nil)
-	_ rest.GracefulDeleter      = (*LegacyStore)(nil)
-	_ rest.Updater              = (*LegacyStore)(nil)
+	_ grafanarest.Storage = (*LegacyStore)(nil)
 )
 
 var teamResource = iamv0alpha1.TeamResourceInfo
@@ -69,10 +62,6 @@ func (s *LegacyStore) NewList() runtime.Object {
 
 func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return teamResource.TableConverter().ConvertToTable(ctx, object, tableOptions)
-}
-
-func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, apierrors.NewMethodNotSupported(teamResource.GroupResource(), "delete")
 }
 
 // Delete implements rest.GracefulDeleter.

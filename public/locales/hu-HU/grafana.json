@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Nem sikerült betölteni a szabálymegjelenítő bővítési szakaszát"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "A konfiguráció frissítése sikertelen volt:",
       "title-something-went-wrong": "Valami hiba történt"
@@ -3174,9 +3177,7 @@
       "deleting": "Törlés",
       "text-federated": "Összevont",
       "text-provisioned": "Kiépítve",
-      "ungrouped": "Nem csoportosított",
-      "ungrouped-suffix": "{{ruleName}} (nem csoportosított)",
-      "unknown-rule": "Ismeretlen szabály"
+      "ungrouped": "Nem csoportosított"
     },
     "saved-searches": {
       "actions-aria-label": "Műveletek",
@@ -4322,6 +4323,7 @@
         "repository-not-found-message": "A kiválasztott mappához tartozó adattár nem található. Kérjük, ellenőrizze, hogy a mappa megfelelően van-e konfigurálva.",
         "repository-not-found-title": "Nem található adattár"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Hiba történt az erőforrások áthelyezésekor",
       "error-no-target-folder-path": "A célmappa elérési útvonala érvénytelen vagy üres. Kérjük, válassza ki újra.",
       "move-total": "Összességében ez a következőket érinti:",
@@ -4460,6 +4462,14 @@
       "request-extension": "Kvótabővítés igénylése",
       "resource-detail-dashboards": "{{limit}}/{{usage}} irányítópultot hozott létre ({{percentage}}%).",
       "resource-detail-folders": "{{limit}}/{{usage}} mappát hozott létre ({{percentage}}%)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Előzmények törlése",
@@ -5269,7 +5279,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Beállítások"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5671,7 +5681,7 @@
         "title": "Változók"
       },
       "variable": {
-        "change-type": "Módosítás",
+        "change-type": "",
         "change-type-aria-label": "Változótípus módosítása",
         "custom-options": {
           "apply": "Alkalmaz",
@@ -5988,7 +5998,7 @@
       "cancel": "Mégse",
       "common": {
         "copy": "Másolás",
-        "copy-or-duplicate": "Másolás/beillesztés vagy duplikálás",
+        "copy-tooltip": "",
         "delete": "Törlés",
         "duplicate": "Duplikálás",
         "layout": "Elrendezés",
@@ -6027,7 +6037,7 @@
     },
     "new-panel": {
       "aria-label": "Nem konfigurált panel. A konfigurációs beállítások megtekintéséhez nyissa meg a lapot.",
-      "configure-button": "Konfigurálás",
+      "configure-button": "",
       "configure-button-menu": "Menü átkapcsolása",
       "configure-visualization": "Vizualizáció konfigurálása",
       "empty-state-message": "Futtasson egy lekérdezést, hogy itt megjelenítse, vagy lépjen az összes megjelenítéshez, hogy hozzáadjon más paneltípusokat",
@@ -6269,10 +6279,8 @@
       "title-provisioned": "Kiépített irányítópult"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Egy irányítópult már létezik ugyanazzal a névvel a kijelölt mappában.<br/><2>Biztosan menti ezt az irányítópultot?</2>",
       "body-version-mismatch": "Valaki más frissítette ezt az irányítópultot<br/><2>Biztosan menti ezt az irányítópultot?</2>",
       "confirmText-save-and-overwrite": "Mentés és felülírás",
-      "title-name-exists": "Ütközés",
       "title-version-mismatch": "Ütközés"
     },
     "save-dashboard-form": {
@@ -7313,6 +7321,7 @@
       "terraform": "Felügyeli: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Nem sikerült áthelyezni az irányítópultot",
       "cancel-action": "Mégse",
       "current-file-not-found": "A jelenlegi irányítópultfájl nem található",
@@ -7325,10 +7334,6 @@
       "success-message": "Irányítópult sikeresen áthelyezve",
       "target-path-label": "Célútvonal",
       "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Egy irányítópult már létezik ugyanazzal a névvel a kijelölt mappában. Biztosan menti ezt az irányítópultot?",
-      "title-name-already-exists": "A név már létezik"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8037,19 +8042,6 @@
       "aria-label-explore-data": "Adatok felfedezése",
       "aria-label-suggested-dashboards": "Javasolt irányítópultok"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "A riasztás nem támogatott",
-      "text-alerting-supported": "A riasztás támogatott"
-    },
-    "basic-serttings": {
-      "tooltip-name": "A név akkor használatos, amikor a paneleken kijelöli az adatforrást. Az alapértelmezett adatforrás előre ki van jelölve az új paneleken."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Adatforrás-beállítások oldalának alapbeállításai",
-      "basic-settings-name-placeholder-name": "Név",
-      "label-default": "Alapértelmezett",
-      "label-name": "Név"
-    },
     "build-a-dashboard-button": {
       "blank": "Üres",
       "build-a-dashboard": "Irányítópult létrehozása",
@@ -8144,6 +8136,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Hozzáadás a kedvencekhez",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Adatok felfedezése",
       "open-in-explore": "Megnyitás Explore nézetben",
       "remove-favorite": "Eltávolítás a kedvencek közül"
@@ -11247,7 +11245,7 @@
     "description-order": "A legújabb vagy a legrégebbi naplóbejegyzések megjelenítése először. Ha a Legrégebbiek elöl lehetőség van kiválasztva, a nézet automatikusan a legalsó, legújabb naplókhoz lesz görgetve.",
     "description-prettify-json": "JSON-naplóbejegyzések formázása behúzással és sortörésekkel.",
     "description-show-controls": "Vezérlők megjelenítése az utolsó vagy az első naplósorra ugráshoz, és szűrés naplószint szerint.",
-    "description-show-log-attributes": "Kísérleti. Amikor az OTel-naplók megjelennek, hozzáadhat egy további megjelenített mezőt a címkék és a metaadatok releváns kulcs-érték párjaival.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Az értékek igazítása oszlopok segítségével a megjelenített mezők használatakor.",
     "description-wrap-lines": "A naplóbejegyzések megjelenítése egyetlen sorban, vagy a hosszú naplóbejegyzések tördelése, hogy illeszkedjenek a panelhez.",
     "field-selector": {
@@ -11573,7 +11571,7 @@
       "line-contains-not": "A hozzáadás sorként nem tartalmaz szűrőt",
       "search-text": "Keresés az eredményekben"
     },
-    "show-log-attributes": "Naplóattribútumok megjelenítése az OTel-naplókhoz",
+    "show-log-attributes": "",
     "timestamp-format": "Időbélyeg felbontása",
     "un-themed-log-details": {
       "aria-label-data-links": "Adathivatkozások",
@@ -14243,6 +14241,8 @@
       "alerts-loading": "Riasztások",
       "card-click": "{{id}} kártya kiválasztása",
       "data": "Adatok",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Új {{type}}",
       "queries-expressions": "Lekérdezések és kifejezések",
       "toggle-size": "Oldalsáv méretének átváltása",
@@ -14959,10 +14959,13 @@
       "title": "Javaslatokkal és sablonokkal gyorsan elindíthat irányítópultokat"
     },
     "nav": {
+      "counter": "",
       "go-to": "Ugrás a(z) {{number}}. diára",
-      "next": "Következő",
-      "prev": "Előző"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Lekérdezés magyarázata",
@@ -15442,7 +15445,6 @@
       "forwards-time-aria-label": "Időtartomány mozgatása előre",
       "to": "vége",
       "zoom-out-button": "Időtartomány kicsinyítése",
-      "zoom-out-tooltip": "Időtartomány kicsinyítése <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Időtartomány kicsinyítése <br/> t -"
     },
     "time-range": {
