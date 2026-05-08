@@ -267,6 +267,3 @@ func (f *fakeInnerStore) List(_ context.Context, _ *internalversion.ListOptions)
 func (f *fakeInnerStore) Delete(_ context.Context, _ string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	return nil, true, nil
 }
-func (f *fakeInnerStore) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, nil
-}

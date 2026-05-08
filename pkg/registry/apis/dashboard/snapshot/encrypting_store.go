@@ -105,10 +105,6 @@ func (s *encryptingStore) Delete(ctx context.Context, name string, deleteValidat
 	return s.inner.Delete(ctx, name, deleteValidation, options)
 }
 
-func (s *encryptingStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return s.inner.DeleteCollection(ctx, deleteValidation, options, listOptions)
-}
-
 func (s *encryptingStore) encryptInPlace(ctx context.Context, obj runtime.Object) error {
 	snap, ok := obj.(*dashv0.Snapshot)
 	if !ok {
