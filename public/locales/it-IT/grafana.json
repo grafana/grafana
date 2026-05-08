@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Impossibile caricare la sezione di arricchimento del visualizzatore di regole"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Impossibile aggiornare la configurazione:",
       "title-something-went-wrong": "Si è verificato un errore"
@@ -3174,9 +3177,7 @@
       "deleting": "Eliminazione",
       "text-federated": "Federato",
       "text-provisioned": "Fornito",
-      "ungrouped": "Non raggruppato",
-      "ungrouped-suffix": "{{ruleName}} (non raggruppato)",
-      "unknown-rule": "Regola sconosciuta"
+      "ungrouped": "Non raggruppato"
     },
     "saved-searches": {
       "actions-aria-label": "Azioni",

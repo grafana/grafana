@@ -43,7 +43,11 @@ type alertmanagerCrypto struct {
 	log     log.Logger
 }
 
-func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logger) Crypto {
+func NewCrypto(
+	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	configs configurationStore,
+	log log.Logger,
+) Crypto {
 	return &alertmanagerCrypto{
 		ExtraConfigsCrypto: NewExtraConfigsCrypto(secrets),
 		configs:            configs,
