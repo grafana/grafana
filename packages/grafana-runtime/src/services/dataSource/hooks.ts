@@ -5,13 +5,13 @@ import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef
 
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
-import { getInstanceSettings, getInstanceSettingsList } from './instanceSettings';
-import { getDataSourcePlugin } from './plugin';
+import { getDataSourceSettings, getDataSourceSettingsList } from './instanceSettings';
+import { getDataSource } from './plugin';
 
 /**
  * @public
  */
-export interface UseInstanceSettingsResult {
+export interface UseDataSourceSettingsResult {
   isLoading: boolean;
   error?: Error;
   settings?: DataSourceInstanceSettings;
@@ -20,7 +20,7 @@ export interface UseInstanceSettingsResult {
 /**
  * @public
  */
-export interface UseInstanceSettingsListResult {
+export interface UseDataSourceSettingsListResult {
   isLoading: boolean;
   error?: Error;
   /** Flattened items across all pages fetched so far. */
@@ -33,39 +33,39 @@ export interface UseInstanceSettingsListResult {
 /**
  * @public
  */
-export interface UseDataSourcePluginResult {
+export interface UseDataSourceResult {
   isLoading: boolean;
   error?: Error;
   dataSource?: DataSourceApi;
 }
 
 /**
- * React hook wrapping {@link getInstanceSettings}. Re-fetches when `ref`
+ * React hook wrapping {@link getDataSourceSettings}. Re-fetches when `ref`
  * changes.
  *
  * @public
  */
-export function useInstanceSettings(ref?: DataSourceRef | string | null): UseInstanceSettingsResult {
+export function useDataSourceSettings(ref?: DataSourceRef | string | null): UseDataSourceSettingsResult {
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getInstanceSettings(ref), [ref]);
+  const { loading, error, value } = useAsync(() => getDataSourceSettings(ref), [ref]);
   return { isLoading: loading, error, settings: value };
 }
 
 /**
- * React hook wrapping {@link getInstanceSettingsList}. Items are flattened
+ * React hook wrapping {@link getDataSourceSettingsList}. Items are flattened
  * across pages; call `fetchMore` to load additional pages. Items reset when
  * `filters` changes (by reference — pass a stable object to avoid extra
  * fetches).
  *
  * @public
  */
-export function useInstanceSettingsList(filters?: GetDataSourceListFilters): UseInstanceSettingsListResult {
+export function useDataSourceSettingsList(filters?: GetDataSourceListFilters): UseDataSourceSettingsListResult {
   const [items, setItems] = useState<DataSourceInstanceSettings[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
 
   const [fetchState, fetchPage] = useAsyncFn(
-    (nextCursor?: string) => getInstanceSettingsList({ filters, cursor: nextCursor }),
+    (nextCursor?: string) => getDataSourceSettingsList({ filters, cursor: nextCursor }),
     [filters], // object equality — pass a stable ref to avoid extra fetches
     { loading: true }
   );
@@ -98,13 +98,13 @@ export function useInstanceSettingsList(filters?: GetDataSourceListFilters): Use
 }
 
 /**
- * React hook wrapping {@link getDataSourcePlugin}. Re-fetches when `ref`
+ * React hook wrapping {@link getDataSource}. Re-fetches when `ref`
  * changes.
  *
  * @public
  */
-export function useDataSourcePlugin(ref?: DataSourceRef | string | null): UseDataSourcePluginResult {
+export function useDataSource(ref?: DataSourceRef | string | null): UseDataSourceResult {
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getDataSourcePlugin(ref), [ref]);
+  const { loading, error, value } = useAsync(() => getDataSource(ref), [ref]);
   return { isLoading: loading, error, dataSource: value };
 }

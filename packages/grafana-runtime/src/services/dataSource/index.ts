@@ -1,19 +1,19 @@
 export {
   initDataSources,
-  getInstanceSettings,
-  getInstanceSettingsList,
+  getDataSourceSettings,
+  getDataSourceSettingsList,
   reload,
   upsertRuntimeDataSource,
 } from './instanceSettings';
-export { type DataSourceInstanceSettingsPage, type GetInstanceSettingsListOptions } from './types';
+export { type DataSourceSettingsPage, type GetDataSourceSettingsListOptions } from './types';
 
-export { getDataSourcePlugin, registerRuntimeDataSource } from './plugin';
+export { getDataSource, registerRuntimeDataSource } from './plugin';
 
 export {
-  useInstanceSettings,
-  useInstanceSettingsList,
-  useDataSourcePlugin,
-  type UseInstanceSettingsResult,
-  type UseInstanceSettingsListResult,
-  type UseDataSourcePluginResult,
+  useDataSourceSettings,
+  useDataSourceSettingsList,
+  useDataSource,
+  type UseDataSourceSettingsResult,
+  type UseDataSourceSettingsListResult,
+  type UseDataSourceResult,
 } from './hooks';
