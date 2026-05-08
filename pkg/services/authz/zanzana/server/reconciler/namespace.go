@@ -127,7 +127,7 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 		},
 		"rolebindings":        TranslateRoleBindingToTuples,
 		"resourcepermissions": TranslateResourcePermissionToTuples,
-		"teambindings":        TranslateTeamBindingToTuples,
+		"teams":               TranslateTeamToMemberTuples,
 		"users":               TranslateUserToTuples,
 		"serviceaccounts":     TranslateServiceAccountToTuples,
 	}
