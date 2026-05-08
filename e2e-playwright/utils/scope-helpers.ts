@@ -322,20 +322,44 @@ export async function selectScope(page: Page, scopeName: string, selectedScope?:
     return;
   }
 
+  const checkboxTestId = `scopes-tree-${scopeName}-checkbox`;
+  const radioTestId = `scopes-tree-${scopeName}-radio`;
+
+  // Grafana's scope selector uses React-controlled checkboxes: the checked state lives in the
+  // DOM property `element.checked`, not in `aria-checked` (which is never set).
+  const isCheckedNow = () =>
+    page
+      .evaluate(
+        ([cb, rb]) => {
+          const el = document.querySelector(`[data-testid="${cb}"]`) ?? document.querySelector(`[data-testid="${rb}"]`);
+          return el instanceof HTMLInputElement ? el.checked : false;
+        },
+        [checkboxTestId, radioTestId]
+      )
+      .catch(() => false);
+
+  // If already checked, clicking would deselect it — skip the click entirely.
+  if (await isCheckedNow()) {
+    return;
+  }
+
   const responsePromise = scopeSelectRequest(page, selectedScope);
 
   await click();
 
-  // Wait for either a network response (first fetch) or the checkbox/radio becoming checked.
+  // Wait for either a network response (first fetch) or the DOM .checked property becoming true.
   // When scope data is already in the RTK Query cache from a previous selection in the same
   // session, no HTTP request is made and waitForResponse would time out. Racing against the
   // UI update handles both cases correctly.
   const uiSelected = page
-    .locator(
-      `[data-testid="scopes-tree-${scopeName}-checkbox"][aria-checked="true"], ` +
-        `[data-testid="scopes-tree-${scopeName}-radio"][aria-checked="true"]`
+    .waitForFunction(
+      ([cb, rb]) => {
+        const el = document.querySelector(`[data-testid="${cb}"]`) ?? document.querySelector(`[data-testid="${rb}"]`);
+        return el instanceof HTMLInputElement ? el.checked : false;
+      },
+      [checkboxTestId, radioTestId],
+      { timeout: 5000 }
     )
-    .waitFor({ timeout: 5000 })
     .catch(() => null);
 
   // Attach .catch before the race: a .catch after await only suppresses the unhandled-rejection
