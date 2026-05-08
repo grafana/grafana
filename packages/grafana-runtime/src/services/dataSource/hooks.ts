@@ -39,34 +39,41 @@ export interface UseDataSourceResult {
   dataSource?: DataSourceApi;
 }
 
+function stableKey(value: unknown): string {
+  return JSON.stringify(value ?? null);
+}
+
 /**
  * React hook wrapping {@link getDataSourceSettings}. Re-fetches when `ref`
- * changes.
+ * changes (compared by value, so inline objects are safe).
  *
  * @public
  */
 export function useDataSourceSettings(ref?: DataSourceRef | string | null): UseDataSourceSettingsResult {
+  const refKey = stableKey(ref);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getDataSourceSettings(ref), [ref]);
+  const { loading, error, value } = useAsync(() => getDataSourceSettings(ref), [refKey]);
   return { isLoading: loading, error, settings: value };
 }
 
 /**
  * React hook wrapping {@link getDataSourceSettingsList}. Items are flattened
  * across pages; call `fetchMore` to load additional pages. Items reset when
- * `filters` changes (by reference — pass a stable object to avoid extra
- * fetches).
+ * `filters` changes (compared by value, so inline objects are safe).
  *
  * @public
  */
 export function useDataSourceSettingsList(filters?: GetDataSourceListFilters): UseDataSourceSettingsListResult {
+  const filtersKey = stableKey(filters);
+
   const [items, setItems] = useState<DataSourceInstanceSettings[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
 
   const [fetchState, fetchPage] = useAsyncFn(
     (nextCursor?: string) => getDataSourceSettingsList({ filters, cursor: nextCursor }),
-    [filters], // object equality — pass a stable ref to avoid extra fetches
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filtersKey],
     { loading: true }
   );
 
@@ -99,12 +106,13 @@ export function useDataSourceSettingsList(filters?: GetDataSourceListFilters): U
 
 /**
  * React hook wrapping {@link getDataSource}. Re-fetches when `ref`
- * changes.
+ * changes (compared by value, so inline objects are safe).
  *
  * @public
  */
 export function useDataSource(ref?: DataSourceRef | string | null): UseDataSourceResult {
+  const refKey = stableKey(ref);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getDataSource(ref), [ref]);
+  const { loading, error, value } = useAsync(() => getDataSource(ref), [refKey]);
   return { isLoading: loading, error, dataSource: value };
 }
