@@ -40,7 +40,7 @@ func (ds *DataSource) newResourceMux() *http.ServeMux {
 
 type handleFn func(ctx context.Context, parameters url.Values) ([]suggestData, error)
 
-// TODO: merge this and resourceRequestMiddleware
+// TODO: merge this and resourceRequestWithHeadersMiddleware
 func (ds *DataSource) handleResourceReq(handleFunc handleFn) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
