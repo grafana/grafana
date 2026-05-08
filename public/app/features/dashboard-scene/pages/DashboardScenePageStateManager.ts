@@ -1015,7 +1015,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
       // Special handling for Template route - set up edit mode and dirty state
       if (
-        getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardOrgTemplates, false) &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false) &&
         options.route === DashboardRoutes.Template
       ) {
         const editMode = !!options.editTemplate;

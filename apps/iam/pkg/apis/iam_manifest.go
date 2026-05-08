@@ -115,11 +115,44 @@ var appManifestData = app.ManifestData{
 																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 																				},
 																			},
+																			"metadata": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"object"},
+																					Properties: map[string]spec.Schema{
+																						"continue": {
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"string"},
+																							},
+																						},
+																						"remainingItemCount": {
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"integer"},
+																							},
+																						},
+																						"resourceVersion": {
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"string"},
+																							},
+																						},
+																						"selfLink": {
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"string"},
+																							},
+																						},
+																					},
+																				},
+																				VendorExtensible: spec.VendorExtensible{
+																					Extensions: spec.Extensions{
+																						"x-grafana-app-uses-kubernetes-list-metadata": true,
+																					},
+																				},
+																			},
 																		},
 																		Required: []string{
 																			"items",
 																			"apiVersion",
 																			"kind",
+																			"metadata",
 																		},
 																	}},
 															}},

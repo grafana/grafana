@@ -50,7 +50,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
 
   query(request: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
     let targets = request.targets.map(async (query: ExpressionQuery): Promise<ExpressionQuery> => {
-      const ds = await getDataSourceSrv().get(query.datasource);
+      const ds = await getDataSourceSrv().get(query.datasource, request.scopedVars);
 
       if (!ds.interpolateVariablesInQueries) {
         return query;

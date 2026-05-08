@@ -1,5 +1,4 @@
-import { PureComponent } from 'react';
-import * as React from 'react';
+import { memo, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
 import {
@@ -63,39 +62,57 @@ type DataSourceInstance =
   | (DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>)
   | (DataSourceApi<DataQuery> & DataSourceWithQueryModificationSupport<DataQuery>);
 
-interface LogsContainerState {
-  dsInstances: Record<string, DataSourceInstance>;
-}
+const LogsContainer = memo(function LogsContainer({
+  loading,
+  loadingState,
+  logRows,
+  logsMeta,
+  logsSeries,
+  logsQueries,
+  onClickFilterLabel,
+  onClickFilterOutLabel,
+  onStartScanning,
+  onStopScanning,
+  absoluteRange,
+  timeZone,
+  visibleRange,
+  scanning,
+  range,
+  width,
+  splitOpenFn,
+  isLive,
+  isPaused,
+  clearedAtIndex,
+  exploreId,
+  logsVolume,
+  onPinLineCallback,
+  datasourceInstance,
+  panelState,
+  logsFrames,
+  isFilterLabelActive,
+  onClickFilterString,
+  onClickFilterOutString,
+  eventBus,
+  updateTimeRange,
+  loadMoreLogs,
+  loadSupplementaryQueryData,
+  setSupplementaryQueryEnabled,
+}: LogsContainerProps) {
+  const [dsInstances, setDsInstances] = useState<Record<string, DataSourceInstance>>({});
 
-class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
-  state: LogsContainerState = {
-    dsInstances: {},
-  };
-
-  componentDidMount() {
-    this.updateDataSourceInstances();
-  }
-
-  componentDidUpdate(prevProps: LogsContainerProps) {
-    if (prevProps.logsQueries !== this.props.logsQueries) {
-      this.updateDataSourceInstances();
-    }
-  }
-
-  private updateDataSourceInstances() {
-    const { logsQueries, datasourceInstance } = this.props;
+  const updateDataSourceInstances = useCallback(() => {
     if (!logsQueries || !datasourceInstance) {
       return;
     }
 
-    const dsInstances: Record<string, DataSourceInstance> = {};
+    const instances: Record<string, DataSourceInstance> = {};
 
     // Not in mixed mode.
     if (datasourceInstance.uid !== MIXED_DATASOURCE_NAME) {
       logsQueries.forEach(({ refId }) => {
-        dsInstances[refId] = datasourceInstance;
+        instances[refId] = datasourceInstance;
       });
-      this.setState({ dsInstances });
+      setDsInstances(instances);
       return;
     }
 
@@ -105,7 +122,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       if (!query.datasource) {
         continue;
       }
-      const mustCheck = !dsInstances[query.refId] || dsInstances[query.refId].uid !== query.datasource.uid;
+      const mustCheck = !instances[query.refId] || instances[query.refId].uid !== query.datasource.uid;
       if (mustCheck) {
         dsPromises.push(
           new Promise((resolve) => {
@@ -123,239 +140,196 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       return;
     }
 
-    Promise.all(dsPromises).then((instances) => {
-      instances.forEach(({ ds, refId }) => {
-        dsInstances[refId] = ds;
+    Promise.all(dsPromises).then((resolved) => {
+      resolved.forEach(({ ds, refId }) => {
+        instances[refId] = ds;
       });
-      this.setState({ dsInstances });
+      setDsInstances(instances);
     });
+  }, [logsQueries, datasourceInstance]);
+
+  useEffect(() => {
+    updateDataSourceInstances();
+  }, [updateDataSourceInstances]);
+
+  function onChangeTime(absoluteRange: AbsoluteTimeRange) {
+    updateTimeRange({ exploreId, absoluteRange });
   }
 
-  onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
-    const { exploreId, updateTimeRange } = this.props;
-    updateTimeRange({ exploreId, absoluteRange });
-  };
-
-  loadMoreLogs = (absoluteRange: AbsoluteTimeRange) => {
-    const { exploreId, loadMoreLogs } = this.props;
+  function handleLoadMoreLogs(absoluteRange: AbsoluteTimeRange) {
     loadMoreLogs({ exploreId, absoluteRange });
-  };
+  }
 
-  private getQuery(
-    logsQueries: DataQuery[] | undefined,
+  function getQuery(
+    queries: DataQuery[] | undefined,
     row: LogRowModel,
-    datasourceInstance: DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>
+    datasource: DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>
   ) {
-    // we need to find the query, and we need to be very sure that it's a query
-    // from this datasource
-    return (logsQueries ?? []).find(
-      (q) => q.refId === row.dataFrame.refId && q.datasource != null && q.datasource.type === datasourceInstance.type
+    return (queries ?? []).find(
+      (q) => q.refId === row.dataFrame.refId && q.datasource != null && q.datasource.type === datasource.type
     );
   }
 
-  getLogRowContext = async (
+  async function getLogRowContext(
     row: LogRowModel,
     origRow: LogRowModel,
     options: LogRowContextOptions
-  ): Promise<DataQueryResponse> => {
-    const { logsQueries } = this.props;
-
-    if (!origRow.dataFrame.refId || !this.state.dsInstances[origRow.dataFrame.refId]) {
-      return Promise.resolve({
-        data: [],
-      });
+  ): Promise<DataQueryResponse> {
+    if (!origRow.dataFrame.refId || !dsInstances[origRow.dataFrame.refId]) {
+      return { data: [] };
     }
 
-    const ds = this.state.dsInstances[origRow.dataFrame.refId];
+    const ds = dsInstances[origRow.dataFrame.refId];
     if (!hasLogsContextSupport(ds)) {
-      return Promise.resolve({
-        data: [],
-      });
+      return { data: [] };
     }
 
-    const query = this.getQuery(logsQueries, origRow, ds);
-    return query
-      ? ds.getLogRowContext(row, options, query)
-      : Promise.resolve({
-          data: [],
-        });
-  };
+    const query = getQuery(logsQueries, origRow, ds);
+    return query ? ds.getLogRowContext(row, options, query) : { data: [] };
+  }
 
-  getLogRowContextQuery = async (
+  async function getLogRowContextQuery(
     row: LogRowModel,
     options?: LogRowContextOptions,
     cacheFilters = true
-  ): Promise<DataQuery | null> => {
-    const { logsQueries } = this.props;
-
-    if (!row.dataFrame.refId || !this.state.dsInstances[row.dataFrame.refId]) {
-      return Promise.resolve(null);
+  ): Promise<DataQuery | null> {
+    if (!row.dataFrame.refId || !dsInstances[row.dataFrame.refId]) {
+      return null;
     }
 
-    const ds = this.state.dsInstances[row.dataFrame.refId];
+    const ds = dsInstances[row.dataFrame.refId];
     if (!hasLogsContextSupport(ds)) {
-      return Promise.resolve(null);
+      return null;
     }
 
-    const query = this.getQuery(logsQueries, row, ds);
-    return query && ds.getLogRowContextQuery
-      ? ds.getLogRowContextQuery(row, options, query, cacheFilters)
-      : Promise.resolve(null);
-  };
+    const query = getQuery(logsQueries, row, ds);
+    return query && ds.getLogRowContextQuery ? ds.getLogRowContextQuery(row, options, query, cacheFilters) : null;
+  }
 
-  getLogRowContextUi = (row: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
-    const { logsQueries } = this.props;
-
-    if (!row.dataFrame.refId || !this.state.dsInstances[row.dataFrame.refId]) {
+  function getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void): ReactNode {
+    if (!row.dataFrame.refId || !dsInstances[row.dataFrame.refId]) {
       return <></>;
     }
 
-    const ds = this.state.dsInstances[row.dataFrame.refId];
+    const ds = dsInstances[row.dataFrame.refId];
     if (!hasLogsContextSupport(ds)) {
       return <></>;
     }
 
-    const query = this.getQuery(logsQueries, row, ds);
+    const query = getQuery(logsQueries, row, ds);
     return query && hasLogsContextUiSupport(ds) && ds.getLogRowContextUi ? (
       ds.getLogRowContextUi(row, runContextQuery, query)
     ) : (
       <></>
     );
-  };
+  }
 
-  showContextToggle = (row?: LogRowModel): boolean => {
-    if (!row?.dataFrame.refId || !this.state.dsInstances[row.dataFrame.refId]) {
+  function showContextToggle(row?: LogRowModel): boolean {
+    if (!row?.dataFrame.refId || !dsInstances[row.dataFrame.refId]) {
       return false;
     }
-    return hasLogsContextSupport(this.state.dsInstances[row.dataFrame.refId]);
-  };
+    return hasLogsContextSupport(dsInstances[row.dataFrame.refId]);
+  }
 
-  getFieldLinks: GetFieldLinksFn = (field, rowIndex, dataFrame, vars) => {
-    const { splitOpenFn, range } = this.props;
+  const getFieldLinks: GetFieldLinksFn = (field, rowIndex, dataFrame, vars) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame, vars });
   };
 
-  logDetailsFilterAvailable = () => {
-    return Object.values(this.state.dsInstances).some(
+  function logDetailsFilterAvailable() {
+    return Object.values(dsInstances).some(
       (ds) => ds?.modifyQuery || hasQueryModificationSupport(ds) || hasToggleableQueryFiltersSupport(ds)
     );
-  };
+  }
 
-  filterValueAvailable = () => {
-    return Object.values(this.state.dsInstances).some(
+  function filterValueAvailable() {
+    return Object.values(dsInstances).some(
       (ds) => hasQueryModificationSupport(ds) && ds?.getSupportedQueryModifications().includes('ADD_STRING_FILTER')
     );
-  };
+  }
 
-  filterOutValueAvailable = () => {
-    return Object.values(this.state.dsInstances).some(
+  function filterOutValueAvailable() {
+    return Object.values(dsInstances).some(
       (ds) => hasQueryModificationSupport(ds) && ds?.getSupportedQueryModifications().includes('ADD_STRING_FILTER_OUT')
     );
-  };
-
-  loadLogsVolumeData = () => {
-    this.props.loadSupplementaryQueryData(this.props.exploreId, SupplementaryQueryType.LogsVolume);
-  };
-
-  onSetLogsVolumeEnabled = (enabled: boolean) => {
-    this.props.setSupplementaryQueryEnabled(this.props.exploreId, enabled, SupplementaryQueryType.LogsVolume);
-  };
-
-  render() {
-    const {
-      loading,
-      loadingState,
-      logRows,
-      logsMeta,
-      logsSeries,
-      logsQueries,
-      onClickFilterLabel,
-      onClickFilterOutLabel,
-      onStartScanning,
-      onStopScanning,
-      absoluteRange,
-      timeZone,
-      visibleRange,
-      scanning,
-      range,
-      width,
-      splitOpenFn,
-      isLive,
-      exploreId,
-      logsVolume,
-      onPinLineCallback,
-    } = this.props;
-
-    if (!logRows) {
-      return null;
-    }
-
-    return (
-      <>
-        <LogsCrossFadeTransition visible={isLive}>
-          <PanelChrome title={t('explore.logs-container.label-logs', 'Logs')}>
-            <LiveTailControls exploreId={exploreId}>
-              {(controls) => (
-                <LiveLogsWithTheme
-                  logRows={logRows}
-                  timeZone={timeZone}
-                  stopLive={controls.stop}
-                  isPaused={this.props.isPaused}
-                  onPause={controls.pause}
-                  onResume={controls.resume}
-                  onClear={controls.clear}
-                  clearedAtIndex={this.props.clearedAtIndex}
-                />
-              )}
-            </LiveTailControls>
-          </PanelChrome>
-        </LogsCrossFadeTransition>
-        <LogsCrossFadeTransition visible={!isLive}>
-          <Logs
-            exploreId={exploreId}
-            datasourceType={this.props.datasourceInstance?.type}
-            logRows={logRows}
-            logsMeta={logsMeta}
-            logsSeries={logsSeries}
-            logsVolumeEnabled={logsVolume.enabled}
-            onSetLogsVolumeEnabled={this.onSetLogsVolumeEnabled}
-            logsVolumeData={logsVolume.data}
-            logsQueries={logsQueries}
-            width={width}
-            splitOpen={splitOpenFn}
-            loading={loading}
-            loadingState={loadingState}
-            loadLogsVolumeData={this.loadLogsVolumeData}
-            onChangeTime={this.onChangeTime}
-            loadMoreLogs={this.loadMoreLogs}
-            onClickFilterLabel={this.logDetailsFilterAvailable() ? onClickFilterLabel : undefined}
-            onClickFilterOutLabel={this.logDetailsFilterAvailable() ? onClickFilterOutLabel : undefined}
-            onStartScanning={onStartScanning}
-            onStopScanning={onStopScanning}
-            absoluteRange={absoluteRange}
-            visibleRange={visibleRange}
-            timeZone={timeZone}
-            scanning={scanning}
-            scanRange={range.raw}
-            showContextToggle={this.showContextToggle}
-            getRowContext={this.getLogRowContext}
-            getRowContextQuery={this.getLogRowContextQuery}
-            getLogRowContextUi={this.getLogRowContextUi}
-            getFieldLinks={this.getFieldLinks}
-            eventBus={this.props.eventBus}
-            panelState={this.props.panelState}
-            logsFrames={this.props.logsFrames}
-            isFilterLabelActive={this.logDetailsFilterAvailable() ? this.props.isFilterLabelActive : undefined}
-            range={range}
-            onPinLineCallback={onPinLineCallback}
-            onClickFilterString={this.filterValueAvailable() ? this.props.onClickFilterString : undefined}
-            onClickFilterOutString={this.filterOutValueAvailable() ? this.props.onClickFilterOutString : undefined}
-          />
-        </LogsCrossFadeTransition>
-      </>
-    );
   }
-}
+
+  function loadLogsVolumeData() {
+    loadSupplementaryQueryData(exploreId, SupplementaryQueryType.LogsVolume);
+  }
+
+  function onSetLogsVolumeEnabled(enabled: boolean) {
+    setSupplementaryQueryEnabled(exploreId, enabled, SupplementaryQueryType.LogsVolume);
+  }
+
+  if (!logRows) {
+    return null;
+  }
+
+  return (
+    <>
+      <LogsCrossFadeTransition visible={isLive}>
+        <PanelChrome title={t('explore.logs-container.label-logs', 'Logs')}>
+          <LiveTailControls exploreId={exploreId}>
+            {(controls) => (
+              <LiveLogsWithTheme
+                logRows={logRows}
+                timeZone={timeZone}
+                stopLive={controls.stop}
+                isPaused={isPaused}
+                onPause={controls.pause}
+                onResume={controls.resume}
+                onClear={controls.clear}
+                clearedAtIndex={clearedAtIndex}
+              />
+            )}
+          </LiveTailControls>
+        </PanelChrome>
+      </LogsCrossFadeTransition>
+      <LogsCrossFadeTransition visible={!isLive}>
+        <Logs
+          exploreId={exploreId}
+          datasourceType={datasourceInstance?.type}
+          logRows={logRows}
+          logsMeta={logsMeta}
+          logsSeries={logsSeries}
+          logsVolumeEnabled={logsVolume.enabled}
+          onSetLogsVolumeEnabled={onSetLogsVolumeEnabled}
+          logsVolumeData={logsVolume.data}
+          logsQueries={logsQueries}
+          width={width}
+          splitOpen={splitOpenFn}
+          loading={loading}
+          loadingState={loadingState}
+          loadLogsVolumeData={loadLogsVolumeData}
+          onChangeTime={onChangeTime}
+          loadMoreLogs={handleLoadMoreLogs}
+          onClickFilterLabel={logDetailsFilterAvailable() ? onClickFilterLabel : undefined}
+          onClickFilterOutLabel={logDetailsFilterAvailable() ? onClickFilterOutLabel : undefined}
+          onStartScanning={onStartScanning}
+          onStopScanning={onStopScanning}
+          absoluteRange={absoluteRange}
+          visibleRange={visibleRange}
+          timeZone={timeZone}
+          scanning={scanning}
+          scanRange={range.raw}
+          showContextToggle={showContextToggle}
+          getRowContext={getLogRowContext}
+          getRowContextQuery={getLogRowContextQuery}
+          getLogRowContextUi={getLogRowContextUi}
+          getFieldLinks={getFieldLinks}
+          eventBus={eventBus}
+          panelState={panelState}
+          logsFrames={logsFrames}
+          isFilterLabelActive={logDetailsFilterAvailable() ? isFilterLabelActive : undefined}
+          range={range}
+          onPinLineCallback={onPinLineCallback}
+          onClickFilterString={filterValueAvailable() ? onClickFilterString : undefined}
+          onClickFilterOutString={filterOutValueAvailable() ? onClickFilterOutString : undefined}
+        />
+      </LogsCrossFadeTransition>
+    </>
+  );
+});
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;

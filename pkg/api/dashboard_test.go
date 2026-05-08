@@ -45,8 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/api"
-	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -403,8 +401,8 @@ func TestHTTPServer_DeleteDashboardByUID_AccessControl(t *testing.T) {
 
 			middleware := publicdashboards.NewFakePublicDashboardMiddleware(t)
 			license := licensingtest.NewFakeLicensing()
-			license.On("FeatureEnabled", publicdashboardModels.FeaturePublicDashboardsEmailSharing).Return(false)
-			hs.PublicDashboardsApi = api.ProvideApi(nil, nil, hs.AccessControl, featuremgmt.WithFeatures(), middleware, hs.Cfg, license)
+			license.On("FeatureEnabled", publicdashboards.FeaturePublicDashboardsEmailSharing).Return(false)
+			hs.PublicDashboardsApi = publicdashboards.ProvideApi(nil, nil, hs.AccessControl, featuremgmt.WithFeatures(), middleware, hs.Cfg, license)
 		})
 	}
 	deleteDashboard := func(server *webtest.Server, permissions []accesscontrol.Permission) (*http.Response, error) {

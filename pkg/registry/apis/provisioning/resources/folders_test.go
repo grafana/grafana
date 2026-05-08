@@ -410,8 +410,46 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		}, "")
 
 		require.Error(t, err)
-		require.ErrorContains(t, err, "managed by a different repository (other-repo)")
+		var ownErr *FolderManagedByOtherError
+		require.True(t, errors.As(err, &ownErr), "should return FolderManagedByOtherError")
+		require.Equal(t, "folder-id", ownErr.FolderID)
+		require.Equal(t, "other-repo", ownErr.CurrentManager)
 		require.Empty(t, client.updateCalls)
+	})
+
+	t.Run("errors when create-then-already-exists folder is managed by a different repository", func(t *testing.T) {
+		// Race path: Get returns NotFound, Create races with another sync that
+		// already wrote the folder under a different manager. The same typed
+		// error must surface so the result is classified as a user warning.
+		repo, _ := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		var getCount int
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				getCount++
+				if getCount == 1 {
+					return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+				}
+				return managedFolder(name, "Title", "other-repo"), nil
+			},
+			createFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewAlreadyExists(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, "folder-id")
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "folder-id",
+			Title: "New Title",
+			Path:  "",
+		}, "")
+
+		require.Error(t, err)
+		var ownErr *FolderManagedByOtherError
+		require.True(t, errors.As(err, &ownErr), "should return FolderManagedByOtherError")
+		require.Equal(t, "folder-id", ownErr.FolderID)
+		require.Equal(t, "other-repo", ownErr.CurrentManager)
 	})
 
 	t.Run("wraps folder depth API error as FolderDepthExceededError", func(t *testing.T) {

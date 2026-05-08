@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
@@ -7,7 +6,12 @@ import { useAsync } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { useFlagDashboardOrgTemplates } from '@grafana/runtime/internal';
+import {
+  useFlagAnalyticsFramework,
+  useFlagAssistantFrontendToolsDashboardTemplates,
+  useFlagDashboardTemplatesAssistantButton,
+  useFlagGrafanaOrgDashboardTemplates,
+} from '@grafana/runtime/internal';
 import { Box, Grid, Modal, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
 
 import { DashboardCard } from './DashboardCard';
@@ -36,14 +40,11 @@ export const TemplateDashboardModal = () => {
   const isOpen = searchParams.get('templateDashboards') === 'true';
   const entryPoint = searchParams.get('source') || '';
   const OrgTemplatesTab = getOrgTemplatesTab();
-  const showOrgTemplates = useFlagDashboardOrgTemplates() && OrgTemplatesTab !== null;
+  const showOrgTemplates = useFlagGrafanaOrgDashboardTemplates() && OrgTemplatesTab !== null;
   const [activeTab, setActiveTab] = useState<TemplateTab>(showOrgTemplates ? 'custom' : 'grafana');
-  const isDashboardTemplatesAssistantButtonEnabled = useBooleanFlagValue('dashboardTemplatesAssistantButton', false);
-  const isDashboardTemplatesAssistantToolEnabled = useBooleanFlagValue(
-    'assistant.frontend.tools.dashboardTemplates',
-    false
-  );
-  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const isDashboardTemplatesAssistantButtonEnabled = useFlagDashboardTemplatesAssistantButton();
+  const isDashboardTemplatesAssistantToolEnabled = useFlagAssistantFrontendToolsDashboardTemplates();
+  const isAnalyticsFrameworkEnabled = useFlagAnalyticsFramework();
 
   const testDataSource = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0];
 

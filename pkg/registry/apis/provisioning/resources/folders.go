@@ -251,7 +251,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			})
 		}
 		if current != cfg.Name {
-			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
+			return NewFolderManagedByOtherError(folder.ID, current)
 		}
 
 		meta, err := utils.MetaAccessor(obj)
@@ -373,7 +373,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 				})
 			}
 			if current != cfg.Name {
-				return fmt.Errorf("target folder is managed by a different repository (%s)", current)
+				return NewFolderManagedByOtherError(folder.ID, current)
 			}
 
 			return nil

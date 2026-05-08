@@ -4,7 +4,7 @@ import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useFlagDashboardOrgTemplates } from '@grafana/runtime/internal';
+import { useFlagGrafanaOrgDashboardTemplates } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -32,6 +32,7 @@ import { TemplateDashboardSavedBanner } from '../components/TemplateDashboardSav
 import { TemplateDashboardUseBanner } from '../components/TemplateDashboardUseBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
+import { useScenesFlickeringFix } from '../utils/utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';
@@ -42,7 +43,7 @@ export interface Props
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
-  const isOrgTemplatesFlagEnabled = useFlagDashboardOrgTemplates();
+  const isOrgTemplatesFlagEnabled = useFlagGrafanaOrgDashboardTemplates();
   // Used by /dashboard/provisioning/:slug/preview/* to load dashboards based on their file path in a remote repository
   // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
   const path = params['*'];
@@ -52,6 +53,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
   const prevParams = useRef<Params<string>>(params);
+
+  useScenesFlickeringFix();
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
