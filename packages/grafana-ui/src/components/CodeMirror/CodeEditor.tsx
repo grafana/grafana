@@ -1,4 +1,4 @@
-import { acceptCompletion, autocompletion } from '@codemirror/autocomplete';
+import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
@@ -27,12 +27,16 @@ const getCompletionExtensions = (
   }
 
   if (mode === 'override') {
-    return [autocompletion({ override: [...sources] })];
+    return [autocompletion({ override: [...sources] }), autocompleteSpaceKeymap];
   }
 
   // Merge: enable autocompletion and contribute the sources via language data
   // so they're combined with whatever the active language registers.
-  return [autocompletion(), ...sources.map((source) => EditorState.languageData.of(() => [{ autocomplete: source }]))];
+  return [
+    autocompletion(),
+    autocompleteSpaceKeymap,
+    ...sources.map((source) => EditorState.languageData.of(() => [{ autocomplete: source }])),
+  ];
 };
 
 const getAccessibilityExtensions = (
@@ -57,6 +61,23 @@ const autocompleteTabKeymap = Prec.highest(
     {
       key: 'Tab',
       run: acceptCompletion,
+    },
+  ])
+);
+
+const autocompleteSpaceKeymap = Prec.highest(
+  keymap.of([
+    {
+      key: 'Space',
+      run: (view) => {
+        if (view.state.readOnly) {
+          return false;
+        }
+
+        view.dispatch(view.state.replaceSelection(' '));
+        startCompletion(view);
+        return true;
+      },
     },
   ])
 );

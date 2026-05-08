@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Falha ao carregar a secção de enriquecimento do visualizador de regras"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Falha ao atualizar a sua configuração:",
       "title-something-went-wrong": "Ocorreu um problema"
@@ -3174,9 +3177,7 @@
       "deleting": "A eliminar",
       "text-federated": "Federado",
       "text-provisioned": "Aprovisionado",
-      "ungrouped": "Não agrupado",
-      "ungrouped-suffix": "{{ruleName}} (Não agrupado)",
-      "unknown-rule": "Regra desconhecida"
+      "ungrouped": "Não agrupado"
     },
     "saved-searches": {
       "actions-aria-label": "Ações",

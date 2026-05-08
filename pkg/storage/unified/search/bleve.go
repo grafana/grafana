@@ -104,7 +104,10 @@ type SnapshotOptions struct {
 	MinDocCount int64
 
 	// MaxIndexAge is the maximum age of a remote snapshot that can be downloaded.
-	// Older snapshots are skipped (hard filter).
+	// Older snapshots are skipped (hard filter). Zero means "no age limit":
+	// snapshots are accepted regardless of age, and cleanup does not delete
+	// snapshots based on age (cleanup's per-version-group eviction of
+	// superseded snapshots still applies; see selectSnapshotsToDelete).
 	MaxIndexAge time.Duration
 
 	// MinBuildVersion, if non-nil, is the preferred lower bound on the Grafana
@@ -878,12 +881,6 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 			indexStorage:  indexStorageFile,
 			source:        buildIndexSourceDownloadedSnapshot,
 		}, nil
-	}
-
-	// With MaxIndexAge=0 the cold-start probe cannot find a reusable snapshot,
-	// so coordination would only serialize replicas rebuilding from scratch.
-	if b.opts.Snapshot.MaxIndexAge <= 0 {
-		return b.createEmptyFileIndex(resourceDir, mapper, selectableFields, logger)
 	}
 
 	idx, name, rv, lock, err := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logger)

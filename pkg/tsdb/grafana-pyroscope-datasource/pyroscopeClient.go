@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 
@@ -19,6 +20,8 @@ import (
 	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	"github.com/grafana/pyroscope/api/gen/proto/go/querier/v1/querierv1connect"
 )
+
+const utf8LabelNamesFeatureToggle = "pyroscopeUTF8LabelNames"
 
 type ProfileType struct {
 	ID    string `json:"id"`
@@ -140,6 +143,9 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 		Limit:         limit,
 		ExemplarType:  exemplarType,
 	})
+	if config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(utf8LabelNamesFeatureToggle) {
+		setUTF8AcceptHeader(req.Header())
+	}
 
 	resp, err := c.connectClient.SelectSeries(ctx, req)
 	if err != nil {
@@ -389,11 +395,15 @@ func getUnits(profileTypeID string) string {
 func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.LabelNames")
 	defer span.End()
-	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&typesv1.LabelNamesRequest{
+	req := connect.NewRequest(&typesv1.LabelNamesRequest{
 		Matchers: []string{labelSelector},
 		Start:    start,
 		End:      end,
-	}))
+	})
+	if config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(utf8LabelNamesFeatureToggle) {
+		setUTF8AcceptHeader(req.Header())
+	}
+	resp, err := c.connectClient.LabelNames(ctx, req)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -436,4 +446,16 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSe
 
 func isPrivateLabel(label string) bool {
 	return strings.HasPrefix(label, "__")
+}
+
+// setUTF8AcceptHeader appends "; allow-utf8-labelnames=true" to the Accept header,
+// signalling to the Pyroscope API that UTF-8 label names are supported.
+// If no Accept header is present, it sets "*/*; allow-utf8-labelnames=true".
+func setUTF8AcceptHeader(h http.Header) {
+	existing := h.Get("Accept")
+	if existing != "" {
+		h.Set("Accept", existing+"; allow-utf8-labelnames=true")
+	} else {
+		h.Set("Accept", "*/*; allow-utf8-labelnames=true")
+	}
 }
