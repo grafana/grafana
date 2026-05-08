@@ -5,7 +5,6 @@ import {
   type ActionModel,
   DashboardCursorSync,
   type DataFrame,
-  FieldMatcherID,
   getFrameDisplayName,
   type InterpolateFunction,
   type PanelProps,
@@ -21,6 +20,7 @@ import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
 import { getActions } from 'app/features/actions/utils';
 
+import { applyColumnWidthOverride } from './columnResizeFieldConfig';
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { type Options } from './panelcfg.gen';
 
@@ -139,36 +139,7 @@ function getCurrentFrameIndex(frames: DataFrame[], options: Options) {
 }
 
 function onColumnResize(fieldDisplayName: string, width: number, fieldScope: MatcherScope = 'series', props: Props) {
-  const { fieldConfig } = props;
-  const { overrides } = fieldConfig;
-
-  const matcherId = FieldMatcherID.byName;
-  const propId = 'custom.width';
-
-  // look for existing override
-  const override = overrides.find(
-    (o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName && o.matcher.scope === fieldScope
-  );
-
-  if (override) {
-    // look for existing property
-    const property = override.properties.find((prop) => prop.id === propId);
-    if (property) {
-      property.value = width;
-    } else {
-      override.properties.push({ id: propId, value: width });
-    }
-  } else {
-    overrides.push({
-      matcher: { id: matcherId, options: fieldDisplayName, scope: fieldScope },
-      properties: [{ id: propId, value: width }],
-    });
-  }
-
-  props.onFieldConfigChange({
-    ...fieldConfig,
-    overrides,
-  });
+  props.onFieldConfigChange(applyColumnWidthOverride(props.fieldConfig, fieldDisplayName, width, fieldScope));
 }
 
 function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
