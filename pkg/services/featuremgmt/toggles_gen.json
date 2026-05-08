@@ -6040,7 +6040,8 @@
       "metadata": {
         "name": "timeRangePan",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-05T01:39:46Z"
+        "creationTimestamp": "2025-11-05T01:39:46Z",
+        "deletionTimestamp": "2026-05-08T20:32:38Z"
       },
       "spec": {
         "description": "Enables time range panning functionality",
