@@ -35,7 +35,6 @@ test.describe(
   },
   () => {
     test('Navigate between dashboards', async ({ page, gotoDashboardPage, selectors }) => {
-      test.setTimeout(90_000); // test takes ~30s locally; CI shard resource pressure needs headroom
       const scopeSelectorInput = getScopesSelectorInput(page);
       const scopesDashboards = getScopesDashboards(page);
       const scopesDashboardsSearchInput = getScopesDashboardsSearchInput(page);
