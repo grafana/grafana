@@ -88,7 +88,7 @@ async function ensureFetched(): Promise<void> {
  *
  * @public
  */
-export async function reload(): Promise<void> {
+export async function reloadDataSources(): Promise<void> {
   fetchedAt = 0;
   // Clear non-runtime plugin instances so they are reconstructed from fresh
   // settings after reload — matching the behaviour of the legacy DatasourceSrv

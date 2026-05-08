@@ -9,7 +9,7 @@ import {
   getDataSourceSettingsList,
   getDataSourceSettings,
   initDataSources,
-  reload,
+  reloadDataSources,
   upsertRuntimeDataSource,
 } from './settings';
 
@@ -447,7 +447,7 @@ describe('instanceSettings', () => {
         defaultDatasource: 'Alpha',
       });
 
-      await reload();
+      await reloadDataSources();
 
       expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
       const result = await getDataSourceSettings(null);
@@ -475,7 +475,7 @@ describe('instanceSettings', () => {
       upsertRuntimeDataSource(runtime);
 
       backendGet.mockResolvedValue({ datasources: fixtures, defaultDatasource: 'Bravo' });
-      await reload();
+      await reloadDataSources();
 
       const result = await getDataSourceSettings('runtime-ds');
       expect(result?.name).toBe('Runtime');
