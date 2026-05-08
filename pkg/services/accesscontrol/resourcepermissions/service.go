@@ -114,7 +114,7 @@ func New(cfg *setting.Cfg,
 		teamService:    teamService,
 		userService:    userService,
 		actionSetSvc:   actionSetService,
-		clearUserCache: options.Resource == "folder", // When folder changes, clear the user cache
+		clearUserCache: options.Resource == "folders", // When folder changes, clear the user cache
 	}
 
 	s.api = newApi(cfg, ac, router, s, features, s.options.RestConfigProvider)
@@ -376,6 +376,8 @@ func (s *Service) SetPermissions(
 		Team:        s.options.OnSetTeam,
 		BuiltInRole: s.options.OnSetBuiltInRole,
 	})
+
+	// Some resources (folders!) must clear the user cache when permission changes happen
 	if err == nil && s.clearUserCache {
 		user, _ := identity.GetRequester(ctx)
 		if user != nil && user.IsIdentityType(authlib.TypeUser, authlib.TypeServiceAccount) {
