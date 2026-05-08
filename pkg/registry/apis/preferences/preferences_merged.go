@@ -128,6 +128,7 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 // items should be in ascending order of importance
 func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences) (*preferences.Preferences, error) {
 	if len(items) == 0 {
+		// With no explicit preferences, return the default
 		return &preferences.Preferences{
 			TypeMeta:   preferences.PreferencesResourceInfo.TypeMeta(),
 			ObjectMeta: v1.ObjectMeta{},
@@ -135,40 +136,33 @@ func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences
 		}, nil
 	}
 
-	// Mark the results with the most recent change date
-	ts := items[0].CreationTimestamp
-	updateTimestamp := func(v *preferences.Preferences) {
+	// The return value
+	p := &preferences.Preferences{
+		TypeMeta:   preferences.PreferencesResourceInfo.TypeMeta(),
+		ObjectMeta: v1.ObjectMeta{},
+	}
+
+	ts := v1.NewTime(time.Unix(0, 0))
+	items = append(items, preferences.Preferences{Spec: defaults})
+	for idx, v := range items {
+		if idx == 0 {
+			p.Spec = v.Spec
+		} else if err := mergo.Merge(&p.Spec, &v.Spec); err != nil {
+			return nil, err
+		}
+
+		// Now check the max time
 		updated, ok := v.Annotations[utils.AnnoKeyUpdatedTimestamp]
 		if ok {
 			t, err := time.Parse(time.RFC3339, updated)
 			if err == nil && t.After(ts.Time) {
 				ts = v1.NewTime(t)
-				return // no need to check the creation timestamp
+				continue // no need to check the creation timestamp
 			}
 		}
 		if ts.Before(&v.CreationTimestamp) {
 			ts = v.CreationTimestamp
 		}
-	}
-	updateTimestamp(&items[0])
-
-	p := &preferences.Preferences{
-		TypeMeta:   preferences.PreferencesResourceInfo.TypeMeta(),
-		ObjectMeta: v1.ObjectMeta{},
-		Spec:       items[0].Spec,
-	}
-
-	for i := 1; i < len(items); i++ {
-		updateTimestamp(&items[i])
-
-		if err := mergo.Merge(&p.Spec, &items[i].Spec); err != nil {
-			return nil, err
-		}
-	}
-
-	// And finally apply the defaults if nothing else was configured
-	if err := mergo.Merge(&p.Spec, &defaults); err != nil {
-		return nil, err
 	}
 
 	// Add an RV to know if anything changed
