@@ -838,6 +838,41 @@ func recordSpanError(span trace.Span, err error) {
 	span.SetStatus(otelcodes.Error, err.Error())
 }
 
+// lookupCaseInsensitiveFallback resolves a case-mismatched lookup against the
+// legacy `resource` table and retries the original query with the canonical
+// (stored-case) name. Only meaningful in compat mode; callers must check
+// k.rvManager != nil before invoking. Returns the resolved DataKey and the
+// canonical name on success, ErrNotFound when the fallback can't resolve the
+// miss (no CI match, same case, or canonical row not visible at the requested
+// rv), or another error on infrastructure failures.
+//
+// TODO: remove when sql/backend backwards compatibility is no longer needed.
+func (k *kvStorageBackend) lookupCaseInsensitiveFallback(
+	ctx context.Context,
+	group, resource, namespace, name string,
+	rv int64,
+) (DataKey, string, error) {
+	canonical, err := k.dataStore.lookupCanonicalName(
+		ctx, k.rvManager.DB(), group, resource, namespace, name,
+	)
+	if err != nil {
+		return DataKey{}, name, err
+	}
+	if canonical == "" {
+		return DataKey{}, name, ErrNotFound
+	}
+	dk, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
+		Group: group, Resource: resource, Namespace: namespace, Name: canonical,
+	}, rv)
+	if err != nil {
+		return DataKey{}, name, err
+	}
+	k.log.Debug("snapping resource name to canonical case from legacy resource table",
+		"namespace", namespace, "group", group, "resource", resource,
+		"requested", name, "canonical", canonical)
+	return dk, canonical, nil
+}
+
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
 //
 //nolint:gocyclo
@@ -874,6 +909,22 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 			Namespace: namespace,
 			Name:      event.Key.Name,
 		})
+
+		// TODO: remove this block when sql/backend backwards compatibility is no longer needed.
+		if errors.Is(err, ErrNotFound) && k.rvManager != nil {
+			var canonical string
+			latestKey, canonical, err = k.lookupCaseInsensitiveFallback(ctx,
+				event.Key.Group, event.Key.Resource, namespace, event.Key.Name, 0)
+			if err == nil {
+				event.Key = &resourcepb.ResourceKey{
+					Namespace: event.Key.Namespace,
+					Group:     event.Key.Group,
+					Resource:  event.Key.Resource,
+					Name:      canonical,
+				}
+			}
+		}
+
 		if err != nil {
 			if errors.Is(err, ErrNotFound) {
 				// Resource doesn't exist, but PreviousRV was provided
@@ -925,6 +976,22 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 			}
 			// Not confirmed: the data is likely transient. Proceed with the
 			// write and let the optimistic lock checks determine the winner.
+		} else if errors.Is(err, ErrNotFound) && k.rvManager != nil {
+			// TODO: remove this branch when sql/backend backwards compatibility is no longer needed.
+			// In compat mode the legacy `resource` table is the source of truth
+			// for live resources, so a case-insensitive hit there is a committed
+			// duplicate and must short-circuit with ErrResourceAlreadyExists
+			// rather than fall through to the create (which would later trip
+			// the legacy unique constraint with a less precise error).
+			_, _, err = k.lookupCaseInsensitiveFallback(ctx,
+				event.Key.Group, event.Key.Resource, namespace, event.Key.Name, 0)
+			if err == nil {
+				return 0, ErrResourceAlreadyExists
+			}
+			if !errors.Is(err, ErrNotFound) {
+				return 0, fmt.Errorf("failed to check if resource exists: %w", err)
+			}
+			// fallback also missed; resource truly doesn't exist — fall through to create.
 		} else if !errors.Is(err, ErrNotFound) {
 			return 0, fmt.Errorf("failed to check if resource exists: %w", err)
 		}
@@ -1169,6 +1236,14 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Namespace: namespace,
 		Name:      req.Key.Name,
 	}, req.ResourceVersion)
+	name := req.Key.Name
+
+	// TODO: remove this block when sql/backend backwards compatibility is no longer needed.
+	if errors.Is(err, ErrNotFound) && k.rvManager != nil {
+		meta, name, err = k.lookupCaseInsensitiveFallback(ctx,
+			req.Key.Group, req.Key.Resource, namespace, req.Key.Name, req.ResourceVersion)
+	}
+
 	if errors.Is(err, ErrNotFound) {
 		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 	} else if err != nil {
@@ -1178,7 +1253,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Group:           req.Key.Group,
 		Resource:        req.Key.Resource,
 		Namespace:       namespace,
-		Name:            req.Key.Name,
+		Name:            name,
 		ResourceVersion: meta.ResourceVersion,
 		Action:          meta.Action,
 		Folder:          meta.Folder,
