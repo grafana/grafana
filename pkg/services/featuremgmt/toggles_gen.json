@@ -4682,6 +4682,36 @@
     },
     {
       "metadata": {
+        "name": "plugins.useMTPluginSettings",
+        "resourceVersion": "1778216270427",
+        "creationTimestamp": "2026-05-08T04:57:50Z"
+      },
+      "spec": {
+        "description": "Enables plugins setting from new apis",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "plugins.useMTPlugins",
+        "resourceVersion": "1778216270427",
+        "creationTimestamp": "2026-05-08T04:57:50Z"
+      },
+      "spec": {
+        "description": "Enables plugins decoupling from bootdata",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsAutoUpdate",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-16T11:44:39Z"
@@ -6128,7 +6158,8 @@
       "metadata": {
         "name": "useMTPluginSettings",
         "resourceVersion": "1774424916561",
-        "creationTimestamp": "2026-03-25T07:48:36Z"
+        "creationTimestamp": "2026-03-25T07:48:36Z",
+        "deletionTimestamp": "2026-05-08T04:57:50Z"
       },
       "spec": {
         "description": "Enables plugins setting from new apis",
@@ -6143,7 +6174,8 @@
       "metadata": {
         "name": "useMTPlugins",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-05T07:09:41Z"
+        "creationTimestamp": "2025-12-05T07:09:41Z",
+        "deletionTimestamp": "2026-05-08T04:57:50Z"
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",

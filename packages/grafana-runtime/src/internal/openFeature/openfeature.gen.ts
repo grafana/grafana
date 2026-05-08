@@ -57,6 +57,10 @@ export const FlagKeys = {
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
+  /** Enables plugins setting from new apis */
+  PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
+  /** Enables plugins decoupling from bootdata */
+  PluginsUseMTPlugins: "plugins.useMTPlugins",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
@@ -73,10 +77,6 @@ export const FlagKeys = {
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
-  /** Enables plugins setting from new apis */
-  UseMTPluginSettings: "useMTPluginSettings",
-  /** Enables plugins decoupling from bootdata */
-  UseMTPlugins: "useMTPlugins",
 } as const;
 
 /**
@@ -322,6 +322,28 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
+ * Enables plugins setting from new apis
+ *
+ * **Details:**
+ * - flag key: `plugins.useMTPluginSettings`
+ * - default value: `false`
+ */
+export const useFlagPluginsUseMTPluginSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.useMTPluginSettings", false, options).value;
+};
+
+/**
+ * Enables plugins decoupling from bootdata
+ *
+ * **Details:**
+ * - flag key: `plugins.useMTPlugins`
+ * - default value: `false`
+ */
+export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.useMTPlugins", false, options).value;
+};
+
+/**
  * Allow setting folder metadata for provisioned folders
  *
  * **Details:**
@@ -407,27 +429,5 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
-};
-
-/**
- * Enables plugins setting from new apis
- *
- * **Details:**
- * - flag key: `useMTPluginSettings`
- * - default value: `false`
- */
-export const useFlagUseMTPluginSettings = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useMTPluginSettings", false, options).value;
-};
-
-/**
- * Enables plugins decoupling from bootdata
- *
- * **Details:**
- * - flag key: `useMTPlugins`
- * - default value: `false`
- */
-export const useFlagUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useMTPlugins", false, options).value;
 };
 

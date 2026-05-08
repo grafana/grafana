@@ -291,7 +291,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-21,lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 2025-11-19,rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
 2025-11-27,kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
-2025-12-05,useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
+2026-05-08,plugins.useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-12-09,multiPropsVariables,GA,@grafana/dashboards-squad,false,false,true
 2026-03-02,dashboardSectionVariables,GA,@grafana/dashboards-squad,false,false,true
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
@@ -338,7 +338,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-06,colorblindThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 2026-03-19,yAxisTickControl,experimental,@grafana/dataviz-squad,false,false,true
 2026-03-25,logsTablePanelNG,experimental,@grafana/observability-logs,false,false,false
-2026-03-25,useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-05-08,plugins.useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-03-24,frontendServiceSSOAutoLogin,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-03-25,splashScreen,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-03-27,streamingForwardTeamHeadersTempo,privatePreview,@grafana/data-sources-plugins,false,false,false

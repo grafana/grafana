@@ -1432,11 +1432,6 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables plugins decoupling from bootdata
-  * @default false
-  */
-  useMTPlugins?: boolean;
-  /**
   * Enables support for variables whose values can have multiple properties
   * @default true
   */
@@ -1646,11 +1641,6 @@ export interface FeatureToggles {
   * @default false
   */
   logsTablePanelNG?: boolean;
-  /**
-  * Enables plugins setting from new apis
-  * @default false
-  */
-  useMTPluginSettings?: boolean;
   /**
   * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
   * @default false
