@@ -2778,6 +2778,14 @@
               "type": "object"
             }
           },
+          "dashboardEncrypted": {
+            "description": "The dashboard payload encrypted at rest. Persisted in unified storage in place of `dashboard`. The envelope is produced by the app-platform EncryptionManager, which is namespace-scoped: dataKeyId identifies the per-namespace data encryption key used to produce encryptedData. Clients should not set this directly; it is populated by the storage layer.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SnapshotV0alpha1SpecDashboardEncrypted"
+              }
+            ]
+          },
           "deleteKey": {
             "description": "Snapshot delete key",
             "type": "string"
@@ -2806,6 +2814,20 @@
           "title": {
             "description": "Snapshot title",
             "type": "string"
+          }
+        }
+      },
+      "SnapshotV0alpha1SpecDashboardEncrypted": {
+        "type": "object",
+        "required": ["dataKeyId", "encryptedData"],
+        "properties": {
+          "dataKeyId": {
+            "type": "string",
+            "default": ""
+          },
+          "encryptedData": {
+            "type": "string",
+            "format": "byte"
           }
         }
       },
