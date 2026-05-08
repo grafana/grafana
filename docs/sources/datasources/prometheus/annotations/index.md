@@ -43,6 +43,7 @@ To add a Prometheus annotation to your dashboard:
 1. Enter a PromQL expression in the query field.
 1. Set the **Min step** to control annotation density (a larger step means fewer annotations).
 1. Configure the field mappings to control what appears in the annotation tooltip.
+1. Optionally, select a **Color** for the annotation markers to distinguish different annotation types visually.
 1. Click **Save dashboard**.
 
 ## How Prometheus annotations work
@@ -84,7 +85,7 @@ The most common and reliable way to create Prometheus annotations. Prometheus au
 ALERTS{alertstate="firing"}
 ```
 
-This creates an annotation at every evaluation interval where an alert is firing. The `ALERTS` metric includes labels such as:
+This creates an annotation at every step interval where an alert is firing. The `ALERTS` metric includes labels such as:
 
 - `alertname` — The name of the alerting rule
 - `alertstate` — Either `firing` or `pending`
@@ -127,13 +128,11 @@ Configure the field mappings:
 Display annotations when available memory drops below 10%:
 
 ```promql
-(node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.1) > 0
+node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.1
 ```
 
-The outer `> 0` ensures that only the moments where the condition is true produce annotations (the inner comparison returns 1 when true, 0 when false isn't returned by Prometheus for comparison operators).
-
 {{< admonition type="note" >}}
-Comparison operators in PromQL act as filters — they only return series/data points where the condition is true. This means `node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.1` already only returns data when memory is below 10%, making annotations appear only at those times.
+Comparison operators in PromQL act as filters — they only return data points where the condition is true. This means the expression above only returns data when memory is below 10%, and annotations only appear at those times. There's no need to add an outer `> 0` wrapper.
 {{< /admonition >}}
 
 ### Scaling event annotations
@@ -153,6 +152,21 @@ sum(rate(http_requests_total{status=~"5.."}[5m])) by (job) / sum(rate(http_reque
 ```
 
 This creates annotations when the error rate exceeds 5%.
+
+### Version or build change annotations
+
+If you expose build metadata using a metric like `build_info` (common in Go services), annotate when the version changes:
+
+```promql
+changes(build_info{job="myservice"}[10m]) > 0
+```
+
+Configure the field mappings:
+
+- **Text:** `version` (shows the new version in the annotation tooltip)
+- **Tags:** `job`
+
+If your build info metric uses a `version` label (for example, `build_info{version="1.2.3"}`), the annotation tooltip displays the version that was deployed.
 
 ## Control annotation density
 
