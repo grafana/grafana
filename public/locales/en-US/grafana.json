@@ -4265,13 +4265,13 @@
       "cancel-button": "Cancel",
       "confirmation-text": "Delete",
       "delete-button": "Delete",
-      "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
-      "delete-modal-invalid-title": "Cannot delete folder",
+      "delete-modal-folder-empty_one": "Selected folder is empty",
+      "delete-modal-folder-empty_other": "Selected folders are empty",
+      "delete-modal-folder-not-empty_one": "Selected folder contains other resources that will be deleted",
+      "delete-modal-folder-not-empty_other": "Selected folders contain other resources that will be deleted",
       "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached.",
       "delete-modal-restore-dashboards-prefix-folder": "This action will delete the selected folders immediately.",
       "delete-modal-restore-dashboards-suffix-folder": "Folders cannot be restored.",
-      "delete-modal-text": "This action will delete the following content:",
-      "delete-modal-text-one-folder": "This action will delete the folder \"<1>{{ folderName }}</1>\" and the following content:",
       "delete-modal-title": "Delete",
       "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
@@ -9131,13 +9131,6 @@
       "folder-deleted-success": "Folder deleted",
       "folder-move-error-provisioned": "Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.",
       "folder-moved-success": "Folder moved"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Loading"
-        }
-      }
     }
   },
   "forgot-password": {
