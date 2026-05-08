@@ -61,6 +61,8 @@ export const FlagKeys = {
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   PluginsUseMTPlugins: "plugins.useMTPlugins",
+  /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
+  ProvisioningReadmes: "provisioning.readmes",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
@@ -341,6 +343,17 @@ export const useFlagPluginsUseMTPluginSettings = (options?: ReactFlagEvaluationO
  */
 export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("plugins.useMTPlugins", false, options).value;
+};
+
+/**
+ * Render the README.md of a Git Sync provisioned folder inline below its dashboards list
+ *
+ * **Details:**
+ * - flag key: `provisioning.readmes`
+ * - default value: `false`
+ */
+export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioning.readmes", false, options).value;
 };
 
 /**
