@@ -121,21 +121,31 @@ export function getConfig(opts: TimelineCoreOptions) {
   const labelHeightPx =
     namePosition === 'top' ? Math.round(12 * devicePixelRatio) + Math.round(4 * devicePixelRatio) : 0;
 
-  // Walk rows with label space included within each row's allocation.
-  // Each row is split into a label portion and a bar portion, with the
-  // label height capped at half the row height to prevent overflow when
-  // there are many series.
   function walkWithLabels(
     rh: number,
     yIdx: number | null,
     count: number,
     dim: number,
-    draw: (idx: number, labelY: number, barY: number, barH: number) => void
+    draw: (idx: number, labelY: number, labelH: number, barY: number, barH: number) => void
   ) {
-    walk(rh, yIdx, count, dim, (i, y0, height) => {
-      const effectiveLabelH = Math.min(labelHeightPx, Math.floor(height * 0.4));
-      draw(i, y0, y0 + effectiveLabelH, height - effectiveLabelH);
-    });
+    const slotH = dim / count;
+    const minGap = Math.round(4 * devicePixelRatio);
+    const barArea = Math.max(0, slotH - labelHeightPx);
+    const barH = Math.min(barArea * Math.min(rh, 1), Math.max(0, barArea - minGap));
+
+    const doOne = (i: number) => {
+      const slotTop = i * slotH;
+      const lH = barArea > 0 ? labelHeightPx : 0;
+      draw(i, slotTop, lH, slotTop + labelHeightPx, barH);
+    };
+
+    if (yIdx == null) {
+      for (let i = 0; i < count; i++) {
+        doOne(i);
+      }
+    } else {
+      doOne(yIdx);
+    }
   }
 
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
@@ -328,7 +338,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         };
 
         if (namePosition === 'top') {
-          walkWithLabels(rowHeight, sidx - 1, numSeries, yDim, (iy, _labelY, barY, barH) => {
+          walkWithLabels(rowHeight, sidx - 1, numSeries, yDim, (iy, _labelY, _labelH, barY, barH) => {
             drawRow(iy, barY, barH);
           });
         } else {
@@ -527,12 +537,15 @@ export function getConfig(opts: TimelineCoreOptions) {
 
           const bbox = u.bbox;
 
-          walkWithLabels(rowHeight, null, numSeries, bbox.height, (iy, labelY, _barY, _barH) => {
+          walkWithLabels(rowHeight, null, numSeries, bbox.height, (iy, labelY, labelH, _barY, _barH) => {
+            if (labelH === 0) {
+              return;
+            }
+
             const text = label(iy + 1);
             const maxWidth = bbox.width;
             let displayText = text;
 
-            // Truncate text with ellipsis if wider than available width
             const measured = u.ctx.measureText(displayText);
             if (measured.width > maxWidth) {
               while (displayText.length > 0 && u.ctx.measureText(displayText + '\u2026').width > maxWidth) {
@@ -598,7 +611,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
     ySplits: (u: uPlot) => {
       if (namePosition === 'top') {
-        walkWithLabels(rowHeight, null, numSeries, u.bbox.height, (iy, _labelY, barY, barH) => {
+        walkWithLabels(rowHeight, null, numSeries, u.bbox.height, (iy, _labelY, _labelH, barY, barH) => {
           let yMid = round(barY + barH / 2);
           ySplits[iy] = u.posToVal(yMid / uPlot.pxRatio, FIXED_UNIT);
         });
@@ -614,6 +627,8 @@ export function getConfig(opts: TimelineCoreOptions) {
 
     yValues: (u: uPlot, splits: number[]) => splits.map((v, i) => label(i + 1)),
     yRange,
+
+    labelHeightPx,
 
     // pathbuilders
     drawPaths,
