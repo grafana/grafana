@@ -1159,11 +1159,17 @@ export type SearchResults = {
   /** The number of matching results */
   totalHits: number;
 };
+export type SnapshotV0Alpha1SpecDashboardEncrypted = {
+  dataKeyId: string;
+  encryptedData: string;
+};
 export type SnapshotSpec = {
   /** The raw dashboard (unstructured for now) */
   dashboard?: {
     [key: string]: object;
   };
+  /** The dashboard payload encrypted at rest. Persisted in unified storage in place of `dashboard`. The envelope is produced by the app-platform EncryptionManager, which is namespace-scoped: dataKeyId identifies the per-namespace data encryption key used to produce encryptedData. Clients should not set this directly; it is populated by the storage layer. */
+  dashboardEncrypted?: SnapshotV0Alpha1SpecDashboardEncrypted;
   /** Snapshot delete key */
   deleteKey?: string;
   /** Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds) */
