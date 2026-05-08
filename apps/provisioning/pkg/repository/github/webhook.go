@@ -105,7 +105,7 @@ func (r *githubWebhookRepository) parseWebhook(ctx context.Context, messageType 
 }
 
 func (r *githubWebhookRepository) parsePushEvent(ctx context.Context, event *github.PushEvent) (*provisioning.WebhookResponse, error) {
-	ctx, logger := r.logger(ctx, "")
+	_, logger := r.logger(ctx, "")
 
 	if event.GetRepo() == nil {
 		return nil, fmt.Errorf("missing repository in push event")
