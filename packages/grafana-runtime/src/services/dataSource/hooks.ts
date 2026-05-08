@@ -5,8 +5,8 @@ import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef
 
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
-import { getDataSourceSettings, getDataSourceSettingsList } from './instanceSettings';
-import { getDataSource } from './plugin';
+import { getDataSource } from './dataSource';
+import { getDataSourceSettings, getDataSourceSettingsList } from './settings';
 
 /**
  * @public

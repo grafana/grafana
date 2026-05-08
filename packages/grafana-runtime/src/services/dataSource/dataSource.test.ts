@@ -4,14 +4,14 @@ import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { RuntimeDataSource } from '../RuntimeDataSource';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
-import { _resetForTests as resetInstanceSettings, initDataSources, reload } from './instanceSettings';
 import {
   _resetForTests as resetPlugin,
   getDataSource,
   registerRuntimeDataSource,
   setDataSourceImporter,
-} from './plugin';
+} from './dataSource';
 import { _resetForTests as resetPluginCache } from './pluginCache';
+import { _resetForTests as resetInstanceSettings, initDataSources, reload } from './settings';
 
 class TestRuntime extends RuntimeDataSource {
   query() {

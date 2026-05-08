@@ -3,8 +3,8 @@ import { DataSourceApi, type DataSourceRef, type ScopedVars } from '@grafana/dat
 import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
-import { getDataSourceSettings, upsertRuntimeDataSource } from './instanceSettings';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
+import { getDataSourceSettings, upsertRuntimeDataSource } from './settings';
 import { type ImportDataSourceFn } from './types';
 
 let importDataSource: ImportDataSourceFn | undefined;
