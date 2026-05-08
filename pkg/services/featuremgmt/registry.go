@@ -2267,14 +2267,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "externalVizSuggestions",
-			Description: "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "nestedFramesFieldOverrides",
 			Description: "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
 			Stage:       FeatureStagePublicPreview,
