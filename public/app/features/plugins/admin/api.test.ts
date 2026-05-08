@@ -43,9 +43,9 @@ describe('api', () => {
     global.fetch = originalFetch;
   });
 
-  describe('when useMTPlugins flag is enabled', () => {
+  describe('when plugins.useMTPlugins flag is enabled', () => {
     beforeAll(() => {
-      setTestFlags({ useMTPlugins: true });
+      setTestFlags({ 'plugins.useMTPlugins': true });
     });
 
     afterAll(() => {
@@ -100,11 +100,12 @@ describe('api', () => {
         expect(logger.logError).toHaveBeenCalledTimes(1);
         expect(logger.logError).toHaveBeenCalledWith(
           expect.objectContaining({
-            message: 'PluginMeta: Failed to install plugin with id myorg-test-panel and version 1.5.0',
+            message: 'installPluginMeta: Failed to install plugin',
             cause: expect.objectContaining({
               message: 'Network Error',
             }),
-          })
+          }),
+          { pluginId: 'myorg-test-panel', pluginVersion: '1.5.0' }
         );
       });
     });
@@ -135,19 +136,20 @@ describe('api', () => {
         expect(logger.logError).toHaveBeenCalledTimes(1);
         expect(logger.logError).toHaveBeenCalledWith(
           expect.objectContaining({
-            message: 'PluginMeta: Failed to uninstall plugin with id myorg-test-panel',
+            message: 'uninstallPluginMeta: Failed to uninstall plugin',
             cause: expect.objectContaining({
               message: 'Network Error',
             }),
-          })
+          }),
+          { pluginId: 'myorg-test-panel' }
         );
       });
     });
   });
 
-  describe('when useMTPlugins flag is disabled', () => {
+  describe('when plugins.useMTPlugins flag is disabled', () => {
     beforeAll(() => {
-      setTestFlags({ useMTPlugins: false });
+      setTestFlags({ 'plugins.useMTPlugins': false });
     });
 
     afterAll(() => {

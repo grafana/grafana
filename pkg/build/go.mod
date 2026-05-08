@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.26.2
+go 1.26.3
 
 replace (
 	// TODO: remove these - the build system should not depend on Grafana code.
@@ -38,7 +38,7 @@ require (
 	dagger.io/dagger v0.18.8
 	github.com/Masterminds/semver v1.5.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0-00010101000000-000000000000
-	github.com/quasilyte/go-ruleguard/dsl v0.3.22
+	github.com/quasilyte/go-ruleguard/dsl v0.3.23
 	github.com/urfave/cli/v3 v3.5.0
 )
 

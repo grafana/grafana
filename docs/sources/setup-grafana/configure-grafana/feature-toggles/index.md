@@ -38,7 +38,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                                                 | Yes                |
 | `dashboardDefaultLayoutSelector`             | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
-| `sceneCsvExport`                             | Enables CSV export using scenes dashboard architecture                                                                                                        | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                                                    |                    |
@@ -69,6 +68,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `sharingDashboardImage`                      | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
+| `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `newVizSuggestions`                          | Enable new visualization suggestions                                                                                                                          | Yes                |
 | `externalVizSuggestions`                     | Enable all plugins to supply visualization suggestions (including 3rd party plugins)                                                                          | Yes                |
@@ -112,6 +112,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 | `profilesExemplars`               | Enables profiles exemplars support in profiles drilldown                                               |
+| `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                                     |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |
 
 ## Development feature toggles

@@ -164,6 +164,7 @@ type Cfg struct {
 	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
+	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                                  string
 	LogsPath                                  string
 	EnterpriseLicensePath                     string
@@ -346,6 +347,7 @@ type Cfg struct {
 	ResponseLimit                  int64
 	DataProxyRowLimit              int64
 	DataProxyUserAgent             string
+	DataProxyForwardUserAgent      bool
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings
@@ -691,21 +693,31 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	// Vector storage (separate pgvector database)
-	EnableVectorBackend               bool
-	VectorDBHost                      string
-	VectorDBPort                      string
-	VectorDBName                      string
-	VectorDBUser                      string
-	VectorDBPassword                  string
-	VectorDBSSLMode                   string
-	VectorPromotionThreshold          int           // row count per tenant to trigger leaf promotion
-	VectorPromoterInterval            time.Duration // promoter tick interval; 0 disables
+	EnableVectorBackend      bool
+	VectorDBHost             string
+	VectorDBPort             string
+	VectorDBName             string
+	VectorDBUser             string
+	VectorDBPassword         string
+	VectorDBSSLMode          string
+	VectorPromotionThreshold int           // row count per tenant to trigger leaf promotion
+	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
+	// Embedding provider used by the VectorSearch RPC. "" = disabled.
+	EmbeddingProvider                 string // "vertex" | "bedrock" | ""
+	VertexProjectID                   string
+	VertexLocation                    string // default "us-central1"
+	VertexModel                       string // default "gemini-embedding-001"
+	VertexDimensions                  int    // default 768
+	BedrockRegion                     string // default "us-east-1"
+	BedrockModel                      string // default "cohere.embed-v4:0"
+	BedrockDimensions                 int    // default 1024
 	OverridesFilePath                 string
 	OverridesReloadInterval           time.Duration
 	EnforcedQuotaResources            []string
 	QuotasErrorMessageSupportInfo     string
 	EnableSQLKVBackend                bool
 	EnableSQLKVCompatibilityMode      bool
+	EnableKVLeases                    bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -2451,6 +2463,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
+	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

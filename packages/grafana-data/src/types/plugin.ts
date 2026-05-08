@@ -109,6 +109,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
 interface PluginDependencyInfo {
   id: string;
   name: string;
+  /** @deprecated it will be removed in a future release */
   version: string;
   type: PluginType;
 }
@@ -180,6 +181,8 @@ export interface PluginInclude {
 
   // Angular app pages
   component?: string;
+
+  slug?: string;
 }
 
 interface PluginMetaInfoLink {
