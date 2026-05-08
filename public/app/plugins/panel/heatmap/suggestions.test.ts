@@ -6,6 +6,7 @@ import {
   VisualizationSuggestionScore,
 } from '@grafana/data';
 
+import * as fields from './fields';
 import { heatmapSuggestionsSupplier } from './suggestions';
 
 describe('heatmap suggestions', () => {
@@ -37,6 +38,47 @@ describe('heatmap suggestions', () => {
 
       const suggestions = heatmapSuggestionsSupplier(dataSummary);
       expect(suggestions).toHaveLength(1);
+    });
+
+    it('should not suggest for a generic table frame whose first field is non-monotonic (e.g. issue ids)', () => {
+      const unsortedIssueIds = [1042, 87, 305, 1199, 41, 980];
+      const dataSummary = getPanelDataSummary([
+        createDataFrame({
+          fields: [
+            { name: 'id', type: FieldType.number, values: unsortedIssueIds },
+            { name: 'lastSeen', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000, 6000] },
+            { name: 'count', type: FieldType.number, values: [3, 7, 1, 9, 4, 2] },
+            { name: 'users', type: FieldType.number, values: [1, 2, 1, 3, 2, 1] },
+          ],
+        }),
+      ]);
+
+      const suggestions = heatmapSuggestionsSupplier(dataSummary);
+      expect(suggestions).toBeUndefined();
+    });
+
+    it('should not suggest when first field is non-monotonic even if prepareHeatmapData returns no warning', () => {
+      const unsortedIssueIds = [1042, 87, 305, 1199, 41, 980];
+      const frame = createDataFrame({
+        fields: [
+          { name: 'id', type: FieldType.number, values: unsortedIssueIds },
+          { name: 'lastSeen', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000, 6000] },
+          { name: 'count', type: FieldType.number, values: [3, 7, 1, 9, 4, 2] },
+          { name: 'users', type: FieldType.number, values: [1, 2, 1, 3, 2, 1] },
+        ],
+      });
+      const dataSummary = getPanelDataSummary([frame]);
+
+      const prepareSpy = jest
+        .spyOn(fields, 'prepareHeatmapData')
+        .mockReturnValue({ heatmap: frame, xBucketSize: 1, yBucketSize: 1 });
+
+      try {
+        const suggestions = heatmapSuggestionsSupplier(dataSummary);
+        expect(suggestions).toBeUndefined();
+      } finally {
+        prepareSpy.mockRestore();
+      }
     });
   });
 
