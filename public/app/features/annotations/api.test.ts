@@ -23,8 +23,9 @@ beforeEach(() => {
   getFn.mockReset();
 });
 
-describe('annotationServer with annotationAppPlatformEnabled OFF', () => {
+describe('annotationServer with both gates OFF', () => {
   beforeAll(() => {
+    config.featureToggles.kubernetesAnnotationsClient = false;
     config.annotationAppPlatformEnabled = false;
     config.namespace = 'stack-1';
   });
@@ -52,15 +53,38 @@ describe('annotationServer with annotationAppPlatformEnabled OFF', () => {
   });
 });
 
-describe('annotationServer with annotationAppPlatformEnabled ON', () => {
+describe('annotationServer with only one gate ON falls back to legacy', () => {
+  afterEach(() => {
+    config.featureToggles.kubernetesAnnotationsClient = false;
+    config.annotationAppPlatformEnabled = false;
+  });
+
+  it('FE FF on, backend platform off → legacy', async () => {
+    config.featureToggles.kubernetesAnnotationsClient = true;
+    config.annotationAppPlatformEnabled = false;
+    await annotationServer().save({ time: 1, text: 'x', dashboardUID: 'd', panelId: 1 });
+    expect(postFn).toHaveBeenCalledWith('/api/annotations', expect.objectContaining({ time: 1 }));
+  });
+
+  it('FE FF off, backend platform on → legacy', async () => {
+    config.featureToggles.kubernetesAnnotationsClient = false;
+    config.annotationAppPlatformEnabled = true;
+    await annotationServer().save({ time: 1, text: 'x', dashboardUID: 'd', panelId: 1 });
+    expect(postFn).toHaveBeenCalledWith('/api/annotations', expect.objectContaining({ time: 1 }));
+  });
+});
+
+describe('annotationServer with both gates ON', () => {
   const baseURL = '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1';
 
   beforeAll(() => {
+    config.featureToggles.kubernetesAnnotationsClient = true;
     config.annotationAppPlatformEnabled = true;
     config.namespace = 'stack-1';
   });
 
   afterAll(() => {
+    config.featureToggles.kubernetesAnnotationsClient = false;
     config.annotationAppPlatformEnabled = false;
   });
 

@@ -48,8 +48,18 @@ class LegacyAnnotationServer implements AnnotationServer {
   }
 }
 
-// When annotationAppPlatformEnabled is on, CRUD/tags/query (dashboard annotations) go
-// to annotation.grafana.app. forAlert stays on legacy because the new /search
+/**
+ * The k8s annotations client is gated by both the FE feature flag
+ * (`kubernetesAnnotationsClient`) and the backend's `annotationAppPlatformEnabled`
+ * config. Calling the new endpoints when the backend hasn't installed the app
+ * would 404, so we require both signals before switching off legacy.
+ */
+export function isK8sAnnotationsClientEnabled(): boolean {
+  return Boolean(config.featureToggles.kubernetesAnnotationsClient) && Boolean(config.annotationAppPlatformEnabled);
+}
+
+// When isK8sAnnotationsClientEnabled() is true, CRUD/tags/query (dashboard annotations)
+// go to annotation.grafana.app. forAlert stays on legacy because the new /search
 // endpoint cannot filter by alertUID/type=alert (ListOptions has no Type/AlertUID).
 class K8sAnnotationServer implements AnnotationServer {
   private legacy = new LegacyAnnotationServer();
@@ -85,5 +95,5 @@ class K8sAnnotationServer implements AnnotationServer {
 }
 
 export function annotationServer(): AnnotationServer {
-  return config.annotationAppPlatformEnabled ? new K8sAnnotationServer() : new LegacyAnnotationServer();
+  return isK8sAnnotationsClientEnabled() ? new K8sAnnotationServer() : new LegacyAnnotationServer();
 }

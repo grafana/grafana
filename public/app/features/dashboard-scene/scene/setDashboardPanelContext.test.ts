@@ -106,7 +106,8 @@ describe('setDashboardPanelContext', () => {
       });
     });
 
-    it('should POST to the k8s endpoint when annotationAppPlatformEnabled is on', async () => {
+    it('should POST to the k8s endpoint when both k8s annotations gates are on', async () => {
+      config.featureToggles.kubernetesAnnotationsClient = true;
       config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
       postFn.mockResolvedValue({});
@@ -132,11 +133,13 @@ describe('setDashboardPanelContext', () => {
           expect.anything()
         );
       } finally {
+        config.featureToggles.kubernetesAnnotationsClient = false;
         config.annotationAppPlatformEnabled = false;
       }
     });
 
     it('should include active scopes in k8s create request', async () => {
+      config.featureToggles.kubernetesAnnotationsClient = true;
       config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
       postFn.mockResolvedValue({});
@@ -152,6 +155,7 @@ describe('setDashboardPanelContext', () => {
         expect(body.spec.scopes).toEqual(['scope-a']);
       } finally {
         jest.restoreAllMocks();
+        config.featureToggles.kubernetesAnnotationsClient = false;
         config.annotationAppPlatformEnabled = false;
       }
     });
@@ -175,7 +179,8 @@ describe('setDashboardPanelContext', () => {
       });
     });
 
-    it('should PUT to the k8s endpoint when annotationAppPlatformEnabled is on', async () => {
+    it('should PUT to the k8s endpoint when both k8s annotations gates are on', async () => {
+      config.featureToggles.kubernetesAnnotationsClient = true;
       config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
       getFn.mockResolvedValue({
@@ -200,11 +205,13 @@ describe('setDashboardPanelContext', () => {
           expect.anything()
         );
       } finally {
+        config.featureToggles.kubernetesAnnotationsClient = false;
         config.annotationAppPlatformEnabled = false;
       }
     });
 
     it('should include active scopes in k8s update request', async () => {
+      config.featureToggles.kubernetesAnnotationsClient = true;
       config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
       getFn.mockResolvedValue({
@@ -226,6 +233,7 @@ describe('setDashboardPanelContext', () => {
         expect(body.spec.scopes).toEqual(['scope-b']);
       } finally {
         jest.restoreAllMocks();
+        config.featureToggles.kubernetesAnnotationsClient = false;
         config.annotationAppPlatformEnabled = false;
       }
     });
@@ -240,7 +248,8 @@ describe('setDashboardPanelContext', () => {
       expect(deleteFn).toHaveBeenCalledWith('/api/annotations/I-do-not-want-you');
     });
 
-    it('should DELETE the k8s resource when annotationAppPlatformEnabled is on', async () => {
+    it('should DELETE the k8s resource when both k8s annotations gates are on', async () => {
+      config.featureToggles.kubernetesAnnotationsClient = true;
       config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
       deleteFn.mockResolvedValue({});
@@ -258,6 +267,7 @@ describe('setDashboardPanelContext', () => {
           { showSuccessAlert: false }
         );
       } finally {
+        config.featureToggles.kubernetesAnnotationsClient = false;
         config.annotationAppPlatformEnabled = false;
       }
     });

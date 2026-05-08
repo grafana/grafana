@@ -20,6 +20,7 @@ import { AbstractList } from '@grafana/ui/internal';
 import { type AnnotationEventResource, annotationK8sClient } from 'app/api/clients/annotation/v0alpha1';
 import { getAPINamespace } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
+import { isK8sAnnotationsClientEnabled } from 'app/features/annotations/api';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 interface DisplayItem {
@@ -37,7 +38,7 @@ interface UserInfo {
   login?: string;
   email?: string;
   // The k8s identity ref ("user:<uid>") used to filter through the new /search endpoint.
-  // Absent when the legacy path (annotationAppPlatformEnabled off) populated this entry.
+  // Absent when the legacy path (k8s annotations client disabled) populated this entry.
   uid?: string;
 }
 
@@ -151,7 +152,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     const scopeNames = this.context?.state.value?.map((s) => s.metadata.name);
 
     let annotations: AnnotationEvent[];
-    if (config.annotationAppPlatformEnabled) {
+    if (isK8sAnnotationsClientEnabled()) {
       // /search hardcodes Type: "annotation" on the backend, so the legacy `type: 'annotation'`
       // filter is implicit. User filter switches from legacy `userId` to k8s `createdBy`.
       const events = await annotationK8sClient.search(
@@ -300,7 +301,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
   onUserClick = (anno: AnnotationEvent) => {
     // Hydrated events expose the k8s identity ref ("user:<uid>") via createdBy when
-    // annotationAppPlatformEnabled is on. Stash the uid so the next /search can filter by it.
+    // the k8s annotations client is enabled. Stash the uid so the next /search can filter by it.
     const createdBy = (anno as AnnotationEventResource).createdBy;
     const uid = createdBy?.startsWith('user:') ? createdBy.slice('user:'.length) : undefined;
     this.setState({

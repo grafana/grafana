@@ -317,7 +317,7 @@ describe('AnnoListPanel', () => {
     });
   });
 
-  describe('with annotationAppPlatformEnabled ON', () => {
+  describe('with the k8s annotations client gates ON (FE FF + backend platform)', () => {
     const SEARCH_URL = '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/search';
     const DISPLAY_URL = '/apis/iam.grafana.app/v0alpha1/namespaces/stack-1/display';
 
@@ -349,6 +349,7 @@ describe('AnnoListPanel', () => {
 
     const setupK8sContext = async (options: Options = defaultOptions, scopeNames?: string[]) => {
       jest.clearAllMocks();
+      config.featureToggles.kubernetesAnnotationsClient = true;
       config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
 
@@ -412,6 +413,7 @@ describe('AnnoListPanel', () => {
     };
 
     afterEach(() => {
+      config.featureToggles.kubernetesAnnotationsClient = false;
       config.annotationAppPlatformEnabled = false;
     });
 
@@ -474,6 +476,27 @@ describe('AnnoListPanel', () => {
           expect.any(String)
         );
       });
+    });
+  });
+
+  describe('with only one k8s gate ON falls back to legacy /api/annotations', () => {
+    afterEach(() => {
+      config.featureToggles.kubernetesAnnotationsClient = false;
+      config.annotationAppPlatformEnabled = false;
+    });
+
+    it('FE FF on, backend platform off → legacy GET', async () => {
+      config.featureToggles.kubernetesAnnotationsClient = true;
+      config.annotationAppPlatformEnabled = false;
+      const { getMock } = await setupTestContext();
+      expect(getMock).toHaveBeenCalledWith('/api/annotations', expect.any(Object), expect.any(String));
+    });
+
+    it('FE FF off, backend platform on → legacy GET', async () => {
+      config.featureToggles.kubernetesAnnotationsClient = false;
+      config.annotationAppPlatformEnabled = true;
+      const { getMock } = await setupTestContext();
+      expect(getMock).toHaveBeenCalledWith('/api/annotations', expect.any(Object), expect.any(String));
     });
   });
 });
