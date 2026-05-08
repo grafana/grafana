@@ -658,26 +658,73 @@ describe('Heatmap data', () => {
     });
   });
 
-  it('returns a warning when first field is not monotonically increasing (non-sortable x)', () => {
-    const unsortedIdValues = [1042, 87, 305, 1199, 41, 980];
-    const frame = toDataFrame({
-      fields: [
-        { name: 'id', type: FieldType.number, values: unsortedIdValues },
-        { name: 'lastSeen', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000, 6000] },
-        { name: 'count', type: FieldType.number, values: [3, 7, 1, 9, 4, 2], state: { displayName: 'count' } },
-        { name: 'users', type: FieldType.number, values: [1, 2, 1, 3, 2, 1], state: { displayName: 'users' } },
-      ],
+  describe('non-monotonic x guard', () => {
+    function expectWarningWithoutInvalidBucketSize(heatmap: ReturnType<typeof prepareHeatmapData>) {
+      expect(heatmap.warning).toEqual(expect.any(String));
+      expect(heatmap.warning?.length ?? 0).toBeGreaterThan(0);
+      if (heatmap.xBucketSize !== undefined) {
+        expect(Number.isFinite(heatmap.xBucketSize)).toBe(true);
+        expect(heatmap.xBucketSize).toBeGreaterThan(0);
+      }
+    }
+
+    it('returns a warning for a generic table frame whose first field is unsorted (rows-fallback path)', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'id', type: FieldType.number, values: [1042, 87, 305, 1199, 41, 980] },
+          { name: 'lastSeen', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000, 6000] },
+          { name: 'count', type: FieldType.number, values: [3, 7, 1, 9, 4, 2], state: { displayName: 'count' } },
+          { name: 'users', type: FieldType.number, values: [1, 2, 1, 3, 2, 1], state: { displayName: 'users' } },
+        ],
+      });
+
+      expectWarningWithoutInvalidBucketSize(prepareHeatmapData({ ...tpl, frames: [frame], palette: ['#000', '#fff'] }));
     });
 
-    const heatmap = prepareHeatmapData({ ...tpl, frames: [frame], palette: ['#000', '#fff'] });
+    it('returns a warning for a HeatmapCells frame whose x field is unsorted (direct cells path)', () => {
+      const frame = toDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'x', type: FieldType.number, values: [3000, 1000, 3000, 1000] },
+          { name: 'y', type: FieldType.number, values: [1, 1, 2, 2] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
+        ],
+      });
 
-    expect(heatmap.warning).toEqual(expect.any(String));
-    expect(heatmap.warning?.length ?? 0).toBeGreaterThan(0);
+      expectWarningWithoutInvalidBucketSize(prepareHeatmapData({ ...tpl, frames: [frame], palette: ['#000', '#fff'] }));
+    });
 
-    if (heatmap.xBucketSize !== undefined) {
-      expect(Number.isFinite(heatmap.xBucketSize)).toBe(true);
+    it('returns a warning for a single frame whose first field is a string (rows-fallback path)', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'category', type: FieldType.string, values: ['c', 'a', 'b'] },
+          { name: 'count', type: FieldType.number, values: [3, 7, 1], state: { displayName: 'count' } },
+          { name: 'users', type: FieldType.number, values: [1, 2, 1], state: { displayName: 'users' } },
+        ],
+      });
+
+      expectWarningWithoutInvalidBucketSize(prepareHeatmapData({ ...tpl, frames: [frame], palette: ['#000', '#fff'] }));
+    });
+
+    it('does not warn when multiple time-keyed frames are outer-joined (multi-frame path)', () => {
+      const frame1 = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [3000, 1000, 2000] },
+          { name: 'value', type: FieldType.number, values: [10, 20, 30], state: { displayName: '1' } },
+        ],
+      });
+      const frame2 = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [2000, 3000, 1000] },
+          { name: 'value', type: FieldType.number, values: [40, 50, 60], state: { displayName: '2' } },
+        ],
+      });
+
+      const heatmap = prepareHeatmapData({ ...tpl, frames: [frame1, frame2], palette: ['#000', '#fff'] });
+
+      expect(heatmap.warning).toBeUndefined();
       expect(heatmap.xBucketSize).toBeGreaterThan(0);
-    }
+    });
   });
 
   describe('getDenseHeatmapData edge cases', () => {
