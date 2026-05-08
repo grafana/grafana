@@ -20,9 +20,9 @@ review_date: 2026-05-07
 
 # Prometheus data source
 
-Prometheus is an open source database that uses a telemetry collector agent to scrape and store metrics used for monitoring and alerting.
+Prometheus is an open source monitoring system and time series database that scrapes and stores metrics used for monitoring and alerting.
 
-Grafana includes built-in support for Prometheus, so you don't need to install a plugin. The Prometheus data source also works with other projects that implement the [Prometheus querying API](https://prometheus.io/docs/prometheus/latest/querying/api/), including [Grafana Mimir](/docs/mimir/latest/) and [Thanos](https://thanos.io/tip/components/query.md/).
+Grafana includes built-in support for Prometheus, so you don't need to install a plugin. Write queries using [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) in the query editor, or use [Metrics Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/metrics/) to explore metrics without writing queries. The Prometheus data source also works with other projects that implement the [Prometheus querying API](https://prometheus.io/docs/prometheus/latest/querying/api/), including [Grafana Mimir](/docs/mimir/latest/) and [Thanos](https://thanos.io/tip/components/query.md/).
 
 ## Supported features
 
