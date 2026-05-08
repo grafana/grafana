@@ -66,60 +66,116 @@ For Prometheus data sources, this view is read-only. To modify these rules, upda
 For Mimir and Cortex data sources, the Alerting UI supports both viewing and creating data source-managed rules. Prometheus only supports viewing.
 {{< /admonition >}}
 
+## Evaluation groups and intervals
+
+Alert rules are organized into evaluation groups. Each group has an evaluation interval that determines how frequently the rules in that group are evaluated. For example, an evaluation interval of `1m` means the alert query runs every 60 seconds.
+
+The **pending period** determines how long a condition must be continuously true before the alert fires. For example, with a 1-minute evaluation interval and a 5-minute pending period, the condition must be true for 5 consecutive evaluations before firing.
+
+Choose evaluation intervals based on your use case:
+
+- **15s–30s** — Critical infrastructure alerts where fast detection matters.
+- **1m** — Standard monitoring alerts (recommended default).
+- **5m** — Non-urgent or noisy metrics where you want to reduce evaluation load.
+
 ## Example alert queries
 
-The following examples show common alerting scenarios with Prometheus.
+The following examples show common alerting scenarios with Prometheus. Each example shows the PromQL query and how to configure the alert condition.
 
 ### Alert on high CPU usage
 
-Monitor CPU usage and alert when it exceeds a threshold:
+Monitor CPU usage and alert when it exceeds 90%:
+
+**Query A:**
 
 ```promql
-100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[$__rate_interval])) * 100)
 ```
 
-Set the condition to alert when the last value is above 0 (the query already encodes the threshold).
+**Condition:** Set the threshold to alert when the last value of **A** is above `90`.
 
-Alternatively, use a simpler query and set the threshold in the alert condition:
-
-```promql
-avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100
-```
-
-Set the condition to alert when the last value is below 10 (meaning less than 10% idle, or more than 90% busy).
+This approach separates the metric query from the threshold, making it easier to adjust the threshold later without editing the PromQL.
 
 ### Alert on high memory usage
 
 Monitor memory usage across nodes:
 
+**Query A:**
+
 ```promql
 (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100
 ```
 
-Set the condition to alert when the last value exceeds 85.
+**Condition:** Alert when the last value of **A** exceeds `85`.
 
 ### Alert on high error rate
 
-Monitor HTTP error rates:
+Monitor HTTP error rates per service:
+
+**Query A:**
 
 ```promql
-sum(rate(http_requests_total{status=~"5.."}[5m])) by (job)
+sum(rate(http_requests_total{status=~"5.."}[$__rate_interval])) by (job)
   /
-sum(rate(http_requests_total[5m])) by (job)
+sum(rate(http_requests_total[$__rate_interval])) by (job)
   * 100
 ```
 
-Set the condition to alert when the error percentage exceeds 5.
+**Condition:** Alert when the last value of **A** exceeds `5` (meaning error rate above 5%).
 
 ### Alert on target down
 
 Monitor whether Prometheus scrape targets are reachable:
 
+**Query A:**
+
 ```promql
-up{job="myservice"} == 0
+up{job="myservice"}
 ```
 
-Set the condition to alert when the last value equals 0.
+**Condition:** Alert when the last value of **A** is below `1`.
+
+### Alert when a metric disappears
+
+Use `absent()` to detect when a metric stops being scraped entirely — for example, when a service crashes and no longer reports metrics:
+
+**Query A:**
+
+```promql
+absent(up{job="myservice"})
+```
+
+**Condition:** Alert when the last value of **A** equals `1` (the `absent()` function returns 1 when the metric is missing, and nothing when the metric exists).
+
+For detecting staleness over a time window (metric exists but hasn't reported recently):
+
+```promql
+absent_over_time(up{job="myservice"}[5m])
+```
+
+### Multi-condition alert (high latency AND high traffic)
+
+Use multiple queries and expressions to alert only when multiple conditions are true simultaneously. This reduces noise by avoiding alerts during low-traffic periods.
+
+**Query A** — P95 latency:
+
+```promql
+histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="api"}[$__rate_interval])) by (le))
+```
+
+**Query B** — Request rate:
+
+```promql
+sum(rate(http_requests_total{job="api"}[$__rate_interval]))
+```
+
+**Expression C** — Math (both conditions must be true):
+
+```
+$A > 2 && $B > 100
+```
+
+**Condition:** Alert when **C** has a value (it only returns data when both latency exceeds 2 seconds AND request rate exceeds 100 req/s).
 
 ## Recording rules as alert targets
 
@@ -188,7 +244,7 @@ For more details on troubleshooting these errors, refer to [Troubleshoot Prometh
 Follow these best practices when creating Prometheus alerts:
 
 - **Configure error state handling:** Set **Alert state if execution error or timeout** to **Keep Last State** to prevent transient backend errors from triggering false alarms.
-- **Use `$__rate_interval`:** When using `rate()` or `increase()` in alert queries, use the `$__rate_interval` variable to avoid gaps caused by scrape interval mismatches.
+- **Use `$__rate_interval`:** When using `rate()` or `increase()` in alert queries, use `$__rate_interval` to ensure the range window is always large enough relative to the scrape interval. Grafana resolves this variable based on the evaluation interval and scrape interval configuration.
 - **Add label filters:** Include specific label matchers to focus on relevant data and improve query performance.
 - **Set realistic pending periods:** Use the pending period to avoid alerting on brief spikes. For example, set a 5-minute pending period so the condition must persist before firing.
 - **Test queries first:** Verify your query returns expected results in Explore before creating an alert.
