@@ -368,6 +368,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				assert.Equal(t, tt.expectedIdentity.AuthID, identity.AuthID)
 				assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, identity.AuthenticatedBy)
 				assert.Equal(t, tt.expectedIdentity.ExternalGroups, identity.ExternalGroups)
+				assert.Empty(t, identity.Groups, "IdP groups must not leak into Identity.Groups")
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)
