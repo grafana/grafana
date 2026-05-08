@@ -2,6 +2,7 @@ import { PluginType } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { config } from '../../config';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger } from '../logging/registry';
 
@@ -37,7 +38,7 @@ const datasourceIdsFromApi = datasourceItemsFromApi.map((i) => i.spec.pluginJson
 
 describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ 'plugins.useMTPlugins': true });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
     setLogger('grafana/runtime.plugins.settings', {
       logDebug: jest.fn(),
       logError: jest.fn(),
@@ -233,7 +234,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 
 describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ 'plugins.useMTPlugins': false });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
   });
 
   afterAll(() => {

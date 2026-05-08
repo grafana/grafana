@@ -1,5 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { getLogger, setLogger } from '../logging/registry';
 
@@ -30,7 +31,7 @@ const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
 
 describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ 'plugins.useMTPlugins': true });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
     (window as unknown as Record<string, unknown>).__grafana_public_path__ = '';
     setLogger('grafana/runtime.plugins.settings', {
       logDebug: jest.fn(),
@@ -381,7 +382,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 
 describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ 'plugins.useMTPlugins': false });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
   });
 
   afterAll(() => {
