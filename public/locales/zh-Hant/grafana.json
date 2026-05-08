@@ -1148,6 +1148,9 @@
         "rule-viewer-section-extension": "規則檢視器增強功能部分無法載入"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "無法更新您的設定：",
       "title-something-went-wrong": "發生了一些錯誤"
@@ -3155,9 +3158,7 @@
       "deleting": "正在刪除",
       "text-federated": "聯合",
       "text-provisioned": "已佈建",
-      "ungrouped": "未分組",
-      "ungrouped-suffix": "{{ruleName}}（未分組）",
-      "unknown-rule": "未知規則"
+      "ungrouped": "未分組"
     },
     "saved-searches": {
       "actions-aria-label": "動作",
