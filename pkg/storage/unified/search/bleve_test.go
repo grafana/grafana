@@ -1388,6 +1388,46 @@ func TestBuildIndexConcurrentBuildsForSameKeyDoNotDeleteEachOthersDirs(t *testin
 	// Let A finish so its goroutine cleans up before the test ends.
 	close(aRelease)
 	<-aDone
+
+	require.Empty(t, backend.inFlightBuildDirs,
+		"in-flight directory registrations leaked after both builds finished")
+}
+
+// TestBuildIndexColdStartReuseRejectionDoesNotLeakInFlightDir guards against
+// a leak in the path where findPreviousFileBasedIndex registers the reused
+// directory but tryReuseFileIndex then rejects it because its BuildTime
+// predates lastImportTime. Without unregistering on the reject path, the
+// stale directory would remain registered for the lifetime of the process,
+// causing cleanOldIndexes to skip it forever.
+func TestBuildIndexColdStartReuseRejectionDoesNotLeakInFlightDir(t *testing.T) {
+	backend, _ := setupBleveBackend(t, withFileThreshold(1))
+	ns := resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
+
+	// Build an initial file-based index so a directory exists on disk.
+	_, err := backend.BuildIndex(t.Context(), ns, 100, nil, "init",
+		func(_ resource.ResourceIndex) (int64, error) { return 1, nil },
+		nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	// Drop the cached entry and close the index, simulating a fresh process
+	// boot that finds an out-of-date persisted index on disk.
+	backend.cacheMx.Lock()
+	prev := backend.cache[ns]
+	delete(backend.cache, ns)
+	backend.cacheMx.Unlock()
+	require.NotNil(t, prev)
+	require.NoError(t, prev.stopUpdaterAndCloseIndex())
+
+	// Call BuildIndex with lastImportTime > the existing index's BuildTime.
+	// tryReuseFileIndex opens the on-disk dir, sees the build is stale, and
+	// closes + rejects it; createEmptyFileIndex then builds a fresh one.
+	_, err = backend.BuildIndex(t.Context(), ns, 100, nil, "rebuild-after-import",
+		func(_ resource.ResourceIndex) (int64, error) { return 2, nil },
+		nil, false, time.Now().Add(time.Hour), 0)
+	require.NoError(t, err)
+
+	require.Empty(t, backend.inFlightBuildDirs,
+		"in-flight directory registrations leaked after cold-start reuse rejection")
 }
 
 func TestBleveIndexWithFailures(t *testing.T) {

@@ -952,6 +952,10 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 
 	logger.Info("File-based index needs rebuild before opening", "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
 	_ = idx.Close()
+	// Release the registration findPreviousFileBasedIndex installed on this
+	// directory: we are discarding the reused index, so cleanOldIndexes is
+	// allowed to remove its directory once the rebuild finishes.
+	b.unregisterInFlightBuildDir(filepath.Join(resourceDir, name))
 	return nil, "", 0, nil
 }
 
@@ -1144,7 +1148,15 @@ func (b *bleveBackend) unregisterInFlightBuildDir(path string) {
 	}
 	b.inFlightBuildDirsMu.Lock()
 	defer b.inFlightBuildDirsMu.Unlock()
-	if c := b.inFlightBuildDirs[path]; c > 1 {
+	c, ok := b.inFlightBuildDirs[path]
+	if !ok {
+		// A missing entry means a registration was never installed for this
+		// path, or that the path is being unregistered twice. Both indicate a
+		// pairing bug in a helper; log so it surfaces in tests and prod logs.
+		b.log.Error("unregisterInFlightBuildDir called with unknown path; missing register or double unregister", "path", path)
+		return
+	}
+	if c > 1 {
 		b.inFlightBuildDirs[path] = c - 1
 	} else {
 		delete(b.inFlightBuildDirs, path)
