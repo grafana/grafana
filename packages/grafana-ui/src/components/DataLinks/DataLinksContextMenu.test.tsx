@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { DataLinksContextMenu, type DataLinksMenuTriggerProps } from './DataLinksContextMenu';
+import { DataLinksContextMenu} from './DataLinksContextMenu';
 
 const twoLinks = () => [
   { href: '/link1', title: 'Link1', target: '_blank' as const, origin: {} },
