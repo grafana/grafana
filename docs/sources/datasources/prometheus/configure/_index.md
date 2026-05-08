@@ -211,7 +211,7 @@ You can define and configure the data source in YAML files as part of the Grafan
 After you have provisioned a data source, you cannot edit it through the UI.
 {{< /admonition >}}
 
-### YAML provisioning
+### Provision with YAML 
 
 For more information about provisioning, and for available configuration options, refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
 
@@ -243,7 +243,7 @@ datasources:
           url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
 ```
 
-### Terraform
+### Provision with Terraform
 
 You can configure the Prometheus data source using [Terraform](https://www.terraform.io/) with the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 

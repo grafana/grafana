@@ -45,10 +45,6 @@ The following documents help you set up and use the Prometheus data source:
 - [Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/alerting/)
 - [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/)
 
-## Exemplars
-
-Prometheus supports exemplars, which link aggregated metric data to specific trace examples. This bridges the gap between metrics and traces, letting you jump from a spike on a graph directly to a relevant trace. For conceptual details, refer to [Introduction to exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/). To set up exemplar links, refer to the Exemplars section in [Configure the Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/).
-
 ## Additional features
 
 After you configure the Prometheus data source, you can:
@@ -58,9 +54,16 @@ After you configure the Prometheus data source, you can:
 - Create [recorded queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/) for pre-aggregated data
 - Build a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
 
-## Amazon Managed Service for Prometheus
+## Cloud-managed Prometheus services
 
-Grafana has deprecated the Prometheus data source for Amazon Managed Service for Prometheus. Use the [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) instead. The linked documentation outlines the migration steps.
+{{< admonition type="note" >}}
+In Grafana 13, the core Prometheus data source no longer supports SigV4 (AWS) or Azure AD authentication. These authentication methods have been migrated to dedicated plugins:
+
+- **Amazon Managed Service for Prometheus** — Use the [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/). For migration details, refer to [AWS authentication (deprecated)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/aws-authentication/).
+- **Azure Monitor Managed Service for Prometheus** — Use the [Azure Monitor Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/). For migration details, refer to [Azure authentication (deprecated)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/azure-authentication/).
+
+Existing data sources using these methods are automatically migrated on startup.
+{{< /admonition >}}
 
 ## Related resources
 

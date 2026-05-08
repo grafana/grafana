@@ -111,6 +111,32 @@ PDC connectivity issues are almost always caused by networking on the customer s
 
 For general PDC setup and configuration, refer to [Private data source connect (PDC)](/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/).
 
+### Certificate verification failed
+
+**Error message:** "x509: certificate signed by unknown authority" or "certificate verify failed"
+
+**Cause:** Grafana cannot verify the TLS certificate presented by Prometheus.
+
+**Solution:**
+
+1. If using a self-signed certificate, enable **Add self-signed certificate** in the TLS settings and add your CA certificate.
+1. Verify the certificate chain is complete and valid.
+1. Ensure the certificate has not expired.
+1. As a temporary workaround for testing, enable **Skip TLS verify** (not recommended for production).
+
+### TLS handshake error
+
+**Error message:** "TLS: handshake failure" or "connection reset"
+
+**Cause:** The TLS handshake between Grafana and Prometheus failed.
+
+**Solution:**
+
+1. Verify that Prometheus is configured to use TLS.
+1. Check that the TLS version and cipher suites are compatible.
+1. If using client certificates, ensure they are correctly configured in the **TLS client authentication** section.
+1. Verify the server name matches the certificate's Common Name or Subject Alternative Name.
+
 ## Authentication errors
 
 The following errors occur when there are issues with authentication credentials or permissions.
@@ -331,7 +357,7 @@ The following errors occur when there are issues with PromQL syntax or query exe
 | Counter reset spikes after pod restarts | Use `$__rate_interval` or a longer range vector to smooth spikes. Investigate frequent restarts as the root cause. |
 | Values differ between edit mode and dashboard | Panel width affects `$__interval` which affects `rate()` window calculations. Set a **Min step** on the query. |
 
-For detailed explanations of these behaviors, refer to [Common PromQL gotchas](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor/#common-promql-gotchas).
+For detailed explanations of these behaviors, refer to [Expected PromQL behaviors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor/#expected-promql-behaviors).
 
 ### Aggregation by labels with dots
 
@@ -395,36 +421,6 @@ The following errors occur when the data source is not configured correctly.
 1. Compare this value against your actual scrape interval. If it's smaller than your scrape interval, you need to configure the data source scrape interval or set a Min step.
 
 For detailed documentation on how `$__rate_interval` works and how to configure it, refer to [Use `$__rate_interval`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-__rate_interval).
-
-## TLS and certificate errors
-
-The following errors occur when there are issues with TLS configuration.
-
-### Certificate verification failed
-
-**Error message:** "x509: certificate signed by unknown authority" or "certificate verify failed"
-
-**Cause:** Grafana cannot verify the TLS certificate presented by Prometheus.
-
-**Solution:**
-
-1. If using a self-signed certificate, enable **Add self-signed certificate** in the TLS settings and add your CA certificate.
-1. Verify the certificate chain is complete and valid.
-1. Ensure the certificate has not expired.
-1. As a temporary workaround for testing, enable **Skip TLS verify** (not recommended for production).
-
-### TLS handshake error
-
-**Error message:** "TLS: handshake failure" or "connection reset"
-
-**Cause:** The TLS handshake between Grafana and Prometheus failed.
-
-**Solution:**
-
-1. Verify that Prometheus is configured to use TLS.
-1. Check that the TLS version and cipher suites are compatible.
-1. If using client certificates, ensure they are correctly configured in the **TLS client authentication** section.
-1. Verify the server name matches the certificate's Common Name or Subject Alternative Name.
 
 ## Performance issues
 

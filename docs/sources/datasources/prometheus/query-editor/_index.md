@@ -88,10 +88,6 @@ Exemplars are not available with Instant query types.
 
 **Builder mode** helps you build queries using a visual interface. This option is best for users who have limited experience with PromQL.
 
-The following video demonstrates how to use the visual Prometheus query builder:
-
-{{< vimeo 720004179 >}}
-
 Builder mode contains the following components:
 
 - **Kick start your query** — Click to view predefined operation patterns that help you quickly build queries with multiple operations:
@@ -320,7 +316,7 @@ High-cardinality metrics (those with many unique label combinations) can cause q
 
 If your queries hit memory or sample limits, refer to [Memory limit exceeded for high-cardinality queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#memory-limit-exceeded-for-high-cardinality-queries).
 
-## Common PromQL gotchas
+## Expected PromQL behaviors
 
 The following behaviors are frequently misinterpreted as bugs but are expected Prometheus behavior.
 

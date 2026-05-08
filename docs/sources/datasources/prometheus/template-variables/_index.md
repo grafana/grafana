@@ -184,13 +184,17 @@ The Prometheus data source supports three variable syntaxes:
 If **Multi-value** or **Include All** is enabled, the variable value becomes a regex pattern (for example, `value1|value2`). Use `=~` instead of `=` in your label matchers.
 {{< /admonition >}}
 
-## Ad hoc filters
+## Filters variable
 
-Prometheus supports the [ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters) variable type, which lets dashboard viewers dynamically add label filters without editing queries.
+Prometheus supports the [Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters) variable type (formerly called "ad hoc filters"), which lets dashboard viewers dynamically add label filters without editing queries.
 
-To set up ad hoc filters:
+{{< admonition type="note" >}}
+In Grafana 13, the **Filter and Group by** feature (public preview) extends the Filters variable by adding grouping support for Prometheus and Loki data sources. Enable the `dashboardUnifiedDrilldownControls` feature toggle to use it. For more information, refer to [Dashboard controls](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#filter-and-group-by).
+{{< /admonition >}}
 
-1. Create a new variable with **Type: Ad hoc filters**.
+To set up a Filters variable:
+
+1. Create a new variable with **Type: Filters**.
 1. Select your Prometheus data source.
 1. Save the dashboard.
 
@@ -199,7 +203,7 @@ Once added, a filter bar appears at the top of the dashboard. Viewers can add fi
 **Example:** A viewer adds the filter `namespace = production`. All queries on the dashboard now include `{namespace="production"}` without any query modifications.
 
 {{< admonition type="note" >}}
-Ad hoc filters are applied to all queries using the selected data source. You cannot selectively apply them to specific panels.
+Filters are applied to all queries using the selected data source. You cannot selectively apply them to specific panels.
 {{< /admonition >}}
 
 ## Related resources
