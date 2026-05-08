@@ -272,29 +272,56 @@ export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
       role="toolbar"
       aria-label={t('query-editor-next.bulk-actions.toolbar-label', 'Bulk actions')}
     >
-      {hasQueryActions && <BulkQueryActions barWidth={barWidth} />}
-      {hasTransformationActions && <BulkTransformationActions barWidth={barWidth} />}
-      <Button
-        size="sm"
-        variant="secondary"
-        fill="text"
-        icon="times"
-        onClick={handleClear}
-        tooltip={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
-        aria-label={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
-        className={styles.clearButton}
-      />
+      <div className={styles.actionsScroll}>
+        {hasQueryActions && <BulkQueryActions barWidth={barWidth} />}
+        {hasTransformationActions && <BulkTransformationActions barWidth={barWidth} />}
+      </div>
+      <div className={styles.clearButtonWrapper}>
+        <Button
+          size="sm"
+          variant="secondary"
+          fill="text"
+          icon="times"
+          onClick={handleClear}
+          tooltip={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
+          aria-label={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
+        />
+      </div>
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   bar: css({
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  actionsScroll: css({
+    flex: 1,
+    minWidth: 0,
+    position: 'relative',
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(0.5),
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: theme.spacing(4),
+      background: `linear-gradient(to right, transparent, ${theme.colors.background.primary})`,
+      pointerEvents: 'none',
+    },
   }),
-  clearButton: css({
-    marginLeft: 'auto',
+  clearButtonWrapper: css({
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
   }),
 });

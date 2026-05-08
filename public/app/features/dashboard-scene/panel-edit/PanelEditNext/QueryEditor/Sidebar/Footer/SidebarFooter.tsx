@@ -115,12 +115,9 @@ function getStyles(theme: GrafanaTheme2) {
     icon: css({
       color: theme.colors.text.secondary,
     }),
-    // Subtle right-to-left slide-in when the bar mounts. The bar sits inline
-    // (not as an overlay) — see the comment on `hasBulkActions` above for why.
     bulkActionsBar: css({
-      flex: 1,
       [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${slideInFromRight} ${theme.transitions.duration.shorter}ms ${theme.transitions.easing.easeOut} both`,
+        animation: `${slideInFromRight} ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeOut} both`,
       },
     }),
   };
