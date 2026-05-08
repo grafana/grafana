@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "De verrijkingssectie in de Rule Viewer kan niet worden geladen"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Kan je configuratie niet bijwerken:",
       "title-something-went-wrong": "Er ging iets mis"
@@ -3174,9 +3177,7 @@
       "deleting": "Verwijderen",
       "text-federated": "Federatief",
       "text-provisioned": "Provisioned",
-      "ungrouped": "Niet gegroepeerd",
-      "ungrouped-suffix": "{{ruleName}} (Niet gegroepeerd)",
-      "unknown-rule": "Onbekende regel"
+      "ungrouped": "Niet gegroepeerd"
     },
     "saved-searches": {
       "actions-aria-label": "Acties",
