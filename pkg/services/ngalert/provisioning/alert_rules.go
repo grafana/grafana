@@ -373,6 +373,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		for _, key := range ids {
 			if key.UID == rule.UID {
 				rule.ID = key.ID
+				rule.GUID = key.GUID
 				fixed = true
 				break
 			}

@@ -670,7 +670,8 @@ type AlertRuleKeyWithGroup struct {
 
 type AlertRuleKeyWithId struct {
 	AlertRuleKey
-	ID int64
+	ID   int64
+	GUID string
 }
 
 // AlertRuleGroupKey is the identifier of a group of alerts
