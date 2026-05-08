@@ -154,11 +154,6 @@ export interface FeatureToggles {
   */
   provisioningExport?: boolean;
   /**
-  * Render the README.md of a Git Sync provisioned folder inline below its dashboards list
-  * @default false
-  */
-  provisioningReadmes?: boolean;
-  /**
   * Start an additional https handler and write kubectl options
   * @default false
   */
@@ -228,6 +223,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesLibraryPanels?: boolean;
+  /**
+  * Enables usage of the new annotations API client
+  * @default false
+  */
+  kubernetesAnnotationsClient?: boolean;
   /**
   * Enables k8s short url api and uses it under the hood when handling legacy /api
   * @default false
@@ -1427,11 +1427,6 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables plugins decoupling from bootdata
-  * @default false
-  */
-  useMTPlugins?: boolean;
-  /**
   * Enables support for variables whose values can have multiple properties
   * @default true
   */
@@ -1641,11 +1636,6 @@ export interface FeatureToggles {
   * @default false
   */
   logsTablePanelNG?: boolean;
-  /**
-  * Enables plugins setting from new apis
-  * @default false
-  */
-  useMTPluginSettings?: boolean;
   /**
   * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
   * @default false

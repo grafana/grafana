@@ -131,6 +131,10 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
+	// FlagKubernetesAnnotationsClient
+	// Enables usage of the new annotations API client
+	FlagKubernetesAnnotationsClient = "kubernetesAnnotationsClient"
+
 	// FlagKubernetesShortURLs
 	// Enables k8s short url api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
@@ -773,6 +777,10 @@ const (
 	// FlagProfilesExemplars
 	// Enables profiles exemplars support in profiles drilldown
 	FlagProfilesExemplars = "profilesExemplars"
+
+	// FlagPyroscopeUTF8LabelNames
+	// Enables support for UTF-8 label names in Pyroscope label selectors
+	FlagPyroscopeUTF8LabelNames = "pyroscopeUTF8LabelNames"
 
 	// FlagAlertingSyncDispatchTimer
 	// Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods

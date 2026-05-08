@@ -1,3 +1,4 @@
+import { type TOptions } from 'i18next';
 /**
  * Hook type for translation function that takes an ID, default message, and optional values
  * @returns A function that returns the translated string
@@ -44,6 +45,11 @@ interface TransPropsBase {
    * Class name for the Trans component
    */
   className?: string;
+  /**
+   * Options to pass to the internal t function. Needed for plural forms.
+   * Note: use the separate `context` prop rather than setting context here.
+   */
+  tOptions?: Omit<TOptions, 'context'>;
 }
 
 interface TransPropsWithChildren extends TransPropsBase {

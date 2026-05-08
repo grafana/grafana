@@ -35,9 +35,9 @@ const logPluginMetaWarningMock = jest.mocked(logPluginMetaWarning);
 const datasourceItemsFromApi = v0alpha1Response.items.filter((i) => i.spec.pluginJson.type === 'datasource');
 const datasourceIdsFromApi = datasourceItemsFromApi.map((i) => i.spec.pluginJson.id);
 
-describe('when useMTPlugins flag is enabled', () => {
+describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: true });
+    setTestFlags({ 'plugins.useMTPlugins': true });
     setLogger('grafana/runtime.plugins.settings', {
       logDebug: jest.fn(),
       logError: jest.fn(),
@@ -231,9 +231,9 @@ describe('when useMTPlugins flag is enabled', () => {
   });
 });
 
-describe('when useMTPlugins flag is disabled', () => {
+describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
+    setTestFlags({ 'plugins.useMTPlugins': false });
   });
 
   afterAll(() => {

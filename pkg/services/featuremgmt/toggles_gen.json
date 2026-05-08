@@ -3183,6 +3183,22 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAnnotationsClient",
+        "resourceVersion": "1778163715528",
+        "creationTimestamp": "2026-05-07T00:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-07 14:21:55.528883 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables usage of the new annotations API client",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
         "resourceVersion": "1773696968793",
         "creationTimestamp": "2025-08-29T14:46:39Z",
@@ -4666,6 +4682,36 @@
     },
     {
       "metadata": {
+        "name": "plugins.useMTPluginSettings",
+        "resourceVersion": "1778216270427",
+        "creationTimestamp": "2026-05-08T04:57:50Z"
+      },
+      "spec": {
+        "description": "Enables plugins setting from new apis",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "plugins.useMTPlugins",
+        "resourceVersion": "1778216270427",
+        "creationTimestamp": "2026-05-08T04:57:50Z"
+      },
+      "spec": {
+        "description": "Enables plugins decoupling from bootdata",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsAutoUpdate",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-16T11:44:39Z"
@@ -4855,6 +4901,20 @@
     },
     {
       "metadata": {
+        "name": "provisioning.readmes",
+        "resourceVersion": "1778221429422",
+        "creationTimestamp": "2026-05-08T06:23:49Z"
+      },
+      "spec": {
+        "description": "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioningExport",
         "resourceVersion": "1771845933585",
         "creationTimestamp": "2026-02-23T11:25:33Z"
@@ -4888,7 +4948,8 @@
       "metadata": {
         "name": "provisioningReadmes",
         "resourceVersion": "1777397546983",
-        "creationTimestamp": "2026-04-28T17:32:26Z"
+        "creationTimestamp": "2026-04-28T17:32:26Z",
+        "deletionTimestamp": "2026-05-08T06:23:49Z"
       },
       "spec": {
         "description": "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
@@ -4924,6 +4985,22 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pyroscopeUTF8LabelNames",
+        "resourceVersion": "1777992596361",
+        "creationTimestamp": "2026-04-03T12:50:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-05 14:49:56.36198 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables support for UTF-8 label names in Pyroscope label selectors",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-traces-and-profiling",
         "expression": "true"
       }
     },
@@ -6112,7 +6189,8 @@
       "metadata": {
         "name": "useMTPluginSettings",
         "resourceVersion": "1774424916561",
-        "creationTimestamp": "2026-03-25T07:48:36Z"
+        "creationTimestamp": "2026-03-25T07:48:36Z",
+        "deletionTimestamp": "2026-05-08T04:57:50Z"
       },
       "spec": {
         "description": "Enables plugins setting from new apis",
@@ -6127,7 +6205,8 @@
       "metadata": {
         "name": "useMTPlugins",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-05T07:09:41Z"
+        "creationTimestamp": "2025-12-05T07:09:41Z",
+        "deletionTimestamp": "2026-05-08T04:57:50Z"
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",

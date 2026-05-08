@@ -1175,6 +1175,69 @@ alerting:
 	require.Empty(t, n.Alertmanagers())
 }
 
+// TestApplyConfigDataSourceUIDChange verifies that when the dataSourceUID changes
+// while the AlertmanagerConfig hash stays the same (e.g. datasource recreated at
+// the same URL), the old UID's metric series are deleted so they don't leak.
+func TestApplyConfigDataSourceUIDChange(t *testing.T) {
+	targetURL := "alertmanager:9093"
+	alertmanagerURL := fmt.Sprintf("http://%s/api/v2/alerts", targetURL)
+	targetGroup := &targetgroup.Group{
+		Targets: []model.LabelSet{
+			{"__address__": model.LabelValue(targetURL)},
+		},
+	}
+
+	reg := prometheus.NewRegistry()
+	n := NewManager(&Options{Registerer: reg}, nil)
+
+	s := `
+alerting:
+  alertmanagers:
+  - file_sd_configs:
+    - files:
+      - foo.json
+`
+	cfg := &config.Config{}
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
+
+	// Apply config with UID "uid-old" and simulate a sync so metrics are initialized.
+	require.NoError(t, n.ApplyConfig(cfg, nil, map[string]string{"config-0": "uid-old"}))
+	n.reload(map[string][]*targetgroup.Group{"config-0": {targetGroup}})
+
+	// Confirm the old-UID series exist.
+	mfs, err := reg.Gather()
+	require.NoError(t, err)
+	foundOld := false
+	for _, mf := range mfs {
+		for _, m := range mf.GetMetric() {
+			for _, lp := range m.GetLabel() {
+				if lp.GetName() == dataSourceUIDLabel && lp.GetValue() == "uid-old" {
+					foundOld = true
+				}
+			}
+		}
+	}
+	require.True(t, foundOld, "expected metrics with uid-old to exist after first sync")
+
+	// Apply config again with the same URL but a different UID (same config hash).
+	require.NoError(t, n.ApplyConfig(cfg, nil, map[string]string{"config-0": "uid-new"}))
+
+	// The old-UID series must be gone, only uid-new may appear.
+	mfs, err = reg.Gather()
+	require.NoError(t, err)
+	for _, mf := range mfs {
+		for _, m := range mf.GetMetric() {
+			for _, lp := range m.GetLabel() {
+				if lp.GetName() == dataSourceUIDLabel {
+					require.NotEqual(t, "uid-old", lp.GetValue(),
+						"leaked metric %s{alertmanager=%q, data_source_uid=%q}",
+						mf.GetName(), alertmanagerURL, lp.GetValue())
+				}
+			}
+		}
+	}
+}
+
 // Maintain strict yaml decode behavior from v2: https://github.com/go-yaml/yaml/issues/639#issuecomment-666935833
 func mustStrictlyDecodeConfig(t testing.TB, r io.Reader, cfg *config.Config) {
 	t.Helper()
