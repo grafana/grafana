@@ -31,15 +31,12 @@ export const InfluxFluxDBConnection = (props: Props) => {
     }
     if (jsonData.organization) {
       setFieldErrors((prev) => omit(prev, 'organization'));
-      validation.clearError('organization');
     }
     if (jsonData.defaultBucket) {
       setFieldErrors((prev) => omit(prev, 'defaultBucket'));
-      validation.clearError('defaultBucket');
     }
     if (tokenConfigured || tokenEntered) {
       setFieldErrors((prev) => omit(prev, 'token'));
-      validation.clearError('token');
     }
     return validation.registerValidation(() => {
       const errors: Record<string, string> = {};
@@ -53,16 +50,6 @@ export const InfluxFluxDBConnection = (props: Props) => {
         errors.token = 'Token is required';
       }
       setFieldErrors(errors);
-      Object.entries(errors).forEach(([field, msg]) => validation.setError(field, msg));
-      if (!errors.organization) {
-        validation.clearError('organization');
-      }
-      if (!errors.defaultBucket) {
-        validation.clearError('defaultBucket');
-      }
-      if (!errors.token) {
-        validation.clearError('token');
-      }
       return Object.keys(errors).length === 0;
     });
   }, [jsonData.organization, jsonData.defaultBucket, tokenConfigured, tokenEntered, validation]);

@@ -50,15 +50,12 @@ export const UrlAndAuthenticationSection = (props: Props) => {
     }
     if (options.url) {
       setFieldErrors((prev) => omit(prev, 'url'));
-      validation.clearError('url');
     }
     if (options.jsonData.product) {
       setFieldErrors((prev) => omit(prev, 'product'));
-      validation.clearError('product');
     }
     if (options.jsonData.version) {
       setFieldErrors((prev) => omit(prev, 'version'));
-      validation.clearError('version');
     }
     return validation.registerValidation(() => {
       const errors: Record<string, string> = {};
@@ -72,16 +69,6 @@ export const UrlAndAuthenticationSection = (props: Props) => {
         errors.version = 'Query language is required';
       }
       setFieldErrors(errors);
-      Object.entries(errors).forEach(([field, msg]) => validation.setError(field, msg));
-      if (!errors.url) {
-        validation.clearError('url');
-      }
-      if (!errors.product) {
-        validation.clearError('product');
-      }
-      if (!errors.version) {
-        validation.clearError('version');
-      }
       return Object.keys(errors).length === 0;
     });
   }, [options.url, options.jsonData.product, options.jsonData.version, validation]);

@@ -28,15 +28,12 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
     }
     if (options.jsonData.dbName) {
       setFieldErrors((prev) => omit(prev, 'dbName'));
-      validation.clearError('dbName');
     }
     if (options.user) {
       setFieldErrors((prev) => omit(prev, 'user'));
-      validation.clearError('user');
     }
     if (passwordConfigured || passwordEntered) {
       setFieldErrors((prev) => omit(prev, 'password'));
-      validation.clearError('password');
     }
     return validation.registerValidation(() => {
       const errors: Record<string, string> = {};
@@ -50,16 +47,6 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
         errors.password = 'Password is required';
       }
       setFieldErrors(errors);
-      Object.entries(errors).forEach(([field, msg]) => validation.setError(field, msg));
-      if (!errors.dbName) {
-        validation.clearError('dbName');
-      }
-      if (!errors.user) {
-        validation.clearError('user');
-      }
-      if (!errors.password) {
-        validation.clearError('password');
-      }
       return Object.keys(errors).length === 0;
     });
   }, [options.jsonData.dbName, options.user, passwordConfigured, passwordEntered, validation]);
