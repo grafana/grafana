@@ -21,13 +21,6 @@ jest.mock('../PanelRenderer', () => ({
   },
 }));
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-  },
-}));
-
 describe('VisualizationSuggestionCard', () => {
   const mockData: PanelData = {
     series: [
@@ -49,6 +42,10 @@ describe('VisualizationSuggestionCard', () => {
     hash: 'ts-hash',
     options: {},
   };
+
+  beforeEach(() => {
+    mockPanelRendererProps.mockClear();
+  });
 
   it('should render a panel renderer card when no imgSrc is provided', () => {
     render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} />);
