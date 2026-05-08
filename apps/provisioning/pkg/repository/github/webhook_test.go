@@ -400,7 +400,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expectedError: fmt.Errorf("repository mismatch"),
+			expectedError: repo.ErrRepositoryMismatch,
 		},
 		{
 			name: "push event when sync is disabled",
@@ -779,7 +779,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expectedError: fmt.Errorf("repository mismatch"),
+			expectedError: repo.ErrRepositoryMismatch,
 		},
 		{
 			name: "pull request event missing pull request info",
