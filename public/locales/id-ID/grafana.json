@@ -1148,6 +1148,9 @@
         "rule-viewer-section-extension": "Bagian Pengayaan Penampil Aturan gagal dimuat"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Gagal memperbarui konfigurasi Anda:",
       "title-something-went-wrong": "Terjadi kesalahan"
@@ -3155,9 +3158,7 @@
       "deleting": "Menghapus",
       "text-federated": "Federasi",
       "text-provisioned": "Disediakan",
-      "ungrouped": "Tidak dikelompokkan",
-      "ungrouped-suffix": "{{ruleName}} (Tidak Dikelompokkan)",
-      "unknown-rule": "Aturan Tidak Diketahui"
+      "ungrouped": "Tidak dikelompokkan"
     },
     "saved-searches": {
       "actions-aria-label": "Tindakan",

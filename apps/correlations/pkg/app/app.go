@@ -86,6 +86,8 @@ func DataSourceMutator() *simple.Mutator {
 				c.Labels[TargetRefLabelKey] = fmt.Sprintf("%s.%s",
 					c.Spec.Target.Group,
 					c.Spec.Target.Name)
+			} else {
+				delete(c.Labels, TargetRefLabelKey)
 			}
 
 			return &app.MutatingResponse{UpdatedObject: c}, nil

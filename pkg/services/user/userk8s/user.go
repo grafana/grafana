@@ -132,7 +132,51 @@ func (s *UserK8sService) CreateServiceAccount(ctx context.Context, cmd *user.Cre
 }
 
 func (s *UserK8sService) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
-	return errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.delete", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("failed to get orgID from context in Delete", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getUserClient()
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	existing, err := s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	err = client.Delete(ctx, resource.Identifier{
+		Namespace: namespace,
+		Name:      existing.Name,
+	}, resource.DeleteOptions{})
+	if err != nil {
+		ctxLogger.Error("k8s user delete failed", "namespace", namespace, "orgID", orgID, "userID", cmd.UserID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func (s *UserK8sService) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*user.User, error) {

@@ -118,13 +118,13 @@ describe('DashboardControls', () => {
     it('should render', () => {
       const scene = buildTestScene();
       expect(() => {
-        render(<scene.Component model={scene} />);
+        renderInGrafanaContext(<scene.Component model={scene} />);
       }).not.toThrow();
     });
 
     it('should render visible controls', async () => {
       const scene = buildTestScene({});
-      const renderer = render(<scene.Component model={scene} />);
+      const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
 
       expect(await renderer.findByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
       expect(await renderer.findByTestId(selectors.components.DashboardLinks.container)).toBeInTheDocument();
@@ -140,9 +140,29 @@ describe('DashboardControls', () => {
         hideLinksControls: true,
         hideDashboardControls: true,
       });
-      const renderer = render(<scene.Component model={scene} />);
+      const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
 
       expect(renderer.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
+    });
+
+    it('should not render an empty controls container in kiosk mode when controls are hidden', () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.dashboardNewLayouts = true;
+
+        const scene = buildTestScene({
+          hideTimeControls: true,
+          hideVariableControls: true,
+          hideLinksControls: true,
+          hideDashboardControls: true,
+        });
+
+        renderInGrafanaContext(<scene.Component model={scene} />, KioskMode.Full);
+
+        expect(screen.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
     });
 
     it('should render Table view toggle in panel edit mode even when all other controls are hidden', () => {
@@ -161,7 +181,7 @@ describe('DashboardControls', () => {
 
       dashboard.activate();
 
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />);
 
       expect(screen.getByTestId('mock-panel-edit-controls')).toBeInTheDocument();
     });
@@ -195,7 +215,7 @@ describe('DashboardControls', () => {
         return <div>Mocked Component</div>;
       });
 
-      const renderer = render(<controls.Component model={controls} />);
+      const renderer = renderInGrafanaContext(<controls.Component model={controls} />);
 
       // Verify UNSAFE_renderAsHidden is set (required for renderHiddenVariables to include it)
       expect(scopeVariable.UNSAFE_renderAsHidden).toBe(true);
@@ -212,7 +232,7 @@ describe('DashboardControls', () => {
       const dashboard = getDashboard(scene);
       dashboard.setState({ defaultVariablesLoading: true });
 
-      const { container } = render(<scene.Component model={scene} />);
+      const { container } = renderInGrafanaContext(<scene.Component model={scene} />);
       expect(container.querySelector('.react-loading-skeleton')).toBeInTheDocument();
     });
 
@@ -221,7 +241,7 @@ describe('DashboardControls', () => {
       const dashboard = getDashboard(scene);
       dashboard.setState({ defaultVariablesLoading: false, defaultLinksLoading: false });
 
-      const { container } = render(<scene.Component model={scene} />);
+      const { container } = renderInGrafanaContext(<scene.Component model={scene} />);
       expect(container.querySelector('.react-loading-skeleton')).not.toBeInTheDocument();
     });
   });

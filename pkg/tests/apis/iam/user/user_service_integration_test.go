@@ -1,13 +1,11 @@
 package user
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -75,27 +73,16 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 			require.NotEmpty(t, secondUser.Result.UID)
 
 			t.Cleanup(func() {
-				if mode < rest.Mode4 {
-					apis.DoRequest(helper, apis.RequestParams{
-						User:   helper.Org1.Admin,
-						Method: "DELETE",
-						Path:   fmt.Sprintf("/api/admin/users/%d", firstUser.Result.ID),
-					}, &struct{}{})
-					apis.DoRequest(helper, apis.RequestParams{
-						User:   helper.Org1.Admin,
-						Method: "DELETE",
-						Path:   fmt.Sprintf("/api/admin/users/%d", secondUser.Result.ID),
-					}, &struct{}{})
-				} else {
-					ctx := context.Background()
-					userClient := helper.GetResourceClient(apis.ResourceClientArgs{
-						User:      helper.Org1.Admin,
-						Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
-						GVR:       gvrUsers,
-					})
-					_ = userClient.Resource.Delete(ctx, firstUser.Result.UID, metav1.DeleteOptions{})
-					_ = userClient.Resource.Delete(ctx, secondUser.Result.UID, metav1.DeleteOptions{})
-				}
+				apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "DELETE",
+					Path:   fmt.Sprintf("/api/admin/users/%d", firstUser.Result.ID),
+				}, &struct{}{})
+				apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "DELETE",
+					Path:   fmt.Sprintf("/api/admin/users/%d", secondUser.Result.ID),
+				}, &struct{}{})
 			})
 
 			// /api/users/lookup routes through UserK8sService.GetByLogin
@@ -184,21 +171,11 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 				require.NotZero(t, createRsp.Result.ID)
 
 				t.Cleanup(func() {
-					if mode < rest.Mode4 {
-						apis.DoRequest(helper, apis.RequestParams{
-							User:   helper.Org1.Admin,
-							Method: "DELETE",
-							Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
-						}, &struct{}{})
-					} else {
-						ctx := context.Background()
-						userClient := helper.GetResourceClient(apis.ResourceClientArgs{
-							User:      helper.Org1.Admin,
-							Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
-							GVR:       gvrUsers,
-						})
-						_ = userClient.Resource.Delete(ctx, createRsp.Result.UID, metav1.DeleteOptions{})
-					}
+					apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: "DELETE",
+						Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
+					}, &struct{}{})
 				})
 
 				updateRsp := apis.DoRequest(helper, apis.RequestParams{
@@ -294,23 +271,90 @@ func TestIntegrationUserService(t *testing.T) {
 				require.Equal(t, "k8s-service-user@example.com", getRsp.Result.Email)
 				require.Equal(t, "k8s-service-user", getRsp.Result.Login)
 
-				if mode <= rest.Mode3 {
-					deleteRsp := apis.DoRequest(helper, apis.RequestParams{
-						User:   helper.Org1.Admin,
-						Method: "DELETE",
-						Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
-					}, &struct{}{})
-					require.Equal(t, 200, deleteRsp.Response.StatusCode)
-				} else {
-					ctx := context.Background()
-					userClient := helper.GetResourceClient(apis.ResourceClientArgs{
-						User:      helper.Org1.Admin,
-						Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
-						GVR:       gvrUsers,
-					})
-					err := userClient.Resource.Delete(ctx, createRsp.Result.UID, metav1.DeleteOptions{})
-					require.NoError(t, err)
-				}
+				deleteRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "DELETE",
+					Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
+				}, &struct{}{})
+				require.Equal(t, 200, deleteRsp.Response.StatusCode)
+			})
+		})
+	}
+}
+
+// go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceDelete$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
+func TestIntegrationUserServiceDelete(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type createUserResponse struct {
+		ID  int64  `json:"id"`
+		UID string `json:"uid"`
+	}
+
+	type getUserResponse struct {
+		ID    int64  `json:"id"`
+		UID   string `json:"uid"`
+		Name  string `json:"name"`
+		Email string `json:"email"`
+		Login string `json:"login"`
+	}
+
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
+		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				APIServerStorageType:   "unified",
+				RBACSingleOrganization: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"users.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesUsersApi,
+					featuremgmt.FlagKubernetesUsersRedirect,
+				},
+			})
+
+			createRsp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "POST",
+				Path:   "/api/admin/users",
+				Body:   []byte(`{"name": "Delete Test User", "email": "delete-test@example.com", "login": "delete-test-user", "password": "password123"}`),
+			}, &createUserResponse{})
+			require.Equal(t, 200, createRsp.Response.StatusCode, "body: %s", string(createRsp.Body))
+			require.NotZero(t, createRsp.Result.ID)
+			require.NotEmpty(t, createRsp.Result.UID)
+
+			t.Run("user exists after creation", func(t *testing.T) {
+				getRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
+				}, &getUserResponse{})
+				require.Equal(t, 200, getRsp.Response.StatusCode, "body: %s", string(getRsp.Body))
+				require.Equal(t, createRsp.Result.ID, getRsp.Result.ID)
+				require.Equal(t, createRsp.Result.UID, getRsp.Result.UID)
+			})
+
+			t.Run("delete succeeds", func(t *testing.T) {
+				deleteRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "DELETE",
+					Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
+				}, &struct{}{})
+				require.Equal(t, 200, deleteRsp.Response.StatusCode, "body: %s", string(deleteRsp.Body))
+			})
+
+			t.Run("user is gone after deletion", func(t *testing.T) {
+				getRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
+				}, &getUserResponse{})
+				require.Equal(t, 404, getRsp.Response.StatusCode, "body: %s", string(getRsp.Body))
 			})
 		})
 	}
@@ -382,14 +426,16 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			time.Sleep(2 * time.Second)
 
 			t.Cleanup(func() {
-				ctx := context.Background()
-				userClient := helper.GetResourceClient(apis.ResourceClientArgs{
-					User:      helper.Org1.Admin,
-					Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
-					GVR:       gvrUsers,
-				})
-				_ = userClient.Resource.Delete(ctx, alphaUser.Result.UID, metav1.DeleteOptions{})
-				_ = userClient.Resource.Delete(ctx, betaUser.Result.UID, metav1.DeleteOptions{})
+				apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "DELETE",
+					Path:   fmt.Sprintf("/api/admin/users/%d", alphaUser.Result.ID),
+				}, &struct{}{})
+				apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "DELETE",
+					Path:   fmt.Sprintf("/api/admin/users/%d", betaUser.Result.ID),
+				}, &struct{}{})
 			})
 
 			t.Run("should return users with correct fields", func(t *testing.T) {

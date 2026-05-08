@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Échec du chargement de la section d’enrichissement de la visionneuse de règles"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Échec de la mise à jour de votre configuration :",
       "title-something-went-wrong": "Une erreur s'est produite"
@@ -3174,9 +3177,7 @@
       "deleting": "Suppression",
       "text-federated": "Fédéré",
       "text-provisioned": "Mis en service",
-      "ungrouped": "Non groupé",
-      "ungrouped-suffix": "{{ruleName}} (non groupé)",
-      "unknown-rule": "Règle inconnue"
+      "ungrouped": "Non groupé"
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
