@@ -39,7 +39,9 @@ export interface NestedFolderPickerProps {
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
 
-  /* Start tree from this folder instead of root */
+  /* Start tree from this folder instead of root. When set, the picker is scoped
+   to this subtree — only descendants of this folder are shown, and top-level
+   items like team folders are excluded. */
   rootFolderUID?: string;
 
   /* Custom root folder item, default is "Dashboards" */
@@ -239,13 +241,23 @@ export function NestedFolderPicker({
         flatTree = filterRootItem(flatTree);
       }
 
+      // Only show team folders when browsing the full tree (no rootFolderUID scope)
+      const fullTree = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...flatTree];
       // Add "Team folders" at the top of the tree list.
-      return filterExcludedItems([...teamFolderTreeItems, ...flatTree], excludeUIDs);
+      return filterExcludedItems(fullTree, excludeUIDs);
     } else {
       flatTree = searchResultsToTreeItems(searchResults?.items || []);
       return filterExcludedItems(flatTree, excludeUIDs);
     }
-  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder, teamFolderTreeItems]);
+  }, [
+    browseFlatTree,
+    excludeUIDs,
+    isBrowsing,
+    searchResults?.items,
+    showRootFolder,
+    teamFolderTreeItems,
+    rootFolderUID,
+  ]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {

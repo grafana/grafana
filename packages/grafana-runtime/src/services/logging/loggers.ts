@@ -13,6 +13,9 @@ export const Loggers = {
   'ui-extension-logs': {},
   'features.plugins': {},
   'features.alerting': { context: { module: 'Alerting' } },
+  'features.correlations': {},
+  'features.dashboards.genai': {},
+  'features.query-history.local-storage': {},
 } satisfies Record<string, LoggerDefaults>;
 
 export type LoggerSource = keyof typeof Loggers;

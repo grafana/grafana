@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
@@ -54,6 +55,9 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 		require.NoError(t, err)
 
 		kvOpts.RvManager = rvManager
+	} else {
+		kvOpts.EnableKVLeases = true
+		kvOpts.Holder = "test-holder-" + uuid.NewString()
 	}
 
 	backend, err := resource.NewKVStorageBackend(kvOpts)

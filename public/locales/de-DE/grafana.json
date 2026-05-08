@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Anreicherungsbereich der Regelanzeige konnte nicht geladen werden"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Ihre Konfiguration konnte nicht aktualisiert werden:",
       "title-something-went-wrong": "Leider ging hier etwas schief"
@@ -3174,9 +3177,7 @@
       "deleting": "Wird gelöscht",
       "text-federated": "Verbunden",
       "text-provisioned": "Bereitgestellt",
-      "ungrouped": "Gruppierung aufgehoben",
-      "ungrouped-suffix": "{{ruleName}} (Gruppierung aufgehoben)",
-      "unknown-rule": "Unbekannte Regel"
+      "ungrouped": "Gruppierung aufgehoben"
     },
     "saved-searches": {
       "actions-aria-label": "Aktionen",

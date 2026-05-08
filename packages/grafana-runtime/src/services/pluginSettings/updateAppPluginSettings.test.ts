@@ -60,9 +60,9 @@ describe('settings', () => {
     setLogger('grafana/runtime.plugins.settings', logger);
   });
 
-  describe('when useMTPluginSettings flag is enabled', () => {
+  describe('when plugins.useMTPluginSettings flag is enabled', () => {
     beforeAll(() => {
-      setTestFlags({ useMTPluginSettings: true });
+      setTestFlags({ 'plugins.useMTPluginSettings': true });
     });
 
     afterAll(() => {
@@ -249,9 +249,9 @@ describe('settings', () => {
     });
   });
 
-  describe('when useMTPluginSettings flag is disabled', () => {
+  describe('when plugins.useMTPluginSettings flag is disabled', () => {
     beforeAll(() => {
-      setTestFlags({ useMTPluginSettings: false });
+      setTestFlags({ 'plugins.useMTPluginSettings': false });
     });
 
     afterAll(() => {
