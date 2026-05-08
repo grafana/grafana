@@ -34,7 +34,7 @@ Query variables query Prometheus to populate dropdown values. When creating a qu
 | --- | --- | --- | --- |
 | **Label names** | `metric` (optional) | Returns all label names, optionally filtered by metric regular expression. | Metric: `http_requests_total` → returns `job`, `instance`, `method`, `status`, etc. |
 | **Label values** | `label` (required), `metric` (optional) | Returns values for a specific label, optionally filtered by metric. | Label: `job`, Metric: `http_requests_total` → returns `api-server`, `web`, `worker` |
-| **Metrics** | `metric` (optional) | Returns metric names matching the specified regex. | Metric: `node_.*` → returns `node_cpu_seconds_total`, `node_memory_MemFree_bytes`, etc. |
+| **Metrics** | `metric` (optional) | Returns metric names matching the specified regular expression. | Metric: `node_.*` → returns `node_cpu_seconds_total`, `node_memory_MemFree_bytes`, etc. |
 | **Query result** | `query` (required) | Runs a PromQL query and returns the results as variable values. | `query_result(up{job="prometheus"})` |
 | **Series query** | `metric`, `label`, or both | Returns time series matching the specified metric and/or label selectors. | Metric: `http_requests_total`, Label: `job="api"` |
 | **Classic query** | query string | _Deprecated._ Legacy syntax using functions like `label_values(metric, label)`. | `label_values(http_requests_total, job)` |
