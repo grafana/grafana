@@ -173,6 +173,74 @@ func TestSQLCommandMetrics(t *testing.T) {
 	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCellCount), "Expected cell count metric to be recorded")
 }
 
+func TestSQLCommandFunctionMetrics(t *testing.T) {
+	t.Run("allowed functions are counted with allowed=true", func(t *testing.T) {
+		m := metrics.NewTestMetrics()
+		cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "A", "",
+			"SELECT SUM(val), ROUND(AVG(val), 2) FROM foo", 0, 0, 0)
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"avg", "round", "sum"}, cmd.functions)
+
+		_, _ = cmd.Execute(t.Context(), time.Now(), mathexp.Vars{}, &testTracer{}, m)
+
+		require.Equal(t, float64(1),
+			testutil.ToFloat64(m.SqlCommandFunctionCount.WithLabelValues("sum", "true")),
+			"sum should be counted as allowed")
+		require.Equal(t, float64(1),
+			testutil.ToFloat64(m.SqlCommandFunctionCount.WithLabelValues("avg", "true")),
+			"avg should be counted as allowed")
+		require.Equal(t, float64(1),
+			testutil.ToFloat64(m.SqlCommandFunctionCount.WithLabelValues("round", "true")),
+			"round should be counted as allowed")
+	})
+
+	t.Run("blocked function is counted with allowed=false", func(t *testing.T) {
+		m := metrics.NewTestMetrics()
+		// SLEEP is syntactically valid but not in the allowlist.
+		cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "A", "",
+			"SELECT SLEEP(1) FROM foo", 0, 0, 0)
+		require.NoError(t, err)
+		require.Equal(t, []string{"sleep"}, cmd.functions)
+
+		_, _ = cmd.Execute(t.Context(), time.Now(), mathexp.Vars{}, &testTracer{}, m)
+
+		require.Equal(t, float64(1),
+			testutil.ToFloat64(m.SqlCommandFunctionCount.WithLabelValues("sleep", "false")),
+			"sleep should be counted as not allowed")
+		require.Equal(t, float64(0),
+			testutil.ToFloat64(m.SqlCommandFunctionCount.WithLabelValues("sleep", "true")),
+			"sleep must not appear with allowed=true")
+	})
+
+	t.Run("each function is counted once per execution even if called multiple times", func(t *testing.T) {
+		m := metrics.NewTestMetrics()
+		cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "A", "",
+			"SELECT ROUND(SUM(a), 0), ROUND(AVG(b), 0) FROM foo", 0, 0, 0)
+		require.NoError(t, err)
+		// ROUND appears twice but should only produce one entry in cmd.functions.
+		require.ElementsMatch(t, []string{"avg", "round", "sum"}, cmd.functions)
+
+		_, _ = cmd.Execute(t.Context(), time.Now(), mathexp.Vars{}, &testTracer{}, m)
+
+		require.Equal(t, float64(1),
+			testutil.ToFloat64(m.SqlCommandFunctionCount.WithLabelValues("round", "true")),
+			"round should be counted exactly once despite appearing twice in the query")
+	})
+
+	t.Run("query with no functions records nothing in the function counter", func(t *testing.T) {
+		m := metrics.NewTestMetrics()
+		cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "A", "",
+			"SELECT col FROM foo WHERE col > 1", 0, 0, 0)
+		require.NoError(t, err)
+		require.Empty(t, cmd.functions)
+
+		_, _ = cmd.Execute(t.Context(), time.Now(), mathexp.Vars{}, &testTracer{}, m)
+
+		require.Equal(t, 0, testutil.CollectAndCount(m.SqlCommandFunctionCount),
+			"no function metrics should be emitted for a query with no function calls")
+	})
+}
+
 func TestHandleSqlInput(t *testing.T) {
 	tests := []struct {
 		name        string
