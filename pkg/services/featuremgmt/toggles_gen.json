@@ -2766,6 +2766,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.logLevelInference",
+        "resourceVersion": "1778252024619",
+        "creationTimestamp": "2026-05-08T14:53:44Z"
+      },
+      "spec": {
+        "description": "Enables log level inference from log line contents when level is not defined as a field or a label",
+        "stage": "deprecated",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.meticulousAIRecorder",
         "resourceVersion": "1777401759422",
         "creationTimestamp": "2026-04-28T17:20:14Z",
