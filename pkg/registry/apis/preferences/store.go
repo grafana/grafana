@@ -83,12 +83,14 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 		if k8serrors.IsNotFound(err) {
 			return nil // don't add it to the list
 		}
-		obj, ok := rsp.(*preferences.Preferences)
-		if !ok {
-			return fmt.Errorf("expected preferences, found %T", rsp)
+		if rsp != nil {
+			obj, ok := rsp.(*preferences.Preferences)
+			if !ok {
+				return fmt.Errorf("expected preferences, found %T", rsp)
+			}
+			result.Items = append(result.Items, *obj)
 		}
-		result.Items = append(result.Items, *obj)
-		return nil
+		return err
 	}
 
 	// Try getting an explicit preferences

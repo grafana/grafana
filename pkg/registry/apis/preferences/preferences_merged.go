@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"dario.cat/mergo"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -15,6 +16,7 @@ import (
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -63,7 +65,7 @@ func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder
 										Description: "workspace",
 										Schema:      spec.StringProperty(),
 									},
-									// Allow getting theme+language from accept
+									// TODO?? Allow getting theme+language from accept
 								},
 							},
 							Responses: &spec3.Responses{
@@ -133,6 +135,23 @@ func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences
 		}, nil
 	}
 
+	// Mark the results with the most recent change date
+	ts := items[0].CreationTimestamp
+	updateTimestamp := func(v *preferences.Preferences) {
+		updated, ok := v.Annotations[utils.AnnoKeyUpdatedTimestamp]
+		if ok {
+			t, err := time.Parse(time.RFC3339, updated)
+			if err == nil && t.After(ts.Time) {
+				ts = v1.NewTime(t)
+				return // no need to check the creation timestamp
+			}
+		}
+		if ts.Before(&v.CreationTimestamp) {
+			ts = v.CreationTimestamp
+		}
+	}
+	updateTimestamp(&items[0])
+
 	p := &preferences.Preferences{
 		TypeMeta:   preferences.PreferencesResourceInfo.TypeMeta(),
 		ObjectMeta: v1.ObjectMeta{},
@@ -140,14 +159,9 @@ func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences
 	}
 
 	for i := 1; i < len(items); i++ {
-		v := items[i]
+		updateTimestamp(&items[i])
 
-		// Set the time from the most recent change
-		if p.CreationTimestamp.IsZero() || v.CreationTimestamp.After(p.CreationTimestamp.Time) {
-			p.CreationTimestamp = v.CreationTimestamp
-		}
-
-		if err := mergo.Merge(&p.Spec, &v.Spec); err != nil {
+		if err := mergo.Merge(&p.Spec, &items[i].Spec); err != nil {
 			return nil, err
 		}
 	}
@@ -155,6 +169,12 @@ func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences
 	// And finally apply the defaults if nothing else was configured
 	if err := mergo.Merge(&p.Spec, &defaults); err != nil {
 		return nil, err
+	}
+
+	// Add an RV to know if anything changed
+	if !ts.IsZero() {
+		p.CreationTimestamp = ts
+		p.ResourceVersion = fmt.Sprintf("%d", ts.UnixMilli())
 	}
 
 	return p, nil
