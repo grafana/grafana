@@ -506,7 +506,19 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 
 	pluginsSect, err := getOrCreateSection("plugins")
 	require.NoError(t, err)
-	_, err = pluginsSect.NewKey("disable_plugins", "grafana-assistant-app")
+
+	// Plugins that are automatically installed, but not relevant in tests
+	disabledPlugins := []string{
+		"grafana-pathfinder-app",
+		"grafana-advisor-app",
+		"grafana-assistant-app",
+		"grafana-lokiexplore-app",
+		"grafana-pyroscope-app",
+		"grafana-exploretraces-app",
+		"grafana-metricsdrilldown-app",
+		"elasticsearch",
+	}
+	_, err = pluginsSect.NewKey("disable_plugins", strings.Join(disabledPlugins, ","))
 	require.NoError(t, err)
 
 	if opts.EnableCSP {
