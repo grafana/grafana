@@ -473,6 +473,34 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     expect(minParamHref, '"Min param" href contains min= with a numeric value').toMatch(/min=[\d.]+/);
   });
 
+  test('expand nested rows by default', async ({ gotoPanelEditPage, selectors, page }) => {
+    const panelEditPage = await gotoPanelEditPage({
+      dashboard: {
+        uid: NESTED_COMPLEX_DASHBOARD_UID,
+      },
+      id: '2',
+    });
+
+    await waitForTableLoad(page);
+
+    // With expandAllRows: true the expander buttons should report aria-expanded=true
+    // and nested rows should be visible without any user interaction.
+    const expanders = panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander);
+
+    await expect(expanders.first()).toBeVisible();
+
+    // Every expander should be in the expanded state — no user clicks required.
+    const expanderCount = await expanders.count();
+    expect(expanderCount, 'at least one row expander is present').toBeGreaterThan(0);
+
+    for (let i = 0; i < expanderCount; i++) {
+      await expect(expanders.nth(i)).toHaveAttribute('aria-expanded', 'true');
+    }
+
+    // The nested table is visible immediately — a second .rdg grid should exist.
+    await expect(page.locator('.rdg').nth(1)).toBeVisible();
+  });
+
   test('tooltip from field', async ({ gotoPanelEditPage, page, selectors }) => {
     const panelEditPage = await gotoPanelEditPage({
       dashboard: {
