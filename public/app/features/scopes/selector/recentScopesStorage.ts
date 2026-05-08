@@ -72,8 +72,19 @@ export function writeRecentScope(store: Store, scopes: Scope[], scopeNodeId?: st
 
   try {
     store.set(RECENT_SCOPES_KEY, JSON.stringify(updated));
-    window.dispatchEvent(new Event(RECENT_SCOPES_CHANGED_EVENT));
-  } catch {
-    // Storage may be unavailable in sandboxed iframes — silently skip
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'QuotaExceededError' && updated.length > 1) {
+      // Retry once with the oldest entry dropped to reclaim space
+      try {
+        store.set(RECENT_SCOPES_KEY, JSON.stringify(updated.slice(0, -1)));
+      } catch {
+        return;
+      }
+    } else {
+      // Storage unavailable (e.g. SecurityError in sandboxed iframes) — silently skip
+      return;
+    }
   }
+  // Dispatch outside the try so a throwing event listener isn't silently swallowed
+  window.dispatchEvent(new Event(RECENT_SCOPES_CHANGED_EVENT));
 }

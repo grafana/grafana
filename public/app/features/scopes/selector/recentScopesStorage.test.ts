@@ -177,4 +177,72 @@ describe('writeRecentScope', () => {
     expect(() => writeRecentScope(mockStore, [makeScope('scope-a')])).not.toThrow();
     expect(dispatchEventSpy).not.toHaveBeenCalled();
   });
+
+  describe('QuotaExceededError retry', () => {
+    function makeQuotaError() {
+      return new DOMException('Storage quota exceeded', 'QuotaExceededError');
+    }
+
+    // The parent beforeEach calls jest.clearAllMocks(), which strips mockImplementation
+    // from dispatchEventSpy. Re-install it here so the spy keeps intercepting.
+    beforeEach(() => {
+      dispatchEventSpy.mockImplementation(() => true);
+    });
+
+    it('retries with one fewer entry and dispatches event when retry succeeds', () => {
+      const existing = [
+        { scopeIds: ['scope-0'], version: '10.0.0' },
+        { scopeIds: ['scope-1'], version: '10.0.0' },
+      ];
+      (mockStore.get as jest.Mock).mockReturnValue(JSON.stringify(existing));
+
+      let setCallCount = 0;
+      (mockStore.set as jest.Mock).mockImplementation(() => {
+        setCallCount++;
+        if (setCallCount === 1) {
+          throw makeQuotaError();
+        }
+      });
+
+      writeRecentScope(mockStore, [makeScope('scope-new')]);
+
+      expect(mockStore.set).toHaveBeenCalledTimes(2);
+      // Second call should have one fewer entry (oldest dropped)
+      const retryStored = JSON.parse((mockStore.set as jest.Mock).mock.calls[1][1]);
+      expect(retryStored).toHaveLength(2); // new + scope-0 (scope-1 dropped as oldest)
+      expect(retryStored[0].scopeIds).toEqual(['scope-new']);
+      expect(dispatchEventSpy).toHaveBeenCalledTimes(1);
+
+      (mockStore.set as jest.Mock).mockReset();
+    });
+
+    it('does not dispatch event when both set and retry throw', () => {
+      const existing = [
+        { scopeIds: ['scope-0'], version: '10.0.0' },
+        { scopeIds: ['scope-1'], version: '10.0.0' },
+      ];
+      (mockStore.get as jest.Mock).mockReturnValue(JSON.stringify(existing));
+
+      (mockStore.set as jest.Mock).mockImplementation(() => {
+        throw makeQuotaError();
+      });
+
+      expect(() => writeRecentScope(mockStore, [makeScope('scope-new')])).not.toThrow();
+      expect(dispatchEventSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not retry when updated list has only one entry', () => {
+      // Only one entry means there is nothing to drop — retry would be pointless
+      (mockStore.get as jest.Mock).mockReturnValue('[]');
+      (mockStore.set as jest.Mock).mockImplementation(() => {
+        throw makeQuotaError();
+      });
+
+      writeRecentScope(mockStore, [makeScope('scope-a')]);
+
+      // Only one call attempted — no retry
+      expect(mockStore.set).toHaveBeenCalledTimes(1);
+      expect(dispatchEventSpy).not.toHaveBeenCalled();
+    });
+  });
 });
