@@ -16,6 +16,7 @@ import {
   usePanelContext,
 } from '@grafana/ui';
 import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
+import { navigateToOneClickLink } from 'app/core/navigation/navigateToHref';
 
 import { getDataLinks } from '../status-history/utils';
 
@@ -119,6 +120,7 @@ export const XYChartPanel2 = (props: Props2) => {
                 const xySeries = series[seriesIdx - 1];
                 return getDataLinks(xySeries.y.field, dataIdx);
               }}
+              onOneClickLink={navigateToOneClickLink}
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                 return (
                   <XYChartTooltip

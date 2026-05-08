@@ -9,7 +9,6 @@ import { DashboardCursorSync } from '@grafana/schema';
 
 import { type AdHocFilterModel } from '../../../internal';
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { navigateOneClickLink } from '../../DataLinks/navigateOneClickLink';
 import { type RangeSelection1D, type RangeSelection2D, type OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
 import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -47,6 +46,12 @@ interface TooltipPlugin2Props {
   onSelectRange?: OnSelectRangeCallback;
   getDataLinks?: GetDataLinksCallback;
   getAdHocFilters?: GetAdHocFiltersCallback;
+
+  // Invoked when a oneClick data link is followed. Lets the host route through
+  // the SPA router instead of triggering a full page reload — @grafana/ui
+  // cannot do this directly because it must not depend on @grafana/runtime.
+  // Falls back to window.open when not provided.
+  onOneClickLink?: (link: LinkModel) => void;
 
   render: (
     u: uPlot,
@@ -126,6 +131,7 @@ export const TooltipPlugin2 = ({
   syncScope = 'global', // eventsScope
   getDataLinks = getDataLinksFallback,
   getAdHocFilters = getAdHocFiltersFallback,
+  onOneClickLink,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -148,6 +154,9 @@ export const TooltipPlugin2 = ({
 
   const getAdHocFiltersRef = useRef(getAdHocFilters);
   getAdHocFiltersRef.current = getAdHocFilters;
+
+  const onOneClickLinkRef = useRef(onOneClickLink);
+  onOneClickLinkRef.current = onOneClickLink;
 
   useLayoutEffect(() => {
     sizeRef.current?.observer.disconnect();
@@ -397,7 +406,13 @@ export const TooltipPlugin2 = ({
             const oneClickLink = dataLinks.find((dataLink) => dataLink.oneClick === true);
 
             if (oneClickLink != null) {
-              navigateOneClickLink(oneClickLink, e);
+              if (oneClickLink.onClick) {
+                oneClickLink.onClick(e);
+              } else if (onOneClickLinkRef.current != null) {
+                onOneClickLinkRef.current(oneClickLink);
+              } else {
+                window.open(oneClickLink.href, oneClickLink.target ?? '_self');
+              }
             } else {
               setTimeout(() => {
                 _isPinned = true;
