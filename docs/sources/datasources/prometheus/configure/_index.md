@@ -130,7 +130,7 @@ Pass along additional information and metadata about the request or response.
 
 ### Interval behavior
 
-- **Scrape interval** - Sets the standard scrape and evaluation interval in Prometheus. The default is `15s`. Set it to match the typical scrape and evaluation interval in your Prometheus configuration file. If you set a higher value than your Prometheus configuration, Grafana evaluates data at this interval, resulting in fewer data points.
+- **Scrape interval** - Sets the standard scrape and evaluation interval in Prometheus. The default is `15s`. Set it to match the typical scrape and evaluation interval in your Prometheus configuration file. If you set a higher value than your Prometheus configuration, Grafana evaluates data at this interval, resulting in less data points.
 - **Query timeout** - Sets the Prometheus query timeout. The default is `60s`. Without a timeout, complex or inefficient queries can run indefinitely, consuming CPU and memory resources.
 
 ### Query editor
