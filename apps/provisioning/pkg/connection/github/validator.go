@@ -72,21 +72,16 @@ func ValidateGitHubAppCredentials(conn *provisioning.Connection, label, appID, i
 		}
 	}
 
-	// Validate the existence of GitHub configuration fields
+	// Validate the existence and correctness of GitHub configuration fields.
+	// Skip the numeric check on empty values to avoid emitting both Required and Invalid for the same field.
 	if appID == "" {
 		list = append(list, field.Required(basePath.Child("appID"), fmt.Sprintf("appID must be specified for %s connection", label)))
+	} else if _, err := strconv.Atoi(appID); err != nil {
+		list = append(list, field.Invalid(basePath.Child("appID"), appID, "appID must be a numeric value"))
 	}
 	if installationID == "" {
 		list = append(list, field.Required(basePath.Child("installationID"), fmt.Sprintf("installationID must be specified for %s connection", label)))
-	}
-
-	// Validating the correctness of Github config fields
-	_, err := strconv.Atoi(appID)
-	if err != nil {
-		list = append(list, field.Invalid(basePath.Child("appID"), appID, "appID must be a numeric value"))
-	}
-	_, err = strconv.Atoi(installationID)
-	if err != nil {
+	} else if _, err := strconv.Atoi(installationID); err != nil {
 		list = append(list, field.Invalid(basePath.Child("installationID"), installationID, "installationID must be a numeric value"))
 	}
 
