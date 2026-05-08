@@ -169,6 +169,46 @@ describe('instanceSettings', () => {
       expect(byLegacyId?.uid).toBe('__expr__');
     });
 
+    it('resolves a DataSourceRef with type but no uid to a matching datasource', async () => {
+      initDataSources(fixtures, 'Bravo');
+      const result = await getDataSourceSettings({ type: 'test-db' });
+      expect(result).toBeDefined();
+      expect(result?.type).toBe('test-db');
+      // Prefers the default datasource of that type.
+      expect(result?.isDefault).toBe(true);
+    });
+
+    it('falls back to the first datasource when type matches but none is default', async () => {
+      const noDefault: Record<string, DataSourceInstanceSettings> = {
+        Alpha: ds({ id: 1, uid: 'uid-alpha', name: 'Alpha', type: 'test-db' }),
+        Charlie: ds({ id: 3, uid: 'uid-charlie', name: 'Charlie', type: 'test-db' }),
+      };
+      initDataSources(noDefault, 'Alpha');
+      const result = await getDataSourceSettings({ type: 'test-db' });
+      expect(result).toBeDefined();
+      expect(result?.type).toBe('test-db');
+    });
+
+    it('returns a result for a type-only DataSourceRef even when no exact match exists', async () => {
+      initDataSources(fixtures, 'Bravo');
+      const result = await getDataSourceSettings({ type: 'nonexistent' });
+      // Matching legacy DatasourceSrv: findByType delegates to applyFilters
+      // which always appends Grafana DS, so a non-matching type still resolves.
+      expect(result).toBeDefined();
+    });
+
+    it('resolves by numeric id as a string fallback', async () => {
+      initDataSources(fixtures, 'Bravo');
+      const result = await getDataSourceSettings('3');
+      expect(result?.name).toBe('Charlie');
+    });
+
+    it('returns undefined when a template variable resolves to a missing datasource', async () => {
+      initDataSources(fixtures, 'Bravo');
+      const result = await getDataSourceSettings('${missing}');
+      expect(result).toBeUndefined();
+    });
+
     it('deduplicates concurrent fetches', async () => {
       backendGet.mockResolvedValue({ datasources: fixtures, defaultDatasource: 'Bravo' });
       const [a, b] = await Promise.all([getDataSourceSettings('uid-alpha'), getDataSourceSettings('uid-bravo')]);
@@ -208,6 +248,194 @@ describe('instanceSettings', () => {
       const page = await getDataSourceSettingsList({ filters: { tracing: true } });
       const names = page.items.map((x) => x.name);
       expect(names).toEqual(['Charlie']);
+    });
+
+    it('honours the `metrics` filter', async () => {
+      initDataSources(fixtures, 'Bravo');
+      const page = await getDataSourceSettingsList({ filters: { metrics: true } });
+      const names = page.items.map((x) => x.name);
+      expect(names).toContain('Alpha');
+      expect(names).not.toContain('Charlie');
+    });
+
+    it('honours the `logs` filter', async () => {
+      const withLogs: Record<string, DataSourceInstanceSettings> = {
+        Loki: ds({
+          id: 10,
+          uid: 'uid-loki',
+          name: 'Loki',
+          type: 'loki',
+          meta: { ...ds({}).meta, id: 'loki', metrics: false, logs: true },
+        }),
+        Alpha: fixtures.Alpha,
+      };
+      initDataSources(withLogs, 'Alpha');
+      const page = await getDataSourceSettingsList({ filters: { logs: true } });
+      const names = page.items.map((x) => x.name);
+      expect(names).toContain('Loki');
+      expect(names).not.toContain('Alpha');
+    });
+
+    it('honours the `annotations` filter', async () => {
+      const withAnnotations: Record<string, DataSourceInstanceSettings> = {
+        Annotator: ds({
+          id: 10,
+          uid: 'uid-annotator',
+          name: 'Annotator',
+          type: 'annotator',
+          meta: { ...ds({}).meta, id: 'annotator', metrics: false, annotations: true },
+        }),
+        Alpha: fixtures.Alpha,
+      };
+      initDataSources(withAnnotations, 'Alpha');
+      const page = await getDataSourceSettingsList({ filters: { annotations: true } });
+      const names = page.items.map((x) => x.name);
+      expect(names).toContain('Annotator');
+      expect(names).not.toContain('Alpha');
+    });
+
+    it('honours the `alerting` filter', async () => {
+      const withAlerting: Record<string, DataSourceInstanceSettings> = {
+        Alerter: ds({
+          id: 10,
+          uid: 'uid-alerter',
+          name: 'Alerter',
+          type: 'alerter',
+          meta: { ...ds({}).meta, id: 'alerter', metrics: false, alerting: true },
+        }),
+        Alpha: fixtures.Alpha,
+      };
+      initDataSources(withAlerting, 'Alpha');
+      const page = await getDataSourceSettingsList({ filters: { alerting: true } });
+      const names = page.items.map((x) => x.name);
+      expect(names).toContain('Alerter');
+      expect(names).not.toContain('Alpha');
+    });
+
+    it('honours the `type` filter with a string', async () => {
+      initDataSources(fixtures, 'Bravo');
+      const page = await getDataSourceSettingsList({ filters: { type: 'test-db' } });
+      // Grafana DS is always appended, so filter the base items.
+      const baseItems = page.items.filter((x) => x.meta.id !== 'grafana');
+      expect(baseItems.every((x) => x.type === 'test-db')).toBe(true);
+      expect(baseItems.length).toBeGreaterThan(0);
+    });
+
+    it('honours the `type` filter with an array', async () => {
+      const mixed: Record<string, DataSourceInstanceSettings> = {
+        Prom: ds({
+          id: 10,
+          uid: 'uid-prom',
+          name: 'Prom',
+          type: 'prometheus',
+          meta: { ...ds({}).meta, id: 'prometheus', metrics: true },
+        }),
+        Alpha: fixtures.Alpha,
+      };
+      initDataSources(mixed, 'Alpha');
+      const page = await getDataSourceSettingsList({ filters: { type: ['prometheus', 'test-db'] } });
+      expect(page.items.length).toBe(2);
+    });
+
+    it('honours a custom `filter` function', async () => {
+      initDataSources(fixtures, 'Bravo');
+      const page = await getDataSourceSettingsList({
+        filters: { filter: (x) => x.name === 'Alpha' },
+      });
+      const names = page.items.map((x) => x.name);
+      expect(names).toEqual(['Alpha']);
+    });
+
+    it('excludes datasources with no capabilities unless `all` is set', async () => {
+      const noCapability: Record<string, DataSourceInstanceSettings> = {
+        NoOp: ds({
+          id: 10,
+          uid: 'uid-noop',
+          name: 'NoOp',
+          type: 'noop',
+          meta: {
+            ...ds({}).meta,
+            id: 'noop',
+            metrics: false,
+            annotations: false,
+            tracing: false,
+            logs: false,
+            alerting: false,
+          },
+        }),
+        Alpha: fixtures.Alpha,
+      };
+      initDataSources(noCapability, 'Alpha');
+
+      const withoutAll = await getDataSourceSettingsList();
+      expect(withoutAll.items.map((x) => x.name)).not.toContain('NoOp');
+
+      const withAll = await getDataSourceSettingsList({ filters: { all: true } });
+      expect(withAll.items.map((x) => x.name)).toContain('NoOp');
+    });
+
+    it('honours the `dashboard` filter', async () => {
+      initDataSources(fixtures, 'Bravo');
+      const page = await getDataSourceSettingsList({ filters: { dashboard: true } });
+      expect(page.items.some((x) => x.name === '-- Dashboard --')).toBe(true);
+    });
+
+    it('includes Grafana DS by default but excludes it when tracing filter is set', async () => {
+      initDataSources(fixtures, 'Bravo');
+
+      const defaultPage = await getDataSourceSettingsList();
+      expect(defaultPage.items.some((x) => x.name === '-- Grafana --')).toBe(true);
+
+      const tracingPage = await getDataSourceSettingsList({ filters: { tracing: true } });
+      expect(tracingPage.items.some((x) => x.name === '-- Grafana --')).toBe(false);
+    });
+
+    it('does not add built-in datasources when alerting filter is set', async () => {
+      const withAlerting: Record<string, DataSourceInstanceSettings> = {
+        ...fixtures,
+        Alerter: ds({
+          id: 10,
+          uid: 'uid-alerter',
+          name: 'Alerter',
+          type: 'alerter',
+          meta: { ...ds({}).meta, id: 'alerter', metrics: false, alerting: true },
+        }),
+      };
+      initDataSources(withAlerting, 'Bravo');
+      const page = await getDataSourceSettingsList({ filters: { alerting: true, mixed: true } });
+      expect(page.items.some((x) => x.name === '-- Mixed --')).toBe(false);
+      expect(page.items.some((x) => x.name === '-- Grafana --')).toBe(false);
+    });
+
+    it('does not include runtime datasources in list results', async () => {
+      initDataSources(fixtures, 'Bravo');
+      upsertRuntimeDataSource(ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' }));
+
+      const page = await getDataSourceSettingsList({ filters: { all: true } });
+      expect(page.items.some((x) => x.uid === 'runtime-ds')).toBe(false);
+    });
+
+    it('injects datasource variables when `variables` filter is set', async () => {
+      setTemplateSrv({
+        ...templateSrv,
+        getVariables: () => [{ type: 'datasource', name: 'dsVar', current: { value: 'uid-alpha' } }],
+      } as unknown as TemplateSrv);
+
+      initDataSources(fixtures, 'Bravo');
+      const page = await getDataSourceSettingsList({ filters: { variables: true } });
+      const names = page.items.map((x) => x.name);
+      expect(names).toContain('${dsVar}');
+
+      // Restore original templateSrv
+      setTemplateSrv(templateSrv);
+    });
+
+    it('returns items sorted alphabetically by name', async () => {
+      initDataSources(fixtures, 'Bravo');
+      const page = await getDataSourceSettingsList();
+      const names = page.items.filter((x) => x.name !== '-- Grafana --').map((x) => x.name);
+      const sorted = [...names].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+      expect(names).toEqual(sorted);
     });
   });
 
