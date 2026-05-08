@@ -6,6 +6,101 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestExtractFunctionNames(t *testing.T) {
+	tests := []struct {
+		name     string
+		sql      string
+		want     []string
+		wantErr  bool
+	}{
+		{
+			name: "regular FuncExpr calls are collected and sorted",
+			sql:  "SELECT SUM(val), AVG(val), COUNT(*) FROM A",
+			want: []string{"avg", "count", "sum"},
+		},
+		{
+			name: "GROUP_CONCAT comes through as a GroupConcatExpr node",
+			sql:  "SELECT GROUP_CONCAT(col) FROM A",
+			want: []string{"group_concat"},
+		},
+		{
+			name: "EXTRACT comes through as an ExtractFuncExpr node",
+			sql:  "SELECT EXTRACT(YEAR FROM ts) FROM A",
+			want: []string{"extract"},
+		},
+		{
+			name: "TIMESTAMPDIFF comes through as a TimestampFuncExpr node",
+			sql:  "SELECT TIMESTAMPDIFF(YEAR, d1, d2) FROM A",
+			want: []string{"timestampdiff"},
+		},
+		{
+			name: "TIMESTAMPADD comes through as a TimestampFuncExpr node",
+			sql:  "SELECT TIMESTAMPADD(DAY, 1, d1) FROM A",
+			want: []string{"timestampadd"},
+		},
+		{
+			name: "TRIM comes through as a TrimExpr node",
+			sql:  "SELECT TRIM(col) FROM A",
+			want: []string{"trim"},
+		},
+		{
+			name: "TRIM with direction comes through as a TrimExpr node",
+			sql:  "SELECT TRIM(LEADING 'x' FROM col) FROM A",
+			want: []string{"trim"},
+		},
+		{
+			name: "CHAR comes through as a CharExpr node",
+			sql:  "SELECT CHAR(65) FROM A",
+			want: []string{"char"},
+		},
+		{
+			name: "same function appearing multiple times is deduplicated",
+			sql:  "SELECT ROUND(SUM(a), 2), ROUND(AVG(b), 2) FROM A",
+			want: []string{"avg", "round", "sum"},
+		},
+		{
+			name: "mix of FuncExpr and special node types",
+			sql:  "SELECT SUM(val), GROUP_CONCAT(label), TRIM(name) FROM A",
+			want: []string{"group_concat", "sum", "trim"},
+		},
+		{
+			name: "query with no function calls returns empty slice",
+			sql:  "SELECT col FROM A WHERE col > 1",
+			want: []string{},
+		},
+		{
+			name: "function names are lower-cased regardless of input case",
+			sql:  "SELECT SuM(val), AvG(val) FROM A",
+			want: []string{"avg", "sum"},
+		},
+		{
+			name:    "invalid SQL returns an error",
+			sql:     "SELECT * FROM zzz aaa zzz",
+			wantErr: true,
+		},
+		{
+			name: "blocked function name is still collected",
+			sql:  "SELECT SLEEP(1) FROM A",
+			want: []string{"sleep"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := ExtractFunctionNames(tc.sql)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if tc.want == nil {
+				tc.want = []string{}
+			}
+			require.Equal(t, tc.want, got)
+		})
+	}
+}
+
 func TestTablesList(t *testing.T) {
 	tests := []struct {
 		name        string

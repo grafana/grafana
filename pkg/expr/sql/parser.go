@@ -10,6 +10,50 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
+// ExtractFunctionNames parses rawSQL and returns a deduplicated, sorted list of
+// SQL function names (lower-cased) found in the query. It covers regular FuncExpr
+// calls as well as the special AST node types that the parser creates for
+// GROUP_CONCAT, EXTRACT, TIMESTAMPDIFF/TIMESTAMPADD, TRIM, and CHAR.
+//
+// Only function names are returned. No column names, literal values, or table
+// names, so the result is safe to use in metrics labels.
+func ExtractFunctionNames(rawSQL string) ([]string, error) {
+	stmt, err := sqlparser.Parse(rawSQL)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing sql: %s", err.Error())
+	}
+
+	seen := make(map[string]struct{})
+	_ = sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+		switch v := node.(type) {
+		case *sqlparser.FuncExpr:
+			seen[strings.ToLower(v.Name.String())] = struct{}{}
+		case *sqlparser.GroupConcatExpr:
+			seen["group_concat"] = struct{}{}
+		case *sqlparser.ExtractFuncExpr:
+			// ExtractFuncExpr.Name is the token string, e.g. "EXTRACT" — normalise it.
+			seen[strings.ToLower(v.Name)] = struct{}{}
+		case *sqlparser.TimestampFuncExpr:
+			// TimestampFuncExpr.Name is already lower-case, e.g. "timestampdiff".
+			if v.Name != "" {
+				seen[v.Name] = struct{}{}
+			}
+		case *sqlparser.TrimExpr:
+			seen["trim"] = struct{}{}
+		case *sqlparser.CharExpr:
+			seen["char"] = struct{}{}
+		}
+		return true, nil
+	}, stmt)
+
+	result := make([]string, 0, len(seen))
+	for name := range seen {
+		result = append(result, name)
+	}
+	sort.Strings(result)
+	return result, nil
+}
+
 // TablesList returns a list of tables for the sql statement excluding
 // CTEs and the 'dual' table. The list is sorted alphabetically.
 func TablesList(ctx context.Context, rawSQL string) ([]string, error) {

@@ -1,10 +1,82 @@
 package sql
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestIsAllowedFunctionName(t *testing.T) {
+	// Spot-check each category from the allowlist.
+	allowed := []string{
+		// Conditional
+		"if", "coalesce", "ifnull", "nullif", "least",
+		// Aggregation
+		"sum", "avg", "count", "min", "max",
+		"stddev", "std", "stddev_pop", "stddev_sample",
+		"variance", "var_pop", "var_samp",
+		// Window
+		"row_number", "rank", "dense_rank", "percent_rank",
+		"first_value", "last_value", "ntile", "lead", "lag",
+		// Math
+		"abs", "round", "floor", "ceiling", "ceil",
+		"sqrt", "pow", "power", "mod", "log", "log2", "log10", "exp",
+		"sign", "ln", "truncate",
+		"sin", "cos", "tan", "cot", "asin", "acos", "atan", "atan2",
+		"conv", "degrees", "radians", "rand", "pi",
+		// String
+		"concat", "length", "char_length",
+		"lower", "upper", "substring", "substring_index",
+		"left", "right", "ltrim", "rtrim", "replace", "reverse",
+		"lcase", "ucase", "mid", "repeat",
+		"position", "instr", "locate", "ascii", "ord",
+		"elt", "quote", "from_base64", "format",
+		"regexp_substr", "regexp_replace", "regexp_instr", "regexp_like",
+		// Date
+		"str_to_date", "date_format", "get_format",
+		"date_add", "adddate", "date_sub", "subdate",
+		"year", "month", "day", "weekday", "last_day",
+		"yearweek", "weekofyear", "datediff",
+		"unix_timestamp", "from_unixtime",
+		"hour", "minute", "second", "microsecond",
+		"dayname", "monthname", "dayofweek", "dayofmonth", "dayofyear",
+		"week", "quarter", "time_to_sec", "sec_to_time",
+		"timestampdiff", "timestampadd", "from_days", "to_days",
+		"time_format", "time", "timediff",
+		// Type conversion
+		"cast", "convert",
+		// JSON
+		"json_extract", "json_object", "json_array", "json_valid",
+		"json_merge", "json_merge_patch", "json_merge_preserve",
+		"json_contains", "json_length", "json_type", "json_keys",
+		"json_contains_path", "json_depth",
+		"json_search", "json_quote", "json_unquote",
+		"json_set", "json_insert", "json_replace", "json_remove",
+		"json_array_append", "json_array_insert",
+		"json_objectagg", "json_arrayagg", "json_overlaps",
+		"json_pretty", "json_value",
+		// Special AST node types
+		"group_concat", "extract", "trim", "char",
+	}
+	for _, fn := range allowed {
+		require.Truef(t, IsAllowedFunctionName(fn), "expected %q to be allowed", fn)
+		// Allowlist check must be case-insensitive.
+		require.Truef(t, IsAllowedFunctionName(strings.ToUpper(fn)), "expected upper-case %q to be allowed", fn)
+	}
+
+	// Functions that are intentionally not in the allowlist.
+	notAllowed := []string{
+		"sleep",      // could be used for DoS
+		"load_file",  // filesystem access
+		"benchmark", // DoS / resource exhaustion
+		"get_lock",   // server-state mutation
+		"nonexistent_fn",
+	}
+	for _, fn := range notAllowed {
+		require.Falsef(t, IsAllowedFunctionName(fn), "expected %q to NOT be allowed", fn)
+	}
+}
 
 func TestAllowQuery(t *testing.T) {
 	testCases := []struct {

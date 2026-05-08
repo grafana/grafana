@@ -37,6 +37,11 @@ type SQLCommand struct {
 	outputLimit int64
 	timeout     time.Duration
 	logger      log.Logger
+
+	// functions is the deduplicated, lower-cased list of SQL function names found
+	// in the query AST. Populated at construction time; used to emit per-function
+	// metrics on every execution.
+	functions []string
 }
 
 // NewSQLCommand creates a new SQLCommand.
@@ -57,6 +62,14 @@ func NewSQLCommand(ctx context.Context, logger log.Logger, refID, format, rawSQL
 		sqlLogger.Debug("REF tables", "tables", tables, "sql", rawSQL)
 	}
 
+	// Extract function names for metrics. The SQL was already successfully parsed
+	// above (TablesList would have returned an error otherwise), so a failure here
+	// is unexpected; treat it as non-fatal so it does not block query execution.
+	functions, err := sql.ExtractFunctionNames(rawSQL)
+	if err != nil {
+		sqlLogger.Warn("failed to extract function names for metrics", "error", err)
+	}
+
 	return &SQLCommand{
 		query:       rawSQL,
 		varsToQuery: tables,
@@ -66,6 +79,7 @@ func NewSQLCommand(ctx context.Context, logger log.Logger, refID, format, rawSQL
 		timeout:     timeout,
 		format:      format,
 		logger:      sqlLogger,
+		functions:   functions,
 	}, nil
 }
 
@@ -178,6 +192,18 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 			}
 		} else {
 			obsCells.Observe(float64(tc))
+		}
+
+		// --- Per-function counter ---
+		// Incremented once per unique function name in the query, regardless of
+		// execution outcome. allowed=true means the function is in the allowlist;
+		// allowed=false means the user attempted a function that is not permitted.
+		for _, fn := range gr.functions {
+			allowed := "false"
+			if sql.IsAllowedFunctionName(fn) {
+				allowed = "true"
+			}
+			metrics.SqlCommandFunctionCount.WithLabelValues(fn, allowed).Inc()
 		}
 	}()
 
