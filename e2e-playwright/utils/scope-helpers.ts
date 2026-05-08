@@ -338,11 +338,10 @@ export async function selectScope(page: Page, scopeName: string, selectedScope?:
     .waitFor({ timeout: 5000 })
     .catch(() => null);
 
-  await Promise.race([responsePromise, uiSelected]);
-  // Suppress any rejection from responsePromise if it outlives the race (cache-hit path).
-  // Without this, Playwright teardown rejects the still-pending waitForResponse and the
-  // error surfaces as a spurious test failure.
-  responsePromise.catch(() => null);
+  // Attach .catch before the race: a .catch after await only suppresses the unhandled-rejection
+  // warning, it does not prevent the await itself from throwing if responsePromise rejects first.
+  const safeResponse = responsePromise.catch(() => null);
+  await Promise.race([safeResponse, uiSelected]);
 }
 
 /**
@@ -485,8 +484,8 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     .waitForSelector('[data-testid="scopes-selector-apply"]', { state: 'hidden', timeout: 5000 })
     .catch(() => null);
 
-  await Promise.race([responsePromise, uiClosed]);
-  responsePromise.catch(() => null);
+  const safeResponse = responsePromise.catch(() => null);
+  await Promise.race([safeResponse, uiClosed]);
 
   // Wait for the apply button to disappear (selector closed)
   await page.waitForSelector('[data-testid="scopes-selector-apply"]', { state: 'hidden', timeout: 5000 });
