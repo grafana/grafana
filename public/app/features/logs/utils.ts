@@ -51,7 +51,7 @@ import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } fro
  * @deprecated
  */
 export function getLogLevel(line: string): LogLevel {
-  const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaLogLevelInference, false)
+  const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaLogLevelInference, false);
   if (!enabled) {
     return LogLevel.unknown;
   }
