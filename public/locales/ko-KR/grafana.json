@@ -1148,6 +1148,9 @@
         "rule-viewer-section-extension": "규칙 뷰어 보강 기능 섹션을 불러오지 못했습니다"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "구성 업데이트 실패:",
       "title-something-went-wrong": "오류 발생"
@@ -3155,9 +3158,7 @@
       "deleting": "삭제 중",
       "text-federated": "연합됨",
       "text-provisioned": "프로비저닝됨",
-      "ungrouped": "그룹 미지정",
-      "ungrouped-suffix": "{{ruleName}} (그룹 미지정)",
-      "unknown-rule": "알 수 없는 규칙"
+      "ungrouped": "그룹 미지정"
     },
     "saved-searches": {
       "actions-aria-label": "작업",

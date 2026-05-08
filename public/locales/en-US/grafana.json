@@ -10851,6 +10851,11 @@
     "name-line-width": "Line width",
     "name-stacking": "Stacking"
   },
+  "home": {
+    "home-page": {
+      "placeholder": "Welcome to Grafana"
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",

@@ -921,3 +921,8 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 func (m *mockSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
+
+// VectorSearch implements resourcepb.ResourceIndexClient.
+func (m *mockSearchClient) VectorSearch(ctx context.Context, in *resourcepb.VectorSearchRequest, opts ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
