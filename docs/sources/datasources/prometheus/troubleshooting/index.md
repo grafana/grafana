@@ -101,7 +101,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
    pdc-agent --ssh-connections=4
    ```
 
-1. **Check firewall rules.** Ensure the PDC agent's outbound SSH connection to Grafana Cloud isn't being interrupted by firewalls, NAT gateways, or idle connection timeouts.
+1. **Check firewall rules.** Ensure the PDC agent's outbound SSH connection to Grafana Cloud isn't being interrupted by firewall rules, NAT gateways, or idle connection timeouts.
 1. **Verify the PDC agent is running and healthy.** Check agent logs for connection errors or restarts. The agent must maintain a persistent connection to Grafana Cloud.
 1. **Check for idle timeout issues.** If the connection drops after periods of inactivity, configure TCP keepalives on the host or add a keepalive setting to the PDC agent configuration.
 
