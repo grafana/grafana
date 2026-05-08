@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -77,7 +76,7 @@ var ErrTooManyItems error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "maximum number of items exceeded",
 }}
 
-var ErrRepositoryMismatch = errors.New("repository mismatch")
+var ErrRepositoryMismatch = apierrors.NewBadRequest("repository mismatch")
 
 type FileInfo struct {
 	// Path to the file on disk.

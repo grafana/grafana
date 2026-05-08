@@ -2,7 +2,6 @@ package webhooks
 
 import (
 	"context"
-	stderrors "errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -153,10 +152,6 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		rsp, err := hooks.Webhook(ctx, r)
 		if err != nil {
 			span.RecordError(err)
-			if stderrors.Is(err, repository.ErrRepositoryMismatch) {
-				responder.Error(errors.NewBadRequest(repository.ErrRepositoryMismatch.Error()))
-				return
-			}
 			responder.Error(err)
 			return
 		}
