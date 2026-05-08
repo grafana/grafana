@@ -32,7 +32,7 @@ Query variables query Prometheus to populate dropdown values. When creating a qu
 
 | Query Type | Required inputs | Description | Example |
 | --- | --- | --- | --- |
-| **Label names** | `metric` (optional) | Returns all label names, optionally filtered by metric regex. | Metric: `http_requests_total` → returns `job`, `instance`, `method`, `status`, etc. |
+| **Label names** | `metric` (optional) | Returns all label names, optionally filtered by metric regular expression. | Metric: `http_requests_total` → returns `job`, `instance`, `method`, `status`, etc. |
 | **Label values** | `label` (required), `metric` (optional) | Returns values for a specific label, optionally filtered by metric. | Label: `job`, Metric: `http_requests_total` → returns `api-server`, `web`, `worker` |
 | **Metrics** | `metric` (optional) | Returns metric names matching the specified regex. | Metric: `node_.*` → returns `node_cpu_seconds_total`, `node_memory_MemFree_bytes`, etc. |
 | **Query result** | `query` (required) | Runs a PromQL query and returns the results as variable values. | `query_result(up{job="prometheus"})` |
