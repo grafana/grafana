@@ -1,5 +1,9 @@
+import { groupBy, map as lmap } from 'lodash';
+import { type Observable, map } from 'rxjs';
+
+import { type CustomTransformOperator, type DataFrame, FieldType } from '@grafana/data';
 import { SceneObjectBase, type SceneObjectState, VizConfigBuilders } from '@grafana/scenes';
-import { VizPanel, useQueryRunner } from '@grafana/scenes-react';
+import { VizPanel, useDataTransformer, useQueryRunner } from '@grafana/scenes-react';
 import { BarAlignment, GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui';
 
@@ -34,13 +38,70 @@ export const summaryChartVizConfig = VizConfigBuilders.timeseries()
   )
   .build();
 
+/**
+ * Collapses time series frames that share the same alertstate label into a single frame per
+ * alertstate by summing their values at each timestamp.
+ *
+ * This is needed because SceneQueryRunner injects GroupBy/AdHocFilters variables into every
+ * Prometheus request, which causes the backend to expand the query's grouping (e.g.
+ * `count by (alertstate)` becomes `count by (alertstate, grafana_folder)`), producing
+ * multiple frames per alertstate. This transformation re-aggregates them back to one frame
+ * per alertstate by summing the values.
+ */
+export const collapseByAlertstateTransformation: CustomTransformOperator = () => (source: Observable<DataFrame[]>) =>
+  source.pipe(
+    map((frames: DataFrame[]) =>
+      lmap(
+        groupBy(frames, (f) => f.fields.find((field) => field.type === FieldType.number)?.labels?.alertstate ?? ''),
+        (groupFrames) => {
+          if (groupFrames.length === 1) {
+            return groupFrames[0];
+          }
+          const first = groupFrames[0];
+          const timeField = first.fields.find((f) => f.type === FieldType.time);
+          const valueField = first.fields.find((f) => f.type === FieldType.number);
+          if (!timeField || !valueField) {
+            return first;
+          }
+          // Each grouped frame covers a different time window: Prometheus only returns
+          // timestamps where that series was active. Build a timestamp→sum map across all
+          // frames so values at the same wall-clock time are combined correctly, regardless
+          // of each frame's start/end or number of data points.
+          const sums = new Map<number, number>();
+          for (const frame of groupFrames) {
+            const times: number[] = frame.fields.find((f) => f.type === FieldType.time)?.values ?? [];
+            const values: number[] = frame.fields.find((f) => f.type === FieldType.number)?.values ?? [];
+            for (let i = 0; i < times.length; i++) {
+              sums.set(times[i], (sums.get(times[i]) ?? 0) + (values[i] ?? 0));
+            }
+          }
+          const sortedTimes = Array.from(sums.keys()).sort((a, b) => a - b);
+          return {
+            ...first,
+            length: sortedTimes.length,
+            fields: [
+              { ...timeField, values: sortedTimes },
+              { ...valueField, values: sortedTimes.map((t) => sums.get(t) ?? 0) },
+            ],
+          };
+        }
+      )
+    )
+  );
+
 export function SummaryChartReact() {
   const filter = useQueryFilter();
   // summaryChartQuery groups by alertstate, so remove any user-supplied alertstate matcher.
   const cleanFilter = cleanAlertStateFilter(filter);
 
-  const dataProvider = useQueryRunner({
+  const runner = useQueryRunner({
     queries: [summaryChartQuery(cleanFilter)],
+  });
+
+  // See collapseByAlertstateTransformation for why this is needed.
+  const dataProvider = useDataTransformer({
+    data: runner,
+    transformations: [collapseByAlertstateTransformation],
   });
 
   return <VizPanel title="" viz={summaryChartVizConfig} dataProvider={dataProvider} hoverHeader={true} />;
