@@ -244,7 +244,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	_ "github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	_ "github.com/grafana/grafana/pkg/registry/apis/iam/roleeffective"
-	_ "github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	_ "github.com/grafana/grafana/pkg/registry/apis/preferences"
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"

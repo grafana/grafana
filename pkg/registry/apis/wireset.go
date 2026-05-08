@@ -14,7 +14,6 @@ import (
 	inmemory "github.com/grafana/grafana/pkg/registry/apis/iam/globalrole/inmemory"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
-	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
@@ -85,6 +84,5 @@ var WireSet = wire.NewSet(
 	preferences.RegisterAPIService,
 	collections.RegisterAPIService,
 	userstorage.RegisterAPIService,
-	ofrep.RegisterAPIService,
 	appplugin.RegisterAPIService,
 )
