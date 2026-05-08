@@ -110,11 +110,11 @@ type ListAlertRulesOptions struct {
 	TargetDatasourceUIDFilter ListRuleStringFilter
 }
 
-// singleString returns the single value from a ListRuleStringFilter's Include or Exclude slice,
+// extractSingleValue returns the single value from a ListRuleStringFilter's Include or Exclude slice,
 // returning an error when the slice has more than one entry. Field selectors only support
 // equality and inequality, so multiple `=` or multiple `!=` requirements for the same field are
 // not meaningful for field-selector-derived filters. Empty slice returns an empty string.
-func singleString(values []string, field, side string) (string, error) {
+func extractSingleValue(values []string, field, side string) (string, error) {
 	switch len(values) {
 	case 0:
 		return "", nil
@@ -125,24 +125,24 @@ func singleString(values []string, field, side string) (string, error) {
 	}
 }
 
-// singleStringFilter resolves a ListRuleStringFilter to scalar (include, exclude) string values,
+// unwrapSingleStringFilter resolves a ListRuleStringFilter to scalar (include, exclude) string values,
 // returning an error when either side has more than one entry.
-func singleStringFilter(filter ListRuleStringFilter, field string) (include, exclude string, err error) {
-	include, err = singleString(filter.Include, field, "include")
+func unwrapSingleStringFilter(filter ListRuleStringFilter, field string) (include, exclude string, err error) {
+	include, err = extractSingleValue(filter.Include, field, "include")
 	if err != nil {
 		return "", "", err
 	}
-	exclude, err = singleString(filter.Exclude, field, "exclude")
+	exclude, err = extractSingleValue(filter.Exclude, field, "exclude")
 	if err != nil {
 		return "", "", err
 	}
 	return include, exclude, nil
 }
 
-// singleInt64Filter resolves a ListRuleStringFilter to scalar (include, exclude) int64 values,
+// unwrapSingleInt64Filter resolves a ListRuleStringFilter to scalar (include, exclude) int64 values,
 // returning an error when either side has more than one entry or fails to parse as int64.
-func singleInt64Filter(filter ListRuleStringFilter, field string) (include, exclude int64, err error) {
-	includeStr, excludeStr, err := singleStringFilter(filter, field)
+func unwrapSingleInt64Filter(filter ListRuleStringFilter, field string) (include, exclude int64, err error) {
+	includeStr, excludeStr, err := unwrapSingleStringFilter(filter, field)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -178,28 +178,28 @@ type scalarFieldSelectorFilters struct {
 func resolveFieldSelectorFilters(opts ListAlertRulesOptions) (scalarFieldSelectorFilters, error) {
 	var f scalarFieldSelectorFilters
 	var err error
-	if f.titleInclude, f.titleExclude, err = singleStringFilter(opts.TitleFilter, "spec.title"); err != nil {
+	if f.titleInclude, f.titleExclude, err = unwrapSingleStringFilter(opts.TitleFilter, "spec.title"); err != nil {
 		return f, err
 	}
-	if f.dashboardInclude, f.dashboardExclude, err = singleStringFilter(opts.DashboardFilter, "spec.panelRef.dashboardUID"); err != nil {
+	if f.dashboardInclude, f.dashboardExclude, err = unwrapSingleStringFilter(opts.DashboardFilter, "spec.panelRef.dashboardUID"); err != nil {
 		return f, err
 	}
-	if f.panelIDInclude, f.panelIDExclude, err = singleInt64Filter(opts.PanelIDFilter, "spec.panelRef.panelID"); err != nil {
+	if f.panelIDInclude, f.panelIDExclude, err = unwrapSingleInt64Filter(opts.PanelIDFilter, "spec.panelRef.panelID"); err != nil {
 		return f, err
 	}
-	if f.notifTypeInclude, f.notifTypeExclude, err = singleStringFilter(opts.NotificationTypeFilter, "spec.notificationSettings.type"); err != nil {
+	if f.notifTypeInclude, f.notifTypeExclude, err = unwrapSingleStringFilter(opts.NotificationTypeFilter, "spec.notificationSettings.type"); err != nil {
 		return f, err
 	}
-	if f.receiverInclude, f.receiverExclude, err = singleStringFilter(opts.ReceiverFilter, "spec.notificationSettings.receiver"); err != nil {
+	if f.receiverInclude, f.receiverExclude, err = unwrapSingleStringFilter(opts.ReceiverFilter, "spec.notificationSettings.receiver"); err != nil {
 		return f, err
 	}
-	if f.routingInclude, f.routingExclude, err = singleStringFilter(opts.RoutingTreeFilter, "spec.notificationSettings.routingTree"); err != nil {
+	if f.routingInclude, f.routingExclude, err = unwrapSingleStringFilter(opts.RoutingTreeFilter, "spec.notificationSettings.routingTree"); err != nil {
 		return f, err
 	}
-	if f.metricInclude, f.metricExclude, err = singleStringFilter(opts.MetricFilter, "spec.metric"); err != nil {
+	if f.metricInclude, f.metricExclude, err = unwrapSingleStringFilter(opts.MetricFilter, "spec.metric"); err != nil {
 		return f, err
 	}
-	if f.targetDSInclude, f.targetDSExclude, err = singleStringFilter(opts.TargetDatasourceUIDFilter, "spec.targetDatasourceUID"); err != nil {
+	if f.targetDSInclude, f.targetDSExclude, err = unwrapSingleStringFilter(opts.TargetDatasourceUIDFilter, "spec.targetDatasourceUID"); err != nil {
 		return f, err
 	}
 	return f, nil
