@@ -167,9 +167,9 @@ type HTTPServer struct {
 	SocialService                social.Service
 	Listener                     net.Listener
 	EncryptionService            encryption.Internal
-	SecretsService               secrets.Service
+	SecretsService               secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsStore                 secretsKV.SecretsKVStore
-	SecretsMigrator              secrets.Migrator
+	SecretsMigrator              secrets.Migrator //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretMigrationProvider      spm.SecretMigrationProvider
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
@@ -267,7 +267,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
 	apiKeyService apikey.Service, kvStore kvstore.KVStore,
-	secretsMigrator secrets.Migrator, secretsService secrets.Service,
+	secretsMigrator secrets.Migrator, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretMigrationProvider spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	pubdashApi *publicdashboards.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, orgDeletionService org.DeletionService, teamService team.Service,

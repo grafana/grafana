@@ -75,6 +75,14 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
+	if s.isKubernetesUserServiceEnabled(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.Delete(k8sCtx, cmd)
+	}
+
 	return s.legacyService.Delete(ctx, cmd)
 }
 
@@ -192,6 +200,14 @@ func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUser
 }
 
 func (s *Service) Search(ctx context.Context, cmd *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.Search(k8sCtx, cmd)
+	}
+
 	return s.legacyService.Search(ctx, cmd)
 }
 

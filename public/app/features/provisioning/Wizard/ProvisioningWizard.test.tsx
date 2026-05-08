@@ -238,10 +238,8 @@ describe('ProvisioningWizard', () => {
 
       // Wait for async operations (useConnectionOptions fetches) to settle
       expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: /Use a personal access token to authenticate/i })).toBeInTheDocument();
-      expect(
-        screen.getByRole('radio', { name: /Use a GitHub App for enhanced security and team colla/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Configure repository$/i })).toBeInTheDocument();
     });
 
