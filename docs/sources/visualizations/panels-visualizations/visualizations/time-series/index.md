@@ -187,6 +187,23 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
+#### Faceted filter
+
+Toggle the **Faceted filter** switch on to add a filter control next to the legend that lets you narrow the visible series by name or by label.
+
+Click the filter control to open a popover with two sections:
+
+- **By name**: Lists each unique series name. Select one or more names to limit the legend to those series.
+- **By labels**: Lists each label key with its values. Select label values to filter series that match.
+
+The popover also provides:
+
+- **Select all** and **Deselect all**: Toggle every value in a section.
+- **Clear all**: Reset the filter.
+- **Pin to sidebar**: Dock the filter alongside the panel so it stays open while you work.
+
+Use the faceted filter when a panel renders many series and you want to focus on a subset without editing the query.
+
 ### Axis options
 
 {{< docs/shared lookup="visualizations/axis-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}

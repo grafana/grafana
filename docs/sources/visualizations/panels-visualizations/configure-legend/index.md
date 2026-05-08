@@ -139,6 +139,16 @@ You can add more context to a visualization by adding series data values or [cal
 
 ![Legend showing values](/media/docs/grafana/panels-visualizations/screenshot-legend-values-10.3.png)
 
+### Faceted filter
+
+Filter visible series in the legend by name or by label without editing the query. Click the filter control next to the legend to open a popover with **By name** and **By labels** sections, then select the names or label values you want to keep.
+
+Pin the filter to the sidebar to keep it open while you explore the panel.
+
+{{< admonition type="note" >}}
+The faceted filter is currently supported in the [time series](ref:time-series) visualization only.
+{{< /admonition >}}
+
 ## Change a series color
 
 By default, Grafana sets the colors of your series data, but you can change them through the panel legend. To change the series data color, follow these steps:
