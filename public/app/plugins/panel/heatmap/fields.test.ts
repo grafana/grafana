@@ -658,6 +658,28 @@ describe('Heatmap data', () => {
     });
   });
 
+  it('returns a warning when first field is not monotonically increasing (non-sortable x)', () => {
+    const unsortedIdValues = [1042, 87, 305, 1199, 41, 980];
+    const frame = toDataFrame({
+      fields: [
+        { name: 'id', type: FieldType.number, values: unsortedIdValues },
+        { name: 'lastSeen', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000, 6000] },
+        { name: 'count', type: FieldType.number, values: [3, 7, 1, 9, 4, 2], state: { displayName: 'count' } },
+        { name: 'users', type: FieldType.number, values: [1, 2, 1, 3, 2, 1], state: { displayName: 'users' } },
+      ],
+    });
+
+    const heatmap = prepareHeatmapData({ ...tpl, frames: [frame], palette: ['#000', '#fff'] });
+
+    expect(heatmap.warning).toEqual(expect.any(String));
+    expect(heatmap.warning?.length ?? 0).toBeGreaterThan(0);
+
+    if (heatmap.xBucketSize !== undefined) {
+      expect(Number.isFinite(heatmap.xBucketSize)).toBe(true);
+      expect(heatmap.xBucketSize).toBeGreaterThan(0);
+    }
+  });
+
   describe('getDenseHeatmapData edge cases', () => {
     it('returns warning when dense frame has no value field', () => {
       const frame = toDataFrame({
