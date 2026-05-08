@@ -1,4 +1,5 @@
 import {
+  type DataFrame,
   DataFrameType,
   FieldType,
   type PanelDataSummary,
@@ -14,6 +15,26 @@ import { type Options } from './panelcfg.gen';
 import { defaultOptions } from './types';
 
 const MAX_SUGGESTIONS_SERIES = 20;
+
+function isFirstFieldSortableAsX(frame: DataFrame): boolean {
+  const firstField = frame.fields[0];
+  if (!firstField) {
+    return false;
+  }
+  if (firstField.type === FieldType.time) {
+    return true;
+  }
+  if (firstField.type !== FieldType.number) {
+    return false;
+  }
+  const values = firstField.values;
+  for (let i = 1; i < values.length; i++) {
+    if (values[i] < values[i - 1]) {
+      return false;
+    }
+  }
+  return true;
+}
 
 function determineScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore {
   // look to see if the data has an explicity marker for heatmap data on it.
@@ -55,6 +76,10 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplier<Option
     !dataSummary.hasFieldType(FieldType.time) ||
     !dataSummary.hasFieldType(FieldType.number)
   ) {
+    return;
+  }
+
+  if (!dataSummary.rawFrames.every(isFirstFieldSortableAsX)) {
     return;
   }
 
