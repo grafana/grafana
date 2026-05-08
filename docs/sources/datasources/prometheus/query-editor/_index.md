@@ -73,7 +73,7 @@ Determines the query type.
 - **Instant** — Returns a single data point per series (the most recent value within the selected time range). Use this for stat panels, tables, or gauges. To visualize instant query results in a time series panel, add a field override with the `Transform` property set to `Constant`. For more information, refer to [Time Series Transform option](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#transform).
 
 {{< admonition type="note" >}}
-Grafana adjusts the query time range to align with the dynamically calculated step interval. This ensures consistent metric visualization and supports Prometheus's result caching. However, this alignment can cause minor visual differences, such as a slight gap at the graph's right edge or a shifted start time. For example, a `15s` step aligns timestamps to Unix times divisible by 15 seconds. A `1w` Min step aligns the range to the start of the week (Thursday at 00:00 UTC in Prometheus).
+Grafana adjusts the query time range to align with the dynamically calculated step interval. This ensures consistent metric visualization and supports Prometheus result caching. However, this alignment can cause minor visual differences, such as a slight gap at the graph's right edge or a shifted start time. For example, a `15s` step aligns timestamps to Unix times divisible by 15 seconds. A `1w` Min step aligns the range to the start of the week (Thursday at 00:00 UTC in Prometheus).
 {{< /admonition >}}
 
 ### Exemplars
@@ -299,7 +299,7 @@ The query inspector helps you debug queries that return unexpected results or no
 
 Common debugging steps:
 
-1. **No data returned** — Check the Query tab to see if template variables resolved to empty values. Try the query directly in Prometheus's built-in expression browser (`/graph`) to rule out Grafana-specific issues.
+1. **No data returned** — Check the Query tab to see if template variables resolved to empty values. Try the query directly in the Prometheus built-in expression browser (`/graph`) to rule out Grafana-specific issues.
 1. **Fewer series than expected** — Check that your label filters aren't too restrictive. Remove filters one at a time to isolate which filter is excluding data.
 1. **"Too many data points" or timeout** — Reduce the time range, increase the Min step, or add aggregations to reduce cardinality. Refer to [Query high-cardinality data](#query-high-cardinality-data).
 
@@ -354,7 +354,7 @@ To minimize the visual impact:
 
 ### Label cardinality causes "too many time series" errors
 
-If adding a label filter doesn't reduce the result count, you may have high-cardinality labels (such as `request_id` or `user_id`) on your metrics. Use the Prometheus TSDB status page (`/tsdb-status`) or Grafana's Metrics explorer to identify high-cardinality label combinations, then either drop unnecessary labels at scrape time or use aggregation in your queries.
+If adding a label filter doesn't reduce the result count, you may have high-cardinality labels (such as `request_id` or `user_id`) on your metrics. Use the Prometheus TSDB status page (`/tsdb-status`) or the Grafana Metrics explorer to identify high-cardinality label combinations, then either drop unnecessary labels at scrape time or use aggregation in your queries.
 
 ## Related resources
 

@@ -119,7 +119,11 @@ query_result(max_over_time(up{job="$job"}[${__range_s}s]) == 1)
 
 Set the variable's **Refresh** to `On time range change` to update values when the time range changes.
 
+<!-- vale Grafana.Spelling = NO -->
+
 ## Use `$__rate_interval`
+
+<!-- vale Grafana.Spelling = YES -->
 
 `$__rate_interval` is a Grafana-specific variable designed for use with `rate()` and `increase()`. It guarantees a range window large enough to capture at least four scrape samples, preventing gaps or inaccuracies in results.
 
@@ -136,7 +140,11 @@ rate(http_requests_total[5m])       # breaks at different zoom levels
 rate(http_requests_total[$__interval])  # can be too small for rate()
 ```
 
+<!-- vale Grafana.Spelling = NO -->
+
 ### How `$__rate_interval` is calculated
+
+<!-- vale Grafana.Spelling = YES -->
 
 ```
 max($__interval + scrape_interval, 4 * scrape_interval)
@@ -148,7 +156,11 @@ Where `scrape_interval` is:
 
 The panel-level `min interval` is affected by the resolution setting and doesn't factor into this calculation.
 
+<!-- vale Grafana.Spelling = NO -->
+
 ### Configure `$__rate_interval` correctly
+
+<!-- vale Grafana.Spelling = YES -->
 
 For `$__rate_interval` to produce reliable results, the scrape interval must match your actual Prometheus scrape configuration:
 
@@ -198,7 +210,7 @@ To set up a Filters variable:
 1. Select your Prometheus data source.
 1. Save the dashboard.
 
-Once added, a filter bar appears at the top of the dashboard. Viewers can add filters by selecting a label, operator (`=`, `!=`, `=~`, `!~`), and value. Grafana automatically applies these filters to **all** Prometheus queries on the dashboard.
+After you add the variable, a filter bar appears at the top of the dashboard. Viewers can add filters by selecting a label, operator (`=`, `!=`, `=~`, `!~`), and value. Grafana automatically applies these filters to **all** Prometheus queries on the dashboard.
 
 **Example:** A viewer adds the filter `namespace = production`. All queries on the dashboard now include `{namespace="production"}` without any query modifications.
 

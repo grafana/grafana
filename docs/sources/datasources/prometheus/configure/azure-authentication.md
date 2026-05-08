@@ -219,7 +219,7 @@ log_message "Rollback complete. Log: $LOG_FILE"
 ```
 
 {{< admonition type="note" >}}
-Provisioned data sources (readOnly) can't be reverted via the API. Update the `type` field to `prometheus` in your provisioning YAML file instead.
+Provisioned data sources (`readOnly`) can't be reverted via the API. Update the `type` field to `prometheus` in your provisioning YAML file instead.
 {{< /admonition >}}
 
 If you continue to experience issues, check the Grafana server logs for detailed error messages and contact [Grafana Support](https://grafana.com/help/).

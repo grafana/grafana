@@ -91,7 +91,7 @@ This creates an annotation at every step interval where an alert is firing. The 
 - `alertstate` — Either `firing` or `pending`
 - Any labels defined on the alerting rule
 
-To limit to specific alerts or severities:
+To limit to specific alerts or severity levels:
 
 ```promql
 ALERTS{alertname="HighCPUUsage", severity="critical"}
@@ -112,7 +112,7 @@ changes(process_start_time_seconds{job="myservice"}[5m]) > 0
 
 ### Deployment annotations
 
-If you track deployments by pushing a timestamp metric via Pushgateway or a recording rule:
+If you track deployments by pushing a timestamp metric via `Pushgateway` or a recording rule:
 
 ```promql
 changes(deployment_timestamp_seconds{environment="production"}[10m]) > 0
@@ -196,6 +196,6 @@ Template variables in annotations are resolved at query time using the current d
 
 Range annotations display as shaded regions rather than vertical lines, representing events with duration. To create range annotations, the query result must include a **TimeEnd** field mapping.
 
-Because PromQL doesn't natively return start/end time pairs, range annotations with Prometheus are limited to scenarios where you have separate metrics for start and end times (for example, via recording rules or custom metrics pushed to Pushgateway). For most use cases, point annotations (using the examples in this page) are the practical approach.
+Because PromQL doesn't natively return start/end time pairs, range annotations with Prometheus are limited to scenarios where you have separate metrics for start and end times (for example, via recording rules or custom metrics pushed to `Pushgateway`). For most use cases, point annotations (using the examples in this page) are the practical approach.
 
 If your annotations aren't appearing or you encounter errors, refer to [Troubleshoot Prometheus data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#annotation-errors).

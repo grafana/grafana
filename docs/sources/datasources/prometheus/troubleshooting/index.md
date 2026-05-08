@@ -160,7 +160,7 @@ The following errors occur when there are issues with authentication credentials
 
 **Symptom:** Queries in Explore and dashboards work correctly, but alert rule evaluations fail intermittently with 401 errors. This is most common with Google Managed Prometheus (GMP) and Azure-managed Prometheus endpoints using OAuth/OIDC authentication.
 
-**Cause:** Grafana's alerting backend and the interactive query path (Explore, dashboards) handle credential refreshes differently. The alerting evaluator can use a cached OAuth token beyond its expiry window due to a token staleness check issue in the Prometheus data source. This causes alerting to fail with expired credentials while interactive queries succeed because they trigger a fresh token exchange.
+**Cause:** The Grafana alerting backend and the interactive query path (Explore, dashboards) handle credential refreshes differently. The alerting evaluator can use a cached OAuth token beyond its expiry window due to a token staleness check issue in the Prometheus data source. This causes alerting to fail with expired credentials while interactive queries succeed because they trigger a fresh token exchange.
 
 **Solutions:**
 
@@ -195,7 +195,7 @@ This token caching behavior is a known issue that has received code fixes in rec
 **Solution:**
 
 1. Verify your backend is Grafana Cloud Metrics or GEM. If you're using a different Prometheus-compatible backend, LBAC isn't supported.
-1. For Google Managed Prometheus or other external endpoints, use Grafana's [data source permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#data-source-permissions) to control which teams can access the data source entirely, rather than per-label access control.
+1. For Google Managed Prometheus or other external endpoints, use [data source permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#data-source-permissions) to control which teams can access the data source entirely, rather than per-label access control.
 1. If you need per-label restrictions on a non-Mimir backend, consider proxying through a Mimir instance or using a separate data source per team with different credentials scoped to the appropriate data.
 
 ### Azure AD or SigV4 authentication options not available
@@ -396,10 +396,14 @@ The following errors occur when the data source is not configured correctly.
 
 1. Check your Prometheus configuration file for the `scrape_interval` setting.
 1. Update the **Scrape interval** in the Grafana data source configuration under **Interval behavior** to match.
-1. Use `$__rate_interval` instead of hardcoded time windows in `rate()` queries. This variable automatically adjusts based on your scrape interval.
+1. Use `$__rate_interval` instead of hard-coded time windows in `rate()` queries. This variable automatically adjusts based on your scrape interval.
 1. For more information, refer to [$\_\_rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
 
+<!-- vale Grafana.Spelling = NO -->
+
 ### `$__rate_interval` returns no data or incorrect values
+
+<!-- vale Grafana.Spelling = YES -->
 
 **Symptom:** Queries using `$__rate_interval` return no data, return different values in edit mode versus the dashboard, or produce unexpected gaps.
 
