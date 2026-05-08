@@ -29,6 +29,14 @@ const (
 	defaultMaxQueueCapacity = 10000
 	defaultTimeout          = 10 * time.Second
 	defaultDrainOnShutdown  = true
+
+	// DefaultMaxLabelStringSize is the default byte cap applied to any single
+	// label/annotation name or value forwarded to an Alertmanager. The
+	// prometheus stringlabels encoder panics on strings larger than 1<<24
+	// (16 MiB); the default sits well below that so a single oversized
+	// templated annotation cannot kill the process. Override via
+	// [WithMaxLabelStringSize].
+	DefaultMaxLabelStringSize = 1 << 20
 )
 
 // ExternalAlertmanager is responsible for dispatching alert notifications to an external Alertmanager service.
@@ -60,7 +68,9 @@ type ExternalAMcfg struct {
 
 type ExternalAMOptions struct {
 	Options
-	sanitizeLabelSetFn func(lbls models.LabelSet) labels.Labels
+	// utf8Labels skips name sanitization before forwarding labels and
+	// annotations. Set via [WithUTF8Labels].
+	utf8Labels bool
 }
 
 type Option func(*ExternalAMOptions)
@@ -78,13 +88,7 @@ func WithDoFunc(doFunc doFunc) Option {
 // It assumes UTF-8 label names are supported by the Alertmanager(s).
 func WithUTF8Labels() Option {
 	return func(opts *ExternalAMOptions) {
-		opts.sanitizeLabelSetFn = func(lbls models.LabelSet) labels.Labels {
-			ls := make([]labels.Label, 0, len(lbls))
-			for k, v := range lbls {
-				ls = append(ls, labels.Label{Name: k, Value: v})
-			}
-			return labels.New(ls...)
-		}
+		opts.utf8Labels = true
 	}
 }
 
@@ -99,6 +103,18 @@ func WithMaxQueueCapacity(capacity int) Option {
 func WithMaxBatchSize(size int) Option {
 	return func(opts *ExternalAMOptions) {
 		opts.MaxBatchSize = size
+	}
+}
+
+// WithMaxLabelStringSize overrides the byte cap applied to any single
+// label/annotation name or value before alerts are forwarded. Names longer
+// than the cap are dropped; values longer than the cap are truncated. The
+// default is [DefaultMaxLabelStringSize]. A non-positive value disables the
+// cap (in which case oversized strings can panic the prometheus stringlabels
+// encoder downstream — only do this when you fully trust upstream input).
+func WithMaxLabelStringSize(size int) Option {
+	return func(opts *ExternalAMOptions) {
+		opts.MaxLabelStringSize = size
 	}
 }
 
@@ -140,10 +156,11 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 
 	options := &ExternalAMOptions{
 		Options: Options{
-			QueueCapacity:   defaultMaxQueueCapacity,
-			MaxBatchSize:    DefaultMaxBatchSize,
-			Registerer:      reg,
-			DrainOnShutdown: defaultDrainOnShutdown,
+			QueueCapacity:      defaultMaxQueueCapacity,
+			MaxBatchSize:       DefaultMaxBatchSize,
+			MaxLabelStringSize: DefaultMaxLabelStringSize,
+			Registerer:         reg,
+			DrainOnShutdown:    defaultDrainOnShutdown,
 		},
 	}
 
@@ -155,10 +172,6 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 		logger:   l,
 		sdCancel: sdCancel,
 		options:  options,
-	}
-
-	if options.sanitizeLabelSetFn == nil {
-		options.sanitizeLabelSetFn = s.sanitizeLabelSet
 	}
 
 	s.manager = NewManager(
@@ -358,36 +371,76 @@ func externalAMcfgToAlertmanagerConfig(am ExternalAMcfg) (*config.AlertmanagerCo
 func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *Alert {
 	// Prometheus alertmanager has stricter rules for annotations/labels than grafana's internal alertmanager, so we sanitize invalid keys.
 	return &Alert{
-		Labels:       s.options.sanitizeLabelSetFn(alert.Labels),
-		Annotations:  s.options.sanitizeLabelSetFn(alert.Annotations),
+		Labels:       s.sanitizeLabelSet(alert.Labels),
+		Annotations:  s.sanitizeLabelSet(alert.Annotations),
 		StartsAt:     time.Time(alert.StartsAt),
 		EndsAt:       time.Time(alert.EndsAt),
 		GeneratorURL: alert.GeneratorURL.String(),
 	}
 }
 
-// sanitizeLabelSet sanitizes all given LabelSet keys according to sanitizeLabelName.
-// If there is a collision as a result of sanitization, a short (6 char) md5 hash of the original key will be added as a suffix.
+// clampLabel bounds the byte length of a single name/value pair to
+// s.options.MaxLabelStringSize. A pair whose name exceeds the cap is dropped
+// (truncating risks key collisions); a value exceeding the cap is truncated.
+// Returns ok=false when the pair must be skipped. A non-positive cap
+// disables the clamp. This guards against the prometheus stringlabels
+// panic in labels.New on strings larger than 1<<24 bytes.
+func (s *ExternalAlertmanager) clampLabel(name, value string) (string, string, bool) {
+	cap := s.options.MaxLabelStringSize
+	if cap <= 0 {
+		return name, value, true
+	}
+	if len(name) > cap {
+		s.logger.Warn("Dropping label/annotation with name exceeding size cap", "size", len(name), "cap", cap)
+		return "", "", false
+	}
+	if len(value) > cap {
+		s.logger.Warn("Truncating label/annotation value exceeding size cap", "name", name, "size", len(value), "cap", cap)
+		value = value[:cap]
+	}
+	return name, value, true
+}
+
+// sanitizeLabelSet returns the given LabelSet as a labels.Labels, applying
+// the clamp from clampLabel to every entry. When utf8Labels is set, names
+// are passed through as-is; otherwise names are sanitized to comply with
+// prometheus alertmanager character restrictions, with collisions
+// disambiguated by a short md5 suffix.
 func (s *ExternalAlertmanager) sanitizeLabelSet(lbls models.LabelSet) labels.Labels {
 	ls := make([]labels.Label, 0, len(lbls))
-	set := make(map[string]struct{})
 
+	if s.options.utf8Labels {
+		for k, v := range lbls {
+			name, value, ok := s.clampLabel(k, v)
+			if !ok {
+				continue
+			}
+			ls = append(ls, labels.Label{Name: name, Value: value})
+		}
+		return labels.New(ls...)
+	}
+
+	set := make(map[string]struct{})
 	// Must sanitize labels in order otherwise resulting label set can be inconsistent when there are collisions.
 	for _, k := range sortedKeys(lbls) {
-		sanitizedLabelName, err := s.sanitizeLabelName(k)
+		name, value, ok := s.clampLabel(k, lbls[k])
+		if !ok {
+			continue
+		}
+		sanitizedLabelName, err := s.sanitizeLabelName(name)
 		if err != nil {
-			s.logger.Error("Alert sending to external Alertmanager(s) contains an invalid label/annotation name that failed to sanitize, skipping", "name", k, "error", err)
+			s.logger.Error("Alert sending to external Alertmanager(s) contains an invalid label/annotation name that failed to sanitize, skipping", "name", name, "error", err)
 			continue
 		}
 
 		// There can be label name collisions after we sanitize. We check for this and attempt to make the name unique again using a short hash of the original name.
 		if _, ok := set[sanitizedLabelName]; ok {
-			sanitizedLabelName = sanitizedLabelName + fmt.Sprintf("_%.3x", md5.Sum([]byte(k)))
-			s.logger.Warn("Alert contains duplicate label/annotation name after sanitization, appending unique suffix", "name", k, "newName", sanitizedLabelName, "error", err)
+			sanitizedLabelName = sanitizedLabelName + fmt.Sprintf("_%.3x", md5.Sum([]byte(name)))
+			s.logger.Warn("Alert contains duplicate label/annotation name after sanitization, appending unique suffix", "name", name, "newName", sanitizedLabelName, "error", err)
 		}
 
 		set[sanitizedLabelName] = struct{}{}
-		ls = append(ls, labels.Label{Name: sanitizedLabelName, Value: lbls[k]})
+		ls = append(ls, labels.Label{Name: sanitizedLabelName, Value: value})
 	}
 
 	return labels.New(ls...)
