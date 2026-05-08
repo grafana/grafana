@@ -302,7 +302,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   onUserClick = (anno: AnnotationEvent) => {
     // Hydrated events expose the k8s identity ref ("user:<uid>") via createdBy when
     // the k8s annotations client is enabled. Stash the uid so the next /search can filter by it.
-    const createdBy = (anno as AnnotationEventResource).createdBy;
+    const createdBy = 'createdBy' in anno && typeof anno.createdBy === 'string' ? anno.createdBy : undefined;
     const uid = createdBy?.startsWith('user:') ? createdBy.slice('user:'.length) : undefined;
     this.setState({
       queryUser: {
