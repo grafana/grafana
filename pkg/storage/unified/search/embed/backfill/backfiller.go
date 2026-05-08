@@ -30,7 +30,11 @@ type VectorBackfiller struct {
 	embedder      *embedder.Embedder
 	batchEmbedder *embedder.BatchEmbedder
 	builders      map[string]embed.Builder
-	log           log.Logger
+	// sortedBuilders is builders sorted by Resource() so iteration order
+	// is stable across pod restarts. Precomputed because the set is
+	// immutable after construction.
+	sortedBuilders []embed.Builder
+	log            log.Logger
 }
 
 func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
@@ -61,14 +65,24 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		}
 		builders[r] = b
 	}
+	keys := make([]string, 0, len(builders))
+	for k := range builders {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	sorted := make([]embed.Builder, 0, len(builders))
+	for _, k := range keys {
+		sorted = append(sorted, builders[k])
+	}
 
 	return &VectorBackfiller{
-		storage:       opts.Storage,
-		vectorBackend: opts.VectorBackend,
-		embedder:      opts.Embedder,
-		batchEmbedder: opts.BatchEmbedder,
-		builders:      builders,
-		log:           opts.Log,
+		storage:        opts.Storage,
+		vectorBackend:  opts.VectorBackend,
+		embedder:       opts.Embedder,
+		batchEmbedder:  opts.BatchEmbedder,
+		builders:       builders,
+		sortedBuilders: sorted,
+		log:            opts.Log,
 	}, nil
 }
 
@@ -144,7 +158,7 @@ func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.Backfi
 		cursor = jobCursor{}
 	}
 
-	for _, builder := range b.sortedBuilders() {
+	for _, builder := range b.sortedBuilders {
 		// Job-level resource filter: empty means "all Builders," non-empty
 		// targets exactly that Builder.
 		if job.Resource != "" && builder.Resource() != job.Resource {
@@ -179,21 +193,6 @@ func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.Backfi
 func (b *VectorBackfiller) hasBuilderForResource(resource string) bool {
 	_, ok := b.builders[resource]
 	return ok
-}
-
-// sortedBuilders returns the registered Builders in deterministic order
-// so iteration matches across pod restarts.
-func (b *VectorBackfiller) sortedBuilders() []embed.Builder {
-	keys := make([]string, 0, len(b.builders))
-	for k := range b.builders {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	out := make([]embed.Builder, 0, len(b.builders))
-	for _, k := range keys {
-		out = append(out, b.builders[k])
-	}
-	return out
 }
 
 // runBackfillPage processes up to backfillPageSize items. Returns the
