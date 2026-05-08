@@ -515,5 +515,6 @@ func (nps *Service) includeImported() bool {
 		return false
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	return nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	return nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) &&
+		nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 }
