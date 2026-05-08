@@ -90,4 +90,4 @@ export {
 } from './services/pluginMeta/hooks';
 export { getListedPanelPluginIds, getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';
 export { isAppPluginEnabled } from './services/pluginSettings/settings';
-export { useAppPluginEnabled } from './services/pluginSettings/hooks';
+export { useAppPluginEnabled, usePluginSettings } from './services/pluginSettings/hooks';

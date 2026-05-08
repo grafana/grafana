@@ -1,5 +1,7 @@
 import { type DefaultBodyType, HttpResponse, type HttpResponseResolver, type PathParams, http } from 'msw';
 
+import { type PluginMeta } from '@grafana/data';
+import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
@@ -9,7 +11,11 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import { getDisabledPluginHandler } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
+import {
+  getDisabledPluginHandler,
+  getPluginMissingHandler,
+  getSpecificPluginHandler,
+} from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import {
   ALERTING_API_SERVER_BASE_URL,
   getK8sResponse,
@@ -280,7 +286,32 @@ export const setAlertmanagerAlertsHandler = (alerts: AlertmanagerAlert[]) => {
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {
   clearPluginSettingsCache(pluginId);
+  invalidateCachedPromisesCache();
   server.use(getDisabledPluginHandler(pluginId));
+};
+
+/** Make a plugin respond with a 404, as if it is not installed */
+export const removePlugin = (pluginId: SupportedPlugin) => {
+  clearPluginSettingsCache(pluginId);
+  invalidateCachedPromisesCache();
+  server.use(getPluginMissingHandler(pluginId));
+};
+
+/** Make an additional plugin respond as installed and enabled */
+export const addPlugin = (pluginMeta: PluginMeta) => {
+  invalidateCachedPromisesCache();
+  server.use(getSpecificPluginHandler(pluginMeta));
+};
+
+/** Make a plugin settings request fail with a given HTTP status code (default 500) */
+export const failPlugin = (pluginId: SupportedPlugin, status = 500) => {
+  clearPluginSettingsCache(pluginId);
+  invalidateCachedPromisesCache();
+  server.use(
+    http.get(`/api/plugins/${pluginId}/settings`, () =>
+      HttpResponse.json({ message: 'Internal server error' }, { status })
+    )
+  );
 };
 
 /** Get an error response for use in a API response, in the format:
