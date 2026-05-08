@@ -1413,14 +1413,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "newTimeRangeZoomShortcuts",
-			Description: "Enables new keyboard shortcuts for time range zoom operations",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
