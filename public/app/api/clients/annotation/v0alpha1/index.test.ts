@@ -63,10 +63,9 @@ describe('annotationEventToSpec', () => {
 
 describe('buildCreatePayload', () => {
   it('produces a k8s ResourceForCreate envelope', () => {
-    const payload = buildCreatePayload(
-      { time: 100, text: 'hi', panelId: 4, dashboardUID: 'd', tags: ['t'] },
-      ['scope-1']
-    );
+    const payload = buildCreatePayload({ time: 100, text: 'hi', panelId: 4, dashboardUID: 'd', tags: ['t'] }, [
+      'scope-1',
+    ]);
     expect(payload).toEqual({
       apiVersion: 'annotation.grafana.app/v0alpha1',
       kind: 'Annotation',

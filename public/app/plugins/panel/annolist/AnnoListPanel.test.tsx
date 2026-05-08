@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { BehaviorSubject } from 'rxjs';
 
 import {
   type AnnotationEvent,
@@ -397,11 +398,10 @@ describe('AnnoListPanel', () => {
           metadata: { name },
           spec: { title: name, filters: [] },
         }));
+        const state = { drawerOpened: false, enabled: true, loading: false, readOnly: false, value: scopes };
         const ctx: ScopesContextValue = {
-          state: { drawerOpened: false, enabled: true, loading: false, readOnly: false, value: scopes },
-          stateObservable: {
-            subscribe: () => ({ unsubscribe: () => {} }),
-          } as unknown as ScopesContextValue['stateObservable'],
+          state,
+          stateObservable: new BehaviorSubject(state),
           changeScopes: jest.fn(),
           setReadOnly: jest.fn(),
           setEnabled: jest.fn(),
