@@ -49,21 +49,16 @@ func (a *AppInstaller) runCleanup(ctx context.Context, lifecycleMgr LifecycleMan
 	deleted, err := lifecycleMgr.Cleanup(ctx)
 	dur := time.Since(start)
 
-	result := "success"
-	if err != nil {
-		result = "failure"
-	}
-	a.metrics.CleanupRuns.WithLabelValues(result).Inc()
-	if err == nil {
-		a.metrics.CleanupDuration.Observe(dur.Seconds())
-		a.metrics.CleanupRowsDeleted.Add(float64(deleted))
-	}
-
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
+		a.metrics.CleanupRuns.WithLabelValues("failure").Inc()
 		a.logger.Error("Annotation cleanup failed", "error", err, "duration", dur)
-	} else if deleted > 0 {
-		a.logger.Info("Annotation cleanup completed", "rows_deleted", deleted, "duration", dur)
+		return
 	}
+
+	a.metrics.CleanupRuns.WithLabelValues("success").Inc()
+	a.metrics.CleanupDuration.Observe(dur.Seconds())
+	a.metrics.CleanupRowsDeleted.Add(float64(deleted))
+	a.logger.Info("Annotation cleanup completed", "rows_deleted", deleted, "duration", dur)
 }

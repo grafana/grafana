@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -97,51 +98,8 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "list", start, err) }()
 
 	opts := ListOptions{}
-	if options.FieldSelector != nil {
-		// Parse K8s field selectors into Store ListOptions
-		for _, r := range options.FieldSelector.Requirements() {
-			switch r.Field {
-			case "spec.dashboardUID":
-				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
-					opts.DashboardUID = r.Value
-				} else {
-					return nil, apierrors.NewBadRequest(fmt.Sprintf("unsupported operator %s for spec.dashboardUID (only = supported)", r.Operator))
-				}
-
-			case "spec.panelID":
-				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
-					panelID, perr := strconv.ParseInt(r.Value, 10, 64)
-					if perr != nil {
-						return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid panelID value %q: %v", r.Value, perr))
-					}
-					opts.PanelID = panelID
-				} else {
-					return nil, apierrors.NewBadRequest(fmt.Sprintf("unsupported operator %s for spec.panelID (only = supported)", r.Operator))
-				}
-			case "spec.time":
-				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
-					from, perr := strconv.ParseInt(r.Value, 10, 64)
-					if perr != nil {
-						return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid time value %q: %v", r.Value, perr))
-					}
-					opts.From = from
-				} else {
-					return nil, apierrors.NewBadRequest(fmt.Sprintf("unsupported operator %s for spec.from (only = supported)", r.Operator))
-				}
-			case "spec.timeEnd":
-				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
-					to, perr := strconv.ParseInt(r.Value, 10, 64)
-					if perr != nil {
-						return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid timeEnd value %q: %v", r.Value, perr))
-					}
-					opts.To = to
-				} else {
-					return nil, apierrors.NewBadRequest(fmt.Sprintf("unsupported operator %s for spec.to (only = supported)", r.Operator))
-				}
-			default:
-				return nil, apierrors.NewBadRequest(fmt.Sprintf("unsupported field selector: %s", r.Field))
-			}
-		}
+	if err := parseFieldSelector(options.FieldSelector, &opts); err != nil {
+		return nil, err
 	}
 
 	opts.Limit = 100
@@ -352,4 +310,41 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, apierrors.NewNotFound(annotationGR, name)
 	}
 	return nil, false, err
+}
+
+// parseFieldSelector translates K8s field selectors into Store ListOptions.
+func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
+	if fs == nil {
+		return nil
+	}
+	for _, r := range fs.Requirements() {
+		if r.Operator != selection.Equals && r.Operator != selection.DoubleEquals {
+			return apierrors.NewBadRequest(fmt.Sprintf("unsupported operator %s for %s (only = supported)", r.Operator, r.Field))
+		}
+		switch r.Field {
+		case "spec.dashboardUID":
+			opts.DashboardUID = r.Value
+		case "spec.panelID":
+			v, err := strconv.ParseInt(r.Value, 10, 64)
+			if err != nil {
+				return apierrors.NewBadRequest(fmt.Sprintf("invalid panelID value %q: %v", r.Value, err))
+			}
+			opts.PanelID = v
+		case "spec.time":
+			v, err := strconv.ParseInt(r.Value, 10, 64)
+			if err != nil {
+				return apierrors.NewBadRequest(fmt.Sprintf("invalid time value %q: %v", r.Value, err))
+			}
+			opts.From = v
+		case "spec.timeEnd":
+			v, err := strconv.ParseInt(r.Value, 10, 64)
+			if err != nil {
+				return apierrors.NewBadRequest(fmt.Sprintf("invalid timeEnd value %q: %v", r.Value, err))
+			}
+			opts.To = v
+		default:
+			return apierrors.NewBadRequest(fmt.Sprintf("unsupported field selector: %s", r.Field))
+		}
+	}
+	return nil
 }
