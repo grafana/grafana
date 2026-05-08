@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/investigations
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/grafana/grafana-app-sdk v0.31.0

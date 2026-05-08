@@ -239,8 +239,8 @@ cloud.google.com/go/deploy v1.23.0 h1:Bmh5UYEeakXtjggRkjVIawXfSBbQsTgDlm96pCw9D3
 cloud.google.com/go/deploy v1.23.0/go.mod h1:O7qoXcg44Ebfv9YIoFEgYjPmrlPsXD4boYSVEiTqdHY=
 cloud.google.com/go/deploy v1.26.1 h1:Hm3pXBzMFJFPOdwtDkg5e/LP53bXqIpwQpjwsVasjhU=
 cloud.google.com/go/deploy v1.26.1/go.mod h1:PwF9RP0Jh30Qd+I71wb52oM42LgfRKXRMSg87wKpK3I=
-cloud.google.com/go/deploy v1.26.2 h1:1c2Cd3jdb0mrKHHfyzSQ5DRmxgYd07tIZZzuMNrwDxU=
-cloud.google.com/go/deploy v1.26.2/go.mod h1:XpS3sG/ivkXCfzbzJXY9DXTeCJ5r68gIyeOgVGxGNEs=
+cloud.google.com/go/deploy v1.26.3 h1:1c2Cd3jdb0mrKHHfyzSQ5DRmxgYd07tIZZzuMNrwDxU=
+cloud.google.com/go/deploy v1.26.3/go.mod h1:XpS3sG/ivkXCfzbzJXY9DXTeCJ5r68gIyeOgVGxGNEs=
 cloud.google.com/go/dialogflow v1.58.0 h1:RTpoVCJHkgNLK8Co/f7F8ipyg3h8fJIaQzdaAbyg788=
 cloud.google.com/go/dialogflow v1.58.0/go.mod h1:sWcyFLdUrg+TWBJVq/OtwDyjcyDOfirTF0Gx12uKy7o=
 cloud.google.com/go/dialogflow v1.64.1 h1:6fU4IKLpvgpXqiUCE8gUp8eV5u629SCtiyXMudXtZSg=

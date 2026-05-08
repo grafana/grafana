@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/plugins/codegen
 
-go 1.26.2
+go 1.26.3
 
 replace github.com/grafana/grafana/pkg/codegen => ../../codegen
 
