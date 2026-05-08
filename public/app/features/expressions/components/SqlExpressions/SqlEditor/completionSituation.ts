@@ -15,15 +15,14 @@ const SQL_JOIN_KEYWORD = 'JOIN';
 const SQL_AS_KEYWORD = 'AS';
 const SQL_STATEMENT_TERMINATOR = ';';
 
+const SQL_SET_OPERATOR_KEYWORDS = new Set(['EXCEPT', 'INTERSECT', 'UNION']);
 const SQL_FROM_SECTION_END_KEYWORDS = new Set([
   'WHERE',
   'GROUP',
   'ORDER',
   'HAVING',
   'LIMIT',
-  'UNION',
-  'EXCEPT',
-  'INTERSECT',
+  ...SQL_SET_OPERATOR_KEYWORDS,
 ]);
 const SQL_JOIN_MODIFIER_KEYWORDS = new Set(['CROSS', 'FULL', 'INNER', 'LEFT', 'NATURAL', 'OUTER', 'RIGHT']);
 
@@ -62,7 +61,9 @@ export function getSqlCompletionSituation(
   word: CompletionWord | null
 ): SqlCompletionSituation {
   const statement = getStatementAtCursor(context);
-  const tableRefs = statement ? getTableRefs(context, statement) : [];
+  const completionFrom = word?.from ?? context.pos;
+  const statementChildren = statement ? getCurrentSelectSegmentChildren(context, statement, context.pos) : [];
+  const tableRefs = getTableRefs(context, statementChildren);
   const qualifiedColumnContext = statement ? getQualifiedColumnContext(context, statement) : undefined;
 
   if (qualifiedColumnContext) {
@@ -76,18 +77,16 @@ export function getSqlCompletionSituation(
     };
   }
 
-  const completionFrom = word?.from ?? context.pos;
-
-  if (statement && isAfterStatementTerminator(context, statement, completionFrom)) {
+  if (statement && isAfterStatementTerminator(context, statementChildren, completionFrom)) {
     return { type: 'none' };
   }
 
-  if (statement && isTableCompletionPosition(context, statement, completionFrom)) {
+  if (statement && isTableCompletionPosition(context, statementChildren, completionFrom)) {
     return { type: 'table', from: completionFrom };
   }
 
   // Let whitespace-triggered completions in the SELECT list use tables declared later in FROM.
-  if (statement && tableRefs.length > 0 && isSelectListCompletionPosition(context, statement, completionFrom)) {
+  if (statement && tableRefs.length > 0 && isSelectListCompletionPosition(context, statementChildren, completionFrom)) {
     return {
       type: 'general',
       from: completionFrom,
@@ -140,6 +139,37 @@ function getStatementAtOrBefore(node: SyntaxNode, pos: number): SyntaxNode | nul
   return candidate;
 }
 
+function getCurrentSelectSegmentChildren(
+  context: CodeMirrorCompletionContext,
+  statement: SyntaxNode,
+  pos: number
+): SyntaxNode[] {
+  const children = getStatementChildren(statement);
+  let segmentStart = 0;
+  let segmentEnd = children.length;
+
+  for (let index = 0; index < children.length; index++) {
+    const child = children[index];
+    const keyword = getKeywordText(context, child);
+
+    if (!SQL_SET_OPERATOR_KEYWORDS.has(keyword)) {
+      continue;
+    }
+
+    if (child.to <= pos) {
+      segmentStart = index + 1;
+      continue;
+    }
+
+    if (child.from >= pos) {
+      segmentEnd = index;
+      break;
+    }
+  }
+
+  return children.slice(segmentStart, segmentEnd);
+}
+
 function getQualifiedColumnContext(
   context: CodeMirrorCompletionContext,
   statement: SyntaxNode
@@ -189,8 +219,7 @@ function getCompositeIdentifierAtCursor(
 /**
  * Extracts table refs and aliases from FROM/JOIN tokens in the parsed statement.
  */
-function getTableRefs(context: CodeMirrorCompletionContext, statement: SyntaxNode): TableRef[] {
-  const children = getStatementChildren(statement);
+function getTableRefs(context: CodeMirrorCompletionContext, children: SyntaxNode[]): TableRef[] {
   const tableRefs: TableRef[] = [];
 
   for (let index = 0; index < children.length; index++) {
@@ -312,16 +341,16 @@ function getUniqueTables(tableRefs: TableRef[]): string[] {
 
 function isTableCompletionPosition(
   context: CodeMirrorCompletionContext,
-  statement: SyntaxNode,
+  statementChildren: SyntaxNode[],
   completionFrom: number
 ): boolean {
-  const previousNode = getPreviousStatementChild(statement, completionFrom);
+  const previousNode = getPreviousStatementChild(statementChildren, completionFrom);
   const previousKeyword = getKeywordText(context, previousNode);
 
   return (
     previousKeyword === SQL_FROM_KEYWORD ||
     previousKeyword === SQL_JOIN_KEYWORD ||
-    (isComma(context, previousNode) && isInFromSection(context, statement, completionFrom))
+    (isComma(context, previousNode) && isInFromSection(context, statementChildren, completionFrom))
   );
 }
 
@@ -330,12 +359,12 @@ function isTableCompletionPosition(
  */
 function isSelectListCompletionPosition(
   context: CodeMirrorCompletionContext,
-  statement: SyntaxNode,
+  statementChildren: SyntaxNode[],
   completionFrom: number
 ): boolean {
   let hasSelectBeforeCursor = false;
 
-  for (const child of getStatementChildren(statement)) {
+  for (const child of statementChildren) {
     const keyword = getKeywordText(context, child);
 
     if (child.from >= completionFrom) {
@@ -355,14 +384,18 @@ function isSelectListCompletionPosition(
   return hasSelectBeforeCursor;
 }
 
-function isAfterStatementTerminator(context: CodeMirrorCompletionContext, statement: SyntaxNode, pos: number): boolean {
-  return isStatementTerminator(context, getPreviousStatementChild(statement, pos));
+function isAfterStatementTerminator(
+  context: CodeMirrorCompletionContext,
+  statementChildren: SyntaxNode[],
+  pos: number
+): boolean {
+  return isStatementTerminator(context, getPreviousStatementChild(statementChildren, pos));
 }
 
-function isInFromSection(context: CodeMirrorCompletionContext, statement: SyntaxNode, pos: number): boolean {
+function isInFromSection(context: CodeMirrorCompletionContext, statementChildren: SyntaxNode[], pos: number): boolean {
   let hasFrom = false;
 
-  for (const child of getStatementChildren(statement)) {
+  for (const child of statementChildren) {
     if (child.from >= pos) {
       break;
     }
@@ -386,11 +419,10 @@ function isFromSectionEndKeyword(keyword: string): boolean {
   return SQL_FROM_SECTION_END_KEYWORDS.has(keyword);
 }
 
-function getPreviousStatementChild(statement: SyntaxNode, pos: number): SyntaxNode | undefined {
-  const children = getStatementChildren(statement);
+function getPreviousStatementChild(statementChildren: SyntaxNode[], pos: number): SyntaxNode | undefined {
   let previous: SyntaxNode | undefined;
 
-  for (const child of children) {
+  for (const child of statementChildren) {
     if (child.to > pos) {
       break;
     }

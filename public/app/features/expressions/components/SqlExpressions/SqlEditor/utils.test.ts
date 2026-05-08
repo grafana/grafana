@@ -262,6 +262,26 @@ LIMIT
     );
   });
 
+  it('scopes SELECT list column completions to the current set-operation segment', async () => {
+    const columns = jest.fn(({ table }) => [{ label: `${table}Value`, insertText: `${table}Value` }]);
+    const result = await getCompletionResult(
+      {
+        columns,
+        functions: () => [],
+      },
+      'SELECT value FROM A UNION SELECT value FROM B',
+      'SELECT value FROM A UNION SELECT value'.length
+    );
+
+    expect(columns).not.toHaveBeenCalledWith({ table: 'A' });
+    expect(columns).toHaveBeenCalledWith({ table: 'B' });
+    expect(result).toEqual(
+      expect.objectContaining({
+        options: [expect.objectContaining({ label: 'BValue' })],
+      })
+    );
+  });
+
   it('opens column completions after whitespace in the SELECT list when FROM tables are available', async () => {
     const columns = jest.fn().mockReturnValue([{ label: 'time', insertText: 'time' }]);
     const result = await getCompletionResult(
