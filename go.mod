@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.26.2
+go 1.26.3
 
 require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.17.0-20240902100956-02fd72488966.1 // @grafana/observability-traces-and-profiling
@@ -169,15 +169,15 @@ require (
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	go.uber.org/zap v1.27.0 // @grafana/identity-access-team
 	gocloud.dev v0.40.0 // @grafana/grafana-app-platform-squad
-	golang.org/x/crypto v0.46.0 // @grafana/grafana-backend-group
+	golang.org/x/crypto v0.50.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // @grafana/alerting-backend
-	golang.org/x/mod v0.30.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.48.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/mod v0.34.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/net v0.53.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.34.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.19.0 // @grafana/alerting-backend
-	golang.org/x/text v0.32.0 // @grafana/grafana-backend-group
+	golang.org/x/sync v0.20.0 // @grafana/alerting-backend
+	golang.org/x/text v0.36.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.11.0 // @grafana/grafana-backend-group
-	golang.org/x/tools v0.39.0 // indirect; @grafana/grafana-as-code
+	golang.org/x/tools v0.43.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.16.0 // @grafana/oss-big-tent
 	google.golang.org/api v0.233.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.79.3 // @grafana/plugins-platform-backend
@@ -527,8 +527,8 @@ require (
 	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/term v0.38.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/term v0.42.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20250324211829-b45e905df463 // indirect
@@ -581,7 +581,7 @@ require (
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.36.0 // indirect
-	golang.org/x/telemetry v0.0.0-20251111182119-bc8e575c7b54 // indirect
+	golang.org/x/telemetry v0.0.0-20260311193753-579e4da9a98c // indirect
 	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 )
 

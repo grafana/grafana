@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.26.2
+go 1.26.3
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -25,11 +25,11 @@ require (
 	go.opentelemetry.io/otel v1.39.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.39.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.39.0 // @grafana/grafana-backend-group
-	golang.org/x/crypto v0.46.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.48.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/crypto v0.50.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/net v0.53.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.34.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.19.0 // @grafana/alerting-backend
-	golang.org/x/text v0.32.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/sync v0.20.0 // @grafana/alerting-backend
+	golang.org/x/text v0.36.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.11.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.233.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.79.3 // indirect; @grafana/plugins-platform-backend
@@ -70,7 +70,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 // indirect
 	go.opentelemetry.io/otel/metric v1.39.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	google.golang.org/genproto v0.0.0-20250324211829-b45e905df463 // indirect; @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
@@ -83,7 +83,7 @@ require (
 	github.com/google/go-github/v70 v70.0.0
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/urfave/cli/v3 v3.3.8 // @grafana/grafana-backend-group
-	golang.org/x/mod v0.30.0
+	golang.org/x/mod v0.34.0
 )
 
 require (
