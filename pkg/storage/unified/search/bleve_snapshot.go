@@ -79,7 +79,11 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 			if err != nil {
 				return ulid.ULID{}, nil, fmt.Errorf("listing remote snapshots: %w", err)
 			}
-			c, ok := b.pickBestSnapshot(all, time.Now(), logger)
+			notOlderThan := time.Time{}
+			if maxAge := b.opts.Snapshot.MaxIndexAge; maxAge > 0 {
+				notOlderThan = time.Now().Add(-maxAge)
+			}
+			c, ok := b.pickBestSnapshot(all, notOlderThan, logger)
 			if !ok {
 				return ulid.ULID{}, nil, nil
 			}
@@ -93,6 +97,9 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 // lastImportTime), and downloads it. Shared between the rebuild path and
 // cold-start coordination; callers pass their own maxAge and policy /
 // span labels. Returns (nil, "", 0, nil) when no candidate matches.
+//
+// maxAge <= 0 means "no age limit": the only freshness floor is
+// lastImportTime (which itself may be zero, meaning no floor at all).
 func (b *bleveBackend) tryDownloadFreshSameVersionSnapshot(
 	ctx context.Context,
 	key resource.NamespacedResource,
@@ -104,23 +111,17 @@ func (b *bleveBackend) tryDownloadFreshSameVersionSnapshot(
 ) (bleve.Index, string, int64, error) {
 	logger.Info("Fresh same-version index snapshot download started", "policy", policy, "max_age", maxAge, "last_import_time", lastImportTime)
 
-	// Combine the freshness cutoff with the lastImportTime correctness check.
-	// Both are "BuildTime must be after X"; take the more restrictive X.
-	effectiveMaxAge := maxAge
-	if !lastImportTime.IsZero() {
-		if since := time.Since(lastImportTime); since < effectiveMaxAge {
-			effectiveMaxAge = since
-		}
+	var notOlderThan time.Time
+	if maxAge > 0 {
+		notOlderThan = time.Now().Add(-maxAge)
+	}
+	if lastImportTime.After(notOlderThan) {
+		notOlderThan = lastImportTime
 	}
 
 	return b.downloadSelectedSnapshot(ctx, key, resourceDir, policy, spanName, logger,
 		func(ctx context.Context) (ulid.ULID, *IndexMeta, error) {
-			if effectiveMaxAge <= 0 {
-				// lastImportTime is in the future (clock skew) or maxAge is
-				// non-positive; no snapshot can satisfy the freshness window.
-				return ulid.ULID{}, nil, nil
-			}
-			k, m, err := findFreshSnapshotByBuildStart(ctx, b.opts.Snapshot.Store, key, effectiveMaxAge, b.opts.BuildVersion)
+			k, m, err := findFreshSnapshotByBuildStart(ctx, b.opts.Snapshot.Store, key, notOlderThan, b.opts.BuildVersion)
 			if err != nil {
 				return ulid.ULID{}, nil, fmt.Errorf("probing for fresh snapshot: %w", err)
 			}
@@ -213,6 +214,17 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 		return nil, "", 0, fmt.Errorf("reserving local snapshot dir: %w", err)
 	}
 
+	// Protect destDir from cleanOldIndexes for the duration of the download
+	// and validation. On success, ownership of the registration transfers to
+	// the caller (BuildIndex unregisters via its own defer); on any failure
+	// path below, this defer releases it.
+	b.registerInFlightBuildDir(destDir)
+	defer func() {
+		if retErr != nil {
+			b.unregisterInFlightBuildDir(destDir)
+		}
+	}()
+
 	// TODO: retry DownloadIndex on transient errors before falling through to
 	// a from-scratch KV rebuild. The object store is its own fault domain;
 	// a single failed download shouldn't force a full rebuild for large
@@ -260,16 +272,15 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 	return idx, name, rv, nil
 }
 
-// pickBestSnapshot applies hard filters (age, unparseable version) and the
-// three-tier preference to pick the best snapshot, if any.
+// pickBestSnapshot applies hard filters (upload time, unparseable version)
+// and the three-tier preference to pick the best snapshot, if any.
 //
 // Tier 0 (ideal): MinBuildVersion <= v <= runningVersion
 // Tier 1 (older, acceptable): v < MinBuildVersion
 // Tier 2 (newer, last resort): v > runningVersion
 //
 // Within each tier, sort by version desc -> RV desc -> upload time desc.
-func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.Time, logger log.Logger) (snapshotCandidate, bool) {
-	maxAge := b.opts.Snapshot.MaxIndexAge
+func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderThan time.Time, logger log.Logger) (snapshotCandidate, bool) {
 	minVersion := b.opts.Snapshot.MinBuildVersion
 	running := b.runningBuildVersion
 
@@ -277,7 +288,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 	candidates := make([]snapshotCandidate, 0, len(all))
 	for k, m := range all {
 		// Hard filter: age.
-		if maxAge > 0 && now.Sub(m.UploadTimestamp) > maxAge {
+		if !notOlderThan.IsZero() && m.UploadTimestamp.Before(notOlderThan) {
 			droppedAge++
 			continue
 		}
@@ -397,8 +408,8 @@ func (b *bleveBackend) recordSnapshotDownloadOutcome(policy, status string) {
 
 // findFreshSnapshotByUploadTime walks namespace snapshots newest-first and
 // returns the first one whose BuildVersion matches runningVersion and
-// whose ULID time falls within [now-maxAge, now]. Returns a zero key and nil
-// meta when no such snapshot exists.
+// whose ULID time is after notOlderThan. Returns a zero key and nil meta when
+// no such snapshot exists.
 //
 // Walking (rather than checking only the newest) is necessary in mixed-version
 // clusters — either transiently during rolling upgrades, or as a deliberate
@@ -414,49 +425,17 @@ func findFreshSnapshotByUploadTime(
 	ctx context.Context,
 	store RemoteIndexStore,
 	ns resource.NamespacedResource,
-	maxAge time.Duration,
+	notOlderThan time.Time,
 	runningVersion string,
 ) (ulid.ULID, *IndexMeta, error) {
-	keys, err := store.ListIndexKeys(ctx, ns)
-	if err != nil {
-		return ulid.ULID{}, nil, fmt.Errorf("listing index keys: %w", err)
-	}
-
-	// Sort newest-first by ULID time. ULID time equals upload time (set in
-	// UploadIndex from the ULID's own timestamp), so this is also the
-	// upload-time ordering.
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i].Time() > keys[j].Time()
+	return findFreshSnapshot(ctx, store, ns, notOlderThan, runningVersion, func(*IndexMeta) bool {
+		return true
 	})
-
-	cutoff := time.Now().Add(-maxAge)
-	for _, k := range keys {
-		// ULID time is the upload time. Once we cross the cutoff, no
-		// remaining candidate can satisfy the freshness criterion.
-		if !ulid.Time(k.Time()).After(cutoff) {
-			return ulid.ULID{}, nil, nil
-		}
-
-		meta, err := store.GetIndexMeta(ctx, ns, k)
-		if err != nil {
-			if errors.Is(err, ErrSnapshotNotFound) || errors.Is(err, ErrInvalidManifest) {
-				continue
-			}
-			return ulid.ULID{}, nil, fmt.Errorf("reading manifest for %s: %w", k, err)
-		}
-
-		if meta.BuildVersion == runningVersion {
-			return k, meta, nil
-		}
-	}
-
-	return ulid.ULID{}, nil, nil
 }
 
 // findFreshSnapshotByBuildStart is the build-start-time variant of
 // findFreshSnapshotByUploadTime: it returns the first same-version
-// snapshot whose BuildTime (not upload time) falls within
-// [now-maxAge, now].
+// snapshot whose BuildTime (not upload time) is after notOlderThan.
 //
 // Use this for data-freshness questions, e.g. "is the remote snapshot
 // fresh enough to skip a rebuild?". Periodic re-uploads preserve the
@@ -465,28 +444,42 @@ func findFreshSnapshotByUploadTime(
 //
 // Manifests with a zero-value BuildTime are skipped (no freshness
 // signal). The stopping rule is unchanged: BuildTime <= ULID time, so a
-// ULID below the cutoff cannot yield a fresh build-start time.
+// ULID below notOlderThan cannot yield a fresh build-start time.
 func findFreshSnapshotByBuildStart(
 	ctx context.Context,
 	store RemoteIndexStore,
 	ns resource.NamespacedResource,
-	maxAge time.Duration,
+	notOlderThan time.Time,
 	runningVersion string,
+) (ulid.ULID, *IndexMeta, error) {
+	return findFreshSnapshot(ctx, store, ns, notOlderThan, runningVersion, func(meta *IndexMeta) bool {
+		return !meta.BuildTime.IsZero() && meta.BuildTime.After(notOlderThan)
+	})
+}
+
+func findFreshSnapshot(
+	ctx context.Context,
+	store RemoteIndexStore,
+	ns resource.NamespacedResource,
+	notOlderThan time.Time,
+	runningVersion string,
+	isFresh func(*IndexMeta) bool,
 ) (ulid.ULID, *IndexMeta, error) {
 	keys, err := store.ListIndexKeys(ctx, ns)
 	if err != nil {
 		return ulid.ULID{}, nil, fmt.Errorf("listing index keys: %w", err)
 	}
 
+	// Sort newest-first by ULID time. ULID time equals upload time, and upload
+	// time is an upper bound for build-start time, so once we cross notOlderThan
+	// no remaining candidate can satisfy either freshness check.
 	sort.Slice(keys, func(i, j int) bool {
 		return keys[i].Time() > keys[j].Time()
 	})
 
-	cutoff := time.Now().Add(-maxAge)
 	for _, k := range keys {
-		// BuildTime <= UploadTimestamp = ULID time. Once ULID
-		// time crosses the cutoff, no remaining candidate can satisfy.
-		if !ulid.Time(k.Time()).After(cutoff) {
+		// Once ULID time crosses the cutoff, no remaining candidate can satisfy.
+		if ulid.Time(k.Time()).Before(notOlderThan) {
 			return ulid.ULID{}, nil, nil
 		}
 
@@ -498,19 +491,9 @@ func findFreshSnapshotByBuildStart(
 			return ulid.ULID{}, nil, fmt.Errorf("reading manifest for %s: %w", k, err)
 		}
 
-		if meta.BuildVersion != runningVersion {
-			continue
-		}
-		// Zero-value BuildTime carries no freshness signal; never selected.
-		if meta.BuildTime.IsZero() {
-			continue
-		}
-		if meta.BuildTime.After(cutoff) {
+		if meta.BuildVersion == runningVersion && isFresh(meta) {
 			return k, meta, nil
 		}
-		// Recent ULID but old BuildTime (e.g. periodic re-upload
-		// of a long-lived index): keep walking — an earlier candidate may
-		// still have a fresh build-start time.
 	}
 
 	return ulid.ULID{}, nil, nil
@@ -585,8 +568,8 @@ func (b *bleveBackend) coordinateColdStartBuild(
 	// filter the tiered selection applies. We don't reuse the rebuild
 	// path's tighter maxFreshSnapshotAge — on a cold start any
 	// same-version snapshot beats rebuilding, so we want the loosest
-	// threshold. Zero means "skip the probe"; the lock + wait loop still
-	// coordinates.
+	// threshold. Zero means "no age limit": the probe still runs and
+	// accepts any same-version snapshot.
 	probeMaxAge := b.opts.Snapshot.MaxIndexAge
 	logger.Info("Cold-start coordination started", "probe_max_age", probeMaxAge, "last_import_time", lastImportTime)
 
@@ -641,13 +624,14 @@ func (b *bleveBackend) coordinateColdStartBuild(
 // snapshot already exists in the remote index store, and downloads it if
 // so. Called once per iteration of coordinateColdStartBuild's loop.
 //
-//   - probeMaxAge <= 0: don't contact the store; coordination falls back
-//     to the lock + wait loop alone.
 //   - idx != nil: snapshot downloaded and returned.
 //   - idx == nil, err == nil: no usable snapshot right now.
 //   - err != nil: only ctx.Err() is propagated. List/get/download failures
 //     are logged and treated as "no hit" — this lookup is an optimisation,
 //     not a correctness check.
+//
+// probeMaxAge <= 0 means "no age limit" — the probe walks the namespace
+// and accepts any same-version snapshot.
 func (b *bleveBackend) tryDownloadColdStartSnapshot(
 	ctx context.Context,
 	key resource.NamespacedResource,
@@ -656,9 +640,6 @@ func (b *bleveBackend) tryDownloadColdStartSnapshot(
 	probeMaxAge time.Duration,
 	logger log.Logger,
 ) (bleve.Index, string, int64, error) {
-	if probeMaxAge <= 0 {
-		return nil, "", 0, nil
-	}
 	idx, name, rv, err := b.tryDownloadFreshSameVersionSnapshot(
 		ctx, key, resourceDir, lastImportTime, probeMaxAge,
 		snapshotPolicyColdStart, "search.remote_index_snapshot.download_cold_start",

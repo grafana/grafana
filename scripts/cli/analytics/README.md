@@ -2,11 +2,11 @@
 
 ## What is the analytics framework?
 
-The analytics framework is a typed, self-documenting system for defining and tracking product analytics events in Grafana. It is built around `defineFeatureEvents`, a factory exported from `@grafana/runtime/internal`, which produces strongly-typed event reporters. Events defined with this factory are automatically discoverable by the report script in this folder.
+The analytics framework is a typed, self-documenting system for defining and tracking product analytics events in Grafana. It is built around `defineFeatureEvents`, a factory exported from `@grafana/runtime/unstable`, which produces strongly-typed event reporters. Events defined with this factory are automatically discoverable by the report script in this folder.
 
 The framework is split into two parts with distinct responsibilities:
 
-- **Framework library** (`packages/grafana-runtime/src/internal/analyticsFramework/`): production code that ships with Grafana. It exports the `defineFeatureEvents` factory and the `EventProperty` base type.
+- **Framework library** (`packages/grafana-runtime/src/analyticsFramework/`): production code that ships with Grafana. It exports the `defineFeatureEvents` factory and the `EventProperty` base type.
 - **Report generator** (`scripts/cli/analytics/`): a developer tool that runs offline and is never bundled with the application. It reads the TypeScript AST to find every event declared with the factory and writes a human-readable catalogue.
 
 The framework ensures that:
@@ -25,10 +25,10 @@ Create a `events.ts` file next to your feature. Ownership of events is resolved 
 
 ### 1. Define the property interfaces
 
-Each interface must extend `EventProperty` from `@grafana/runtime/internal`, and every property must have a JSDoc comment:
+Each interface must extend `EventProperty` from `@grafana/runtime/unstable`, and every property must have a JSDoc comment:
 
 ```ts
-import { type EventProperty } from '@grafana/runtime/internal';
+import { type EventProperty } from '@grafana/runtime/unstable';
 
 export interface ThemeChanged extends EventProperty {
   /** Whether the preference being changed belongs to an org, team, or individual user. */
@@ -64,7 +64,7 @@ Events can be declared in two ways. Both are fully supported by the report scrip
 Each event is exported as its own `const`. This works well for small, cohesive sets of events. The JSDoc comment above each export becomes its description in the report.
 
 ```ts
-import { defineFeatureEvents } from '@grafana/runtime/internal';
+import { defineFeatureEvents } from '@grafana/runtime/unstable';
 import { type ThemeChanged, type LanguageChanged } from './types';
 
 const createSharedPreferencesEvents = defineFeatureEvents('grafana', 'preferences');
@@ -81,7 +81,7 @@ export const languageChanged = createSharedPreferencesEvents<LanguageChanged>('l
 All events are collected into a single exported `const` object. This is useful for larger feature areas where events are used together. Each property of the object must have a JSDoc comment. The object can also spread another events object to inherit and override entries:
 
 ```ts
-import { defineFeatureEvents } from '@grafana/runtime/internal';
+import { defineFeatureEvents } from '@grafana/runtime/unstable';
 import { type LoadedProperties, type ItemClickedProperties } from './types';
 
 const newDashboardLibraryInteraction = defineFeatureEvents('grafana', 'dashboard_library', {

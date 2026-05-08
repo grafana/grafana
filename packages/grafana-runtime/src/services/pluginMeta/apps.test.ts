@@ -19,9 +19,9 @@ const initPluginMetasMock = jest.mocked(initPluginMetas);
 const getGrafanaExploretracesApp = () =>
   structuredClone(v0alpha1Response.items.find((a) => a.spec.pluginJson.id === 'grafana-exploretraces-app'));
 
-describe('when useMTPlugins flag is enabled', () => {
+describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: true });
+    setTestFlags({ 'plugins.useMTPlugins': true });
   });
 
   afterAll(() => {
@@ -106,7 +106,7 @@ describe('when useMTPlugins flag is enabled', () => {
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
             'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-            { type: 'app' }
+            { pluginType: 'app' }
           );
         }
       );
@@ -119,7 +119,7 @@ describe('when useMTPlugins flag is enabled', () => {
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
             'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-            { type: 'app' }
+            { pluginType: 'app' }
           );
         }
       );
@@ -180,9 +180,9 @@ describe('when useMTPlugins flag is enabled', () => {
   });
 });
 
-describe('when useMTPlugins flag is disabled', () => {
+describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
+    setTestFlags({ 'plugins.useMTPlugins': false });
   });
 
   afterAll(() => {

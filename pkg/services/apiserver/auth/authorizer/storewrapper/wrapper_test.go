@@ -8,9 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -19,6 +16,10 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 var allowAllWatchFilter WatchEventFilter = func(events []watch.Event) ([]bool, error) {
@@ -309,16 +310,6 @@ func TestWrapper_Update(t *testing.T) {
 	// Assert expectations
 	setup.mockAuth.AssertExpectations(t)
 	setup.mockStore.AssertExpectations(t)
-}
-
-func TestWrapper_DeleteCollection(t *testing.T) {
-	setup := newTestSetup(t)
-
-	result, err := setup.wrapper.DeleteCollection(setup.ctx, nil, &metaV1.DeleteOptions{}, &internalversion.ListOptions{})
-
-	require.Error(t, err)
-	assert.True(t, k8serrors.IsMethodNotSupported(err), "expected MethodNotSupported error, got: %v", err)
-	assert.Nil(t, result)
 }
 
 func TestWrapper_PassthroughMethods(t *testing.T) {

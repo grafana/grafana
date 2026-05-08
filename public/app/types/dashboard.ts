@@ -85,6 +85,9 @@ export interface DashboardMeta {
   // This property is not persisted in the DB but its existence is controlled by the API
   reloadOnParamsChange?: boolean;
 
+  /** True when no custom home dashboard is configured (the platform default should be used). */
+  isDefaultHome?: boolean;
+
   // Conversion status from the API response, indicating if the dashboard was converted from another version
   conversionStatus?: {
     storedVersion?: string;

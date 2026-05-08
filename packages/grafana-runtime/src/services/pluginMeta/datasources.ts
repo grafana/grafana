@@ -2,6 +2,7 @@ import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
 import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
@@ -83,7 +84,7 @@ function setMetas(metas: PluginMetasResponse) {
     // fallback to config.datasources from bootdata
     // eslint-disable-next-line no-restricted-syntax
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
-    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, PluginType.datasource);
+    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, { pluginType: PluginType.datasource });
     return;
   }
 
@@ -92,7 +93,7 @@ function setMetas(metas: PluginMetasResponse) {
 }
 
 async function initDatasourcePluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     // eslint-disable-next-line no-restricted-syntax
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
     return;
@@ -138,7 +139,7 @@ export function setDatasourcePluginMetas(override: DatasourcePluginMetas): void 
 }
 
 export async function refetchDatasourcePluginMetas(settings?: FrontendSettings): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     const resolved = settings ?? (await getBackendSrv().get<FrontendSettings>('/api/frontend/settings'));
     setDatasourcesAndAliases(extractFromConfig(resolved.datasources));
     return;
