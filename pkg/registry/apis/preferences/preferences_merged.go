@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"dario.cat/mergo"
@@ -15,7 +16,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -96,19 +96,8 @@ func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder
 
 func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
-	}
-	ns := user.GetNamespace() // namespace not in context!
 
-	if s.lister == nil {
-		errhttp.Write(ctx, fmt.Errorf("lister is not configured"), w)
-		return
-	}
-
-	list, err := s.lister.ListPreferences(ctx, nil)
+	list, err := s.lister.ListPreferences(r.Context(), nil)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
@@ -119,57 +108,54 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 		errhttp.Write(ctx, err, w)
 		return
 	}
-	p.Namespace = ns
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(p)
 }
 
-// items should be in ascending order of importance
+// items should be in descending order of importance — for each field, the
+// first non-nil value wins; the configured defaults fill anything still empty.
 func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences) (*preferences.Preferences, error) {
-	if len(items) == 0 {
-		// With no explicit preferences, return the default
-		return &preferences.Preferences{
-			TypeMeta:   preferences.PreferencesResourceInfo.TypeMeta(),
-			ObjectMeta: v1.ObjectMeta{},
-			Spec:       defaults,
-		}, nil
-	}
-
-	// The return value
 	p := &preferences.Preferences{
-		TypeMeta:   preferences.PreferencesResourceInfo.TypeMeta(),
-		ObjectMeta: v1.ObjectMeta{},
+		TypeMeta: preferences.PreferencesResourceInfo.TypeMeta(),
 	}
 
-	ts := v1.NewTime(time.Unix(0, 0))
-	items = append(items, preferences.Preferences{Spec: defaults})
-	for idx, v := range items {
-		if idx == 0 {
-			p.Spec = v.Spec
-		} else if err := mergo.Merge(&p.Spec, &v.Spec); err != nil {
+	sources := make([]string, 0, len(items))
+	var latest time.Time
+	for _, item := range items {
+		if err := mergo.Merge(&p.Spec, item.Spec); err != nil {
 			return nil, err
 		}
-
-		// Now check the max time
-		updated, ok := v.Annotations[utils.AnnoKeyUpdatedTimestamp]
-		if ok {
-			t, err := time.Parse(time.RFC3339, updated)
-			if err == nil && t.After(ts.Time) {
-				ts = v1.NewTime(t)
-				continue // no need to check the creation timestamp
-			}
+		if t := itemUpdatedAt(&item); t.After(latest) {
+			latest = t
 		}
-		if ts.Before(&v.CreationTimestamp) {
-			ts = v.CreationTimestamp
-		}
+		sources = append(sources, item.Name)
+	}
+	if err := mergo.Merge(&p.Spec, defaults); err != nil {
+		return nil, err
 	}
 
-	// Add an RV to know if anything changed
-	if !ts.IsZero() {
-		p.CreationTimestamp = ts
-		p.ResourceVersion = fmt.Sprintf("%d", ts.UnixMilli())
+	// Where did the preferences come from
+	p.Annotations = map[string]string{
+		preferences.APIGroup + "/source": strings.Join(sources, ","),
 	}
 
+	// An RV derived from the latest input lets clients tell when anything changed.
+	if !latest.IsZero() {
+		p.CreationTimestamp = v1.NewTime(latest)
+		p.ResourceVersion = fmt.Sprintf("%d", latest.UnixMilli())
+	}
 	return p, nil
+}
+
+// itemUpdatedAt returns the most recent of the item's creation timestamp and
+// its AnnoKeyUpdatedTimestamp annotation (when present and parseable).
+func itemUpdatedAt(item *preferences.Preferences) time.Time {
+	t := item.CreationTimestamp.Time
+	if updated, ok := item.Annotations[utils.AnnoKeyUpdatedTimestamp]; ok {
+		if u, err := time.Parse(time.RFC3339, updated); err == nil && u.After(t) {
+			t = u
+		}
+	}
+	return t
 }
