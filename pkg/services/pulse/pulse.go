@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -34,6 +35,8 @@ type Service interface {
 	ListThreads(ctx context.Context, q ListThreadsQuery) (PageResult[Thread], error)
 	ListAllThreads(ctx context.Context, q ListAllThreadsQuery) (PageResult[Thread], error)
 	ListPulses(ctx context.Context, q ListPulsesQuery) (PageResult[Pulse], error)
+	ListPanelMentions(ctx context.Context, q ListPanelMentionsQuery) ([]PanelMentionSummary, error)
+	ListParticipants(ctx context.Context, q ListParticipantsQuery) ([]ParticipantSummary, error)
 	Subscribe(ctx context.Context, cmd SubscribeCommand) error
 	Unsubscribe(ctx context.Context, cmd SubscribeCommand) error
 	MarkRead(ctx context.Context, cmd MarkReadCommand) error
@@ -425,6 +428,60 @@ func (s *PulseService) ListPulses(ctx context.Context, q ListPulsesQuery) (PageR
 		return PageResult[Pulse]{}, ErrThreadNotFound
 	}
 	return s.store.listPulses(ctx, q)
+}
+
+// ListPanelMentions returns the per-panel rollup of open threads on a
+// resource. Permission is gated at the API boundary by the same
+// dashboard-read check the rest of the Pulse surface uses.
+func (s *PulseService) ListPanelMentions(ctx context.Context, q ListPanelMentionsQuery) ([]PanelMentionSummary, error) {
+	if err := ensureThreadResource(q.ResourceKind, q.ResourceUID); err != nil {
+		return nil, err
+	}
+	return s.store.listPanelMentions(ctx, q)
+}
+
+// ListParticipants resolves the unique commenters on a resource into
+// dropdown-ready ParticipantSummary rows. Hydration mirrors the
+// thread/pulse author display path (login + name + gravatar URL) so
+// the frontend can render a participant chip identically to a thread
+// card avatar without bouncing through another endpoint.
+//
+// Users we cannot resolve via userSvc (deleted, foreign org) are
+// dropped from the result rather than rendered with a placeholder —
+// the dropdown should only offer rows the user can actually pick to
+// produce a meaningful filter.
+func (s *PulseService) ListParticipants(ctx context.Context, q ListParticipantsQuery) ([]ParticipantSummary, error) {
+	if err := ensureThreadResource(q.ResourceKind, q.ResourceUID); err != nil {
+		return nil, err
+	}
+	ids, err := s.store.listParticipantUserIDs(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	if len(ids) == 0 || s.userSvc == nil {
+		return []ParticipantSummary{}, nil
+	}
+	users, err := s.userSvc.ListByIdOrUID(ctx, nil, ids)
+	if err != nil {
+		s.log.Warn("failed to resolve pulse participants", "err", err)
+		return []ParticipantSummary{}, nil
+	}
+	out := make([]ParticipantSummary, 0, len(users))
+	for _, u := range users {
+		if u == nil {
+			continue
+		}
+		out = append(out, ParticipantSummary{
+			UserID:    u.ID,
+			Login:     u.Login,
+			Name:      u.Name,
+			AvatarURL: gravatarAvatarURL(u.Email),
+		})
+	}
+	// Sort by login so the dropdown is deterministic and the same
+	// participant always appears in the same slot across reloads.
+	sort.Slice(out, func(i, j int) bool { return out[i].Login < out[j].Login })
+	return out, nil
 }
 
 func (s *PulseService) Subscribe(ctx context.Context, cmd SubscribeCommand) error {

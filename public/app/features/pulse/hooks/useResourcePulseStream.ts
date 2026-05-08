@@ -56,6 +56,17 @@ export function useResourcePulseStream({ resourceKind, resourceUID, enabled }: A
             pulseApi.util.invalidateTags([
               { type: 'ResourceThreads', id: `${evt.resourceKind}:${evt.resourceUID}` },
               { type: 'ResourceVersion', id: `${evt.resourceKind}:${evt.resourceUID}` },
+              // PanelMentions feeds the per-panel title-bar indicator;
+              // every event that affects the thread list could also
+              // change which panels are mentioned, so bust this tag on
+              // the same channel.
+              { type: 'PanelMentions', id: `${evt.resourceKind}:${evt.resourceUID}` },
+              // Participants feeds the "Users" filter dropdown. Any
+              // pulse event can change the unique-author rollup (a new
+              // reply from a previously-unseen user, a deleted pulse
+              // dropping a user from the list), so we treat it the
+              // same as the other resource-scoped tags.
+              { type: 'Participants', id: `${evt.resourceKind}:${evt.resourceUID}` },
               { type: 'Thread', id: evt.threadUID },
               { type: 'Pulse', id: evt.threadUID },
             ])

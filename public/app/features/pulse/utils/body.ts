@@ -118,6 +118,54 @@ export function mentionMarkdownToken(m: PulseMention): string {
 }
 
 /**
+ * rewritePanelMentionsInMarkdown swaps `` `#oldName` `` inline-code tokens
+ * for the panel's current title. Panel ids are stable but titles aren't —
+ * rename a panel after it's been mentioned and every existing chip would
+ * otherwise read as the historical name forever, which is confusing
+ * ("see #Latency" pointing at a panel now called "Tail latency").
+ *
+ * The mention sidecar in the AST is the source of truth for which
+ * `<code>` spans were panel chips at compose time, so we drive the
+ * rewrite off it instead of pattern-matching arbitrary backticked
+ * `#text` (which could be a literal hashtag, a Markdown header inside
+ * code, etc).
+ *
+ * Falls back to the historical token when the panel has been deleted or
+ * isn't on the current dashboard — better stale text than a broken
+ * reference.
+ */
+export function rewritePanelMentionsInMarkdown(
+  markdown: string,
+  mentions: readonly PulseMention[],
+  panelTitlesById: ReadonlyMap<number, string>
+): string {
+  if (!markdown || mentions.length === 0 || panelTitlesById.size === 0) {
+    return markdown;
+  }
+  let out = markdown;
+  for (const m of mentions) {
+    if (m.kind !== 'panel') {
+      continue;
+    }
+    const panelId = parseInt(m.targetId, 10);
+    if (Number.isNaN(panelId)) {
+      continue;
+    }
+    const current = panelTitlesById.get(panelId);
+    if (!current || current === m.displayName) {
+      continue;
+    }
+    const oldToken = '`#' + (m.displayName ?? m.targetId) + '`';
+    const newToken = '`#' + current + '`';
+    // String#replaceAll keeps us out of regex-escape territory — panel
+    // titles can contain dots, parens, asterisks, and other characters
+    // that would need escaping inside a RegExp.
+    out = out.split(oldToken).join(newToken);
+  }
+  return out;
+}
+
+/**
  * bodyFromMarkdown wraps a markdown source plus its mention metadata
  * into the AST shape the backend expects. The AST stays the
  * source-of-truth for mention extraction (so notifications fan out
@@ -193,7 +241,12 @@ export function bodyToMarkdown(body: PulseBody): { text: string; mentions: Pulse
   }
 }
 
-function collectMentions(body: PulseBody): PulseMention[] {
+/**
+ * collectMentions walks a body's AST and returns every mention node in
+ * document order. Exported so renderers can drive panel-title rewrites
+ * off the mention sidecar instead of pattern-matching markdown text.
+ */
+export function collectMentions(body: PulseBody): PulseMention[] {
   const out: PulseMention[] = [];
   walk(body.root);
   return out;

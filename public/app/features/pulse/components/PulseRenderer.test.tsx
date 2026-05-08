@@ -80,6 +80,86 @@ describe('PulseRenderer', () => {
     expect(a.getAttribute('target')).toBe('_blank');
   });
 
+  it('rewrites markdown panel mention chips to the live panel title when renamed', () => {
+    const body: PulseBody = {
+      markdown: 'see `#OldName` for context',
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'see ' },
+              {
+                type: 'mention',
+                mention: { kind: 'panel', targetId: '7', displayName: 'OldName' },
+              },
+              { type: 'text', text: ' for context' },
+            ],
+          },
+        ],
+      },
+    };
+    const titles = new Map<number, string>([[7, 'NewName']]);
+    const { container } = render(<PulseRenderer body={body} panelTitlesById={titles} />);
+    // `#NewName` is now in the rendered markdown; the historical
+    // `#OldName` token is gone. Both checks matter — the first proves
+    // the rewrite happened, the second guards against a partial replace
+    // that left the stale label behind.
+    expect(container.textContent).toContain('#NewName');
+    expect(container.textContent).not.toContain('#OldName');
+  });
+
+  it('keeps the historical displayName when the panel was deleted', () => {
+    // No entry for panel id 7 in the live map = panel removed.
+    const body: PulseBody = {
+      markdown: 'see `#GoneName` for context',
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'see ' },
+              {
+                type: 'mention',
+                mention: { kind: 'panel', targetId: '7', displayName: 'GoneName' },
+              },
+              { type: 'text', text: ' for context' },
+            ],
+          },
+        ],
+      },
+    };
+    const titles = new Map<number, string>();
+    const { container } = render(<PulseRenderer body={body} panelTitlesById={titles} />);
+    expect(container.textContent).toContain('#GoneName');
+  });
+
+  it('rewrites AST-only panel mention chips to the live title (legacy bodies)', () => {
+    const body: PulseBody = {
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'see ' },
+              {
+                type: 'mention',
+                mention: { kind: 'panel', targetId: '7', displayName: 'OldName' },
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const titles = new Map<number, string>([[7, 'NewName']]);
+    render(<PulseRenderer body={body} panelTitlesById={titles} />);
+    expect(screen.getByText('#NewName')).toBeInTheDocument();
+    expect(screen.queryByText('#OldName')).toBeNull();
+  });
+
   it('renders an unknown node type as its plain children, not as HTML', () => {
     const body: PulseBody = {
       root: {

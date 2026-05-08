@@ -20,6 +20,7 @@ import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior } from './PanelMenuBehavior';
 import { PanelNotices } from './PanelNotices';
+import { PanelPulseMentions } from './PanelPulseMentions';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
@@ -72,6 +73,10 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       })
     );
     titleItems.push(new PanelNotices());
+    // Library panels honour the same Pulse mention indicator as
+    // dashboard-native panels — the icon keys off the dashboard
+    // panel id we already resolved above, not the library asset.
+    titleItems.push(new PanelPulseMentions({ panelId: dashboardPanelId }));
 
     let title;
     if (config.featureToggles.preferLibraryPanelTitle) {

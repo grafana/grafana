@@ -1,14 +1,32 @@
 import { css } from '@emotion/css';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ChangeEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Avatar, Box, Button, Card, EmptyState, Icon, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  Combobox,
+  type ComboboxOption,
+  EmptyState,
+  Field,
+  Icon,
+  Input,
+  LoadingPlaceholder,
+  Pagination,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 
 import {
   useCreateThreadMutation,
   useGetResourceVersionQuery,
   useGetThreadQuery,
+  useListParticipantsQuery,
+  useListPanelMentionsQuery,
   useListThreadsQuery,
 } from '../api/pulseApi';
 import { useResourcePulseStream } from '../hooks/useResourcePulseStream';
@@ -22,17 +40,34 @@ import { PulseThreadView } from './PulseThreadView';
 
 interface Props {
   resourceUID: string;
-  panelId?: number;
+  panelFilter?: number;
+  authorFilter?: number;
+  /** Free-form search needle. Empty / whitespace-only is no filter. */
+  searchFilter?: string;
   panels?: PanelSuggestion[];
   currentUserId?: number;
   isAdmin?: boolean;
   onMentionPanel?: (panelId: number) => void;
+  onPanelFilterChange?: (panelId: number | undefined) => void;
+  onAuthorFilterChange?: (userId: number | undefined) => void;
+  onSearchFilterChange?: (query: string | undefined) => void;
+  onClearFilters?: () => void;
   /** When set, the drawer auto-opens this thread on mount (deep link from
    *  the global Pulse overview). Cleared via onInitialThreadOpened so a
    *  subsequent "Back" doesn't snap back to the deep-linked thread. */
   initialThreadUID?: string;
   onInitialThreadOpened?: () => void;
 }
+
+/** Sentinel for the "no filter" Combobox option. Numeric panel/user
+ *  ids never collide with this string so we can encode it in the
+ *  same `value` slot. */
+const FILTER_ALL = '__all__';
+
+/** Debounce window for the free-form search input. Long enough to
+ *  avoid a request per keystroke on a slow link, short enough that
+ *  it doesn't feel laggy when the user pauses to read results. */
+const SEARCH_DEBOUNCE_MS = 250;
 
 // Page size for the threads list. The backend caps at 100 and defaults
 // to 50; we render in narrow drawer space so 10 keeps each card legible
@@ -51,11 +86,17 @@ const THREADS_PAGE_SIZE = 10;
  */
 export function PulseDrawerContent({
   resourceUID,
-  panelId,
+  panelFilter,
+  authorFilter,
+  searchFilter,
   panels,
   currentUserId,
   isAdmin = false,
   onMentionPanel,
+  onPanelFilterChange,
+  onAuthorFilterChange,
+  onSearchFilterChange,
+  onClearFilters,
   initialThreadUID,
   onInitialThreadOpened,
 }: Props): ReactNode {
@@ -74,22 +115,67 @@ export function PulseDrawerContent({
     setActiveThreadUID(initialThreadUID);
     onInitialThreadOpened?.();
   }, [initialThreadUID, onInitialThreadOpened]);
-  // cursorStack records the cursor used to load each visited page. Page 0
-  // is the empty list (no cursor); pushing the server's nextCursor onto
-  // the stack opens the next page; popping returns to the previous one.
-  // We avoid storing the data itself — RTK Query caches every (cursor,
-  // limit) tuple separately, so going back to a prior page is a cache
-  // hit rather than a refetch.
-  const [cursorStack, setCursorStack] = useState<string[]>([]);
-  const currentCursor = cursorStack[cursorStack.length - 1];
+  // 1-indexed page state. Offset pagination here (rather than a
+  // cursor stack) so the numbered pager can let the user click
+  // "Page 5" directly — cursor pagination would force them to walk
+  // forward through every prior page first. RTK Query caches each
+  // (page, filters) tuple, so revisiting a previous page is a cache
+  // hit, not a refetch.
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // When the user navigates to a different resource (e.g. switches
-  // dashboards while the drawer is open) the cursor we're holding is
-  // meaningless on the new resource — reset to the first page so the
-  // list always opens on what's most recent.
+  // When the user changes the resource OR any filter, the page index
+  // is meaningless against the new result set — reset to page 1 so
+  // the list always lands on the most-recent slice.
   useEffect(() => {
-    setCursorStack([]);
-  }, [resourceUID, panelId]);
+    setCurrentPage(1);
+  }, [resourceUID, panelFilter, authorFilter, searchFilter]);
+
+  // Local search state: tracks what the user is typing right now so
+  // the input stays responsive while we debounce the URL/network
+  // round-trip. We only push the trimmed value upstream — empty /
+  // whitespace-only edits should clear the URL key, not pin it to
+  // an empty string.
+  const [searchDraft, setSearchDraft] = useState(searchFilter ?? '');
+  // External resets (Clear filters, deep-link nav, etc.) need to
+  // overwrite whatever the user was typing. Compare against the
+  // canonical value so we don't fight the user mid-keystroke.
+  useEffect(() => {
+    setSearchDraft(searchFilter ?? '');
+  }, [searchFilter]);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+  const onSearchInput = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const next = event.target.value;
+      setSearchDraft(next);
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      debounceRef.current = setTimeout(() => {
+        const trimmed = next.trim();
+        onSearchFilterChange?.(trimmed === '' ? undefined : trimmed);
+      }, SEARCH_DEBOUNCE_MS);
+    },
+    [onSearchFilterChange]
+  );
+
+  // Live panel-id → title map. Powers the rename-resilient render of
+  // `#panel` mention chips in PulseRenderer, so a renamed panel
+  // immediately reflects across every thread instead of leaving the
+  // historical name baked into every existing pulse.
+  const panelTitlesById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const p of panels ?? []) {
+      map.set(p.id, p.title);
+    }
+    return map;
+  }, [panels]);
 
   // Polling fallback when Live is unavailable. Refetches every 15s; live
   // events will invalidate sooner. RTK dedupes within the cache.
@@ -100,13 +186,105 @@ export function PulseDrawerContent({
 
   useResourcePulseStream({ resourceKind: 'dashboard', resourceUID, enabled: !!resourceUID });
 
-  const { data, isLoading, isFetching } = useListThreadsQuery({
+  // Facet sources for the filter dropdowns. Both queries dedupe on
+  // their resource cache key so we can call them at the drawer level
+  // without worrying about wasteful round-trips when other Pulse UI
+  // (the title-bar icons) already requested the same data.
+  const { data: panelMentionsData } = useListPanelMentionsQuery(
+    { resourceKind: 'dashboard', resourceUID },
+    { skip: !resourceUID }
+  );
+  const { data: participantsData } = useListParticipantsQuery(
+    { resourceKind: 'dashboard', resourceUID },
+    { skip: !resourceUID }
+  );
+
+  const panelOptions = useMemo<Array<ComboboxOption<string>>>(() => {
+    const opts: Array<ComboboxOption<string>> = [
+      { value: FILTER_ALL, label: t('pulse.drawer.filter-panel-all', 'All panels') },
+    ];
+    for (const m of panelMentionsData?.mentions ?? []) {
+      // Resolve the live panel title from the dashboard scene's panel
+      // map; fall back to the historical title saved on the latest
+      // thread, then to "Panel #N" so the dropdown is never blank.
+      const title =
+        panelTitlesById.get(m.panelId) ??
+        m.latestThreadTitle ??
+        t('pulse.drawer.filter-panel-fallback', 'Panel #{{id}}', { id: m.panelId });
+      opts.push({ value: String(m.panelId), label: `#${title}` });
+    }
+    return opts;
+  }, [panelMentionsData, panelTitlesById]);
+
+  const userOptions = useMemo<Array<ComboboxOption<string>>>(() => {
+    const opts: Array<ComboboxOption<string>> = [
+      { value: FILTER_ALL, label: t('pulse.drawer.filter-user-all', 'All users') },
+    ];
+    for (const p of participantsData?.participants ?? []) {
+      const label = p.name?.trim() || p.login?.trim() || t('pulse.drawer.filter-user-fallback', 'User #{{id}}', { id: p.userId });
+      opts.push({ value: String(p.userId), label });
+    }
+    return opts;
+  }, [participantsData]);
+
+  const onPanelSelect = useCallback(
+    (option: ComboboxOption<string>) => {
+      // The "All" sentinel encodes the cleared state as a regular
+      // option value rather than relying on isClearable, which would
+      // show an X glyph users could miss when the dropdown already
+      // includes a labelled "All" row.
+      if (option.value === FILTER_ALL) {
+        onPanelFilterChange?.(undefined);
+        return;
+      }
+      const id = parseInt(option.value, 10);
+      onPanelFilterChange?.(Number.isNaN(id) ? undefined : id);
+    },
+    [onPanelFilterChange]
+  );
+
+  const onUserSelect = useCallback(
+    (option: ComboboxOption<string>) => {
+      if (option.value === FILTER_ALL) {
+        onAuthorFilterChange?.(undefined);
+        return;
+      }
+      const id = parseInt(option.value, 10);
+      onAuthorFilterChange?.(Number.isNaN(id) ? undefined : id);
+    },
+    [onAuthorFilterChange]
+  );
+
+  const hasFilters =
+    panelFilter !== undefined ||
+    authorFilter !== undefined ||
+    (searchFilter !== undefined && searchFilter.trim() !== '');
+
+  const { data, isLoading } = useListThreadsQuery({
     resourceKind: 'dashboard',
     resourceUID,
-    panelId,
+    panelId: panelFilter,
+    authorUserId: authorFilter,
+    q: searchFilter,
+    page: currentPage,
     limit: THREADS_PAGE_SIZE,
-    cursor: currentCursor,
   });
+
+  // Backend returns the total once it's known; derive the page count
+  // from it so the pager can render numbered buttons up-front. We
+  // clamp to at least 1 to avoid Pagination's 0-page edge case when
+  // the list is empty.
+  const totalCount = data?.totalCount ?? 0;
+  const numberOfPages = Math.max(1, Math.ceil(totalCount / THREADS_PAGE_SIZE));
+
+  // Defensive: a delete on the last page can leave us pointing past
+  // the end of the result set. Snap back to the new last page so the
+  // list isn't stranded blank between fetches.
+  useEffect(() => {
+    if (currentPage > numberOfPages) {
+      setCurrentPage(numberOfPages);
+    }
+  }, [currentPage, numberOfPages]);
 
   const [createThread, createThreadState] = useCreateThreadMutation();
 
@@ -147,6 +325,7 @@ export function PulseDrawerContent({
         <PulseThreadView
           thread={activeThread}
           panels={panels}
+          panelTitlesById={panelTitlesById}
           currentUserId={currentUserId}
           isAdmin={isAdmin}
           onMentionPanel={onMentionPanel}
@@ -162,9 +341,7 @@ export function PulseDrawerContent({
       <Box padding={2}>
         <Stack direction="column" gap={2}>
           <Text element="h3" weight="medium">
-            {panelId
-              ? t('pulse.drawer.start-on-panel', 'Start a thread on panel #{{id}}', { id: panelId })
-              : t('pulse.drawer.start-on-dashboard', 'Start a thread on this dashboard')}
+            {t('pulse.drawer.start-on-dashboard', 'Start a thread on this dashboard')}
           </Text>
           <PulseComposer
             panels={panels}
@@ -176,16 +353,20 @@ export function PulseDrawerContent({
               const res = await createThread({
                 resourceKind: 'dashboard',
                 resourceUID,
-                panelId,
+                // Filters narrow the *view* of existing threads but
+                // never anchor a brand-new thread to a panel — the
+                // user can mention `#panel:N` explicitly if they want
+                // to associate it. This keeps the affordance honest
+                // (filter ≠ scope) and avoids surprise anchoring.
                 title: buildThreadPreviewTitle(body.markdown ?? bodyToText(body)),
                 body,
               }).unwrap();
               setComposing(false);
-              // Reset to page 0 so the user lands back on a list that
-              // includes the thread they just authored when they
-              // navigate back, rather than being stranded on a stale
-              // page two.
-              setCursorStack([]);
+              // Snap back to page 1 so the user lands on the list
+              // that now includes their new thread (it sorts to the
+              // top by last_pulse_at) rather than being stranded on
+              // a deeper page that no longer makes sense.
+              setCurrentPage(1);
               setActiveThreadUID(res.thread.uid);
             }}
           />
@@ -194,21 +375,91 @@ export function PulseDrawerContent({
     );
   }
 
+  const panelSelectValue = panelFilter !== undefined ? String(panelFilter) : FILTER_ALL;
+  const userSelectValue = authorFilter !== undefined ? String(authorFilter) : FILTER_ALL;
+  const showFilteredEmpty = !isLoading && (data?.items.length ?? 0) === 0 && hasFilters;
+  const showUnfilteredEmpty = !isLoading && (data?.items.length ?? 0) === 0 && !hasFilters;
+
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
+        <Field
+          className={styles.searchField}
+          label={t('pulse.drawer.filter-search-label', 'Search threads')}
+          noMargin
+        >
+          <Input
+            value={searchDraft}
+            onChange={onSearchInput}
+            placeholder={t(
+              'pulse.drawer.filter-search-placeholder',
+              'Search title or body — matches replies too'
+            )}
+            prefix={<Icon name="search" />}
+            aria-label={t('pulse.drawer.filter-search-aria', 'Filter threads by text')}
+          />
+        </Field>
+        <Stack direction="row" gap={1} alignItems="flex-end" wrap="wrap">
+          <Field
+            className={styles.filterField}
+            label={t('pulse.drawer.filter-panel-label', 'Panel')}
+            noMargin
+          >
+            <Combobox
+              value={panelSelectValue}
+              options={panelOptions}
+              onChange={onPanelSelect}
+              aria-label={t('pulse.drawer.filter-panel-aria', 'Filter threads by panel')}
+            />
+          </Field>
+          <Field
+            className={styles.filterField}
+            label={t('pulse.drawer.filter-user-label', 'User')}
+            noMargin
+          >
+            <Combobox
+              value={userSelectValue}
+              options={userOptions}
+              onChange={onUserSelect}
+              aria-label={t('pulse.drawer.filter-user-aria', 'Filter threads by user')}
+            />
+          </Field>
+          {hasFilters && (
+            <Button
+              size="sm"
+              variant="secondary"
+              fill="text"
+              onClick={() => onClearFilters?.()}
+            >
+              {t('pulse.drawer.filter-clear', 'Clear filters')}
+            </Button>
+          )}
+        </Stack>
         <Stack justifyContent="space-between" alignItems="center">
           <Text element="h3" weight="medium">
-            {panelId
-              ? t('pulse.drawer.threads-on-panel', 'Threads on panel #{{id}}', { id: panelId })
-              : t('pulse.drawer.threads-on-dashboard', 'Threads on this dashboard')}
+            {t('pulse.drawer.threads-on-dashboard', 'Threads on this dashboard')}
           </Text>
           <Button size="sm" icon="plus" onClick={() => setComposing(true)}>
             {t('pulse.drawer.new-thread', 'Start a thread')}
           </Button>
         </Stack>
         {isLoading && <LoadingPlaceholder text={t('pulse.drawer.loading', 'Loading threads…')} />}
-        {!isLoading && (data?.items.length ?? 0) === 0 && (
+        {showFilteredEmpty && (
+          <EmptyState
+            variant="not-found"
+            message={t('pulse.drawer.empty-filtered-title', 'No threads match the current filters')}
+            button={
+              <Button variant="secondary" onClick={() => onClearFilters?.()}>
+                {t('pulse.drawer.empty-filtered-cta', 'Clear filters')}
+              </Button>
+            }
+          >
+            <Trans i18nKey="pulse.drawer.empty-filtered-body">
+              Try a different panel or user, or clear the filters to see every thread on this dashboard.
+            </Trans>
+          </EmptyState>
+        )}
+        {showUnfilteredEmpty && (
           <EmptyState
             variant="not-found"
             message={t('pulse.drawer.empty-title', 'Nothing to discuss yet')}
@@ -225,43 +476,31 @@ export function PulseDrawerContent({
         )}
         <div className={styles.list}>
           {data?.items.map((t) => (
-            <ThreadCard key={t.uid} thread={t} onClick={() => setActiveThreadUID(t.uid)} />
+            <ThreadCard
+              key={t.uid}
+              thread={t}
+              panelTitlesById={panelTitlesById}
+              onClick={() => setActiveThreadUID(t.uid)}
+            />
           ))}
         </div>
-        {(data?.hasMore || cursorStack.length > 0) && (
-          <Stack justifyContent="space-between" alignItems="center">
-            <Button
-              size="sm"
-              variant="secondary"
-              icon="angle-left"
-              disabled={cursorStack.length === 0 || isFetching}
-              onClick={() => setCursorStack((prev) => prev.slice(0, -1))}
-            >
-              {t('pulse.drawer.prev-page', 'Previous')}
-            </Button>
-            <Text variant="bodySmall" color="secondary">
-              {/*
-                The cursor stack length is also the zero-based index of
-                the page we're viewing, so +1 gives a 1-based label that
-                matches what users expect when they read "Page N".
-              */}
-              {t('pulse.drawer.page-indicator', 'Page {{page}}', { page: cursorStack.length + 1 })}
-            </Text>
-            <Button
-              size="sm"
-              variant="secondary"
-              icon="angle-right"
-              disabled={!data?.hasMore || isFetching}
-              onClick={() => {
-                if (data?.nextCursor) {
-                  setCursorStack((prev) => [...prev, data.nextCursor!]);
-                }
-              }}
-            >
-              {t('pulse.drawer.next-page', 'Next')}
-            </Button>
-          </Stack>
-        )}
+        {/*
+          Numbered pager. `hideWhenSinglePage` collapses to nothing
+          when only page 1 exists, so the empty-state and small-list
+          flows stay clean. The active page renders in primary
+          (blue) by Pagination's own logic — no extra styling
+          required to match the user's "highlight current in blue"
+          ask. Container styles below keep the pager centered with
+          some breathing room from the list above.
+        */}
+        <div className={styles.pagination}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={(page) => setCurrentPage(page)}
+            hideWhenSinglePage
+          />
+        </div>
       </Stack>
     </Box>
   );
@@ -269,10 +508,11 @@ export function PulseDrawerContent({
 
 interface ThreadCardProps {
   thread: PulseThread;
+  panelTitlesById?: ReadonlyMap<number, string>;
   onClick: () => void;
 }
 
-function ThreadCard({ thread, onClick }: ThreadCardProps): ReactNode {
+function ThreadCard({ thread, panelTitlesById, onClick }: ThreadCardProps): ReactNode {
   const styles = useStyles2(getStyles);
   const authorLabel = thread.authorName || thread.authorLogin || t('pulse.drawer.thread-author-unknown', 'User');
   // Prefer rendering the first pulse's AST so mentions appear as styled
@@ -298,7 +538,11 @@ function ThreadCard({ thread, onClick }: ThreadCardProps): ReactNode {
       </Card.Figure>
       <Card.Heading>
         <div className={styles.previewBox}>
-          {thread.previewBody ? <PulseRenderer body={thread.previewBody} /> : headingFallback}
+          {thread.previewBody ? (
+            <PulseRenderer body={thread.previewBody} panelTitlesById={panelTitlesById} />
+          ) : (
+            headingFallback
+          )}
         </div>
       </Card.Heading>
       <Card.Description>
@@ -371,6 +615,30 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: theme.spacing(4),
     borderRadius: theme.shape.radius.circle,
     background: theme.colors.background.secondary,
+  }),
+  // Each filter Field grows to share row width 50/50; small minimum so
+  // long panel titles can still wrap into the dropdown without
+  // collapsing the dropdown's hit area below something usable on
+  // narrow viewports.
+  filterField: css({
+    flex: '1 1 0',
+    minWidth: theme.spacing(20),
+    marginBottom: 0,
+  }),
+  // Search field spans the full row above the dropdowns. Margin is
+  // owned by the parent Stack's gap so the field itself stays flush.
+  searchField: css({
+    width: '100%',
+    marginBottom: 0,
+  }),
+  // Pagination centers itself within this wrapper so the numbered
+  // buttons sit balanced under the list rather than left-aligned
+  // against the card edge. We don't use Stack here because
+  // Pagination already manages its own internal flex layout.
+  pagination: css({
+    display: 'flex',
+    justifyContent: 'center',
+    paddingTop: theme.spacing(1),
   }),
   // Closed threads get a pill that visually breaks from the row's
   // running prose so it reads as state rather than as more metadata.

@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -175,42 +177,91 @@ func (s *store) getPulseByUID(ctx context.Context, orgID int64, uid string) (Pul
 // listThreads returns the most-recently-active threads for a resource. The
 // caller is responsible for already authorizing access to the parent
 // resource (we trust that here and only filter by org).
+//
+// All three filters share one rule: a match on any non-deleted child
+// pulse lifts its parent thread into the result, so the drawer
+// behaves the way users mentally model a "thread" (root + replies as
+// one unit) instead of forcing them to expand each thread to find
+// the pulse that actually matches.
+//
+//   - PanelID: (anchored to panel) OR (any pulse on the thread carries
+//     a `#panel:N` chip). The mention fan-out is denormalized into
+//     pulse_mention with thread_uid per row, so the sub-select picks
+//     up replies for free without a JOIN to pulse.
+//   - AuthorUserID: (created_by) OR (the user authored any non-deleted
+//     pulse on the thread). Same shape as listAllThreads's "Mine"
+//     filter, scoped to one resource. Hits the (org_id,
+//     author_user_id) prefix on pulse so cost stays cheap on chatty
+//     dashboards.
+//   - Query: case-insensitive substring match against either the
+//     thread title or the body_text of any non-deleted pulse on the
+//     thread. Identical structure to listAllThreads's search clause —
+//     LOWER(...) keeps behavior stable across SQLite, MySQL and
+//     Postgres without depending on collation defaults.
 func (s *store) listThreads(ctx context.Context, q ListThreadsQuery) (PageResult[Thread], error) {
 	if q.Limit <= 0 || q.Limit > 100 {
 		q.Limit = 50
 	}
-
-	c, err := decodeCursor(q.Cursor)
-	if err != nil {
-		return PageResult[Thread]{}, err
+	if q.Page <= 0 {
+		q.Page = 1
 	}
 
-	threads := make([]Thread, 0, q.Limit+1)
-	err = s.sql.WithDbSession(ctx, func(sess *db.Session) error {
-		sb := sess.Where("org_id = ? AND resource_kind = ? AND resource_uid = ?", q.OrgID, q.ResourceKind, q.ResourceUID)
-		if q.PanelID != nil {
-			sb = sb.And("panel_id = ?", *q.PanelID)
+	threads := make([]Thread, 0, q.Limit)
+	var total int64
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		// xorm consumes filter conditions on Run, so we rebuild the
+		// session via this helper to apply the same WHERE clause to
+		// both the Count and the Find. Mirrors listAllThreads.
+		applyFilters := func() *xorm.Session {
+			sb := sess.Where("org_id = ? AND resource_kind = ? AND resource_uid = ?", q.OrgID, q.ResourceKind, q.ResourceUID)
+			if q.PanelID != nil {
+				sb = sb.And(
+					"(panel_id = ? OR uid IN (SELECT thread_uid FROM pulse_mention WHERE org_id = ? AND kind = ? AND target_id = ?))",
+					*q.PanelID, q.OrgID, MentionKindPanel, strconv.FormatInt(*q.PanelID, 10),
+				)
+			}
+			if q.AuthorUserID != nil {
+				sb = sb.And(
+					"(created_by = ? OR uid IN (SELECT thread_uid FROM pulse WHERE org_id = ? AND deleted = ? AND author_user_id = ?))",
+					*q.AuthorUserID, q.OrgID, false, *q.AuthorUserID,
+				)
+			}
+			if needle := strings.TrimSpace(q.Query); needle != "" {
+				like := "%" + strings.ToLower(needle) + "%"
+				sb = sb.And(
+					"(LOWER(title) LIKE ? OR uid IN (SELECT thread_uid FROM pulse WHERE org_id = ? AND deleted = ? AND LOWER(body_text) LIKE ?))",
+					like, q.OrgID, false, like,
+				)
+			}
+			return sb
 		}
-		if c.Created != "" {
-			sb = sb.And("(last_pulse_at < ? OR (last_pulse_at = ? AND uid < ?))", c.Created, c.Created, c.UID)
+
+		n, err := applyFilters().Count(&Thread{})
+		if err != nil {
+			return err
 		}
-		return sb.OrderBy("last_pulse_at DESC, uid DESC").Limit(q.Limit + 1).Find(&threads)
+		total = n
+
+		offset := (q.Page - 1) * q.Limit
+		// Tie-break on uid (deterministic) so two threads sharing a
+		// last_pulse_at don't shuffle between pages on different
+		// cursor positions — same pattern as before, but now the
+		// pager is offset-driven rather than cursor-driven.
+		return applyFilters().
+			OrderBy("last_pulse_at DESC, uid DESC").
+			Limit(q.Limit, offset).
+			Find(&threads)
 	})
 	if err != nil {
 		return PageResult[Thread]{}, err
 	}
 
-	res := PageResult[Thread]{Items: threads}
-	if len(threads) > q.Limit {
-		res.HasMore = true
-		last := threads[q.Limit-1]
-		res.Items = threads[:q.Limit]
-		res.NextCursor = encodeCursor(cursor{
-			Created: last.LastPulseAt.UTC().Format(time.RFC3339Nano),
-			UID:     last.UID,
-		})
-	}
-	return res, nil
+	return PageResult[Thread]{
+		Items:      threads,
+		Page:       q.Page,
+		TotalCount: total,
+		HasMore:    int64(q.Page*q.Limit) < total,
+	}, nil
 }
 
 // listAllThreads returns the most-recently-active threads across every
@@ -370,6 +421,208 @@ func (s *store) listPulses(ctx context.Context, q ListPulsesQuery) (PageResult[P
 		})
 	}
 	return res, nil
+}
+
+// listPanelMentions rolls up open threads that touch each panel on a
+// resource. A thread "touches" a panel when it is anchored to that
+// panel (Thread.PanelID) or when any of its pulses contain a #panel
+// mention chip pointing at it. Both conditions are folded into a
+// single per-panel summary so the title-bar indicator lights up for
+// either signal without forcing the frontend to make two calls.
+//
+// Implementation note: we issue two small queries and merge in Go
+// rather than UNION + GROUP BY in SQL. The cross-database type
+// coercion (pulse_thread.panel_id is INT, pulse_mention.target_id is
+// VARCHAR) and the "latest thread title" projection both get gnarlier
+// to express portably than the merge cost saves. Both queries hit
+// existing indexes (pulse_thread (org_id, resource_kind, resource_uid)
+// and pulse_mention (org_id, kind, target_id)) and a typical dashboard
+// has tens of panels and hundreds of threads at most, so the merge
+// runs over at most a few hundred rows.
+func (s *store) listPanelMentions(ctx context.Context, q ListPanelMentionsQuery) ([]PanelMentionSummary, error) {
+	type row struct {
+		PanelID     int64
+		ThreadUID   string
+		LastPulseAt time.Time
+		Title       string
+	}
+
+	rows := make([]row, 0)
+
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		// Anchored threads: thread.panel_id directly identifies the panel.
+		anchored := make([]Thread, 0)
+		if err := sess.Table(&Thread{}).
+			Where("org_id = ? AND resource_kind = ? AND resource_uid = ? AND panel_id IS NOT NULL AND closed = ?",
+				q.OrgID, q.ResourceKind, q.ResourceUID, false).
+			Cols("uid", "panel_id", "title", "last_pulse_at").
+			Find(&anchored); err != nil {
+			return err
+		}
+		for _, t := range anchored {
+			if t.PanelID == nil {
+				continue
+			}
+			rows = append(rows, row{
+				PanelID:     *t.PanelID,
+				ThreadUID:   t.UID,
+				LastPulseAt: t.LastPulseAt,
+				Title:       t.Title,
+			})
+		}
+
+		// Mentioned threads: join via the denormalized pulse_mention
+		// table. Mentions on the same thread collapse to one row per
+		// (panel, thread) pair via DISTINCT — a single thread can mention
+		// the same panel from many pulses.
+		type mentionRow struct {
+			TargetID    string    `xorm:"target_id"`
+			ThreadUID   string    `xorm:"thread_uid"`
+			LastPulseAt time.Time `xorm:"last_pulse_at"`
+			Title       string    `xorm:"title"`
+		}
+		mentioned := make([]mentionRow, 0)
+		if err := sess.SQL(`
+			SELECT DISTINCT m.target_id, t.uid AS thread_uid, t.last_pulse_at, t.title
+			FROM pulse_mention m
+			JOIN pulse_thread t ON m.thread_uid = t.uid AND m.org_id = t.org_id
+			WHERE m.org_id = ? AND m.kind = ?
+			  AND t.resource_kind = ? AND t.resource_uid = ? AND t.closed = ?`,
+			q.OrgID, MentionKindPanel,
+			q.ResourceKind, q.ResourceUID, false,
+		).Find(&mentioned); err != nil {
+			return err
+		}
+		for _, m := range mentioned {
+			// Mention.TargetID is a string column because user mentions
+			// also live in this table. For panel mentions the composer
+			// always writes a numeric id, but defensive parsing here
+			// keeps a malformed target_id (manual API caller, future
+			// schema change, etc.) from blowing up the whole rollup.
+			pid, parseErr := strconv.ParseInt(strings.TrimSpace(m.TargetID), 10, 64)
+			if parseErr != nil {
+				continue
+			}
+			rows = append(rows, row{
+				PanelID:     pid,
+				ThreadUID:   m.ThreadUID,
+				LastPulseAt: m.LastPulseAt,
+				Title:       m.Title,
+			})
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Merge: per panel, dedupe threads (a thread may be anchored AND
+	// mentioned), pick the most-recently-active one as the click
+	// target, and sum the distinct count. Map iteration order is
+	// non-deterministic in Go, so we sort the final slice by panel id
+	// to keep the wire payload stable across calls.
+	type bucket struct {
+		threads      map[string]struct{}
+		latestUID    string
+		latestAt     time.Time
+		latestTitle  string
+	}
+	byPanel := make(map[int64]*bucket)
+	for _, r := range rows {
+		b, ok := byPanel[r.PanelID]
+		if !ok {
+			b = &bucket{threads: make(map[string]struct{})}
+			byPanel[r.PanelID] = b
+		}
+		if _, seen := b.threads[r.ThreadUID]; seen {
+			// Don't downgrade latestAt if we re-encounter the same thread
+			// via the other code path; the timestamps come from the same
+			// pulse_thread row so they match anyway.
+			continue
+		}
+		b.threads[r.ThreadUID] = struct{}{}
+		if r.LastPulseAt.After(b.latestAt) || b.latestUID == "" {
+			b.latestAt = r.LastPulseAt
+			b.latestUID = r.ThreadUID
+			b.latestTitle = r.Title
+		}
+	}
+
+	out := make([]PanelMentionSummary, 0, len(byPanel))
+	for pid, b := range byPanel {
+		out = append(out, PanelMentionSummary{
+			PanelID:           pid,
+			ThreadCount:       len(b.threads),
+			LatestThreadUID:   b.latestUID,
+			LatestThreadTitle: b.latestTitle,
+		})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].PanelID < out[j].PanelID })
+	return out, nil
+}
+
+// listParticipantUserIDs returns the unique non-zero user ids that have
+// either started a thread or posted a non-deleted pulse on the resource.
+// Closed threads are intentionally counted: a user who replied on a now-
+// closed thread should still appear in the participants filter so they
+// can find their own contribution. The service layer hydrates these ids
+// into ParticipantSummary rows via userSvc.ListByIdOrUID.
+//
+// We issue two queries and merge in Go to keep the SQL portable across
+// SQLite, MySQL and Postgres — UNION-ing into a derived table works on
+// all three but xorm's session API doesn't expose a clean way to select
+// from a subquery, and the merge cost is bounded by the number of
+// participants on a single dashboard (tens at most).
+func (s *store) listParticipantUserIDs(ctx context.Context, q ListParticipantsQuery) ([]int64, error) {
+	seen := make(map[int64]struct{})
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		// Thread starters: created_by from each thread on the resource.
+		type starter struct {
+			CreatedBy int64 `xorm:"created_by"`
+		}
+		starters := make([]starter, 0)
+		if err := sess.Table(&Thread{}).
+			Where("org_id = ? AND resource_kind = ? AND resource_uid = ?", q.OrgID, q.ResourceKind, q.ResourceUID).
+			Cols("created_by").Find(&starters); err != nil {
+			return err
+		}
+		for _, s := range starters {
+			if s.CreatedBy > 0 {
+				seen[s.CreatedBy] = struct{}{}
+			}
+		}
+
+		// Repliers: non-deleted pulse rows whose thread is on this
+		// resource. The join key (thread_uid, org_id) is covered by the
+		// pulse_thread unique index so the planner stays cheap.
+		type replier struct {
+			AuthorUserID int64 `xorm:"author_user_id"`
+		}
+		repliers := make([]replier, 0)
+		if err := sess.SQL(`
+			SELECT DISTINCT p.author_user_id
+			FROM pulse p
+			JOIN pulse_thread t ON p.thread_uid = t.uid AND p.org_id = t.org_id
+			WHERE t.org_id = ? AND t.resource_kind = ? AND t.resource_uid = ?
+			  AND p.deleted = ? AND p.author_user_id > 0`,
+			q.OrgID, q.ResourceKind, q.ResourceUID, false,
+		).Find(&repliers); err != nil {
+			return err
+		}
+		for _, r := range repliers {
+			seen[r.AuthorUserID] = struct{}{}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]int64, 0, len(seen))
+	for id := range seen {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	return ids, nil
 }
 
 // updatePulseBody updates body_text + body_json + edited flag. Mention rows

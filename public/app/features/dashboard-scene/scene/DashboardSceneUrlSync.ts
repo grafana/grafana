@@ -155,8 +155,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
  * overlay with the correct initial state.
  *
  * Accepted shapes:
- *   - "open"          → empty drawer
- *   - "panel-<id>"    → drawer scoped to a panel
+ *   - "open"          → empty drawer (filters live on the separate
+ *                       `pulsePanel` / `pulseUser` URL keys, not here)
+ *   - "panel-<id>"    → back-compat: pre-applies the panel filter
  *   - "thread-<uid>"  → drawer that auto-opens a specific thread
  *
  * Once the drawer mounts, its own `SceneObjectUrlSyncConfig` takes over.
@@ -165,7 +166,7 @@ function pulseDrawerFromUrlValue(value: string): PulseDrawer {
   if (value.startsWith('panel-')) {
     const id = parseInt(value.slice('panel-'.length), 10);
     if (!Number.isNaN(id)) {
-      return new PulseDrawer({ panelId: id });
+      return new PulseDrawer({ panelFilter: id });
     }
   }
   if (value.startsWith('thread-')) {

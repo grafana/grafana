@@ -9,6 +9,14 @@ import { type PulseMention } from '../types';
 interface Props {
   mention: PulseMention;
   onClick?: (mention: PulseMention) => void;
+  /**
+   * Live panel-id → title map for the dashboard the chip is rendered
+   * inside. When the mention's panel has been renamed since the chip
+   * was authored, we prefer the current title so the chip stays in
+   * sync with the dashboard. Pass undefined (or omit) on AST-only
+   * surfaces that don't know about the dashboard's panels.
+   */
+  panelTitlesById?: ReadonlyMap<number, string>;
 }
 
 /**
@@ -21,9 +29,23 @@ interface Props {
  * persistence. Even if a malicious displayName slipped through, the
  * worst it can do is render as text.
  */
-export function MentionChip({ mention, onClick }: Props): ReactNode {
+export function MentionChip({ mention, onClick, panelTitlesById }: Props): ReactNode {
   const styles = useStyles2(getStyles);
-  const label = mention.displayName ?? mention.targetId;
+  // Prefer the live dashboard title for panel mentions so a renamed
+  // panel doesn't leave its historical label stranded across every
+  // pulse that referenced it. Stored displayName is the fallback for
+  // user mentions and for panels that have been deleted (panel id no
+  // longer on the dashboard).
+  let label = mention.displayName ?? mention.targetId;
+  if (mention.kind === 'panel' && panelTitlesById) {
+    const id = parseInt(mention.targetId, 10);
+    if (!Number.isNaN(id)) {
+      const current = panelTitlesById.get(id);
+      if (current) {
+        label = current;
+      }
+    }
+  }
   const isPanel = mention.kind === 'panel';
   const className = isPanel ? styles.panel : styles.user;
   const prefix = isPanel ? '#' : '@';

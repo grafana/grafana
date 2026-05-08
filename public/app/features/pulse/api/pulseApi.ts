@@ -9,6 +9,8 @@ import {
   type EditPulseRequest,
   type MarkReadRequest,
   type PageResult,
+  type PanelMentionsResponse,
+  type ParticipantsResponse,
   type Pulse,
   type PulseThread,
   type ResourceKind,
@@ -19,7 +21,23 @@ interface ListThreadsArgs {
   resourceKind: ResourceKind;
   resourceUID: string;
   panelId?: number;
-  cursor?: string;
+  /**
+   * When set, narrows the result to threads the user started or
+   * replied on (matches the backend's AuthorUserID filter, which
+   * widens to repliers — not just thread starters). Powers the
+   * "Users" filter dropdown in the per-resource Pulse drawer.
+   */
+  authorUserId?: number;
+  /**
+   * Free-form substring search. Matches against the thread title or
+   * the body_text of any non-deleted pulse on the thread, so a hit
+   * inside a reply still surfaces its parent. Empty / whitespace-only
+   * values are treated as no filter by the backend.
+   */
+  q?: string;
+  /** 1-indexed page; the drawer pager renders numbered buttons that
+   *  jump straight to a page rather than walking forwards. */
+  page?: number;
   limit?: number;
 }
 
@@ -59,10 +77,18 @@ interface ResourceVersionArgs {
 export const pulseApi = createApi({
   reducerPath: 'pulseApi',
   baseQuery: createBaseQuery({ baseURL: '/api/pulse' }),
-  tagTypes: ['Thread', 'Pulse', 'ResourceVersion', 'ResourceThreads', 'AllThreads'],
+  tagTypes: [
+    'Thread',
+    'Pulse',
+    'ResourceVersion',
+    'ResourceThreads',
+    'AllThreads',
+    'PanelMentions',
+    'Participants',
+  ],
   endpoints: (builder) => ({
     listThreads: builder.query<PageResult<PulseThread>, ListThreadsArgs>({
-      query: ({ resourceKind, resourceUID, panelId, cursor, limit }) => {
+      query: ({ resourceKind, resourceUID, panelId, authorUserId, q, page, limit }) => {
         const params: Record<string, string> = {
           resourceKind,
           resourceUID,
@@ -70,8 +96,21 @@ export const pulseApi = createApi({
         if (panelId !== undefined) {
           params.panelId = String(panelId);
         }
-        if (cursor) {
-          params.cursor = cursor;
+        if (authorUserId !== undefined) {
+          params.authorUserId = String(authorUserId);
+        }
+        // Trim before sending: a whitespace-only query would still
+        // produce a distinct cache key on RTK Query's side, leading
+        // to needless refetches as the user types and immediately
+        // backspaces past their last non-whitespace character.
+        const trimmedQ = q?.trim();
+        if (trimmedQ) {
+          params.q = trimmedQ;
+        }
+        if (page !== undefined && page > 1) {
+          // Page 1 is the default; omitting the param keeps the URL
+          // clean for the common case.
+          params.page = String(page);
         }
         if (limit !== undefined) {
           params.limit = String(limit);
@@ -155,6 +194,10 @@ export const pulseApi = createApi({
       invalidatesTags: (_r, _e, args) => [
         { type: 'ResourceThreads', id: `${args.resourceKind}:${args.resourceUID}` },
         { type: 'ResourceVersion', id: `${args.resourceKind}:${args.resourceUID}` },
+        { type: 'PanelMentions', id: `${args.resourceKind}:${args.resourceUID}` },
+        // A new thread always introduces at least the author into the
+        // participants set, so bust the dropdown's cache.
+        { type: 'Participants', id: `${args.resourceKind}:${args.resourceUID}` },
         { type: 'AllThreads', id: 'LIST' },
       ],
     }),
@@ -166,6 +209,10 @@ export const pulseApi = createApi({
       }),
       invalidatesTags: (_r, _e, args) => [
         { type: 'ResourceThreads', id: `${args.resourceKind}:${args.resourceUID}` },
+        { type: 'PanelMentions', id: `${args.resourceKind}:${args.resourceUID}` },
+        // Removing a thread can drop a participant who only commented
+        // there from the rollup; refresh the dropdown.
+        { type: 'Participants', id: `${args.resourceKind}:${args.resourceUID}` },
         { type: 'Thread', id: args.threadUID },
         { type: 'AllThreads', id: 'LIST' },
       ],
@@ -179,6 +226,9 @@ export const pulseApi = createApi({
       }),
       invalidatesTags: (_r, _e, args) => [
         { type: 'ResourceThreads', id: `${args.resourceKind}:${args.resourceUID}` },
+        // Closed threads drop out of the panel-mentions rollup; bust
+        // the cache so the icon disappears immediately for the actor.
+        { type: 'PanelMentions', id: `${args.resourceKind}:${args.resourceUID}` },
         { type: 'Thread', id: args.threadUID },
         { type: 'AllThreads', id: 'LIST' },
       ],
@@ -193,6 +243,9 @@ export const pulseApi = createApi({
         }),
         invalidatesTags: (_r, _e, args) => [
           { type: 'ResourceThreads', id: `${args.resourceKind}:${args.resourceUID}` },
+          // Reopening puts the thread back into the panel-mentions
+          // rollup; same reason as closeThread.
+          { type: 'PanelMentions', id: `${args.resourceKind}:${args.resourceUID}` },
           { type: 'Thread', id: args.threadUID },
           { type: 'AllThreads', id: 'LIST' },
         ],
@@ -206,6 +259,12 @@ export const pulseApi = createApi({
         body: req,
         showSuccessAlert: false,
       }),
+      // We don't carry resourceKind/UID through the addPulse request
+      // (the thread already knows its resource), so we can't safely
+      // bust the per-resource Participants tag here. The live channel
+      // (`useResourcePulseStream`) already invalidates Participants
+      // alongside other tags on every pulse-changed event, so the
+      // dropdown still refreshes within the live round-trip.
       invalidatesTags: (_r, _e, args) => [
         { type: 'Pulse', id: args.threadUID },
         { type: 'Thread', id: args.threadUID },
@@ -270,6 +329,36 @@ export const pulseApi = createApi({
       }),
       providesTags: (_r, _e, args) => [{ type: 'ResourceVersion', id: `${args.resourceKind}:${args.resourceUID}` }],
     }),
+
+    /**
+     * One round-trip per dashboard returns the rollup for every panel
+     * with open Pulse activity. The PanelPulseMentions scene title-item
+     * mounts on every viz panel but RTK Query dedupes the call by
+     * `${resourceKind}:${resourceUID}`, so a 50-panel dashboard makes
+     * exactly one request and each panel selects its own row from the
+     * cached payload. Live updates invalidate the PanelMentions tag so
+     * new threads light up icons without a manual refresh.
+     */
+    listPanelMentions: builder.query<PanelMentionsResponse, ResourceVersionArgs>({
+      query: ({ resourceKind, resourceUID }) => ({
+        url: `/resources/${encodeURIComponent(resourceKind)}/${encodeURIComponent(resourceUID)}/panel-mentions`,
+      }),
+      providesTags: (_r, _e, args) => [{ type: 'PanelMentions', id: `${args.resourceKind}:${args.resourceUID}` }],
+    }),
+
+    /**
+     * Resolves the unique commenters on a resource into avatar-ready
+     * rows for the per-resource "Users" filter dropdown. Cached by
+     * `${resourceKind}:${resourceUID}` and invalidated on the live
+     * channel + every write that could change the participant set
+     * (createThread, addPulse, deleteThread, deletePulse).
+     */
+    listParticipants: builder.query<ParticipantsResponse, ResourceVersionArgs>({
+      query: ({ resourceKind, resourceUID }) => ({
+        url: `/resources/${encodeURIComponent(resourceKind)}/${encodeURIComponent(resourceUID)}/participants`,
+      }),
+      providesTags: (_r, _e, args) => [{ type: 'Participants', id: `${args.resourceKind}:${args.resourceUID}` }],
+    }),
   }),
 });
 
@@ -289,4 +378,6 @@ export const {
   useUnsubscribeMutation,
   useMarkReadMutation,
   useGetResourceVersionQuery,
+  useListPanelMentionsQuery,
+  useListParticipantsQuery,
 } = pulseApi;

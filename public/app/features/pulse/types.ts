@@ -110,6 +110,14 @@ export interface MarkReadRequest {
   lastReadPulseUID: string;
 }
 
+/**
+ * PageResult is the standard envelope for both pagination paradigms
+ * the backend uses. Cursor-based endpoints (per-thread pulse replay)
+ * populate `nextCursor` + `hasMore`; offset-based endpoints (drawer
+ * thread list, global overview) populate `page` + `totalCount`. A
+ * response uses one paradigm or the other — clients pick based on
+ * the endpoint they're calling.
+ */
 export interface PageResult<T> {
   items: T[];
   /** Cursor-based listings populate this. */
@@ -125,6 +133,48 @@ export interface ResourceVersion {
   resourceUID: string;
   version: number;
   lastPulseAt: string;
+}
+
+/**
+ * PanelMentionSummary rolls up the open Pulse threads that touch a
+ * single panel — either anchored via Thread.panelId or referenced by
+ * a #panel mention chip in any pulse. Powers the per-panel mention
+ * indicator in the visualization title bar.
+ */
+export interface PanelMentionSummary {
+  panelId: number;
+  threadCount: number;
+  /** Most-recently-active matching thread; the title-bar icon opens
+   *  straight to it when threadCount === 1. */
+  latestThreadUID: string;
+  latestThreadTitle?: string;
+}
+
+export interface PanelMentionsResponse {
+  resourceKind: ResourceKind;
+  resourceUID: string;
+  mentions: PanelMentionSummary[];
+}
+
+/**
+ * ParticipantSummary is a single user who has authored or replied on
+ * any thread for a resource. Powers the "Users" filter dropdown in
+ * the per-resource Pulse drawer. Mirrors the backend's
+ * ParticipantSummary so the wire shape and the dropdown row share a
+ * type.
+ */
+export interface ParticipantSummary {
+  userId: number;
+  login?: string;
+  name?: string;
+  /** Server-resolved gravatar URL; absent for users without an email. */
+  avatarUrl?: string;
+}
+
+export interface ParticipantsResponse {
+  resourceKind: ResourceKind;
+  resourceUID: string;
+  participants: ParticipantSummary[];
 }
 
 /** Discriminated union of events the live channel emits. */

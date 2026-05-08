@@ -60,6 +60,8 @@ func (s *PulseService) registerAPIEndpoints() {
 		r.Post("/threads/:threadUID/unsubscribe", authorize(read), routing.Wrap(s.unsubscribeHandler))
 		r.Post("/threads/:threadUID/read", authorize(read), routing.Wrap(s.markReadHandler))
 		r.Get("/resources/:kind/:uid/version", authorize(read), routing.Wrap(s.getResourceVersionHandler))
+		r.Get("/resources/:kind/:uid/panel-mentions", authorize(read), routing.Wrap(s.listPanelMentionsHandler))
+		r.Get("/resources/:kind/:uid/participants", authorize(read), routing.Wrap(s.listParticipantsHandler))
 	}, middleware.ReqSignedIn, s.featureGate)
 }
 
@@ -141,14 +143,32 @@ func (s *PulseService) listThreadsHandler(c *contextmodel.ReqContext) response.R
 		OrgID:        c.GetOrgID(),
 		ResourceKind: ResourceKind(c.Query("resourceKind")),
 		ResourceUID:  c.Query("resourceUID"),
-		Cursor:       c.Query("cursor"),
-		Limit:        int(c.QueryInt64("limit")),
+		// Page is 1-indexed; the store clamps invalid/zero values to
+		// page 1 so an absent query param "just works".
+		Page:  int(c.QueryInt64("page")),
+		Limit: int(c.QueryInt64("limit")),
 	}
 	if pid := c.Query("panelId"); pid != "" {
 		if v, err := strconv.ParseInt(pid, 10, 64); err == nil {
 			q.PanelID = &v
 		}
 	}
+	// authorUserId narrows to threads the user started OR replied on.
+	// Powers the per-resource Users filter dropdown. Invalid ids are
+	// silently dropped — the frontend dropdown only emits valid ids
+	// from the participants endpoint, so a malformed value here is
+	// either a stale tab or a hand-crafted URL and "no filter" is the
+	// least-surprising fallback.
+	if uid := c.Query("authorUserId"); uid != "" {
+		if v, err := strconv.ParseInt(uid, 10, 64); err == nil && v > 0 {
+			q.AuthorUserID = &v
+		}
+	}
+	// q is a free-form substring filter over the thread title and the
+	// body_text of any non-deleted pulse on the thread. The store
+	// trims/lowercases for matching, so we pass the raw string
+	// through here.
+	q.Query = c.Query("q")
 	if err := s.assertCanReadResource(c, q.ResourceKind, q.ResourceUID); err != nil {
 		return err
 	}
@@ -775,6 +795,80 @@ func (s *PulseService) getResourceVersionHandler(c *contextmodel.ReqContext) res
 	return response.JSON(http.StatusOK, rv)
 }
 
+// swagger:route GET /pulse/resources/{kind}/{uid}/panel-mentions pulse alpha listPanelMentions
+//
+// List the panels on a resource that have open Pulse activity.
+//
+// Returns one summary entry per panel that is either anchored to a
+// thread (Thread.PanelID) or referenced by a #panel mention chip in
+// any pulse on the resource. Closed threads are excluded so the
+// payload reflects live conversation. Powers the per-panel Pulse
+// indicator in the visualization title bar — the frontend renders the
+// icon iff threadCount > 0 for the panel id.
+//
+// Responses:
+// 200: pulsePanelMentionsResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (s *PulseService) listPanelMentionsHandler(c *contextmodel.ReqContext) response.Response {
+	kind := ResourceKind(web.Params(c.Req)[":kind"])
+	uid := web.Params(c.Req)[":uid"]
+	if err := s.assertCanReadResource(c, kind, uid); err != nil {
+		return err
+	}
+	mentions, err := s.ListPanelMentions(c.Req.Context(), ListPanelMentionsQuery{
+		OrgID:        c.GetOrgID(),
+		ResourceKind: kind,
+		ResourceUID:  uid,
+	})
+	if err != nil {
+		return mapPulseError(err, "Failed to list panel mentions")
+	}
+	return response.JSON(http.StatusOK, PanelMentionsResponse{
+		ResourceKind: kind,
+		ResourceUID:  uid,
+		Mentions:     mentions,
+	})
+}
+
+// swagger:route GET /pulse/resources/{kind}/{uid}/participants pulse alpha listParticipants
+//
+// List the users who have started or replied on any thread for a resource.
+//
+// Powers the per-resource Users filter dropdown in the Pulse drawer.
+// Closed threads are intentionally counted so a participant doesn't
+// disappear from the dropdown the moment a thread closes.
+//
+// Responses:
+// 200: pulseParticipantsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (s *PulseService) listParticipantsHandler(c *contextmodel.ReqContext) response.Response {
+	kind := ResourceKind(web.Params(c.Req)[":kind"])
+	uid := web.Params(c.Req)[":uid"]
+	if err := s.assertCanReadResource(c, kind, uid); err != nil {
+		return err
+	}
+	participants, err := s.ListParticipants(c.Req.Context(), ListParticipantsQuery{
+		OrgID:        c.GetOrgID(),
+		ResourceKind: kind,
+		ResourceUID:  uid,
+	})
+	if err != nil {
+		return mapPulseError(err, "Failed to list participants")
+	}
+	return response.JSON(http.StatusOK, ParticipantsResponse{
+		ResourceKind: kind,
+		ResourceUID:  uid,
+		Participants: participants,
+	})
+}
+
 // assertCanReadResource defers to the existing dashboard guardian for v1.
 // We do not consult the pulse_thread row here — the thread is irrelevant
 // for permission; only the underlying resource matters. Callers that have
@@ -909,4 +1003,16 @@ type PulseGenericResponse struct {
 type PulseResourceVersionResponse struct {
 	// in: body
 	Body ResourceVersion `json:"body"`
+}
+
+// swagger:response pulsePanelMentionsResponse
+type PulsePanelMentionsResponse struct {
+	// in: body
+	Body PanelMentionsResponse `json:"body"`
+}
+
+// swagger:response pulseParticipantsResponse
+type PulseParticipantsResponse struct {
+	// in: body
+	Body ParticipantsResponse `json:"body"`
 }

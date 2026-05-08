@@ -46,6 +46,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
+import { PanelPulseMentions } from '../scene/PanelPulseMentions';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { DashboardGridItem, type RepeatDirection } from '../scene/layout-default/DashboardGridItem';
@@ -476,6 +477,12 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   );
 
   titleItems.push(new PanelNotices());
+
+  // Pulse mention indicator. Renders nothing when the dashboardPulse
+  // toggle is off or when there are no open threads touching this
+  // panel, so it's safe to attach unconditionally — the cost is one
+  // SceneObject per panel and zero network calls when Pulse is off.
+  titleItems.push(new PanelPulseMentions({ panelId: panel.id }));
 
   const timeOverrideShown = (panel.timeFrom || panel.timeShift) && !panel.hideTimeOverride;
 

@@ -7423,6 +7423,11 @@
     "panel-non-applicable-drilldowns-sub-header": {
       "default-reason": "Filter is not applicable"
     },
+    "panel-pulse-mentions": {
+      "tooltip-many_one": "{{count}} threads mention this panel",
+      "tooltip-many_other": "{{count}} threads mention this panel",
+      "tooltip-one": "1 thread mentions this panel"
+    },
     "panel-styles": {
       "threshold-badge-tooltip": "This preset will modify thresholds",
       "title": "Panel styles"
@@ -14100,16 +14105,27 @@
       "closed-tag": "Closed",
       "empty-body": "Use Pulse to leave context-aware comments on this dashboard. Your team will be notified.",
       "empty-cta": "Start the first thread",
+      "empty-filtered-body": "Try a different panel or user, or clear the filters to see every thread on this dashboard.",
+      "empty-filtered-cta": "Clear filters",
+      "empty-filtered-title": "No threads match the current filters",
       "empty-title": "Nothing to discuss yet",
+      "filter-clear": "Clear filters",
+      "filter-panel-all": "All panels",
+      "filter-panel-aria": "Filter threads by panel",
+      "filter-panel-fallback": "Panel #{{id}}",
+      "filter-panel-label": "Panel",
+      "filter-search-aria": "Filter threads by text",
+      "filter-search-label": "Search threads",
+      "filter-search-placeholder": "Search title or body — matches replies too",
+      "filter-user-all": "All users",
+      "filter-user-aria": "Filter threads by user",
+      "filter-user-fallback": "User #{{id}}",
+      "filter-user-label": "User",
       "last-activity": "Last activity: {{when}}",
       "loading": "Loading threads…",
       "loading-thread": "Loading thread…",
       "new-thread": "Start a thread",
-      "next-page": "Next",
-      "page-indicator": "Page {{page}}",
-      "prev-page": "Previous",
       "start-on-dashboard": "Start a thread on this dashboard",
-      "start-on-panel": "Start a thread on panel #{{id}}",
       "thread-author-avatar-alt": "Avatar for {{name}}",
       "thread-author-unknown": "User",
       "thread-fallback": "Conversation",
@@ -14117,9 +14133,7 @@
       "thread-meta_other": "{{count}} replies",
       "thread-missing": "Thread not found.",
       "threads-on-dashboard": "Threads on this dashboard",
-      "threads-on-panel": "Threads on panel #{{id}}",
-      "title": "Pulse",
-      "title-panel": "Pulse · panel #{{id}}"
+      "title": "Pulse"
     },
     "overview": {
       "author-unknown": "Unknown",

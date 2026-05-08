@@ -283,13 +283,70 @@ type ReopenThreadCommand struct {
 
 // ListThreadsQuery returns threads attached to a resource, ordered by most
 // recent activity.
+//
+// Filters are AND-combined and every filter rolls up across the
+// thread's entire pulse fan-out, not just the root pulse — a match
+// on any non-deleted child pulse lifts its parent into the result so
+// the drawer behaves the way the user thinks of a "thread":
+//
+//   - PanelID matches if the thread is anchored to the panel OR any
+//     pulse (root or reply) carries a `#panel:N` chip. The mention
+//     fan-out is denormalized into pulse_mention with thread_uid, so
+//     the sub-select picks up replies for free.
+//   - AuthorUserID matches if the user started the thread OR
+//     authored any non-deleted pulse on it. Repliers are surfaced via
+//     the pulse table sub-select.
+//   - Query is a case-insensitive substring match against the thread
+//     title OR the body_text of any non-deleted pulse, so a child
+//     reply that mentions "p99" lifts its root into a search for
+//     "p99" even if the title and root pulse don't say so.
 type ListThreadsQuery struct {
 	OrgID        int64        `json:"-"`
 	ResourceKind ResourceKind `json:"-"`
 	ResourceUID  string       `json:"-"`
-	PanelID      *int64       `json:"-"` // nil = all threads on the resource (incl. panel-scoped)
-	Limit        int          `json:"-"`
-	Cursor       string       `json:"-"`
+	PanelID      *int64       `json:"-"` // nil = no panel filter (matches anchored OR mentioned across child pulses)
+	AuthorUserID *int64       `json:"-"` // nil = no participant filter (matches author OR replier across child pulses)
+	Query        string       `json:"-"` // empty = no text filter (matches title OR body_text of any non-deleted pulse)
+	// Page is 1-indexed. The drawer renders a numbered pager with the
+	// current page highlighted, which means the UI needs the total
+	// page count up-front; we offset-paginate here (rather than the
+	// cursor model used by the global overview) so a click on
+	// "Page 5" lands deterministically without the client having to
+	// walk every prior page first.
+	Page  int `json:"-"`
+	Limit int `json:"-"`
+}
+
+// ParticipantSummary describes a user who has authored or replied on
+// any open thread for a resource. Powers the "Users" filter dropdown
+// in the per-resource Pulse drawer. Fields mirror what we already
+// project for thread/pulse author rows so the frontend can render the
+// dropdown row identically to a thread card avatar without a second
+// fetch.
+type ParticipantSummary struct {
+	UserID    int64  `json:"userId"`
+	Login     string `json:"login,omitempty"`
+	Name      string `json:"name,omitempty"`
+	AvatarURL string `json:"avatarUrl,omitempty"`
+}
+
+// ListParticipantsQuery rolls up the unique non-deleted commenters on a
+// resource. The result feeds the Users filter dropdown. Closed threads
+// are intentionally included — a user who replied on a since-closed
+// thread should still appear in the filter so they can find it.
+type ListParticipantsQuery struct {
+	OrgID        int64        `json:"-"`
+	ResourceKind ResourceKind `json:"-"`
+	ResourceUID  string       `json:"-"`
+}
+
+// ParticipantsResponse is the JSON envelope for the participants
+// endpoint. Items are sorted by login ascending so the dropdown order
+// is deterministic.
+type ParticipantsResponse struct {
+	ResourceKind ResourceKind         `json:"resourceKind"`
+	ResourceUID  string               `json:"resourceUID"`
+	Participants []ParticipantSummary `json:"participants"`
 }
 
 // ThreadStatusFilter narrows ListAllThreads to a subset of threads by
@@ -330,6 +387,41 @@ type ListPulsesQuery struct {
 	ThreadUID string `json:"-"`
 	Limit     int    `json:"-"`
 	Cursor    string `json:"-"`
+}
+
+// ListPanelMentionsQuery rolls up panel-relevant pulse activity for a
+// single resource (today always a dashboard). The result powers the
+// per-panel Pulse indicator in the visualization title bar.
+type ListPanelMentionsQuery struct {
+	OrgID        int64        `json:"-"`
+	ResourceKind ResourceKind `json:"-"`
+	ResourceUID  string       `json:"-"`
+}
+
+// PanelMentionSummary aggregates the open threads that touch a single
+// panel — either anchored to it via Thread.PanelID or referencing it
+// via a #panel mention chip in any pulse on the resource. Closed
+// threads are excluded so the indicator reflects live conversation.
+//
+// LatestThreadUID is the UID of the most-recently-active matching
+// thread; the frontend opens straight to it when the count is one,
+// and falls back to the panel-scoped drawer view when it's higher.
+// LatestThreadTitle is included so a tooltip can render without a
+// follow-up fetch.
+type PanelMentionSummary struct {
+	PanelID           int64  `json:"panelId"`
+	ThreadCount       int    `json:"threadCount"`
+	LatestThreadUID   string `json:"latestThreadUID"`
+	LatestThreadTitle string `json:"latestThreadTitle,omitempty"`
+}
+
+// PanelMentionsResponse is the JSON envelope returned by the
+// panel-mentions endpoint. Items are sorted by panel id ascending so
+// the wire format is deterministic across calls.
+type PanelMentionsResponse struct {
+	ResourceKind ResourceKind          `json:"resourceKind"`
+	ResourceUID  string                `json:"resourceUID"`
+	Mentions     []PanelMentionSummary `json:"mentions"`
 }
 
 // PageResult is the generic page envelope used by list endpoints.

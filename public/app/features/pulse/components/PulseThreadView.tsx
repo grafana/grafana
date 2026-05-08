@@ -27,6 +27,12 @@ import { PulseRenderer } from './PulseRenderer';
 interface Props {
   thread: PulseThread;
   panels?: PanelSuggestion[];
+  /**
+   * Live panel-id → title map so renamed panels keep their `#` chips
+   * in sync across the transcript. Optional — when absent, chips fall
+   * back to their stored displayName.
+   */
+  panelTitlesById?: ReadonlyMap<number, string>;
   currentUserId?: number;
   isAdmin?: boolean;
   onMentionPanel?: (panelId: number) => void;
@@ -44,6 +50,7 @@ interface Props {
 export function PulseThreadView({
   thread,
   panels,
+  panelTitlesById,
   currentUserId,
   isAdmin = false,
   onMentionPanel,
@@ -222,6 +229,7 @@ export function PulseThreadView({
               await deletePulse({ pulseUID: p.uid, threadUID: thread.uid }).unwrap();
             }}
             panels={panels}
+            panelTitlesById={panelTitlesById}
             currentUserId={currentUserId}
             onMention={handleMention}
           />
@@ -253,6 +261,7 @@ interface RowProps {
   onEdit: (body: PulseBody) => Promise<void>;
   onDelete: () => Promise<void>;
   panels?: PanelSuggestion[];
+  panelTitlesById?: ReadonlyMap<number, string>;
   currentUserId?: number;
   onMention: (m: PulseMention) => void;
 }
@@ -264,6 +273,7 @@ function PulseRow({
   onEdit,
   onDelete,
   panels,
+  panelTitlesById,
   currentUserId,
   onMention,
 }: RowProps): ReactNode {
@@ -346,7 +356,7 @@ function PulseRow({
             }}
           />
         ) : (
-          <PulseRenderer body={pulse.body} onMentionClick={onMention} />
+          <PulseRenderer body={pulse.body} onMentionClick={onMention} panelTitlesById={panelTitlesById} />
         )}
       </div>
     </div>
