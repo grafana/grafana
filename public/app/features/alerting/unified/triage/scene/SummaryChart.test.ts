@@ -65,15 +65,15 @@ describe('collapseByAlertstateTranformation', () => {
   it('correctly sums frames with non-overlapping or offset time windows', async () => {
     // Reflects real Prometheus behaviour: each per-folder frame only contains timestamps
     // where that series was active, so frames start/end at different times.
-    const t = (offset: number) => 1_778_237_070_000 + offset * 15_000;
+    const ts = (offset: number) => 1_778_237_070_000 + offset * 15_000;
 
-    // folder A: active from t0 (3 points)
+    // folder A: active from ts(0) (3 points)
     const folderA: DataFrame = {
       name: 'firing',
       refId: 'query',
       length: 3,
       fields: [
-        { name: 'Time', type: FieldType.time, config: {}, values: [t(0), t(1), t(2)] },
+        { name: 'Time', type: FieldType.time, config: {}, values: [ts(0), ts(1), ts(2)] },
         {
           name: 'Value',
           type: FieldType.number,
@@ -83,7 +83,7 @@ describe('collapseByAlertstateTranformation', () => {
         },
       ],
     };
-    // folder B: active from t(6), non-overlapping with A (A ends at t(2))
+    // folder B: active from ts(6), non-overlapping with A (A ends at ts(2))
     const folderB: DataFrame = {
       name: 'firing',
       refId: 'query',
@@ -93,7 +93,7 @@ describe('collapseByAlertstateTranformation', () => {
           name: 'Time',
           type: FieldType.time,
           config: {},
-          values: [t(6), t(7), t(8), t(9), t(10), t(11), t(12), t(13), t(14)],
+          values: [ts(6), ts(7), ts(8), ts(9), ts(10), ts(11), ts(12), ts(13), ts(14)],
         },
         {
           name: 'Value',
@@ -104,13 +104,13 @@ describe('collapseByAlertstateTranformation', () => {
         },
       ],
     };
-    // folder C: overlaps with B at t(9)..t(14)
+    // folder C: overlaps with B at ts(9)..ts(14)
     const folderC: DataFrame = {
       name: 'firing',
       refId: 'query',
       length: 6,
       fields: [
-        { name: 'Time', type: FieldType.time, config: {}, values: [t(9), t(10), t(11), t(12), t(13), t(14)] },
+        { name: 'Time', type: FieldType.time, config: {}, values: [ts(9), ts(10), ts(11), ts(12), ts(13), ts(14)] },
         {
           name: 'Value',
           type: FieldType.number,
@@ -125,20 +125,20 @@ describe('collapseByAlertstateTranformation', () => {
 
     expect(result).toHaveLength(1);
     const merged = result[0];
-    // t(0)..t(2): A only (13), t(6)..t(8): B only (1), t(9)..t(14): B+C (1+5=6)
+    // ts(0)..ts(2): A only (13), ts(6)..ts(8): B only (1), ts(9)..ts(14): B+C (1+5=6)
     expect(merged.fields[0].values).toEqual([
-      t(0),
-      t(1),
-      t(2),
-      t(6),
-      t(7),
-      t(8),
-      t(9),
-      t(10),
-      t(11),
-      t(12),
-      t(13),
-      t(14),
+      ts(0),
+      ts(1),
+      ts(2),
+      ts(6),
+      ts(7),
+      ts(8),
+      ts(9),
+      ts(10),
+      ts(11),
+      ts(12),
+      ts(13),
+      ts(14),
     ]);
     expect(merged.fields[1].values).toEqual([13, 13, 13, 1, 1, 1, 6, 6, 6, 6, 6, 6]);
     expect(merged.length).toBe(12);

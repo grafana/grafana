@@ -81,7 +81,7 @@ export const collapseByAlertstateTransformation: CustomTransformOperator = () =>
             length: sortedTimes.length,
             fields: [
               { ...timeField, values: sortedTimes },
-              { ...valueField, values: sortedTimes.map((t) => sums.get(t) ?? 0) },
+              { ...valueField, values: sortedTimes.map((ts) => sums.get(ts) ?? 0) },
             ],
           };
         }
