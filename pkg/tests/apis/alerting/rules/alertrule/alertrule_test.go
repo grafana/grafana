@@ -1073,6 +1073,7 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 		r1 := baseRule("fs-folder")
 		r1.Spec.Title = "field-sel-title-unique-abc"
 		r2 := baseRule("fs-folder")
+		r2.Spec.Title = "field-sel-title-unique-other"
 
 		created1, err := client.Create(ctx, r1, v1.CreateOptions{})
 		require.NoError(t, err)
@@ -1083,10 +1084,26 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 			_ = client.Delete(ctx, created2.Name, v1.DeleteOptions{})
 		})
 
-		list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.title=field-sel-title-unique-abc"})
-		require.NoError(t, err)
-		require.Len(t, list.Items, 1)
-		require.Equal(t, "field-sel-title-unique-abc", list.Items[0].Spec.Title)
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.title=field-sel-title-unique-abc"})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 1)
+			require.Equal(t, "field-sel-title-unique-abc", list.Items[0].Spec.Title)
+		})
+
+		t.Run("not-equals returns only rules whose title differs", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.title!=field-sel-title-unique-abc",
+			})
+			require.NoError(t, err)
+			titles := make([]string, 0, len(list.Items))
+			for _, item := range list.Items {
+				titles = append(titles, item.Spec.Title)
+			}
+			require.Contains(t, titles, "field-sel-title-unique-other")
+			require.NotContains(t, titles, "field-sel-title-unique-abc")
+		})
 	})
 
 	t.Run("filter by spec.paused", func(t *testing.T) {
@@ -1159,13 +1176,28 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
 		})
 
-		list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.panelRef.dashboardUID=" + dashUID})
-		require.NoError(t, err)
-		require.Len(t, list.Items, 2)
-		for _, item := range list.Items {
-			require.NotNil(t, item.Spec.PanelRef)
-			require.Equal(t, dashUID, item.Spec.PanelRef.DashboardUID)
-		}
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.panelRef.dashboardUID=" + dashUID})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.PanelRef)
+				require.Equal(t, dashUID, item.Spec.PanelRef.DashboardUID)
+			}
+		})
+
+		t.Run("not-equals excludes matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.panelRef.dashboardUID!=" + dashUID,
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				if item.Spec.PanelRef != nil {
+					require.NotEqual(t, dashUID, item.Spec.PanelRef.DashboardUID)
+				}
+			}
+		})
 	})
 
 	t.Run("filter by spec.panelRef.panelID", func(t *testing.T) {
@@ -1189,12 +1221,325 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
 		})
 
-		list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.panelRef.panelID=7"})
-		require.NoError(t, err)
-		require.Len(t, list.Items, 2)
-		for _, item := range list.Items {
-			require.NotNil(t, item.Spec.PanelRef)
-			require.Equal(t, int64(7), item.Spec.PanelRef.PanelID)
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.panelRef.panelID=7"})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.PanelRef)
+				require.Equal(t, int64(7), item.Spec.PanelRef.PanelID)
+			}
+		})
+
+		t.Run("not-equals excludes matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.panelRef.panelID!=7",
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				if item.Spec.PanelRef != nil {
+					require.NotEqual(t, int64(7), item.Spec.PanelRef.PanelID)
+				}
+			}
+		})
+	})
+
+	t.Run("filter by spec.notificationSettings.receiver", func(t *testing.T) {
+		// Use the default "empty" receiver, since creating ad-hoc receivers is heavy and rule
+		// create-time validates that the receiver exists.
+		const matchReceiver = "empty"
+		r1 := baseRule("fs-folder")
+		r1.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: matchReceiver,
+			},
 		}
+		r2 := baseRule("fs-folder")
+		r2.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: matchReceiver,
+			},
+		}
+		r3 := baseRule("fs-folder") // no notification settings
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only rules with the matching receiver", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.notificationSettings.receiver=" + matchReceiver,
+			})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.NotificationSettings)
+				require.NotNil(t, item.Spec.NotificationSettings.SimplifiedRouting)
+				require.Equal(t, matchReceiver, item.Spec.NotificationSettings.SimplifiedRouting.Receiver)
+			}
+		})
+
+		t.Run("not-equals excludes rules with the matching receiver", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.notificationSettings.receiver!=" + matchReceiver,
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				if item.Spec.NotificationSettings != nil && item.Spec.NotificationSettings.SimplifiedRouting != nil {
+					require.NotEqual(t, matchReceiver, item.Spec.NotificationSettings.SimplifiedRouting.Receiver)
+				}
+			}
+		})
+	})
+
+	t.Run("filter by spec.notificationSettings.type=SimplifiedRouting", func(t *testing.T) {
+		r1 := baseRule("fs-folder")
+		r1.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		r2 := baseRule("fs-folder")
+		r2.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		r3 := baseRule("fs-folder") // no notification settings
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only rules with simplified routing", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.notificationSettings.type=SimplifiedRouting",
+			})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.NotificationSettings)
+				require.NotNil(t, item.Spec.NotificationSettings.SimplifiedRouting)
+			}
+		})
+
+		t.Run("not-equals excludes rules with simplified routing", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.notificationSettings.type!=SimplifiedRouting",
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				require.True(t, item.Spec.NotificationSettings == nil || item.Spec.NotificationSettings.SimplifiedRouting == nil)
+			}
+		})
+	})
+
+	t.Run("invalid value for spec.notificationSettings.type returns 400", func(t *testing.T) {
+		_, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.notificationSettings.type=Invalid"})
+		require.Error(t, err)
+	})
+}
+
+func TestIntegrationListWithNamedRoutingTreeFieldSelectors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagAlertingMultiplePolicies,
+		},
+	})
+	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	common.CreateTestFolder(t, helper, "rt-fs-folder")
+
+	routingTreeClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	matchTree := &v1beta1.RoutingTree{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "rt-tree-match",
+			Namespace: "default",
+		},
+		Spec: v1beta1.RoutingTreeSpec{
+			Defaults: v1beta1.RoutingTreeRouteDefaults{Receiver: "empty"},
+		},
+	}
+	otherTree := &v1beta1.RoutingTree{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "rt-tree-other",
+			Namespace: "default",
+		},
+		Spec: v1beta1.RoutingTreeSpec{
+			Defaults: v1beta1.RoutingTreeRouteDefaults{Receiver: "empty"},
+		},
+	}
+	_, err = routingTreeClient.Create(ctx, matchTree, resource.CreateOptions{})
+	require.NoError(t, err)
+	_, err = routingTreeClient.Create(ctx, otherTree, resource.CreateOptions{})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = routingTreeClient.Delete(ctx, matchTree.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		_ = routingTreeClient.Delete(ctx, otherTree.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+	})
+
+	baseRule := func(folder string) *v0alpha1.AlertRule {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUniqueUID(),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID(folder),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).Generate()
+		return &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": folder,
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     util.Pointer("query"),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        util.Pointer(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+			},
+		}
+	}
+
+	t.Run("filter by spec.notificationSettings.routingTree", func(t *testing.T) {
+		r1 := baseRule("rt-fs-folder")
+		r1.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: matchTree.Name,
+			},
+		}
+		r2 := baseRule("rt-fs-folder")
+		r2.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: matchTree.Name,
+			},
+		}
+		r3 := baseRule("rt-fs-folder")
+		r3.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: otherTree.Name,
+			},
+		}
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.notificationSettings.routingTree=" + matchTree.Name})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.NotificationSettings)
+				require.NotNil(t, item.Spec.NotificationSettings.NamedRoutingTree)
+				require.Equal(t, matchTree.Name, item.Spec.NotificationSettings.NamedRoutingTree.RoutingTree)
+			}
+		})
+
+		t.Run("not-equals returns rules whose routing tree differs (or have none)", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=rt-fs-folder",
+				FieldSelector: "spec.notificationSettings.routingTree!=" + matchTree.Name,
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				if item.Spec.NotificationSettings != nil && item.Spec.NotificationSettings.NamedRoutingTree != nil {
+					require.NotEqual(t, matchTree.Name, item.Spec.NotificationSettings.NamedRoutingTree.RoutingTree)
+				}
+			}
+		})
+	})
+
+	t.Run("filter by spec.notificationSettings.type=NamedRoutingTree", func(t *testing.T) {
+		r1 := baseRule("rt-fs-folder")
+		r1.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: matchTree.Name,
+			},
+		}
+		r2 := baseRule("rt-fs-folder")
+		r2.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		r3 := baseRule("rt-fs-folder") // no settings
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		list, err := client.List(ctx, v1.ListOptions{
+			LabelSelector: "grafana.app/folder=rt-fs-folder",
+			FieldSelector: "spec.notificationSettings.type=NamedRoutingTree",
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.NotNil(t, list.Items[0].Spec.NotificationSettings)
+		require.NotNil(t, list.Items[0].Spec.NotificationSettings.NamedRoutingTree)
 	})
 }
