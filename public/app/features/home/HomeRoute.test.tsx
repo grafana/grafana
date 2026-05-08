@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import React from 'react';
+import { type ComponentProps } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { locationService, setBackendSrv } from '@grafana/runtime';
@@ -44,7 +44,7 @@ describe('HomeRoute', () => {
     jest.restoreAllMocks();
   });
 
-  const props = {} as React.ComponentProps<typeof HomeRoute>;
+  const props = {} as ComponentProps<typeof HomeRoute>;
 
   it('flag off → renders dashboard proxy without probing', async () => {
     // Body would route to <HomePage> if probe fired — proves the flag-off branch is structural.
