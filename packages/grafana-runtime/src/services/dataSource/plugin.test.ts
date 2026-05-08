@@ -124,6 +124,50 @@ describe('plugin', () => {
       expect(second).toBe(instance);
       expect(MockClass).toHaveBeenCalledTimes(1);
     });
+
+    it('throws when the plugin import fails', async () => {
+      const settings = ds();
+      initDataSources({ [settings.name]: settings }, settings.name);
+      setDataSourceImporter(jest.fn().mockRejectedValue(new Error('module not found')));
+
+      await expect(getDataSource(settings.uid)).rejects.toThrow(/module not found/);
+    });
+
+    it('returns the same instance for name-based and uid-based lookups', async () => {
+      const settings = ds();
+      initDataSources({ [settings.name]: settings }, settings.name);
+
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      const mockImport = jest.fn().mockResolvedValue({
+        DataSourceClass: jest.fn().mockReturnValue(instance),
+        components: {},
+      });
+      setDataSourceImporter(mockImport);
+
+      const byUid = await getDataSource(settings.uid);
+      const byName = await getDataSource(settings.name);
+
+      expect(byUid).toBe(byName);
+      expect(mockImport).toHaveBeenCalledTimes(1);
+    });
+
+    it('resolves a template variable that interpolates to default', async () => {
+      const alpha = ds();
+      const bravo = ds({ id: 2, uid: 'uid-bravo', name: 'Bravo', type: 'test-db' });
+      initDataSources({ [alpha.name]: alpha, [bravo.name]: bravo }, bravo.name);
+      setTemplateSrv({
+        getVariables: () => [],
+        replace: (v?: string) => (v === '${dsVar}' ? 'default' : (v ?? '')),
+      } as unknown as TemplateSrv);
+
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      setDataSourceImporter(
+        jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
+      );
+
+      const result = await getDataSource('${dsVar}');
+      expect(result).toBe(instance);
+    });
   });
 
   describe('registerRuntimeDataSource', () => {
