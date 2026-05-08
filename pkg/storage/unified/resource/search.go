@@ -1114,7 +1114,9 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		// so its conditions (e.g. a newer lastImportTime) are re-evaluated against
 		// the just-built index when the in-flight rebuild finishes.
 		if state.deferred == nil {
-			state.deferred = &req
+			// new(req), not &req: we mutate req.completeChannels = nil below,
+			// and state.deferred must observe the values seen here, not those.
+			state.deferred = new(req)
 		} else {
 			merged, _ := combineRebuildRequests(*state.deferred, req)
 			state.deferred = &merged
