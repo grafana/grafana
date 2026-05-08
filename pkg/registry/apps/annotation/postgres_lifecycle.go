@@ -9,7 +9,8 @@ import (
 )
 
 // Cleanup implements the LifecycleManager interface
-// It removes old partitions that are beyond the retention TTL
+// It removes old partitions that are beyond the retention TTL and purges
+// corresponding rows from the annotation_keys lookup table.
 func (s *PostgreSQLStore) Cleanup(ctx context.Context) (int64, error) {
 	// Calculate cutoff timestamp and corresponding partition name
 	cutoff := time.Now().UTC().Add(-s.config.RetentionTTL)
@@ -60,6 +61,14 @@ func (s *PostgreSQLStore) Cleanup(ctx context.Context) (int64, error) {
 		}
 
 		totalDeleted += count
+	}
+
+	// Purge stale rows from the annotation_keys lookup table.
+	// This is idempotent and self-healing: if a previous cleanup failed or was
+	// skipped, the next run catches up by deleting everything older than the
+	// retention cutoff.
+	if _, err := s.pool.Exec(ctx, "DELETE FROM annotation_keys WHERE time < $1", cutoffMs); err != nil {
+		return totalDeleted, fmt.Errorf("failed to clean up annotation keys: %w", err)
 	}
 
 	return totalDeleted, nil

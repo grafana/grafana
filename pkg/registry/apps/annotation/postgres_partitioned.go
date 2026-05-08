@@ -119,14 +119,15 @@ func (s *PostgreSQLStore) Close() {
 	}
 }
 
-// Get retrieves a single annotation by namespace and name
+// Get retrieves a single annotation by namespace and name.
+// Uses the annotation_keys table to look up the time value, enabling direct partition targeting.
 func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	query := `
-		SELECT namespace, name, time, time_end, dashboard_uid, panel_id,
-		       text, tags, scopes, created_by, created_at
-		FROM annotations
-		WHERE namespace = $1 AND name = $2
-		LIMIT 1
+		SELECT a.namespace, a.name, a.time, a.time_end, a.dashboard_uid, a.panel_id,
+		       a.text, a.tags, a.scopes, a.created_by, a.created_at
+		FROM annotation_keys k
+		INNER JOIN annotations a ON a.namespace = k.namespace AND a.name = k.name AND a.time = k.time
+		WHERE k.namespace = $1 AND k.name = $2
 	`
 
 	row := s.pool.QueryRow(ctx, query, namespace, name)
@@ -176,34 +177,53 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 	createdBy := anno.GetCreatedBy()
 	createdAt := time.Now().UTC().UnixMilli()
 
-	query := `
-		INSERT INTO annotations
-		(namespace, name, time, time_end, dashboard_uid, panel_id, text, tags, scopes, created_by, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-	`
-
-	_, err := s.pool.Exec(ctx, query,
-		namespace, name, timeMs, timeEnd, dashboardUID, panelID,
-		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt,
-	)
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		// Check for unique constraint violation
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	// Insert into annotation_keys first to enforce namespace+name uniqueness
+	keyQuery := `INSERT INTO annotation_keys (namespace, name, time) VALUES ($1, $2, $3)`
+	if _, err := tx.Exec(ctx, keyQuery, namespace, name, timeMs); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return nil, fmt.Errorf("annotation with name %q already exists: %w", name, err)
 		}
+		return nil, fmt.Errorf("failed to insert annotation key: %w", err)
+	}
+
+	// Insert into partitioned annotations table
+	annoQuery := `
+		INSERT INTO annotations
+		(namespace, name, time, time_end, dashboard_uid, panel_id, text, tags, scopes, created_by, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	`
+	if _, err := tx.Exec(ctx, annoQuery,
+		namespace, name, timeMs, timeEnd, dashboardUID, panelID,
+		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt,
+	); err != nil {
 		return nil, fmt.Errorf("failed to insert annotation: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return anno, nil
 }
 
-// Update updates an existing annotation (only mutable fields: text, tags, scopes)
+// Update updates an existing annotation (only mutable fields: text, tags, scopes).
+// Uses the annotation_keys table to target the correct partition directly.
 func (s *PostgreSQLStore) Update(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
 	query := `
-		UPDATE annotations
+		UPDATE annotations a
 		SET text = $1, tags = $2, scopes = $3
-		WHERE namespace = $4 AND name = $5
+		FROM annotation_keys k
+		WHERE a.namespace = k.namespace AND a.name = k.name AND a.time = k.time
+		  AND k.namespace = $4 AND k.name = $5
 	`
 
 	result, err := s.pool.Exec(ctx, query,
@@ -224,11 +244,24 @@ func (s *PostgreSQLStore) Update(ctx context.Context, anno *annotationV0.Annotat
 	return anno, nil
 }
 
-// Delete deletes an annotation
+// Delete deletes an annotation from both the partitioned table and the key lookup table.
 func (s *PostgreSQLStore) Delete(ctx context.Context, namespace, name string) error {
-	query := `DELETE FROM annotations WHERE namespace = $1 AND name = $2`
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
 
-	result, err := s.pool.Exec(ctx, query, namespace, name)
+	// Delete from annotations using the key table for partition targeting
+	annoQuery := `
+		DELETE FROM annotations a
+		USING annotation_keys k
+		WHERE a.namespace = k.namespace AND a.name = k.name AND a.time = k.time
+		  AND k.namespace = $1 AND k.name = $2
+	`
+	result, err := tx.Exec(ctx, annoQuery, namespace, name)
 	if err != nil {
 		return fmt.Errorf("failed to delete annotation: %w", err)
 	}
@@ -237,7 +270,13 @@ func (s *PostgreSQLStore) Delete(ctx context.Context, namespace, name string) er
 		return ErrNotFound
 	}
 
-	return nil
+	// Delete from annotation_keys
+	keyQuery := `DELETE FROM annotation_keys WHERE namespace = $1 AND name = $2`
+	if _, err := tx.Exec(ctx, keyQuery, namespace, name); err != nil {
+		return fmt.Errorf("failed to delete annotation key: %w", err)
+	}
+
+	return tx.Commit(ctx)
 }
 
 // List lists annotations based on the provided options
