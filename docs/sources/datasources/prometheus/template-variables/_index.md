@@ -78,7 +78,7 @@ Set **Refresh** to `On time range change` so the top 5 instances update as you c
 | Option | Description |
 | --- | --- |
 | **Data source** | The Prometheus data source to query. |
-| **Regex** | Optional regex to extract a portion of the returned values. Use capture groups — for example, `/.*instance="([^"]+)".*/` extracts the instance label value from a series string. |
+| **Regex** | Optional regular expression to extract a portion of the returned values. Use capture groups — for example, `/.*instance="([^"]+)".*/` extracts the instance label value from a series string. |
 | **Sort** | Sort order for dropdown values: `Disabled`, `Alphabetical (asc)`, `Alphabetical (desc)`, `Numerical (asc)`, `Numerical (desc)`, `Alphabetical (case-insensitive, asc)`, `Alphabetical (case-insensitive, desc)`. |
 | **Refresh** | When to update values: `On dashboard load` or `On time range change`. Use `On time range change` for variables that depend on `$__range`. |
 
