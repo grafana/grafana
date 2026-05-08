@@ -18,7 +18,6 @@ import {
   LoadingState,
 } from '@grafana/data';
 import {
-  config,
   DataSourceWithBackend,
   getDataSourceSrv,
   getGrafanaLiveSrv,

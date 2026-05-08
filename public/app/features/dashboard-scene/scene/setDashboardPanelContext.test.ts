@@ -1,4 +1,10 @@
-import { type AdHocVariableModel, EventBusSrv, type GroupByVariableModel, type Scope, type VariableModel } from '@grafana/data';
+import {
+  type AdHocVariableModel,
+  EventBusSrv,
+  type GroupByVariableModel,
+  type Scope,
+  type VariableModel,
+} from '@grafana/data';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
@@ -227,7 +233,13 @@ describe('setDashboardPanelContext', () => {
 
       try {
         const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
-        await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'scoped update', tags: [] });
+        await context.onAnnotationUpdate!({
+          from: 100,
+          to: 200,
+          id: 'event-id-123',
+          description: 'scoped update',
+          tags: [],
+        });
 
         const [, body] = putFn.mock.calls[0];
         expect(body.spec.scopes).toEqual(['scope-b']);

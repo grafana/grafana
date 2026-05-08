@@ -399,7 +399,9 @@ describe('AnnoListPanel', () => {
         }));
         const ctx: ScopesContextValue = {
           state: { drawerOpened: false, enabled: true, loading: false, readOnly: false, value: scopes },
-          stateObservable: { subscribe: () => ({ unsubscribe: () => {} }) } as unknown as ScopesContextValue['stateObservable'],
+          stateObservable: {
+            subscribe: () => ({ unsubscribe: () => {} }),
+          } as unknown as ScopesContextValue['stateObservable'],
           changeScopes: jest.fn(),
           setReadOnly: jest.fn(),
           setEnabled: jest.fn(),
