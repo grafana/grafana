@@ -350,12 +350,12 @@ The following errors occur when there are issues with PromQL syntax or query exe
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-|-------|----------|
-| `increase()` fractional values | Expected behavior — Prometheus uses linear interpolation. Use `ceil()` or `floor()` if you need integers. |
-| `rate()` grows over time | Multiple instances write to the same series without unique labels. Ensure each target has unique `instance`/`pod` labels and aggregate with `sum by`. |
-| Counter reset spikes after pod restarts | Use `$__rate_interval` or a longer range vector to smooth spikes. Investigate frequent restarts as the root cause. |
-| Values differ between edit mode and dashboard | Panel width affects `$__interval` which affects `rate()` window calculations. Set a **Min step** on the query. |
+| Cause                                         | Solution                                                                                                                                              |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `increase()` fractional values                | Expected behavior — Prometheus uses linear interpolation. Use `ceil()` or `floor()` if you need integers.                                             |
+| `rate()` grows over time                      | Multiple instances write to the same series without unique labels. Ensure each target has unique `instance`/`pod` labels and aggregate with `sum by`. |
+| Counter reset spikes after pod restarts       | Use `$__rate_interval` or a longer range vector to smooth spikes. Investigate frequent restarts as the root cause.                                    |
+| Values differ between edit mode and dashboard | Panel width affects `$__interval` which affects `rate()` window calculations. Set a **Min step** on the query.                                        |
 
 For detailed explanations of these behaviors, refer to [Expected PromQL behaviors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor/#expected-promql-behaviors).
 
@@ -411,12 +411,12 @@ The following errors occur when the data source is not configured correctly.
 
 **Common causes and solutions:**
 
-| Cause | Solution |
-|-------|----------|
-| Data source scrape interval left at default `15s` while actual Prometheus scrape interval is longer (for example, `60s`) | Set the **Scrape interval** under **Interval behavior** in the data source configuration to match your Prometheus `scrape_interval`. |
-| Query works in edit mode but shows gaps on the dashboard | Panel size affects `$__interval`. Smaller panels produce larger intervals. Set a **Min step** on the query to enforce a consistent floor. |
-| LBAC-enabled data source doesn't inherit scrape interval | Set the **Min step** explicitly on each query panel rather than relying on data source inheritance. |
-| Using `$__rate_interval` in recording rules or alerting | Use a fixed interval (for example, `[5m]`) instead of `$__rate_interval` in contexts without a panel/dashboard. |
+| Cause                                                                                                                    | Solution                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Data source scrape interval left at default `15s` while actual Prometheus scrape interval is longer (for example, `60s`) | Set the **Scrape interval** under **Interval behavior** in the data source configuration to match your Prometheus `scrape_interval`.      |
+| Query works in edit mode but shows gaps on the dashboard                                                                 | Panel size affects `$__interval`. Smaller panels produce larger intervals. Set a **Min step** on the query to enforce a consistent floor. |
+| LBAC-enabled data source doesn't inherit scrape interval                                                                 | Set the **Min step** explicitly on each query panel rather than relying on data source inheritance.                                       |
+| Using `$__rate_interval` in recording rules or alerting                                                                  | Use a fixed interval (for example, `[5m]`) instead of `$__rate_interval` in contexts without a panel/dashboard.                           |
 
 **To debug the current value:**
 
@@ -486,13 +486,13 @@ The following issues occur when using Prometheus as a data source for annotation
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-|-------|----------|
-| Query returns no data in the current time range | Verify the query returns results in Explore for the dashboard's time range. |
+| Cause                                                | Solution                                                                                                                                                                                                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Query returns no data in the current time range      | Verify the query returns results in Explore for the dashboard's time range.                                                                                                                                                     |
 | Query returns continuous data (too many annotations) | Every returned data point creates an annotation. If the query returns hundreds of points, annotations may render but are too dense to see. Increase the **Min step** or refine your query to only return data at event moments. |
-| Wrong data source selected | Verify the correct Prometheus data source is selected in the annotation configuration. |
-| Annotation is disabled | Check that the annotation toggle is enabled (eye icon) in the dashboard's annotation settings. |
-| Time range mismatch | Expand the dashboard time range to include the events you expect to see. |
+| Wrong data source selected                           | Verify the correct Prometheus data source is selected in the annotation configuration.                                                                                                                                          |
+| Annotation is disabled                               | Check that the annotation toggle is enabled (eye icon) in the dashboard's annotation settings.                                                                                                                                  |
+| Time range mismatch                                  | Expand the dashboard time range to include the events you expect to see.                                                                                                                                                        |
 
 {{< admonition type="note" >}}
 Prometheus annotations create a marker for **every data point** returned by the query. There's no automatic filtering of zero values. If you only want annotations at specific moments, your PromQL expression must return data only at those times (for example, using `> 0`, `changes() > 0`, or the `ALERTS` metric).
@@ -535,12 +535,12 @@ For configuration details, refer to [Configure alert state for execution errors]
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-|-------|----------|
-| Template variables in query | Alert queries don't support template variables. Replace variables with hard-coded values. |
-| Query timeout | Simplify the query or increase the evaluation timeout. Use recording rules for complex expressions. |
-| Data source unreachable | Verify the Prometheus data source connection is working (test it in the data source settings). |
-| No data in range | Ensure the metric has recent data. Check that Prometheus is actively scraping the target. |
+| Cause                       | Solution                                                                                            |
+| --------------------------- | --------------------------------------------------------------------------------------------------- |
+| Template variables in query | Alert queries don't support template variables. Replace variables with hard-coded values.           |
+| Query timeout               | Simplify the query or increase the evaluation timeout. Use recording rules for complex expressions. |
+| Data source unreachable     | Verify the Prometheus data source connection is working (test it in the data source settings).      |
+| No data in range            | Ensure the metric has recent data. Check that Prometheus is actively scraping the target.           |
 
 ### Data source-managed rules not visible
 

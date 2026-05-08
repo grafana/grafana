@@ -195,10 +195,10 @@ Calculate the per-second rate of HTTP requests, broken down by service:
 sum(rate(http_requests_total[$__rate_interval])) by (service)
 ```
 
-| Option | Setting |
-| ------ | ------- |
-| Legend | `{{service}}` (Custom) |
-| Type | Range |
+| Option   | Setting                          |
+| -------- | -------------------------------- |
+| Legend   | `{{service}}` (Custom)           |
+| Type     | Range                            |
 | Min step | Leave empty (uses `$__interval`) |
 
 **Builder mode steps:** Select `http_requests_total` → Add operation **Range functions > Rate** → Add operation **Aggregations > Sum** → Set `by` label to `service`.
@@ -211,11 +211,11 @@ Calculate the percentage of requests that returned 5xx errors:
 sum(rate(http_requests_total{status=~"5.."}[$__rate_interval])) / sum(rate(http_requests_total[$__rate_interval])) * 100
 ```
 
-| Option | Setting |
-| ------ | ------- |
+| Option | Setting                 |
+| ------ | ----------------------- |
 | Legend | `Error rate %` (Custom) |
-| Type | Range |
-| Format | Time series |
+| Type   | Range                   |
+| Format | Time series             |
 
 ### Histogram quantile (p95 latency)
 
@@ -225,10 +225,10 @@ Calculate the 95th percentile request duration from a histogram metric:
 histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[$__rate_interval])) by (le))
 ```
 
-| Option | Setting |
-| ------ | ------- |
+| Option | Setting                |
+| ------ | ---------------------- |
 | Legend | `p95 latency` (Custom) |
-| Type | Range |
+| Type   | Range                  |
 
 **Builder mode steps:** Select `http_request_duration_seconds_bucket` → Add **Range functions > Rate** → Add **Aggregations > Sum** with `by` label `le` → Add **Functions > Histogram quantile** with value `0.95`.
 
@@ -240,10 +240,10 @@ Calculate average CPU usage percentage, grouped by instance:
 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[$__rate_interval])) * 100)
 ```
 
-| Option | Setting |
-| ------ | ------- |
-| Legend | `{{instance}}` (Custom) |
-| Type | Range |
+| Option   | Setting                            |
+| -------- | ---------------------------------- |
+| Legend   | `{{instance}}` (Custom)            |
+| Type     | Range                              |
 | Min step | `15s` (match your scrape interval) |
 
 ### Multi-query expressions (available memory percentage)
@@ -278,9 +278,9 @@ A simple alert query that fires when a scrape target is down:
 up{job="my-service"} == 0
 ```
 
-| Option | Setting |
-| ------ | ------- |
-| Type | Both |
+| Option | Setting     |
+| ------ | ----------- |
+| Type   | Both        |
 | Format | Time series |
 
 {{< admonition type="note" >}}

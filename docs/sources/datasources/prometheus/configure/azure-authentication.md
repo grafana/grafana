@@ -61,11 +61,11 @@ After migration (or for new setups), configure the dedicated plugin:
 1. Select your Azure Monitor Managed Service for Prometheus data source.
 1. In the **Authentication** section, select your authentication method:
 
-| Method               | Use case                          | Additional configuration required          |
-| -------------------- | --------------------------------- | ------------------------------------------ |
-| **Managed Identity** | Azure-hosted Grafana instances    | None (system-assigned) or Client ID (user-assigned) |
-| **App Registration** | Service principal authentication  | Directory ID, Application ID, Client secret |
-| **Current User**     | Current user's Entra ID credentials | None                                       |
+| Method               | Use case                            | Additional configuration required                   |
+| -------------------- | ----------------------------------- | --------------------------------------------------- |
+| **Managed Identity** | Azure-hosted Grafana instances      | None (system-assigned) or Client ID (user-assigned) |
+| **App Registration** | Service principal authentication    | Directory ID, Application ID, Client secret         |
+| **Current User**     | Current user's Entra ID credentials | None                                                |
 
 For Managed Identity authentication:
 

@@ -35,10 +35,10 @@ Before creating alerts with Prometheus, ensure you have:
 
 Prometheus supports two alerting workflows in Grafana:
 
-| Type | Description |
-| ---- | ----------- |
-| **Grafana-managed alert rules** | Alert rules defined and evaluated within Grafana, using Prometheus as the query data source. You create and manage these entirely in the Grafana Alerting UI. |
-| **Data source-managed rules** | Alerting rules defined in Prometheus itself (in `prometheus.yml` or rule files). When **Manage alerts via Alerting UI** is enabled in the data source configuration, Grafana displays these existing rules in the Alerting UI. For Prometheus (unlike Mimir), this is read-only. |
+| Type                            | Description                                                                                                                                                                                                                                                                      |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Grafana-managed alert rules** | Alert rules defined and evaluated within Grafana, using Prometheus as the query data source. You create and manage these entirely in the Grafana Alerting UI.                                                                                                                    |
+| **Data source-managed rules**   | Alerting rules defined in Prometheus itself (in `prometheus.yml` or rule files). When **Manage alerts via Alerting UI** is enabled in the data source configuration, Grafana displays these existing rules in the Alerting UI. For Prometheus (unlike Mimir), this is read-only. |
 
 ## Create a Grafana-managed alert rule
 

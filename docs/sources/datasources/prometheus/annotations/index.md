@@ -63,13 +63,13 @@ Because every returned data point creates an annotation, queries that return con
 
 After entering your PromQL expression, use the field mapping drop-downs to control how query results are displayed as annotations. Grafana shows mapping options for:
 
-| Field       | Description                                                                                                   | Default behavior                                   |
-| ----------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| **Time**    | The timestamp for the annotation.                                                                             | Uses the first time-type field (always present).   |
-| **TimeEnd** | An end timestamp for range annotations, which display as a shaded region instead of a vertical line.          | Not set (produces point annotations).              |
-| **Title**   | Short label displayed on the annotation marker.                                                               | Not set.                                           |
-| **Text**    | The annotation description displayed when you hover over it.                                                  | Uses the first string-type field, or the metric/label display name if configured. |
-| **Tags**    | Comma-separated tags for the annotation. Helps categorize and filter annotations.                             | Not set.                                           |
+| Field       | Description                                                                                          | Default behavior                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **Time**    | The timestamp for the annotation.                                                                    | Uses the first time-type field (always present).                                  |
+| **TimeEnd** | An end timestamp for range annotations, which display as a shaded region instead of a vertical line. | Not set (produces point annotations).                                             |
+| **Title**   | Short label displayed on the annotation marker.                                                      | Not set.                                                                          |
+| **Text**    | The annotation description displayed when you hover over it.                                         | Uses the first string-type field, or the metric/label display name if configured. |
+| **Tags**    | Comma-separated tags for the annotation. Helps categorize and filter annotations.                    | Not set.                                                                          |
 
 To configure field mappings, select the appropriate field name from each drop-down, or enter a fixed text value.
 

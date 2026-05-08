@@ -142,15 +142,15 @@ Pass along additional information and metadata about the request or response.
 
 - **Prometheus type** - Select the type of your Prometheus-compatible database. Setting this incorrectly may cause unexpected behavior when querying metrics and labels. Cortex is end-of-life; if you're running Cortex, consider migrating to [Mimir](https://grafana.com/oss/mimir/).
 
-  | Capability | Prometheus | Mimir | Thanos | Cortex |
-  | --- | --- | --- | --- | --- |
-  | Regex label matching in variable queries | No | Yes | No | Yes |
-  | Metadata API (metric type/help) | Yes (2.4+) | Yes | No | Yes |
-  | Exemplars | Yes (2.26+) | Yes | No | No |
-  | Data source-managed alert rules (read/write) | Read only | Read/Write | Read only | Read/Write |
-  | Recording rules target (write-back) | Yes | Yes | No | Yes |
-  | LBAC (Team-based access control) | No | Yes (Cloud/GEM) | No | No |
-  | Native histograms | Yes (2.40+) | Yes | No | No |
+  | Capability                                   | Prometheus  | Mimir           | Thanos    | Cortex     |
+  | -------------------------------------------- | ----------- | --------------- | --------- | ---------- |
+  | Regex label matching in variable queries     | No          | Yes             | No        | Yes        |
+  | Metadata API (metric type/help)              | Yes (2.4+)  | Yes             | No        | Yes        |
+  | Exemplars                                    | Yes (2.26+) | Yes             | No        | No         |
+  | Data source-managed alert rules (read/write) | Read only   | Read/Write      | Read only | Read/Write |
+  | Recording rules target (write-back)          | Yes         | Yes             | No        | Yes        |
+  | LBAC (Team-based access control)             | No          | Yes (Cloud/GEM) | No        | No         |
+  | Native histograms                            | Yes (2.40+) | Yes             | No        | No         |
 
   Grafana uses this setting to determine which API endpoints and features to enable. For example, when set to Mimir, Grafana uses regular expression-optimized label queries that significantly improve autocomplete and variable loading performance for large metric sets.
 
@@ -223,7 +223,7 @@ You can define and configure the data source in YAML files as part of the Grafan
 After you have provisioned a data source, you cannot edit it through the UI.
 {{< /admonition >}}
 
-### Provision with YAML 
+### Provision with YAML
 
 For more information about provisioning, and for available configuration options, refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
 

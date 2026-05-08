@@ -30,14 +30,14 @@ For an introduction to templating and template variables, refer to [Templating](
 
 Query variables query Prometheus to populate dropdown values. When creating a query variable, select a Prometheus data source and choose a query type:
 
-| Query Type | Required inputs | Description | Example |
-| --- | --- | --- | --- |
-| **Label names** | `metric` (optional) | Returns all label names, optionally filtered by metric regular expression. | Metric: `http_requests_total` → returns `job`, `instance`, `method`, `status`, etc. |
-| **Label values** | `label` (required), `metric` (optional) | Returns values for a specific label, optionally filtered by metric. | Label: `job`, Metric: `http_requests_total` → returns `api-server`, `web`, `worker` |
-| **Metrics** | `metric` (optional) | Returns metric names matching the specified regular expression. | Metric: `node_.*` → returns `node_cpu_seconds_total`, `node_memory_MemFree_bytes`, etc. |
-| **Query result** | `query` (required) | Runs a PromQL query and returns the results as variable values. | `query_result(up{job="prometheus"})` |
-| **Series query** | `metric`, `label`, or both | Returns time series matching the specified metric and/or label selectors. | Metric: `http_requests_total`, Label: `job="api"` |
-| **Classic query** | query string | _Deprecated._ Legacy syntax using functions like `label_values(metric, label)`. | `label_values(http_requests_total, job)` |
+| Query Type        | Required inputs                         | Description                                                                     | Example                                                                                 |
+| ----------------- | --------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Label names**   | `metric` (optional)                     | Returns all label names, optionally filtered by metric regular expression.      | Metric: `http_requests_total` → returns `job`, `instance`, `method`, `status`, etc.     |
+| **Label values**  | `label` (required), `metric` (optional) | Returns values for a specific label, optionally filtered by metric.             | Label: `job`, Metric: `http_requests_total` → returns `api-server`, `web`, `worker`     |
+| **Metrics**       | `metric` (optional)                     | Returns metric names matching the specified regular expression.                 | Metric: `node_.*` → returns `node_cpu_seconds_total`, `node_memory_MemFree_bytes`, etc. |
+| **Query result**  | `query` (required)                      | Runs a PromQL query and returns the results as variable values.                 | `query_result(up{job="prometheus"})`                                                    |
+| **Series query**  | `metric`, `label`, or both              | Returns time series matching the specified metric and/or label selectors.       | Metric: `http_requests_total`, Label: `job="api"`                                       |
+| **Classic query** | query string                            | _Deprecated._ Legacy syntax using functions like `label_values(metric, label)`. | `label_values(http_requests_total, job)`                                                |
 
 For details on metric names, label names, and label values, refer to the [Prometheus data model](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
@@ -75,12 +75,12 @@ Set **Refresh** to `On time range change` so the top 5 instances update as you c
 
 ### Query options
 
-| Option | Description |
-| --- | --- |
-| **Data source** | The Prometheus data source to query. |
-| **Regex** | Optional regular expression to extract a portion of the returned values. Use capture groups — for example, `/.*instance="([^"]+)".*/` extracts the instance label value from a series string. |
-| **Sort** | Sort order for dropdown values: `Disabled`, `Alphabetical (asc)`, `Alphabetical (desc)`, `Numerical (asc)`, `Numerical (desc)`, `Alphabetical (case-insensitive, asc)`, `Alphabetical (case-insensitive, desc)`. |
-| **Refresh** | When to update values: `On dashboard load` or `On time range change`. Use `On time range change` for variables that depend on `$__range`. |
+| Option          | Description                                                                                                                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source** | The Prometheus data source to query.                                                                                                                                                                             |
+| **Regex**       | Optional regular expression to extract a portion of the returned values. Use capture groups — for example, `/.*instance="([^"]+)".*/` extracts the instance label value from a series string.                    |
+| **Sort**        | Sort order for dropdown values: `Disabled`, `Alphabetical (asc)`, `Alphabetical (desc)`, `Numerical (asc)`, `Numerical (desc)`, `Alphabetical (case-insensitive, asc)`, `Alphabetical (case-insensitive, desc)`. |
+| **Refresh**     | When to update values: `On dashboard load` or `On time range change`. Use `On time range change` for variables that depend on `$__range`.                                                                        |
 
 ### Selection options
 
@@ -101,13 +101,13 @@ rate(http_requests_total{job=~"$job"}[$__rate_interval])
 
 You can use global built-in variables in query variable definitions:
 
-| Variable | Description |
-| --- | --- |
-| `$__interval` | Calculated interval based on time range and panel width. |
-| `$__interval_ms` | Same as `$__interval` in milliseconds. |
-| `$__range` | Duration of the current dashboard time range (for example, `1h`). |
-| `$__range_s` | Duration in seconds. |
-| `$__range_ms` | Duration in milliseconds. |
+| Variable         | Description                                                       |
+| ---------------- | ----------------------------------------------------------------- |
+| `$__interval`    | Calculated interval based on time range and panel width.          |
+| `$__interval_ms` | Same as `$__interval` in milliseconds.                            |
+| `$__range`       | Duration of the current dashboard time range (for example, `1h`). |
+| `$__range_s`     | Duration in seconds.                                              |
+| `$__range_ms`    | Duration in milliseconds.                                         |
 
 For details, refer to [Global built-in variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables).
 
@@ -151,6 +151,7 @@ max($__interval + scrape_interval, 4 * scrape_interval)
 ```
 
 Where `scrape_interval` is:
+
 1. The per-query **Min step** setting, if set.
 2. Otherwise, the data source's **Scrape interval** setting (under Interval behavior in the data source configuration).
 
@@ -186,11 +187,11 @@ For additional background, refer to [$\_\_rate_interval for Prometheus rate quer
 
 The Prometheus data source supports three variable syntaxes:
 
-| Syntax | Example | Use case |
-| --- | --- | --- |
-| `$varname` | `rate(http_requests_total{job=~"$job"}[$__rate_interval])` | Simple, readable. Cannot be used mid-word. |
-| `${varname}` | `rate(http_requests_total{job=~"${job}"}[$__rate_interval])` | Use when the variable is adjacent to other text (for example, `${env}-cluster`). |
-| `[[varname]]` | `rate(http_requests_total{job=~"[[job]]"}[$__rate_interval])` | Legacy syntax. Supported for backward compatibility. |
+| Syntax        | Example                                                       | Use case                                                                         |
+| ------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `$varname`    | `rate(http_requests_total{job=~"$job"}[$__rate_interval])`    | Simple, readable. Cannot be used mid-word.                                       |
+| `${varname}`  | `rate(http_requests_total{job=~"${job}"}[$__rate_interval])`  | Use when the variable is adjacent to other text (for example, `${env}-cluster`). |
+| `[[varname]]` | `rate(http_requests_total{job=~"[[job]]"}[$__rate_interval])` | Legacy syntax. Supported for backward compatibility.                             |
 
 {{< admonition type="note" >}}
 If **Multi-value** or **Include All** is enabled, the variable value becomes a regular expression pattern (for example, `value1|value2`). Use `=~` instead of `=` in your label matchers.
