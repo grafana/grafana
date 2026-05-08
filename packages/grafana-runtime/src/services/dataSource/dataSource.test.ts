@@ -11,7 +11,7 @@ import {
   setDataSourceImporter,
 } from './dataSource';
 import { _resetForTests as resetPluginCache } from './pluginCache';
-import { _resetForTests as resetInstanceSettings, initDataSources, reload } from './settings';
+import { _resetForTests as resetInstanceSettings, initDataSources, reloadDataSources } from './settings';
 
 class TestRuntime extends RuntimeDataSource {
   query() {
@@ -210,7 +210,7 @@ describe('plugin', () => {
           defaultDatasource: settings.name,
         }),
       });
-      await reload();
+      await reloadDataSources();
 
       // The importer must be called again because the cache was cleared.
       await getDataSource(settings.uid);
@@ -225,7 +225,7 @@ describe('plugin', () => {
       jest.spyOn(require('../../services/backendSrv'), 'getBackendSrv').mockReturnValue({
         get: jest.fn().mockResolvedValue({ datasources: {}, defaultDatasource: '' }),
       });
-      await reload();
+      await reloadDataSources();
 
       const result = await getDataSource('runtime-uid');
       expect(result).toBe(runtime);
