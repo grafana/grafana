@@ -181,7 +181,7 @@ The Prometheus data source supports three variable syntaxes:
 | `[[varname]]` | `rate(http_requests_total{job=~"[[job]]"}[$__rate_interval])` | Legacy syntax. Supported for backward compatibility. |
 
 {{< admonition type="note" >}}
-If **Multi-value** or **Include All** is enabled, the variable value becomes a regex pattern (for example, `value1|value2`). Use `=~` instead of `=` in your label matchers.
+If **Multi-value** or **Include All** is enabled, the variable value becomes a regular expression pattern (for example, `value1|value2`). Use `=~` instead of `=` in your label matchers.
 {{< /admonition >}}
 
 ## Filters variable
