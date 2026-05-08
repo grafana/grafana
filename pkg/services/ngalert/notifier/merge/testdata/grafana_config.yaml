@@ -1,0 +1,60 @@
+mute_time_intervals:
+  - name: mti-1
+    time_intervals:
+    - times:
+      - start_time: 00:00
+        end_time: 12:00
+time_intervals:
+  - name: ti-1
+    time_intervals:
+    - weekdays:
+      - saturday
+      - sunday
+inhibit_rules:
+    - source_matchers:
+        - alertname="test"
+        - cluster="test1"
+      target_matchers:
+        - alertname="test2"
+        - cluster="test1"
+      equal:
+        - namespace
+route:
+  receiver: grafana-default-email
+  group_by: [test, test2]
+  group_wait: 1m
+  group_interval: 1m
+  repeat_interval: 1m
+  routes:
+  - receiver: test-webhook
+    object_matchers:
+    - - team
+      - =
+      - teamC
+    group_by:
+    - teste
+    - test2f
+    group_wait: 0s
+    group_interval: 1m
+    repeat_interval: 1m
+    mute_time_intervals:
+    - mti-1
+    active_time_intervals:
+    - ti-1
+receivers:
+  - name: grafana-default-email
+    grafana_managed_receiver_configs:
+      - uid: uxwfZvtnz
+        type: email
+        disableResolveMessage: false
+        settings:
+          addresses: "<example@email.com>"
+        secureFields: {}
+  - name: test-webhook
+    grafana_managed_receiver_configs:
+      - uid: 12345
+        type: webhook
+        disableResolveMessage: false
+        settings:
+          url: "http://localhost/api/v1/alerts"
+        secureFields: {}

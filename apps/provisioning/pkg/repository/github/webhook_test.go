@@ -133,7 +133,7 @@ func TestParseWebhooks(t *testing.T) {
 			payload, err := os.ReadFile(path.Join("testdata", name))
 			require.NoError(t, err)
 
-			rsp, err := gh.parseWebhook(tt.messageType, payload)
+			rsp, err := gh.parseWebhook(context.Background(), tt.messageType, payload)
 			require.NoError(t, err)
 
 			require.Equal(t, tt.expected.Code, rsp.Code)
@@ -167,7 +167,7 @@ func TestParsePushEvent_LargeDiffForcesFullSync(t *testing.T) {
 	payload, err := os.ReadFile(path.Join("testdata", "webhook-push-large_diff.json"))
 	require.NoError(t, err)
 
-	rsp, err := gh.parseWebhook("push", payload)
+	rsp, err := gh.parseWebhook(context.Background(), "push", payload)
 	require.NoError(t, err)
 
 	require.Equal(t, http.StatusAccepted, rsp.Code)
@@ -400,7 +400,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expectedError: fmt.Errorf("repository mismatch"),
+			expectedError: repo.ErrRepositoryMismatch,
 		},
 		{
 			name: "push event when sync is disabled",
@@ -779,7 +779,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expectedError: fmt.Errorf("repository mismatch"),
+			expectedError: repo.ErrRepositoryMismatch,
 		},
 		{
 			name: "pull request event missing pull request info",

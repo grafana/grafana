@@ -1296,6 +1296,138 @@ func TestCleanOldIndexes(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, files, 0)
 	})
+
+	t.Run("in-flight build directory is preserved", func(t *testing.T) {
+		dir := t.TempDir()
+		b, _ := setupBleveBackend(t, withRootDir(dir))
+
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0750))
+
+		// Pretend a concurrent BuildIndex is using index-2.
+		inFlightDir := filepath.Join(dir, "index-2")
+		b.registerInFlightBuildDir(inFlightDir)
+		t.Cleanup(func() { b.unregisterInFlightBuildDir(inFlightDir) })
+
+		b.cleanOldIndexes(dir, "index-3")
+
+		names := dirEntryNames(t, dir)
+		require.ElementsMatch(t, []string{"index-2", "index-3"}, names,
+			"in-flight directory and skipName must both survive cleanup")
+	})
+}
+
+func dirEntryNames(t *testing.T, dir string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+	names := make([]string, 0, len(entries))
+	for _, e := range entries {
+		names = append(names, e.Name())
+	}
+	return names
+}
+
+// TestBuildIndexConcurrentBuildsForSameKeyDoNotDeleteEachOthersDirs covers
+// the case of two concurrent BuildIndex calls for the same key, the second
+// finishing first and running cleanOldIndexes while the first is still
+// building. cleanOldIndexes must skip the first build's directory, otherwise
+// the still-running build's segments get wiped from disk and persists fail
+// with ENOENT.
+func TestBuildIndexConcurrentBuildsForSameKeyDoNotDeleteEachOthersDirs(t *testing.T) {
+	backend, _ := setupBleveBackend(t, withFileThreshold(1))
+	ns := resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
+	resourceDir := backend.getResourceDir(ns)
+
+	// Seed the cache with a file-based index so the subsequent rebuilds skip
+	// the cold-start reuse path (which would otherwise collide on the bolt
+	// lock of the already-open initial index).
+	_, err := backend.BuildIndex(t.Context(), ns, 100, nil, "init",
+		func(_ resource.ResourceIndex) (int64, error) { return 1, nil },
+		nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	initDirs := dirEntryNames(t, resourceDir)
+	require.Len(t, initDirs, 1)
+
+	// Start build A and park its builder, so A's directory is on disk and
+	// registered as in-flight while B runs.
+	aEntered := make(chan struct{})
+	aRelease := make(chan struct{})
+	aDone := make(chan struct{})
+	go func() {
+		defer close(aDone)
+		_, _ = backend.BuildIndex(t.Context(), ns, 100, nil, "build-a",
+			func(_ resource.ResourceIndex) (int64, error) {
+				close(aEntered)
+				<-aRelease
+				return 1, nil
+			}, nil, true, time.Time{}, 0)
+	}()
+	<-aEntered
+
+	// A's directory is the new entry that appeared since the initial build.
+	var aDir string
+	for _, name := range dirEntryNames(t, resourceDir) {
+		if name != initDirs[0] {
+			aDir = name
+			break
+		}
+	}
+	require.NotEmpty(t, aDir)
+
+	// Run B to completion. B's cleanOldIndexes runs while A is still in flight.
+	_, err = backend.BuildIndex(t.Context(), ns, 100, nil, "build-b",
+		func(_ resource.ResourceIndex) (int64, error) { return 2, nil },
+		nil, true, time.Time{}, 0)
+	require.NoError(t, err)
+
+	require.Contains(t, dirEntryNames(t, resourceDir), aDir,
+		"A's directory was deleted by B's cleanOldIndexes while A was still in flight")
+
+	// Let A finish so its goroutine cleans up before the test ends.
+	close(aRelease)
+	<-aDone
+
+	require.Empty(t, backend.inFlightBuildDirs,
+		"in-flight directory registrations leaked after both builds finished")
+}
+
+// TestBuildIndexColdStartReuseRejectionDoesNotLeakInFlightDir guards against
+// a leak in the path where findPreviousFileBasedIndex registers the reused
+// directory but tryReuseFileIndex then rejects it because its BuildTime
+// predates lastImportTime. Without unregistering on the reject path, the
+// stale directory would remain registered for the lifetime of the process,
+// causing cleanOldIndexes to skip it forever.
+func TestBuildIndexColdStartReuseRejectionDoesNotLeakInFlightDir(t *testing.T) {
+	backend, _ := setupBleveBackend(t, withFileThreshold(1))
+	ns := resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
+
+	// Build an initial file-based index so a directory exists on disk.
+	_, err := backend.BuildIndex(t.Context(), ns, 100, nil, "init",
+		func(_ resource.ResourceIndex) (int64, error) { return 1, nil },
+		nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	// Drop the cached entry and close the index, simulating a fresh process
+	// boot that finds an out-of-date persisted index on disk.
+	backend.cacheMx.Lock()
+	prev := backend.cache[ns]
+	delete(backend.cache, ns)
+	backend.cacheMx.Unlock()
+	require.NotNil(t, prev)
+	require.NoError(t, prev.stopUpdaterAndCloseIndex())
+
+	// Call BuildIndex with lastImportTime > the existing index's BuildTime.
+	// tryReuseFileIndex opens the on-disk dir, sees the build is stale, and
+	// closes + rejects it; createEmptyFileIndex then builds a fresh one.
+	_, err = backend.BuildIndex(t.Context(), ns, 100, nil, "rebuild-after-import",
+		func(_ resource.ResourceIndex) (int64, error) { return 2, nil },
+		nil, false, time.Now().Add(time.Hour), 0)
+	require.NoError(t, err)
+
+	require.Empty(t, backend.inFlightBuildDirs,
+		"in-flight directory registrations leaked after cold-start reuse rejection")
 }
 
 func TestBleveIndexWithFailures(t *testing.T) {

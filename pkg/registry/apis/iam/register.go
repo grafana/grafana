@@ -383,13 +383,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	})
 
 	if enableTeamsApi {
-		if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi); err != nil {
+		if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi, enableZanzanaSync); err != nil {
 			return err
 		}
 	}
 
 	if enableTeamsApi {
-		if err := b.UpdateTeamBindingsAPIGroup(opts, storage, enableZanzanaSync); err != nil {
+		if err := b.UpdateTeamBindingsAPIGroup(opts, storage); err != nil {
 			return err
 		}
 	}
@@ -455,12 +455,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableExternalGroupMappingsApi bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableExternalGroupMappingsApi bool, enableZanzanaSync bool) error {
 	teamResource := iamv0.TeamResourceInfo
 	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
+
+	// Team membership is sourced from team.spec.members; sync those changes
+	// to Zanzana from the Team hooks (TeamBinding is deprecated).
+	if enableZanzanaSync {
+		b.logger.Info("Enabling hooks for Team to sync members to Zanzana")
+		teamUniStore.AfterCreate = b.AfterTeamCreate
+		teamUniStore.AfterDelete = b.AfterTeamDelete
+		teamUniStore.BeginUpdate = b.BeginTeamUpdate
+	}
+
 	storage[teamResource.StoragePath()] = teamUniStore
 	b.teamGetter = teamUniStore
 
@@ -485,7 +495,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
 	teamBindingResource := iamv0.TeamBindingResourceInfo
 
 	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
@@ -497,15 +507,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 		return err
 	}
 
+	// Zanzana sync for team membership lives on the Team hooks now;
+	// team.spec.members is the source of truth.
 	var teamBindingStore storewrapper.K8sStorage = teamBindingUniStore
-
-	// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
-	if enableZanzanaSync {
-		b.logger.Info("Enabling hooks for TeamBinding to sync to Zanzana")
-		teamBindingUniStore.AfterCreate = b.AfterTeamBindingCreate
-		teamBindingUniStore.AfterDelete = b.AfterTeamBindingDelete
-		teamBindingUniStore.BeginUpdate = b.BeginTeamBindingUpdate
-	}
 
 	if b.teamBindingLegacyStore != nil {
 		dw, err := opts.DualWriteBuilder(teamBindingResource.GroupResource(), b.teamBindingLegacyStore, teamBindingUniStore)

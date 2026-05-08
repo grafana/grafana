@@ -328,10 +328,11 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 // that should be deleted. Two independent rules; a snapshot is deletable if
 // either fires:
 //
-//	A. Age cutoff: anything older than maxAge, regardless of group/successor.
-//	B. Superseded with stable replacement: within a Grafana-version group, all
-//	   snapshots except the newest are deletable once the newest has lived
-//	   beyond gracePeriod.
+//	rule A — age cutoff: anything older than maxAge, regardless of group/successor.
+//	rule B — within a Grafana-version group, an older snapshot is deleted
+//	         once a newer same-version snapshot has existed for longer than
+//	         gracePeriod (the grace period gives in-flight downloaders that
+//	         picked the older snapshot time to finish before it goes away).
 //
 // Snapshots with an unparseable BuildVersion are excluded from any
 // version group; rule A still applies, but otherwise they are left untouched.

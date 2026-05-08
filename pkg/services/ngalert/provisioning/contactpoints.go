@@ -49,7 +49,7 @@ type emailIntegrationValidator interface {
 type ContactPointService struct {
 	authz                     receiverAuthz
 	configStore               alertmanagerConfigStore
-	encryptionService         secrets.Service
+	encryptionService         secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	provenanceStore           ProvisioningStore
 	notificationSettingsStore AlertRuleNotificationSettingsStore
 	xact                      TransactionManager
@@ -69,7 +69,7 @@ type receiverService interface {
 func NewContactPointService(
 	authz receiverAuthz,
 	store alertmanagerConfigStore,
-	encryptionService secrets.Service,
+	encryptionService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	provenanceStore ProvisioningStore,
 	xact TransactionManager,
 	receiverService receiverService,
