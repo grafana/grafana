@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -219,8 +219,15 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
   // Check if we're on the root browser dashboards page
   const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
   const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
+
+  // Capture the repo UID so it survives selection state changes during/after job execution
+  const resolvedRepoUID = useRef(selectedItemsRepoUID);
+  if (selectedItemsRepoUID) {
+    resolvedRepoUID.current = selectedItemsRepoUID;
+  }
+
   const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: isRootPage ? selectedItemsRepoUID : folderUid,
+    folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);

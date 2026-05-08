@@ -4,7 +4,6 @@
       "label-advanced": "Speciális"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "Hozzáadás",
       "aria-label-remove": "Eltávolítás",
       "button-add-resource": "Erőforrás hozzáadása",
       "button-add-resource-uri": "Erőforrás-URI hozzáadása",

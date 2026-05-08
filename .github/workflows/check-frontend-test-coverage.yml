@@ -296,9 +296,37 @@ jobs:
         if: steps.check-affected.outputs.affected == 'true'
         run: mkdir -p ./coverage-pr && cp ./pr/coverage-summary.json ./coverage-pr/coverage-summary.json
 
+      - name: Get codeowner coverage directory slug
+        if: steps.check-affected.outputs.affected == 'true'
+        id: coverage-dir
+        run: |
+          SLUG=$(node -e "
+            const {createCodeownerSlug} = require('./pr/scripts/codeowners-manifest/utils.js');
+            console.log(createCodeownerSlug('${{ matrix.codeowner }}'));
+          ")
+          echo "slug=${SLUG}" >> "$GITHUB_OUTPUT"
+          PATH=$(node -e "
+            const {buildCodeownerDirectoryPath} = require('./pr/scripts/codeowners-manifest/utils.js');
+            console.log(buildCodeownerDirectoryPath('${{ matrix.codeowner }}'));
+          ")
+          echo "path=${PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload PR HTML coverage report
+        if: steps.check-affected.outputs.affected == 'true'
+        id: upload-coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-${{ steps.coverage-dir.outputs.slug }}
+          path: ./pr/coverage/by-team/${{ steps.coverage-dir.outputs.path }}/html
+          retention-days: 7
+
       - name: Compare coverage
         if: steps.check-affected.outputs.affected == 'true'
         id: compare
+        env:
+          COVERAGE_ARTIFACT_URL: ${{ steps.upload-coverage.outputs.artifact-url }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           # Run comparison from workspace root where coverage-main/ and coverage-pr/ live
           if node ./pr/scripts/compare-coverage-by-codeowner.js; then

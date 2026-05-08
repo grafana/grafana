@@ -102,6 +102,8 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "resource_history"
 	case PendingDeleteSection:
 		tableName = "pending_tenant_deletions"
+	case LeasesSection:
+		tableName = "kv_leases"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
@@ -380,7 +382,7 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
-	if section != DataSection && section != EventsSection && section != PendingDeleteSection && section != LastImportTimeSection {
+	if section != DataSection && section != EventsSection && section != PendingDeleteSection && section != LastImportTimeSection && section != LeasesSection {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
@@ -433,9 +435,11 @@ func (w *sqlWriteCloser) Close() error {
 
 	keyPath := getKeyPath(w.section, w.key)
 
-	// do regular kv save: simple key_path + value insert with conflict check.
-	// can only do this on resource_events and pending_tenant_deletions for now, until we drop the columns in resource_history
-	if w.section == EventsSection || w.section == PendingDeleteSection {
+	// Do regular kv save: simple key_path + value insert with conflict check.
+	// Used for sections that map to dedicated key-value tables (resource_events,
+	// pending_tenant_deletions, kv_leases). DataSection still goes through the
+	// resource_history-specific path below until the legacy columns are dropped.
+	if w.section == EventsSection || w.section == PendingDeleteSection || w.section == LeasesSection {
 		query, args := qb.buildUpsertQuery(keyPath, value)
 		_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 		if err != nil {
