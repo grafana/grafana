@@ -39,7 +39,7 @@ composableKinds: PanelCfg: {
 					//Controls value alignment on the timelines
 					alignValue?: ui.TimelineValueAlignment & (*"left" | _)
 					//Controls where the series name is displayed
-					namePosition?: ("left" | "top") | *"left"
+					namePosition?: "left" | "top"
 					//Enables pagination when > 0
 					perPage?: number & >=1 | *20
 				} @cuetsy(kind="interface")
