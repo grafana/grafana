@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Falha ao carregar a secção de enriquecimento do visualizador de regras"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Falha ao atualizar a sua configuração:",
       "title-something-went-wrong": "Ocorreu um problema"
@@ -3174,9 +3177,7 @@
       "deleting": "A eliminar",
       "text-federated": "Federado",
       "text-provisioned": "Aprovisionado",
-      "ungrouped": "Não agrupado",
-      "ungrouped-suffix": "{{ruleName}} (Não agrupado)",
-      "unknown-rule": "Regra desconhecida"
+      "ungrouped": "Não agrupado"
     },
     "saved-searches": {
       "actions-aria-label": "Ações",
@@ -4322,6 +4323,7 @@
         "repository-not-found-message": "Não foi possível encontrar o repositório para a pasta selecionada. Certifique-se de que a pasta está aprovisionada corretamente.",
         "repository-not-found-title": "Repositório não encontrado"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Erro ao mover recursos",
       "error-no-target-folder-path": "O caminho da pasta de destino é inválido ou está vazio, selecione novamente.",
       "move-total": "No total, isto afetará:",
@@ -4460,6 +4462,14 @@
       "request-extension": "Pedir extensão da quota",
       "resource-detail-dashboards": "Criou {{usage}} de {{limit}} painéis de controlo ({{percentage}}%).",
       "resource-detail-folders": "Criou {{usage}} de {{limit}} pastas ({{percentage}}%)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Limpar histórico",
@@ -5269,7 +5279,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Definições"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5671,7 +5681,7 @@
         "title": "Variáveis"
       },
       "variable": {
-        "change-type": "Alterar",
+        "change-type": "",
         "change-type-aria-label": "Alterar tipo de variável",
         "custom-options": {
           "apply": "Aplicar",
@@ -5988,7 +5998,7 @@
       "cancel": "Cancelar",
       "common": {
         "copy": "Copiar",
-        "copy-or-duplicate": "Copiar/colar ou duplicar",
+        "copy-tooltip": "",
         "delete": "Eliminar",
         "duplicate": "Duplicar",
         "layout": "Layout",
@@ -6027,7 +6037,7 @@
     },
     "new-panel": {
       "aria-label": "Painel não configurado. Prima Tab para ver as opções de configuração.",
-      "configure-button": "Configurar",
+      "configure-button": "",
       "configure-button-menu": "Alternar menu",
       "configure-visualization": "Configurar a visualização",
       "empty-state-message": "Execute uma consulta para a visualizar aqui ou aceda a todas as visualizações para adicionar outros tipos de painel",
@@ -6269,10 +6279,8 @@
       "title-provisioned": "Painel de controlo fornecido"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Já existe um painel de controlo com o mesmo nome na pasta selecionada.<br/><2>Pretende guardar este painel de controlo mesmo assim?</2>",
       "body-version-mismatch": "Outra pessoa atualizou este painel de controlo.<br/><2>Pretende guardar este painel de controlo mesmo assim?</2>",
       "confirmText-save-and-overwrite": "Guardar e substituir",
-      "title-name-exists": "Conflito",
       "title-version-mismatch": "Conflito"
     },
     "save-dashboard-form": {
@@ -7313,6 +7321,7 @@
       "terraform": "Gerido por: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Não foi possível mover o painel de controlo",
       "cancel-action": "Cancelar",
       "current-file-not-found": "Não foi possível encontrar o ficheiro do painel de controlo atual",
@@ -7325,10 +7334,6 @@
       "success-message": "Painel de controlo movido com sucesso",
       "target-path-label": "Caminho de destino",
       "title-this-repository-is-read-only": "Este repositório é apenas de leitura"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Já existe um painel de controlo com o mesmo nome na pasta selecionada. Ainda pretende guardar este painel de controlo?",
-      "title-name-already-exists": "Nome já existente"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8036,19 +8041,6 @@
       "aria-label-create-a-dashboard": "Criar um painel de controlo",
       "aria-label-explore-data": "Explorar dados",
       "aria-label-suggested-dashboards": "Painéis de controlo sugeridos"
-    },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alertas não suportados",
-      "text-alerting-supported": "Alertas suportados"
-    },
-    "basic-serttings": {
-      "tooltip-name": "O nome é utilizado quando seleciona a origem de dados nos painéis. A origem de dados predefinida é pré-selecionada em novos painéis."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Definições básicas da página de definições da origem de dados",
-      "basic-settings-name-placeholder-name": "Nome",
-      "label-default": "Predefinição",
-      "label-name": "Nome"
     },
     "build-a-dashboard-button": {
       "blank": "Em branco",
@@ -11253,7 +11245,7 @@
     "description-order": "Mostrar primeiro os registos mais recentes ou mais antigos. Quando a opção Mais antigos primeiro estiver selecionada, a vista deslocar-se-á automaticamente para os registos mais recentes, na parte inferior.",
     "description-prettify-json": "Formatar entradas de registo JSON com recuo e quebras de linha.",
     "description-show-controls": "Mostrar controlos para aceder à última ou primeira linha de registo e filtrar por nível de registo.",
-    "description-show-log-attributes": "Experimental. Quando os registos OTel são exibidos, adicionar um campo exibido extra com pares de chave-valor relevantes de etiquetas e metadados.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Alinhar os valores usando colunas ao utilizar os campos exibidos.",
     "description-wrap-lines": "Apresentar os registos numa única linha ou quebrar as entradas de registo longas para se ajustarem ao painel.",
     "field-selector": {
@@ -11579,7 +11571,7 @@
       "line-contains-not": "Adicionar, pois a linha não contém filtro",
       "search-text": "Pesquisar nos resultados"
     },
-    "show-log-attributes": "Mostrar atributos de registo para registos OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Resolução do carimbo de data e hora",
     "un-themed-log-details": {
       "aria-label-data-links": "Ligações de dados",
@@ -15453,7 +15445,6 @@
       "forwards-time-aria-label": "Mover o intervalo de tempo para a frente",
       "to": "para",
       "zoom-out-button": "Diminuir o zoom do intervalo de tempo",
-      "zoom-out-tooltip": "Diminuir o zoom do intervalo de tempo <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Diminuir o zoom do intervalo de tempo <br/> t -"
     },
     "time-range": {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Alert, ConfirmModal, Space } from '@grafana/ui';
 import { useGetAffectedItems } from 'app/api/clients/folder/v1beta1/hooks';
 
@@ -51,7 +51,6 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
         folder: Object.keys(selectedItems.folder).length,
       },
       source: 'browse_dashboards',
-      restore_enabled: Boolean(config.featureToggles.restoreDashboards),
     });
     setIsDeleting(true);
     try {
@@ -67,12 +66,8 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
     <ConfirmModal
       body={
         <>
-          {config.featureToggles.restoreDashboards && (
-            <>
-              <DeletedDashboardsInfo target="folder" />
-              <Space v={2} />
-            </>
-          )}
+          <DeletedDashboardsInfo target="folder" />
+          <Space v={2} />
 
           {!!selectedFolders?.length &&
             // Only show this if we have any folders selected. If user selected one or more specific resources, there

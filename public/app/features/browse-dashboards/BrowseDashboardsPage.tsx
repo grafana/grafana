@@ -204,6 +204,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
                   height={height}
                   folderUID={folderUID}
                   isReadOnlyRepo={isReadOnlyRepo}
+                  isProvisionedFolder={isProvisionedFolder}
                 />
               )
             }

@@ -219,12 +219,12 @@ func runLeaseConcurrency(t *testing.T, store kv.KV) {
 }
 
 func runLeaseExpiration(t *testing.T, store kv.KV) {
-	const ttl = 75 * time.Millisecond
+	const ttl = 50 * time.Millisecond
 	ctx := t.Context()
 
 	t.Run("different holder can acquire after TTL", func(t *testing.T) {
-		a := lease.NewManager(store, "holder-expire-a")
-		b := lease.NewManager(store, "holder-expire-b")
+		a := lease.NewManager(store, "holder-expire-a", lease.WithInternalMinTTL(ttl))
+		b := lease.NewManager(store, "holder-expire-b", lease.WithInternalMinTTL(ttl))
 
 		_, err := a.Acquire(ctx, "expiration/handoff", lease.WithTTL(ttl))
 		require.NoError(t, err)
@@ -239,7 +239,7 @@ func runLeaseExpiration(t *testing.T, store kv.KV) {
 	})
 
 	t.Run("original release after TTL returns ErrLeaseLost", func(t *testing.T) {
-		m := lease.NewManager(store, "holder-expire-self")
+		m := lease.NewManager(store, "holder-expire-self", lease.WithInternalMinTTL(ttl))
 
 		l, err := m.Acquire(ctx, "expiration/self-release", lease.WithTTL(ttl))
 		require.NoError(t, err)
@@ -266,8 +266,8 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 	})
 
 	t.Run("release after expiry returns ErrLeaseLost", func(t *testing.T) {
-		const ttl = 75 * time.Millisecond
-		m := lease.NewManager(store, "holder-release-expired")
+		const ttl = 50 * time.Millisecond
+		m := lease.NewManager(store, "holder-release-expired", lease.WithInternalMinTTL(ttl))
 
 		l, err := m.Acquire(ctx, "release/expired", lease.WithTTL(ttl))
 		require.NoError(t, err)
@@ -281,8 +281,8 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 
 func runLeaseLoss(t *testing.T, store kv.KV) {
 	t.Run("Lost() closes when TTL elapses", func(t *testing.T) {
-		const ttl = 75 * time.Millisecond
-		m := lease.NewManager(store, "holder-lost-ttl")
+		const ttl = 50 * time.Millisecond
+		m := lease.NewManager(store, "holder-lost-ttl", lease.WithInternalMinTTL(ttl))
 
 		l, err := m.Acquire(t.Context(), "ctx/lost-on-ttl", lease.WithTTL(ttl))
 		require.NoError(t, err)
@@ -636,13 +636,13 @@ func (p *leasePBT) runOp(serverIdx int, op operation) (violation bool) {
 			// nothing to release.
 			return false
 		}
+		p.m.released(serverIdx, op.leaseIdx)
 		if err := p.managers[serverIdx].Release(p.ctx, l); err != nil {
 			p.t.Logf("violation: server %d failed to release: %v",
 				serverIdx, err)
 			return true
 		}
 		delete(p.held[serverIdx], op.leaseIdx)
-		p.m.released(serverIdx, op.leaseIdx)
 	}
 	return false
 }

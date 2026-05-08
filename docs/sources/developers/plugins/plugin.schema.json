@@ -332,6 +332,10 @@
       "type": "boolean",
       "description": "For data source plugins, if the plugin supports metric queries. Used to enable the plugin in the panel editor."
     },
+    "mixed": {
+      "type": "boolean",
+      "description": "[internal only] For data source plugins, marks the plugin as a 'mixed' data source — one whose queries each carry their own `datasource` reference and are delegated to other data sources. When `true`, Grafana preserves the per-query `datasource` field instead of overwriting it with the plugin's own ref. Used by the built-in `-- Mixed --` data source. Setting this on a regular data source plugin will break query routing."
+    },
     "multiValueFilterOperators": {
       "type": "boolean",
       "description": "For data source plugins, if the plugin supports multi value operators in filters."

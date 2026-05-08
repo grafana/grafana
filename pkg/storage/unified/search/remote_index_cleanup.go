@@ -328,12 +328,13 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 // that should be deleted. Two independent rules; a snapshot is deletable if
 // either fires:
 //
-//	A. Age cutoff: anything older than maxAge, regardless of group/successor.
-//	B. Superseded with stable replacement: within a Grafana-version group, all
-//	   snapshots except the newest are deletable once the newest has lived
-//	   beyond gracePeriod.
+//	rule A — age cutoff: anything older than maxAge, regardless of group/successor.
+//	rule B — within a Grafana-version group, an older snapshot is deleted
+//	         once a newer same-version snapshot has existed for longer than
+//	         gracePeriod (the grace period gives in-flight downloaders that
+//	         picked the older snapshot time to finish before it goes away).
 //
-// Snapshots with an unparseable GrafanaBuildVersion are excluded from any
+// Snapshots with an unparseable BuildVersion are excluded from any
 // version group; rule A still applies, but otherwise they are left untouched.
 // CleanupIncompleteUploads does NOT pick them up — it only targets prefixes
 // with missing or syntactically invalid snapshot manifest, and an unparseable version
@@ -358,7 +359,7 @@ func selectSnapshotsToDelete(metas map[ulid.ULID]*IndexMeta, now time.Time, maxA
 			toDelete = append(toDelete, k)
 			continue
 		}
-		v, err := semver.NewVersion(m.GrafanaBuildVersion)
+		v, err := semver.NewVersion(m.BuildVersion)
 		if err != nil {
 			continue
 		}

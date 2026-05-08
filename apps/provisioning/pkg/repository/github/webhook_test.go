@@ -133,13 +133,47 @@ func TestParseWebhooks(t *testing.T) {
 			payload, err := os.ReadFile(path.Join("testdata", name))
 			require.NoError(t, err)
 
-			rsp, err := gh.parseWebhook(tt.messageType, payload)
+			rsp, err := gh.parseWebhook(context.Background(), tt.messageType, payload)
 			require.NoError(t, err)
 
 			require.Equal(t, tt.expected.Code, rsp.Code)
 			require.Equal(t, tt.expected.Job, rsp.Job)
 		})
 	}
+}
+
+func TestParsePushEvent_LargeDiffForcesFullSync(t *testing.T) {
+	gh := &githubWebhookRepository{
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "unit-test-repo",
+			},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{
+					Enabled: true,
+				},
+				GitHub: &provisioning.GitHubRepositoryConfig{
+					URL:    "https://github.com/grafana/git-ui-sync-demo",
+					Branch: "main",
+				},
+			},
+		},
+		owner:             "grafana",
+		repo:              "git-ui-sync-demo",
+		incrementalPolicy: repo.NewIncrementalSyncPolicy(false, 5),
+	}
+
+	// nolint:gosec
+	payload, err := os.ReadFile(path.Join("testdata", "webhook-push-large_diff.json"))
+	require.NoError(t, err)
+
+	rsp, err := gh.parseWebhook(context.Background(), "push", payload)
+	require.NoError(t, err)
+
+	require.Equal(t, http.StatusAccepted, rsp.Code)
+	require.NotNil(t, rsp.Job)
+	require.NotNil(t, rsp.Job.Pull)
+	require.False(t, rsp.Job.Pull.Incremental, "large diff should force full sync when above threshold")
 }
 
 func TestGitHubRepository_Webhook(t *testing.T) {
@@ -366,7 +400,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expectedError: fmt.Errorf("repository mismatch"),
+			expectedError: repo.ErrRepositoryMismatch,
 		},
 		{
 			name: "push event when sync is disabled",
@@ -745,7 +779,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expectedError: fmt.Errorf("repository mismatch"),
+			expectedError: repo.ErrRepositoryMismatch,
 		},
 		{
 			name: "pull request event missing pull request info",
