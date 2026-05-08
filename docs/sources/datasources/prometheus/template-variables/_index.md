@@ -85,7 +85,7 @@ Set **Refresh** to `On time range change` so the top 5 instances update as you c
 ### Selection options
 
 - **Multi-value** — Allows selecting multiple values at once. Grafana joins them with a pipe (`|`) for regular expression matching.
-- **Include All option** — Adds an "All" option that selects every value. Combined with multi-value, this generates a regex like `value1|value2|value3`.
+- **Include All option** — Adds an "All" option that selects every value. Combined with multi-value, this generates a regular expression like `value1|value2|value3`.
 
 {{< admonition type="note" >}}
 When **Multi-value** or **Include All** is enabled, use `=~` (regular expression match) instead of `=` (exact match) in your queries, since the variable value becomes a regex pattern.
