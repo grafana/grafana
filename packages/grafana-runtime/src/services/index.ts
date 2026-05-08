@@ -44,17 +44,17 @@ export { RuntimeDataSource } from './RuntimeDataSource';
 export { ScopesContext, type ScopesContextValueState, type ScopesContextValue, useScopes } from './ScopesContext';
 
 export {
-  getInstanceSettings,
-  getInstanceSettingsList,
-  getDataSourcePlugin,
+  getDataSourceSettings,
+  getDataSourceSettingsList,
+  getDataSource,
   registerRuntimeDataSource,
   reload as reloadDataSources,
-  useInstanceSettings,
-  useInstanceSettingsList,
-  useDataSourcePlugin,
-  type DataSourceInstanceSettingsPage,
-  type GetInstanceSettingsListOptions,
-  type UseInstanceSettingsResult,
-  type UseInstanceSettingsListResult,
-  type UseDataSourcePluginResult,
+  useDataSourceSettings,
+  useDataSourceSettingsList,
+  useDataSource,
+  type DataSourceSettingsPage,
+  type GetDataSourceSettingsListOptions,
+  type UseDataSourceSettingsResult,
+  type UseDataSourceSettingsListResult,
+  type UseDataSourceResult,
 } from './dataSource';

@@ -17,7 +17,7 @@ import { type GetDataSourceListFilters } from '../dataSourceSrv';
  *
  * @public
  */
-export interface DataSourceInstanceSettingsPage {
+export interface DataSourceSettingsPage {
   items: DataSourceInstanceSettings[];
   /** Opaque cursor for fetching the next page. Undefined when no more pages. */
   nextCursor?: string;
@@ -27,7 +27,7 @@ export interface DataSourceInstanceSettingsPage {
 /**
  * @public
  */
-export interface GetInstanceSettingsListOptions {
+export interface GetDataSourceSettingsListOptions {
   filters?: GetDataSourceListFilters;
   /** Cursor returned by a previous call; omit to fetch the first page. */
   cursor?: string;

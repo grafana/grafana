@@ -6,7 +6,7 @@ import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
-import { useDataSourcePlugin, useInstanceSettingsList, useInstanceSettings } from './hooks';
+import { useDataSource, useDataSourceSettingsList, useDataSourceSettings } from './hooks';
 import { _resetForTests as resetInstanceSettings, initDataSources } from './instanceSettings';
 import { _resetForTests as resetPlugin, setDataSourceImporter } from './plugin';
 
@@ -65,9 +65,9 @@ beforeEach(() => {
   initDataSources(fixtures, 'Bravo');
 });
 
-describe('useInstanceSettings', () => {
+describe('useDataSourceSettings', () => {
   it('starts loading then resolves to data', async () => {
-    const { result } = renderHook(() => useInstanceSettings('uid-alpha'));
+    const { result } = renderHook(() => useDataSourceSettings('uid-alpha'));
 
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -76,7 +76,7 @@ describe('useInstanceSettings', () => {
   });
 
   it('refetches when the ref changes', async () => {
-    const { result, rerender } = renderHook(({ ref }) => useInstanceSettings(ref), {
+    const { result, rerender } = renderHook(({ ref }) => useDataSourceSettings(ref), {
       initialProps: { ref: 'uid-alpha' },
     });
 
@@ -87,9 +87,9 @@ describe('useInstanceSettings', () => {
   });
 });
 
-describe('useInstanceSettingsList', () => {
+describe('useDataSourceSettingsList', () => {
   it('populates items and reports hasMore=false for the initial page', async () => {
-    const { result } = renderHook(() => useInstanceSettingsList());
+    const { result } = renderHook(() => useDataSourceSettingsList());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.items.length).toBeGreaterThan(0);
@@ -97,7 +97,7 @@ describe('useInstanceSettingsList', () => {
   });
 
   it('is safe to call fetchMore when there are no more pages', async () => {
-    const { result } = renderHook(() => useInstanceSettingsList());
+    const { result } = renderHook(() => useDataSourceSettingsList());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
@@ -107,14 +107,14 @@ describe('useInstanceSettingsList', () => {
   });
 });
 
-describe('useDataSourcePlugin', () => {
+describe('useDataSource', () => {
   it('starts loading then resolves to a plugin instance', async () => {
     const instance = { name: 'mock-ds' };
     setDataSourceImporter(
       jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
     );
 
-    const { result } = renderHook(() => useDataSourcePlugin('uid-alpha'));
+    const { result } = renderHook(() => useDataSource('uid-alpha'));
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.dataSource).toBeTruthy();
@@ -122,7 +122,7 @@ describe('useDataSourcePlugin', () => {
   });
 
   it('reports errors when lookup fails', async () => {
-    const { result } = renderHook(() => useDataSourcePlugin('missing'));
+    const { result } = renderHook(() => useDataSource('missing'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.error).toBeInstanceOf(Error);
   });

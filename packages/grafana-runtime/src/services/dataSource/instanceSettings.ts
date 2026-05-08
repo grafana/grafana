@@ -12,9 +12,9 @@ import { type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
 import { clearPluginCache } from './pluginCache';
-import { type DataSourceInstanceSettingsPage, type GetInstanceSettingsListOptions } from './types';
+import { type DataSourceSettingsPage, type GetDataSourceSettingsListOptions } from './types';
 
-export type { DataSourceInstanceSettingsPage, GetInstanceSettingsListOptions };
+export type { DataSourceSettingsPage, GetDataSourceSettingsListOptions };
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const FETCH_CACHE_KEY = 'grafana-runtime:ds-instance-settings';
@@ -108,7 +108,7 @@ export async function reload(): Promise<void> {
  *
  * @public
  */
-export async function getInstanceSettings(
+export async function getDataSourceSettings(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceInstanceSettings | undefined> {
@@ -127,9 +127,9 @@ export async function getInstanceSettings(
  *
  * @public
  */
-export async function getInstanceSettingsList(
-  options?: GetInstanceSettingsListOptions
-): Promise<DataSourceInstanceSettingsPage> {
+export async function getDataSourceSettingsList(
+  options?: GetDataSourceSettingsListOptions
+): Promise<DataSourceSettingsPage> {
   await ensureFetched();
   const items = applyFilters(options?.filters);
   return { items, hasMore: false, nextCursor: undefined };

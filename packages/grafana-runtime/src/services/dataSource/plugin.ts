@@ -3,7 +3,7 @@ import { DataSourceApi, type DataSourceRef, type ScopedVars } from '@grafana/dat
 import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
-import { getInstanceSettings, upsertRuntimeDataSource } from './instanceSettings';
+import { getDataSourceSettings, upsertRuntimeDataSource } from './instanceSettings';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
 import { type GenericDataSourcePlugin, type ImportDataSourceFn } from './types';
 
@@ -27,11 +27,11 @@ export function setDataSourceImporter(fn: ImportDataSourceFn): void {
  *
  * @public
  */
-export async function getDataSourcePlugin(
+export async function getDataSource(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
-  const settings = await getInstanceSettings(ref, scopedVars);
+  const settings = await getDataSourceSettings(ref, scopedVars);
   if (!settings) {
     throw new Error(`Datasource ${describeRef(ref)} was not found`);
   }
@@ -79,7 +79,7 @@ export async function getDataSourcePlugin(
 /**
  * Register a runtime data source. Writes to both the instance-settings cache
  * and the plugin-instance cache so the data source is available to
- * {@link getInstanceSettings} and {@link getDataSourcePlugin}.
+ * {@link getInstanceSettings} and {@link getDataSource}.
  *
  * Runtime data sources are intentionally excluded from {@link getInstanceSettingsList}
  * results, matching the behaviour of the legacy `DatasourceSrv.registerRuntimeDataSource`.

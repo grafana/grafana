@@ -6,7 +6,7 @@ import { RuntimeDataSource } from '../RuntimeDataSource';
 import { _resetForTests as resetInstanceSettings, initDataSources, reload } from './instanceSettings';
 import {
   _resetForTests as resetPlugin,
-  getDataSourcePlugin,
+  getDataSource,
   registerRuntimeDataSource,
   setDataSourceImporter,
 } from './plugin';
@@ -56,7 +56,7 @@ beforeEach(() => {
 });
 
 describe('plugin', () => {
-  describe('getDataSourcePlugin', () => {
+  describe('getDataSource', () => {
     it('loads and returns a datasource instance', async () => {
       const settings = ds();
       initDataSources({ [settings.name]: settings }, settings.name);
@@ -65,7 +65,7 @@ describe('plugin', () => {
       const MockClass = jest.fn().mockReturnValue(instance);
       setDataSourceImporter(jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} }));
 
-      const result = await getDataSourcePlugin(settings.uid);
+      const result = await getDataSource(settings.uid);
 
       expect(MockClass).toHaveBeenCalledWith(settings);
       expect(result).toBe(instance);
@@ -82,8 +82,8 @@ describe('plugin', () => {
       });
       setDataSourceImporter(mockImport);
 
-      const first = await getDataSourcePlugin(settings.uid);
-      const second = await getDataSourcePlugin(settings.uid);
+      const first = await getDataSource(settings.uid);
+      const second = await getDataSource(settings.uid);
 
       expect(mockImport).toHaveBeenCalledTimes(1);
       expect(first).toBe(second);
@@ -93,24 +93,24 @@ describe('plugin', () => {
       initDataSources({}, '');
       setDataSourceImporter(jest.fn());
 
-      await expect(getDataSourcePlugin('unknown-uid')).rejects.toThrow(/was not found/);
+      await expect(getDataSource('unknown-uid')).rejects.toThrow(/was not found/);
     });
 
     it('throws when the importer has not been set', async () => {
       const settings = ds();
       initDataSources({ [settings.name]: settings }, settings.name);
 
-      await expect(getDataSourcePlugin(settings.uid)).rejects.toThrow(/has not been set/);
+      await expect(getDataSource(settings.uid)).rejects.toThrow(/has not been set/);
     });
   });
 
   describe('registerRuntimeDataSource', () => {
-    it('makes the runtime instance available via getDataSourcePlugin', async () => {
+    it('makes the runtime instance available via getDataSource', async () => {
       initDataSources({}, '');
       const runtime = new TestRuntime('plugin-id', 'runtime-uid');
       registerRuntimeDataSource({ dataSource: runtime });
 
-      const result = await getDataSourcePlugin('runtime-uid');
+      const result = await getDataSource('runtime-uid');
       expect(result).toBe(runtime);
     });
 
@@ -134,7 +134,7 @@ describe('plugin', () => {
       setDataSourceImporter(mockImport);
 
       // Prime the cache.
-      await getDataSourcePlugin(settings.uid);
+      await getDataSource(settings.uid);
       expect(mockImport).toHaveBeenCalledTimes(1);
 
       // Simulate a reload — backend returns the same settings for simplicity.
@@ -147,7 +147,7 @@ describe('plugin', () => {
       await reload();
 
       // The importer must be called again because the cache was cleared.
-      await getDataSourcePlugin(settings.uid);
+      await getDataSource(settings.uid);
       expect(mockImport).toHaveBeenCalledTimes(2);
     });
 
@@ -161,7 +161,7 @@ describe('plugin', () => {
       });
       await reload();
 
-      const result = await getDataSourcePlugin('runtime-uid');
+      const result = await getDataSource('runtime-uid');
       expect(result).toBe(runtime);
     });
   });
