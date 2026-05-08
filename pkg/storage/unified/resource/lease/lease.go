@@ -177,11 +177,6 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		now := time.Now()
 		if latestKey != "" {
 			latest, err := m.read(ctx, latestKey)
-			if errors.Is(err, kv.ErrNotFound) {
-				// The key was deleted by a concurrent extendGeneration;
-				// the lease is still held — retry to pick up the new generation.
-				continue
-			}
 			if err != nil {
 				return nil, err
 			}
