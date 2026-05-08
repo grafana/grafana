@@ -143,6 +143,7 @@ export function ExploreLogsTable(props: Props) {
         matcher: {
           id: 'byName',
           options: columnWidth.field,
+          scope: 'series',
         },
         properties: [
           {
