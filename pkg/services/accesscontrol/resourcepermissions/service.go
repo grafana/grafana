@@ -10,6 +10,7 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -100,19 +101,20 @@ func New(cfg *setting.Cfg,
 	}
 
 	s := &Service{
-		ac:           ac,
-		features:     features,
-		store:        NewStore(cfg, sqlStore, features),
-		options:      options,
-		license:      license,
-		log:          log.New("resourcepermissions"),
-		permissions:  permissions,
-		actions:      actions,
-		sqlStore:     sqlStore,
-		service:      service,
-		teamService:  teamService,
-		userService:  userService,
-		actionSetSvc: actionSetService,
+		ac:             ac,
+		features:       features,
+		store:          NewStore(cfg, sqlStore, features),
+		options:        options,
+		license:        license,
+		log:            log.New("resourcepermissions"),
+		permissions:    permissions,
+		actions:        actions,
+		sqlStore:       sqlStore,
+		service:        service,
+		teamService:    teamService,
+		userService:    userService,
+		actionSetSvc:   actionSetService,
+		clearUserCache: options.Resource == "folder", // When folder changes, clear the user cache
 	}
 
 	s.api = newApi(cfg, ac, router, s, features, s.options.RestConfigProvider)
@@ -135,14 +137,15 @@ type Service struct {
 	api      *api
 	license  licensing.Licensing
 
-	log          log.Logger
-	options      Options
-	permissions  []string
-	actions      []string
-	sqlStore     db.DB
-	teamService  team.Service
-	userService  user.Service
-	actionSetSvc ActionSetService
+	log            log.Logger
+	options        Options
+	permissions    []string
+	actions        []string
+	sqlStore       db.DB
+	teamService    team.Service
+	userService    user.Service
+	actionSetSvc   ActionSetService
+	clearUserCache bool // when true, changes will invalidate the user cache
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
@@ -368,11 +371,18 @@ func (s *Service) SetPermissions(
 		})
 	}
 
-	return s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
+	rsp, err := s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
 		User:        s.options.OnSetUser,
 		Team:        s.options.OnSetTeam,
 		BuiltInRole: s.options.OnSetBuiltInRole,
 	})
+	if err == nil && s.clearUserCache {
+		user, _ := identity.GetRequester(ctx)
+		if user != nil && user.IsIdentityType(authlib.TypeUser, authlib.TypeServiceAccount) {
+			s.service.ClearUserPermissionCache(user)
+		}
+	}
+	return rsp, err
 }
 
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
