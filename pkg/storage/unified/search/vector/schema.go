@@ -119,13 +119,10 @@ func initVectorTables(mg *migrator.Migrator) {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"model", "resource"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"is_complete"}},
 		},
 	}
 	mg.AddMigration("create vector_backfill_jobs table",
 		migrator.NewAddTableMigration(backfillJobs))
 	mg.AddMigration("create vector_backfill_jobs (model, resource) index",
 		migrator.NewAddIndexMigration(backfillJobs, backfillJobs.Indices[0]))
-	mg.AddMigration("create vector_backfill_jobs is_complete index",
-		migrator.NewAddIndexMigration(backfillJobs, backfillJobs.Indices[1]))
 }

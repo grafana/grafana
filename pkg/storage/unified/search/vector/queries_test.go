@@ -97,6 +97,7 @@ func TestVectorQueries(t *testing.T) {
 					Name: "simple",
 					Data: &sqlVectorBackfillJobsListRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Model:       "text-embedding-005",
 						Response:    &sqlVectorBackfillJobsListResponse{},
 					},
 				},

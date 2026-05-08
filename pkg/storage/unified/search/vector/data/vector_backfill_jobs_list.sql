@@ -8,5 +8,6 @@ SELECT
     {{ .Ident "last_error"    | .Into .Response.LastError }}
     FROM vector_backfill_jobs
     WHERE {{ .Ident "is_complete" }} = FALSE
+      AND {{ .Ident "model" }} = {{ .Arg .Model }}
     ORDER BY {{ .Ident "id" }}
 ;

@@ -61,6 +61,10 @@ type fakeStorage struct {
 	// honours req.Limit to simulate pagination + peek-for-more.
 	listItems []listItem
 	listErr   error
+	// listCalls records each ListIterator invocation's NextPageToken so
+	// tests can assert the backfiller actually paginated rather than
+	// pulling everything in a single call.
+	listCalls []string
 }
 
 type listItem struct {
@@ -117,6 +121,9 @@ func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, e
 // resourceembedder's "peek for next page" logic exercises correctly.
 // req.NextPageToken is parsed as "tok-<index>" pointing at the next item.
 func (f *fakeStorage) ListIterator(_ context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	f.mu.Lock()
+	f.listCalls = append(f.listCalls, req.NextPageToken)
+	f.mu.Unlock()
 	if f.listErr != nil {
 		return 0, f.listErr
 	}
@@ -256,11 +263,15 @@ func (f *fakeVector) Exists(_ context.Context, ns, model, res, uid string) (bool
 	return f.existsSet[existsKey(ns, model, res, uid)], nil
 }
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) { return 0, nil }
-func (f *fakeVector) ListIncompleteBackfillJobs(context.Context) ([]vector.BackfillJob, error) {
+func (f *fakeVector) ListIncompleteBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]vector.BackfillJob, len(f.jobs))
-	copy(out, f.jobs)
+	out := make([]vector.BackfillJob, 0, len(f.jobs))
+	for _, j := range f.jobs {
+		if j.Model == model {
+			out = append(out, j)
+		}
+	}
 	return out, nil
 }
 func (f *fakeVector) UpdateBackfillJobCheckpoint(_ context.Context, id int64, key, e string) error {

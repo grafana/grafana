@@ -93,7 +93,7 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	log := b.log.FromContext(ctx)
 
-	jobs, err := b.vectorBackend.ListIncompleteBackfillJobs(ctx)
+	jobs, err := b.vectorBackend.ListIncompleteBackfillJobs(ctx, b.embedder.Model)
 	if err != nil {
 		log.Error("backfill: list jobs", "err", err)
 		return
@@ -106,6 +106,12 @@ func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	for _, job := range jobs {
 		if ctx.Err() != nil {
 			return
+		}
+		// we dont have the builder yet - skip it and dont mark complete
+		if job.Resource != "" && !b.hasBuilderForResource(job.Resource) {
+			log.Info("backfill: skipping job for unregistered resource",
+				"job_id", job.ID, "job_resource", job.Resource)
+			continue
 		}
 		if err := b.runBackfillJob(ctx, job); err != nil {
 			log.Error("backfill: job failed",
@@ -125,18 +131,6 @@ func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 // Builders are processed in deterministic resource-name order; each one gets its own paginated cross-namespace scan.
 // last_seen_key contains the continue token and the resource name so we know which builder to resume from.
 func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob) error {
-	if job.Model != b.embedder.Model {
-		return fmt.Errorf("job model %q != configured model %q", job.Model, b.embedder.Model)
-	}
-
-	// If the job targets a specific resource, that resource must be
-	// registered.
-	if job.Resource != "" && !b.hasBuilderForResource(job.Resource) {
-		b.log.Warn("backfill: job targets unregistered resource; marking complete",
-			"job_id", job.ID, "job_resource", job.Resource)
-		return nil
-	}
-
 	// Decode cursor to see if we need to resume
 	cursor, err := decodeCursor(job.LastSeenKey)
 	if err != nil {

@@ -272,9 +272,10 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 	return results, nil
 }
 
-func (b *pgvectorBackend) ListIncompleteBackfillJobs(ctx context.Context) ([]BackfillJob, error) {
+func (b *pgvectorBackend) ListIncompleteBackfillJobs(ctx context.Context, model string) ([]BackfillJob, error) {
 	req := &sqlVectorBackfillJobsListRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
+		Model:       model,
 		Response:    &sqlVectorBackfillJobsListResponse{},
 	}
 	rows, err := dbutil.Query(ctx, b.db, sqlVectorBackfillJobsList, req)

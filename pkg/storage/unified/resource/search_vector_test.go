@@ -93,7 +93,7 @@ func (f *fakeVectorBackend) Exists(context.Context, string, string, string, stri
 	return false, nil
 }
 func (f *fakeVectorBackend) GetLatestRV(context.Context) (int64, error) { return 0, nil }
-func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context) ([]vector.BackfillJob, error) {
+func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
 	return nil, nil
 }
 func (f *fakeVectorBackend) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {

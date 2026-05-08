@@ -45,9 +45,11 @@ type VectorBackend interface {
 	// GetLatestRV is the global write-pipeline checkpoint. 0 if empty.
 	GetLatestRV(ctx context.Context) (int64, error)
 
-	// ListIncompleteBackfillJobs returns one row per active backfill job.
-	// Operators add rows via SQL migrations; the resource embedder drains them.
-	ListIncompleteBackfillJobs(ctx context.Context) ([]BackfillJob, error)
+	// ListIncompleteBackfillJobs returns one row per active backfill job for
+	// the given model. Filtering server-side keeps instances configured for
+	// other embedder models from observing (and erroring on) jobs they don't
+	// own. Operators add rows via SQL migrations; the resource embedder drains them.
+	ListIncompleteBackfillJobs(ctx context.Context, model string) ([]BackfillJob, error)
 
 	// UpdateBackfillJobCheckpoint writes the cursor + optional error after
 	// each processed resource. Best-effort — race with another writer is

@@ -133,10 +133,16 @@ type sqlVectorBackfillJobsListResponse struct {
 
 type sqlVectorBackfillJobsListRequest struct {
 	sqltemplate.SQLTemplate
+	Model    string
 	Response *sqlVectorBackfillJobsListResponse
 }
 
-func (r *sqlVectorBackfillJobsListRequest) Validate() error { return nil }
+func (r *sqlVectorBackfillJobsListRequest) Validate() error {
+	if r.Model == "" {
+		return fmt.Errorf("missing model")
+	}
+	return nil
+}
 
 func (r *sqlVectorBackfillJobsListRequest) Results() (*sqlVectorBackfillJobsListResponse, error) {
 	cp := *r.Response

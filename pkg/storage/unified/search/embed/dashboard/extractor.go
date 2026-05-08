@@ -18,12 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 )
 
-// Extractor produces one embed.Item per panel.
 // defaultMaxPanels caps embeddings per dashboard. Anything past ~200
 // panels is unlikely to be human-authored; the cap saves provider
 // tokens on those outliers without affecting normal dashboards.
 const defaultMaxPanels = 200
 
+// Extractor produces one embed.Item per panel.
 type Extractor struct {
 	logger    *slog.Logger
 	maxPanels int

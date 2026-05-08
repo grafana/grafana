@@ -213,36 +213,15 @@ func TestRunBackfillJob_CursorForUnknownResource_StartsFromScratch(t *testing.T)
 	require.Len(t, vec.completedJobIDs, 1)
 }
 
-func TestRunBackfillJob_TargetedResource_RunsMatchingBuilder(t *testing.T) {
-	storage := newFakeStorage()
-	storage.listItems = []listItem{
-		makeListItem("ns", "a", 1),
-		makeListItem("ns", "b", 2),
-	}
-
-	vec := newFakeVector()
-	// Job explicitly targets the dashboards resource. Since only the
-	// dashboards builder is registered, this is functionally equivalent
-	// to the resource="" case but exercises the filter pass-through.
-	vec.jobs = []vector.BackfillJob{{
-		ID: 1, Model: "test-model", Resource: "dashboards", StoppingRV: 100,
-	}}
-
-	o := newBackfiller(t, storage, vec)
-	o.runBackfill(context.Background())
-
-	require.Len(t, vec.upserts, 2, "targeted dashboards job should embed all dashboards")
-	require.Len(t, vec.completedJobIDs, 1)
-}
-
-func TestRunBackfillJob_TargetedUnknownResource_CompletesNoOp(t *testing.T) {
+// A job pinned to a resource this instance doesn't know about almost
+// certainly belongs to another instance configured with a different set of
+// Builders. Leaving it untouched (no upserts, no complete, no error stamp)
+// lets the right instance drain it.
+func TestRunBackfillJob_TargetedUnknownResource_LeftUntouched(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{makeListItem("ns", "a", 1)}
 
 	vec := newFakeVector()
-	// Job targets a resource that has no registered builder. The
-	// backfiller should mark the job complete and move on rather than
-	// stamp an error and re-run forever.
 	vec.jobs = []vector.BackfillJob{{
 		ID: 1, Model: "test-model", Resource: "folders", StoppingRV: 100,
 	}}
@@ -251,7 +230,9 @@ func TestRunBackfillJob_TargetedUnknownResource_CompletesNoOp(t *testing.T) {
 	o.runBackfill(context.Background())
 
 	assert.Empty(t, vec.upserts, "no builder for the targeted resource → no embeddings")
-	require.Len(t, vec.completedJobIDs, 1, "job completes silently rather than spinning")
+	assert.Empty(t, vec.completedJobIDs, "another instance may own this resource; do not complete it")
+	assert.Empty(t, vec.errorMarks, "no error path on a deliberate skip")
+	assert.Empty(t, vec.checkpoints)
 }
 
 func TestRunBackfillJob_MalformedCursor_StartsFromScratch(t *testing.T) {
@@ -271,27 +252,31 @@ func TestRunBackfillJob_MalformedCursor_StartsFromScratch(t *testing.T) {
 	require.Len(t, vec.completedJobIDs, 1)
 }
 
-func TestRunBackfillJob_ModelMismatch_StampsErrorAndContinues(t *testing.T) {
+// Jobs targeting a different model belong to another instance; the SQL
+// list query filters them server-side so this backfiller never sees them.
+// The fake mirrors that behavior — we assert nothing happens, in particular
+// that last_error is not stamped on a row another instance owns.
+func TestRunBackfillJob_DifferentModel_IgnoredCompletely(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{makeListItem("ns", "a", 1)}
 
 	vec := newFakeVector()
 	vec.jobs = []vector.BackfillJob{{
-		ID: 1, Model: "wrong-model", StoppingRV: 100,
+		ID: 1, Model: "some-other-instances-model", StoppingRV: 100,
 	}}
 
 	o := newBackfiller(t, storage, vec)
 	o.runBackfill(context.Background())
 
 	assert.Empty(t, vec.upserts)
-	assert.Empty(t, vec.completedJobIDs, "job left incomplete after model mismatch")
-	assert.Empty(t, vec.checkpoints, "checkpoint must not be touched on error — it would rewind cursor")
-	require.Len(t, vec.errorMarks, 1, "error should be stamped via MarkBackfillJobError")
-	assert.Contains(t, vec.errorMarks[0].LastError, "wrong-model")
+	assert.Empty(t, vec.completedJobIDs, "another instance owns this job; do not complete it")
+	assert.Empty(t, vec.checkpoints)
+	assert.Empty(t, vec.errorMarks, "model mismatch must not pollute another instance's last_error")
 }
 
 func TestRunBackfillJob_PaginatedAcrossPages(t *testing.T) {
-	// Build a larger result set than backfillPageSize to force pagination.
+	// Build a result set one page + 5 items long so the backfiller must
+	// fetch exactly two pages.
 	const total = backfillPageSize + 5
 
 	storage := newFakeStorage()
@@ -310,6 +295,10 @@ func TestRunBackfillJob_PaginatedAcrossPages(t *testing.T) {
 
 	assert.Len(t, vec.upserts, total, "every item across all pages is embedded")
 	require.Len(t, vec.completedJobIDs, 1)
+	// assert pagination
+	require.Len(t, storage.listCalls, 2, "backfiller must request two pages")
+	assert.Empty(t, storage.listCalls[0], "first page starts with an empty token")
+	assert.NotEmpty(t, storage.listCalls[1], "second page must resume from a continue token")
 }
 
 // TestRunBackfillJob_ExactPageMultiple exercises the boundary where total
