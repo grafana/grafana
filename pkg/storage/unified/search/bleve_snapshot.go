@@ -214,6 +214,17 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 		return nil, "", 0, fmt.Errorf("reserving local snapshot dir: %w", err)
 	}
 
+	// Protect destDir from cleanOldIndexes for the duration of the download
+	// and validation. On success, ownership of the registration transfers to
+	// the caller (BuildIndex unregisters via its own defer); on any failure
+	// path below, this defer releases it.
+	b.registerInFlightBuildDir(destDir)
+	defer func() {
+		if retErr != nil {
+			b.unregisterInFlightBuildDir(destDir)
+		}
+	}()
+
 	// TODO: retry DownloadIndex on transient errors before falling through to
 	// a from-scratch KV rebuild. The object store is its own fault domain;
 	// a single failed download shouldn't force a full rebuild for large
