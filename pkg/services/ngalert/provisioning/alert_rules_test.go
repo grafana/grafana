@@ -1357,7 +1357,7 @@ func TestUpdateAlertRule(t *testing.T) {
 	})
 
 	// NoGroup-specific tests for UpdateAlertRule
-	t.Run("NoGroup: UpdateAlertRule preserves interval and sentinel group", func(t *testing.T) {
+	t.Run("NoGroup: UpdateAlertRule allows changing interval and preserves sentinel group", func(t *testing.T) {
 		service, ruleStore, provenanceStore, ac := initService(t)
 		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) { return true, nil }
 
@@ -1366,17 +1366,61 @@ func TestUpdateAlertRule(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &rule, orgID, models.ProvenanceNone))
 
-		// mutate fields and attempt to change interval via UpdateAlertRule
+		// mutate fields and change interval via UpdateAlertRule
 		rule.Title = "nogroup-update-new"
 		originalInterval := int64(60)
 		require.Equal(t, originalInterval, rule.IntervalSeconds)
-		rule.IntervalSeconds = originalInterval + 60
+		newInterval := originalInterval + 60
+		rule.IntervalSeconds = newInterval
 
 		updated, err := service.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
 		require.NoError(t, err)
 		require.True(t, models.IsNoGroupRuleGroup(updated.RuleGroup))
 		require.Equal(t, "nogroup-update-new", updated.Title)
-		require.Equal(t, originalInterval, updated.IntervalSeconds)
+		require.Equal(t, newInterval, updated.IntervalSeconds)
+	})
+
+	t.Run("NoGroup: UpdateAlertRule on one rule does not affect interval of other NoGroup rules", func(t *testing.T) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) { return true, nil }
+
+		r1 := createNoGroupRule("nogroup-1", orgID, "my-namespace")
+		r2 := createNoGroupRule("nogroup-2", orgID, "my-namespace")
+		_, err := ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.InsertRule{{AlertRule: r1}, {AlertRule: r2}})
+		require.NoError(t, err)
+		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &r1, orgID, models.ProvenanceNone))
+		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &r2, orgID, models.ProvenanceNone))
+
+		newInterval := r1.IntervalSeconds + 60
+		r1.IntervalSeconds = newInterval
+
+		updated, err := service.UpdateAlertRule(context.Background(), u, r1, models.ProvenanceNone)
+		require.NoError(t, err)
+		require.Equal(t, newInterval, updated.IntervalSeconds)
+
+		// only the targeted rule must be updated; r2 must not be touched
+		updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			a, ok := cmd.([]models.UpdateRule)
+			return a, ok
+		})
+		require.Len(t, updates, 1)
+		batch := updates[0].([]models.UpdateRule)
+		require.Len(t, batch, 1)
+		require.Equal(t, r1.UID, batch[0].New.UID)
+		require.Equal(t, newInterval, batch[0].New.IntervalSeconds)
+	})
+
+	t.Run("non-NoGroup: UpdateAlertRule preserves the group's interval", func(t *testing.T) {
+		service, _, _, ac := initServiceWithData(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) { return true, nil }
+
+		rule := models.CopyRule(rules[0])
+		rule.Title = rule.Title + "_new"
+		rule.IntervalSeconds = groupIntervalSeconds + 60
+
+		updated, err := service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+		require.NoError(t, err)
+		require.Equal(t, groupIntervalSeconds, updated.IntervalSeconds)
 	})
 
 	t.Run("should reject update when folder is managed by a manager", func(t *testing.T) {
