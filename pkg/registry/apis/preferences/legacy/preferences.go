@@ -266,11 +266,6 @@ func (s *preferenceStorage) Delete(ctx context.Context, name string, deleteValid
 	return nil, (err == nil), err
 }
 
-// DeleteCollection implements [rest.Storage].
-func (s *preferenceStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("unsupported")
-}
-
 func asPreferencesResource(ns string, p *preferenceModel) preferences.Preferences {
 	owner := utils.OwnerReference{}
 	if p.TeamUID.Valid {
