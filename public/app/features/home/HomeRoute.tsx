@@ -11,7 +11,7 @@ const DashboardPageProxy = lazy(
 const HomePage = lazy(() => import(/* webpackChunkName: "HomePage" */ './HomePage'));
 
 export default function HomeRoute(props: DashboardPageProxyProps) {
-  const unifiedHomepageEnabled = useFlagGrafanaUnifiedHomepage();
+  const unifiedHomepageEnabled = useFlagGrafanaUnifiedHomepage({ suspend: true });
   return (
     <Suspense fallback={<LoadingPlaceholder text="" />}>
       {unifiedHomepageEnabled ? <HomePage /> : <DashboardPageProxy {...props} />}
