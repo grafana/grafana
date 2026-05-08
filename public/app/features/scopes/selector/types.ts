@@ -6,7 +6,7 @@ export type ScopesMap = Record<string, Scope>;
 export interface SelectedScope {
   scopeId: string;
   scopeNodeId?: string;
-  // Used for recent scopes functionality when scope node isn't loaded yet
+  // TODO: remove - parentNodeId is never populated in production code and is not read by any service method
   parentNodeId?: string;
 }
 
