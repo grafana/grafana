@@ -5,7 +5,7 @@ import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
 import { getDataSourceSettings, upsertRuntimeDataSource } from './instanceSettings';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
-import { type GenericDataSourcePlugin, type ImportDataSourceFn } from './types';
+import { type ImportDataSourceFn } from './types';
 
 let importDataSource: ImportDataSourceFn | undefined;
 

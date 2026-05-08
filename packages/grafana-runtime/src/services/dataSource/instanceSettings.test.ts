@@ -80,6 +80,13 @@ const fixtures: Record<string, DataSourceInstanceSettings> = {
     type: 'dashboard',
     meta: { ...ds({}).meta, id: 'dashboard', metrics: true },
   }),
+  Expression: ds({
+    id: 0,
+    uid: '__expr__',
+    name: 'Expression',
+    type: '__expr__',
+    meta: { ...ds({}).meta, id: '__expr__', metrics: false },
+  }),
 };
 
 const templateSrv: TemplateSrv = {
@@ -149,6 +156,17 @@ describe('instanceSettings', () => {
       const result = await getDataSourceSettings('uid-alpha');
       expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
       expect(result?.name).toBe('Alpha');
+    });
+
+    it('resolves expression references by uid, name, and legacy id', async () => {
+      initDataSources(fixtures, 'Bravo');
+      const byUid = await getDataSourceSettings('__expr__');
+      const byName = await getDataSourceSettings('Expression');
+      const byLegacyId = await getDataSourceSettings('-100');
+
+      expect(byUid?.uid).toBe('__expr__');
+      expect(byName?.uid).toBe('__expr__');
+      expect(byLegacyId?.uid).toBe('__expr__');
     });
 
     it('deduplicates concurrent fetches', async () => {

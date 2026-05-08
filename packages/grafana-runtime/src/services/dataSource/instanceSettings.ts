@@ -6,6 +6,7 @@ import {
   matchPluginId,
 } from '@grafana/data';
 
+import { ExpressionDatasourceRef, isExpressionReference } from '../../utils/DataSourceWithBackend';
 import { getCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
@@ -153,6 +154,10 @@ function lookupFromMaps(
   ref: DataSourceRef | string | null | undefined,
   scopedVars: ScopedVars | undefined
 ): DataSourceInstanceSettings | undefined {
+  if (isExpressionReference(ref)) {
+    return byUid[ExpressionDatasourceRef.uid];
+  }
+
   const nameOrUid = getNameOrUid(ref);
 
   if (nameOrUid == null || nameOrUid === 'default') {
