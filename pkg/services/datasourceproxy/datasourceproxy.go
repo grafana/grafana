@@ -27,7 +27,10 @@ import (
 func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValidator validations.DataSourceRequestValidator,
 	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
-	tracer tracing.Tracer, secretsService secrets.Service, features featuremgmt.FeatureToggles) *DataSourceProxyService {
+	tracer tracing.Tracer,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	features featuremgmt.FeatureToggles,
+) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:            dataSourceCache,
 		DataSourceRequestValidator: datasourceReqValidator,
@@ -51,7 +54,7 @@ type DataSourceProxyService struct {
 	OAuthTokenService          *oauthtoken.Service
 	DataSourcesService         datasources.DataSourceService
 	tracer                     tracing.Tracer
-	secretsService             secrets.Service
+	secretsService             secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	features                   featuremgmt.FeatureToggles
 }
 
