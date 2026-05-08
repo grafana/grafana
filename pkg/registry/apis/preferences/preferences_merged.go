@@ -1,16 +1,18 @@
 package preferences
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"dario.cat/mergo"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -18,14 +20,17 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-type merger struct {
-	defaults preferences.PreferencesSpec
-	client   *clientGetter
+type PreferenceLister interface {
+	ListPreferences(ctx context.Context, options *internalversion.ListOptions) (*preferences.PreferencesList, error)
 }
 
-func newMerger(cfg *setting.Cfg, client *clientGetter) *merger {
+type merger struct {
+	defaults preferences.PreferencesSpec
+	lister   PreferenceLister
+}
+
+func newMerger(cfg *setting.Cfg) *merger {
 	return &merger{
-		client: client,
 		defaults: preferences.PreferencesSpec{
 			Theme:     &cfg.DefaultTheme,
 			Timezone:  &cfg.DateFormats.DefaultTimezone,
@@ -96,13 +101,12 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 	}
 	ns := user.GetNamespace() // namespace not in context!
 
-	client, err := s.client.Get()
-	if err != nil {
-		errhttp.Write(ctx, err, w)
+	if s.lister == nil {
+		errhttp.Write(ctx, fmt.Errorf("lister is not configured"), w)
 		return
 	}
 
-	list, err := client.List(ctx, ns, resource.ListOptions{})
+	list, err := s.lister.ListPreferences(ctx, nil)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
@@ -121,22 +125,37 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 
 // items should be in ascending order of importance
 func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences) (*preferences.Preferences, error) {
+	if len(items) == 0 {
+		return &preferences.Preferences{
+			TypeMeta:   preferences.PreferencesResourceInfo.TypeMeta(),
+			ObjectMeta: v1.ObjectMeta{},
+			Spec:       defaults,
+		}, nil
+	}
+
 	p := &preferences.Preferences{
 		TypeMeta:   preferences.PreferencesResourceInfo.TypeMeta(),
 		ObjectMeta: v1.ObjectMeta{},
-		Spec:       defaults,
+		Spec:       items[0].Spec,
 	}
 
-	// Iterate in reverse order (least relevant to most relevant)
-	for _, v := range items {
+	for i := 1; i < len(items); i++ {
+		v := items[i]
+
 		// Set the time from the most recent change
 		if p.CreationTimestamp.IsZero() || v.CreationTimestamp.After(p.CreationTimestamp.Time) {
 			p.CreationTimestamp = v.CreationTimestamp
 		}
 
-		if err := mergo.Merge(&p.Spec, &v.Spec, mergo.WithOverride); err != nil {
+		if err := mergo.Merge(&p.Spec, &v.Spec); err != nil {
 			return nil, err
 		}
 	}
+
+	// And finally apply the defaults if nothing else was configured
+	if err := mergo.Merge(&p.Spec, &defaults); err != nil {
+		return nil, err
+	}
+
 	return p, nil
 }

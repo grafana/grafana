@@ -1,14 +1,9 @@
 package preferences
 
 import (
-	"context"
-	"fmt"
-
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -48,11 +43,11 @@ func RegisterAPIService(
 	prefs pref.Service,
 	accessClient authlib.AccessClient,
 	apiregistration builder.APIRegistrar,
-	clientGenerator resource.ClientGenerator,
+	_ resource.ClientGenerator,
 ) (*APIBuilder, error) {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		merger: newMerger(cfg, &clientGetter{clientGenerator: clientGenerator}),
+		merger: newMerger(cfg),
 		authorizer: &utils.AuthorizeFromName{
 			OKNames:      []string{"merged"},
 			AccessClient: accessClient, // can i edit a team
@@ -119,7 +114,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 			return err
 		}
 	}
-	storage[prefs.StoragePath()] = &preferencesStorage{store}
+	wrappedStorage := &preferencesStorage{store}
+	storage[prefs.StoragePath()] = wrappedStorage
+	b.merger.lister = wrappedStorage
 
 	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage
 	return nil
@@ -136,32 +133,4 @@ func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	return b.merger.GetAPIRoutes(defs)
-}
-
-// Validate validates that the preference object has valid theme and timezone (if specified)
-func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	if a.GetResource().Resource != "preferences" {
-		return nil
-	}
-
-	op := a.GetOperation()
-	if op != admission.Create && op != admission.Update {
-		return nil
-	}
-
-	obj := a.GetObject()
-	p, ok := obj.(*preferences.Preferences)
-	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected Preferences object, got %T", obj))
-	}
-
-	if p.Spec.Timezone != nil && !pref.IsValidTimezone(*p.Spec.Timezone) {
-		return apierrors.NewBadRequest("invalid timezone: must be a valid IANA timezone (e.g., America/New_York), 'utc', 'browser', or empty string")
-	}
-
-	if p.Spec.Theme != nil && *p.Spec.Theme != "" && !pref.IsValidThemeID(*p.Spec.Theme) {
-		return apierrors.NewBadRequest("invalid theme")
-	}
-
-	return nil
 }

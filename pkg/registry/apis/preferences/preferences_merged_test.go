@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"k8s.io/utils/ptr"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 )
 
-func TestStarsQueries(t *testing.T) {
+func TestMergePreferences(t *testing.T) {
 	tests := []struct {
 		name     string
 		defaults preferences.PreferencesSpec
@@ -19,30 +18,38 @@ func TestStarsQueries(t *testing.T) {
 		{
 			name: "test1",
 			defaults: preferences.PreferencesSpec{
-				Theme:            ptr.To("settings.ini"),
-				Language:         ptr.To("settings.ini"),
-				HomeDashboardUID: ptr.To("settings.ini"),
-				Timezone:         ptr.To("settings.ini"),
+				Theme:            new("settings.ini"),
+				Language:         new("settings.ini"),
+				HomeDashboardUID: new("settings.ini"),
+				Timezone:         new("settings.ini"),
+				WeekStart:        new("settings.ini"),
 			},
 			items: []preferences.Preferences{
 				{Spec: preferences.PreferencesSpec{
-					Theme:            ptr.To("namespace"),
-					Language:         ptr.To("namespace"),
-					HomeDashboardUID: ptr.To("namespace"),
+					Theme: new("user"),
 				}},
 				{Spec: preferences.PreferencesSpec{
-					Theme:    ptr.To("team"),
-					Language: ptr.To("team"),
+					Theme:    new("teamA"),
+					Language: new("teamA"),
 				}},
 				{Spec: preferences.PreferencesSpec{
-					Theme: ptr.To("user"),
+					Theme:            new("teamB"),
+					Language:         new("teamB"),
+					HomeDashboardUID: new("teamB"),
+				}},
+				{Spec: preferences.PreferencesSpec{
+					Theme:            new("namespace"),
+					Language:         new("namespace"),
+					HomeDashboardUID: new("namespace"),
+					Timezone:         new("namespace"),
 				}},
 			},
 			expect: preferences.PreferencesSpec{
-				Theme:            ptr.To("user"),
-				Language:         ptr.To("team"),
-				HomeDashboardUID: ptr.To("namespace"),
-				Timezone:         ptr.To("settings.ini"),
+				Theme:            new("user"),
+				Language:         new("teamA"),
+				HomeDashboardUID: new("teamB"),
+				Timezone:         new("namespace"),
+				WeekStart:        new("settings.ini"),
 			},
 		},
 	}
