@@ -288,7 +288,7 @@ func runLeaseAutoRenew(t *testing.T, store kv.KV) {
 		a := lease.NewManager(store, "holder-renew-a", lease.WithInternalMinTTL(ttl))
 		b := lease.NewManager(store, "holder-renew-b", lease.WithInternalMinTTL(ttl))
 
-		l, err := a.Acquire(ctx, "renew/alive", lease.WithTTL(ttl), lease.WithAutoRenew(0))
+		l, err := a.Acquire(ctx, "renew/alive", lease.WithTTL(ttl), lease.WithAutoRenew())
 		require.NoError(t, err)
 
 		// Sleep well past the original TTL — auto-renewal should keep it alive.
@@ -319,7 +319,7 @@ func runLeaseAutoRenew(t *testing.T, store kv.KV) {
 	t.Run("Lost fires on Release", func(t *testing.T) {
 		m := lease.NewManager(store, "holder-renew-release", lease.WithInternalMinTTL(ttl))
 
-		l, err := m.Acquire(ctx, "renew/release", lease.WithTTL(ttl), lease.WithAutoRenew(0))
+		l, err := m.Acquire(ctx, "renew/release", lease.WithTTL(ttl), lease.WithAutoRenew())
 		require.NoError(t, err)
 
 		require.NoError(t, m.Release(ctx, l))
