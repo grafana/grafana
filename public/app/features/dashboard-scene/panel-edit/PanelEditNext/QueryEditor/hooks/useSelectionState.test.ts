@@ -75,6 +75,18 @@ describe('useSelectionState', () => {
       expect(result.current.selectedQueryRefIds).toEqual(['C']);
     });
 
+    it('keeps the last selection when Cmd+clicking the only selected query', () => {
+      // Mount-time default already selects queries[0] = 'A'. Cmd+clicking it
+      // should be a no-op so we never reach a "selection mode but nothing
+      // selected" state — same invariant clearSelection enforces.
+      const { result } = setup();
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
+
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+    });
+
     it('does NOT call onClearSideEffects', () => {
       const onClearSideEffects = jest.fn();
       const { result } = setup({ ...defaultProps, onClearSideEffects });
@@ -200,6 +212,16 @@ describe('useSelectionState', () => {
       act(() => result.current.toggleTransformationSelection(mockTransformations[2], { multi: true }));
       act(() => result.current.toggleTransformationSelection(mockTransformations[0], { multi: true }));
       expect(result.current.selectedTransformationIds).toEqual(['tx-2']);
+    });
+
+    it('keeps the last selection when Cmd+clicking the only selected transformation', () => {
+      const { result } = setup();
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
+      expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
+
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0], { multi: true }));
+
+      expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
     });
   });
 

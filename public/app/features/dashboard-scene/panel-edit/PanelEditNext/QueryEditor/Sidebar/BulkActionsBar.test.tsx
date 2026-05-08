@@ -84,13 +84,14 @@ describe('BulkActionsBar', () => {
   });
 
   describe('visibility (multi-select mode on)', () => {
-    it('renders the toolbar with no action buttons when multi-select mode is on with no selection', () => {
-      renderBar({
+    it('does not render the toolbar when multi-select mode is on with no selection', () => {
+      // Multi-select mode without any actionable selection is a degenerate
+      // UI state — the toggle/clearSelection invariants prevent reaching it
+      // through normal flows, so the bar deliberately stays hidden.
+      const { container } = renderBar({
         uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: [], selectedTransformationIds: [] },
       });
-      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
-      // No bulk action buttons until at least 1 item is selected.
-      expect(screen.queryByRole('button', { name: /^delete$/i })).not.toBeInTheDocument();
+      expect(container).toBeEmptyDOMElement();
     });
 
     it('shows query action buttons as soon as 1 query is selected', () => {

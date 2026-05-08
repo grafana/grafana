@@ -235,10 +235,7 @@ function getBulkActionsVisibility({
   return {
     hasQueryActions,
     hasTransformationActions,
-    // Stay visible while the user is in multi-select mode so they always have
-    // an affordance to exit (the close button) — even if they've toggled off
-    // every selection via Cmd+click.
-    shouldRender: multiSelectMode || hasQueryActions || hasTransformationActions,
+    shouldRender: hasQueryActions || hasTransformationActions,
   };
 }
 
@@ -258,14 +255,10 @@ export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
     return null;
   }
 
-  const hasAnySelection = selectedQueryRefIds.length > 0 || selectedTransformationIds.length > 0;
-
   // When multi-select mode is active, closing the bar should also leave the
   // mode so the sidebar returns to its default (single-selection) presentation.
   const handleClear = () => {
-    if (hasAnySelection) {
-      clearSelection();
-    }
+    clearSelection();
     if (multiSelectMode) {
       setMultiSelectMode(false);
     }

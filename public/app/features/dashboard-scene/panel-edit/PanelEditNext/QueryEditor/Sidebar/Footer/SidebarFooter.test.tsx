@@ -136,13 +136,15 @@ describe('SidebarFooter', () => {
       { transformId: 'tx-1', registryItem: undefined, transformConfig: { id: 'reduce', options: {} } },
     ];
 
-    it('renders the bar inside the footer as soon as multi-select mode is on, even with 0 selected items', () => {
+    it('does not render the bar in the footer when multi-select mode is on but nothing is selected', () => {
+      // Multi-select mode without any actionable selection is a degenerate
+      // state — the bar deliberately stays hidden.
       renderWithQueryEditorProvider(<SidebarFooter />, {
         queries,
         uiStateOverrides: { selectedQueryRefIds: [], multiSelectMode: true },
       });
 
-      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
     });
 
     it('does not render the bar in the footer when multi-select mode is off and nothing is selected', () => {
