@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	v0alpha1 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
@@ -228,7 +229,6 @@ func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorr
 }
 
 func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
-	// todo: datasource type was needed a a label selector for actually using app platform - test with write mode 5
 	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: "correlations.grafana.app/sourceDS-ref=" + cmd.SourceUID})
 	if err != nil {
 		return []Correlation{}, err
@@ -248,8 +248,13 @@ func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context,
 
 func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
 	//get all correlations up to the last page asked for
-	fetchAmt := cmd.Limit * cmd.Page
-	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{Limit: fetchAmt})
+	listOpts := v1.ListOptions{Limit: cmd.Limit * cmd.Page}
+
+	if len(cmd.SourceUIDs) != 0 {
+		listOpts.LabelSelector = fmt.Sprintf("correlations.grafana.app/sourceDS-ref in (%s)", strings.Join(cmd.SourceUIDs, ","))
+	}
+
+	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, listOpts)
 	if err != nil {
 		return GetCorrelationsResponseBody{
 			Correlations: []Correlation{},

@@ -74,7 +74,12 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 			if r.Key() == "correlations.grafana.app/sourceDS-ref" {
 				if r.Operator() == selection.Equals || r.Operator() == selection.In {
 					for _, item := range r.Values().List() {
-						uids = append(uids, strings.Split(item, ".")[1])
+						// if we are coming from legacy, we won't have a datasource type / group, so we can use the UID directly without splitting
+						if strings.Contains(item, ".") {
+							uids = append(uids, strings.Split(item, ".")[1])
+						} else {
+							uids = append(uids, item)
+						}
 					}
 				} else {
 					return nil, fmt.Errorf("unsupported operation")
