@@ -434,6 +434,13 @@ describe('prepConfig', () => {
         return xFacet?.sorted;
       }
 
+      function getExemplarSeriesXFacetSorted(builder: ReturnType<typeof prepConfig>): number | undefined {
+        const config = builder.getConfig();
+        const exemplarSeries = config.series?.[2];
+        const xFacet = exemplarSeries?.facets?.[0];
+        return xFacet?.sorted;
+      }
+
       it('does not declare the x facet as sorted when xBucketSize is negative', () => {
         const builder = buildBuilderWithInvalidBucketSize(-50);
         expect(getHeatmapSeriesXFacetSorted(builder)).not.toBe(1);
@@ -446,6 +453,26 @@ describe('prepConfig', () => {
 
       it('does declare the x facet as sorted when xBucketSize is positive', () => {
         const builder = buildBuilderWithInvalidBucketSize(4);
+        expect(getHeatmapSeriesXFacetSorted(builder)).toBe(1);
+      });
+
+      it('exemplar series x facet sorted matches heatmap series x facet sorted', () => {
+        for (const xBucketSize of [-50, 0, 4]) {
+          const builder = buildBuilderWithInvalidBucketSize(xBucketSize);
+          expect(getExemplarSeriesXFacetSorted(builder)).toBe(getHeatmapSeriesXFacetSorted(builder));
+        }
+      });
+
+      it('declares x facet as sorted for time-axis heatmaps regardless of xBucketSize', () => {
+        const dataRef = { current: createMinimalHeatmapData() };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        });
         expect(getHeatmapSeriesXFacetSorted(builder)).toBe(1);
       });
 
