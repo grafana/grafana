@@ -10,7 +10,7 @@ import {
   type StoredRecentScopeSet,
 } from './recentScopesStorage';
 import { type RecentScopeSet } from './types';
-import { useScopesById, useScopeNodesByName } from './useRecentScopesApi';
+import { useScopesById, useScopeNodesByName } from './useScopesApi';
 
 function subscribe(callback: () => void) {
   const onStorage = (e: StorageEvent) => {
@@ -83,7 +83,7 @@ export function useRecentScopes(appliedScopeIds: string[]): RecentScopeSet[] {
     ...new Set(
       filteredScopes.flatMap((set) => {
         const defaultPath = scopesById[set.scopeIds[0]]?.spec?.defaultPath ?? [];
-        return defaultPath.length === 0 && set.scopeNodeId ? [set.scopeNodeId] : [];
+        return defaultPath.length <= 1 && set.scopeNodeId ? [set.scopeNodeId] : [];
       })
     ),
   ];

@@ -3,40 +3,21 @@ import { renderHook } from '@testing-library/react';
 import { type Scope } from '@grafana/data';
 import { type ScopeNode } from 'app/api/clients/scope/v0alpha1/endpoints.gen';
 
-import { type StoredRecentScopeSet } from './recentScopesStorage';
+import { readStoredRecentScopes, type StoredRecentScopeSet } from './recentScopesStorage';
 import { useRecentScopes } from './useRecentScopes';
-import { useScopesById, useScopeNodesByName } from './useRecentScopesApi';
+import { useScopesById, useScopeNodesByName } from './useScopesApi';
 
 // Mock the storage module so tests control what's "in localStorage"
-const mockReadStoredRecentScopes = jest.fn<StoredRecentScopeSet[], []>().mockReturnValue([]);
-const mockWriteRecentScope = jest.fn();
-
 jest.mock('./recentScopesStorage', () => ({
   ...jest.requireActual('./recentScopesStorage'),
-  readStoredRecentScopes: () => mockReadStoredRecentScopes(),
-  writeRecentScope: () => mockWriteRecentScope(),
+  readStoredRecentScopes: jest.fn(),
 }));
+const mockReadStoredRecentScopes = jest.mocked(readStoredRecentScopes);
 
 // Mock the API hooks so tests don't need a Redux store
-jest.mock('./useRecentScopesApi');
+jest.mock('./useScopesApi');
 const mockUseScopesById = jest.mocked(useScopesById);
 const mockUseScopeNodesByName = jest.mocked(useScopeNodesByName);
-
-// Mock @grafana/data store (used by getSnapshot via readStoredRecentScopes)
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
-  store: {
-    get: jest.fn(),
-    set: jest.fn(),
-    subscribe: jest.fn(),
-    notifySubscribers: jest.fn(),
-    getBool: jest.fn(),
-    getObject: jest.fn(),
-    setObject: jest.fn(),
-    exists: jest.fn(),
-    delete: jest.fn(),
-  },
-}));
 
 const mockScope = (id: string, title: string, defaultPath?: string[]): Scope => ({
   metadata: { name: id },
@@ -116,8 +97,23 @@ describe('useRecentScopes', () => {
     expect(result.current[0].scopeNodeId).toBe('leaf-node');
   });
 
+  it('fetches leaf node when defaultPath has exactly one segment', () => {
+    // defaultPath.length === 1 must also trigger a leaf node fetch so resolveParentNodeTitle
+    // can read the leaf's parentName — previously length === 0 was the only gate.
+    const stored: StoredRecentScopeSet[] = [{ scopeIds: ['scope-a'], scopeNodeId: 'leaf-node', version: '1.0' }];
+    mockReadStoredRecentScopes.mockReturnValue(stored);
+    mockUseScopesById.mockReturnValue({
+      'scope-a': mockScope('scope-a', 'Scope A', ['leaf-node']),
+    });
+    mockUseScopeNodesByName.mockReturnValue({ 'leaf-node': mockScopeNode('leaf-node', 'Leaf') });
+
+    renderHook(() => useRecentScopes([]));
+
+    const calledWith = mockUseScopeNodesByName.mock.calls[0][0];
+    expect(calledWith).toContain('leaf-node');
+  });
+
   it('strips scopeNodeId when version is stale (handled by readStoredRecentScopes)', () => {
-    // readStoredRecentScopes already strips stale scopeNodeIds, so simulate that result
     const stored: StoredRecentScopeSet[] = [
       { scopeIds: ['scope-a'], version: 'old-version' },
       // Note: scopeNodeId is NOT present because readStoredRecentScopes stripped it
