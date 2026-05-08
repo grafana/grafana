@@ -57,6 +57,7 @@ import {
   getCellLinks,
   getDefaultRowHeight,
   getDisplayName,
+  getStableRowKey,
   getVisibleFields,
 } from './utils';
 
@@ -139,11 +140,8 @@ export function TableNested(props: TableNGProps) {
     [data, nestedFramesFieldName]
   );
 
-  const getRowStableKey = useCallback(
-    (rowIdx: number): string => {
-      const key = nestedData?.[rowIdx]?.meta?.custom?.stableRowKey;
-      return key != null ? String(key) : String(rowIdx);
-    },
+  const getRowStableKeyForRowIdx = useCallback(
+    (rowIdx: number): string => getStableRowKey(rowIdx, nestedData?.[rowIdx]),
     [nestedData]
   );
 
@@ -198,12 +196,7 @@ export function TableNested(props: TableNGProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(() => {
     if (data.meta?.custom?.expandAllRows) {
       const nestedField = data.fields.find((f) => f.type === FieldType.nestedFrames);
-      return new Set(
-        Array.from({ length: data.length }, (_, i) => {
-          const key = nestedField?.values[i]?.[0]?.meta?.custom?.stableRowKey;
-          return key != null ? String(key) : String(i);
-        })
-      );
+      return new Set(Array.from({ length: data.length }, (_, i) => getStableRowKey(i, nestedField?.values?.[i]?.[0])));
     }
     return new Set();
   });
@@ -244,8 +237,8 @@ export function TableNested(props: TableNGProps) {
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
   const visibleNestedRowCounts = useMemo(
-    () => nestedRows.map((row, idx) => (expandedRows.has(getRowStableKey(idx)) ? row.final.length : null)),
-    [nestedRows, expandedRows, getRowStableKey]
+    () => nestedRows.map((row, idx) => (expandedRows.has(getRowStableKeyForRowIdx(idx)) ? row.final.length : null)),
+    [nestedRows, expandedRows, getRowStableKeyForRowIdx]
   );
 
   const { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange } = useNestedColWidths({
@@ -312,7 +305,7 @@ export function TableNested(props: TableNGProps) {
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
-      return (row: TableRow) => (expandedRows.has(getRowStableKey(row.__index)) ? TABLE.MAX_CELL_HEIGHT : 0);
+      return (row: TableRow) => (expandedRows.has(getRowStableKeyForRowIdx(row.__index)) ? TABLE.MAX_CELL_HEIGHT : 0);
     }
     if (typeof rowHeight === 'function') {
       // safe: we only return a (row: TableRow) => string function when defaultNestedRowHeight is a string.
@@ -323,11 +316,11 @@ export function TableNested(props: TableNGProps) {
       return () => TABLE.MAX_CELL_HEIGHT;
     }
     return () => rowHeight;
-  }, [rowHeight, defaultNestedRowHeight, expandedRows, getRowStableKey]);
+  }, [rowHeight, defaultNestedRowHeight, expandedRows, getRowStableKeyForRowIdx]);
 
   const renderRow = useMemo(
-    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair, getRowStableKey),
-    [data.fields, panelContext, expandedRows, enableSharedCrosshair, getRowStableKey]
+    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair, getRowStableKeyForRowIdx),
+    [data.fields, panelContext, expandedRows, enableSharedCrosshair, getRowStableKeyForRowIdx]
   );
 
   const commonDataGridProps = useMemo(
@@ -456,7 +449,7 @@ export function TableNested(props: TableNGProps) {
 
         if (row.__depth === 0) {
           const rowIdx = row.__index;
-          const stableKey = getRowStableKey(rowIdx);
+          const stableKey = getRowStableKeyForRowIdx(rowIdx);
 
           return (
             <RowExpander
@@ -523,7 +516,7 @@ export function TableNested(props: TableNGProps) {
       data.fields.length,
       commonDataGridProps,
       expandedRows,
-      getRowStableKey,
+      getRowStableKeyForRowIdx,
       nestedRows,
       noValue,
       onCellClick,
@@ -565,7 +558,7 @@ export function TableNested(props: TableNGProps) {
       panelContext,
       expandedRows,
       enableSharedCrosshair,
-      getRowStableKey
+      getRowStableKeyForRowIdx
     );
 
     const expanderCellRenderer: CellRootRenderer = (key, cellProps) => <Cell key={key} {...cellProps} />;
@@ -594,7 +587,7 @@ export function TableNested(props: TableNGProps) {
     expandedRows,
     firstRowNestedData,
     fromFields,
-    getRowStableKey,
+    getRowStableKeyForRowIdx,
     hasNestedHeaders,
     nestedColumnsMatrix,
     nestedFooterHeight,

@@ -1214,3 +1214,8 @@ export function parseStyleJson(rawValue: unknown): CSSProperties | void {
     }
   }
 }
+
+export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => {
+  const key = frame?.meta?.custom?.stableRowKey;
+  return key != null ? String(key) : String(rowIndex);
+};
