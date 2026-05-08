@@ -239,8 +239,8 @@ export async function openScopesSelector(page: Page, scopes?: TestScope[]) {
     .waitFor({ timeout: 5000 })
     .catch(() => null);
 
-  await Promise.race([responsePromise, uiLoaded]);
-  responsePromise.catch(() => null);
+  const safeResponse = responsePromise.catch(() => null);
+  await Promise.race([safeResponse, uiLoaded]);
 }
 
 /**
@@ -268,8 +268,8 @@ export async function expandScopesSelection(page: Page, parentScope: string, sco
     .waitFor({ timeout: 5000 })
     .catch(() => null);
 
-  await Promise.race([responsePromise, uiExpanded]);
-  responsePromise.catch(() => null);
+  const safeResponse = responsePromise.catch(() => null);
+  await Promise.race([safeResponse, uiExpanded]);
 }
 
 /**
