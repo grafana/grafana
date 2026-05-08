@@ -294,7 +294,17 @@ func runLeaseAutoRenew(t *testing.T, store kv.KV) {
 		// Sleep well past the original TTL — auto-renewal should keep it alive.
 		time.Sleep(ttl * 3)
 
-		_, err = b.Acquire(ctx, "renew/alive", lease.WithTTL(ttl))
+		// b.Acquire may occasionally hit a narrow race where
+		// extendGeneration deletes the old generation key between
+		// latest() and read(), returning ErrNotFound instead of
+		// ErrLeaseAlreadyHeld. Retry to let it resolve.
+		for range 5 {
+			_, err = b.Acquire(ctx, "renew/alive", lease.WithTTL(ttl))
+			if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+				break
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
 		require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
 
 		select {
