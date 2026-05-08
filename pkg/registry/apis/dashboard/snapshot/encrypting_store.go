@@ -17,14 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
-// encryptingStore wraps a snapshot rest.Storage and applies envelope encryption
-// to Spec.Dashboard at the storage boundary, matching the at-rest encryption
-// the legacy SQL store provides via dashboardsnapshots.Service.
-//
-// On write, the plaintext Spec.Dashboard is JSON-marshaled, encrypted, and
-// moved to Spec.DashboardEncrypted. Spec.Dashboard is cleared so unified
-// storage never persists plaintext. On read, Spec.DashboardEncrypted is
-// decrypted back into Spec.Dashboard.
+// encryptingStore applies envelope encryption to Spec.Dashboard at the
+// unified-storage boundary so the plaintext is never persisted: writes move
+// it into Spec.DashboardEncrypted, reads restore it.
 type encryptingStore struct {
 	inner             grafanarest.Storage
 	encryptionManager secretcontracts.EncryptionManager
@@ -32,21 +27,9 @@ type encryptingStore struct {
 
 var _ grafanarest.Storage = (*encryptingStore)(nil)
 
-// NewEncryptingStore wraps inner so that snapshot dashboards are encrypted
-// before persistence and decrypted after reads. It is meant to wrap the
-// unified-storage branch of the snapshot dual-writer; the legacy SQL branch
-// continues to encrypt via dashboardsnapshots.Service / pkg/services/secrets,
-// which is single-tenant. This wrapper uses the app-platform EncryptionManager
-// (pkg/registry/apis/secret/contracts), which is namespace-scoped and works in
-// both single-tenant and multi-tenant deployments.
-//
-// The two paths are NOT envelope-compatible: legacy ciphertext is bound to the
-// global secrets service's data keys, while EncryptionManager mints
-// per-namespace data keys. A future migration job that copies snapshots from
-// the legacy dashboard_snapshot.dashboard_encrypted column into unified
-// storage must decrypt with the legacy secrets.Service and re-encrypt
-// per-namespace via EncryptionManager — copying ciphertext bytes verbatim
-// will not round-trip.
+// NewEncryptingStore wraps the unified-storage branch of the snapshot
+// dual-writer with the namespace-scoped app-platform EncryptionManager so
+// each tenant's snapshots are bound to their own data keys.
 func NewEncryptingStore(inner grafanarest.Storage, encryptionManager secretcontracts.EncryptionManager) grafanarest.Storage {
 	return &encryptingStore{inner: inner, encryptionManager: encryptionManager}
 }
@@ -75,10 +58,8 @@ func (s *encryptingStore) Create(ctx context.Context, obj runtime.Object, create
 	return out, nil
 }
 
-// Update is rejected: snapshots are immutable. Matching SnapshotLegacyStore.Update,
-// which returns the same error. Failing fast here keeps the wrapper self-consistent
-// regardless of dual-writer mode (in modes that skip legacy, this is the last line
-// of defense).
+// Update is rejected: snapshots are immutable. Enforced here so the rejection
+// holds even in dual-writer modes that bypass the legacy store.
 func (s *encryptingStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	return nil, false, fmt.Errorf("snapshots are immutable and cannot be updated")
 }
@@ -94,9 +75,9 @@ func (s *encryptingStore) Get(ctx context.Context, name string, options *metav1.
 	return out, nil
 }
 
-// List does not decrypt because the snapshot list endpoint never returns the
-// dashboard payload (legacy returns SnapshotDTOs without it; unified strips it
-// in stripSensitiveFieldsFromList). Decrypting here would be wasted KMS work.
+// List does not decrypt: the snapshot list endpoint strips the dashboard
+// payload (see stripSensitiveFieldsFromList), so decrypting would be wasted
+// KMS work.
 func (s *encryptingStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	return s.inner.List(ctx, options)
 }
@@ -165,11 +146,9 @@ func (s *encryptingStore) decryptSpec(ctx context.Context, spec *dashv0.Snapshot
 	return nil
 }
 
-// namespaceFromContext extracts the request namespace as xkube.Namespace, which
-// EncryptionManager uses to scope per-tenant data keys. The apiserver always
-// populates the namespace on requests for namespaced resources; an empty value
-// would silently collapse all tenants onto the same DEK, so we surface it as
-// an error instead of defaulting.
+// namespaceFromContext returns the request namespace for EncryptionManager
+// scoping. An empty namespace would silently share one DEK across tenants,
+// so we error instead of defaulting.
 func namespaceFromContext(ctx context.Context) (xkube.Namespace, error) {
 	ns := request.NamespaceValue(ctx)
 	if ns == "" {
