@@ -146,7 +146,7 @@ func TestWrapper_Observer(t *testing.T) {
 		assert.Equal(t, []observerCall{
 			{layer: LayerAuthz, resource: resource, op: "before_create", status: "success"},
 			{layer: LayerInner, resource: resource, op: "create", status: "success"},
-		}, observer.callsWithoutDuration())
+		}, observer.calls)
 	})
 
 	t.Run("records authz failure without inner call", func(t *testing.T) {
@@ -166,7 +166,7 @@ func TestWrapper_Observer(t *testing.T) {
 		assert.Nil(t, result)
 		assert.Equal(t, []observerCall{
 			{layer: LayerAuthz, resource: resource, op: "before_create", status: "unauthorized"},
-		}, observer.callsWithoutDuration())
+		}, observer.calls)
 		mockStore.AssertNotCalled(t, "Create")
 	})
 }
@@ -824,14 +824,14 @@ func TestWrapper_Watch(t *testing.T) {
 
 		setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
 
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+
 		// Fill the inner channel buffer without ever reading from w.ResultChan().
 		// Wrapper watcher result channel will be blocked at DefaultChanSize.
 		for i := int32(0); i < watch.DefaultChanSize*2; i++ {
 			inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}})
 		}
-
-		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
-		require.NoError(t, err)
 
 		// Wait for the send timeout to trigger. Use a generous overall timeout
 		// because the run goroutine must first process ~100 events through the
@@ -985,9 +985,9 @@ func (f *fakeWatcherStorage) Watch(ctx context.Context, _ *internalversion.ListO
 // need to push events without racing on Stop (watch.FakeWatcher's Add/Stop are
 // not safe to call concurrently).
 type pumpedWatcher struct {
-	ch       chan watch.Event
-	stopOnce sync.Once
-	done     atomic.Bool
+	ch   chan watch.Event
+	mu   sync.Mutex
+	done atomic.Bool
 }
 
 func newPumpedWatcher(buffer int) *pumpedWatcher {
@@ -997,20 +997,33 @@ func newPumpedWatcher(buffer int) *pumpedWatcher {
 // Events will be written to the channel without blocking.
 // If the buffer is full, the event will be dropped.
 func (p *pumpedWatcher) push(e watch.Event) {
-	select {
-	case p.ch <- e:
-	default:
-		// Buffer full — drop. Tests using this just want to fill the pipeline.
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if !p.done.Load() {
+		select {
+		case p.ch <- e:
+		default:
+			// Buffer full — drop. Tests using this just want to fill the pipeline.
+		}
 	}
 }
 
 func (p *pumpedWatcher) Stop() {
-	p.stopOnce.Do(func() { close(p.ch); p.done.Store(true) })
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if !p.done.Load() {
+		p.done.Store(true)
+		close(p.ch)
+	}
 }
 
-func (p *pumpedWatcher) ResultChan() <-chan watch.Event { return p.ch }
+func (p *pumpedWatcher) ResultChan() <-chan watch.Event {
+	return p.ch
+}
 
-func (p *pumpedWatcher) IsStopped() bool { return p.done.Load() }
+func (p *pumpedWatcher) IsStopped() bool {
+	return p.done.Load()
+}
 
 type observerCall struct {
 	layer    string
@@ -1025,8 +1038,4 @@ type fakeObserver struct {
 
 func (f *fakeObserver) Observe(layer, op string, resource schema.GroupResource, _ time.Duration, status string) {
 	f.calls = append(f.calls, observerCall{layer: layer, resource: resource, op: op, status: status})
-}
-
-func (f *fakeObserver) callsWithoutDuration() []observerCall {
-	return f.calls
 }

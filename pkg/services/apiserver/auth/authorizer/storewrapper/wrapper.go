@@ -53,6 +53,7 @@ const (
 
 // WatchEventFilter is a batch filter for watch events. Given a slice of
 // data-carrying events (Added, Modified, Deleted) it returns a same-length bool
+// slice indicating which events to forward. Returning an error terminates the watch.
 // Implementations are called from a single goroutine and need not be concurrency-safe.
 type WatchEventFilter func(events []watch.Event) ([]bool, error)
 
@@ -74,6 +75,7 @@ func isPassThroughWatchFilter(filter WatchEventFilter) bool {
 	return reflect.ValueOf(filter).Pointer() == reflect.ValueOf(PassThroughWatchFilter).Pointer()
 }
 
+// ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
 type ResourceStorageAuthorizer interface {
 	BeforeCreate(ctx context.Context, obj runtime.Object) error
 	BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error
@@ -144,15 +146,6 @@ func WithPreserveIdentity() Option {
 func WithWatchFlushInterval(d time.Duration) Option {
 	return func(w *Wrapper) {
 		w.watchFlushInterval = d
-	}
-}
-
-// WithWatchSendTimeout configures how long to wait when sending an event to the caller.
-// If the caller fails to receive the event within this timeframe (default 1s),
-// it is considered too slow, which will stop the watcher and return an error.
-func WithWatchSendTimeout(d time.Duration) Option {
-	return func(w *Wrapper) {
-		w.watchSendTimeout = d
 	}
 }
 
@@ -231,14 +224,6 @@ func (w *Wrapper) startSpan(ctx context.Context, method string) (context.Context
 	return startSpan(ctx, w.tracer, w.resource, method)
 }
 
-func (w *Wrapper) observeAuthz(op string, start time.Time, err error) {
-	w.observer.Observe(LayerAuthz, op, w.resource, time.Since(start), statusFromError(err))
-}
-
-func (w *Wrapper) observeInner(op string, start time.Time, err error) {
-	w.observer.Observe(LayerInner, op, w.resource, time.Since(start), statusFromError(err))
-}
-
 func recordSpanError(span trace.Span, err error) {
 	if err == nil {
 		return
@@ -247,29 +232,22 @@ func recordSpanError(span trace.Span, err error) {
 	span.SetStatus(codes.Error, err.Error())
 }
 
+func (w *Wrapper) observeAuthz(op string, start time.Time, err error) {
+	w.observer.Observe(LayerAuthz, op, w.resource, time.Since(start), statusFromError(err))
+}
+
+func (w *Wrapper) observeInner(op string, start time.Time, err error) {
+	w.observer.Observe(LayerInner, op, w.resource, time.Since(start), statusFromError(err))
+}
+
 func statusFromError(err error) string {
 	if err == nil {
-		return "success"
+		return metaV1.StatusSuccess
 	}
-	if errors.IsForbidden(err) {
-		return "forbidden"
+	if reason := errors.ReasonForError(err); reason != metaV1.StatusReasonUnknown {
+		return string(reason)
 	}
-	if errors.IsUnauthorized(err) {
-		return "unauthorized"
-	}
-	if errors.IsNotFound(err) {
-		return "not_found"
-	}
-	if errors.IsMethodNotSupported(err) {
-		return "method_not_supported"
-	}
-	if errors.IsConflict(err) {
-		return "conflict"
-	}
-	if errors.IsBadRequest(err) {
-		return "bad_request"
-	}
-	return "error"
+	return metaV1.StatusFailure
 }
 
 func (w *Wrapper) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metaV1.Table, error) {
@@ -495,7 +473,7 @@ func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOption
 	// Fail-closed: a nil filter is treated as RejectAllWatchFilter.
 	// Implementors should return PassThroughWatchFilter explicitly for unrestricted resources.
 	if filter == nil {
-		err = errors.NewUnauthorized("watch filter not implemented")
+		err = errors.NewUnauthorized("watch denied")
 		return nil, err
 	}
 
@@ -567,13 +545,22 @@ func newFilteredWatcher(ctx context.Context,
 	return fw
 }
 
-type sendEventResult string
+type sendEventResult int
 
 const (
-	sendEventSuccess sendEventResult = "success"
-	sendEventTimeout sendEventResult = "timeout"
-	sendEventStopped sendEventResult = "stopped"
+	sendEventSuccess sendEventResult = iota
+	sendEventTimeout
+	sendEventStopped
 )
+
+// statusFromSendResult converts a sendEventResult to a string status.
+// Use statuses consistent with the statusFromError function.
+func statusFromSendResult(r sendEventResult) string {
+	if r == sendEventTimeout {
+		return string(metaV1.StatusReasonTimeout)
+	}
+	return metaV1.StatusSuccess
+}
 
 // sendEvent forwards an event to the caller.
 // It returns if the user context is done or the watcher is stopped.
@@ -628,13 +615,13 @@ func (fw *filteredWatcher) sendAllowed(ctx context.Context, pending []watch.Even
 	result := sendEventSuccess
 
 	defer func(startTime time.Time) {
-		span.SetAttributes(attribute.String("send_result", string(result)))
+		span.SetAttributes(attribute.String("send_result", statusFromSendResult(result)))
 		span.SetAttributes(attribute.Int("sent_count", sent))
 		if result == sendEventTimeout {
 			recordSpanError(span, errutil.Internal("watch event send timed out"))
 		}
 		span.End()
-		fw.observer.Observe(LayerInner, OpSendWatchEvents, fw.resource, time.Since(startTime), string(result))
+		fw.observer.Observe(LayerInner, OpSendWatchEvents, fw.resource, time.Since(startTime), statusFromSendResult(result))
 	}(time.Now())
 
 	for i, event := range pending {
