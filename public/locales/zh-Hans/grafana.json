@@ -1148,6 +1148,9 @@
         "rule-viewer-section-extension": "规则查看器扩充版块加载失败"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "更新配置失败：",
       "title-something-went-wrong": "出现错误"
@@ -3155,9 +3158,7 @@
       "deleting": "删除",
       "text-federated": "联合",
       "text-provisioned": "已预置",
-      "ungrouped": "未分组",
-      "ungrouped-suffix": "{{ruleName}}（未分组）",
-      "unknown-rule": "未知规则"
+      "ungrouped": "未分组"
     },
     "saved-searches": {
       "actions-aria-label": "操作",

@@ -97,6 +97,9 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 // lastImportTime), and downloads it. Shared between the rebuild path and
 // cold-start coordination; callers pass their own maxAge and policy /
 // span labels. Returns (nil, "", 0, nil) when no candidate matches.
+//
+// maxAge <= 0 means "no age limit": the only freshness floor is
+// lastImportTime (which itself may be zero, meaning no floor at all).
 func (b *bleveBackend) tryDownloadFreshSameVersionSnapshot(
 	ctx context.Context,
 	key resource.NamespacedResource,
@@ -108,7 +111,10 @@ func (b *bleveBackend) tryDownloadFreshSameVersionSnapshot(
 ) (bleve.Index, string, int64, error) {
 	logger.Info("Fresh same-version index snapshot download started", "policy", policy, "max_age", maxAge, "last_import_time", lastImportTime)
 
-	notOlderThan := time.Now().Add(-maxAge)
+	var notOlderThan time.Time
+	if maxAge > 0 {
+		notOlderThan = time.Now().Add(-maxAge)
+	}
 	if lastImportTime.After(notOlderThan) {
 		notOlderThan = lastImportTime
 	}
@@ -551,8 +557,8 @@ func (b *bleveBackend) coordinateColdStartBuild(
 	// filter the tiered selection applies. We don't reuse the rebuild
 	// path's tighter maxFreshSnapshotAge — on a cold start any
 	// same-version snapshot beats rebuilding, so we want the loosest
-	// threshold. Zero means "skip the probe"; the lock + wait loop still
-	// coordinates.
+	// threshold. Zero means "no age limit": the probe still runs and
+	// accepts any same-version snapshot.
 	probeMaxAge := b.opts.Snapshot.MaxIndexAge
 	logger.Info("Cold-start coordination started", "probe_max_age", probeMaxAge, "last_import_time", lastImportTime)
 
@@ -607,13 +613,14 @@ func (b *bleveBackend) coordinateColdStartBuild(
 // snapshot already exists in the remote index store, and downloads it if
 // so. Called once per iteration of coordinateColdStartBuild's loop.
 //
-//   - probeMaxAge <= 0: don't contact the store; coordination falls back
-//     to the lock + wait loop alone.
 //   - idx != nil: snapshot downloaded and returned.
 //   - idx == nil, err == nil: no usable snapshot right now.
 //   - err != nil: only ctx.Err() is propagated. List/get/download failures
 //     are logged and treated as "no hit" — this lookup is an optimisation,
 //     not a correctness check.
+//
+// probeMaxAge <= 0 means "no age limit" — the probe walks the namespace
+// and accepts any same-version snapshot.
 func (b *bleveBackend) tryDownloadColdStartSnapshot(
 	ctx context.Context,
 	key resource.NamespacedResource,
@@ -622,9 +629,6 @@ func (b *bleveBackend) tryDownloadColdStartSnapshot(
 	probeMaxAge time.Duration,
 	logger log.Logger,
 ) (bleve.Index, string, int64, error) {
-	if probeMaxAge <= 0 {
-		return nil, "", 0, nil
-	}
 	idx, name, rv, err := b.tryDownloadFreshSameVersionSnapshot(
 		ctx, key, resourceDir, lastImportTime, probeMaxAge,
 		snapshotPolicyColdStart, "search.remote_index_snapshot.download_cold_start",

@@ -1163,6 +1163,9 @@
         "rule-viewer-section-extension": "Nie udało się wczytać sekcji wzbogacania przeglądarki reguł"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Nie udało się zaktualizować konfiguracji:",
       "title-something-went-wrong": "Coś poszło nie tak"
@@ -3212,9 +3215,7 @@
       "deleting": "Usuwam",
       "text-federated": "Federacja",
       "text-provisioned": "Po aprowizacji",
-      "ungrouped": "Niezgrupowane",
-      "ungrouped-suffix": "{{ruleName}} (niezgrupowane)",
-      "unknown-rule": "Nieznana reguła"
+      "ungrouped": "Niezgrupowane"
     },
     "saved-searches": {
       "actions-aria-label": "Działania",

@@ -135,6 +135,23 @@ func TestSelectSnapshotsToDelete_RuleAWinsOnLoneOldSnapshot(t *testing.T) {
 	assert.Equal(t, []ulid.ULID{only}, got)
 }
 
+// TestSelectSnapshotsToDelete_ZeroMaxAgeKeepsLoneOldSnapshot pins the
+// "MaxIndexAge=0 means no age limit" semantic for cleanup rule A: an
+// arbitrarily old lone snapshot is not eligible for age-based deletion.
+// Rule B (per-version-group eviction) still applies in the multi-snapshot
+// case — covered by TestSelectSnapshotsToDelete_PerVersionIsolation.
+func TestSelectSnapshotsToDelete_ZeroMaxAgeKeepsLoneOldSnapshot(t *testing.T) {
+	now := time.Date(2026, 4, 22, 12, 0, 0, 0, time.UTC)
+
+	only := makeULID(t, now.Add(-30*24*time.Hour))
+	metas := map[ulid.ULID]*IndexMeta{
+		only: mkMeta("11.5.0", 100, now.Add(-30*24*time.Hour)),
+	}
+
+	got := selectSnapshotsToDelete(metas, now, 0, testCleanupGrace)
+	assert.Empty(t, got, "maxAge=0 must disable age-based deletion (rule A)")
+}
+
 func TestSelectSnapshotsToDelete_PerVersionIsolation(t *testing.T) {
 	now := time.Date(2026, 4, 22, 12, 0, 0, 0, time.UTC)
 

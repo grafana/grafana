@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Nem sikerült betölteni a szabálymegjelenítő bővítési szakaszát"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "A konfiguráció frissítése sikertelen volt:",
       "title-something-went-wrong": "Valami hiba történt"
@@ -3174,9 +3177,7 @@
       "deleting": "Törlés",
       "text-federated": "Összevont",
       "text-provisioned": "Kiépítve",
-      "ungrouped": "Nem csoportosított",
-      "ungrouped-suffix": "{{ruleName}} (nem csoportosított)",
-      "unknown-rule": "Ismeretlen szabály"
+      "ungrouped": "Nem csoportosított"
     },
     "saved-searches": {
       "actions-aria-label": "Műveletek",

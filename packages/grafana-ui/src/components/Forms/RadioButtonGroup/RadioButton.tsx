@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { forwardRef, type HTMLProps } from 'react';
+import { forwardRef, useId, type HTMLProps } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type StringSelector, selectors } from '@grafana/e2e-selectors';
@@ -18,7 +18,6 @@ export interface RadioButtonProps extends Omit<HTMLProps<HTMLInputElement>, 'siz
   name?: string;
   description?: string;
   active: boolean;
-  id: string;
   onChange: () => void;
   onClick: () => void;
   fullWidth?: boolean;
@@ -36,7 +35,6 @@ export const RadioButton = forwardRef<HTMLInputElement, RadioButtonProps>(
       size = 'md',
       onChange,
       onClick,
-      id,
       name = undefined,
       description,
       fullWidth,
@@ -47,6 +45,7 @@ export const RadioButton = forwardRef<HTMLInputElement, RadioButtonProps>(
     ref
   ) => {
     const styles = useStyles2(getRadioButtonStyles, size, fullWidth);
+    const id = useId();
     const adjustedTitle = title ?? ariaLabel;
 
     const inputRadioButton = (
