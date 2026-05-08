@@ -204,15 +204,15 @@ func TestAuthenticate_GRPCLogFields(t *testing.T) {
 	grpcCtx := func(ctx context.Context) context.Context {
 		return grpclog.InjectFields(ctx, grpclog.Fields{})
 	}
+
+	// gRPC log fields are stored as alternating (key, value, key, value, ...)
+	// in a flat []any slice. This helper converts it to a map to simplify assertions.
 	extractFieldMap := func(ctx context.Context) map[string]string {
-		raw := grpclog.ExtractFields(ctx)
-		m := make(map[string]string, len(raw)/2)
-		for i := 0; i+1 < len(raw); i += 2 {
-			if k, ok := raw[i].(string); ok {
-				if v, ok := raw[i+1].(string); ok {
-					m[k] = v
-				}
-			}
+		m := make(map[string]string)
+		it := grpclog.ExtractFields(ctx).Iterator()
+		for it.Next() {
+			k, v := it.At()
+			m[k] = v.(string)
 		}
 		return m
 	}
