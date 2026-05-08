@@ -22,6 +22,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -829,10 +830,18 @@ func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event Wri
 	return leaseCtx, true, release, nil
 }
 
+func recordSpanError(span trace.Span, err error) {
+	if err == nil {
+		return
+	}
+	span.RecordError(err)
+	span.SetStatus(otelcodes.Error, err.Error())
+}
+
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
 //
 //nolint:gocyclo
-func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
+func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
 	if err := event.Validate(); err != nil {
 		return 0, apierrors.NewBadRequest(err.Error())
 	}
@@ -846,6 +855,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		attribute.String("namespace", event.Key.Namespace),
 	))
 	defer span.End()
+	defer func() { recordSpanError(span, err) }()
 
 	ctx, leasesActive, releaseLease, err := k.maybeAcquireWriteLease(ctx, event)
 	if err != nil {
@@ -853,8 +863,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 	defer releaseLease()
 
-	rv := k.snowflake.Generate().Int64()
-
+	rv = k.snowflake.Generate().Int64()
 	namespace := event.Key.Namespace
 
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
@@ -1109,7 +1118,7 @@ func (k *kvStorageBackend) confirmExistence(ctx context.Context, key DataKey) (b
 	return false, err
 }
 
-func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
+func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) (rsp *BackendReadResponse) {
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
@@ -1122,7 +1131,13 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		attribute.String("resource", req.Key.Resource),
 		attribute.String("name", req.Key.Name),
 	))
+	var err error
 	defer span.End()
+	defer func() {
+		if rsp != nil && rsp.Error != nil && rsp.Error.Code >= 500 {
+			recordSpanError(span, err)
+		}
+	}()
 
 	namespace := req.Key.Namespace
 
@@ -1130,7 +1145,8 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if req.ResourceVersion > 0 {
 		// Fetch the latest RV
 		latestRV := k.snowflake.Generate().Int64()
-		if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
+		var lastEventKey EventKey
+		if lastEventKey, err = k.eventStore.LastEventKey(ctx); err == nil {
 			latestRV = lastEventKey.ResourceVersion
 		} else if !errors.Is(err, ErrNotFound) {
 			return &BackendReadResponse{Error: &resourcepb.ErrorResult{
@@ -1183,7 +1199,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 }
 
 // ListIterator returns an iterator for listing resources.
-func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (rv int64, err error) {
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
@@ -1196,6 +1212,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		attribute.String("resource", req.Options.Key.Resource),
 	))
 	defer span.End()
+	defer func() { recordSpanError(span, err) }()
 
 	// Parse continue token if provided
 	listOptions := ListRequestOptions{
@@ -1258,8 +1275,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
 	defer iter.stop()
 
-	err := cb(iter)
-	if err != nil {
+	if err := cb(iter); err != nil {
 		return 0, err
 	}
 
@@ -1496,8 +1512,10 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 			return sinceRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
 		}
 
+		err = fmt.Errorf("error trying to retrieve last event key: %w", err)
+		recordSpanError(span, err)
 		return 0, func(yield func(*ModifiedResource, error) bool) {
-			yield(nil, fmt.Errorf("error trying to retrieve last event key: %w", err))
+			yield(nil, err)
 		}
 	}
 
@@ -1684,7 +1702,7 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.
-func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
+func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (rv int64, err error) {
 	if err := validateListHistoryRequest(req); err != nil {
 		return 0, err
 	}
@@ -1697,6 +1715,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		attribute.String("resource", key.Resource),
 	))
 	defer span.End()
+	defer func() { recordSpanError(span, err) }()
 
 	// Parse continue token if provided
 	lastSeenRV := int64(0)

@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useState } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
@@ -55,8 +54,13 @@ export const SidebarCard = ({
   const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
-  const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
-  const { multiSelectMode } = useQueryEditorUIContext();
+  const { multiSelectMode, selectedQueryRefIds, selectedTransformationIds } = useQueryEditorUIContext();
+  // Selection-mode UI shows whenever the user has explicitly entered
+  // multi-select mode (Select… button) OR has accumulated 2+ items via
+  // Cmd/Shift+click. While in this mode, plain clicks toggle the card in/out
+  // of the selection (checkbox-style) instead of replacing it.
+  const showSelectionControls =
+    multiSelectMode || selectedQueryRefIds.length >= 2 || selectedTransformationIds.length >= 2;
 
   const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
 
@@ -76,7 +80,7 @@ export const SidebarCard = ({
   }, []);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    onSelect({ multi: e.metaKey || e.ctrlKey, range: e.shiftKey });
+    onSelect({ multi: showSelectionControls || e.metaKey || e.ctrlKey, range: e.shiftKey });
   };
 
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
@@ -88,7 +92,7 @@ export const SidebarCard = ({
 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onSelect({});
+      onSelect({ multi: showSelectionControls });
     }
   };
 
@@ -124,7 +128,7 @@ export const SidebarCard = ({
         aria-pressed={isSelected || isPartOfSelection}
       >
         <div className={styles.cardContent}>
-          {isMultiSelectEnabled && multiSelectMode && (
+          {showSelectionControls && (
             <div aria-hidden className={styles.checkboxWrapper}>
               <Checkbox
                 className={styles.roundedCheckbox}

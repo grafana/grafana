@@ -180,7 +180,13 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, err
 	}
 
-	rule, err := s.service.CreateAlertRule(ctx, user, *model, provenance)
+	created, err := s.service.CreateAlertRule(ctx, user, *model, provenance)
+	if err != nil {
+		return nil, err
+	}
+
+	// perform the get after to ensure we return the object with all the system filled fields set
+	rule, provenance, err := s.service.GetAlertRule(ctx, user, created.UID)
 	if err != nil {
 		return nil, err
 	}

@@ -165,6 +165,29 @@ describe('DashboardControls', () => {
       }
     });
 
+    it('in edit mode, should render the "Add variable" button when hasControls returns false and time controls are hidden', async () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.dashboardNewLayouts = true;
+
+        const controls = buildTestSceneWithEditable({
+          editable: true,
+          canEdit: true,
+          isEditing: true,
+        });
+        controls.setState({ hideTimeControls: true });
+
+        const renderer = renderInGrafanaContext(<controls.Component model={controls} />);
+
+        expect(renderer.getByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
+        expect(renderer.queryByTestId(selectors.components.TimePicker.openButton)).not.toBeInTheDocument();
+        expect(renderer.queryByTestId(selectors.components.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
+        expect(renderer.getByRole('button', { name: /add variable/i })).toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
+    });
+
     it('should render Table view toggle in panel edit mode even when all other controls are hidden', () => {
       const controls = new DashboardControls({
         hideTimeControls: true,
