@@ -1,9 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { DataLinksContextMenu } from './DataLinksContextMenu';
+import { DataLinksContextMenu, type DataLinksMenuTriggerProps } from './DataLinksContextMenu';
 
 const twoLinks = () => [
   { href: '/link1', title: 'Link1', target: '_blank' as const, origin: {} },
@@ -60,5 +60,100 @@ describe('DataLinksContextMenu', () => {
     await userEvent.click(screen.getByText('click me'));
 
     expect(onClick).toHaveBeenCalled();
+  });
+
+  describe('single-link accessibility', () => {
+    it('renders the single link as a real <a> with href so it is keyboard-focusable', () => {
+      render(
+        <DataLinksContextMenu links={singleLink}>{() => <div aria-label="fake aria label" />}</DataLinksContextMenu>
+      );
+
+      const anchor = screen.getByTestId(selectors.components.DataLinksContextMenu.singleLink);
+      expect(anchor.tagName).toBe('A');
+      expect(anchor).toHaveAttribute('href', '/link1');
+    });
+
+    it('exposes a focus-visible outline class on the single-link anchor', () => {
+      // We can't assert pseudo-class styles directly in jsdom, but we can verify the themed class is applied
+      render(
+        <DataLinksContextMenu links={singleLink}>{() => <div aria-label="fake aria label" />}</DataLinksContextMenu>
+      );
+      const anchor = screen.getByTestId(selectors.components.DataLinksContextMenu.singleLink);
+      expect(getComputedStyle(anchor).outline).toEqual('');
+      act(() => {
+        anchor.focus();
+      });
+      expect(anchor).toHaveFocus();
+      expect(getComputedStyle(anchor).outline).toMatch(/2px solid .+/);
+    });
+  });
+
+  describe('multi-link accessibility (triggerProps API)', () => {
+    it('opens the context menu when triggerProps.onClick fires (mouse path)', async () => {
+      const user = userEvent.setup();
+      render(
+        <DataLinksContextMenu links={twoLinks}>
+          {({ triggerProps }) => (
+            <button data-testid="trigger" {...triggerProps}>
+              open
+            </button>
+          )}
+        </DataLinksContextMenu>
+      );
+
+      expect(screen.queryByText('Link')).not.toBeInTheDocument();
+      const linkMenu = screen.getByTestId('trigger');
+      expect(linkMenu).toHaveRole('button');
+      expect(linkMenu.tabIndex).toEqual(0);
+      expect(linkMenu).toHaveAttribute('aria-haspopup', 'menu');
+
+      await user.click(linkMenu);
+
+      expect(screen.getByText('Link1')).toBeInTheDocument();
+      expect(screen.getByText('Link2')).toBeInTheDocument();
+    });
+
+    it.each([
+      { name: 'Enter', sequence: '{Enter}' },
+      { name: 'Space', sequence: ' ' },
+    ])('opens the context menu when $name is pressed', async ({ sequence }) => {
+      // Regression test for the "synthetic MouseEvent('click', { clientX, clientY })"
+      // anti-pattern that earlier iterations of this fix relied on — pressing Enter
+      // or Space on the trigger should open the menu via the element-anchored path.
+      const user = userEvent.setup();
+      render(
+        <DataLinksContextMenu links={twoLinks}>
+          {({ triggerProps }) => (
+            <button data-testid="trigger" {...triggerProps}>
+              open
+            </button>
+          )}
+        </DataLinksContextMenu>
+      );
+
+      expect(screen.queryByText('Link')).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+
+      screen.getByTestId('trigger').focus();
+      await user.keyboard(sequence);
+
+      expect(screen.queryAllByRole('menuitem')).toHaveLength(2);
+      expect(screen.getByText('Link1')).toBeInTheDocument();
+      expect(screen.getByText('Link2')).toBeInTheDocument();
+    });
+
+    it('does not expose triggerProps for the single-link case (single link is a real <a>)', () => {
+      let captured: unknown = 'unset';
+      render(
+        <DataLinksContextMenu links={singleLink}>
+          {({ triggerProps }) => {
+            captured = triggerProps;
+            return <div aria-label="fake aria label" />;
+          }}
+        </DataLinksContextMenu>
+      );
+
+      expect(captured).toBeUndefined();
+    });
   });
 });

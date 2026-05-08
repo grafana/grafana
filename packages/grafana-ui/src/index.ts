@@ -200,6 +200,7 @@ export {
   DataLinksContextMenu,
   type DataLinksContextMenuProps,
   type DataLinksContextMenuApi,
+  type DataLinksMenuTriggerProps,
 } from './components/DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './components/VizLegend/SeriesIcon';
 export { InfoBox } from './components/InfoBox/InfoBox';

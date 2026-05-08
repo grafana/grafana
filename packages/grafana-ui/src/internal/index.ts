@@ -69,7 +69,10 @@ export { defaultSparklineCellConfig } from '../components/Table/Cells/SparklineC
 export { TableCell } from '../components/Table/Cells/TableCell';
 export { useTableStyles } from '../components/Table/TableRT/styles';
 export { migrateTableDisplayModeToCellOptions } from '../components/Table/utils';
-export { type DataLinksContextMenuApi } from '../components/DataLinks/DataLinksContextMenu';
+export {
+  type DataLinksContextMenuApi,
+  type DataLinksMenuTriggerProps,
+} from '../components/DataLinks/DataLinksContextMenu';
 export { MenuDivider } from '../components/Menu/MenuDivider';
 export { AbstractList } from '../components/List/AbstractList';
 export type { HttpSettingsBaseProps, AzureAuthSettings } from '../components/DataSourceSettings/types';
