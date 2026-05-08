@@ -9,12 +9,12 @@ import (
 
 	prom_model "github.com/prometheus/common/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,6 +39,7 @@ func convertToK8sResource(
 	k8sRule := &model.RecordingRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.UID,
+			UID:             types.UID(rule.GUID),
 			Namespace:       namespaceMapper(orgID),
 			ResourceVersion: fmt.Sprint(rule.Version),
 			Labels:          make(map[string]string),
@@ -95,8 +96,6 @@ func convertToK8sResource(
 	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
 	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
 	// k8sRule.SetCreationTimestamp(rule.)
-
-	k8sRule.UID = gapiutil.CalculateClusterWideUID(k8sRule)
 	return k8sRule, nil
 }
 

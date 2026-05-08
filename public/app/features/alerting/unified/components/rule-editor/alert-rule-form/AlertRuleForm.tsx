@@ -52,6 +52,7 @@ import {
   isExpressionQueryInAlert,
 } from '../../../rule-editor/formProcessing';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
+import { stringifyErrorLike } from '../../../utils/misc';
 import { rulesNav } from '../../../utils/navigation';
 import {
   MANUAL_ROUTING_KEY,
@@ -143,7 +144,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
     setConditionErrorMsg(msg);
   };
 
-  // @todo why is error not propagated to form?
   const submit = async (values: RuleFormValues): Promise<void> => {
     const { type, evaluateEvery } = values;
 
@@ -166,37 +166,41 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
     const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
 
-    let saveResult: RulerGroupUpdatedResponse;
-    // @TODO move this to a hook too to make sure the logic here is tested for regressions?
-    if (!existing) {
-      // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
-      storeInLocalStorageValues(values);
-      // save the rule to the rule group
-      saveResult = await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
-      // track the new Grafana-managed rule creation in the analytics
-      if (grafanaTypeRule) {
-        const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
-        const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
-        trackNewGrafanaAlertRuleFormSavedSuccess({
-          simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
-          simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
-          canBeTransformedToSimpleQuery: areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries),
-        });
-      }
-    } else {
-      // when updating an existing rule
-      const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
-      saveResult = await updateRuleInRuleGroup.execute(
-        ruleGroupIdentifier,
-        ruleIdentifier,
-        ruleDefinition,
-        targetRuleGroupIdentifier,
-        evaluateEvery
-      );
-    }
+    const errorTitle = t('alerting.alert-rule-form.error-title', 'Failed to save alert rule');
 
-    redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);
-    return;
+    let saveResult: RulerGroupUpdatedResponse;
+    try {
+      if (!existing) {
+        // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
+        storeInLocalStorageValues(values);
+        // save the rule to the rule group
+        saveResult = await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
+        // track the new Grafana-managed rule creation in the analytics
+        if (grafanaTypeRule) {
+          const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
+          const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
+          trackNewGrafanaAlertRuleFormSavedSuccess({
+            simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
+            simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
+            canBeTransformedToSimpleQuery: areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries),
+          });
+        }
+      } else {
+        // when updating an existing rule
+        const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
+        saveResult = await updateRuleInRuleGroup.execute(
+          ruleGroupIdentifier,
+          ruleIdentifier,
+          ruleDefinition,
+          targetRuleGroupIdentifier,
+          evaluateEvery
+        );
+      }
+
+      redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);
+    } catch (err) {
+      notifyApp.error(errorTitle, stringifyErrorLike(err));
+    }
   };
 
   const onInvalid: SubmitErrorHandler<RuleFormValues> = (errors): void => {

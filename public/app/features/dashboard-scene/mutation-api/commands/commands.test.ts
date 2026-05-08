@@ -66,6 +66,7 @@ describe('Command consistency', () => {
       'REMOVE_ROW',
       'REMOVE_TAB',
       'REMOVE_VARIABLE',
+      'UPDATE_DASHBOARD_SETTINGS',
       'UPDATE_LAYOUT',
       'UPDATE_PANEL',
       'UPDATE_ROW',

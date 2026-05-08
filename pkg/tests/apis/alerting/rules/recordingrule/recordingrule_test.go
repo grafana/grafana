@@ -779,3 +779,219 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 		}
 	})
 }
+
+func TestIntegrationListWithFieldSelectors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	client := common.NewRecordingRuleClient(t, helper.Org1.Admin)
+
+	common.CreateTestFolder(t, helper, "rr-fs-folder")
+
+	baseRule := func(folder string) *v0alpha1.RecordingRule {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUniqueUID(),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID(folder),
+			ngmodels.RuleMuts.WithAllRecordingRules(),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).Generate()
+		return &v0alpha1.RecordingRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": folder,
+				},
+			},
+			Spec: v0alpha1.RecordingRuleSpec{
+				Title:  rule.Title,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Expressions: v0alpha1.RecordingRuleExpressionMap{
+					"A": {
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        util.Pointer(true),
+						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
+							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
+							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.RecordingRuleIntervalTrigger{
+					Interval: v0alpha1.RecordingRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+			},
+		}
+	}
+
+	t.Run("filter by spec.title", func(t *testing.T) {
+		r1 := baseRule("rr-fs-folder")
+		r1.Spec.Title = "rr-field-sel-title-unique-xyz"
+		r2 := baseRule("rr-fs-folder")
+		r2.Spec.Title = "rr-field-sel-title-unique-other"
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.title=rr-field-sel-title-unique-xyz"})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 1)
+			require.Equal(t, "rr-field-sel-title-unique-xyz", list.Items[0].Spec.Title)
+		})
+
+		t.Run("not-equals returns only rules whose title differs", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=rr-fs-folder",
+				FieldSelector: "spec.title!=rr-field-sel-title-unique-xyz",
+			})
+			require.NoError(t, err)
+			titles := make([]string, 0, len(list.Items))
+			for _, item := range list.Items {
+				titles = append(titles, item.Spec.Title)
+			}
+			require.Contains(t, titles, "rr-field-sel-title-unique-other")
+			require.NotContains(t, titles, "rr-field-sel-title-unique-xyz")
+		})
+	})
+
+	t.Run("filter by spec.paused", func(t *testing.T) {
+		paused1 := baseRule("rr-fs-folder")
+		paused1.Spec.Paused = util.Pointer(true)
+		paused2 := baseRule("rr-fs-folder")
+		paused2.Spec.Paused = util.Pointer(true)
+		active1 := baseRule("rr-fs-folder")
+		active2 := baseRule("rr-fs-folder")
+
+		cp1, err := client.Create(ctx, paused1, v1.CreateOptions{})
+		require.NoError(t, err)
+		cp2, err := client.Create(ctx, paused2, v1.CreateOptions{})
+		require.NoError(t, err)
+		ca1, err := client.Create(ctx, active1, v1.CreateOptions{})
+		require.NoError(t, err)
+		ca2, err := client.Create(ctx, active2, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, cp1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, cp2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, ca1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, ca2.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("true returns only paused rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=rr-fs-folder",
+				FieldSelector: "spec.paused=true",
+			})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.Paused)
+				require.True(t, *item.Spec.Paused)
+			}
+		})
+
+		t.Run("false returns only non-paused rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=rr-fs-folder",
+				FieldSelector: "spec.paused=false",
+			})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.True(t, item.Spec.Paused == nil || !*item.Spec.Paused)
+			}
+		})
+	})
+
+	t.Run("filter by spec.metric", func(t *testing.T) {
+		matchMetric := "rr_match_metric_unique"
+		r1 := baseRule("rr-fs-folder")
+		r1.Spec.Metric = v0alpha1.RecordingRuleMetricName(matchMetric)
+		r2 := baseRule("rr-fs-folder")
+		r2.Spec.Metric = v0alpha1.RecordingRuleMetricName(matchMetric)
+		r3 := baseRule("rr-fs-folder") // a different unique metric from baseRule
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.metric=" + matchMetric})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.Equal(t, matchMetric, string(item.Spec.Metric))
+			}
+		})
+
+		t.Run("not-equals excludes matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=rr-fs-folder",
+				FieldSelector: "spec.metric!=" + matchMetric,
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				require.NotEqual(t, matchMetric, string(item.Spec.Metric))
+			}
+		})
+	})
+
+	t.Run("filter by spec.targetDatasourceUID", func(t *testing.T) {
+		matchUID := "rr-target-ds-unique-uid"
+		r1 := baseRule("rr-fs-folder")
+		r1.Spec.TargetDatasourceUID = v0alpha1.RecordingRuleDatasourceUID(matchUID)
+		r2 := baseRule("rr-fs-folder")
+		r2.Spec.TargetDatasourceUID = v0alpha1.RecordingRuleDatasourceUID(matchUID)
+		r3 := baseRule("rr-fs-folder")
+		r3.Spec.TargetDatasourceUID = v0alpha1.RecordingRuleDatasourceUID("rr-target-ds-other-uid")
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.targetDatasourceUID=" + matchUID})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.Equal(t, matchUID, string(item.Spec.TargetDatasourceUID))
+			}
+		})
+
+		t.Run("not-equals excludes matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=rr-fs-folder",
+				FieldSelector: "spec.targetDatasourceUID!=" + matchUID,
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				require.NotEqual(t, matchUID, string(item.Spec.TargetDatasourceUID))
+			}
+		})
+	})
+}

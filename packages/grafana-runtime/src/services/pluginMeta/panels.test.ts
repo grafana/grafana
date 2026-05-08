@@ -28,9 +28,17 @@ jest.mock('./plugins', () => ({
 const initPluginMetasMock = jest.mocked(initPluginMetas);
 const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
 
-describe('when useMTPlugins flag is enabled', () => {
+describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: true });
+    setTestFlags({ 'plugins.useMTPlugins': true });
+    (window as unknown as Record<string, unknown>).__grafana_public_path__ = '';
+    setLogger('grafana/runtime.plugins.settings', {
+      logDebug: jest.fn(),
+      logError: jest.fn(),
+      logInfo: jest.fn(),
+      logMeasurement: jest.fn(),
+      logWarning: jest.fn(),
+    });
   });
 
   afterAll(() => {
@@ -159,7 +167,7 @@ describe('when useMTPlugins flag is enabled', () => {
         expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
         expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
           'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-          { type: 'panel' }
+          { pluginType: 'panel' }
         );
       });
 
@@ -171,7 +179,7 @@ describe('when useMTPlugins flag is enabled', () => {
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
             'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-            { type: 'panel' }
+            { pluginType: 'panel' }
           );
         }
       );
@@ -371,9 +379,9 @@ describe('when useMTPlugins flag is enabled', () => {
   });
 });
 
-describe('when useMTPlugins flag is disabled', () => {
+describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
+    setTestFlags({ 'plugins.useMTPlugins': false });
   });
 
   afterAll(() => {
@@ -515,7 +523,7 @@ describe('when useMTPlugins flag is disabled', () => {
     });
   });
 
-  describe('when useMTPlugins flag is disabled and refetchPanelPluginMetas is called', () => {
+  describe('when plugins.useMTPlugins flag is disabled and refetchPanelPluginMetas is called', () => {
     let backendSrv: BackendSrv;
     beforeEach(() => {
       setPanelPluginMetas({});

@@ -520,7 +520,8 @@
       "action-buttons": {
         "edit-yaml": "Edytuj YAML",
         "save": "Zapisz"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nazwa",
@@ -1162,6 +1163,9 @@
         "rule-viewer-section-extension": "Nie udało się wczytać sekcji wzbogacania przeglądarki reguł"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Nie udało się zaktualizować konfiguracji:",
       "title-something-went-wrong": "Coś poszło nie tak"
@@ -1300,7 +1304,8 @@
       "delete": {
         "button": {
           "label": "Usuń wszystkie reguły"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Usuń",
       "delete-modal-delete-button": "Usuń",
@@ -1583,8 +1588,14 @@
         "update-error": "Nie udało się zaktualizować grupy reguł",
         "update-success": "Pomyślnie zaktualizowano grupę reguł"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Nie można edytować wybranej grupy",
       "group-not-editable-description": "Ta grupa należy do źródła danych, które nie obsługuje edycji.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Edytuj grupę reguł",
       "rule-group-error": "Błąd podczas ładowania grupy reguł"
     },
@@ -3204,9 +3215,7 @@
       "deleting": "Usuwam",
       "text-federated": "Federacja",
       "text-provisioned": "Po aprowizacji",
-      "ungrouped": "Niezgrupowane",
-      "ungrouped-suffix": "{{ruleName}} (niezgrupowane)",
-      "unknown-rule": "Nieznana reguła"
+      "ungrouped": "Niezgrupowane"
     },
     "saved-searches": {
       "actions-aria-label": "Działania",
@@ -4358,6 +4367,7 @@
         "repository-not-found-message": "Nie znaleziono repozytorium dla wybranego folderu. Upewnij się, że folder jest prawidłowo przygotowany.",
         "repository-not-found-title": "Nie znaleziono repozytorium"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Błąd przenoszenia zasobów",
       "error-no-target-folder-path": "Ścieżka do folderu docelowego jest nieprawidłowa lub pusta. Wybierz ponownie.",
       "move-total": "Łącznie wpłynie to na następujące elementy:",
@@ -4507,6 +4517,14 @@
       "resource-detail-dashboards": "Utworzono {{usage}} z {{limit}} pulpitów ({{percentage}}%).",
       "resource-detail-folders": "Utworzono {{usage}} z {{limit}} folderów ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Wyczyść historię",
       "error": "Nie udało się załadować ostatnio wyświetlanych pulpitów.",
@@ -4551,6 +4569,8 @@
       "label": {
         "alphabetically-az": "Alfabetycznie (A–Z)",
         "alphabetically-za": "Alfabetycznie (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Usunięte (od najnowszych)",
         "deleted-oldest": "Usunięte (od najstarszych)"
       }
@@ -5319,7 +5339,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Ustawienia"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5721,7 +5741,7 @@
         "title": "Zmienne"
       },
       "variable": {
-        "change-type": "Zmień",
+        "change-type": "",
         "change-type-aria-label": "Zmień typ zmiennej",
         "custom-options": {
           "apply": "Zastosuj",
@@ -6038,7 +6058,7 @@
       "cancel": "Anuluj",
       "common": {
         "copy": "Kopiuj",
-        "copy-or-duplicate": "Kopiuj/wklej lub duplikuj",
+        "copy-tooltip": "",
         "delete": "Usuń",
         "duplicate": "Duplikuj",
         "layout": "Układ",
@@ -6077,7 +6097,7 @@
     },
     "new-panel": {
       "aria-label": "Nieskonfigurowany panel. Użyj klawisza Tab, aby wyświetlić opcje konfiguracji.",
-      "configure-button": "Konfiguruj",
+      "configure-button": "",
       "configure-button-menu": "Przełącz menu",
       "configure-visualization": "Skonfiguruj wizualizację",
       "empty-state-message": "Uruchom zapytanie, aby je tutaj zwizualizować, lub przejdź do wszystkich wizualizacji, aby dodać inne typy paneli",
@@ -6321,10 +6341,8 @@
       "title-provisioned": "Pulpit aprowizowany"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "W wybranym folderze istnieje już pulpit o tej samej nazwie.<br/><2>Czy nadal chcesz zapisać ten pulpit?</2>",
       "body-version-mismatch": "Inna osoba zaktualizowała ten pulpit.<br/><2>Czy nadal chcesz zapisać ten pulpit?</2>",
       "confirmText-save-and-overwrite": "Zapisz i zastąp",
-      "title-name-exists": "Konflikt",
       "title-version-mismatch": "Konflikt"
     },
     "save-dashboard-form": {
@@ -6550,6 +6568,7 @@
     },
     "transformation-editor": {
       "input-data": "Dane wejściowe",
+      "loading": "",
       "output-data": "Dane wyjściowe",
       "title-debug-transformation": "Debugowanie transformacji"
     },
@@ -7384,6 +7403,7 @@
       "terraform": "Zarządzane przez Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Nie udało się przenieść pulpitu",
       "cancel-action": "Anuluj",
       "current-file-not-found": "Nie znaleziono bieżącego pliku pulpitu",
@@ -7396,10 +7416,6 @@
       "success-message": "Pulpit został przeniesiony",
       "target-path-label": "Ścieżka docelowa",
       "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "W wybranym folderze istnieje już pulpit o tej samej nazwie. Czy nadal chcesz zapisać ten pulpit?",
-      "title-name-already-exists": "Nazwa już istnieje"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8118,19 +8134,6 @@
       "aria-label-explore-data": "Przeglądaj dane",
       "aria-label-suggested-dashboards": "Sugerowane pulpity"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alerty nie są obsługiwane",
-      "text-alerting-supported": "Alerty są obsługiwane"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Nazwa jest używana podczas wybierania źródła danych w panelach. Domyślne źródło danych jest wstępnie wybrane w nowych panelach."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Strona ustawień źródła danych – ustawienia podstawowe",
-      "basic-settings-name-placeholder-name": "Imię",
-      "label-default": "Domyślny",
-      "label-name": "Imię"
-    },
     "build-a-dashboard-button": {
       "blank": "Pusty",
       "build-a-dashboard": "Utwórz pulpit",
@@ -8225,6 +8228,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Dodaj do ulubionych",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Przeglądaj dane",
       "open-in-explore": "Otwórz w widoku Eksploruj",
       "remove-favorite": "Usuń z ulubionych"
@@ -8361,6 +8370,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Szukaj"
     },
     "resource-dimension-editor": {
@@ -10236,6 +10246,12 @@
     "cascader": {
       "clear-button": "Usuń zaznaczone"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Wartość RGBA"
     },
@@ -10581,6 +10597,7 @@
     "sidebar": {
       "close": "Zamknij",
       "dock": "Zadokuj",
+      "go-back": "",
       "hide": "Ukryj",
       "show": "Pokaż",
       "undock": "Odepnij"
@@ -11354,7 +11371,7 @@
     "description-order": "Wyświetlanie logów od najnowszych lub najstarszych. Po wybraniu opcji „Najpierw najstarsze” widok automatycznie przewija się do najnowszych logów u dołu.",
     "description-prettify-json": "Formatowanie wpisów logów JSON za pomocą znaków wcięcia i podziału wiersza.",
     "description-show-controls": "Wyświetlanie elementów sterujących umożliwiających przejście do ostatniego lub pierwszego wiersza logu i filtrowanie według poziomu logów.",
-    "description-show-log-attributes": "Funkcja eksperymentalna. Gdy wyświetlane są dzienniki OTel, wyświetlane jest dodatkowe pole z odpowiednimi parami klucz-wartość z etykiet i metadanych.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Wyrównywanie wartości za pomocą kolumn podczas korzystania z wyświetlanych pól.",
     "description-wrap-lines": "Wyświetlanie logów w pojedynczym wierszu lub zawijanie długich wpisów, aby zmieściły się w panelu.",
     "field-selector": {
@@ -11686,7 +11703,7 @@
       "line-contains-not": "Dodaj jako wiersz nie zawierający filtra",
       "search-text": "Szukaj w wynikach"
     },
-    "show-log-attributes": "Wyświetl atrybuty logów OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Rozdzielczość znacznika czasu",
     "un-themed-log-details": {
       "aria-label-data-links": "Połączenia danych",
@@ -12040,8 +12057,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Wszystkie",
-      "title-filtered": "Wszystkie (przefiltrowane)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Wyczyść wszystko"
@@ -13716,6 +13735,7 @@
       "contact-admin": "Skontaktuj się z administratorem usługi Grafana, aby przekształcić ten zasób w lokalny lub usunąć wszystkie zasoby z brakującego repozytorium.",
       "convert-to-local-button": "Przekształć w lokalne",
       "delete-button": "Usuń",
+      "go-to-dashboards": "",
       "job-error": "Podczas przetwarzania osieroconych zasobów wystąpił błąd",
       "job-success": "Osierocone zasoby zostały przetworzone",
       "job-warning": "Niektóre zasoby zostały przetworzone z ostrzeżeniami. Zapoznaj się z wynikami.",
@@ -13978,7 +13998,8 @@
       "make-sure": "Utwórz token z tymi uprawnieniami"
     },
     "validation": {
-      "hidden-characters": "To pole zawiera ukryte znaki, które mogły zostać wprowadzone podczas kopiowania i wklejania. Wprowadź wartość ponownie lub wyczyść zawartość i spróbuj ponownie."
+      "hidden-characters": "To pole zawiera ukryte znaki, które mogły zostać wprowadzone podczas kopiowania i wklejania. Wprowadź wartość ponownie lub wyczyść zawartość i spróbuj ponownie.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Ostrzeżenie",
     "watch-stream": {
@@ -14392,6 +14413,8 @@
       "alerts-loading": "Alerty",
       "card-click": "Wybierz kartę {{id}}",
       "data": "Dane",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nowy: {{type}}",
       "queries-expressions": "Zapytania i wyrażenia",
       "toggle-size": "Przełącz rozmiar paska bocznego",
@@ -14451,6 +14474,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Przywróć"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Ostatnio nie usunięto żadnych pulpitów.",
@@ -14617,6 +14644,10 @@
     },
     "results-table": {
       "datasource-header": "Źródło danych",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Pozostały czas",
       "location-header": "Lokalizacja",
@@ -15112,10 +15143,13 @@
       "title": "Szybko rozpoczynaj tworzenie pulpitów dzięki sugestiom i szablonom"
     },
     "nav": {
+      "counter": "",
       "go-to": "Przejdź do slajdu {{number}}",
-      "next": "Dalej",
-      "prev": "Wstecz"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Wyjaśnij zapytanie",
@@ -15597,7 +15631,6 @@
       "forwards-time-aria-label": "Przesuń zakres czasu do przodu",
       "to": "do",
       "zoom-out-button": "Oddal zakres czasu",
-      "zoom-out-tooltip": "Oddal zakres czasu <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Oddal zakres czasu <br/> t -"
     },
     "time-range": {
@@ -16194,6 +16227,9 @@
         "grouping-to-matrix": "Grupowanie do macierzy"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Oblicz histogram na podstawie danych wejściowych."
@@ -16528,6 +16564,9 @@
       "label-time-field": "Pole czasu",
       "tooltip-statistic-should-calculated-series": "Statystyka, która powinna zostać obliczona dla tego szeregu czasowego.",
       "tooltip-time-field": "Pole czasu, które będzie używane dla szeregu czasowego. Jeśli nie zostanie wybrane, zostanie użyta pierwsza znaleziona wartość."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nazwa pierwszego pola",

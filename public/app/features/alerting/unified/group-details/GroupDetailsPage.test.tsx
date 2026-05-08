@@ -350,6 +350,19 @@ describe('GroupDetailsPage', () => {
       expect(ui.exportButton.query()).not.toBeInTheDocument();
     });
   });
+
+  describe('Ungrouped rules', () => {
+    it('shows EntityNotFound for ungrouped artificial group names', async () => {
+      const ruleUid = 'dfkgj15gwrawwa';
+      const artificialGroupName = `no_group_for_rule_${ruleUid}`.padEnd(200, '*');
+
+      renderGroupDetailsPage('grafana', 'test-folder-uid', artificialGroupName);
+
+      expect(await screen.findByText('Group not found')).toBeInTheDocument();
+      expect(ui.editLink.query()).not.toBeInTheDocument();
+      expect(ui.exportButton.query()).not.toBeInTheDocument();
+    });
+  });
 });
 
 function renderGroupDetailsPage(dsUid: string, namespaceId: string, groupName: string) {

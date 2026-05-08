@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Modifica YAML",
         "save": "Salva"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1152,6 +1153,9 @@
         "rule-viewer-section-extension": "Impossibile caricare la sezione di arricchimento del visualizzatore di regole"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Impossibile aggiornare la configurazione:",
       "title-something-went-wrong": "Si è verificato un errore"
@@ -1290,7 +1294,8 @@
       "delete": {
         "button": {
           "label": "Elimina tutte le regole"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Elimina",
       "delete-modal-delete-button": "Elimina",
@@ -1573,8 +1578,14 @@
         "update-error": "Impossibile aggiornare il gruppo di regole",
         "update-success": "Gruppo di regole aggiornato correttamente"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Il gruppo selezionato non può essere modificato",
       "group-not-editable-description": "Questo gruppo appartiene a un'origine dati che non supporta la modifica.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Modifica gruppo di regole",
       "rule-group-error": "Errore durante il caricamento del gruppo di regole"
     },
@@ -3166,9 +3177,7 @@
       "deleting": "Eliminazione",
       "text-federated": "Federato",
       "text-provisioned": "Fornito",
-      "ungrouped": "Non raggruppato",
-      "ungrouped-suffix": "{{ruleName}} (non raggruppato)",
-      "unknown-rule": "Regola sconosciuta"
+      "ungrouped": "Non raggruppato"
     },
     "saved-searches": {
       "actions-aria-label": "Azioni",
@@ -4314,6 +4323,7 @@
         "repository-not-found-message": "Impossibile trovare il repository per la cartella selezionata. Assicurati che la cartella sia stata fornita correttamente.",
         "repository-not-found-title": "Repository non trovato"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Errore durante lo spostamento delle risorse",
       "error-no-target-folder-path": "Il percorso della cartella di destinazione non è valido o è vuoto, prova a selezionarlo di nuovo.",
       "move-total": "In totale, questo influenzerà:",
@@ -4453,6 +4463,14 @@
       "resource-detail-dashboards": "Hai creato {{usage}} di {{limit}} dashboard ({{percentage}}%).",
       "resource-detail-folders": "Hai creato {{usage}} di {{limit}} cartelle ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Cancella cronologia",
       "error": "Impossibile caricare le dashboard visualizzate di recente.",
@@ -4491,6 +4509,8 @@
       "label": {
         "alphabetically-az": "In ordine alfabetico (A-Z)",
         "alphabetically-za": "In ordine alfabetico (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Elementi eliminati (prima il più recente)",
         "deleted-oldest": "Elementi eliminati (prima il meno recente)"
       }
@@ -5259,7 +5279,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Impostazioni"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5661,7 +5681,7 @@
         "title": "Variabili"
       },
       "variable": {
-        "change-type": "Modifica",
+        "change-type": "",
         "change-type-aria-label": "Modifica il tipo di variabile",
         "custom-options": {
           "apply": "Applica",
@@ -5978,7 +5998,7 @@
       "cancel": "Annulla",
       "common": {
         "copy": "Copia",
-        "copy-or-duplicate": "Copia/incolla o duplica",
+        "copy-tooltip": "",
         "delete": "Elimina",
         "duplicate": "Duplica",
         "layout": "Layout",
@@ -6017,7 +6037,7 @@
     },
     "new-panel": {
       "aria-label": "Pannello non configurato. Premi il tasto Tab per visualizzare le opzioni di configurazione.",
-      "configure-button": "Configura",
+      "configure-button": "",
       "configure-button-menu": "Attiva/disattiva menu",
       "configure-visualization": "Configura la visualizzazione",
       "empty-state-message": "Esegui una query per visualizzarlo qui o vai a tutte le visualizzazioni per aggiungere altri tipi di pannello",
@@ -6259,10 +6279,8 @@
       "title-provisioned": "Dashboard configurata"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata.<br/><2>Salvare comunque questa dashboard?</2>",
       "body-version-mismatch": "Qualcun altro ha aggiornato questa dashboard<br/><2>Salvare comunque questa dashboard?</2>",
       "confirmText-save-and-overwrite": "Salva e sovrascrivi",
-      "title-name-exists": "Conflitto",
       "title-version-mismatch": "Conflitto"
     },
     "save-dashboard-form": {
@@ -6488,6 +6506,7 @@
     },
     "transformation-editor": {
       "input-data": "Dati di input",
+      "loading": "",
       "output-data": "Dati di uscita",
       "title-debug-transformation": "Esegui il debug della trasformazione"
     },
@@ -7302,6 +7321,7 @@
       "terraform": "Gestito da: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Impossibile spostare la dashboard",
       "cancel-action": "Annulla",
       "current-file-not-found": "Impossibile trovare il file della dashboard corrente",
@@ -7314,10 +7334,6 @@
       "success-message": "Dashboard spostata correttamente",
       "target-path-label": "Percorso di destinazione",
       "title-this-repository-is-read-only": "Questo repository è di sola lettura"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata. Desideri comunque salvare questa dashboard?",
-      "title-name-already-exists": "Nome già in uso"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8026,19 +8042,6 @@
       "aria-label-explore-data": "Esplora i dati",
       "aria-label-suggested-dashboards": "Dashboard suggerite"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Avvisi non supportati",
-      "text-alerting-supported": "Avvisi supportati"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Il nome viene utilizzato quando si seleziona l'origine dei dati nei pannelli. L'origine dei dati predefinita è preselezionata nei nuovi pannelli."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Impostazioni di base della pagina delle impostazioni dell'origine dei dati",
-      "basic-settings-name-placeholder-name": "Nome",
-      "label-default": "Predefinito",
-      "label-name": "Nome"
-    },
     "build-a-dashboard-button": {
       "blank": "Vuota",
       "build-a-dashboard": "Crea una dashboard",
@@ -8133,6 +8136,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aggiungi a Preferiti",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Esplora i dati",
       "open-in-explore": "Apri nella visualizzazione Esplora",
       "remove-favorite": "Rimuovi da Preferiti"
@@ -8269,6 +8278,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Cerca"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10130,12 @@
     "cascader": {
       "clear-button": "Cancella selezione"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valore RGBA"
     },
@@ -10465,6 +10481,7 @@
     "sidebar": {
       "close": "Chiudi",
       "dock": "Aggancia",
+      "go-back": "",
       "hide": "Nascondi",
       "show": "Mostra",
       "undock": "Sgancia"
@@ -11228,7 +11245,7 @@
     "description-order": "Mostra per primi i registri più recenti o quelli più vecchi. Quando si seleziona l'opzione \"Prima i meno recenti\", la visualizzazione scorre automaticamente fino ai registri più recenti in fondo alla pagina.",
     "description-prettify-json": "Imposta le voci di registro JSON con rientro e ritorno a capo.",
     "description-show-controls": "Visualizza i controlli per passare all'ultima o alla prima riga del registro e filtra per livello di registro.",
-    "description-show-log-attributes": "Sperimentale. Quando vengono visualizzati i registri OTel, aggiungi un campo visualizzato extra con coppie chiave-valore pertinenti da etichette e metadati.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Allinea i valori utilizzando le colonne quando si usano i campi visualizzati.",
     "description-wrap-lines": "Visualizza i registri su una singola riga oppure adatta le voci più lunghe per adattarle al pannello.",
     "field-selector": {
@@ -11554,7 +11571,7 @@
       "line-contains-not": "Aggiungi come riga non contenente filtro",
       "search-text": "Cerca nei risultati"
     },
-    "show-log-attributes": "Visualizza gli attributi del registro per i registri OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Risoluzione marca temporale",
     "un-themed-log-details": {
       "aria-label-data-links": "Collegamenti dati",
@@ -11908,8 +11925,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Tutti",
-      "title-filtered": "Tutti (filtrati)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Cancella tutto"
@@ -13566,6 +13585,7 @@
       "contact-admin": "Contatta l'amministratore di Grafana per convertire questa risorsa in locale o per eliminare tutte le risorse dal repository mancante.",
       "convert-to-local-button": "Converti in risorsa locale",
       "delete-button": "Elimina",
+      "go-to-dashboards": "",
       "job-error": "Si è verificato un errore durante l'elaborazione delle risorse non gestite",
       "job-success": "Risorse non gestite elaborate correttamente",
       "job-warning": "Alcune risorse sono state elaborate con avvisi. Rivedi i risultati.",
@@ -13812,7 +13832,8 @@
       "make-sure": "Crea un token con queste autorizzazioni"
     },
     "validation": {
-      "hidden-characters": "Questo campo contiene caratteri nascosti che potrebbero essere stati introdotti durante l'operazione di copia e incolla. Digita nuovamente il valore oppure cancellalo e riprova."
+      "hidden-characters": "Questo campo contiene caratteri nascosti che potrebbero essere stati introdotti durante l'operazione di copia e incolla. Digita nuovamente il valore oppure cancellalo e riprova.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Attenzione",
     "watch-stream": {
@@ -14220,6 +14241,8 @@
       "alerts-loading": "Avvisi",
       "card-click": "Seleziona scheda {{id}}",
       "data": "Dati",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nuovo {{type}}",
       "queries-expressions": "Query ed espressioni",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
@@ -14273,6 +14296,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Ripristina"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Non hai eliminato nessun dashboard di recente.",
@@ -14435,6 +14462,10 @@
     },
     "results-table": {
       "datasource-header": "Sorgente dati",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "<1 min",
       "deleted-remaining-header": "Tempo rimanente",
       "location-header": "Posizione",
@@ -14928,10 +14959,13 @@
       "title": "Crea rapidamente dashboard grazie a suggerimenti e modelli"
     },
     "nav": {
+      "counter": "",
       "go-to": "Vai alla diapositiva {{number}}",
-      "next": "Avanti",
-      "prev": "Precedente"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Spiega query",
@@ -15411,7 +15445,6 @@
       "forwards-time-aria-label": "Usa un intervallo di tempo successivo",
       "to": "a",
       "zoom-out-button": "Riduci l'intervallo di tempo",
-      "zoom-out-tooltip": "Riduci l'intervallo di tempo <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Riduci l'intervallo di tempo <br/> t -"
     },
     "time-range": {
@@ -16008,6 +16041,9 @@
         "grouping-to-matrix": "Raggruppamento in matrice"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Calcola un istogramma dai dati di input."
@@ -16342,6 +16378,9 @@
       "label-time-field": "Campo dell'ora",
       "tooltip-statistic-should-calculated-series": "La statistica che dovrebbe essere calcolata per questa serie temporale.",
       "tooltip-time-field": "Il campo temporale che verrà utilizzato per la serie temporale. Se non selezionato, verrà utilizzato il primo trovato."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nome del primo campo",

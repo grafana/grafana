@@ -38,7 +38,8 @@ import * as ruleId from '../../utils/rule-id';
 import { stringifyIdentifier } from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
-import RuleViewer, { ActiveTab } from './RuleViewer';
+import RuleViewer from './RuleViewer';
+import { ActiveTab } from './activeTab';
 import { addRulePageEnrichmentSection } from './tabs/extensions/RuleViewerExtension';
 
 jest.mock('@grafana/assistant', () => ({

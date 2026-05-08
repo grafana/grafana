@@ -1,9 +1,23 @@
 import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
 
+import { logPluginMetaWarning } from '../logging';
 import type { DatasourcePluginMetas, DatasourcePluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
-import { angularMapper, infoMapper, loadingStrategyMapper, signatureMapper, stateMapper } from './shared';
+import {
+  angularMapper,
+  infoMapper,
+  loadingStrategyMapper,
+  signatureStatusMapper,
+  stateMapper,
+  prependPublicPathToCorePlugins,
+  isCorePlugin,
+} from './shared';
+
+export function coreSpecMapper(spec: v0alpha1Spec): DataSourcePluginMeta {
+  const mapped = specMapper(spec);
+  return prependPublicPathToCorePlugins(mapped, spec);
+}
 
 function specMapper(spec: v0alpha1Spec): DataSourcePluginMeta {
   const {
@@ -21,13 +35,13 @@ function specMapper(spec: v0alpha1Spec): DataSourcePluginMeta {
     queryOptions,
     multiValueFilterOperators,
   } = spec.pluginJson;
-  const state = stateMapper(spec);
+  const state = stateMapper(spec, logPluginMetaWarning);
   const info = infoMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);
   const type = PluginType.datasource;
   const module = spec.module.path;
   const baseUrl = spec.baseURL;
-  const signature = signatureMapper(spec);
+  const signature = signatureStatusMapper(spec, logPluginMetaWarning);
   const angular = angularMapper(spec);
   const translations = spec.translations;
   const moduleHash = spec.module.hash;
@@ -69,7 +83,9 @@ export const v0alpha1DatasourceMapper: DatasourcePluginMetasMapper<PluginMetasRe
       return acc;
     }
 
-    const config = specMapper(curr.spec);
+    const mapper = isCorePlugin(curr.spec) ? coreSpecMapper : specMapper;
+
+    const config = mapper(curr.spec);
     acc[config.id] = config;
     return acc;
   }, result);
