@@ -215,13 +215,14 @@ This option is only available when you're editing the panel.
 ## Nested tables
 
 A table can display sub-tables inside expandable rows.
-Nested tables are produced by the [Group to nested tables transformation](ref:group-to-nested-tables-transformation), which groups rows by a field and renders the remaining rows as a nested table on each parent row.
+Nested tables are produced by the [Group to nested tables transformation](ref:group-to-nested-tables-transformation), which groups rows by one or more fields, and can summarize nested row data by applying calculations.
 
-Click the expand icon on a row to reveal its nested table:
+Click the expand icon on a row to toggle the visibility of its nested table:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-nested-expanded-v12.x.png" max-width="750px" alt="Table with one row expanded showing a nested sub-table" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-nested-expanded-v13.x.png" max-width="750px" alt="Table with one row expanded showing a nested sub-table" >}}
 
-Sorting and column filters applied to the parent table don't affect nested tables.
+Sorting nested and top-level rows in a nested table uses the same interaction as sorting multiple columns in a flat table - refer to [Sort columns](#sort-columns) to learn more.
+
 To control the display of fields inside a nested table&mdash;for example, to apply thresholds, units, or a different cell type&mdash;use [field overrides](#field-overrides) with the **Target fields** option set to **Nested**.
 For more information, refer to [Apply overrides to nested table fields](#apply-overrides-to-nested-table-fields).
 
@@ -614,7 +615,7 @@ This feature is in [public preview](https://grafana.com/docs/release-life-cycle/
 By default, field overrides apply only to columns in the parent table.
 To target columns inside a nested table, set the **Target fields** option on the override to **Nested**:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v12.x.png" max-width="500px" alt="Field override configuration with the Target fields selector showing Series and Nested options" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v13.x.png" max-width="500px" alt="Field override configuration with the Target fields selector showing Series and Nested options" >}}
 
 All standard override properties&mdash;including thresholds, value mappings, units, data links, and cell type&mdash;apply the same way to nested fields.
 
