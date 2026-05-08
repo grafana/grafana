@@ -304,7 +304,7 @@ describe('StateTimeline uPlot integration', () => {
 
       it('draws series labels above each row when called', () => {
         const labelFn = jest.fn((idx: number) => `Series ${idx}`);
-        const config = getConfig(buildTestCoreOptions({ namePosition: 'top', label: labelFn }));
+        const config = getConfig(buildTestCoreOptions({ namePosition: 'top', label: labelFn, rowHeight: 0.9 }));
         const mockUplot = buildMockUplotInstance();
 
         config.drawSeriesLabels!(mockUplot);
@@ -318,7 +318,7 @@ describe('StateTimeline uPlot integration', () => {
 
       it('truncates long labels with ellipsis', () => {
         const longLabel = 'A very long series name that should be truncated';
-        const config = getConfig(buildTestCoreOptions({ namePosition: 'top', label: () => longLabel }));
+        const config = getConfig(buildTestCoreOptions({ namePosition: 'top', label: () => longLabel, rowHeight: 0.9 }));
         const mockUplot = buildMockUplotInstance();
         // Make measureText return a width larger than bbox
         mockUplot.ctx.measureText = jest.fn(() => ({ width: 200 })) as unknown as typeof mockUplot.ctx.measureText;
@@ -328,6 +328,18 @@ describe('StateTimeline uPlot integration', () => {
         // fillText should have been called with a truncated string ending in ellipsis
         const fillTextCall = jest.mocked(mockUplot.ctx.fillText).mock.calls[0];
         expect(fillTextCall[0]).toContain('\u2026');
+      });
+
+      it('skips labels when rows are too small', () => {
+        const labelFn = jest.fn((idx: number) => `Series ${idx}`);
+        const config = getConfig(
+          buildTestCoreOptions({ namePosition: 'top', label: labelFn, rowHeight: 0.9, numSeries: 50 })
+        );
+        const mockUplot = buildMockUplotInstance();
+
+        config.drawSeriesLabels!(mockUplot);
+
+        expect(mockUplot.ctx.fillText).not.toHaveBeenCalled();
       });
     });
 
