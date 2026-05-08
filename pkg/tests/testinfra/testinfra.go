@@ -245,7 +245,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	return addr, env, testDB, cleanup
 }
 
-// CreateGrafDir creates the Grafana directory.
+// CreateGrafDir creates the Grafana directory. trigger ci backend
 // The log by default is muted in the regression test, to activate it, pass option EnableLog = true
 func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	t.Helper()
