@@ -10,11 +10,13 @@ import { useRecentScopes } from 'app/features/scopes/selector/useRecentScopes';
 import { type CommandPaletteAction } from '../types';
 import { RECENT_SCOPES_PRIORITY } from '../values';
 
+const EMPTY_OBSERVABLE = new Observable<ScopesSelectorServiceState>();
+
 export function useRecentScopesActions(): CommandPaletteAction[] {
   const services = useScopesServices();
 
   const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
-    services?.scopesSelectorService.stateObservable ?? new Observable(),
+    services?.scopesSelectorService.stateObservable ?? EMPTY_OBSERVABLE,
     services?.scopesSelectorService.state
   );
 
