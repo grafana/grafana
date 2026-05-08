@@ -78,6 +78,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
               <Alert
                 title={t('browse-dashboards.action.delete-modal-folder-empty', 'Selected folder is empty', {
                   count: selectedFolders.length,
+                  defaultValue_other: 'Selected folders are empty',
                 })}
                 severity={'success'}
               />
@@ -88,6 +89,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
                   'Selected folder contains other resources that will be deleted',
                   {
                     count: selectedFolders.length,
+                    defaultValue_other: 'Selected folders contain other resources that will be deleted',
                   }
                 )}
                 severity={'warning'}
