@@ -143,18 +143,34 @@ func (sc *SmtpClient) setFiles(
 	}
 
 	for _, file := range msg.EmbeddedContents {
-		m.Embed(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
-			_, err := writer.Write(file.Content)
-			return err
-		}))
+		m.Embed(file.Name, safeCopyContent(file.Name, file.Content))
 	}
 
 	for _, file := range msg.AttachedFiles {
-		file := file
-		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
-			_, err := writer.Write(file.Content)
-			return err
-		}))
+		m.Attach(file.Name, safeCopyContent(file.Name, file.Content))
+	}
+}
+
+// safeCopyContent returns a gomail SetCopyFunc closure that copies the given
+// content to the writer provided by mail.v2, converting panics into errors.
+// mail.v2's base64LineWriter (gh-go-gomail/gomail#89) does not nil-guard its
+// underlying writer and can panic mid-encoding, killing the entire process
+// because the panic propagates through the calling alert-notification
+// goroutine. Recovering here keeps the process alive: the email send fails
+// with a regular error and other notifications continue.
+func safeCopyContent(name string, content []byte) gomail.FileSetting {
+	return gomail.SetCopyFunc(copyContentFunc(name, content))
+}
+
+func copyContentFunc(name string, content []byte) func(io.Writer) error {
+	return func(writer io.Writer) (err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("panic while writing email attachment %q: %v", name, r)
+			}
+		}()
+		_, err = writer.Write(content)
+		return err
 	}
 }
 
