@@ -4,10 +4,10 @@ export {
   getDataSourceSettingsList,
   reload,
   upsertRuntimeDataSource,
-} from './instanceSettings';
+} from './settings';
 export { type DataSourceSettingsPage, type GetDataSourceSettingsListOptions } from './types';
 
-export { getDataSource, registerRuntimeDataSource } from './plugin';
+export { getDataSource, registerRuntimeDataSource } from './dataSource';
 
 export {
   useDataSourceSettings,

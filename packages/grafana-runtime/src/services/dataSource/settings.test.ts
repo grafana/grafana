@@ -11,7 +11,7 @@ import {
   initDataSources,
   reload,
   upsertRuntimeDataSource,
-} from './instanceSettings';
+} from './settings';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
   return {

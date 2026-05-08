@@ -6,9 +6,9 @@ import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
+import { _resetForTests as resetPlugin, setDataSourceImporter } from './dataSource';
 import { useDataSource, useDataSourceSettingsList, useDataSourceSettings } from './hooks';
-import { _resetForTests as resetInstanceSettings, initDataSources } from './instanceSettings';
-import { _resetForTests as resetPlugin, setDataSourceImporter } from './plugin';
+import { _resetForTests as resetInstanceSettings, initDataSources } from './settings';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
   return {
