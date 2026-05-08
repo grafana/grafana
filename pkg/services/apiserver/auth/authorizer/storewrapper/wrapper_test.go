@@ -144,8 +144,8 @@ func TestWrapper_Observer(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expectedObj, result)
 		assert.Equal(t, []observerCall{
-			{layer: LayerAuthz, resource: resource, op: "before_create", status: "success"},
-			{layer: LayerInner, resource: resource, op: "create", status: "success"},
+			{layer: LayerAuthz, resource: resource, op: "before_create", status: metaV1.StatusSuccess},
+			{layer: LayerInner, resource: resource, op: "create", status: metaV1.StatusSuccess},
 		}, observer.calls)
 	})
 
@@ -165,7 +165,7 @@ func TestWrapper_Observer(t *testing.T) {
 		require.Error(t, err)
 		assert.Nil(t, result)
 		assert.Equal(t, []observerCall{
-			{layer: LayerAuthz, resource: resource, op: "before_create", status: "unauthorized"},
+			{layer: LayerAuthz, resource: resource, op: "before_create", status: string(metaV1.StatusReasonUnauthorized)},
 		}, observer.calls)
 		mockStore.AssertNotCalled(t, "Create")
 	})
