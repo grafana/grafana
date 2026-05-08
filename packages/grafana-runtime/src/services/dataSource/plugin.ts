@@ -36,7 +36,12 @@ export async function getDataSource(
     throw new Error(`Datasource ${describeRef(ref)} was not found`);
   }
 
-  const cached = getCachedPlugin(settings.uid);
+  // When ref is a template variable, settings.uid is the raw variable string
+  // (e.g. "${datasource}"). Use the resolved uid as the cache key so repeated
+  // calls for the same variable don't create duplicate instances.
+  const cacheUid = settings.rawRef?.uid ?? settings.uid;
+
+  const cached = getCachedPlugin(cacheUid);
   if (cached) {
     return cached;
   }
@@ -48,7 +53,7 @@ export async function getDataSource(
   const dsPlugin = await importDataSource(settings.meta);
 
   // Another caller may have populated the cache while we were awaiting.
-  const racedCache = getCachedPlugin(settings.uid);
+  const racedCache = getCachedPlugin(cacheUid);
   if (racedCache) {
     return racedCache;
   }
@@ -72,7 +77,7 @@ export async function getDataSource(
     anyInstance.getRef = DataSourceApi.prototype.getRef;
   }
 
-  setCachedPlugin(settings.uid, instance);
+  setCachedPlugin(cacheUid, instance);
   return instance;
 }
 

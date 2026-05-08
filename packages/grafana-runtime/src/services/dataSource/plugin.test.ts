@@ -2,6 +2,7 @@ import { DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMe
 
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { RuntimeDataSource } from '../RuntimeDataSource';
+import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { _resetForTests as resetInstanceSettings, initDataSources, reload } from './instanceSettings';
 import {
@@ -101,6 +102,27 @@ describe('plugin', () => {
       initDataSources({ [settings.name]: settings }, settings.name);
 
       await expect(getDataSource(settings.uid)).rejects.toThrow(/has not been set/);
+    });
+
+    it('caches under the resolved uid when ref is a template variable', async () => {
+      const settings = ds();
+      initDataSources({ [settings.name]: settings }, settings.name);
+      setTemplateSrv({
+        getVariables: () => [],
+        replace: (v?: string) => (v === '${myds}' ? settings.name : (v ?? '')),
+      } as unknown as TemplateSrv);
+
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      const MockClass = jest.fn().mockReturnValue(instance);
+      setDataSourceImporter(jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} }));
+
+      const result = await getDataSource('${myds}');
+      expect(result).toBe(instance);
+
+      // Cached under the real uid — subsequent call via real uid returns the same instance.
+      const second = await getDataSource(settings.uid);
+      expect(second).toBe(instance);
+      expect(MockClass).toHaveBeenCalledTimes(1);
     });
   });
 
