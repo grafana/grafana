@@ -30,7 +30,7 @@ import { MockObservableDataSourceApi } from '../../../test/mocks/datasource_srv'
 const mockGetBooleanValue = jest.fn((key: string, defaultValue: boolean) => defaultValue);
 
 jest.mock('@grafana/runtime/internal', () => {
-  const actual = jest.requireActual<typeof import('@grafana/runtime/internal')>('@grafana/runtime/internal');
+  const actual = jest.requireActual('@grafana/runtime/internal');
   return {
     ...actual,
     getFeatureFlagClient: jest.fn(() => ({
