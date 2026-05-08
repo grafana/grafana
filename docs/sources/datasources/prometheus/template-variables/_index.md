@@ -88,7 +88,7 @@ Set **Refresh** to `On time range change` so the top 5 instances update as you c
 - **Include All option** — Adds an "All" option that selects every value. Combined with multi-value, this generates a regex like `value1|value2|value3`.
 
 {{< admonition type="note" >}}
-When **Multi-value** or **Include All** is enabled, use `=~` (regex match) instead of `=` (exact match) in your queries, since the variable value becomes a regex pattern.
+When **Multi-value** or **Include All** is enabled, use `=~` (regular expression match) instead of `=` (exact match) in your queries, since the variable value becomes a regex pattern.
 {{< /admonition >}}
 
 **Example with multi-value:**
