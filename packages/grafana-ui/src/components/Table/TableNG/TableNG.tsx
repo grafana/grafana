@@ -296,7 +296,18 @@ export function TableNG(props: TableNGProps) {
 
   // https://github.com/grafana/grafana/issues/118984: nested tables don't support frozen columns yet.
   const frozenColumns = useMemo(() => (hasNestedFrames ? 0 : _frozenColumns), [hasNestedFrames, _frozenColumns]);
-  const [widths, numFrozenColsFullyInView] = useColWidths(visibleFields, availableWidth, frozenColumns);
+  const configuredWidthCount = visibleFields.filter((field) => field.config.custom?.width != null).length;
+  const prevConfiguredWidthCount = useRef(configuredWidthCount);
+  const resetColumnWidths = configuredWidthCount < prevConfiguredWidthCount.current ? new Map() : undefined;
+
+  prevConfiguredWidthCount.current = configuredWidthCount;
+
+  const [widths, numFrozenColsFullyInView] = useColWidths(
+    visibleFields,
+    availableWidth,
+    frozenColumns,
+    resetColumnWidths
+  );
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
@@ -1026,6 +1037,8 @@ export function TableNG(props: TableNGProps) {
         onSelectedRowsChange={setSelectedRows}
         headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
         headerRowHeight={headerHeight}
+        columnWidths={resetColumnWidths}
+        onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
         onColumnResize={resizeHandler}
         onCellClick={onCellClick}
         onCellKeyDown={({ column, row }, event) => {

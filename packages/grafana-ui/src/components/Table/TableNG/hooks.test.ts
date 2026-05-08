@@ -14,6 +14,7 @@ import {
   useReducerEntries,
   useManagedSort,
   useNestedRows,
+  useColWidths,
 } from './hooks';
 import { type TableRow } from './types';
 import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
@@ -1366,6 +1367,36 @@ describe('TableNG hooks', () => {
       rerender({ nestedVisibleFields: fields, availableWidth: 300 });
 
       expect(result.current.nestedFieldWidths).toEqual([200, 200]);
+    });
+  });
+
+  describe('useColWidths', () => {
+    function makeFields(names: string[]): Field[] {
+      return names.map((name) => ({
+        name,
+        type: FieldType.string,
+        config: {},
+        values: [],
+      }));
+    }
+
+    it('recomputes widths when reset key changes without new field objects', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result, rerender } = renderHook(
+        ({ resetKey }: { resetKey: number }) => useColWidths(fields, 600, undefined, resetKey),
+        { initialProps: { resetKey: 0 } }
+      );
+
+      expect(result.current[0]).toEqual([300, 300]);
+
+      fields[0].config.custom = { width: 100 };
+      rerender({ resetKey: 1 });
+      expect(result.current[0]).toEqual([100, 500]);
+
+      fields[0].config.custom = {};
+      rerender({ resetKey: 2 });
+
+      expect(result.current[0]).toEqual([300, 300]);
     });
   });
 });
