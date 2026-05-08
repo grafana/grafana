@@ -171,11 +171,14 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   let incrs;
 
-  if (!isTime) {
+  const xBucketSize = dataRef.current?.xBucketSize;
+  const hasPositiveXBucketSize = typeof xBucketSize === 'number' && xBucketSize > 0;
+
+  if (!isTime && hasPositiveXBucketSize) {
     incrs = [];
 
-    for (let i = 0; i < 10; i++) {
-      incrs.push(i * dataRef.current?.xBucketSize!);
+    for (let i = 1; i < 10; i++) {
+      incrs.push(i * xBucketSize);
     }
   }
 
@@ -451,13 +454,15 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   const pathBuilder = isSparseHeatmap ? heatmapPathsSparse : heatmapPathsDense;
 
+  const xFacetSorted = hasPositiveXBucketSize || isTime ? 1 : 0;
+
   // heatmap layer
   builder.addSeries({
     facets: [
       {
         scale: xScaleKey,
         auto: true,
-        sorted: 1,
+        sorted: xFacetSorted,
       },
       {
         scale: yScaleKey,
@@ -511,7 +516,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       {
         scale: xScaleKey,
         auto: true,
-        sorted: 1,
+        sorted: xFacetSorted,
       },
       {
         scale: yScaleKey,
