@@ -13,7 +13,7 @@ function getApiVersion(): string {
 }
 
 async function loadPluginMetas(): Promise<PluginMetasResponse> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     const result = { items: [] };
     return result;
   }
@@ -28,7 +28,7 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
 }
 
 export async function installPluginMeta(pluginId: string, version: string): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     return;
   }
 
@@ -54,7 +54,7 @@ export async function installPluginMeta(pluginId: string, version: string): Prom
 }
 
 export async function uninstallPluginMeta(pluginId: string): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     return;
   }
 
@@ -82,7 +82,7 @@ export function refetchPluginMetas(): Promise<PluginMetasResponse> {
 }
 
 export async function getPluginMetaFromCache(pluginId: string): Promise<Meta | null> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     return null;
   }
 
@@ -92,7 +92,7 @@ export async function getPluginMetaFromCache(pluginId: string): Promise<Meta | n
 }
 
 export async function refetchPluginMeta(pluginId: string): Promise<Meta | null> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     return null;
   }
 

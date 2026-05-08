@@ -15,6 +15,7 @@ export const Loggers = {
   'features.alerting': { context: { module: 'Alerting' } },
   'features.correlations': {},
   'features.dashboards.genai': {},
+  'features.query-history.local-storage': {},
 } satisfies Record<string, LoggerDefaults>;
 
 export type LoggerSource = keyof typeof Loggers;
