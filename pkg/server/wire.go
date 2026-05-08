@@ -140,7 +140,6 @@ import (
 	promTypeMigration "github.com/grafana/grafana/pkg/services/promtypemigration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/pulse"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -387,9 +386,10 @@ var wireBasicSet = wire.NewSet(
 	publicdashboards.ProvideStore,
 	publicdashboards.ProvideMetricsService,
 	publicdashboards.ProvideApi,
-	pulse.ProvideService,
-	wire.Bind(new(pulse.Service), new(*pulse.PulseService)),
-	pulse.ProvideChannelPublisher,
+	// Pulse is wired only for OSS builds (see wireexts_oss.go). Enterprise
+	// builds carry a pre-generated enterprise_wire_gen.go in the grafana-
+	// enterprise repo, so any addition to the shared wireBasicSet would
+	// force a companion PR every time we touch Pulse wiring.
 	starApi.ProvideApi,
 	userimpl.ProvideService,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),

@@ -91,10 +91,7 @@ describe('PanelPulseMentions', () => {
     // Single match → deep link to the specific thread; we also clear
     // any stale pulsePanel filter so a previous filtered URL doesn't
     // leak into the deep-link.
-    expect(partialMock).toHaveBeenCalledWith(
-      { pulse: 'thread-thread-abc', pulsePanel: null },
-      true
-    );
+    expect(partialMock).toHaveBeenCalledWith({ pulse: 'thread-thread-abc', pulsePanel: null }, true);
   });
 
   it('applies the panel filter when multiple threads mention the panel', async () => {

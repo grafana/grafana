@@ -1776,6 +1776,26 @@
         },
         "description": "(empty)"
       },
+      "pulsePanelMentionsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PanelMentionsResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "pulseParticipantsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ParticipantsResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "pulseResourceVersionResponse": {
         "content": {
           "application/json": {
@@ -8169,6 +8189,82 @@
           }
         },
         "title": "PagerdutyLink is a link.",
+        "type": "object"
+      },
+      "PanelMentionSummary": {
+        "description": "LatestThreadUID is the UID of the most-recently-active matching\nthread; the frontend opens straight to it when the count is one,\nand falls back to the panel-scoped drawer view when it's higher.\nLatestThreadTitle is included so a tooltip can render without a\nfollow-up fetch.",
+        "properties": {
+          "latestThreadTitle": {
+            "type": "string"
+          },
+          "latestThreadUID": {
+            "type": "string"
+          },
+          "panelId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "threadCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "title": "PanelMentionSummary aggregates the open threads that touch a single\npanel — either anchored to it via Thread.PanelID or referencing it\nvia a #panel mention chip in any pulse on the resource. Closed\nthreads are excluded so the indicator reflects live conversation.",
+        "type": "object"
+      },
+      "PanelMentionsResponse": {
+        "description": "PanelMentionsResponse is the JSON envelope returned by the\npanel-mentions endpoint. Items are sorted by panel id ascending so\nthe wire format is deterministic across calls.",
+        "properties": {
+          "mentions": {
+            "items": {
+              "$ref": "#/components/schemas/PanelMentionSummary"
+            },
+            "type": "array"
+          },
+          "resourceKind": {
+            "$ref": "#/components/schemas/ResourceKind"
+          },
+          "resourceUID": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ParticipantSummary": {
+        "description": "ParticipantSummary describes a user who has authored or replied on\nany open thread for a resource. Powers the \"Users\" filter dropdown\nin the per-resource Pulse drawer. Fields mirror what we already\nproject for thread/pulse author rows so the frontend can render the\ndropdown row identically to a thread card avatar without a second\nfetch.",
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "login": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ParticipantsResponse": {
+        "description": "ParticipantsResponse is the JSON envelope for the participants\nendpoint. Items are sorted by login ascending so the dropdown order\nis deterministic.",
+        "properties": {
+          "participants": {
+            "items": {
+              "$ref": "#/components/schemas/ParticipantSummary"
+            },
+            "type": "array"
+          },
+          "resourceKind": {
+            "$ref": "#/components/schemas/ResourceKind"
+          },
+          "resourceUID": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "Password": {

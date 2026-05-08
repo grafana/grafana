@@ -4,12 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import {
-  type SceneComponentProps,
-  type SceneObject,
-  SceneObjectBase,
-  type SceneObjectState,
-} from '@grafana/scenes';
+import { type SceneComponentProps, type SceneObject, SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import { Icon, PanelChrome, Tooltip, useStyles2 } from '@grafana/ui';
 import { useListPanelMentionsQuery } from 'app/features/pulse/api/pulseApi';
 
@@ -81,10 +76,7 @@ function PanelPulseMentionsRenderer({ model }: SceneComponentProps<PanelPulseMen
   const isPulseEnabled = Boolean(config.featureToggles.dashboardPulse);
   const skipQuery = !isPulseEnabled || !resourceUID;
 
-  const { data } = useListPanelMentionsQuery(
-    { resourceKind: 'dashboard', resourceUID },
-    { skip: skipQuery }
-  );
+  const { data } = useListPanelMentionsQuery({ resourceKind: 'dashboard', resourceUID }, { skip: skipQuery });
 
   // The summary list comes back sorted by panel id; a Map keyed by id
   // keeps lookup O(1) per render across all panels mounted on the
@@ -108,10 +100,7 @@ function PanelPulseMentionsRenderer({ model }: SceneComponentProps<PanelPulseMen
     // ensure the drawer mounts even when the URL didn't already
     // contain the `pulse` key.
     if (summary.threadCount === 1 && summary.latestThreadUID) {
-      locationService.partial(
-        { pulse: `thread-${summary.latestThreadUID}`, pulsePanel: null },
-        true
-      );
+      locationService.partial({ pulse: `thread-${summary.latestThreadUID}`, pulsePanel: null }, true);
       return;
     }
     locationService.partial({ pulse: 'open', pulsePanel: String(panelId) }, true);

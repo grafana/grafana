@@ -107,13 +107,7 @@ describe('PulseDrawerContent filter row', () => {
       },
     });
 
-    render(
-      <PulseDrawerContent
-        resourceUID="dash-uid"
-        authorFilter={2}
-        panels={[]}
-      />
-    );
+    render(<PulseDrawerContent resourceUID="dash-uid" authorFilter={2} panels={[]} />);
 
     const inputs = screen.getAllByRole('combobox');
     // panel input shows the "all" sentinel label; user input shows
@@ -130,13 +124,7 @@ describe('PulseDrawerContent filter row', () => {
     useListPanelMentionsQueryMock.mockReturnValue({ data: { mentions: [] } });
     useListParticipantsQueryMock.mockReturnValue({ data: { participants: [] } });
 
-    render(
-      <PulseDrawerContent
-        resourceUID="dash-uid"
-        panelFilter={5}
-        panels={[{ id: 5, title: 'CPU' }]}
-      />
-    );
+    render(<PulseDrawerContent resourceUID="dash-uid" panelFilter={5} panels={[{ id: 5, title: 'CPU' }]} />);
 
     expect(screen.getByText('No threads match the current filters')).toBeInTheDocument();
     // The unfiltered "Start the first thread" CTA must NOT appear in
@@ -207,13 +195,7 @@ describe('PulseDrawerContent filter row', () => {
       useListParticipantsQueryMock.mockReturnValue({ data: { participants: [] } });
 
       const onSearchFilterChange = jest.fn();
-      render(
-        <PulseDrawerContent
-          resourceUID="dash-uid"
-          onSearchFilterChange={onSearchFilterChange}
-          panels={[]}
-        />
-      );
+      render(<PulseDrawerContent resourceUID="dash-uid" onSearchFilterChange={onSearchFilterChange} panels={[]} />);
 
       const input = screen.getByLabelText('Filter threads by text');
       // userEvent under fake timers needs an explicit advanceTimers
@@ -325,4 +307,3 @@ describe('PulseDrawerContent filter row', () => {
     expect(screen.queryByText('Start the first thread')).not.toBeInTheDocument();
   });
 });
-

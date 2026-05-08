@@ -77,15 +77,7 @@ interface ResourceVersionArgs {
 export const pulseApi = createApi({
   reducerPath: 'pulseApi',
   baseQuery: createBaseQuery({ baseURL: '/api/pulse' }),
-  tagTypes: [
-    'Thread',
-    'Pulse',
-    'ResourceVersion',
-    'ResourceThreads',
-    'AllThreads',
-    'PanelMentions',
-    'Participants',
-  ],
+  tagTypes: ['Thread', 'Pulse', 'ResourceVersion', 'ResourceThreads', 'AllThreads', 'PanelMentions', 'Participants'],
   endpoints: (builder) => ({
     listThreads: builder.query<PageResult<PulseThread>, ListThreadsArgs>({
       query: ({ resourceKind, resourceUID, panelId, authorUserId, q, page, limit }) => {

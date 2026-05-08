@@ -522,10 +522,10 @@ func (s *store) listPanelMentions(ctx context.Context, q ListPanelMentionsQuery)
 	// non-deterministic in Go, so we sort the final slice by panel id
 	// to keep the wire payload stable across calls.
 	type bucket struct {
-		threads      map[string]struct{}
-		latestUID    string
-		latestAt     time.Time
-		latestTitle  string
+		threads     map[string]struct{}
+		latestUID   string
+		latestAt    time.Time
+		latestTitle string
 	}
 	byPanel := make(map[int64]*bucket)
 	for _, r := range rows {

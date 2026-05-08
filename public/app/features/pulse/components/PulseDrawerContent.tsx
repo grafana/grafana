@@ -221,7 +221,8 @@ export function PulseDrawerContent({
       { value: FILTER_ALL, label: t('pulse.drawer.filter-user-all', 'All users') },
     ];
     for (const p of participantsData?.participants ?? []) {
-      const label = p.name?.trim() || p.login?.trim() || t('pulse.drawer.filter-user-fallback', 'User #{{id}}', { id: p.userId });
+      const label =
+        p.name?.trim() || p.login?.trim() || t('pulse.drawer.filter-user-fallback', 'User #{{id}}', { id: p.userId });
       opts.push({ value: String(p.userId), label });
     }
     return opts;
@@ -383,28 +384,17 @@ export function PulseDrawerContent({
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        <Field
-          className={styles.searchField}
-          label={t('pulse.drawer.filter-search-label', 'Search threads')}
-          noMargin
-        >
+        <Field className={styles.searchField} label={t('pulse.drawer.filter-search-label', 'Search threads')} noMargin>
           <Input
             value={searchDraft}
             onChange={onSearchInput}
-            placeholder={t(
-              'pulse.drawer.filter-search-placeholder',
-              'Search title or body — matches replies too'
-            )}
+            placeholder={t('pulse.drawer.filter-search-placeholder', 'Search title or body — matches replies too')}
             prefix={<Icon name="search" />}
             aria-label={t('pulse.drawer.filter-search-aria', 'Filter threads by text')}
           />
         </Field>
         <Stack direction="row" gap={1} alignItems="flex-end" wrap="wrap">
-          <Field
-            className={styles.filterField}
-            label={t('pulse.drawer.filter-panel-label', 'Panel')}
-            noMargin
-          >
+          <Field className={styles.filterField} label={t('pulse.drawer.filter-panel-label', 'Panel')} noMargin>
             <Combobox
               value={panelSelectValue}
               options={panelOptions}
@@ -412,11 +402,7 @@ export function PulseDrawerContent({
               aria-label={t('pulse.drawer.filter-panel-aria', 'Filter threads by panel')}
             />
           </Field>
-          <Field
-            className={styles.filterField}
-            label={t('pulse.drawer.filter-user-label', 'User')}
-            noMargin
-          >
+          <Field className={styles.filterField} label={t('pulse.drawer.filter-user-label', 'User')} noMargin>
             <Combobox
               value={userSelectValue}
               options={userOptions}
@@ -425,12 +411,7 @@ export function PulseDrawerContent({
             />
           </Field>
           {hasFilters && (
-            <Button
-              size="sm"
-              variant="secondary"
-              fill="text"
-              onClick={() => onClearFilters?.()}
-            >
+            <Button size="sm" variant="secondary" fill="text" onClick={() => onClearFilters?.()}>
               {t('pulse.drawer.filter-clear', 'Clear filters')}
             </Button>
           )}
