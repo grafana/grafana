@@ -106,7 +106,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 1. **Check for idle timeout issues.** If the connection drops after periods of inactivity, configure TCP keepalives on the host or add a keepalive setting to the PDC agent configuration.
 
 {{< admonition type="note" >}}
-PDC connectivity issues are almost always caused by networking on the customer side (DNS, firewalls, routing), not by Grafana Cloud. The data source test passing doesn't guarantee sustained connectivity under load — it only verifies a single query succeeds.
+PDC connectivity issues are almost always caused by networking on the customer side (DNS, firewall rules, routing), not by Grafana Cloud. The data source test passing doesn't guarantee sustained connectivity under load — it only verifies a single query succeeds.
 {{< /admonition >}}
 
 For general PDC setup and configuration, refer to [Private data source connect (PDC)](/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/).
