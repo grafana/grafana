@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/storage/unified/resource/kv
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/dgraph-io/badger/v4 v4.7.0
