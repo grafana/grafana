@@ -426,70 +426,55 @@ The following errors occur when there are issues with TLS configuration.
 1. If using client certificates, ensure they are correctly configured in the **TLS client authentication** section.
 1. Verify the server name matches the certificate's Common Name or Subject Alternative Name.
 
-## Other common issues
+## Performance issues
 
-The following issues don't produce specific error messages but are commonly encountered.
-
-### Empty query results
-
-**Cause:** The query returns no data.
-
-**Solution:**
-
-1. Verify the time range includes data in Prometheus.
-1. Check that the metric and label names are correct.
-1. Test the query directly in the Prometheus expression browser.
-1. Ensure label filters are not excluding all data.
-1. For rate or increase functions, ensure the time range is at least twice the scrape interval.
+The following issues affect query speed and data freshness.
 
 ### Slow query performance
 
-**Cause:** Queries take a long time to execute.
+**Symptom:** Queries take a long time to execute, dashboards are slow to load, or the loading spinner persists.
+
+**Cause:** Queries scan too much data, the Prometheus server is overloaded, or the network connection is slow.
 
 **Solution:**
 
 1. Reduce the time range of your query.
 1. Add more specific label filters to limit the data scanned.
-1. Increase the **Min interval** in the query options.
+1. Increase the **Min step** in the query options to reduce the number of data points.
 1. Check Prometheus server performance and resource utilization.
 1. Enable **Disable metrics lookup** in the data source configuration for large Prometheus instances.
 1. Enable **Incremental querying (beta)** to cache query results.
-1. Consider using recording rules to pre-aggregate frequently queried data.
+1. Use recording rules to pre-aggregate frequently queried data.
+1. For high-cardinality metrics, refer to [Memory limit exceeded for high-cardinality queries](#memory-limit-exceeded-for-high-cardinality-queries).
 
 ### Data appears delayed or missing recent points
 
-**Cause:** The visualization doesn't show the most recent data.
+**Symptom:** The visualization doesn't show the most recent data, even after refreshing.
+
+**Cause:** Scrape timing, clock drift, or dashboard refresh settings.
 
 **Solution:**
 
 1. Check the dashboard time range and refresh settings.
-1. Verify the **Scrape interval** is configured correctly.
-1. Ensure Prometheus has finished scraping the target.
-1. Check for clock synchronization issues between Grafana and Prometheus.
-1. For `rate()` and similar functions, remember that they need at least two data points to calculate.
+1. Verify the **Scrape interval** is configured correctly in the data source settings.
+1. Ensure Prometheus has finished scraping the target (there's a delay between the scrape interval and data availability).
+1. Check for clock synchronization issues between Grafana and Prometheus (use NTP).
+1. For `rate()` and similar functions, the most recent partial scrape interval won't have enough data points — this is expected.
 
 ### Exemplars not showing
 
-**Cause:** Exemplar data is not appearing in visualizations.
+**Symptom:** Exemplar data doesn't appear on graphs even though you expect it.
+
+**Cause:** Exemplars require specific configuration in both the data source and the query editor.
 
 **Solution:**
 
-1. Verify that exemplars are enabled in the data source configuration under **Exemplars**.
+1. Verify that exemplars are configured in the data source settings under **Exemplars** (at least one exemplar link must be defined).
 1. Check that your Prometheus version supports exemplars (2.26+).
-1. Ensure your instrumented application is sending exemplar data.
+1. Ensure your instrumented application is actually sending exemplar data with metrics.
 1. Verify the tracing data source is correctly configured for the exemplar link.
-1. Enable the **Exemplars** toggle in the query editor.
-
-### Alerting rules not visible
-
-**Cause:** Prometheus alerting rules are not appearing in the Grafana Alerting UI.
-
-**Solution:**
-
-1. Verify that **Manage alerts via Alerting UI** is enabled in the data source configuration.
-1. Check that Prometheus has alerting rules configured.
-1. Ensure Grafana can access the Prometheus rules API endpoint.
-1. Note that for Prometheus (unlike Mimir), the Alerting UI only supports viewing existing rules, not creating new ones.
+1. Enable the **Exemplars** toggle in the query editor for the specific query.
+1. Exemplars only appear with **Range** query type, not **Instant**.
 
 ## Annotation errors
 
@@ -503,10 +488,15 @@ The following issues occur when using Prometheus as a data source for annotation
 
 | Cause | Solution |
 |-------|----------|
-| Query returns no data | Verify the query returns results in Explore for the current time range. |
-| All values are zero | Annotations are only created for non-zero data points. Adjust your query to return non-zero values for events. |
+| Query returns no data in the current time range | Verify the query returns results in Explore for the dashboard's time range. |
+| Query returns continuous data (too many annotations) | Every returned data point creates an annotation. If the query returns hundreds of points, annotations may render but are too dense to see. Increase the **Min step** or refine your query to only return data at event moments. |
 | Wrong data source selected | Verify the correct Prometheus data source is selected in the annotation configuration. |
+| Annotation is disabled | Check that the annotation toggle is enabled (eye icon) in the dashboard's annotation settings. |
 | Time range mismatch | Expand the dashboard time range to include the events you expect to see. |
+
+{{< admonition type="note" >}}
+Prometheus annotations create a marker for **every data point** returned by the query. There's no automatic filtering of zero values. If you only want annotations at specific moments, your PromQL expression must return data only at those times (for example, using `> 0`, `changes() > 0`, or the `ALERTS` metric).
+{{< /admonition >}}
 
 For more information on configuring annotations, refer to [Prometheus annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/annotations/).
 

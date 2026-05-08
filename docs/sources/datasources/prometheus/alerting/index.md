@@ -250,5 +250,6 @@ Follow these best practices when creating Prometheus alerts:
 - **Test queries first:** Verify your query returns expected results in Explore before creating an alert.
 - **Use meaningful names:** Give alert rules descriptive names that indicate what they monitor and the severity.
 - **Pre-aggregate with recording rules:** For complex or frequently evaluated expressions, create recording rules and alert on the pre-aggregated metric.
+- **Use `absent()` for availability monitoring:** Detect when metrics stop being reported, which often indicates a crashed or unresponsive service.
 
 If you encounter errors when creating or evaluating alert rules, refer to [Troubleshoot Prometheus data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#alerting-errors).
