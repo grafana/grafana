@@ -5,7 +5,6 @@ import { locationUtil } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { useFlagGrafanaUnifiedHomepage } from '@grafana/runtime/internal';
 import { LoadingPlaceholder } from '@grafana/ui';
-import { isDashboardResource } from 'app/features/dashboard/api/utils';
 import { type DashboardDTO, isRedirectResponse } from 'app/types/dashboard';
 
 import { type DashboardPageProxyProps } from '../dashboard/containers/DashboardPageProxy';
@@ -39,11 +38,11 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
     return <LoadingPlaceholder text="" />;
   }
 
-  if (error || !value || isDashboardResource(value)) {
+  if (error || !value || !isBundledDefaultHome(value)) {
     return <DashboardPageProxy {...props} />;
   }
 
-  return isBundledDefaultHome(value) ? <HomePage /> : <DashboardPageProxy {...props} />;
+  return <HomePage />;
 }
 
 export default function HomeRoute(props: DashboardPageProxyProps) {
