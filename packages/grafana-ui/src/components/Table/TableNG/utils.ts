@@ -948,13 +948,6 @@ export function rowKeyGetter(row: TableRow): string {
 
 /**
  * @internal
- * Returns true if the DataFrame contains nested frames
- */
-export const getIsNestedTable = (fields: Field[]): boolean =>
-  fields.some(({ type }) => type === FieldType.nestedFrames);
-
-/**
- * @internal
  * Calculate the footer height based on the maximum reducer count
  */
 export const calculateFooterHeight = (fields: Field[]): number => {
