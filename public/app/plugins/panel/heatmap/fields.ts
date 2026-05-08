@@ -338,6 +338,14 @@ const getDenseHeatmapData = (
   let xBinQty = dlen / yBinQty;
   let yBinIncr = ys[1] - ys[0];
   let xBinIncr = xs[yBinQty] - xs[0];
+  const hasValidXBucketSize = Number.isFinite(xBinIncr) && xBinIncr > 0;
+
+  if (!hasValidXBucketSize) {
+    return {
+      warning: 'Could not infer heatmap bucket size; x field is not sorted ascending',
+      heatmap: frame,
+    };
+  }
 
   let [minValue, maxValue] = boundedMinMax(
     valueField.values,
