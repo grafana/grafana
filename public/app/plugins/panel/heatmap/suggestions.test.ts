@@ -80,6 +80,38 @@ describe('heatmap suggestions', () => {
         prepareSpy.mockRestore();
       }
     });
+
+    describe('first field shape determines whether a heatmap suggestion is offered', () => {
+      function summaryWithFirstField(type: FieldType, values: readonly unknown[]) {
+        return getPanelDataSummary([
+          createDataFrame({
+            fields: [
+              { name: 'x', type, values: [...values] },
+              { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+              { name: 'count', type: FieldType.number, values: [1, 2, 3] },
+            ],
+          }),
+        ]);
+      }
+
+      it.each([
+        ['ascending number', FieldType.number, [1, 2, 3], true],
+        ['descending number', FieldType.number, [3, 2, 1], false],
+        ['number with NaN', FieldType.number, [1, NaN, 3], false],
+        ['number with adjacent duplicates', FieldType.number, [1, 1, 2, 2, 3], false],
+        ['string', FieldType.string, ['a', 'b', 'c'], false],
+        ['boolean', FieldType.boolean, [true, false, true], false],
+        ['ascending time', FieldType.time, [1000, 2000, 3000], true],
+        ['unsorted time', FieldType.time, [3000, 1000, 2000], false],
+      ] as const)('%s first field offers suggestion: %s', (_label, type, values, shouldSuggest) => {
+        const suggestions = heatmapSuggestionsSupplier(summaryWithFirstField(type, values));
+        if (shouldSuggest) {
+          expect(suggestions).toHaveLength(1);
+        } else {
+          expect(suggestions).toBeUndefined();
+        }
+      });
+    });
   });
 
   describe('scoring', () => {
