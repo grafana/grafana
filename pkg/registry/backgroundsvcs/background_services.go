@@ -38,6 +38,7 @@ import (
 	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/pulse"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -84,6 +85,11 @@ func ProvideBackgroundServiceRegistry(
 	_ *grpcserver.HealthService, _ *grpcserver.ReflectionService,
 	_ *ldapapi.Service, _ *apiregistry.Service, _ auth.IDService, _ *teamapi.TeamAPI, _ ssosettings.Service,
 	_ cloudmigration.Service, _ authnimpl.Registration,
+	// Pulse has no other consumer in the wire graph; keeping a blank reference
+	// here forces wire to call pulse.ProvideService, which mounts the
+	// /api/pulse/* HTTP routes during construction. Without this the routes
+	// silently 404 even when the dashboardPulse feature toggle is on.
+	_ pulse.Service,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
