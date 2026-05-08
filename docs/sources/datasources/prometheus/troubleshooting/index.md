@@ -70,6 +70,19 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 1. Ensure the URL includes the protocol (`http://` or `https://`).
 1. Remove any trailing slashes or invalid characters from the URL.
 
+### Data doesn't appear in Metrics Drilldown or Explore
+
+**Symptom:** You've successfully tested the data source connection, but no metric data appears in Explore or Metrics Drilldown.
+
+**Cause:** The wrong data source is selected, or the data source name doesn't match expectations.
+
+**Solution:**
+
+1. Verify you've selected the correct data source from the data source drop-down menu.
+1. When using `remote_write` to send metrics to Grafana Cloud, the data source name follows the convention `grafanacloud-<stackname>-prom`.
+1. Check that metrics are being actively scraped by querying `up` in the Explore view.
+1. If using Grafana Cloud, verify the `remote_write` endpoint URL and credentials are correct.
+
 ### PDC connectivity errors
 
 **Error messages:** "host unreachable", "EOF", "network unreachable", "connection reset by peer", "dial tcp: lookup ... no such host"
