@@ -165,6 +165,20 @@ describe('SidebarFooter', () => {
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
     });
 
+    it('does not keep the count layout in the DOM while the bar is shown (a11y)', () => {
+      // The bar and the counts render mutually exclusively so the obscured
+      // Select… button and item-count text aren't left in the tab order /
+      // screen-reader sequence.
+      renderWithQueryEditorProvider(<SidebarFooter />, {
+        queries,
+        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], multiSelectMode: false },
+      });
+
+      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /select multiple items/i })).not.toBeInTheDocument();
+      expect(screen.queryByText('2 items')).not.toBeInTheDocument();
+    });
+
     it('renders the bar inside the footer when 2+ transformations are selected', () => {
       renderWithQueryEditorProvider(<SidebarFooter />, {
         transformations,

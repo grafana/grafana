@@ -219,8 +219,9 @@ interface BulkActionsVisibility {
 
 // In explicit multi-select mode any selection is actionable. Outside of it
 // (keyboard-shortcut path: Cmd/Ctrl+click, Shift+click) the bar opens at 2+
-// to avoid noise on every plain single-card click.
-function hasActionableSelection(selectionCount: number, multiSelectMode: boolean): boolean {
+// to avoid noise on every plain single-card click. Exported so the parent
+// (SidebarFooter) can ternary-render the bar vs. counts off the same rule.
+export function hasActionableSelection(selectionCount: number, multiSelectMode: boolean): boolean {
   return multiSelectMode ? selectionCount >= 1 : selectionCount >= 2;
 }
 
@@ -288,17 +289,10 @@ export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // The bar lives at the bottom of the sidebar (inside SidebarFooter), so it
-  // matches the footer background and rounds the bottom corners to follow the
-  // sidebar's outline.
   bar: css({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(0.5),
-    padding: theme.spacing(0.75, 1.5),
-    background: theme.colors.background.primary,
-    borderBottomLeftRadius: theme.shape.radius.default,
-    borderBottomRightRadius: theme.shape.radius.default,
   }),
   clearButton: css({
     marginLeft: 'auto',
