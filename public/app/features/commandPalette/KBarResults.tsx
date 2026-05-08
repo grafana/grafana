@@ -32,6 +32,21 @@ export const KBarResults = (props: KBarResultsProps) => {
   const itemsRef = React.useRef(props.items);
   itemsRef.current = props.items;
 
+  // A11y: Pre-compute the group label for each item so that option items can
+  // announce their section even when the section header has scrolled out of
+  // the virtual window and is no longer in the DOM.
+  const itemGroupLabels = React.useMemo(() => {
+    const labels: Array<string | null> = [];
+    let currentGroup: string | null = null;
+    for (const item of props.items) {
+      if (typeof item === 'string') {
+        currentGroup = item;
+      }
+      labels.push(currentGroup);
+    }
+    return labels;
+  }, [props.items]);
+
   const rowVirtualizer = useVirtual({
     size: itemsRef.current.length,
     parentRef,
@@ -164,8 +179,11 @@ export const KBarResults = (props: KBarResultsProps) => {
         }}
       >
         {rowVirtualizer.virtualItems.map((virtualRow) => {
+          const rawItem = itemsRef.current[virtualRow.index];
+          const isStringItem = typeof rawItem === 'string';
+
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const item = itemsRef.current[virtualRow.index] as ActionImpl & {
+          const item = rawItem as ActionImpl & {
             url?: string | URLCallback;
             target?: React.HTMLAttributeAnchorTarget;
           };
@@ -174,19 +192,24 @@ export const KBarResults = (props: KBarResultsProps) => {
           // so our url property is secretly there, but completely untyped
           // Preferably this change is upstreamed and ActionImpl has this
           const { target, url } = item;
+          const groupLabel = itemGroupLabels[virtualRow.index];
 
-          const handlers = typeof item !== 'string' && {
+          const handlers = !isStringItem && {
             onPointerMove: () =>
               pointerMoved && activeIndex !== virtualRow.index && query.setActiveIndex(virtualRow.index),
             onPointerDown: () => query.setActiveIndex(virtualRow.index),
             onClick: (ev: React.MouseEvent) => execute(ev, item),
           };
-          const active = virtualRow.index === activeIndex;
+          const active = !isStringItem && virtualRow.index === activeIndex;
 
           const childProps = {
-            id: getListboxItemId(virtualRow.index),
-            role: 'option',
-            'aria-selected': active,
+            ...(isStringItem
+              ? { 'aria-hidden': true }
+              : {
+                  id: getListboxItemId(virtualRow.index),
+                  role: 'option',
+                  'aria-selected': active,
+                }),
             style: {
               position: 'absolute',
               top: 0,
@@ -217,6 +240,7 @@ export const KBarResults = (props: KBarResultsProps) => {
                 ref={active ? (activeRef as React.RefObject<HTMLAnchorElement>) : null}
                 {...childProps}
               >
+                {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
                 {renderedItem}
               </a>
             );
@@ -229,6 +253,7 @@ export const KBarResults = (props: KBarResultsProps) => {
               ref={active ? (activeRef as React.RefObject<HTMLDivElement>) : null}
               {...childProps}
             >
+              {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
               {renderedItem}
             </div>
           );
