@@ -1,28 +1,31 @@
 import { debounce } from 'lodash';
-import { FeatureLike } from 'ol/Feature';
-import MapBrowserEvent from 'ol/MapBrowserEvent';
+import { type FeatureLike } from 'ol/Feature';
+import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import { Point } from 'ol/geom';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import { toLonLat } from 'ol/proj';
-import VectorSource from 'ol/source/Vector';
+import type VectorSource from 'ol/source/Vector';
 
-import { DataFrame, DataHoverClearEvent } from '@grafana/data';
+import { type DataFrame, DataHoverClearEvent } from '@grafana/data';
 
-import { GeomapPanel } from '../GeomapPanel';
-import { GeomapHoverPayload, GeomapLayerHover } from '../event';
-import { MapLayerState } from '../types';
+import { type GeomapPanel } from '../GeomapPanel';
+import { type GeomapHoverPayload, type GeomapLayerHover } from '../event';
+import { type MapLayerState } from '../types';
 
 import { getMapLayerState } from './layers';
 
 export const setTooltipListeners = (panel: GeomapPanel) => {
-  // Tooltip listener
+  panel.tooltipPointerMoveDebounced?.cancel();
+
+  const debouncedMove = debounce((evt: MapBrowserEvent) => pointerMoveListener(evt, panel), 200);
+  panel.tooltipPointerMoveDebounced = debouncedMove;
+
   panel.map?.on('singleclick', (evt) => pointerClickListener(evt, panel));
-  panel.map?.on(
-    'pointermove',
-    debounce((evt) => pointerMoveListener(evt, panel), 200)
-  );
-  panel.map?.getViewport().addEventListener('mouseout', (evt: MouseEvent) => {
+  panel.map?.on('pointermove', debouncedMove);
+  panel.map?.getViewport().addEventListener('pointerleave', () => {
+    debouncedMove.cancel();
     panel.props.eventBus.publish(new DataHoverClearEvent());
+    panel.clearTooltip();
   });
 };
 

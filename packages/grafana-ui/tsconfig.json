@@ -8,6 +8,7 @@
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "allowJs": true,
+    "rootDir": "../../",
     "rootDirs": ["."],
     "moduleResolution": "bundler"
   },

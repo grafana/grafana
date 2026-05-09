@@ -15,34 +15,13 @@ labels:
 menuTitle: Query editor
 title: Loki query editor
 weight: 300
-refs:
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-  logs:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Loki query editor
 
-The Loki data source's query editor helps you create [log](#create-a-log-query) and [metric](#create-a-metric-query) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
+The Loki data source's query editor helps you create [log](#create-a-log-query) and [metric](#create-a-metric-query) queries that use Loki's query language, [LogQL](https://grafana.com/docs/loki/latest/logql/).
 
-For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 ## Choose a query editing mode
 
@@ -56,14 +35,14 @@ To switch between the editor modes, select the corresponding **Builder** and **C
 To run a query, select **Run queries** located at the top of the editor.
 
 {{< admonition type="note" >}}
-To run Loki queries in [Explore](ref:explore), select **Run query**.
+To run Loki queries in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/), select **Run query**.
 {{< /admonition >}}
 
 Each mode is synchronized, so you can switch between them without losing your work, although there are some limitations. Builder mode doesn't support some complex queries.
 When you switch from Code mode to Builder mode with such a query, the editor displays a warning message that explains how you might lose parts of the query if you continue.
 You can then decide whether you still want to switch to Builder mode.
 
-You can also augment queries by using [template variables](../template-variables/).
+You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/template-variables/).
 
 ## Toolbar elements
 
@@ -133,15 +112,15 @@ Each operation's header displays its name, and additional action buttons appear 
 
 The query editor groups operations into the following sections:
 
-- Aggregations - see [Built-in aggregation operators](/docs/loki/latest/logql/metric_queries/#built-in-aggregation-operators)
-- Range functions - see [Range Vector aggregation](/docs/loki/latest/logql/metric_queries/#range-vector-aggregation)
-- Formats - see [Log queries](/docs/loki/latest/logql/log_queries/#log-queries)
-- Binary operations - see [Binary operators](/docs/loki/latest/logql/#binary-operators)
-- Label filters - see [Label filter expression](/docs/loki/latest/logql/log_queries/#label-filter-expression)
-- Line filters - see [Line filter expression](/docs/loki/latest/logql/log_queries/#label-filter-expression)
+- Aggregations - see [Built-in aggregation operators](https://grafana.com/docs/loki/latest/logql/metric_queries/#built-in-aggregation-operators)
+- Range functions - see [Range Vector aggregation](https://grafana.com/docs/loki/latest/logql/metric_queries/#range-vector-aggregation)
+- Formats - see [Log queries](https://grafana.com/docs/loki/latest/logql/log_queries/#log-queries)
+- Binary operations - see [Binary operators](https://grafana.com/docs/loki/latest/logql/#binary-operators)
+- Label filters - see [Label filter expression](https://grafana.com/docs/loki/latest/logql/log_queries/#label-filter-expression)
+- Line filters - see [Line filter expression](https://grafana.com/docs/loki/latest/logql/log_queries/#label-filter-expression)
 
 Some operations make sense only when used in a specific order. If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
-To re-order operations manually, drag the operation box by its name and drop it into the desired place. For additional information see [Order of operations](/docs/loki/latest/logql/#order-of-operations).
+To re-order operations manually, drag the operation box by its name and drop it into the desired place. For additional information see [Order of operations](https://grafana.com/docs/loki/latest/logql/#order-of-operations).
 
 ### Hints
 
@@ -152,7 +131,7 @@ In same cases the query editor can detect which operations would be most appropr
 In **Code mode**, you can write complex queries using a text editor with autocompletion feature, syntax highlighting, and query validation.
 It also contains a [label browser](#label-browser) to further help you write queries.
 
-For more information about Loki's query language, refer to the [Loki documentation](/docs/loki/latest/logql/).
+For more information about Loki's query language, refer to the [Loki documentation](https://grafana.com/docs/loki/latest/logql/).
 
 ### Use autocompletion
 
@@ -178,11 +157,11 @@ The following options are the same for both **Builder** and **Code** mode:
 ## Create a log query
 
 Loki log queries return the contents of the log lines.
-You can query and display log data from Loki via [Explore](ref:explore), and with the [Logs panel](ref:logs) in dashboards.
+You can query and display log data from Loki via [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/), and with the [Logs panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/) in dashboards.
 
 To display the results of a log query, select the Loki data source, then enter a LogQL query.
 
-For more information about log queries and LogQL, refer to the [Loki log queries documentation](/docs/loki/latest/logql/log_queries/).
+For more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/).
 
 ### Show log context
 
@@ -196,7 +175,7 @@ To reset filters and use the initial log context query, click the `Revert to ini
 
 ### Tail live logs
 
-Loki supports live tailing of logs in real-time in [Explore](ref:explore).
+Loki supports live tailing of logs in real-time in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
 
 Live tailing relies on two Websocket connections: one between the browser and Grafana server, and another between the Grafana server and Loki server.
 
@@ -254,11 +233,11 @@ In your `server` section, add the following configuration:
 
 You can use LogQL to wrap a log query with functions that create metrics from your logs.
 
-For more information about metric queries, refer to the [Loki metric queries documentation](/docs/loki/latest/logql/metric_queries/).
+For more information about metric queries, refer to the [Loki metric queries documentation](https://grafana.com/docs/loki/latest/logql/metric_queries/).
 
 ## Apply annotations
 
-[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
+[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 You can only use log queries as a source for annotations.

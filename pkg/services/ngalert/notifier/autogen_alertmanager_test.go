@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -32,7 +31,7 @@ func TestAddAutogenConfig(t *testing.T) {
 		}
 		for _, receiver := range receivers {
 			cfg.Receivers = append(cfg.Receivers, &definitions.PostableApiReceiver{
-				Receiver: config.Receiver{
+				Receiver: definitions.Receiver{
 					Name: receiver,
 				},
 			})

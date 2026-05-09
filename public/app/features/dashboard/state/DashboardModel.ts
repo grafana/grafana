@@ -2,32 +2,32 @@ import { cloneDeep, defaults as _defaults, filter, indexOf, isEqual, map, maxBy,
 import { Subscription } from 'rxjs';
 
 import {
-  AnnotationQuery,
-  AppEvent,
-  DashboardCursorSync,
+  type AnnotationQuery,
+  type AppEvent,
+  type DashboardCursorSync,
   dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
-  DateTimeInput,
-  EventBusExtended,
+  type DateTimeInput,
+  type EventBusExtended,
   EventBusSrv,
-  PanelModel as IPanelModel,
-  TimeRange,
-  TimeZone,
-  TypedVariableModel,
-  UrlQueryValue,
+  type PanelModel as IPanelModel,
+  type TimeRange,
+  type TimeZone,
+  type TypedVariableModel,
+  type UrlQueryValue,
 } from '@grafana/data';
-import { PromQuery } from '@grafana/prometheus';
+import { type PromQuery } from '@grafana/prometheus';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { Dashboard, DashboardLink, VariableModel } from '@grafana/schema';
+import { type Dashboard, type DashboardLink, type VariableModel } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
-import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
-import { DashboardMeta } from 'app/types/dashboard';
+import { type GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
+import { type DashboardMeta } from 'app/types/dashboard';
 import {
   DashboardMetaChangedEvent,
   DashboardPanelsChangedEvent,
@@ -39,17 +39,17 @@ import { appEvents } from '../../../core/app_events';
 import { dispatch } from '../../../store/store';
 import {
   VariablesChanged,
-  VariablesChangedEvent,
+  type VariablesChangedEvent,
   VariablesChangedInUrl,
   VariablesTimeRangeProcessDone,
 } from '../../variables/types';
 import { isAllVariable } from '../../variables/utils';
 import { getTimeSrv } from '../services/TimeSrv';
-import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
+import { mergePanels, type PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
 import { PanelModel } from './PanelModel';
-import { TimeModel } from './TimeModel';
+import { type TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
 export interface CloneOptions {
@@ -355,7 +355,10 @@ export class DashboardModel implements TimeModel {
     const currentVariables = this.getVariablesFromState(this.uid);
 
     const saveModels = currentVariables.map((variable) => {
-      const variableSaveModel = variableAdapters.get(variable.type).getSaveModel(variable, options.saveVariables);
+      // Group by variables has no adapter. Use the model as-is. This is safe to do as in scenes from which dashboard can be serialised,
+      // the variable model is provided through getVariablesCompatibility.
+      const adapter = variableAdapters.getIfExists(variable.type);
+      const variableSaveModel: any = adapter ? adapter.getSaveModel(variable, options.saveVariables) : variable;
 
       if (!options.saveVariables) {
         const original = originalVariables.find(
@@ -1245,29 +1248,11 @@ export class DashboardModel implements TimeModel {
   }
 
   canEditAnnotations(dashboardUID?: string) {
-    let canEdit = true;
-
-    // dashboardUID is falsy when it is an organizational annotation
-    if (!dashboardUID) {
-      canEdit = !!this.meta.annotationsPermissions?.organization.canEdit;
-    } else {
-      canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
-    }
-
-    return canEdit;
+    return !!this.meta.annotationsPermissions?.dashboard.canEdit;
   }
 
   canDeleteAnnotations(dashboardUID?: string) {
-    let canDelete = true;
-
-    // dashboardUID is falsy when it is an organizational annotation
-    if (!dashboardUID) {
-      canDelete = !!this.meta.annotationsPermissions?.organization.canDelete;
-    } else {
-      canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
-    }
-
-    return canDelete;
+    return !!this.meta.annotationsPermissions?.dashboard.canDelete;
   }
 
   canAddAnnotations() {

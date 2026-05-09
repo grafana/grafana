@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { ChangeEventHandler } from 'react';
+import { type ChangeEventHandler } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Icon, IconButton, Input, Stack, useStyles2 } from '@grafana/ui';

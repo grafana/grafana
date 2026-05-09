@@ -7,30 +7,24 @@ on:
       - main
       - release-*.*.*
 
-# TODO: re-enable this before merging
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 permissions: {}
-
-env:
-  ACTIONS_STEP_DEBUG: true
-  RUNNER_DEBUG: 1
 
 jobs:
   detect-changes:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
-      changed: ${{ steps.detect-changes.outputs.e2e }}
-      cloud_plugins_changed: ${{ steps.detect-changes.outputs.e2e-cloud-plugins }}
+      run-e2e-tests: ${{ steps.detect-changes.outputs.e2e == 'true' || github.event_name == 'push' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 2
@@ -40,242 +34,97 @@ jobs:
         with:
           self: .github/workflows/pr-e2e-tests.yml
 
-  build-grafana:
+  build-backend:
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
-    name: Build & Package Grafana
+    if: needs.detect-changes.outputs.run-e2e-tests == 'true'
+    name: Build backend
     runs-on: ubuntu-x64-xlarge
+    timeout-minutes: 15
     permissions:
       contents: read
-      id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v5
+      - name: Checkout repo
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      # TODO: add a cleanup workflow to remove the cache when the PR is closed
-      # https://github.com/actions/cache/blob/main/tips-and-workarounds.md#force-deletion-of-caches-overriding-default-cache-eviction-policy
-      # TODO: maybe we could just use the cache to store the build, instead of uploading as an artifact?
-      - uses: actions/cache@v4
+      - name: Cache backend build
+        uses: actions/cache@v5
         id: cache
         with:
-          key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'conf/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', 'Dockerfile') }}"
-          path: |
-            build-dir
+          key: "e2e-build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'embed.go') }}"
+          path: bin
 
-      # If no cache hit, build Grafana
-      - name: Build Grafana
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        env:
-          CACHE_BUILDERS: ${{ github.event.pull_request.head.repo.fork == false }}
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" --cache-builders=${CACHE_BUILDERS} > out.txt
-      - name: Cat built artifact
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: cat out.txt
-      - name: Move built artifacts
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p build-dir
-          mv "$(grep 'grafana_.*tar.gz$' out.txt | grep -Fv -m1 'docker')" build-dir/grafana.tar.gz
-          mv "$(grep 'grafana_.*docker.tar.gz$' out.txt)" build-dir/grafana.docker.tar.gz
-
-      # If cache hit, validate the artifact is present
-      - name: Validate artifact
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: |
-          if [ ! -f build-dir/grafana.tar.gz ]; then
-            echo "Error: build-dir/grafana.tar.gz not found in cache"
-            exit 1
-          fi
-
-      - name: Set artifact name
-        run: echo "artifact=grafana-server-${{github.run_number}}" >> "$GITHUB_OUTPUT"
-        id: artifact
-
-      - name: Upload grafana.tar.gz
-        uses: actions/upload-artifact@v5
-        with:
-          retention-days: 1
-          name: grafana-tar-gz
-          path: build-dir/grafana.tar.gz
-
-      - name: Upload grafana docker tarball
-        uses: actions/upload-artifact@v5
-        with:
-          retention-days: 1
-          name: grafana-docker-tar-gz
-          path: build-dir/grafana.docker.tar.gz
-
-  # TODO: we won't need this when we only have playwright
-  build-e2e-runner:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
-    name: Build E2E test runner
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    outputs:
-      artifact: ${{ steps.artifact.outputs.artifact }}
-    steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
+        uses: ./.github/actions/setup-go
+        if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: Build backend
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: make build-go
+
+      - name: Upload backend build artifacts
+        uses: actions/upload-artifact@v7
         with:
-          go-version-file: go.mod
-          cache: ${{ !github.event.pull_request.head.repo.fork }}
-      - name: Build E2E test runner
-        id: artifact
-        run: |
-          set -euo pipefail
-          # We want a static binary, so we need to set CGO_ENABLED=0
-          CGO_ENABLED=0 go build -o ./e2e-runner ./e2e/
-          echo "artifact=e2e-runner-${{github.run_number}}" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v5
-        id: upload
-        with:
+          name: grafana-backend
+          path: bin/
           retention-days: 1
-          name: ${{ steps.artifact.outputs.artifact }}
-          path: e2e-runner
 
-  push-docker-image:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+  build-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.run-e2e-tests == 'true'
+    name: Build frontend
+    runs-on: ubuntu-x64-xlarge
+    timeout-minutes: 15
     permissions:
       contents: read
-      id-token: write
-    runs-on: ubuntu-latest
-    needs:
-      - build-grafana
     steps:
-      - id: get-github-token
-        name: "create github app token"
-        uses: grafana/shared-workflows/actions/create-github-app-token@eb02241ed0a92aff205feab8ac3afcdf51c757c8 # create-github-app-token-v0.2.0
-        with:
-          github_app: "delivery-bot-app"
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        id: login-to-gar
-        with:
-          registry: 'us-docker.pkg.dev'
-          environment: 'dev'
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
-        with:
-          name: grafana-docker-tar-gz
-          path: .
-      - name: Load & Push Docker image
-        env:
-          BUILD_ID: ${{ github.run_id }}
-        run: |
-          set -euo pipefail
-          LOADED_IMAGE_NAME=$(docker load -i grafana.docker.tar.gz | sed 's/Loaded image: //g')
-          VERSION=$(echo "${LOADED_IMAGE_NAME}" | cut -d ':' -f 2 | cut -d '-' -f 1)
-          DOCKER_IMAGE="us-docker.pkg.dev/grafanalabs-dev/docker-grafana-dev/grafana:${VERSION}-${BUILD_ID}"
-          docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
-          docker push "${DOCKER_IMAGE}"
-          echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
-      - name: Add PR status check
-        env:
-          GH_TOKEN: ${{ steps.get-github-token.outputs.token }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/grafana/grafana/check-runs \
-           -f "name=${IMAGE}" \
-           -f "head_sha=${SHA}" \
-           -f 'status=completed' \
-           -f 'conclusion=neutral' \
-           -f 'output[title]=Docker image' \
-           -f "output[summary]=${IMAGE}" \
-           -f "output[text]=${IMAGE}"
-
-  run-e2e-tests:
-    needs:
-      - build-grafana
-      - build-e2e-runner
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - suite: various-suite (old arch)
-            path: e2e/old-arch/various-suite
-            flags: --flags="--env dashboardScene=false"
-          - suite: dashboards-suite (old arch)
-            path: e2e/old-arch/dashboards-suite
-            flags: --flags="--env dashboardScene=false"
-          - suite: smoke-tests-suite (old arch)
-            path: e2e/old-arch/smoke-tests-suite
-            flags: --flags="--env dashboardScene=false"
-          - suite: panels-suite (old arch)
-            path: e2e/old-arch/panels-suite
-            flags: --flags="--env dashboardScene=false"
-    name: ${{ matrix.suite }}
-    runs-on: ubuntu-x64-large
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v5
+      - name: Checkout repo
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v6
+
+      - name: Cache frontend build
+        uses: actions/cache@v5
+        id: cache
         with:
-          name: grafana-tar-gz
-      - uses: actions/download-artifact@v6
-        with:
-          name: ${{ needs.build-e2e-runner.outputs.artifact }}
-      - name: chmod +x
-        run: chmod +x ./e2e-runner
-      - name: Run E2E tests
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/e2e --package=grafana.tar.gz
-            --suite=${{ matrix.path }}
-            ${{ matrix.flags }}
-      - name: Set suite name
-        id: set-suite-name
-        if: success() || failure()
+          key: "e2e-build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
+          path: |
+            public/build
+            public/app/plugins/*/*/dist
+
+      - name: Setup Node.js
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: ./.github/actions/setup-node
+
+      - name: Install yarn dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: ./.github/actions/yarn-install
+
+      - name: Build frontend
+        if: steps.cache.outputs.cache-hit != 'true'
         env:
-          SUITE: ${{ matrix.path }}
-        run: |
-          set -euo pipefail
-          echo "suite=$(echo "$SUITE" | sed 's/\//-/g')" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v5
-        if: success() || failure()
+          NO_SOURCEMAP: '1' # Don't generate sourcemaps for CI builds to speed up webpack + packaging
+        run: make build-js
+
+      - name: Upload frontend build artifacts
+        uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.set-suite-name.outputs.suite }}-${{ github.run_number }}
-          path: videos
+          name: grafana-frontend
+          path: |
+            public/
+            !**/*.ts
+            !**/*.tsx
+            !public/**/node_modules/
+            !public/locales/
           retention-days: 1
 
   run-storybook-test:
     name: Verify Storybook (Playwright)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
+    timeout-minutes: 15
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: needs.detect-changes.outputs.run-e2e-tests == 'true'
     permissions:
       contents: read
       id-token: write
@@ -287,32 +136,31 @@ jobs:
         if: github.event.pull_request.head.repo.fork == false
 
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+        uses: ./.github/actions/setup-node
 
-      - name: Install dependencies
-        run: yarn install --immutable
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: yarn playwright install chromium --with-deps
 
       - name: Run Storybook and E2E tests
         run: yarn e2e:playwright:storybook
 
   run-playwright-tests:
     needs:
-      - build-grafana
+      - build-backend
+      - build-frontend
     name: Playwright E2E tests (${{ matrix.shard }}/${{ matrix.shardTotal }})
     runs-on: ubuntu-x64-large
+    timeout-minutes: 20
     permissions:
       contents: read
-      id-token: write
 
     strategy:
       fail-fast: false
@@ -321,137 +169,135 @@ jobs:
         shardTotal: [8]
 
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v6
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
+      # It's quicker to build them in each test shard then prebuild and upload/download them as artifacts
+      - name: Build test plugins
+        run: yarn e2e:plugin:build
+
+      # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v8
         with:
-          name: grafana-tar-gz
-      - name: Run E2E tests
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
+          name: grafana-backend
+          path: grafana-server/bin
+      - name: Fix binary permissions
+        run: chmod +x grafana-server/bin/grafana*
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v8
         with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --blob-dir=./blob-report
-      - uses: actions/upload-artifact@v5
+          name: grafana-frontend
+          path: grafana-server/public
+      - name: Copy misc server files
+        run: |
+          cp -r conf/ grafana-server
+          cp -r tools/ grafana-server
+
+      # Apply E2E test configuration on top of the production-mirrored distribution
+      - name: Configure for E2E testing
+        run: |
+          mkdir -p grafana-server/conf/provisioning/{datasources,dashboards,alerting,plugins}
+          cp scripts/grafana-server/custom.ini grafana-server/conf/custom.ini
+          cp devenv/datasources.yaml grafana-server/conf/provisioning/datasources/
+          cp devenv/dashboards.yaml grafana-server/conf/provisioning/dashboards/
+          cp devenv/alert_rules.yaml grafana-server/conf/provisioning/alerting/
+          cp devenv/plugins.yaml grafana-server/conf/provisioning/plugins/
+          mkdir -p grafana-server/data/plugins
+          cp -r e2e-playwright/test-plugins/. grafana-server/data/plugins/
+
+      # Start Grafana from the standalone directory
+      # The server is immediately backgrounded so it can initialise in parallel while the Playwright browsers are installing 🤓
+      - name: Start Grafana server
+        run: |
+          grafana-server/bin/grafana server \
+            --homepath="$PWD/grafana-server" \
+            cfg:server.http_port=3001 \
+            > grafana-server/grafana.log 2>&1 &
+
+          printf "\nThe Grafana server is starting in the background.\n"
+          echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
+
+      - name: Install Playwright browsers
+        run: yarn playwright install chromium --with-deps
+
+      - name: Wait for Grafana server to start
+        run: |
+          timeout=60
+          elapsed=0
+          printf "Waiting for Grafana to start"
+          while ! curl -s -f http://localhost:3001/health > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              printf "\n\n--- Grafana server logs ---\n"
+              cat grafana-server/grafana.log
+              printf "\n--- End of Grafana server logs ---\n\n"
+              printf "Timeout after %d seconds waiting for Grafana\n" "$timeout"
+              exit 1
+            fi
+            printf "."
+            sleep 1
+            elapsed=$((elapsed + 1))
+          done
+          printf "\nThe Grafana server is ready\n"
+          echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
+
+      - name: Run Playwright tests
+        run: yarn e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
+        env:
+          GRAFANA_URL: http://localhost:3001
+          CI: true
+
+      - name: Show failure instructions
+        if: failure()
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          echo "Tests in this shard failed."
+          echo ""
+          echo "View combined logs and HTML report in the 'All Playwright tests complete' job once all tests finish."
+          exit 1
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: grafana-server-log-${{ matrix.shard }}
+          path: grafana-server/grafana.log
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v7
         if: success() || failure()
         with:
-          name: playwright-blob-${{ github.run_number }}-${{ matrix.shard }}
-          path: ./blob-report
+          name: playwright-blob-${{ matrix.shard }}
+          path: blob-report
           retention-days: 1
-
-  run-azure-monitor-e2e:
-    if: needs.detect-changes.outputs.cloud_plugins_changed == 'true' && github.event.pull_request.head.repo.fork == false && github.event_name == 'pull_request'
-    runs-on: ubuntu-x64-large
-    needs:
-      - build-grafana
-      - detect-changes
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - uses: grafana/shared-workflows/actions/login-to-gar@login-to-gar-v0.4.0
-        id: login-to-gar
-        with:
-          registry: "us-docker.pkg.dev"
-          environment: "dev"
-
-      - id: pull-docker-image
-        run: |
-          docker pull us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest
-
-      - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            AZURE_SP_APP_ID=cpp-azure-resourcemanager-credentials:application_id
-            AZURE_SP_PASSWORD=cpp-azure-resourcemanager-credentials:application_secret
-            AZURE_TENANT=cpp-azure-resourcemanager-credentials:tenant_id
-
-      - id: deploy-resources
-        env:
-          AZURE_SP_APP_ID: ${{ env.AZURE_SP_APP_ID}}
-          AZURE_SP_PASSWORD: ${{ env.AZURE_SP_PASSWORD}}
-          AZURE_TENANT: ${{ env.AZURE_TENANT }}
-          NAME: ${{ github.ref_name }}
-        run: |
-          docker container run --name cpp-e2e-deploy -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT -e PLAYWRIGHT_CI=true us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run-playwright.sh azure "${NAME}" deploy
-
-      - id: extract-creds
-        # see https://github.com/grafana/oss-plugin-partnerships/blob/a77040d0456003cd258668b61d542dc7c75db5b5/e2e/scripts/deploy.sh#L25 for path
-        run: |
-          docker cp cpp-e2e-deploy:/outputs.json /tmp/outputs.json
-
-      - uses: actions/download-artifact@v6
-        with:
-          name: grafana-tar-gz
-
-      - name: Run E2E tests
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --playwright-command="yarn e2e:playwright:cloud-plugins" --cloud-plugin-creds=/tmp/outputs.json
-
-      - name: Destroy resources
-        if: always() && steps.deploy-resources.outcome == 'success'
-        env:
-          AZURE_SP_APP_ID: ${{ env.AZURE_SP_APP_ID }}
-          AZURE_SP_PASSWORD: ${{ env.AZURE_SP_PASSWORD }}
-          AZURE_TENANT: ${{ env.AZURE_TENANT }}
-          NAME: ${{ github.ref_name }}
-        run: |
-          docker container run --name cpp-e2e-destroy -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run-playwright.sh azure "${NAME}" destroy
 
   required-playwright-tests:
     needs:
       - run-playwright-tests
-      - run-azure-monitor-e2e
       - run-storybook-test
-      - build-grafana
     if: ${{ !cancelled() }}
     name: All Playwright tests complete
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
     permissions:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-
       - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@v6
+        if: needs.run-playwright-tests.result != 'skipped'
+        uses: actions/download-artifact@v8
         with:
           path: blobs
           pattern: playwright-blob-*
           merge-multiple: true
 
       - name: Check blob reports
+        if: needs.run-playwright-tests.result != 'skipped'
         run: |
           if [ ! "$(ls -A ./blobs)" ]; then
             echo "Error: No blob reports found in ./blobs directory"
@@ -462,110 +308,99 @@ jobs:
           ls -lah ./blobs
 
       - name: Merge into HTML Report
+        if: needs.run-playwright-tests.result != 'skipped'
         run: npx playwright merge-reports --reporter html ./blobs
 
-      - name: Merge into JSON Report
-        env:
-          PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/playwright-results.json
-        run: npx playwright merge-reports --reporter=json ./blobs
-
-      - name: Bench report
-        run: |
-          docker run --rm \
-            --volume="/tmp/playwright-results.json:/home/bench/tests/playwright-results.json" \
-            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.5.1 report \
-              --grafana-url "http://localhost:3000" \
-              --grafana-version "CI- ${{ github.sha }}" \
-              --test-suite-name "FrontendCore" \
-              --report-input playwright \
-              --report-output log \
-              --log-level DEBUG \
-              /home/bench/tests/playwright-results.json
-
       - name: Upload HTML report
+        if: needs.run-playwright-tests.result != 'skipped'
         id: upload-html
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
-          name: playwright-html-${{ github.run_number }}
+          name: playwright-html
           path: playwright-report
           retention-days: 7
 
       - name: Check test suites
         id: check-jobs
-        uses: ./.github/actions/check-jobs
-        continue-on-error: true # Failure will be reported on Show test results step
+        uses: grafana/grafana/.github/actions/check-jobs@main
+        continue-on-error: true # Failure will be reported on Check test results step
         with:
           needs: ${{ toJson(needs) }}
           failure-message: "One or more E2E test suites have failed"
           success-message: "All E2E test suites completed successfully"
 
-      - name: Show test results
+      - name: Check test results
         env:
           FAILED: ${{ steps.check-jobs.outputs.any-failed }}
           REPORT_URL: ${{ steps.upload-html.outputs.artifact-url }}
+          RUN_ID: ${{ github.run_id }}
+          TESTS_RAN: ${{ needs.run-playwright-tests.result != 'skipped' }}
         # sed removes the leading `../../src/` from the paths
+        # Only show the report if the tests actually ran, but fail if the `check-jobs` step failed
         run: |
-          npx playwright merge-reports --reporter list ./blobs | sed 's|\(\.\./\)\{1,\}src/|/|g'
-          if [ "$FAILED" = "true" ]; then
+          if [ "$TESTS_RAN" = "true" ]; then
+            npx playwright merge-reports --reporter list ./blobs | sed 's|\(\.\./\)\{1,\}src/|/|g'
             echo ""
-            echo "Download the test report from $REPORT_URL"
+            echo "Run the following command to view the results locally:"
+            echo "  ./scripts/view-playwright-ci.sh $RUN_ID"
+            echo ""
+            echo "Alternatively, download the test report from $REPORT_URL"
+            echo "and view it locally with:"
+            echo "  yarn playwright show-report <path-to-unzipped-report>"
+          fi
+
+          if [ "$FAILED" = "true" ]; then
             exit 1
           fi
 
-  run-a11y-test:
+  report-playwright-bench:
     needs:
-      - build-grafana
-    name: A11y test
-    runs-on: ubuntu-x64-large
+      - run-playwright-tests
+    if: ${{ !cancelled() }}
+    name: Report Playwright benchmarks
+    runs-on: ubuntu-x64-small
     permissions:
       contents: read
       id-token: write
-
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v5
+      - name: Download blob reports from GitHub Actions Artifacts
+        if: needs.run-playwright-tests.result != 'skipped'
+        uses: actions/download-artifact@v8
         with:
-          persist-credentials: false
-      - uses: actions/download-artifact@v6
-        with:
-          name: grafana-tar-gz
-      - name: Run PR a11y test
-        if: github.event_name == 'pull_request'
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/a11y --package=grafana.tar.gz
-      - name: Run non-PR a11y test
-        if: github.event_name != 'pull_request'
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail --results=./pa11y-ci-results.json
-      - name: Upload pa11y results
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v5
-        with:
-          retention-days: 1
-          name: pa11y-ci-results
-          path: pa11y-ci-results.json
+          path: blobs
+          pattern: playwright-blob-*
+          merge-multiple: true
+
+      - name: Merge into JSON Report
+        if: needs.run-playwright-tests.result != 'skipped'
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/playwright-results.json
+        run: npx playwright merge-reports --reporter=json ./blobs
+
+      - name: Bench report
+        if: needs.run-playwright-tests.result != 'skipped'
+        run: |
+          docker run --rm \
+            --volume="/tmp/playwright-results.json:/home/bench/tests/playwright-results.json" \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v1.0.1 report \
+              --service grafana \
+              --service-url "http://localhost:3000" \
+              --service-version "CI-${{ github.sha }}" \
+              --suite-name "FrontendCore" \
+              --run-stage ci \
+              --report-input playwright \
+              --report-output log \
+              --log-level DEBUG \
+              /home/bench/tests/playwright-results.json
 
   publish-metrics:
-    needs:
-      - run-a11y-test
     name: Publish metrics
     # Run on `grafana/grafana` main branch only
     if: github.event_name == 'push' && github.repository == 'grafana/grafana' && github.ref_name == 'main'
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
     steps:
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
@@ -573,48 +408,29 @@ jobs:
           repo_secrets: |
             GRAFANA_MISC_STATS_API_KEY=grafana-misc-stats:api_key
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: ./.github/actions/setup-node
         with:
-          node-version-file: '.nvmrc'
-      - name: Install dependencies
-        run: yarn install --immutable
-      - name: Get pa11y results
-        uses: actions/download-artifact@v6
-        with:
-          name: pa11y-ci-results
+          cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the yarn-install step
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:
           GRAFANA_MISC_STATS_API_KEY: ${{ env.GRAFANA_MISC_STATS_API_KEY}}
 
-  # This is the job that is actually required by rulesets.
-  # We want to only require one job instead of all the individual tests.
-  # Future work also allows us to start skipping some tests based on changed files.
+  # 'All E2E tests complete' is still a required check. To help with this transition, we keep
+  # a placeholder job to avoid needing to remove the required check from github yet.
   required-e2e-tests:
     needs:
-      - run-e2e-tests
-      - build-grafana
-      # a11y test is not listed on purpose: it is not an important E2E test.
-      # It is also totally fine to fail right now.
-    # always() is the best function here.
-    # success() || failure() will skip this function if any need is also skipped.
-    # That means conditional test suites will fail the entire requirement check.
+      - run-playwright-tests
     if: always()
 
     name: All E2E tests complete
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Check test suites
-        uses: ./.github/actions/check-jobs
-        with:
-          needs: ${{ toJson(needs) }}
-          failure-message: "One or more E2E test suites have failed"
-          success-message: "All E2E test suites completed successfully"
+    - name: Placeholder step
+      run: echo "This step is intentionally left blank. Check playwright-required-tests job for the actual test results."

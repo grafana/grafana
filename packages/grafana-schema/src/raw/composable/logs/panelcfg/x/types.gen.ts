@@ -12,9 +12,10 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "13.0.0-pre";
+export const pluginVersion = "13.1.0-pre";
 
 export interface Options {
+  allowDownload?: boolean;
   controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
   detailsMode?: ('inline' | 'sidebar');
@@ -22,6 +23,7 @@ export interface Options {
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
   fontSize?: ('default' | 'small');
+  grammar?: unknown;
   isFilterLabelActive?: unknown;
   logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
@@ -44,6 +46,7 @@ export interface Options {
   showControls?: boolean;
   showFieldSelector?: boolean;
   showLabels: boolean;
+  showLevel?: boolean;
   showLogAttributes?: boolean;
   showLogContextToggle: boolean;
   showTime: boolean;

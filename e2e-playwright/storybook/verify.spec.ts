@@ -1,4 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect } from 'playwright/test';
 // very basic test to verify that the button story loads correctly
 // this is only intended to catch some basic build errors with storybook
 test.describe(

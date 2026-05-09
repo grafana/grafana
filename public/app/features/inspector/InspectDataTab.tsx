@@ -1,23 +1,23 @@
 import { cloneDeep } from 'lodash';
 import { PureComponent } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
-  CoreApp,
-  DataFrame,
+  type CoreApp,
+  type DataFrame,
   DataTransformerID,
-  FieldConfigSource,
-  SelectableValue,
-  TimeZone,
+  type FieldConfigSource,
+  type SelectableValue,
+  type TimeZone,
   transformDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { dataFrameToLogsModel } from '../logs/logsModel';
 
@@ -272,7 +272,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const hasServiceGraph = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
 
     return (
-      <div className={styles.wrap} aria-label={selectors.components.PanelInspector.Data.content}>
+      <div className={styles.wrap} data-testid={selectors.components.PanelInspector.Data.content}>
         <div className={styles.toolbar}>
           <InspectDataOptions
             data={data}
@@ -291,7 +291,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
         </div>
         <div className={styles.content}>
           <AutoSizer>
-            {({ width, height }) => {
+            {({ width, height }: Size) => {
               if (width === 0) {
                 return null;
               }

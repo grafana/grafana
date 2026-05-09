@@ -32,6 +32,20 @@ var (
 	_ resource.BulkProcessingBackend = (*backend)(nil)
 )
 
+const (
+	bulkHistoryInsertSQLiteMaxRows  = 8
+	bulkHistoryInsertDefaultMaxRows = 1000
+)
+
+// noRollbackTx wraps a db.Tx but makes Rollback() a no-op.
+// Used for external (migration) transactions where we want to keep the
+// transaction alive on failure so the caller can retry with parquet buffering.
+type noRollbackTx struct {
+	db.Tx
+}
+
+func (t *noRollbackTx) Rollback() error { return nil }
+
 type bulkRV struct {
 	max     int64
 	counter int64
@@ -121,6 +135,11 @@ func buildKeyPath(key *resourcepb.ResourceKey, rv int64, action resourcepb.BulkR
 		actionStr = fmt.Sprintf("%d", action)
 	}
 	snowflakeRV := rvmanager.SnowflakeFromRV(rv)
+	if key.Namespace == "" {
+		return fmt.Sprintf("unified/data/%s/%s/%s/%d~%s~%s",
+			key.Group, key.Resource, key.Name, snowflakeRV, actionStr, folder)
+	}
+
 	return fmt.Sprintf("unified/data/%s/%s/%s/%s/%d~%s~%s",
 		key.Group, key.Resource, key.Namespace, key.Name, snowflakeRV, actionStr, folder)
 }
@@ -139,27 +158,36 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 	}
 	defer b.bulkLock.Finish(setting.Collection)
 
-	// If provided, reuse the inproc transaction for SQLite
-	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil && b.dialect.DialectName() == "sqlite" {
-		if externalTx := resource.TransactionFromContext(clientCtx); externalTx != nil {
-			b.log.Info("Using SQLite transaction from client context")
-			rsp := &resourcepb.BulkResponse{}
-			err := b.processBulkWithTx(ctx, dbimpl.NewTx(externalTx), setting, iter, rsp)
-			if err != nil {
-				rsp.Error = resource.AsErrorResult(err)
-			}
-			return rsp
-		}
+	// Use a temporary Parquet file to separate read and write phases for SQLite.
+	// This avoids lock contention between the SHARED lock held by legacy row cursors
+	// and the EXCLUSIVE lock needed for cache spills during bulk inserts.
+	// Enabled via config (migration_parquet_buffer) or context (retry after failure).
+	useParquet := b.migrationParquetBuffer
+	clientCtx := inprocgrpc.ClientContext(ctx) // inprocgrpc contains the migrator context
+	if !useParquet && clientCtx != nil {
+		useParquet = resource.ParquetBufferFromContext(clientCtx)
 	}
-
-	// We may want to first write parquet, then read parquet
-	if b.dialect.DialectName() == "sqlite" {
-		file, err := os.CreateTemp("", "grafana-bulk-export-*.parquet")
+	if useParquet && b.dialect.DialectName() == "sqlite" {
+		if b.tmpDir != "" {
+			if err := os.MkdirAll(b.tmpDir, 0750); err != nil {
+				return &resourcepb.BulkResponse{
+					Error: resource.AsErrorResult(fmt.Errorf("create tmp dir: %w", err)),
+				}
+			}
+		}
+		file, err := os.CreateTemp(b.tmpDir, "grafana-bulk-export-*.parquet")
 		if err != nil {
 			return &resourcepb.BulkResponse{
 				Error: resource.AsErrorResult(err),
 			}
 		}
+		defer func() {
+			// Close is best-effort; the parquet writer may have already closed the file.
+			_ = file.Close()
+			if err := os.Remove(file.Name()); err != nil && !os.IsNotExist(err) {
+				b.log.Warn("failed to remove parquet tmp file", "path", file.Name(), "err", err)
+			}
+		}()
 
 		writer, err := parquet.NewParquetWriter(file)
 		if err != nil {
@@ -168,13 +196,13 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 			}
 		}
 
-		// write bulk to parquet
+		// write bulk to parquet (ProcessBulk closes the file via writer.Close)
 		rsp := writer.ProcessBulk(ctx, setting, iter)
 		if rsp.Error != nil {
 			return rsp
 		}
 
-		b.log.Info("using parquet buffer", "parquet", file)
+		b.log.Info("using parquet buffer", "path", file.Name(), "processed", rsp.Processed)
 
 		// Replace the iterator with one from parquet
 		iter, err = parquet.NewParquetReader(file.Name(), 50)
@@ -182,6 +210,20 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 			return &resourcepb.BulkResponse{
 				Error: resource.AsErrorResult(err),
 			}
+		}
+	}
+
+	if clientCtx != nil && b.dialect.DialectName() == "sqlite" {
+		if externalTx := resource.TransactionFromContext(clientCtx); externalTx != nil {
+			b.log.Info("Using SQLite transaction from client context")
+			rsp := &resourcepb.BulkResponse{}
+			// Let migrator rollback its transaction on error
+			tx := &noRollbackTx{dbimpl.NewTx(externalTx)}
+			err := b.processBulkWithTx(ctx, tx, setting, iter, rsp)
+			if err != nil {
+				rsp.Error = resource.AsErrorResult(err)
+			}
+			return rsp
 		}
 	}
 
@@ -221,6 +263,10 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 
 	// Calculate the RV based on incoming request timestamps
 	rv := newBulkRV()
+	batchIter, ok := iter.(resource.BulkRequestBatchIterator)
+	if !ok {
+		batchIter = &singleRequestBatchIterator{iter: iter}
+	}
 
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 
@@ -234,68 +280,17 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 		rsp.Summary = append(rsp.Summary, summary)
 	}
 
-	obj := &unstructured.Unstructured{}
-
 	// Write each event into the history
-	for iter.Next() {
-		iterStart := time.Now()
-		if iter.RollbackRequested() {
+	for batchIter.NextBatch() {
+		if batchIter.RollbackRequested() {
 			return rollbackWithError(nil)
 		}
-		req := iter.Request()
-		if req == nil {
-			return rollbackWithError(fmt.Errorf("missing request"))
+		batch := batchIter.Batch()
+		if len(batch) == 0 {
+			return rollbackWithError(fmt.Errorf("missing request batch"))
 		}
-		rsp.Processed++
-
-		if req.Action == resourcepb.BulkRequest_UNKNOWN {
-			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-				Key:    req.Key,
-				Action: req.Action,
-				Error:  "unknown action",
-			})
-			continue
-		}
-
-		err := obj.UnmarshalJSON(req.Value)
-		if err != nil {
-			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-				Key:    req.Key,
-				Action: req.Action,
-				Error:  "unable to unmarshal json",
-			})
-			continue
-		}
-
-		// Compute RV first so we can use it for key_path
-		resourceVersion := rv.next(obj)
-
-		// Build key_path for indexing/searching
-		keyPath := buildKeyPath(req.Key, resourceVersion, req.Action, req.Folder)
-
-		// Write the event to history
-		insertStart := time.Now()
-		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent: resource.WriteEvent{
-				Key:        req.Key,
-				Type:       resourcepb.WatchEvent_Type(req.Action),
-				Value:      req.Value,
-				PreviousRV: -1, // Used for WATCH, but we want to skip watch events
-			},
-			Folder:          req.Folder,
-			GUID:            uuid.New().String(),
-			ResourceVersion: resourceVersion,
-			KeyPath:         keyPath,
-		}); err != nil {
-			return rollbackWithError(fmt.Errorf("insert into resource history: %w", err))
-		}
-		insertDuration := time.Since(insertStart)
-
-		if insertDuration > 500*time.Millisecond {
-			b.log.Warn("slow bulk insert", "processed", rsp.Processed, "recv_wait", insertStart.Sub(iterStart), "insert", insertDuration, "name", req.Key.Name)
-		} else if rsp.Processed%10 == 0 {
-			b.log.Debug("bulk insert timing", "processed", rsp.Processed, "recv_wait", insertStart.Sub(iterStart), "insert", insertDuration, "name", req.Key.Name)
+		if err := b.insertHistoryBatch(ctx, tx, batch, rv, rsp); err != nil {
+			return rollbackWithError(err)
 		}
 	}
 
@@ -327,7 +322,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 			}
 		} else {
 			// Make sure the collection RV is above our last written event
-			_, err = b.rvManager.ExecWithRV(ctx, key, func(tx db.Tx) (string, error) {
+			_, err = b.rvManager.ExecWithRV(ctx, key, func(_ context.Context, _ db.Tx) (string, error) {
 				return "", nil
 			})
 			if err != nil {
@@ -342,6 +337,116 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 		}
 	}
 	return nil
+}
+
+func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, batch []*resourcepb.BulkRequest, rv *bulkRV, rsp *resourcepb.BulkResponse) error {
+	rows := make([]sqlResourceRequest, 0, len(batch))
+	payloadBytes := 0
+	for _, req := range batch {
+		if req == nil {
+			return fmt.Errorf("missing request")
+		}
+		rsp.Processed++
+		payloadBytes += len(req.Value)
+
+		if req.Action == resourcepb.BulkRequest_UNKNOWN {
+			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+				Key:    req.Key,
+				Action: req.Action,
+				Error:  "unknown action",
+			})
+			continue
+		}
+
+		obj := &unstructured.Unstructured{}
+		if err := obj.UnmarshalJSON(req.Value); err != nil {
+			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+				Key:    req.Key,
+				Action: req.Action,
+				Error:  "unable to unmarshal json",
+			})
+			continue
+		}
+
+		resourceVersion := rv.next(obj)
+		rows = append(rows, sqlResourceRequest{
+			WriteEvent: resource.WriteEvent{
+				Key:        req.Key,
+				Type:       resourcepb.WatchEvent_Type(req.Action),
+				Value:      req.Value,
+				PreviousRV: -1, // Used for WATCH, but we want to skip watch events
+			},
+			Folder:          req.Folder,
+			GUID:            uuid.New().String(),
+			ResourceVersion: resourceVersion,
+			KeyPath:         buildKeyPath(req.Key, resourceVersion, req.Action, req.Folder),
+		})
+	}
+
+	if len(rows) == 0 {
+		return nil
+	}
+
+	insertStart := time.Now()
+	maxRows := bulkHistoryInsertRowLimit(b.dialect.DialectName())
+	for start := 0; start < len(rows); start += maxRows {
+		end := start + maxRows
+		if end > len(rows) {
+			end = len(rows)
+		}
+		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsertBulk, sqlBulkResourceHistoryInsertRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Rows:        rows[start:end],
+		}); err != nil {
+			return fmt.Errorf("insert into resource history: %w", err)
+		}
+	}
+	insertDuration := time.Since(insertStart)
+
+	if insertDuration > 500*time.Millisecond {
+		b.log.Warn("slow bulk insert", "processed", rsp.Processed, "batch_size", len(batch), "inserted", len(rows), "payload_bytes", payloadBytes, "insert", insertDuration)
+	} else if rsp.Processed%10 == 0 {
+		b.log.Debug("bulk insert timing", "processed", rsp.Processed, "batch_size", len(batch), "inserted", len(rows), "payload_bytes", payloadBytes, "insert", insertDuration)
+	}
+
+	return nil
+}
+
+func bulkHistoryInsertRowLimit(dialectName string) int {
+	switch dialectName {
+	case "sqlite":
+		return bulkHistoryInsertSQLiteMaxRows
+	default:
+		return bulkHistoryInsertDefaultMaxRows
+	}
+}
+
+type singleRequestBatchIterator struct {
+	iter  resource.BulkRequestIterator
+	batch []*resourcepb.BulkRequest
+}
+
+func (s *singleRequestBatchIterator) NextBatch() bool {
+	if !s.iter.Next() {
+		return false
+	}
+	if req := s.iter.Request(); req != nil {
+		if len(s.batch) == 0 {
+			s.batch = make([]*resourcepb.BulkRequest, 1)
+		}
+		s.batch[0] = req
+	} else {
+		s.batch = nil
+	}
+	return true
+}
+
+func (s *singleRequestBatchIterator) Batch() []*resourcepb.BulkRequest {
+	return s.batch
+}
+
+func (s *singleRequestBatchIterator) RollbackRequested() bool {
+	return s.iter.RollbackRequested()
 }
 
 func (b *backend) updateLastImportTime(ctx context.Context, tx db.Tx, key *resourcepb.ResourceKey, now time.Time) error {

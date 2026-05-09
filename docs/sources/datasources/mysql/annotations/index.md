@@ -13,12 +13,6 @@ labels:
 menuTitle: Annotations
 title: MySQL annotations
 weight: 340
-refs:
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
 ---
 
 # MySQL annotations
@@ -26,7 +20,7 @@ refs:
 Annotations overlay event data on your dashboard graphs, helping you correlate events with metrics.
 You can use MySQL as a data source for annotations to display events such as deployments, alerts, or other significant occurrences on your visualizations.
 
-For general information about annotations, refer to [Annotate visualizations](ref:annotate-visualizations).
+For general information about annotations, refer to [Annotate visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/).
 
 ## Before you begin
 

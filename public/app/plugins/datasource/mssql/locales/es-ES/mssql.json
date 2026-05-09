@@ -14,7 +14,7 @@
       "auth-options-azure-entra": "Contraseña de Azure Entra",
       "auth-options-managed-identity": "Identidad administrada",
       "client-secret-reset": "Restablecer",
-      "description-authentication": "Elija el tipo de autenticación para los servicios de Azure",
+      "description-authentication": "Elige el tipo de autenticación para los servicios de Azure",
       "label-application-client-id": "ID de cliente de la aplicación",
       "label-authentication": "Autenticación",
       "label-azure-cloud": "Azure Cloud",
@@ -48,14 +48,14 @@
     "table": "Tabla:",
     "table-tip": "devuelve cualquier conjunto de columnas",
     "time-series": "Series temporales:",
-    "time-series-tip": "devuelve la columna denominada «hora» (en UTC), como una marca de tiempo unix o cualquier tipo de datos de fecha nativa SQL. Puede utilizar las macros a continuación.",
+    "time-series-tip": "devuelve la columna denominada «hora» (en UTC), como una marca de tiempo unix o cualquier tipo de datos de fecha nativa SQL. Puedes utilizar las macros a continuación.",
     "time-series-tip-2": "cualquier otra columna devuelta serán los valores de los puntos de tiempo.",
     "title": "Hoja de trucos de MSSQL"
   },
   "configuration": {
     "configuration-editor": {
-      "body-user-permission": "Al usuario de la base de datos solo se le deben conceder permisos {{permissionType}} en la base de datos especificada y en las tablas que desee consultar. Grafana no valida la seguridad de las consultas, por lo que las consultas pueden contener cualquier instrucción SQL. Por ejemplo, se ejecutarían sentencias como <3>{{example1}}</3> y <5>{{example2}}</5>. Como protección, es <7>muy recomendable</7> que cree un usuario específico de MS SQL con permisos restringidos. Consulte la <10>documentación de la fuente de datos de Microsoft SQL Server</10> para obtener más información.",
-      "description-additional-settings": "Los ajustes adicionales son ajustes opcionales que se pueden configurar para tener un mayor control sobre su fuente de datos. Esto incluye los límites de conexión, el tiempo de espera de la conexión, el intervalo de tiempo de agrupación y el proxy SOCKS seguro.",
+      "body-user-permission": "Al usuario de la base de datos solo se le deben conceder permisos {{permissionType}} en la base de datos especificada y en las tablas que desee consultar. Grafana no valida la seguridad de las consultas, por lo que las consultas pueden contener cualquier instrucción SQL. Por ejemplo, se ejecutarían sentencias como <3>{{example1}}</3> y <5>{{example2}}</5>. Como protección, es <7>muy</7> recomendable que crees un usuario específico de MS SQL con permisos restringidos. Consulta la <10>documentación de la fuente de datos de Microsoft SQL Server</10> para obtener más información.",
+      "description-additional-settings": "Los ajustes adicionales son ajustes opcionales que se pueden configurar para tener un mayor control sobre tu fuente de datos. Esto incluye los límites de conexión, el tiempo de espera de la conexión, el intervalo de tiempo de agrupación y el proxy SOCKS seguro.",
       "description-auth-type-azure-auth": "<i>Autenticación de Azure</i> Autentica los recursos y las aplicaciones de Azure y accede de forma segura a ellos mediante las credenciales de Azure AD: se admiten la identidad de servicio administrado y las credenciales secretas del cliente.",
       "description-auth-type-credential-cache": "<i>Windows AD: caché de credenciales</i> Windows Active Directory: inicio de sesión para el usuario del dominio a través de la caché de credenciales.",
       "description-auth-type-credential-cache-file": "<i>Windows AD: archivo de caché de credenciales</i> Windows Active Directory: inicio de sesión para el usuario del dominio a través del archivo de caché de credenciales.",
@@ -100,10 +100,10 @@
       "title-user-permission": "Permiso de usuario"
     },
     "kerberos": {
-      "username-message": "Utilice el formato <1>usuario@EJEMPLO.COM</1>. El dominio deriva del nombre de usuario."
+      "username-message": "Utiliza el formato <1>usuario@EJEMPLO.COM</1>. El dominio deriva del nombre de usuario."
     },
     "kerberos-advanced-settings": {
-      "description-dns-lookup-kdc": "Indique si los registros DNS «SRV» deben utilizarse para localizar los KDC y otros servidores de un dominio. El valor predeterminado es <1>{{default}}</1>.",
+      "description-dns-lookup-kdc": "Indica si los registros DNS «SRV» deben utilizarse para localizar los KDC y otros servidores de un dominio. El valor predeterminado es <1>{{default}}</1>.",
       "description-krb5-config-file-path": "La ruta del archivo de configuración para el <2>paquete MIT krb5</2>. El valor predeterminado es <4>{{default}}</4>.",
       "description-udp-preference-limit": "El valor predeterminado es <1>{{default}}</1> y significa que siempre se utiliza TCP y es opcional.",
       "label-dns-lookup-kdc": "KDC de búsqueda de DNS",

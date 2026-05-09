@@ -126,7 +126,7 @@ func (g *GRPCInlineClient) CanReference(ctx context.Context, owner v0alpha1.Obje
 	return err
 }
 
-func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.ObjectReference, value v0alpha1.RawSecureValue) (string, error) {
+func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.ObjectReference, value v0alpha1.RawSecureValue, desc *string) (string, error) {
 	client, err := g.getClient(owner.Namespace)
 	if err != nil {
 		return "", err
@@ -144,7 +144,8 @@ func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.Obje
 			Namespace:  owner.Namespace,
 			Name:       owner.Name,
 		},
-		Value: value.DangerouslyExposeAndConsumeValue(),
+		Value:       value.DangerouslyExposeAndConsumeValue(),
+		Description: desc,
 	}
 
 	resp, err := client.CreateInline(ctx, req)

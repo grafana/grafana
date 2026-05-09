@@ -3,16 +3,16 @@ import { noop } from 'lodash';
 import pluralize from 'pluralize';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { type GrafanaTheme2, type PanelProps } from '@grafana/data';
 import { Button, clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
 import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
-import { Alert, CombinedRule } from 'app/types/unified-alerting';
+import { type Alert, type CombinedRule } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../core/constants';
 
-import { GroupMode, UnifiedAlertListOptions } from './types';
+import { GroupMode, type UnifiedAlertListOptions } from './types';
 import { filterAlerts } from './util';
 
 interface Props {

@@ -2,7 +2,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 export const UnlinkLibraryPanelButton = ({ dashboard }: ToolbarActionProps) => {
   return (

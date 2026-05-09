@@ -1,12 +1,14 @@
 import { css, cx } from '@emotion/css';
-import { addMinutes, subDays, subHours } from 'date-fns';
-import { Location } from 'history';
+import { addMinutes } from 'date-fns/addMinutes';
+import { subDays } from 'date-fns/subDays';
+import { subHours } from 'date-fns/subHours';
+import { type Location } from 'history';
 import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
@@ -28,7 +30,7 @@ import {
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
-import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
@@ -42,12 +44,13 @@ import { EditorColumnHeader } from '../EditorColumnHeader';
 import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import {
-  NotificationTemplate,
+  type NotificationTemplate,
   useCreateNotificationTemplate,
   useNotificationTemplateMetadata,
   useUpdateNotificationTemplate,
   useValidateNotificationTemplate,
 } from '../contact-points/useNotificationTemplates';
+import { isLegacyTemplate } from '../contact-points/utils';
 
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
@@ -129,6 +132,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const { provenance } = useNotificationTemplateMetadata(originalTemplate);
   const isProvisioned = isProvisionedResource(provenance);
   const isImported = provenance === KnownProvenance.ConvertedPrometheus;
+  const isLegacy = originalTemplate ? isLegacyTemplate(originalTemplate) : false;
   const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
     ? { title: originalTemplate.title, content: originalTemplate.content }
     : undefined;
@@ -222,6 +226,18 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
           {isProvisioned && !isImported && (
             <Box grow={0}>
               <ProvisioningAlert resource={ProvisionedResource.Template} />
+            </Box>
+          )}
+          {isLegacy && (
+            <Box grow={0}>
+              <Alert
+                title={t('alerting.template-form.title-legacy', 'This template uses a legacy format')}
+                severity="warning"
+              >
+                <Trans i18nKey="alerting.template-form.body-legacy">
+                  This template was imported from a Mimir Alertmanager and uses a legacy format.
+                </Trans>
+              </Alert>
             </Box>
           )}
 
@@ -333,7 +349,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                         </div>
                         <Box flex={1}>
                           <AutoSizer>
-                            {({ width, height }) => (
+                            {({ width, height }: Size) => (
                               <TemplateEditor
                                 value={getValues('content')}
                                 onBlur={(value) => setValue('content', value)}

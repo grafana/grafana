@@ -1,22 +1,22 @@
 import {
   SceneDataNode,
   SceneDataTransformer,
-  SceneDeactivationHandler,
+  type SceneDeactivationHandler,
   SceneFlexItem,
   SceneFlexLayout,
   sceneGraph,
-  SceneObject,
+  type SceneObject,
   SceneObjectBase,
-  SceneVariable,
+  type SceneVariable,
   SceneVariableSet,
   TestVariable,
 } from '@grafana/scenes';
-import { DataTransformerConfig, LoadingState } from '@grafana/schema';
+import { type DataTransformerConfig, LoadingState } from '@grafana/schema';
 
 import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { cacheFieldDisplayNames } from '../../field/fieldState';
-import { DataFrame, FieldType } from '../../types/dataFrame';
+import { type DataFrame, FieldType } from '../../types/dataFrame';
 import { getDefaultTimeRange } from '../../types/time';
 import { BinaryOperationID } from '../../utils/binaryOperators';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
@@ -28,7 +28,7 @@ import { transformDataFrame } from '../transformDataFrame';
 import {
   CalculateFieldMode,
   calculateFieldTransformer,
-  ReduceOptions,
+  type ReduceOptions,
   WindowSizeMode,
   WindowAlignment,
   getNameFromOptions,
@@ -869,7 +869,7 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    const data = setupTransformationScene(seriesA, cfg, [
+    const data = await setupTransformationScene(seriesA, cfg, [
       new TestVariable({ name: 'var1', value: 'Test' }),
       new TestVariable({ name: 'var2', value: 5 }),
     ]);
@@ -1629,7 +1629,7 @@ function setupTransformationScene(
   inputData: DataFrame,
   cfg: DataTransformerConfig,
   variables: SceneVariable[]
-): DataFrame[] {
+): Promise<DataFrame[]> {
   class TestSceneObject extends SceneObjectBase<{}> {}
   const dataNode = new SceneDataNode({
     data: {
@@ -1655,5 +1655,11 @@ function setupTransformationScene(
 
   activateFullSceneTree(scene);
 
-  return sceneGraph.getData(consumer).state.data?.series!;
+  return new Promise<DataFrame[]>((resolve) => {
+    const dataProvider = sceneGraph.getData(consumer);
+    const sub = dataProvider.subscribeToState((state) => {
+      sub.unsubscribe();
+      resolve(state.data?.series ?? []);
+    });
+  });
 }

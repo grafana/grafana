@@ -30,10 +30,20 @@ var (
 
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
-	id        int64
-	refID     string
-	isInputTo map[string]struct{}
+	id          int64
+	refID       string
+	isInputTo   map[string]struct{}
+	disabledErr error // non-nil when the node is disabled due to a build-time error (e.g. missing dependency)
 }
+
+// Disable marks the node as disabled with the given reason. Disabled nodes are
+// skipped during pipeline execution; their error is injected into the result
+// vars so that downstream nodes fail with a dependency error.
+func (b *baseNode) Disable(err error) { b.disabledErr = err }
+
+// DisabledErr returns the build-time error that caused this node to be
+// disabled, or nil if the node is enabled.
+func (b *baseNode) DisabledErr() error { return b.disabledErr }
 
 type rawNode struct {
 	RefID      string `json:"refId"`
@@ -140,7 +150,7 @@ func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureT
 
 	switch commandType {
 	case TypeMath:
-		node.Command, err = UnmarshalMathCommand(rn)
+		node.Command, err = UnmarshalMathCommand(rn, cfg)
 	case TypeReduce:
 		node.Command, err = UnmarshalReduceCommand(rn)
 	case TypeResample:

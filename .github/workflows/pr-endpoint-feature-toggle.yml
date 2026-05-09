@@ -1,0 +1,108 @@
+name: "Endpoint Migration Feature Toggle Check"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend-strict: ${{ steps.changed-files.outputs.frontend_strict_any_changed }}
+      backend-strict: ${{ steps.changed-files.outputs.backend_strict_any_changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+          fetch-depth: 2
+
+      - name: Detect changes
+        id: changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+        with:
+          files_yaml: |
+            frontend_strict:
+              - 'public/**'
+              - 'packages/**'
+              - '!public/**/*.gen.ts'
+              - '!packages/**/*.gen.ts'
+              - '!packages/grafana-openapi/**'
+              - 'scripts/webpack/**'
+              - '.eslintrc*'
+              - '.prettierrc*'
+              - '.stylelintrc*'
+              - 'tsconfig*'
+              - 'yarn.lock'
+              - 'package.json'
+              - '.betterer*'
+              - 'jest.config*'
+              - 'playwright**'
+            backend_strict:
+              - 'pkg/**'
+              - 'go.mod'
+              - 'go.sum'
+              - 'Makefile'
+              - 'conf/**'
+              - '.golangci*'
+              - 'apiserver/**'
+              - 'pkg-gen/**'
+              - 'scripts/drone/**'
+              - 'scripts/go/**'
+              - '.air.toml'
+
+  check-endpoint-migration:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend-strict == 'true' && needs.detect-changes.outputs.backend-strict != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Check for bypass label
+        id: label-check
+        run: |
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --json labels --jq '.labels[].name')
+          if echo "$LABELS" | grep -q "no-check-endpoint-feature-toggle"; then
+            echo "Endpoint migration check bypassed — exception label is present"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Checkout code
+        if: steps.label-check.outputs.skip != 'true'
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/workflows/scripts
+
+      - name: Detect endpoint migration without feature toggle
+        if: steps.label-check.outputs.skip != 'true'
+        run: ./.github/workflows/scripts/test-endpoint-migration-check.sh "${{ github.event.pull_request.number }}" "${{ github.repository }}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  # Always-run job for use as required status check
+  endpoint-toggle-result:
+    if: always()
+    needs: [detect-changes, check-endpoint-migration]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Check job results
+        uses: ./.github/actions/check-jobs
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "Endpoint migration feature toggle check failed"
+          success-message: "Endpoint migration feature toggle check passed"

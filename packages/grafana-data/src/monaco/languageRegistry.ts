@@ -1,4 +1,4 @@
-import { Registry, RegistryItem } from '../utils/Registry';
+import { Registry, type RegistryItem } from '../utils/Registry';
 
 /**
  * @alpha

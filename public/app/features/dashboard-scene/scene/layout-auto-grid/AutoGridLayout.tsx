@@ -1,6 +1,12 @@
-import { createRef, CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
+import { createRef, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 
-import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel, SceneGridItemLike } from '@grafana/scenes';
+import {
+  type SceneLayout,
+  SceneObjectBase,
+  type SceneObjectState,
+  type VizPanel,
+  type SceneGridItemLike,
+} from '@grafana/scenes';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutOrchestratorFor } from '../../utils/utils';
@@ -69,6 +75,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   /** Container's initial page position, used to compensate for layout shifts during drag */
   private _initialContainerRect: { top: number; left: number } | null = null;
   private _lastDropTargetGridItemKey: string | null = null;
+  protected _renderBeforeActivation = true;
 
   public constructor(state: Partial<AutoGridLayoutState>) {
     super({

@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, IconButton, Input, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { useAppNotification } from '../../../../../core/copy/appNotification';
 
-import { SavedSearch, isValidationError, validateSearchName } from './savedSearchesSchema';
+import { type SavedSearch, isValidationError, validateSearchName } from './savedSearchesSchema';
 
 // ============================================================================
 // Inline Save Input (compact input with icon buttons)

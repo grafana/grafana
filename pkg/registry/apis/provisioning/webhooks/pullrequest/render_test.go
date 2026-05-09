@@ -122,8 +122,8 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			path: "test",
 			setupRender: func(ctrl *gomock.Controller) rendering.Service {
 				render := rendering.NewMockService(ctrl)
-				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
-					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts, _ rendering.AuthOpts) (*rendering.RenderResult, error) {
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts) (*rendering.RenderResult, error) {
 						require.Equal(t, "test?kiosk", opts.Path)
 						require.Equal(t, int64(1), opts.OrgID)
 						require.Equal(t, int64(1), opts.UserID)
@@ -144,7 +144,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			path: "test",
 			setupRender: func(ctrl *gomock.Controller) rendering.Service {
 				render := rendering.NewMockService(ctrl)
-				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
 					Return(&rendering.RenderResult{
 						FilePath: "/non/existent/file.png",
 					}, nil)
@@ -162,7 +162,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 				tmpFile, cleanup := setupTempFile(t)
 				t.Cleanup(cleanup)
 				render := rendering.NewMockService(ctrl)
-				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
 					Return(&rendering.RenderResult{
 						FilePath: tmpFile,
 					}, nil)
@@ -191,7 +191,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 				tmpFile, cleanup := setupTempFile(t)
 				t.Cleanup(cleanup)
 				render := rendering.NewMockService(ctrl)
-				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
 					Return(&rendering.RenderResult{
 						FilePath: tmpFile,
 					}, nil)
@@ -218,7 +218,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 				tmpFile, cleanup := setupTempFile(t)
 				t.Cleanup(cleanup)
 				render := rendering.NewMockService(ctrl)
-				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
 					Return(&rendering.RenderResult{
 						FilePath: tmpFile,
 					}, nil)
@@ -245,8 +245,8 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 				tmpFile, cleanup := setupTempFile(t)
 				t.Cleanup(cleanup)
 				render := rendering.NewMockService(ctrl)
-				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
-					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts, _ rendering.AuthOpts) (*rendering.RenderResult, error) {
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts) (*rendering.RenderResult, error) {
 						require.Equal(t, "test?param1=value1&param2=value2&kiosk", opts.Path)
 						return &rendering.RenderResult{
 							FilePath: tmpFile,

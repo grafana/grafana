@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 
-import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
+import { type SelectableValue, type StandardEditorProps, VariableOrigin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
+import { type HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
 import { RadioButtonGroup, ScaleDistribution, Stack } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';

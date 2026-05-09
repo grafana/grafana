@@ -57,16 +57,12 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 
 // fetchAvailableMetrics retrieves available metrics from the datasource via cache
 // and returns them as a set for O(1) lookup.
-// This is a thin wrapper that delegates to the cache layer.
+// Uses GetMetricsSet to return the cached set directly, avoiding a per-call
+// []string → map[string]bool conversion (28MB for 500K metrics).
 func fetchAvailableMetrics(ctx context.Context, metricsCache *cache.MetricsCache, datasource validator.Datasource) (map[string]bool, error) {
-	availableMetrics, err := metricsCache.GetMetrics(ctx, datasources.DS_PROMETHEUS, datasource.UID, datasource.URL, datasource.HTTPClient)
+	availableSet, err := metricsCache.GetMetricsSet(ctx, datasources.DS_PROMETHEUS, datasource.UID, datasource.URL, datasource.HTTPClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch metrics from Prometheus: %w", err)
-	}
-
-	availableSet := make(map[string]bool, len(availableMetrics))
-	for _, metric := range availableMetrics {
-		availableSet[metric] = true
 	}
 
 	return availableSet, nil

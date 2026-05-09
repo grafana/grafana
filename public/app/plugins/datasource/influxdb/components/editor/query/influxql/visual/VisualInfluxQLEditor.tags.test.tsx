@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import InfluxDatasource from '../../../../../datasource';
+import type InfluxDatasource from '../../../../../datasource';
 import * as mockedMeta from '../../../../../influxql_metadata_query';
-import { DEFAULT_POLICY, InfluxQuery } from '../../../../../types';
+import { DEFAULT_POLICY, type InfluxQuery } from '../../../../../types';
 
 import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 

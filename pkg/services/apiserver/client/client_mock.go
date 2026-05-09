@@ -33,6 +33,10 @@ func (m *MockK8sHandler) Get(ctx context.Context, name string, orgID int64, opti
 	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
 }
 
+func (m *MockK8sHandler) GetWithPreferredAPIVersion(ctx context.Context, name string, orgID int64, options v1.GetOptions, _ string, subresource ...string) (*unstructured.Unstructured, error) {
+	return m.Get(ctx, name, orgID, options, subresource...)
+}
+
 func (m *MockK8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.CreateOptions) (*unstructured.Unstructured, error) {
 	args := m.Called(ctx, obj, orgID, opts)
 	if args.Get(0) == nil {
@@ -54,8 +58,8 @@ func (m *MockK8sHandler) Delete(ctx context.Context, name string, orgID int64, o
 	return args.Error(0)
 }
 
-func (m *MockK8sHandler) DeleteCollection(ctx context.Context, orgID int64) error {
-	args := m.Called(ctx, orgID)
+func (m *MockK8sHandler) DeleteCollection(ctx context.Context, orgID int64, listOptions v1.ListOptions) error {
+	args := m.Called(ctx, orgID, listOptions)
 	return args.Error(0)
 }
 

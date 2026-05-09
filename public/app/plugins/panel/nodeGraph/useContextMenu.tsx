@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import { MouseEvent, useCallback, useState, type JSX } from 'react';
+import { type MouseEvent, useCallback, useState, type JSX } from 'react';
 import * as React from 'react';
 
-import { DataFrame, Field, GrafanaTheme2, LinkModel, LinkTarget } from '@grafana/data';
+import { type DataFrame, type Field, type GrafanaTheme2, type LinkModel, type LinkTarget } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
 
-import { Config } from './layout';
-import { EdgeDatumLayout, NodeDatum } from './types';
+import { type Config } from './layout';
+import { type EdgeDatumLayout, type NodeDatum } from './types';
 import { getEdgeFields, getNodeFields, statToString } from './utils';
 
 /**

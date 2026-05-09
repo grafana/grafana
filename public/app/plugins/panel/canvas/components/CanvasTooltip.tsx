@@ -4,26 +4,26 @@ import { useOverlay } from '@react-aria/overlays';
 import { createRef, useMemo } from 'react';
 
 import {
-  Field,
-  LinkModel,
+  type Field,
+  type LinkModel,
   FieldType,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   formattedValueToString,
   getFieldDisplayName,
-  ScopedVars,
-  ValueLinkConfig,
-  ActionModel,
+  type ScopedVars,
+  type ValueLinkConfig,
+  type ActionModel,
 } from '@grafana/data';
 import { Portal, useStyles2, useTheme2, VizTooltipContainer, usePanelContext } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
-  VizTooltipItem,
+  type VizTooltipItem,
   CloseButton,
 } from '@grafana/ui/internal';
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { type Scene } from 'app/features/canvas/runtime/scene';
 
 import { getDataLinks } from '../../status-history/utils';
 import { getElementFields, getRowIndex } from '../utils';

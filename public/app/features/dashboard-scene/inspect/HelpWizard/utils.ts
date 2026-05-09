@@ -2,23 +2,23 @@ import { cloneDeep } from 'lodash';
 
 import {
   dateTimeFormat,
-  TimeRange,
-  PanelData,
-  DataTransformerConfig,
-  DataFrameJSON,
+  type TimeRange,
+  type PanelData,
+  type DataTransformerConfig,
+  type DataFrameJSON,
   LoadingState,
   dataFrameToJSON,
   DataTopic,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { gridItemToPanel, vizPanelToPanel } from '../../serialization/transformSceneToSaveModel';
 import { getQueryRunnerFor, isLibraryPanel } from '../../utils/utils';
 
-import { Randomize, randomizeData } from './randomizer';
+import { type Randomize, randomizeData } from './randomizer';
 
 export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
   const frames: DataFrameJSON[] = [];

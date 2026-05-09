@@ -18,40 +18,14 @@ labels:
 menuTitle: Query editor
 title: Microsoft SQL Server query editor
 weight: 300
-refs:
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-  table:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
-  configure-standard-options-display-name:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Microsoft SQL Server query editor
 
-Grafana provides a query editor for the Microsoft SQL Server data source, which is located on the [Explore page](ref:explore). You can also access the MSSQL query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
+Grafana provides a query editor for the Microsoft SQL Server data source, which is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the MSSQL query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
 
 This topic explains querying specific to the MSSQL data source.
-For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data). For options and functions common to all query editors, refer to [Query editors](ref:query-transform-data).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/). For options and functions common to all query editors, refer to [Query editors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 For more information on writing Transact-SQL statements, refer to [Write Transact-SQL statements](https://learn.microsoft.com/en-us/sql/t-sql/tutorial-writing-transact-sql-statements?view=sql-server-ver17) and [Transact-SQL reference](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17) in the Microsoft SQL Server documentation.
 
@@ -177,7 +151,7 @@ The query editor includes a **Generated SQL** link that appears after you run a 
 
 ## Table queries
 
-To create a Table query, set the **Format** option in the query editor to [**Table**](ref:table). This allows you to write any valid SQL query, and the Table panel will display the results using the returned columns and rows.
+To create a Table query, set the **Format** option in the query editor to [**Table**](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/). This allows you to write any valid SQL query, and the Table panel will display the results using the returned columns and rows.
 
 **Example:**
 
@@ -251,7 +225,7 @@ For backward compatibility, there's an exception to the above rule for queries t
 Instead of transforming the `metric` column into field labels, it becomes the field name, and then the series name is formatted as the value of the `metric` column.
 See the example with the `metric` column below.
 
-To optionally customize the default series name formatting, refer to [Standard options definitions](ref:configure-standard-options-display-name).
+To optionally customize the default series name formatting, refer to [Standard options definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name).
 
 **Example with `metric` column:**
 
@@ -297,7 +271,7 @@ GROUP BY
 ORDER BY 1
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions](ref:configure-standard-options-display-name) display name value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name) display name value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -340,7 +314,7 @@ Data frame result:
 
 ## Apply annotations
 
-[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
+[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's **Annotations** view.
 
 **Columns:**

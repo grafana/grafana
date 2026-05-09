@@ -79,7 +79,7 @@ func (r *TeamBindingAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Ob
 }
 
 // BeforeUpdate implements ResourceStorageAuthorizer.
-func (r *TeamBindingAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (r *TeamBindingAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	return r.beforeWrite(ctx, obj)
 }
 
@@ -116,6 +116,12 @@ func (r *TeamBindingAuthorizer) beforeWrite(ctx context.Context, obj runtime.Obj
 		)
 	}
 	return nil
+}
+
+// WatchFilter implements ResourceStorageAuthorizer.
+// TODO: implement proper watch filtering using Compile or BatchCheck.
+func (r *TeamBindingAuthorizer) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.RejectAllWatchFilter, nil
 }
 
 // FilterList implements ResourceStorageAuthorizer.

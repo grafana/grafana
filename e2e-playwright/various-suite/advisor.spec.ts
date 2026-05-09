@@ -1,4 +1,4 @@
-import { Page } from 'playwright-core';
+import { type Page } from 'playwright-core';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
@@ -61,14 +61,16 @@ async function runChecks(page: Page) {
     .catch(() => false);
   await expect(page.getByRole('button', { name: 'Running checks...' })).not.toBeVisible({ timeout: 30000 });
   await expect(page.getByText('Last checked')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Running checks...' })).not.toBeVisible({ timeout: 30000 });
 }
 
 async function createEmptyDatasource(page: Page): Promise<string> {
   await page.goto('/connections/datasources');
   await expect(page.getByText(/Add( new)? data source/)).toBeVisible();
   await page.getByText(/Add( new)? data source/).click();
-  await page.getByRole('button', { name: 'Add new data source Prometheus' }).click();
-  const dsName = await page.locator('#basic-settings-name').inputValue();
+  await page.getByRole('button', { name: 'Prometheus' }).click();
+  await expect(page.getByRole('button', { name: 'Edit title' })).toBeVisible();
+  const dsName = await page.getByRole('heading', { level: 1 }).innerText();
   return dsName;
 }
 
@@ -84,7 +86,7 @@ test.describe(
       await runChecks(page);
 
       // Page should now show a report with the failing health check
-      await page.getByText('Action needed').first().click();
+      await page.getByText('Action needed', { exact: true }).first().click();
       await page.getByText('Health check failed').click();
       // Click on the "Fix me" button
       await page.getByTestId(testIds.CheckDrillDown.actionLink(dsName, 'fix me')).click();
@@ -95,7 +97,7 @@ test.describe(
 
       // Now retrigger the report
       await loadAndWait(page);
-      await page.getByText('Action needed').first().click();
+      await page.getByText('Action needed', { exact: true }).first().click();
       await page.getByText('Health check failed').click();
       await page.getByTestId(testIds.CheckDrillDown.retryButton(dsName)).click();
       // The issue should be fixed

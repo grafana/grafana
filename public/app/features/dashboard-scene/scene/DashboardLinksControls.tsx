@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { sceneGraph } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 
 export interface Props {
   links: DashboardLink[];
@@ -15,18 +15,24 @@ export interface Props {
 
 export function DashboardLinksControls({ links, dashboard }: Props) {
   sceneGraph.getTimeRange(dashboard).useState();
-  const uid = dashboard.state.uid;
+  const { uid } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const linksToDisplay = excludeControlMenuLinks(links);
 
-  if (!uid || linksToDisplay.length === 0) {
+  if (linksToDisplay.length === 0) {
     return null;
   }
 
   return (
     <div className={styles.linksContainer}>
       {linksToDisplay.map((link: DashboardLink, index: number) => (
-        <DashboardLinkRenderer link={link} dashboardUID={uid} key={`${link.title}-$${index}`} />
+        <DashboardLinkRenderer
+          link={link}
+          dashboardUID={uid}
+          key={`${link.title}-$${index}`}
+          linkIndex={links.indexOf(link)}
+          dashboard={dashboard}
+        />
       ))}
     </div>
   );
@@ -45,10 +51,13 @@ function getStyles(theme: GrafanaTheme2) {
     linksContainer: css({
       label: 'dashboard-links-controls',
       display: 'inline-flex',
+      alignItems: 'center',
       gap: theme.spacing(1),
       marginRight: theme.spacing(1),
       marginBottom: theme.spacing(1),
       flexWrap: 'wrap',
+      // Match variable/annotation alignment in the controls row
+      alignSelf: 'flex-start',
     }),
   };
 }

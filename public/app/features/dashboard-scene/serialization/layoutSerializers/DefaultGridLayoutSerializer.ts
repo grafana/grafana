@@ -1,19 +1,19 @@
-import { SceneGridItemLike, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { type SceneGridItemLike, SceneGridLayout, VizPanel } from '@grafana/scenes';
 import {
-  Spec as DashboardV2Spec,
-  GridLayoutItemKind,
-  GridLayoutKind,
-  RepeatOptions,
-  Element,
-  GridLayoutItemSpec,
-  PanelKind,
-  LibraryPanelKind,
+  type Spec as DashboardV2Spec,
+  type GridLayoutItemKind,
+  type GridLayoutKind,
+  type RepeatOptions,
+  type Element,
+  type GridLayoutItemSpec,
+  type PanelKind,
+  type LibraryPanelKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { getIsLazy } from '../../scene/layouts-shared/utils';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { calculateGridItemDimensions, isLibraryPanel } from '../../utils/utils';
 
 import { buildLibraryPanel, buildVizPanel } from './utils';
@@ -34,7 +34,7 @@ export function deserializeDefaultGridLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): DefaultGridLayoutManager {
   if (layout.kind !== 'GridLayout') {
     throw new Error('Invalid layout kind');
@@ -191,7 +191,7 @@ function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false):
 function createSceneGridLayoutForItems(
   layout: GridLayoutKind,
   elements: Record<string, Element>,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): SceneGridItemLike[] {
   const gridItems = layout.spec.items;
 
@@ -233,7 +233,7 @@ function buildGridItem(
 export function deserializeGridItem(
   item: GridLayoutItemKind,
   elements: DashboardV2Spec['elements'],
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): DashboardGridItem {
   const panel = elements[item.spec.element.name];
 

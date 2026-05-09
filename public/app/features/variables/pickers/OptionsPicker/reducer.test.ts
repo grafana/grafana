@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { QueryVariableModel, VariableOption } from '@grafana/data';
+import { type QueryVariableModel, type VariableOption } from '@grafana/data';
 
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../constants';
@@ -12,7 +12,7 @@ import {
   moveOptionsHighlight,
   OPTIONS_LIMIT,
   optionsPickerReducer,
-  OptionsPickerState,
+  type OptionsPickerState,
   showOptions,
   toggleAllOptions,
   toggleOption,

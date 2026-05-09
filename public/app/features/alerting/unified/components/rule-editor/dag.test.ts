@@ -1,8 +1,8 @@
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { Graph } from 'app/core/utils/dag';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
   DAGError,

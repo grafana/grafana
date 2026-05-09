@@ -1,7 +1,7 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import type { JSX } from 'react';
 
-import { AppPluginConfig, PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
+import { type AppPluginConfig, PluginContextProvider, type PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
@@ -11,7 +11,7 @@ import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
-import { PluginExtensionRegistries } from './registry/types';
+import { type PluginExtensionRegistries } from './registry/types';
 import { basicApp } from './test-fixtures/config.apps';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponent } from './usePluginComponent';

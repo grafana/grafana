@@ -26,6 +26,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -64,6 +65,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
@@ -167,6 +169,16 @@ const injectedRtkApi = api
           body: queryArg.createNotificationqueryRequestBody,
         }),
       }),
+      createNotificationsqueryalerts: build.mutation<
+        CreateNotificationsqueryalertsApiResponse,
+        CreateNotificationsqueryalertsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/notifications/queryalerts`,
+          method: 'POST',
+          body: queryArg.createNotificationsqueryalertsRequestBody,
+        }),
+      }),
     }),
     overrideExisting: false,
   });
@@ -215,6 +227,29 @@ export type ListDummyApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -283,6 +318,29 @@ export type DeletecollectionDummyApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
@@ -380,6 +438,10 @@ export type UpdateDummyStatusApiArg = {
 export type CreateNotificationqueryApiResponse = /** status 200 OK */ CreateNotificationqueryResponse;
 export type CreateNotificationqueryApiArg = {
   createNotificationqueryRequestBody: CreateNotificationqueryRequestBody;
+};
+export type CreateNotificationsqueryalertsApiResponse = /** status 200 OK */ CreateNotificationsqueryalertsResponse;
+export type CreateNotificationsqueryalertsApiArg = {
+  createNotificationsqueryalertsRequestBody: CreateNotificationsqueryalertsRequestBody;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -599,6 +661,27 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
+export type CreateNotificationqueryNotificationOutcome = 'success' | 'error';
+export type CreateNotificationqueryNotificationStatus = 'firing' | 'resolved';
+export type CreateNotificationqueryNotificationRangeValue = {
+  /** Count is the number of notification attempts at this point in time. */
+  count: number;
+  /** Timestamp is the Unix epoch in seconds for this data point. */
+  timestamp: number;
+};
+export type CreateNotificationqueryNotificationCount = {
+  /** Count is the number of notification attempts in the time period. Set for counts queries. */
+  count: number;
+  error?: string;
+  integration?: string;
+  integrationIndex?: number;
+  outcome?: CreateNotificationqueryNotificationOutcome;
+  receiver?: string;
+  ruleUID?: string;
+  status?: CreateNotificationqueryNotificationStatus;
+  /** Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries. */
+  values: CreateNotificationqueryNotificationRangeValue[];
+};
 export type CreateNotificationqueryNotificationEntryAlert = {
   annotations: {
     [key: string]: string;
@@ -613,10 +696,10 @@ export type CreateNotificationqueryNotificationEntryAlert = {
   startsAt: string;
   status: string;
 };
-export type CreateNotificationqueryNotificationOutcome = 'success' | 'error';
-export type CreateNotificationqueryNotificationStatus = 'firing' | 'resolved';
 export type CreateNotificationqueryNotificationEntry = {
-  /** Alerts are the alerts grouped into the notification. */
+  /** AlertCount is the total number of alerts included in the notification. */
+  alertCount: number;
+  /** Alerts are the alerts grouped into the notification. Deprecated: not populated, will be removed. */
   alerts: CreateNotificationqueryNotificationEntryAlert[];
   /** Duration is the length of time the notification attempt took in nanoseconds. */
   duration: number;
@@ -628,6 +711,10 @@ export type CreateNotificationqueryNotificationEntry = {
   groupLabels: {
     [key: string]: string;
   };
+  /** Integration is the integration (contact point type) name. */
+  integration: string;
+  /** IntegrationIndex is the index of the integration within the receiver. */
+  integrationIndex: number;
   /** Outcome indicaes if the notificaion attempt was successful or if it failed. */
   outcome: CreateNotificationqueryNotificationOutcome;
   /** PipelineTime is the time at which the flush began. */
@@ -636,12 +723,17 @@ export type CreateNotificationqueryNotificationEntry = {
   receiver: string;
   /** Retry indicates if the attempt was a retried attempt. */
   retry: boolean;
+  /** RuleUIDs are the unique identifiers of the alert rules included in the notification. */
+  ruleUIDs: string[];
   /** Status indicates if the notification contains one or more firing alerts. */
   status: CreateNotificationqueryNotificationStatus;
   /** Timestamp is the time at which the notification attempt completed. */
   timestamp: string;
+  /** Uuid is a unique identifier for the notification attempt. */
+  uuid: string;
 };
 export type CreateNotificationqueryResponse = {
+  counts: CreateNotificationqueryNotificationCount[];
   entries: CreateNotificationqueryNotificationEntry[];
 };
 export type CreateNotificationqueryMatcher = {
@@ -653,6 +745,16 @@ export type CreateNotificationqueryMatchers = CreateNotificationqueryMatcher[];
 export type CreateNotificationqueryRequestBody = {
   /** From is the starting timestamp for the query. */
   from?: string;
+  /** GroupBy specifies how to aggregate counts queries. */
+  groupBy?: {
+    error: boolean;
+    integration: boolean;
+    integrationIndex: boolean;
+    outcome: boolean;
+    receiver: boolean;
+    ruleUID: boolean;
+    status: boolean;
+  };
   /** GroupLabels optionally filters the entries by matching group labels. */
   groupLabels?: CreateNotificationqueryMatchers;
   /** Labels optionally filters the entries by matching alert labels. */
@@ -667,8 +769,39 @@ export type CreateNotificationqueryRequestBody = {
   ruleUID?: string;
   /** Status optionally filters the entries to only either firing or resolved. */
   status?: CreateNotificationqueryNotificationStatus;
+  /** Step is the step interval in seconds for range_counts queries. */
+  step?: number;
   /** To is the starting timestamp for the query. */
   to?: string;
+  /** Type of query to perform (default: entries) */
+  type?: 'entries' | 'counts' | 'range_counts';
+};
+export type CreateNotificationsqueryalertsNotificationEntryAlert = {
+  annotations: {
+    [key: string]: string;
+  };
+  endsAt: string;
+  enrichments?: {
+    [key: string]: any;
+  };
+  labels: {
+    [key: string]: string;
+  };
+  startsAt: string;
+  status: string;
+};
+export type CreateNotificationsqueryalertsResponse = {
+  alerts: CreateNotificationsqueryalertsNotificationEntryAlert[];
+};
+export type CreateNotificationsqueryalertsRequestBody = {
+  /** From is the starting timestamp for the query. */
+  from?: string;
+  /** Limit is the maximum number of entries to return. */
+  limit?: number;
+  /** To is the ending timestamp for the query. */
+  to?: string;
+  /** UUID filters the alerts to those belonging to a specific alert rule. */
+  uuid?: string;
 };
 export const {
   useGetApiResourcesQuery,
@@ -689,4 +822,5 @@ export const {
   useReplaceDummyStatusMutation,
   useUpdateDummyStatusMutation,
   useCreateNotificationqueryMutation,
+  useCreateNotificationsqueryalertsMutation,
 } = injectedRtkApi;

@@ -10,7 +10,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +23,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -37,6 +38,13 @@ var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
 const namespaceMismatchMsg = "rejecting request with namespace mismatch"
+const bodyReadFailureMsg = "rejecting request with body read failure"
+const mib = 1024 * 1024
+
+type evalContext struct {
+	namespace string
+	slug      string
+}
 
 var groupVersion = schema.GroupVersion{
 	Group:   "features.grafana.app",
@@ -138,6 +146,24 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 				},
 			}}}
 
+	flagsResponse := &spec3.Responses{
+		ResponsesProps: spec3.ResponsesProps{
+			StatusCodeResponses: map[int]*spec3.Response{
+				200: {
+					ResponseProps: spec3.ResponseProps{
+						Content: map[string]*spec3.MediaType{
+							"application/json": {
+								MediaTypeProps: spec3.MediaTypeProps{
+									Schema: spec.MapProperty(nil),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -160,23 +186,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 								},
 							},
 							RequestBody: evaluationContext,
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.MapProperty(nil), // TODO... real type?
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+							Responses:   flagsResponse,
 						},
 					},
 				},
@@ -212,23 +222,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 								},
 							},
 							RequestBody: evaluationContext,
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.MapProperty(nil), // TODO, real type
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+							Responses:   flagsResponse,
 						},
 					},
 				},
@@ -267,12 +261,21 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		valid, ns := b.validateNamespace(r)
-		b.logger.Debug("validating namespace in oneFlagHandler handler", "namespace", ns, "valid", valid, "flag", flagKey)
+		evalCtx, err := b.readEvalContext(w, r)
+		if err != nil {
+			_ = tracing.Errorf(span, bodyReadFailureMsg)
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
+			b.logger.Error(bodyReadFailureMsg, "error", err, "flag", flagKey)
+			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
+			return
+		}
+
+		authNamespace, valid := b.validateNamespace(r, evalCtx.namespace)
+		b.logger.Debug("validating namespace in oneFlagHandler handler", "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "valid", valid, "flag", flagKey)
 		if !valid {
 			_ = tracing.Errorf(span, namespaceMismatchMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-			b.logger.Error(namespaceMismatchMsg)
+			b.logger.Error(namespaceMismatchMsg, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug, "flag", flagKey)
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
@@ -294,13 +297,22 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		valid, ns := b.validateNamespace(r)
-		b.logger.Debug("validating namespace in allFlagsHandler handler", "namespace", ns, "valid", valid)
+		evalCtx, err := b.readEvalContext(w, r)
+		if err != nil {
+			_ = tracing.Errorf(span, bodyReadFailureMsg)
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
+			b.logger.Error(bodyReadFailureMsg, "error", err)
+			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
+			return
+		}
+
+		authNamespace, valid := b.validateNamespace(r, evalCtx.namespace)
+		b.logger.Debug("validating namespace in allFlagsHandler handler", "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "valid", valid)
 
 		if !valid {
 			_ = tracing.Errorf(span, namespaceMismatchMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-			b.logger.Error(namespaceMismatchMsg)
+			b.logger.Error(namespaceMismatchMsg, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
@@ -321,28 +333,41 @@ func writeResponse(statusCode int, result any, logger log.Logger, w http.Respons
 	}
 }
 
-func (b *APIBuilder) namespaceFromEvalCtx(body []byte) string {
-	// TODO: eval ctx should be added to span attributes, not log
-	b.logger.Debug("evaluation context from request", "ctx", string(body))
-
-	var evalCtx struct {
-		// Extract namespace from request body without consuming it
+// parseEvalContextBody parses the evaluation context fields from a request body.
+func parseEvalContextBody(body []byte) (evalContext, error) {
+	var raw struct {
 		Context struct {
 			Namespace string `json:"namespace"`
+			Slug      string `json:"slug"`
 		} `json:"context"`
 	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return evalContext{}, err
+	}
+	return evalContext{namespace: raw.Context.Namespace, slug: raw.Context.Slug}, nil
+}
 
-	if err := json.Unmarshal(body, &evalCtx); err != nil {
-		b.logger.Debug("Failed to unmarshal evaluation context", "error", err, "body", string(body))
-		return ""
+// readEvalContext reads the request body, re-buffers it for downstream use,
+// and parses the evaluation context fields needed for validation and logging.
+func (b *APIBuilder) readEvalContext(w http.ResponseWriter, r *http.Request) (evalContext, error) {
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, mib))
+	if err != nil {
+		return evalContext{}, err
+	}
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	b.logger.Debug("evaluation context from request", "ctx", string(body))
+
+	if len(bytes.TrimSpace(body)) == 0 {
+		return evalContext{}, nil
 	}
 
-	if evalCtx.Context.Namespace == "" {
-		b.logger.Debug("namespace missing from evaluation context", "namespace", evalCtx.Context.Namespace)
-		return ""
+	evalCtx, err := parseEvalContextBody(body)
+	if err != nil {
+		b.logger.Warn("failed to unmarshal evaluation context", "error", err)
+		return evalContext{}, err
 	}
-
-	return evalCtx.Context.Namespace
+	return evalCtx, nil
 }
 
 // isAuthenticatedRequest returns true if the request is authenticated
@@ -354,42 +379,36 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 	return user.GetIdentityType() != types.TypeUnauthenticated
 }
 
-// validateNamespace checks if the namespace in the evaluation context matches the namespace in the request
-func (b *APIBuilder) validateNamespace(r *http.Request) (bool, string) {
+// validateNamespace checks if the namespace in the evaluation context matches the auth namespace.
+// Returns the resolved auth namespace and whether validation passed.
+func (b *APIBuilder) validateNamespace(r *http.Request, evalCtxNamespace string) (string, bool) {
 	_, span := tracing.Start(r.Context(), "ofrep.validateNamespace")
 	defer span.End()
 
-	var namespace string
 	user, ok := types.AuthInfoFrom(r.Context())
 	if !ok {
-		return false, ""
-	}
-
-	if user.GetNamespace() != "" {
-		namespace = user.GetNamespace()
-	} else {
-		namespace = mux.Vars(r)["namespace"]
-	}
-
-	// Read request body for namespace validation and tracing
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		_ = tracing.Errorf(span, "failed to read request body: %w", err)
-		b.logger.Error("Error reading evaluation request body", "error", err)
 		span.SetAttributes(attribute.Bool("validation.success", false))
-		return false, ""
+		return "", false
 	}
-	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
-	span.SetAttributes(attribute.String("request.body", string(body)))
+	var authNamespace string
+	if user.GetNamespace() != "" {
+		authNamespace = user.GetNamespace()
+	} else {
+		authNamespace = mux.Vars(r)["namespace"]
+	}
 
-	evalCtxNamespace := b.namespaceFromEvalCtx(body)
+	span.SetAttributes(
+		attribute.String("auth_namespace", authNamespace),
+		attribute.String("eval_ctx_namespace", evalCtxNamespace),
+	)
+
 	// Remote providers MUST include namespace in evaluation context
-	if evalCtxNamespace == namespace {
+	if evalCtxNamespace == authNamespace {
 		span.SetAttributes(attribute.Bool("validation.success", true))
-		return true, evalCtxNamespace
+		return authNamespace, true
 	}
 
 	span.SetAttributes(attribute.Bool("validation.success", false))
-	return false, evalCtxNamespace
+	return authNamespace, false
 }

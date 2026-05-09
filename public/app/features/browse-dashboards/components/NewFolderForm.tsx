@@ -5,11 +5,12 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, Icon, Input, Space, Stack, Tooltip } from '@grafana/ui';
-import { OwnerReference } from 'app/api/clients/folder/v1beta1';
-import { FolderDTO } from 'app/types/folders';
+import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
+import { type FolderDTO } from 'app/types/folders';
 
 import { OwnerReferenceSelector } from '../../../core/components/OwnerReferences/OwnerReferenceSelector';
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
+import { getFolderPermissions } from '../permissions';
 
 interface Props {
   onConfirm: (folderName: string, teamOwnerRefs?: OwnerReference[]) => void;
@@ -24,7 +25,8 @@ interface FormModel {
 const initialFormModel: FormModel = { folderName: '' };
 
 export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
-  const showFolderOwnerSelector = config.featureToggles.teamFolders;
+  const { canSetPermissions } = getFolderPermissions(parentFolder);
+  const showFolderOwnerSelector = canSetPermissions && config.featureToggles.teamFolders;
   const {
     handleSubmit,
     register,

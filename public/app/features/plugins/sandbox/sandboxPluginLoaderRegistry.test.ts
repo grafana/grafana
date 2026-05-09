@@ -1,9 +1,9 @@
-import { PluginMeta, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { type PluginMeta, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getPluginDetails } from '../admin/api';
-import { CatalogPluginDetails } from '../admin/types';
+import { type CatalogPluginDetails } from '../admin/types';
 import { getPluginSettings } from '../pluginSettings';
 
 import {

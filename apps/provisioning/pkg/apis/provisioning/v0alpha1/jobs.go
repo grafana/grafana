@@ -64,6 +64,19 @@ const (
 	// JobActionFixFolderMetadata is a placeholder job that will eventually regenerate folder metadata files.
 	// Currently a no-op to unblock frontend development.
 	JobActionFixFolderMetadata JobAction = "fixFolderMetadata"
+
+	// JobActionReleaseResources removes ownership annotations from all resources
+	// managed by a repository that no longer exists or is stuck in Terminating state.
+	// Resources remain in Grafana but become unmanaged.
+	// This action has inverted validation: it is only allowed when the repository
+	// does not exist or has a DeletionTimestamp set.
+	JobActionReleaseResources JobAction = "releaseResources"
+
+	// JobActionDeleteResources deletes all resources managed by a repository
+	// that no longer exists or is stuck in Terminating state.
+	// This action has inverted validation: it is only allowed when the repository
+	// does not exist or has a DeletionTimestamp set.
+	JobActionDeleteResources JobAction = "deleteResources"
 )
 
 // +enum
@@ -91,7 +104,7 @@ func (j JobState) Finished() bool {
 }
 
 type JobSpec struct {
-	Action JobAction `json:"action,omitempty"`
+	Action JobAction `json:"action"`
 
 	// The the repository reference (for now also in labels)
 	// This value is required, but will be popuplated from the job making the request
@@ -164,6 +177,12 @@ type ExportJobOptions struct {
 	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
+
+	// Resources to export. When empty, every unmanaged resource in the namespace
+	// is exported (legacy behavior). When non-empty, only the listed resources
+	// are exported — the folder hierarchy is still emitted so parent paths resolve.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRef `json:"resources,omitempty"`
 }
 
 func (ExportJobOptions) OpenAPIModelName() string {
@@ -173,6 +192,14 @@ func (ExportJobOptions) OpenAPIModelName() string {
 type MigrateJobOptions struct {
 	// Message to use when committing the changes in a single commit
 	Message string `json:"message,omitempty"`
+
+	// Resources to migrate. When empty, every unmanaged resource in the namespace
+	// is migrated (legacy behavior). When non-empty, only the listed resources
+	// are exported to the repository — the folder hierarchy is still emitted so
+	// parent paths resolve, and the subsequent pull phase only takes ownership
+	// of those resources.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRef `json:"resources,omitempty"`
 }
 
 func (MigrateJobOptions) OpenAPIModelName() string {
@@ -239,7 +266,10 @@ func (MoveJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "MoveJobOptions"
 }
 
-type FixFolderMetadataJobOptions struct{}
+type FixFolderMetadataJobOptions struct {
+	// Ref to the branch to create the commit on (uses repository's default branch if not specified)
+	Ref string `json:"ref,omitempty"`
+}
 
 func (FixFolderMetadataJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "FixFolderMetadataJobOptions"

@@ -70,16 +70,17 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// If repo is git, ensure no other repository is defined with a child path
-	if cfg.Spec.Type.IsGit() {
+	// If repo is git and sync is enabled, ensure no other repository is defined with a conflicting path.
+	// Path checks are skipped when sync is disabled to allow the onboarding wizard to create repositories
+	// in multiple steps (first with empty path, then configure path, then enable sync).
+	if cfg.Spec.Type.IsGit() && cfg.Spec.Sync.Enabled {
 		for _, v := range all {
 			// skip itself
 			if cfg.Name == v.Name {
 				continue
 			}
-			if v.URL() == cfg.URL() {
-				// Allow duplicate paths only when both paths are empty (repository root)
-				if v.Path() == cfg.Path() && cfg.Path() != "" {
+			if v.URL() == cfg.URL() && v.Branch() == cfg.Branch() {
+				if v.Path() == cfg.Path() {
 					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
 						cfg.Path(),
 						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
@@ -108,17 +109,20 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
 	}
 
-	// Check repository limit (0 = unlimited, > 0 = use value)
+	// Check repository limit (0 = unlimited, > 0 = use value).
+	// Only enforce on creation — updating an existing repo should never be
+	// blocked by a quota that was lowered after the repo was created.
 	maxRepos := quotaStatus.MaxRepositories
-	// Early return if unlimited (0) to avoid unnecessary counting.
 	if maxRepos == 0 {
 		return nil
 	}
 
-	// Count repositories excluding the current one being created/updated
 	count := 0
 	for _, v := range all {
-		if v.Name != cfg.Name {
+		// If the repository is being updated, allow it even if the quota is reached
+		if v.Name == cfg.Name {
+			return nil
+		} else {
 			count++
 		}
 	}

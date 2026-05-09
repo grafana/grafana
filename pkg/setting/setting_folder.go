@@ -5,21 +5,21 @@ import (
 )
 
 const maxNestedFolderDepth = 7
-const defaultMaxNestedFolderDepth = 4
+const DefaultMaxNestedFolderDepth = 4
 
 func maxDeptFolderSettings(iniFile *ini.File) int {
 	if iniFile == nil {
-		return defaultMaxNestedFolderDepth
+		return DefaultMaxNestedFolderDepth
 	}
 
 	folderSection := iniFile.Section("folder")
-	cfgMaxNestedFolderDepth := folderSection.Key("max_nested_folder_depth").MustInt(defaultMaxNestedFolderDepth)
+	cfgMaxNestedFolderDepth := folderSection.Key("max_nested_folder_depth").MustInt(DefaultMaxNestedFolderDepth)
 	if cfgMaxNestedFolderDepth > maxNestedFolderDepth {
 		cfgMaxNestedFolderDepth = maxNestedFolderDepth
 	}
 
 	if cfgMaxNestedFolderDepth <= 0 {
-		cfgMaxNestedFolderDepth = defaultMaxNestedFolderDepth
+		cfgMaxNestedFolderDepth = DefaultMaxNestedFolderDepth
 	}
 
 	return cfgMaxNestedFolderDepth

@@ -1,9 +1,9 @@
 import { render, within } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { VariableValueOption } from '@grafana/scenes';
+import { type VariableValueOption } from '@grafana/scenes';
 
-import { VariableValuesPreview, VariableValuesPreviewProps } from './VariableValuesPreview';
+import { VariableValuesPreview, type VariableValuesPreviewProps } from './VariableValuesPreview';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -42,15 +42,15 @@ describe('VariableValuesPreview', () => {
 
       const table = elements.multiPropsPreviewTable();
 
-      const expectedHeaders = ['text', 'value', 'region'];
+      const expectedHeaders = ['value', 'text', 'region'];
       const headerCells = within(table).getAllByRole('columnheader');
       expect(headerCells).toHaveLength(expectedHeaders.length);
       expect(headerCells.map((cell) => cell.textContent)).toEqual(expectedHeaders);
 
       const expectedRows = [
-        ['Development', 'dev', 'eu'],
-        ['Production', 'prod', 'us'],
-        ['Staging', 'stag', 'apac'],
+        ['dev', 'Development', 'eu'],
+        ['prod', 'Production', 'us'],
+        ['stag', 'Staging', 'apac'],
       ];
 
       const rows = Array.from(table.tBodies[0].rows);
@@ -75,15 +75,15 @@ describe('VariableValuesPreview', () => {
 
         const table = elements.multiPropsPreviewTable();
 
-        const expectedHeaders = ['text', 'value', 'region'];
+        const expectedHeaders = ['value', 'text', 'region'];
         const headerCells = within(table).getAllByRole('columnheader');
         expect(headerCells).toHaveLength(expectedHeaders.length);
         expect(headerCells.map((cell) => cell.textContent)).toEqual(expectedHeaders);
 
         const expectedRows = [
-          ['Development', 'env', 'eu'],
-          ['Production', 'env', 'us'],
-          ['Staging', 'env', 'apac'],
+          ['env', 'Development', 'eu'],
+          ['env', 'Production', 'us'],
+          ['env', 'Staging', 'apac'],
         ];
 
         const rows = Array.from(table.tBodies[0].rows);

@@ -16,6 +16,11 @@ menuTitle: Best practices
 title: Best practices
 weight: 1010
 refs:
+  when-slos-reduce-alert-noise:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/guides/when-slos-reduce-alert-noise/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/guides/when-slos-reduce-alert-noise/
   recovery-threshold:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
@@ -61,6 +66,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/examples/multi-dimensional-alerts/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/examples/multi-dimensional-alerts/
+  email-optional-settings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-email/#optional-settings
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-email/#optional-settings
 ---
 
 # Alerting best practices
@@ -144,6 +154,8 @@ For example, a database failure can trigger several alerts at the same time like
 
 Grouping should follow operational boundaries such as service or owner, as defined by notification policies. Downstream or cascading failures should be grouped together so they surface as one issue rather than many.
 
+There is also a limit to how many notifications can be sent out per second. You can configure your Contact Point settings to reduce the email expenditure by setting up single email notifications rather than individual email notifications. To configure this, go to your desired email Contact Point and enable **Single email** in the [optional settings](ref:email-optional-settings).
+
 ## Mitigate flapping alerts
 
 Short-lived failure spikes often trigger alerts that auto-resolve quickly. Alerting on transient failures creates noise and leads responders to ignore them.
@@ -170,13 +182,15 @@ Finally, avoid rapid resolve-and-fire notifications by using [`keep_firing_for`]
 
 ## Graduate symptom-based alerts into SLOs
 
-When a symptom-based alert fires frequently, it usually indicates a reliability concern that should be measured and managed more deliberately. This is often a sign that the alert could evolve into an [SLO](/docs/grafana-cloud/alerting-and-irm/slo/).
+When a symptom-based alert fires frequently, it usually indicates a reliability concern that should be measured and managed more deliberately. This is often a sign that the alert could evolve into an [service level objective (SLO)](/docs/grafana-cloud/alerting-and-irm/slo/introduction).
 
 Traditional alerts create pressure to react immediately, while error budgets introduce a buffer of time to act, changing how urgency is handled. Alerts can then be defined in terms of error budget burn rate rather than reacting to every minor deviation.
 
 SLOs also align distinct teams around common reliability goals by providing a shared definition of what "good" looks like. They help consolidate multiple symptom alerts into a single user-facing objective.
 
 For example, instead of several teams alerting on high latency, a single SLO can be used across teams to capture overall API performance.
+
+For other use cases, refer to [when alerts need an SLO](ref:when-slos-reduce-alert-noise).
 
 ## Integrate alerting into incident post-mortems
 

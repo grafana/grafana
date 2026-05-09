@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
-import { BackendSrv, BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
 
 /**
  * Minimal mock implementation of BackendSrv for testing.

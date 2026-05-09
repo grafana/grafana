@@ -1,7 +1,7 @@
-import { useCallback, ChangeEvent, useState, type JSX } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { useCallback, type ChangeEvent, useState, type JSX } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
 
-import { TimeZone } from '@grafana/data';
+import { type TimeZone } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -14,7 +14,7 @@ import {
   TextArea,
   Box,
   Stack,
-  WeekStart,
+  type WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -25,7 +25,7 @@ import { GenAIDashDescriptionButton } from '../GenAI/GenAIDashDescriptionButton'
 import { GenAIDashTitleButton } from '../GenAI/GenAIDashTitleButton';
 
 import { TimePickerSettings } from './TimePickerSettings';
-import { SettingsPageProps } from './types';
+import { type SettingsPageProps } from './types';
 
 export type Props = SettingsPageProps & ConnectedProps<typeof connector>;
 

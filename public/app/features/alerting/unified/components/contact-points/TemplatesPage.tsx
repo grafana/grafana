@@ -29,7 +29,7 @@ function TemplatesPageContent() {
             href="/alerting/notifications/templates/new"
             disabled={!createTemplateAllowed}
           >
-            <Trans i18nKey="alerting.templates-page.add-template">Add notification template group</Trans>
+            <Trans i18nKey="alerting.templates-page.add-template">New notification template</Trans>
           </LinkButton>
         )}
       </Stack>

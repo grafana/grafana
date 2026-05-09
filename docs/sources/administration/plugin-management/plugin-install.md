@@ -23,9 +23,9 @@ weight: 120
 
 {{< admonition type="note" >}}
 
-Installing plugins from the Grafana website into a Grafana Cloud instance will be removed in February 2026.
+Installing plugins from the Grafana website into a Grafana Cloud instance will be removed during the first half of 2026.
 
-If you're a Grafana Cloud user, follow [Install a plugin through the Grafana UI](#install-a-plugin-through-the-grafana-uiinstall-a-plugin-through-the-grafana-ui) instead.
+If you're a Grafana Cloud user, follow [Install a plugin through the Grafana UI](#install-a-plugin-through-the-grafana-ui) instead.
 
 {{< /admonition >}}
 

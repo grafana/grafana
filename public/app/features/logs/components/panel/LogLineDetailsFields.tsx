@@ -3,20 +3,29 @@ import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CoreApp, Field, fuzzySearch, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
+import {
+  CoreApp,
+  type Field,
+  fuzzySearch,
+  type GrafanaTheme2,
+  type IconName,
+  type LinkModel,
+  type LogLabelStatsModel,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, type IconSize, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
-import { FieldDef } from '../logParser';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
+import { type FieldDef } from '../logParser';
 
 import { useLogDetailsContext } from './LogDetailsContext';
+import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
-import { LogListModel, getNormalizedFieldName } from './processing';
+import { type LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -27,7 +36,8 @@ interface LogLineDetailsFieldsProps {
 }
 
 export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
-  const styles = useStyles2(getFieldsStyles);
+  const { onClickShowField, fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
@@ -74,7 +84,8 @@ interface LogLineDetailsLabelFieldsProps {
 }
 
 export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
-  const styles = useStyles2(getFieldsStyles);
+  const { fontSize, onClickShowField } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
 
@@ -101,15 +112,19 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   );
 };
 
-const getFieldsStyles = (theme: GrafanaTheme2) => ({
+const getFieldsStyles = (
+  theme: GrafanaTheme2,
+  fontSize: LogListFontSize,
+  onClickShowField?: (key: string) => void
+) => ({
   fieldsTable: css({
     display: 'grid',
-    gap: theme.spacing(1),
-    gridTemplateColumns: `${theme.spacing(11.5)} fit-content(30%) 1fr`,
+    gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
+    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(10) : theme.spacing(7)) : onClickShowField ? theme.spacing(11.5) : theme.spacing(7.5)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
-    gap: theme.spacing(1),
+    gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
     gridTemplateColumns: `auto 1fr`,
   }),
 });
@@ -138,6 +153,7 @@ export const LogLineDetailsField = ({
   const [showFieldsStats, setShowFieldStats] = useState(false);
   const [fieldCount, setFieldCount] = useState(0);
   const [fieldStats, setFieldStats] = useState<LogLabelStatsModel[] | null>(null);
+  const { fontSize } = useLogListContext();
   const {
     app,
     displayedFields,
@@ -271,6 +287,7 @@ export const LogLineDetailsField = ({
               {onClickFilterLabel && fieldSupportsFilters && (
                 <AsyncIconButton
                   name="search-plus"
+                  size={fontSize === 'small' ? 'sm' : undefined}
                   onClick={filterLabel}
                   // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
                   isActive={labelFilterActive}
@@ -280,6 +297,7 @@ export const LogLineDetailsField = ({
               {onClickFilterOutLabel && fieldSupportsFilters && (
                 <IconButton
                   name="search-minus"
+                  size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={
                     app === CoreApp.Explore && log.dataFrame?.refId
                       ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
@@ -290,27 +308,30 @@ export const LogLineDetailsField = ({
                   onClick={filterOutLabel}
                 />
               )}
-              {singleKey && displayedFields.includes(keys[0]) && (
+              {onClickHideField && singleKey && displayedFields.includes(keys[0]) && (
                 <IconButton
                   variant="primary"
+                  size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={t('logs.log-line-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
                   name="eye"
                   onClick={hideField}
                 />
               )}
-              {singleKey && !displayedFields.includes(keys[0]) && (
+              {onClickShowField && singleKey && !displayedFields.includes(keys[0]) && (
                 <IconButton
                   tooltip={t(
                     'logs.log-line-details.fields.toggle-field-button.field-instead-message',
                     'Show this field instead of the message'
                   )}
                   name="eye"
+                  size={fontSize === 'small' ? 'sm' : undefined}
                   onClick={showField}
                 />
               )}
               <IconButton
                 variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
+                size={fontSize === 'small' ? 'sm' : undefined}
                 tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
                 className={styles.statsIcon}
                 disabled={!singleKey}
@@ -527,6 +548,7 @@ export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: str
 interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
   name: IconName;
   isActive(): Promise<boolean>;
+  size?: IconSize;
   tooltipSuffix: string;
 }
 

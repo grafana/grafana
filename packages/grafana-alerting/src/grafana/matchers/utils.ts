@@ -1,6 +1,6 @@
 import { parseFlags } from '@grafana/data';
 
-import { Label, LabelMatcher } from './types';
+import { type Label, type LabelMatcher } from './types';
 
 type LabelMatchingResult = {
   // wether all of the labels match the given set of matchers

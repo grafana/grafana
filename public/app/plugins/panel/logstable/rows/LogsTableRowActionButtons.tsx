@@ -1,23 +1,16 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  ClipboardButton,
-  CustomCellRendererProps,
-  IconButton,
-  TableCellInspector,
-  TableCellInspectorMode,
-  useTheme2,
-} from '@grafana/ui';
-import { LogsFrame } from 'app/features/logs/logsFrame';
+import { ClipboardButton, type CustomCellRendererProps, IconButton, useTheme2 } from '@grafana/ui';
+import { type LogsFrame } from 'app/features/logs/logsFrame';
 
-import { BuildLinkToLogLine } from '../types';
+import { useLogDetailsContext } from '../LogDetailsContext';
+import { type BuildLinkToLogLine } from '../types';
 
 interface Props extends CustomCellRendererProps {
   buildLinkToLog?: BuildLinkToLogLine;
-  showInspectLogLine: boolean;
   logsFrame: LogsFrame;
 }
 
@@ -27,29 +20,29 @@ interface Props extends CustomCellRendererProps {
  * @constructor
  */
 export function LogsTableRowActionButtons(props: Props) {
-  const { rowIndex, buildLinkToLog, showInspectLogLine, logsFrame } = props;
+  const { rowIndex, buildLinkToLog, logsFrame } = props;
   const theme = useTheme2();
-  const [isInspecting, setIsInspecting] = useState(false);
   const styles = getStyles(theme);
+  const { enableLogDetails, detailsDisplayed, toggleDetails } = useLogDetailsContext();
 
-  const handleViewClick = () => {
-    setIsInspecting(true);
-  };
+  const handleDetailsClick = useCallback(() => {
+    toggleDetails(rowIndex);
+  }, [rowIndex, toggleDetails]);
 
   return (
     <>
       <div className={styles.container}>
-        {showInspectLogLine && (
+        {enableLogDetails && (
           <div className={styles.buttonWrapper}>
             <IconButton
               className={styles.inspectButton}
-              tooltip={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
-              variant="secondary"
-              aria-label={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
+              tooltip={t('explore.logs-table.action-buttons.show-details', 'Show details')}
+              variant={detailsDisplayed(rowIndex) ? 'primary' : 'secondary'}
+              aria-label={t('explore.logs-table.action-buttons.show-details', 'Show details')}
               tooltipPlacement="top"
               size="md"
               name="eye"
-              onClick={handleViewClick}
+              onClick={handleDetailsClick}
               tabIndex={0}
             />
           </div>
@@ -79,23 +72,9 @@ export function LogsTableRowActionButtons(props: Props) {
           </div>
         )}
       </div>
-      {isInspecting && (
-        <TableCellInspector
-          value={getLineValue(logsFrame, rowIndex)}
-          mode={TableCellInspectorMode.code}
-          onDismiss={function (): void {
-            setIsInspecting(false);
-          }}
-        />
-      )}
     </>
   );
 }
-
-const getLineValue = (logsFrame: LogsFrame, rowIndex: number) => {
-  const bodyField = logsFrame.bodyField;
-  return bodyField?.values[rowIndex];
-};
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   container: css({

@@ -1,13 +1,13 @@
 import { useEffect, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Select, SelectCommonProps, Text } from '@grafana/ui';
+import { Alert, Select, type SelectCommonProps, Text } from '@grafana/ui';
 import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
 import { useContactPointsWithStatus } from '../contact-points/useContactPoints';
-import { ContactPointWithMetadata } from '../contact-points/utils';
+import { type ContactPointWithMetadata } from '../contact-points/utils';
 
 const MAX_CONTACT_POINTS_RENDERED = 500;
 

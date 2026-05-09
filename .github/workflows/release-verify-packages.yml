@@ -1,0 +1,409 @@
+name: Verify release packages
+
+on:
+  workflow_call:
+    inputs:
+      run-id:
+        description: Run ID where package artifacts were produced
+        required: true
+        type: string
+      packages-artifact-name:
+        description: Name of the artifact containing deb/rpm packages
+        required: false
+        type: string
+        default: artifacts-linux-amd64
+      docker-artifact-name:
+        description: Name of the artifact containing the alpine docker image. Defaults to packages-artifact-name.
+        required: false
+        type: string
+      docker-ubuntu-artifact-name:
+        description: Name of the artifact containing the ubuntu docker image. Defaults to docker-artifact-name.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify-deb:
+    name: Verify deb
+    runs-on: ubuntu-x64-large
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
+      - name: Build test plugins
+        run: yarn e2e:plugin:build
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ inputs.packages-artifact-name }}
+          run-id: ${{ inputs.run-id }}
+          path: dist
+
+      - name: Start deb package under test
+        run: |
+          PACKAGE_PATH="$(find dist -type f -name '*_linux_amd64.deb' | sort | sed -n '1p')"
+          if [ -z "$PACKAGE_PATH" ]; then
+            echo "No deb package found in dist/"
+            ls -laR dist
+            exit 1
+          fi
+
+          if ! command -v ar >/dev/null 2>&1; then
+            echo "ar is required to extract .deb packages"
+            exit 1
+          fi
+          workdir="$(mktemp -d)"
+          cp "$PACKAGE_PATH" "$workdir/package.deb"
+          (
+            cd "$workdir"
+            ar x package.deb
+          )
+          data_tar="$(find "$workdir" -maxdepth 1 -type f -name 'data.tar.*' | sort | sed -n '1p')"
+          if [ -z "$data_tar" ]; then
+            echo "Could not locate data.tar.* in extracted deb package"
+            exit 1
+          fi
+          mkdir -p grafana-server
+          tar -xf "$data_tar" -C grafana-server
+          GRAFANA_HOME="$PWD/grafana-server/usr/share/grafana"
+          if [ ! -x "$GRAFANA_HOME/bin/grafana" ]; then
+            chmod +x "$GRAFANA_HOME/bin/grafana" || true
+          fi
+          mkdir -p "${RUNNER_TEMP}/grafana-plugins"
+          GF_LOG_LEVEL=error \
+          GF_PATHS_PLUGINS="${RUNNER_TEMP}/grafana-plugins" \
+          "$GRAFANA_HOME/bin/grafana" server \
+            --homepath="$GRAFANA_HOME" \
+            cfg:server.http_port=3001 \
+            cfg:feature_toggles.splashScreen=false \
+            > /tmp/release-verify-deb.log 2>&1 &
+          echo "$!" > /tmp/release-verify-deb.pid
+
+      - name: Install Playwright browsers
+        run: yarn playwright install chromium --with-deps
+
+      - name: Wait for Grafana server to start
+        run: |
+          timeout=120
+          elapsed=0
+          while ! curl -s -f http://localhost:3001/health > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              cat /tmp/release-verify-deb.log || true
+              exit 1
+            fi
+            sleep 1
+            elapsed=$((elapsed + 1))
+          done
+
+      - name: Run acceptance suite
+        env:
+          GRAFANA_URL: http://localhost:3001
+          CI: true
+        run: yarn e2e:acceptance --reporter=dot,blob --output=playwright-test-results
+
+      - name: Upload Playwright blob report
+        if: success() || failure()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-verify-deb-playwright-blob
+          path: blob-report
+          retention-days: 1
+
+      - name: Upload server logs
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-verify-deb-server-log
+          path: /tmp/release-verify-deb.log
+          retention-days: 7
+
+      - name: Cleanup verify process
+        if: always()
+        run: |
+          if [ -f /tmp/release-verify-deb.pid ]; then
+            kill -9 "$(cat /tmp/release-verify-deb.pid)" || true
+          fi
+
+  verify-rpm:
+    name: Verify rpm
+    runs-on: ubuntu-x64-large
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
+      - name: Build test plugins
+        run: yarn e2e:plugin:build
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ inputs.packages-artifact-name }}
+          run-id: ${{ inputs.run-id }}
+          path: dist
+
+      - name: Install bsdtar for rpm extraction
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools
+
+      - name: Start rpm package under test
+        run: |
+          PACKAGE_PATH="$(find dist -type f -name '*_linux_amd64.rpm' | sort | sed -n '1p')"
+          if [ -z "$PACKAGE_PATH" ]; then
+            echo "No rpm package found in dist/"
+            ls -laR dist
+            exit 1
+          fi
+          if ! command -v bsdtar >/dev/null 2>&1; then
+            echo "bsdtar not found; expected libarchive-tools to provide it"
+            exit 1
+          fi
+          mkdir -p grafana-server
+          bsdtar -xf "$PACKAGE_PATH" -C grafana-server
+          GRAFANA_HOME="$PWD/grafana-server/usr/share/grafana"
+          if [ ! -x "$GRAFANA_HOME/bin/grafana" ]; then
+            chmod +x "$GRAFANA_HOME/bin/grafana" || true
+          fi
+          mkdir -p "${RUNNER_TEMP}/grafana-plugins"
+          GF_LOG_LEVEL=error \
+          GF_PATHS_PLUGINS="${RUNNER_TEMP}/grafana-plugins" \
+          "$GRAFANA_HOME/bin/grafana" server \
+            --homepath="$GRAFANA_HOME" \
+            cfg:server.http_port=3001 \
+            cfg:feature_toggles.splashScreen=false \
+            > /tmp/release-verify-rpm.log 2>&1 &
+          echo "$!" > /tmp/release-verify-rpm.pid
+
+      - name: Install Playwright browsers
+        run: yarn playwright install chromium --with-deps
+
+      - name: Wait for Grafana server to start
+        run: |
+          timeout=120
+          elapsed=0
+          while ! curl -s -f http://localhost:3001/health > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              cat /tmp/release-verify-rpm.log || true
+              exit 1
+            fi
+            sleep 1
+            elapsed=$((elapsed + 1))
+          done
+
+      - name: Run acceptance suite
+        env:
+          GRAFANA_URL: http://localhost:3001
+          CI: true
+        run: yarn e2e:acceptance --reporter=dot,blob --output=playwright-test-results
+
+      - name: Upload Playwright blob report
+        if: success() || failure()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-verify-rpm-playwright-blob
+          path: blob-report
+          retention-days: 1
+
+      - name: Upload server logs
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-verify-rpm-server-log
+          path: /tmp/release-verify-rpm.log
+          retention-days: 7
+
+      - name: Cleanup verify process
+        if: always()
+        run: |
+          if [ -f /tmp/release-verify-rpm.pid ]; then
+            kill -9 "$(cat /tmp/release-verify-rpm.pid)" || true
+          fi
+
+  verify-docker:
+    name: Verify docker
+    runs-on: ubuntu-x64-large
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
+      - name: Build test plugins
+        run: yarn e2e:plugin:build
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ inputs.docker-artifact-name || inputs.packages-artifact-name }}
+          run-id: ${{ inputs.run-id }}
+          path: dist
+
+      - name: Load Docker image under test
+        run: |
+          PACKAGE_PATH="$(find dist -type f -name '*_linux_amd64.docker.tar.gz' | sort | sed -n '1p')"
+          if [ -z "$PACKAGE_PATH" ]; then
+            echo "No docker package found in dist/"
+            ls -laR dist
+            exit 1
+          fi
+          IMAGE="$(docker load -i "$PACKAGE_PATH" | sed -n 's/^Loaded image: //p' | sed -n '1p')"
+          if [ -z "$IMAGE" ]; then
+            echo "Unable to load Docker image from $PACKAGE_PATH"
+            exit 1
+          fi
+          echo "IMAGE_UNDER_TEST=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Run Docker image under test
+        run: docker run -d --name grafana-verify -p 3000:3000 -e GF_FEATURE_TOGGLES_splashScreen=false "${IMAGE_UNDER_TEST}"
+
+      - name: Install Playwright browsers
+        run: yarn playwright install chromium --with-deps
+
+      - name: Wait for Grafana server to start
+        run: |
+          timeout=120
+          elapsed=0
+          while ! curl -s -f http://localhost:3000/health > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              docker logs grafana-verify || true
+              exit 1
+            fi
+            sleep 1
+            elapsed=$((elapsed + 1))
+          done
+
+      - name: Run acceptance suite
+        env:
+          GRAFANA_URL: http://localhost:3000
+          CI: true
+        run: yarn e2e:acceptance --reporter=dot,blob --output=playwright-test-results
+
+      - name: Upload Playwright blob report
+        if: success() || failure()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-verify-docker-playwright-blob
+          path: blob-report
+          retention-days: 1
+
+      - name: Collect server logs
+        if: always()
+        run: docker logs grafana-verify > /tmp/release-verify-docker.log 2>&1 || true
+
+      - name: Upload server logs
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-verify-docker-server-log
+          path: /tmp/release-verify-docker.log
+          retention-days: 7
+
+      - name: Cleanup verify container
+        if: always()
+        run: docker rm -f grafana-verify || true
+
+  verify-docker-ubuntu:
+    name: Verify docker-ubuntu
+    runs-on: ubuntu-x64-large
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
+      - name: Build test plugins
+        run: yarn e2e:plugin:build
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ inputs.docker-ubuntu-artifact-name || inputs.docker-artifact-name || inputs.packages-artifact-name }}
+          run-id: ${{ inputs.run-id }}
+          path: dist
+
+      - name: Load Docker Ubuntu image under test
+        run: |
+          PACKAGE_PATH="$(find dist -type f -name '*_linux_amd64.ubuntu.docker.tar.gz' | sort | sed -n '1p')"
+          if [ -z "$PACKAGE_PATH" ]; then
+            echo "No docker-ubuntu package found in dist/"
+            ls -laR dist
+            exit 1
+          fi
+          IMAGE="$(docker load -i "$PACKAGE_PATH" | sed -n 's/^Loaded image: //p' | sed -n '1p')"
+          if [ -z "$IMAGE" ]; then
+            echo "Unable to load Docker image from $PACKAGE_PATH"
+            exit 1
+          fi
+          echo "IMAGE_UNDER_TEST=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Run Docker Ubuntu image under test
+        run: docker run -d --name grafana-verify -p 3000:3000 -e GF_FEATURE_TOGGLES_splashScreen=false "${IMAGE_UNDER_TEST}"
+
+      - name: Install Playwright browsers
+        run: yarn playwright install chromium --with-deps
+
+      - name: Wait for Grafana server to start
+        run: |
+          timeout=120
+          elapsed=0
+          while ! curl -s -f http://localhost:3000/health > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              docker logs grafana-verify || true
+              exit 1
+            fi
+            sleep 1
+            elapsed=$((elapsed + 1))
+          done
+
+      - name: Run acceptance suite
+        env:
+          GRAFANA_URL: http://localhost:3000
+          CI: true
+        run: yarn e2e:acceptance --reporter=dot,blob --output=playwright-test-results
+
+      - name: Upload Playwright blob report
+        if: success() || failure()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-verify-docker-ubuntu-playwright-blob
+          path: blob-report
+          retention-days: 1
+
+      - name: Collect server logs
+        if: always()
+        run: docker logs grafana-verify > /tmp/release-verify-docker-ubuntu.log 2>&1 || true
+
+      - name: Upload server logs
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-verify-docker-ubuntu-server-log
+          path: /tmp/release-verify-docker-ubuntu.log
+          retention-days: 7
+
+      - name: Cleanup verify container
+        if: always()
+        run: docker rm -f grafana-verify || true

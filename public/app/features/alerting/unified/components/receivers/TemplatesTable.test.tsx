@@ -8,7 +8,7 @@ import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { NotificationTemplate } from '../contact-points/useNotificationTemplates';
+import { type NotificationTemplate } from '../contact-points/useNotificationTemplates';
 
 import { TemplatesTable } from './TemplatesTable';
 
@@ -99,5 +99,35 @@ describe('TemplatesTable', () => {
       const templateRow = screen.getByRole('row', { name: new RegExp(template.title ?? '', 'i') });
       expect(within(templateRow).queryByText('Provisioned')).not.toBeInTheDocument();
     });
+  });
+
+  it('shows "Legacy" badge for templates with mimir kind', () => {
+    renderWithProvider([
+      {
+        uid: 'mimir-only',
+        title: 'mimir-only',
+        content: '{{ define "mimir-only" }}Mimir template{{ end }}',
+        provenance: KnownProvenance.None,
+        kind: 'mimir',
+      },
+    ]);
+
+    const row = screen.getByRole('row', { name: /mimir-only/i });
+    expect(within(row).getByText('Legacy')).toBeInTheDocument();
+  });
+
+  it('shows both "Imported" and "Legacy" badges for mimir kind with converted_prometheus provenance', () => {
+    renderWithProvider([mockTemplates[0]]); // kind: 'mimir', provenance: ConvertedPrometheus
+
+    const row = screen.getByRole('row', { name: /mimir-template/i });
+    expect(within(row).getByText('Imported')).toBeInTheDocument();
+    expect(within(row).getByText('Legacy')).toBeInTheDocument();
+  });
+
+  it('does not show "Legacy" badge for templates with grafana kind', () => {
+    renderWithProvider([mockTemplates[3]]); // kind: 'grafana', provenance: None
+
+    const row = screen.getByRole('row', { name: /no-provenance-template/i });
+    expect(within(row).queryByText('Legacy')).not.toBeInTheDocument();
   });
 });

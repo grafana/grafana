@@ -1,7 +1,9 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Field, Input, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -10,12 +12,14 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../edit-pane/SectionFiltersList';
+import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../edit-pane/SectionVariablesList';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
-import { TabItem } from './TabItem';
+import { type TabItem } from './TabItem';
 
 export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
@@ -55,7 +59,60 @@ export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPan
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const editOptions = [tabCategory, ...layoutCategory, repeatCategory];
+  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  const sectionVariablesCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.tabs-layout.tab-options.section-variables.title', 'Variables'),
+      id: 'tab-section-variables',
+      isOpenDefault: true,
+      renderTitle: (isExpanded: boolean) => (
+        <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
+      ),
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: 'tab-section-variables-list',
+        skipField: true,
+        render: () => <SectionVariablesList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
+  const sectionFiltersCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.tabs-layout.tab-options.section-filters.title', 'Filters'),
+      id: 'tab-section-filters',
+      isOpenDefault: true,
+      renderTitle: (isExpanded: boolean) => (
+        <SectionFiltersCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
+      ),
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: 'tab-section-filters-list',
+        skipField: true,
+        render: () => <SectionFiltersList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
+  const editOptions = sectionVariablesEnabled
+    ? [
+        tabCategory,
+        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
+        sectionVariablesCategory,
+        ...layoutCategory,
+        repeatCategory,
+      ]
+    : [tabCategory, ...layoutCategory, repeatCategory];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),

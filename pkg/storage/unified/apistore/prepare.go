@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/storage"
@@ -20,7 +21,9 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -116,6 +119,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
 		return v, err
 	}
+	if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
+		return v, err
+	}
 
 	if s.opts.RequireDeprecatedInternalID {
 		// nolint:staticcheck
@@ -135,7 +141,11 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
-	obj.SetCreatedBy(info.GetUID())
+	createdBy := info.GetUID()
+	if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
+		createdBy = metaUID
+	}
+	obj.SetCreatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
 	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
@@ -211,6 +221,9 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 		}
 		// TODO: check that we can move the folder?
+		if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
+			return v, err
+		}
 		v.hasChanged = true
 	} else if obj.GetDeletionTimestamp() != nil && previous.GetDeletionTimestamp() == nil {
 		v.hasChanged = true // bump generation when deleted
@@ -224,16 +237,32 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
+	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+		return v, err
+	}
+
+	// If staying in the same folder but manager properties changed, re-validate
+	// consistency with the parent folder. Without this, removing or changing
+	// manager annotations would leave unmanaged resources in a repo-managed folder.
+	if obj.GetFolder() != "" && obj.GetFolder() == previous.GetFolder() {
+		newMgr, newOk := obj.GetManagerProperties()
+		oldMgr, oldOk := previous.GetManagerProperties()
+		if newOk != oldOk || newMgr != oldMgr {
+			if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
+				return v, err
+			}
+		}
+	}
+
 	// Mark the resource as changed
 	if v.hasChanged {
 		obj.SetGeneration(previous.GetGeneration() + 1)
-		obj.SetUpdatedBy(info.GetUID())
-		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
-
-		// Only validate when the generation has changed
-		if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
-			return v, err
+		updatedBy := info.GetUID()
+		if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
+			updatedBy = metaUID
 		}
+		obj.SetUpdatedBy(updatedBy)
+		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 	} else {
 		obj.SetGeneration(previous.GetGeneration())
 		obj.SetAnnotation(utils.AnnoKeyUpdatedBy, previous.GetAnnotation(utils.AnnoKeyUpdatedBy))
@@ -244,6 +273,43 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
 	return v, err
+}
+
+func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
+	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" {
+		return nil
+	}
+	folder, err := s.getParentFolder(ctx, obj)
+	if err != nil {
+		return err
+	}
+	if folder == nil {
+		return nil
+	}
+	return ensureSameRepoManager(folder, obj)
+}
+
+// getParentFolder fetches the folder that contains obj. Returns (nil, nil)
+// when the dynamic client is not available, signalling the caller to skip
+// the consistency check.
+func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
+	if s.getDynClient == nil {
+		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: dynamic client not configured", "resource", s.gr.String())
+		return nil, nil
+	}
+	dynClient, err := s.getDynClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	name := obj.GetFolder()
+	gvr := folders.FolderResourceInfo.GroupVersionResource()
+	raw, err := dynClient.Resource(gvr).Namespace(obj.GetNamespace()).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
+	}
+
+	return utils.MetaAccessor(raw)
 }
 
 // The bytes buffer will be reset with the proper value

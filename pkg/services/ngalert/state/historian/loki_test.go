@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -256,9 +257,9 @@ func TestBuildLogQuery(t *testing.T) {
 			name: "filters instance labels in log line",
 			query: models.HistoryQuery{
 				OrgID: 123,
-				Labels: map[string]string{
-					"customlabel": "customvalue",
-					"labeltwo":    "labelvaluetwo",
+				Labels: labels.Matchers{
+					mustNewMatcher(t, labels.MatchEqual, "customlabel", "customvalue"),
+					mustNewMatcher(t, labels.MatchEqual, "labeltwo", "labelvaluetwo"),
 				},
 			},
 			exp: []string{`{orgID="123",from="state-history"} | json | labels_customlabel="customvalue" | labels_labeltwo="labelvaluetwo"`},
@@ -268,8 +269,8 @@ func TestBuildLogQuery(t *testing.T) {
 			query: models.HistoryQuery{
 				OrgID:   123,
 				RuleUID: "rule-uid",
-				Labels: map[string]string{
-					"customlabel": "customvalue",
+				Labels: labels.Matchers{
+					mustNewMatcher(t, labels.MatchEqual, "customlabel", "customvalue"),
 				},
 			},
 			exp: []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`},
@@ -279,8 +280,8 @@ func TestBuildLogQuery(t *testing.T) {
 			query: models.HistoryQuery{
 				OrgID:   123,
 				RuleUID: "rule-uid",
-				Labels: map[string]string{
-					"customlabel": strings.Repeat("!", 24),
+				Labels: labels.Matchers{
+					mustNewMatcher(t, labels.MatchEqual, "customlabel", strings.Repeat("!", 24)),
 				},
 			},
 			exp: []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="!!!!!!!!!!!!!!!!!!!!!!!!"`},
@@ -290,11 +291,41 @@ func TestBuildLogQuery(t *testing.T) {
 			query: models.HistoryQuery{
 				OrgID:   123,
 				RuleUID: "rule-uid",
-				Labels: map[string]string{
-					"customlabel": strings.Repeat("!", 25),
+				Labels: labels.Matchers{
+					mustNewMatcher(t, labels.MatchEqual, "customlabel", strings.Repeat("!", 25)),
 				},
 			},
 			expErr: ErrLokiQueryTooLong,
+		},
+		{
+			name: "filters instance labels with not-equal operator",
+			query: models.HistoryQuery{
+				OrgID: 123,
+				Labels: labels.Matchers{
+					mustNewMatcher(t, labels.MatchNotEqual, "severity", "critical"),
+				},
+			},
+			exp: []string{`{orgID="123",from="state-history"} | json | labels_severity!="critical"`},
+		},
+		{
+			name: "filters instance labels with regex operator",
+			query: models.HistoryQuery{
+				OrgID: 123,
+				Labels: labels.Matchers{
+					mustNewMatcher(t, labels.MatchRegexp, "severity", "crit.*"),
+				},
+			},
+			exp: []string{`{orgID="123",from="state-history"} | json | labels_severity=~"crit.*"`},
+		},
+		{
+			name: "filters instance labels with not-regex operator",
+			query: models.HistoryQuery{
+				OrgID: 123,
+				Labels: labels.Matchers{
+					mustNewMatcher(t, labels.MatchNotRegexp, "env", "prod.*"),
+				},
+			},
+			exp: []string{`{orgID="123",from="state-history"} | json | labels_env!~"prod.*"`},
 		},
 		{
 			name: "filters by all namespaces",
@@ -308,8 +339,8 @@ func TestBuildLogQuery(t *testing.T) {
 			name: "should batch queries to fit all folders",
 			query: models.HistoryQuery{
 				OrgID: 123,
-				Labels: map[string]string{
-					"customlabel": "customvalue",
+				Labels: labels.Matchers{
+					mustNewMatcher(t, labels.MatchEqual, "customlabel", "customvalue"),
 				},
 			},
 			folderUIDs: []string{"folder-1", "folder-2", "folder\\d", "folder-" + strings.Repeat("!", 13)},
@@ -323,8 +354,8 @@ func TestBuildLogQuery(t *testing.T) {
 			name: "should fail if a single folder UID is too long",
 			query: models.HistoryQuery{
 				OrgID: 123,
-				Labels: map[string]string{
-					"customlabel": "customvalue",
+				Labels: labels.Matchers{
+					mustNewMatcher(t, labels.MatchEqual, "customlabel", "customvalue"),
 				},
 			},
 			folderUIDs: []string{"folder-1", "folder-2", "folder-" + strings.Repeat("!", 14)},
@@ -362,8 +393,8 @@ func TestBuildLogQuery(t *testing.T) {
 				RuleUID:  "rule-uid",
 				Previous: "Pending",
 				Current:  "Alerting",
-				Labels: map[string]string{
-					"instance": "localhost:9090",
+				Labels: labels.Matchers{
+					mustNewMatcher(t, labels.MatchEqual, "instance", "localhost:9090"),
 				},
 			},
 			maxQuerySize: 200,
@@ -1219,4 +1250,12 @@ func toJson[T any](entry T) json.RawMessage {
 		panic(err)
 	}
 	return b
+}
+
+// mustNewMatcher constructs a labels.Matcher and fails the test if it cannot be created (e.g. invalid regex).
+func mustNewMatcher(t *testing.T, mt labels.MatchType, name, value string) *labels.Matcher {
+	t.Helper()
+	m, err := labels.NewMatcher(mt, name, value)
+	require.NoError(t, err)
+	return m
 }

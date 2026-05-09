@@ -6,7 +6,7 @@ import { explainOperator } from '../../../querybuilder/operations';
 import { LokiOperationId } from '../../../querybuilder/types';
 import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS, BUILT_IN_FUNCTIONS } from '../../../syntax';
 
-import { CompletionDataProvider } from './CompletionDataProvider';
+import { type CompletionDataProvider } from './CompletionDataProvider';
 import { NeverCaseError } from './NeverCaseError';
 import type { Situation, Label } from './situation';
 

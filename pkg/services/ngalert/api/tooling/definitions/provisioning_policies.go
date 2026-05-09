@@ -8,13 +8,18 @@ import (
 //
 // Get the notification policy tree.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: Route
 //         description: The currently active notification routing tree
+//       403: ForbiddenError
 
 // swagger:route PUT /v1/provisioning/policies provisioning stable RoutePutPolicyTree
 //
 // Sets the notification policy tree.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -22,16 +27,20 @@ import (
 //     Responses:
 //       202: Ack
 //       400: ValidationError
+//       403: ForbiddenError
 
 // swagger:route DELETE /v1/provisioning/policies provisioning stable RouteResetPolicyTree
 //
 // Clears the notification policy tree.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 
 // swagger:route GET /v1/provisioning/policies/export provisioning stable RouteGetPolicyTreeExport
 //
@@ -46,6 +55,7 @@ import (
 //
 //     Responses:
 //       200: AlertingFileExport
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:parameters RoutePutPolicyTree

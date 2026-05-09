@@ -1,11 +1,21 @@
 import { render, screen } from '@testing-library/react';
 
 import { VariableHide } from '@grafana/data';
-import { SceneGridLayout, SceneVariable, SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
+import {
+  CustomVariable,
+  LocalValueVariable,
+  SceneGridLayout,
+  type SceneVariable,
+  SceneVariableSet,
+  ScopesVariable,
+  TextBoxVariable,
+} from '@grafana/scenes';
 
 import { DashboardScene } from './DashboardScene';
-import { VariableControls } from './VariableControls';
+import { SectionVariableControls, VariableControls } from './VariableControls';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { RowItem } from './layout-rows/RowItem';
 
 jest.mock('@grafana/runtime', () => {
   const runtime = jest.requireActual('@grafana/runtime');
@@ -56,7 +66,7 @@ describe('VariableControls', () => {
     expect(screen.queryByText('HiddenVar')).not.toBeInTheDocument();
   });
 
-  it('should render regular hidden variables but not scopes variable in edit mode', async () => {
+  it('should not render hidden variables in edit mode', async () => {
     const scopesVariable = new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' });
     const hiddenVariable = new TextBoxVariable({ name: 'HiddenVar', hide: VariableHide.hideVariable });
     const variables = [scopesVariable, hiddenVariable];
@@ -66,7 +76,7 @@ describe('VariableControls', () => {
     dashboard.setState({ isEditing: true });
     render(<VariableControls dashboard={dashboard} />);
 
-    expect(await screen.findByText('HiddenVar')).toBeInTheDocument();
+    expect(screen.queryByText('HiddenVar')).not.toBeInTheDocument();
     expect(screen.queryByText('__scopes')).not.toBeInTheDocument();
   });
 
@@ -88,6 +98,25 @@ describe('VariableControls', () => {
     render(<VariableControls dashboard={dashboard} />);
 
     expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
+  });
+
+  it('should hide local repeat variables in section controls', () => {
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new LocalValueVariable({ name: 'custom0', value: 'glo3', text: 'glo3' }),
+        new CustomVariable({ name: 'custom0', query: 'sec1,sec2', value: ['sec1'], text: ['sec1'] }),
+      ],
+    });
+
+    const row = new RowItem({
+      repeatByVariable: 'custom0',
+      $variables: variableSet,
+      layout: AutoGridLayoutManager.createEmpty(),
+    });
+
+    render(<SectionVariableControls variableSet={row.state.$variables!} />);
+
+    expect(screen.queryAllByText('custom0')).toHaveLength(1);
   });
 });
 

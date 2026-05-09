@@ -11,7 +11,7 @@
       },
       "connection-limits": {
         "auto-max-idle": "Auto. max. nečinný",
-        "content-auto-max-idle": "Pokud je tato možnost povolena, automaticky nastaví počet <i>maximálních nečinných připojení</i> na stejnou hodnotu jako <i> maximální otevřená připojení</i>. Pokud není nastaven počet maximálních otevřených připojení, bude nastaven na výchozí hodnotu ({{defaultMaxIdle}}).",
+        "content-auto-max-idle": "Pokud je tato možnost povolena, automaticky nastaví počet <i>maximálních nečinných připojení</i> na stejnou hodnotu jako<i> maximální otevřená připojení</i>. Pokud není nastaven počet maximálních otevřených připojení, bude nastaven na výchozí hodnotu ({{defaultMaxIdle}}).",
         "content-max-idle": "Maximální počet připojení v nečinném připojovacím souboru. Pokud je <i>maximální počet otevřených připojení</i> větší než 0, ale menší než <i>maximální počet nečinných připojení</i>, pak bude <i>maximální počet nečinných připojení</i> snížen tak, aby odpovídal limitu <i>maximálního počtu otevřených připojení</i>. Pokud je nastaveno na 0, nejsou zachována žádná nečinná připojení.",
         "content-max-lifetime": "Maximální doba v sekundách, po kterou může být připojení znovu použito. Pokud je nastaveno na 0, připojení jsou znovu používána opakovaně.",
         "content-max-open": "Maximální počet otevřených připojení k databázi. Pokud je <i>maximální počet nečinných připojení</i> větší než 0 a <i>maximální počet otevřených připojení</i> je menší než <i>maximální počet nečinných připojení</i>, pak bude <i>maximální počet nečinných připojení</i> snížen tak, aby odpovídal limitu <i>maximálního počtu otevřených připojení</i>. Pokud je nastaveno na 0, počet otevřených připojení není omezen.",
@@ -38,7 +38,7 @@
       "make-render-column": {
         "render-column": {
           "aria-label-group-by": "Seřadit podle",
-          "title-remove-group-by-column": "Odebrat skupinu podle sloupce"
+          "title-remove-group-by-column": "Odebrat funkci Seřadit podle sloupce"
         }
       },
       "order-by-row": {
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Váš dotaz je neplatný. Podrobnosti najdete níže. <br />Tento dotaz však můžete stále spustit.",
+        "content-invalid-query": "Váš dotaz je neplatný. Podrobnosti najdete níže. <br/>Tento dotaz však můžete stále spustit.",
         "editor-modes": {
           "label-builder": "Nástroj pro tvorbu",
           "label-code": "Kód"

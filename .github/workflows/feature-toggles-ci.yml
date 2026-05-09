@@ -43,11 +43,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Go
-        uses: actions/setup-go@v6.0.0
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
         with:
-          go-version-file: 'go.mod'
-          cache: true
+          cache-build: 'false'
 
       - name: Run feature toggle tests
         run: go test -v -run TestFeatureToggleFiles ./pkg/services/featuremgmt/

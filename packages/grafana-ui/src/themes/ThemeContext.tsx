@@ -3,9 +3,9 @@ import memoize from 'micro-memoize';
 import { useContext } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme, GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { type GrafanaTheme, type GrafanaTheme2, ThemeContext } from '@grafana/data';
 
-import { Themeable, Themeable2 } from '../types/theme';
+import { type Themeable, type Themeable2 } from '../types/theme';
 
 import { stylesFactory } from './stylesFactory';
 
@@ -41,7 +41,7 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
   return WithTheme as Hoisted;
 };
 
-/** @alpha */
+/** @public */
 export const withTheme2 = <P extends Themeable2, S extends {} = {}>(Component: React.ComponentType<P>) => {
   const WithTheme: React.FunctionComponent<Subtract<P, Themeable2>> = (props) => {
     /**

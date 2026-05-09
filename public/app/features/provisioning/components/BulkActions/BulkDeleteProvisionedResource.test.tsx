@@ -1,12 +1,12 @@
 import { screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { Job, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
-import { ResponseType } from './useBulkActionJob';
+import { type ResponseType } from './useBulkActionJob';
 
 jest.mock('app/features/browse-dashboards/components/BrowseActions/DescendantCount', () => ({
   DescendantCount: jest.fn(({ selectedItems }) => (
@@ -227,6 +227,72 @@ describe('BulkDeleteProvisionedResource', () => {
         }),
       })
     );
+  });
+
+  it('preserves repository context when selection clears on root page', async () => {
+    const selectedItems = {
+      folder: { 'folder-1': true },
+      dashboard: { 'dashboard-1': true },
+    };
+
+    const defaultRepository: RepositoryView = {
+      name: 'test-folder',
+      type: 'github',
+      title: 'Test Repository',
+      target: 'folder',
+      workflows: ['branch', 'write'],
+    };
+
+    const mockCreateBulkJob = jest.fn().mockResolvedValue({
+      success: true,
+      job: { metadata: { name: 'test-job' }, status: { state: 'success' } },
+    });
+
+    mockUseGetResourceRepositoryView.mockImplementation(({ folderName }: { folderName?: string }) => {
+      if (folderName === 'test-folder') {
+        return {
+          repository: defaultRepository,
+          folder: null,
+          isInstanceManaged: false,
+          isReadOnlyRepo: false,
+        };
+      }
+      return {
+        repository: undefined,
+        folder: null,
+        isInstanceManaged: false,
+        isReadOnlyRepo: false,
+      };
+    });
+
+    mockUseBulkActionJob.mockReturnValue({
+      createBulkJob: mockCreateBulkJob,
+      isLoading: false,
+    });
+
+    const onDismiss = jest.fn();
+    const { rerender, user } = render(
+      <BulkDeleteProvisionedResource folderUid={undefined} selectedItems={selectedItems} onDismiss={onDismiss} />
+    );
+
+    await user.click(screen.getByRole('button', { name: /Delete/i }));
+    expect(await screen.findByTestId('job-status')).toBeInTheDocument();
+
+    // Simulate selection clearing after job starts
+    mockUseSelectionRepoValidation.mockReturnValue({
+      selectedItemsRepoUID: undefined,
+      isInLockedRepo: jest.fn().mockReturnValue(false),
+      isCrossRepo: false,
+      isUidInReadOnlyRepo: jest.fn().mockReturnValue(false),
+    });
+
+    rerender(
+      <BulkDeleteProvisionedResource folderUid={undefined} selectedItems={selectedItems} onDismiss={onDismiss} />
+    );
+
+    // The ref should preserve the repo UID, so the job status remains visible
+    expect(screen.getByTestId('job-status')).toBeInTheDocument();
+    expect(screen.queryByText(/Repository not found/)).not.toBeInTheDocument();
   });
 
   it('calls createBulkJob with write workflow parameters for write-only repositories', async () => {

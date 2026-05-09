@@ -1,12 +1,10 @@
-import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
-import { RadialGaugeDimensions } from './types';
+import { ARC_END } from './constants';
+import { type RadialGaugeDimensions, type RadialShape } from './types';
 
 // some utility transparent white colors for gradients
 const TRANSPARENT_WHITE = '#ffffff00';
-const MOSTLY_TRANSPARENT_WHITE = '#ffffff88';
-const MOSTLY_OPAQUE_WHITE = '#ffffffbb';
-const OPAQUE_WHITE = '#ffffff';
 
 const MIN_GLOW_SIZE = 0.75;
 const GLOW_FACTOR = 0.08;
@@ -37,11 +35,17 @@ export interface CenterGlowProps {
   dimensions: RadialGaugeDimensions;
   gaugeId: string;
   color?: string;
+  shape?: RadialShape;
 }
 
-export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps) {
+export function MiddleCircleGlow({ dimensions, gaugeId, color, shape }: CenterGlowProps) {
   const gradientId = `circle-glow-${gaugeId}`;
+  const clipId = `circle-glow-clip-${gaugeId}`;
   const transparentColor = color ? colorManipulator.alpha(color, CENTER_GLOW_OPACITY) : color;
+
+  // Clip the glow to the gauge arc's flat-bottom opening (arc endpoints sit at centerY + radius * sin(20°)).
+  const isGaugeShape = shape === 'gauge';
+  const arcEndOffsetY = Math.sin(((ARC_END - 90) * Math.PI) / 180);
 
   return (
     <>
@@ -50,9 +54,25 @@ export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps
           <stop offset="0%" stopColor={transparentColor} />
           <stop offset="90%" stopColor={TRANSPARENT_WHITE} />
         </radialGradient>
+        {isGaugeShape && (
+          <clipPath id={clipId}>
+            <rect
+              x={dimensions.centerX - dimensions.radius}
+              y={dimensions.centerY - dimensions.radius}
+              width={dimensions.radius * 2}
+              height={dimensions.radius * (1 + arcEndOffsetY)}
+            />
+          </clipPath>
+        )}
       </defs>
       <g>
-        <circle cx={dimensions.centerX} cy={dimensions.centerY} r={dimensions.radius} fill={`url(#${gradientId})`} />
+        <circle
+          cx={dimensions.centerX}
+          cy={dimensions.centerY}
+          r={dimensions.radius}
+          fill={`url(#${gradientId})`}
+          clipPath={isGaugeShape ? `url(#${clipId})` : undefined}
+        />
       </g>
     </>
   );
@@ -64,25 +84,27 @@ interface SpotlightGradientProps {
   angle: number;
   roundedBars: boolean;
   theme: GrafanaTheme2;
+  color: string;
 }
 
-export function SpotlightGradient({ id, dimensions, roundedBars, angle, theme }: SpotlightGradientProps) {
+export function SpotlightGradient({ id, dimensions, roundedBars, angle, theme, color }: SpotlightGradientProps) {
   if (theme.isLight) {
     return null;
   }
 
-  const angleRadian = ((angle - 90) * Math.PI) / 180;
+  // Shift the centre forward by the endcap's angular half-width so the bloom sits over the visual tip.
+  const endcapOffsetRad = roundedBars ? dimensions.barWidth / (2 * dimensions.radius) : 0;
+  const angleRadian = ((angle - 90) * Math.PI) / 180 + endcapOffsetRad;
 
-  let x1 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian - 0.2);
-  let y1 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian - 0.2);
-  let x2 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian);
-  let y2 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian);
+  const cx = dimensions.centerX + dimensions.radius * Math.cos(angleRadian);
+  const cy = dimensions.centerY + dimensions.radius * Math.sin(angleRadian);
+  const glowRadius = dimensions.barWidth * 1.5;
+  const tintTip = colorManipulator.alpha(colorManipulator.lighten(color, 0.8), 0.85);
 
   return (
-    <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor={TRANSPARENT_WHITE} />
-      <stop offset="95%" stopColor={MOSTLY_TRANSPARENT_WHITE} />
-      {roundedBars && <stop offset="100%" stopColor={roundedBars ? MOSTLY_OPAQUE_WHITE : OPAQUE_WHITE} />}
-    </linearGradient>
+    <radialGradient id={id} cx={cx} cy={cy} r={glowRadius} fx={cx} fy={cy} gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor={tintTip} />
+      <stop offset="100%" stopColor={TRANSPARENT_WHITE} />
+    </radialGradient>
   );
 }

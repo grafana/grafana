@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { ComponentProps, useMemo } from 'react';
+import { type ComponentProps, useMemo } from 'react';
 import { useAsync, useToggle } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
@@ -8,14 +8,14 @@ import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { RulerRuleDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { trackImportToGMAError, trackImportToGMASuccess } from '../../Analytics';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { createListFilterLink } from '../../utils/navigation';
 import { getRuleName, isPluginProvidedRule } from '../../utils/rules';
 
-import { ImportFormValues } from './ImportToGMARules';
+import { type ImportFormValues } from './ImportToGMARules';
 import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';
 import { parseYamlFileToRulerRulesConfigDTO } from './yamlToRulerConverter';
 
@@ -169,7 +169,7 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
       const isRootFolder = isEmpty(targetFolder?.uid);
 
       trackImportToGMASuccess({
-        importSource,
+        rulesSource: importSource,
         isRootFolder,
         namespace,
         ruleGroup,
@@ -184,7 +184,7 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
       );
       locationService.push(ruleListUrl);
     } catch (error) {
-      trackImportToGMAError({ importSource });
+      trackImportToGMAError({ rulesSource: importSource });
       notifyApp.error(
         t('alerting.import-to-gma.error', 'Failed to import alert rules: {{error}}', {
           error: stringifyErrorLike(error),

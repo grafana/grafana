@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {

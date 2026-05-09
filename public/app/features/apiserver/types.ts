@@ -8,7 +8,7 @@
  *
  */
 
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 /** The object type and version */
 export interface TypeMeta<K = string> {

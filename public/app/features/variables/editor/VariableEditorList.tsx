@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
-import { ReactElement } from 'react';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { type ReactElement } from 'react';
 
-import { TypedVariableModel } from '@grafana/data';
+import { type TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Stack, EmptyState, TextLink } from '@grafana/ui';
 
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
-import { UsagesToNetwork, VariableUsageTree } from '../inspect/types';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type UsagesToNetwork, type VariableUsageTree } from '../inspect/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
 
@@ -55,7 +55,7 @@ export function VariableEditorList({
             <div className={styles.tableContainer}>
               <table
                 className="filter-table filter-table--hover"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.table}
                 role="grid"
               >
                 <thead>
@@ -95,7 +95,7 @@ export function VariableEditorList({
             <Stack>
               <VariablesDependenciesButton variables={variables} />
               <Button
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton}
                 onClick={onAdd}
                 icon="plus"
               >

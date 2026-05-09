@@ -1,22 +1,22 @@
 import {
   cacheFieldDisplayNames,
-  DataFrame,
+  type DataFrame,
   DataFrameType,
-  Field,
+  type Field,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
   getLinksSupplier,
-  GrafanaTheme2,
-  InterpolateFunction,
+  type GrafanaTheme2,
+  type InterpolateFunction,
   outerJoinDataFrames,
-  TimeRange,
-  ValueFormatter,
+  type TimeRange,
+  type ValueFormatter,
 } from '@grafana/data';
 import { parseSampleValue, sortSeriesByLabel } from '@grafana/prometheus';
 import {
   HeatmapCalculationMode,
-  HeatmapCalculationOptions,
+  type HeatmapCalculationOptions,
   HeatmapCellLayout,
   ScaleDistribution,
 } from '@grafana/schema';
@@ -27,7 +27,7 @@ import {
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { CellValues, Options } from './panelcfg.gen';
+import { type CellValues, type Options } from './panelcfg.gen';
 import { boundedMinMax, valuesToFills } from './utils';
 
 export interface HeatmapData {
@@ -89,6 +89,11 @@ export function prepareHeatmapData({
   replaceVariables = (v) => v,
   timeRange,
 }: PrepareHeatmapDataOptions): HeatmapData {
+  // exclude empty frames
+  frames = frames.filter(
+    (frame) => frame.length > 0 && frame.fields.length > 0 && frame.fields.every((field) => field.values.length > 0)
+  );
+
   if (!frames?.length) {
     return {};
   }

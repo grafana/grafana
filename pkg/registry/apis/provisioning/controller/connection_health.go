@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -22,7 +23,16 @@ const (
 //go:generate mockery --name=ConnectionHealthCheckerInterface --structname=MockConnectionHealthChecker --inpackage --filename connection_health_mock.go --with-expecter
 type ConnectionHealthCheckerInterface interface {
 	ShouldCheckHealth(conn *provisioning.Connection) bool
-	RefreshHealthWithPatchOps(ctx context.Context, conn *provisioning.Connection) (*provisioning.TestResults, provisioning.HealthStatus, []map[string]interface{}, error)
+	RefreshHealthWithPatchOps(ctx context.Context, conn *provisioning.Connection) (ConnectionHealthResultWithPatchOps, error)
+}
+
+// ConnectionHealthResultWithPatchOps contains connection health-check results
+// and patch operations to be applied in a single status patch request.
+type ConnectionHealthResultWithPatchOps struct {
+	TestResults    *provisioning.TestResults
+	HealthStatus   provisioning.HealthStatus
+	ReadyCondition metav1.Condition
+	PatchOps       []map[string]interface{}
 }
 
 //go:generate mockery --name=ConnectionTester --structname=MockConnectionTester --inpackage --filename connection_tester_mock.go --with-expecter
@@ -123,41 +133,37 @@ func classifyConnectionError(testResults *provisioning.TestResults) string {
 }
 
 // RefreshHealthWithPatchOps performs a health check on an existing connection
-// and returns the test results, health status, and patch operations to apply.
+// and returns the health result and patch operations to apply.
 // This method does NOT apply the patch itself, allowing the caller to batch
 // multiple status updates together to avoid race conditions.
-func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, conn *provisioning.Connection) (*provisioning.TestResults, provisioning.HealthStatus, []map[string]interface{}, error) {
+func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, conn *provisioning.Connection) (ConnectionHealthResultWithPatchOps, error) {
 	// Use health checker to perform comprehensive health check with existing status
 	testResults, newHealthStatus, err := hc.refreshHealth(ctx, conn, conn.Status.Health)
 	if err != nil {
-		return nil, provisioning.HealthStatus{}, nil, fmt.Errorf("health check failed: %w", err)
+		return ConnectionHealthResultWithPatchOps{}, fmt.Errorf("health check failed: %w", err)
 	}
 
 	var patchOps []map[string]interface{}
-
-	// Only return patch operation if health status actually changed
 	if hc.hasHealthStatusChanged(conn.Status.Health, newHealthStatus) {
-		patchOps = append(patchOps, map[string]interface{}{
+		patchOps = []map[string]interface{}{{
 			"op":    "replace",
 			"path":  "/status/health",
 			"value": newHealthStatus,
-		})
+		}}
 	}
 
-	// Update Ready condition based on health status with error classification
-	reason := classifyConnectionError(testResults)
-	readyCondition := buildReadyConditionWithReason(newHealthStatus, reason)
-	if conditionPatchOps := BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.GetGeneration(), readyCondition); conditionPatchOps != nil {
-		patchOps = append(patchOps, conditionPatchOps...)
-	}
-
-	return testResults, newHealthStatus, patchOps, nil
+	return ConnectionHealthResultWithPatchOps{
+		TestResults:    testResults,
+		HealthStatus:   newHealthStatus,
+		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, classifyConnectionError(testResults)),
+		PatchOps:       patchOps,
+	}, nil
 }
 
 // refreshHealth performs a comprehensive health check
 // Returns test results, health status, and any error
 func (hc *ConnectionHealthChecker) refreshHealth(ctx context.Context, conn *provisioning.Connection, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {
-	logger := logging.FromContext(ctx).With("connection", conn.GetName(), "namespace", conn.GetNamespace())
+	logger := logging.FromContext(ctx)
 	start := time.Now()
 	outcome := utils.SuccessOutcome
 	defer func() {

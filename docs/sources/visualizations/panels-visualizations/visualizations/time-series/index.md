@@ -191,6 +191,10 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 {{< docs/shared lookup="visualizations/axis-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
+### Annotation options
+
+{{< docs/shared lookup="visualizations/annotations/options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ### Graph styles options
 
 The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options).

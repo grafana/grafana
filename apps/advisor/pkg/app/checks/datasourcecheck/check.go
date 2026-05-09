@@ -95,7 +95,7 @@ func (c *check) Name() string {
 
 func (c *check) Init(ctx context.Context) error {
 	c.pluginCanBeInstalledCache = make(map[string]bool)
-	return nil
+	return c.healthChecker.Init(ctx)
 }
 
 func (c *check) Steps() []checks.Step {
@@ -103,6 +103,7 @@ func (c *check) Steps() []checks.Step {
 		&uidValidationStep{},
 		&healthCheckStep{
 			HealthChecker: c.healthChecker,
+			PluginStore:   c.PluginStore,
 		},
 		&missingPluginStep{
 			PluginStore:    c.PluginStore,
@@ -156,8 +157,8 @@ func (c *check) canBeInstalled(ctx context.Context, pluginType string) (bool, er
 	}
 
 	// Plugin is not installed but IS available - return false to show install link
-	// Plugin is not installed and NOT available in repo - return true (nothing to install)
+	// Plugin is not installed and NOT available in repo - return false (nothing to install)
 	isAvailableInRepo := len(availablePlugins) > 0
-	c.pluginCanBeInstalledCache[pluginType] = !isAvailableInRepo
+	c.pluginCanBeInstalledCache[pluginType] = isAvailableInRepo
 	return isAvailableInRepo, nil
 }

@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import { Props } from 'react-virtualized-auto-sizer';
+import { type Props } from 'react-virtualized-auto-sizer';
 
 import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 

@@ -1,9 +1,9 @@
-import { TypedVariableModel } from '@grafana/data';
+import { type TypedVariableModel } from '@grafana/data';
 import { config, DataSourceWithBackend, featureEnabled } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { PanelModel } from '../../../state/PanelModel';
+import { type PanelModel } from '../../../state/PanelModel';
 import { shareDashboardType } from '../utils';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';

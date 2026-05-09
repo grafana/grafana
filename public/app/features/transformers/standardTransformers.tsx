@@ -1,0 +1,775 @@
+import { lazy } from 'react';
+
+import {
+  standardTransformers,
+  DataTransformerID,
+  PluginState,
+  TransformerCategory,
+  type DataTransformerInfo,
+  type TransformerRegistryItem,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+
+// Direct source import - standardTransformers was removed from @grafana/data's public API
+// to keep it out of the plugin-facing shared chunk.
+
+import { isHeatmapApplicable } from './calculateHeatmap/applicability';
+// SVG images - dark
+import calculateFieldDark from './images/dark/calculateField.svg';
+import concatenateDark from './images/dark/concatenate.svg';
+import configFromDataDark from './images/dark/configFromData.svg';
+import convertFieldTypeDark from './images/dark/convertFieldType.svg';
+import extractFieldsDark from './images/dark/extractFields.svg';
+import fieldLookupDark from './images/dark/fieldLookup.svg';
+import filterByRefIdDark from './images/dark/filterByRefId.svg';
+import filterByValueDark from './images/dark/filterByValue.svg';
+import filterFieldsByNameDark from './images/dark/filterFieldsByName.svg';
+import formatStringDark from './images/dark/formatString.svg';
+import formatTimeDark from './images/dark/formatTime.svg';
+import groupByDark from './images/dark/groupBy.svg';
+import groupToNestedTableDark from './images/dark/groupToNestedTable.svg';
+import groupingToMatrixDark from './images/dark/groupingToMatrix.svg';
+import heatmapDark from './images/dark/heatmap.svg';
+import histogramDark from './images/dark/histogram.svg';
+import joinByFieldDark from './images/dark/joinByField.svg';
+import joinByLabelsDark from './images/dark/joinByLabels.svg';
+import labelsToFieldsDark from './images/dark/labelsToFields.svg';
+import limitDark from './images/dark/limit.svg';
+import mergeDark from './images/dark/merge.svg';
+import organizeDark from './images/dark/organize.svg';
+import partitionByValuesDark from './images/dark/partitionByValues.svg';
+import prepareTimeSeriesDark from './images/dark/prepareTimeSeries.svg';
+import reduceDark from './images/dark/reduce.svg';
+import regressionDark from './images/dark/regression.svg';
+import renameByRegexDark from './images/dark/renameByRegex.svg';
+import rowsToFieldsDark from './images/dark/rowsToFields.svg';
+import seriesToRowsDark from './images/dark/seriesToRows.svg';
+import smoothingDark from './images/dark/smoothing.svg';
+import sortByDark from './images/dark/sortBy.svg';
+import spatialDark from './images/dark/spatial.svg';
+import timeSeriesTableDark from './images/dark/timeSeriesTable.svg';
+import transposeDark from './images/dark/transpose.svg';
+// SVG images - light
+import calculateFieldLight from './images/light/calculateField.svg';
+import concatenateLight from './images/light/concatenate.svg';
+import configFromDataLight from './images/light/configFromData.svg';
+import convertFieldTypeLight from './images/light/convertFieldType.svg';
+import extractFieldsLight from './images/light/extractFields.svg';
+import fieldLookupLight from './images/light/fieldLookup.svg';
+import filterByRefIdLight from './images/light/filterByRefId.svg';
+import filterByValueLight from './images/light/filterByValue.svg';
+import filterFieldsByNameLight from './images/light/filterFieldsByName.svg';
+import formatStringLight from './images/light/formatString.svg';
+import formatTimeLight from './images/light/formatTime.svg';
+import groupByLight from './images/light/groupBy.svg';
+import groupToNestedTableLight from './images/light/groupToNestedTable.svg';
+import groupingToMatrixLight from './images/light/groupingToMatrix.svg';
+import heatmapLight from './images/light/heatmap.svg';
+import histogramLight from './images/light/histogram.svg';
+import joinByFieldLight from './images/light/joinByField.svg';
+import joinByLabelsLight from './images/light/joinByLabels.svg';
+import labelsToFieldsLight from './images/light/labelsToFields.svg';
+import limitLight from './images/light/limit.svg';
+import mergeLight from './images/light/merge.svg';
+import organizeLight from './images/light/organize.svg';
+import partitionByValuesLight from './images/light/partitionByValues.svg';
+import prepareTimeSeriesLight from './images/light/prepareTimeSeries.svg';
+import reduceLight from './images/light/reduce.svg';
+import regressionLight from './images/light/regression.svg';
+import renameByRegexLight from './images/light/renameByRegex.svg';
+import rowsToFieldsLight from './images/light/rowsToFields.svg';
+import seriesToRowsLight from './images/light/seriesToRows.svg';
+import smoothingLight from './images/light/smoothing.svg';
+import sortByLight from './images/light/sortBy.svg';
+import spatialLight from './images/light/spatial.svg';
+import timeSeriesTableLight from './images/light/timeSeriesTable.svg';
+import transposeLight from './images/light/transpose.svg';
+import { isSmoothingApplicable } from './smoothing/applicability';
+import { isTimeSeriesTableApplicable } from './timeSeriesTable/applicability';
+
+const emptyLazyEditor = lazy(async () => ({ default: () => <></> }));
+
+function makeRegistryItemFromTransformer<T>(
+  transformer: DataTransformerInfo<T>,
+  metadata: Omit<
+    TransformerRegistryItem<T>,
+    'transformation' | 'isApplicable' | 'isApplicableDescription' | 'defaultOptions'
+  >
+): TransformerRegistryItem<T> {
+  return {
+    ...metadata,
+    transformation: () => Promise.resolve(transformer),
+    defaultOptions: transformer.defaultOptions,
+    isApplicable: transformer.isApplicable,
+    isApplicableDescription: transformer.isApplicableDescription,
+  };
+}
+
+// Lazy entries can't auto-hoist defaultOptions / isApplicable / isApplicableDescription
+// from the resolver because the resolver is a dynamic import that is not awaited at
+// registration time. To prevent silent divergence from the underlying DataTransformerInfo,
+// this helper requires those fields to be specified explicitly at the call site.
+// Pass `undefined` when there is intentionally no value, to document the decision.
+type LazyRegistryItem<TOptions> = Omit<
+  TransformerRegistryItem<TOptions>,
+  'defaultOptions' | 'isApplicable' | 'isApplicableDescription'
+> & {
+  defaultOptions: TransformerRegistryItem<TOptions>['defaultOptions'];
+  isApplicable: TransformerRegistryItem<TOptions>['isApplicable'];
+  isApplicableDescription: TransformerRegistryItem<TOptions>['isApplicableDescription'];
+};
+
+function makeLazyRegistryItem<TOptions>(item: LazyRegistryItem<TOptions>): TransformerRegistryItem<TOptions> {
+  return item;
+}
+
+function hiddenTransformer(id: DataTransformerID, transformer: DataTransformerInfo): TransformerRegistryItem {
+  return {
+    id,
+    transformation: () => Promise.resolve(transformer),
+    editor: emptyLazyEditor,
+    name: id,
+    description: '',
+    imageDark: '',
+    imageLight: '',
+    excludeFromPicker: true,
+  };
+}
+
+export const getStandardTransformers = (): TransformerRegistryItem[] => {
+  return [
+    makeRegistryItemFromTransformer(standardTransformers.reduceTransformer, {
+      id: DataTransformerID.reduce,
+      editor: lazy(() =>
+        import('./editors/ReduceTransformerEditor').then((m) => ({ default: m.ReduceTransformerEditor }))
+      ),
+      name: t('transformers.reduce-transformer-editor.name.reduce', 'Reduce'),
+      description: t(
+        'transformers.reduce-transformer-editor.description.reduce-to-single-value',
+        'Reduce all rows or data points to a single value (ex. max, mean).'
+      ),
+      categories: new Set([TransformerCategory.CalculateNewFields]),
+      imageDark: reduceDark,
+      imageLight: reduceLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.filterFieldsByNameTransformer, {
+      id: DataTransformerID.filterFieldsByName,
+      editor: lazy(() =>
+        import('./editors/FilterByNameTransformerEditor').then((m) => ({
+          default: m.FilterByNameTransformerEditor,
+        }))
+      ),
+      name: t('transformers.filter-by-name-transformer-editor.name.filter-fields-by-name', 'Filter fields by name'),
+      description: t(
+        'transformers.filter-by-name-transformer-editor.description.remove-part-query-results-regex-pattern',
+        'Remove parts of the query results using a regex pattern.'
+      ),
+      categories: new Set([TransformerCategory.Filter]),
+      imageDark: filterFieldsByNameDark,
+      imageLight: filterFieldsByNameLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.renameByRegexTransformer, {
+      id: DataTransformerID.renameByRegex,
+      editor: lazy(() =>
+        import('./editors/RenameByRegexTransformer').then((m) => ({ default: m.RenameByRegexTransformerEditor }))
+      ),
+      name: t('transformers.rename-by-regex-transformer.name.rename-fields-by-regex', 'Rename fields by regex'),
+      description: t(
+        'transformers.rename-by-regex-transformer.description.rename-parts-using-regex',
+        'Rename parts of the query results using a regular expression and replacement pattern.'
+      ),
+      categories: new Set([TransformerCategory.ReorderAndRename]),
+      imageDark: renameByRegexDark,
+      imageLight: renameByRegexLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.filterFramesByRefIdTransformer, {
+      id: DataTransformerID.filterByRefId,
+      editor: lazy(() =>
+        import('./editors/FilterByRefIdTransformerEditor').then((m) => ({ default: m.FilterByRefIdTransformerEditor }))
+      ),
+      name: t('transformers.filter-by-ref-id-transformer-editor.name.filter-data-by-query', 'Filter data by query'),
+      description: t(
+        'transformers.filter-by-ref-id-transformer-editor.description.filter-data-by-query-useful-sharing-results',
+        'Remove rows from the data based on origin query'
+      ),
+      categories: new Set([TransformerCategory.Filter]),
+      imageDark: filterByRefIdDark,
+      imageLight: filterByRefIdLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.filterByValueTransformer, {
+      id: DataTransformerID.filterByValue,
+      editor: lazy(() =>
+        import('./FilterByValueTransformer/FilterByValueTransformerEditor').then((m) => ({
+          default: m.FilterByValueTransformerEditor,
+        }))
+      ),
+      name: t('transformers.filter-by-value-transformer-editor.name.filter-data-by-values', 'Filter data by values'),
+      description: t(
+        'transformers.filter-by-value-transformer-editor.description.remove-rows-query-results-user-defined-filters',
+        'Remove rows from the query results using user-defined filters.'
+      ),
+      categories: new Set([TransformerCategory.Filter]),
+      imageDark: filterByValueDark,
+      imageLight: filterByValueLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.organizeFieldsTransformer, {
+      id: DataTransformerID.organize,
+      editor: lazy(() =>
+        import('./editors/OrganizeFieldsTransformerEditor').then((m) => ({
+          default: m.OrganizeFieldsTransformerEditor,
+        }))
+      ),
+      name: t('transformers.organize-fields-transformer-editor.name.organize-fields', 'Organize fields by name'),
+      description: t(
+        'transformers.organize-fields-transformer-editor.description.reorder-hide-or-rename-fields',
+        'Re-order, hide, or rename fields.'
+      ),
+      categories: new Set([TransformerCategory.ReorderAndRename]),
+      imageDark: organizeDark,
+      imageLight: organizeLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.joinByFieldTransformer, {
+      id: DataTransformerID.joinByField,
+      aliasIds: [DataTransformerID.seriesToColumns],
+      editor: lazy(() =>
+        import('./editors/JoinByFieldTransformerEditor').then((m) => ({
+          default: m.SeriesToFieldsTransformerEditor,
+        }))
+      ),
+      name: t('transformers.join-by-field-transformer-editor.name.join-by-field', 'Join by field'),
+      description: t(
+        'transformers.join-by-field-transformer-editor.description.combine-rows-from-2-tables',
+        'Combine rows from 2+ tables, based on a related field.'
+      ),
+      categories: new Set([TransformerCategory.Combine]),
+      imageDark: joinByFieldDark,
+      imageLight: joinByFieldLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.seriesToRowsTransformer, {
+      id: DataTransformerID.seriesToRows,
+      editor: lazy(() =>
+        import('./editors/SeriesToRowsTransformerEditor').then((m) => ({
+          default: m.SeriesToRowsTransformerEditor,
+        }))
+      ),
+      name: t('transformers.series-to-rows-transformer-editor.name.series-to-rows', 'Series to rows'),
+      description: t(
+        'transformers.series-to-rows-transformer-editor.description.merge-multiple-series',
+        'Merge multiple series. Return time, metric and values as a row.'
+      ),
+      categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
+      imageDark: seriesToRowsDark,
+      imageLight: seriesToRowsLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.concatenateTransformer, {
+      id: DataTransformerID.concatenate,
+      editor: lazy(() =>
+        import('./editors/ConcatenateTransformerEditor').then((m) => ({
+          default: m.ConcatenateTransformerEditor,
+        }))
+      ),
+      name: t('transformers.editors.concatenate-transformer-editor.name.concatenate-fields', 'Concatenate fields'),
+      description: t(
+        'transformers.editors.concatenate-transformer-editor.description.combine-all-fields',
+        'Combine all fields into a single frame.'
+      ),
+      categories: new Set([TransformerCategory.Combine]),
+      tags: new Set([t('transformers.editors.concatenate-transformer-editor.tags.combine', 'Combine')]),
+      imageDark: concatenateDark,
+      imageLight: concatenateLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.calculateFieldTransformer, {
+      id: DataTransformerID.calculateField,
+      editor: lazy(() =>
+        import('./editors/CalculateFieldTransformerEditor/CalculateFieldTransformerEditor').then((m) => ({
+          default: m.CalculateFieldTransformerEditor,
+        }))
+      ),
+      name: t(
+        'transformers.get-calculate-field-transform-registry-item.name.add-field-from-calculation',
+        'Add field from calculation'
+      ),
+      description: t(
+        'transformers.get-calculate-field-transform-registry-item.description.values-calculate-field',
+        'Use the row values to calculate a new field.'
+      ),
+      categories: new Set([TransformerCategory.CalculateNewFields]),
+      imageDark: calculateFieldDark,
+      imageLight: calculateFieldLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.labelsToFieldsTransformer, {
+      id: DataTransformerID.labelsToFields,
+      editor: lazy(() =>
+        import('./editors/LabelsToFieldsTransformerEditor').then((m) => ({
+          default: m.LabelsAsFieldsTransformerEditor,
+        }))
+      ),
+      name: t('transformers.labels-to-fields-transformer-editor.name.labels-to-fields', 'Labels to fields'),
+      description: t(
+        'transformers.labels-to-fields-transformer-editor.description.groups-series-time-return-labels-tags-fields',
+        'Group series by time and return labels or tags as fields.'
+      ),
+      categories: new Set([TransformerCategory.Reformat]),
+      imageDark: labelsToFieldsDark,
+      imageLight: labelsToFieldsLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.groupByTransformer, {
+      id: DataTransformerID.groupBy,
+      editor: lazy(() =>
+        import('./editors/GroupByTransformerEditor').then((m) => ({ default: m.GroupByTransformerEditor }))
+      ),
+      name: t('transformers.group-by-transformer-editor.name.group-by', 'Group by'),
+      description: t(
+        'transformers.group-by-transformer-editor.description.group-series-by-field-calculate-stats',
+        'Group data by a field value and create aggregate data.'
+      ),
+      categories: new Set([
+        TransformerCategory.Combine,
+        TransformerCategory.CalculateNewFields,
+        TransformerCategory.Reformat,
+      ]),
+      imageDark: groupByDark,
+      imageLight: groupByLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.sortByTransformer, {
+      id: DataTransformerID.sortBy,
+      editor: lazy(() =>
+        import('./editors/SortByTransformerEditor').then((m) => ({ default: m.SortByTransformerEditor }))
+      ),
+      name: t('transformers.sort-by-transformer-editor.name.sort-by', 'Sort by'),
+      description: t('transformers.sort-by-transformer-editor.description.sort-fields', 'Sort fields in a frame.'),
+      categories: new Set([TransformerCategory.ReorderAndRename]),
+      imageDark: sortByDark,
+      imageLight: sortByLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.mergeTransformer, {
+      id: DataTransformerID.merge,
+      editor: lazy(() =>
+        import('./editors/MergeTransformerEditor').then((m) => ({ default: m.MergeTransformerEditor }))
+      ),
+      name: t('transformers.merge-transformer-editor.name.merge', 'Merge series/tables'),
+      description: t(
+        'transformers.merge-transformer-editor.description.merge-multiple-series',
+        'Merge multiple series. Values will be combined into one row.'
+      ),
+      categories: new Set([TransformerCategory.Combine]),
+      imageDark: mergeDark,
+      imageLight: mergeLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.histogramTransformer, {
+      id: DataTransformerID.histogram,
+      editor: lazy(() =>
+        import('./editors/HistogramTransformerEditor').then((m) => ({ default: m.HistogramTransformerEditor }))
+      ),
+      name: t('transformers.histogram-transformer-editor.name.histogram', 'Histogram'),
+      description: t(
+        'transformers.histogram-transformer-editor.description.calculate-histogram-from-input-data',
+        'Calculate a histogram from input data.'
+      ),
+      categories: new Set([TransformerCategory.CreateNewVisualization]),
+      imageDark: histogramDark,
+      imageLight: histogramLight,
+    }),
+    makeLazyRegistryItem({
+      id: DataTransformerID.rowsToFields,
+      editor: lazy(() =>
+        import('./rowsToFields/RowsToFieldsTransformerEditor').then((m) => ({
+          default: m.RowsToFieldsTransformerEditor,
+        }))
+      ),
+      transformation: () => import('./rowsToFields/rowsToFields').then((m) => m.getRowsToFieldsTransformer()),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
+      name: t('transformers.get-rows-to-fields-transformer.name.rows-to-fields', 'Rows to fields'),
+      description: t(
+        'transformers.get-rows-to-fields-transformer.description.convert-field-dynamic-config',
+        'Convert each row into a field with dynamic config.'
+      ),
+      state: PluginState.beta,
+      categories: new Set([TransformerCategory.Reformat]),
+      imageDark: rowsToFieldsDark,
+      imageLight: rowsToFieldsLight,
+    }),
+    makeLazyRegistryItem({
+      id: DataTransformerID.configFromData,
+      editor: lazy(() =>
+        import('./configFromQuery/ConfigFromQueryTransformerEditor').then((m) => ({
+          default: m.ConfigFromQueryTransformerEditor,
+        }))
+      ),
+      transformation: () => import('./configFromQuery/configFromQuery').then((m) => m.getConfigFromDataTransformer()),
+      // Keep in sync with getConfigFromDataTransformer().defaultOptions in ./configFromQuery/configFromQuery.ts.
+      // Without this, FieldToConfigMappingEditor receives mappings=undefined and crashes on first render.
+      defaultOptions: { configRefId: 'config', mappings: [] },
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
+      name: t(
+        'transformers.get-config-from-data-transformer.name.config-from-query-results',
+        'Config from query results'
+      ),
+      description: t(
+        'transformers.get-config-from-data-transformer.description.set-unit-min-max-and-more',
+        'Set unit, min, max and more.'
+      ),
+      state: PluginState.beta,
+      categories: new Set([TransformerCategory.CalculateNewFields]),
+      imageDark: configFromDataDark,
+      imageLight: configFromDataLight,
+    }),
+    makeLazyRegistryItem({
+      id: DataTransformerID.prepareTimeSeries,
+      editor: lazy(() =>
+        import('./prepareTimeSeries/PrepareTimeSeriesEditor').then((m) => ({
+          default: m.PrepareTimeSeriesEditor,
+        }))
+      ),
+      transformation: () =>
+        import('./prepareTimeSeries/prepareTimeSeries').then((m) => m.getPrepareTimeSeriesTransformer()),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
+      name: t('transformers.prepare-time-series.name.prepare-time-series', 'Prepare time series'),
+      description: t(
+        'transformers.prepare-time-series.description.stretch-data-frames',
+        'Stretch data frames from the wide format into the long format.'
+      ),
+      categories: new Set([TransformerCategory.Reformat]),
+      imageDark: prepareTimeSeriesDark,
+      imageLight: prepareTimeSeriesLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.convertFieldTypeTransformer, {
+      id: DataTransformerID.convertFieldType,
+      editor: lazy(() =>
+        import('./editors/ConvertFieldTypeTransformerEditor').then((m) => ({
+          default: m.ConvertFieldTypeTransformerEditor,
+        }))
+      ),
+      name: t('transformers.convert-field-type-transformer-editor.name.convert-field-type', 'Convert field type'),
+      description: t(
+        'transformers.convert-field-type-transformer-editor.description.convert-to-specified-field-type',
+        'Convert a field to a specified field type.'
+      ),
+      categories: new Set([TransformerCategory.Reformat]),
+      tags: new Set([t('transformers.convert-field-type-transformer-editor.tags.format-field', 'Format field')]),
+      imageDark: convertFieldTypeDark,
+      imageLight: convertFieldTypeLight,
+    }),
+    makeLazyRegistryItem({
+      id: DataTransformerID.spatial,
+      editor: lazy(() =>
+        import('./spatial/SpatialTransformerEditor').then((m) => ({ default: m.SetGeometryTransformerEditor }))
+      ),
+      transformation: () => import('./spatial/spatialTransformer').then((m) => m.getSpatialTransformer()),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
+      name: t('transformers.get-spatial-transformer.name.spatial-operations', 'Spatial operations'),
+      description: t(
+        'transformers.get-spatial-transformer.description.apply-spatial-operations-to-query-results',
+        'Apply spatial operations to query results.'
+      ),
+      state: PluginState.alpha,
+      categories: new Set([TransformerCategory.PerformSpatialOperations]),
+      imageDark: spatialDark,
+      imageLight: spatialLight,
+    }),
+    makeLazyRegistryItem({
+      id: DataTransformerID.fieldLookup,
+      editor: lazy(() =>
+        import('./lookupGazetteer/FieldLookupTransformerEditor').then((m) => ({
+          default: m.FieldLookupTransformerEditor,
+        }))
+      ),
+      transformation: () => import('./lookupGazetteer/fieldLookup').then((m) => m.fieldLookupTransformer),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
+      name: t(
+        'transformers.field-lookup-transformer-editor.name.lookup-fields-from-resource',
+        'Lookup fields from resource'
+      ),
+      description: t(
+        'transformers.field-lookup-transformer-editor.description.lookup-additional-fields-external-source',
+        'Use a field value to lookup countries, states, or airports.'
+      ),
+      state: PluginState.alpha,
+      categories: new Set([TransformerCategory.PerformSpatialOperations]),
+      imageDark: fieldLookupDark,
+      imageLight: fieldLookupLight,
+    }),
+    makeLazyRegistryItem({
+      id: DataTransformerID.extractFields,
+      editor: lazy(() =>
+        import('./extractFields/ExtractFieldsTransformerEditor').then((m) => ({
+          default: m.extractFieldsTransformerEditor,
+        }))
+      ),
+      transformation: () => import('./extractFields/extractFields').then((m) => m.extractFieldsTransformer),
+      // Keep in sync with extractFieldsTransformer.defaultOptions in ./extractFields/extractFields.ts.
+      defaultOptions: { delimiter: ',' },
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
+      name: t('transformers.extract-fields-transformer-editor.name.extract-fields', 'Extract fields'),
+      description: t(
+        'transformers.extract-fields-transformer-editor.description.parse-fields-from-content',
+        'Parse fields from content (JSON, labels, etc).'
+      ),
+      categories: new Set([TransformerCategory.Reformat]),
+      imageDark: extractFieldsDark,
+      imageLight: extractFieldsLight,
+    }),
+    makeLazyRegistryItem({
+      id: DataTransformerID.heatmap,
+      editor: lazy(() =>
+        import('./calculateHeatmap/HeatmapTransformerEditor').then((m) => ({
+          default: m.HeatmapTransformerEditor,
+        }))
+      ),
+      transformation: () => import('./calculateHeatmap/heatmap').then((m) => m.getHeatmapTransformer()),
+      defaultOptions: {},
+      isApplicable: isHeatmapApplicable,
+      isApplicableDescription: t(
+        'transformers.heatmap.is-applicable-description',
+        'The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found.'
+      ),
+      name: t('transformers.get-heatmap-transformer.name.create-heatmap', 'Create heatmap'),
+      description: t(
+        'transformers.get-heatmap-transformer.description.generate-heatmap-data-from-source',
+        'Generate heatmap data from source data.'
+      ),
+      state: PluginState.alpha,
+      categories: new Set([TransformerCategory.CreateNewVisualization]),
+      imageDark: heatmapDark,
+      imageLight: heatmapLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.groupingToMatrixTransformer, {
+      id: DataTransformerID.groupingToMatrix,
+      editor: lazy(() =>
+        import('./editors/GroupingToMatrixTransformerEditor').then((m) => ({
+          default: m.GroupingToMatrixTransformerEditor,
+        }))
+      ),
+      name: t('transformers.grouping-to-matrix-transformer-editor.name.grouping-to-matrix', 'Grouping to matrix'),
+      description: t(
+        'transformers.grouping-to-matrix-transformer-editor.description.summarize-and-reorganize-data',
+        'Summarize and reorganize data based on three fields.'
+      ),
+      categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
+      imageDark: groupingToMatrixDark,
+      imageLight: groupingToMatrixLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.limitTransformer, {
+      id: DataTransformerID.limit,
+      editor: lazy(() =>
+        import('./editors/LimitTransformerEditor').then((m) => ({ default: m.LimitTransformerEditor }))
+      ),
+      name: t('transformers.limit-transformer-editor.name.limit', 'Limit'),
+      description: t(
+        'transformers.limit-transformer-editor.description.limit-number-items-displayed',
+        'Limit the number of items displayed.'
+      ),
+      categories: new Set([TransformerCategory.Filter]),
+      imageDark: limitDark,
+      imageLight: limitLight,
+    }),
+    makeLazyRegistryItem({
+      id: DataTransformerID.joinByLabels,
+      editor: lazy(() =>
+        import('./joinByLabels/JoinByLabelsTransformerEditor').then((m) => ({
+          default: m.JoinByLabelsTransformerEditor,
+        }))
+      ),
+      transformation: () => import('./joinByLabels/joinByLabels').then((m) => m.getJoinByLabelsTransformer()),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
+      name: t('transformers.get-join-by-labels-transformer.name.join-by-labels', 'Join by labels'),
+      description: t(
+        'transformers.get-join-by-labels-transformer.description.flatten-labeled-results-table-joined-labels',
+        'Flatten labeled results into a table joined by labels.'
+      ),
+      state: PluginState.beta,
+      categories: new Set([TransformerCategory.Combine]),
+      imageDark: joinByLabelsDark,
+      imageLight: joinByLabelsLight,
+    }),
+    makeLazyRegistryItem({
+      id: DataTransformerID.regression,
+      editor: lazy(() =>
+        import('./regression/regressionEditor').then((m) => ({ default: m.RegressionTransformerEditor }))
+      ),
+      transformation: () => import('./regression/regression').then((m) => m.getRegressionTransformer()),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
+      name: t('transformers.regression.name.trendline', 'Trendline'),
+      description: t(
+        'transformers.regression.description.create-new-data-frame',
+        'Create a new data frame containing values predicted by a statistical model.'
+      ),
+      categories: new Set([TransformerCategory.CalculateNewFields]),
+      tags: new Set([t('transformers.regression-transformer-editor.tags.regression-analysis', 'Regression analysis')]),
+      imageDark: regressionDark,
+      imageLight: regressionLight,
+    }),
+    makeLazyRegistryItem({
+      id: DataTransformerID.partitionByValues,
+      editor: lazy(() =>
+        import('./partitionByValues/PartitionByValuesEditor').then((m) => ({
+          default: m.PartitionByValuesEditor,
+        }))
+      ),
+      transformation: () =>
+        import('./partitionByValues/partitionByValues').then((m) => m.getPartitionByValuesTransformer()),
+      // Keep in sync with getPartitionByValuesTransformer().defaultOptions in ./partitionByValues/partitionByValues.ts.
+      defaultOptions: { keepFields: false },
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
+      name: t('transformers.get-partition-by-values-transformer.name.partition-by-values', 'Partition by values'),
+      description: t(
+        'transformers.get-partition-by-values-transformer.description.split-oneframe-dataset-multiple-series',
+        'Split a one-frame dataset into multiple series.'
+      ),
+      state: PluginState.alpha,
+      categories: new Set([TransformerCategory.Reformat]),
+      imageDark: partitionByValuesDark,
+      imageLight: partitionByValuesLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.formatStringTransformer, {
+      id: DataTransformerID.formatString,
+      editor: lazy(() =>
+        import('./editors/FormatStringTransformerEditor').then((m) => ({
+          default: m.FormatStringTransfomerEditor,
+        }))
+      ),
+      name: t('transformers.format-string-transformer-editor.name.format-string', 'Format string'),
+      state: PluginState.beta,
+      description: t(
+        'transformers.format-string-transformer-editor.description.manipulate-string-fields-formatting',
+        'Manipulate string fields formatting.'
+      ),
+      categories: new Set([TransformerCategory.Reformat]),
+      imageDark: formatStringDark,
+      imageLight: formatStringLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.groupToNestedTable, {
+      id: DataTransformerID.groupToNestedTable,
+      editor: lazy(() =>
+        import('./editors/GroupToNestedTableTransformerEditor/index').then((m) => ({
+          default: m.GroupToNestedTableTransformerEditor,
+        }))
+      ),
+      name: t(
+        'transformers.group-to-nested-table-transformer-editor.name.group-to-nested-tables',
+        'Group to nested tables'
+      ),
+      description: t(
+        'transformers.group-to-nested-table-transformer-editor.description.group-by-field-value',
+        'Group data by a field value and create nested tables with the grouped data.'
+      ),
+      categories: new Set([
+        TransformerCategory.Combine,
+        TransformerCategory.CalculateNewFields,
+        TransformerCategory.Reformat,
+      ]),
+      state: PluginState.beta,
+      imageDark: groupToNestedTableDark,
+      imageLight: groupToNestedTableLight,
+    }),
+    ...(config.featureToggles.smoothingTransformation
+      ? [
+          makeLazyRegistryItem({
+            id: DataTransformerID.smoothing,
+            editor: lazy(() =>
+              import('./smoothing/smoothingEditor').then((m) => ({ default: m.SmoothingTransformerEditor }))
+            ),
+            transformation: () => import('./smoothing/smoothing').then((m) => m.getSmoothingTransformer()),
+            defaultOptions: {},
+            isApplicable: isSmoothingApplicable,
+            isApplicableDescription: t(
+              'transformers.smoothing.is-applicable-description',
+              'The Smoothing transformation requires at least one time series frame to function. You currently have none.'
+            ),
+            name: t('transformers.smoothing.name', 'Smoothing'),
+            description: t(
+              'transformers.smoothing.description',
+              'Reduce noise in time series data through adaptive downsampling.'
+            ),
+            categories: new Set([TransformerCategory.CalculateNewFields]),
+            tags: new Set(['ASAP', 'Autosmooth']),
+            imageDark: smoothingDark,
+            imageLight: smoothingLight,
+          }),
+        ]
+      : []),
+    makeRegistryItemFromTransformer(standardTransformers.formatTimeTransformer, {
+      id: DataTransformerID.formatTime,
+      editor: lazy(() =>
+        import('./editors/FormatTimeTransformerEditor').then((m) => ({ default: m.FormatTimeTransfomerEditor }))
+      ),
+      name: t('transformers.format-time-transformer-editor.name.format-time', 'Format time'),
+      state: PluginState.alpha,
+      description: t(
+        'transformers.format-time-transformer-editor.description.set-based-on-time',
+        'Set the output format of a time field'
+      ),
+      categories: new Set([TransformerCategory.Reformat]),
+      imageDark: formatTimeDark,
+      imageLight: formatTimeLight,
+    }),
+    makeLazyRegistryItem({
+      id: DataTransformerID.timeSeriesTable,
+      editor: lazy(() =>
+        import('./timeSeriesTable/TimeSeriesTableTransformEditor').then((m) => ({
+          default: m.TimeSeriesTableTransformEditor,
+        }))
+      ),
+      transformation: () =>
+        import('./timeSeriesTable/timeSeriesTableTransformer').then((m) => m.getTimeSeriesTableTransformer()),
+      defaultOptions: {},
+      isApplicable: isTimeSeriesTableApplicable,
+      isApplicableDescription: t(
+        'transformers.time-series-table.is-applicable-description.requires-time-series-frame',
+        'The Time series to table transformation requires at least one time series frame to function. You currently have none.'
+      ),
+      name: t('transformers.time-series-table.name.time-series-to-table', 'Time series to table'),
+      description: t(
+        'transformers.time-series-table.description.convert-to-table-rows',
+        'Convert time series data to table rows so that they can be viewed in tabular or sparkline format.'
+      ),
+      state: PluginState.beta,
+      imageDark: timeSeriesTableDark,
+      imageLight: timeSeriesTableLight,
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.transposeTransformer, {
+      id: DataTransformerID.transpose,
+      editor: lazy(() =>
+        import('./editors/TransposeTransformerEditor').then((m) => ({ default: m.TransposeTransformerEditor }))
+      ),
+      name: t('transformers.transpose-transformer-editor.name.transpose', 'Transpose'),
+      description: t(
+        'transformers.transpose-transformer-editor.description.transpose-data-frame',
+        'Transpose the data frame.'
+      ),
+      categories: new Set([TransformerCategory.Reformat]),
+      tags: new Set([
+        t('transformers.transpose-transformer-editor.tags.pivot', 'Pivot'),
+        t('transformers.transpose-transformer-editor.tags.translate', 'Translate'),
+        t('transformers.transpose-transformer-editor.tags.transform', 'Transform'),
+      ]),
+      imageDark: transposeDark,
+      imageLight: transposeLight,
+    }),
+    hiddenTransformer(DataTransformerID.ensureColumns, standardTransformers.ensureColumnsTransformer),
+    hiddenTransformer(DataTransformerID.noop, standardTransformers.noopTransformer),
+    hiddenTransformer(DataTransformerID.order, standardTransformers.orderFieldsTransformer),
+    hiddenTransformer(DataTransformerID.rename, standardTransformers.renameFieldsTransformer),
+    hiddenTransformer(DataTransformerID.filterFields, standardTransformers.filterFieldsTransformer),
+    hiddenTransformer(DataTransformerID.filterFrames, standardTransformers.filterFramesTransformer),
+    hiddenTransformer(DataTransformerID.convertFrameType, standardTransformers.convertFrameTypeTransformer),
+    // No dedicated append transformer exists; noop ensures safe passthrough for saved dashboards that reference this id
+    hiddenTransformer(DataTransformerID.append, standardTransformers.noopTransformer),
+  ];
+};

@@ -4,23 +4,29 @@ import { useMemo } from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { Alert, Spinner, Stack } from '@grafana/ui';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
-import { AnnoKeyMessage, AnnoKeyUpdatedBy, AnnoKeyUpdatedTimestamp, Resource } from 'app/features/apiserver/types';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyMessage,
+  AnnoKeyUpdatedBy,
+  AnnoKeyUpdatedTimestamp,
+  type Resource,
+} from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import {
-  DecoratedRevisionModel,
-  RevisionModel,
+  type DecoratedRevisionModel,
+  type RevisionModel,
   VERSIONS_FETCH_LIMIT,
 } from 'app/features/dashboard/types/revisionModels';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VersionsHistoryButtons } from './version-history/VersionHistoryButtons';
 import { VersionHistoryComparison } from './version-history/VersionHistoryComparison';
 import { VersionHistoryHeader } from './version-history/VersionHistoryHeader';
@@ -102,8 +108,8 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     const options = append ? { limit: this._limit, continueToken: this._continueToken } : { limit: this._limit };
 
     getDashboardAPI()
-      .listDashboardHistory(uid, options)
-      .then((result) => {
+      .then(async (api) => {
+        const result = await api.listDashboardHistory(uid, options);
         const versions = this.transformToRevisionModels(result.items);
         this.setState({
           isLoading: false,
@@ -127,7 +133,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
           item.metadata.annotations?.[AnnoKeyUpdatedTimestamp] ??
           item.metadata.creationTimestamp ??
           new Date().toISOString(),
-        createdBy: item.metadata.annotations?.[AnnoKeyUpdatedBy] ?? '',
+        createdBy: item.metadata.annotations?.[AnnoKeyUpdatedBy] ?? item.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
         message: item.metadata.annotations?.[AnnoKeyMessage] ?? '',
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         data: item.spec as object,
@@ -197,14 +203,19 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
   const { data: displayData } = useGetDisplayMappingQuery(userKeys.length > 0 ? { key: userKeys } : skipToken);
   const isLoadingUserDisplayNames = userKeys.length > 0 && !displayData;
 
-  // Here replacing raw user ids with human readable names
   const versionsWithDisplayNames = useMemo(() => {
     if (!displayData) {
       return model.versions;
     }
+    const displayMap = new Map<string, string>();
+    for (const item of displayData.display) {
+      displayMap.set(`${item.identity.type}:${item.identity.name}`, item.displayName);
+      if (item.internalId) {
+        displayMap.set(String(item.internalId), item.displayName);
+      }
+    }
     return model.versions.map((version) => {
-      const idx = version.createdBy ? displayData.keys.indexOf(version.createdBy) : -1;
-      const displayName = idx >= 0 ? displayData.display[idx]?.displayName : undefined;
+      const displayName = version.createdBy ? displayMap.get(version.createdBy) : undefined;
       return displayName ? { ...version, createdBy: displayName } : version;
     });
   }, [model.versions, displayData]);

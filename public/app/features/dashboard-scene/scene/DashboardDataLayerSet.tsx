@@ -1,18 +1,18 @@
-import { AnnotationQuery, getDataSourceRef } from '@grafana/data';
+import { type AnnotationQuery, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
-  SceneDataLayerProviderState,
-  SceneDataLayerProvider,
+  type SceneDataLayerProviderState,
+  type SceneDataLayerProvider,
   SceneDataLayerSetBase,
-  SceneComponentProps,
+  type SceneComponentProps,
 } from '@grafana/scenes';
 
-import { AlertStatesDataLayer } from './AlertStatesDataLayer';
+import { type AlertStatesDataLayer } from './AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DataLayerControl } from './DataLayerControl';
 
 export const NEW_ANNOTATION_NAME = 'New annotation';
-const NEW_ANNOTATION_COLOR = 'red';
+export const NEW_ANNOTATION_COLOR = 'red';
 
 export interface DashboardDataLayerSetState extends SceneDataLayerProviderState {
   alertStatesLayer?: AlertStatesDataLayer;

@@ -1,14 +1,14 @@
 import { PureComponent } from 'react';
 
-import { DataQuery, getDataSourceRef } from '@grafana/data';
+import { type DataQuery, getDataSourceRef } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
-import { QueryGroupDataSource, QueryGroupOptions } from 'app/types/query';
+import { type QueryGroupDataSource, type QueryGroupOptions } from 'app/types/query';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { PanelModel } from '../../state/PanelModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { getLastUsedDatasourceFromStorage } from '../../utils/dashboard';
 
 interface Props {

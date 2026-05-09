@@ -1,18 +1,17 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
-import { OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { contextSrv } from 'app/core/services/context_srv';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { DashboardViewItem } from 'app/features/search/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { PAGE_SIZE } from '../api/services';
+import { PAGE_SIZE } from '../api/constants';
 import { canSelectItems } from '../permissions';
 import { fetchNextChildrenPage } from '../state/actions';
 import {
@@ -24,7 +23,12 @@ import {
   useLoadNextChildrenPage,
 } from '../state/hooks';
 import { setAllSelection, setFolderOpenState, setItemSelectionState } from '../state/slice';
-import { BrowseDashboardsPermissions, BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
+import {
+  type BrowseDashboardsPermissions,
+  type BrowseDashboardsState,
+  type DashboardTreeSelection,
+  SelectionState,
+} from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
@@ -34,9 +38,17 @@ interface BrowseViewProps {
   folderUID: string | undefined;
   permissions: BrowseDashboardsPermissions;
   isReadOnlyRepo?: boolean;
+  isProvisionedFolder?: boolean;
 }
 
-export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRepo }: BrowseViewProps) {
+export function BrowseView({
+  folderUID,
+  width,
+  height,
+  permissions,
+  isReadOnlyRepo,
+  isProvisionedFolder,
+}: BrowseViewProps) {
   const status = useBrowseLoadingStatus(folderUID);
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
@@ -44,8 +56,7 @@ export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRe
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
   const provisioningEnabled = config.featureToggles.provisioning;
-  const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
-  const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled || hasNoRole ? skipToken : undefined);
+  const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
   const isProvisionedInstance = useIsProvisionedInstance({ settings: settingsData });
   const rootItems = useSelector(rootItemsSelector);
 
@@ -137,18 +148,33 @@ export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRe
     [selectedItems, childrenByParentUID]
   );
 
+  const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
+
+  const flatTreeWithReadme = useMemo(() => {
+    if (!provisioningReadmesEnabled || !isProvisionedFolder || !folderUID || flatTree.length === 0) {
+      return flatTree;
+    }
+
+    return [
+      ...flatTree,
+      {
+        item: { kind: 'ui' as const, uiKind: 'readme' as const, uid: `folder-readme-${folderUID}` },
+        level: 0,
+        isOpen: false,
+      },
+    ];
+  }, [flatTree, isProvisionedFolder, folderUID, provisioningReadmesEnabled]);
+
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
-      const treeItem = flatTree[itemIndex];
+      const treeItem = flatTreeWithReadme[itemIndex];
       if (!treeItem) {
         return false;
       }
       const item = treeItem.item;
-      const result = !(item.kind === 'ui' && item.uiKind === 'pagination-placeholder');
-
-      return result;
+      return !(item.kind === 'ui' && item.uiKind === 'pagination-placeholder');
     },
-    [flatTree]
+    [flatTreeWithReadme]
   );
 
   const handleLoadMore = useLoadNextChildrenPage();
@@ -200,7 +226,8 @@ export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRe
   return (
     <DashboardsTree
       permissions={permissions}
-      items={flatTree}
+      items={flatTreeWithReadme}
+      folderUID={folderUID}
       width={width}
       height={height}
       isSelected={isSelected}

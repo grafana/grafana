@@ -16,67 +16,6 @@ labels:
 menuTitle: MySQL
 title: MySQL data source
 weight: 1000
-refs:
-  configure-mysql-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configure/
-  mysql-query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
-  troubleshoot-mysql:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/
-  mysql-template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/template-variables/
-  mysql-alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
-  mysql-annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/
-  transformations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
-  visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
-  query-caching:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
-  postgres:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/
-  mssql:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/
 ---
 
 # MySQL data source
@@ -118,21 +57,21 @@ The MySQL data source supports:
 
 The following documentation helps you get started with the MySQL data source:
 
-- [Configure the MySQL data source](ref:configure-mysql-data-source)
-- [MySQL query editor](ref:mysql-query-editor)
-- [MySQL template variables](ref:mysql-template-variables)
-- [MySQL annotations](ref:mysql-annotations)
-- [MySQL alerting](ref:mysql-alerting)
-- [Troubleshoot MySQL data source issues](ref:troubleshoot-mysql)
+- [Configure the MySQL data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configure/)
+- [MySQL query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/)
+- [MySQL template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/template-variables/)
+- [MySQL annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/)
+- [MySQL alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/)
+- [Troubleshoot MySQL data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/)
 
 ## Additional resources
 
 After configuring the MySQL data source, you can also:
 
-- Create a wide variety of [visualizations](ref:visualizations).
-- Configure and use [templates and variables](ref:variables).
-- Add [transformations](ref:transformations).
-- Optimize performance with [query caching](ref:query-caching).
+- Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/).
+- Configure and use [templates and variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/).
+- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/).
+- Optimize performance with [query caching](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching).
 
 ## Pre-configured dashboards
 
@@ -158,5 +97,5 @@ The MySQL integration monitors your MySQL _server_ using Prometheus metrics. The
 
 ## Related data sources
 
-- [PostgreSQL](ref:postgres) - For PostgreSQL databases.
-- [Microsoft SQL Server](ref:mssql) - For Microsoft SQL Server and Azure SQL databases.
+- [PostgreSQL](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/) - For PostgreSQL databases.
+- [Microsoft SQL Server](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/) - For Microsoft SQL Server and Azure SQL databases.

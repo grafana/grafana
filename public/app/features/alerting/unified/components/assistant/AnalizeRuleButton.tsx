@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 
-import { OpenAssistantProps, createAssistantContextItem, useAssistant } from '@grafana/assistant';
+import { type OpenAssistantProps, createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
-import { GrafanaAlertingRule, GrafanaRecordingRule, GrafanaRule } from 'app/types/unified-alerting';
+import { type GrafanaAlertingRule, type GrafanaRecordingRule, type GrafanaRule } from 'app/types/unified-alerting';
 
 import { prometheusRuleType } from '../../utils/rules';
 

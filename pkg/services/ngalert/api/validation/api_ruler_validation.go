@@ -193,6 +193,9 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 
 func validateLabels(l map[string]string) error {
 	for key := range l {
+		if key == "" {
+			return fmt.Errorf("label key cannot be empty")
+		}
 		if _, ok := ngmodels.LabelsUserCannotSpecify[key]; ok {
 			return fmt.Errorf("system reserved labels cannot be defined in the rule. Label %s is the reserved", key)
 		}
@@ -394,8 +397,11 @@ func ValidateRuleGroup(
 }
 
 func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) (*ngmodels.NotificationSettings, error) {
-	s := NotificationSettingsFromAlertRuleNotificationSettings(n)
+	if n.Policy == nil && n.Receiver == "" {
+		return nil, errors.New("notification policy or receiver must be specified")
+	}
 
+	s := NotificationSettingsFromAlertRuleNotificationSettings(n)
 	if err := s.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid notification settings: %w", err)
 	}

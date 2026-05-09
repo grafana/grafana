@@ -1,7 +1,7 @@
 import { KnownProvenance } from '../../types/knownProvenance';
 
 import { K8sAnnotations } from './constants';
-import { canTestEntity, encodeFieldSelector, isProvisionedResource } from './utils';
+import { canTestEntity, encodeFieldSelector, isProvisionedResource, validateRbacEntityName } from './utils';
 
 describe('encodeFieldSelector', () => {
   it('should escape backslashes', () => {
@@ -90,5 +90,32 @@ describe('canTestEntity', () => {
   it('should return false when metadata is undefined', () => {
     const entity = {};
     expect(canTestEntity(entity)).toBe(false);
+  });
+});
+
+describe('validateRbacEntityName', () => {
+  it('returns an error for an empty name', () => {
+    expect(validateRbacEntityName('')?.message).toContain('required');
+  });
+
+  it('returns an error when name contains a colon', () => {
+    expect(validateRbacEntityName('my:route')?.message).toContain(':');
+  });
+
+  it('returns an error when name exceeds 40 characters', () => {
+    expect(validateRbacEntityName('a'.repeat(41))?.message).toContain('longer than 40');
+  });
+
+  it('returns an error when name is not a valid DNS subdomain', () => {
+    expect(validateRbacEntityName('My_Route')?.message).toContain('DNS subdomain'); // uppercase + underscore
+    expect(validateRbacEntityName('-leading-hyphen')?.message).toContain('DNS subdomain');
+    expect(validateRbacEntityName('trailing-hyphen-')?.message).toContain('DNS subdomain');
+    expect(validateRbacEntityName('.leading-dot')?.message).toContain('DNS subdomain');
+    expect(validateRbacEntityName('trailing-dot.')?.message).toContain('DNS subdomain');
+    expect(validateRbacEntityName('illegal@chars!')?.message).toContain('DNS subdomain');
+  });
+
+  it('returns undefined for a valid name', () => {
+    expect(validateRbacEntityName('my-route.1')).toBeUndefined();
   });
 });

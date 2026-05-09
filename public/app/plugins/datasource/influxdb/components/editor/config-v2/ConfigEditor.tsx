@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Box, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { DatabaseConnectionSection } from './DatabaseConnectionSection';
 import { LeftSideBar } from './LeftSideBar';
 import { UrlAndAuthenticationSection } from './UrlAndAuthenticationSection';
 import { CONTAINER_MIN_WIDTH } from './constants';
-import { Props } from './types';
+import { type Props } from './types';
 
 export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Props) => {
   const styles = useStyles2(getStyles);

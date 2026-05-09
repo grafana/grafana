@@ -1,6 +1,6 @@
-import { AnnotationQuery, AnnotationSupport } from '@grafana/data';
+import { type AnnotationQuery, type AnnotationSupport } from '@grafana/data';
 
-import { LegacyAnnotation, OpenTsdbQuery } from './types';
+import { type LegacyAnnotation, type OpenTsdbQuery } from './types';
 
 // this becomes the target in the migrated annotations
 const migrateLegacyAnnotation = (json: LegacyAnnotation) => {

@@ -3,11 +3,15 @@ package storewrapper
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"sync"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -20,21 +24,82 @@ var (
 	ErrUnexpectedType  = errors.NewBadRequest("unexpected object type")
 )
 
+// WatchEventFilter is a batch filter for watch events. Given a slice of
+// data-carrying events (Added, Modified, Deleted) it returns a same-length bool
+// slice indicating which events to forward. Returning an error terminates the watch.
+// Implementations are called from a single goroutine and need not be concurrency-safe.
+type WatchEventFilter func(events []watch.Event) ([]bool, error)
+
+// RejectAllWatchFilter is a nil WatchEventFilter that will make watch return an error.
+var RejectAllWatchFilter WatchEventFilter = nil
+
+// PassThroughWatchFilter is used to bypass the filter and forward the inner watch.Interface directly to the caller.
+var PassThroughWatchFilter WatchEventFilter = func(_ []watch.Event) ([]bool, error) {
+	// The error is a safety net to prevent the filter from being used accidentally
+	// silently dropping all events without returning an error.
+	return nil, errors.NewUnauthorized("watch filter not implemented")
+}
+
+// isPassThroughWatchFilter returns true if the filter is the PassThroughWatchFilter.
+func isPassThroughWatchFilter(filter WatchEventFilter) bool {
+	if filter == nil {
+		return false
+	}
+	return reflect.ValueOf(filter).Pointer() == reflect.ValueOf(PassThroughWatchFilter).Pointer()
+}
+
 // ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
 type ResourceStorageAuthorizer interface {
 	BeforeCreate(ctx context.Context, obj runtime.Object) error
-	BeforeUpdate(ctx context.Context, obj runtime.Object) error
+	BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error
 	BeforeDelete(ctx context.Context, obj runtime.Object) error
 	AfterGet(ctx context.Context, obj runtime.Object) error
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
+	// WatchFilter is called once when a Watch begins. It may pre-compile authorization
+	// state (e.g. fetch permissions, capture auth info) and must return a WatchEventFilter
+	// that will be invoked for each flush of buffered events. Bookmark and Error events
+	// always bypass the filter. Use PassThroughWatchFilter for resources with no per-event
+	// read restrictions, and RejectAllWatchFilter as a safe placeholder.
+	// The Wrapper's WatchFlushInterval controls how often the buffer is flushed:
+	// 0 (default) flushes after every event; >0 amortizes RPC cost across bursts.
+	WatchFilter(ctx context.Context) (WatchEventFilter, error)
 }
 
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
-// It overrides the identity in the context to use service identity for the underlying store operations.
-// That way, the underlying store authorization is always successful, and the authorization is enforced by the wrapper.
+// It overrides the identity in the context to use service identity for the underlying store operations so the
+// store's authorization always succeeds and the wrapper enforces authorization. The wrapper injects the original
+// user's UID as metadata identity so unistore can set createdBy/updatedBy correctly (see identity.WithOriginalIdentityUID).
+// The wrapper also supports an option to preserve the original caller's identity in the context for inner store calls instead of replacing it with a service identity.
+// Use this when the inner store does not perform its own RBAC checks and the caller's identity is needed downstream (e.g. for admission webhooks).
 type Wrapper struct {
-	inner      K8sStorage
-	authorizer ResourceStorageAuthorizer
+	inner              K8sStorage
+	authorizer         ResourceStorageAuthorizer
+	preserveIdentity   bool
+	watchFlushInterval time.Duration
+}
+
+// Option configures a Wrapper.
+type Option func(*Wrapper)
+
+// WithPreserveIdentity instructs the Wrapper to leave the caller's identity in the context when
+// calling the inner store, instead of replacing it with a service identity. Use this when the inner
+// store does not perform its own RBAC checks and the caller's identity is needed downstream
+// (e.g. for admission webhooks).
+func WithPreserveIdentity() Option {
+	return func(w *Wrapper) {
+		w.preserveIdentity = true
+	}
+}
+
+// WithWatchFlushInterval sets how long the filteredWatcher buffers events before
+// calling WatchFilter with a batch. The default (0) flushes after every individual
+// event, which is safe and correct but makes one filter call per event. Set a
+// positive duration (e.g. 50ms) to amortize RPC cost across bursts when the
+// authorizer's WatchFilter uses BatchCheck internally.
+func WithWatchFlushInterval(d time.Duration) Option {
+	return func(w *Wrapper) {
+		w.watchFlushInterval = d
+	}
 }
 
 type K8sStorage interface {
@@ -48,9 +113,32 @@ type K8sStorage interface {
 }
 
 var _ rest.Storage = (*Wrapper)(nil)
+var _ k8srest.Watcher = (*Wrapper)(nil)
 
-func New(store K8sStorage, authz ResourceStorageAuthorizer) *Wrapper {
-	return &Wrapper{inner: store, authorizer: authz}
+// New returns a Wrapper that enforces authorization and uses service identity for inner store calls,
+// injecting the original user's UID for createdBy/updatedBy annotations.
+func New(store K8sStorage, authz ResourceStorageAuthorizer, opts ...Option) *Wrapper {
+	w := &Wrapper{inner: store, authorizer: authz}
+	for _, opt := range opts {
+		opt(w)
+	}
+	return w
+}
+
+// storeCtx returns the context for inner store calls: service identity so the store's authorization
+// succeeds, with the original user's UID injected as metadata identity for createdBy/updatedBy (see identity.WithOriginalIdentityUID).
+// When preserveIdentity is true the original caller context is returned unchanged;
+func (w *Wrapper) storeCtx(ctx context.Context) context.Context {
+	if w.preserveIdentity {
+		return ctx
+	}
+
+	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	if user, err := identity.GetRequester(ctx); err == nil && user.GetUID() != "" {
+		srvCtx = identity.WithOriginalIdentityUID(srvCtx, user.GetUID())
+	}
+
+	return srvCtx
 }
 
 func (w *Wrapper) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metaV1.Table, error) {
@@ -63,20 +151,18 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 	if err != nil {
 		return nil, err
 	}
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
 
-	return w.inner.Create(srvCtx, obj, createValidation, options)
+	return w.inner.Create(w.storeCtx(ctx), obj, createValidation, options)
 }
 
 func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions) (runtime.Object, bool, error) {
 	// Fetch the object first to authorize
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	storeCtx := w.storeCtx(ctx)
 	getOpts := &metaV1.GetOptions{TypeMeta: options.TypeMeta}
 	if options.Preconditions != nil {
 		getOpts.ResourceVersion = *options.Preconditions.ResourceVersion
 	}
-	obj, err := w.inner.Get(srvCtx, name, getOpts)
+	obj, err := w.inner.Get(storeCtx, name, getOpts)
 	if err != nil {
 		return nil, false, err
 	}
@@ -86,13 +172,7 @@ func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8sr
 		return nil, false, err
 	}
 
-	return w.inner.Delete(srvCtx, name, deleteValidation, options)
-}
-
-func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	// DeleteCollection is complex to authorize properly
-	// For now, deny it entirely for safety
-	return nil, fmt.Errorf("bulk delete operations are not supported through this API")
+	return w.inner.Delete(storeCtx, name, deleteValidation, options)
 }
 
 func (w *Wrapper) Destroy() {
@@ -100,10 +180,7 @@ func (w *Wrapper) Destroy() {
 }
 
 func (w *Wrapper) Get(ctx context.Context, name string, options *metaV1.GetOptions) (runtime.Object, error) {
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	item, err := w.inner.Get(srvCtx, name, options)
+	item, err := w.inner.Get(w.storeCtx(ctx), name, options)
 	if err != nil {
 		return nil, err
 	}
@@ -121,10 +198,7 @@ func (w *Wrapper) GetSingularName() string {
 }
 
 func (w *Wrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	list, err := w.inner.List(srvCtx, options)
+	list, err := w.inner.List(w.storeCtx(ctx), options)
 	if err != nil {
 		return nil, err
 	}
@@ -161,10 +235,7 @@ func (w *Wrapper) Update(
 		userCtx:    ctx, // Keep original context for authorization
 	}
 
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	return w.inner.Update(srvCtx, name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
+	return w.inner.Update(w.storeCtx(ctx), name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
 }
 
 type authorizedUpdateInfo struct {
@@ -185,11 +256,214 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 	}
 
 	// Enforce authorization using the original user context
-	if err := a.authorizer.BeforeUpdate(a.userCtx, updatedObj); err != nil {
+	if err := a.authorizer.BeforeUpdate(a.userCtx, oldObj, updatedObj); err != nil {
 		return nil, err
 	}
 
 	return updatedObj, nil
+}
+
+func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	// Check if the underlying storage supports Watch
+	watcher, ok := w.inner.(k8srest.Watcher)
+	if !ok {
+		return nil, fmt.Errorf("watch is not supported on the underlying storage")
+	}
+
+	// Build the filter once, before starting the watch, so callers get an immediate
+	// error if authorization state cannot be resolved (e.g. auth backend unavailable).
+	filter, err := w.authorizer.WatchFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Fail-closed: a nil filter is treated as RejectAllWatchFilter.
+	// Implementors should return PassThroughWatchFilter explicitly for unrestricted resources.
+	if filter == nil {
+		return nil, errors.NewUnauthorized("watch filter not implemented")
+	}
+
+	// Call the underlying storage's Watch method
+	inner, err := watcher.Watch(w.storeCtx(ctx), options)
+	if err != nil {
+		return nil, err
+	}
+
+	if isPassThroughWatchFilter(filter) {
+		return inner, nil
+	}
+
+	// Return a new filtered watcher that runs the filter over the buffered events
+	// and forwards the events to the caller.
+	return newFilteredWatcher(ctx, inner, filter, w.watchFlushInterval), nil
+}
+
+// filteredWatcher wraps a watch.Interface and runs the WatchEventFilter over
+// buffered batches of events before forwarding them to the caller.
+// Bookmark and Error events bypass the filter and are forwarded immediately.
+//
+// When flushInterval is 0 the buffer is flushed after every individual event
+// (synchronous, no added latency). When flushInterval > 0 events are accumulated
+// and flushed either when the buffer is full or the ticker fires, amortizing the
+// cost of expensive filter implementations (e.g. BatchCheck RPCs) across bursts.
+type filteredWatcher struct {
+	inner         watch.Interface  // The underlying watch.Interface.
+	filter        WatchEventFilter // Filter to apply to the buffered events.
+	flushInterval time.Duration    // The interval to flush the buffered events.
+	result        chan watch.Event // Forwarded events to the caller.
+	stopOnce      sync.Once        // Ensures Stop() is called only once to prevent race conditions.
+	done          chan struct{}    // Closed when the watcher Stop() method is called.
+	pending       []watch.Event    // Buffered events awaiting flush; only accessed from run goroutine.
+}
+
+// watchBatchSize is the maximum number of events buffered before a forced flush.
+// Matches watch.DefaultChanSize so the batch can never exceed the inner channel capacity.
+const watchBatchSize = 100
+
+// defaultSendTimeout is the timeout for sending an event to the caller.
+var defaultSendTimeout = 1 * time.Second
+
+func newFilteredWatcher(ctx context.Context, inner watch.Interface, filter WatchEventFilter, flushInterval time.Duration) *filteredWatcher {
+	fw := &filteredWatcher{
+		inner:         inner,
+		filter:        filter,
+		flushInterval: flushInterval,
+		result:        make(chan watch.Event, watch.DefaultChanSize),
+		done:          make(chan struct{}),
+	}
+	go fw.run(ctx)
+	return fw
+}
+
+type sendEventResult string
+
+const (
+	sendEventSuccess sendEventResult = "success"
+	sendEventTimeout sendEventResult = "timeout"
+	sendEventStopped sendEventResult = "stopped"
+)
+
+// sendEvent forwards an event to the caller.
+// It returns if the user context is done or the watcher is stopped.
+func (fw *filteredWatcher) sendEvent(ctx context.Context, event watch.Event) sendEventResult {
+	// If we could not send the event on time, emit an Error
+	// and shut down to release backpressure on the inner storage.
+	timer := time.NewTimer(defaultSendTimeout)
+	select {
+	case <-ctx.Done(): // User context is done.
+		return sendEventStopped
+	case <-fw.done: // Closed when the watcher Stop() method is called.
+		return sendEventStopped
+	case fw.result <- event: // Forward the event to the caller.
+		return sendEventSuccess
+	case <-timer.C: // Consumer is too slow, emit Timeout Error and tear down watch.
+		select {
+		case fw.result <- watch.Event{Type: watch.Error, Object: &metaV1.Status{
+			Status: metaV1.StatusFailure, Reason: metaV1.StatusReasonTimeout,
+			Message: "watch consumer too slow",
+		}}:
+		default:
+		}
+		// A bit redundant with run's defer, but it explicits the intent.
+		fw.Stop()
+		return sendEventTimeout
+	}
+}
+
+func (fw *filteredWatcher) filterEvents(pending []watch.Event) ([]bool, error) {
+	allowed, err := fw.filter(pending)
+	if err == nil && len(allowed) != len(pending) {
+		err = fmt.Errorf("watch filter contract violation: returned %d entries for %d events", len(allowed), len(pending))
+	}
+	return allowed, err
+}
+
+func (fw *filteredWatcher) sendAllowed(ctx context.Context, pending []watch.Event, allowed []bool) bool {
+	for i, event := range pending {
+		if allowed[i] {
+			if fw.sendEvent(ctx, event) != sendEventSuccess {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (fw *filteredWatcher) flush(ctx context.Context) bool {
+	if len(fw.pending) == 0 {
+		return true
+	}
+
+	allowed, err := fw.filterEvents(fw.pending)
+	if err != nil {
+		errEvent := watch.Event{Type: watch.Error, Object: &metaV1.Status{Status: metaV1.StatusFailure, Message: err.Error()}}
+		_ = fw.sendEvent(ctx, errEvent)
+		fw.inner.Stop()
+		fw.pending = fw.pending[:0]
+		return false
+	}
+	ok := fw.sendAllowed(ctx, fw.pending, allowed)
+	fw.pending = fw.pending[:0]
+	return ok
+}
+
+func (fw *filteredWatcher) run(ctx context.Context) {
+	defer func() {
+		fw.Stop()
+		close(fw.result)
+	}()
+
+	// A nil channel blocks forever in select, disabling the ticker case when
+	// flushInterval is 0 (each event is flushed inline immediately instead).
+	var tickerC <-chan time.Time
+	if fw.flushInterval > 0 {
+		t := time.NewTicker(fw.flushInterval)
+		defer t.Stop()
+		tickerC = t.C
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-fw.done:
+			return
+		case event, ok := <-fw.inner.ResultChan():
+			if !ok {
+				return
+			}
+			// Protocol events carry no resource data and must never be delayed.
+			if event.Type == watch.Bookmark || event.Type == watch.Error {
+				if !fw.flush(ctx) {
+					return
+				}
+				if fw.sendEvent(ctx, event) != sendEventSuccess {
+					return
+				}
+				continue
+			}
+			fw.pending = append(fw.pending, event)
+			if fw.flushInterval == 0 || len(fw.pending) >= watchBatchSize {
+				if !fw.flush(ctx) {
+					return
+				}
+			}
+		case <-tickerC:
+			if !fw.flush(ctx) {
+				return
+			}
+		}
+	}
+}
+
+func (fw *filteredWatcher) Stop() {
+	fw.stopOnce.Do(func() {
+		close(fw.done)
+		fw.inner.Stop()
+	})
+}
+
+func (fw *filteredWatcher) ResultChan() <-chan watch.Event {
+	return fw.result
 }
 
 // NoopAuthorizer is a no-op implementation of ResourceStorageAuthorizer.
@@ -202,7 +476,7 @@ func (b *NoopAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) e
 	return nil
 }
 
-func (b *NoopAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (b *NoopAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	return nil
 }
 
@@ -218,6 +492,10 @@ func (b *NoopAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return list, nil
 }
 
+func (b *NoopAuthorizer) WatchFilter(_ context.Context) (WatchEventFilter, error) {
+	return PassThroughWatchFilter, nil
+}
+
 // DenyAuthorizer denies all storage operations.
 // Use this as a safe default when no explicit authorizer is provided
 // for cluster-scoped resources. This ensures fail-closed behavior.
@@ -227,7 +505,7 @@ func (d *DenyAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) e
 	return ErrUnauthorized
 }
 
-func (d *DenyAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (d *DenyAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	return ErrUnauthorized
 }
 
@@ -241,4 +519,8 @@ func (d *DenyAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error
 
 func (d *DenyAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
 	return nil, ErrUnauthorized
+}
+
+func (d *DenyAuthorizer) WatchFilter(_ context.Context) (WatchEventFilter, error) {
+	return RejectAllWatchFilter, nil
 }

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { AppNotificationSeverity } from 'app/types/appNotifications';

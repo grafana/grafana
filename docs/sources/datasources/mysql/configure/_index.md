@@ -15,67 +15,11 @@ labels:
 menuTitle: Configure
 title: Configure the MySQL data source
 weight: 10
-refs:
-  add-template-variables-interval:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#__interval
-  add-template-variables-interval-ms:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms
-    - pattern: /docs/grafana-cloud/
-      destination: docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#__interval_ms
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  mysql-query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
-  mysql-alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
-  mysql-annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/
-  mysql-troubleshoot:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/
-  mysql-template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/template-variables/
 ---
 
 # Configure the MySQL data source
 
-This document provides instructions for configuring the MySQL data source and explains available configuration options. For general information on managing data sources refer to [Data source management](ref:data-source-management).
+This document provides instructions for configuring the MySQL data source and explains available configuration options. For general information on managing data sources refer to [Data source management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
 
 ## Before you begin
 
@@ -152,7 +96,7 @@ The following are additional MySQL settings.
 **MySQL options:**
 
 - **Session Timezone** - Specifies the timezone used in the database session, such as `Europe/Berlin` or `+02:00`. Required if the timezone of the database (or the host of the database) is set to something other than UTC. Set this to `+00:00` so Grafana can handle times properly. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, the timezone will not be updated. For more information, refer to [MySQL Server Time Zone Support](https://dev.mysql.com/doc/en/time-zone-support.html).
-- **Min time interval** - Defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables. Grafana recommends aligning this setting with the data write frequency. For example, set it to `1m` if your data is written every minute. Refer to [Min time interval](#min-time-interval) for format examples.
+- **Min time interval** - Defines a lower limit for the [`$__interval`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval) and [`$__interval_ms`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms) variables. Grafana recommends aligning this setting with the data write frequency. For example, set it to `1m` if your data is written every minute. Refer to [Min time interval](#min-time-interval) for format examples.
 
 **Connection limits:**
 
@@ -171,7 +115,7 @@ Once you have added your MySQL connection settings, click **Save & test** to tes
 
 ### Min time interval
 
-The **Min time interval** setting defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables.
+The **Min time interval** setting defines a lower limit for the [`$__interval`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval) and [`$__interval_ms`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms) variables.
 
 This value must be formatted as a number followed by a valid time identifier:
 
@@ -191,7 +135,7 @@ You can override this setting in a dashboard panel under its data source options
 ## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
+For more information about provisioning, and available configuration options, refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 ### MySQL provisioning examples
 
@@ -299,8 +243,8 @@ For all available configuration options, refer to the [Grafana provider data sou
 
 After configuring your MySQL data source, you can:
 
-- [Write queries](ref:mysql-query-editor) using the query editor to explore and visualize your data.
-- [Use template variables](ref:mysql-template-variables) to create dynamic, reusable dashboards.
-- [Add annotations](ref:mysql-annotations) to overlay MySQL events on your graphs.
-- [Set up alerting](ref:mysql-alerting) to create alert rules based on your MySQL data.
-- [Troubleshoot issues](ref:mysql-troubleshoot) if you encounter problems with your data source.
+- [Write queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/) using the query editor to explore and visualize your data.
+- [Use template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/template-variables/) to create dynamic, reusable dashboards.
+- [Add annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/) to overlay MySQL events on your graphs.
+- [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/) to create alert rules based on your MySQL data.
+- [Troubleshoot issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/) if you encounter problems with your data source.

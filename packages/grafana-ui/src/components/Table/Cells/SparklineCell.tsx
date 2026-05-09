@@ -2,21 +2,21 @@ import * as React from 'react';
 
 import {
   FieldType,
-  FieldConfig,
+  type FieldConfig,
   getMinMaxAndDelta,
-  FieldSparkline,
+  type FieldSparkline,
   isDataFrame,
-  Field,
+  type Field,
   isDataFrameWithValue,
   formattedValueToString,
 } from '@grafana/data';
 import {
   BarAlignment,
   GraphDrawStyle,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
-  TableSparklineCellOptions,
+  type TableSparklineCellOptions,
   TableCellDisplayMode,
   VisibilityMode,
 } from '@grafana/schema';
@@ -25,7 +25,7 @@ import { useTheme2 } from '../../../themes/ThemeContext';
 import { measureText } from '../../../utils/measureText';
 import { FormattedValueDisplay } from '../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../Sparkline/Sparkline';
-import { TableCellProps } from '../types';
+import { type TableCellProps } from '../types';
 import { getAlignmentFactor, getCellOptions } from '../utils';
 
 export const defaultSparklineCellConfig: TableSparklineCellOptions = {

@@ -1,4 +1,4 @@
-import { Plugin } from 'slate-react';
+import { type Plugin } from 'slate-react';
 
 // Clears the rest of the line after the caret
 export function ClearPlugin(): Plugin {

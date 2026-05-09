@@ -1,19 +1,24 @@
 /**
  * MOVE_PANEL command
  *
- * Move an existing panel to a different group (row/tab) and/or grid position.
+ * Move an existing panel to a different group (row/tab) and/or reposition it.
  * The panel is identified by its element name (key in the elements map).
+ * The layout item kind is adapted to match the target layout (warning emitted
+ * if converted). Supports panels in both DashboardGridItem and AutoGridItem.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import type { VizPanel } from '@grafana/scenes';
 
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { resolveLayoutPath } from './layoutPathResolver';
+import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -21,11 +26,6 @@ export const movePanelPayloadSchema = payloads.movePanel;
 
 export type MovePanelPayload = z.infer<typeof movePanelPayloadSchema>;
 
-/**
- * Apply grid position fields to the DashboardGridItem wrapping a panel.
- * Only updates fields that are explicitly provided (partial update).
- * Silently no-ops if the panel is not inside a DashboardGridItem (e.g. AutoGridItem).
- */
 function applyGridPosition(
   panel: VizPanel,
   position: { x?: number; y?: number; width?: number; height?: number }
@@ -54,27 +54,74 @@ function applyGridPosition(
   }
 }
 
+function resolveEffectivePosition(
+  payload: MovePanelPayload,
+  warnings: string[]
+): { x?: number; y?: number; width?: number; height?: number } | undefined {
+  if (payload.layoutItem) {
+    const spec = payload.layoutItem.spec;
+    if (
+      spec &&
+      (spec.x !== undefined || spec.y !== undefined || spec.width !== undefined || spec.height !== undefined)
+    ) {
+      return spec;
+    }
+    return undefined;
+  }
+
+  if (payload.position) {
+    warnings.push(
+      'DEPRECATED: "position" will be removed in a future version. ' +
+        'Use "layoutItem: { spec: { x, y, width, height } }" instead.'
+    );
+    return payload.position;
+  }
+
+  return undefined;
+}
+
+function emitLayoutItemKindWarnings(
+  layoutItemKind: string | undefined,
+  isAutoGrid: boolean,
+  isDefaultGrid: boolean,
+  warnings: string[]
+) {
+  if (!layoutItemKind) {
+    return;
+  }
+  if (layoutItemKind === 'GridLayoutItem' && isAutoGrid) {
+    warnings.push(
+      'layoutItem adapted from GridLayoutItem to AutoGridLayoutItem: target uses AutoGridLayout which auto-arranges panels.'
+    );
+  } else if (layoutItemKind === 'AutoGridLayoutItem' && isDefaultGrid) {
+    warnings.push(
+      'layoutItem adapted from AutoGridLayoutItem to GridLayoutItem: target uses GridLayout which requires explicit positioning.'
+    );
+  }
+}
+
 export const movePanelCommand: MutationCommand<MovePanelPayload> = {
   name: 'MOVE_PANEL',
   description: payloads.movePanel.description ?? '',
 
   payloadSchema: payloads.movePanel,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
     enterEditModeIfNeeded(scene);
 
     try {
-      const { element, toParent, position } = payload;
+      const { element, toParent } = payload;
       const elementName = element.name;
+      const warnings: string[] = [];
 
       const panelId = scene.serializer.getPanelIdForElement(elementName);
       if (panelId === undefined) {
         throw new Error(`Element "${elementName}" not found in the dashboard`);
       }
 
-      // Find the VizPanel matching this ID using the canonical key format
       const expectedKey = getVizPanelKeyForPanelId(panelId);
       const allPanels = scene.state.body.getVizPanels();
       const vizPanel = allPanels.find((p) => p.state.key === expectedKey);
@@ -82,64 +129,97 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
         throw new Error(`Panel with ID ${panelId} (element "${elementName}") not found in the layout`);
       }
 
+      const effectivePosition = resolveEffectivePosition(payload, warnings);
+
       if (!toParent) {
-        // Same-group repositioning
-        if (position) {
-          applyGridPosition(vizPanel, position);
+        const currentLayout = getLayoutManagerFor(vizPanel);
+        const isAutoGrid = currentLayout instanceof AutoGridLayoutManager;
+        const isDefaultGrid = currentLayout instanceof DefaultGridLayoutManager;
+
+        emitLayoutItemKindWarnings(payload.layoutItem?.kind, isAutoGrid, isDefaultGrid, warnings);
+
+        const previousPosition = serializeResultLayoutItem(vizPanel);
+
+        if (effectivePosition) {
+          if (isAutoGrid) {
+            warnings.push('Position ignored: current layout uses AutoGridLayout which auto-arranges panels.');
+          } else {
+            applyGridPosition(vizPanel, effectivePosition);
+          }
         }
+
+        const resultLayoutItem = serializeResultLayoutItem(vizPanel);
+        const fullElements = getElements(scene.state.body, scene);
+        const elementData = fullElements[elementName];
+
         return {
           success: true,
-          data: { element: elementName, parent: 'current' },
-          changes: position
-            ? [{ path: `/elements/${elementName}/position`, previousValue: 'previous', newValue: position }]
+          data: { element: elementData, layoutItem: resultLayoutItem },
+          changes: effectivePosition
+            ? [
+                {
+                  path: `/elements/${elementName}`,
+                  previousValue: previousPosition,
+                  newValue: resultLayoutItem,
+                },
+              ]
             : [],
+          warnings: warnings.length > 0 ? warnings : undefined,
         };
       }
 
-      // Resolve target
       const targetResolved = resolveLayoutPath(scene.state.body, toParent);
       const targetLayout = targetResolved.layoutManager;
+      const isTargetAutoGrid = targetLayout instanceof AutoGridLayoutManager;
+      const isTargetDefaultGrid = targetLayout instanceof DefaultGridLayoutManager;
 
-      // Capture original grid dimensions before the panel is removed
+      emitLayoutItemKindWarnings(payload.layoutItem?.kind, isTargetAutoGrid, isTargetDefaultGrid, warnings);
+
+      const previousLayoutItem = serializeResultLayoutItem(vizPanel);
+
       const sourceGridItem = vizPanel.parent;
-      const originalSize =
+      const originalPosition =
         sourceGridItem instanceof DashboardGridItem
-          ? { width: sourceGridItem.state.width, height: sourceGridItem.state.height }
+          ? {
+              x: sourceGridItem.state.x,
+              y: sourceGridItem.state.y,
+              width: sourceGridItem.state.width,
+              height: sourceGridItem.state.height,
+            }
           : undefined;
 
-      // Clone the panel, remove from owning layout, add to target
       const panelClone = vizPanel.clone();
 
-      // Remove from the layout that actually contains this panel
       const currentLayout = getLayoutManagerFor(vizPanel);
       if (!currentLayout.removePanel) {
         throw new Error('Source layout does not support panel removal');
       }
       currentLayout.removePanel(vizPanel);
 
-      // Add to target layout
       targetLayout.addPanel(panelClone);
 
-      // Restore original dimensions when no explicit position is provided
-      const warnings: string[] = [];
-      if (position) {
-        if (targetLayout instanceof AutoGridLayoutManager) {
+      if (effectivePosition) {
+        if (isTargetAutoGrid) {
           warnings.push('Position ignored: target uses AutoGridLayout which auto-arranges panels.');
         } else {
-          applyGridPosition(panelClone, position);
+          applyGridPosition(panelClone, effectivePosition);
         }
-      } else if (originalSize && !(targetLayout instanceof AutoGridLayoutManager)) {
-        applyGridPosition(panelClone, originalSize);
+      } else if (originalPosition && !isTargetAutoGrid) {
+        applyGridPosition(panelClone, originalPosition);
       }
+
+      const resultLayoutItem = serializeResultLayoutItem(panelClone);
+      const fullElements = getElements(scene.state.body, scene);
+      const elementData = fullElements[elementName];
 
       return {
         success: true,
-        data: { element: elementName, parent: toParent },
+        data: { element: elementData, layoutItem: resultLayoutItem },
         changes: [
           {
             path: `/elements/${elementName}`,
-            previousValue: { parent: 'previous' },
-            newValue: { parent: toParent },
+            previousValue: previousLayoutItem,
+            newValue: resultLayoutItem,
           },
         ],
         warnings: warnings.length > 0 ? warnings : undefined,

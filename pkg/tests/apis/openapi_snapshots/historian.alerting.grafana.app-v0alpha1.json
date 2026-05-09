@@ -150,6 +150,15 @@
             }
           },
           {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
             "name": "timeoutSeconds",
             "in": "query",
             "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
@@ -413,6 +422,15 @@
             "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
             "schema": {
               "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
               "uniqueItems": true
             }
           },
@@ -1137,6 +1155,60 @@
           }
         }
       ]
+    },
+    "/apis/historian.alerting.grafana.app/v0alpha1/namespaces/{namespace}/notifications/queryalerts": {
+      "post": {
+        "operationId": "createNotificationsqueryalerts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsRequestBody"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -1172,14 +1244,60 @@
           "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatcher"
         }
       },
+      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationCount": {
+        "type": "object",
+        "required": [
+          "count",
+          "values"
+        ],
+        "properties": {
+          "count": {
+            "description": "Count is the number of notification attempts in the time period. Set for counts queries.",
+            "type": "integer"
+          },
+          "error": {
+            "type": "string"
+          },
+          "integration": {
+            "type": "string"
+          },
+          "integrationIndex": {
+            "type": "integer"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationOutcome"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "ruleUID": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationStatus"
+          },
+          "values": {
+            "description": "Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationRangeValue"
+            }
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntry": {
         "type": "object",
         "required": [
           "timestamp",
+          "uuid",
           "receiver",
+          "integration",
+          "integrationIndex",
           "status",
           "outcome",
           "groupLabels",
+          "ruleUIDs",
+          "alertCount",
           "alerts",
           "retry",
           "duration",
@@ -1187,8 +1305,12 @@
           "groupKey"
         ],
         "properties": {
+          "alertCount": {
+            "description": "AlertCount is the total number of alerts included in the notification.",
+            "type": "integer"
+          },
           "alerts": {
-            "description": "Alerts are the alerts grouped into the notification.",
+            "description": "Alerts are the alerts grouped into the notification. Deprecated: not populated, will be removed.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntryAlert"
@@ -1213,6 +1335,14 @@
               "type": "string"
             }
           },
+          "integration": {
+            "description": "Integration is the integration (contact point type) name.",
+            "type": "string"
+          },
+          "integrationIndex": {
+            "description": "IntegrationIndex is the index of the integration within the receiver.",
+            "type": "integer"
+          },
           "outcome": {
             "description": "Outcome indicaes if the notificaion attempt was successful or if it failed.",
             "allOf": [
@@ -1234,6 +1364,13 @@
             "description": "Retry indicates if the attempt was a retried attempt.",
             "type": "boolean"
           },
+          "ruleUIDs": {
+            "description": "RuleUIDs are the unique identifiers of the alert rules included in the notification.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "status": {
             "description": "Status indicates if the notification contains one or more firing alerts.",
             "allOf": [
@@ -1246,6 +1383,10 @@
             "description": "Timestamp is the time at which the notification attempt completed.",
             "type": "string",
             "format": "date-time"
+          },
+          "uuid": {
+            "description": "Uuid is a unique identifier for the notification attempt.",
+            "type": "string"
           }
         }
       },
@@ -1295,6 +1436,24 @@
           "error"
         ]
       },
+      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationRangeValue": {
+        "description": "NotificationRangeValue is a single (timestamp, count) data point in a range count series.",
+        "type": "object",
+        "required": [
+          "timestamp",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "description": "Count is the number of notification attempts at this point in time.",
+            "type": "integer"
+          },
+          "timestamp": {
+            "description": "Timestamp is the Unix epoch in seconds for this data point.",
+            "type": "integer"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationStatus": {
         "type": "string",
         "enum": [
@@ -1309,6 +1468,42 @@
             "description": "From is the starting timestamp for the query.",
             "type": "string",
             "format": "date-time"
+          },
+          "groupBy": {
+            "description": "GroupBy specifies how to aggregate counts queries.",
+            "type": "object",
+            "required": [
+              "receiver",
+              "integration",
+              "integrationIndex",
+              "status",
+              "outcome",
+              "error",
+              "ruleUID"
+            ],
+            "properties": {
+              "error": {
+                "type": "boolean"
+              },
+              "integration": {
+                "type": "boolean"
+              },
+              "integrationIndex": {
+                "type": "boolean"
+              },
+              "outcome": {
+                "type": "boolean"
+              },
+              "receiver": {
+                "type": "boolean"
+              },
+              "ruleUID": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "boolean"
+              }
+            }
           },
           "groupLabels": {
             "description": "GroupLabels optionally filters the entries by matching group labels.",
@@ -1354,23 +1549,119 @@
               }
             ]
           },
+          "step": {
+            "description": "Step is the step interval in seconds for range_counts queries.",
+            "type": "integer"
+          },
           "to": {
             "description": "To is the starting timestamp for the query.",
             "type": "string",
             "format": "date-time"
+          },
+          "type": {
+            "description": "Type of query to perform (default: entries)",
+            "type": "string",
+            "enum": [
+              "entries",
+              "counts",
+              "range_counts"
+            ]
           }
         }
       },
       "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryResponse": {
         "type": "object",
         "required": [
-          "entries"
+          "entries",
+          "counts"
         ],
         "properties": {
+          "counts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationCount"
+            }
+          },
           "entries": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntry"
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsNotificationEntryAlert": {
+        "type": "object",
+        "required": [
+          "status",
+          "labels",
+          "annotations",
+          "startsAt",
+          "endsAt"
+        ],
+        "properties": {
+          "annotations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "enrichments": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsRequestBody": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "description": "From is the starting timestamp for the query.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "limit": {
+            "description": "Limit is the maximum number of entries to return.",
+            "type": "integer"
+          },
+          "to": {
+            "description": "To is the ending timestamp for the query.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "uuid": {
+            "description": "UUID filters the alerts to those belonging to a specific alert rule.",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse": {
+        "type": "object",
+        "required": [
+          "alerts"
+        ],
+        "properties": {
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsNotificationEntryAlert"
             }
           }
         }

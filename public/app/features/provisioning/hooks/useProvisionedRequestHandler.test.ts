@@ -1,27 +1,19 @@
 import { renderHook } from '@testing-library/react';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
+import { setAppEvents } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
+import { type ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
+import { type appEvents } from 'app/core/app_events';
 
-import { useProvisionedRequestHandler, RequestHandlers } from './useProvisionedRequestHandler';
+import { useProvisionedRequestHandler, type RequestHandlers } from './useProvisionedRequestHandler';
 
-jest.mock('@grafana/runtime', () => ({
-  getAppEvents: jest.fn(),
-}));
-
-jest.mock('@grafana/i18n', () => ({
-  t: jest.fn((key: string, defaultValue: string) => defaultValue),
-}));
-
-const mockGetAppEvents = jest.mocked(getAppEvents);
-
+const mockDispatch = jest.fn();
 jest.mock('react-redux', () => {
   const actual = jest.requireActual('react-redux');
   return {
     ...actual,
-    useDispatch: jest.fn(),
+    useDispatch: () => mockDispatch,
   };
 });
 
@@ -32,6 +24,7 @@ jest.mock('app/features/browse-dashboards/api/services', () => ({
 describe('useProvisionedRequestHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockDispatch.mockClear();
   });
 
   describe('error handling', () => {
@@ -91,7 +84,7 @@ describe('useProvisionedRequestHandler', () => {
 
       expect(mockPublish).toHaveBeenCalledWith({
         type: AppEvents.alertSuccess.name,
-        payload: ['Dashboard saved successfully'],
+        payload: ['Changes saved successfully'],
       });
       expect(handlers.onDismiss).toHaveBeenCalled();
     });
@@ -134,6 +127,44 @@ describe('useProvisionedRequestHandler', () => {
       expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
       // Branch workflow should not show success alert (PR banner handles it)
       expect(mockPublish).not.toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertSuccess.name }));
+    });
+
+    it('should show push success with branch link when repository info is available', () => {
+      const { request, handlers } = setup({
+        requestOverrides: {
+          isError: false,
+          isSuccess: true,
+          data: createMockResourceWrapper({
+            urls: { repositoryURL: 'https://github.com/org/repo' },
+          }),
+        },
+      });
+
+      renderHook(() =>
+        useProvisionedRequestHandler({
+          request,
+          workflow: 'write',
+          resourceType: 'dashboard',
+          repository: {
+            type: 'github',
+            name: 'test-repo',
+            target: 'folder',
+            title: 'Test Repository',
+            workflows: [],
+            branch: 'main',
+            url: 'https://github.com/org/repo',
+          },
+          handlers,
+        })
+      );
+
+      expect(mockDispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            component: expect.anything(),
+          }),
+        })
+      );
     });
 
     it('should call onWriteSuccess for write workflow', () => {
@@ -262,9 +293,7 @@ function setup({
 } = {}) {
   const mockPublish = jest.fn();
 
-  mockGetAppEvents.mockReturnValue({
-    publish: mockPublish,
-  } as unknown as ReturnType<typeof getAppEvents>);
+  setAppEvents({ publish: mockPublish } as unknown as typeof appEvents);
 
   const request = {
     isError: false,

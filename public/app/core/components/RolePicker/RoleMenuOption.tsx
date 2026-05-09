@@ -1,10 +1,10 @@
 import { cx } from '@emotion/css';
-import { forwardRef, FormEvent } from 'react';
+import { forwardRef, type FormEvent } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
-import { Role } from 'app/types/accessControl';
+import { type Role } from 'app/types/accessControl';
 
 import { getStyles } from './styles';
 

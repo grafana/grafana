@@ -19,42 +19,6 @@ menuTitle: OpenTSDB
 title: OpenTSDB data source
 weight: 1100
 last_reviewed: 2026-01-28
-refs:
-  configure-opentsdb:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/configure/
-  query-editor-opentsdb:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
-  template-variables-opentsdb:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
-  alerting-opentsdb:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
-  annotations-opentsdb:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/annotations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/annotations/
-  troubleshooting-opentsdb:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # OpenTSDB data source
@@ -87,19 +51,19 @@ The data source supports OpenTSDB versions 2.1 through 2.4. Some features are ve
 
 The following documents help you get started with the OpenTSDB data source:
 
-- [Configure the OpenTSDB data source](ref:configure-opentsdb) - Set up authentication and connect to OpenTSDB.
-- [OpenTSDB query editor](ref:query-editor-opentsdb) - Create and edit queries with aggregation, downsampling, and filtering.
-- [Template variables](ref:template-variables-opentsdb) - Create dynamic dashboards with OpenTSDB variables.
-- [Troubleshooting](ref:troubleshooting-opentsdb) - Solve common configuration and query errors.
+- [Configure the OpenTSDB data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/configure/) - Set up authentication and connect to OpenTSDB.
+- [OpenTSDB query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/) - Create and edit queries with aggregation, downsampling, and filtering.
+- [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/) - Create dynamic dashboards with OpenTSDB variables.
+- [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/) - Solve common configuration and query errors.
 
 ## Additional features
 
 After you have configured the OpenTSDB data source, you can:
 
-- Add [Annotations](ref:annotations-opentsdb) to overlay OpenTSDB events on your graphs.
-- Configure and use [Template variables](ref:template-variables-opentsdb) for dynamic dashboards.
-- Set up [Alerting](ref:alerting-opentsdb) rules based on your time series queries.
-- Use [Explore](ref:explore) to investigate your OpenTSDB data without building a dashboard.
+- Add [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/annotations/) to overlay OpenTSDB events on your graphs.
+- Configure and use [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/) for dynamic dashboards.
+- Set up [Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/) rules based on your time series queries.
+- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to investigate your OpenTSDB data without building a dashboard.
 
 ## Related resources
 

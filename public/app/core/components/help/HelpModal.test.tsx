@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
 import { useAssistant } from '@grafana/assistant';
-import { config } from '@grafana/runtime';
 
 import { useShortcuts } from './HelpModal';
 
@@ -24,6 +23,7 @@ describe('useShortcuts', () => {
 
   it('should return shortcuts without assistant shortcut when assistant is not available', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       toggleAssistant: jest.fn(),
     } as unknown as ReturnType<typeof useAssistant>);
@@ -42,6 +42,7 @@ describe('useShortcuts', () => {
 
   it('should return shortcuts with assistant shortcut when assistant is available', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: true,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -63,6 +64,7 @@ describe('useShortcuts', () => {
 
   it('should include all expected shortcut categories', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -85,6 +87,7 @@ describe('useShortcuts', () => {
 
   it('should use the correct modKey in shortcuts', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -105,6 +108,7 @@ describe('useShortcuts', () => {
 
   it('should memoize results when dependencies do not change', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -123,6 +127,7 @@ describe('useShortcuts', () => {
 
   it('should update when assistant availability changes', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -134,6 +139,7 @@ describe('useShortcuts', () => {
 
     // Change assistant availability
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: true,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -153,6 +159,7 @@ describe('useShortcuts', () => {
   describe('time range zoom shortcuts with feature toggle', () => {
     beforeEach(() => {
       mockUseAssistant.mockReturnValue({
+        isLoading: false,
         isAvailable: false,
         openAssistant: jest.fn(),
         closeAssistant: jest.fn(),
@@ -160,9 +167,7 @@ describe('useShortcuts', () => {
       });
     });
 
-    it('should show new zoom shortcuts when feature toggle is enabled', () => {
-      config.featureToggles.newTimeRangeZoomShortcuts = true;
-
+    it('should show new zoom shortcuts', () => {
       const { result } = renderHook(() => useShortcuts());
 
       const timeRangeCategory = result.current.find((cat) => cat.category.includes('Time range'));
@@ -176,37 +181,7 @@ describe('useShortcuts', () => {
       expect(zoomOutShortcut!.isNew).toBe(true);
     });
 
-    it('should show legacy t z shortcut when feature toggle is disabled', () => {
-      config.featureToggles.newTimeRangeZoomShortcuts = false;
-
-      const { result } = renderHook(() => useShortcuts());
-
-      const timeRangeCategory = result.current.find((cat) => cat.category.includes('Time range'));
-
-      const legacyZoomShortcut = timeRangeCategory!.shortcuts.find((s) => s.keys.includes('t') && s.keys.includes('z'));
-      const newZoomInShortcut = timeRangeCategory!.shortcuts.find((s) => s.keys.includes('t') && s.keys.includes('+'));
-      const newZoomOutShortcut = timeRangeCategory!.shortcuts.find((s) => s.keys.includes('t') && s.keys.includes('-'));
-
-      expect(legacyZoomShortcut).toBeDefined();
-      expect(newZoomInShortcut).toBeUndefined();
-      expect(newZoomOutShortcut).toBeUndefined();
-    });
-
-    it('should not show isNew badge on legacy shortcuts', () => {
-      config.featureToggles.newTimeRangeZoomShortcuts = false;
-
-      const { result } = renderHook(() => useShortcuts());
-
-      const timeRangeCategory = result.current.find((cat) => cat.category.includes('Time range'));
-
-      const legacyZoomShortcut = timeRangeCategory!.shortcuts.find((s) => s.keys.includes('t') && s.keys.includes('z'));
-
-      expect(legacyZoomShortcut!.isNew).toBeUndefined();
-    });
-
-    it('should show isNew badge on new shortcuts when feature toggle is enabled', () => {
-      config.featureToggles.newTimeRangeZoomShortcuts = true;
-
+    it('should show isNew badge on new shortcuts', () => {
       const { result } = renderHook(() => useShortcuts());
 
       const timeRangeCategory = result.current.find((cat) => cat.category.includes('Time range'));

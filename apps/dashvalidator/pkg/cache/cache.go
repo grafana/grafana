@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -17,9 +19,12 @@ const (
 )
 
 // cacheEntry represents a cached metrics list with expiration time.
+// The metricsSet is built eagerly alongside the slice to avoid repeated
+// []string → map[string]bool conversions on every validation call.
 type cacheEntry struct {
-	metrics   []string
-	expiresAt time.Time
+	metrics    []string
+	metricsSet map[string]bool
+	expiresAt  time.Time
 }
 
 // MetricsCache provides TTL-based caching for metrics fetched from datasources.
@@ -31,6 +36,7 @@ type MetricsCache struct {
 	mu        sync.RWMutex
 	entries   map[string]*cacheEntry     // key: datasourceUID
 	providers map[string]MetricsProvider // key: datasource type (e.g., "prometheus")
+	sf        singleflight.Group         // coalesces concurrent fetches for the same datasourceUID
 }
 
 // NewMetricsCache creates a new MetricsCache.
@@ -92,23 +98,84 @@ func (c *MetricsCache) GetMetrics(ctx context.Context, dsType, datasourceUID, da
 		return nil, fmt.Errorf("no metrics provider registered for datasource type: %s", dsType)
 	}
 
-	// Cache miss or expired - fetch from provider
-	result, err := provider.GetMetrics(ctx, datasourceUID, datasourceURL, client)
+	// Cache miss or expired — use singleflight to coalesce concurrent fetches
+	v, err, _ := c.sf.Do(datasourceUID, func() (any, error) {
+		// Re-check cache: another goroutine may have populated it while we waited
+		c.mu.RLock()
+		cached, exists := c.entries[datasourceUID]
+		c.mu.RUnlock()
+		if exists && time.Now().Before(cached.expiresAt) {
+			return cached.metrics, nil
+		}
+
+		result, err := provider.GetMetrics(ctx, datasourceUID, datasourceURL, client)
+		if err != nil {
+			return nil, err
+		}
+
+		// Don't cache results with zero TTL
+		if result.TTL > 0 {
+			c.mu.Lock()
+			c.entries[datasourceUID] = &cacheEntry{
+				metrics:    result.Metrics,
+				metricsSet: toMetricsSet(result.Metrics),
+				expiresAt:  time.Now().Add(result.TTL),
+			}
+			c.mu.Unlock()
+		}
+
+		return result.Metrics, nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	// Don't cache results with zero TTL
-	if result.TTL > 0 {
-		c.mu.Lock()
-		c.entries[datasourceUID] = &cacheEntry{
-			metrics:   result.Metrics,
-			expiresAt: time.Now().Add(result.TTL),
-		}
-		c.mu.Unlock()
+	return v.([]string), nil
+}
+
+// GetMetricsSet returns the cached metrics as a set (map[string]bool) for O(1) lookup.
+// This avoids rebuilding the set from []string on every call — critical when the
+// metrics list is large (100K+ entries, ~28MB per map rebuild).
+//
+// NOTE: This method delegates to GetMetrics for fetching/caching logic.
+// If GetMetrics' caching behavior changes, this method must be updated in lockstep.
+func (c *MetricsCache) GetMetricsSet(ctx context.Context, dsType, datasourceUID, datasourceURL string,
+	client *http.Client) (map[string]bool, error) {
+	// Check cache — return the pre-built set on hit
+	c.mu.RLock()
+	cached, exists := c.entries[datasourceUID]
+	c.mu.RUnlock()
+
+	if exists && time.Now().Before(cached.expiresAt) {
+		return cached.metricsSet, nil
 	}
 
-	return result.Metrics, nil
+	// Delegate to GetMetrics to handle provider lookup, fetching, and caching
+	metrics, err := c.GetMetrics(ctx, dsType, datasourceUID, datasourceURL, client)
+	if err != nil {
+		return nil, err
+	}
+
+	// Re-check cache — GetMetrics will have stored the entry (with metricsSet) if TTL > 0
+	c.mu.RLock()
+	cached, exists = c.entries[datasourceUID]
+	c.mu.RUnlock()
+
+	if exists && time.Now().Before(cached.expiresAt) {
+		return cached.metricsSet, nil
+	}
+
+	// Fallback: provider returned TTL=0 (explicitly opted out of caching), build set on the fly
+	return toMetricsSet(metrics), nil
+}
+
+// toMetricsSet converts a slice of metric names to a set for O(1) lookup.
+func toMetricsSet(metrics []string) map[string]bool {
+	set := make(map[string]bool, len(metrics))
+	for _, m := range metrics {
+		set[m] = true
+	}
+	return set
 }
 
 // cleanupExpired removes expired entries from the cache.

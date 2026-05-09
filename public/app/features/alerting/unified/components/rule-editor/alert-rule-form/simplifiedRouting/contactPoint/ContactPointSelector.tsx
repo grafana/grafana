@@ -10,7 +10,7 @@ import {
 } from '@grafana/alerting/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
-import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
+import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { stringifyFieldSelector } from 'app/features/alerting/unified/utils/k8s/utils';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
@@ -97,7 +97,7 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
     </Stack>
   );
 }
-function LinkToContactPoints() {
+export function LinkToContactPoints() {
   const hrefToContactPoints = '/alerting/notifications';
   return (
     <TextLink

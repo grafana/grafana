@@ -1,9 +1,9 @@
 import { chain } from 'lodash';
 
-import { Combobox, ComboboxOption } from '@grafana/ui';
+import { Combobox, type ComboboxOption } from '@grafana/ui';
 
 import type { ContactPoint } from '../../../api/notifications/v0alpha1/types';
-import { CustomComboBoxProps } from '../../../common/ComboBox.types';
+import { type CustomComboBoxProps } from '../../../common/ComboBox.types';
 import { useListContactPoints } from '../../hooks/v0alpha1/useContactPoints';
 import { getContactPointDescription, isUsableContactPoint } from '../../utils';
 

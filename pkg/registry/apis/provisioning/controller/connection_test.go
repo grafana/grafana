@@ -145,8 +145,12 @@ func TestConnectionController_process(t *testing.T) {
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
-					Return(testResults, healthStatus, []map[string]interface{}{
-						{"op": "replace", "path": "/status/health", "value": healthStatus},
+					Return(ConnectionHealthResultWithPatchOps{
+						TestResults:  testResults,
+						HealthStatus: healthStatus,
+						PatchOps: []map[string]interface{}{
+							{"op": "replace", "path": "/status/health", "value": healthStatus},
+						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -241,8 +245,12 @@ func TestConnectionController_process(t *testing.T) {
 				mockTokenConnection.EXPECT().TokenExpiration(mock.Anything).Return(time.Now().Add(2*time.Minute), nil)
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
-					Return(testResults, healthStatus, []map[string]interface{}{
-						{"op": "replace", "path": "/status/health", "value": healthStatus},
+					Return(ConnectionHealthResultWithPatchOps{
+						TestResults:  testResults,
+						HealthStatus: healthStatus,
+						PatchOps: []map[string]interface{}{
+							{"op": "replace", "path": "/status/health", "value": healthStatus},
+						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -331,8 +339,12 @@ func TestConnectionController_process(t *testing.T) {
 				mockTokenConnection.EXPECT().TokenValid(mock.Anything).Return(true)
 				mockTokenConnection.EXPECT().TokenCreationTime(mock.Anything).Return(time.Now().Add(-8*time.Second), nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
-					Return(testResults, healthStatus, []map[string]interface{}{
-						{"op": "replace", "path": "/status/health", "value": healthStatus},
+					Return(ConnectionHealthResultWithPatchOps{
+						TestResults:  testResults,
+						HealthStatus: healthStatus,
+						PatchOps: []map[string]interface{}{
+							{"op": "replace", "path": "/status/health", "value": healthStatus},
+						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -430,8 +442,12 @@ func TestConnectionController_process(t *testing.T) {
 				// Token expires in 15 minutes - with buffer of 10m10s (2*5m + 10s), this will NOT trigger regeneration
 				mockTokenConnection.EXPECT().TokenExpiration(mock.Anything).Return(time.Now().Add(15*time.Minute), nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
-					Return(testResults, healthStatus, []map[string]interface{}{
-						{"op": "replace", "path": "/status/health", "value": healthStatus},
+					Return(ConnectionHealthResultWithPatchOps{
+						TestResults:  testResults,
+						HealthStatus: healthStatus,
+						PatchOps: []map[string]interface{}{
+							{"op": "replace", "path": "/status/health", "value": healthStatus},
+						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -530,8 +546,12 @@ func TestConnectionController_process(t *testing.T) {
 				mockTokenConnection.EXPECT().TokenExpiration(mock.Anything).Return(time.Now().Add(9*time.Minute), nil)
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return("someToken", nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
-					Return(testResults, healthStatus, []map[string]interface{}{
-						{"op": "replace", "path": "/status/health", "value": healthStatus},
+					Return(ConnectionHealthResultWithPatchOps{
+						TestResults:  testResults,
+						HealthStatus: healthStatus,
+						PatchOps: []map[string]interface{}{
+							{"op": "replace", "path": "/status/health", "value": healthStatus},
+						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -632,8 +652,12 @@ func TestConnectionController_process(t *testing.T) {
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
 				// Health check is still performed as part of reconciliation even though ShouldCheckHealth returned false
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
-					Return(testResults, healthStatus, []map[string]interface{}{
-						{"op": "replace", "path": "/status/health", "value": healthStatus},
+					Return(ConnectionHealthResultWithPatchOps{
+						TestResults:  testResults,
+						HealthStatus: healthStatus,
+						PatchOps: []map[string]interface{}{
+							{"op": "replace", "path": "/status/health", "value": healthStatus},
+						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -709,7 +733,7 @@ func TestConnectionController_process(t *testing.T) {
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
-					Return(nil, provisioning.HealthStatus{}, nil, errors.New("health check failed"))
+					Return(ConnectionHealthResultWithPatchOps{}, errors.New("health check failed"))
 
 				return mockLister, mockHealthChecker, nil, mockFactory
 			},
@@ -768,8 +792,12 @@ func TestConnectionController_process(t *testing.T) {
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
-					Return(testResults, healthStatus, []map[string]interface{}{
-						{"op": "replace", "path": "/status/health", "value": healthStatus},
+					Return(ConnectionHealthResultWithPatchOps{
+						TestResults:  testResults,
+						HealthStatus: healthStatus,
+						PatchOps: []map[string]interface{}{
+							{"op": "replace", "path": "/status/health", "value": healthStatus},
+						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -891,7 +919,12 @@ func TestConnectionController_process(t *testing.T) {
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
 				// Health check should be performed after token generation
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).Return(
-					&provisioning.TestResults{Success: true}, provisioning.HealthStatus{Healthy: true}, []map[string]interface{}{}, nil,
+					ConnectionHealthResultWithPatchOps{
+						TestResults:  &provisioning.TestResults{Success: true},
+						HealthStatus: provisioning.HealthStatus{Healthy: true},
+						PatchOps:     []map[string]interface{}{},
+					},
+					nil,
 				)
 
 				mockPatcher := NewMockConnectionStatusPatcher(t)
@@ -974,8 +1007,12 @@ func TestConnectionController_process(t *testing.T) {
 				// TokenCreationTime and TokenExpiration should NOT be called when token is invalid
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
-					Return(testResults, healthStatus, []map[string]interface{}{
-						{"op": "replace", "path": "/status/health", "value": healthStatus},
+					Return(ConnectionHealthResultWithPatchOps{
+						TestResults:  testResults,
+						HealthStatus: healthStatus,
+						PatchOps: []map[string]interface{}{
+							{"op": "replace", "path": "/status/health", "value": healthStatus},
+						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -1145,8 +1182,12 @@ func TestConnectionController_process(t *testing.T) {
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).
 					Return("", errors.New("token generation failed"))
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
-					Return(testResults, healthStatus, []map[string]interface{}{
-						{"op": "replace", "path": "/status/health", "value": healthStatus},
+					Return(ConnectionHealthResultWithPatchOps{
+						TestResults:  testResults,
+						HealthStatus: healthStatus,
+						PatchOps: []map[string]interface{}{
+							{"op": "replace", "path": "/status/health", "value": healthStatus},
+						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -1340,7 +1381,11 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 			mockHealthChecker := NewMockConnectionHealthChecker(t)
 			mockHealthChecker.EXPECT().ShouldCheckHealth(mock.IsType(&provisioning.Connection{})).Return(true)
 			mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, conn).Return(
-				tt.testResults, provisioning.HealthStatus{Healthy: false}, nil, nil,
+				ConnectionHealthResultWithPatchOps{
+					TestResults:  tt.testResults,
+					HealthStatus: provisioning.HealthStatus{Healthy: false},
+				},
+				nil,
 			)
 
 			// Create controller

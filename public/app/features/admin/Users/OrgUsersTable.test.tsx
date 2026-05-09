@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { OrgUser } from 'app/types/user';
+import { type OrgUser } from 'app/types/user';
 
 import { getMockUsers } from '../../users/mocks/userMocks';
 
-import { OrgUsersTable, Props } from './OrgUsersTable';
+import { OrgUsersTable, type Props } from './OrgUsersTable';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {

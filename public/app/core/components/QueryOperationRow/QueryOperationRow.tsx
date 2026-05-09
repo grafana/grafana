@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 import { useUpdateEffect } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ReactUtils, useStyles2 } from '@grafana/ui';
 
-import { QueryOperationRowHeader, ExpanderMessages } from './QueryOperationRowHeader';
+import { QueryOperationRowHeader, type ExpanderMessages } from './QueryOperationRowHeader';
 
 export interface QueryOperationRowProps {
   index: number;
@@ -54,6 +54,7 @@ export function QueryOperationRow({
   const onRowToggle = useCallback(() => {
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
+  const contentId = useId();
 
   // Force QueryOperationRow expansion when `isOpen` prop updates in parent component.
   // `undefined` can be deliberately passed value here, but we only want booleans to trigger the effect.
@@ -115,7 +116,7 @@ export function QueryOperationRow({
               <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
                 <div>
                   <QueryOperationRowHeader
-                    id={id}
+                    id={contentId}
                     actionsElement={actionsElement}
                     disabled={disabled}
                     draggable
@@ -129,7 +130,11 @@ export function QueryOperationRow({
                     expanderMessages={expanderMessages}
                   />
                 </div>
-                {isContentVisible && <div className={styles.content}>{children}</div>}
+                {isContentVisible && (
+                  <div className={styles.content} id={contentId}>
+                    {children}
+                  </div>
+                )}
               </div>
             </>
           );
@@ -141,7 +146,7 @@ export function QueryOperationRow({
   return (
     <div className={styles.wrapper}>
       <QueryOperationRowHeader
-        id={id}
+        id={contentId}
         actionsElement={actionsElement}
         disabled={disabled}
         draggable={false}
@@ -153,7 +158,11 @@ export function QueryOperationRow({
         title={title}
         expanderMessages={expanderMessages}
       />
-      {isContentVisible && <div className={styles.content}>{children}</div>}
+      {isContentVisible && (
+        <div className={styles.content} id={contentId}>
+          {children}
+        </div>
+      )}
     </div>
   );
 }

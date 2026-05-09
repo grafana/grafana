@@ -1,7 +1,7 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardPage, E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
@@ -64,6 +64,11 @@ export const flows = {
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
       .click();
+
+    // New variable creation schedules a delayed autofocus to name input
+    // Let that timer finish before we interact to prevent focus on the wrong input
+    await dashboardPage.ctx.page.waitForTimeout(250);
+
     const variableNameInput = dashboardPage.getByGrafanaSelector(
       selectors.components.PanelEditor.ElementEditPane.variableNameInput
     );
@@ -92,6 +97,13 @@ export const flows = {
     await expect(inputField).toBeVisible();
     await inputField.fill(variable.value);
     await inputField.blur();
+
+    if (variable.display) {
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
+        .click();
+      await dashboardPage.ctx.page.getByText(variable.display, { exact: true }).click();
+    }
   },
 };
 
@@ -101,6 +113,7 @@ export type Variable = {
   label?: string;
   description?: string;
   value: string;
+  display?: string;
 };
 
 export async function saveDashboard(
@@ -114,7 +127,12 @@ export async function saveDashboard(
     await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
   }
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
-  await expect(page.getByText('Dashboard saved')).toBeVisible();
+
+  // wait for the toast
+  const toast = page.getByRole('status', { name: 'Dashboard saved' });
+  await expect(toast).toBeVisible();
+  // close toast, we do this to prevent any incorrect assertion when several saves occur fast. i.e. the 1st toast is still visible but the 2nd save has not occurred yet
+  await toast.getByRole('button', { name: 'Close alert' }).click();
 }
 
 export async function checkRepeatedPanelTitles(
@@ -183,22 +201,43 @@ export async function verifyChanges(
 }
 interface ImportTestDashboardOptions {
   checkPanelsVisible?: boolean;
+  requiresDataSourceSelection?: boolean;
 }
+
+export function stripMetadataNameFromImportJson(input: string): string {
+  // Keep fixture JSON intact, but remove a fixed resource name at import time so
+  // each test creates an isolated dashboard via generateName in parallel runs.
+  try {
+    const parsed = JSON.parse(input);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const metadata = Reflect.get(parsed, 'metadata');
+      if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+        Reflect.deleteProperty(metadata, 'name');
+      }
+    }
+    return JSON.stringify(parsed);
+  } catch {
+    return input;
+  }
+}
+
 export async function importTestDashboard(
   page: Page,
   selectors: E2ESelectorGroups,
   title: string,
   dashInput?: string,
-  options: ImportTestDashboardOptions = { checkPanelsVisible: true }
+  options: ImportTestDashboardOptions = {}
 ) {
+  options = { checkPanelsVisible: true, requiresDataSourceSelection: true, ...options };
+  const importJson = stripMetadataNameFromImportJson(dashInput || JSON.stringify(testV2Dashboard));
   await page.goto(selectors.pages.ImportDashboard.url);
-  await page
-    .getByTestId(selectors.components.DashboardImportPage.textarea)
-    .fill(dashInput || JSON.stringify(testV2Dashboard));
+  await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(importJson);
   await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
   await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
-  await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-  await page.locator('div[data-testid="data-source-card"]').first().click();
+  if (options.requiresDataSourceSelection) {
+    await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
+    await page.locator('div[data-testid="data-source-card"]').first().click();
+  }
   await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
   const undockMenuButton = page.locator('[aria-label="Undock menu"]');
   const undockMenuVisible = await undockMenuButton.isVisible();
@@ -368,4 +407,22 @@ export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelect
 export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
   await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
   await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+}
+
+export async function fillVariableValue(
+  page: Page,
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  varName: string,
+  text: string
+) {
+  const variable = dashboardPage
+    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(varName))
+    .locator('..')
+    .locator('input');
+  await variable.click();
+  await variable.clear();
+  await variable.fill(text);
+  await variable.press('Enter');
+  await page.waitForLoadState('networkidle');
 }

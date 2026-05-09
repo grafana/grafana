@@ -161,20 +161,22 @@ const (
 	EnricherTypeExplain         EnricherType = "explain"
 	EnricherTypeLoop            EnricherType = "loop"
 	EnricherTypeAssistant       EnricherType = "assistant"
+	EnricherTypeQuerySample     EnricherType = "querySample"
 )
 
 // EnricherConfig is a discriminated union of enricher configurations.
 type EnricherConfig struct {
-	Type EnricherType `json:"type" yaml:"type" jsonschema:"description=Enricher type ('assign', 'external', 'dsquery', 'sift', 'asserts', 'explain', 'loop')"`
+	Type EnricherType `json:"type" yaml:"type" jsonschema:"description=Enricher type ('assign', 'external', 'dsquery', 'sift', 'asserts', 'explain', 'loop', 'assistant', 'querySample')"`
 
-	Assign     *AssignEnricher     `json:"assign,omitempty" yaml:"assign,omitempty" jsonschema:"description=Assign enricher settings"`
-	External   *ExternalEnricher   `json:"external,omitempty" yaml:"external,omitempty" jsonschema:"description=External HTTP enricher settings"`
-	DataSource *DataSourceEnricher `json:"dataSource,omitempty" yaml:"dataSource,omitempty" jsonschema:"description=Data source query enricher settings"`
-	Sift       *SiftEnricher       `json:"sift,omitempty" yaml:"sift,omitempty" jsonschema:"description=Sift enricher settings"`
-	Asserts    *AssertsEnricher    `json:"asserts,omitempty" yaml:"asserts,omitempty" jsonschema:"description=Asserts enricher settings"`
-	Explain    *ExplainEnricher    `json:"explain,omitempty" yaml:"explain,omitempty" jsonschema:"description=Explain enricher settings"`
-	Loop       *LoopEnricher       `json:"loop,omitempty" yaml:"loop,omitempty" jsonschema:"description=Loop enricher settings"`
-	Assistant  *AssistantEnricher  `json:"assistant,omitempty" yaml:"assistant,omitempty" jsonschema:"description=Assistant enricher settings"`
+	Assign      *AssignEnricher      `json:"assign,omitempty" yaml:"assign,omitempty" jsonschema:"description=Assign enricher settings"`
+	External    *ExternalEnricher    `json:"external,omitempty" yaml:"external,omitempty" jsonschema:"description=External HTTP enricher settings"`
+	DataSource  *DataSourceEnricher  `json:"dataSource,omitempty" yaml:"dataSource,omitempty" jsonschema:"description=Data source query enricher settings"`
+	Sift        *SiftEnricher        `json:"sift,omitempty" yaml:"sift,omitempty" jsonschema:"description=Sift enricher settings"`
+	Asserts     *AssertsEnricher     `json:"asserts,omitempty" yaml:"asserts,omitempty" jsonschema:"description=Asserts enricher settings"`
+	Explain     *ExplainEnricher     `json:"explain,omitempty" yaml:"explain,omitempty" jsonschema:"description=Explain enricher settings"`
+	Loop        *LoopEnricher        `json:"loop,omitempty" yaml:"loop,omitempty" jsonschema:"description=Loop enricher settings"`
+	Assistant   *AssistantEnricher   `json:"assistant,omitempty" yaml:"assistant,omitempty" jsonschema:"description=Assistant enricher settings"`
+	QuerySample *QuerySampleEnricher `json:"querySample,omitempty" yaml:"querySample,omitempty" jsonschema:"description=Data sample enricher settings"`
 }
 
 func (EnricherConfig) OpenAPIModelName() string {
@@ -313,4 +315,14 @@ type AssistantEnricher struct {
 
 func (AssistantEnricher) OpenAPIModelName() string {
 	return OpenAPIPrefix + "AssistantEnricher"
+}
+
+// QuerySampleEnricher configures an enricher that samples data from the queries
+// used in the alert rule definition, such as logs.
+type QuerySampleEnricher struct {
+	// In the future, there may be configuration options.
+}
+
+func (QuerySampleEnricher) OpenAPIModelName() string {
+	return OpenAPIPrefix + "QuerySampleEnricher"
 }

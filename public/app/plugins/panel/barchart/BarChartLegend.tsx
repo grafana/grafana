@@ -2,16 +2,23 @@ import { includes } from 'lodash';
 import { memo } from 'react';
 
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldColorModeId,
   getFieldSeriesColor,
-  ThresholdsConfig,
+  type ThresholdsConfig,
   ThresholdsMode,
-  ValueMapping,
+  type ValueMapping,
 } from '@grafana/data';
-import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
-import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
+import { type VizLegendOptions, AxisPlacement } from '@grafana/schema';
+import {
+  type UPlotConfigBuilder,
+  VizLayout,
+  type VizLayoutLegendProps,
+  VizLegend,
+  type VizLegendItem,
+  useTheme2,
+} from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/internal';
 import { getThresholdItems, getValueMappingItems } from 'app/core/components/TimelineChart/utils';
 interface BarChartLegend2Props extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {

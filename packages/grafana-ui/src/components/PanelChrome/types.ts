@@ -7,6 +7,7 @@
 export enum SeriesVisibilityChangeMode {
   ToggleSelection = 'select',
   AppendToSelection = 'append',
+  SetExactly = 'setExactly',
 }
 
 export type OnSelectRangeCallback = (selections: RangeSelection2D[]) => void;

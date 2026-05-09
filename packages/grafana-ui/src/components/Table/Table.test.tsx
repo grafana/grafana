@@ -1,12 +1,12 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { applyFieldOverrides, createTheme, type DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
 import { Icon } from '../Icon/Icon';
 
 import { Table } from './TableRT/Table';
-import { CustomHeaderRendererProps, TableRTProps } from './types';
+import { type CustomHeaderRendererProps, type TableRTProps } from './types';
 
 // mock transition styles to ensure consistent behaviour in unit tests
 jest.mock('@floating-ui/react', () => ({

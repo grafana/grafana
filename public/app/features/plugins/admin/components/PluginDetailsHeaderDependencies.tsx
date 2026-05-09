@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2, Icon, Stack } from '@grafana/ui';
 
-import { CatalogPlugin, PluginIconName } from '../types';
+import { type CatalogPlugin, PluginIconName } from '../types';
 
 type Props = {
   plugin: CatalogPlugin;

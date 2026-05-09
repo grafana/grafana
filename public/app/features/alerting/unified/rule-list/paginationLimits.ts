@@ -1,9 +1,9 @@
 import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../featureToggles';
-import { RulesFilter } from '../search/rulesSearchParser';
+import { type RulesFilter } from '../search/rulesSearchParser';
 
 import { hasDatasourceClientSideFilters } from './hooks/datasourceFilter';
 import { hasGrafanaClientSideFilters } from './hooks/grafanaFilter';
-import { FetchGroupsLimitOptions } from './hooks/prometheusGroupsGenerator';
+import { type FetchGroupsLimitOptions } from './hooks/prometheusGroupsGenerator';
 
 export const FRONTEND_LIST_PAGE_SIZE = 100;
 

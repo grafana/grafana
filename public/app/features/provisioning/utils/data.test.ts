@@ -1,6 +1,6 @@
-import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { RepositoryFormData } from '../types';
+import { type RepositoryFormData } from '../types';
 
 import { dataToSpec, generateRepositoryTitle, specToData } from './data';
 
@@ -166,6 +166,54 @@ describe('provisioning data mapping', () => {
       expect(data.url).toBe('https://github.com/owner/repo');
       expect(data.generateDashboardPreviews).toBe(true);
     });
+  });
+
+  describe('webhook', () => {
+    it('includes webhook baseUrl in spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.webhook = { baseUrl: 'https://grafana.example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.webhook?.baseUrl).toBe('https://grafana.example.com');
+    });
+
+    it('omits webhook from spec when baseUrl is empty', () => {
+      const formData = makeFormData('github');
+      formData.webhook = { baseUrl: '' };
+      const spec = dataToSpec(formData);
+      expect(spec.webhook).toBeUndefined();
+    });
+
+    it('omits webhook from spec when not set', () => {
+      const spec = dataToSpec(makeFormData('github'));
+      expect(spec.webhook).toBeUndefined();
+    });
+
+    it('reads webhook from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        webhook: { baseUrl: 'https://grafana.example.com' },
+      };
+      const data = specToData(spec);
+      expect(data.webhook?.baseUrl).toBe('https://grafana.example.com');
+    });
+  });
+
+  describe('empty branch sends empty string for backend auto-detection', () => {
+    it.each(['github', 'gitlab', 'bitbucket', 'git'] as const)(
+      'sends empty branch for %s when branch is not set',
+      (type) => {
+        const formData = makeFormData(type);
+        formData.branch = '';
+        const spec = dataToSpec(formData);
+
+        const providerSpec = spec[type];
+        expect(providerSpec?.branch).toBe('');
+      }
+    );
   });
 
   describe('local', () => {

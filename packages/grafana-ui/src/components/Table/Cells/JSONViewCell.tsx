@@ -1,13 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { isString } from 'lodash';
 import { useState, type JSX } from 'react';
 
 import { getCellLinks } from '../../../utils/table';
 import { CellActions } from '../CellActions';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellProps } from '../types';
-import { tooltipOnClickHandler, DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../utils';
+import { type TableCellProps } from '../types';
+import { tooltipOnClickHandler, type DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../utils';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps, field, row } = props;
@@ -20,7 +19,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   let value = cell.value;
   let displayValue = value;
 
-  if (isString(value)) {
+  if (typeof value === 'string') {
     try {
       value = JSON.parse(value);
     } catch {} // ignore errors

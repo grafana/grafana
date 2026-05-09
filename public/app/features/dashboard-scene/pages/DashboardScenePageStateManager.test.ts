@@ -1,26 +1,28 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { advanceBy } from 'jest-date-mock';
-import { UnknownAction } from 'redux';
+import { type UnknownAction } from 'redux';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import { store } from '@grafana/data';
-import { BackendSrv, config, locationService, setBackendSrv } from '@grafana/runtime';
+import { type BackendSrv, config, locationService, setBackendSrv } from '@grafana/runtime';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
-  DashboardLoaderSrv,
-  DashboardLoaderSrvV2,
+  type DashboardLoaderSrv,
+  type DashboardLoaderSrvV2,
   setDashboardLoaderSrv,
 } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
+import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
@@ -86,6 +88,10 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
 }));
 
+jest.mock('app/features/dashboard/services/ReportRenderReadinessObserver', () => ({
+  initializeReportRenderReadinessObserver: jest.fn(),
+}));
+
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
   playlistSrv: {
     state: {
@@ -128,15 +134,17 @@ const setupDashboardAPI = (
   spy: jest.Mock,
   effect?: () => void
 ) => {
-  (getDashboardAPI as jest.Mock).mockImplementation(() => ({
-    getDashboardDTO: async () => {
-      spy();
-      effect?.();
-      return d;
-    },
-    deleteDashboard: jest.fn(),
-    saveDashboard: jest.fn(),
-  }));
+  (getDashboardAPI as jest.Mock).mockImplementation(() =>
+    Promise.resolve({
+      getDashboardDTO: async () => {
+        spy();
+        effect?.();
+        return d;
+      },
+      deleteDashboard: jest.fn(),
+      saveDashboard: jest.fn(),
+    })
+  );
 };
 
 const setupV1FailureV2Success = (
@@ -234,6 +242,38 @@ describe('DashboardScenePageStateManager v1', () => {
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(loadDashboardMock.mock.calls.length).toBe(1);
+    });
+
+    it('should register report render readiness observer for render-authenticated normal route', async () => {
+      const loadDashboardMock = setupLoadDashboardMock(MOCK_DASHBOARD);
+      const originalAuthBy = contextSrv.user.authenticatedBy;
+      contextSrv.user.authenticatedBy = 'render';
+
+      const loader = new DashboardScenePageStateManager({});
+
+      try {
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+        expect(initializeReportRenderReadinessObserver as jest.Mock).toHaveBeenCalled();
+      } finally {
+        contextSrv.user.authenticatedBy = originalAuthBy;
+      }
+    });
+
+    it('should not register report render readiness observer for non-render normal route', async () => {
+      const loadDashboardMock = setupLoadDashboardMock(MOCK_DASHBOARD);
+      const originalAuthBy = contextSrv.user.authenticatedBy;
+      contextSrv.user.authenticatedBy = '';
+
+      const loader = new DashboardScenePageStateManager({});
+
+      try {
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+        expect(initializeReportRenderReadinessObserver as jest.Mock).not.toHaveBeenCalled();
+      } finally {
+        contextSrv.user.authenticatedBy = originalAuthBy;
+      }
     });
 
     describe('reloadDashboardsOnParamsChange feature toggle', () => {
@@ -418,6 +458,15 @@ describe('DashboardScenePageStateManager v1', () => {
       expect(loader.state.isLoading).toBe(false);
     });
 
+    it('should store the snapshot key in meta.snapshotKey', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadSnapshot('fake-slug');
+
+      expect(loader.state.dashboard?.state.meta.snapshotKey).toBe('fake-slug');
+    });
+
     describe('AssistantPreview', () => {
       const previewUid = btoa('preview-key');
       const v1StoredDashboard = { title: 'Preview', panels: [], schemaVersion: 40 };
@@ -493,6 +542,41 @@ describe('DashboardScenePageStateManager v1', () => {
 
         // should update cache with new scene
         expect(loader.getSceneFromCache('fake-dash').state.title).toBe('Dashboard 2');
+      });
+
+      it('public dashboard: should build scene from API and not reuse or keep stale scene cache', () => {
+        const loader = new DashboardScenePageStateManager({});
+        const accessToken = 'public-access-token';
+        const staleScene = new DashboardScene(
+          {
+            title: 'Stale cached title',
+            uid: 'underlying-dash-uid',
+            meta: { created: 'same-created' },
+            version: 2,
+          },
+          'v1'
+        );
+
+        loader.setSceneCache(accessToken, staleScene);
+
+        const rsp: DashboardDTO = {
+          meta: { created: 'same-created' },
+          dashboard: {
+            uid: 'underlying-dash-uid',
+            title: 'Fresh from API',
+            schemaVersion: 38,
+            version: 2,
+          } as DashboardDataDTO,
+        };
+
+        const scene = loader.transformResponseToScene(rsp, {
+          uid: accessToken,
+          route: DashboardRoutes.Public,
+        });
+
+        expect(rsp.dashboard?.title).toBe('Fresh from API');
+        expect(scene).not.toBe(staleScene);
+        expect(scene?.state.title).toBe('Fresh from API');
       });
 
       it('should take scene from cache if it exists', async () => {
@@ -714,6 +798,105 @@ describe('DashboardScenePageStateManager v2', () => {
       expect(getDashSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('public dashboard: should build scene from API and not reuse or keep stale scene cache', () => {
+      const loader = new DashboardScenePageStateManagerV2({});
+      const accessToken = 'public-access-token';
+      const generation = 4;
+      const staleScene = new DashboardScene(
+        {
+          title: 'Stale cached title',
+          uid: 'dash-uid',
+          meta: {},
+          version: generation,
+        },
+        'v2'
+      );
+
+      loader.setSceneCache(accessToken, staleScene);
+
+      const rsp: DashboardWithAccessInfo<DashboardV2Spec> = {
+        access: {},
+        apiVersion: 'v2beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          name: 'dash',
+          creationTimestamp: '',
+          resourceVersion: '1',
+          generation,
+        },
+        spec: { ...defaultDashboardV2Spec(), title: 'Fresh from API' },
+      };
+
+      const scene = loader.transformResponseToScene(rsp, {
+        uid: accessToken,
+        route: DashboardRoutes.Public,
+      });
+
+      expect(rsp.spec?.title).toBe('Fresh from API');
+      expect(scene).not.toBe(staleScene);
+      expect(scene?.state.title).toBe('Fresh from API');
+    });
+
+    it('should register report render readiness observer for render-authenticated normal route', async () => {
+      const getDashSpy = jest.fn();
+      setupDashboardAPI(
+        {
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            resourceVersion: '1',
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        },
+        getDashSpy
+      );
+
+      const originalAuthBy = contextSrv.user.authenticatedBy;
+      contextSrv.user.authenticatedBy = 'render';
+      const loader = new DashboardScenePageStateManagerV2({});
+
+      try {
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        expect(getDashSpy).toHaveBeenCalledTimes(1);
+        expect(initializeReportRenderReadinessObserver as jest.Mock).toHaveBeenCalled();
+      } finally {
+        contextSrv.user.authenticatedBy = originalAuthBy;
+      }
+    });
+
+    it('should not register report render readiness observer for non-render normal route', async () => {
+      const getDashSpy = jest.fn();
+      setupDashboardAPI(
+        {
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            resourceVersion: '1',
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        },
+        getDashSpy
+      );
+
+      const originalAuthBy = contextSrv.user.authenticatedBy;
+      contextSrv.user.authenticatedBy = '';
+      const loader = new DashboardScenePageStateManagerV2({});
+
+      try {
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        expect(getDashSpy).toHaveBeenCalledTimes(1);
+        expect(initializeReportRenderReadinessObserver as jest.Mock).not.toHaveBeenCalled();
+      } finally {
+        contextSrv.user.authenticatedBy = originalAuthBy;
+      }
+    });
+
     // TODO: Fix this test, v2 does not return undefined dashboard, but throws instead. The code needs to be updated.
     it.skip("should error when the dashboard doesn't exist", async () => {
       const getDashSpy = jest.fn();
@@ -845,6 +1028,22 @@ describe('DashboardScenePageStateManager v2', () => {
       expect(loader.state.isLoading).toBe(false);
     });
 
+    it('should store the snapshot key in meta.snapshotKey', async () => {
+      jest.spyOn(getDashboardSnapshotSrv(), 'getSnapshot').mockResolvedValue({
+        dashboard: {
+          uid: 'fake-dash',
+          title: 'Fake dashboard',
+          schemaVersion: 40,
+        },
+        meta: { isSnapshot: true },
+      });
+
+      const loader = new DashboardScenePageStateManagerV2({});
+      await loader.loadSnapshot('fake-slug');
+
+      expect(loader.state.dashboard?.state.meta.snapshotKey).toBe('fake-slug');
+    });
+
     describe('AssistantPreview', () => {
       const previewUid = btoa('preview-key');
       const v1StoredDashboard = { title: 'Preview', panels: [], schemaVersion: 40 };
@@ -881,6 +1080,35 @@ describe('DashboardScenePageStateManager v2', () => {
 
         expect(loader.state.dashboard).toBeUndefined();
         expect(loader.state.loadError).toBeUndefined();
+      });
+
+      it('should preserve query params when redirecting to custom home dashboard', async () => {
+        const mockLocationService = locationService as jest.Mocked<typeof locationService>;
+        const originalReplace = locationService.replace;
+        const originalGetLocation = locationService.getLocation;
+
+        try {
+          mockLocationService.replace = jest.fn();
+          mockLocationService.getLocation = jest.fn().mockReturnValue({
+            pathname: '/',
+            search: '?doc=some-query-value',
+            hash: '',
+            state: {},
+          });
+
+          setBackendSrv({
+            get: () => Promise.resolve({ redirectUri: '/d/custom-home?tab=recent' }),
+          } as unknown as BackendSrv);
+
+          const loader = new DashboardScenePageStateManagerV2({});
+          await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+          expect(mockLocationService.replace).toHaveBeenCalledWith('/d/custom-home?tab=recent&doc=some-query-value');
+          expect(loader.state.dashboard).toBeUndefined();
+        } finally {
+          locationService.replace = originalReplace;
+          locationService.getLocation = originalGetLocation;
+        }
       });
 
       it('should handle invalid home dashboard request', async () => {
@@ -1401,6 +1629,126 @@ describe('DashboardScenePageStateManager v2', () => {
         await expect(loader.reloadDashboard(params)).rejects.toThrow(DashboardVersionError);
       });
     });
+
+    describe('reloadDashboardsOnParamsChange feature toggle', () => {
+      const setupGetDashboardDTOMock = () => {
+        const getDashboardDTOMock = jest.fn().mockResolvedValue({
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            resourceVersion: '1',
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        });
+
+        (getDashboardAPI as jest.Mock).mockImplementation(() =>
+          Promise.resolve({
+            getDashboardDTO: getDashboardDTOMock,
+            deleteDashboard: jest.fn(),
+            saveDashboard: jest.fn(),
+          })
+        );
+
+        return getDashboardDTOMock;
+      };
+
+      it(
+        'should process query params when enabled',
+        withFeatureToggle(true, async () => {
+          const cleanup = mockTimeAndLocation(MOCK_NOW, {
+            from: 'now-1h',
+            to: 'now',
+            timezone: 'UTC',
+            extraParam: 'shouldBeRemoved',
+          });
+
+          const expectedFromISO = '2023-10-01T06:00:00.000Z';
+          const expectedToISO = '2023-10-01T12:00:00.000Z';
+
+          const getDashboardDTOMock = setupGetDashboardDTOMock();
+
+          const loader = new DashboardScenePageStateManagerV2({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          expect(getDashboardDTOMock).toHaveBeenCalledWith(
+            'fake-dash',
+            expect.objectContaining({
+              from: expectedFromISO,
+              to: expectedToISO,
+            })
+          );
+
+          const callArgs = getDashboardDTOMock.mock.calls[0][1];
+          expect(callArgs).not.toHaveProperty('extraParam');
+          expect(callArgs).not.toHaveProperty('timezone');
+
+          cleanup();
+        })
+      );
+
+      it(
+        'should pass undefined query params when disabled',
+        withFeatureToggle(false, async () => {
+          const getDashboardDTOMock = setupGetDashboardDTOMock();
+
+          const loader = new DashboardScenePageStateManagerV2({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          expect(getDashboardDTOMock).toHaveBeenCalledWith('fake-dash', undefined);
+        })
+      );
+
+      it(
+        'should filter parameters correctly when enabled',
+        withFeatureToggle(true, async () => {
+          const cleanup = mockTimeAndLocation(MOCK_NOW, {
+            from: 'now-6h',
+            to: 'now',
+            'var-server': 'web-01',
+            'var-env': 'production',
+            scopes: 'scope1,scope2',
+            version: '2',
+            refresh: '5s',
+            theme: 'dark',
+            kiosk: 'true',
+          });
+
+          const expectedFromISO = '2023-10-01T06:00:00.000Z';
+          const expectedToISO = '2023-10-01T12:00:00.000Z';
+
+          const getDashboardDTOMock = setupGetDashboardDTOMock();
+
+          const loader = new DashboardScenePageStateManagerV2({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          const callArgs = getDashboardDTOMock.mock.calls[0][1];
+
+          expect(callArgs).toEqual(
+            expect.objectContaining({
+              from: expectedFromISO,
+              to: expectedToISO,
+              'var-server': 'web-01',
+              'var-env': 'production',
+              scopes: 'scope1,scope2',
+              version: '2',
+            })
+          );
+
+          expect(callArgs).toEqual(
+            expect.not.objectContaining({
+              refresh: expect.anything(),
+              theme: expect.anything(),
+              kiosk: expect.anything(),
+            })
+          );
+
+          cleanup();
+        })
+      );
+    });
   });
 });
 
@@ -1431,6 +1779,53 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(getDashSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('should keep v2 manager state in sync after loadDashboard', async () => {
+      setupV1FailureV2Success();
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+      const v2Manager = manager['v2Manager'] as DashboardScenePageStateManagerV2;
+      v2Manager.clearState();
+      expect(v2Manager.state.dashboard).toBeUndefined();
+
+      const getDashSpy = jest.fn();
+      setupDashboardAPI(
+        {
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'linked-dash',
+            creationTimestamp: '',
+            resourceVersion: '2',
+            generation: 2,
+          },
+          spec: { ...defaultDashboardV2Spec(), title: 'Linked dashboard' },
+        },
+        getDashSpy
+      );
+
+      await manager.loadDashboard({ uid: 'linked-dash', route: DashboardRoutes.Normal });
+
+      expect(getDashSpy).toHaveBeenCalledTimes(1);
+      expect(manager.state.dashboard?.state.uid).toBe('linked-dash');
+      expect(v2Manager.state.dashboard?.state.uid).toBe('linked-dash');
+    });
+
+    it('should not sync state back to v1 manager after loadDashboard', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      const v1SetStateSpy = jest.spyOn(manager['v1Manager'], 'setState');
+
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      expect(v1SetStateSpy).not.toHaveBeenCalled();
+    });
+
     it('should maintain active manager state between operations', async () => {
       setupV1FailureV2Success();
 
@@ -1445,7 +1840,24 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(cachedDash).toBeDefined();
     });
 
-    it.todo('should handle snapshot loading for both v1 and v2');
+    it('should keep v2 manager state in sync after loadSnapshot', async () => {
+      setupV1FailureV2Success();
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      manager.setActiveManager('v2');
+
+      const v2Manager = manager['v2Manager'] as DashboardScenePageStateManagerV2;
+      v2Manager.clearState();
+      expect(v2Manager.state.dashboard).toBeUndefined();
+
+      jest.spyOn(manager, 'loadSnapshotScene').mockResolvedValue(manager.state.dashboard!);
+
+      await manager.loadSnapshot('snapshot-slug');
+
+      expect(v2Manager.state.dashboard).toBeDefined();
+      expect(v2Manager.state.dashboard?.state.uid).toBe(manager.state.dashboard?.state.uid);
+    });
 
     it('should handle dashboard reloading with current active manager', async () => {
       setupV1FailureV2Success();
@@ -1566,6 +1978,47 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
     });
 
+    it('should sync state to active manager before reloading', async () => {
+      setupV1FailureV2Success();
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+      expect(manager.state.dashboard).toBeDefined();
+
+      const v2Manager = manager['activeManager'] as DashboardScenePageStateManagerV2;
+
+      // Clear the active manager's state to simulate the bug scenario where
+      // the unified manager has the dashboard but the active manager does not
+      v2Manager.clearState();
+      expect(v2Manager.state.dashboard).toBeUndefined();
+
+      const setStateSpy = jest.spyOn(v2Manager, 'setState');
+
+      v2Manager.fetchDashboard = jest.fn().mockResolvedValue({
+        access: {},
+        apiVersion: 'v2beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          name: 'fake-dash',
+          creationTimestamp: '',
+          resourceVersion: '2',
+          generation: 2,
+        },
+        spec: { ...defaultDashboardV2Spec() },
+      });
+
+      const params = { version: 2, scopes: [], from: 'now-1h', to: 'now' };
+      await manager.reloadDashboard(params);
+
+      // Verify setState was called on the active manager to sync unified state
+      // before the reload operation
+      expect(setStateSpy).toHaveBeenCalled();
+      const firstSetStateCall = setStateSpy.mock.calls[0][0];
+      expect(firstSetStateCall).toHaveProperty('dashboard');
+    });
+
     it('should not use cache if cache version and current dashboard state version differ in v1', async () => {
       const loadDashboardMock = setupLoadDashboardMock({
         dashboard: { uid: 'fake-dash', editable: true, version: 0 },
@@ -1600,6 +2053,27 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(loadDashboardMock).toHaveBeenCalledTimes(2);
       expect(manager.state.dashboard?.state.version).toBe(2);
     });
+
+    it('should use v1 reloadDashboard implementation and update unified state', async () => {
+      const loadDashboardMock = setupLoadDashboardMock({
+        dashboard: { uid: 'fake-dash', editable: true, version: 1 },
+        meta: {},
+      });
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      loadDashboardMock.mockResolvedValue({
+        dashboard: { uid: 'fake-dash', editable: true, version: 3, title: 'fake-dash' } as DashboardDataDTO,
+        meta: {},
+      });
+
+      await manager.reloadDashboard({ version: 3, scopes: [], from: 'now-1h', to: 'now' });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      expect(loadDashboardMock).toHaveBeenCalledTimes(2);
+      expect(manager.state.dashboard?.state.version).toBe(3);
+    });
   });
 
   describe('Home dashboard', () => {
@@ -1614,6 +2088,37 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.loadError).toBeUndefined();
       expect(locationService.getLocation().pathname).toBe('/d/asd');
+    });
+
+    it('should preserve query params when redirecting to custom home dashboard', async () => {
+      const mockLocationService = locationService as jest.Mocked<typeof locationService>;
+      const originalReplace = locationService.replace;
+      const originalGetLocation = locationService.getLocation;
+
+      try {
+        mockLocationService.replace = jest.fn();
+        mockLocationService.getLocation = jest.fn().mockReturnValue({
+          pathname: '/',
+          search: '?doc=some-query-value',
+          hash: '',
+          state: {},
+        });
+
+        setBackendSrv({
+          get: () => Promise.resolve({ redirectUri: '/a/custom-home-plugin?tab=recent' }),
+        } as unknown as BackendSrv);
+
+        const loader = new UnifiedDashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+        expect(mockLocationService.replace).toHaveBeenCalledWith(
+          '/a/custom-home-plugin?tab=recent&doc=some-query-value'
+        );
+        expect(loader.state.dashboard).toBeUndefined();
+      } finally {
+        locationService.replace = originalReplace;
+        locationService.getLocation = originalGetLocation;
+      }
     });
 
     it('should handle invalid home dashboard request', async () => {
@@ -1648,9 +2153,134 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual(customHomeDashboardV1Spec);
     });
 
-    it('should transform v2 custom home dashboard to v1', async () => {
+    it('should render v2 custom home dashboard natively via the v2 scene builder', async () => {
+      // Backend now returns the k8s resource verbatim with an injected access
+      // block when default_home_dashboard_path points at a
+      // dashboard.grafana.app/* manifest.
       setBackendSrv({
-        get: () => Promise.resolve({ dashboard: customHomeDashboardV2Spec, meta: {} }),
+        get: () =>
+          Promise.resolve({
+            kind: 'Dashboard',
+            apiVersion: 'dashboard.grafana.app/v2beta1',
+            metadata: {
+              name: 'custom-home-v2',
+              creationTimestamp: '',
+              resourceVersion: '0',
+              generation: 0,
+            },
+            spec: customHomeDashboardV2Spec,
+            access: {
+              canSave: false,
+              canShare: false,
+              canStar: false,
+              canEdit: false,
+              canDelete: false,
+              canAdmin: false,
+            },
+          }),
+      } as unknown as BackendSrv);
+
+      const loader = new UnifiedDashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+      expect(loader.state.dashboard).toBeDefined();
+      // When rendered natively as v2 the initial save model is the v2 spec, not
+      // a down-converted v1 payload.
+      expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual(customHomeDashboardV2Spec);
+      expect(loader.state.dashboard!.state.title).toBe(customHomeDashboardV2Spec.title);
+    });
+
+    it('should render v2 custom home dashboard with non-GridLayout layouts', async () => {
+      const v2WithRowsLayout = {
+        ...customHomeDashboardV2Spec,
+        layout: {
+          kind: 'RowsLayout',
+          spec: {
+            rows: [
+              {
+                kind: 'RowsLayoutRow',
+                spec: {
+                  title: 'Row 1',
+                  collapse: false,
+                  layout: {
+                    kind: 'GridLayout',
+                    spec: {
+                      items: [
+                        {
+                          kind: 'GridLayoutItem',
+                          spec: {
+                            x: 0,
+                            y: 0,
+                            width: 12,
+                            height: 6,
+                            element: { kind: 'ElementReference', name: 'text_panel' },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      };
+
+      setBackendSrv({
+        get: () =>
+          Promise.resolve({
+            kind: 'Dashboard',
+            apiVersion: 'dashboard.grafana.app/v2beta1',
+            metadata: {
+              name: 'custom-home-v2-rows',
+              creationTimestamp: '',
+              resourceVersion: '0',
+              generation: 0,
+            },
+            spec: v2WithRowsLayout,
+            access: {
+              canSave: false,
+              canShare: false,
+              canStar: false,
+              canEdit: false,
+              canDelete: false,
+              canAdmin: false,
+            },
+          }),
+      } as unknown as BackendSrv);
+
+      const loader = new UnifiedDashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+      // Previously this would throw "Cannot convert non-GridLayout layout to v1"
+      // because the home path force-converted v2 into v1. With native v2
+      // rendering it should succeed.
+      expect(loader.state.dashboard).toBeDefined();
+      expect(loader.state.loadError).toBeUndefined();
+    });
+
+    it('should render v1 k8s home dashboard by unwrapping spec to the classic path', async () => {
+      setBackendSrv({
+        get: () =>
+          Promise.resolve({
+            kind: 'Dashboard',
+            apiVersion: 'dashboard.grafana.app/v1beta1',
+            metadata: {
+              name: 'custom-home-v1',
+              creationTimestamp: '',
+              resourceVersion: '0',
+              generation: 0,
+            },
+            spec: customHomeDashboardV1Spec,
+            access: {
+              canSave: false,
+              canShare: false,
+              canStar: false,
+              canEdit: false,
+              canDelete: false,
+              canAdmin: false,
+            },
+          }),
       } as unknown as BackendSrv);
 
       const loader = new UnifiedDashboardScenePageStateManager({});
@@ -1784,17 +2414,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
           }
           return Promise.reject(new Error('Not found'));
         }),
-        post: jest.fn((url: string) => {
-          if (url === '/api/dashboards/interpolate') {
-            return Promise.resolve({
-              title: 'AWS ElastiCache Redis',
-              uid: '',
-              panels: [],
-              schemaVersion: 40,
-            });
-          }
-          return Promise.reject(new Error('Not found'));
-        }),
       } as unknown as BackendSrv);
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -1827,17 +2446,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
                 panels: [],
                 schemaVersion: 40,
               },
-            });
-          }
-          return Promise.reject(new Error('Not found'));
-        }),
-        post: jest.fn((url: string) => {
-          if (url === '/api/dashboards/interpolate') {
-            return Promise.resolve({
-              title: 'Template Dashboard',
-              uid: '',
-              panels: [],
-              schemaVersion: 40,
             });
           }
           return Promise.reject(new Error('Not found'));

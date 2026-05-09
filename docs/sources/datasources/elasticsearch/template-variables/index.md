@@ -26,12 +26,12 @@ Grafana refers to such variables as template variables.
 
 For an introduction to templating and template variables, refer to the [Templating](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) and [Add and manage variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/) documentation.
 
-## Use ad hoc filters
+## Use filters
 
-Elasticsearch supports the **Ad hoc filters** variable type.
+Elasticsearch supports the **Filters** variable type.
 You can use this variable type to specify any number of key/value filters, and Grafana applies them automatically to all of your Elasticsearch queries.
 
-Ad hoc filters support the following operators:
+Filters support the following operators:
 
 | Operator | Description                                                   |
 | -------- | ------------------------------------------------------------- |
@@ -42,7 +42,7 @@ Ad hoc filters support the following operators:
 | `>`      | Greater than. Adds `AND field:>value` to the query.           |
 | `<`      | Less than. Adds `AND field:<value` to the query.              |
 
-For more information, refer to [Add ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+For more information, refer to [Add Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
 
 ## Choose a variable syntax
 

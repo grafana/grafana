@@ -33,7 +33,6 @@ type FrontendSettingsAuthDTO struct {
 
 	DisableLogin                  bool `json:"disableLogin"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
-	PasswordlessEnabled           bool `json:"passwordlessEnabled"`
 	DisableSignoutMenu            bool `json:"disableSignoutMenu"`
 }
 
@@ -196,6 +195,8 @@ type FrontendSettingsDTO struct {
 	NewsFeedEnabled     bool `json:"newsFeedEnabled"`
 	QueryHistoryEnabled bool `json:"queryHistoryEnabled"`
 
+	AnnotationAppPlatformEnabled bool `json:"annotationAppPlatformEnabled"`
+
 	GoogleAnalyticsId                   string `json:"googleAnalyticsId"`
 	GoogleAnalytics4Id                  string `json:"googleAnalytics4Id"`
 	GoogleAnalytics4SendManualPageViews bool   `json:"GoogleAnalytics4SendManualPageViews"`
@@ -285,7 +286,6 @@ type FrontendSettingsDTO struct {
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
 	SharedWithMeFolderUID   string                             `json:"sharedWithMeFolderUID"`
 	RootFolderUID           string                             `json:"rootFolderUID"`
-	PasswordlessEnabled     string                             `json:"passwordlessEnabled"`
 
 	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`

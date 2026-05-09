@@ -1,19 +1,23 @@
-import { Registry, RegistryItem } from '../utils/Registry';
+import { Registry, type RegistryItem } from '../utils/Registry';
 
 import { createTheme, NewThemeOptionsSchema } from './createTheme';
 import aubergine from './themeDefinitions/aubergine.json';
 import debug from './themeDefinitions/debug.json';
 import desertbloom from './themeDefinitions/desertbloom.json';
+import deut_prot_dark from './themeDefinitions/deut_prot_dark.json';
+import deut_prot_light from './themeDefinitions/deut_prot_light.json';
 import gildedgrove from './themeDefinitions/gildedgrove.json';
 import gloom from './themeDefinitions/gloom.json';
 import mars from './themeDefinitions/mars.json';
 import matrix from './themeDefinitions/matrix.json';
 import sapphiredusk from './themeDefinitions/sapphiredusk.json';
 import synthwave from './themeDefinitions/synthwave.json';
+import tritanopia_dark from './themeDefinitions/tritanopia_dark.json';
+import tritanopia_light from './themeDefinitions/tritanopia_light.json';
 import tron from './themeDefinitions/tron.json';
 import victorian from './themeDefinitions/victorian.json';
 import zen from './themeDefinitions/zen.json';
-import { GrafanaTheme2 } from './types';
+import { type GrafanaTheme2 } from './types';
 
 export interface ThemeRegistryItem extends RegistryItem {
   isExtra?: boolean;
@@ -24,12 +28,16 @@ const extraThemes: { [key: string]: unknown } = {
   aubergine,
   debug,
   desertbloom,
+  deut_prot_dark,
+  deut_prot_light,
   gildedgrove,
   gloom,
   mars,
   matrix,
   sapphiredusk,
   synthwave,
+  tritanopia_dark,
+  tritanopia_light,
   tron,
   victorian,
   zen,

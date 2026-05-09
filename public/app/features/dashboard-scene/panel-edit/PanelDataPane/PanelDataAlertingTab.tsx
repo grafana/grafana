@@ -1,9 +1,15 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
 import { Alert, LoadingPlaceholder, Tab, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
@@ -14,7 +20,7 @@ import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 
 import { ScenesNewRuleFromPanelButton } from './NewAlertRuleButton';
-import { PanelDataPaneTab, PanelDataTabHeaderProps, TabId } from './types';
+import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 
 export interface PanelDataAlertingTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;

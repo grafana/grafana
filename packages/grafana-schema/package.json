@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/schema",
-  "version": "13.0.0-pre",
+  "version": "13.1.0-pre",
   "description": "Grafana Schema Library",
   "keywords": [
     "typescript"
@@ -77,23 +77,11 @@
       "import": "./dist/esm/raw/composable/dashboardlist/panelcfg/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/dashboardlist/panelcfg/x/types.gen.cjs"
     },
-    "./dist/esm/raw/composable/datagrid/panelcfg/x/DatagridPanelCfg_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/datagrid/panelcfg/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/datagrid/panelcfg/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/datagrid/panelcfg/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/datagrid/panelcfg/x/types.gen.cjs"
-    },
     "./dist/esm/raw/composable/debug/panelcfg/x/DebugPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/debug/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/debug/panelcfg/x/types.gen.d.ts",
       "import": "./dist/esm/raw/composable/debug/panelcfg/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/debug/panelcfg/x/types.gen.cjs"
-    },
-    "./dist/esm/raw/composable/elasticsearch/dataquery/x/ElasticsearchDataQuery_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/elasticsearch/dataquery/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/elasticsearch/dataquery/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/elasticsearch/dataquery/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/elasticsearch/dataquery/x/types.gen.cjs"
     },
     "./dist/esm/raw/composable/gauge/panelcfg/x/GaugePanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/gauge/panelcfg/x/types.gen.ts",
@@ -277,11 +265,11 @@
     "esbuild": "0.25.8",
     "glob": "^11.0.0",
     "rimraf": "6.0.1",
-    "rollup": "^4.22.4",
+    "rollup": "^4.60.1",
     "rollup-plugin-copy": "3.5.0",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
-    "typescript": "5.9.2"
+    "typescript": "6.0.2"
   },
   "dependencies": {
     "tslib": "2.8.1"

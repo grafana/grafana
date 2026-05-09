@@ -4,14 +4,18 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Combobox, Field, Input, TextArea } from '@grafana/ui';
-import { RepositoryView, useGetRepositoryRefsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, useGetRepositoryRefsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
+import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
+import { joinPath, splitPath } from '../utils/path';
+
+type SharedFieldName = 'path' | 'comment';
 
 interface DashboardEditFormSharedFieldsProps {
   resourceType: 'dashboard' | 'folder';
@@ -19,11 +23,12 @@ interface DashboardEditFormSharedFieldsProps {
   isNew?: boolean;
   readOnly?: boolean;
   repository?: RepositoryView;
-  hidePath?: boolean;
+  hiddenFields?: SharedFieldName[];
+  allowPathEdit?: boolean;
 }
 
 export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, canPushToConfiguredBranch, repository, isNew, resourceType, hidePath = false }) => {
+  ({ readOnly = false, canPushToConfiguredBranch, repository, isNew, resourceType, hiddenFields, allowPathEdit }) => {
     const {
       control,
       register,
@@ -56,6 +61,13 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       branchData,
       canPushToConfiguredBranch,
       canPushToNonConfiguredBranch,
+    });
+
+    const showFolderFilename = (isNew || allowPathEdit) && resourceType === 'dashboard';
+
+    const { options: folderOptions, loading: isFoldersLoading } = useGetRepositoryFolders({
+      repositoryName: showFolderFilename ? repository?.name : undefined,
+      ref: selectedBranch || undefined,
     });
 
     const pathText =
@@ -140,8 +152,71 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
           </>
         )}
 
-        {/* Path */}
-        {!hidePath && (
+        {/* Path — split into folder + filename for new dashboards */}
+        {!hiddenFields?.includes('path') && showFolderFilename && (
+          <Controller
+            name="path"
+            control={control}
+            render={({ field: { ref, onChange, value } }) => {
+              const { directory: dir, filename: file } = splitPath(value || '');
+              return (
+                <>
+                  <Field
+                    noMargin
+                    htmlFor="folder-path"
+                    label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-folder', 'Folder')}
+                    description={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
+                      'Folder inside the repository. Leave empty for the repository root.'
+                    )}
+                  >
+                    <Combobox
+                      id="folder-path"
+                      value={dir}
+                      onChange={(option) => {
+                        // setValue (not onChange) so folder picks don't dirty the path field,
+                        // preserving title→filename auto-sync until the filename is edited.
+                        setValue('path', joinPath(option?.value ?? '', file), { shouldDirty: !isNew });
+                      }}
+                      options={folderOptions}
+                      loading={isFoldersLoading}
+                      createCustomValue
+                      isClearable
+                      placeholder={t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-folder',
+                        'Select or enter folder path'
+                      )}
+                    />
+                  </Field>
+                  <Field
+                    noMargin
+                    htmlFor="dashboard-filename"
+                    label={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.label-filename',
+                      'Filename'
+                    )}
+                    description={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.description-filename',
+                      'File name for the dashboard (.json or .yaml)'
+                    )}
+                  >
+                    <Input
+                      id="dashboard-filename"
+                      type="text"
+                      value={file}
+                      onChange={(e) => {
+                        onChange(joinPath(dir, e.currentTarget.value));
+                      }}
+                    />
+                  </Field>
+                </>
+              );
+            }}
+          />
+        )}
+
+        {/* Path — single read-only field for existing resources */}
+        {!hiddenFields?.includes('path') && !showFolderFilename && (
           <Field
             noMargin
             label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-path', 'Path')}
@@ -155,21 +230,23 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         )}
 
         {/* Comment */}
-        <Field
-          noMargin
-          label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}
-        >
-          <TextArea
-            id="provisioned-resource-form-comment"
-            {...register('comment')}
-            disabled={readOnly}
-            placeholder={t(
-              'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
-              'Add a note to describe your changes (optional)'
-            )}
-            rows={5}
-          />
-        </Field>
+        {!hiddenFields?.includes('comment') && (
+          <Field
+            noMargin
+            label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}
+          >
+            <TextArea
+              id="provisioned-resource-form-comment"
+              {...register('comment')}
+              disabled={readOnly}
+              placeholder={t(
+                'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
+                'Add a note to describe your changes (optional)'
+              )}
+              rows={5}
+            />
+          </Field>
+        )}
       </>
     );
   }

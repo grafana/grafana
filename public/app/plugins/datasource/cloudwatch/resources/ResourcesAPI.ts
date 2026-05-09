@@ -1,23 +1,23 @@
 import { memoize } from 'lodash';
 
-import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
-import { getBackendSrv, TemplateSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, type SelectableValue } from '@grafana/data';
+import { getBackendSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchRequest } from '../query-runner/CloudWatchRequest';
-import { CloudWatchJsonData, LogGroupField, MultiFilters } from '../types';
+import { type CloudWatchJsonData, type LogGroupField, type MultiFilters } from '../types';
 
 import {
-  ResourceRequest,
-  Account,
-  ResourceResponse,
-  DescribeLogGroupsRequest,
-  LogGroupResponse,
-  GetMetricsRequest,
-  GetDimensionKeysRequest,
-  GetDimensionValuesRequest,
-  MetricResponse,
-  SelectableResourceValue,
-  RegionResponse,
+  type ResourceRequest,
+  type Account,
+  type ResourceResponse,
+  type DescribeLogGroupsRequest,
+  type LogGroupResponse,
+  type GetMetricsRequest,
+  type GetDimensionKeysRequest,
+  type GetDimensionValuesRequest,
+  type MetricResponse,
+  type SelectableResourceValue,
+  type RegionResponse,
 } from './types';
 
 export class ResourcesAPI extends CloudWatchRequest {

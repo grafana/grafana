@@ -11,5 +11,8 @@
     "lastSeenAt": 0,
     "login": "user.two",
     "role": "Viewer"
+  },
+  "selectableFields": {
+    "spec.login": "user.two"
   }
 }

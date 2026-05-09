@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,8 +17,7 @@ import (
 	k8srest "k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -34,14 +34,18 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func runDashboardTest(t *testing.T, mode rest.DualWriterMode, gvr schema.GroupVersionResource) {
+func runDashboardTest(t *testing.T, gvr schema.GroupVersionResource) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("simple crud+list", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableAnonymous:      true,
-			DisableDataMigrations: true,
+			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
-					DualWriterMode: mode,
+					DualWriterMode: rest.Mode5,
+				},
+				"folders.folder.grafana.app": {
+					DualWriterMode: rest.Mode5,
 				},
 			},
 		})
@@ -128,76 +132,34 @@ func runDashboardTest(t *testing.T, mode rest.DualWriterMode, gvr schema.GroupVe
 }
 
 func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
-	gvr := schema.GroupVersionResource{
+	runDashboardTest(t, schema.GroupVersionResource{
 		Group:    dashboardV0.GROUP,
 		Version:  dashboardV0.VERSION,
 		Resource: "dashboards",
-	}
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
-	for _, mode := range modes {
-		t.Run(fmt.Sprintf("v0alpha1 with dual writer mode %d", mode), func(t *testing.T) {
-			runDashboardTest(t, mode, gvr)
-		})
-	}
+	})
 }
 
 func TestIntegrationDashboardsAppV1(t *testing.T) {
-	gvr := schema.GroupVersionResource{
+	runDashboardTest(t, schema.GroupVersionResource{
 		Group:    dashboardV1.GROUP,
 		Version:  dashboardV1.VERSION,
 		Resource: "dashboards",
-	}
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
-	for _, mode := range modes {
-		t.Run(fmt.Sprintf("v1beta1 with dual writer mode %d", mode), func(t *testing.T) {
-			runDashboardTest(t, mode, gvr)
-		})
-	}
-}
-
-func TestIntegrationDashboardsAppV2alpha1(t *testing.T) {
-	gvr := schema.GroupVersionResource{
-		Group:    dashboardV2alpha1.GROUP,
-		Version:  dashboardV2alpha1.VERSION,
-		Resource: "dashboards",
-	}
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
-	for _, mode := range modes {
-		t.Run(fmt.Sprintf("v2alpha1 with dual writer mode %d", mode), func(t *testing.T) {
-			runDashboardTest(t, mode, gvr)
-		})
-	}
+	})
 }
 
 func TestIntegrationDashboardsAppV2beta1(t *testing.T) {
-	gvr := schema.GroupVersionResource{
+	runDashboardTest(t, schema.GroupVersionResource{
 		Group:    dashboardV2beta1.GROUP,
 		Version:  dashboardV2beta1.VERSION,
 		Resource: "dashboards",
-	}
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
-	for _, mode := range modes {
-		t.Run(fmt.Sprintf("v1alpha2 with dual writer mode %d", mode), func(t *testing.T) {
-			runDashboardTest(t, mode, gvr)
-		})
-	}
+	})
 }
 
 func TestIntegrationLegacySupport(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
-	})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 
 	clientV0 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
@@ -223,7 +185,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 
 	clientV2 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
-		GVR:  dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource(),
+		GVR:  dashboardV2beta1.DashboardResourceInfo.GroupVersionResource(),
 	})
 	obj, err = clientV2.Resource.Create(ctx,
 		helper.LoadYAMLOrJSONFile("testdata/dashboard-test-v2.yaml"),
@@ -244,23 +206,32 @@ func TestIntegrationLegacySupport(t *testing.T) {
 			expect string
 			inK8s  bool
 		}{{
-			name: "with apiVersion",
+			name: "with apiVersion (missing spec)",
 			input: map[string]any{
-				"apiVersion": "v2",
+				"apiVersion": "dashboard.grafana.app/v2",
 			},
-			expect: "Dashboard appears to be a full k8s style resource",
+			expect: "must include the dashboard contents in the spec property",
 		}, {
-			name: "with metadata",
+			name: "id at root",
+			input: map[string]any{
+				"apiVersion": "dashboard.grafana.app/v2",
+				"id":         123,
+			},
+			expect: "must not include an id on the root element",
+		}, {
+			name: "with metadata (missing apiVersion)",
 			input: map[string]any{
 				"metadata": map[string]any{},
+				"spec":     map[string]any{},
 			},
-			expect: "Dashboard appears to be a full k8s style resource",
+			expect: "but is missing an explicit apiVersion",
 		}, {
 			name: "with spec",
 			input: map[string]any{
-				"spec": map[string]any{},
+				"apiVersion": "dashboard.grafana.app/v2",
+				"spec":       map[string]any{},
 			},
-			expect: "Dashboard appears to be a full k8s style resource",
+			expect: "spec is missing required title property",
 		}, {
 			name: "with elements",
 			input: map[string]any{
@@ -277,6 +248,13 @@ func TestIntegrationLegacySupport(t *testing.T) {
 			},
 			expect: "dashboard appears to be in v2 format",
 			inK8s:  true,
+		}, {
+			name: "non dashboard api",
+			input: map[string]any{
+				"apiVersion": "playlist.grafana.app/v2",
+				"spec":       map[string]any{},
+			},
+			expect: "dashboard payload references a non dashboard apiVersion",
 		}, {
 			name: "missing title",
 			input: map[string]any{
@@ -313,6 +291,100 @@ func TestIntegrationLegacySupport(t *testing.T) {
 						require.ErrorContains(t, err, tc.expect)
 					})
 				}
+			})
+		}
+	})
+
+	t.Run("use k8s payload in legacy API", func(t *testing.T) {
+		cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+		cfg.GroupVersion = &dashboardV0.GroupVersion
+		adminClient, err := k8srest.RESTClientFor(cfg)
+		require.NoError(t, err)
+
+		// Construct a legacy api payload from a k8s object
+		getLegacySaveCommand := func(obj *unstructured.Unstructured, title string, overwrite bool) []byte {
+			err := unstructured.SetNestedField(obj.Object, title, "spec", "title") // update the title
+			require.NoError(t, err)
+			cmd := map[string]any{
+				"dashboard": obj.Object,
+				"overwrite": overwrite,
+			}
+			jj, err := json.Marshal(cmd)
+			require.NoError(t, err)
+			return jj
+		}
+
+		names := []string{"test-v0", "test-v1", "test-v2"}
+		clients := []dynamic.ResourceInterface{
+			clientV0.Resource,
+			clientV1.Resource,
+			clientV2.Resource,
+		}
+		for idx, name := range names {
+			t.Run(name, func(t *testing.T) {
+				client := clients[idx]
+				obj := helper.LoadYAMLOrJSONFile(fmt.Sprintf("testdata/dashboard-%s.yaml", name))
+				obj.SetName(name + "-legacy")
+				title := "create:" + name
+				err = unstructured.SetNestedField(obj.Object, title, "spec", "title") // update the title
+				require.NoError(t, err)
+				jj, err := obj.MarshalJSON()
+				require.NoError(t, err)
+
+				// Create it
+				var statusCode int
+				body := []byte(`{"dashboard": ` + string(jj) + `, "overwrite": true}`)
+				result := adminClient.Post().AbsPath("api", "dashboards", "db").
+					Body(body).
+					SetHeader("Content-type", "application/json").
+					Do(ctx).
+					StatusCode(&statusCode)
+				require.NoError(t, result.Error())
+				require.Equal(t, int(http.StatusOK), statusCode)
+
+				found, err := client.Get(ctx, obj.GetName(), metav1.GetOptions{})
+				require.NoError(t, err)
+				foundTitle, _, _ := unstructured.NestedString(found.Object, "spec", "title")
+				require.Equal(t, title, foundTitle, "in object: %s", obj.GetName())
+
+				// ID must not be a saved element
+				_, ok, _ := unstructured.NestedInt64(obj.Object, "spec", "id")
+				require.False(t, ok, "internal id should not be part of the saved spec")
+
+				// Update the title -- try to save without overwrite=false
+				title = "update:" + name
+				body = getLegacySaveCommand(obj, title, false)
+				_ = adminClient.Post().AbsPath("api", "dashboards", "db").
+					Body(body).
+					SetHeader("Content-type", "application/json").
+					Do(ctx).
+					StatusCode(&statusCode)
+				require.Equal(t, int(http.StatusConflict), statusCode)
+
+				// Overwrite!
+				body = getLegacySaveCommand(obj, title, true)
+				_ = adminClient.Post().AbsPath("api", "dashboards", "db").
+					Body(body).
+					SetHeader("Content-type", "application/json").
+					Do(ctx).
+					StatusCode(&statusCode)
+				require.Equal(t, int(http.StatusOK), statusCode)
+
+				found, err = client.Get(ctx, obj.GetName(), metav1.GetOptions{})
+				require.NoError(t, err)
+				foundTitle, _, _ = unstructured.NestedString(found.Object, "spec", "title")
+				require.Equal(t, title, foundTitle, "in object: %s", obj.GetName())
+
+				// legacy GET should also work
+				result = adminClient.Get().AbsPath("api", "dashboards", "uid", obj.GetName()).
+					Do(ctx).
+					StatusCode(&statusCode)
+				require.Equal(t, int(http.StatusOK), statusCode)
+				jj, _ = result.Raw()
+				dto := &dtos.DashboardFullWithMeta{}
+				err = json.Unmarshal(jj, dto)
+				require.NoError(t, err)
+				require.Equal(t, title, dto.Dashboard.Get("title").MustString(""), "in object: %s", obj.GetName())
 			})
 		}
 	})
@@ -391,16 +463,14 @@ func TestIntegrationListPagination(t *testing.T) {
 	}
 
 	// Test on modes with legacy
-	modes := []rest.DualWriterMode{rest.Mode1, rest.Mode2, rest.Mode3}
+	modes := []rest.DualWriterMode{rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous:      true,
-				DisableDataMigrations: true,
+				DisableAnonymous: true,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
+					"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
+					"folders.folder.grafana.app":       {DualWriterMode: mode},
 				},
 			})
 			t.Cleanup(helper.Shutdown)
@@ -484,12 +554,10 @@ func TestIntegrationListPagination(t *testing.T) {
 
 		t.Run(fmt.Sprintf("history pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous:      true,
-				DisableDataMigrations: true,
+				DisableAnonymous: true,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
+					"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
+					"folders.folder.grafana.app":       {DualWriterMode: mode},
 				},
 			})
 			t.Cleanup(helper.Shutdown)
@@ -577,169 +645,238 @@ func TestIntegrationListPagination(t *testing.T) {
 func TestIntegrationSearchTypeFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
-	for _, mode := range modes {
-		runDashboardSearchTest(t, mode)
+	ctx := context.Background()
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+		},
+	})
+	defer helper.Shutdown()
+
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  dashboardV0.DashboardResourceInfo.GroupVersionResource(),
+	})
+
+	// Create one folder via legacy API
+	{
+		cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+		cfg.GroupVersion = &schema.GroupVersion{Group: "folder.grafana.app", Version: "v1beta1"}
+		restClient, err := k8srest.RESTClientFor(cfg)
+		require.NoError(t, err)
+
+		var statusCode int
+		body := []byte(`{"uid":"sfolder","title":"Sample Folder"}`)
+		result := restClient.Post().AbsPath("api", "folders").
+			Body(body).
+			SetHeader("Content-type", "application/json").
+			Do(ctx).
+			StatusCode(&statusCode)
+		require.NoError(t, result.Error())
+		require.Equal(t, int(http.StatusOK), statusCode)
 	}
-}
 
-func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
-	t.Run(fmt.Sprintf("search types with dual writer mode %d", mode), func(t *testing.T) {
-		ctx := context.Background()
-
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableDataMigrations: true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
-				"folders.folder.grafana.app":       {DualWriterMode: mode},
-			},
-			UnifiedStorageEnableSearch: mode >= rest.Mode3,
-		})
-		defer helper.Shutdown()
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Admin,
-			GVR:  dashboardV0.DashboardResourceInfo.GroupVersionResource(),
-		})
-
-		// Create one folder via legacy API
-		{
-			cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
-			cfg.GroupVersion = &schema.GroupVersion{Group: "folder.grafana.app", Version: "v1beta1"}
-			restClient, err := k8srest.RESTClientFor(cfg)
-			require.NoError(t, err)
-
-			var statusCode int
-			body := []byte(`{"uid":"sfolder","title":"Sample Folder"}`)
-			result := restClient.Post().AbsPath("api", "folders").
-				Body(body).
-				SetHeader("Content-type", "application/json").
-				Do(ctx).
-				StatusCode(&statusCode)
-			require.NoError(t, result.Error())
-			require.Equal(t, int(http.StatusOK), statusCode)
-		}
-
-		// Create one dashboard in root
-		{
-			obj := &unstructured.Unstructured{
-				Object: map[string]any{
-					"spec": map[string]any{
-						"title":         "X",
-						"schemaVersion": 1,
-					},
+	// Create one dashboard in root
+	{
+		obj := &unstructured.Unstructured{
+			Object: map[string]any{
+				"spec": map[string]any{
+					"title":         "X",
+					"schemaVersion": 1,
 				},
-			}
-			obj.SetGenerateName("x-")
-			obj.SetAPIVersion(dashboardV0.GroupVersion.String())
-			obj.SetKind("Dashboard")
-			_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
-			require.NoError(t, err)
+			},
 		}
+		obj.SetGenerateName("x-")
+		obj.SetAPIVersion(dashboardV0.GroupVersion.String())
+		obj.SetKind("Dashboard")
+		_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
 
-		// Also create a dashboard via legacy API to ensure legacy search sees it in modes < 3
-		{
-			cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
-			cfg.GroupVersion = &schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v0alpha1"}
-			restClient, err := k8srest.RESTClientFor(cfg)
-			require.NoError(t, err)
-			var statusCode int
-			body := []byte(`{"dashboard":{"title":"Legacy X"},"overwrite":true}`)
-			result := restClient.Post().AbsPath("api", "dashboards", "db").
-				Body(body).
-				SetHeader("Content-type", "application/json").
-				Do(ctx).
-				StatusCode(&statusCode)
-			require.NoError(t, result.Error())
-			require.Equal(t, int(http.StatusOK), statusCode)
-		}
-
-		ns := helper.Org1.Admin.Identity.GetNamespace()
+	// Also create a dashboard via legacy API to ensure legacy search sees it in modes < 3
+	{
 		cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
 		cfg.GroupVersion = &schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v0alpha1"}
 		restClient, err := k8srest.RESTClientFor(cfg)
 		require.NoError(t, err)
+		var statusCode int
+		body := []byte(`{"dashboard":{"title":"Legacy X"},"overwrite":true}`)
+		result := restClient.Post().AbsPath("api", "dashboards", "db").
+			Body(body).
+			SetHeader("Content-type", "application/json").
+			Do(ctx).
+			StatusCode(&statusCode)
+		require.NoError(t, result.Error())
+		require.Equal(t, int(http.StatusOK), statusCode)
+	}
 
-		call := func(params string) dashboardV0.SearchResults {
-			var statusCode int
-			req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
-				Param("limit", "1000")
-			for _, kv := range strings.Split(params, "&") {
-				if kv == "" {
-					continue
-				}
-				parts := strings.SplitN(kv, "=", 2)
-				if len(parts) == 2 {
-					req = req.Param(parts[0], parts[1])
-				}
-			}
-			res := req.Do(ctx).StatusCode(&statusCode)
-			require.NoError(t, res.Error())
-			require.Equal(t, int(http.StatusOK), statusCode)
-			var sr dashboardV0.SearchResults
-			raw, err := res.Raw()
-			require.NoError(t, err)
-			require.NoError(t, json.Unmarshal(raw, &sr))
-			return sr
-		}
+	ns := helper.Org1.Admin.Identity.GetNamespace()
+	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	cfg.GroupVersion = &schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v0alpha1"}
+	restClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
 
-		// No type => defaults to both
-		resAny := call("")
-		folders := 0
-		dashboards := 0
-		for _, h := range resAny.Hits {
-			if strings.HasPrefix(h.Resource, "folder") {
-				folders++
+	call := func(params string) dashboardV0.SearchResults {
+		var statusCode int
+		req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+			Param("limit", "1000")
+		for _, kv := range strings.Split(params, "&") {
+			if kv == "" {
+				continue
 			}
-			if strings.HasPrefix(h.Resource, "dash") {
-				dashboards++
+			parts := strings.SplitN(kv, "=", 2)
+			if len(parts) == 2 {
+				req = req.Param(parts[0], parts[1])
 			}
 		}
-		require.GreaterOrEqual(t, dashboards, 1)
-		require.GreaterOrEqual(t, folders, 1)
+		res := req.Do(ctx).StatusCode(&statusCode)
+		require.NoError(t, res.Error())
+		require.Equal(t, int(http.StatusOK), statusCode)
+		var sr dashboardV0.SearchResults
+		raw, err := res.Raw()
+		require.NoError(t, err)
+		require.NoError(t, json.Unmarshal(raw, &sr))
+		return sr
+	}
 
-		// Only folder
-		resFolder := call("type=folder")
-		for _, h := range resFolder.Hits {
-			require.True(t, strings.HasPrefix(h.Resource, "folder"))
+	// No type => defaults to both
+	resAny := call("")
+	folders := 0
+	dashboards := 0
+	for _, h := range resAny.Hits {
+		if strings.HasPrefix(h.Resource, "folder") {
+			folders++
 		}
+		if strings.HasPrefix(h.Resource, "dash") {
+			dashboards++
+		}
+	}
+	require.GreaterOrEqual(t, dashboards, 1)
+	require.GreaterOrEqual(t, folders, 1)
 
-		// Only dashboard
-		resDash := call("type=dashboard")
-		require.GreaterOrEqual(t, len(resDash.Hits), 1)
-		for _, h := range resDash.Hits {
-			require.True(t, strings.HasPrefix(h.Resource, "dash"))
-		}
+	// Only folder
+	resFolder := call("type=folder")
+	for _, h := range resFolder.Hits {
+		require.True(t, strings.HasPrefix(h.Resource, "folder"))
+	}
 
-		// Both via repetition
-		resBoth := call("type=folder&type=dashboard")
-		folders, dashboards = 0, 0
-		for _, h := range resBoth.Hits {
-			if strings.HasPrefix(h.Resource, "folder") {
-				folders++
-			}
-			if strings.HasPrefix(h.Resource, "dash") {
-				dashboards++
-			}
-		}
-		require.GreaterOrEqual(t, dashboards, 1)
-		require.GreaterOrEqual(t, folders, 1)
+	// Only dashboard
+	resDash := call("type=dashboard")
+	require.GreaterOrEqual(t, len(resDash.Hits), 1)
+	for _, h := range resDash.Hits {
+		require.True(t, strings.HasPrefix(h.Resource, "dash"))
+	}
 
-		// Invalid => defaults to both
-		resInvalid := call("type=invalid")
-		folders, dashboards = 0, 0
-		for _, h := range resInvalid.Hits {
-			if strings.HasPrefix(h.Resource, "folder") {
-				folders++
-			}
-			if strings.HasPrefix(h.Resource, "dash") {
-				dashboards++
-			}
+	// Both via repetition
+	resBoth := call("type=folder&type=dashboard")
+	folders, dashboards = 0, 0
+	for _, h := range resBoth.Hits {
+		if strings.HasPrefix(h.Resource, "folder") {
+			folders++
 		}
-		require.GreaterOrEqual(t, dashboards, 1)
-		require.GreaterOrEqual(t, folders, 1)
+		if strings.HasPrefix(h.Resource, "dash") {
+			dashboards++
+		}
+	}
+	require.GreaterOrEqual(t, dashboards, 1)
+	require.GreaterOrEqual(t, folders, 1)
+
+	// Invalid => defaults to both
+	resInvalid := call("type=invalid")
+	folders, dashboards = 0, 0
+	for _, h := range resInvalid.Hits {
+		if strings.HasPrefix(h.Resource, "folder") {
+			folders++
+		}
+		if strings.HasPrefix(h.Resource, "dash") {
+			dashboards++
+		}
+	}
+	require.GreaterOrEqual(t, dashboards, 1)
+	require.GreaterOrEqual(t, folders, 1)
+}
+
+func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	// Step 1: Start Grafana normally so migrations complete
+	env := apis.NewSearchDownTestEnv(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+
+	// Step 2: Restart with search down
+	helper := env.RestartWithSearchDown(t)
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+	})
+
+	// Verify search is actually down
+	searchCfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	searchCfg.GroupVersion = &dashboardV0.GroupVersion
+	restClient, err := k8srest.RESTClientFor(searchCfg)
+	require.NoError(t, err)
+	var statusCode int
+	restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", "default", "search").
+		Param("query", "*").Param("limit", "1").
+		Do(ctx).StatusCode(&statusCode)
+	require.Equal(t, http.StatusInternalServerError, statusCode, "search should be down")
+
+	t.Run("non-provisioned dashboard can be deleted", func(t *testing.T) {
+		dash := &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title":         "gd-test-regular",
+				"schemaVersion": 42,
+			},
+		}}
+		dash.SetGenerateName("gd-test-")
+		created, err := client.Resource.Create(ctx, dash, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err, "non-provisioned dashboard delete should succeed when search is down")
+
+		_, err = client.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.True(t, errors.IsNotFound(err), "dashboard should be gone after deletion")
+	})
+
+	t.Run("provisioned dashboard is still protected from deletion", func(t *testing.T) {
+		dash := &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title":         "gd-test-provisioned",
+				"schemaVersion": 42,
+			},
+		}}
+		dash.SetGenerateName("gd-prov-")
+		created, err := client.Resource.Create(ctx, dash, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		// Mark as classic file provisioned
+		meta, err := utils.MetaAccessor(created)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindClassicFP, //nolint:staticcheck
+			Identity: "test-provisioner",
+		})
+		updated, err := client.Resource.Update(ctx, created, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Verify manager properties are persisted
+		updatedMeta, err := utils.MetaAccessor(updated)
+		require.NoError(t, err)
+		mgr, managed := updatedMeta.GetManagerProperties()
+		require.True(t, managed, "dashboard should be marked as managed after update")
+		require.Equal(t, utils.ManagerKindClassicFP, mgr.Kind) //nolint:staticcheck
+		require.Equal(t, "test-provisioner", mgr.Identity)
+
+		// Delete should be blocked even without search
+		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.Error(t, err, "provisioned dashboard delete should be blocked")
 	})
 }

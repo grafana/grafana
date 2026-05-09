@@ -37,7 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -58,10 +58,11 @@ func ProvideBackgroundServiceRegistry(
 	provisioning *provisioning.ProvisioningServiceImpl, usageStats *uss.UsageStats,
 	statsCollector *statscollector.Service, grafanaUpdateChecker *updatemanager.GrafanaService,
 	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metrics.InternalMetricsService,
-	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, StorageService store.StorageService, entityEventsService store.EntityEventsService,
+	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	StorageService store.StorageService, // nolint:staticcheck
 	saService *samanager.ServiceAccountsService, grpcServerProvider grpcserver.Provider,
 	secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
-	bundleService *supportbundlesimpl.Service, publicDashboardsMetric *publicdashboardsmetric.Service,
+	bundleService *supportbundlesimpl.Service, publicDashboardsMetric *publicdashboards.MetricsService,
 	keyRetriever *dynamic.KeyRetriever, dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
 	grafanaAPIServer grafanaapiserver.Service,
 	anon *anonimpl.AnonDeviceService,
@@ -74,6 +75,7 @@ func ProvideBackgroundServiceRegistry(
 	dashboardServiceImpl *service.DashboardServiceImpl,
 	secretsGarbageCollectionWorker *secretsgarbagecollectionworker.Worker,
 	fixedRolesLoader *accesscontrol.FixedRolesLoader,
+	noopIAMRolesSyncer *accesscontrol.NoopIAMRolesSyncer,
 	installSync installsync.Syncer,
 	zanzanaService *authz.EmbeddedZanzanaService,
 	// Need to make sure these are initialized, is there a better place to put them?
@@ -102,7 +104,6 @@ func ProvideBackgroundServiceRegistry(
 		remoteCache,
 		secretsService,
 		StorageService,
-		entityEventsService,
 		grpcServerProvider,
 		saService,
 		pluginStore,
@@ -123,6 +124,7 @@ func ProvideBackgroundServiceRegistry(
 		dashboardServiceImpl,
 		secretsGarbageCollectionWorker,
 		fixedRolesLoader,
+		noopIAMRolesSyncer,
 		installSync,
 		zanzanaService,
 	)

@@ -536,7 +536,6 @@
       "annotations"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "now-30m",
       "to": "now",
       "autoRefresh": "",
@@ -561,7 +560,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

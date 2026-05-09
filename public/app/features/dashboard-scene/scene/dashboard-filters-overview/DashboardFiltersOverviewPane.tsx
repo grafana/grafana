@@ -1,23 +1,31 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
+import { type SceneComponentProps, sceneGraph, SceneObjectBase, sceneUtils } from '@grafana/scenes';
 import { Box, IconButton, Text, useStyles2 } from '@grafana/ui';
+
+import { DashboardEditPane } from '../../edit-pane/DashboardEditPane';
 
 import { DashboardFiltersOverview } from './DashboardFiltersOverview';
 import { DashboardFiltersOverviewSearch } from './DashboardFiltersOverviewSearch';
 
-interface Props {
-  adhocFilters?: AdHocFiltersVariable;
-  groupByVariable?: GroupByVariable;
-  onClose: () => void;
+export class DashboardFiltersOverviewPane extends SceneObjectBase {
+  public static Component = DashboardFiltersOverviewPaneRenderer;
+
+  public getId() {
+    return 'filters' as const;
+  }
 }
 
-export function DashboardFiltersOverviewPane({ adhocFilters, groupByVariable, onClose }: Props) {
+export function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentProps<DashboardFiltersOverviewPane>) {
+  const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
+  const { variables } = sceneGraph.getVariables(model)!.useState();
+  const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
+  const groupByVar = variables.find((v) => sceneUtils.isGroupByVariable(v));
 
   return (
     <Box display="flex" direction="column" flex={1} height="100%" minHeight={0}>
@@ -25,7 +33,7 @@ export function DashboardFiltersOverviewPane({ adhocFilters, groupByVariable, on
         <IconButton
           name="times"
           size="lg"
-          onClick={onClose}
+          onClick={() => editPane.closePane()}
           aria-label={t('dashboard.filters-overview.close', 'Close')}
         />
         <div className={styles.title}>
@@ -35,9 +43,9 @@ export function DashboardFiltersOverviewPane({ adhocFilters, groupByVariable, on
       </div>
       <div className={cx(styles.content, styles.body)}>
         <DashboardFiltersOverview
-          adhocFilters={adhocFilters}
-          groupByVariable={groupByVariable}
-          onClose={onClose}
+          adhocFilters={adHocVar}
+          groupByVariable={groupByVar}
+          onClose={() => editPane.closePane()}
           searchQuery={searchQuery}
         />
       </div>

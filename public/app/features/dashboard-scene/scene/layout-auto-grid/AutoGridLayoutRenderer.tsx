@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { type SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -13,7 +13,7 @@ import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
-import { AutoGridLayout, AutoGridLayoutState } from './AutoGridLayout';
+import { type AutoGridLayout, type AutoGridLayoutState } from './AutoGridLayout';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {

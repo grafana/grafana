@@ -3,7 +3,6 @@ package kv
 import (
 	"context"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -13,10 +12,10 @@ const (
 	resourceLastImportTimeTable = "resource_last_import_time"
 )
 
-func (k *SqlKV) saveLastImportTime(ctx context.Context, key string) (io.WriteCloser, error) {
+func (k *SqlKV) saveLastImportTime(ctx context.Context, key string) error {
 	ns, group, resource, lastImportTime, err := ParseLastImportTimeKey(key)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var query string
@@ -58,22 +57,12 @@ func (k *SqlKV) saveLastImportTime(ctx context.Context, key string) (io.WriteClo
 		)
 		args = []any{group, ns, resource, lastImportTime}
 	default:
-		return nil, fmt.Errorf("unknown dialect: %v", k.dialect.Name())
+		return fmt.Errorf("unknown dialect: %v", k.dialect.Name())
 	}
-	_, err = k.db.ExecContext(ctx, query, args...)
+	_, err = k.conn(ctx).ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to save last import time: %w", err)
+		return fmt.Errorf("failed to save last import time: %w", err)
 	}
-	return &noDataWriteCloser{}, nil
-}
-
-type noDataWriteCloser struct{}
-
-func (n *noDataWriteCloser) Write([]byte) (int, error) {
-	return 0, fmt.Errorf("can't write any data to last import time")
-}
-
-func (n noDataWriteCloser) Close() error {
 	return nil
 }
 
@@ -96,7 +85,7 @@ func (k *SqlKV) lastImportTimeKeys(ctx context.Context, opt ListOptions, yield f
 		k.dialect.QuoteIdent("resource"),
 	)
 
-	rows, err := k.db.QueryContext(ctx, query)
+	rows, err := k.conn(ctx).QueryContext(ctx, query)
 	if err != nil {
 		yield("", err)
 		return
@@ -141,7 +130,7 @@ func (k *SqlKV) deleteLastImportTime(ctx context.Context, key string) error {
 		k.dialect.QuoteIdent("last_import_time"),
 	)
 	args := []any{group, resource, ns, lastImportTime}
-	_, err = k.db.ExecContext(ctx, query, args...)
+	_, err = k.conn(ctx).ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed to delete last import time: %w", err)
 	}

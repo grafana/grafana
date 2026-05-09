@@ -4,7 +4,8 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Field, Input, SecretTextArea, Stack } from '@grafana/ui';
 
-import { ConnectionFormData } from '../../types';
+import { type ConnectionFormData } from '../../types';
+import { validateNoHiddenCharacters } from '../../utils/validators';
 
 export interface GitHubConnectionFieldsProps {
   /** Whether fields are required. Depends if we are in edit mode or not. */
@@ -120,6 +121,7 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
             control={control}
             rules={{
               required: requiredValidation,
+              validate: validateNoHiddenCharacters,
             }}
             render={({ field: { ref, ...field } }) => (
               <SecretTextArea

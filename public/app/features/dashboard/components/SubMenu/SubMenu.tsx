@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 import * as React from 'react';
-import { connect, MapStateToProps } from 'react-redux';
+import { connect, type MapStateToProps } from 'react-redux';
 
-import { AnnotationQuery, DataQuery, TypedVariableModel, GrafanaTheme2 } from '@grafana/data';
+import { type AnnotationQuery, type DataQuery, type TypedVariableModel, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DashboardLink } from '@grafana/schema';
-import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
-import { StoreState } from 'app/types/store';
+import { type DashboardLink } from '@grafana/schema';
+import { stylesFactory, type Themeable2, withTheme2 } from '@grafana/ui';
+import { type StoreState } from 'app/types/store';
 
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 import { Annotations } from './Annotations';
 import { DashboardLinks } from './DashboardLinks';

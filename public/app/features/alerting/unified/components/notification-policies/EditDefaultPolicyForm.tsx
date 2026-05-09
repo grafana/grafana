@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
@@ -6,10 +6,10 @@ import { Trans, t } from '@grafana/i18n';
 import { Collapse, Field, InlineLabel, Input, MultiSelect, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { ExternalAlertmanagerContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
-import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { FormAmRoute } from '../../types/amroutes';
+import { type FormAmRoute } from '../../types/amroutes';
 import {
   amRouteToFormAmRoute,
   commonGroupByOptions,
@@ -19,6 +19,7 @@ import {
   stringToSelectableValue,
   stringsToSelectableValues,
 } from '../../utils/amroutes';
+import { validateRbacEntityName } from '../../utils/k8s/utils';
 import { makeAMLink } from '../../utils/misc';
 
 import { PromDurationInput } from './PromDurationInput';
@@ -81,18 +82,15 @@ export const AmRootRouteForm = ({
           >
             <Input
               {...register('name', {
-                required: true,
-                validate: (value) => {
-                  if (!value || value.trim().length === 0) {
-                    return t('alerting.am-root-route-form.validate-name', 'Name is required');
-                  }
-                  if (existingPolicyNames?.includes(value.trim())) {
-                    return t(
-                      'alerting.am-root-route-form.validate-name-duplicate',
-                      'A notification policy with this name already exists'
-                    );
-                  }
-                  return true;
+                validate: {
+                  format: (value) => validateRbacEntityName(value)?.message ?? true,
+                  duplicate: (value) =>
+                    existingPolicyNames?.includes((value ?? '').trim())
+                      ? t(
+                          'alerting.am-root-route-form.validate-name-duplicate',
+                          'A notification policy with this name already exists'
+                        )
+                      : true,
                 },
               })}
               className={styles.input}

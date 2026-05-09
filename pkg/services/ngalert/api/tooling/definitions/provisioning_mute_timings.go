@@ -8,8 +8,11 @@ import (
 //
 // Get all the mute timings.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: MuteTimings
+//       403: ForbiddenError
 
 // swagger:route GET /v1/provisioning/mute-timings/export provisioning stable RouteExportMuteTimings
 //
@@ -30,8 +33,11 @@ import (
 //
 // Get a mute timing.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: MuteTimeInterval
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route GET /v1/provisioning/mute-timings/{name}/export provisioning stable RouteExportMuteTiming
@@ -53,16 +59,21 @@ import (
 //
 // Create a new mute timing.
 //
+// Deprecated: true
+//
 //     Consumes:
 //     - application/json
 //
 //     Responses:
 //       201: MuteTimeInterval
 //       400: ValidationError
+//       403: ForbiddenError
 
 // swagger:route PUT /v1/provisioning/mute-timings/{name} provisioning stable RoutePutMuteTiming
 //
 // Replace an existing mute timing.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -70,14 +81,18 @@ import (
 //     Responses:
 //       202: MuteTimeInterval
 //       400: ValidationError
+//       403: ForbiddenError
 //       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/mute-timings/{name} provisioning stable RouteDeleteMuteTiming
 //
 // Delete a mute timing.
 //
+// Deprecated: true
+//
 //     Responses:
 //       204: description: The mute timing was deleted successfully.
+//       403: ForbiddenError
 //       409: PublicError
 
 // swagger:model

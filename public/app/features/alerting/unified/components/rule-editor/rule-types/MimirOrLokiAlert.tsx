@@ -4,7 +4,7 @@ import mimirLogoSvg from 'img/alerting/mimir_logo.svg';
 import { RuleFormType } from '../../../types/rule-form';
 
 import { DisabledTooltip } from './DisabledTooltip';
-import { RuleType, SharedProps } from './RuleType';
+import { RuleType, type SharedProps } from './RuleType';
 
 interface Props extends SharedProps {
   onClick: (value: RuleFormType) => void;

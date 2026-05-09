@@ -1,6 +1,26 @@
-import { FieldDisplay, getDisplayProcessor, Threshold, ThresholdsMode } from '@grafana/data';
+import {
+  type FieldConfig,
+  type FieldDisplay,
+  GAUGE_DEFAULT_MAXIMUM,
+  GAUGE_DEFAULT_MINIMUM,
+  getActiveThreshold,
+  getDisplayProcessor,
+  type GrafanaTheme,
+  type GrafanaTheme2,
+  type Threshold,
+  type ThresholdsConfig,
+  ThresholdsMode,
+} from '@grafana/data';
 
-import { RadialGaugeDimensions } from './types';
+import { type RadialGaugeDimensions } from './types';
+
+const DEFAULT_THRESHOLDS: ThresholdsConfig = {
+  mode: ThresholdsMode.Absolute,
+  steps: [
+    { value: -Infinity, color: 'green' },
+    { value: 80, color: 'red' },
+  ],
+};
 
 export function getFieldDisplayProcessor(displayValue: FieldDisplay) {
   if (displayValue.view && displayValue.colIndex != null) {
@@ -211,7 +231,13 @@ export function toCartesian(centerX: number, centerY: number, radius: number, an
   };
 }
 
-export function drawRadialArcPath(startAngle: number, endAngle: number, radius: number): string {
+export function drawRadialArcPath(
+  startAngle: number,
+  endAngle: number,
+  radius: number,
+  xOffset = 0,
+  yOffset = 0
+): string {
   // For some reason a 100% full arc cannot be rendered
   if (endAngle >= 360) {
     endAngle = 359.99;
@@ -224,10 +250,10 @@ export function drawRadialArcPath(startAngle: number, endAngle: number, radius: 
 
   const MAX_DECIMALS = 2;
 
-  const x1 = parseFloat((radius * Math.cos(startRadians)).toFixed(MAX_DECIMALS));
-  const y1 = parseFloat((radius * Math.sin(startRadians)).toFixed(MAX_DECIMALS));
-  const x2 = parseFloat((radius * Math.cos(endRadians)).toFixed(MAX_DECIMALS));
-  const y2 = parseFloat((radius * Math.sin(endRadians)).toFixed(MAX_DECIMALS));
+  const x1 = xOffset + parseFloat((radius * Math.cos(startRadians)).toFixed(MAX_DECIMALS));
+  const y1 = yOffset + parseFloat((radius * Math.sin(startRadians)).toFixed(MAX_DECIMALS));
+  const x2 = xOffset + parseFloat((radius * Math.cos(endRadians)).toFixed(MAX_DECIMALS));
+  const y2 = yOffset + parseFloat((radius * Math.sin(endRadians)).toFixed(MAX_DECIMALS));
 
   return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
 }
@@ -264,6 +290,59 @@ export function getThresholdPercentageValue(
   }
   const [min, max] = getFieldConfigMinMax(fieldDisplay);
   return (threshold.value - min) / (max - min);
+}
+
+export function getFormattedThresholds(
+  decimals: number,
+  field: FieldConfig,
+  theme: GrafanaTheme | GrafanaTheme2,
+  offsetColor = true
+): Threshold[] {
+  const thresholds = field.thresholds ?? DEFAULT_THRESHOLDS;
+  const isPercent = thresholds.mode === ThresholdsMode.Percentage;
+  const steps = thresholds.steps;
+
+  let min = field.min ?? GAUGE_DEFAULT_MINIMUM;
+  let max = field.max ?? GAUGE_DEFAULT_MAXIMUM;
+
+  if (isPercent) {
+    min = 0;
+    max = 100;
+  }
+
+  const first = getActiveThreshold(min, steps);
+  const last = getActiveThreshold(max, steps);
+  const formatted: Threshold[] = [];
+
+  if (offsetColor) {
+    formatted.push({
+      value: parseFloat(min.toFixed(decimals)),
+      color: theme.visualization.getColorByName(first.color),
+    });
+  }
+
+  let skip = offsetColor;
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    if (skip) {
+      if (first === step) {
+        skip = false;
+      }
+      continue;
+    }
+    const prev = steps[i - 1];
+    formatted.push({
+      value: isFinite(step.value) ? step.value : 0,
+      color: theme.visualization.getColorByName((offsetColor ? prev : step).color),
+    });
+    if (step === last) {
+      break;
+    }
+  }
+  if (max > last.value) {
+    formatted.push({ value: parseFloat(max.toFixed(decimals)), color: theme.visualization.getColorByName(last.color) });
+  }
+  return formatted;
 }
 
 export const IS_SAFARI = (() => {

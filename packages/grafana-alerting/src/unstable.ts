@@ -27,3 +27,4 @@ export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } fro
 // API endpoints
 export { generatedAPI as notificationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 export { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+export { generatedAPI as historianAPIv0alpha1 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';

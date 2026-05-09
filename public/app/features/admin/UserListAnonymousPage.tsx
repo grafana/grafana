@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { AnonUsersDevicesTable } from './Users/AnonUsersTable';
 import { fetchUsersAnonymousDevices, changeAnonUserSort, changeAnonPage, changeAnonQuery } from './state/actions';

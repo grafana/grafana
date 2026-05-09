@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState, type JSX } from 'react';
 
-import { QueryEditorProps } from '@grafana/data';
+import { type QueryEditorProps } from '@grafana/data';
 
-import { CloudWatchDatasource } from '../../datasource';
+import { type CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
 import useMigratedQuery from '../../migrations/useMigratedQuery';
-import { CloudWatchJsonData, CloudWatchQuery } from '../../types';
+import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 
 import LogsQueryEditor from './LogsQueryEditor/LogsQueryEditor';
 import { MetricsQueryEditor } from './MetricsQueryEditor/MetricsQueryEditor';

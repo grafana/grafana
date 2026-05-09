@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Dropdown, Icon, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 

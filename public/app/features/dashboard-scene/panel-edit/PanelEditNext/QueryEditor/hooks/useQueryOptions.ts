@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
-import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
-import { QueryGroupOptions } from 'app/types/query';
+import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
+import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../../../scene/panel-timerange/PanelTimeRange';
 

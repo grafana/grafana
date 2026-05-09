@@ -1,15 +1,15 @@
-import { Style } from 'ol/style';
+import { type Style } from 'ol/style';
 
 import {
-  ColorDimensionConfig,
-  ResourceDimensionConfig,
+  type ColorDimensionConfig,
+  type ResourceDimensionConfig,
   ResourceDimensionMode,
-  ScaleDimensionConfig,
-  ScalarDimensionConfig,
+  type ScaleDimensionConfig,
+  type ScalarDimensionConfig,
   ScalarDimensionMode,
-  TextDimensionConfig,
+  type TextDimensionConfig,
 } from '@grafana/schema';
-import { DimensionSupplier } from 'app/features/dimensions/types';
+import { type DimensionSupplier } from 'app/features/dimensions/types';
 
 export enum GeometryTypeId {
   Point = 'point',

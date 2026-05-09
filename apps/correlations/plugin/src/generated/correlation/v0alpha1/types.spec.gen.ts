@@ -37,22 +37,20 @@ export const defaultTargetSpec = (): TargetSpec => ({});
 
 export interface TransformationSpec {
 	type: "regex" | "logfmt";
-	expression: string;
-	field: string;
-	mapValue: string;
+	expression?: string;
+	field?: string;
+	mapValue?: string;
 }
 
 export const defaultTransformationSpec = (): TransformationSpec => ({
 	type: "regex",
-	expression: "",
-	field: "",
-	mapValue: "",
 });
 
 export interface Spec {
 	type: CorrelationType;
 	source: DataSourceRef;
-	target?: DataSourceRef;
+	// null is for PATCH/edit when we want to clear the value
+	target?: DataSourceRef | null;
 	description?: string;
 	label: string;
 	config: ConfigSpec;

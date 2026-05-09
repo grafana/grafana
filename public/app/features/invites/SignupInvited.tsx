@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Field, Input, useStyles2 } from '@grafana/ui';

@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -38,6 +39,7 @@ func ProvideTestEnv(
 	githubRepoFactory *github.Factory,
 	githubConnectionFactory githubconnection.GithubFactory,
 	decryptService decrypt.DecryptService,
+	quotaGetter quotas.QuotaGetter,
 ) (*TestEnv, error) {
 	return &TestEnv{
 		TestingT:                testingT,
@@ -55,6 +57,7 @@ func ProvideTestEnv(
 		GithubRepoFactory:       githubRepoFactory,
 		GithubConnectionFactory: githubConnectionFactory,
 		DecryptService:          decryptService,
+		QuotaGetter:             quotaGetter,
 	}, nil
 }
 
@@ -78,4 +81,5 @@ type TestEnv struct {
 	GithubRepoFactory       *github.Factory
 	GithubConnectionFactory githubconnection.GithubFactory
 	DecryptService          decrypt.DecryptService
+	QuotaGetter             quotas.QuotaGetter
 }

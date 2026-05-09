@@ -183,15 +183,16 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 	}
 
 	query := team.SearchTeamsQuery{
-		OrgID:        c.GetOrgID(),
-		Query:        c.Query("query"),
-		Name:         c.Query("name"),
-		TeamIds:      queryTeamIDs,
-		Page:         page,
-		Limit:        perPage,
-		SignedInUser: c.SignedInUser,
-		HiddenUsers:  tapi.cfg.HiddenUsers,
-		SortOpts:     sortOpts,
+		OrgID:             c.GetOrgID(),
+		Query:             c.Query("query"),
+		Name:              c.Query("name"),
+		TeamIds:           queryTeamIDs,
+		Page:              page,
+		Limit:             perPage,
+		SignedInUser:      c.SignedInUser,
+		HiddenUsers:       tapi.cfg.HiddenUsers,
+		SortOpts:          sortOpts,
+		WithAccessControl: c.QueryBool("accesscontrol"),
 	}
 
 	queryResult, err := tapi.teamService.SearchTeams(c.Req.Context(), &query)
@@ -202,13 +203,19 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 	teamIDs := map[string]bool{}
 	for _, team := range queryResult.Teams {
 		team.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, team.Email, team.Name)
-		teamIDs[strconv.FormatInt(team.ID, 10)] = true
+		if team.ID != 0 {
+			teamIDs[strconv.FormatInt(team.ID, 10)] = true
+		}
 	}
 
-	metadata := tapi.getMultiAccessControlMetadata(c, "teams:id:", teamIDs)
-	if len(metadata) > 0 {
-		for _, team := range queryResult.Teams {
-			team.AccessControl = metadata[strconv.FormatInt(team.ID, 10)]
+	// Only fetch legacy access control metadata for teams with legacy IDs.
+	// Teams returned via the K8s path already have AccessControl populated.
+	if len(teamIDs) > 0 {
+		metadata := tapi.getMultiAccessControlMetadata(c, "teams:id:", teamIDs)
+		if len(metadata) > 0 {
+			for _, team := range queryResult.Teams {
+				team.AccessControl = metadata[strconv.FormatInt(team.ID, 10)]
+			}
 		}
 	}
 

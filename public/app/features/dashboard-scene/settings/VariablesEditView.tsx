@@ -1,27 +1,35 @@
 import { useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
+import { type NavModel, type NavModelItem, PageLayoutType } from '@grafana/data';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneVariable,
+  type SceneVariables,
+  sceneGraph,
+} from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor } from '../utils/utils';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../variables/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { ProvisionedVariablesSection } from './variables/ProvisionedVariablesSection';
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
 import { VariablesUnknownTable } from './variables/VariablesUnknownTable';
 import {
-  EditableVariableType,
+  type EditableVariableType,
   RESERVED_GLOBAL_VARIABLE_NAME_REGEX,
   WORD_CHARACTERS_REGEX,
   getVariableDefault,
   getVariableScene,
+  isVariableEditable,
 } from './variables/utils';
 
 export interface VariablesEditViewState extends DashboardEditViewState {
@@ -227,6 +235,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onAdd } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
+  const defaultVariables = useMemo(() => variables.filter((v) => !isVariableEditable(v)), [variables]);
   const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
   const usages = useMemo(() => model.getUsages(), [model]);
   const saveModel = model.getSaveModel();
@@ -261,6 +270,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
         onAdd={onAdd}
         onEdit={onEdit}
       />
+      {defaultVariables.length > 0 && <ProvisionedVariablesSection variables={defaultVariables} />}
       <VariablesUnknownTable variables={variables} dashboard={saveModel} />
     </Page>
   );

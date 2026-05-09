@@ -1,23 +1,27 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
 
-import { DataSourceApi, FeatureState, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { type DataSourceApi, FeatureState, type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, FeatureBadge, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
+import { Button, FeatureBadge, IconButton, InlineField, type PopoverContent, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
-import { SqlExpr } from './components/SqlExpressions/SqlExpr';
 import { Threshold } from './components/Threshold';
-import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
+import { type ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
 
 export type ExpressionQueryEditorProps = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
 
 const labelWidth = 15;
+const SqlExpr = lazy(() =>
+  import('./components/SqlExpressions/SqlExpr').then((module) => ({
+    default: module.SqlExpr,
+  }))
+);
 
 type NonClassicExpressionType = Exclude<ExpressionQueryType, ExpressionQueryType.classic>;
 type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, string>>;
@@ -131,14 +135,16 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
 
       case ExpressionQueryType.sql:
         return (
-          <SqlExpr
-            onChange={onChange}
-            query={query}
-            refIds={refIds}
-            queries={queries}
-            metadata={props}
-            onRunQuery={onRunQuery}
-          />
+          <Suspense fallback={null}>
+            <SqlExpr
+              onChange={onChange}
+              query={query}
+              refIds={refIds}
+              queries={queries}
+              metadata={props}
+              onRunQuery={onRunQuery}
+            />
+          </Suspense>
         );
     }
   };

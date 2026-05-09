@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import Map from 'ol/Map';
-import { Coordinate } from 'ol/coordinate';
+import type Map from 'ol/Map';
+import { type Coordinate } from 'ol/coordinate';
 import { transform } from 'ol/proj';
 import { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';

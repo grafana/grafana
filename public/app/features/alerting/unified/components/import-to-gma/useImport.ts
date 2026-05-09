@@ -1,12 +1,13 @@
 import { load } from 'js-yaml';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { stringifyErrorLike } from '../../utils/misc';
 
+import { MERGE_MATCHERS_LABEL_NAME } from './Wizard/constants';
 import type { ConvertAlertmanagerResponse, DryRunValidationResult } from './types';
 
 interface ParsedAlertmanagerYaml {
@@ -88,15 +89,38 @@ async function resolveAlertmanagerConfig(params: NotificationsSourceParams): Pro
   throw new Error('Invalid import source configuration');
 }
 
-interface MigrateRulesParams {
+interface MigrateRulesBaseParams {
   dataSourceUID: string;
   targetFolderUID?: string;
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
   payload: RulerRulesConfigDTO;
   targetDatasourceUID?: string;
-  /** Extra labels to add to all imported rules (format: key=value,key2=value2) */
-  extraLabels?: string;
+}
+
+/**
+ * Policy routing via notification_settings.policy (new) and label-based routing via extraLabels (legacy)
+ * are mutually exclusive — only one mechanism should be used per import.
+ */
+type MigrateRulesParams = MigrateRulesBaseParams &
+  ({ extraLabels?: string; notificationSettings?: never } | { extraLabels?: never; notificationSettings?: string });
+
+/**
+ * Build the routing-specific params for rule import.
+ * When the `alertingPolicyRoutingSettings` feature flag is ON and a routing tree is selected,
+ * uses the new `notification_settings.policy` mechanism; otherwise falls back to `extraLabels`.
+ */
+export function buildRoutingParams(
+  selectedRoutingTree: string | undefined,
+  usePolicyRouting: boolean
+): Pick<MigrateRulesParams, 'extraLabels' | 'notificationSettings'> {
+  if (usePolicyRouting && selectedRoutingTree) {
+    return { notificationSettings: JSON.stringify({ policy: selectedRoutingTree }) };
+  }
+
+  return {
+    extraLabels: selectedRoutingTree ? `${MERGE_MATCHERS_LABEL_NAME}=${selectedRoutingTree}` : undefined,
+  };
 }
 
 /**
@@ -138,6 +162,7 @@ export function useImportRules() {
         payload,
         targetDatasourceUID,
         extraLabels,
+        notificationSettings,
       } = params;
 
       await convert({
@@ -148,6 +173,7 @@ export function useImportRules() {
         payload,
         targetDatasourceUID,
         extraLabels,
+        notificationSettings,
       }).unwrap();
     },
     [convert]
@@ -270,7 +296,7 @@ export function useDryRunNotifications() {
     [dryRunAlertmanagerConfig]
   );
 
-  const result = data ? parseDryRunResponse(data) : undefined;
+  const result = useMemo(() => (data ? parseDryRunResponse(data) : undefined), [data]);
   const error = mutationError ? stringifyErrorLike(mutationError) : preRunError;
 
   return { runDryRun, isLoading, result, error };

@@ -134,6 +134,21 @@ func TestAfterUserCreate(t *testing.T) {
 		// If we get here without panic, the test passes
 	})
 
+	t.Run("should skip when user has None role", func(t *testing.T) {
+		user := iamv0.User{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nonerole",
+				Namespace: "org-5",
+			},
+			Spec: iamv0.UserSpec{
+				Role: "None",
+			},
+		}
+
+		b.zClient = nil
+		b.AfterUserCreate(&user, nil)
+	})
+
 	t.Run("should skip when zClient is nil", func(t *testing.T) {
 		builder := &IdentityAccessManagementAPIBuilder{
 			logger:   log.NewNopLogger(),
@@ -218,7 +233,7 @@ func TestBeginUserUpdate(t *testing.T) {
 		wg.Wait()
 	})
 
-	t.Run("should update role when new role is empty", func(t *testing.T) {
+	t.Run("should only delete old role when new role is None", func(t *testing.T) {
 		wg.Add(1)
 		oldUser := iamv0.User{
 			ObjectMeta: metav1.ObjectMeta{
@@ -236,7 +251,7 @@ func TestBeginUserUpdate(t *testing.T) {
 				Namespace: "org-2",
 			},
 			Spec: iamv0.UserSpec{
-				Role: "",
+				Role: "None",
 			},
 		}
 
@@ -244,16 +259,9 @@ func TestBeginUserUpdate(t *testing.T) {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-2", req.Namespace)
-			require.Len(t, req.Operations, 2)
+			require.Len(t, req.Operations, 1)
 
-			// First operation should be UpdateUserOrgRole with empty role
-			updateOp := req.Operations[0].GetUpdateUserOrgRole()
-			require.NotNil(t, updateOp)
-			require.Equal(t, "testuser2", updateOp.User)
-			require.Equal(t, "", updateOp.Role)
-
-			// Second operation should be DeleteUserOrgRole with old role
-			deleteOp := req.Operations[1].GetDeleteUserOrgRole()
+			deleteOp := req.Operations[0].GetDeleteUserOrgRole()
 			require.NotNil(t, deleteOp)
 			require.Equal(t, "testuser2", deleteOp.User)
 			require.Equal(t, "Editor", deleteOp.Role)
@@ -543,6 +551,21 @@ func TestAfterUserDelete(t *testing.T) {
 		b.zClient = nil
 		b.AfterUserDelete(&user, nil)
 		// If we get here without panic, the test passes
+	})
+
+	t.Run("should skip when user has None role", func(t *testing.T) {
+		user := iamv0.User{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nonerole",
+				Namespace: "org-5",
+			},
+			Spec: iamv0.UserSpec{
+				Role: "None",
+			},
+		}
+
+		b.zClient = nil
+		b.AfterUserDelete(&user, nil)
 	})
 
 	t.Run("should skip when zClient is nil", func(t *testing.T) {

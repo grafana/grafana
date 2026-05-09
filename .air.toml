@@ -1,7 +1,7 @@
 [build]
 bin = "./bin/grafana-air"
 args_bin = ["server", "-profile", "-profile-addr=127.0.0.1", "-profile-port=6000", "-profile-block-rate=1", "-profile-mutex-rate=5", "-packaging=dev", "cfg:app_mode=development"]
-cmd = "make GO_BUILD_DEV=1 build-air"
+cmd = "make CGO_ENABLED=0 SOURCE_DATE_EPOCH=1767222000 GO_BUILD_DEV=1 build-air"
 exclude_regex = ["_test.go", "_gen.go"]
 exclude_unchanged = true
 follow_symlink = true

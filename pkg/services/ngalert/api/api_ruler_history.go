@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/alertmanager/pkg/labels"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -67,11 +69,22 @@ func ParseHistoryQuery(orgID int64, user identity.Requester, query url.Values) (
 		}
 	}
 
-	labels := make(map[string]string)
+	var matchers labels.Matchers
 	for k, v := range query {
 		if strings.HasPrefix(k, labelQueryPrefix) {
-			labels[k[len(labelQueryPrefix):]] = v[0]
+			m, err := labels.ParseMatcher(k[len(labelQueryPrefix):] + "=" + v[0])
+			if err != nil {
+				return models.HistoryQuery{}, fmt.Errorf("invalid label filter %q: %w", k, err)
+			}
+			matchers = append(matchers, m)
 		}
+	}
+	for _, s := range query["matchers"] {
+		parsed, err := labels.ParseMatchers(s)
+		if err != nil {
+			return models.HistoryQuery{}, fmt.Errorf("invalid matchers: %w", err)
+		}
+		matchers = append(matchers, parsed...)
 	}
 
 	return models.HistoryQuery{
@@ -85,6 +98,6 @@ func ParseHistoryQuery(orgID int64, user identity.Requester, query url.Values) (
 		From:         time.Unix(from, 0),
 		To:           time.Unix(to, 0),
 		Limit:        limit,
-		Labels:       labels,
+		Labels:       matchers,
 	}, nil
 }

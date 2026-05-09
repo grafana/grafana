@@ -1,6 +1,6 @@
 import { pick, sum } from 'lodash';
 
-import { AlertGroupTotals } from 'app/types/unified-alerting';
+import { type AlertGroupTotals } from 'app/types/unified-alerting';
 
 export function totalFromStats(stats: AlertGroupTotals): number {
   // countable stats will pick only the states that indicate a single rule – health indicators like "error" and "nodata" should

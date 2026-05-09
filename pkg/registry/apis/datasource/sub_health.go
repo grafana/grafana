@@ -3,15 +3,19 @@ package datasource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type subHealthREST struct {
@@ -46,42 +50,64 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
-// FIXME: this endpoint has not been tested yet, so it is not enabled by default.
-var healthEnabled = false
-
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	if !healthEnabled {
-		return nil, &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Status: metav1.StatusFailure,
-				Code:   http.StatusNotImplemented,
-			},
-		}
-	}
+	namespace := request.NamespaceValue(ctx)
+	ctx, connectSpan := tracing.Start(ctx, "datasource.health.connect",
+		attribute.String("namespace", namespace),
+		attribute.String("plugin_id", r.builder.pluginJSON.ID),
+		attribute.String("datasource_uid", name),
+	)
+	defer connectSpan.End()
+
+	m := newConnectMetric("health", r.builder.pluginJSON.ID)
 
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
+		err = tracing.Error(connectSpan, err)
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			m.SetNotFound()
+			m.Record()
+			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
+		}
+		m.SetError()
+		m.Record()
 		return nil, err
 	}
-	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	ctx = contextualMiddlewares(ctx)
 
-	healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
+	checkHealthCtx, checkHealthSpan := tracing.Start(ctx, "datasource.health.pluginClient.CheckHealth")
+	healthResponse, err := r.builder.client.CheckHealth(checkHealthCtx, &backend.CheckHealthRequest{
 		PluginContext: pluginCtx,
 	})
+	checkHealthSpan.End()
 	if err != nil {
+		err = tracing.Error(connectSpan, err)
+		m.SetError()
+		m.Record()
 		return nil, err
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer m.Record()
+
+		_, reqSpan := tracing.Start(req.Context(), "datasource.health.request",
+			attribute.String("namespace", namespace),
+			attribute.String("plugin_id", r.builder.pluginJSON.ID),
+			attribute.String("datasource_uid", name),
+		)
+		defer reqSpan.End()
+
 		rsp := &datasource.HealthCheckResult{}
 		rsp.Code = int(healthResponse.Status)
 		rsp.Status = healthResponse.Status.String()
 		rsp.Message = healthResponse.Message
 
 		if len(healthResponse.JSONDetails) > 0 {
-			err = json.Unmarshal(healthResponse.JSONDetails, &rsp.Details)
+			err := json.Unmarshal(healthResponse.JSONDetails, &rsp.Details)
 			if err != nil {
+				_ = tracing.Error(reqSpan, err)
+				m.SetError()
 				responder.Error(err)
 				return
 			}
@@ -89,6 +115,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 
 		statusCode := http.StatusOK
 		if healthResponse.Status != backend.HealthStatusOk {
+			m.SetError()
 			statusCode = http.StatusBadRequest
 		}
 		responder.Object(statusCode, rsp)

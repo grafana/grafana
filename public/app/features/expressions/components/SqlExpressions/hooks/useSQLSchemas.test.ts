@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { isDashboardDatasource } from './useSQLSchemas';

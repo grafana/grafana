@@ -4,7 +4,7 @@ import { PluginSignatureStatus } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { usePluginConfig } from '../../hooks/usePluginConfig';
-import { CatalogPlugin } from '../../types';
+import { type CatalogPlugin } from '../../types';
 
 import { GetStartedWithApp } from './GetStartedWithApp';
 
@@ -41,7 +41,6 @@ const mockPlugin: CatalogPlugin = {
   isInstalled: false,
   isDisabled: false,
   isDeprecated: false,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   isPublished: false,
   orgName: 'Test Org',
@@ -49,6 +48,10 @@ const mockPlugin: CatalogPlugin = {
   popularity: 0,
   publishedAt: '2021-01-01',
   updatedAt: '2021-01-01',
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 describe('GetStartedWithApp', () => {

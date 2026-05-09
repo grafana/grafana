@@ -12,11 +12,25 @@ export const GENERAL_FOLDER_UID = 'general';
 export const GENERAL_FOLDER_TITLE = 'Dashboards';
 export const SEARCH_PANELS_LOCAL_STORAGE_KEY = 'grafana.search.include.panels';
 export const SEARCH_SELECTED_LAYOUT = 'grafana.search.layout';
+export const SEARCH_SELECTED_LAYOUT_DELETED = 'grafana.search.layout.recently-deleted';
 export const SEARCH_SELECTED_SORT = 'grafana.search.sort';
+export const SEARCH_SELECTED_SORT_DELETED = 'grafana.search.sort.recently-deleted';
+
+export const RECENTLY_DELETED_SORT_VALUES = [
+  'alpha-asc',
+  'alpha-desc',
+  'deleted-asc',
+  'deleted-desc',
+  'deletedby-asc',
+  'deletedby-desc',
+] as const;
+
 export const TYPE_KIND_MAP: { [key: string]: DashboardSearchItemType } = {
   dashboard: DashboardSearchItemType.DashDB,
   folder: DashboardSearchItemType.DashFolder,
   home: DashboardSearchItemType.DashHome,
 };
+
+export const TEAM_FOLDERS_UID = 'teamfolders';
 
 export const DEFAULT_MAX_VALUES = 1000;

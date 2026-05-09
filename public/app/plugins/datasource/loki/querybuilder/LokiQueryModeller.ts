@@ -1,13 +1,18 @@
 import {
   QueryModellerBase,
-  QueryBuilderLabelFilter,
-  VisualQuery,
-  QueryBuilderOperation,
-  VisualQueryBinary,
+  type QueryBuilderLabelFilter,
+  type VisualQuery,
+  type QueryBuilderOperation,
+  type VisualQueryBinary,
 } from '@grafana/plugin-ui';
 
 import { operationDefinitions } from './operations';
-import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType, LokiVisualQueryOperationCategory } from './types';
+import {
+  LokiOperationId,
+  type LokiQueryPattern,
+  LokiQueryPatternType,
+  LokiVisualQueryOperationCategory,
+} from './types';
 
 export class LokiQueryModeller extends QueryModellerBase {
   constructor() {

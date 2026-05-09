@@ -1,10 +1,14 @@
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
+import { urlUtil } from '@grafana/data';
+import { locationService, logInfo } from '@grafana/runtime';
+import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { type RuleGroupIdentifierV2, type RuleIdentifier } from 'app/types/unified-alerting';
 
 import { createReturnTo } from '../hooks/useReturnTo';
+import { type RuleFormValues } from '../types/rule-form';
 
+import { ROOT_ROUTE_NAME } from './k8s/constants';
 import { stringifyIdentifier } from './rule-id';
-import { RelativeUrl, createRelativeUrl } from './url';
+import { type RelativeUrl, createRelativeUrl } from './url';
 
 /**
  * Tab values for contact points page - duplicated here to avoid circular dependency
@@ -18,6 +22,7 @@ const ContactPointsTab = {
  * Navigation IDs used for Alerting pages
  */
 export const NAV_IDS = {
+  ALERT_ACTIVITY: 'alert-activity',
   NOTIFICATION_CONFIG: 'notification-config',
   RECEIVERS: 'receivers',
   ROUTES: 'am-routes',
@@ -27,6 +32,8 @@ export const NAV_IDS = {
  * Alerting page paths
  */
 export const ALERTING_PATHS: Record<string, RelativeUrl> = {
+  ALERTS: '/alerting/alerts',
+  ALERT_GROUPS: '/alerting/groups',
   NOTIFICATIONS: '/alerting/notifications',
   TEMPLATES: '/alerting/notifications/templates',
   TIME_INTERVALS: '/alerting/routes/mute-timing',
@@ -150,4 +157,42 @@ export const notificationPolicies = {
       alertmanager: alertmanagerSourceName ?? 'grafana',
     });
   },
+  policyLink: (policyName = ROOT_ROUTE_NAME, alertmanagerSourceName = 'grafana') => {
+    return createRelativeUrl('/alerting/routes', {
+      includeTree: policyName,
+      alertmanager: alertmanagerSourceName,
+    });
+  },
+};
+
+export const createPanelAlertRuleNavigation = (
+  getFormValues: () => Promise<Partial<RuleFormValues> | undefined>,
+  location: { pathname: string; search: string }
+) => {
+  const navigateToAlerting = async (currentValues?: RuleFormValues) => {
+    logInfo('creating alert rule from panel');
+
+    const updateToDateFormValues = currentValues ?? (await getFormValues());
+
+    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+      defaults: JSON.stringify(updateToDateFormValues),
+      returnTo: location.pathname + location.search,
+    });
+
+    locationService.push(ruleFormUrl);
+  };
+
+  const onContinueInAlertingFromDrawer = (values: RuleFormValues) => {
+    void navigateToAlerting(values);
+  };
+
+  const onButtonClick = () => {
+    void navigateToAlerting(undefined);
+  };
+
+  return {
+    navigateToAlerting,
+    onContinueInAlertingFromDrawer,
+    onButtonClick,
+  };
 };

@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -122,29 +120,10 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		ac2 := &org.Org{ID: 22, Name: "ac2", Version: 1, Created: time.Now(), Updated: time.Now()}
 		orgId, err := orgStore.Insert(context.Background(), ac2)
 		require.NoError(t, err)
-
-		// Create some org-scoped items like playlists, so we can assert that they
-		// are cleaned up on delete.
-		plItems := []playlist.PlaylistItem{
-			{
-				Type: "foo",
-			},
-		}
-		plStore := playlistimpl.ProvideService(ss, tracing.InitializeTracerForTest())
-		plCreateCommand := playlist.CreatePlaylistCommand{
-			OrgId: orgId,
-			Name:  "test",
-			Items: plItems,
-		}
-		pl, err := plStore.Create(context.Background(), &plCreateCommand)
-		require.NoError(t, err)
+		t.Logf("remove: %d\n", orgId)
 
 		err = orgStore.Delete(context.Background(), &org.DeleteOrgCommand{ID: ac2.ID})
 		require.NoError(t, err)
-
-		plDTO, err := plStore.Get(context.Background(), &playlist.GetPlaylistByUidQuery{OrgId: pl.OrgId, UID: pl.UID})
-		require.Error(t, err)
-		require.Nil(t, plDTO)
 
 		// TODO: this part of the test will be added when we move RemoveOrgUser to org store
 		// "Removing user from org should delete user completely if in no other org"
@@ -505,6 +484,131 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			cmd := org.RemoveOrgUserCommand{OrgID: ac1.OrgID, UserID: ac1.ID}
 			err := orgUserStore.RemoveOrgUser(context.Background(), &cmd)
 			require.Equal(t, err, org.ErrLastOrgAdmin)
+		})
+	})
+
+	t.Run("SearchOrgUsersByEmails", func(t *testing.T) {
+		ss, cfg := db.InitTestDBWithCfg(t)
+		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
+
+		ac1, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"})
+		require.NoError(t, err)
+		ac2, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"})
+		require.NoError(t, err)
+		ac3, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "ac3", Email: "ac3@test.com", Name: "ac3 name"})
+		require.NoError(t, err)
+
+		// ac1 is already in its own org; add ac2 to that same org, leave ac3 out
+		err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
+			OrgID: ac1.OrgID, UserID: ac2.ID, Role: org.RoleViewer,
+		})
+		require.NoError(t, err)
+
+		store := sqlStore{db: ss, dialect: ss.GetDialect(), log: log.NewNopLogger()}
+
+		t.Run("returns matched members", func(t *testing.T) {
+			result, err := store.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
+				OrgID:  ac1.OrgID,
+				Emails: []string{ac1.Email, ac2.Email},
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 2)
+			emails := []string{result[0].Email, result[1].Email}
+			require.ElementsMatch(t, emails, []string{ac1.Email, ac2.Email})
+		})
+
+		t.Run("excludes non-members even when email is listed", func(t *testing.T) {
+			result, err := store.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
+				OrgID:  ac1.OrgID,
+				Emails: []string{ac1.Email, ac3.Email},
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+			require.Equal(t, ac1.Email, result[0].Email)
+		})
+
+		t.Run("returns empty slice for empty email list", func(t *testing.T) {
+			result, err := store.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
+				OrgID:  ac1.OrgID,
+				Emails: []string{},
+			})
+			require.NoError(t, err)
+			require.Empty(t, result)
+		})
+
+		t.Run("returns empty slice when no email matches", func(t *testing.T) {
+			result, err := store.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
+				OrgID:  ac1.OrgID,
+				Emails: []string{"nobody@test.com"},
+			})
+			require.NoError(t, err)
+			require.Empty(t, result)
+		})
+
+		t.Run("excludes hidden users when ExcludeHiddenUsers is set", func(t *testing.T) {
+			storeWithHidden := sqlStore{
+				db:      ss,
+				dialect: ss.GetDialect(),
+				log:     log.NewNopLogger(),
+				cfg:     &setting.Cfg{HiddenUsers: map[string]struct{}{ac2.Login: {}}},
+			}
+			result, err := storeWithHidden.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
+				OrgID:              ac1.OrgID,
+				Emails:             []string{ac1.Email, ac2.Email},
+				ExcludeHiddenUsers: true,
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+			require.Equal(t, ac1.Email, result[0].Email)
+		})
+
+		t.Run("excludes service accounts", func(t *testing.T) {
+			sa, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
+				Login:            "sa1",
+				Email:            "sa1@test.com",
+				Name:             "sa1 name",
+				IsServiceAccount: true,
+				SkipOrgSetup:     true,
+			})
+			require.NoError(t, err)
+			err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
+				OrgID: ac1.OrgID, UserID: sa.ID, Role: org.RoleViewer, AllowAddingServiceAccount: true,
+			})
+			require.NoError(t, err)
+
+			result, err := store.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
+				OrgID:  ac1.OrgID,
+				Emails: []string{ac1.Email, sa.Email},
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+			require.Equal(t, ac1.Email, result[0].Email)
+		})
+
+		t.Run("matches emails case-insensitively", func(t *testing.T) {
+			result, err := store.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
+				OrgID:  ac1.OrgID,
+				Emails: []string{"AC1@TEST.COM", "AC2@TEST.COM"},
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 2)
+			emails := []string{result[0].Email, result[1].Email}
+			require.ElementsMatch(t, emails, []string{ac1.Email, ac2.Email})
+		})
+
+		t.Run("returns hidden users when ExcludeHiddenUsers is false", func(t *testing.T) {
+			storeWithHidden := sqlStore{
+				db:      ss,
+				dialect: ss.GetDialect(),
+				log:     log.NewNopLogger(),
+				cfg:     &setting.Cfg{HiddenUsers: map[string]struct{}{ac2.Login: {}}},
+			}
+			result, err := storeWithHidden.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
+				OrgID:  ac1.OrgID,
+				Emails: []string{ac1.Email, ac2.Email},
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 2)
 		})
 	})
 
@@ -1140,7 +1244,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 

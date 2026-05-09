@@ -26,3 +26,15 @@ const (
 type Entry = v0alpha1.CreateNotificationqueryNotificationEntry
 
 type EntryAlert = v0alpha1.CreateNotificationqueryNotificationEntryAlert
+
+type AlertQuery = v0alpha1.CreateNotificationsqueryalertsRequestBody
+
+type AlertQueryResult = v0alpha1.CreateNotificationsqueryalertsResponse
+
+type AlertEntry = v0alpha1.CreateNotificationsqueryalertsNotificationEntryAlert
+
+type QueryGroupBy = v0alpha1.CreateNotificationqueryRequestV0alpha1BodyGroupBy
+
+type Count = v0alpha1.CreateNotificationqueryNotificationCount
+
+type RangeValue = v0alpha1.CreateNotificationqueryNotificationRangeValue

@@ -15,6 +15,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 
 	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -212,7 +213,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 				Password: user.Password(ss.cfg.AdminPassword),
 				IsAdmin:  true,
 			}); err != nil {
-				return fmt.Errorf("failed to create admin user: %s", err)
+				return fmt.Errorf("failed to create admin user: %w", err)
 			}
 
 			ss.log.Info("Created default admin", "user", ss.cfg.AdminUser)
@@ -324,14 +325,18 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	// initialize and register metrics wrapper around the *sql.DB
 	db := engine.DB().DB
 
-	// register the go_sql_stats_connections_* metrics
-	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
-		ss.log.Warn("Failed to register sqlstore stats collector", "error", err)
+	if err := prometheus.Register(collectors.NewDBStatsCollector(db, "grafana")); err != nil {
+		ss.log.Warn("Failed to register 'Prometheus collector' sqlstore stats collector", "error", err)
 	}
 
-	// TODO: deprecate/remove these metrics
-	if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
-		ss.log.Warn("Failed to register sqlstore metrics", "error", err)
+	// TODO(@macabu/2026-03-04): Remove on G14 as these metrics are the same as the ones above.
+	if ss.cfg.DatabaseRegisterDeprecatedMetrics {
+		if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
+			ss.log.Warn("Failed to register 'sqlstats' sqlstore stats collector", "error", err)
+		}
+		if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
+			ss.log.Warn("Failed to register 'Grafana legacy' sqlstore metrics", "error", err)
+		}
 	}
 
 	ss.engine = engine

@@ -621,10 +621,11 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Clients can use this service directly
-// NOTE: This is read only, and no read afer write guarantees
+// Deprecated: Use the standard gRPC health checking protocol (grpc.health.v1.Health)
+// instead.
+// This service will be removed in a future release.
 type DiagnosticsClient interface {
-	// Check if the service is healthy
+	// Deprecated: Use grpc.health.v1.Health/Check instead.
 	IsHealthy(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
@@ -650,10 +651,11 @@ func (c *diagnosticsClient) IsHealthy(ctx context.Context, in *HealthCheckReques
 // All implementations should embed UnimplementedDiagnosticsServer
 // for forward compatibility
 //
-// Clients can use this service directly
-// NOTE: This is read only, and no read afer write guarantees
+// Deprecated: Use the standard gRPC health checking protocol (grpc.health.v1.Health)
+// instead.
+// This service will be removed in a future release.
 type DiagnosticsServer interface {
-	// Check if the service is healthy
+	// Deprecated: Use grpc.health.v1.Health/Check instead.
 	IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 }
 

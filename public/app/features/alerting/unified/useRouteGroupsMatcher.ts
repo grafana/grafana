@@ -1,8 +1,8 @@
 import * as comlink from 'comlink';
 import { useCallback, useEffect } from 'react';
 
-import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
-import { Labels } from '../../../types/unified-alerting-dto';
+import { type AlertmanagerGroup, type RouteWithID } from '../../../plugins/datasource/alertmanager/types';
+import { type Labels } from '../../../types/unified-alerting-dto';
 
 import { logError, logInfo } from './Analytics';
 import { createWorker } from './createRouteGroupsMatcherWorker';

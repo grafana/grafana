@@ -50,7 +50,7 @@ const LogPrefix = "setting.service"
 const DefaultPageSize = int64(500)
 const DefaultQPS = float32(200)
 const DefaultBurst = 300
-const DefaultCacheTTL = 1 * time.Second
+const DefaultCacheTTL = 5 * time.Second
 const DefaultCacheMaxEntries = 1000
 
 const (
@@ -78,6 +78,7 @@ type clientMetrics struct {
 	listResultSize           prometheus.Histogram
 	rateLimiterThrottleTotal prometheus.Counter
 	cacheHitTotal            prometheus.Counter
+	cacheMissTotal           prometheus.Counter
 }
 
 // Service retrieves configuration settings from a remote settings service.
@@ -269,7 +270,8 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 	defer span.End()
 
 	if !ok || namespace == "" {
-		return nil, tracing.Errorf(span, "missing namespace in context")
+		oErr = tracing.Errorf(span, "missing namespace in context")
+		return nil, oErr
 	}
 	log := s.log.FromContext(ctx).New(ns.Key, ns.Value, "function", "remoteSettingService.List", "traceId", span.SpanContext().TraceID())
 
@@ -291,7 +293,8 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 
 	selector, err := metav1.LabelSelectorAsSelector(&labelSelector)
 	if err != nil {
-		return nil, tracing.Error(span, err)
+		oErr = tracing.Error(span, err)
+		return nil, oErr
 	}
 	if selector.Empty() {
 		log.Debug("empty selector. Fetching all settings")
@@ -320,9 +323,11 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 		}
 	}
 
+	s.metrics.cacheMissTotal.Inc()
 	allSettings, err := s.fetch(ctx, namespace, lSelector, span)
 	if err != nil {
-		return nil, err
+		oErr = err
+		return nil, oErr
 	}
 
 	if s.cache != nil {
@@ -644,6 +649,12 @@ func initMetrics() clientMetrics {
 			Name:      "list_settings_cache_hit_total",
 			Help:      "Total number of List cache hits",
 		}),
+		cacheMissTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: "settings",
+			Subsystem: "service",
+			Name:      "list_settings_cache_miss_total",
+			Help:      "Total number of List cache misses",
+		}),
 	}
 	return metrics
 }
@@ -653,6 +664,7 @@ func (s *remoteSettingService) Describe(descs chan<- *prometheus.Desc) {
 	s.metrics.listResultSize.Describe(descs)
 	s.metrics.rateLimiterThrottleTotal.Describe(descs)
 	s.metrics.cacheHitTotal.Describe(descs)
+	s.metrics.cacheMissTotal.Describe(descs)
 }
 
 func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
@@ -660,4 +672,5 @@ func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
 	s.metrics.listResultSize.Collect(metrics)
 	s.metrics.rateLimiterThrottleTotal.Collect(metrics)
 	s.metrics.cacheHitTotal.Collect(metrics)
+	s.metrics.cacheMissTotal.Collect(metrics)
 }

@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import type { JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Alert, AlertVariant } from '../Alert/Alert';
+import { Alert, type AlertVariant } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 
 export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {

@@ -7,7 +7,7 @@ import { TokenPermissionsInfo } from '../../Shared/TokenPermissionsInfo';
 import { getHasTokenInstructions } from '../../utils/git';
 import { isGitProvider } from '../../utils/repositoryTypes';
 import { getGitProviderFields } from '../fields';
-import { WizardFormData } from '../types';
+import { type WizardFormData } from '../types';
 
 export function RepositoryTokenInput() {
   const [tokenConfigured, setTokenConfigured] = useState(false);

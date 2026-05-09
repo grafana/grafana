@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useEffectOnce, useToggle } from 'react-use';
 
-import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { type GrafanaTheme2, type PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
@@ -13,6 +13,7 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
+  Link,
   LoadingPlaceholder,
   ScrollContainer,
   useStyles2,
@@ -36,19 +37,26 @@ import {
 } from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { ThunkDispatch, useDispatch } from 'app/types/store';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type ThunkDispatch, useDispatch } from 'app/types/store';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { AlertingAction, useAlertingAbility } from '../../../features/alerting/unified/hooks/useAbilities';
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
-import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-alerting';
+import { type AlertingRule, type CombinedRuleWithLocation } from '../../../types/unified-alerting';
 
-import { GroupMode, SortOrder, StateFilter, UnifiedAlertListOptions, ViewMode } from './types';
+import {
+  GroupMode,
+  SortOrder,
+  STAT_THRESHOLDS_DEFAULT,
+  type StateFilter,
+  type UnifiedAlertListOptions,
+  ViewMode,
+} from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
 import UngroupedModeView from './unified-alerting/UngroupedView';
-import { filterAlerts } from './util';
+import { buildAlertingListUrl, filterAlerts, getStatDisplayValue } from './util';
 
 function getStateList(state: StateFilter) {
   const reducer = (list: string[], [stateKey, value]: [string, boolean]) => {
@@ -121,10 +129,10 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     props.options.stateFilter.inactive = undefined; // now disable inactive
   }, [props.options.stateFilter]);
 
-  let dashboard: DashboardModel | undefined = undefined;
+  const dashboardRef = useRef<DashboardModel | undefined>(undefined);
 
   useEffectOnce(() => {
-    dashboard = getDashboardSrv().getCurrent();
+    dashboardRef.current = getDashboardSrv().getCurrent();
   });
 
   const stateList = useMemo(() => getStateList(props.options.stateFilter), [props.options.stateFilter]);
@@ -173,6 +181,10 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     if (!promRulesRequests.loading) {
       fetchPromAndRuler({ dispatch, limitAlerts: effectiveLimitAlerts, matcherList, dataSourceName, stateList });
     }
+  }, [dispatch, matcherList, stateList, effectiveLimitAlerts, dataSourceName, promRulesRequests.loading]);
+
+  useEffect(() => {
+    const dashboard = dashboardRef.current;
     const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => {
       if (shouldFetchGrafanaRules) {
         refetchGrafanaPromRules();
@@ -187,14 +199,12 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     };
   }, [
     dispatch,
-    dashboard,
     matcherList,
     stateList,
     effectiveLimitAlerts,
     dataSourceName,
     refetchGrafanaPromRules,
     shouldFetchGrafanaRules,
-    promRulesRequests.loading,
   ]);
 
   const handleInstancesLimit = (limit: boolean) => {
@@ -237,15 +247,13 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
       {havePreviousResults && (
         <section>
           {props.options.viewMode === ViewMode.Stat && (
-            <BigValue
-              colorMode={BigValueColorMode.None}
+            <StatView
+              rules={rules}
               width={props.width}
               height={props.height}
-              graphMode={BigValueGraphMode.None}
-              textMode={BigValueTextMode.Auto}
-              justifyMode={BigValueJustifyMode.Auto}
-              theme={config.theme2}
-              value={{ text: `${rules.length}`, numeric: rules.length }}
+              options={parsedOptions}
+              dashboardUid={options.dashboardAlerts ? dashboardRef.current?.uid : undefined}
+              styles={styles}
             />
           )}
           {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
@@ -266,6 +274,60 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
       {renderLoading && <LoadingPlaceholder text={t('alertlist.unified-alert-list.text-loading', 'Loading...')} />}
     </ScrollContainer>
   );
+}
+
+function StatView({
+  rules,
+  width,
+  height,
+  options,
+  dashboardUid,
+  styles,
+}: {
+  rules: CombinedRuleWithLocation[];
+  width: number;
+  height: number;
+  options: UnifiedAlertListOptions;
+  dashboardUid?: string;
+  styles: ReturnType<typeof getStyles>;
+}) {
+  const enhancementsEnabled = Boolean(config.featureToggles.alertingAlertListPanelEnhancements);
+
+  const displayValue = enhancementsEnabled
+    ? getStatDisplayValue(
+        rules.length,
+        options.statColorMode ?? BigValueColorMode.None,
+        options.statThresholds ?? STAT_THRESHOLDS_DEFAULT,
+        options.statValueMappings ?? [],
+        config.theme2
+      )
+    : { text: `${rules.length}`, numeric: rules.length };
+
+  const colorMode = enhancementsEnabled ? (options.statColorMode ?? BigValueColorMode.None) : BigValueColorMode.None;
+
+  const bigValue = (
+    <BigValue
+      colorMode={colorMode}
+      width={width}
+      height={height}
+      graphMode={BigValueGraphMode.None}
+      textMode={BigValueTextMode.Auto}
+      justifyMode={BigValueJustifyMode.Auto}
+      theme={config.theme2}
+      value={displayValue}
+    />
+  );
+
+  if (enhancementsEnabled) {
+    const href = buildAlertingListUrl(options, dashboardUid);
+    return (
+      <Link href={href} className={styles.statLink}>
+        {bigValue}
+      </Link>
+    );
+  }
+
+  return bigValue;
 }
 
 function sortRules(sortOrder: SortOrder, rules: CombinedRuleWithLocation[]) {
@@ -460,6 +522,15 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   }),
   hidden: css({
     display: 'none',
+  }),
+  statLink: css({
+    display: 'block',
+    width: '100%',
+    height: '100%',
+    textDecoration: 'none',
+    '&:hover': {
+      textDecoration: 'none',
+    },
   }),
 });
 

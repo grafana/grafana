@@ -1,9 +1,9 @@
-import { BuildInfo } from '@grafana/data';
+import { type BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
-import { Faro, Instrumentation } from '@grafana/faro-core';
+import { type Faro, type Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import {
-  BrowserConfig,
+  type BrowserConfig,
   FetchTransport,
   SessionInstrumentation,
   UserActionInstrumentation,
@@ -16,7 +16,7 @@ import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { GrafanaJavascriptAgentBackend, TRACKING_URLS } from './GrafanaJavascriptAgentBackend';
-import { GrafanaJavascriptAgentBackendOptions } from './types';
+import { type GrafanaJavascriptAgentBackendOptions } from './types';
 
 describe('GrafanaJavascriptAgentEchoBackend', () => {
   let mockedSetUser: jest.Mock;

@@ -1,23 +1,22 @@
 import {
   AppEvents,
-  DataFrame,
+  type DataFrame,
   FieldType,
   getDefaultTimeRange,
   getPanelDataSummary,
   LoadingState,
-  PanelData,
-  PanelPluginVisualizationSuggestion,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
   PluginType,
   toDataFrame,
   VisualizationSuggestionScore,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
+import { getListedPanelPluginMetas, type PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   BarGaugeDisplayMode,
   BigValueColorMode,
-  GraphFieldConfig,
-  ReduceDataOptions,
+  type GraphFieldConfig,
+  type ReduceDataOptions,
   StackingMode,
   VizOrientation,
 } from '@grafana/schema';
@@ -25,8 +24,28 @@ import { appEvents } from 'app/core/app_events';
 import { clearPanelPluginCache } from 'app/features/plugins/importPanelPlugin';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 
-import { panelsToCheckFirst } from './consts';
 import { getAllSuggestions, loadPlugins, sortSuggestions } from './getAllSuggestions';
+
+const PANELS_TO_TEST = [
+  'timeseries',
+  'barchart',
+  'gauge',
+  'stat',
+  'piechart',
+  'bargauge',
+  'table',
+  'state-timeline',
+  'status-history',
+  'logs',
+  'candlestick',
+  'flamegraph',
+  'traces',
+  'nodeGraph',
+  'heatmap',
+  'histogram',
+  'text',
+] as const;
+const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart'];
 
 jest.mock('app/core/app_events', () => ({
   appEvents: {
@@ -35,7 +54,12 @@ jest.mock('app/core/app_events', () => ({
   },
 }));
 
-config.featureToggles.externalVizSuggestions = true;
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getListedPanelPluginMetas: jest.fn(),
+}));
+
+const getListedPanelPluginMetasMock = jest.mocked(getListedPanelPluginMetas);
 
 let idx = 0;
 
@@ -64,24 +88,11 @@ function getPanelPluginMeta(pluginId: string) {
 
 function getPanelPlugins() {
   const plugins = [];
-  for (const pluginId of panelsToCheckFirst) {
-    if (pluginId === 'geomap') {
-      continue;
-    }
+  for (const pluginId of PANELS_TO_TEST) {
     plugins.push(getPanelPluginMeta(pluginId));
   }
   return plugins;
 }
-
-jest.mock('../state/util', () => {
-  const originalModule = jest.requireActual('../state/util');
-  return {
-    ...originalModule,
-    getAllPanelPluginMeta: jest.fn().mockImplementation(() => getPanelPlugins()),
-  };
-});
-
-const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart'];
 
 class ScenarioContext {
   data: DataFrame[] = [];
@@ -93,6 +104,7 @@ class ScenarioContext {
     beforeAll(async () => {
       const metas = getPanelPlugins().reduce((acc, curr) => ({ ...acc, [curr.id]: curr }), {} as PanelPluginMetas);
       setPanelPluginMetas(metas);
+      getListedPanelPluginMetasMock.mockResolvedValue(getPanelPlugins());
       await this.run();
     });
   }
@@ -159,7 +171,6 @@ scenario('Single frame with time and number field', (ctx) => {
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
       expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
-      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart' }),
       expect.objectContaining({ pluginId: 'gauge' }),
@@ -216,7 +227,6 @@ scenario('Single frame with time 2 number fields', (ctx) => {
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
       expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
-      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked by percentage' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart - stacked' }),

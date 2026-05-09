@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -18,8 +19,10 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
-	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	gutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -27,15 +30,7 @@ import (
 )
 
 var (
-	_ rest.Scoper               = (*DashboardStarsStorage)(nil)
-	_ rest.SingularNameProvider = (*DashboardStarsStorage)(nil)
-	_ rest.Getter               = (*DashboardStarsStorage)(nil)
-	_ rest.Lister               = (*DashboardStarsStorage)(nil)
-	_ rest.Storage              = (*DashboardStarsStorage)(nil)
-	_ rest.Creater              = (*DashboardStarsStorage)(nil)
-	_ rest.Updater              = (*DashboardStarsStorage)(nil)
-	_ rest.GracefulDeleter      = (*DashboardStarsStorage)(nil)
-	_ rest.CollectionDeleter    = (*DashboardStarsStorage)(nil)
+	_ grafanarest.Storage = (*DashboardStarsStorage)(nil)
 )
 
 func NewDashboardStarsStorage(
@@ -291,18 +286,21 @@ func (s *DashboardStarsStorage) Delete(ctx context.Context, name string, deleteV
 	return obj, true, err
 }
 
-// DeleteCollection implements rest.CollectionDeleter.
-func (s *DashboardStarsStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("not implemented yet")
-}
-
 func asStarsResource(ns string, v *dashboardStars) collections.Stars {
+	slices.Sort(v.Dashboards) // ensure names are in sorted order
 	stars := collections.Stars{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: collections.APIGroup + "/" + collections.APIVersion,
+			Kind:       collections.StarsKind().Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              fmt.Sprintf("user-%s", v.UserUID),
 			Namespace:         ns,
 			ResourceVersion:   strconv.FormatInt(v.Last, 10),
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.First)),
+			Annotations: map[string]string{
+				gutils.AnnoKeyCreatedBy: fmt.Sprintf("user:%s", v.UserUID),
+			},
 		},
 		Spec: collections.StarsSpec{
 			Resource: []collections.StarsResource{{
@@ -313,5 +311,9 @@ func asStarsResource(ns string, v *dashboardStars) collections.Stars {
 		},
 	}
 	stars.Spec.Normalize()
+	if v.Last > v.First {
+		m, _ := gutils.MetaAccessor(&stars)
+		m.SetUpdatedTimestampMillis(v.Last)
+	}
 	return stars
 }

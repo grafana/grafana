@@ -27,6 +27,7 @@ var (
 
 var appManifestData = app.ManifestData{
 	AppName:          "alerting-historian",
+	AppDisplayName:   "alerting-historian",
 	Group:            "historian.alerting.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
@@ -106,6 +107,58 @@ var appManifestData = app.ManifestData{
 																		Description: "From is the starting timestamp for the query.",
 																	},
 																},
+																"groupBy": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"object"},
+																		Description: "GroupBy specifies how to aggregate counts queries.",
+																		Properties: map[string]spec.Schema{
+																			"error": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"integration": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"integrationIndex": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"outcome": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"receiver": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"ruleUID": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"status": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"receiver",
+																			"integration",
+																			"integrationIndex",
+																			"status",
+																			"outcome",
+																			"error",
+																			"ruleUID",
+																		},
+																	},
+																},
 																"groupLabels": {
 																	SchemaProps: spec.SchemaProps{
 
@@ -152,11 +205,28 @@ var appManifestData = app.ManifestData{
 																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationStatus"),
 																	},
 																},
+																"step": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"integer"},
+																		Description: "Step is the step interval in seconds for range_counts queries.",
+																	},
+																},
 																"to": {
 																	SchemaProps: spec.SchemaProps{
 																		Type:        []string{"string"},
 																		Format:      "date-time",
 																		Description: "To is the starting timestamp for the query.",
+																	},
+																},
+																"type": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Description: "Type of query to perform (default: entries)",
+																		Enum: []interface{}{
+																			"entries",
+																			"counts",
+																			"range_counts",
+																		},
 																	},
 																},
 															},
@@ -176,6 +246,18 @@ var appManifestData = app.ManifestData{
 																SchemaProps: spec.SchemaProps{
 																	Type: []string{"object"},
 																	Properties: map[string]spec.Schema{
+																		"counts": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationCount"),
+																						}},
+																				},
+																			},
+																		},
 																		"entries": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"array"},
@@ -191,6 +273,91 @@ var appManifestData = app.ManifestData{
 																	},
 																	Required: []string{
 																		"entries",
+																		"counts",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
+					"/notifications/queryalerts": {
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "createNotificationsqueryalerts",
+
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
+
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"from": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Format:      "date-time",
+																		Description: "From is the starting timestamp for the query.",
+																	},
+																},
+																"limit": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"integer"},
+																		Description: "Limit is the maximum number of entries to return.",
+																	},
+																},
+																"to": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Format:      "date-time",
+																		Description: "To is the ending timestamp for the query.",
+																	},
+																},
+																"uuid": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Description: "UUID filters the alerts to those belonging to a specific alert rule.",
+																	},
+																},
+															},
+														}},
+												}},
+										},
+									}},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"alerts": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationsqueryalertsNotificationEntryAlert"),
+																						}},
+																				},
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"alerts",
 																	},
 																}},
 														}},
@@ -249,14 +416,87 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
+					"createNotificationqueryNotificationCount": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"count": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Count is the number of notification attempts in the time period. Set for counts queries.",
+									},
+								},
+								"error": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"integration": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"integrationIndex": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"outcome": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationOutcome"),
+									},
+								},
+								"receiver": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"ruleUID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"status": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationStatus"),
+									},
+								},
+								"values": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationRangeValue"),
+												}},
+										},
+									},
+								},
+							},
+							Required: []string{
+								"count",
+								"values",
+							},
+						},
+					},
 					"createNotificationqueryNotificationEntry": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
+								"alertCount": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "AlertCount is the total number of alerts included in the notification.",
+									},
+								},
 								"alerts": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"array"},
-										Description: "Alerts are the alerts grouped into the notification.",
+										Description: "Alerts are the alerts grouped into the notification. Deprecated: not populated, will be removed.",
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
@@ -297,6 +537,18 @@ var appManifestData = app.ManifestData{
 										},
 									},
 								},
+								"integration": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Integration is the integration (contact point type) name.",
+									},
+								},
+								"integrationIndex": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "IntegrationIndex is the index of the integration within the receiver.",
+									},
+								},
 								"outcome": {
 									SchemaProps: spec.SchemaProps{
 
@@ -323,6 +575,18 @@ var appManifestData = app.ManifestData{
 										Description: "Retry indicates if the attempt was a retried attempt.",
 									},
 								},
+								"ruleUIDs": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "RuleUIDs are the unique identifiers of the alert rules included in the notification.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
 								"status": {
 									SchemaProps: spec.SchemaProps{
 
@@ -337,13 +601,24 @@ var appManifestData = app.ManifestData{
 										Description: "Timestamp is the time at which the notification attempt completed.",
 									},
 								},
+								"uuid": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Uuid is a unique identifier for the notification attempt.",
+									},
+								},
 							},
 							Required: []string{
 								"timestamp",
+								"uuid",
 								"receiver",
+								"integration",
+								"integrationIndex",
 								"status",
 								"outcome",
 								"groupLabels",
+								"ruleUIDs",
+								"alertCount",
 								"alerts",
 								"retry",
 								"duration",
@@ -426,12 +701,101 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
+					"createNotificationqueryNotificationRangeValue": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "NotificationRangeValue is a single (timestamp, count) data point in a range count series.",
+							Properties: map[string]spec.Schema{
+								"count": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Count is the number of notification attempts at this point in time.",
+									},
+								},
+								"timestamp": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Timestamp is the Unix epoch in seconds for this data point.",
+									},
+								},
+							},
+							Required: []string{
+								"timestamp",
+								"count",
+							},
+						},
+					},
 					"createNotificationqueryNotificationStatus": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"string"},
 							Enum: []interface{}{
 								"firing",
 								"resolved",
+							},
+						},
+					},
+					"createNotificationsqueryalertsNotificationEntryAlert": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"annotations": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"endsAt": {
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "date-time",
+									},
+								},
+								"enrichments": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{},
+											},
+										},
+									},
+								},
+								"labels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"startsAt": {
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "date-time",
+									},
+								},
+								"status": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"status",
+								"labels",
+								"annotations",
+								"startsAt",
+								"endsAt",
 							},
 						},
 					},
@@ -461,8 +825,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/alertstate/history|GET":  v0alpha1.GetAlertstatehistoryResponse{},
-	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationqueryResponse{},
+	"v0alpha1||<namespace>/alertstate/history|GET":         v0alpha1.GetAlertstatehistoryResponse{},
+	"v0alpha1||<namespace>/notification/query|POST":        v0alpha1.CreateNotificationqueryResponse{},
+	"v0alpha1||<namespace>/notifications/queryalerts|POST": v0alpha1.CreateNotificationsqueryalertsResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -488,7 +853,8 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
-	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationqueryRequestBody{},
+	"v0alpha1||<namespace>/notification/query|POST":        v0alpha1.CreateNotificationqueryRequestBody{},
+	"v0alpha1||<namespace>/notifications/queryalerts|POST": v0alpha1.CreateNotificationsqueryalertsRequestBody{},
 }
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {

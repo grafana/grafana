@@ -1,9 +1,9 @@
-import { DataSourceApi, parseDuration } from '@grafana/data';
+import { type DataSourceApi, parseDuration } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { generateId } from './SearchTraceQLEditor/TagsInput';
-import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
-import { TempoQuery } from './types';
+import { type TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
+import { type TempoQuery } from './types';
 
 const LIMIT_MESSAGE = /.*range specified by start and end.*exceeds.*/;
 const LIMIT_MESSAGE_METRICS = /.*metrics query time range exceeds the maximum allowed duration of.*/;

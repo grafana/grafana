@@ -1,7 +1,7 @@
 import { isNumber } from 'lodash';
 
 import { isDateTimeInput, dateTime } from '../datetime/moment_wrapper';
-import { Field, FieldType } from '../types/dataFrame';
+import { type Field, FieldType } from '../types/dataFrame';
 
 type IndexComparer = (a: number, b: number) => number;
 
