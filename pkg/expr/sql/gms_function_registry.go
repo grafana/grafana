@@ -5,6 +5,7 @@ package sql
 import (
 	"strings"
 
+	gmssql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/expression/function"
 )
 
@@ -20,21 +21,18 @@ var gmsBuiltinFunctions = func() map[string]struct{} {
 	return m
 }()
 
-// gmsExtraFunctions covers GMS functions that are registered outside of
-// function.BuiltIns and therefore absent from gmsBuiltinFunctions:
-//   - Locking functions come from function.GetLockingFuncs and are registered
-//     separately by the engine outside function.BuiltIns.
-//   - version() is registered separately by the engine outside function.BuiltIns.
-//
-// These names are finite and well-known, so they are safe as metric label values.
-var gmsExtraFunctions = map[string]struct{}{
-	"version":           {},
-	"get_lock":          {},
-	"is_free_lock":      {},
-	"is_used_lock":      {},
-	"release_lock":      {},
-	"release_all_locks": {},
-}
+// gmsExtraFunctions covers GMS functions that are registered separately by the
+// engine outside of function.BuiltIns. These names are finite and well-known, so
+// they are safe as metric label values.
+var gmsExtraFunctions = func() map[string]struct{} {
+	m := map[string]struct{}{
+		"version": {},
+	}
+	for _, fn := range function.GetLockingFuncs(gmssql.NewLockSubsystem()) {
+		m[strings.ToLower(fn.FunctionName())] = struct{}{}
+	}
+	return m
+}()
 
 // IsKnownEngineFunction reports whether name (case-insensitive) is a known
 // go-mysql-server function — either in its default built-in registry or in
