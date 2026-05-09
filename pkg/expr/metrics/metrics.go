@@ -73,7 +73,7 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 			Namespace: "grafana",
 			Subsystem: subsystem,
 			Name:      "sql_command_function_count",
-			Help:      "Number of SQL expression executions that include a call to a particular SQL function. The 'function' label is the lower-cased function name. The 'allowed' label is 'true' when the function is in the SQL expression allowlist and 'false' when it is not. Incremented once per unique function name per query execution, regardless of how many times the function appears in the query.",
+			Help:      "Number of SQL expression execution attempts that include a call to a particular SQL function. The 'function' label is the lower-cased function name. The 'allowed' label is 'true' when the function is in the SQL expression allowlist and 'false' when it is not. Incremented once per unique function name per query execution attempt, regardless of whether the query succeeded, was blocked by the allowlist, or errored.",
 		}, []string{"function", "allowed"}),
 	}
 }
