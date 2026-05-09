@@ -1159,6 +1159,9 @@
       "content-show-all-errors": "显示所有错误"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} 失败，状态为{{status}}：{{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10793,6 +10796,11 @@
     "name-line-width": "线宽度",
     "name-stacking": "堆叠"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "正在加载",
@@ -15929,7 +15937,9 @@
       "description": {
         "group-by-field-value": "按字段值对数据进行分组，并使用分组数据创建嵌套表。"
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "如果启用，嵌套表会将字段名称显示为表头",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "在嵌套表中显示字段名称",
       "name": {
         "group-to-nested-tables": "分组到嵌套表"
