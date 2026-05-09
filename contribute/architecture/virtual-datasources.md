@@ -65,7 +65,7 @@
 - Materialised views (caching is opt-in, on top of the same
   evaluation path).
 - Per-row column-level RBAC on VDS output.
-- Pushdown of AdHoc filters *into* upstream datasources (e.g.
+- Pushdown of AdHoc filters _into_ upstream datasources (e.g.
   rewriting BigQuery SQL to add a `WHERE`). The PoC applies AdHoc
   filters to the **output** of the VDS via a synthetic terminal
   `SELECT ... WHERE` node. Per-source pushdown can be added later
@@ -78,13 +78,13 @@
 
 ## 3. How it fits with existing systems
 
-| System | Today | After VDS |
-| --- | --- | --- |
-| Saved queries (`queryLibrary`) | Templates copied into consumers; no cascade. | Still exists; gains an action "Promote to Virtual Datasource". |
-| Library elements (panels) | Pre-existing "by reference" panel reuse. | VDS is the query-level analogue. |
-| `pkg/services/query/query.go` | Single entry point for `QueryData`. | Adds a VDS expansion step in `parseMetricRequest` (or a wrapper layer in `pkg/registry/apis/query`). |
-| Expressions (`__expr__`) | Sentinel UID; evaluator runs DAG of frame-level operations. | VDS reuses the expression engine at evaluation time but is *not* an expression itself — it is a real DS plugin from the consumer's POV. |
-| AdHoc filter API (`getTagKeys`/`getTagValues`, `applyTemplateVariables`) | Per-DS, brittle for composite queries. | VDS implements them off the declared schema. Filters arrive in the `QueryDataRequest` and are applied server-side as a final `WHERE`. |
+| System                                                                   | Today                                                       | After VDS                                                                                                                               |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Saved queries (`queryLibrary`)                                           | Templates copied into consumers; no cascade.                | Still exists; gains an action "Promote to Virtual Datasource".                                                                          |
+| Library elements (panels)                                                | Pre-existing "by reference" panel reuse.                    | VDS is the query-level analogue.                                                                                                        |
+| `pkg/services/query/query.go`                                            | Single entry point for `QueryData`.                         | Adds a VDS expansion step in `parseMetricRequest` (or a wrapper layer in `pkg/registry/apis/query`).                                    |
+| Expressions (`__expr__`)                                                 | Sentinel UID; evaluator runs DAG of frame-level operations. | VDS reuses the expression engine at evaluation time but is _not_ an expression itself — it is a real DS plugin from the consumer's POV. |
+| AdHoc filter API (`getTagKeys`/`getTagValues`, `applyTemplateVariables`) | Per-DS, brittle for composite queries.                      | VDS implements them off the declared schema. Filters arrive in the `QueryDataRequest` and are applied server-side as a final `WHERE`.   |
 
 ## 4. Architecture
 
@@ -155,7 +155,7 @@ A built-in (core, not a plugin workspace) datasource:
   ("values not yet supported"). Phase 2: it executes the VDS
   with a `SELECT DISTINCT field` injected.
 - `applyTemplateVariables()` is a no-op — filters travel as
-  `request.filters` into the request body and the *backend*
+  `request.filters` into the request body and the _backend_
   evaluator applies them. Documenting this is important.
 
 VDS instances surface in the datasource picker via:
@@ -171,10 +171,10 @@ VDS expansion has to happen on **two distinct codepaths**, because
 Grafana's interactive query path and its alerting eval path do not
 share an entry point:
 
-| Caller | Entry | Calls into |
-| --- | --- | --- |
-| Dashboard panel, Explore, the new MT querier (`/apis/query.grafana.app/...`) | `service.QueryData` | `pkg/services/query/query.go` `parseMetricRequest` → `handleExpressions` / `handleQuerySingleDatasource` / `executeConcurrentQueries` |
-| Alert rule eval, recording rules | `evaluatorImpl.evaluate` | `pkg/services/ngalert/eval/eval.go` `getExprRequest` → `expr.Service.BuildPipeline` / `ExecutePipeline` directly |
+| Caller                                                                       | Entry                    | Calls into                                                                                                                            |
+| ---------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard panel, Explore, the new MT querier (`/apis/query.grafana.app/...`) | `service.QueryData`      | `pkg/services/query/query.go` `parseMetricRequest` → `handleExpressions` / `handleQuerySingleDatasource` / `executeConcurrentQueries` |
+| Alert rule eval, recording rules                                             | `evaluatorImpl.evaluate` | `pkg/services/ngalert/eval/eval.go` `getExprRequest` → `expr.Service.BuildPipeline` / `ExecutePipeline` directly                      |
 
 We therefore add **two thin call sites** that delegate to a single
 **`virtualdatasource.Expander`** (`pkg/services/virtualdatasource/expand.go`):
@@ -184,8 +184,8 @@ We therefore add **two thin call sites** that delegate to a single
    `parseMetricRequest`). Returns the request with all VDS
    targets inlined; downstream code sees no VDS.
 2. **Alerting path** — call `Expander.ExpandAlertCondition(ctx,
-   condition models.Condition) (models.Condition, error)` from
-   `getExprRequest` *before* the loop that resolves
+condition models.Condition) (models.Condition, error)` from
+   `getExprRequest` _before_ the loop that resolves
    `q.DatasourceUID`. By the time `getExprRequest` walks
    `condition.Data`, no entry has a VDS UID, so the existing
    `expr.NodeTypeFromDatasourceUID` switch keeps working.
@@ -236,13 +236,13 @@ inner refIds we must rewrite **every** place those refIds appear,
 not only SQL `TablesList`. Inventory (verified in
 `pkg/expr/commands.go` and `pkg/expr/sql_command.go`):
 
-| Expression node | refId reference site | Rewriter |
-| --- | --- | --- |
-| `__expr__` SQL (`SQLCommand`) | Table names parsed via `pkg/expr/sql/parser.go` `TablesList`. | Reuse `TablesList` to find tables, then string-replace whole-token table names with prefixed refIds. Re-parse to confirm. |
-| `__expr__` math (`MathCommand`) | `Expression.VarNames` (`mathexp/parse`). The expression is `${A} + ${B}` style. | Walk `parse.Tree` and rewrite each `Var` node's name. Avoid blind string substitution — `$AA` is not `$A`. |
-| `__expr__` reduce / resample | String `expression` field that points at a single refId (`$`-stripped during `UnmarshalReduceCommand`). | Substitute the field value if it matches the unprefixed inner refId. |
-| `__expr__` threshold | `Conditions[*].Evaluator.Params` doesn't carry refIds. The dependency is in the surrounding query JSON's `expression`. | Same as reduce/resample. |
-| `__expr__` classic conditions | Each `Condition` references a query refId via the surrounding query JSON's `expression`. | Same as reduce/resample. |
+| Expression node                 | refId reference site                                                                                                   | Rewriter                                                                                                                  |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `__expr__` SQL (`SQLCommand`)   | Table names parsed via `pkg/expr/sql/parser.go` `TablesList`.                                                          | Reuse `TablesList` to find tables, then string-replace whole-token table names with prefixed refIds. Re-parse to confirm. |
+| `__expr__` math (`MathCommand`) | `Expression.VarNames` (`mathexp/parse`). The expression is `${A} + ${B}` style.                                        | Walk `parse.Tree` and rewrite each `Var` node's name. Avoid blind string substitution — `$AA` is not `$A`.                |
+| `__expr__` reduce / resample    | String `expression` field that points at a single refId (`$`-stripped during `UnmarshalReduceCommand`).                | Substitute the field value if it matches the unprefixed inner refId.                                                      |
+| `__expr__` threshold            | `Conditions[*].Evaluator.Params` doesn't carry refIds. The dependency is in the surrounding query JSON's `expression`. | Same as reduce/resample.                                                                                                  |
+| `__expr__` classic conditions   | Each `Condition` references a query refId via the surrounding query JSON's `expression`.                               | Same as reduce/resample.                                                                                                  |
 
 We will write `expand.RewriteRefIds(inner []DataQuery, prefix string) ([]DataQuery, error)` that handles all of the above and
 is unit-tested against fixture queries from
@@ -318,7 +318,7 @@ Notes:
   the inner queries; they are not stored on the VDS spec.
 - Recursion: a VDS may not reference another VDS (PoC). We detect
   this and return a 4xx.
-- Identity: the VDS expands using the *caller's* identity. There
+- Identity: the VDS expands using the _caller's_ identity. There
   is no "service account" mode in the PoC. (Same posture as
   expressions today.)
 
@@ -349,7 +349,7 @@ resolution call sites:
    pattern used by `expr.DataSourceModelFromNodeType` and
    `grafanads.DataSourceModel`.
 
-   In practice, the expander runs *before* `parseMetricRequest`
+   In practice, the expander runs _before_ `parseMetricRequest`
    so the synthetic DS code path is only a defence-in-depth
    fallback. We still want it: if a downstream consumer ever
    calls `getDataSourceFromQuery` on a request that wasn't
@@ -383,7 +383,7 @@ Constraints surfaced by review:
 1. **Cell limits.** `pkg/expr/sql_command.go` `NewSQLCommand`
    enforces query-length, input-cell, output-cell, and timeout
    limits from config. A `SELECT *` over a wide time-series
-   frame can exceed `inputLimit` *before* filtering. The PoC
+   frame can exceed `inputLimit` _before_ filtering. The PoC
    handles this by:
    - Rejecting AdHoc filters at expansion time when the VDS
      output is not declared as `tabular` in `spec.schema.shape`
@@ -517,16 +517,16 @@ expanded query/eval spans.
 User-facing errors use the standard `errutil` framework
 (`pkg/apimachinery/errutil`). Reason codes:
 
-| Code | HTTP | Meaning |
-| --- | --- | --- |
-| `vds.notFound` | 404 | VDS UID does not resolve |
-| `vds.cycle` | 400 | VDS-in-VDS detected |
-| `vds.invalidGraph` | 400 | Inner graph violates expression engine constraints (§4.3.2) |
-| `vds.adhoc.unknownColumn` | 400 | AdHoc filter targets a column not declared adHocFilter=true |
-| `vds.adhoc.disallowedShape` | 400 | AdHoc filter against non-tabular VDS |
-| `vds.adhoc.cellLimitExceeded` | 400 | SQL expression cell limits hit during AdHoc evaluation |
-| `vds.upstreamForbidden` | 403 | Caller lacks read on at least one upstream DS |
-| `vds.outputRefIdMissing` | 400 | `spec.outputRefId` not present in `spec.queries` |
+| Code                          | HTTP | Meaning                                                     |
+| ----------------------------- | ---- | ----------------------------------------------------------- |
+| `vds.notFound`                | 404  | VDS UID does not resolve                                    |
+| `vds.cycle`                   | 400  | VDS-in-VDS detected                                         |
+| `vds.invalidGraph`            | 400  | Inner graph violates expression engine constraints (§4.3.2) |
+| `vds.adhoc.unknownColumn`     | 400  | AdHoc filter targets a column not declared adHocFilter=true |
+| `vds.adhoc.disallowedShape`   | 400  | AdHoc filter against non-tabular VDS                        |
+| `vds.adhoc.cellLimitExceeded` | 400  | SQL expression cell limits hit during AdHoc evaluation      |
+| `vds.upstreamForbidden`       | 403  | Caller lacks read on at least one upstream DS               |
+| `vds.outputRefIdMissing`      | 400  | `spec.outputRefId` not present in `spec.queries`            |
 
 Inner refIds are surfaced in panel inspect under a `vds.inner`
 group (frame metadata) so debugging is possible without
@@ -584,7 +584,7 @@ reverse-engineering the prefix scheme.
 Out of scope for PoC, but the design is forward-compatible:
 
 - Cache key: `vdsUID + vdsResourceVersion + from + to + intervalMs +
-  scopedVars + filters`.
+scopedVars + filters`.
 - Backed by the existing `querycaching` app (`pkg/registry/apps/querycaching`).
 - We mark VDS-expanded queries with a header so the cache layer
   can short-circuit the post-expansion graph.
@@ -644,7 +644,7 @@ deletes a VDS via the Resource API.
 8. **Alerting call site:** `getExprRequest` in
    `pkg/services/ngalert/eval/eval.go` — call
    `ExpandAlertCondition` before the `condition.Data` loop,
-   gated on `virtualDatasources` *and* a separate
+   gated on `virtualDatasources` _and_ a separate
    `virtualDatasourcesInAlerts` toggle (so we can ship
    interactive support before alerting if the eval review takes
    longer).
@@ -886,7 +886,7 @@ for the PoC; reviewers please push back if any of them are wrong.
      querier): VDS evaluates with the **caller's** identity.
      Same posture as expressions today.
    - **Alert / recording rule eval**: rule's identity is checked
-     for read on every upstream DS *at rule save time* and
+     for read on every upstream DS _at rule save time_ and
      re-checked at eval time. Eval logs `vds.eval.identity` and
      `vds.eval.upstream_ds`.
    - A "VDS-owner / service-account" mode is a follow-up.
