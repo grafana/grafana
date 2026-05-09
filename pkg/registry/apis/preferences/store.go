@@ -29,8 +29,11 @@ func (s *preferencesStorage) List(ctx context.Context, options *internalversion.
 	return s.ListPreferences(ctx, options)
 }
 
-// [TODO] this should have a test to assert that they're returned in the correct order (user, teams, namespace(org))
-// merged needs this in the right order so inheritance works correctly or just test in merged?
+// ListPreferences wraps a regular storage object and populates the results with:
+// 1. user preferences (if they exist)
+// 2. team preferences (if they exist) for the first 25 groups sorted by UID
+// 3. namespace (org) preferences (if they exist)
+// The preferences/merged call will merge these all into a single object keeping the first property defined
 func (s *preferencesStorage) ListPreferences(ctx context.Context, options *internalversion.ListOptions) (*preferences.PreferencesList, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -54,7 +57,6 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 	}
 
 	groups := user.GetGroups()
-	slices.Sort(groups) // fixed order (yes, different than internal ID order)
 
 	result := &preferences.PreferencesList{
 		Items: make([]preferences.Preferences, 0, len(groups)+2),
@@ -116,8 +118,8 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 		return nil, err
 	}
 
-	// [todo] Is it possible to match the existing sql implementation sort (of numerical team ID?)
-	// if not, should we change it to something else more... intuitive?
+	// predictable order
+	slices.Sort(groups)
 	for i, group := range groups {
 		if i >= 25 {
 			break // only process the fist 25 -- to keep it bounded
