@@ -19,6 +19,7 @@ import { pluginImporter } from '../importer/pluginImporter';
 import { getPluginSettings } from '../pluginSettings';
 
 import AppRootPage from './AppRootPage';
+import { pluginNavFallbacks } from './pluginNavFallbacks';
 
 jest.mock('../pluginSettings', () => ({
   getPluginSettings: jest.fn(),
@@ -151,6 +152,24 @@ describe('AppRootPage', () => {
     // Renders once for the first time
     renderUnderRouter();
     expect(await screen.findByText('App not found')).toBeVisible();
+  });
+
+  it('renders a registered nav fallback component when a known plugin fails to load', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    getPluginSettingsMock.mockRejectedValue(new Error('Unknown Plugin'));
+
+    // Inject a fallback for the pluginId the renderUnderRouter helper uses, then restore.
+    const FALLBACK_TEXT = 'fallback-onboarding-page';
+    const Fallback = () => <div>{FALLBACK_TEXT}</div>;
+    pluginNavFallbacks['my-awesome-plugin'] = Fallback;
+
+    try {
+      renderUnderRouter();
+      expect(await screen.findByText(FALLBACK_TEXT)).toBeVisible();
+      expect(screen.queryByText('App not found')).not.toBeInTheDocument();
+    } finally {
+      delete pluginNavFallbacks['my-awesome-plugin'];
+    }
   });
 
   it('should not render the component if we are not under a plugin path', async () => {

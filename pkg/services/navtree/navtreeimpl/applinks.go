@@ -63,6 +63,21 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		}
 	}
 
+	// When the assistant app plugin isn't installed/enabled, surface an Assistant nav entry pointing at the
+	// plugin's own URL so the navtree never has to mutate when the plugin's installation state changes. The
+	// AppRootPage at /a/grafana-assistant-app falls back to a core onboarding page when the plugin isn't loaded.
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAssistantStubNav) &&
+		enabledAccessibleAppPluginMap["grafana-assistant-app"] == nil {
+		appLinks = append(appLinks, &navtree.NavLink{
+			Text:       "Assistant",
+			Id:         navtree.NavIDAssistant,
+			SubTitle:   "AI-powered assistant for Grafana",
+			Icon:       "ai-sparkle",
+			SortWeight: navtree.WeightAssistant,
+			Url:        s.cfg.AppSubURL + "/a/grafana-assistant-app",
+		})
+	}
+
 	if len(appLinks) > 0 {
 		sort.SliceStable(appLinks, func(i, j int) bool {
 			return appLinks[i].Text < appLinks[j].Text

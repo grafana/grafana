@@ -1,6 +1,6 @@
 // Libraries
 import { type AnyAction, createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useReducer } from 'react';
 import * as React from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
@@ -40,6 +40,7 @@ import { buildPluginSectionNav } from '../utils';
 
 import { PluginErrorBoundary } from './PluginErrorBoundary';
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
+import { pluginNavFallbacks } from './pluginNavFallbacks';
 import { RestrictedGrafanaApisProvider } from './restrictedGrafanaApis/RestrictedGrafanaApisProvider';
 
 interface Props {
@@ -88,10 +89,16 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   if (!plugin || pluginId !== plugin.meta.id) {
     // Use current layout while loading to reduce flickering
     const currentLayout = grafanaContext.chrome.state.getValue().layout;
+    const FallbackComponent = !loading && loadingError ? pluginNavFallbacks[pluginId] : undefined;
     return (
       <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
         {loading && <PageLoader />}
-        {!loading && loadingError && <EntityNotFound entity="App" />}
+        {!loading && loadingError && FallbackComponent && (
+          <Suspense fallback={<PageLoader />}>
+            <FallbackComponent />
+          </Suspense>
+        )}
+        {!loading && loadingError && !FallbackComponent && <EntityNotFound entity="App" />}
       </Page>
     );
   }

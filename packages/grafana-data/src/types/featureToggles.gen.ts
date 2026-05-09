@@ -930,6 +930,11 @@ export interface FeatureToggles {
   */
   grafanaAdvisor?: boolean;
   /**
+  * Show a Grafana Assistant entry in the main nav with an onboarding stub when the assistant app plugin is not installed.
+  * @default false
+  */
+  assistantStubNav?: boolean;
+  /**
   * Enables less memory intensive Elasticsearch result parsing
   * @default false
   */

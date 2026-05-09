@@ -376,6 +376,83 @@ func TestAddAppLinks(t *testing.T) {
 	})
 }
 
+func TestAssistantStubNav(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	permissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+	}
+
+	assistantPlugin := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-assistant-app",
+			Name: "Grafana Assistant",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Workspace", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
+			},
+		},
+	}
+
+	newService := func(togglesOn bool, plugins ...pluginstore.Plugin) *ServiceImpl {
+		settings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{}}
+		for _, p := range plugins {
+			settings.Plugins[p.ID] = &pluginsettings.DTO{ID: 0, OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
+		}
+
+		var features featuremgmt.FeatureToggles
+		if togglesOn {
+			features = featuremgmt.WithFeatures(featuremgmt.FlagAssistantStubNav)
+		} else {
+			features = featuremgmt.WithFeatures()
+		}
+
+		s := &ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &settings,
+			features:       features,
+			pluginStore:    &pluginstore.FakePluginStore{PluginList: plugins},
+		}
+		s.readNavigationSettings()
+		return s
+	}
+
+	t.Run("stub appears with the plugin's URL when toggle is on and the plugin is not installed", func(t *testing.T) {
+		service := newService(true)
+		treeRoot := navtree.NavTreeRoot{}
+
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		stub := treeRoot.FindById(navtree.NavIDAssistant)
+		require.NotNil(t, stub, "expected an assistant stub nav node")
+		require.Equal(t, "Assistant", stub.Text)
+		require.Equal(t, "/a/grafana-assistant-app", stub.Url, "stub must point at the plugin's canonical URL so the navtree never has to mutate when install state changes")
+		require.Equal(t, "ai-sparkle", stub.Icon)
+		require.Empty(t, stub.PluginID, "stub should not advertise a plugin id")
+	})
+
+	t.Run("stub is suppressed when the plugin is installed and enabled", func(t *testing.T) {
+		service := newService(true, assistantPlugin)
+		treeRoot := navtree.NavTreeRoot{}
+
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDAssistant), "stub should not be added when plugin is enabled")
+		require.NotNil(t, treeRoot.FindById("plugin-page-grafana-assistant-app"), "real plugin nav should be present")
+	})
+
+	t.Run("stub does not appear when toggle is off", func(t *testing.T) {
+		service := newService(false)
+		treeRoot := navtree.NavTreeRoot{}
+
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDAssistant))
+	})
+}
+
 func TestBuildDataConnectionsNavLink(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}

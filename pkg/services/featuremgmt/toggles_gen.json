@@ -1117,6 +1117,19 @@
     },
     {
       "metadata": {
+        "name": "assistantStubNav",
+        "resourceVersion": "1778345328029",
+        "creationTimestamp": "2026-05-09T16:48:48Z"
+      },
+      "spec": {
+        "description": "Show a Grafana Assistant entry in the main nav with an onboarding stub when the assistant app plugin is not installed.",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "auditLoggingAppPlatform",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-12-29T15:28:29Z"
