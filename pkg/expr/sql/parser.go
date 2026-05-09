@@ -34,9 +34,8 @@ func ExtractFunctionNames(rawSQL string) ([]string, error) {
 			// ExtractFuncExpr.Name is the token string, e.g. "EXTRACT" — normalise it.
 			seen[strings.ToLower(v.Name)] = struct{}{}
 		case *sqlparser.TimestampFuncExpr:
-			// TimestampFuncExpr.Name is already lower-case, e.g. "timestampdiff".
 			if v.Name != "" {
-				seen[v.Name] = struct{}{}
+				seen[strings.ToLower(v.Name)] = struct{}{}
 			}
 		case *sqlparser.TrimExpr:
 			seen["trim"] = struct{}{}
