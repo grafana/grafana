@@ -35,6 +35,11 @@ func (b *DataSourceAPIBuilder) getInstanceSettings(ctx context.Context, name str
 		ts = ptr.To(obj.GetCreationTimestamp().Time)
 	}
 
+	gvk := obj.GetGroupVersionKind()
+	if gvk.Version == "" {
+		gvk.Version = datasourceV0.VERSION
+	}
+
 	settings := &backend.DataSourceInstanceSettings{
 		UID:              ds.Name,
 		Type:             b.pluginJSON.ID,
@@ -46,7 +51,7 @@ func (b *DataSourceAPIBuilder) getInstanceSettings(ctx context.Context, name str
 		BasicAuthEnabled: ds.Spec.BasicAuth(),
 		BasicAuthUser:    ds.Spec.BasicAuthUser(),
 		Updated:          *ts,
-		APIVersion:       datasourceV0.VERSION,
+		APIVersion:       gvk.Version,
 	}
 
 	settings.JSONData, err = json.Marshal(ds.Spec.JSONData())

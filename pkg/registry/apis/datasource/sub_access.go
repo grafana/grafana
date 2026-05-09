@@ -15,6 +15,7 @@ import (
 
 type subAccessREST struct {
 	builder *DataSourceAPIBuilder
+	getter  rest.Getter
 }
 
 var _ = rest.Connecter(&subAccessREST{})
