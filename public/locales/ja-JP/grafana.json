@@ -1159,6 +1159,9 @@
       "content-show-all-errors": "すべてのエラーを表示"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{status}}により{{-config}}が失敗しました：{{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10793,6 +10796,11 @@
     "name-line-width": "線の太さ",
     "name-stacking": "積み上げ"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "読込中",
@@ -15929,7 +15937,9 @@
       "description": {
         "group-by-field-value": "フィールド値でデータをグループ化し、グループ化されたデータでネストされたテーブルを作成します。"
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "有効にすると、入れ子になったテーブルではフィールド名がテーブルヘッダーとして表示されます",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "ネストされたテーブルにフィールド名を表示",
       "name": {
         "group-to-nested-tables": "ネストされたテーブルとしてグループ化"

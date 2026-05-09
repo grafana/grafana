@@ -65,7 +65,7 @@ func (s *TeamMembersREST) ProducesObject(verb string) interface{} {
 func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//nolint:staticcheck // not migrated to OpenFeature
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsApi) {
 			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
 				name, errors.New("functionality not available")))
 			return

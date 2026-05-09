@@ -1,6 +1,8 @@
 package merge
 
 import (
+	"context"
+	_ "embed"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -15,98 +17,88 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-func TestMergeOpts_Validate(t *testing.T) {
+func TestValidateSubtreeMatchers(t *testing.T) {
 	testCases := []struct {
 		name        string
-		opts        MergeOpts
+		matchers    config.Matchers
 		expectedErr error
 	}{
 		{
-			name: "no error if subtree matchers are empty",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{},
-			},
+			name:     "no error if subtree matchers are empty",
+			matchers: config.Matchers{},
 		},
 		{
 			name: "error if subtree matchers are not equal",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{
-					{
-						Type:  labels.MatchNotEqual,
-						Name:  "label",
-						Value: "test",
-					},
+			matchers: config.Matchers{
+				{
+					Type:  labels.MatchNotEqual,
+					Name:  "label",
+					Value: "test",
 				},
 			},
 			expectedErr: ErrInvalidMatchers,
 		},
 		{
 			name: "error if subtree matchers are regex",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{
-					{
-						Type:  labels.MatchRegexp,
-						Name:  "label",
-						Value: "test",
-					},
+			matchers: config.Matchers{
+				{
+					Type:  labels.MatchRegexp,
+					Name:  "label",
+					Value: "test",
 				},
 			},
 			expectedErr: ErrInvalidMatchers,
 		},
 		{
 			name: "error if subtree matchers are not-regex",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{
-					{
-						Type:  labels.MatchNotRegexp,
-						Name:  "label",
-						Value: "test",
-					},
+			matchers: config.Matchers{
+				{
+					Type:  labels.MatchNotRegexp,
+					Name:  "label",
+					Value: "test",
 				},
 			},
 			expectedErr: ErrInvalidMatchers,
 		},
 		{
 			name: "error if duplicates",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{
-					{
-						Type:  labels.MatchEqual,
-						Name:  "label",
-						Value: "test",
-					},
-					{
-						Type:  labels.MatchEqual,
-						Name:  "label",
-						Value: "test",
-					},
+			matchers: config.Matchers{
+				{
+					Type:  labels.MatchEqual,
+					Name:  "label",
+					Value: "test",
+				},
+				{
+					Type:  labels.MatchEqual,
+					Name:  "label",
+					Value: "test",
 				},
 			},
 			expectedErr: ErrDuplicateMatchers,
 		},
 		{
 			name: "valid if no duplicates and only equal matchers",
-			opts: MergeOpts{
-				SubtreeMatchers: config.Matchers{
-					{
-						Type:  labels.MatchEqual,
-						Name:  "al",
-						Value: "test",
-					},
-					{
-						Type:  labels.MatchEqual,
-						Name:  "bl",
-						Value: "test",
-					},
+			matchers: config.Matchers{
+				{
+					Type:  labels.MatchEqual,
+					Name:  "al",
+					Value: "test",
+				},
+				{
+					Type:  labels.MatchEqual,
+					Name:  "bl",
+					Value: "test",
 				},
 			},
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual := tc.opts.Validate()
+			actual := ValidateSubtreeMatchers(tc.matchers)
 			if tc.expectedErr != nil {
 				assert.ErrorIs(t, actual, tc.expectedErr)
 				return
@@ -114,295 +106,6 @@ func TestMergeOpts_Validate(t *testing.T) {
 			assert.NoError(t, actual)
 		})
 	}
-}
-
-func TestMerge(t *testing.T) {
-	opts := MergeOpts{
-		DedupSuffix: "_mimir-12345",
-		SubtreeMatchers: config.Matchers{
-			{
-				Type:  labels.MatchEqual,
-				Name:  "__datasource_uid__",
-				Value: "12345",
-			},
-			{
-				Type:  labels.MatchEqual,
-				Name:  "__mimir__",
-				Value: "true",
-			},
-		},
-	}
-
-	testCases := []struct {
-		name        string
-		grafana     *definition.PostableApiAlertingConfig
-		mimir       *definition.PostableApiAlertingConfig
-		expected    MergeResult
-		expectedErr error
-	}{
-		{
-			name:    "should merge all resources, no renames",
-			grafana: load(t, fullGrafanaConfig),
-			mimir:   load(t, fullMimirConfig),
-			expected: MergeResult{
-				Config: *load(t, fullMergedConfig),
-			},
-		},
-		{
-			name:    "should populate intervals by defaults",
-			grafana: load(t, fullGrafanaConfig),
-			mimir: load(t, fullMimirConfig, func(p *definition.PostableApiAlertingConfig) {
-				p.Route.GroupWait = nil
-				p.Route.GroupInterval = nil
-				p.Route.RepeatInterval = nil
-			}),
-			expected: MergeResult{
-				Config: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
-					gw := model.Duration(dispatch.DefaultRouteOpts.GroupWait)
-					gi := model.Duration(dispatch.DefaultRouteOpts.GroupInterval)
-					ri := model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)
-					p.Route.Routes[0].GroupWait = &gw
-					p.Route.Routes[0].GroupInterval = &gi
-					p.Route.Routes[0].RepeatInterval = &ri
-				}),
-			},
-		},
-		{
-			name:    "should rename receivers and refactor usages",
-			grafana: load(t, fullGrafanaConfig),
-			mimir: load(t, fullMimirConfig, func(p *definition.PostableApiAlertingConfig) {
-				p.Receivers = append(p.Receivers, &definition.PostableApiReceiver{
-					Receiver: definition.Receiver{
-						Name: "grafana-default-email",
-					},
-				})
-				p.Route.Routes = append(p.Route.Routes, &definition.Route{
-					Receiver: "grafana-default-email",
-					Matchers: config.Matchers{
-						{
-							Type:  labels.MatchEqual,
-							Name:  "label",
-							Value: "test",
-						},
-					},
-				})
-			}),
-			expected: MergeResult{
-				Config: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
-					p.Route.Routes[0].Routes = append(p.Route.Routes[0].Routes, &definition.Route{
-						Receiver: "grafana-default-email_mimir-12345",
-						Matchers: config.Matchers{
-							{
-								Type:  labels.MatchEqual,
-								Name:  "label",
-								Value: "test",
-							},
-						},
-					})
-					p.Receivers = append(p.Receivers, &definition.PostableApiReceiver{
-						Receiver: definition.Receiver{
-							Name: "grafana-default-email_mimir-12345",
-						},
-					})
-				}),
-				RenameResources: RenameResources{
-					Receivers: map[string]string{
-						"grafana-default-email": "grafana-default-email_mimir-12345",
-					},
-				},
-			},
-		},
-		{
-			name: "should append index suffix if rename still collides",
-			grafana: load(t, fullGrafanaConfig, func(p *definition.PostableApiAlertingConfig) {
-				p.Receivers = append(p.Receivers, &definition.PostableApiReceiver{
-					Receiver: definition.Receiver{
-						Name: "grafana-default-email_mimir-12345",
-					},
-				})
-			}),
-			mimir: load(t, fullMimirConfig, func(p *definition.PostableApiAlertingConfig) {
-				p.Receivers = append(p.Receivers, &definition.PostableApiReceiver{
-					Receiver: definition.Receiver{
-						Name: "grafana-default-email",
-					},
-				})
-			}),
-			expected: MergeResult{
-				Config: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
-					p.Receivers = append(p.Receivers,
-						&definition.PostableApiReceiver{
-							Receiver: definition.Receiver{
-								Name: "grafana-default-email_mimir-12345",
-							},
-						},
-						&definition.PostableApiReceiver{
-							Receiver: definition.Receiver{
-								Name: "grafana-default-email_mimir-12345_01",
-							},
-						},
-					)
-				}),
-				RenameResources: RenameResources{
-					Receivers: map[string]string{
-						"grafana-default-email": "grafana-default-email_mimir-12345_01",
-					},
-				},
-			},
-		},
-		{
-			name:    "should rename time intervals and refactor usages",
-			grafana: load(t, fullGrafanaConfig),
-			mimir: load(t, fullMimirConfig, func(p *definition.PostableApiAlertingConfig) {
-				// intentionally swap intervals here, just make sure the uniqueness is enforced across both fields
-				p.TimeIntervals = append(p.TimeIntervals, config.TimeInterval{
-					Name: "mti-1",
-				})
-				p.MuteTimeIntervals = []config.MuteTimeInterval{
-					{
-						Name: "ti-1",
-					},
-				}
-				p.Route.Routes = append(p.Route.Routes, &definition.Route{
-					Matchers: config.Matchers{
-						{
-							Type:  labels.MatchEqual,
-							Name:  "label",
-							Value: "test",
-						},
-					},
-					MuteTimeIntervals:   []string{"ti-1"},
-					ActiveTimeIntervals: []string{"mti-1"},
-				})
-			}),
-			expected: MergeResult{
-				Config: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
-					// remove mti2 that we replaced with ti-1
-					expected := p.TimeIntervals[:len(p.TimeIntervals)-1]
-					expected = append(expected, config.TimeInterval{
-						Name: "mti-1_mimir-12345",
-					})
-					expected = append(expected, config.TimeInterval{
-						Name: "ti-1_mimir-12345",
-					})
-					p.TimeIntervals = expected
-					p.Route.Routes[0].Routes = append(p.Route.Routes[0].Routes, &definition.Route{
-						Matchers: config.Matchers{
-							{
-								Type:  labels.MatchEqual,
-								Name:  "label",
-								Value: "test",
-							},
-						},
-						MuteTimeIntervals:   []string{"ti-1_mimir-12345"},
-						ActiveTimeIntervals: []string{"mti-1_mimir-12345"},
-					})
-				}),
-				RenameResources: RenameResources{
-					TimeIntervals: map[string]string{
-						"ti-1":  "ti-1_mimir-12345",
-						"mti-1": "mti-1_mimir-12345",
-					},
-				},
-			},
-		},
-		{
-			name: "should fail if merging matchers conflict with Grafana, exact match",
-			grafana: load(t, fullGrafanaConfig, func(p *definition.PostableApiAlertingConfig) {
-				p.Route.Routes = append(p.Route.Routes, &definition.Route{
-					Matchers: opts.SubtreeMatchers,
-				})
-			}),
-			mimir:       load(t, fullMimirConfig),
-			expectedErr: ErrSubtreeMatchersConflict,
-		},
-		{
-			name: "should fail if merging matchers conflict with Grafana, subset match",
-			grafana: load(t, fullGrafanaConfig, func(p *definition.PostableApiAlertingConfig) {
-				m, err := labels.NewMatcher(labels.MatchEqual, "label", "test")
-				require.NoError(t, err)
-				p.Route.Routes = append(p.Route.Routes, &definition.Route{
-					Matchers: append(opts.SubtreeMatchers, m),
-				})
-			}),
-			mimir:       load(t, fullMimirConfig),
-			expectedErr: ErrSubtreeMatchersConflict,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := Merge(*tc.grafana, *tc.mimir, opts)
-			if tc.expectedErr != nil {
-				if err == nil {
-					data, err := yaml.Marshal(result.Config)
-					require.NoError(t, err)
-					t.Fatalf("Expected error but got result. YAML:\n%v", string(data))
-				}
-				assert.ErrorIs(t, err, tc.expectedErr)
-				return
-			}
-			require.NoError(t, err)
-			tc.expected.Config.Global = nil
-
-			diff := cmp.Diff(tc.expected, result,
-				cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, httpcfg.ProxyConfig{}, labels.Matcher{}),
-				cmpopts.SortSlices(func(a, b *labels.Matcher) bool {
-					return a.Name < b.Name
-				}),
-				cmpopts.SortSlices(func(a, b *definition.PostableApiReceiver) bool {
-					return a.Name < b.Name
-				}),
-				cmpopts.EquateEmpty(),
-			)
-			if !assert.Empty(t, diff) {
-				data, err := yaml.Marshal(result.Config)
-				require.NoError(t, err)
-				t.Fatalf("YAML:\n%v", string(data))
-			}
-		})
-	}
-
-	t.Run("should not modify existing config", func(t *testing.T) {
-		g := load(t, fullGrafanaConfig)
-		m := load(t, fullMimirConfig)
-		_, err := Merge(*g, *m, opts)
-		require.NoError(t, err)
-		assert.Equal(t, load(t, fullGrafanaConfig), g)
-		assert.Equal(t, load(t, fullMimirConfig), m)
-	})
-
-	t.Run("should skip merging routes and inhibition rules if matchers are empty", func(t *testing.T) {
-		g := load(t, fullGrafanaConfig)
-		m := load(t, fullMimirConfig)
-		opts := MergeOpts{
-			DedupSuffix:     "_mimir-12345",
-			SubtreeMatchers: config.Matchers{},
-		}
-		result, err := Merge(*g, *m, opts)
-		require.NoError(t, err)
-
-		full := load(t, fullMergedConfig)
-		full.Route.Routes = full.Route.Routes[1:]
-		full.InhibitRules = g.InhibitRules
-		full.Global = nil
-
-		diff := cmp.Diff(MergeResult{Config: *full}, result,
-			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, httpcfg.ProxyConfig{}, labels.Matcher{}),
-			cmpopts.SortSlices(func(a, b *labels.Matcher) bool {
-				return a.Name < b.Name
-			}),
-			cmpopts.SortSlices(func(a, b *definition.PostableApiReceiver) bool {
-				return a.Name < b.Name
-			}),
-			cmpopts.EquateEmpty(),
-		)
-		if !assert.Empty(t, diff) {
-			data, err := yaml.Marshal(result.Config)
-			require.NoError(t, err)
-			t.Fatalf("YAML:\n%v", string(data))
-		}
-	})
 }
 
 func TestCheckIfMatchersUsed(t *testing.T) {
@@ -810,6 +513,18 @@ func TestMergeTimeIntervals(t *testing.T) {
 	}
 }
 
+//go:embed testdata/mimir_no_intervals.yaml
+var fullMimirNoIntervals string
+
+//go:embed testdata/mimir_with_extra_receiver.yaml
+var fullMimirWithExtraReceiver string
+
+//go:embed testdata/mimir_with_only_extra_receiver.yaml
+var fullMimirWithOnlyExtraReceiver string
+
+//go:embed testdata/mimir_swapped_intervals.yaml
+var fullMimirSwappedIntervals string
+
 func load(t *testing.T, yaml string, mutate ...func(p *definition.PostableApiAlertingConfig)) *definition.PostableApiAlertingConfig {
 	t.Helper()
 	p, err := definition.LoadCompat([]byte(yaml))
@@ -820,244 +535,245 @@ func load(t *testing.T, yaml string, mutate ...func(p *definition.PostableApiAle
 	return p
 }
 
-const fullGrafanaConfig = `
-mute_time_intervals:
-  - name: mti-1
-    time_intervals:
-    - times:
-      - start_time: 00:00
-        end_time: 12:00
-time_intervals:
-  - name: ti-1
-    time_intervals:
-    - weekdays:
-      - saturday
-      - sunday
-inhibit_rules:
-    - source_matchers:
-        - alertname="test"
-        - cluster="test1"
-      target_matchers:
-        - alertname="test2"
-        - cluster="test1"
-      equal:
-        - namespace
-route:
-  receiver: grafana-default-email
-  group_by: [test, test2]
-  group_wait: 1m
-  group_interval: 1m
-  repeat_interval: 1m
-  routes:
-  - receiver: test-webhook
-    object_matchers:
-    - - team
-      - =
-      - teamC
-    group_by:
-    - teste
-    - test2f
-    group_wait: 0s
-    group_interval: 1m
-    repeat_interval: 1m
-    mute_time_intervals:
-    - mti-1
-    active_time_intervals:
-    - ti-1
-receivers:
-  - name: grafana-default-email
-    grafana_managed_receiver_configs:
-      - uid: uxwfZvtnz
-        type: email
-        disableResolveMessage: false
-        settings:
-          addresses: "<example@email.com>"
-        secureFields: {}
-  - name: test-webhook
-    grafana_managed_receiver_configs:
-      - uid: 12345
-        type: webhook
-        disableResolveMessage: false
-        settings:
-          url: "http://localhost/api/v1/alerts"
-        secureFields: {}
-`
+//go:embed testdata/grafana_config.yaml
+var fullGrafanaConfig string
 
-const fullMimirConfig = `
-mute_time_intervals:
-  - name: mti-2
-    time_intervals:
-      - times:
-          - start_time: 00:00
-            end_time: 12:00
-time_intervals:
-  - name: ti-2
-    time_intervals:
-    - weekdays:
-      - monday
-      - tuesday
-      - wednesday
-      - thursday
-      - friday
-inhibit_rules:
-    - source_matchers:
-        - alertname="test"
-      target_matchers:
-        - servicename="test2"
-      equal:
-        - namespace
-route:
-  receiver: recv
-  group_by:
-    - alertname
-    - groupby
-  group_wait: 65s
-  group_interval: 20m
-  repeat_interval: 10h   
-  routes:
-    - receiver: recv2
-      object_matchers:
-        - - team
-          - =
-          - teamC
-      group_by:
-        - teste
-        - test2f
-      group_wait: 0s
-      group_interval: 1m
-      repeat_interval: 1m
-      mute_time_intervals:
-        - mti-2
-      active_time_intervals:
-        - ti-2
-receivers:
-  - name: recv
-    email_configs:
-      - to: recv
-        smarthost: smtp.example.org:587
-        from: email@example.com
-  - name: recv2
-    webhook_configs:
-      - url: http://localhost
-`
+//go:embed testdata/mimir_config.yaml
+var fullMimirConfig string
 
-const fullMergedConfig = `
-route:
-    receiver: grafana-default-email
-    group_by:
-        - test
-        - test2
-    group_wait: 1m
-    group_interval: 1m
-    repeat_interval: 1m
-    routes:
-        - receiver: recv
-          group_by:
-            - alertname
-            - groupby
-          group_wait: 65s
-          group_interval: 20m
-          repeat_interval: 10h        
-          matchers:
-            - __mimir__="true"
-            - __datasource_uid__="12345"
-          routes:
-            - receiver: recv2
-              group_by:
-                - teste
-                - test2f
-              object_matchers:
-                - - team
-                  - =
-                  - teamC
-              mute_time_intervals:
-                - mti-2
-              active_time_intervals:
-                - ti-2
-              group_wait: 0s
-              group_interval: 1m
-              repeat_interval: 1m
-        - receiver: test-webhook
-          group_by:
-            - teste
-            - test2f
-          object_matchers:
-            - - team
-              - =
-              - teamC
-          mute_time_intervals:
-            - mti-1
-          active_time_intervals:
-            - ti-1
-          group_wait: 0s
-          group_interval: 1m
-          repeat_interval: 1m
-mute_time_intervals:
-    - name: mti-1
-      time_intervals:
-        - times:
-            - start_time: "00:00"
-              end_time: "12:00"
-time_intervals:
-    - name: ti-1
-      time_intervals:
-        - weekdays: 
-          - saturday
-          - sunday
-    - name: ti-2
-      time_intervals:
-        - weekdays:
-          - monday
-          - tuesday
-          - wednesday
-          - thursday
-          - friday
-    - name: mti-2
-      time_intervals:
-        - times:
-            - start_time: "00:00"
-              end_time: "12:00"
-receivers:
-    - name: grafana-default-email
-      grafana_managed_receiver_configs:
-        - uid: uxwfZvtnz
-          type: email
-          disableResolveMessage: false
-          settings:
-            addresses: <example@email.com>
-    - name: test-webhook
-      grafana_managed_receiver_configs:
-        - uid: "12345"
-          type: webhook
-          disableResolveMessage: false
-          settings:
-            url: http://localhost/api/v1/alerts
-    - name: recv
-      email_configs:
-        - to: recv
-          from: email@example.com
-          smarthost: smtp.example.org:587
-    - name: recv2
-      webhook_configs:
-        - url: http://localhost
-inhibit_rules:
-    - source_matchers:
-        - alertname="test"
-        - cluster="test1"
-      target_matchers:
-        - alertname="test2"
-        - cluster="test1"
-      equal:
-        - namespace
-    - source_matchers:
-        - alertname="test"
-        - __datasource_uid__="12345"
-        - __mimir__="true"
-      target_matchers:
-        - servicename="test2"
-        - __datasource_uid__="12345"
-        - __mimir__="true"
-      equal:
-        - namespace
+//go:embed testdata/merged_config.yaml
+var fullMergedConfig string
 
-`
+func TestMergeExtraConfig(t *testing.T) {
+	identifier := "_mimir-12345"
+	subtreeMatchers := config.Matchers{
+		{Type: labels.MatchEqual, Name: "__datasource_uid__", Value: "12345"},
+		{Type: labels.MatchEqual, Name: "__mimir__", Value: "true"},
+	}
+
+	// withExtra wraps grafana and a raw mimir YAML string into a PostableUserConfig with ExtraConfigs.
+	// Optional mutateFn can adjust the ExtraConfiguration before it's used.
+	withExtra := func(t *testing.T, grafana *definition.PostableApiAlertingConfig, mimirYAML string, mutateFn ...func(*definitions.ExtraConfiguration)) definitions.PostableUserConfig {
+		t.Helper()
+		extra := definitions.ExtraConfiguration{
+			Identifier:         identifier,
+			MergeMatchers:      subtreeMatchers,
+			AlertmanagerConfig: mimirYAML,
+		}
+		for _, fn := range mutateFn {
+			fn(&extra)
+		}
+		return definitions.PostableUserConfig{
+			AlertmanagerConfig: *grafana,
+			ExtraConfigs:       []definitions.ExtraConfiguration{extra},
+		}
+	}
+
+	assertResult := func(t *testing.T, expected, actual MergeResult) {
+		t.Helper()
+		diff := cmp.Diff(expected, actual,
+			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, httpcfg.ProxyConfig{}, labels.Matcher{}, definitions.PostableUserConfig{}),
+			cmpopts.SortSlices(func(a, b *labels.Matcher) bool { return a.Name < b.Name }),
+			cmpopts.SortSlices(func(a, b *definition.PostableApiReceiver) bool { return a.Name < b.Name }),
+			cmpopts.EquateEmpty(),
+			cmpopts.IgnoreFields(MergeResult{}, "ExtraRoute", "ExtraInhibitRules"),
+		)
+		if !assert.Empty(t, diff) {
+			data, err := yaml.Marshal(actual.Config)
+			require.NoError(t, err)
+			t.Fatalf("YAML:\n%v", string(data))
+		}
+	}
+
+	t.Run("should merge all resources, no renames", func(t *testing.T) {
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
+		result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+
+		assertResult(t, MergeResult{
+			Config:     definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) { p.Global = nil })},
+			Identifier: identifier,
+		}, result)
+	})
+
+	t.Run("should populate intervals by defaults", func(t *testing.T) {
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirNoIntervals)
+		result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+
+		assertResult(t, MergeResult{
+			Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
+				p.Global = nil
+				gw := model.Duration(dispatch.DefaultRouteOpts.GroupWait)
+				gi := model.Duration(dispatch.DefaultRouteOpts.GroupInterval)
+				ri := model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)
+				p.Route.Routes[0].GroupWait = &gw
+				p.Route.Routes[0].GroupInterval = &gi
+				p.Route.Routes[0].RepeatInterval = &ri
+			})},
+			Identifier: identifier,
+		}, result)
+	})
+
+	t.Run("should rename receivers and refactor usages", func(t *testing.T) {
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirWithExtraReceiver)
+		result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+
+		assertResult(t, MergeResult{
+			Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
+				p.Global = nil
+				p.Route.Routes[0].Routes = append(p.Route.Routes[0].Routes, &definition.Route{
+					Receiver: "grafana-default-email" + identifier,
+					Matchers: config.Matchers{{Type: labels.MatchEqual, Name: "label", Value: "test"}},
+				})
+				p.Receivers = append(p.Receivers, &definition.PostableApiReceiver{
+					Receiver: definition.Receiver{Name: "grafana-default-email" + identifier},
+				})
+			})},
+			RenameResources: RenameResources{
+				Receivers: map[string]string{"grafana-default-email": "grafana-default-email" + identifier},
+			},
+			Identifier: identifier,
+		}, result)
+	})
+
+	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
+		grafana := load(t, fullGrafanaConfig, func(p *definition.PostableApiAlertingConfig) {
+			p.Receivers = append(p.Receivers, &definition.PostableApiReceiver{
+				Receiver: definition.Receiver{Name: "grafana-default-email" + identifier},
+			})
+		})
+		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)
+		result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+
+		assertResult(t, MergeResult{
+			Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
+				p.Global = nil
+				p.Receivers = append(p.Receivers,
+					&definition.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier}},
+					&definition.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier + "_01"}},
+				)
+			})},
+			RenameResources: RenameResources{
+				Receivers: map[string]string{"grafana-default-email": "grafana-default-email" + identifier + "_01"},
+			},
+			Identifier: identifier,
+		}, result)
+	})
+
+	t.Run("should rename time intervals and refactor usages", func(t *testing.T) {
+		// fullMimirSwappedIntervals has mute_time_intervals=[ti-1] and time_intervals=[ti-2, mti-1],
+		// intentionally swapping names to verify uniqueness is enforced across both fields.
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirSwappedIntervals)
+		result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+
+		assertResult(t, MergeResult{
+			Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
+				p.Global = nil
+				// fullMimirSwappedIntervals removed mti-2 from mute_time_intervals, so the
+				// recv2 sub-route no longer has a mute interval.
+				p.Route.Routes[0].Routes[0].MuteTimeIntervals = nil
+				// remove mti-2 that was replaced by ti-1 in fullMimirSwappedIntervals
+				expected := p.TimeIntervals[:len(p.TimeIntervals)-1]
+				expected = append(expected, config.TimeInterval{Name: "mti-1" + identifier})
+				expected = append(expected, config.TimeInterval{Name: "ti-1" + identifier})
+				p.TimeIntervals = expected
+				p.Route.Routes[0].Routes = append(p.Route.Routes[0].Routes, &definition.Route{
+					Matchers:            config.Matchers{{Type: labels.MatchEqual, Name: "label", Value: "test"}},
+					MuteTimeIntervals:   []string{"ti-1" + identifier},
+					ActiveTimeIntervals: []string{"mti-1" + identifier},
+				})
+			})},
+			RenameResources: RenameResources{
+				TimeIntervals: map[string]string{
+					"ti-1":  "ti-1" + identifier,
+					"mti-1": "mti-1" + identifier,
+				},
+			},
+			Identifier: identifier,
+		}, result)
+	})
+
+	t.Run("should fail if merging matchers conflict with Grafana, exact match", func(t *testing.T) {
+		grafana := load(t, fullGrafanaConfig, func(p *definition.PostableApiAlertingConfig) {
+			p.Route.Routes = append(p.Route.Routes, &definition.Route{Matchers: subtreeMatchers})
+		})
+		input := withExtra(t, grafana, fullMimirConfig)
+		_, err := MergeExtraConfig(context.Background(), &input)
+		assert.ErrorIs(t, err, ErrSubtreeMatchersConflict)
+	})
+
+	t.Run("should fail if merging matchers conflict with Grafana, subset match", func(t *testing.T) {
+		grafana := load(t, fullGrafanaConfig, func(p *definition.PostableApiAlertingConfig) {
+			m, err := labels.NewMatcher(labels.MatchEqual, "label", "test")
+			require.NoError(t, err)
+			p.Route.Routes = append(p.Route.Routes, &definition.Route{
+				Matchers: append(subtreeMatchers, m),
+			})
+		})
+		input := withExtra(t, grafana, fullMimirConfig)
+		_, err := MergeExtraConfig(context.Background(), &input)
+		assert.ErrorIs(t, err, ErrSubtreeMatchersConflict)
+	})
+
+	t.Run("should not modify the base Grafana config", func(t *testing.T) {
+		g := load(t, fullGrafanaConfig)
+		input := withExtra(t, g, fullMimirConfig)
+		_, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+		assert.Equal(t, load(t, fullGrafanaConfig), g)
+	})
+
+	t.Run("should skip merging routes and inhibition rules if matchers are empty", func(t *testing.T) {
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *definitions.ExtraConfiguration) {
+			e.MergeMatchers = config.Matchers{}
+		})
+		result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+
+		full := load(t, fullMergedConfig)
+		full.Route.Routes = full.Route.Routes[1:]
+		full.InhibitRules = load(t, fullGrafanaConfig).InhibitRules
+		full.Global = nil
+
+		assertResult(t, MergeResult{
+			Config:     definitions.PostableUserConfig{AlertmanagerConfig: *full},
+			Identifier: identifier,
+		}, result)
+	})
+
+	t.Run("should return base config unchanged if no extra configs", func(t *testing.T) {
+		input := definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullGrafanaConfig)}
+		result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+		assert.Equal(t, input, result.Config)
+	})
+
+	t.Run("should fail if identifier is empty", func(t *testing.T) {
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *definitions.ExtraConfiguration) {
+			e.Identifier = ""
+		})
+		_, err := MergeExtraConfig(context.Background(), &input)
+		require.ErrorContains(t, err, "identifier is required")
+	})
+
+	t.Run("should fail if matcher type is not equal", func(t *testing.T) {
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *definitions.ExtraConfiguration) {
+			e.MergeMatchers = config.Matchers{{Type: labels.MatchNotEqual, Name: "cluster", Value: "prod"}}
+		})
+		_, err := MergeExtraConfig(context.Background(), &input)
+		require.ErrorContains(t, err, "only matchers with type equal are supported")
+	})
+
+	t.Run("should fail if base route is nil and matchers are set", func(t *testing.T) {
+		grafana := load(t, fullGrafanaConfig, func(p *definition.PostableApiAlertingConfig) {
+			p.Route = nil
+		})
+		input := withExtra(t, grafana, fullMimirConfig)
+		_, err := MergeExtraConfig(context.Background(), &input)
+		require.ErrorContains(t, err, "cannot merge into undefined routing tree")
+	})
+}

@@ -43,9 +43,9 @@ describe('api', () => {
     global.fetch = originalFetch;
   });
 
-  describe('when useMTPlugins flag is enabled', () => {
+  describe('when plugins.useMTPlugins flag is enabled', () => {
     beforeAll(() => {
-      setTestFlags({ useMTPlugins: true });
+      setTestFlags({ 'plugins.useMTPlugins': true });
     });
 
     afterAll(() => {
@@ -147,9 +147,9 @@ describe('api', () => {
     });
   });
 
-  describe('when useMTPlugins flag is disabled', () => {
+  describe('when plugins.useMTPlugins flag is disabled', () => {
     beforeAll(() => {
-      setTestFlags({ useMTPlugins: false });
+      setTestFlags({ 'plugins.useMTPlugins': false });
     });
 
     afterAll(() => {

@@ -2825,14 +2825,23 @@ func runTestResourceNameCaseMismatch(t *testing.T, sqlBackend, kvBackend resourc
 		req := &resourcepb.ReadRequest{Key: createPlaylistKey(ns, readName)}
 		resp := kvBackend.ReadResource(ctx, req)
 		require.NotNil(t, resp)
-		// The KV backend looks resources up by key_path with binary
-		// (case-sensitive) comparison on every database, so a mixed-case read
-		// should not resolve regardless of the underlying engine.
-		require.NotNil(t, resp.Error,
-			"KV backend lookup is case-sensitive; mixed-case read should not resolve")
-		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
-		require.False(t, resource.IsResourceNameMixedCase(req, resp),
-			"helper should not flag a mismatch when the read failed")
+
+		if db.DriverName() == "mysql" {
+			// In compat mode (rvManager != nil) on MySQL, the KV backend falls
+			// back to a case-insensitive lookup against the legacy `resource`
+			// table when the case-sensitive key_path lookup misses.
+			require.Nil(t, resp.Error,
+				"compat-mode fallback should resolve mixed-case reads on MySQL")
+		} else {
+			// On case-sensitive engines (sqlite, postgres) the legacy
+			// `resource` table comparison is case-sensitive too, so the
+			// fallback also misses.
+			require.NotNil(t, resp.Error,
+				"KV backend lookup is case-sensitive; mixed-case read should not resolve")
+			require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+			require.False(t, resource.IsResourceNameMixedCase(req, resp),
+				"helper should not flag a mismatch when the read failed")
+		}
 
 		// Sanity check: reading with the original casing succeeds and the
 		// helper does not flag identical names.
@@ -2842,5 +2851,111 @@ func runTestResourceNameCaseMismatch(t *testing.T, sqlBackend, kvBackend resourc
 		require.Nil(t, matchingResp.Error)
 		require.False(t, resource.IsResourceNameMixedCase(matchingReq, matchingResp),
 			"helper should not flag identical names")
+	})
+
+	// The following sub-tests exercise the compat-mode (rvManager != nil)
+	// case-insensitive fallback the KV backend performs against the legacy
+	// `resource` table. They only resolve on MySQL because the `name` column
+	// uses a CI collation there; on sqlite/postgres the fallback misses, so
+	// the tests are skipped to avoid asserting current case-sensitive behavior.
+	//
+	// TODO: remove these when sql/backend backwards compatibility is no longer needed.
+	t.Run("Write SQL, Update KV with mixed case", func(t *testing.T) {
+		if db.DriverName() != "mysql" {
+			t.Skip("compat-mode case-insensitive fallback only resolves on MySQL")
+		}
+		ns := nsPrefix + "-write-sql-update-kv"
+		created := createPlaylistResource(t, sqlServer, ctx, PlaylistResourceOptions{
+			Name:       "Hello",
+			Namespace:  ns,
+			UID:        "case-mismatch-update",
+			Generation: 1,
+			Title:      "sql-stored",
+		})
+
+		updated, err := kvServer.Update(ctx, &resourcepb.UpdateRequest{
+			Key: createPlaylistKey(ns, "hello"),
+			Value: createPlaylistJSON(PlaylistResourceOptions{
+				Name:       "hello",
+				Namespace:  ns,
+				UID:        "case-mismatch-update",
+				Generation: 2,
+				Title:      "kv-updated",
+			}),
+			ResourceVersion: created.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+		require.Nil(t, updated.Error,
+			"compat-mode fallback should snap the mixed-case name and let the update through")
+		require.Greater(t, updated.ResourceVersion, int64(0))
+
+		// Confirm the canonical row is now at the new RV.
+		resp := kvBackend.ReadResource(ctx, &resourcepb.ReadRequest{Key: createPlaylistKey(ns, "Hello")})
+		require.NotNil(t, resp)
+		require.Nil(t, resp.Error)
+		require.Equal(t, updated.ResourceVersion, resp.ResourceVersion)
+	})
+
+	t.Run("Write SQL, Delete KV with mixed case", func(t *testing.T) {
+		if db.DriverName() != "mysql" {
+			t.Skip("compat-mode case-insensitive fallback only resolves on MySQL")
+		}
+		ns := nsPrefix + "-write-sql-delete-kv"
+		created := createPlaylistResource(t, sqlServer, ctx, PlaylistResourceOptions{
+			Name:       "Hello",
+			Namespace:  ns,
+			UID:        "case-mismatch-delete",
+			Generation: 1,
+			Title:      "sql-stored",
+		})
+
+		deleted, err := kvServer.Delete(ctx, &resourcepb.DeleteRequest{
+			Key:             createPlaylistKey(ns, "hello"),
+			ResourceVersion: created.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, deleted)
+		require.Nil(t, deleted.Error,
+			"compat-mode fallback should snap the mixed-case name and let the delete through")
+
+		// Confirm the canonical row no longer reads as live.
+		resp := kvBackend.ReadResource(ctx, &resourcepb.ReadRequest{Key: createPlaylistKey(ns, "Hello")})
+		require.NotNil(t, resp)
+		require.NotNil(t, resp.Error,
+			"resource should be gone after the case-insensitive delete")
+		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+	})
+
+	t.Run("Write SQL, Create KV with mixed case duplicate", func(t *testing.T) {
+		if db.DriverName() != "mysql" {
+			t.Skip("compat-mode case-insensitive fallback only resolves on MySQL")
+		}
+		ns := nsPrefix + "-write-sql-create-kv"
+		createPlaylistResource(t, sqlServer, ctx, PlaylistResourceOptions{
+			Name:       "Hello",
+			Namespace:  ns,
+			UID:        "case-mismatch-create",
+			Generation: 1,
+			Title:      "sql-stored",
+		})
+
+		// Attempt a Create with a different case for the same logical resource.
+		created, err := kvServer.Create(ctx, &resourcepb.CreateRequest{
+			Key: createPlaylistKey(ns, "hello"),
+			Value: createPlaylistJSON(PlaylistResourceOptions{
+				Name:       "hello",
+				Namespace:  ns,
+				UID:        "case-mismatch-create-2",
+				Generation: 1,
+				Title:      "kv-attempt",
+			}),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+		require.NotNil(t, created.Error,
+			"compat-mode fallback should detect the case-insensitive duplicate")
+		require.Equal(t, int32(http.StatusConflict), created.Error.Code,
+			"mixed-case duplicate should surface as already-exists")
 	})
 }

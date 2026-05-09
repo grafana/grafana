@@ -86,7 +86,7 @@ receivers:
 		require.Empty(t, renamed.Receivers, "no renaming should occur")
 		require.Empty(t, renamed.TimeIntervals, "no renaming should occur")
 
-		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 1)
 		require.Equal(t, extraConfig.Identifier, gettableConfig.ExtraConfigs[0].Identifier)
@@ -121,7 +121,7 @@ receivers:
 		require.NoError(t, err)
 
 		// Verify configuration was NOT saved
-		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 0, "configuration should not be saved in dry run mode")
 	})
@@ -161,7 +161,7 @@ receivers:
 		require.NoError(t, err)
 
 		// Verify only one config exists with updated content
-		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 1)
 		require.Equal(t, identifier, gettableConfig.ExtraConfigs[0].Identifier)
@@ -215,7 +215,7 @@ receivers:
 			_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, secondConfig, true, false)
 			require.NoError(t, err)
 
-			gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
+			gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
 			require.NoError(t, err)
 			require.Len(t, gettableConfig.ExtraConfigs, 1)
 			require.Equal(t, secondConfig.Identifier, gettableConfig.ExtraConfigs[0].Identifier)
@@ -299,14 +299,14 @@ receivers:
 		require.Empty(t, renamed.Receivers, "no renaming should occur")
 		require.Empty(t, renamed.TimeIntervals, "no renaming should occur")
 
-		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 1)
 
 		err = mam.DeleteExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, identifier)
 		require.NoError(t, err)
 
-		gettableConfig, err = mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
+		gettableConfig, err = mam.GetAlertmanagerConfiguration(ctx, orgID, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 0)
 	})
@@ -351,7 +351,7 @@ receivers:
 		require.Error(t, err)
 
 		// Verify no config was saved.
-		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 0)
 	})
@@ -412,7 +412,7 @@ receivers:
 		require.Error(t, err)
 
 		// Verify config still exists.
-		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 1)
 	})

@@ -1969,8 +1969,8 @@ func (m *mockAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, o
 	return args.Get(0).(merge.RenameResources), args.Error(1)
 }
 
-func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error) {
-	args := m.Called(ctx, org, withAutogen, withMergedExtraConfig)
+func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error) {
+	args := m.Called(ctx, org, withAutogen)
 	return args.Get(0).(apimodels.GettableUserConfig), args.Error(1)
 }
 
@@ -2197,7 +2197,7 @@ func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
 
 	t.Run("without config identifier header should use default identifier", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
 			ExtraConfigs: []apimodels.ExtraConfiguration{
 				{
 					Identifier: defaultConfigIdentifier,
@@ -2220,7 +2220,7 @@ receivers:
 
 	t.Run("with empty config identifier header should use default identifier", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
 			ExtraConfigs: []apimodels.ExtraConfiguration{
 				{
 					Identifier: defaultConfigIdentifier,
@@ -2268,7 +2268,7 @@ receivers:
 			},
 		}
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, int64(1), false, false).Return(expectedConfig, nil).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, int64(1), false).Return(expectedConfig, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -2335,7 +2335,7 @@ receivers:
 			},
 		}
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(expectedConfig, nil).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(expectedConfig, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -2350,7 +2350,7 @@ receivers:
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{}, errors.New("config error")).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{}, errors.New("config error")).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)

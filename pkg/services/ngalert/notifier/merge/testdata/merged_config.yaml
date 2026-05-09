@@ -1,0 +1,115 @@
+route:
+    receiver: grafana-default-email
+    group_by:
+        - test
+        - test2
+    group_wait: 1m
+    group_interval: 1m
+    repeat_interval: 1m
+    routes:
+        - receiver: recv
+          group_by:
+            - alertname
+            - groupby
+          group_wait: 65s
+          group_interval: 20m
+          repeat_interval: 10h
+          matchers:
+            - __mimir__="true"
+            - __datasource_uid__="12345"
+          routes:
+            - receiver: recv2
+              group_by:
+                - teste
+                - test2f
+              matchers:
+                - team="teamC"
+              mute_time_intervals:
+                - mti-2
+              active_time_intervals:
+                - ti-2
+              group_wait: 0s
+              group_interval: 1m
+              repeat_interval: 1m
+        - receiver: test-webhook
+          group_by:
+            - teste
+            - test2f
+          object_matchers:
+            - - team
+              - =
+              - teamC
+          mute_time_intervals:
+            - mti-1
+          active_time_intervals:
+            - ti-1
+          group_wait: 0s
+          group_interval: 1m
+          repeat_interval: 1m
+mute_time_intervals:
+    - name: mti-1
+      time_intervals:
+        - times:
+            - start_time: "00:00"
+              end_time: "12:00"
+time_intervals:
+    - name: ti-1
+      time_intervals:
+        - weekdays:
+          - saturday
+          - sunday
+    - name: ti-2
+      time_intervals:
+        - weekdays:
+          - monday
+          - tuesday
+          - wednesday
+          - thursday
+          - friday
+    - name: mti-2
+      time_intervals:
+        - times:
+            - start_time: "00:00"
+              end_time: "12:00"
+receivers:
+    - name: grafana-default-email
+      grafana_managed_receiver_configs:
+        - uid: uxwfZvtnz
+          type: email
+          disableResolveMessage: false
+          settings:
+            addresses: <example@email.com>
+    - name: test-webhook
+      grafana_managed_receiver_configs:
+        - uid: "12345"
+          type: webhook
+          disableResolveMessage: false
+          settings:
+            url: http://localhost/api/v1/alerts
+    - name: recv
+      email_configs:
+        - to: recv
+          from: email@example.com
+          smarthost: smtp.example.org:587
+    - name: recv2
+      webhook_configs:
+        - url: http://localhost
+inhibit_rules:
+    - source_matchers:
+        - alertname="test"
+        - cluster="test1"
+      target_matchers:
+        - alertname="test2"
+        - cluster="test1"
+      equal:
+        - namespace
+    - source_matchers:
+        - alertname="test"
+        - __datasource_uid__="12345"
+        - __mimir__="true"
+      target_matchers:
+        - servicename="test2"
+        - __datasource_uid__="12345"
+        - __mimir__="true"
+      equal:
+        - namespace

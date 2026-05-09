@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useRef } from 'react';
 import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Button, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -25,11 +25,12 @@ interface Props {
  * Header shows the file name + an Edit pencil that opens the host editor;
  * the body either renders the markdown or shows an "Add README" empty state.
  *
- * Returns null and triggers no data fetching when the feature toggle is off
- * or when the folder isn't provisioned.
+ * Returns null and triggers no data fetching when the `provisioning.readmes`
+ * OpenFeature toggle is off or when the folder isn't provisioned.
  */
 export function FolderReadmePanel({ folderUID }: Props) {
-  if (!config.featureToggles.provisioningReadmes) {
+  const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
+  if (!provisioningReadmesEnabled) {
     return null;
   }
   return <FolderReadmePanelContent folderUID={folderUID} />;
