@@ -137,6 +137,7 @@ require (
 	github.com/grafana/grafana/apps/folder v0.0.0 // indirect
 	github.com/grafana/grafana/apps/iam v0.0.0 // indirect
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
+	github.com/grafana/grafana/apps/secret v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // indirect

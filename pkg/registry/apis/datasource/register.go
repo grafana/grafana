@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -56,6 +57,7 @@ type DataSourceAPIBuilder struct {
 	client                 PluginClient // will only ever be called with the same plugin id!
 	datasources            PluginDatasourceProvider
 	contextProvider        PluginContextWrapper
+	decrypter              decrypt.DecryptService // when not reading legacy
 	accessControl          accesscontrol.AccessControl
 	schemas                map[string]*pluginschema.PluginSchema
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
@@ -72,6 +74,7 @@ func RegisterAPIService(
 	pluginClient plugins.Client, // access to everything
 	datasources ScopedPluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
+	decrypter decrypt.DecryptService, // when not reading legacy
 	accessControl accesscontrol.AccessControl,
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
@@ -127,6 +130,7 @@ func RegisterAPIService(
 			datasources.GetDatasourceProvider(plugin.JSONData),
 			contextProvider,
 			accessControl,
+			decrypter,
 			flags,
 		)
 		if err != nil {
@@ -162,6 +166,7 @@ func NewDataSourceAPIBuilder(
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl,
+	decrypter decrypt.DecryptService, // when not reading legacy
 	cfg DataSourceAPIBuilderConfig,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
@@ -173,6 +178,7 @@ func NewDataSourceAPIBuilder(
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
+		decrypter:              decrypter,
 		cfg:                    cfg,
 	}
 	return builder, nil
@@ -354,9 +360,9 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 	getInstanceCtx, getInstanceSpan := tracing.Start(ctx, "datasource.getPluginContext.getInstanceSettings")
 	var err error
 	var instance *backend.DataSourceInstanceSettings
-	if b.store != nil {
-		//instance, err = getInstanceSettingsFromStore(ctx, b.store, uid)
-		instance, err = b.datasources.GetInstanceSettings(getInstanceCtx, uid)
+	if b.store != nil && b.decrypter != nil {
+		// Load from storage + decrypter (respecting dual write settings)
+		instance, err = b.getInstanceSettings(getInstanceCtx, uid)
 	} else {
 		// This is backed by the datasources abstraction, NOT storage
 		instance, err = b.datasources.GetInstanceSettings(getInstanceCtx, uid)
