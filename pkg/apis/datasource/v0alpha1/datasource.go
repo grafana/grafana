@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -103,6 +104,24 @@ func FromUnstructured(obj *unstructured.Unstructured) (*DataSource, error) {
 		ds.Secure = sv
 	}
 	return ds, nil
+}
+
+func (ds DataSource) ToDataSourceInstanceSettings() (*backend.DataSourceInstanceSettings, error) {
+	s := &backend.DataSourceInstanceSettings{
+		UID:              ds.Name,
+		Type:             "", // TODO, from plugin
+		URL:              ds.Spec.URL(),
+		ID:               0, // from labels
+		Name:             ds.Spec.Title(),
+		User:             ds.Spec.User(),
+		Database:         ds.Spec.Database(),
+		BasicAuthEnabled: ds.Spec.BasicAuth(),
+		BasicAuthUser:    ds.Spec.BasicAuthUser(),
+		//Updated:          ds.CreationTimestamp.Time,
+		APIVersion: VERSION,
+	}
+
+	return s, nil
 }
 
 // DsAccess represents how the datasource connects to the remote service

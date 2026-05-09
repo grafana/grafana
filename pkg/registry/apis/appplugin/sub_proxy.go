@@ -30,7 +30,7 @@ import (
 type subProxyREST struct {
 	pluginID             string
 	routes               []*plugins.Route
-	settingsProvider     func(ctx context.Context) (*apppluginV0.Settings, pluginsettings.SecureJsonGetter, error)
+	settingsProvider     func(ctx context.Context) (*apppluginV0.Settings, pluginsettings.DecryptedSecureJSONLoader, error)
 	accessControl        ac.AccessControl
 	tracer               tracing.Tracer
 	features             featuremgmt.FeatureToggles

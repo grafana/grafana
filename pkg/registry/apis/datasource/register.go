@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,13 +16,12 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -61,6 +61,9 @@ type DataSourceAPIBuilder struct {
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
 	dataSourceCRUDMetric   *prometheus.HistogramVec
+
+	// Legacy or Unified -- depending on config
+	store grafanarest.Storage
 }
 
 func RegisterAPIService(
@@ -263,15 +266,16 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		if err != nil {
 			return err
 		}
-		storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		b.store, err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
 		if err != nil {
 			return err
 		}
+		storage[ds.StoragePath()] = b.store
 		storage[ds.StoragePath("access")] = &subAccessREST{
 			builder: b,
-			getter:  legacyStore,
 		}
 	} else {
+		// Read only datasources
 		storage[ds.StoragePath()] = &connectionAccess{
 			datasources:    b.datasources,
 			resourceInfo:   ds,
@@ -348,7 +352,15 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 	defer span.End()
 
 	getInstanceCtx, getInstanceSpan := tracing.Start(ctx, "datasource.getPluginContext.getInstanceSettings")
-	instance, err := b.datasources.GetInstanceSettings(getInstanceCtx, uid)
+	var err error
+	var instance *backend.DataSourceInstanceSettings
+	if b.store != nil {
+		//instance, err = getInstanceSettingsFromStore(ctx, b.store, uid)
+		instance, err = b.datasources.GetInstanceSettings(getInstanceCtx, uid)
+	} else {
+		// This is backed by the datasources abstraction, NOT storage
+		instance, err = b.datasources.GetInstanceSettings(getInstanceCtx, uid)
+	}
 	getInstanceSpan.End()
 	if err != nil {
 		err = tracing.Error(span, err)
