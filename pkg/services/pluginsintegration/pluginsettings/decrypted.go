@@ -37,11 +37,9 @@ func WithSecureContextShim(ctx context.Context) context.Context {
 // WithDecryptedValues stashes already-decrypted secure values on the context
 // shim so a later GetDecryptedSecureJSONLoader call returns them directly
 // without re-decrypting. No-op if WithSecureContextShim was not called.
-func WithDecryptedValues(ctx context.Context, sv map[string]string) {
+func WithDecryptedValues(ctx context.Context, loader DecryptedSecureJSONLoader) {
 	if shim, ok := ctx.Value(ctxKey{}).(*secureContextShim); ok {
-		shim.loader = func(context.Context) (map[string]string, error) {
-			return sv, nil
-		}
+		shim.loader = loader
 	}
 }
 
