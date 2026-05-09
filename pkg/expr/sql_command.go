@@ -198,12 +198,23 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		// Incremented once per unique function name in the query, regardless of
 		// execution outcome. allowed=true means the function is in the allowlist;
 		// allowed=false means the user attempted a function that is not permitted.
+		//
+		// For disallowed functions, the label value is bounded to the GMS function
+		// vocabulary (function.BuiltIns plus functions registered separately by the
+		// engine): if the name is recognised by go-mysql-server it is safe to emit
+		// as-is (it comes from a finite, well-known set). Anything else is recorded
+		// as "unknown" so that arbitrary user-supplied strings never appear as
+		// Prometheus label values.
 		for _, fn := range gr.functions {
-			allowed := "false"
 			if sql.IsAllowedFunctionName(fn) {
-				allowed = "true"
+				metrics.SqlCommandFunctionCount.WithLabelValues(fn, "true").Inc()
+			} else {
+				label := "unknown"
+				if sql.IsKnownEngineFunction(fn) {
+					label = fn
+				}
+				metrics.SqlCommandFunctionCount.WithLabelValues(label, "false").Inc()
 			}
-			metrics.SqlCommandFunctionCount.WithLabelValues(fn, allowed).Inc()
 		}
 	}()
 

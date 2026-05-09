@@ -67,10 +67,10 @@ func TestIsAllowedFunctionName(t *testing.T) {
 
 	// Functions that are intentionally not in the allowlist.
 	notAllowed := []string{
-		"sleep",      // could be used for DoS
-		"load_file",  // filesystem access
+		"sleep",     // could be used for DoS
+		"load_file", // filesystem access
 		"benchmark", // DoS / resource exhaustion
-		"get_lock",   // server-state mutation
+		"get_lock",  // server-state mutation
 		"nonexistent_fn",
 	}
 	for _, fn := range notAllowed {

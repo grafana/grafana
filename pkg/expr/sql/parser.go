@@ -42,6 +42,11 @@ func ExtractFunctionNames(rawSQL string) ([]string, error) {
 			seen["trim"] = struct{}{}
 		case *sqlparser.CharExpr:
 			seen["char"] = struct{}{}
+		case *sqlparser.ConvertExpr:
+			// ConvertExpr.Name is the token string: "cast" or "convert".
+			if v.Name != "" {
+				seen[strings.ToLower(v.Name)] = struct{}{}
+			}
 		}
 		return true, nil
 	}, stmt)

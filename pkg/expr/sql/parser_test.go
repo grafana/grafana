@@ -8,10 +8,10 @@ import (
 
 func TestExtractFunctionNames(t *testing.T) {
 	tests := []struct {
-		name     string
-		sql      string
-		want     []string
-		wantErr  bool
+		name    string
+		sql     string
+		want    []string
+		wantErr bool
 	}{
 		{
 			name: "regular FuncExpr calls are collected and sorted",
@@ -72,6 +72,16 @@ func TestExtractFunctionNames(t *testing.T) {
 			name: "function names are lower-cased regardless of input case",
 			sql:  "SELECT SuM(val), AvG(val) FROM A",
 			want: []string{"avg", "sum"},
+		},
+		{
+			name: "CAST comes through as a ConvertExpr node",
+			sql:  "SELECT CAST(col AS UNSIGNED) FROM A",
+			want: []string{"cast"},
+		},
+		{
+			name: "CONVERT comes through as a ConvertExpr node",
+			sql:  "SELECT CONVERT(col, CHAR) FROM A",
+			want: []string{"convert"},
 		},
 		{
 			name:    "invalid SQL returns an error",
