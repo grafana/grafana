@@ -57,7 +57,10 @@ export function PluginDetailsPage({
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
 
-  if (isFetchLoading || isFetchDetailsLoading) {
+  // Only show the page-level loader on the initial load (when we don't yet have a plugin to render).
+  // Re-fetches that happen after an action (e.g. fetchDetails after install) keep the page mounted so
+  // transient UI state in the actions slot — like the "Refresh the page to see the changes" notice — survives.
+  if (!plugin && (isFetchLoading || isFetchDetailsLoading)) {
     return (
       <Page
         navId={navId}
