@@ -426,6 +426,9 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 			return response.Error(http.StatusBadRequest, "The dashboard payload references a non dashboard apiVersion.  This should be sent to the requested api directly", nil)
 		}
 	} else {
+		if _, found := spec["title"]; !found {
+			return response.Error(http.StatusBadRequest, "Dashboard is missing required title property", nil)
+		}
 		obj.SetAPIVersion(dashboardsV1.APIVERSION) // v1
 	}
 	return hs.saveDashboardViaK8s(c, cmd, obj)
@@ -472,6 +475,9 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	name := obj.GetName()
 	if name == "" {
 		name, _, _ = unstructured.NestedString(obj.Object, "spec", "uid")
+		if name != "" {
+			meta.SetName(name)
+		}
 	}
 
 	// Check (and remove) any legacy internal IDs
@@ -564,7 +570,7 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 
 func nestedInternalID(obj map[string]interface{}) (int64, error) {
 	val, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "id")
-	if !found || err != nil {
+	if !found || err != nil || val == nil {
 		return 0, nil
 	}
 	i, ok := val.(int64)
