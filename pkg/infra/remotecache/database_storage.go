@@ -90,25 +90,16 @@ func (dc *databaseCache) Set(ctx context.Context, key string, data []byte, expir
 			expiresInSeconds = int64(expire) / int64(time.Second)
 		}
 
-		// attempt to insert the key
-		sql := `INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`
-		_, err := session.Exec(sql, key, data, getTime().Unix(), expiresInSeconds)
-		if err != nil {
-			// attempt to update if a unique constrain violation or a deadlock (for MySQL) occurs
-			// if the update fails propagate the error
-			// which eventually will result in a key that is not finally set
-			// but since it's a cache does not harm a lot
-			if dc.SQLStore.GetDialect().IsUniqueConstraintViolation(err) || dc.SQLStore.GetDialect().IsDeadlock(err) {
-				sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
-				_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
-				if err != nil && dc.SQLStore.GetDialect().IsDeadlock(err) {
-					// most probably somebody else is upserting the key
-					// so it is safe enough not to propagate this error
-					return nil
-				}
-			}
+		upsertSQL := dc.SQLStore.GetDialect().UpsertSQL(
+			"cache_data",
+			[]string{"cache_key"},
+			[]string{"cache_key", "data", "created_at", "expires"},
+		)
+		_, err := session.Exec(upsertSQL, key, data, getTime().Unix(), expiresInSeconds)
+		if err != nil && dc.SQLStore.GetDialect().IsDeadlock(err) {
+			// Another writer is upserting the same key; the cache will converge.
+			return nil
 		}
-
 		return err
 	})
 }
