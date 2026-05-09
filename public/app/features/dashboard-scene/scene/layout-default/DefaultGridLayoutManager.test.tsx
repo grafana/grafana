@@ -8,6 +8,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
+import { activateFullSceneTree } from '../../utils/test-utils';
 import { findVizPanelByKey, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene, type DashboardSceneState } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -362,6 +363,22 @@ describe('DefaultGridLayoutManager', () => {
       expect((children[0] as DashboardGridItem).state.variableName).toBeUndefined();
     });
   });
+
+  describe('activation handler', () => {
+    it('syncs grid isDraggable and isResizable to true when dashboard is in edit mode', () => {
+      const { grid } = setupAndActivate({ isEditing: true });
+
+      expect(grid.state.isDraggable).toBe(true);
+      expect(grid.state.isResizable).toBe(true);
+    });
+
+    it('syncs grid isDraggable and isResizable to false when dashboard is in view mode', () => {
+      const { grid } = setupAndActivate({ isEditing: false });
+
+      expect(grid.state.isDraggable ?? false).toBe(false);
+      expect(grid.state.isResizable ?? false).toBe(false);
+    });
+  });
 });
 
 interface TestOptions {
@@ -416,6 +433,14 @@ function setup(options?: TestOptions) {
   new DashboardScene({ body: manager });
 
   return { manager, grid };
+}
+
+function setupAndActivate(sceneOptions?: Partial<DashboardSceneState>) {
+  const grid = new SceneGridLayout({ children: [] });
+  const manager = new DefaultGridLayoutManager({ grid });
+  const dashboard = new DashboardScene({ body: manager, ...sceneOptions });
+  activateFullSceneTree(dashboard);
+  return { dashboard, manager, grid };
 }
 
 const panelOptions = { legend: { displayMode: 'list', placement: 'bottom' } };

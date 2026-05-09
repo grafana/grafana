@@ -1,4 +1,8 @@
+import { type PointerEvent as ReactPointerEvent } from 'react';
+
 import { VizPanel } from '@grafana/scenes';
+
+import * as utils from '../utils/utils';
 
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardScene } from './DashboardScene';
@@ -402,6 +406,22 @@ describe('DashboardLayoutOrchestrator', () => {
       // Empty title should be falsy, which the orchestrator handles with fallback to 'Panel'
       expect(gridItem.state.body.state.title).toBe('');
       expect(gridItem.state.body.state.title || 'Panel').toBe('Panel');
+    });
+  });
+
+  describe('startDraggingSync', () => {
+    it('returns early without setting a source drop target when dashboard is not in edit mode', () => {
+      const { orchestrator, gridItem } = setupWithTwoTabs();
+      const viewModeDashboard = new DashboardScene({ isEditing: false });
+      const spy = jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(viewModeDashboard);
+
+      const evt = { clientX: 0, clientY: 0, preventDefault: jest.fn() } as unknown as ReactPointerEvent;
+
+      orchestrator.startDraggingSync(evt, gridItem);
+
+      // @ts-expect-error - accessing private property for testing
+      expect(orchestrator._sourceDropTarget).toBeNull();
+      spy.mockRestore();
     });
   });
 });

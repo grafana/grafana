@@ -99,7 +99,7 @@ export class AutoGridLayoutManager
       layout:
         state.layout ??
         new AutoGridLayout({
-          isDraggable: true,
+          isDraggable: false,
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
           autoRows: getAutoRowsTemplate(rowHeight, fillScreen),
         }),

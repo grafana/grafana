@@ -254,6 +254,11 @@ export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   throw new Error('SceneObject root is not a DashboardScene');
 }
 
+export function tryGetDashboardSceneFor(sceneObject: SceneObject): DashboardScene | undefined {
+  const root = sceneObject.getRoot();
+  return root instanceof DashboardScene ? root : undefined;
+}
+
 export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   if (sceneObject instanceof VizPanel) {
     return sceneObject;

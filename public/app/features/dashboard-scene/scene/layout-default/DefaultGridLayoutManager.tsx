@@ -43,6 +43,7 @@ import {
   useDashboard,
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
+  tryGetDashboardSceneFor,
 } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -128,6 +129,17 @@ export class DefaultGridLayoutManager
   }
 
   private _activationHandler() {
+    const dashboard = tryGetDashboardSceneFor(this);
+    if (dashboard) {
+      const isEditing = dashboard.state.isEditing ?? false;
+      const grid = this.state.grid;
+      const currentDraggable = grid.state.isDraggable ?? false;
+      const currentResizable = grid.state.isResizable ?? false;
+      if (currentDraggable !== isEditing || currentResizable !== isEditing) {
+        grid.setState({ isDraggable: isEditing, isResizable: isEditing });
+      }
+    }
+
     if (config.featureToggles.dashboardNewLayouts) {
       this._subs.add(
         this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {

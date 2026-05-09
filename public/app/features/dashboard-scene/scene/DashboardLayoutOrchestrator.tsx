@@ -18,7 +18,7 @@ import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { dashboardEditActions, DashboardStateChangedEvent, ObjectsReorderedOnCanvasEvent } from '../edit-pane/shared';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
+import { getDashboardSceneFor, getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
@@ -139,6 +139,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   public startDraggingSync(evt: ReactPointerEvent, gridItem: SceneGridItemLike): void {
+    const dashboard = getDashboardSceneFor(this);
+    if (!dashboard.state.isEditing) {
+      return;
+    }
+
     const dropTarget = sceneGraph.findObject(gridItem, isDashboardDropTarget);
 
     if (!dropTarget || !isDashboardDropTarget(dropTarget)) {

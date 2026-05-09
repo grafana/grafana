@@ -191,6 +191,14 @@ describe('AutoGridLayoutManager', () => {
       expect(autoLayout.state.layout.state.isDraggable).toBe(false);
     });
   });
+
+  describe('default layout', () => {
+    it('defaults isDraggable to false when constructed without an explicit layout', () => {
+      const manager = new AutoGridLayoutManager({});
+
+      expect(manager.state.layout.state.isDraggable).toBe(false);
+    });
+  });
 });
 
 describe('AutoGridItem repeat + conditional rendering', () => {
