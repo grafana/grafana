@@ -254,6 +254,46 @@ describe('AzureMonitor: metrics dataHooks', () => {
         });
       });
     });
+
+    it('updates allowedTimeGrainsMs when metric changes but aggregation and timeGrain remain the same', async () => {
+      // Simulate switching to a metric (e.g. AKS Cluster Health) that only supports a limited set of time grains.
+      // The query already has aggregation and timeGrain set, so only allowedTimeGrainsMs differs.
+      datasource.azureMonitorDatasource.getMetricMetadata = jest.fn().mockResolvedValue({
+        primaryAggType: 'Average',
+        supportedAggTypes: ['Average'],
+        supportedTimeGrains: [
+          { label: 'Auto', value: 'auto' },
+          { label: '5 minutes', value: 'PT5M' },
+          { label: '1 hour', value: 'PT1H' },
+          { label: '1 day', value: 'P1D' },
+        ],
+        dimensions: [],
+      });
+
+      const query = {
+        ...bareQuery,
+        azureMonitor: {
+          ...metricsMetadataConfig.emptyQueryPartial,
+          aggregation: 'Average',
+          timeGrain: 'auto',
+          // Stale allowedTimeGrainsMs from the previous metric (includes PT1M which the new metric doesn't support)
+          allowedTimeGrainsMs: [60_000, 300_000, 900_000, 1_800_000, 3_600_000, 21_600_000, 43_200_000, 86_400_000],
+        },
+      };
+      renderHook(() => metricsMetadataConfig.hook(query, datasource, onChange));
+
+      await waitFor(() => {
+        expect(onChange).toHaveBeenCalledWith({
+          ...query,
+          azureMonitor: {
+            ...query.azureMonitor,
+            aggregation: 'Average',
+            timeGrain: 'auto',
+            allowedTimeGrainsMs: [300_000, 3_600_000, 86_400_000],
+          },
+        });
+      });
+    });
   });
 
   describe('useMetricNamespaces', () => {

@@ -21,6 +21,11 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 - Separate PRs for frontend and backend changes (deployed at different cadences)
 - Security: prevent XSS, SQL injection, command injection
 
+## Comments
+
+- Only add a comment when it explains **why** something is done or reveals non-obvious logic that a reader must know to safely change the code. If the code is self-explanatory, no comment is needed.
+- Never include links (Slack, GitHub, Jira, etc.) in code comments.
+
 ## Commands
 
 ### Build & Run
@@ -119,7 +124,7 @@ Standalone Go apps using Grafana App SDK: `apps/dashboard/`, `apps/folder/`, `ap
 
 ### Plugin Workspaces
 
-These built-in plugins require separate build steps: `azuremonitor`, `cloud-monitoring`, `grafana-postgresql-datasource`, `loki`, `tempo`, `jaeger`, `mysql`, `parca`, `zipkin`, `grafana-pyroscope-datasource`, `grafana-testdata-datasource`.
+These built-in plugins require separate build steps: `azuremonitor`, `cloud-monitoring`, `grafana-postgresql-datasource`, `loki`, `tempo`, `jaeger`, `mysql`, `parca`, `grafana-pyroscope-datasource`, `grafana-testdata-datasource`.
 
 Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 

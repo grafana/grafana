@@ -5,6 +5,7 @@ import { render, screen, testWithFeatureToggles, userEvent, within } from 'test/
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -49,8 +50,6 @@ import {
   deleteRoutingTree,
   getRoutingTree,
   resetRoutingTreeMap,
-  routingTreeFromSpec,
-  setAllRoutingTreePermissions,
   setRoutingTree,
 } from './mocks/server/entities/k8s/routingtrees';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
@@ -181,20 +180,9 @@ describe.each([
   { testName: 'PolicyPage', renderPage: renderPolicyPage(ROOT_ROUTE_NAME), routeName: ROOT_ROUTE_NAME },
   { testName: 'PolicyPage', renderPage: renderPolicyPage(OtherPolicyName), routeName: OtherPolicyName },
 ])('$testName - Policy: $routeName', ({ testName, renderPage, routeName }) => {
-  // combobox hack :/
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    // combobox hack :/
+    mockComboboxRect();
   });
 
   beforeEach(() => {
@@ -297,8 +285,13 @@ describe.each([
   });
 
   it('can edit root route if one is not defined yet', async () => {
-    const emptyTree = createKubernetesRoutingTreeSpec({ name: routeName, routes: [] });
-    setRoutingTree(routeName, routingTreeFromSpec(routeName, emptyTree.spec));
+    setRoutingTree(
+      routeName,
+      createKubernetesRoutingTreeSpec({
+        name: routeName,
+        routes: [],
+      })
+    );
     const { user } = renderPage();
 
     // Sanity check to make sure we actually have an undefined root route.
@@ -332,7 +325,6 @@ describe.each([
       AccessControlAction.AlertingNotificationsRead,
       AccessControlAction.AlertingNotificationsExternalRead,
     ]);
-    setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
 
     const { user } = renderPage();
 
@@ -380,8 +372,13 @@ describe.each([
   });
 
   it('Should be able to delete an empty route', async () => {
-    const tree = createKubernetesRoutingTreeSpec({ name: routeName, routes: [{}] });
-    setRoutingTree(routeName, routingTreeFromSpec(routeName, tree.spec));
+    setRoutingTree(
+      routeName,
+      createKubernetesRoutingTreeSpec({
+        name: routeName,
+        routes: [{}],
+      })
+    );
 
     const { user } = renderPage();
 

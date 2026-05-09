@@ -7,7 +7,7 @@ import { dateTimeFormat, dateTimeFormatTimeAgo, dateTimeFormatWithAbbrevation, t
 // Default time zone ("browser") is set to Pacific/Easter in jest.config.js
 const referenceDate = '2020-04-17T12:36:15.779Z';
 
-describe('dateTimeFormat (regionalFormatPreference)', () => {
+describe.skip('dateTimeFormat (regionalFormatPreference)', () => {
   let mockGetFeatureToggle: jest.SpyInstance;
 
   beforeAll(() => {

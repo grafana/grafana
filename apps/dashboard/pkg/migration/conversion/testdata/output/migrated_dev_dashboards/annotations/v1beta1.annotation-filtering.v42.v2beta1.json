@@ -548,7 +548,6 @@
       "annotations"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "now-30m",
       "to": "now",
       "autoRefresh": "",

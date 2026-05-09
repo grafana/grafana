@@ -51,6 +51,9 @@ jobs:
   deploy-storybook:
     needs: main
     if: ${{ !inputs.dry_run && inputs.latest == '1' }}
+    permissions:
+      contents: read
+      id-token: write
     uses: grafana/grafana/.github/workflows/deploy-storybook.yml@main
     with:
       version: ${{ inputs.version }}

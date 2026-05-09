@@ -79,9 +79,8 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 			if cfg.Name == v.Name {
 				continue
 			}
-			if v.URL() == cfg.URL() {
-				// Allow duplicate paths only when both paths are empty (repository root)
-				if v.Path() == cfg.Path() && cfg.Path() != "" {
+			if v.URL() == cfg.URL() && v.Branch() == cfg.Branch() {
+				if v.Path() == cfg.Path() {
 					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
 						cfg.Path(),
 						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}

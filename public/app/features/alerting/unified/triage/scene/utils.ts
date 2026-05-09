@@ -24,14 +24,6 @@ export function getDataQuery(expression: string, options?: Partial<SceneDataQuer
   return query;
 }
 
-/**
- * Turns an array of "groupBy" keys into a Prometheus matcher such as key!="",key2!="" .
- * This way we can show only instances that have a label that was grouped on.
- */
-export function stringifyGroupFilter(groupBy: string[]) {
-  return groupBy.map((key) => `${key}!=""`).join(',');
-}
-
 export const defaultTimeRange = {
   from: 'now-15m',
   to: 'now',

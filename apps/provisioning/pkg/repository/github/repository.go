@@ -125,7 +125,7 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 	if r.GetCurrentBranch() == "" {
 		branch, err := r.GetDefaultBranch(ctx)
 		if err != nil {
-			return nil, err
+			return testResultFromGetDefaultBranchError(url, err), nil
 		}
 
 		r.SetBranch(branch)
@@ -141,6 +141,44 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 	}
 
 	return results, nil
+}
+
+// testResultFromGetDefaultBranchError converts a GetDefaultBranch failure into a
+// user-facing TestResults. The /test endpoint is the onboarding entry point; surfacing
+// these as bare Go errors turns recoverable conditions (wrong URL, missing token scope,
+// transient GitHub outage) into opaque HTTP 500s.
+func testResultFromGetDefaultBranchError(url string, err error) *provisioning.TestResults {
+	path := field.NewPath("spec", "github", "url")
+	code := http.StatusBadRequest
+	var detail string
+
+	switch {
+	case errors.Is(err, repository.ErrFileNotFound):
+		detail = fmt.Sprintf("repository %q not found, or the configured token does not have access to it", url)
+	case errors.Is(err, repository.ErrUnauthorized):
+		path = field.NewPath("spec", "github", "token")
+		code = http.StatusUnauthorized
+		detail = "authentication failed: the configured token is invalid or expired"
+	case errors.Is(err, repository.ErrPermissionDenied):
+		path = field.NewPath("spec", "github", "token")
+		code = http.StatusForbidden
+		detail = fmt.Sprintf("the configured token lacks permission to access %q", url)
+	case errors.Is(err, repository.ErrServerUnavailable):
+		code = http.StatusServiceUnavailable
+		detail = "GitHub is currently unavailable, please try again later"
+	default:
+		detail = err.Error()
+	}
+
+	return &provisioning.TestResults{
+		Code:    code,
+		Success: false,
+		Errors: []provisioning.ErrorDetails{{
+			Type:   metav1.CauseTypeFieldValueInvalid,
+			Field:  path.String(),
+			Detail: detail,
+		}},
+	}
 }
 
 // checkBranchProtection validates that branch protection rules and repository rulesets

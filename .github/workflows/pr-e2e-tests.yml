@@ -290,7 +290,7 @@ jobs:
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
         if: needs.run-playwright-tests.result != 'skipped'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: blobs
           pattern: playwright-blob-*
@@ -365,7 +365,7 @@ jobs:
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
         if: needs.run-playwright-tests.result != 'skipped'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: blobs
           pattern: playwright-blob-*

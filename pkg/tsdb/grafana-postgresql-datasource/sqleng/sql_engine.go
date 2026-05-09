@@ -534,16 +534,18 @@ func convertSQLTimeColumnsToEpochMS(frame *data.Frame, qm *dataQueryModel) error
 func convertResultsToFrame(results []*pgconn.Result, rowLimit int64) (*data.Frame, error) {
 	m := pgtype.NewMap()
 
-	// Find the first SELECT result to establish the frame structure
+	// Find the first result that returns rows (has field descriptions).
+	// We check FieldDescriptions rather than CommandTag.Select() because commands
+	// like EXPLAIN and EXPLAIN ANALYZE return rows but have a non-SELECT command tag.
 	var firstSelectResult *pgconn.Result
 	for _, result := range results {
-		if result.CommandTag.Select() {
+		if len(result.FieldDescriptions) > 0 {
 			firstSelectResult = result
 			break
 		}
 	}
 
-	// If no SELECT results found, return empty frame
+	// If no row-returning results found, return empty frame
 	if firstSelectResult == nil {
 		return data.NewFrame(""), nil
 	}
@@ -561,10 +563,10 @@ func convertResultsToFrame(results []*pgconn.Result, rowLimit int64) (*data.Fram
 	}
 	frame := *data.NewFrame("", fields...)
 
-	// Process all SELECT results, but validate column compatibility
+	// Process all row-returning results, but validate column compatibility
 	for _, result := range results {
-		// Skip non-select statements
-		if !result.CommandTag.Select() {
+		// Skip statements that don't return rows (e.g. INSERT, UPDATE, DELETE)
+		if len(result.FieldDescriptions) == 0 {
 			continue
 		}
 

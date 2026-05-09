@@ -11,13 +11,12 @@ import {
 } from '../Analytics';
 import { shouldUseAlertingListViewV2 } from '../featureToggles';
 import { setPreviewToggle } from '../previewToggles';
-import { isOpenSourceEdition } from '../utils/misc';
 import { ALERTING_PATHS } from '../utils/navigation';
 
 import { RevertToOldExperienceModal } from './AlertsActivityOptOutModal';
 
 export function RuleListPageTitle({ title }: { title: string }) {
-  const shouldShowV2Toggle = (config.featureToggles.alertingListViewV2PreviewToggle ?? false) && isOpenSourceEdition();
+  const shouldShowV2Toggle = config.featureToggles.alertingListViewV2PreviewToggle ?? false;
   const listViewV2Enabled = shouldUseAlertingListViewV2();
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);

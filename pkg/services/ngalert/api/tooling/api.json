@@ -6598,7 +6598,8 @@
     "summary": "Get all the contact points.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "post": {
     "consumes": [
@@ -6642,7 +6643,8 @@
     "summary": "Create a contact point.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/contact-points/export": {
@@ -6738,7 +6740,8 @@
     "summary": "Delete a contact point.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -6789,7 +6792,8 @@
     "summary": "Update an existing contact point.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
@@ -7015,7 +7019,8 @@
     "summary": "Get all the mute timings.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "post": {
     "consumes": [
@@ -7059,7 +7064,8 @@
     "summary": "Create a new mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/mute-timings/export": {
@@ -7156,7 +7162,8 @@
     "summary": "Delete a mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "get": {
     "operationId": "RouteGetMuteTiming",
@@ -7189,7 +7196,8 @@
     "summary": "Get a mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -7246,7 +7254,8 @@
     "summary": "Replace an existing mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/mute-timings/{name}/export": {
@@ -7330,7 +7339,8 @@
     "summary": "Clears the notification policy tree.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "get": {
     "operationId": "RouteGetPolicyTree",
@@ -7351,7 +7361,8 @@
     "summary": "Get the notification policy tree.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -7396,7 +7407,8 @@
     "summary": "Sets the notification policy tree.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/policies/export": {
@@ -7455,7 +7467,8 @@
     "summary": "Get all notification template groups.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/templates/{name}": {
@@ -7496,7 +7509,8 @@
     "summary": "Delete a notification template group.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "get": {
     "operationId": "RouteGetTemplate",
@@ -7532,7 +7546,8 @@
     "summary": "Get a notification template group.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -7589,7 +7604,8 @@
     "summary": "Updates an existing notification template group.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   }
  },

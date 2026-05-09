@@ -10,12 +10,12 @@
         "warning": "Aviso"
       },
       "connection-limits": {
-        "auto-max-idle": "Ralenti máximo automático",
-        "content-auto-max-idle": "",
-        "content-max-idle": "O número máximo de ligações no conjunto de ligações inativas. Se o numero de <i>Ligações abertas máximas</i> for superior a 0, mas inferior ao número de <i>Ligações inativas máximas</i>, então o número de <i>Ligações inativas máximas</i> será reduzido para corresponder ao limite de <i>Ligações abertas máximas</i>. Se definido para 0, nenhuma ligação de ralenti será retida.",
+        "auto-max-idle": "Máx. em inatividade automático",
+        "content-auto-max-idle": "Se ativado, defina automaticamente o número de <i>Ligações máximas em inatividade</i> para o mesmo valor que<i> Ligações abertas máximas</i>. Se o número de ligações abertas máximas não estiver definido, será definido para a predefinição ({{defaultMaxIdle}}).",
+        "content-max-idle": "O número máximo de ligações no conjunto de ligações inativas. Se o numero de <i>Ligações abertas máximas</i> for superior a 0, mas inferior ao número de <i>Ligações inativas máximas</i>, então o número de <i>Ligações inativas máximas</i> será reduzido para corresponder ao limite de <i>Ligações abertas máximas</i>. Se definido para 0, nenhuma ligação em inatividade será retida.",
         "content-max-lifetime": "A quantidade máxima de tempo em segundos que uma ligação pode ser reutilizada. Se definido para 0, as ligações serão reutilizadas para sempre.",
-        "content-max-open": "",
-        "max-idle": "Ralenti máx.",
+        "content-max-open": "O número máximo de ligações abertas à base de dados. Se o número de <i>Ligações máximas em inatividade</i> for superior a 0 e o número de <i>Ligações abertas máximas</i> for inferior ao número de <i>Ligações máximas em inatividade</i>, então o número de <i>Ligações máximas em inatividade</i> será reduzido para corresponder ao limite de <i>Ligações abertas máximas</i>. Se definido para 0, não há limite para o número de ligações abertas.",
+        "max-idle": "Máx. em inatividade",
         "max-lifetime": "Tempo de vida máximo",
         "max-open": "Aberturas máx.",
         "title-connection-limits": "Limites da ligação"
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "A sua consulta é inválida. Verifique abaixo para obter detalhes. <br/>No entanto, ainda pode executar esta consulta.",
         "editor-modes": {
           "label-builder": "Construtor",
           "label-code": "Cód."

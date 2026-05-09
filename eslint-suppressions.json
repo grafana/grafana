@@ -1,29 +1,4 @@
 {
-  "e2e/cypress/support/commands.js": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 1
-    }
-  },
-  "e2e/old-arch/utils/support/localStorage.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 2
-    }
-  },
-  "e2e/old-arch/utils/support/types.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "e2e/utils/support/localStorage.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 2
-    }
-  },
-  "e2e/utils/support/types.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/dataframe/CircularDataFrame.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -352,96 +327,8 @@
       "count": 1
     }
   },
-  "packages/grafana-prometheus/src/components/PromExploreExtraField.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 4
-    }
-  },
-  "packages/grafana-prometheus/src/components/PromQueryField.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 2
-    }
-  },
-  "packages/grafana-prometheus/src/components/metrics-browser/useMetricsLabelsValues.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 6
-    }
-  },
-  "packages/grafana-prometheus/src/configuration/AlertingSettingsOverhaul.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 5
-    }
-  },
-  "packages/grafana-prometheus/src/configuration/ExemplarSetting.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
-  "packages/grafana-prometheus/src/datasource.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    }
-  },
-  "packages/grafana-prometheus/src/language_provider.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 8
-    }
-  },
-  "packages/grafana-prometheus/src/language_provider.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
-  "packages/grafana-prometheus/src/language_utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "packages/grafana-prometheus/src/querybuilder/components/LabelFilterItem.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
-    }
-  },
-  "packages/grafana-prometheus/src/querybuilder/components/LabelParamEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "packages/grafana-prometheus/src/querybuilder/shared/OperationEditor.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-prometheus/src/querybuilder/shared/OperationParamEditorRegistry.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
-    }
-  },
-  "packages/grafana-prometheus/src/querybuilder/shared/types.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-prometheus/src/resource_clients.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 8
-    }
-  },
-  "packages/grafana-prometheus/src/types.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    }
-  },
   "packages/grafana-runtime/src/analytics/types.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-runtime/src/components/DataSourcePicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -524,11 +411,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/Combobox/Combobox.story.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 5
-    }
-  },
   "packages/grafana-ui/src/components/Combobox/MultiCombobox.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -574,14 +456,9 @@
       "count": 3
     }
   },
-  "packages/grafana-ui/src/components/Forms/Form.story.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 9
-    }
-  },
   "packages/grafana-ui/src/components/Forms/InlineField.story.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 9
+      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.tsx": {
@@ -783,11 +660,6 @@
       "count": 6
     }
   },
-  "packages/grafana-ui/src/components/TableInputCSV/TableInputCSV.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Tags/Tag.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -938,11 +810,6 @@
       "count": 1
     }
   },
-  "public/app/AppWrapper.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/core/TableModel.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -1001,11 +868,6 @@
   },
   "public/app/core/components/OptionsUI/select.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/Page/EditableTitle.tsx": {
-    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -1156,11 +1018,6 @@
   "public/app/core/utils/ticks.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    }
-  },
-  "public/app/features/actions/ActionEditor.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 7
     }
   },
   "public/app/features/actions/ActionVariablesEditor.tsx": {
@@ -2016,22 +1873,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/containers/DashboardPage.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/containers/PublicDashboardPage.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/dashgrid/DashboardGrid.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -2261,18 +2102,8 @@
       "count": 1
     }
   },
-  "public/app/features/explore/Logs/LogsContainer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/RichHistory/RichHistorySettingsTab.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/Table/TableContainer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2302,11 +2133,6 @@
     }
   },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/index.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
@@ -2441,11 +2267,6 @@
       "count": 1
     }
   },
-  "public/app/features/logs/components/LogMessageAnsi.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/migrate-to-cloud/cloud/MigrationTokenPane/CreateTokenModal.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -2537,11 +2358,6 @@
   "public/app/features/plugins/admin/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/features/plugins/datasource_srv.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
     }
   },
   "public/app/features/plugins/datasource_srv.ts": {
@@ -2647,14 +2463,6 @@
     }
   },
   "public/app/features/search/page/components/columns.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/search/state/SearchStateManager.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 16
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
@@ -2857,14 +2665,6 @@
   "public/app/features/variables/editor/VariableEditorContainer.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/variables/editor/VariableEditorEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/variables/editor/getVariableQueryEditor.tsx": {
@@ -2883,11 +2683,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 3
-    }
-  },
-  "public/app/features/variables/pickers/OptionsPicker/OptionsPicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/variables/pickers/OptionsPicker/actions.ts": {
@@ -3023,11 +2818,6 @@
   },
   "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/BasicLogsToggle.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/ConfigEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -3260,9 +3050,6 @@
     }
   },
   "public/app/plugins/datasource/graphite/datasource.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 8
     }
@@ -3496,16 +3283,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/prometheus/configuration/AzureAuthSettings.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsForm.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 15
-    }
-  },
   "public/app/plugins/datasource/tempo/QueryField.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -3576,22 +3353,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "public/app/plugins/datasource/zipkin/QueryField.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    },
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/zipkin/datasource.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
     }
   },
   "public/app/plugins/panel/annolist/AnnoListPanel.tsx": {

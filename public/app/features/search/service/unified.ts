@@ -33,10 +33,6 @@ import {
 } from './types';
 import { appendFrame, filterSearchResults, replaceCurrentFolderQuery } from './utils';
 
-// The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
-// and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
-const loadingFrameName = 'Loading';
-
 const searchURI = `${v0alphaBaseURL}/search`;
 
 export type SearchHit = {
@@ -72,7 +68,7 @@ const folderViewSort = 'name_sort';
 export class UnifiedSearcher implements GrafanaSearcher {
   locationInfo: Promise<Record<string, LocationInfo>>;
 
-  constructor(private fallbackSearcher: GrafanaSearcher) {
+  constructor() {
     this.locationInfo = loadLocationInfo();
   }
 
@@ -161,9 +157,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     const first = toDashboardResults(rsp, query.sort ?? '');
-    if (first.name === loadingFrameName) {
-      return this.fallbackSearcher.search(query);
-    }
 
     // We add parent folder information into meta.custom of the data frame. This is loaded separately in
     // loadLocationInfo. Used to show parent information upstream.
@@ -236,11 +229,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       // This will be mutated when loadMoreItems is called.
       view,
 
-      // Not using the startIndex because it is required to satisfy the typing that is shared between this and SQL
-      // searcher. The SQL searcher though does not support loadMoreItems at all though so I guess it's just weird.
-      // TODO: maybe we can just remove it. SearchResultsTable seems to be using it but obviously it does not do
-      //  anything.
-      loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+      loadMoreItems: async (stopIndex: number): Promise<void> => {
         loadMax = Math.max(loadMax, stopIndex + 1);
         if (!pending) {
           pending = getNextPage();
@@ -390,7 +379,7 @@ function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
   return {
     view: new DataFrameView({ length: 0, fields: [] }),
     totalRows: 0,
-    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+    loadMoreItems: async (stopIndex: number): Promise<void> => {
       return;
     },
     isItemLoaded: (index: number): boolean => {

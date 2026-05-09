@@ -40,12 +40,12 @@ The form has these options:
 | Label values | `label`       |                         | Label values for `label`.                                        |
 | Label values | `label`       | `log stream selector`   | Label values for `label` in the specified `log stream selector`. |
 
-## Use ad hoc filters
+## Use filters
 
-Loki supports the special **Ad hoc filters** variable type.
+Loki supports the special **Filters** variable type.
 You can use this variable type to specify any number of key/value filters, and Grafana applies them automatically to all of your Loki queries.
 
-For more information, refer to [Add ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+For more information, refer to [Add filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
 
 ## Use $\_\_auto variable for Loki metric queries
 

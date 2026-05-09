@@ -2,9 +2,8 @@ package accesscontrol
 
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -19,7 +18,7 @@ var (
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingRuleRead,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalRead,
@@ -27,7 +26,7 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingSilencesRead,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				// Following are needed for simplified notification policies
 				{
@@ -50,15 +49,15 @@ var (
 			Permissions: accesscontrol.ConcatPermissions(rulesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingRuleCreate,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleUpdate,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleDelete,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalWrite,
@@ -66,11 +65,11 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingSilencesWrite,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingSilencesCreate,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 			}),
 		},
@@ -383,8 +382,8 @@ var (
 					Action: accesscontrol.ActionAlertingNotificationsProvisioningWrite, // organization scope
 				},
 				{
-					Action: dashboards.ActionFoldersRead,
-					Scope:  dashboards.ScopeFoldersAll,
+					Action: folder.ActionFoldersRead,
+					Scope:  folder.ScopeFoldersAll,
 				},
 			},
 		},
@@ -493,8 +492,25 @@ var (
 	}
 )
 
-func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.FeatureToggles) error {
-	fixedRoles := []accesscontrol.RoleRegistration{
+var alertmanagerImportsAdminRole = accesscontrol.RoleRegistration{
+	Role: accesscontrol.RoleDTO{
+		Name:        accesscontrol.FixedRolePrefix + "alerting.alertmanager-imports:writer",
+		DisplayName: "Alerting alertmanager imports writer",
+		Description: "Read, write, and delete Prometheus/Mimir-compatible alertmanager configurations imported via the convert API.",
+		Group:       models.AlertRolesGroup,
+		Permissions: []accesscontrol.Permission{
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsCreate, Scope: models.ScopeAlertmanagerImportsAll},
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsRead, Scope: models.ScopeAlertmanagerImportsAll},
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsWrite, Scope: models.ScopeAlertmanagerImportsAll},
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsDelete, Scope: models.ScopeAlertmanagerImportsAll},
+		},
+	},
+	Grants: []string{string(org.RoleAdmin)},
+}
+
+// FixedRoleRegistrations returns all alerting role registrations declared by this package.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
+	return []accesscontrol.RoleRegistration{
 		rulesReaderRole, rulesWriterRole,
 		instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
@@ -506,7 +522,10 @@ func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.Featu
 		timeIntervalsReaderRole, timeIntervalsWriterRole,
 		routesCreatorRole, routesReaderRole, routesWriterRole,
 		inhibitionRulesReaderRole, inhibitionRulesWriterRole,
+		alertmanagerImportsAdminRole,
 	}
+}
 
-	return service.DeclareFixedRoles(fixedRoles...)
+func DeclareFixedRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }

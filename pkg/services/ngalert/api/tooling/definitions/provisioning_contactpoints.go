@@ -8,6 +8,8 @@ import (
 //
 // Get all the contact points.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: ContactPoints
 //       403: ForbiddenError
@@ -31,6 +33,8 @@ import (
 //
 // Create a contact point.
 //
+// Deprecated: true
+//
 //     Consumes:
 //     - application/json
 //
@@ -43,6 +47,8 @@ import (
 //
 // Update an existing contact point.
 //
+// Deprecated: true
+//
 //     Consumes:
 //     - application/json
 //
@@ -54,6 +60,8 @@ import (
 // swagger:route DELETE /v1/provisioning/contact-points/{UID} provisioning stable RouteDeleteContactpoints
 //
 // Delete a contact point.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json

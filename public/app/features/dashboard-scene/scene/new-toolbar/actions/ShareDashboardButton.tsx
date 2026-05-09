@@ -41,14 +41,12 @@ export const ShareDashboardButton = ({ dashboard }: ToolbarActionProps) => {
         }
       }}
       groupTestId={newShareButtonSelector.shareLink}
-      buttonLabel={t('dashboard.toolbar.new.share.title', 'Share')}
       buttonTooltip={t('dashboard.toolbar.new.share.tooltip', 'Copy link')}
       buttonTestId={newShareButtonSelector.container}
       onButtonClick={onPrimaryShareClick}
       arrowLabel={t('dashboard.toolbar.new.share.arrow', 'Share')}
       arrowTestId={newShareButtonSelector.arrowMenu}
       dashboard={dashboard}
-      variant={!dashboard.state.isEditing ? 'primary' : 'canvas'}
       loading={loading}
     />
   );

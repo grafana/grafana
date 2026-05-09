@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
+	inmemory "github.com/grafana/grafana/pkg/registry/apis/iam/globalrole/inmemory"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
@@ -30,10 +31,10 @@ import (
 var WireSetExts = wire.NewSet(
 	noopstorage.ProvideStorageBackend,
 	iam.ProvideNoopRoleApiInstaller,
-	iam.ProvideNoopGlobalRoleApiInstaller,
+	inmemory.ProvideInMemoryGlobalRoleApiInstaller,
 	iam.ProvideNoopTeamLBACApiInstaller,
 	iam.ProvideNoopExternalGroupMappingApiInstaller,
-	wire.Bind(new(iam.RoleBindingStorageBackend), new(*noopstorage.StorageBackendImpl)),
+	iam.ProvideNoopRoleBindingApiInstaller,
 
 	externalgroupmapping.ProvideNoopTeamGroupsREST,
 	wire.Bind(new(externalgroupmapping.TeamGroupsHandler), new(*externalgroupmapping.NoopTeamGroupsREST)),
@@ -58,9 +59,10 @@ var provisioningExtras = wire.NewSet(
 var WireSet = wire.NewSet(
 	ProvideRegistryServiceSink, // dummy background service that forces registration
 
-	// read-only datasource abstractions
+	// plugin abstractions
 	plugincontext.ProvideService,
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
+	wire.Bind(new(appplugin.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
 
 	// Secrets

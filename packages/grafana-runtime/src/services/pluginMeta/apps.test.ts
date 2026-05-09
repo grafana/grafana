@@ -1,6 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { type MonitoringLogger } from '../../utils/logging';
+import { getLogger, setLogger } from '../logging/registry';
 
 import {
   getAppPluginMeta,
@@ -9,7 +9,6 @@ import {
   isAppPluginInstalled,
   setAppPluginMetas,
 } from './apps';
-import { setPluginMetaLogger } from './logging';
 import { initPluginMetas } from './plugins';
 import { app, apps as testApps } from './test-fixtures/config.apps';
 import { v0alpha1Response } from './test-fixtures/v0alpha1Response';
@@ -20,19 +19,9 @@ const initPluginMetasMock = jest.mocked(initPluginMetas);
 const getGrafanaExploretracesApp = () =>
   structuredClone(v0alpha1Response.items.find((a) => a.spec.pluginJson.id === 'grafana-exploretraces-app'));
 
-describe('when useMTPlugins flag is enabled', () => {
-  let logger: MonitoringLogger;
-
+describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: true });
-    logger = {
-      logDebug: jest.fn(),
-      logError: jest.fn(),
-      logInfo: jest.fn(),
-      logMeasurement: jest.fn(),
-      logWarning: jest.fn(),
-    };
-    setPluginMetaLogger(logger);
+    setTestFlags({ 'plugins.useMTPlugins': true });
   });
 
   afterAll(() => {
@@ -97,8 +86,16 @@ describe('when useMTPlugins flag is enabled', () => {
 
     describe('and initPluginMetas returns an empty result', () => {
       beforeEach(() => {
+        jest.resetAllMocks();
         initPluginMetasMock.mockResolvedValue({ items: [] });
-        jest.spyOn(console, 'warn').mockImplementation();
+        // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
+        setLogger('grafana/runtime.plugins.meta', {
+          logDebug: jest.fn(),
+          logError: jest.fn(),
+          logInfo: jest.fn(),
+          logMeasurement: jest.fn(),
+          logWarning: jest.fn(),
+        });
       });
 
       it.each([{ func: getAppPluginMetas }])(
@@ -106,14 +103,10 @@ describe('when useMTPlugins flag is enabled', () => {
         async ({ func }) => {
           await func();
 
-          expect(console.warn).toHaveBeenCalledTimes(1);
-          expect(console.warn).toHaveBeenCalledWith(
-            'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata'
-          );
-          expect(logger.logWarning).toHaveBeenCalledTimes(1);
-          expect(logger.logWarning).toHaveBeenCalledWith(
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
             'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-            { type: 'app' }
+            { pluginType: 'app' }
           );
         }
       );
@@ -123,14 +116,10 @@ describe('when useMTPlugins flag is enabled', () => {
         async ({ func }) => {
           await func('');
 
-          expect(console.warn).toHaveBeenCalledTimes(1);
-          expect(console.warn).toHaveBeenCalledWith(
-            'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata'
-          );
-          expect(logger.logWarning).toHaveBeenCalledTimes(1);
-          expect(logger.logWarning).toHaveBeenCalledWith(
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
             'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-            { type: 'app' }
+            { pluginType: 'app' }
           );
         }
       );
@@ -191,9 +180,9 @@ describe('when useMTPlugins flag is enabled', () => {
   });
 });
 
-describe('when useMTPlugins flag is enabled', () => {
+describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
+    setTestFlags({ 'plugins.useMTPlugins': false });
   });
 
   afterAll(() => {

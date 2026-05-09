@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getAllOptionEditors registers unique ids 1`] = `
+[
+  "actions",
+  "boolean",
+  "color",
+  "dashboard-uid",
+  "field-name",
+  "fieldColor",
+  "links",
+  "mappings",
+  "multi-select",
+  "number",
+  "radio",
+  "select",
+  "slider",
+  "stats-picker",
+  "strings",
+  "text",
+  "thresholds",
+  "timezone",
+  "unit",
+]
+`;
+
+exports[`getAllStandardFieldConfigs returns standard field config items with stable paths 1`] = `
+[
+  "actions",
+  "color",
+  "decimals",
+  "displayName",
+  "fieldMinMax",
+  "filterable",
+  "links",
+  "mappings",
+  "max",
+  "min",
+  "noValue",
+  "thresholds",
+  "unit",
+]
+`;

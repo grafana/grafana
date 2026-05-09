@@ -5,7 +5,8 @@ keeper: {
 	pluralName: "Keepers"
 	scope:      "Namespaced"
 	schema: {
-		spec: KeeperSpec
+		spec:   KeeperSpec
+		status: KeeperStatus
 	}
 }
 

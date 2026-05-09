@@ -288,6 +288,10 @@ func (f *fakeClientGenerator) GetCustomRouteClient(schema.GroupVersion, string) 
 	return nil, nil
 }
 
+func (f *fakeClientGenerator) DiscoveryClient() (resource.DiscoveryClient, error) {
+	return nil, nil
+}
+
 type fakeResourceClient struct {
 	client *fakePluginInstallClient
 }
@@ -649,6 +653,23 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 				}
 			},
 			expectError: true,
+		},
+		{
+			name: "treats AlreadyExists as conflict (concurrent create race)",
+			install: &PluginInstall{
+				ID:      "plugin-1",
+				Version: "1.0.0",
+				Source:  SourceChildPluginReconciler,
+			},
+			setupClient: func(fc *fakePluginInstallClient) {
+				fc.getFunc = func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+					return nil, errorsK8s.NewNotFound(pluginGroupResource(), "plugin-1")
+				}
+				fc.createFunc = func(context.Context, *pluginsv0alpha1.Plugin, resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
+					return nil, errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1")
+				}
+			},
+			expectError: false,
 		},
 		{
 			name: "update fails",

@@ -38,6 +38,7 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -145,7 +146,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			req = webtest.RequestWithSignedInUser(req, sc.signedInUser)
 			b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				rec := httptest.NewRecorder()
 				m.ServeHTTP(rec, req)
 				require.Equal(b, 200, rec.Code)
@@ -182,7 +183,7 @@ func setupDB(b testing.TB) benchScenario {
 	var orgID int64 = 1
 
 	userIDs := make([]int64, 0, TEAM_MEMBER_NUM)
-	for i := 0; i < TEAM_MEMBER_NUM; i++ {
+	for i := range TEAM_MEMBER_NUM {
 		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			OrgID: orgID,
 			Login: fmt.Sprintf("user%d", i),
@@ -193,7 +194,7 @@ func setupDB(b testing.TB) benchScenario {
 	}
 
 	signedInUser := user.SignedInUser{UserID: userIDs[0], OrgID: orgID, Permissions: map[int64]map[string][]string{
-		orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+		orgID: {folder.ActionFoldersCreate: {}, folder.ActionFoldersWrite: {folder.ScopeFoldersAll}},
 	}}
 
 	now := time.Now()
@@ -203,15 +204,17 @@ func setupDB(b testing.TB) benchScenario {
 	teamRoles := make([]accesscontrol.TeamRole, 0, TEAM_NUM)
 	for i := 1; i < TEAM_NUM+1; i++ {
 		teamID := int64(i)
+		teamUID := fmt.Sprintf("team%d", i)
 		teams = append(teams, team.Team{
-			UID:     fmt.Sprintf("team%d", i),
+			UID:     teamUID,
 			ID:      teamID,
 			Name:    fmt.Sprintf("team%d", i),
 			OrgID:   orgID,
 			Created: now,
 			Updated: now,
 		})
-		signedInUser.Teams = append(signedInUser.Teams, teamID)
+		signedInUser.TeamIDs = append(signedInUser.TeamIDs, teamID) // nolint:staticcheck
+		signedInUser.TeamUIDs = append(signedInUser.TeamUIDs, teamUID)
 
 		for _, userID := range userIDs {
 			teamMembers = append(teamMembers, team.TeamMember{
@@ -262,7 +265,7 @@ func setupDB(b testing.TB) benchScenario {
 	dashs := make([]*dashboards.Dashboard, 0, foldersCap+dashsCap)
 	dashTags := make([]*dashboardTag, 0, dashsCap)
 	permissions := make([]accesscontrol.Permission, 0, foldersCap*2)
-	for i := 0; i < LEVEL0_FOLDER_NUM; i++ {
+	for i := range LEVEL0_FOLDER_NUM {
 		f0, d := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d", i), nil)
 		folders = append(folders, f0)
 		dashs = append(dashs, d)
@@ -270,21 +273,21 @@ func setupDB(b testing.TB) benchScenario {
 		roleID := int64(i%TEAM_NUM + 1)
 		permissions = append(permissions, accesscontrol.Permission{
 			RoleID:  roleID,
-			Action:  dashboards.ActionFoldersRead,
-			Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+			Action:  folder.ActionFoldersRead,
+			Scope:   folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
 			Updated: now,
 			Created: now,
 		},
 			accesscontrol.Permission{
 				RoleID:  roleID,
 				Action:  dashboards.ActionDashboardsRead,
-				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+				Scope:   folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
 				Updated: now,
 				Created: now,
 			},
 		)
-		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(signedInUser.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
-		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = append(signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
+		signedInUser.Permissions[orgID][folder.ActionFoldersRead] = append(signedInUser.Permissions[orgID][folder.ActionFoldersRead], folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
+		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = append(signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead], folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
 
 		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)

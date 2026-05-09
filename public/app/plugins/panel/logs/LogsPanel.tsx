@@ -146,6 +146,7 @@ const noCommonLabels: Labels = {};
 
 export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChange, height, id }: LogsPanelProps) => {
   const {
+    allowDownload,
     showControls,
     showFieldSelector,
     controlsStorageKey,
@@ -590,6 +591,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
         >
           {deduplicatedRows.length > 0 && scrollElement && (
             <LogList
+              allowDownload={allowDownload}
               app={isCoreApp(app) ? app : CoreApp.Dashboard}
               containerElement={scrollElement}
               dataFrames={panelData.series}

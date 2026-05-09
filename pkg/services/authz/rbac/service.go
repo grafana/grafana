@@ -253,10 +253,21 @@ func (s *Service) BatchCheck(ctx context.Context, req *authzv1.BatchCheckRequest
 		return s.batchCheckErrorResponse(checks, err), nil
 	}
 
-	// Group checks by action and process each group
+	// Group checks by action and process each group.
+	// Share a single folder tree getter across all groups to avoid redundant folder list calls.
+	// If any group requires fresh data, skip the cache for everyone — the fresh tree is
+	// at least as recent as what the cache would return.
 	groups := s.groupBatchCheckItems(ctx, checks, ns, userUID, idType, results)
+	var skipCache bool
+	for _, g := range groups {
+		if g.requiresFreshData {
+			skipCache = true
+			break
+		}
+	}
+	getTree := s.newFolderTreeGetter(ctx, ns, skipCache)
 	for _, group := range groups {
-		s.processBatchCheckGroup(ctx, ctxLogger, group, ns, idType, userUID, results)
+		s.processBatchCheckGroup(ctx, ctxLogger, group, ns, idType, userUID, getTree, results)
 	}
 
 	// Verify all checks have a result (defensive check)
@@ -360,6 +371,7 @@ func (s *Service) processBatchCheckGroup(
 	ns types.NamespaceInfo,
 	idType types.IdentityType,
 	userUID string,
+	getTree folderTreeGetter,
 	results map[string]*authzv1.BatchCheckResult,
 ) {
 	permissions, err := s.getPermissionsForGroup(ctx, group, ns, idType, userUID)
@@ -370,8 +382,6 @@ func (s *Service) processBatchCheckGroup(
 		}
 		return
 	}
-
-	getTree := s.newFolderTreeGetter(ctx, ns, group.requiresFreshData)
 
 	for i, item := range group.items {
 		checkReq := group.checkReqs[i]

@@ -23,7 +23,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 	const repo = "delete-job-test-repo"
 	testRepo := common.TestRepo{
-		Name: repo,
+		Name:      repo,
+		Workflows: []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json":    "dashboard1.json",
 			"../testdata/text-options.json":  "dashboard2.json",
@@ -33,7 +34,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		ExpectedFolders:    1,
 	}
 
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	t.Run("delete single file", func(t *testing.T) {
 		// FIXME: make the tests in a way that we can simply have a spec and some expectations per scenario.

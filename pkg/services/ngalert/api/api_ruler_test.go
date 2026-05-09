@@ -24,7 +24,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -1123,8 +1122,8 @@ func createPermissionsForRules(rules []*models.AlertRule, orgID int64) map[int64
 	permissions := map[string][]string{}
 	for _, rule := range rules {
 		if _, ok := ns[rule.NamespaceUID]; !ok {
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
-			permissions[dashboards.ActionFoldersRead] = append(permissions[dashboards.ActionFoldersRead], scope)
+			scope := folder.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
+			permissions[folder.ActionFoldersRead] = append(permissions[folder.ActionFoldersRead], scope)
 			permissions[ac.ActionAlertingRuleRead] = append(permissions[ac.ActionAlertingRuleRead], scope)
 			permissions[ac.ActionAlertingRuleUpdate] = append(permissions[ac.ActionAlertingRuleUpdate], scope)
 			ns[rule.NamespaceUID] = struct{}{}
@@ -1141,8 +1140,8 @@ func createPermissionsForRulesWithoutDS(rules []*models.AlertRule, orgID int64) 
 	permissions := map[string][]string{}
 	for _, rule := range rules {
 		if _, ok := ns[rule.NamespaceUID]; !ok {
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
-			permissions[dashboards.ActionFoldersRead] = append(permissions[dashboards.ActionFoldersRead], scope)
+			scope := folder.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
+			permissions[folder.ActionFoldersRead] = append(permissions[folder.ActionFoldersRead], scope)
 			permissions[ac.ActionAlertingRuleRead] = append(permissions[ac.ActionAlertingRuleRead], scope)
 			ns[rule.NamespaceUID] = struct{}{}
 		}
@@ -1403,7 +1402,7 @@ func TestRoutePostNameRulesConfig(t *testing.T) {
 
 		permissions := map[int64]map[string][]string{
 			orgID: {
-				dashboards.ScopeFoldersProvider.GetResourceScopeUID(managedFolder.UID): {dashboards.ActionFoldersRead},
+				folder.ScopeFoldersProvider.GetResourceScopeUID(managedFolder.UID): {folder.ActionFoldersRead},
 			},
 		}
 		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)

@@ -73,6 +73,18 @@ func (qb *queryBuilder) buildUpsertQuery(keyPath string, value []byte) (string, 
 	}
 }
 
+// buildInsertQuery generates a plain INSERT (key_path, value) with no conflict handling.
+// The DB's unique constraint on key_path will reject duplicates.
+func (qb *queryBuilder) buildInsertQuery(keyPath string, value []byte) (string, []interface{}) {
+	query := fmt.Sprintf(
+		"INSERT INTO %s (%s, %s) VALUES (%s, %s)",
+		qb.dialect.QuoteIdent(qb.tableName),
+		qb.dialect.QuoteIdent("key_path"), qb.dialect.QuoteIdent("value"),
+		qb.dialect.Placeholder(1), qb.dialect.Placeholder(2),
+	)
+	return query, []interface{}{keyPath, value}
+}
+
 // buildDeleteQuery generates DELETE query
 func (qb *queryBuilder) buildDeleteQuery(keyPath string) (string, []interface{}) {
 	query := fmt.Sprintf(

@@ -187,11 +187,6 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 
 	server := setupOpenFGAServer(t)
 	setup(t, server)
-	server.cfg.UseStreamedListObjects = true
-
-	t.Cleanup(func() {
-		server.cfg.UseStreamedListObjects = false
-	})
 
 	newList := func(subject, group, resource, subresource string) *authzv1.ListRequest {
 		return &authzv1.ListRequest{
@@ -401,7 +396,7 @@ func TestIntegrationServerListStreamDeadline(t *testing.T) {
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(t, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { srv.Close() })
 

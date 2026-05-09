@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -21,9 +18,9 @@ import (
 // We currently block the creation of library panels in provisioned folders.
 func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 	helper := sharedHelper(t)
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            "test-repo",
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
@@ -120,9 +117,9 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 	const repo = "test-repo"
 	helper := sharedHelper(t)
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repo,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
@@ -144,20 +141,8 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 		require.NoError(t, err, "should successfully patch finalizers")
 
 		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
-			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*10, time.Millisecond*50, "repository should be deleted")
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			foundFolders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-			require.NoError(t, err, "can list values")
-			for _, v := range foundFolders.Items {
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
-			}
-		}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
+		helper.WaitForRepositoryDeleted(t, t.Context(), repo)
+		common.WaitForResourcesReleased(t, t.Context(), helper.Folders.Resource, "folders")
 
 		libraryElement := map[string]interface{}{
 			"kind":      1,

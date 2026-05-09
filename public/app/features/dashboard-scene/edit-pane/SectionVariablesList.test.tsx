@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import { CustomVariable, LocalValueVariable, SceneVariableSet } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { AdHocFiltersVariable, CustomVariable, LocalValueVariable, SceneVariableSet } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -11,7 +12,7 @@ import { SectionVariablesCategoryTitle, SectionVariablesList } from './SectionVa
 
 describe('SectionVariablesList', () => {
   it('does not render local repeat variables in section variables list', () => {
-    const row = buildRowWithVariables();
+    const row = buildRow();
 
     render(<SectionVariablesList sectionOwner={row} />);
 
@@ -20,19 +21,39 @@ describe('SectionVariablesList', () => {
   });
 
   it('counts only non-local variables in title', () => {
-    const row = buildRowWithVariables();
+    const row = buildRow();
 
     render(<SectionVariablesCategoryTitle sectionOwner={row} isExpanded={false} />);
 
-    expect(screen.getByText('Variables (1)')).toBeInTheDocument();
+    expect(screen.getByText('Variables (2)')).toBeInTheDocument();
+  });
+
+  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+    });
+
+    it('excludes adhoc variables from the list', () => {
+      const row = buildRow();
+
+      render(<SectionVariablesList sectionOwner={row} />);
+
+      expect(screen.getByText('custom0')).toBeInTheDocument();
+      expect(screen.queryByText('filter0')).not.toBeInTheDocument();
+    });
   });
 });
 
-function buildRowWithVariables() {
+function buildRow() {
   const variableSet = new SceneVariableSet({
     variables: [
       new LocalValueVariable({ name: 'custom0', value: 'glo3', text: 'glo3' }),
       new CustomVariable({ name: 'custom0', query: 'sec1,sec2', value: ['sec1'], text: ['sec1'] }),
+      new AdHocFiltersVariable({ name: 'filter0', type: 'adhoc' }),
     ],
   });
 

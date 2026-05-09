@@ -39,7 +39,9 @@ export interface NestedFolderPickerProps {
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
 
-  /* Start tree from this folder instead of root */
+  /* Start tree from this folder instead of root. When set, the picker is scoped
+   to this subtree — only descendants of this folder are shown, and top-level
+   items like team folders are excluded. */
   rootFolderUID?: string;
 
   /* Custom root folder item, default is "Dashboards" */
@@ -102,16 +104,20 @@ export function NestedFolderPicker({
   const [foldersOpenState, setFoldersOpenState] = useState<Record<string, boolean>>({ [TEAM_FOLDERS_UID]: true });
   const overlayId = useId();
 
-  const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
 
-  const { teamFolderTreeItems, teamFolderOwnersByUid } = useTeamFolders(foldersOpenState, value, onChange);
+  const {
+    teamFolderTreeItems,
+    teamFolderOwnersByUid,
+    error: teamFoldersError,
+  } = useTeamFolders(foldersOpenState, value, onChange);
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
     emptyFolders,
     items: browseFlatTree,
     isLoading: isBrowseLoading,
+    error: browseError,
     requestNextPage: fetchFolderPage,
   } = useFoldersQuery({
     isBrowsing,
@@ -235,13 +241,23 @@ export function NestedFolderPicker({
         flatTree = filterRootItem(flatTree);
       }
 
+      // Only show team folders when browsing the full tree (no rootFolderUID scope)
+      const fullTree = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...flatTree];
       // Add "Team folders" at the top of the tree list.
-      return filterExcludedItems([...teamFolderTreeItems, ...flatTree], excludeUIDs);
+      return filterExcludedItems(fullTree, excludeUIDs);
     } else {
       flatTree = searchResultsToTreeItems(searchResults?.items || []);
       return filterExcludedItems(flatTree, excludeUIDs);
     }
-  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder, teamFolderTreeItems]);
+  }, [
+    browseFlatTree,
+    excludeUIDs,
+    isBrowsing,
+    searchResults?.items,
+    showRootFolder,
+    teamFolderTreeItems,
+    rootFolderUID,
+  ]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -259,6 +275,7 @@ export function NestedFolderPicker({
   );
 
   const isLoading = isBrowseLoading || isFetchingSearchResults;
+  const displayError = teamFoldersError || browseError;
 
   const { focusedItemIndex, handleKeyDown } = useTreeInteractions({
     tree: flatTree,
@@ -339,37 +356,40 @@ export function NestedFolderPicker({
         }}
         {...getFloatingProps()}
       >
-        {error ? (
+        {displayError && (
           <Alert
             className={styles.error}
             severity="warning"
-            title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
+            title={
+              teamFoldersError
+                ? t('browse-dashboards.folder-picker.team-folders-error-title', 'Error loading team folders')
+                : t('browse-dashboards.folder-picker.error-title', 'Error loading some folders')
+            }
           >
-            {error.message || error.toString?.() || t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
+            {displayError.message ||
+              displayError.toString?.() ||
+              t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
           </Alert>
-        ) : (
-          <div>
-            {isLoading && (
-              <div className={styles.loader}>
-                <LoadingBar width={600} />
-              </div>
-            )}
-
-            <NestedFolderList
-              items={flatTree}
-              selectedFolder={value}
-              focusedItemIndex={focusedItemIndex}
-              onFolderExpand={handleFolderExpand}
-              onFolderSelect={handleFolderSelect}
-              idPrefix={overlayId}
-              foldersAreOpenable={!(search && searchResults)}
-              isItemLoaded={isItemLoaded}
-              requestLoadMore={handleLoadMore}
-              emptyFolders={emptyFolders}
-              teamFolderOwnersByUid={teamFolderOwnersByUid}
-            />
+        )}
+        {isLoading && (
+          <div className={styles.loader}>
+            <LoadingBar width={600} />
           </div>
         )}
+
+        <NestedFolderList
+          items={flatTree}
+          selectedFolder={value}
+          focusedItemIndex={focusedItemIndex}
+          onFolderExpand={handleFolderExpand}
+          onFolderSelect={handleFolderSelect}
+          idPrefix={overlayId}
+          foldersAreOpenable={!(search && searchResults)}
+          isItemLoaded={isItemLoaded}
+          requestLoadMore={handleLoadMore}
+          emptyFolders={emptyFolders}
+          teamFolderOwnersByUid={teamFolderOwnersByUid}
+        />
       </fieldset>
     </>
   );
@@ -380,7 +400,7 @@ function useTeamFolders(
   value?: string,
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void
 ) {
-  const { foldersByTeam } = useGetTeamFolders({ skip: !config.featureToggles.teamFolders });
+  const { foldersByTeam, error } = useGetTeamFolders({ skip: !config.featureToggles.teamFolders });
   const teamFolders = useMemo(() => foldersByTeam.flatMap(({ folders }) => folders), [foldersByTeam]);
   const firstTeamFolder = teamFolders[0];
 
@@ -442,6 +462,7 @@ function useTeamFolders(
   return {
     teamFolderTreeItems,
     teamFolderOwnersByUid,
+    error,
   };
 }
 

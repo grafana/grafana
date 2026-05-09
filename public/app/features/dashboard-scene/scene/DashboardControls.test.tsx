@@ -2,21 +2,15 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import {
-  AdHocFiltersVariable,
-  GroupByVariable,
-  SceneVariableSet,
-  ScopesVariable,
-  TextBoxVariable,
-} from '@grafana/scenes';
+import { SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
+import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardControls, type DashboardControlsState } from './DashboardControls';
@@ -26,6 +20,10 @@ jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasEditPermissionInFolders: false,
   },
+}));
+
+jest.mock('../panel-edit/PanelEditControls', () => ({
+  PanelEditControls: () => <div data-testid="mock-panel-edit-controls">Table view toggle</div>,
 }));
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
@@ -120,13 +118,13 @@ describe('DashboardControls', () => {
     it('should render', () => {
       const scene = buildTestScene();
       expect(() => {
-        render(<scene.Component model={scene} />);
+        renderInGrafanaContext(<scene.Component model={scene} />);
       }).not.toThrow();
     });
 
     it('should render visible controls', async () => {
       const scene = buildTestScene({});
-      const renderer = render(<scene.Component model={scene} />);
+      const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
 
       expect(await renderer.findByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
       expect(await renderer.findByTestId(selectors.components.DashboardLinks.container)).toBeInTheDocument();
@@ -142,9 +140,73 @@ describe('DashboardControls', () => {
         hideLinksControls: true,
         hideDashboardControls: true,
       });
-      const renderer = render(<scene.Component model={scene} />);
+      const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
 
       expect(renderer.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
+    });
+
+    it('should not render an empty controls container in kiosk mode when controls are hidden', () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.dashboardNewLayouts = true;
+
+        const scene = buildTestScene({
+          hideTimeControls: true,
+          hideVariableControls: true,
+          hideLinksControls: true,
+          hideDashboardControls: true,
+        });
+
+        renderInGrafanaContext(<scene.Component model={scene} />, KioskMode.Full);
+
+        expect(screen.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
+    });
+
+    it('in edit mode, should render the "Add variable" button when hasControls returns false and time controls are hidden', async () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.dashboardNewLayouts = true;
+
+        const controls = buildTestSceneWithEditable({
+          editable: true,
+          canEdit: true,
+          isEditing: true,
+        });
+        controls.setState({ hideTimeControls: true });
+
+        const renderer = renderInGrafanaContext(<controls.Component model={controls} />);
+
+        expect(renderer.getByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
+        expect(renderer.queryByTestId(selectors.components.TimePicker.openButton)).not.toBeInTheDocument();
+        expect(renderer.queryByTestId(selectors.components.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
+        expect(renderer.getByRole('button', { name: /add variable/i })).toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
+    });
+
+    it('should render Table view toggle in panel edit mode even when all other controls are hidden', () => {
+      const controls = new DashboardControls({
+        hideTimeControls: true,
+        hideVariableControls: true,
+        hideLinksControls: true,
+        hideDashboardControls: true,
+      });
+
+      const dashboard = new DashboardScene({
+        uid: 'test-dashboard',
+        controls,
+        editPanel: { state: { useQueryExperienceNext: false } } as unknown as PanelEditor,
+      });
+
+      dashboard.activate();
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(screen.getByTestId('mock-panel-edit-controls')).toBeInTheDocument();
     });
 
     it('should render ScopesVariable Component even when hidden', () => {
@@ -176,7 +238,7 @@ describe('DashboardControls', () => {
         return <div>Mocked Component</div>;
       });
 
-      const renderer = render(<controls.Component model={controls} />);
+      const renderer = renderInGrafanaContext(<controls.Component model={controls} />);
 
       // Verify UNSAFE_renderAsHidden is set (required for renderHiddenVariables to include it)
       expect(scopeVariable.UNSAFE_renderAsHidden).toBe(true);
@@ -193,7 +255,7 @@ describe('DashboardControls', () => {
       const dashboard = getDashboard(scene);
       dashboard.setState({ defaultVariablesLoading: true });
 
-      const { container } = render(<scene.Component model={scene} />);
+      const { container } = renderInGrafanaContext(<scene.Component model={scene} />);
       expect(container.querySelector('.react-loading-skeleton')).toBeInTheDocument();
     });
 
@@ -202,59 +264,8 @@ describe('DashboardControls', () => {
       const dashboard = getDashboard(scene);
       dashboard.setState({ defaultVariablesLoading: false, defaultLinksLoading: false });
 
-      const { container } = render(<scene.Component model={scene} />);
+      const { container } = renderInGrafanaContext(<scene.Component model={scene} />);
       expect(container.querySelector('.react-loading-skeleton')).not.toBeInTheDocument();
-    });
-
-    describe('drilldown wrapper hidden variables', () => {
-      const originalFeatureToggles = { ...config.featureToggles };
-
-      beforeEach(() => {
-        config.featureToggles = {
-          dashboardNewLayouts: true,
-          dashboardAdHocAndGroupByWrapper: true,
-        };
-      });
-
-      afterEach(() => {
-        config.featureToggles = originalFeatureToggles;
-      });
-
-      it('should render hidden group-by variable in edit mode when drilldown wrapper is enabled', async () => {
-        const adHocVar = new AdHocFiltersVariable({
-          name: 'filters',
-          label: 'filters',
-          filters: [],
-          datasource: { uid: 'devscopes' },
-          applicabilityEnabled: false,
-        });
-        const groupByVar = new GroupByVariable({
-          name: 'query0',
-          value: ['instance'],
-          text: ['instance'],
-          options: [],
-          datasource: { uid: 'devscopes' },
-          hide: VariableHide.hideVariable,
-          applicabilityEnabled: false,
-        });
-
-        const dashboard = new DashboardScene({
-          uid: 'test-dashboard',
-          $variables: new SceneVariableSet({
-            variables: [adHocVar, groupByVar],
-          }),
-          controls: new DashboardControls({}),
-        });
-
-        dashboard.activate();
-        dashboard.setState({ isEditing: true });
-
-        const controls = dashboard.state.controls as DashboardControls;
-        renderInGrafanaContext(<controls.Component model={controls} />, undefined);
-
-        // Hidden variables should still be visible in edit mode.
-        expect(await screen.findByText('query0')).toBeInTheDocument();
-      });
     });
   });
 
@@ -404,6 +415,14 @@ describe('DashboardControls', () => {
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
     });
 
+    it('should not show EditDashboardSwitch when dashboard has no uid (new dashboard)', async () => {
+      const controls = buildTestSceneWithEditable({ hasUid: false, editable: true, canEdit: true });
+
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+    });
+
     it('should show playlist nav buttons when hidePlaylistNav is undefined', async () => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
 
@@ -499,6 +518,7 @@ describe('DashboardControls', () => {
 });
 
 function buildTestSceneWithEditable(options: {
+  hasUid?: boolean;
   editable?: boolean;
   isEditing?: boolean;
   canEdit?: boolean;
@@ -506,10 +526,18 @@ function buildTestSceneWithEditable(options: {
   canMakeEditable?: boolean;
   isSnapshot?: boolean;
 }): DashboardControls {
-  const { editable = true, isEditing, canEdit = true, canSave, canMakeEditable = false, isSnapshot = false } = options;
+  const {
+    editable = true,
+    isEditing,
+    canEdit = true,
+    canSave,
+    canMakeEditable = false,
+    isSnapshot = false,
+    hasUid = true,
+  } = options;
 
   const dashboard = new DashboardScene({
-    uid: 'test-uid',
+    uid: hasUid ? 'test-uid' : undefined,
     editable,
     isEditing,
     meta: {

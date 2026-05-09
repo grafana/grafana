@@ -3872,6 +3872,12 @@
         },
         "subject": {
           "type": "string"
+        },
+        "urls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReportURLItem"
+          }
         }
       }
     },
@@ -4235,9 +4241,6 @@
           "type": "boolean"
         },
         "isSnapshot": {
-          "type": "boolean"
-        },
-        "isStarred": {
           "type": "boolean"
         },
         "provisioned": {
@@ -6462,7 +6465,7 @@
           "type": "string"
         },
         "language": {
-          "description": "Selected language (beta)",
+          "description": "Selected language",
           "type": "string"
         },
         "navbar": {
@@ -6472,15 +6475,15 @@
           "$ref": "#/definitions/PreferencesQueryHistoryPreference"
         },
         "regionalFormat": {
-          "description": "Selected locale (beta)",
+          "description": "Selected locale (beta)\nTODO: Will be removed",
           "type": "string"
         },
         "theme": {
-          "description": "light, dark, empty is default",
+          "description": "user interface theme",
           "type": "string"
         },
         "timezone": {
-          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+          "description": "The timezone selection",
           "type": "string"
         },
         "weekStart": {
@@ -6944,6 +6947,12 @@
           "type": "string",
           "format": "date-time"
         },
+        "urls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReportURLItem"
+          }
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -7123,6 +7132,17 @@
           "type": "string"
         },
         "to": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportURLItem": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "url": {
           "type": "string"
         }
       }
