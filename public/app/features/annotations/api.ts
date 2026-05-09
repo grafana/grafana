@@ -17,7 +17,19 @@ class LegacyAnnotationServer implements AnnotationServer {
   query(params: unknown, requestId: string): Promise<DataFrame> {
     return getBackendSrv()
       .get('/api/annotations', params, requestId)
-      .then((v) => toDataFrame(v));
+      .then((v) => {
+        // arrayToDataFrame infers the schema from the first object's keys,
+        // so `tags` is lost when the first annotation lacks it.
+        // Backfill with an empty array so the field always appears.
+        if (Array.isArray(v)) {
+          for (const item of v) {
+            if (item && typeof item === 'object' && !('tags' in item)) {
+              item.tags = [];
+            }
+          }
+        }
+        return toDataFrame(v);
+      });
   }
 
   forAlert(alertUID: string) {
