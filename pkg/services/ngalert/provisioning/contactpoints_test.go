@@ -9,13 +9,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/email"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/slack"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -745,9 +746,9 @@ func TestIntegrationAuthorization(t *testing.T) {
 	receiverC := "receiverC"
 	sut, authz := sutWithAuthz()
 	gen := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(email.Type), models.IntegrationMuts.WithName(receiverA))
-	integration1 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
-	integration2 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
-	integration3 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
+	integration1 := GrafanaIntegrationConfigToEmbeddedContactPoint(new(gen()), models.ProvenanceAPI)
+	integration2 := GrafanaIntegrationConfigToEmbeddedContactPoint(new(gen()), models.ProvenanceAPI)
+	integration3 := GrafanaIntegrationConfigToEmbeddedContactPoint(new(gen()), models.ProvenanceAPI)
 	t.Run("CreateContactPoint", func(t *testing.T) {
 		t.Run("authorize create if receiver is new", func(t *testing.T) {
 			authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
@@ -1019,7 +1020,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "teams",
 			},
-			expOldReceiver: util.Pointer("receiver-2"),
+			expOldReceiver: new("receiver-2"),
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -1080,7 +1081,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "new-receiver",
 				Type: "slack",
 			},
-			expOldReceiver:     util.Pointer("receiver-1"),
+			expOldReceiver:     new("receiver-1"),
 			expCreatedReceiver: true,
 			expFullRemoval:     true,
 			expCfg: definitions.PostableApiAlertingConfig{
@@ -1143,7 +1144,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     util.Pointer("receiver-2"),
+			expOldReceiver:     new("receiver-2"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1264,7 +1265,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "slack",
 			},
-			expOldReceiver:     util.Pointer("receiver-1"),
+			expOldReceiver:     new("receiver-1"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1408,7 +1409,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-4",
 				Type: "slack",
 			},
-			expOldReceiver:     util.Pointer("receiver-1"),
+			expOldReceiver:     new("receiver-1"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1493,7 +1494,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     util.Pointer("receiver-2"),
+			expOldReceiver:     new("receiver-2"),
 			expCreatedReceiver: true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1565,7 +1566,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     util.Pointer("receiver-2"), // Not the inconsistent receiver-3?
+			expOldReceiver:     new("receiver-2"), // Not the inconsistent receiver-3?
 			expCreatedReceiver: true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1688,7 +1689,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     util.Pointer("receiver-2"),
+			expOldReceiver:     new("receiver-2"),
 			expCreatedReceiver: false,
 			expFullRemoval:     true,
 			expCfg: definitions.PostableApiAlertingConfig{
