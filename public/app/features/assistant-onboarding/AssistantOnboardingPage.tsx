@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { LinkButton, useStyles2 } from '@grafana/ui';
+import { LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 
 const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 const INSTALL_PATH = `/plugins/${ASSISTANT_PLUGIN_ID}`;
@@ -11,6 +11,7 @@ const DOCS_URL = 'https://grafana.com/docs/plugins/grafana-assistant-app/latest/
 const BLOG_URL =
   'https://grafana.com/blog/2025/08/14/ai-for-grafana-onboarding-get-your-teams-started-quicker-with-grafana-assistant';
 const VIDEO_URL = 'https://www.youtube.com/watch?v=UtZkFYUmjrM';
+const SELF_MANAGED_DOCS_URL = 'https://grafana.com/docs/grafana-cloud/machine-learning/assistant/self-managed/';
 const VIDEO_THUMB = 'https://img.youtube.com/vi/UtZkFYUmjrM/hqdefault.jpg';
 const DOCS_THUMB = 'https://grafana.com/meta-generator/Grafana+Assistant@@@cloud@@@1.png';
 const BLOG_THUMB = 'https://a-us.storyblok.com/f/1022730/1200x630/78f2b37ebc/onboarding-assistant-meta.png?w=1504';
@@ -73,8 +74,11 @@ export default function AssistantOnboardingPage() {
           </LinkButton>
           <p className={styles.ctaSubnote}>
             <Trans i18nKey="assistant-onboarding.subnote">
-              Delivered as a Grafana plugin. Once installed, connect it to Grafana Cloud to get started.
-            </Trans>
+              Once installed, connect it to Grafana Cloud to get started.
+            </Trans>{' '}
+            <TextLink href={SELF_MANAGED_DOCS_URL} external>
+              <Trans i18nKey="assistant-onboarding.learn-how">Learn how</Trans>
+            </TextLink>
           </p>
         </section>
 
