@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const assistantPluginID = "grafana-assistant-app"
+
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
@@ -39,10 +41,18 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	}
 
 	enabledAccessibleAppPluginMap := make(map[string]*pluginstore.Plugin)
+	// Tracks whether the assistant app is enabled at the org level, regardless of whether the current
+	// user has access to it. The stub-nav decision below needs the org-level fact, not the per-user one
+	// — otherwise we'd surface "go install" to a user for whom the plugin is already present.
+	assistantEnabled := false
 
 	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
 		if !isPluginEnabled(plugin) {
 			continue
+		}
+
+		if plugin.ID == assistantPluginID {
+			assistantEnabled = true
 		}
 
 		if !hasAccess(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
@@ -63,18 +73,21 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		}
 	}
 
-	// When the assistant app plugin isn't installed/enabled, surface an Assistant nav entry pointing at the
-	// plugin's own URL so the navtree never has to mutate when the plugin's installation state changes. The
-	// AppRootPage at /a/grafana-assistant-app falls back to a core onboarding page when the plugin isn't loaded.
+	// When the assistant app plugin isn't enabled at the org level, surface an Assistant nav entry pointing
+	// at the plugin's own URL so the navtree never has to mutate when the plugin's installation state changes.
+	// The AppRootPage at /a/grafana-assistant-app falls back to a core onboarding page when the plugin isn't
+	// loaded. Gated on plugins:install so the stub doesn't surface a CTA users without that permission can't
+	// follow through on — those users should reach the plugin via an admin-installed instance, not the stub.
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAssistantStubNav) &&
-		enabledAccessibleAppPluginMap["grafana-assistant-app"] == nil {
+		!assistantEnabled &&
+		hasAccess(ac.EvalPermission(pluginaccesscontrol.ActionInstall)) {
 		appLinks = append(appLinks, &navtree.NavLink{
 			Text:       "Assistant",
 			Id:         navtree.NavIDAssistant,
 			SubTitle:   "AI-powered assistant for Grafana",
 			Icon:       "ai-sparkle",
 			SortWeight: navtree.WeightAssistant,
-			Url:        s.cfg.AppSubURL + "/a/grafana-assistant-app",
+			Url:        s.cfg.AppSubURL + "/a/" + assistantPluginID,
 		})
 	}
 

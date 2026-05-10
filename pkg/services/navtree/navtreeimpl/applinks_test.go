@@ -379,7 +379,11 @@ func TestAddAppLinks(t *testing.T) {
 func TestAssistantStubNav(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
-	permissions := []ac.Permission{
+	installerPermissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+		{Action: pluginaccesscontrol.ActionInstall},
+	}
+	nonInstallerPermissions := []ac.Permission{
 		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
 	}
 
@@ -394,7 +398,7 @@ func TestAssistantStubNav(t *testing.T) {
 		},
 	}
 
-	newService := func(togglesOn bool, plugins ...pluginstore.Plugin) *ServiceImpl {
+	newService := func(togglesOn bool, permissions []ac.Permission, plugins ...pluginstore.Plugin) *ServiceImpl {
 		settings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{}}
 		for _, p := range plugins {
 			settings.Plugins[p.ID] = &pluginsettings.DTO{ID: 0, OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
@@ -419,8 +423,8 @@ func TestAssistantStubNav(t *testing.T) {
 		return s
 	}
 
-	t.Run("stub appears with the plugin's URL when toggle is on and the plugin is not installed", func(t *testing.T) {
-		service := newService(true)
+	t.Run("stub appears with the plugin's URL when toggle is on, plugin not installed, user can install", func(t *testing.T) {
+		service := newService(true, installerPermissions)
 		treeRoot := navtree.NavTreeRoot{}
 
 		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
@@ -434,7 +438,7 @@ func TestAssistantStubNav(t *testing.T) {
 	})
 
 	t.Run("stub is suppressed when the plugin is installed and enabled", func(t *testing.T) {
-		service := newService(true, assistantPlugin)
+		service := newService(true, installerPermissions, assistantPlugin)
 		treeRoot := navtree.NavTreeRoot{}
 
 		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
@@ -443,8 +447,29 @@ func TestAssistantStubNav(t *testing.T) {
 		require.NotNil(t, treeRoot.FindById("plugin-page-grafana-assistant-app"), "real plugin nav should be present")
 	})
 
+	t.Run("stub is suppressed when the plugin is enabled but the current user lacks app-access", func(t *testing.T) {
+		// Plugin is installed and enabled at the org level but the user has neither app-access nor install
+		// permission. The stub must NOT appear — surfacing a "go install" CTA to a user for whom the plugin
+		// already exists (just hidden from them) would be wrong.
+		service := newService(true, []ac.Permission{}, assistantPlugin)
+		treeRoot := navtree.NavTreeRoot{}
+
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDAssistant), "stub should be suppressed when plugin is enabled regardless of access")
+	})
+
+	t.Run("stub is suppressed when the user lacks plugins:install permission", func(t *testing.T) {
+		service := newService(true, nonInstallerPermissions)
+		treeRoot := navtree.NavTreeRoot{}
+
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDAssistant), "stub should not appear for users who can't install plugins")
+	})
+
 	t.Run("stub does not appear when toggle is off", func(t *testing.T) {
-		service := newService(false)
+		service := newService(false, installerPermissions)
 		treeRoot := navtree.NavTreeRoot{}
 
 		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))

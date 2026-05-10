@@ -3929,6 +3929,36 @@
       "trace-id": "Trace ID: {{traceId}}"
     }
   },
+  "assistant-onboarding": {
+    "cards": {
+      "blog": {
+        "description": "Real-world examples and best practices for using Assistant",
+        "link": "Read blog",
+        "title": "Blog & use cases"
+      },
+      "docs": {
+        "description": "Setup guide and feature reference for getting started",
+        "link": "Read docs",
+        "title": "Documentation"
+      },
+      "video": {
+        "description": "Watch a walkthrough of key features and capabilities",
+        "link": "Watch video",
+        "title": "Video demo"
+      }
+    },
+    "greeting": "Hi, I'm",
+    "heading": "Grafana Assistant",
+    "install-cta": "Install Grafana Assistant",
+    "learn-how": "Learn how",
+    "learn-more": {
+      "subtitle": "Explore tutorials, documentation, and best practices",
+      "title": "Learn more"
+    },
+    "no-permission": "Ask a Grafana administrator to install Grafana Assistant for your organization.",
+    "subnote": "Once installed, connect it to Grafana Cloud to get started.",
+    "subtitle": "A purpose-built <1>agentic LLM assistant</1> for Grafana that helps you learn, investigate, make changes and more."
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Auth settings"
