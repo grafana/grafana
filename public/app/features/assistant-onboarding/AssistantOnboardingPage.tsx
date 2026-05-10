@@ -62,14 +62,7 @@ export default function AssistantOnboardingPage() {
         </header>
 
         <section className={styles.ctaSection}>
-          <LinkButton
-            href={INSTALL_PATH}
-            icon="plus-circle"
-            size="lg"
-            variant="primary"
-            onClick={onInstallClick}
-            className={styles.ctaButton}
-          >
+          <LinkButton href={INSTALL_PATH} icon="plus-circle" size="lg" variant="primary" onClick={onInstallClick}>
             <Trans i18nKey="assistant-onboarding.install-cta">Install Grafana Assistant</Trans>
           </LinkButton>
           <p className={styles.ctaSubnote}>
@@ -290,16 +283,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: theme.spacing(1.5),
+    gap: theme.spacing(2),
     marginBottom: theme.spacing(8),
   }),
-  ctaButton: css({
-    padding: `${theme.spacing(1.5)} ${theme.spacing(4)}`,
-    fontSize: '1.125rem',
-    height: 'auto',
-  }),
   ctaSubnote: css({
-    fontSize: theme.typography.bodySmall.fontSize,
+    fontSize: theme.typography.body.fontSize,
     color: theme.colors.text.secondary,
     margin: 0,
     textAlign: 'center',
