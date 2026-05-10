@@ -4,14 +4,12 @@ import { dateTime, dateTimeFormat, type DateTime } from '@grafana/data';
 
 import { Combobox } from '../Combobox/Combobox';
 import { type ComboboxOption } from '../Combobox/types';
-import { type FormInputSize } from '../Forms/types';
 
 interface BaseProps {
   onChange: (value: DateTime) => void | ((value?: DateTime) => void);
   value?: DateTime;
   showSeconds?: boolean;
   minuteStep?: 5 | 10 | 15 | 20 | 30;
-  size?: FormInputSize;
   disabled?: boolean;
   disabledHours?: () => number[];
   placeholder?: string;
@@ -35,8 +33,6 @@ export const TimeOfDayPicker = ({
   minuteStep = 15,
   showSeconds = false,
   value,
-  // todo: hook up?
-  size = 'auto',
   disabled,
   disabledHours,
   id,
