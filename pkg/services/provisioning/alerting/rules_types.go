@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type RuleDelete struct {
@@ -241,21 +242,21 @@ func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, e
 		if err != nil {
 			return models.NotificationSettings{}, fmt.Errorf("failed to parse group wait: %w", err)
 		}
-		gw = new(dur)
+		gw = util.Pointer(dur)
 	}
 	if nsV1.GroupInterval.Value() != "" {
 		dur, err := model.ParseDuration(nsV1.GroupInterval.Value())
 		if err != nil {
 			return models.NotificationSettings{}, fmt.Errorf("failed to parse group interval: %w", err)
 		}
-		gi = new(dur)
+		gi = util.Pointer(dur)
 	}
 	if nsV1.RepeatInterval.Value() != "" {
 		dur, err := model.ParseDuration(nsV1.RepeatInterval.Value())
 		if err != nil {
 			return models.NotificationSettings{}, fmt.Errorf("failed to parse repeat interval: %w", err)
 		}
-		ri = new(dur)
+		ri = util.Pointer(dur)
 	}
 
 	var groupBy []string
