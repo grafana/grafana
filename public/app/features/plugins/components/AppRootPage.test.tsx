@@ -172,6 +172,32 @@ describe('AppRootPage', () => {
     }
   });
 
+  it('suppresses the backend auto-toast for plugins with a registered fallback', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    getPluginSettingsMock.mockRejectedValue(new Error('Unknown Plugin'));
+
+    const Fallback = () => <div>fallback</div>;
+    pluginNavFallbacks['my-awesome-plugin'] = Fallback;
+
+    try {
+      renderUnderRouter();
+      await screen.findByText('fallback');
+      expect(getPluginSettingsMock).toHaveBeenCalledWith('my-awesome-plugin', { showErrorAlert: false });
+    } finally {
+      delete pluginNavFallbacks['my-awesome-plugin'];
+    }
+  });
+
+  it('does NOT suppress the backend auto-toast for plugins without a registered fallback', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    getPluginSettingsMock.mockRejectedValue(new Error('Unknown Plugin'));
+
+    renderUnderRouter();
+    await screen.findByText('App not found');
+    // No fallback for "my-awesome-plugin" → second arg should be undefined so the auto-toast still fires.
+    expect(getPluginSettingsMock).toHaveBeenCalledWith('my-awesome-plugin', undefined);
+  });
+
   it('should not render the component if we are not under a plugin path', async () => {
     getPluginSettingsMock.mockResolvedValue(pluginMeta);
 

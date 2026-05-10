@@ -235,8 +235,14 @@ const stateSlice = createSlice({
 });
 
 async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyAction>) {
+  // For plugins with a registered nav fallback, the dummy fallback component IS the inline error UI,
+  // so the backend's auto-toast on 404 ("Plugin not found, no installed plugin with that id") is just
+  // redundant noise. Suppressing it follows the same pattern Login uses (showErrorAlert: false +
+  // surface errors inline). Genuine failures still hit the catch below and log to console / Faro.
+  const hasFallback = pluginNavFallbacks[pluginId] !== undefined;
+  const settingsRequestOptions = hasFallback ? { showErrorAlert: false } : undefined;
   try {
-    const app = await getPluginSettings(pluginId).then((info) => {
+    const app = await getPluginSettings(pluginId, settingsRequestOptions).then((info) => {
       const error = getAppPluginPageError(info);
       if (error) {
         appEvents.emit(AppEvents.alertError, [error]);
