@@ -251,12 +251,12 @@ describe('HeatmapPanel (canvas)', () => {
 
   const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
     await assertUPlotReady();
-    expect(scrubOutput(uPlotInstance!.ctx.__getEvents())).toMatchUPlotSnapshot(uPlotAxisEvents!, snapshotSize);
+    expect(scrubOutput(uPlotInstance!.ctx.__getEvents())).toMatchCanvasSnapshot(uPlotAxisEvents!, snapshotSize);
   };
 
   const assertAxesOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
     await assertUPlotReady();
-    expect(scrubOutput(uPlotAxisEvents!)).toMatchUPlotSnapshot([], snapshotSize);
+    expect(scrubOutput(uPlotAxisEvents!)).toMatchCanvasSnapshot([], snapshotSize);
   };
 
   beforeEach(() => {

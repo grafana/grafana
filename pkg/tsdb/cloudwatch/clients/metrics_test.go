@@ -63,9 +63,9 @@ func TestMetricsClient(t *testing.T) {
 		response, err := client.ListMetricsWithPageLimit(ctx, &cloudwatch.ListMetricsInput{IncludeLinkedAccounts: aws.Bool(true)})
 		require.NoError(t, err)
 		expected := []resources.MetricResponse{
-			{Metric: cloudwatchtypes.Metric{MetricName: aws.String("Test_MetricName1")}, AccountId: stringPtr("1234567890")},
-			{Metric: cloudwatchtypes.Metric{MetricName: aws.String("Test_MetricName2")}, AccountId: stringPtr("1234567890")},
-			{Metric: cloudwatchtypes.Metric{MetricName: aws.String("Test_MetricName3")}, AccountId: stringPtr("1234567895")},
+			{Metric: cloudwatchtypes.Metric{MetricName: aws.String("Test_MetricName1")}, AccountId: new("1234567890")},
+			{Metric: cloudwatchtypes.Metric{MetricName: aws.String("Test_MetricName2")}, AccountId: new("1234567890")},
+			{Metric: cloudwatchtypes.Metric{MetricName: aws.String("Test_MetricName3")}, AccountId: new("1234567895")},
 		}
 		assert.Equal(t, expected, response)
 	})
@@ -79,5 +79,3 @@ func TestMetricsClient(t *testing.T) {
 		assert.Nil(t, response[0].AccountId)
 	})
 }
-
-func stringPtr(s string) *string { return &s }

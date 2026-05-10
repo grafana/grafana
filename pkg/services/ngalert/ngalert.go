@@ -76,7 +76,7 @@ func ProvideService(
 	expressionService *expr.Service,
 	dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService quota.Service,
-	secretsService secrets.Service,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	notificationService notifications.Service,
 	m *metrics.NGAlert,
 	folderService folder.Service,
@@ -152,7 +152,7 @@ type AlertNG struct {
 	ExpressionService     *expr.Service
 	DataProxy             *datasourceproxy.DataSourceProxyService
 	QuotaService          quota.Service
-	SecretsService        secrets.Service
+	SecretsService        secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	Metrics               *metrics.NGAlert
 	NotificationService   notifications.Service
 	Log                   log.Logger
@@ -415,7 +415,7 @@ func (ng *AlertNG) init() error {
 	ng.stateManager = state.NewManager(stateManagerCfg, statePersister)
 
 	var apiStateManager state.AlertInstanceManager
-	var apiStatusReader apiprometheus.StatusReader
+	var ruleMutator apiprometheus.RuleMutator
 	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
 		peer := ng.MultiOrgAlertmanager.Peer()
 		if peer == nil {
@@ -431,7 +431,7 @@ func (ng *AlertNG) init() error {
 		// because non-primary nodes have no in-memory state
 		storeStateReader := state.NewStoreStateReader(ng.InstanceStore, ng.Log)
 		apiStateManager = storeStateReader
-		apiStatusReader = storeStateReader
+		ruleMutator = apiprometheus.NewDBRuleMutator(storeStateReader)
 	} else {
 		// No need for a real evaluation coordinator in non-HA mode.
 		ng.evaluationCoordinator = cluster.NewNoopEvaluationCoordinator()
@@ -439,7 +439,7 @@ func (ng *AlertNG) init() error {
 		// Use in-memory state/scheduler for API calls
 		apiStateManager = ng.stateManager
 		ng.schedule = schedule.NewScheduler(ng.schedCfg, ng.stateManager)
-		apiStatusReader = ng.schedule
+		ruleMutator = apiprometheus.NewInMemoryRuleMutator(ng.schedule, ng.stateManager)
 	}
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles)
@@ -564,7 +564,7 @@ func (ng *AlertNG) init() error {
 		ProvenanceStore:       ng.store,
 		MultiOrgAlertmanager:  ng.MultiOrgAlertmanager,
 		StateManager:          apiStateManager,
-		RuleStatusReader:      apiStatusReader,
+		RuleMutator:           ruleMutator,
 		AccessControl:         ng.accesscontrol,
 		Policies:              policyService,
 		RouteService:          routeService,

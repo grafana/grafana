@@ -79,11 +79,11 @@ func WithDoFunc(doFunc doFunc) Option {
 func WithUTF8Labels() Option {
 	return func(opts *ExternalAMOptions) {
 		opts.sanitizeLabelSetFn = func(lbls models.LabelSet) labels.Labels {
-			ls := make(labels.Labels, 0, len(lbls))
+			ls := make([]labels.Label, 0, len(lbls))
 			for k, v := range lbls {
 				ls = append(ls, labels.Label{Name: k, Value: v})
 			}
-			return ls
+			return labels.New(ls...)
 		}
 	}
 }
@@ -369,7 +369,7 @@ func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) 
 // sanitizeLabelSet sanitizes all given LabelSet keys according to sanitizeLabelName.
 // If there is a collision as a result of sanitization, a short (6 char) md5 hash of the original key will be added as a suffix.
 func (s *ExternalAlertmanager) sanitizeLabelSet(lbls models.LabelSet) labels.Labels {
-	ls := make(labels.Labels, 0, len(lbls))
+	ls := make([]labels.Label, 0, len(lbls))
 	set := make(map[string]struct{})
 
 	// Must sanitize labels in order otherwise resulting label set can be inconsistent when there are collisions.
@@ -390,7 +390,7 @@ func (s *ExternalAlertmanager) sanitizeLabelSet(lbls models.LabelSet) labels.Lab
 		ls = append(ls, labels.Label{Name: sanitizedLabelName, Value: lbls[k]})
 	}
 
-	return ls
+	return labels.New(ls...)
 }
 
 // sanitizeLabelName will fix a given label name so that it is compatible with prometheus alertmanager character restrictions.

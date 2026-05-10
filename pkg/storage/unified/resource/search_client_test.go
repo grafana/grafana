@@ -96,6 +96,10 @@ func (f *fakeResourceIndexClient) RebuildIndexes(ctx context.Context, in *resour
 	return f.rebuildResponse, f.rebuildErr
 }
 
+func (f *fakeResourceIndexClient) VectorSearch(ctx context.Context, in *resourcepb.VectorSearchRequest, opts ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	return nil, nil
+}
+
 func setupTestSearchClient(t *testing.T) (schema.GroupResource, *fakeResourceIndexClient, *fakeResourceIndexClient) {
 	t.Helper()
 	gr := schema.GroupResource{Group: "test", Resource: "items"}

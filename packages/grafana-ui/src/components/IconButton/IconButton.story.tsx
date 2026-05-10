@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type StoryFn, type Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { type IconSize, type IconName } from '../../types/icon';

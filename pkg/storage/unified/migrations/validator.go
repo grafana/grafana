@@ -118,6 +118,9 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 	}
 
 	counter := sess.Table(v.opts.Table).Where(v.opts.Where, orgID)
+	if v.opts.Join != nil {
+		counter = counter.Join("INNER", v.opts.Join.Table, v.opts.Join.On)
+	}
 	if v.opts.Distinct != "" {
 		counter = counter.Distinct(v.opts.Distinct)
 	}
@@ -406,11 +409,21 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Sessi
 	return parentMap, nil
 }
 
+// CountValidationJoin configures an optional INNER JOIN for the legacy count query.
+// Use []string{"tablename", "alias"} as Table to get dialect-correct quoting from xorm.
+type CountValidationJoin struct {
+	Table any    // passed directly to xorm Join(); use []string{"table", "alias"} for quoting
+	On    string // JOIN condition, may use the alias
+}
+
 type CountValidationOptions struct {
 	Table string
 	// includes org_id
 	Where    string
 	Distinct string
+	// Join optionally adds an INNER JOIN so the legacy count matches exactly what the
+	// migrator processes (e.g. excluding orphaned rows whose foreign key was deleted).
+	Join *CountValidationJoin
 }
 
 // CountValidation creates a ValidatorFactory for count-based validation.

@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Redigera YAML",
         "save": "Spara"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "namn",
@@ -1152,6 +1153,9 @@
         "rule-viewer-section-extension": "Berikningssektionen i regelvisaren kunde inte läsas in"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Misslyckades med att uppdatera din konfiguration:",
       "title-something-went-wrong": "Något gick fel"
@@ -1160,6 +1164,9 @@
       "content-show-all-errors": "Visa alla fel"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} misslyckades med {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -1290,7 +1297,8 @@
       "delete": {
         "button": {
           "label": "Radera alla regler"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Radera",
       "delete-modal-delete-button": "Radera",
@@ -1573,8 +1581,14 @@
         "update-error": "Misslyckades med att uppdatera regelgrupp",
         "update-success": "Regelgruppen har uppdaterats"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Vald grupp kan inte redigeras",
       "group-not-editable-description": "Den här gruppen tillhör en datakälla som inte stöder redigering.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Redigera regelgrupp",
       "rule-group-error": "Fel vid laddning av regelgrupp"
     },
@@ -3166,9 +3180,7 @@
       "deleting": "Raderar",
       "text-federated": "Federerade",
       "text-provisioned": "Provisionerad",
-      "ungrouped": "Ogrupperad",
-      "ungrouped-suffix": "{{ruleName}} (ogrupperad)",
-      "unknown-rule": "Okänd regel"
+      "ungrouped": "Ogrupperad"
     },
     "saved-searches": {
       "actions-aria-label": "Åtgärder",
@@ -4314,6 +4326,7 @@
         "repository-not-found-message": "Lagringsplatsen för den valda mappen kunde inte hittas. Verifiera att mappen är korrekt tilldelad.",
         "repository-not-found-title": "Lagringsplatsen hittades inte"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Fel vid flyttning av resurser",
       "error-no-target-folder-path": "Sökvägen till målmappen är ogiltig eller tom. Välj på nytt.",
       "move-total": "Totalt kommer detta att påverka:",
@@ -4452,6 +4465,14 @@
       "request-extension": "Begär kvotutökning",
       "resource-detail-dashboards": "Du har skapat {{usage}} av {{limit}} instrumentpaneler ({{percentage}} %).",
       "resource-detail-folders": "Du har skapat {{usage}} av {{limit}} mappar ({{percentage}} %)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Rensa historik",
@@ -5261,7 +5282,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Inställningar"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5663,7 +5684,7 @@
         "title": "Variabler"
       },
       "variable": {
-        "change-type": "Ändra",
+        "change-type": "",
         "change-type-aria-label": "Ändra variabeltyp",
         "custom-options": {
           "apply": "Tillämpa",
@@ -5980,7 +6001,7 @@
       "cancel": "Avbryt",
       "common": {
         "copy": "Kopiera",
-        "copy-or-duplicate": "Kopiera/klistra in eller duplicera",
+        "copy-tooltip": "",
         "delete": "Ta bort",
         "duplicate": "Dubblett",
         "layout": "Layout",
@@ -6019,7 +6040,7 @@
     },
     "new-panel": {
       "aria-label": "Okonfigurerad panel. Tryck på Tabb för att se konfigurationsalternativ.",
-      "configure-button": "Konfigurera",
+      "configure-button": "",
       "configure-button-menu": "Växla meny",
       "configure-visualization": "Konfigurera visualisering",
       "empty-state-message": "Kör en fråga för att visualisera den här eller gå till alla visualiseringar för att lägga till andra paneltyper",
@@ -6261,10 +6282,8 @@
       "title-provisioned": "Tilldelad instrumentpanel"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "En instrumentpanel med samma namn finns redan i den valda mappen.<br/><2>Vill du fortfarande spara denna instrumentpanel?</2>",
       "body-version-mismatch": "Någon annan har uppdaterat denna instrumentpanel<br/><2>Vill du fortfarande spara denna instrumentpanel?</2>",
       "confirmText-save-and-overwrite": "Spara och skriv över",
-      "title-name-exists": "Konflikt",
       "title-version-mismatch": "Konflikt"
     },
     "save-dashboard-form": {
@@ -7305,6 +7324,7 @@
       "terraform": "Hanteras av: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Det gick inte att flytta kontrollpanelen",
       "cancel-action": "Avbryt",
       "current-file-not-found": "Den aktuella kontrollpanelfilen kunde inte hittas",
@@ -7317,10 +7337,6 @@
       "success-message": "Kontrollpanelen har flyttats",
       "target-path-label": "Målsökväg",
       "title-this-repository-is-read-only": "Den här lagringsplatsen är skrivskyddad"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "En instrumentpanel med samma namn finns redan i den valda mappen. Vill du fortfarande spara denna instrumentpanel?",
-      "title-name-already-exists": "Namnet finns redan"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8029,19 +8045,6 @@
       "aria-label-explore-data": "Utforska data",
       "aria-label-suggested-dashboards": "Föreslagna instrumentpaneler"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Larm stöds inte",
-      "text-alerting-supported": "Larm stöds"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Namnet används när du väljer datakälla i paneler. Standarddatakällan är förvald i nya paneler."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Grundinställningar för datakällans inställningssida",
-      "basic-settings-name-placeholder-name": "Namn",
-      "label-default": "Standard",
-      "label-name": "Namn"
-    },
     "build-a-dashboard-button": {
       "blank": "Tomt",
       "build-a-dashboard": "Bygg en instrumentpanel",
@@ -8136,6 +8139,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Lägg till i favoriter",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Utforska data",
       "open-in-explore": "Öppna i Utforska vy",
       "remove-favorite": "Ta bort från favoriter"
@@ -10845,6 +10854,11 @@
     "name-line-width": "Linjebredd",
     "name-stacking": "Stapling"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Laddar",
@@ -11239,7 +11253,7 @@
     "description-order": "Visa de senaste eller äldsta loggarna först. När Äldsta först har valts bläddrar vyn automatiskt till de senaste loggarna längst ner.",
     "description-prettify-json": "Formatera JSON-loggposter med indrag och radbrytningar.",
     "description-show-controls": "Visa kontroller för att hoppa till den sista eller första loggraden och filtrera efter loggnivå.",
-    "description-show-log-attributes": "Experimentellt. När OTel-loggar visas lägger du till ett extra visningsfält med relevanta nyckelvärdespar från etiketter och metadata.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Justera värden med hjälp av kolumner när du använder visade fält.",
     "description-wrap-lines": "Visa loggar som en enda rad eller radbryt långa loggposter så att de passar in i panelen.",
     "field-selector": {
@@ -11565,7 +11579,7 @@
       "line-contains-not": "Lägg till som rad innehåller inte filter",
       "search-text": "Sök i resultat"
     },
-    "show-log-attributes": "Visa loggattribut för OTel-loggar",
+    "show-log-attributes": "",
     "timestamp-format": "Tidsstämpelupplösning",
     "un-themed-log-details": {
       "aria-label-data-links": "Datalänkar",
@@ -13826,7 +13840,8 @@
       "make-sure": "Skapa en token med dessa behörigheter"
     },
     "validation": {
-      "hidden-characters": "Detta fält innehåller dolda tecken som kan ha införts genom att kopiera och klistra in. Skriv in värdet på nytt eller rensa det och försök igen."
+      "hidden-characters": "Detta fält innehåller dolda tecken som kan ha införts genom att kopiera och klistra in. Skriv in värdet på nytt eller rensa det och försök igen.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Varning",
     "watch-stream": {
@@ -14234,6 +14249,8 @@
       "alerts-loading": "Larm",
       "card-click": "Välj kort {{id}}",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Ny {{type}}",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
@@ -14950,10 +14967,13 @@
       "title": "Kom igång med instrumentpaneler snabbt med hjälp av förslag och mallar"
     },
     "nav": {
+      "counter": "",
       "go-to": "Gå till bilden {{number}}",
-      "next": "Nästa",
-      "prev": "Föregående"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Förklara fråga",
@@ -15433,7 +15453,6 @@
       "forwards-time-aria-label": "Flytta tidsintervallet framåt",
       "to": "till",
       "zoom-out-button": "Zooma ut tidsintervall",
-      "zoom-out-tooltip": "Zooma ut tidsintervall <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Zooma ut tidsintervall <br/> t -"
     },
     "time-range": {
@@ -16011,7 +16030,9 @@
       "description": {
         "group-by-field-value": "Gruppera data efter ett fältvärde och skapa kapslade tabeller med de grupperade data."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Om det är aktiverat kommer kapslade tabeller att visa fältnamn som en tabellrubrik",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Visa fältnamn i kapslade tabeller",
       "name": {
         "group-to-nested-tables": "Gruppera till kapslade tabeller"

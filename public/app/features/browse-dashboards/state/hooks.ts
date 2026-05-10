@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
-import { PAGE_SIZE } from '../api/services';
+import { PAGE_SIZE } from '../api/constants';
 import {
   type BrowseDashboardsState,
   type DashboardsTreeItem,

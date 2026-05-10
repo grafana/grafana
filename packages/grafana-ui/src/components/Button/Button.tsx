@@ -284,6 +284,8 @@ export const getButtonStyles = (props: StyleProps) => {
     }),
     disabled: css(disabledStyles, {
       '&:hover': css(disabledStyles),
+      '&:focus': css(disabledStyles),
+      '&:focus-visible': css(disabledStyles),
     }),
     img: css({
       width: '16px',

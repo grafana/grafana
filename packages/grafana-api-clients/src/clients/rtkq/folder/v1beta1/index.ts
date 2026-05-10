@@ -22,7 +22,6 @@ export * from './endpoints.gen';
 export const generatedAPI = rawAPI.enhanceEndpoints({
   endpoints: {
     createFolder: invalidateDashboardSearch,
-    deletecollectionFolder: invalidateDashboardSearch,
     replaceFolder: invalidateDashboardSearch,
     deleteFolder: invalidateDashboardSearch,
     updateFolder: invalidateDashboardSearch,
