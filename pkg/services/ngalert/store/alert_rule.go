@@ -89,7 +89,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 				version.Created = TimeNow()
 				version.CreatedBy = nil
 				if user != nil {
-					version.CreatedBy = util.Pointer(string(*user))
+					version.CreatedBy = new(string(*user))
 				}
 			}
 		}

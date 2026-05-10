@@ -1942,25 +1942,25 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 	// Setup mock repositories for the ListRepos endpoint
 	expectedRepos := []*github.Repository{
 		{
-			Name: github.Ptr("test-repo-1"),
+			Name: new("test-repo-1"),
 			Owner: &github.User{
-				Login: github.Ptr("test-owner-1"),
+				Login: new("test-owner-1"),
 			},
-			HTMLURL: github.Ptr("https://github.com/test-owner-1/test-repo-1"),
+			HTMLURL: new("https://github.com/test-owner-1/test-repo-1"),
 		},
 		{
-			Name: github.Ptr("test-repo-2"),
+			Name: new("test-repo-2"),
 			Owner: &github.User{
-				Login: github.Ptr("test-owner-2"),
+				Login: new("test-owner-2"),
 			},
-			HTMLURL: github.Ptr("https://github.com/test-owner-2/test-repo-2"),
+			HTMLURL: new("https://github.com/test-owner-2/test-repo-2"),
 		},
 		{
-			Name: github.Ptr("test-repo-3"),
+			Name: new("test-repo-3"),
 			Owner: &github.User{
-				Login: github.Ptr("test-owner-3"),
+				Login: new("test-owner-3"),
 			},
-			HTMLURL: github.Ptr("https://github.com/test-owner-3/test-repo-3"),
+			HTMLURL: new("https://github.com/test-owner-3/test-repo-3"),
 		},
 	}
 
@@ -1973,10 +1973,10 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 					ID:   &id,
 					Slug: &appSlug,
 					Permissions: &github.InstallationPermissions{
-						Contents:        github.Ptr("write"),
-						Metadata:        github.Ptr("read"),
-						PullRequests:    github.Ptr("write"),
-						RepositoryHooks: github.Ptr("write"),
+						Contents:        new("write"),
+						Metadata:        new("read"),
+						PullRequests:    new("write"),
+						RepositoryHooks: new("write"),
 					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(app))
@@ -1991,10 +1991,10 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				installation := github.Installation{
 					ID: &idInt,
 					Permissions: &github.InstallationPermissions{
-						Contents:        github.Ptr("write"),
-						Metadata:        github.Ptr("read"),
-						PullRequests:    github.Ptr("write"),
-						RepositoryHooks: github.Ptr("write"),
+						Contents:        new("write"),
+						Metadata:        new("read"),
+						PullRequests:    new("write"),
+						RepositoryHooks: new("write"),
 					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
@@ -2005,7 +2005,7 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				installation := github.InstallationToken{
-					Token:     github.Ptr("someToken"),
+					Token:     new("someToken"),
 					ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour * 2)},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
@@ -2017,7 +2017,7 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				w.WriteHeader(http.StatusOK)
 				reposResponse := &github.ListRepositories{
 					Repositories: expectedRepos,
-					TotalCount:   github.Ptr(len(expectedRepos)),
+					TotalCount:   new(len(expectedRepos)),
 				}
 				_, _ = w.Write(ghmock.MustMarshal(reposResponse))
 			}),

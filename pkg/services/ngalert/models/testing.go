@@ -13,18 +13,17 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
-	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/notify/notifytest"
-	"github.com/grafana/alerting/receivers/schema"
-	"github.com/grafana/alerting/receivers/webex"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	alertingModels "github.com/grafana/alerting/models"
-
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/alerting/receivers/webex"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -100,17 +99,17 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 
 	var ns *NotificationSettings
 	if rand.Int63()%2 == 0 {
-		ns = util.Pointer(NotificationSettingsGen()())
+		ns = new(NotificationSettingsGen()())
 		if rand.Int63()%2 == 0 {
 			// Use PolicyRouting instead.
 			ns.ContactPointRouting = nil
-			ns.PolicyRouting = util.Pointer(PolicyRoutingGen()())
+			ns.PolicyRouting = new(PolicyRoutingGen()())
 		}
 	}
 
 	var updatedBy *UserUID
 	if rand.Int63()%2 == 0 {
-		updatedBy = util.Pointer(UserUID(util.GenerateShortUID()))
+		updatedBy = new(UserUID(util.GenerateShortUID()))
 	}
 
 	rule := AlertRule{
@@ -545,13 +544,13 @@ func (a *AlertRuleMutators) WithMissingSeriesEvalsToResolve(timesOfInterval int6
 		if timesOfInterval <= 0 {
 			panic("timesOfInterval must be greater than 0")
 		}
-		rule.MissingSeriesEvalsToResolve = util.Pointer[int64](timesOfInterval)
+		rule.MissingSeriesEvalsToResolve = new(timesOfInterval)
 	}
 }
 
 func (a *AlertRuleMutators) WithNotificationSettingsGen(ns func() NotificationSettings) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NotificationSettings = util.Pointer(ns())
+		rule.NotificationSettings = new(ns())
 	}
 }
 
@@ -563,13 +562,13 @@ func (a *AlertRuleMutators) WithNotificationSettings(ns NotificationSettings) Al
 
 func (a *AlertRuleMutators) WithContactPointRouting(ns ContactPointRouting) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NotificationSettings = util.Pointer(NotificationSettingsFromContact(ns))
+		rule.NotificationSettings = new(NotificationSettingsFromContact(ns))
 	}
 }
 
 func (a *AlertRuleMutators) WithPolicyRouting(pr PolicyRouting) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NotificationSettings = util.Pointer(NotificationSettingsFromPolicy(pr.Policy))
+		rule.NotificationSettings = new(NotificationSettingsFromPolicy(pr.Policy))
 	}
 }
 
@@ -935,11 +934,11 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 		CurrentStateSince: currentStateSince,
 		CurrentStateEnd:   currentStateSince.Add(time.Duration(rand.Intn(100) + 200)),
 		LastEvalTime:      time.Now().Add(-time.Duration(rand.Intn(100) + 50)),
-		LastSentAt:        util.Pointer(time.Now().Add(-time.Duration(rand.Intn(100) + 50))),
+		LastSentAt:        new(time.Now().Add(-time.Duration(rand.Intn(100) + 50))),
 	}
 
 	if instance.CurrentState == InstanceStateNormal && rand.Intn(2) == 1 {
-		instance.ResolvedAt = util.Pointer(time.Now().Add(-time.Duration(rand.Intn(100) + 50)))
+		instance.ResolvedAt = new(time.Now().Add(-time.Duration(rand.Intn(100) + 50)))
 	}
 
 	for _, mutator := range mutators {
@@ -1018,13 +1017,13 @@ func CopyContactPointRouting(ns ContactPointRouting, mutators ...Mutator[Contact
 		Receiver: ns.Receiver,
 	}
 	if ns.GroupWait != nil {
-		c.GroupWait = util.Pointer(*ns.GroupWait)
+		c.GroupWait = new(*ns.GroupWait)
 	}
 	if ns.GroupInterval != nil {
-		c.GroupInterval = util.Pointer(*ns.GroupInterval)
+		c.GroupInterval = new(*ns.GroupInterval)
 	}
 	if ns.RepeatInterval != nil {
-		c.RepeatInterval = util.Pointer(*ns.RepeatInterval)
+		c.RepeatInterval = new(*ns.RepeatInterval)
 	}
 	if ns.GroupBy != nil {
 		c.GroupBy = make([]string, len(ns.GroupBy))
@@ -1050,9 +1049,9 @@ func ContactPointRoutingGen(mutators ...Mutator[ContactPointRouting]) func() Con
 		c := ContactPointRouting{
 			Receiver:            util.GenerateShortUID(),
 			GroupBy:             []string{model.AlertNameLabel, FolderTitleLabel, util.GenerateShortUID()},
-			GroupWait:           util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
-			GroupInterval:       util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
-			RepeatInterval:      util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			GroupWait:           new(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			GroupInterval:       new(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			RepeatInterval:      new(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
 			MuteTimeIntervals:   []string{util.GenerateShortUID(), util.GenerateShortUID()},
 			ActiveTimeIntervals: []string{util.GenerateShortUID(), util.GenerateShortUID()},
 		}
@@ -1139,7 +1138,7 @@ func PolicyRoutingGen(mutators ...Mutator[PolicyRouting]) func() PolicyRouting {
 func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[NotificationSettings]) NotificationSettings {
 	c := NotificationSettings{}
 	if ns.ContactPointRouting != nil {
-		c.ContactPointRouting = util.Pointer(CopyContactPointRouting(*ns.ContactPointRouting))
+		c.ContactPointRouting = new(CopyContactPointRouting(*ns.ContactPointRouting))
 	}
 	if ns.PolicyRouting != nil {
 		c.PolicyRouting = &PolicyRouting{Policy: ns.PolicyRouting.Policy}
@@ -1256,25 +1255,25 @@ func CopySilence(s Silence) Silence {
 	}
 
 	if s.ID != nil {
-		c.ID = util.Pointer(*s.ID)
+		c.ID = new(*s.ID)
 	}
 	if s.Status != nil {
-		c.Status = util.Pointer(*s.Status)
+		c.Status = new(*s.Status)
 	}
 	if s.UpdatedAt != nil {
-		c.UpdatedAt = util.Pointer(*s.UpdatedAt)
+		c.UpdatedAt = new(*s.UpdatedAt)
 	}
 	if s.Comment != nil {
-		c.Comment = util.Pointer(*s.Comment)
+		c.Comment = new(*s.Comment)
 	}
 	if s.CreatedBy != nil {
-		c.CreatedBy = util.Pointer(*s.CreatedBy)
+		c.CreatedBy = new(*s.CreatedBy)
 	}
 	if s.EndsAt != nil {
-		c.EndsAt = util.Pointer(*s.EndsAt)
+		c.EndsAt = new(*s.EndsAt)
 	}
 	if s.StartsAt != nil {
-		c.StartsAt = util.Pointer(*s.StartsAt)
+		c.StartsAt = new(*s.StartsAt)
 	}
 	if s.Matchers != nil {
 		c.Matchers = CopyMatchers(s.Matchers)
@@ -1289,16 +1288,16 @@ func CopyMatchers(matchers []*amv2.Matcher) []*amv2.Matcher {
 	for i, m := range matchers {
 		c := amv2.Matcher{}
 		if m.IsEqual != nil {
-			c.IsEqual = util.Pointer(*m.IsEqual)
+			c.IsEqual = new(*m.IsEqual)
 		}
 		if m.IsRegex != nil {
-			c.IsRegex = util.Pointer(*m.IsRegex)
+			c.IsRegex = new(*m.IsRegex)
 		}
 		if m.Name != nil {
-			c.Name = util.Pointer(*m.Name)
+			c.Name = new(*m.Name)
 		}
 		if m.Value != nil {
-			c.Value = util.Pointer(*m.Value)
+			c.Value = new(*m.Value)
 		}
 		copies[i] = &c
 	}
@@ -1308,17 +1307,17 @@ func CopyMatchers(matchers []*amv2.Matcher) []*amv2.Matcher {
 // SilenceGen generates Silence using a base and mutators.
 func SilenceGen(mutators ...Mutator[Silence]) func() Silence {
 	return func() Silence {
-		now := time.Now()
+		now := time.Now() //nolint:staticcheck // SA4006: lint seems wrong, now IS used
 		c := Silence{
-			ID:        util.Pointer(util.GenerateShortUID()),
-			Status:    util.Pointer(amv2.SilenceStatus{State: util.Pointer(amv2.SilenceStatusStateActive)}),
-			UpdatedAt: util.Pointer(strfmt.DateTime(now.Add(time.Minute))),
+			ID:        new(util.GenerateShortUID()),
+			Status:    new(amv2.SilenceStatus{State: new(amv2.SilenceStatusStateActive)}),
+			UpdatedAt: new(strfmt.DateTime(now.Add(time.Minute))),
 			Silence: amv2.Silence{
-				Comment:   util.Pointer(util.GenerateShortUID()),
-				CreatedBy: util.Pointer(util.GenerateShortUID()),
-				StartsAt:  util.Pointer(strfmt.DateTime(now.Add(-time.Minute))),
-				EndsAt:    util.Pointer(strfmt.DateTime(now.Add(time.Minute))),
-				Matchers:  []*amv2.Matcher{{Name: util.Pointer(util.GenerateShortUID()), Value: util.Pointer(util.GenerateShortUID()), IsRegex: util.Pointer(false), IsEqual: util.Pointer(true)}},
+				Comment:   new(util.GenerateShortUID()),
+				CreatedBy: new(util.GenerateShortUID()),
+				StartsAt:  new(strfmt.DateTime(now.Add(-time.Minute))),
+				EndsAt:    new(strfmt.DateTime(now.Add(time.Minute))),
+				Matchers:  []*amv2.Matcher{{Name: new(util.GenerateShortUID()), Value: new(util.GenerateShortUID()), IsRegex: new(false), IsEqual: new(true)}},
 			},
 		}
 		for _, mutator := range mutators {
@@ -1339,8 +1338,8 @@ func (n SilenceMutators) WithMatcher(name, value string, matchType labels.MatchT
 		m := amv2.Matcher{
 			Name:    &name,
 			Value:   &value,
-			IsRegex: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchNotRegexp),
-			IsEqual: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchEqual),
+			IsRegex: new(matchType == labels.MatchRegexp || matchType == labels.MatchNotRegexp),
+			IsEqual: new(matchType == labels.MatchRegexp || matchType == labels.MatchEqual),
 		}
 		s.Matchers = append(s.Matchers, &m)
 	}
@@ -1351,8 +1350,8 @@ func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
 		m := amv2.Matcher{
 			Name:    &name,
 			Value:   &value,
-			IsRegex: util.Pointer(false),
-			IsEqual: util.Pointer(true),
+			IsRegex: new(false),
+			IsEqual: new(true),
 		}
 		for _, matcher := range s.Matchers {
 			if isRuleUIDMatcher(*matcher) {
@@ -1365,13 +1364,13 @@ func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
 }
 func (n SilenceMutators) Expired() Mutator[Silence] {
 	return func(s *Silence) {
-		s.EndsAt = util.Pointer(strfmt.DateTime(time.Now().Add(-time.Minute)))
+		s.EndsAt = new(strfmt.DateTime(time.Now().Add(-time.Minute)))
 	}
 }
 
 func (n SilenceMutators) WithEmptyId() Mutator[Silence] {
 	return func(s *Silence) {
-		s.ID = util.Pointer("")
+		s.ID = new("")
 	}
 }
 
