@@ -253,12 +253,12 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "provisioningReadmes",
+			Name:        "provisioning.readmes",
 			Description: "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",

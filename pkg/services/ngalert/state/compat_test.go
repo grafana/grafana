@@ -11,10 +11,11 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -386,11 +387,11 @@ func randomTransition(from, to eval.State) StateTransition {
 			State:              to,
 			AlertRuleUID:       util.GenerateShortUID(),
 			StartsAt:           time.Now(),
-			FiredAt:            util.Pointer(randomTimeInPast()),
+			FiredAt:            new(randomTimeInPast()),
 			EndsAt:             randomTimeInFuture(),
 			LastEvaluationTime: randomTimeInPast(),
 			EvaluationDuration: randomDuration(),
-			LastSentAt:         util.Pointer(randomTimeInPast()),
+			LastSentAt:         new(randomTimeInPast()),
 			Annotations:        make(map[string]string),
 			Labels:             make(map[string]string),
 			Values:             make(map[string]float64),

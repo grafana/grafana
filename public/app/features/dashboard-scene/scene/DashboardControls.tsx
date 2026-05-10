@@ -178,6 +178,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       return (
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
+            {!hideVariableControls && <VariableControls dashboard={dashboard} />}
             <div className={styles.rightControls}>
               <div className={styles.fixedControls}>
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />

@@ -1164,6 +1164,9 @@
       "content-show-all-errors": "Mostrar todos los errores"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} falló con {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10851,6 +10854,11 @@
     "name-line-width": "Espesor de la línea",
     "name-stacking": "Apilamiento"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Cargando",
@@ -16022,7 +16030,9 @@
       "description": {
         "group-by-field-value": "Agrupa los datos por un valor de campo y crea tablas anidadas con los datos agrupados."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Si está habilitado, las tablas anidadas mostrarán los nombres de los campos como encabezado de la tabla",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mostrar nombres de campo en tablas anidadas",
       "name": {
         "group-to-nested-tables": "Agrupar en tablas anidadas"

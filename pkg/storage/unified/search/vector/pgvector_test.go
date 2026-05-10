@@ -1,6 +1,7 @@
 package vector
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 
@@ -59,7 +60,7 @@ func TestValidateResource(t *testing.T) {
 
 func TestPgvectorBackend_Upsert_EmptySlice(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
-	backend := NewPgvectorBackend(rdb.DB, 1000, 0)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
 	require.NoError(t, backend.Upsert(ctx, nil))
@@ -69,7 +70,7 @@ func TestPgvectorBackend_Upsert_EmptySlice(t *testing.T) {
 
 func TestPgvectorBackend_Upsert_InvalidVector_Rejected(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
-	backend := NewPgvectorBackend(rdb.DB, 1000, 0)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
 	err := backend.Upsert(ctx, []Vector{
@@ -83,7 +84,7 @@ func TestPgvectorBackend_Upsert_InvalidVector_Rejected(t *testing.T) {
 func TestPgvectorBackend_Upsert_UnknownResource_Rejected(t *testing.T) {
 	// Unknown resource has no shared table; Upsert errors before any DB work.
 	rdb := test.NewDBProviderNopSQL(t)
-	backend := NewPgvectorBackend(rdb.DB, 1000, 0)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
 	rdb.SQLMock.ExpectBegin()
@@ -99,7 +100,7 @@ func TestPgvectorBackend_Upsert_UnknownResource_Rejected(t *testing.T) {
 
 func TestPgvectorBackend_Delete_EmptyModel_Rejected(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
-	backend := NewPgvectorBackend(rdb.DB, 1000, 0)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
 	err := backend.Delete(ctx, "ns", "", "dashboards", "dash-1")
@@ -110,7 +111,7 @@ func TestPgvectorBackend_Delete_EmptyModel_Rejected(t *testing.T) {
 
 func TestPgvectorBackend_DeleteSubresources_EmptySlice_NoOp(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
-	backend := NewPgvectorBackend(rdb.DB, 1000, 0)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
 	require.NoError(t, backend.DeleteSubresources(ctx, "ns", "m", "dashboards", "dash-1", nil))
@@ -120,7 +121,7 @@ func TestPgvectorBackend_DeleteSubresources_EmptySlice_NoOp(t *testing.T) {
 
 func TestPgvectorBackend_GetLatestRV(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
-	backend := NewPgvectorBackend(rdb.DB, 1000, 0)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
 	rdb.SQLMock.ExpectQuery("SELECT latest_rv FROM vector_latest_rv").
@@ -134,7 +135,7 @@ func TestPgvectorBackend_GetLatestRV(t *testing.T) {
 
 func TestPgvectorBackend_GetLatestRV_SeedRowMissing(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
-	backend := NewPgvectorBackend(rdb.DB, 1000, 0)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
 	rdb.SQLMock.ExpectQuery("SELECT latest_rv FROM vector_latest_rv").

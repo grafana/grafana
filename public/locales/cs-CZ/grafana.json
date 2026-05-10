@@ -1174,6 +1174,9 @@
       "content-show-all-errors": "Zobrazit všechny chyby"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} selhalo se stavem {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10967,6 +10970,11 @@
     "name-line-width": "Šířka řádku",
     "name-stacking": "Stackování"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Načítání",
@@ -16208,7 +16216,9 @@
       "description": {
         "group-by-field-value": "Seskupit data podle hodnoty pole a vytvořit vnořené tabulky se seskupenými daty."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Pokud je povoleno, vnořené tabulky zobrazí názvy polí jako záhlaví tabulky",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Zobrazit názvy polí ve vnořených tabulkách",
       "name": {
         "group-to-nested-tables": "Seskupit do vnořených tabulek"

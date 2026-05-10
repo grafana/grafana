@@ -1164,6 +1164,9 @@
       "content-show-all-errors": "Összes hiba megjelenítése"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} sikertelen {{status}} állapottal: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10851,6 +10854,11 @@
     "name-line-width": "Vonal szélessége",
     "name-stacking": "Egymásra helyezés"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Betöltés",
@@ -16022,7 +16030,9 @@
       "description": {
         "group-by-field-value": "Csoportosítsa az adatokat egy mezőérték szerint, és hozzon létre beágyazott táblázatokat a csoportosított adatokkal."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Ha engedélyezve van, a beágyazott táblázatok a mezőneveket táblázatfejlécként jelenítik meg",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mezőnevek megjelenítése a beágyazott táblázatokban",
       "name": {
         "group-to-nested-tables": "Csoportosítás beágyazott táblázatokba"

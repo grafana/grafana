@@ -13,6 +13,7 @@ declare module "@openfeature/core" {
     | "lokiShardSplitting"
     | "faroSessionReplay"
     | "provisioningFolderMetadata"
+    | "provisioning.readmes"
     | "stateTimeline.nameAboveBars"
     | "newSavedQueriesExperience"
     | "grafana.orgDashboardTemplates"
