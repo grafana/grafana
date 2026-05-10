@@ -363,8 +363,6 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
             onChange={onChangeTime}
             value={timeOfDayDateTime}
             disabledHours={disabledHours}
-            disabledMinutes={disabledMinutes}
-            disabledSeconds={disabledSeconds}
           />
         </div>
         <Stack>
