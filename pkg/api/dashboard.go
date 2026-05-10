@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	claims "github.com/grafana/authlib/types"
+	dashboardsV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -429,7 +430,10 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		if _, found := spec["title"]; !found {
 			return response.Error(http.StatusBadRequest, "Dashboard is missing required title property", nil)
 		}
-		obj.SetAPIVersion(dashboardsV1.APIVERSION) // v1
+		// Default legacy POSTs to v0alpha1: matches the prior DashboardService.SaveDashboard
+		// behavior. v0 lets the dashboard apiserver mutate hook strip uid/version/id without
+		// running the v1 schema migrations, so legacy callers' panel content is preserved.
+		obj.SetAPIVersion(dashboardsV0.APIVERSION)
 	}
 	return hs.saveDashboardViaK8s(c, cmd, obj)
 }
@@ -552,6 +556,23 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	meta, err = utils.MetaAccessor(dash)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed get meta accessor", err)
+	}
+
+	// For new dashboards, set default RBAC permissions. The K8s direct path bypasses
+	// DashboardService.SaveDashboard, which previously called this. The apistore's
+	// AnnoKeyGrantPermissions hook is the alternative, but it leaves a managedFields
+	// trace in the persisted document, so call the service directly here instead.
+	if isCreate {
+		dto := &dashboards.SaveDashboardDTO{
+			OrgID: c.GetOrgID(),
+			User:  c.SignedInUser,
+			Dashboard: &dashboards.Dashboard{
+				ID:        meta.GetDeprecatedInternalID(), //nolint:staticcheck
+				UID:       meta.GetName(),
+				FolderUID: meta.GetFolder(),
+			},
+		}
+		hs.DashboardService.SetDefaultPermissions(ctx, dto, dto.Dashboard, false)
 	}
 
 	title, _, _ = unstructured.NestedString(dash.Object, "spec", "title")
