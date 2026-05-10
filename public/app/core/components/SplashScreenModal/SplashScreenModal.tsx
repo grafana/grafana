@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, LinkButton, useStyles2 } from '@grafana/ui';
 import { ModalBase } from '@grafana/ui/internal';
@@ -12,14 +12,16 @@ import { SplashScreenSlide } from './SplashScreenSlide';
 import { type SplashFeatureCta, getSplashScreenConfig } from './splashContent';
 import { useShouldShowSplash } from './useShouldShowSplash';
 
-function resolveCtaUrl(cta: SplashFeatureCta): string {
+export function resolveCtaUrl(cta: SplashFeatureCta): string {
+  let url: string;
   if (cta.requiresAdmin && !contextSrv.hasRole('Admin')) {
-    return cta.fallbackUrl ?? cta.url;
+    url = cta.fallbackUrl ?? cta.url;
+  } else if (cta.permission && !contextSrv.hasPermission(cta.permission)) {
+    url = cta.fallbackUrl ?? cta.url;
+  } else {
+    url = cta.url;
   }
-  if (cta.permission && !contextSrv.hasPermission(cta.permission)) {
-    return cta.fallbackUrl ?? cta.url;
-  }
-  return cta.url;
+  return locationUtil.assureBaseUrl(url);
 }
 
 export function SplashScreenModal() {
