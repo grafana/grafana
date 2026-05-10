@@ -58,6 +58,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	fbStrategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
 		strategies.NewLDAPStrategy(cfg),
+		strategies.NewJWTStrategy(cfg),
 	}
 
 	configurableProviders := make(map[string]bool)
@@ -68,6 +69,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	providersList := ssosettings.AllOAuthProviders
 	providersList = append(providersList, social.LDAPProviderName)
 	configurableProviders[social.LDAPProviderName] = true
+	providersList = append(providersList, social.JWTProviderName)
+	configurableProviders[social.JWTProviderName] = true
 
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
 		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))
@@ -271,13 +274,7 @@ func (s *Service) Patch(ctx context.Context, provider string, data map[string]an
 		return err
 	}
 
-	newSettingsMap := make(map[string]any)
-	for k, v := range storedSettings.Settings {
-		newSettingsMap[k] = v
-	}
-	for k, v := range data {
-		newSettingsMap[k] = v
-	}
+	newSettingsMap := overrideMaps(storedSettings.Settings, data)
 
 	newSettings := &models.SSOSettings{
 		Provider: provider,
@@ -367,13 +364,10 @@ func (s *Service) Reload(ctx context.Context, provider string) {
 }
 
 func (s *Service) RegisterReloadable(provider string, reloadable ssosettings.Reloadable) {
-	if s.reloadables == nil {
-		s.reloadables = make(map[string]ssosettings.Reloadable)
-	}
 	s.reloadables[provider] = reloadable
 }
 
-func (s *Service) RegisterFallbackStrategy(providerRegex string, strategy ssosettings.FallbackStrategy) {
+func (s *Service) RegisterFallbackStrategy(_ string, strategy ssosettings.FallbackStrategy) {
 	s.fbStrategies = append(s.fbStrategies, strategy)
 }
 
@@ -654,10 +648,10 @@ func overrideMaps(maps ...map[string]any) map[string]any {
 	return result
 }
 
+var secretFieldPatterns = []string{"secret", "private", "certificate", "password", "client_key"}
+
 // IsSecretField returns true if the SSO settings field provided is a secret
 func IsSecretField(fieldName string) bool {
-	secretFieldPatterns := []string{"secret", "private", "certificate", "password", "client_key"}
-
 	for _, v := range secretFieldPatterns {
 		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
 			return true

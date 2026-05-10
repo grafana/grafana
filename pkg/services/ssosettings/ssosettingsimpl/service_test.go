@@ -916,6 +916,11 @@ func TestService_List(t *testing.T) {
 					Settings: map[string]any(nil),
 					Source:   models.System,
 				},
+				{
+					Provider: "jwt",
+					Settings: map[string]any(nil),
+					Source:   models.System,
+				},
 			},
 			wantErr: false,
 		},
@@ -1103,6 +1108,11 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 					Settings: map[string]any{},
 					Source:   models.System,
 				},
+				{
+					Provider: "jwt",
+					Settings: map[string]any{},
+					Source:   models.System,
+				},
 			},
 			wantErr: false,
 		},
@@ -1225,6 +1235,11 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 				},
 				{
 					Provider: "ldap",
+					Settings: map[string]any{},
+					Source:   models.System,
+				},
+				{
+					Provider: "jwt",
 					Settings: map[string]any{},
 					Source:   models.System,
 				},
@@ -2399,8 +2414,9 @@ func Test_ProviderService(t *testing.T) {
 				"azuread",
 				"okta",
 				"ldap",
+				"jwt",
 			},
-			strategiesLength: 2,
+			strategiesLength: 3,
 		},
 		{
 			name:             "should return all fallback strategies and it should return all OAuth providers and SAML because the licensing feature is enabled and the provider is setup",
@@ -2414,9 +2430,10 @@ func Test_ProviderService(t *testing.T) {
 				"azuread",
 				"okta",
 				"ldap",
+				"jwt",
 				"saml",
 			},
-			strategiesLength: 3,
+			strategiesLength: 4,
 		},
 	}
 	for _, tc := range tests {

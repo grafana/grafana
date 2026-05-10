@@ -10,49 +10,53 @@ import (
 )
 
 func (s *AuthService) initClaimExpectations() error {
-	if err := json.Unmarshal([]byte(s.Cfg.JWTAuth.ExpectClaims), &s.expect); err != nil {
+	expect := map[string]any{}
+	if err := json.Unmarshal([]byte(s.settings.ExpectClaims), &expect); err != nil {
 		return err
 	}
 
-	for key, value := range s.expect {
+	var expectRegistered jwt.Expected
+	for key, value := range expect {
 		switch key {
 		case "iss":
 			if stringValue, ok := value.(string); ok {
-				s.expectRegistered.Issuer = stringValue
+				expectRegistered.Issuer = stringValue
 			} else {
 				return fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
 			}
-			delete(s.expect, key)
+			delete(expect, key)
 		case "sub":
 			if stringValue, ok := value.(string); ok {
-				s.expectRegistered.Subject = stringValue
+				expectRegistered.Subject = stringValue
 			} else {
 				return fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
 			}
-			delete(s.expect, key)
+			delete(expect, key)
 		case "aud":
 			switch value := value.(type) {
 			case []any:
 				for _, val := range value {
 					if v, ok := val.(string); ok {
-						s.expectRegistered.AnyAudience = append(s.expectRegistered.AnyAudience, v)
+						expectRegistered.AnyAudience = append(expectRegistered.AnyAudience, v)
 					} else {
 						return fmt.Errorf("%q expectation contains value with invalid type %T, string expected", key, val)
 					}
 				}
 			case string:
-				s.expectRegistered.AnyAudience = []string{value}
+				expectRegistered.AnyAudience = []string{value}
 			default:
 				return fmt.Errorf("%q expectation has invalid type %T, array or string expected", key, value)
 			}
-			delete(s.expect, key)
+			delete(expect, key)
 		}
 	}
 
+	s.expect = expect
+	s.expectRegistered = expectRegistered
 	return nil
 }
 
-func (s *AuthService) validateClaims(claims map[string]any) error {
+func validateClaims(claims map[string]any, expect map[string]any, expectRegistered jwt.Expected) error {
 	var registeredClaims jwt.Claims
 	for key, value := range claims {
 		switch key {
@@ -116,13 +120,12 @@ func (s *AuthService) validateClaims(claims map[string]any) error {
 		}
 	}
 
-	expectRegistered := s.expectRegistered
 	expectRegistered.Time = time.Now()
 	if err := registeredClaims.Validate(expectRegistered); err != nil {
 		return err
 	}
 
-	for key, expected := range s.expect {
+	for key, expected := range expect {
 		value, ok := claims[key]
 		if !ok {
 			return fmt.Errorf("%q claim is missing", key)
