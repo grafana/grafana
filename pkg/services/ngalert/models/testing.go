@@ -1307,7 +1307,7 @@ func CopyMatchers(matchers []*amv2.Matcher) []*amv2.Matcher {
 // SilenceGen generates Silence using a base and mutators.
 func SilenceGen(mutators ...Mutator[Silence]) func() Silence {
 	return func() Silence {
-		now := time.Now() // nolint:staticcheck is wrong!
+		now := time.Now() //nolint:staticcheck // SA4006: lint seems wrong, now IS used
 		c := Silence{
 			ID:        new(util.GenerateShortUID()),
 			Status:    new(amv2.SilenceStatus{State: new(amv2.SilenceStatusStateActive)}),
