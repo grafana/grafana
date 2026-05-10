@@ -544,7 +544,7 @@ func (a *AlertRuleMutators) WithMissingSeriesEvalsToResolve(timesOfInterval int6
 		if timesOfInterval <= 0 {
 			panic("timesOfInterval must be greater than 0")
 		}
-		rule.MissingSeriesEvalsToResolve = util.Pointer[int64](timesOfInterval)
+		rule.MissingSeriesEvalsToResolve = new(timesOfInterval)
 	}
 }
 
@@ -1307,7 +1307,7 @@ func CopyMatchers(matchers []*amv2.Matcher) []*amv2.Matcher {
 // SilenceGen generates Silence using a base and mutators.
 func SilenceGen(mutators ...Mutator[Silence]) func() Silence {
 	return func() Silence {
-		now := time.Now()
+		now := time.Now() // nolint:staticcheck is wrong!
 		c := Silence{
 			ID:        new(util.GenerateShortUID()),
 			Status:    new(amv2.SilenceStatus{State: new(amv2.SilenceStatusStateActive)}),
