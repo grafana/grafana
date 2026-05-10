@@ -79,5 +79,3 @@ func TestMetricsClient(t *testing.T) {
 		assert.Nil(t, response[0].AccountId)
 	})
 }
-
-func stringPtr(s string) *string { return &s }

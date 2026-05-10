@@ -22,10 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func stringPtr(s string) *string {
-	return &s
-}
-
 func TestAuthenticateJWT(t *testing.T) {
 	t.Parallel()
 

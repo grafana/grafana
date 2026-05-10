@@ -89,8 +89,8 @@ func TestLargeDashboardSupportV2alpha1(t *testing.T) {
 			Title:       "Test V2 Dashboard",
 			Description: new("A test dashboard for v2 large object support"),
 			Tags:        []string{"test", "v2", "large-object"},
-			Editable:    boolPtr(true),
-			LiveNow:     boolPtr(false),
+			Editable:    new(true),
+			LiveNow:     new(false),
 			Preload:     false,
 			Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{
 				{
@@ -189,8 +189,8 @@ func TestLargeDashboardSupportV2beta1(t *testing.T) {
 			Title:       "Test V2 Dashboard",
 			Description: new("A test dashboard for v2 large object support"),
 			Tags:        []string{"test", "v2", "large-object"},
-			Editable:    boolPtr(true),
-			LiveNow:     boolPtr(false),
+			Editable:    new(true),
+			LiveNow:     new(false),
 			Preload:     false,
 			Annotations: []dashv2beta1.DashboardAnnotationQueryKind{
 				{
@@ -272,13 +272,4 @@ func TestLargeDashboardSupportV2beta1(t *testing.T) {
 	require.Len(t, rehydratedDash.Spec.Elements, 1)
 	_, exists := rehydratedDash.Spec.Elements["panel-1"]
 	require.True(t, exists)
-}
-
-// Helper functions for pointer types
-func stringPtr(s string) *string {
-	return &s
-}
-
-func boolPtr(b bool) *bool {
-	return &b
 }

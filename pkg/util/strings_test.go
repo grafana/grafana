@@ -510,11 +510,6 @@ func TestStripBOMFromStruct(t *testing.T) {
 	}
 }
 
-// Helper function for tests
-func stringPtr(s string) *string {
-	return &s
-}
-
 // Benchmark StripBOMFromStruct performance
 func BenchmarkStripBOMFromStruct(b *testing.B) {
 	type SmallStruct struct {
