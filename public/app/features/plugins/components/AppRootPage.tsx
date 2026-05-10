@@ -26,6 +26,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import {
   ExtensionRegistriesProvider,
@@ -97,8 +98,13 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     // Only render a registered fallback when the settings fetch returned 404 — that is the genuine
     // "plugin is not installed" signal. Other failures (auth, server, import) keep the not-found UI
     // and the user gets a real toast (re-emitted in loadAppPlugin's catch).
+    //
+    // Also gate on plugins:install. Fallbacks are conceptually onboarding screens that direct the
+    // user to install; for users without that permission we fall through to the standard not-found
+    // UI so this matches how every other unavailable plugin URL behaves in Grafana.
+    const canInstallPlugins = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
     const FallbackComponent =
-      !loading && loadingError && errorStatus === 404 ? pluginNavFallbacks[pluginId] : undefined;
+      !loading && loadingError && errorStatus === 404 && canInstallPlugins ? pluginNavFallbacks[pluginId] : undefined;
     return (
       <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
         {loading && <PageLoader />}

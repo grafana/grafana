@@ -9,6 +9,7 @@ import { setEchoSrv } from '@grafana/runtime';
 import { GrafanaRouteWrapper } from 'app/core/navigation/GrafanaRoute';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ExtensionRegistriesProvider } from '../extensions/ExtensionRegistriesContext';
 import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsRegistry';
@@ -138,6 +139,13 @@ describe('AppRootPage', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     setEchoSrv(new Echo());
+    // Default: user can install plugins. Specific tests override this to exercise the unauthorized
+    // path where fallbacks should NOT render.
+    contextSrv.user.permissions = { [AccessControlAction.PluginsInstall]: true };
+  });
+
+  afterEach(() => {
+    contextSrv.user.permissions = {};
   });
 
   const pluginMeta = getMockPlugin({
@@ -205,6 +213,27 @@ describe('AppRootPage', () => {
 
     try {
       renderUnderRouter();
+      expect(await screen.findByText('App not found')).toBeVisible();
+      expect(screen.queryByText(FALLBACK_TEXT)).not.toBeInTheDocument();
+    } finally {
+      delete pluginNavFallbacks['my-awesome-plugin'];
+    }
+  });
+
+  it('does NOT render the fallback when the user lacks plugins:install', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    getPluginSettingsMock.mockRejectedValue(fetchError(404));
+    contextSrv.user.permissions = {};
+
+    const FALLBACK_TEXT = 'fallback-onboarding-page';
+    const Fallback = () => <div>{FALLBACK_TEXT}</div>;
+    pluginNavFallbacks['my-awesome-plugin'] = Fallback;
+
+    try {
+      renderUnderRouter();
+      // Without install permission, the fallback's "go install" CTA would be useless. Standardize
+      // on the existing not-found UI for unauthorized users — same as every other unavailable
+      // plugin URL in Grafana.
       expect(await screen.findByText('App not found')).toBeVisible();
       expect(screen.queryByText(FALLBACK_TEXT)).not.toBeInTheDocument();
     } finally {

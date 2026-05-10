@@ -4,8 +4,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, TextLink, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 
 const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 const DOCS_URL = 'https://grafana.com/docs/plugins/grafana-assistant-app/latest/';
@@ -19,9 +17,6 @@ const BLOG_THUMB = 'https://a-us.storyblok.com/f/1022730/1200x630/78f2b37ebc/onb
 
 export default function AssistantOnboardingPage() {
   const styles = useStyles2(getStyles);
-  // Direct-URL access bypasses the nav-level gate, so the page itself has to branch on install permission.
-  // Without it we'd render an Install button the user cannot follow through on.
-  const canInstall = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
   const installPath = `${config.appSubUrl}/plugins/${ASSISTANT_PLUGIN_ID}`;
 
   const onInstallClick = () => {
@@ -67,27 +62,17 @@ export default function AssistantOnboardingPage() {
         </header>
 
         <section className={styles.ctaSection}>
-          {canInstall ? (
-            <>
-              <LinkButton href={installPath} icon="plus-circle" size="lg" variant="primary" onClick={onInstallClick}>
-                <Trans i18nKey="assistant-onboarding.install-cta">Install Grafana Assistant</Trans>
-              </LinkButton>
-              <p className={styles.ctaSubnote}>
-                <Trans i18nKey="assistant-onboarding.subnote">
-                  Once installed, connect it to Grafana Cloud to get started.
-                </Trans>
-              </p>
-              <TextLink href={SELF_MANAGED_DOCS_URL} external>
-                <Trans i18nKey="assistant-onboarding.learn-how">Learn how</Trans>
-              </TextLink>
-            </>
-          ) : (
-            <p className={styles.ctaSubnote}>
-              <Trans i18nKey="assistant-onboarding.no-permission">
-                Ask a Grafana administrator to install Grafana Assistant for your organization.
-              </Trans>
-            </p>
-          )}
+          <LinkButton href={installPath} icon="plus-circle" size="lg" variant="primary" onClick={onInstallClick}>
+            <Trans i18nKey="assistant-onboarding.install-cta">Install Grafana Assistant</Trans>
+          </LinkButton>
+          <p className={styles.ctaSubnote}>
+            <Trans i18nKey="assistant-onboarding.subnote">
+              Once installed, connect it to Grafana Cloud to get started.
+            </Trans>
+          </p>
+          <TextLink href={SELF_MANAGED_DOCS_URL} external>
+            <Trans i18nKey="assistant-onboarding.learn-how">Learn how</Trans>
+          </TextLink>
         </section>
 
         <section className={styles.learnMore}>
