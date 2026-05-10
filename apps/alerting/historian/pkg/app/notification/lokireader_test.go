@@ -55,7 +55,7 @@ func TestLokiReader_Query(t *testing.T) {
 		{
 			name: "successful query with results",
 			query: Query{
-				RuleUID: new("test-rule-uid"),
+				RuleUID: stringPtr("test-rule-uid"),
 			},
 			lokiResponse: createMockLokiResponse(testTimestamp),
 			validateFn: func(t *testing.T, result QueryResult) {
@@ -68,16 +68,16 @@ func TestLokiReader_Query(t *testing.T) {
 		{
 			name: "query with custom time range",
 			query: Query{
-				RuleUID: new("test-rule-uid"),
-				From:    new(now.Add(-2 * time.Hour)),
-				To:      new(now),
+				RuleUID: stringPtr("test-rule-uid"),
+				From:    timePtr(now.Add(-2 * time.Hour)),
+				To:      timePtr(now),
 			},
 			lokiResponse: createMockLokiResponse(testTimestamp),
 		},
 		{
 			name: "query with custom limit",
 			query: Query{
-				RuleUID: new("test-rule-uid"),
+				RuleUID: stringPtr("test-rule-uid"),
 				Limit:   int64Ptr(100),
 			},
 			lokiResponse: createMockLokiResponse(testTimestamp),
@@ -85,7 +85,7 @@ func TestLokiReader_Query(t *testing.T) {
 		{
 			name: "query with max limit",
 			query: Query{
-				RuleUID: new("test-rule-uid"),
+				RuleUID: stringPtr("test-rule-uid"),
 				Limit:   int64Ptr(1000),
 			},
 			lokiResponse: createMockLokiResponse(testTimestamp),
@@ -93,7 +93,7 @@ func TestLokiReader_Query(t *testing.T) {
 		{
 			name: "query with over max limit",
 			query: Query{
-				RuleUID: new("test-rule-uid"),
+				RuleUID: stringPtr("test-rule-uid"),
 				Limit:   int64Ptr(1001),
 			},
 			lokiResponse: createMockLokiResponse(testTimestamp),
@@ -145,7 +145,7 @@ func TestBuildQuery(t *testing.T) {
 		{
 			name: "query with rule uid filter",
 			query: Query{
-				RuleUID: new("test-rule-uid"),
+				RuleUID: stringPtr("test-rule-uid"),
 			},
 			expected: fmt.Sprintf(`{%s=%q} | rule_uids =~ "(^|.*,)test-rule-uid($|,.*)" | json`,
 				historian.LabelFrom, historian.LabelFromValue),
@@ -153,7 +153,7 @@ func TestBuildQuery(t *testing.T) {
 		{
 			name: "query with receiver filter only",
 			query: Query{
-				Receiver: new("email-receiver"),
+				Receiver: stringPtr("email-receiver"),
 			},
 			expected: fmt.Sprintf(`{%s=%q} | receiver = "email-receiver" | json`,
 				historian.LabelFrom, historian.LabelFromValue),
@@ -161,8 +161,8 @@ func TestBuildQuery(t *testing.T) {
 		{
 			name: "query with receiver filter",
 			query: Query{
-				RuleUID:  new("test-rule-uid"),
-				Receiver: new("email-receiver"),
+				RuleUID:  stringPtr("test-rule-uid"),
+				Receiver: stringPtr("email-receiver"),
 			},
 			expected: fmt.Sprintf(`{%s=%q} | rule_uids =~ "(^|.*,)test-rule-uid($|,.*)" | receiver = "email-receiver" | json`,
 				historian.LabelFrom, historian.LabelFromValue),
@@ -170,8 +170,8 @@ func TestBuildQuery(t *testing.T) {
 		{
 			name: "query with status filter",
 			query: Query{
-				RuleUID: new("test-rule-uid"),
-				Status:  new(v0alpha1.CreateNotificationqueryRequestNotificationStatusFiring),
+				RuleUID: stringPtr("test-rule-uid"),
+				Status:  createStatusPtr(v0alpha1.CreateNotificationqueryRequestNotificationStatusFiring),
 			},
 			expected: fmt.Sprintf(`{%s=%q} | rule_uids =~ "(^|.*,)test-rule-uid($|,.*)" | json | status = "firing"`,
 				historian.LabelFrom, historian.LabelFromValue),
@@ -179,8 +179,8 @@ func TestBuildQuery(t *testing.T) {
 		{
 			name: "query with success outcome filter",
 			query: Query{
-				RuleUID: new("test-rule-uid"),
-				Outcome: new(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeSuccess),
+				RuleUID: stringPtr("test-rule-uid"),
+				Outcome: outcomePtr(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeSuccess),
 			},
 			expected: fmt.Sprintf(`{%s=%q} | rule_uids =~ "(^|.*,)test-rule-uid($|,.*)" | json | error = ""`,
 				historian.LabelFrom, historian.LabelFromValue),
@@ -188,8 +188,8 @@ func TestBuildQuery(t *testing.T) {
 		{
 			name: "query with error outcome filter",
 			query: Query{
-				RuleUID: new("test-rule-uid"),
-				Outcome: new(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeError),
+				RuleUID: stringPtr("test-rule-uid"),
+				Outcome: outcomePtr(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeError),
 			},
 			expected: fmt.Sprintf(`{%s=%q} | rule_uids =~ "(^|.*,)test-rule-uid($|,.*)" | json | error != ""`,
 				historian.LabelFrom, historian.LabelFromValue),
@@ -197,10 +197,10 @@ func TestBuildQuery(t *testing.T) {
 		{
 			name: "query with many filters",
 			query: Query{
-				RuleUID:  new("test-rule-uid"),
-				Receiver: new("email-receiver"),
-				Status:   new(v0alpha1.CreateNotificationqueryRequestNotificationStatusResolved),
-				Outcome:  new(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeSuccess),
+				RuleUID:  stringPtr("test-rule-uid"),
+				Receiver: stringPtr("email-receiver"),
+				Status:   createStatusPtr(v0alpha1.CreateNotificationqueryRequestNotificationStatusResolved),
+				Outcome:  outcomePtr(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeSuccess),
 			},
 			expected: fmt.Sprintf(`{%s=%q} | rule_uids =~ "(^|.*,)test-rule-uid($|,.*)" | receiver = "email-receiver" | json | status = "resolved" | error = ""`,
 				historian.LabelFrom, historian.LabelFromValue),
@@ -272,9 +272,9 @@ func TestBuildQuery(t *testing.T) {
 		{
 			name: "query with UUID filter and other filters",
 			query: Query{
-				RuleUID:  new("test-rule-uid"),
-				Receiver: new("email-receiver"),
-				Status:   new(v0alpha1.CreateNotificationqueryRequestNotificationStatusFiring),
+				RuleUID:  stringPtr("test-rule-uid"),
+				Receiver: stringPtr("email-receiver"),
+				Status:   createStatusPtr(v0alpha1.CreateNotificationqueryRequestNotificationStatusFiring),
 			},
 			uuids: []string{"uuid-1"},
 			expected: fmt.Sprintf(`{%s=%q} | rule_uids =~ "(^|.*,)test-rule-uid($|,.*)" | receiver = "email-receiver" | json | status = "firing" | uuid =~ "uuid-1"`,
@@ -378,7 +378,7 @@ func TestParseLokiEntry(t *testing.T) {
 				RuleUIDs:     []string{},
 				AlertCount:   1,
 				Alerts:       []EntryAlert{},
-				Error:        new("notification failed"),
+				Error:        stringPtr("notification failed"),
 				PipelineTime: now,
 			},
 		},
@@ -556,7 +556,7 @@ func TestLokiReader_QueryAlerts(t *testing.T) {
 	}{
 		{
 			name:         "successful query with results",
-			query:        AlertQuery{Uuid: new("test-uuid")},
+			query:        AlertQuery{Uuid: stringPtr("test-uuid")},
 			lokiResponse: createMockAlertLokiResponse(testTimestamp),
 			validateFn: func(t *testing.T, result AlertQueryResult) {
 				assert.Len(t, result.Alerts, 1)
@@ -567,16 +567,16 @@ func TestLokiReader_QueryAlerts(t *testing.T) {
 		{
 			name: "query with custom time range",
 			query: AlertQuery{
-				Uuid: new("test-uuid"),
-				From: new(now.Add(-2 * time.Hour)),
-				To:   new(now),
+				Uuid: stringPtr("test-uuid"),
+				From: timePtr(now.Add(-2 * time.Hour)),
+				To:   timePtr(now),
 			},
 			lokiResponse: createMockAlertLokiResponse(testTimestamp),
 		},
 		{
 			name: "query with custom limit",
 			query: AlertQuery{
-				Uuid:  new("test-uuid"),
+				Uuid:  stringPtr("test-uuid"),
 				Limit: int64Ptr(10),
 			},
 			lokiResponse: createMockAlertLokiResponse(testTimestamp),
@@ -584,7 +584,7 @@ func TestLokiReader_QueryAlerts(t *testing.T) {
 		{
 			name: "query with over max limit",
 			query: AlertQuery{
-				Uuid:  new("test-uuid"),
+				Uuid:  stringPtr("test-uuid"),
 				Limit: int64Ptr(1001),
 			},
 			lokiResponse: createMockAlertLokiResponse(testTimestamp),
@@ -592,7 +592,7 @@ func TestLokiReader_QueryAlerts(t *testing.T) {
 		},
 		{
 			name:          "loki error is propagated",
-			query:         AlertQuery{Uuid: new("test-uuid")},
+			query:         AlertQuery{Uuid: stringPtr("test-uuid")},
 			lokiResponse:  lokiclient.QueryRes{},
 			responseError: fmt.Errorf("loki unavailable"),
 			experr:        fmt.Errorf("loki unavailable"),
@@ -640,13 +640,13 @@ func TestBuildAlertQuery(t *testing.T) {
 		},
 		{
 			name:  "query with uuid filter",
-			query: AlertQuery{Uuid: new("test-uuid-123")},
+			query: AlertQuery{Uuid: stringPtr("test-uuid-123")},
 			expected: fmt.Sprintf(`{%s=%q} | uuid = "test-uuid-123" | json`,
 				historian.LabelFrom, historian.LabelFromValueAlerts),
 		},
 		{
 			name:  "query with empty uuid is ignored",
-			query: AlertQuery{Uuid: new("")},
+			query: AlertQuery{Uuid: stringPtr("")},
 			expected: fmt.Sprintf(`{%s=%q} | json`,
 				historian.LabelFrom, historian.LabelFromValueAlerts),
 		},
@@ -677,7 +677,7 @@ func TestBuildAlertLabelQuery(t *testing.T) {
 		},
 		{
 			name:    "single label matcher with rule uid",
-			ruleUID: new("test-rule-uid"),
+			ruleUID: stringPtr("test-rule-uid"),
 			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
 			expected: fmt.Sprintf(`{%s=%q} | rule_uid = "test-rule-uid" | json | labels_alertname = "HighCPU"`,
 				historian.LabelFrom, historian.LabelFromValueAlerts),
@@ -694,7 +694,7 @@ func TestBuildAlertLabelQuery(t *testing.T) {
 		},
 		{
 			name:    "multiple label matchers with rule uid",
-			ruleUID: new("my-rule"),
+			ruleUID: stringPtr("my-rule"),
 			labels: Matchers{
 				{Type: "=", Label: "alertname", Value: "HighCPU"},
 				{Type: "!=", Label: "severity", Value: "info"},
@@ -714,13 +714,13 @@ func TestBuildAlertLabelQuery(t *testing.T) {
 		},
 		{
 			name:    "invalid rule uid",
-			ruleUID: new("bad uid!"),
+			ruleUID: stringPtr("bad uid!"),
 			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
 			experr:  ErrInvalidQuery,
 		},
 		{
 			name:    "empty rule uid is ignored",
-			ruleUID: new(""),
+			ruleUID: stringPtr(""),
 			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
 			expected: fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU"`,
 				historian.LabelFrom, historian.LabelFromValueAlerts),
@@ -977,7 +977,7 @@ func TestLokiReader_Query_Counts(t *testing.T) {
 			name: "successful counts query with results",
 			query: Query{
 				Type:    &queryTypeCounts,
-				RuleUID: new("test-rule-uid"),
+				RuleUID: stringPtr("test-rule-uid"),
 				GroupBy: &QueryGroupBy{Receiver: true},
 			},
 			lokiResponse: lokiclient.MetricsQueryRes{
@@ -1007,7 +1007,7 @@ func TestLokiReader_Query_Counts(t *testing.T) {
 			name: "counts query loki error is propagated",
 			query: Query{
 				Type:    &queryTypeCounts,
-				RuleUID: new("test-rule-uid"),
+				RuleUID: stringPtr("test-rule-uid"),
 			},
 			lokiResponse:  lokiclient.MetricsQueryRes{},
 			responseError: fmt.Errorf("loki unavailable"),
@@ -1181,7 +1181,7 @@ func TestParseCount(t *testing.T) {
 				Metric: map[string]string{"receiver": "email"},
 				Value:  makeValue("10"),
 			},
-			want: Count{Count: 10, Receiver: new("email")},
+			want: Count{Count: 10, Receiver: stringPtr("email")},
 		},
 		{
 			name: "with integration and integrationIdx",
@@ -1189,7 +1189,7 @@ func TestParseCount(t *testing.T) {
 				Metric: map[string]string{"integration": "slack", "integrationIdx": "2"},
 				Value:  makeValue("5"),
 			},
-			want: Count{Count: 5, Integration: new("slack"), IntegrationIndex: int64Ptr(2)},
+			want: Count{Count: 5, Integration: stringPtr("slack"), IntegrationIndex: int64Ptr(2)},
 		},
 		{
 			name: "with status",
@@ -1213,7 +1213,7 @@ func TestParseCount(t *testing.T) {
 				Metric: map[string]string{"error": "connection refused"},
 				Value:  makeValue("1"),
 			},
-			want: Count{Count: 1, Error: new("connection refused")},
+			want: Count{Count: 1, Error: stringPtr("connection refused")},
 		},
 		{
 			name: "with rule_uids",
@@ -1221,7 +1221,7 @@ func TestParseCount(t *testing.T) {
 				Metric: map[string]string{"rule_uids": "ruleA,ruleB"},
 				Value:  makeValue("15"),
 			},
-			want: Count{Count: 15, RuleUID: new("ruleA,ruleB")},
+			want: Count{Count: 15, RuleUID: stringPtr("ruleA,ruleB")},
 		},
 		{
 			name: "non-integer count",
@@ -1331,8 +1331,8 @@ func TestLokiReader_Query_RangeCounts(t *testing.T) {
 			name: "range_counts query uses custom step",
 			query: Query{
 				Type: &queryTypeRangeCounts,
-				From: new(now.Add(-time.Hour)),
-				To:   new(now),
+				From: timePtr(now.Add(-time.Hour)),
+				To:   timePtr(now),
 				Step: int64Ptr(300),
 			},
 			lokiResponse: lokiclient.MetricsRangeQueryRes{},
@@ -1445,7 +1445,7 @@ func TestParseRangeCount(t *testing.T) {
 				Values: []lokiclient.MetricSampleValue{makeValue(1000.0, "3")},
 			},
 			want: Count{
-				Receiver: new("email"),
+				Receiver: stringPtr("email"),
 				Values:   []RangeValue{{Timestamp: 1000, Count: 3}},
 			},
 		},
@@ -1502,8 +1502,24 @@ func TestParseRangeCount(t *testing.T) {
 
 // Helper functions
 
+func stringPtr(s string) *string {
+	return &s
+}
+
 func int64Ptr(i int64) *int64 {
 	return &i
+}
+
+func timePtr(t time.Time) *time.Time {
+	return &t
+}
+
+func createStatusPtr(s v0alpha1.CreateNotificationqueryRequestNotificationStatus) *v0alpha1.CreateNotificationqueryRequestNotificationStatus {
+	return &s
+}
+
+func outcomePtr(o v0alpha1.CreateNotificationqueryRequestNotificationOutcome) *v0alpha1.CreateNotificationqueryRequestNotificationOutcome {
+	return &o
 }
 
 func createMockLokiResponse(timestamp time.Time) lokiclient.QueryRes {
@@ -1598,70 +1614,70 @@ func TestExplodeRuleUIDCounts(t *testing.T) {
 		{
 			name: "single rule_uid no splitting needed",
 			counts: []Count{
-				{RuleUID: new("ruleA"), Count: 5},
+				{RuleUID: stringPtr("ruleA"), Count: 5},
 			},
 			limit: 10,
 			want: []Count{
-				{RuleUID: new("ruleA"), Count: 5},
+				{RuleUID: stringPtr("ruleA"), Count: 5},
 			},
 		},
 		{
 			name: "comma-separated rule_uids are split",
 			counts: []Count{
-				{RuleUID: new("ruleA,ruleB"), Count: 10},
+				{RuleUID: stringPtr("ruleA,ruleB"), Count: 10},
 			},
 			limit: 10,
 			want: []Count{
-				{RuleUID: new("ruleA"), Count: 10},
-				{RuleUID: new("ruleB"), Count: 10},
+				{RuleUID: stringPtr("ruleA"), Count: 10},
+				{RuleUID: stringPtr("ruleB"), Count: 10},
 			},
 		},
 		{
 			name: "aggregation across multiple entries",
 			counts: []Count{
-				{RuleUID: new("ruleA,ruleB"), Count: 10},
-				{RuleUID: new("ruleB,ruleC"), Count: 5},
+				{RuleUID: stringPtr("ruleA,ruleB"), Count: 10},
+				{RuleUID: stringPtr("ruleB,ruleC"), Count: 5},
 			},
 			limit: 10,
 			want: []Count{
-				{RuleUID: new("ruleB"), Count: 15},
-				{RuleUID: new("ruleA"), Count: 10},
-				{RuleUID: new("ruleC"), Count: 5},
+				{RuleUID: stringPtr("ruleB"), Count: 15},
+				{RuleUID: stringPtr("ruleA"), Count: 10},
+				{RuleUID: stringPtr("ruleC"), Count: 5},
 			},
 		},
 		{
 			name: "limit is applied after aggregation",
 			counts: []Count{
-				{RuleUID: new("ruleA,ruleB"), Count: 10},
-				{RuleUID: new("ruleB,ruleC"), Count: 5},
+				{RuleUID: stringPtr("ruleA,ruleB"), Count: 10},
+				{RuleUID: stringPtr("ruleB,ruleC"), Count: 5},
 			},
 			limit: 2,
 			want: []Count{
-				{RuleUID: new("ruleB"), Count: 15},
-				{RuleUID: new("ruleA"), Count: 10},
+				{RuleUID: stringPtr("ruleB"), Count: 15},
+				{RuleUID: stringPtr("ruleA"), Count: 10},
 			},
 		},
 		{
 			name: "preserves other groupBy fields",
 			counts: []Count{
-				{RuleUID: new("ruleA,ruleB"), Receiver: new("email"), Count: 7},
+				{RuleUID: stringPtr("ruleA,ruleB"), Receiver: stringPtr("email"), Count: 7},
 			},
 			limit: 10,
 			want: []Count{
-				{RuleUID: new("ruleA"), Receiver: new("email"), Count: 7},
-				{RuleUID: new("ruleB"), Receiver: new("email"), Count: 7},
+				{RuleUID: stringPtr("ruleA"), Receiver: stringPtr("email"), Count: 7},
+				{RuleUID: stringPtr("ruleB"), Receiver: stringPtr("email"), Count: 7},
 			},
 		},
 		{
 			name: "aggregation with other dimensions",
 			counts: []Count{
-				{RuleUID: new("ruleA"), Receiver: new("email"), Count: 3},
-				{RuleUID: new("ruleA"), Receiver: new("slack"), Count: 5},
+				{RuleUID: stringPtr("ruleA"), Receiver: stringPtr("email"), Count: 3},
+				{RuleUID: stringPtr("ruleA"), Receiver: stringPtr("slack"), Count: 5},
 			},
 			limit: 10,
 			want: []Count{
-				{RuleUID: new("ruleA"), Receiver: new("slack"), Count: 5},
-				{RuleUID: new("ruleA"), Receiver: new("email"), Count: 3},
+				{RuleUID: stringPtr("ruleA"), Receiver: stringPtr("slack"), Count: 5},
+				{RuleUID: stringPtr("ruleA"), Receiver: stringPtr("email"), Count: 3},
 			},
 		},
 		{

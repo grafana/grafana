@@ -8,11 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -360,7 +359,7 @@ func TestCache_GetAlertInstances(t *testing.T) {
 		},
 		{
 			name:   "returns alert instances",
-			states: []*State{new(randomState(ruleKey)), new(randomState(ruleKey))},
+			states: []*State{util.Pointer(randomState(ruleKey)), util.Pointer(randomState(ruleKey))},
 		},
 	}
 
@@ -565,8 +564,8 @@ func randomState(ruleKey models.AlertRuleKey) State {
 		},
 		StartsAt:             randomTimeInPast(),
 		EndsAt:               randomTimeInFuture(),
-		ResolvedAt:           new(randomTimeInPast()),
-		LastSentAt:           new(randomTimeInPast()),
+		ResolvedAt:           util.Pointer(randomTimeInPast()),
+		LastSentAt:           util.Pointer(randomTimeInPast()),
 		LastEvaluationString: util.GenerateShortUID(),
 		LastEvaluationTime:   randomTimeInPast(),
 		EvaluationDuration:   time.Duration(6000),

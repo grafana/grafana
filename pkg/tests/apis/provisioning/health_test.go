@@ -307,7 +307,7 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 			"webhooks":      "read", // needs write
 		})
 		installation := &github.Installation{
-			ID: new(int64(454545)),
+			ID: github.Ptr(int64(454545)),
 		}
 
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
@@ -483,12 +483,12 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 			"webhooks":      "write",
 		})
 		installation := &github.Installation{
-			ID: new(int64(454545)),
+			ID: github.Ptr(int64(454545)),
 			Permissions: &github.InstallationPermissions{
-				Contents:        new("write"),
-				Metadata:        new("read"),
-				PullRequests:    new("write"),
-				RepositoryHooks: new("write"),
+				Contents:        github.Ptr("write"),
+				Metadata:        github.Ptr("read"),
+				PullRequests:    github.Ptr("write"),
+				RepositoryHooks: github.Ptr("write"),
 			},
 		}
 
@@ -765,10 +765,10 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 
 func createAppWithPermissions(id int64, permissions map[string]string) *github.App {
 	app := &github.App{
-		ID:   new(id),
-		Slug: new("test-app"),
+		ID:   github.Ptr(id),
+		Slug: github.Ptr("test-app"),
 		Owner: &github.User{
-			Login: new("test-owner"),
+			Login: github.Ptr("test-owner"),
 		},
 	}
 
@@ -776,16 +776,16 @@ func createAppWithPermissions(id int64, permissions map[string]string) *github.A
 		installationPerms := &github.InstallationPermissions{}
 
 		if contents, ok := permissions["contents"]; ok {
-			installationPerms.Contents = new(contents)
+			installationPerms.Contents = github.Ptr(contents)
 		}
 		if metadata, ok := permissions["metadata"]; ok {
-			installationPerms.Metadata = new(metadata)
+			installationPerms.Metadata = github.Ptr(metadata)
 		}
 		if prs, ok := permissions["pull_requests"]; ok {
-			installationPerms.PullRequests = new(prs)
+			installationPerms.PullRequests = github.Ptr(prs)
 		}
 		if hooks, ok := permissions["webhooks"]; ok {
-			installationPerms.RepositoryHooks = new(hooks)
+			installationPerms.RepositoryHooks = github.Ptr(hooks)
 		}
 
 		app.Permissions = installationPerms
@@ -796,12 +796,12 @@ func createAppWithPermissions(id int64, permissions map[string]string) *github.A
 
 func createAppInstallationWithPermissions(id int64, permissions map[string]string) *github.Installation {
 	installation := &github.Installation{
-		ID: new(id),
+		ID: github.Ptr(id),
 		Permissions: &github.InstallationPermissions{
-			Contents:        new("write"),
-			Metadata:        new("read"),
-			PullRequests:    new("write"),
-			RepositoryHooks: new("write"),
+			Contents:        github.Ptr("write"),
+			Metadata:        github.Ptr("read"),
+			PullRequests:    github.Ptr("write"),
+			RepositoryHooks: github.Ptr("write"),
 		},
 	}
 
@@ -809,16 +809,16 @@ func createAppInstallationWithPermissions(id int64, permissions map[string]strin
 		installationPerms := &github.InstallationPermissions{}
 
 		if contents, ok := permissions["contents"]; ok {
-			installationPerms.Contents = new(contents)
+			installationPerms.Contents = github.Ptr(contents)
 		}
 		if metadata, ok := permissions["metadata"]; ok {
-			installationPerms.Metadata = new(metadata)
+			installationPerms.Metadata = github.Ptr(metadata)
 		}
 		if prs, ok := permissions["pull_requests"]; ok {
-			installationPerms.PullRequests = new(prs)
+			installationPerms.PullRequests = github.Ptr(prs)
 		}
 		if hooks, ok := permissions["webhooks"]; ok {
-			installationPerms.RepositoryHooks = new(hooks)
+			installationPerms.RepositoryHooks = github.Ptr(hooks)
 		}
 
 		installation.Permissions = installationPerms

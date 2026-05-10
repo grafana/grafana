@@ -546,7 +546,7 @@ func (a *AlertRuleMutators) WithMissingSeriesEvalsToResolve(timesOfInterval int6
 		if timesOfInterval <= 0 {
 			panic("timesOfInterval must be greater than 0")
 		}
-		rule.MissingSeriesEvalsToResolve = new(int64(timesOfInterval))
+		rule.MissingSeriesEvalsToResolve = new(timesOfInterval)
 	}
 }
 
