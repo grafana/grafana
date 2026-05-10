@@ -6,10 +6,10 @@ import (
 	"math/rand"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 const (
@@ -54,7 +54,7 @@ func SeedSecureValues(ctx context.Context, svc contracts.SecureValueService, num
 				},
 				Spec: secretv1beta1.SecureValueSpec{
 					Description: description,
-					Value:       ptr.To(secretv1beta1.NewExposedSecureValue(value)),
+					Value:       new(secretv1beta1.NewExposedSecureValue(value)),
 					Decrypters:  []string{"decrypter1"},
 				},
 				Status: secretv1beta1.SecureValueStatus{},
