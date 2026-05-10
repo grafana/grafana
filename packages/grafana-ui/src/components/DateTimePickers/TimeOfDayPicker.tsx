@@ -17,11 +17,6 @@ interface BaseProps {
   placeholder?: string;
   allowEmpty?: boolean;
   id?: string;
-
-  // weird / unused / deprecated
-  showHour?: boolean;
-  disabledMinutes?: () => number[];
-  disabledSeconds?: () => number[];
 }
 
 interface AllowEmptyProps extends BaseProps {
