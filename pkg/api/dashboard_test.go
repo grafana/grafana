@@ -1122,52 +1122,8 @@ func (hs *HTTPServer) callGetDashboardVersionsWithParams(sc *scenarioContext, qu
 	sc.fakeReqWithParams("GET", sc.url, queryParams).exec()
 }
 
-func callPostDashboard(sc *scenarioContext) {
-	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-}
-
 func callRestoreDashboardVersion(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-}
-
-func callPostDashboardShouldReturnSuccess(sc *scenarioContext) {
-	callPostDashboard(sc)
-
-	assert.Equal(sc.t, 200, sc.resp.Code)
-}
-
-func postDashboardScenario(t *testing.T, desc string, url string, routePattern string, cmd dashboards.SaveDashboardCommand, dashboardService dashboards.DashboardService, folderService folder.Service, fn scenarioFunc) {
-	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		cfg := setting.NewCfg()
-		hs := HTTPServer{
-			Cfg:                   cfg,
-			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                  newTestLive(t),
-			QuotaService:          quotatest.New(false, nil),
-			pluginStore:           &pluginstore.FakePluginStore{},
-			LibraryElementService: &libraryelementsfake.LibraryElementService{},
-			DashboardService:      dashboardService,
-			folderService:         folderService,
-			Features:              featuremgmt.WithFeatures(),
-			accesscontrolService:  actest.FakeService{},
-			log:                   log.New("test-logger"),
-			tracer:                tracing.InitializeTracerForTest(),
-		}
-
-		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-			c.Req.Body = mockRequestBody(cmd)
-			c.Req.Header.Add("Content-Type", "application/json")
-			sc.context = c
-			sc.context.SignedInUser = &user.SignedInUser{OrgID: cmd.OrgID, UserID: cmd.UserID}
-
-			return hs.PostDashboard(c)
-		})
-
-		sc.m.Post(routePattern, sc.defaultHandler)
-
-		fn(sc)
-	})
 }
 
 func restoreDashboardVersionScenario(t *testing.T, desc string, url string, routePattern string,
