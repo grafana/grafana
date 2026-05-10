@@ -19,12 +19,17 @@ export function getPluginSettings(pluginId: string, options?: Partial<BackendSrv
       return settings;
     })
     .catch((e) => {
-      // User does not have access to plugin
-      if (typeof e === 'object' && e !== null && 'status' in e && (e.status === 403 || e.status === 401)) {
-        e.isHandled = true;
+      // Preserve the FetchError shape (status, data, ...) so callers can discriminate by status —
+      // e.g. AppRootPage only renders the onboarding fallback for a genuine 404, not for 5xx/auth.
+      // 401/403 are also marked isHandled so the caller knows the auto-toast already fired.
+      if (typeof e === 'object' && e !== null && 'status' in e) {
+        if (e.status === 403 || e.status === 401) {
+          e.isHandled = true;
+        }
         return Promise.reject(e);
       }
 
+      // Status-less errors (network failure, JSON parse, ...) keep the legacy opaque shape.
       return Promise.reject(new Error('Unknown Plugin'));
     });
 }
