@@ -50,7 +50,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			{
 				Alert: "TestAlert",
 				Expr:  "up == 0",
-				For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+				For:   new(prommodel.Duration(5 * time.Minute)),
 				Labels: map[string]string{
 					"severity": "critical",
 				},
@@ -458,7 +458,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 				{
 					Alert: "TestAlert",
 					Expr:  "up == 0",
-					For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+					For:   new(prommodel.Duration(5 * time.Minute)),
 					Labels: map[string]string{
 						"severity": "critical",
 					},
@@ -567,7 +567,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 					{
 						Alert: alertname,
 						Expr:  "up == 0",
-						For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+						For:   new(prommodel.Duration(5 * time.Minute)),
 						Labels: map[string]string{
 							"severity": "critical",
 						},
@@ -676,7 +676,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 					GroupBy:  []string{"cluster", "pod"},
 				}),
 				expectedStatus: http.StatusAccepted,
-				expectedNotificationSettings: util.Pointer(models.NotificationSettingsFromContact(models.ContactPointRouting{
+				expectedNotificationSettings: new(models.NotificationSettingsFromContact(models.ContactPointRouting{
 					Receiver: "test-receiver",
 					GroupBy:  []string{"cluster", "pod"},
 				})),
@@ -703,18 +703,18 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 				name: "sets PolicyRouting for rules if specified",
 				headerValue: func() string {
 					settings := apimodels.AlertRuleNotificationSettings{
-						Policy: util.Pointer("policy-a"),
+						Policy: new("policy-a"),
 					}
 					settingsJSON, _ := json.Marshal(settings)
 					return string(settingsJSON)
 				}(),
 				expectedStatus:               http.StatusAccepted,
-				expectedNotificationSettings: util.Pointer(models.NotificationSettingsFromPolicy("policy-a")),
+				expectedNotificationSettings: new(models.NotificationSettingsFromPolicy("policy-a")),
 			},
 			{
 				name: "returns policy missing error when policy is empty",
 				headerValue: mustMarshal(apimodels.AlertRuleNotificationSettings{
-					Policy: util.Pointer(""),
+					Policy: new(""),
 				}),
 				expectedStatus: http.StatusBadRequest,
 				expectedBody:   "policy must be specified",
@@ -731,7 +731,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			{
 				name: "returns error when both receiver and policy are specified",
 				headerValue: mustMarshal(apimodels.AlertRuleNotificationSettings{
-					Policy:   util.Pointer("policy-a"),
+					Policy:   new("policy-a"),
 					Receiver: "test-receiver",
 				}),
 				expectedStatus: http.StatusBadRequest,
@@ -752,7 +752,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 						{
 							Alert: "TestAlert",
 							Expr:  "up == 0",
-							For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+							For:   new(prommodel.Duration(5 * time.Minute)),
 							Labels: map[string]string{
 								"severity": "critical",
 							},
@@ -785,7 +785,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 	promRule := apimodels.PrometheusRule{
 		Alert: "test alert",
 		Expr:  "vector(1) > 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "critical",
 		},
@@ -883,7 +883,7 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 	promRule1 := apimodels.PrometheusRule{
 		Alert: "test alert",
 		Expr:  "vector(1) > 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "critical",
 		},
@@ -895,7 +895,7 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 	promRule2 := apimodels.PrometheusRule{
 		Alert: "test alert 2",
 		Expr:  "vector(1) > 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "also critical",
 		},
@@ -991,7 +991,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 	promRule1 := apimodels.PrometheusRule{
 		Alert: "test alert",
 		Expr:  "vector(1) > 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "critical",
 		},
@@ -1003,7 +1003,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 	promRule2 := apimodels.PrometheusRule{
 		Alert: "test alert 2",
 		Expr:  "vector(1) > 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "also critical",
 		},
@@ -1529,7 +1529,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 	promAlertRule := apimodels.PrometheusRule{
 		Alert: "TestAlert",
 		Expr:  "up == 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "critical",
 		},
