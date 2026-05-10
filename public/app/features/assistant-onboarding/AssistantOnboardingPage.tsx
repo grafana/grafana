@@ -68,11 +68,11 @@ export default function AssistantOnboardingPage() {
           <p className={styles.ctaSubnote}>
             <Trans i18nKey="assistant-onboarding.subnote">
               Once installed, connect it to Grafana Cloud to get started.
-            </Trans>{' '}
-            <TextLink href={SELF_MANAGED_DOCS_URL} external>
-              <Trans i18nKey="assistant-onboarding.learn-how">Learn how</Trans>
-            </TextLink>
+            </Trans>
           </p>
+          <TextLink href={SELF_MANAGED_DOCS_URL} external>
+            <Trans i18nKey="assistant-onboarding.learn-how">Learn how</Trans>
+          </TextLink>
         </section>
 
         <section className={styles.learnMore}>
