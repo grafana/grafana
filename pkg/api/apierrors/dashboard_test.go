@@ -10,7 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -66,6 +68,20 @@ func TestToDashboardErrorResponse(t *testing.T) {
 			pluginStore: pluginStoreWithoutPlugin,
 			input:       dashboards.ErrFolderNotFound,
 			want:        response.Error(http.StatusBadRequest, dashboards.ErrFolderNotFound.Error(), nil),
+		},
+		{
+			// k8s dashboard apiserver surfaces a NotFound on the folders resource when the
+			// referenced folder UID does not exist; legacy /api/dashboards/db must stay 400.
+			name:        "k8s folder not found is mapped to legacy 400",
+			pluginStore: pluginStoreWithoutPlugin,
+			input:       k8sErrors.NewNotFound(folderv1.FolderResourceInfo.GroupResource(), "unknown"),
+			want:        response.Error(http.StatusBadRequest, dashboards.ErrFolderNotFound.Error(), nil),
+		},
+		{
+			name:        "k8s not found for non-folder resource passes through",
+			pluginStore: pluginStoreWithoutPlugin,
+			input:       k8sErrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "abc"),
+			want:        response.Error(http.StatusNotFound, `dashboards.dashboard.grafana.app "abc" not found`, k8sErrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "abc")),
 		},
 		{
 			name:        "dashboard error with a non-bad-request status",
