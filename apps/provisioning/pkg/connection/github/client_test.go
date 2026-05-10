@@ -31,16 +31,16 @@ func TestGithubClient_GetApp(t *testing.T) {
 					mockhub.GetApp,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						app := &github.App{
-							ID:   github.Ptr(int64(12345)),
-							Slug: github.Ptr("my-test-app"),
+							ID:   new(int64(12345)),
+							Slug: new("my-test-app"),
 							Owner: &github.User{
-								Login: github.Ptr("grafana"),
+								Login: new("grafana"),
 							},
 							Permissions: &github.InstallationPermissions{
-								Contents:        github.Ptr("write"),
-								Metadata:        github.Ptr("read"),
-								PullRequests:    github.Ptr("write"),
-								RepositoryHooks: github.Ptr("write"),
+								Contents:        new("write"),
+								Metadata:        new("read"),
+								PullRequests:    new("write"),
+								RepositoryHooks: new("write"),
 							},
 						}
 						w.WriteHeader(http.StatusOK)
@@ -187,8 +187,8 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 					mockhub.GetAppInstallationsByInstallationId,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						installation := &github.Installation{
-							ID:          github.Ptr(int64(67890)),
-							SuspendedAt: github.Ptr(github.Timestamp{Time: time.Now()}),
+							ID:          new(int64(67890)),
+							SuspendedAt: new(github.Timestamp{Time: time.Now()}),
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(installation))
@@ -210,7 +210,7 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 					mockhub.GetAppInstallationsByInstallationId,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						installation := &github.Installation{
-							ID:          github.Ptr(int64(67890)),
+							ID:          new(int64(67890)),
 							SuspendedAt: nil,
 						}
 						w.WriteHeader(http.StatusOK)
@@ -233,13 +233,13 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 					mockhub.GetAppInstallationsByInstallationId,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						installation := &github.Installation{
-							ID:          github.Ptr(int64(67890)),
+							ID:          new(int64(67890)),
 							SuspendedAt: nil,
 							Permissions: &github.InstallationPermissions{
-								Contents:        github.Ptr("write"),
-								Metadata:        github.Ptr("read"),
-								PullRequests:    github.Ptr("write"),
-								RepositoryHooks: github.Ptr("write"),
+								Contents:        new("write"),
+								Metadata:        new("read"),
+								PullRequests:    new("write"),
+								RepositoryHooks: new("write"),
 							},
 						}
 						w.WriteHeader(http.StatusOK)
@@ -268,7 +268,7 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 					mockhub.GetAppInstallationsByInstallationId,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						installation := &github.Installation{
-							ID:          github.Ptr(int64(67890)),
+							ID:          new(int64(67890)),
 							SuspendedAt: nil,
 							Permissions: nil,
 						}
@@ -292,10 +292,10 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 					mockhub.GetAppInstallationsByInstallationId,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						installation := &github.Installation{
-							ID:          github.Ptr(int64(67890)),
+							ID:          new(int64(67890)),
 							SuspendedAt: nil,
 							Permissions: &github.InstallationPermissions{
-								Contents: github.Ptr("read"),
+								Contents: new("read"),
 								Metadata: nil,
 							},
 						}
@@ -429,21 +429,21 @@ func TestGithubClient_ListInstallationRepositories(t *testing.T) {
 					mockhub.GetInstallationRepositories,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						response := &github.ListRepositories{
-							TotalCount: github.Ptr(2),
+							TotalCount: new(2),
 							Repositories: []*github.Repository{
 								{
-									Name: github.Ptr("repo1"),
+									Name: new("repo1"),
 									Owner: &github.User{
-										Login: github.Ptr("owner1"),
+										Login: new("owner1"),
 									},
-									HTMLURL: github.Ptr("https://github.com/owner1/repo1"),
+									HTMLURL: new("https://github.com/owner1/repo1"),
 								},
 								{
-									Name: github.Ptr("repo2"),
+									Name: new("repo2"),
 									Owner: &github.User{
-										Login: github.Ptr("owner2"),
+										Login: new("owner2"),
 									},
-									HTMLURL: github.Ptr("https://github.com/owner2/repo2"),
+									HTMLURL: new("https://github.com/owner2/repo2"),
 								},
 							},
 						}
@@ -469,14 +469,14 @@ func TestGithubClient_ListInstallationRepositories(t *testing.T) {
 						case "", "1":
 							// First page
 							response := &github.ListRepositories{
-								TotalCount: github.Ptr(3),
+								TotalCount: new(3),
 								Repositories: []*github.Repository{
 									{
-										Name: github.Ptr("repo1"),
+										Name: new("repo1"),
 										Owner: &github.User{
-											Login: github.Ptr("owner1"),
+											Login: new("owner1"),
 										},
-										HTMLURL: github.Ptr("https://github.com/owner1/repo1"),
+										HTMLURL: new("https://github.com/owner1/repo1"),
 									},
 								},
 							}
@@ -486,21 +486,21 @@ func TestGithubClient_ListInstallationRepositories(t *testing.T) {
 						case "2":
 							// Second page
 							response := &github.ListRepositories{
-								TotalCount: github.Ptr(3),
+								TotalCount: new(3),
 								Repositories: []*github.Repository{
 									{
-										Name: github.Ptr("repo2"),
+										Name: new("repo2"),
 										Owner: &github.User{
-											Login: github.Ptr("owner2"),
+											Login: new("owner2"),
 										},
-										HTMLURL: github.Ptr("https://github.com/owner2/repo2"),
+										HTMLURL: new("https://github.com/owner2/repo2"),
 									},
 									{
-										Name: github.Ptr("repo3"),
+										Name: new("repo3"),
 										Owner: &github.User{
-											Login: github.Ptr("owner3"),
+											Login: new("owner3"),
 										},
-										HTMLURL: github.Ptr("https://github.com/owner3/repo3"),
+										HTMLURL: new("https://github.com/owner3/repo3"),
 									},
 								},
 							}
@@ -524,7 +524,7 @@ func TestGithubClient_ListInstallationRepositories(t *testing.T) {
 					mockhub.GetInstallationRepositories,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						response := &github.ListRepositories{
-							TotalCount:   github.Ptr(0),
+							TotalCount:   new(0),
 							Repositories: []*github.Repository{},
 						}
 						w.WriteHeader(http.StatusOK)
@@ -635,16 +635,16 @@ func TestGithubClient_ListInstallationRepositories(t *testing.T) {
 						for i := range 100 {
 							repoNum := (pageNum-1)*100 + i + 1
 							repos[i] = &github.Repository{
-								Name: github.Ptr(fmt.Sprintf("repo%d", repoNum)),
+								Name: new(fmt.Sprintf("repo%d", repoNum)),
 								Owner: &github.User{
-									Login: github.Ptr(fmt.Sprintf("owner%d", repoNum)),
+									Login: new(fmt.Sprintf("owner%d", repoNum)),
 								},
-								HTMLURL: github.Ptr(fmt.Sprintf("https://github.com/owner%d/repo%d", repoNum, repoNum)),
+								HTMLURL: new(fmt.Sprintf("https://github.com/owner%d/repo%d", repoNum, repoNum)),
 							}
 						}
 
 						response := &github.ListRepositories{
-							TotalCount:   github.Ptr(1200),
+							TotalCount:   new(1200),
 							Repositories: repos,
 						}
 
@@ -703,7 +703,7 @@ func TestGithubClient_CreateInstallationAccessToken(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						expiresAt := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 						token := &github.InstallationToken{
-							Token:     github.Ptr("ghs_test_token_123456789"),
+							Token:     new("ghs_test_token_123456789"),
 							ExpiresAt: &github.Timestamp{Time: expiresAt},
 						}
 						w.WriteHeader(http.StatusCreated)
