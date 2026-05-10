@@ -3157,7 +3157,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 
 	t.Run("when filtering by imported Prometheus rules", func(t *testing.T) {
 		filterOpts := &FilterOptions{
-			HasPrometheusRuleDefinition: util.Pointer(true),
+			HasPrometheusRuleDefinition: new(true),
 			NamespaceUIDs:               []string{"namespace1"},
 		}
 
