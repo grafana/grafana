@@ -87,7 +87,7 @@ func TestLargeDashboardSupportV2alpha1(t *testing.T) {
 		},
 		Spec: dashv2alpha1.DashboardSpec{
 			Title:       "Test V2 Dashboard",
-			Description: stringPtr("A test dashboard for v2 large object support"),
+			Description: new("A test dashboard for v2 large object support"),
 			Tags:        []string{"test", "v2", "large-object"},
 			Editable:    boolPtr(true),
 			LiveNow:     boolPtr(false),
@@ -132,7 +132,7 @@ func TestLargeDashboardSupportV2alpha1(t *testing.T) {
 
 	// Verify only essential fields remain after reduction
 	require.Equal(t, "Test V2 Dashboard", dashToReduce.Spec.Title)
-	require.Equal(t, stringPtr("A test dashboard for v2 large object support"), dashToReduce.Spec.Description)
+	require.Equal(t, new("A test dashboard for v2 large object support"), dashToReduce.Spec.Description)
 	require.Equal(t, []string{"test", "v2", "large-object"}, dashToReduce.Spec.Tags)
 
 	// Everything else should be empty/default
@@ -187,7 +187,7 @@ func TestLargeDashboardSupportV2beta1(t *testing.T) {
 		},
 		Spec: dashv2beta1.DashboardSpec{
 			Title:       "Test V2 Dashboard",
-			Description: stringPtr("A test dashboard for v2 large object support"),
+			Description: new("A test dashboard for v2 large object support"),
 			Tags:        []string{"test", "v2", "large-object"},
 			Editable:    boolPtr(true),
 			LiveNow:     boolPtr(false),
@@ -232,7 +232,7 @@ func TestLargeDashboardSupportV2beta1(t *testing.T) {
 
 	// Verify only essential fields remain after reduction
 	require.Equal(t, "Test V2 Dashboard", dashToReduce.Spec.Title)
-	require.Equal(t, stringPtr("A test dashboard for v2 large object support"), dashToReduce.Spec.Description)
+	require.Equal(t, new("A test dashboard for v2 large object support"), dashToReduce.Spec.Description)
 	require.Equal(t, []string{"test", "v2", "large-object"}, dashToReduce.Spec.Tags)
 
 	// Everything else should be empty/default
