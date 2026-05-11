@@ -427,9 +427,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 			return response.Error(http.StatusBadRequest, "The dashboard payload references a non dashboard apiVersion.  This should be sent to the requested api directly", nil)
 		}
 	} else {
-		if _, found := spec["title"]; !found {
-			return response.Error(http.StatusBadRequest, "Dashboard is missing required title property", nil)
-		}
 		// Default legacy POSTs to v0alpha1: matches the prior DashboardService.SaveDashboard
 		// behavior. v0 lets the dashboard apiserver mutate hook strip uid/version/id without
 		// running the v1 schema migrations, so legacy callers' panel content is preserved.
@@ -520,7 +517,7 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 		}
 	}
 	isCreate := old == nil
-	if isCreate && name == "" {
+	if isCreate && name == "" && obj.GetGenerateName() == "" {
 		obj.SetGenerateName("a")
 	}
 
