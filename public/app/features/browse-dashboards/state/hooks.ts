@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { createSelector } from 'reselect';
 
 import { config } from '@grafana/runtime';
@@ -104,6 +104,50 @@ export function useChildrenByParentUIDState() {
 
 export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
+}
+
+export function useSelectedItemTitles(selectedItems: DashboardTreeSelection): Array<{ kind: string; title: string }> {
+  const rootItems = useSelector(rootItemsSelector);
+  const childrenByParentUID = useSelector(childrenByParentUIDSelector);
+
+  return useMemo(() => {
+    const selectedUIDs = new Map<string, string>();
+    for (const kind of ['dashboard', 'folder', 'panel'] as const) {
+      const items = selectedItems[kind];
+      if (items) {
+        for (const [uid, selected] of Object.entries(items)) {
+          if (selected) {
+            selectedUIDs.set(uid, kind);
+          }
+        }
+      }
+    }
+
+    if (selectedUIDs.size === 0) {
+      return [];
+    }
+
+    const results: Array<{ kind: string; title: string }> = [];
+    const allCollections = [rootItems, ...Object.values(childrenByParentUID)];
+
+    for (const collection of allCollections) {
+      if (!collection) {
+        continue;
+      }
+      for (const item of collection.items) {
+        const kind = selectedUIDs.get(item.uid);
+        if (kind) {
+          results.push({ kind, title: item.title });
+          selectedUIDs.delete(item.uid);
+        }
+      }
+      if (selectedUIDs.size === 0) {
+        break;
+      }
+    }
+
+    return results;
+  }, [selectedItems, rootItems, childrenByParentUID]);
 }
 
 export function useLoadNextChildrenPage(

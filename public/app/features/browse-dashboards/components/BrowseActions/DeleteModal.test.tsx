@@ -6,6 +6,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { type StoreState } from 'app/types/store';
 
 import { DeleteModal, type Props } from './DeleteModal';
 
@@ -13,7 +14,11 @@ function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
 }
 
-const [_, { folderA }] = getFolderFixtures();
+function renderWithStore(ui: React.ReactElement, storeState: Partial<StoreState>) {
+  rtlRender(<TestProvider storeState={storeState}>{ui}</TestProvider>);
+}
+
+const [_, { folderA, dashbdD, dashbdE }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -103,5 +108,81 @@ describe('browse-dashboards DeleteModal', () => {
     expect(await screen.findByText(/This action will delete the folder/i)).toBeInTheDocument();
     expect(await screen.findByText(/5 item/)).toBeInTheDocument();
     expect(screen.queryByText(/NaN item/)).not.toBeInTheDocument();
+  });
+
+  it('shows dashboard names when a small number of dashboards are selected', async () => {
+    const storeState: Partial<StoreState> = {
+      browseDashboards: {
+        rootItems: {
+          items: [dashbdD.item, dashbdE.item],
+          lastFetchedKind: 'dashboard',
+          lastFetchedPage: 1,
+          lastKindHasMoreItems: false,
+          isFullyLoaded: true,
+        },
+        childrenByParentUID: {},
+        openFolders: {},
+        selectedItems: {
+          dashboard: { [dashbdD.item.uid]: true },
+          folder: {},
+          panel: {},
+          $all: false,
+        },
+      },
+    };
+
+    renderWithStore(
+      <DeleteModal
+        {...defaultProps}
+        selectedItems={{
+          $all: false,
+          folder: {},
+          dashboard: { [dashbdD.item.uid]: true },
+          panel: {},
+        }}
+      />,
+      storeState
+    );
+
+    expect(await screen.findByText(dashbdD.item.title)).toBeInTheDocument();
+    expect(await screen.findByText(/This action will delete the following:/i)).toBeInTheDocument();
+  });
+
+  it('shows multiple dashboard names when a few dashboards are selected', async () => {
+    const storeState: Partial<StoreState> = {
+      browseDashboards: {
+        rootItems: {
+          items: [dashbdD.item, dashbdE.item],
+          lastFetchedKind: 'dashboard',
+          lastFetchedPage: 1,
+          lastKindHasMoreItems: false,
+          isFullyLoaded: true,
+        },
+        childrenByParentUID: {},
+        openFolders: {},
+        selectedItems: {
+          dashboard: { [dashbdD.item.uid]: true, [dashbdE.item.uid]: true },
+          folder: {},
+          panel: {},
+          $all: false,
+        },
+      },
+    };
+
+    renderWithStore(
+      <DeleteModal
+        {...defaultProps}
+        selectedItems={{
+          $all: false,
+          folder: {},
+          dashboard: { [dashbdD.item.uid]: true, [dashbdE.item.uid]: true },
+          panel: {},
+        }}
+      />,
+      storeState
+    );
+
+    expect(await screen.findByText(dashbdD.item.title)).toBeInTheDocument();
+    expect(await screen.findByText(dashbdE.item.title)).toBeInTheDocument();
   });
 });

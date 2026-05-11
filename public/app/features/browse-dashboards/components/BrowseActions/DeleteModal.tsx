@@ -5,6 +5,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Alert, ConfirmModal, Space, Text } from '@grafana/ui';
 import { useGetAffectedItems, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
+import { useSelectedItemTitles } from '../../state/hooks';
 import { type DashboardTreeSelection } from '../../types';
 import { DeletedDashboardsInfo } from '../DeletedDashboardsInfo';
 
@@ -17,6 +18,8 @@ export interface Props {
   selectedItems: DashboardTreeSelection;
 }
 
+const MAX_ITEMS_TO_LIST = 5;
+
 export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const { data } = useGetAffectedItems(selectedItems);
   const deleteIsInvalid = Boolean(data && (data.alertrules || data.library_elements));
@@ -27,10 +30,13 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   const selectedPanels = Object.keys(selectedItems.panel || {}).filter((uid) => selectedItems.panel[uid]);
   const { data: folderData } = useGetFolderQueryFacade(selectedFolders.length === 1 ? selectedFolders[0] : undefined);
 
-  // If we are only moving one folder, we can show a different message
-  // (we might be in the "Folder actions" version of the modal)
+  const totalDirectlySelected = selectedFolders.length + selectedDashboards.length + selectedPanels.length;
+  const selectedItemTitles = useSelectedItemTitles(selectedItems);
+
   const onlyOneFolderSelected =
     selectedFolders.length === 1 && selectedDashboards.length === 0 && selectedPanels.length === 0;
+
+  const showItemNames = totalDirectlySelected <= MAX_ITEMS_TO_LIST && selectedItemTitles.length > 0;
 
   const onDelete = async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {
@@ -68,13 +74,38 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
                 </Text>
                 &quot; and the following content:
               </Trans>
+            ) : showItemNames ? (
+              <Trans i18nKey="browse-dashboards.action.delete-modal-text-named-items">
+                This action will delete the following:
+              </Trans>
             ) : (
               <Trans i18nKey="browse-dashboards.action.delete-modal-text">
                 This action will delete the following content:
               </Trans>
             )}
           </Text>
-          <DescendantCount selectedItems={selectedItems} />
+          {showItemNames && !onlyOneFolderSelected ? (
+            <ul>
+              {selectedItemTitles.map(({ kind, title }) => (
+                <li key={title}>
+                  <Text weight="bold">{title}</Text>
+                  {selectedFolders.length > 0 && kind === 'folder' && (
+                    <Text color="secondary">
+                      {' '}
+                      ({t('browse-dashboards.action.delete-modal-item-kind-folder', 'folder')})
+                    </Text>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {(onlyOneFolderSelected || !showItemNames) && <DescendantCount selectedItems={selectedItems} />}
+          {showItemNames && selectedFolders.length > 0 && (
+            <>
+              <Space v={1} />
+              <DescendantCount selectedItems={selectedItems} />
+            </>
+          )}
           <Space v={2} />
         </>
       }
