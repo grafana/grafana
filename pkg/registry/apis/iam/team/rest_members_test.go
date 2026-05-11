@@ -18,7 +18,6 @@ import (
 )
 
 func TestTeamMembersREST_Connect(t *testing.T) {
-
 	t.Run("returns members from team spec", func(t *testing.T) {
 		g := &mockGetter{team: teamWithMembers("team1",
 			member("user1", "admin", true),
