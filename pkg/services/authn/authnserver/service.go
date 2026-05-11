@@ -7,6 +7,7 @@ import (
 
 	grpclog "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"go.opentelemetry.io/otel/attribute"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	authnv1 "github.com/grafana/authlib/authn/proto/v1"
 
@@ -53,6 +54,11 @@ func (s *Service) RegisterClient(c Client) {
 func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateRequest) (*authnv1.AuthenticateResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "authnserver.Authenticate")
 	defer span.End()
+
+	if req != nil && req.Namespace != "" {
+		ctx = request.WithNamespace(ctx, req.Namespace)
+		span.SetAttributes(attribute.String("namespace", req.Namespace))
+	}
 
 	grpclog.AddFields(ctx, grpclog.Fields{"authn.headers", headerNames(req.GetHttpHeaders())})
 
