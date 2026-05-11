@@ -6,7 +6,7 @@ import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
@@ -24,7 +24,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { dispatch } from 'app/store/store';
 import { type PermissionLevel } from 'app/types/acl';
-import { type ImportDashboardResponseDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import {
   type DescendantCount,
   type DescendantCountDTO,
@@ -67,20 +67,6 @@ export interface MoveFoldersArgs {
 export interface MoveFolderArgs {
   folderUID: string;
   destinationUID: string;
-}
-
-export interface ImportInputs {
-  name: string;
-  type: string;
-  value: string;
-  pluginId?: string;
-}
-
-interface ImportOptions {
-  dashboard: Dashboard;
-  overwrite: boolean;
-  inputs: ImportInputs[];
-  folderUid: string;
 }
 
 interface RestoreDashboardArgs {
@@ -510,66 +496,6 @@ export const browseDashboardsAPI = createApi({
             const url = locationUtil.stripBaseFromUrl(data.url);
             dispatch(updateDashboardName({ id: data.uid, title, url }));
           }
-        });
-      },
-    }),
-
-    importDashboard: builder.mutation<ImportDashboardResponseDTO, ImportOptions>({
-      query: ({ dashboard, overwrite, inputs, folderUid }) => ({
-        method: 'POST',
-        url: '/dashboards/import',
-        body: {
-          dashboard,
-          overwrite,
-          inputs,
-          folderUid,
-        },
-      }),
-      onQueryStarted: async ({ dashboard, folderUid }, { queryFulfilled, dispatch }) => {
-        // Check if a dashboard with this UID already exists to find its current folder
-        let currentFolderUid: string | undefined;
-        if (dashboard.uid) {
-          try {
-            const api = await getDashboardAPI();
-            const existingDashboard = await api.getDashboardDTO(dashboard.uid);
-            currentFolderUid = isDashboardV2Resource(existingDashboard)
-              ? existingDashboard.metadata?.name
-              : existingDashboard.meta?.folderUid;
-          } catch (error) {
-            if (isFetchError(error)) {
-              if (error.status !== 404) {
-                console.error('Error fetching dashboard', error);
-              } else {
-                // Do not show the error alert if the dashboard does not exist
-                // this is expected when importing a new dashboard
-                error.isHandled = true;
-              }
-            }
-          }
-        }
-
-        queryFulfilled.then(async (response) => {
-          // Refresh destination folder
-          dispatch(
-            refetchChildren({
-              parentUID: folderUid,
-              pageSize: PAGE_SIZE,
-            })
-          );
-
-          // If the dashboard was moved from a different folder, refresh the source folder too
-          if (currentFolderUid && currentFolderUid !== folderUid) {
-            dispatch(
-              refetchChildren({
-                parentUID: currentFolderUid,
-                pageSize: PAGE_SIZE,
-              })
-            );
-          }
-
-          const dashboardUrl = locationUtil.stripBaseFromUrl(response.data.importedUrl);
-          locationService.push(dashboardUrl);
-          invalidateQuotaUsage(dispatch);
         });
       },
     }),
