@@ -25,8 +25,6 @@ func NewPreferencesTestCase() ResourceMigratorTestCase {
 }
 
 // testUsers returns the users that the preferences testcase exercises.
-// Read fresh from the helper on each call so we never hold references to a
-// torn-down apiserver across migration steps.
 func (tc *preferencesTestCase) testUsers(helper *apis.K8sTestHelper) []apis.User {
 	return []apis.User{
 		helper.Org1.Admin,
