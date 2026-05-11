@@ -1,8 +1,9 @@
 // Package reconciler keeps the vector index in sync with ongoing
 // dashboard writes via a periodic reconciler that drains an in-memory
-// dedup queue. Watch events and startupReconcile-listed events both feed the
-// queue; enqueue keeps only the highest RV per resource so a replayed
-// older event can't overwrite a newer one in the queue.
+// dedup map keyed by (group, resource, namespace, name). Watch events
+// and startupReconcile-listed events both feed the map; enqueue keeps
+// only the highest RV per resource so a replayed older event can't
+// overwrite a newer one before it's processed.
 package reconciler
 
 import (
@@ -33,11 +34,11 @@ const maxEventAttempts = 5
 // postgres without delaying real work.
 const defaultLockRetryInterval = 10 * time.Second
 
-// startupBatchSize bounds the in-memory queue during startupReconcile.
-// When the listing iterator fills the queue to this cap, we break out,
-// flush via processQueue (advancing the cursor), then resume listing
-// from the new cursor. Keeps memory bounded over large catch-up windows.
-// Package-level so tests can override.
+// startupBatchSize bounds the per-flush batch size during
+// startupReconcile. When the listing iterator fills a batch to this
+// cap, we flush it through processEvents, then resume listing. Keeps
+// memory bounded over large catch-up windows. Package-level so tests
+// can override.
 var startupBatchSize = 1000
 
 // pendingEvent flattens (group, resource, namespace, name) instead of
@@ -55,8 +56,15 @@ type pendingEvent struct {
 	attempts  int
 }
 
-func eventQueueKey(group, resource, namespace, name string) string {
+func pendingKey(group, resource, namespace, name string) string {
 	return group + "/" + resource + "/" + namespace + "/" + name
+}
+
+// builderKey identifies a builder by both group and resource so the
+// reconciler supports multiple builders sharing a group (or, in
+// principle, the same resource name under different groups).
+func builderKey(group, resource string) string {
+	return group + "/" + resource
 }
 
 type Options struct {
@@ -70,7 +78,7 @@ type Options struct {
 
 // Reconciler keeps the vector index in sync with ongoing writes. The
 // advisory lock is held for the pod's lifetime (acquired in Run), so
-// only one replica processes the queue at a time and bootstrap
+// only one replica processes the pending map at a time and bootstrap
 // pagination doesn't ping-pong across replicas. Connection-bound pg
 // session locks release naturally if the pod crashes.
 type Reconciler struct {
@@ -85,8 +93,8 @@ type Reconciler struct {
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
 
-	queueMu sync.Mutex
-	queue   map[string]*pendingEvent
+	pendingMu sync.Mutex
+	pending map[string]*pendingEvent
 }
 
 // New constructs the embedding reconciler.
@@ -98,10 +106,11 @@ func New(opts Options) (*Reconciler, error) {
 		return nil, fmt.Errorf("reconciler: no builders")
 	}
 	for _, b := range opts.Builders {
-		if _, dup := builders[b.Resource()]; dup {
-			return nil, fmt.Errorf("reconciler: duplicate builder for resource %q", b.Resource())
+		k := builderKey(b.Group(), b.Resource())
+		if _, dup := builders[k]; dup {
+			return nil, fmt.Errorf("reconciler: duplicate builder for %s", k)
 		}
-		builders[b.Resource()] = b
+		builders[k] = b
 	}
 	if opts.Interval <= 0 {
 		opts.Interval = DefaultInterval
@@ -117,7 +126,7 @@ func New(opts Options) (*Reconciler, error) {
 		interval:          opts.Interval,
 		lockRetryInterval: opts.LockRetryInterval,
 		log:               log.New("embeddings_reconciler"),
-		queue:             make(map[string]*pendingEvent),
+		pending:           make(map[string]*pendingEvent),
 	}, nil
 }
 
@@ -126,42 +135,41 @@ func (s *Reconciler) UseBroadcaster(b resource.Broadcaster[*resource.WrittenEven
 }
 
 // enqueue keeps the highest RV per resource so older replayed events
-// can't overwrite a newer one already queued.
+// can't overwrite a newer one already pending.
 func (s *Reconciler) enqueue(ev *pendingEvent) {
 	if ev == nil || ev.namespace == "" {
 		return
 	}
-	builder, ok := s.builders[ev.resource]
-	if !ok || builder.Group() != ev.group {
+	if _, ok := s.builders[builderKey(ev.group, ev.resource)]; !ok {
 		return
 	}
-	k := eventQueueKey(ev.group, ev.resource, ev.namespace, ev.name)
-	s.queueMu.Lock()
-	defer s.queueMu.Unlock()
-	if existing, ok := s.queue[k]; ok && existing.rv >= ev.rv {
+	k := pendingKey(ev.group, ev.resource, ev.namespace, ev.name)
+	s.pendingMu.Lock()
+	defer s.pendingMu.Unlock()
+	if existing, ok := s.pending[k]; ok && existing.rv >= ev.rv {
 		return
 	}
-	s.queue[k] = ev
+	s.pending[k] = ev
 }
 
-func (s *Reconciler) drainQueue() []*pendingEvent {
-	s.queueMu.Lock()
-	defer s.queueMu.Unlock()
-	if len(s.queue) == 0 {
+func (s *Reconciler) drainPending() []*pendingEvent {
+	s.pendingMu.Lock()
+	defer s.pendingMu.Unlock()
+	if len(s.pending) == 0 {
 		return nil
 	}
-	out := make([]*pendingEvent, 0, len(s.queue))
-	for _, ev := range s.queue {
+	out := make([]*pendingEvent, 0, len(s.pending))
+	for _, ev := range s.pending {
 		out = append(out, ev)
 	}
-	s.queue = make(map[string]*pendingEvent)
+	s.pending = make(map[string]*pendingEvent)
 	return out
 }
 
-func (s *Reconciler) queueLen() int {
-	s.queueMu.Lock()
-	defer s.queueMu.Unlock()
-	return len(s.queue)
+func (s *Reconciler) pendingLen() int {
+	s.pendingMu.Lock()
+	defer s.pendingMu.Unlock()
+	return len(s.pending)
 }
 
 func (s *Reconciler) Run(ctx context.Context) error {
@@ -209,14 +217,14 @@ func (s *Reconciler) Run(ctx context.Context) error {
 
 	// First cycle runs immediately so a freshly-started replica picks up
 	// startupReconcile work without waiting a full poll interval.
-	s.processQueue(ctx)
+	s.processPending(ctx)
 	for {
 		select {
 		case <-ctx.Done():
 			s.log.Info("reconciler: stopping", "reason", ctx.Err())
 			return ctx.Err()
 		case <-t.C:
-			s.processQueue(ctx)
+			s.processPending(ctx)
 		}
 	}
 }
@@ -296,11 +304,11 @@ func (s *Reconciler) startupReconcile(ctx context.Context) {
 }
 
 // reconcileSince walks ListModifiedSince and processes events in
-// startup-sized batches. Bootstrap deliberately bypasses the global
-// queue: a watch event with a higher RV landing mid-iteration would
-// otherwise advance the cursor past iter events not yet yielded, which
-// would then be filtered out as "already processed" — leaving those
-// dashboards without their initial embedding.
+// startup-sized batches. Bootstrap deliberately bypasses the shared
+// pending map: a watch event with a higher RV landing mid-iteration
+// would otherwise advance the cursor past iter events not yet yielded,
+// which would then be filtered out as "already processed" — leaving
+// those dashboards without their initial embedding.
 //
 // The cursor is pinned to the value read at startupReconcile and
 // advanced once after all batches drain. Advancing per-batch would
@@ -309,8 +317,8 @@ func (s *Reconciler) startupReconcile(ctx context.Context) {
 // and advancing after it would push every later (lower-RV) batch
 // below the freshly-bumped cursor — silently losing those resources.
 //
-// Watch events accumulate in the global queue while bootstrap runs and
-// are picked up by the first processQueue cycle in Run.
+// Watch events accumulate in the shared pending map while bootstrap
+// runs and are picked up by the first processPending cycle in Run.
 func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, sinceRv int64) {
 	logger := s.log.FromContext(ctx)
 	key := resource.NamespacedResource{
@@ -368,7 +376,7 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 		// Skip iter events that watch has already superseded with a
 		// newer write — re-embedding the older copy would just be
 		// overwritten by the watch event the next cycle.
-		if s.queueSupersedes(ev) {
+		if s.supersedesPending(ev) {
 			continue
 		}
 		batch = append(batch, ev)
@@ -415,30 +423,29 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 		"from", sinceRv, "to", target)
 }
 
-// queueSupersedes returns true if the global queue has an event for the
+// supersedesPending returns true if the shared pending map has an event for the
 // same resource at a higher-or-equal RV. Used by reconcileSince so it
 // doesn't waste work on iter events that watch has overtaken.
-func (s *Reconciler) queueSupersedes(ev *pendingEvent) bool {
-	s.queueMu.Lock()
-	defer s.queueMu.Unlock()
-	existing, ok := s.queue[eventQueueKey(ev.group, ev.resource, ev.namespace, ev.name)]
+func (s *Reconciler) supersedesPending(ev *pendingEvent) bool {
+	s.pendingMu.Lock()
+	defer s.pendingMu.Unlock()
+	existing, ok := s.pending[pendingKey(ev.group, ev.resource, ev.namespace, ev.name)]
 	return ok && existing.rv >= ev.rv
 }
 
-// processQueue drains the global pending queue (watch-sourced events
+// processPending drains the in-memory pending map (watch-sourced events
 // in steady state, plus failed retries) and runs the batch through
 // processBatch.
-func (s *Reconciler) processQueue(ctx context.Context) {
-	pending := s.drainQueue()
-	s.processBatch(ctx, pending)
+func (s *Reconciler) processPending(ctx context.Context) {
+	s.processBatch(ctx, s.drainPending())
 }
 
-// processBatch runs the embed/upsert pipeline over a slice of pending
-// events and advances the cursor. Used by processQueue (steady state).
+// processBatch runs the embed/upsert pipeline over a batch of pending
+// events and advances the cursor. Used by processPending (steady state).
 // reconcileSince calls processEvents directly so the cursor advances
 // once after every startup batch, not per batch.
-func (s *Reconciler) processBatch(ctx context.Context, pending []*pendingEvent) {
-	if len(pending) == 0 {
+func (s *Reconciler) processBatch(ctx context.Context, batch []*pendingEvent) {
+	if len(batch) == 0 {
 		return
 	}
 	logger := s.log.FromContext(ctx)
@@ -446,13 +453,13 @@ func (s *Reconciler) processBatch(ctx context.Context, pending []*pendingEvent) 
 	sinceRv, err := s.vectorBackend.GetLatestRV(ctx)
 	if err != nil {
 		logger.Error("reconciler: read checkpoint", "err", err)
-		s.requeue(pending)
+		s.requeue(batch)
 		return
 	}
 
-	maxRv, lowestFailedRv, failed, successes, abort := s.processEvents(ctx, sinceRv, pending)
+	maxRv, lowestFailedRv, failed, successes, abort := s.processEvents(ctx, sinceRv, batch)
 	if abort {
-		s.requeue(pending)
+		s.requeue(batch)
 		return
 	}
 
@@ -460,7 +467,7 @@ func (s *Reconciler) processBatch(ctx context.Context, pending []*pendingEvent) 
 	if selectedRV > sinceRv {
 		if err := s.vectorBackend.SetLatestRV(ctx, selectedRV); err != nil {
 			logger.Error("reconciler: advance checkpoint", "err", err, "sinceRV", sinceRv, "selectedRV", selectedRV)
-			s.requeue(pending)
+			s.requeue(batch)
 			return
 		}
 	}
@@ -490,11 +497,11 @@ func (s *Reconciler) processBatch(ctx context.Context, pending []*pendingEvent) 
 // don't accidentally filter out lower-RV events after an earlier batch
 // would have bumped the checkpoint. abort is true if ctx was cancelled
 // mid-loop; the caller should treat all events as un-processed.
-func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, pending []*pendingEvent) (maxRv, lowestFailedRv int64, failed, successes []*pendingEvent, abort bool) {
+func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*pendingEvent) (maxRv, lowestFailedRv int64, failed, successes []*pendingEvent, abort bool) {
 	logger := s.log.FromContext(ctx)
 	maxRv = sinceRv
 	lowestFailedRv = math.MaxInt64
-	for _, ev := range pending {
+	for _, ev := range batch {
 		if ctx.Err() != nil {
 			return maxRv, lowestFailedRv, nil, nil, true
 		}
@@ -503,7 +510,7 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, pending [
 		if ev.rv <= sinceRv {
 			continue
 		}
-		builder, ok := s.builders[ev.resource]
+		builder, ok := s.builders[builderKey(ev.group, ev.resource)]
 		if !ok {
 			continue
 		}

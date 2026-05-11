@@ -114,7 +114,7 @@ func TestReconciler_EmptyQueue_NoOp(t *testing.T) {
 	vec := newFakeVector()
 	s, text := newReconciler(t, st, vec)
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	assert.Empty(t, vec.upserts)
 	assert.Empty(t, vec.deletes)
@@ -131,7 +131,7 @@ func TestReconciler_HappyPath_PerDashboardEmbed(t *testing.T) {
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns-a", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns-b", "dash-2", 200, minimalDashboard("dash-2", "Dash 2")))
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	assert.Equal(t, 2, text.calls, "one EmbedText call per dashboard")
 	require.Len(t, vec.upserts, 2, "one Upsert per dashboard")
@@ -145,7 +145,7 @@ func TestReconciler_MultiPanelDashboard_SingleEmbedCall(t *testing.T) {
 	s, text := newReconciler(t, &fakeStorage{}, vec)
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "big", 100, multiPanelDashboard("big", "Big Dash", 12)))
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	assert.Equal(t, 1, text.calls)
 	require.Len(t, vec.upserts, 1)
@@ -157,7 +157,7 @@ func TestReconciler_DeleteEvent_CallsVectorDelete(t *testing.T) {
 	s, text := newReconciler(t, &fakeStorage{}, vec)
 	s.enqueue(dashEvent(resourcepb.WatchEvent_DELETED, "ns", "dash-x", 50, nil))
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	require.Len(t, vec.deletes, 1)
 	assert.Equal(t, deleteCall{Namespace: "ns", Model: testModel, Resource: dashRes, UID: "dash-x"}, vec.deletes[0])
@@ -183,16 +183,16 @@ func TestReconciler_PerEventFailure_BlocksAdvanceAtFailureRV(t *testing.T) {
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "boom", 200, minimalDashboard("boom", "Boom")))
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "ok-b", 300, minimalDashboard("ok-b", "OK B")))
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	// ok-a and ok-b succeeded; boom failed and is re-queued.
 	require.Len(t, vec.upserts, 2)
 	assert.Equal(t, int64(199), vec.latestRV)
 
 	// boom should be back in the queue.
-	s.queueMu.Lock()
-	defer s.queueMu.Unlock()
-	_, hasBoom := s.queue[eventQueueKey(dashGroup, dashRes, "ns", "boom")]
+	s.pendingMu.Lock()
+	defer s.pendingMu.Unlock()
+	_, hasBoom := s.pending[pendingKey(dashGroup, dashRes, "ns", "boom")]
 	assert.True(t, hasBoom)
 }
 
@@ -208,7 +208,7 @@ func TestReconciler_StaleSubresources_AreDeletedBeforeUpsert(t *testing.T) {
 
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	require.Len(t, vec.delsubs, 1)
 	assert.ElementsMatch(t, []string{"panel/2"}, vec.delsubs[0].Subresources)
@@ -220,14 +220,14 @@ func TestReconciler_MonotonicCheckpoint(t *testing.T) {
 	s, text := newReconciler(t, &fakeStorage{}, vec)
 
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 	require.Len(t, vec.upserts, 1)
 	require.Equal(t, int64(100), vec.latestRV)
 	require.Equal(t, 1, text.calls)
 
 	// Same dashboard at a higher RV: dedup keeps the new one.
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, minimalDashboard("dash-1", "Dash 1 v2")))
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 	require.Len(t, vec.upserts, 2)
 	require.Equal(t, int64(200), vec.latestRV)
 	require.Equal(t, 2, text.calls)
@@ -244,7 +244,7 @@ func TestReconciler_UnknownAction_BlocksAdvance(t *testing.T) {
 		name:      "weird",
 		rv:        50,
 	})
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	assert.Empty(t, vec.upserts)
 	assert.Empty(t, vec.deletes)
@@ -263,7 +263,7 @@ func TestReconciler_Bootstrap_SkipsWhenCursorIsZero(t *testing.T) {
 	s, text := newReconciler(t, st, vec)
 
 	s.startupReconcile(context.Background())
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	assert.Empty(t, vec.upserts, "startupReconcile is a no-op when cursor is 0")
 	assert.Equal(t, 0, text.calls)
@@ -283,7 +283,7 @@ func TestReconciler_Bootstrap_PullsCrossNamespaceEvents(t *testing.T) {
 	s, text := newReconciler(t, st, vec)
 
 	s.startupReconcile(context.Background())
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	require.Len(t, vec.upserts, 2)
 	assert.Equal(t, 2, text.calls)
@@ -301,7 +301,7 @@ func TestReconciler_Bootstrap_FiltersBelowCursor(t *testing.T) {
 	s, _ := newReconciler(t, st, vec)
 
 	s.startupReconcile(context.Background())
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, "new", vec.upserts[0][0].UID)
@@ -315,12 +315,12 @@ func TestReconciler_WatchEvent_DrivesNextCycle(t *testing.T) {
 	vec := newFakeVector()
 	s, text := newReconciler(t, st, vec)
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 	require.Empty(t, vec.upserts)
 	require.Equal(t, 0, text.calls)
 
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns-x", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, 1, text.calls)
@@ -354,13 +354,13 @@ func TestReconciler_WatchConsumer_IgnoresUnrelatedResources(t *testing.T) {
 		ResourceVersion: 60,
 	})
 
-	dashKey := eventQueueKey(dashGroup, dashRes, "ns-y", "d1")
-	folderKey := eventQueueKey("folder.grafana.app", "folders", "ns-x", "f1")
+	dashKey := pendingKey(dashGroup, dashRes, "ns-y", "d1")
+	folderKey := pendingKey("folder.grafana.app", "folders", "ns-x", "f1")
 	require.Eventually(t, func() bool {
-		s.queueMu.Lock()
-		defer s.queueMu.Unlock()
-		_, dashboardQueued := s.queue[dashKey]
-		_, folderQueued := s.queue[folderKey]
+		s.pendingMu.Lock()
+		defer s.pendingMu.Unlock()
+		_, dashboardQueued := s.pending[dashKey]
+		_, folderQueued := s.pending[folderKey]
 		return dashboardQueued && !folderQueued
 	}, time.Second, 10*time.Millisecond)
 }
@@ -375,7 +375,7 @@ func TestReconciler_EnqueueDedup_KeepsHighestRV(t *testing.T) {
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash", 200, minimalDashboard("dash", "New Title")))
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", 100, minimalDashboard("dash", "Old Again")))
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	assert.Equal(t, 1, text.calls)
 	require.Len(t, vec.upserts, 1)
@@ -391,7 +391,7 @@ func TestReconciler_EnqueueDedup_DeleteOverridesOlderUpsert(t *testing.T) {
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", 100, minimalDashboard("dash", "Title")))
 	s.enqueue(dashEvent(resourcepb.WatchEvent_DELETED, "ns", "dash", 200, nil))
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	assert.Empty(t, vec.upserts, "older upsert overridden by newer delete")
 	require.Len(t, vec.deletes, 1)
@@ -407,7 +407,7 @@ func TestReconciler_CursorFiltersAlreadyProcessedEvents(t *testing.T) {
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "old", 100, minimalDashboard("old", "Old")))
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "new", 200, minimalDashboard("new", "New")))
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	assert.Equal(t, 1, text.calls)
 	require.Len(t, vec.upserts, 1)
@@ -424,10 +424,10 @@ func TestReconciler_RetryCap_DropsEventAfterMaxAttempts(t *testing.T) {
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "boom", 100, minimalDashboard("boom", "Boom")))
 
 	for i := 0; i < maxEventAttempts; i++ {
-		s.processQueue(context.Background())
+		s.processPending(context.Background())
 	}
 
-	require.Equal(t, 0, s.queueLen(), "event dropped after max attempts")
+	require.Equal(t, 0, s.pendingLen(), "event dropped after max attempts")
 	assert.Empty(t, vec.upserts)
 	// First failure pinned the cursor at lowestFailedRv-1 (= 99). On
 	// the give-up cycle the failure no longer pins it, but no successful
@@ -439,7 +439,7 @@ func TestReconciler_RetryCap_DropsEventAfterMaxAttempts(t *testing.T) {
 	// advances the cursor.
 	vec.upsertErr = nil
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns-other", "ok", 200, minimalDashboard("ok", "OK")))
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, int64(200), vec.latestRV)
 }
@@ -454,7 +454,7 @@ func TestReconciler_RetryCap_FreshHigherRVResetsBudget(t *testing.T) {
 
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash", 200, minimalDashboard("dash", "v2")))
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, int64(200), vec.upserts[0][0].ResourceVersion)
@@ -467,12 +467,12 @@ func TestReconciler_RetryCap_ReEnqueuePreservesAttempts(t *testing.T) {
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", 100, minimalDashboard("dash", "v1")))
 
-	s.processQueue(context.Background())
-	require.Equal(t, 1, s.queueLen())
+	s.processPending(context.Background())
+	require.Equal(t, 1, s.pendingLen())
 
-	s.queueMu.Lock()
-	queued := s.queue[eventQueueKey(dashGroup, dashRes, "ns", "dash")]
-	s.queueMu.Unlock()
+	s.pendingMu.Lock()
+	queued := s.pending[pendingKey(dashGroup, dashRes, "ns", "dash")]
+	s.pendingMu.Unlock()
 	require.NotNil(t, queued)
 	assert.Equal(t, 1, queued.attempts)
 }
@@ -567,7 +567,7 @@ func TestReconciler_StartupReconcile_FlushesAtBatchSize(t *testing.T) {
 
 	require.Len(t, vec.upserts, 7, "every event must be processed across batched flushes")
 	assert.Equal(t, int64(160), vec.latestRV, "cursor advances to highest RV")
-	assert.Equal(t, 0, s.queueLen(), "queue is empty after startup")
+	assert.Equal(t, 0, s.pendingLen(), "queue is empty after startup")
 	assert.Equal(t, 1, vec.setLatestRVCalls, "cursor advances exactly once at end of startup")
 }
 
@@ -626,7 +626,7 @@ func TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure(t *testing
 
 	assert.Len(t, vec.upserts, 3, "embeds succeeded even though the cursor write failed")
 	assert.Equal(t, int64(50), vec.latestRV, "cursor stays at old value when SetLatestRV errors")
-	assert.Equal(t, 3, s.queueLen(), "all processed events re-enqueued for the next cycle to retry the advance")
+	assert.Equal(t, 3, s.pendingLen(), "all processed events re-enqueued for the next cycle to retry the advance")
 }
 
 // TestReconciler_StartupReconcile_DoesNotProcessWatchEvents verifies
@@ -667,10 +667,10 @@ func TestReconciler_StartupReconcile_DoesNotProcessWatchEvents(t *testing.T) {
 		assert.NotEqual(t, "watch-only", batch[0].UID, "watch event must not be processed during bootstrap")
 	}
 	assert.Equal(t, int64(130), vec.latestRV, "cursor stays within iter range during bootstrap")
-	assert.Equal(t, 1, s.queueLen(), "watch event remains in global queue for the next cycle")
+	assert.Equal(t, 1, s.pendingLen(), "watch event remains in global queue for the next cycle")
 
-	// A subsequent processQueue (Run's first cycle) drains the watch event.
-	s.processQueue(context.Background())
+	// A subsequent processPending (Run's first cycle) drains the watch event.
+	s.processPending(context.Background())
 	require.Len(t, vec.upserts, 5)
 	assert.Equal(t, "watch-only", vec.upserts[4][0].UID)
 	assert.Equal(t, int64(9999), vec.latestRV)
@@ -700,7 +700,7 @@ func TestReconciler_StartupReconcile_SkipsIterEventsSupersededByWatch(t *testing
 	// watch's @500 supersedes iter's @100.
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, "other", vec.upserts[0][0].UID)
-	assert.Equal(t, 1, s.queueLen(), "watch's shared@500 stays queued")
+	assert.Equal(t, 1, s.pendingLen(), "watch's shared@500 stays queued")
 }
 
 func TestChooseTarget(t *testing.T) {
@@ -906,11 +906,11 @@ func TestReconciler_ProcessBatch_RequeuesOnGetLatestRVFailure(t *testing.T) {
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "a", 100, minimalDashboard("a", "A")))
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "b", 110, minimalDashboard("b", "B")))
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	assert.Empty(t, vec.upserts, "no upserts should happen when GetLatestRV errors")
 	assert.Equal(t, int64(50), vec.latestRV, "cursor stays put on GetLatestRV failure")
-	assert.Equal(t, 2, s.queueLen(), "both events re-enqueued for the next cycle")
+	assert.Equal(t, 2, s.pendingLen(), "both events re-enqueued for the next cycle")
 }
 
 // TestReconciler_ProcessBatch_RequeuesOnSetLatestRVFailure: in steady
@@ -926,11 +926,11 @@ func TestReconciler_ProcessBatch_RequeuesOnSetLatestRVFailure(t *testing.T) {
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "a", 100, minimalDashboard("a", "A")))
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "b", 110, minimalDashboard("b", "B")))
 
-	s.processQueue(context.Background())
+	s.processPending(context.Background())
 
 	assert.Len(t, vec.upserts, 2, "embeds happen even when SetLatestRV errors")
 	assert.Equal(t, int64(50), vec.latestRV, "cursor stays put on SetLatestRV failure")
-	assert.Equal(t, 2, s.queueLen(), "both events re-enqueued so the next cycle retries the advance")
+	assert.Equal(t, 2, s.pendingLen(), "both events re-enqueued so the next cycle retries the advance")
 }
 
 // TestReconciler_Run_BroadcasterDeliversWatchEvents pins the watch

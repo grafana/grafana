@@ -674,25 +674,21 @@ func (s *server) Init(ctx context.Context) error {
 // backfiller doesn't need the watch path.
 func (s *server) startVectorIndexers() {
 	if s.vectorBackfiller != nil {
-		s.indexersWG.Add(1)
-		go func() {
-			defer s.indexersWG.Done()
+		s.indexersWG.Go(func() {
 			if err := s.vectorBackfiller.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
 				s.log.Error("vector backfiller stopped", "err", err)
 			}
-		}()
+		})
 	}
 	if s.vectorWriteReconciler != nil {
 		if s.broadcaster != nil {
 			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
 		}
-		s.indexersWG.Add(1)
-		go func() {
-			defer s.indexersWG.Done()
+		s.indexersWG.Go(func() {
 			if err := s.vectorWriteReconciler.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
 				s.log.Error("vector reconciler stopped", "err", err)
 			}
-		}()
+		})
 	}
 }
 
