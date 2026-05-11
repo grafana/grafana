@@ -602,6 +602,33 @@ func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
 	assert.Equal(t, int64(150), vec.latestRV)
 }
 
+// TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure
+// pins the recovery behavior when SetLatestRV fails after embeds
+// succeed. Without re-enqueueing the embedded events the cursor stays
+// stale (no advance happened) and the queue is empty, so the next
+// steady-state cycle has nothing to retry — the cursor sits behind
+// real progress until a new write arrives.
+func TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure(t *testing.T) {
+	st := &fakeStorage{}
+	for i := 0; i < 3; i++ {
+		rv := int64(100 + i*10)
+		name := fmt.Sprintf("dash-%d", i)
+		st.changes = append(st.changes,
+			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
+	}
+
+	vec := newFakeVector()
+	vec.latestRV = 50
+	vec.setLatestRVErr = fmt.Errorf("transient checkpoint write failure")
+	s, _ := newReconciler(t, st, vec)
+
+	s.startupReconcile(context.Background())
+
+	assert.Len(t, vec.upserts, 3, "embeds succeeded even though the cursor write failed")
+	assert.Equal(t, int64(50), vec.latestRV, "cursor stays at old value when SetLatestRV errors")
+	assert.Equal(t, 3, s.queueLen(), "all processed events re-enqueued for the next cycle to retry the advance")
+}
+
 // TestReconciler_StartupReconcile_DoesNotProcessWatchEvents verifies
 // that a watch event queued while bootstrap is iterating is left in the
 // global queue and is NOT processed mid-batch. If it were, its higher

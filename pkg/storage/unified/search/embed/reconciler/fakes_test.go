@@ -170,6 +170,7 @@ type fakeVector struct {
 	lockReleases    int
 
 	setLatestRVCalls int
+	setLatestRVErr   error
 }
 
 type deleteCall struct{ Namespace, Model, Resource, UID string }
@@ -291,6 +292,9 @@ func (f *fakeVector) SetLatestRV(_ context.Context, rv int64) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.setLatestRVCalls++
+	if f.setLatestRVErr != nil {
+		return f.setLatestRVErr
+	}
 	if rv > f.latestRV {
 		f.latestRV = rv
 	}

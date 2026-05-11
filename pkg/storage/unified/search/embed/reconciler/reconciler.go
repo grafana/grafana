@@ -315,9 +315,9 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 
 	var (
 		failed         []*pendingEvent
+		successes      []*pendingEvent
 		maxRv          = sinceRv
 		lowestFailedRv = int64(math.MaxInt64)
-		successCount   int
 	)
 
 	flush := func(batch []*pendingEvent) bool {
@@ -332,7 +332,7 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 			lowestFailedRv = batchLowestFailed
 		}
 		failed = append(failed, batchFailed...)
-		successCount += len(batchSuccess)
+		successes = append(successes, batchSuccess...)
 		return true
 	}
 
@@ -383,8 +383,16 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 		if err := s.vectorBackend.SetLatestRV(ctx, target); err != nil {
 			logger.Error("reconciler: startupReconcile advance checkpoint",
 				"err", err, "sinceRV", sinceRv, "target", target)
-			// Re-enqueue everything we processed so the steady-state
-			// loop retries the cursor advance with fresh state.
+			// Cursor write failed: re-enqueue everything we touched so
+			// the steady-state loop retries the advance with fresh
+			// state. Without this the cursor stays stale until a new
+			// write happens to arrive (forcing another full catch-up
+			// on the next restart). Re-enqueue of already-embedded
+			// events is idempotent — UpsertReplaceSubresources just
+			// rewrites the same rows.
+			for _, ev := range successes {
+				s.enqueue(ev)
+			}
 			for _, ev := range failed {
 				s.enqueue(ev)
 			}
@@ -396,7 +404,7 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 	}
 	logger.Info("reconciler: startupReconcile builder complete",
 		"group", builder.Group(), "resource", builder.Resource(),
-		"events", successCount, "failed", len(failed),
+		"events", len(successes), "failed", len(failed),
 		"from", sinceRv, "to", target)
 }
 
