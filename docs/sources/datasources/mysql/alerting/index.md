@@ -13,6 +13,7 @@ labels:
 menuTitle: Alerting
 title: MySQL alerting
 weight: 350
+review_date: 2026-05-11
 ---
 
 # MySQL alerting

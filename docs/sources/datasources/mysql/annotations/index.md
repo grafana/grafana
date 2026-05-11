@@ -13,6 +13,7 @@ labels:
 menuTitle: Annotations
 title: MySQL annotations
 weight: 340
+review_date: 2026-05-11
 ---
 
 # MySQL annotations
