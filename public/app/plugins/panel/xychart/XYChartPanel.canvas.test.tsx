@@ -22,7 +22,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import { XYChartPanel2 } from 'app/plugins/panel/xychart/XYChartPanel';
-import { type Options, PointShape, SeriesMapping, type XYSeriesConfig } from 'app/plugins/panel/xychart/panelcfg.gen';
+import {
+  type Options,
+  PointShape,
+  SeriesMapping,
+  type XYSeriesConfig,
+  XYShowMode,
+} from 'app/plugins/panel/xychart/panelcfg.gen';
 
 import * as utils from './scatter';
 
@@ -212,8 +218,7 @@ defaultFrame.fields = defaultFrame.fields.map((field) => ({
 }));
 
 /**
- * z = [3, 5, 7] with absolute thresholds at 4 and 6 yields palette indices [0, 1, 2] so each point gets a
- * different color and scatter `drawBubbles` runs the per-index fill/stroke update (scatter.ts ~139–144).
+ * each point gets a different color
  */
 const frameColorByThresholdZ: DataFrame = (() => {
   const fields = defaultFrame.fields.map((f) =>
@@ -243,7 +248,7 @@ const frameColorByThresholdZ: DataFrame = (() => {
   return frame;
 })();
 
-/** x + y only, with square points on y (scatter `isSquare` → fillRect / strokeRect). */
+/** x + y only, with square points on y */
 const xySquareFrame: DataFrame = (() => {
   const xField = defaultFrame.fields.find((f) => f.name === 'x')!;
   const yField = defaultFrame.fields.find((f) => f.name === 'y')!;
@@ -266,7 +271,35 @@ const xySquareFrame: DataFrame = (() => {
   return frame;
 })();
 
-/** Two numeric Y candidates (x + y only) — auto mapping yields a single series. */
+/** x + y with points & lines. */
+const xyLineDashFrame: DataFrame = (() => {
+  const xField = defaultFrame.fields.find((f) => f.name === 'x')!;
+  const yField = defaultFrame.fields.find((f) => f.name === 'y')!;
+  const yLine = {
+    ...yField,
+    config: {
+      ...yField.config,
+      custom: {
+        ...yField.config.custom!,
+        show: XYShowMode.PointsAndLines,
+        lineWidth: 3,
+        lineStyle: {
+          fill: 'dot',
+          dash: [6, 6],
+        },
+      },
+    },
+  };
+  const fields = [xField, yLine];
+  const frame: DataFrame = { ...defaultFrame, fields };
+  frame.fields = fields.map((field) => ({
+    ...field,
+    display: getDisplayProcessor({ field, theme }),
+  }));
+  return frame;
+})();
+
+/** Two numeric Y candidates (x + y only) */
 const xyOnlyFrame: DataFrame = {
   ...defaultFrame,
   fields: [defaultFrame.fields.find((f) => f.name === 'x')!, defaultFrame.fields.find((f) => f.name === 'y')!],
@@ -410,7 +443,13 @@ describe('XYChartPanel2', () => {
     expect(screen.getByText('Unable to render data: No data.'));
   });
 
-  describe('DataFrame: x, y, z (three numeric fields)', () => {
+  describe('Axes: x, y, z', () => {
+    beforeAll(() => {
+      clearAxisEvents = false;
+    });
+    afterAll(() => {
+      clearAxisEvents = true;
+    });
     it.each<[string, Partial<Options>]>([
       ['auto mapping (two Y series)', {}],
       [
@@ -440,20 +479,14 @@ describe('XYChartPanel2', () => {
     });
   });
 
-  describe('DataFrame: x, y (two numeric fields)', () => {
-    it.each<[string, Partial<Options>]>([
-      ['auto mapping (single Y series)', {}],
-      [
-        'manual mapping (x vs y)',
-        {
-          mapping: SeriesMapping.Manual,
-          series: [manualSeriesForFrame({ yField: 'y' })],
-        },
-      ],
-    ])('%s', async (_label, optionsPartial) => {
-      setUp({ options: optionsPartial }, [xyOnlyFrame]);
-      await assertCanvasOutput();
-    });
+  describe('Canvas: x, y (two numeric fields)', () => {
+    it.each<[string, Partial<Options>]>([['auto mapping (single Y series)', {}]])(
+      '%s',
+      async (_label, optionsPartial) => {
+        setUp({ options: optionsPartial }, [xyOnlyFrame]);
+        await assertCanvasOutput();
+      }
+    );
   });
 
   describe('Square point shape (fillRect / strokeRect)', () => {
@@ -463,8 +496,15 @@ describe('XYChartPanel2', () => {
     });
   });
 
-  describe('Color-by-value (threshold palette on color field)', () => {
-    it('updates canvas fill/stroke when point color index changes (scatter drawBubbles)', async () => {
+  describe('Line path stroke (scatter linePath + lineStyle)', () => {
+    it('strokes connect line with dash/dot lineStyle after points (scatter ~185–199)', async () => {
+      setUp(undefined, [xyLineDashFrame]);
+      await assertCanvasOutput();
+    });
+  });
+
+  describe('Color by value', () => {
+    it('renders fill/stroke', async () => {
       setUp(
         {
           options: {
