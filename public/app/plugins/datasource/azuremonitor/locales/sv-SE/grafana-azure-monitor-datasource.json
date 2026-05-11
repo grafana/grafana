@@ -4,7 +4,6 @@
       "label-advanced": "Avancerat"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "Lägg till",
       "aria-label-remove": "Ta bort",
       "button-add-resource": "Lägg till resurs",
       "button-add-resource-uri": "Lägg till resurs-URI",

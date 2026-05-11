@@ -3,7 +3,6 @@ package conversion
 import (
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/ptr"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -52,7 +51,7 @@ func setConversionStatus(in DashboardConversion, out DashboardConversion, err er
 	storedVersion := getStoredVersion(in)
 	var errMsg *string
 	if err != nil {
-		errMsg = ptr.To(err.Error())
+		errMsg = new(err.Error())
 	}
 	out.SetConversionStatus(storedVersion, err != nil, errMsg, source)
 }

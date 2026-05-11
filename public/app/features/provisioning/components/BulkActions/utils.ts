@@ -94,3 +94,15 @@ export function getResourceTargetPath(currentPath: string, targetFolderPath: str
   const basePath = joinPath(targetFolderPath, filename);
   return isFolder ? `${basePath}/` : basePath;
 }
+
+function normalizeRepoPath(path: string): string {
+  return path.replace(/^\/+/, '').replace(/\/+$/, '');
+}
+
+export function isResourceAlreadyInTarget(currentPath: string, targetFolderPath: string): boolean {
+  return normalizeRepoPath(currentPath) === normalizeRepoPath(getResourceTargetPath(currentPath, targetFolderPath));
+}
+
+export function isSameFolderPath(currentFolderPath: string | undefined, targetFolderPath: string): boolean {
+  return normalizeRepoPath(currentFolderPath || '') === normalizeRepoPath(targetFolderPath);
+}

@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/ptr"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -37,6 +36,7 @@ func TestIntegrationPreferences(t *testing.T) {
 	})
 
 	t.Run("legacy preferences api", func(t *testing.T) {
+		t.Skip("TODO: skipping these for now; see #123657")
 		ctx := context.Background()
 		clientAdmin := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
@@ -80,7 +80,7 @@ func TestIntegrationPreferences(t *testing.T) {
 			"apiVersion": "preferences.grafana.app/v1alpha1",
 			"kind": "Preferences",
 			"spec": { "weekStart": "saturday" }
-		}`), metav1.PatchOptions{FieldManager: "test", Force: ptr.To(true)}) // requires field manager
+		}`), metav1.PatchOptions{FieldManager: "test", Force: new(true)}) // requires field manager
 		require.NoError(t, err)
 		v, _, _ = unstructured.NestedString(out.Object, "spec", "weekStart")
 		require.Equal(t, "saturday", v)

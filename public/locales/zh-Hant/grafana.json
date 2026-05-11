@@ -511,7 +511,8 @@
       "action-buttons": {
         "edit-yaml": "編輯 YAML",
         "save": "儲存"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "名稱",
@@ -1147,6 +1148,9 @@
         "rule-viewer-section-extension": "規則檢視器增強功能部分無法載入"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "無法更新您的設定：",
       "title-something-went-wrong": "發生了一些錯誤"
@@ -1155,6 +1159,9 @@
       "content-show-all-errors": "顯示所有錯誤"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} 失敗，顯示{{status}}：{{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -1285,7 +1292,8 @@
       "delete": {
         "button": {
           "label": "刪除所有規則"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "刪除",
       "delete-modal-delete-button": "刪除",
@@ -1568,8 +1576,14 @@
         "update-error": "無法更新規則群組",
         "update-success": "已成功更新規則群組"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "無法編輯所選群組",
       "group-not-editable-description": "此群組屬於不支援編輯的資料來源。",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "編輯規則群組",
       "rule-group-error": "載入規則群組時發生錯誤"
     },
@@ -3147,9 +3161,7 @@
       "deleting": "正在刪除",
       "text-federated": "聯合",
       "text-provisioned": "已佈建",
-      "ungrouped": "未分組",
-      "ungrouped-suffix": "{{ruleName}}（未分組）",
-      "unknown-rule": "未知規則"
+      "ungrouped": "未分組"
     },
     "saved-searches": {
       "actions-aria-label": "動作",
@@ -4292,6 +4304,7 @@
         "repository-not-found-message": "找不到所選資料夾的儲存庫。請確認資料夾已正確佈建。",
         "repository-not-found-title": "找不到儲存庫"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "移動資源時發生錯誤",
       "error-no-target-folder-path": "目標資料夾路徑無效或空白，請再選擇一次。",
       "move-total": "總體而言，這會影響：",
@@ -4426,6 +4439,14 @@
       "resource-detail-dashboards": "您已建立 {{usage}} 個儀表板，共 {{limit}} 個 ({{percentage}}%)。",
       "resource-detail-folders": "您已建立 {{usage}} 個資料夾，共 {{limit}} 個 ({{percentage}}%)。"
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "清除歷史記錄",
       "error": "無法載入最近瀏覽的儀表板。",
@@ -4461,6 +4482,8 @@
       "label": {
         "alphabetically-az": "按字母順序 (A–Z)",
         "alphabetically-za": "按字母順序 (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "已刪除（最新排前）",
         "deleted-oldest": "已刪除（最舊排前）"
       }
@@ -5229,7 +5252,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "設定"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5631,7 +5654,7 @@
         "title": "變數"
       },
       "variable": {
-        "change-type": "變更",
+        "change-type": "",
         "change-type-aria-label": "變更變數類型",
         "custom-options": {
           "apply": "套用",
@@ -5948,7 +5971,7 @@
       "cancel": "取消",
       "common": {
         "copy": "複製",
-        "copy-or-duplicate": "複製/貼上或重複",
+        "copy-tooltip": "",
         "delete": "刪除",
         "duplicate": "重複",
         "layout": "版面配置",
@@ -5987,7 +6010,7 @@
     },
     "new-panel": {
       "aria-label": "未設定的面板。按 Tab 鍵可查看設定選項。",
-      "configure-button": "設定",
+      "configure-button": "",
       "configure-button-menu": "切換選單",
       "configure-visualization": "設定視覺效果",
       "empty-state-message": "執行查詢以便在此處視覺化呈現，或前往所有視覺化呈現以新增其他面板類型",
@@ -6228,10 +6251,8 @@
       "title-provisioned": "已佈建儀表板"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "所選資料夾中已存在名稱相同的儀表板。<br/><2>仍要儲存此儀表板嗎？</2>",
       "body-version-mismatch": "其他人已更新此儀表板<br/><2>仍要儲存此儀表板嗎？</2>",
       "confirmText-save-and-overwrite": "儲存並覆寫",
-      "title-name-exists": "衝突",
       "title-version-mismatch": "衝突"
     },
     "save-dashboard-form": {
@@ -6457,6 +6478,7 @@
     },
     "transformation-editor": {
       "input-data": "輸入資料",
+      "loading": "",
       "output-data": "輸出資料",
       "title-debug-transformation": "偵錯轉換"
     },
@@ -7261,6 +7283,7 @@
       "terraform": "管理者：Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "無法移動儀表板",
       "cancel-action": "取消",
       "current-file-not-found": "找不到目前的儀表板檔案",
@@ -7273,10 +7296,6 @@
       "success-message": "儀表板已成功移動",
       "target-path-label": "目標路徑",
       "title-this-repository-is-read-only": "此儲存庫為唯讀"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "所選資料夾中已存在名稱相同的儀表板。仍要儲存此儀表板嗎？",
-      "title-name-already-exists": "名稱已存在"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -7980,19 +7999,6 @@
       "aria-label-explore-data": "探索資料",
       "aria-label-suggested-dashboards": "建議的儀表板"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "不支援的警報",
-      "text-alerting-supported": "支援的警報"
-    },
-    "basic-serttings": {
-      "tooltip-name": "在面板中選擇資料來源時，會使用此名稱。預設資料來源已在新面板中預先選取。"
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "資料來源設定頁面基本設定",
-      "basic-settings-name-placeholder-name": "名稱（名字）",
-      "label-default": "預設值",
-      "label-name": "名稱（名字）"
-    },
     "build-a-dashboard-button": {
       "blank": "空白",
       "build-a-dashboard": "建立儀表板",
@@ -8087,6 +8093,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "新增至收藏夾",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "探索資料",
       "open-in-explore": "在「探索」檢視畫面中開啟",
       "remove-favorite": "從收藏夾中移除"
@@ -8223,6 +8235,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "搜尋"
     },
     "resource-dimension-editor": {
@@ -10062,6 +10075,12 @@
     "cascader": {
       "clear-button": "清空選項"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA 值"
     },
@@ -10407,6 +10426,7 @@
     "sidebar": {
       "close": "關閉",
       "dock": "停靠",
+      "go-back": "",
       "hide": "隱藏",
       "show": "顯示",
       "undock": "取消停靠"
@@ -10775,6 +10795,11 @@
     "name-gradient-mode": "漸變模式",
     "name-line-width": "線寬",
     "name-stacking": "堆疊"
+  },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11165,7 +11190,7 @@
     "description-order": "先顯示最新或最舊的記錄。選取「最舊記錄優先」時，檢視畫面會自動捲動至最下方的最新記錄。",
     "description-prettify-json": "使用縮排和換行來格式化 JSON 記錄項目。",
     "description-show-controls": "顯示控制項以跳至最後或第一個記錄行，並按記錄層級篩選。",
-    "description-show-log-attributes": "實驗性。顯示 OTel 記錄時，請新增一個附有標籤和中繼資料相關鍵值對的額外顯示欄位。",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "使用顯示的欄位時，透過欄對齊值。",
     "description-wrap-lines": "將記錄顯示為單行，或將較長的記錄條目換行，以便適應面板大小。",
     "field-selector": {
@@ -11488,7 +11513,7 @@
       "line-contains-not": "新增為不包含篩選條件的行",
       "search-text": "在結果中搜尋"
     },
-    "show-log-attributes": "顯示 OTel 記錄的記錄屬性",
+    "show-log-attributes": "",
     "timestamp-format": "時間戳記解決方案",
     "un-themed-log-details": {
       "aria-label-data-links": "資料連結",
@@ -11842,8 +11867,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "全部",
-      "title-filtered": "全部（已篩選）"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "全部清除"
@@ -13491,6 +13518,7 @@
       "contact-admin": "請聯絡您的 Grafana 管理員，以將此資源轉換為本機資源，或刪除缺失的儲存庫中的所有資源。",
       "convert-to-local-button": "轉換為本機資源",
       "delete-button": "刪除",
+      "go-to-dashboards": "",
       "job-error": "處理孤立的資源時發生錯誤",
       "job-success": "孤立的資源已成功處理",
       "job-warning": "某些資源在處理時出現警告。請檢查結果。",
@@ -13729,7 +13757,8 @@
       "make-sure": "使用以下權限建立權杖"
     },
     "validation": {
-      "hidden-characters": "此欄位包含可能是透過複製貼上而引入的隱藏字元。請重新輸入或清除該值，然後再試一次。"
+      "hidden-characters": "此欄位包含可能是透過複製貼上而引入的隱藏字元。請重新輸入或清除該值，然後再試一次。",
+      "url-with-credentials": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {
@@ -14134,6 +14163,8 @@
       "alerts-loading": "警示",
       "card-click": "選取卡片 {{id}}",
       "data": "資料",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新 {{type}}",
       "queries-expressions": "查詢和運算式",
       "toggle-size": "切換側邊欄大小",
@@ -14184,6 +14215,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "還原"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "您最近沒有刪除任何儀表板。",
@@ -14344,6 +14379,10 @@
     },
     "results-table": {
       "datasource-header": "資料來源",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 分鐘",
       "deleted-remaining-header": "剩餘時間",
       "location-header": "位置",
@@ -14836,10 +14875,13 @@
       "title": "利用建議和範本快速建立儀表板"
     },
     "nav": {
+      "counter": "",
       "go-to": "前往投影片 {{number}}",
-      "next": "下一個",
-      "prev": "上一個"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "解釋查詢",
@@ -15318,7 +15360,6 @@
       "forwards-time-aria-label": "將時間範圍向前移動",
       "to": "至",
       "zoom-out-button": "縮小時間範圍",
-      "zoom-out-tooltip": "時間範圍縮小 <br/> CTRL+Z",
       "zoom-out-tooltip-new": "時間範圍縮小 <br/> t -"
     },
     "time-range": {
@@ -15896,7 +15937,9 @@
       "description": {
         "group-by-field-value": "依欄位值分組資料，並使用分組資料建立巢狀表格。"
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "若啟用，巢狀表格將顯示欄位名稱作為表格標題",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "在巢狀表格中顯示欄位名稱",
       "name": {
         "group-to-nested-tables": "分組到巢狀表格"
@@ -15914,6 +15957,9 @@
       "name": {
         "grouping-to-matrix": "分組到矩陣"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": ""
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16249,6 +16295,9 @@
       "label-time-field": "時間欄位",
       "tooltip-statistic-should-calculated-series": "應該為此時間系列計算的統計資料。",
       "tooltip-time-field": "將用於時間系列的時間欄位。如果未選擇，將使用第一個找到的欄位。"
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "第一個欄位名稱",

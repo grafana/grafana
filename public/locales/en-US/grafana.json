@@ -515,7 +515,8 @@
       "action-buttons": {
         "edit-yaml": "Edit YAML",
         "save": "Save"
-      }
+      },
+      "error-title": "Failed to save alert rule"
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
@@ -1153,6 +1154,9 @@
         "rule-viewer-section-extension": "Rule Viewer Enrichment Section failed to load"
       }
     },
+    "entities": {
+      "group": "Group"
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Failed to update your configuration:",
       "title-something-went-wrong": "Something went wrong"
@@ -1161,6 +1165,9 @@
       "content-show-all-errors": "Show all errors"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": "{{-baseMessage}}: {{-causes}}"
+      },
       "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -1291,7 +1298,8 @@
       "delete": {
         "button": {
           "label": "Delete all rules"
-        }
+        },
+        "error": "Failed to delete folder rules"
       },
       "delete-modal-confirmation-text": "Delete",
       "delete-modal-delete-button": "Delete",
@@ -1574,8 +1582,14 @@
         "update-error": "Failed to update rule group",
         "update-success": "Successfully updated the rule group"
       },
+      "group-federated": "This rule group is federated",
+      "group-federated-description": "Federated rule groups cannot be edited from Grafana.",
       "group-not-editable": "Selected group cannot be edited",
       "group-not-editable-description": "This group belongs to a data source that does not support editing.",
+      "group-plugin-provided": "This rule group is managed by a plugin",
+      "group-plugin-provided-description": "Rule groups provisioned by a plugin cannot be edited from Grafana. Manage them from the plugin that owns them.",
+      "group-provisioned": "This rule group is provisioned",
+      "group-provisioned-description": "Provisioned rule groups cannot be edited from Grafana. Update the source provisioning configuration instead.",
       "page-title": "Edit rule group",
       "rule-group-error": "Error loading rule group"
     },
@@ -3168,9 +3182,7 @@
       "deleting": "Deleting",
       "text-federated": "Federated",
       "text-provisioned": "Provisioned",
-      "ungrouped": "Ungrouped",
-      "ungrouped-suffix": "{{ruleName}} (Ungrouped)",
-      "unknown-rule": "Unknown Rule"
+      "ungrouped": "Ungrouped"
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
@@ -4316,6 +4328,7 @@
         "repository-not-found-message": "The repository for the selected folder could not be found. Please ensure that the folder is provisioned correctly.",
         "repository-not-found-title": "Repository not found"
       },
+      "error-already-in-target-folder": "Selected resources are already in the target folder.",
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
       "move-total": "In total, this will affect:",
@@ -4455,6 +4468,14 @@
       "resource-detail-dashboards": "You've created {{usage}} of {{limit}} dashboards ({{percentage}}%).",
       "resource-detail-folders": "You've created {{usage}} of {{limit}} folders ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "Add README",
+      "edit-tooltip": "Edit README",
+      "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
+      "load-error-retry": "Try again",
+      "load-error-title": "Couldn't load README",
+      "parse-error": "Unable to display README content."
+    },
     "recently-viewed": {
       "clear": "Clear history",
       "error": "Recently viewed dashboards couldn’t be loaded.",
@@ -4493,6 +4514,8 @@
       "label": {
         "alphabetically-az": "Alphabetically (A–Z)",
         "alphabetically-za": "Alphabetically (Z–A)",
+        "deleted-by-az": "Deleted by (A–Z)",
+        "deleted-by-za": "Deleted by (Z–A)",
         "deleted-newest": "Deleted (newest first)",
         "deleted-oldest": "Deleted (oldest first)"
       }
@@ -5261,7 +5284,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Settings"
+      "open-settings": "View all settings"
     },
     "add": {
       "new-panel": {
@@ -5663,7 +5686,7 @@
         "title": "Variables"
       },
       "variable": {
-        "change-type": "Change",
+        "change-type": "Change type",
         "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
@@ -5980,7 +6003,7 @@
       "cancel": "Cancel",
       "common": {
         "copy": "Copy",
-        "copy-or-duplicate": "Copy/paste or duplicate",
+        "copy-tooltip": "Copy",
         "delete": "Delete",
         "duplicate": "Duplicate",
         "layout": "Layout",
@@ -6019,7 +6042,7 @@
     },
     "new-panel": {
       "aria-label": "Unconfigured panel. Tab to see configuration options.",
-      "configure-button": "Configure",
+      "configure-button": "Edit visualization",
       "configure-button-menu": "Toggle menu",
       "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
@@ -6261,10 +6284,8 @@
       "title-provisioned": "Provisioned dashboard"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "A dashboard with the same name in selected folder already exists.<br/><2>Would you still like to save this dashboard?</2>",
       "body-version-mismatch": "Someone else has updated this dashboard<br/><2>Would you still like to save this dashboard?</2>",
       "confirmText-save-and-overwrite": "Save and overwrite",
-      "title-name-exists": "Conflict",
       "title-version-mismatch": "Conflict"
     },
     "save-dashboard-form": {
@@ -7305,6 +7326,7 @@
       "terraform": "Managed by: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
       "current-file-not-found": "Current dashboard file could not be found",
@@ -7317,10 +7339,6 @@
       "success-message": "Dashboard moved successfully",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
-      "title-name-already-exists": "Name already exists"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8029,19 +8047,6 @@
       "aria-label-explore-data": "Explore data",
       "aria-label-suggested-dashboards": "Suggested dashboards"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alerting not supported",
-      "text-alerting-supported": "Alerting supported"
-    },
-    "basic-serttings": {
-      "tooltip-name": "The name is used when you select the data source in panels. The default data source is preselected in new panels."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Datasource settings page basic settings",
-      "basic-settings-name-placeholder-name": "Name",
-      "label-default": "Default",
-      "label-name": "Name"
-    },
     "build-a-dashboard-button": {
       "blank": "Blank",
       "build-a-dashboard": "Build a dashboard",
@@ -8136,6 +8141,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
+      "default-active": "This data source is currently set as the default.",
+      "default-error": "Failed to update default data source",
+      "default-label": "Default",
+      "default-make-button": "Make default",
+      "default-remove-button": "Remove default",
+      "default-tooltip": "The default data source is preselected in new panels.",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
@@ -8272,6 +8283,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "Folder",
       "placeholder-search": "Search"
     },
     "resource-dimension-editor": {
@@ -10844,6 +10856,11 @@
     "name-line-width": "Line width",
     "name-stacking": "Stacking"
   },
+  "home": {
+    "home-page": {
+      "placeholder": "Welcome to Grafana"
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",
@@ -11238,7 +11255,7 @@
     "description-order": "Show newest or oldest logs first. When Oldest first is selected, the view automatically scrolls to the newest logs at the bottom.",
     "description-prettify-json": "Format JSON log entries with indentation and line breaks.",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level.",
-    "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
+    "description-show-log-attributes": "Experimental. When OTel logs are displayed, and there are no displayed fields selected, the panel automatically sets displayed fields with relevant key-value pairs from labels and metadata.",
     "description-unwrapped-columns": "Align values using columns when using displayed fields.",
     "description-wrap-lines": "Display logs as a single line or wrap long log entries to fit the panel.",
     "field-selector": {
@@ -11564,7 +11581,7 @@
       "line-contains-not": "Add as line does not contain filter",
       "search-text": "Search in results"
     },
-    "show-log-attributes": "Display log attributes for OTel logs",
+    "show-log-attributes": "Enable log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",
@@ -13578,6 +13595,7 @@
       "contact-admin": "Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository.",
       "convert-to-local-button": "Convert to local",
       "delete-button": "Delete",
+      "go-to-dashboards": "Go to dashboards",
       "job-error": "An error occurred while processing orphaned resources",
       "job-success": "Orphaned resources processed successfully",
       "job-warning": "Some resources were processed with warnings. Please review the results.",
@@ -13824,7 +13842,8 @@
       "make-sure": "Create a token with these permissions"
     },
     "validation": {
-      "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again."
+      "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
+      "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."
     },
     "warning-title-default": "Warning",
     "watch-stream": {
@@ -14238,6 +14257,8 @@
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
+      "footer-select": "Select...",
+      "footer-select-label": "Select multiple items",
       "new-type": "New {{type}}",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
@@ -14285,6 +14306,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Restore"
+    },
+    "limit-banner": {
+      "at-limit-body": "Grafana retains up to {{limit}} recently deleted dashboards. Older entries are permanently removed.",
+      "at-limit-title": "Deleted dashboards limit reached"
     },
     "page": {
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
@@ -14447,6 +14472,10 @@
     },
     "results-table": {
       "datasource-header": "Data source",
+      "deleted-by-header": "Deleted by",
+      "deleted-by-removed": "Deleted account",
+      "deleted-by-unknown-short": "<0></0> Unknown",
+      "deleted-by-unknown-tooltip": "Failed to look up the account that deleted this dashboard",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Time remaining",
       "location-header": "Location",
@@ -14940,10 +14969,13 @@
       "title": "Kickstart dashboards with suggestions and templates"
     },
     "nav": {
+      "counter": "Slide {{current}} of {{total}}",
       "go-to": "Go to slide {{number}}",
-      "next": "Next",
-      "prev": "Previous"
-    }
+      "label": "Slide navigation",
+      "next": "Next slide",
+      "prev": "Previous slide"
+    },
+    "slide-announcement": "Slide {{current}} of {{total}}: {{title}}"
   },
   "sql-expressions": {
     "explain-query": "Explain query",
@@ -15423,7 +15455,6 @@
       "forwards-time-aria-label": "Move time range forwards",
       "to": "to",
       "zoom-out-button": "Zoom out time range",
-      "zoom-out-tooltip": "Time range zoom out <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
     },
     "time-range": {
@@ -16001,7 +16032,9 @@
       "description": {
         "group-by-field-value": "Group data by a field value and create nested tables with the grouped data."
       },
+      "description-expand-nested-rows": "If enabled, all nested rows will be expanded when the panel loads",
       "description-show-field-names": "If enabled nested tables will show field names as a table header",
+      "label-expand-nested-rows-by-default": "Expand nested rows by default",
       "label-show-field-names-in-nested-tables": "Show field names in nested tables",
       "name": {
         "group-to-nested-tables": "Group to nested tables"

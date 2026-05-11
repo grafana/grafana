@@ -5,7 +5,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
 func TestParseLabelSelectorFilter(t *testing.T) {
@@ -107,5 +111,57 @@ func TestParseLabelSelectorFilter(t *testing.T) {
 		assert.Nil(t, filter.Exists)
 		assert.Empty(t, filter.Include)
 		assert.Empty(t, filter.Exclude)
+	})
+}
+
+func TestApplyFieldSelectorRequirement(t *testing.T) {
+	t.Run("Equals sets Include", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		err := ApplyFieldSelectorRequirement(&f, fields.Requirement{Field: "spec.title", Operator: selection.Equals, Value: "a"}, nil)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"a"}, f.Include)
+		assert.Empty(t, f.Exclude)
+	})
+
+	t.Run("DoubleEquals sets Include", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		err := ApplyFieldSelectorRequirement(&f, fields.Requirement{Field: "spec.title", Operator: selection.DoubleEquals, Value: "a"}, nil)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"a"}, f.Include)
+	})
+
+	t.Run("NotEquals sets Exclude", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		err := ApplyFieldSelectorRequirement(&f, fields.Requirement{Field: "spec.title", Operator: selection.NotEquals, Value: "a"}, nil)
+		require.NoError(t, err)
+		assert.Empty(t, f.Include)
+		assert.Equal(t, []string{"a"}, f.Exclude)
+	})
+
+	t.Run("two Equals requirements for the same field returns an error", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		require.NoError(t, ApplyFieldSelectorRequirement(&f, fields.Requirement{Field: "spec.title", Operator: selection.Equals, Value: "a"}, nil))
+		err := ApplyFieldSelectorRequirement(&f, fields.Requirement{Field: "spec.title", Operator: selection.Equals, Value: "b"}, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("two NotEquals requirements for the same field returns an error", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		require.NoError(t, ApplyFieldSelectorRequirement(&f, fields.Requirement{Field: "spec.title", Operator: selection.NotEquals, Value: "a"}, nil))
+		err := ApplyFieldSelectorRequirement(&f, fields.Requirement{Field: "spec.title", Operator: selection.NotEquals, Value: "b"}, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("In operator returns an error (field selectors do not support it)", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		err := ApplyFieldSelectorRequirement(&f, fields.Requirement{Field: "spec.title", Operator: selection.In, Value: "a"}, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("validate is invoked on the value before bucketing", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		err := ApplyFieldSelectorRequirement(&f, fields.Requirement{Field: "spec.foo", Operator: selection.Equals, Value: "x"}, ValidateOneOf("spec.foo", []string{"y"}))
+		require.Error(t, err)
+		assert.Empty(t, f.Include)
 	})
 }

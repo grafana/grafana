@@ -372,7 +372,7 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
         {isEditing ? (
           <ButtonGroup>
             <Button icon="sliders-v-alt" onClick={onConfigure}>
-              <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
+              <Trans i18nKey="dashboard.new-panel.configure-button">Edit visualization</Trans>
             </Button>
             <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
               <Button
@@ -411,10 +411,11 @@ function getStyles(theme: GrafanaTheme2) {
         content: '""',
         position: 'absolute',
         inset: 0,
-        backgroundImage: `url(${emptyPanelSvg})`,
-        backgroundSize: '100% auto',
-        backgroundPosition: 'bottom',
-        backgroundRepeat: 'no-repeat',
+        maskImage: `url(${emptyPanelSvg})`,
+        maskSize: '100% auto',
+        maskPosition: 'bottom',
+        maskRepeat: 'no-repeat',
+        backgroundColor: theme.colors.text.primary,
         opacity: 0.08,
         pointerEvents: 'none',
       },

@@ -1229,11 +1229,12 @@ func initUserSyncService() *UserSync {
 	}
 	quotaSvc := &quotatest.FakeQuotaService{}
 	return &UserSync{
-		userService:     userSvc,
-		authInfoService: authInfoSvc,
-		quotaService:    quotaSvc,
-		tracer:          tracing.InitializeTracerForTest(),
-		log:             log,
+		userService:       userSvc,
+		authInfoService:   authInfoSvc,
+		quotaService:      quotaSvc,
+		tracer:            tracing.InitializeTracerForTest(),
+		log:               log,
+		openFeatureClient: openfeature.NewDefaultClient(),
 	}
 }
 
@@ -1645,6 +1646,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			provider.UsingFlags(t, defaultFeatureFlags)
 			userSyncService := tt.userSyncServiceSetup()
 			err := userSyncService.ValidateUserProvisioningHook(context.Background(), tt.identity, nil)
 			require.ErrorIs(t, err, tt.expectedErr)
@@ -1997,6 +1999,7 @@ func TestUserSync_GetUsageStats(t *testing.T) {
 }
 
 func TestUserSync_SCIMLoginUsageStatSet(t *testing.T) {
+	provider.UsingFlags(t, defaultFeatureFlags)
 	userSync := initUserSyncService()
 	userSync.rejectNonProvisionedUsers = true
 	userSync.isUserProvisioningEnabled = true
@@ -2257,4 +2260,25 @@ func TestUserSync_SyncUserHook_SCIMUserAllowsGCOMLogin(t *testing.T) {
 	}, nil)
 
 	require.NoError(t, err)
+}
+
+// Pins: id.Groups ← usr.TeamUIDs; id.ExternalGroups preserved.
+func TestSyncSignedInUserToIdentity_GroupsContract(t *testing.T) {
+	usr := &user.SignedInUser{
+		UserID:   42,
+		UserUID:  "uid-42",
+		Login:    "alice",
+		TeamUIDs: []string{"team-uid-1", "team-uid-2"},
+	}
+
+	id := &authn.Identity{
+		ExternalGroups: []string{"ldap-admins", "ldap-devs"},
+	}
+
+	syncSignedInUserToIdentity(usr, id)
+
+	assert.Equal(t, []string{"team-uid-1", "team-uid-2"}, id.Groups,
+		"Groups must be populated from usr.TeamUIDs")
+	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, id.ExternalGroups,
+		"ExternalGroups (set by the auth client) must not be clobbered by the user-sync hook")
 }

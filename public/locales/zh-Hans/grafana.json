@@ -511,7 +511,8 @@
       "action-buttons": {
         "edit-yaml": "编辑 YAML",
         "save": "保存"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "姓名",
@@ -1147,6 +1148,9 @@
         "rule-viewer-section-extension": "规则查看器扩充版块加载失败"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "更新配置失败：",
       "title-something-went-wrong": "出现错误"
@@ -1155,6 +1159,9 @@
       "content-show-all-errors": "显示所有错误"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} 失败，状态为{{status}}：{{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -1285,7 +1292,8 @@
       "delete": {
         "button": {
           "label": "删除所有规则"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "删除",
       "delete-modal-delete-button": "删除",
@@ -1568,8 +1576,14 @@
         "update-error": "更新规则组失败",
         "update-success": "已成功更新规则组"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "无法编辑所选组",
       "group-not-editable-description": "此组所属的数据源不支持编辑。",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "编辑规则组",
       "rule-group-error": "加载规则组时出错"
     },
@@ -3147,9 +3161,7 @@
       "deleting": "删除",
       "text-federated": "联合",
       "text-provisioned": "已预置",
-      "ungrouped": "未分组",
-      "ungrouped-suffix": "{{ruleName}}（未分组）",
-      "unknown-rule": "未知规则"
+      "ungrouped": "未分组"
     },
     "saved-searches": {
       "actions-aria-label": "操作",
@@ -4292,6 +4304,7 @@
         "repository-not-found-message": "找不到所选文件夹的存储库。请确保已正确预置文件夹。",
         "repository-not-found-title": "找不到存储库"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "移动资源时出错",
       "error-no-target-folder-path": "目标文件夹路径无效或为空，请再次选择。",
       "move-total": "总体而言，这将影响：",
@@ -4426,6 +4439,14 @@
       "resource-detail-dashboards": "您已创建 {{usage}} 个数据面板，共 {{limit}} 个（{{percentage}}%）。",
       "resource-detail-folders": "您已创建 {{usage}} 个文件夹，共 {{limit}} 个（{{percentage}}%）。"
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "清除历史记录",
       "error": "无法加载近期查看的数据面板。",
@@ -4461,6 +4482,8 @@
       "label": {
         "alphabetically-az": "按字母顺序 (A-Z)",
         "alphabetically-za": "按字母顺序 (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "已删除（最新靠前）",
         "deleted-oldest": "已删除（最旧靠前）"
       }
@@ -5229,7 +5252,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "设置"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5631,7 +5654,7 @@
         "title": "变量"
       },
       "variable": {
-        "change-type": "更改",
+        "change-type": "",
         "change-type-aria-label": "更改变量类型",
         "custom-options": {
           "apply": "应用",
@@ -5948,7 +5971,7 @@
       "cancel": "取消",
       "common": {
         "copy": "复制",
-        "copy-or-duplicate": "复制/粘贴或重复创建",
+        "copy-tooltip": "",
         "delete": "删除",
         "duplicate": "复制",
         "layout": "布局",
@@ -5987,7 +6010,7 @@
     },
     "new-panel": {
       "aria-label": "未配置的面板。按 Tab 键可查看配置选项。",
-      "configure-button": "配置",
+      "configure-button": "",
       "configure-button-menu": "切换菜单",
       "configure-visualization": "配置可视化",
       "empty-state-message": "运行查询以在此处可视化，或转到所有可视化以添加其他面板类型",
@@ -6228,10 +6251,8 @@
       "title-provisioned": "已预置的数据面板"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "所选文件夹中已存在具有相同名称的数据面板。<br/><2>您仍然要保存此数据面板吗？</2>",
       "body-version-mismatch": "其他人已更新此数据面板<br/><2>您仍然要保存此数据面板吗？</2>",
       "confirmText-save-and-overwrite": "保存并覆盖",
-      "title-name-exists": "冲突",
       "title-version-mismatch": "冲突"
     },
     "save-dashboard-form": {
@@ -6457,6 +6478,7 @@
     },
     "transformation-editor": {
       "input-data": "输入数据",
+      "loading": "",
       "output-data": "输出数据",
       "title-debug-transformation": "调试转换"
     },
@@ -7261,6 +7283,7 @@
       "terraform": "管理者：Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "移动数据面板失败",
       "cancel-action": "取消",
       "current-file-not-found": "找不到当前数据面板文件",
@@ -7273,10 +7296,6 @@
       "success-message": "数据面板已成功移动",
       "target-path-label": "目标路径",
       "title-this-repository-is-read-only": "此存储库为只读"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "所选文件夹中已存在具有相同名称的数据面板。您仍然要保存此数据面板吗？",
-      "title-name-already-exists": "名称已存在"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -7980,19 +7999,6 @@
       "aria-label-explore-data": "浏览数据",
       "aria-label-suggested-dashboards": "建议的数据面板"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "不支持警报",
-      "text-alerting-supported": "支持警报"
-    },
-    "basic-serttings": {
-      "tooltip-name": "在面板中选择数据源时使用该名称。默认数据源在新面板中已预先选中。"
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "数据源设置页面基本设置",
-      "basic-settings-name-placeholder-name": "名称",
-      "label-default": "默认",
-      "label-name": "名称"
-    },
     "build-a-dashboard-button": {
       "blank": "空白",
       "build-a-dashboard": "构建数据面板",
@@ -8087,6 +8093,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "添加到收藏夹",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "浏览数据",
       "open-in-explore": "在浏览视图中打开",
       "remove-favorite": "从收藏夹中移除"
@@ -8223,6 +8235,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "搜索"
     },
     "resource-dimension-editor": {
@@ -10062,6 +10075,12 @@
     "cascader": {
       "clear-button": "清除选择"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA 值"
     },
@@ -10407,6 +10426,7 @@
     "sidebar": {
       "close": "关闭",
       "dock": "停靠",
+      "go-back": "",
       "hide": "隐藏",
       "show": "显示",
       "undock": "取消停靠"
@@ -10775,6 +10795,11 @@
     "name-gradient-mode": "渐变模式",
     "name-line-width": "线宽度",
     "name-stacking": "堆叠"
+  },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11165,7 +11190,7 @@
     "description-order": "首先显示最新或最早的日志。选择“最早的日志优先”时，视图会自动滚动到最底部的最新日志。",
     "description-prettify-json": "使用缩进和换行符来格式化 JSON 日志条目。",
     "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选。",
-    "description-show-log-attributes": "实验性。当显示 OTel 日志时，添加一个额外的显示字段，其中包含来自标签和元数据的相关键值对。",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "使用显示的字段时，通过列对齐值。",
     "description-wrap-lines": "将日志显示为单行，或将较长的日志条目自动换行，以适应面板大小。",
     "field-selector": {
@@ -11488,7 +11513,7 @@
       "line-contains-not": "添加为不包含筛选器的行",
       "search-text": "在结果中搜索"
     },
-    "show-log-attributes": "显示 OTel 日志的日志属性",
+    "show-log-attributes": "",
     "timestamp-format": "时间戳分辨率",
     "un-themed-log-details": {
       "aria-label-data-links": "数据关联",
@@ -11842,8 +11867,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "全部",
-      "title-filtered": "全部（已筛选）"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "全部清除"
@@ -13491,6 +13518,7 @@
       "contact-admin": "请与您的 Grafana 管理员联系，以便将此资源转换为本地资源，或删除该缺失存储库中的所有资源。",
       "convert-to-local-button": "转换为本地资源",
       "delete-button": "删除",
+      "go-to-dashboards": "",
       "job-error": "处理孤立资源时发生错误",
       "job-success": "孤立资源已成功处理",
       "job-warning": "某些资源已处理完毕，但有警告。请查看结果。",
@@ -13729,7 +13757,8 @@
       "make-sure": "创建具有以下权限的令牌"
     },
     "validation": {
-      "hidden-characters": "此字段包含可能通过复制粘贴引入的隐藏字符。请重新输入或清理该值，然后重试。"
+      "hidden-characters": "此字段包含可能通过复制粘贴引入的隐藏字符。请重新输入或清理该值，然后重试。",
+      "url-with-credentials": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {
@@ -14134,6 +14163,8 @@
       "alerts-loading": "警报",
       "card-click": "选择卡片 {{id}}",
       "data": "数据",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新{{type}}",
       "queries-expressions": "查询和表达式",
       "toggle-size": "切换侧边栏大小",
@@ -14184,6 +14215,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "还原"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "您最近没有删除任何数据面板。",
@@ -14344,6 +14379,10 @@
     },
     "results-table": {
       "datasource-header": "数据源",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 分钟",
       "deleted-remaining-header": "剩余时间",
       "location-header": "位置",
@@ -14836,10 +14875,13 @@
       "title": "借助建议和模板快速创建数据面板"
     },
     "nav": {
+      "counter": "",
       "go-to": "前往幻灯片 {{number}}",
-      "next": "下一个",
-      "prev": "上一个"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "解释查询",
@@ -15318,7 +15360,6 @@
       "forwards-time-aria-label": "向前移动时间范围",
       "to": "至",
       "zoom-out-button": "缩放时间范围",
-      "zoom-out-tooltip": "时间范围拉宽 <br/> CTRL+Z",
       "zoom-out-tooltip-new": "时间范围拉宽 <br/> t -"
     },
     "time-range": {
@@ -15896,7 +15937,9 @@
       "description": {
         "group-by-field-value": "按字段值对数据进行分组，并使用分组数据创建嵌套表。"
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "如果启用，嵌套表会将字段名称显示为表头",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "在嵌套表中显示字段名称",
       "name": {
         "group-to-nested-tables": "分组到嵌套表"
@@ -15914,6 +15957,9 @@
       "name": {
         "grouping-to-matrix": "分组到矩阵"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": ""
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16249,6 +16295,9 @@
       "label-time-field": "时间字段",
       "tooltip-statistic-should-calculated-series": "应该为此时间序列计算的统计信息。",
       "tooltip-time-field": "将用于时间序列的时间字段。如果未选择，将使用第一个找到的字段。"
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "第一个字段名称",

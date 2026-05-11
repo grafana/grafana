@@ -33,6 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -41,6 +43,21 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 // errStopping is returned when a write operation is rejected because the server is shutting down.
 // Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
 var errStopping = status.Error(codes.Unavailable, "server is stopping")
+
+// logIfServerError logs errRes at Error level if it represents a 5xx (server) error.
+func (s *server) logIfServerError(ctx context.Context, op string, key *resourcepb.ResourceKey, errRes *resourcepb.ErrorResult) {
+	if errRes == nil || errRes.Code < 500 {
+		return
+	}
+	s.log.FromContext(ctx).Error(fmt.Sprintf("server error: %s", op),
+		"group", key.Group,
+		"resource", key.Resource,
+		"namespace", key.Namespace,
+		"name", key.Name,
+		"code", errRes.Code,
+		"error", errRes.Message,
+	)
+}
 
 // defaultBookmarkFrequency is how often periodic bookmark events are sent
 // to Watch clients that have AllowWatchBookmarks enabled.
@@ -273,10 +290,12 @@ type SearchOptions struct {
 	IndexSnapshotUploadInterval time.Duration
 	// IndexSnapshotLockTTL is the TTL for the distributed lock used to coordinate uploads/cleanup.
 	IndexSnapshotLockTTL time.Duration
-	// IndexSnapshotMinKeep is the minimum number of snapshots to retain regardless of age.
-	IndexSnapshotMinKeep int
 	// IndexSnapshotCleanupInterval is how often snapshot cleanup runs.
 	IndexSnapshotCleanupInterval time.Duration
+	// IndexSnapshotCleanupGracePeriod is the time a newly uploaded snapshot must
+	// have existed before its predecessor in the same Grafana-version group is
+	// considered eligible for cleanup.
+	IndexSnapshotCleanupGracePeriod time.Duration
 }
 
 type ResourceServerOptions struct {
@@ -337,6 +356,17 @@ type ResourceServerOptions struct {
 	// BookmarkFrequency controls how often periodic bookmark events are sent to
 	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
 	BookmarkFrequency time.Duration
+
+	// VectorBackend is the optional pgvector-backed store for semantic search.
+	// nil when the [unified_storage] vector_backend flag is off. When present,
+	// the resource and search servers hold a reference for use by future
+	// write and query paths.
+	VectorBackend vector.VectorBackend
+
+	// Embedder is the optional text-to-vector embedder used by the
+	// VectorSearch RPC. nil when no [vector_embedder] provider is configured;
+	// the RPC then returns Unimplemented.
+	Embedder *embedder.Embedder
 }
 
 func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
@@ -365,7 +395,7 @@ func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, err
 	}
 
 	// Create the search server using the search.go factory
-	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
+	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
 	if err != nil || searchServer == nil {
 		return nil, fmt.Errorf("search server could not be created: %w", err)
 	}
@@ -449,6 +479,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 	s := &server{
 		log:                            logger,
 		backend:                        opts.Backend,
+		vectorBackend:                  opts.VectorBackend,
 		bulkBatchOptions:               opts.bulkBatchOptions(),
 		blob:                           blobstore,
 		diagnostics:                    opts.Diagnostics,
@@ -473,7 +504,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchServer(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
@@ -524,6 +555,7 @@ var _ ResourceServer = &server{}
 type server struct {
 	log              log.Logger
 	backend          StorageBackend
+	vectorBackend    vector.VectorBackend
 	bulkBatchOptions BulkBatchOptions
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
@@ -910,6 +942,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 
 func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	rsp := &resourcepb.CreateResponse{}
+	defer func() { s.logIfServerError(ctx, "server.create", req.Key, rsp.Error) }()
 
 	event, e := s.newEvent(ctx, user, req.Key, 0, req.Value, nil)
 	if e != nil {
@@ -929,7 +962,6 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 		}
 		rsp.Error = AsErrorResult(err)
 	}
-	s.log.FromContext(ctx).Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
 }
 
@@ -1014,6 +1046,8 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 
 func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
 	rsp := &resourcepb.UpdateResponse{}
+	defer func() { s.logIfServerError(ctx, "server.update", req.Key, rsp.Error) }()
+
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
@@ -1080,6 +1114,8 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 
 func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resourcepb.DeleteRequest) (*resourcepb.DeleteResponse, error) {
 	rsp := &resourcepb.DeleteResponse{}
+	defer func() { s.logIfServerError(ctx, "server.delete", req.Key, rsp.Error) }()
+
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
@@ -1180,7 +1216,13 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 	return res, err
 }
 
-func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (readRsp *resourcepb.ReadResponse, readErr error) {
+	defer func() {
+		if readRsp != nil {
+			s.logIfServerError(ctx, "server.read", req.Key, readRsp.Error)
+		}
+	}()
+
 	rsp := s.backend.ReadResource(ctx, req)
 	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
 		return &resourcepb.ReadResponse{Error: rsp.Error}, nil
@@ -1348,7 +1390,7 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		return iter.Error()
 	})
 
-	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
 }
 
 // listFromTrash lists deleted resources. Trash uses a different authorization
@@ -1418,12 +1460,14 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 		return iter.Error()
 	})
 
-	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
 }
 
 // finalizeListResponse validates the resource version, sets pagination token,
 // and records metrics. Shared by listFromStore, listFromHistory, and listFromTrash.
-func (s *server) finalizeListResponse(rsp *resourcepb.ListResponse, rv int64, err error, nextToken string, key *resourcepb.ResourceKey) (*resourcepb.ListResponse, error) {
+func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListResponse, rv int64, err error, nextToken string, key *resourcepb.ResourceKey) (*resourcepb.ListResponse, error) {
+	defer func() { s.logIfServerError(ctx, "server.list", key, rsp.Error) }()
+
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -1506,7 +1550,12 @@ func (s *server) initWatcher() error {
 	if s.storageMetrics != nil {
 		broadcasterMetrics = s.storageMetrics.Broadcaster
 	}
-	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics)
+	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics, func(e *WrittenEvent) string {
+		if e == nil || e.Key == nil {
+			return ""
+		}
+		return e.Key.Resource
+	})
 	return nil
 }
 
@@ -1537,7 +1586,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	// Start listening -- this will buffer any changes that happen while we backfill.
 	// If events are generated faster than we can process them, then some events will be dropped.
 	// TODO: Think of a way to allow the client to catch up.
-	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace))
+	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace), key.Resource)
 	if err != nil {
 		return err
 	}
@@ -1708,7 +1757,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				}
 				lastEmittedRV = event.ResourceVersion
 
-				if s.storageMetrics != nil {
+				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
 					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
 					// or a snowflake ID (KV backend), so we use resourceVersionTime to handle both formats.
 					latencySeconds := time.Since(resourceVersionTime(event.ResourceVersion)).Seconds()
@@ -1727,6 +1776,16 @@ func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchReque
 	}
 
 	return s.search.Search(ctx, req)
+}
+
+// VectorSearch delegates to the embedded searchServer; the searchServer is
+// where the vector backend and embedder live and where the actual handler
+// is implemented.
+func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("vector search is not configured")
+	}
+	return s.search.VectorSearch(ctx, req)
 }
 
 // StatsGetter provides resource statistics (via search index or backend).

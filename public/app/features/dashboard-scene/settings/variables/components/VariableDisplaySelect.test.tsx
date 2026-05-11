@@ -2,23 +2,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
+import { mockComboboxRect } from '@grafana/test-utils';
 
 import { VariableDisplaySelect } from './VariableDisplaySelect';
 
-// For testing combobox
 beforeAll(() => {
-  const mockGetBoundingClientRect = jest.fn(() => ({
-    width: 120,
-    height: 120,
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  }));
-
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: mockGetBoundingClientRect,
-  });
+  // For testing combobox
+  mockComboboxRect();
 });
 
 describe('VariableDisplaySelect', () => {

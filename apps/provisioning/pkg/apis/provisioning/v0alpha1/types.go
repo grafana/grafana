@@ -271,12 +271,29 @@ func (ConnectionInfo) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ConnectionInfo"
 }
 
+type CommitOptions struct {
+	// Template for commit messages produced by single-resource UI operations
+	// (dashboard save/delete/move, folder create/rename/delete).
+	// Bulk operations and sync jobs are out of scope and build their own messages.
+	// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}.
+	// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
+	SingleResourceMessageTemplate string `json:"singleResourceMessageTemplate,omitempty"`
+}
+
+func (CommitOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "CommitOptions"
+}
+
 type RepositorySpec struct {
 	// The repository display name (shown in the UI)
 	Title string `json:"title"`
 
 	// Repository description
 	Description string `json:"description,omitempty"`
+
+	// Commit message options. Currently only contains the template used by
+	// single-resource UI operations; future siblings (bulk, sync) can live here.
+	Commit *CommitOptions `json:"commit,omitempty"`
 
 	// UI driven Workflow that allow changes to the contends of the repository.
 	// The order is relevant for defining the precedence of the workflows.

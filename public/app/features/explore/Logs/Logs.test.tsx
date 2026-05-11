@@ -490,13 +490,13 @@ describe('Logs', () => {
 
     it('should show visualisation type radio group', () => {
       setup();
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      const logsSection = screen.getByRole('radio', { name: 'Table' });
       expect(logsSection).toBeInTheDocument();
     });
 
     it('should change visualisation to table on toggle (loki)', async () => {
       setup({});
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
       const table = screen.getByTestId('logRowsTable');
@@ -519,7 +519,7 @@ describe('Logs', () => {
 
     it('should change visualisation to table on toggle (elastic)', async () => {
       setup({}, getMockElasticFrame());
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
       const table = screen.getByTestId('logRowsTable');

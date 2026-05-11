@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var orgID = rand.Int63()
@@ -840,9 +839,9 @@ func testSilence(id string, ruleUID *string) *models.Silence {
 	s := &models.Silence{ID: &id}
 	if ruleUID != nil {
 		s.Matchers = amv2.Matchers{{
-			IsEqual: util.Pointer(true),
-			IsRegex: util.Pointer(false),
-			Name:    util.Pointer(alertingModels.RuleUIDLabel),
+			IsEqual: new(true),
+			IsRegex: new(false),
+			Name:    new(alertingModels.RuleUIDLabel),
 			Value:   ruleUID,
 		}}
 	}
