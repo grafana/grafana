@@ -15,7 +15,7 @@ import { useApplyDefaultSearch } from '../filter/useApplyDefaultSearch';
 
 import { ChainDrawer } from './ChainDrawer';
 import { ChainFilterField } from './ChainFilterField';
-import { FlatRuleListView } from './FlatRuleListView';
+import { GroupedRuleListView } from './GroupedRuleListView';
 
 export const CHAIN_URL_PARAM = 'chain';
 
@@ -44,7 +44,7 @@ function RuleListV3() {
             />
           </Stack>
           <Box flex={1} minWidth={0} paddingLeft={2}>
-            <FlatRuleListView
+            <GroupedRuleListView
               groupFilter={filterState.groupName}
               namespaceFilter={filterState.namespace}
               chainFilter={chainFilter}

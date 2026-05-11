@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Icon, Stack, TextLink } from '@grafana/ui';
-import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
+import { type GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import {
   type GrafanaPromRuleDTO,
   type GrafanaPromRuleGroupDTO,
@@ -17,10 +17,15 @@ import { GrafanaNoRulesCTA } from '../../components/rules/NoRulesCTA';
 import { DEMO_CHAIN_ID, DEMO_CHAIN_SIZE } from '../../mocks/fixtures/chains';
 import { GRAFANA_RULES_SOURCE_NAME, GrafanaRulesSource } from '../../utils/datasource';
 import { makeFolderAlertsLink } from '../../utils/misc';
+import { groups as groupNav } from '../../utils/navigation';
+import { isUngroupedRuleGroup } from '../../utils/rules';
 import { GrafanaRuleListItem } from '../GrafanaRuleListItem';
+import { GrafanaGroupActions } from '../PaginatedGrafanaLoader';
 import { AlertRuleListItemSkeleton } from '../components/AlertRuleListItemLoader';
 import { DataSourceErrorBoundary } from '../components/DataSourceErrorBoundary';
 import { DataSourceSection } from '../components/DataSourceSection';
+import { GroupIntervalIndicator } from '../components/GroupIntervalMetadata';
+import { ListGroup } from '../components/ListGroup';
 import { ListSection } from '../components/ListSection';
 import { LoadMoreButton } from '../components/LoadMoreButton';
 import { NoRulesFound } from '../components/NoRulesFound';
@@ -33,7 +38,7 @@ import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from '../paginationLim
 
 import { EvaluationChainLink } from './EvaluationChainLink';
 
-interface FlatRuleListViewProps {
+interface GroupedRuleListViewProps {
   groupFilter?: string;
   namespaceFilter?: string;
   chainFilter?: string;
@@ -41,23 +46,23 @@ interface FlatRuleListViewProps {
 }
 
 /**
- * V3 flattened variant of GroupedView: renders each folder's rules as direct
- * siblings of the folder row (no evaluation-group wrapper). Chain membership
- * is surfaced as an inline meta item on each rule row.
+ * V3 variant of GroupedView: consumes already-paginated Grafana rule groups and
+ * renders the same folder → group → rule hierarchy as V2's PaginatedGrafanaLoader,
+ * but surfaces chain membership as an inline meta item on each rule row.
  */
-export function FlatRuleListView({
+export function GroupedRuleListView({
   groupFilter,
   namespaceFilter,
   chainFilter,
   onChainLinkClick,
-}: FlatRuleListViewProps) {
+}: GroupedRuleListViewProps) {
   const { updateState, loadingDataSources } = useDataSourceLoadingStates();
   const hasFilters = Boolean(groupFilter || namespaceFilter || chainFilter);
 
   return (
     <Stack direction="column" gap={1} role="list">
       <DataSourceErrorBoundary rulesSourceIdentifier={GrafanaRulesSource}>
-        <FlatGrafanaLoader
+        <GroupedGrafanaLoader
           key={`${groupFilter}-${namespaceFilter}-${chainFilter}`}
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
@@ -71,7 +76,7 @@ export function FlatRuleListView({
   );
 }
 
-interface FlatGrafanaLoaderProps {
+interface GroupedGrafanaLoaderProps {
   groupFilter?: string;
   namespaceFilter?: string;
   chainFilter?: string;
@@ -79,13 +84,13 @@ interface FlatGrafanaLoaderProps {
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
-function FlatGrafanaLoader({
+function GroupedGrafanaLoader({
   groupFilter,
   namespaceFilter,
   chainFilter,
   onChainLinkClick,
   onLoadingStateChange,
-}: FlatGrafanaLoaderProps) {
+}: GroupedGrafanaLoaderProps) {
   const filterState = { namespace: namespaceFilter, groupName: groupFilter };
   const { backendFilter } = getGrafanaFilter(filterState);
 
@@ -144,7 +149,7 @@ function FlatGrafanaLoader({
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
   const hasNoRules = isEmpty(groups) && !isLoading;
 
-  const folderRenderData = useMemo(() => buildFolderRenderData(groupsByFolder), [groupsByFolder]);
+  const folderRenderData = useMemo(() => buildGroupedRenderData(groupsByFolder), [groupsByFolder]);
 
   if (hasFilters && isEmpty(groups)) {
     return null;
@@ -159,10 +164,15 @@ function FlatGrafanaLoader({
       error={error}
     >
       <Stack direction="column" gap={0}>
-        {folderRenderData.map(({ folderUid, folderName, rules }) => {
-          const filteredRules = chainFilter ? rules.filter((r) => r.membership?.id === chainFilter) : rules;
+        {folderRenderData.map(({ folderUid, folderName, groups: folderGroups }) => {
+          const renderableGroups = folderGroups
+            .map((entry) => ({
+              ...entry,
+              rules: chainFilter ? entry.rules.filter((r) => r.membership?.id === chainFilter) : entry.rules,
+            }))
+            .filter((entry) => entry.rules.length > 0);
 
-          if (chainFilter && filteredRules.length === 0) {
+          if (chainFilter && renderableGroups.length === 0) {
             return null;
           }
 
@@ -184,12 +194,14 @@ function FlatGrafanaLoader({
               }
               actions={<FolderActionsButton folderUID={folderUid} />}
             >
-              {filteredRules.map((info) => (
-                <FlatRuleRow
-                  key={`${info.folderUid}-${info.groupName}-${info.rule.uid}`}
-                  info={info}
-                  membership={info.membership}
+              {renderableGroups.map(({ group, rules }) => (
+                <GroupedRuleGroup
+                  key={`${folderUid}-${group.name}`}
+                  group={group}
                   folderName={folderName}
+                  rules={rules}
+                  // Auto-open when a chain filter is active so the matches don't sit hidden inside a collapsed group.
+                  isOpen={Boolean(chainFilter)}
                   onChainLinkClick={onChainLinkClick}
                 />
               ))}
@@ -208,85 +220,101 @@ function FlatGrafanaLoader({
   );
 }
 
-interface FolderRenderData {
+interface GroupedRuleEntry {
+  rule: GrafanaPromRuleDTO;
+  membership?: ChainMembership;
+}
+
+interface GroupedGroupEntry {
+  group: GrafanaPromRuleGroupDTO;
+  rules: GroupedRuleEntry[];
+}
+
+interface GroupedFolderEntry {
   folderUid: string;
   folderName: string;
-  rules: Array<FlatRuleInfo & { membership?: ChainMembership }>;
+  groups: GroupedGroupEntry[];
 }
 
 /**
- * For the POC, tag the first DEMO_CHAIN_SIZE rules encountered (in folder order,
- * then group order, then rule order) as sequential members of the demo chain.
- * A real backend would return memberships keyed by rule UID.
+ * For the POC, tag the first DEMO_CHAIN_SIZE rules encountered as sequential
+ * chain members. A real backend would return memberships keyed by rule UID.
+ *
+ * Iteration order depends on the insertion order of `groupsByFolder`. Lodash's
+ * `groupBy` preserves insertion order, so the tagged rules remain stable across
+ * renders as long as the underlying group list isn't reshuffled.
  */
-function buildFolderRenderData(groupsByFolder: Record<string, GrafanaPromRuleGroupDTO[]>): FolderRenderData[] {
+function buildGroupedRenderData(groupsByFolder: Record<string, GrafanaPromRuleGroupDTO[]>): GroupedFolderEntry[] {
   let chainCounter = 0;
   return Object.entries(groupsByFolder).map(([folderUid, folderGroups]) => {
     const folderName = folderGroups[0].file;
-    const rules = flattenRulesForFolder(folderGroups).map((info) => {
-      if (chainCounter < DEMO_CHAIN_SIZE) {
-        chainCounter += 1;
-        return {
-          ...info,
-          membership: {
-            id: DEMO_CHAIN_ID,
-            position: chainCounter,
-            total: DEMO_CHAIN_SIZE,
-          },
-        };
-      }
-      return info;
+    const groups: GroupedGroupEntry[] = folderGroups.map((group) => {
+      const rules: GroupedRuleEntry[] = group.rules.map((rule) => {
+        if (chainCounter < DEMO_CHAIN_SIZE) {
+          chainCounter += 1;
+          return {
+            rule,
+            membership: { id: DEMO_CHAIN_ID, position: chainCounter, total: DEMO_CHAIN_SIZE },
+          };
+        }
+        return { rule };
+      });
+      return { group, rules };
     });
-    return { folderUid, folderName, rules };
+    return { folderUid, folderName, groups };
   });
 }
 
-interface FlatRuleInfo {
-  rule: GrafanaPromRuleDTO;
-  groupName: string;
-  folderUid: string;
-}
-
-function flattenRulesForFolder(groups: GrafanaPromRuleGroupDTO[]): FlatRuleInfo[] {
-  return groups.flatMap((group) =>
-    group.rules.map((rule) => ({
-      rule,
-      groupName: group.name,
-      folderUid: group.folderUid,
-    }))
-  );
-}
-
-interface FlatRuleRowProps {
-  info: FlatRuleInfo;
-  membership?: ChainMembership;
+interface GroupedRuleGroupProps {
+  group: GrafanaPromRuleGroupDTO;
   folderName: string;
+  rules: GroupedRuleEntry[];
+  isOpen: boolean;
   onChainLinkClick: (chainId: string, position: number) => void;
 }
 
-function FlatRuleRow({ info, membership, folderName, onChainLinkClick }: FlatRuleRowProps) {
-  const groupIdentifier = {
-    groupName: info.groupName,
-    namespace: { uid: info.folderUid },
-    groupOrigin: 'grafana' as const,
+function GroupedRuleGroup({ group, folderName, rules, isOpen, onChainLinkClick }: GroupedRuleGroupProps) {
+  const groupIdentifier: GrafanaRuleGroupIdentifier = {
+    groupName: group.name,
+    namespace: { uid: group.folderUid },
+    groupOrigin: 'grafana',
   };
 
-  const chainLink = membership ? (
-    <EvaluationChainLink
-      chainId={membership.id}
-      position={membership.position}
-      total={membership.total}
-      onClick={onChainLinkClick}
-    />
-  ) : undefined;
+  const detailsLink = groupNav.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
+
+  const firstRuleName = group.rules[0]?.name ?? t('alerting.rules-group.unknown-rule', 'Unknown Rule');
+  const groupDisplayName = isUngroupedRuleGroup(group.name)
+    ? t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', { ruleName: firstRuleName })
+    : group.name;
 
   return (
-    <GrafanaRuleListItem
-      rule={info.rule}
-      groupIdentifier={groupIdentifier}
-      namespaceName={folderName}
-      showLocation={false}
-      chainLink={chainLink}
-    />
+    <ListGroup
+      name={groupDisplayName}
+      metaRight={<GroupIntervalIndicator seconds={group.interval} />}
+      actions={<GrafanaGroupActions folderUid={group.folderUid} groupName={group.name} />}
+      href={detailsLink}
+      isOpen={isOpen}
+    >
+      {rules.map(({ rule, membership }) => {
+        const chainLink = membership ? (
+          <EvaluationChainLink
+            chainId={membership.id}
+            position={membership.position}
+            total={membership.total}
+            onClick={onChainLinkClick}
+          />
+        ) : undefined;
+        return (
+          <GrafanaRuleListItem
+            key={rule.uid}
+            rule={rule}
+            groupIdentifier={groupIdentifier}
+            namespaceName={folderName}
+            showLocation={false}
+            chainLink={chainLink}
+          />
+        );
+      })}
+    </ListGroup>
   );
 }

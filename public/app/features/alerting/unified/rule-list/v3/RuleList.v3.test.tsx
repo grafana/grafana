@@ -11,12 +11,11 @@ import { EvaluationChainLink } from './EvaluationChainLink';
 
 // Don't load the lazy V3 page's heavy children — we only need to verify the
 // chain link -> drawer wiring at the page level.
-jest.mock('./FlatRuleListView', () => {
+jest.mock('./GroupedRuleListView', () => {
   const { EvaluationChainLink } = jest.requireActual('./EvaluationChainLink');
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    FlatRuleListView: ({ onChainLinkClick }: { onChainLinkClick: (id: string, position: number) => void }) => (
-      <div data-testid="flat-rule-list-view">
+    GroupedRuleListView: ({ onChainLinkClick }: { onChainLinkClick: (id: string, position: number) => void }) => (
+      <div data-testid="grouped-rule-list-view">
         <EvaluationChainLink chainId="usage-chain" position={2} total={4} onClick={onChainLinkClick} />
       </div>
     ),
