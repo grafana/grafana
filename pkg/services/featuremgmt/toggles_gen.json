@@ -6103,7 +6103,8 @@
       "metadata": {
         "name": "unifiedStorageBigObjectsSupport",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-10-17T10:18:29Z"
+        "creationTimestamp": "2024-10-17T10:18:29Z",
+        "deletionTimestamp": "2026-05-10T19:55:32Z"
       },
       "spec": {
         "description": "Enables to save big objects in blob storage",

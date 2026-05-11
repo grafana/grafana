@@ -216,13 +216,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, err
 	}
 
-	// perform the get after to ensure we return the object with all the system filled fields set
-	rule, provenance, err := s.service.GetAlertRule(ctx, user, created.UID)
-	if err != nil {
-		return nil, err
-	}
-
-	return convertToK8sResource(info.OrgID, &rule, provenance, s.namespacer)
+	return convertToK8sResource(info.OrgID, &created, provenance, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {

@@ -643,17 +643,10 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
 
-	// Split dashboards when they are large
-	var largeObjects apistore.LargeObjectSupport
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
-		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme, opts.StorageOpts.BlobThresholdBytes)
-		storageOpts.LargeObjectSupport = largeObjects
-	}
 	opts.StorageOptsRegister(dashv0.DashboardResourceInfo.GroupResource(), storageOpts)
 
 	// v0alpha1
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv0.DashboardResourceInfo,
 		&dashv0.LibraryPanelResourceInfo,
 		&dashv0.SnapshotResourceInfo,
@@ -672,7 +665,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// v1beta1
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv1beta1.DashboardResourceInfo,
 		nil, // do not register library panel
 		nil,
@@ -691,7 +684,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// v1 (identical schema to v1beta1, thin wrapper)
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv1.DashboardResourceInfo,
 		nil, // do not register library panel
 		nil,
@@ -710,7 +703,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// v2alpha1
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv2alpha1.DashboardResourceInfo,
 		nil, // do not register library panel
 		nil,
@@ -728,7 +721,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv2beta1.DashboardResourceInfo,
 		nil, // do not register library panel
 		nil,
@@ -747,7 +740,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// v2
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv2.DashboardResourceInfo,
 		nil, // do not register library panel
 		nil,
@@ -771,7 +764,6 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 func (b *DashboardsAPIBuilder) storageForVersion(
 	apiGroupInfo *genericapiserver.APIGroupInfo,
 	opts builder.APIGroupOptions,
-	largeObjects apistore.LargeObjectSupport,
 	dashboards utils.ResourceInfo,
 	libraryPanels *utils.ResourceInfo,
 	snapshots *utils.ResourceInfo,
@@ -791,7 +783,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		storage[dashboards.StoragePath()] = unified
 		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 			unified,
-			largeObjects,
 			b.unified,
 			b.accessClient,
 			newDTOFunc,
@@ -813,7 +804,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 		storage[dashboards.StoragePath()].(rest.Getter),
-		largeObjects,
 		b.unified,
 		b.accessClient,
 		newDTOFunc,

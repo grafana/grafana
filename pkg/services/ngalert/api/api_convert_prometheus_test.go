@@ -50,7 +50,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			{
 				Alert: "TestAlert",
 				Expr:  "up == 0",
-				For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+				For:   new(prommodel.Duration(5 * time.Minute)),
 				Labels: map[string]string{
 					"severity": "critical",
 				},
@@ -458,7 +458,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 				{
 					Alert: "TestAlert",
 					Expr:  "up == 0",
-					For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+					For:   new(prommodel.Duration(5 * time.Minute)),
 					Labels: map[string]string{
 						"severity": "critical",
 					},
@@ -567,7 +567,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 					{
 						Alert: alertname,
 						Expr:  "up == 0",
-						For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+						For:   new(prommodel.Duration(5 * time.Minute)),
 						Labels: map[string]string{
 							"severity": "critical",
 						},
@@ -676,7 +676,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 					GroupBy:  []string{"cluster", "pod"},
 				}),
 				expectedStatus: http.StatusAccepted,
-				expectedNotificationSettings: util.Pointer(models.NotificationSettingsFromContact(models.ContactPointRouting{
+				expectedNotificationSettings: new(models.NotificationSettingsFromContact(models.ContactPointRouting{
 					Receiver: "test-receiver",
 					GroupBy:  []string{"cluster", "pod"},
 				})),
@@ -703,18 +703,18 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 				name: "sets PolicyRouting for rules if specified",
 				headerValue: func() string {
 					settings := apimodels.AlertRuleNotificationSettings{
-						Policy: util.Pointer("policy-a"),
+						Policy: new("policy-a"),
 					}
 					settingsJSON, _ := json.Marshal(settings)
 					return string(settingsJSON)
 				}(),
 				expectedStatus:               http.StatusAccepted,
-				expectedNotificationSettings: util.Pointer(models.NotificationSettingsFromPolicy("policy-a")),
+				expectedNotificationSettings: new(models.NotificationSettingsFromPolicy("policy-a")),
 			},
 			{
 				name: "returns policy missing error when policy is empty",
 				headerValue: mustMarshal(apimodels.AlertRuleNotificationSettings{
-					Policy: util.Pointer(""),
+					Policy: new(""),
 				}),
 				expectedStatus: http.StatusBadRequest,
 				expectedBody:   "policy must be specified",
@@ -731,7 +731,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			{
 				name: "returns error when both receiver and policy are specified",
 				headerValue: mustMarshal(apimodels.AlertRuleNotificationSettings{
-					Policy:   util.Pointer("policy-a"),
+					Policy:   new("policy-a"),
 					Receiver: "test-receiver",
 				}),
 				expectedStatus: http.StatusBadRequest,
@@ -752,7 +752,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 						{
 							Alert: "TestAlert",
 							Expr:  "up == 0",
-							For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+							For:   new(prommodel.Duration(5 * time.Minute)),
 							Labels: map[string]string{
 								"severity": "critical",
 							},
@@ -785,7 +785,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 	promRule := apimodels.PrometheusRule{
 		Alert: "test alert",
 		Expr:  "vector(1) > 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "critical",
 		},
@@ -883,7 +883,7 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 	promRule1 := apimodels.PrometheusRule{
 		Alert: "test alert",
 		Expr:  "vector(1) > 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "critical",
 		},
@@ -895,7 +895,7 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 	promRule2 := apimodels.PrometheusRule{
 		Alert: "test alert 2",
 		Expr:  "vector(1) > 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "also critical",
 		},
@@ -991,7 +991,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 	promRule1 := apimodels.PrometheusRule{
 		Alert: "test alert",
 		Expr:  "vector(1) > 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "critical",
 		},
@@ -1003,7 +1003,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 	promRule2 := apimodels.PrometheusRule{
 		Alert: "test alert 2",
 		Expr:  "vector(1) > 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "also critical",
 		},
@@ -1529,7 +1529,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 	promAlertRule := apimodels.PrometheusRule{
 		Alert: "TestAlert",
 		Expr:  "up == 0",
-		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		For:   new(prommodel.Duration(5 * time.Minute)),
 		Labels: map[string]string{
 			"severity": "critical",
 		},
@@ -1969,8 +1969,8 @@ func (m *mockAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, o
 	return args.Get(0).(merge.RenameResources), args.Error(1)
 }
 
-func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error) {
-	args := m.Called(ctx, org, withAutogen, withMergedExtraConfig)
+func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error) {
+	args := m.Called(ctx, org, withAutogen)
 	return args.Get(0).(apimodels.GettableUserConfig), args.Error(1)
 }
 
@@ -2197,7 +2197,7 @@ func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
 
 	t.Run("without config identifier header should use default identifier", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
 			ExtraConfigs: []apimodels.ExtraConfiguration{
 				{
 					Identifier: defaultConfigIdentifier,
@@ -2220,7 +2220,7 @@ receivers:
 
 	t.Run("with empty config identifier header should use default identifier", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
 			ExtraConfigs: []apimodels.ExtraConfiguration{
 				{
 					Identifier: defaultConfigIdentifier,
@@ -2268,7 +2268,7 @@ receivers:
 			},
 		}
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, int64(1), false, false).Return(expectedConfig, nil).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, int64(1), false).Return(expectedConfig, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -2335,7 +2335,7 @@ receivers:
 			},
 		}
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(expectedConfig, nil).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(expectedConfig, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -2350,7 +2350,7 @@ receivers:
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{}, errors.New("config error")).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{}, errors.New("config error")).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)

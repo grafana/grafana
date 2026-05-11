@@ -686,6 +686,40 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 			require.Equal(t, expectedRv, actualRv, "wrong RV for %s", name)
 		}
 	})
+
+	t.Run("cross-namespace scan with empty namespace", func(t *testing.T) {
+		// Two namespaces, each with a resource named "shared". The
+		// cross-namespace scan must yield both rather than collapsing
+		// them through name-based dedup.
+		nsA := nsPrefix + "-cross-a"
+		nsB := nsPrefix + "-cross-b"
+		startRv, err := WriteEvent(ctx, backend, "shared", resourcepb.WatchEvent_ADDED, WithNamespace(nsA))
+		require.NoError(t, err)
+		rvA, err := WriteEvent(ctx, backend, "shared", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(nsA, startRv))
+		require.NoError(t, err)
+		rvB, err := WriteEvent(ctx, backend, "shared", resourcepb.WatchEvent_ADDED, WithNamespace(nsB))
+		require.NoError(t, err)
+
+		key := resource.NamespacedResource{
+			Group:    "group",
+			Resource: "resource",
+		}
+		_, seq := backend.ListModifiedSince(ctx, key, startRv-1, nil)
+
+		seen := map[string]int64{}
+		for res, err := range seq {
+			require.NoError(t, err)
+			if res.Key.Name != "shared" {
+				continue
+			}
+			if res.Key.Namespace != nsA && res.Key.Namespace != nsB {
+				continue
+			}
+			seen[res.Key.Namespace] = res.ResourceVersion
+		}
+		require.Equal(t, rvA, seen[nsA], "namespace A should yield latest rv for shared")
+		require.Equal(t, rvB, seen[nsB], "namespace B should yield latest rv for shared")
+	})
 }
 
 func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {

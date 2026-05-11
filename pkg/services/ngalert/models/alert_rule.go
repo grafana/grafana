@@ -670,7 +670,8 @@ type AlertRuleKeyWithGroup struct {
 
 type AlertRuleKeyWithId struct {
 	AlertRuleKey
-	ID int64
+	ID   int64
+	GUID string
 }
 
 // AlertRuleGroupKey is the identifier of a group of alerts
@@ -965,7 +966,7 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 	}
 
 	if alertRule.NotificationSettings != nil {
-		result.NotificationSettings = util.Pointer(CopyNotificationSettings(*alertRule.NotificationSettings))
+		result.NotificationSettings = new(CopyNotificationSettings(*alertRule.NotificationSettings))
 	}
 
 	return &result

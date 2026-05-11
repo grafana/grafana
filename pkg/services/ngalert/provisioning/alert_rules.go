@@ -474,6 +474,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		for _, key := range ids {
 			if key.UID == rule.UID {
 				rule.ID = key.ID
+				rule.GUID = key.GUID
 				fixed = true
 				break
 			}
@@ -940,7 +941,11 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
-	rule.IntervalSeconds = storedRule.IntervalSeconds
+	// Normal rule groups share an interval, so single-rule updates can't change it.
+	// NoGroup rules each live in their own sentinel group, so per-rule interval changes are allowed.
+	if !models.IsNoGroupRuleGroup(storedRule.RuleGroup) {
+		rule.IntervalSeconds = storedRule.IntervalSeconds
+	}
 
 	// Currently metadata contains only editor settings, so we can just copy it.
 	// If we add more fields to metadata, we might need to handle them separately,
@@ -1113,7 +1118,7 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 
 	namespaces := make(map[string][]*models.AlertRuleGroupKey)
 	for groupKey := range groups {
-		namespaces[groupKey.NamespaceUID] = append(namespaces[groupKey.NamespaceUID], util.Pointer(groupKey))
+		namespaces[groupKey.NamespaceUID] = append(namespaces[groupKey.NamespaceUID], new(groupKey))
 	}
 
 	if len(namespaces) == 0 {

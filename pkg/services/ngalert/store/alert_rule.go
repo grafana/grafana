@@ -89,7 +89,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 				version.Created = TimeNow()
 				version.CreatedBy = nil
 				if user != nil {
-					version.CreatedBy = util.Pointer(string(*user))
+					version.CreatedBy = new(string(*user))
 				}
 			}
 		}
@@ -541,7 +541,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 				r := newRules[i]
 				key := ngmodels.AlertRuleKey{OrgID: r.OrgID, UID: r.UID}
 
-				ids = append(ids, ngmodels.AlertRuleKeyWithId{AlertRuleKey: key, ID: r.ID})
+				ids = append(ids, ngmodels.AlertRuleKeyWithId{AlertRuleKey: key, ID: r.ID, GUID: r.GUID})
 				keys = append(keys, key)
 			}
 		}

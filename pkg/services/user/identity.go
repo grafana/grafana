@@ -43,6 +43,8 @@ type SignedInUser struct {
 	// Deprecated: use TeamUIDs instead
 	TeamIDs  []int64
 	TeamUIDs []string
+	// ExternalGroups holds groups asserted by the external IdP (SAML/OIDC/LDAP).
+	ExternalGroups []string `json:"-" xorm:"-"`
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
 
@@ -144,6 +146,10 @@ func (u *SignedInUser) GetExtra() map[string][]string {
 
 func (u *SignedInUser) GetGroups() []string {
 	return u.TeamUIDs
+}
+
+func (u *SignedInUser) GetExternalGroups() []string {
+	return u.ExternalGroups
 }
 
 func (u *SignedInUser) GetTokenPermissions() []string {

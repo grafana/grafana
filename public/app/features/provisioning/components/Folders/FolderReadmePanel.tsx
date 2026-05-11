@@ -287,7 +287,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   body: css({
     padding: theme.spacing(2),
-    maxHeight: '60vh',
-    overflowY: 'auto',
   }),
 });
