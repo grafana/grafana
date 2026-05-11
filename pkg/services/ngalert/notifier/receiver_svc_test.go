@@ -275,7 +275,7 @@ func TestReceiverService_Delete(t *testing.T) {
 	}}
 
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
-	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))()
+	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))() // nolint:staticcheck // SA4006 false positive with new
 	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"), models.ReceiverMuts.WithIntegrations(slackIntegration))()
 
 	for _, tc := range []struct {

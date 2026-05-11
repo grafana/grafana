@@ -359,7 +359,7 @@ func TestCache_GetAlertInstances(t *testing.T) {
 		},
 		{
 			name:   "returns alert instances",
-			states: []*State{new(randomState(ruleKey)), new(randomState(ruleKey))},
+			states: []*State{randomState(ruleKey), randomState(ruleKey)},
 		},
 	}
 
@@ -536,8 +536,8 @@ func TestCache_reset(t *testing.T) {
 	})
 }
 
-func randomState(ruleKey models.AlertRuleKey) State {
-	return State{
+func randomState(ruleKey models.AlertRuleKey) *State {
+	return &State{
 		OrgID:             ruleKey.OrgID,
 		AlertRuleUID:      ruleKey.UID,
 		CacheID:           data.Fingerprint(rand.Int63()),
