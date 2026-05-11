@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
 
@@ -382,7 +382,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 			dt := fromStart
 
-			for i := 0; i < 2; i++ {
+			for i := range 2 {
 				aValue := *frames[0].Fields[1].At(i).(*float64)
 				aTime := *frames[0].Fields[0].At(i).(*time.Time)
 				require.Equal(t, float64(15), aValue)

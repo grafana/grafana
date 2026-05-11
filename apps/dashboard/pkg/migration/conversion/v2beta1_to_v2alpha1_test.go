@@ -231,7 +231,7 @@ func TestV2beta1ToV2alpha1(t *testing.T) {
 																Version: "v0",
 																Group:   "prometheus",
 																Datasource: &dashv2beta1.DashboardV2beta1DataQueryKindDatasource{
-																	Name: stringPtr("prometheus-uid"),
+																	Name: new("prometheus-uid"),
 																},
 																Spec: map[string]interface{}{
 																	"expr": "up",
@@ -262,7 +262,7 @@ func TestV2beta1ToV2alpha1(t *testing.T) {
 				assert.NotNil(t, v2alpha1.Spec.Elements["panel-1"])
 				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
 				require.NotNil(t, panel)
-				assert.Equal(t, float64(1), panel.Spec.Id)
+				assert.Equal(t, int32(1), panel.Spec.Id)
 				assert.Equal(t, "Test Panel", panel.Spec.Title)
 				// Verify datasource was moved from query to panel query spec
 				require.Len(t, panel.Spec.Data.Spec.Queries, 1)
@@ -343,7 +343,7 @@ func TestV2beta1ToV2alpha1(t *testing.T) {
 										Version: "v0",
 										Group:   "prometheus",
 										Datasource: &dashv2beta1.DashboardV2beta1DataQueryKindDatasource{
-											Name: stringPtr("prometheus-uid"),
+											Name: new("prometheus-uid"),
 										},
 										Spec: map[string]interface{}{
 											"expr": "up",
@@ -419,7 +419,7 @@ func TestV2beta1ToV2alpha1(t *testing.T) {
 											Version: "v0",
 											Group:   "prometheus",
 											Datasource: &dashv2beta1.DashboardV2beta1DataQueryKindDatasource{
-												Name: stringPtr("prometheus-uid"),
+												Name: new("prometheus-uid"),
 											},
 											Spec: map[string]interface{}{
 												"expr": "label_values(up, instance)",
@@ -549,8 +549,8 @@ func TestV2beta1ToV2alpha1(t *testing.T) {
 										{
 											Kind: "RowsLayoutRow",
 											Spec: dashv2beta1.DashboardRowsLayoutRowSpec{
-												Title:    stringPtr("Row 1"),
-												Collapse: boolPtr(false),
+												Title:    new("Row 1"),
+												Collapse: new(false),
 												Layout: dashv2beta1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{
 													GridLayoutKind: &dashv2beta1.DashboardGridLayoutKind{
 														Kind: "GridLayout",
@@ -791,14 +791,4 @@ func TestV2beta1ToV2alpha1(t *testing.T) {
 			tc.validateV2alpha1(t, &v2alpha1)
 		})
 	}
-}
-
-// Helper function to create string pointer
-func stringPtr(s string) *string {
-	return &s
-}
-
-// Helper function to create bool pointer
-func boolPtr(b bool) *bool {
-	return &b
 }

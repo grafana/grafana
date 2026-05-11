@@ -252,9 +252,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     contentWithIcon: css({
       display: 'none',
       paddingLeft: theme.spacing(1),
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      minWidth: 0,
 
       [`@media ${mediaUp(theme.v1.breakpoints.md)}`]: {
         display: 'block',

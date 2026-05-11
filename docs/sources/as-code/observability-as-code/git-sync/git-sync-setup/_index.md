@@ -11,7 +11,7 @@ labels:
     - oss
     - cloud
 title: Set up Git Sync
-weight: 150
+weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/git-sync-setup/
 aliases:
   - ../../../observability-as-code/provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
@@ -21,7 +21,7 @@ aliases:
 
 # Set up Git Sync
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
 **Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
 
@@ -80,6 +80,12 @@ If you want to configure Git Sync for GitHub and authenticate with a Personal Ac
 - **Metadata**: Read-only permission
 - **Pull requests**: Read and write permission
 - **Webhooks**: Read and write permission
+
+{{< admonition type="note" >}}
+
+The Personal Access Token must belong to a user with the **Admin** role on the repository. GitHub only grants the **Webhooks: Read and write** permission to repository admins, so tokens created by non-admin users can't manage the webhooks Git Sync relies on for instantaneous updates and pull request previews.
+
+{{< /admonition >}}
 
 Refer to [Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for instructions.
 

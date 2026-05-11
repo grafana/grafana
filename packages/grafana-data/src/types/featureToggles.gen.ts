@@ -39,11 +39,6 @@ export interface FeatureToggles {
   */
   featureHighlights?: boolean;
   /**
-  * Configurable storage for dashboards, datasources, and resources
-  * @default false
-  */
-  storage?: boolean;
-  /**
   * Allow elements nesting
   * @default false
   */
@@ -229,6 +224,11 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
+  * Enables usage of the new annotations API client
+  * @default false
+  */
+  kubernetesAnnotationsClient?: boolean;
+  /**
   * Enables k8s short url api and uses it under the hood when handling legacy /api
   * @default false
   */
@@ -314,11 +314,6 @@ export interface FeatureToggles {
   */
   datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
   /**
-  * use raw output mode for the data source querier
-  * @default false
-  */
-  datasourcesQuerierRawOutput?: boolean;
-  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
@@ -393,11 +388,6 @@ export interface FeatureToggles {
   * @default false
   */
   unlimitedLayoutsNesting?: boolean;
-  /**
-  * Enables CSV export using scenes dashboard architecture
-  * @default true
-  */
-  sceneCsvExport?: boolean;
   /**
   * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
   * @default false
@@ -510,12 +500,12 @@ export interface FeatureToggles {
   scopeApi?: boolean;
   /**
   * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
-  * @default false
+  * @default true
   */
   useScopeSingleNodeEndpoint?: boolean;
   /**
   * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
-  * @default false
+  * @default true
   */
   useMultipleScopeNodesEndpoint?: boolean;
   /**
@@ -800,11 +790,6 @@ export interface FeatureToggles {
   */
   pluginsSriChecks?: boolean;
   /**
-  * Enables to save big objects in blob storage
-  * @default false
-  */
-  unifiedStorageBigObjectsSupport?: boolean;
-  /**
   * Enables time pickers sync
   * @default false
   */
@@ -1000,11 +985,6 @@ export interface FeatureToggles {
   */
   newShareReportDrawer?: boolean;
   /**
-  * Enables SRI checks for Grafana JavaScript assets
-  * @default false
-  */
-  assetSriChecks?: boolean;
-  /**
   * Enables the alert rule restore feature
   * @default true
   */
@@ -1146,11 +1126,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
-  * Enables restore deleted dashboards feature
-  * @default true
-  */
-  restoreDashboards?: boolean;
-  /**
   * Enables recently viewed dashboards section in the browsing dashboard page
   * @default false
   */
@@ -1262,7 +1237,7 @@ export interface FeatureToggles {
   newLogContext?: boolean;
   /**
   * Enables new design for the Clickhouse data source configuration page
-  * @default false
+  * @default true
   */
   newClickhouseConfigPageDesign?: boolean;
   /**
@@ -1447,18 +1422,13 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables plugins decoupling from bootdata
-  * @default false
-  */
-  useMTPlugins?: boolean;
-  /**
   * Enables support for variables whose values can have multiple properties
   * @default true
   */
   multiPropsVariables?: boolean;
   /**
   * Enables support for section level variables (rows and tabs)
-  * @default false
+  * @default true
   */
   dashboardSectionVariables?: boolean;
   /**
@@ -1491,6 +1461,11 @@ export interface FeatureToggles {
   * @default false
   */
   queryEditorNext?: boolean;
+  /**
+  * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
+  * @default false
+  */
+  queryEditorNextMultiSelect?: boolean;
   /**
   * Enables search for team bindings in the app platform API
   * @default false
@@ -1556,11 +1531,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingPolicyRoutingSettings?: boolean;
-  /**
-  * Registers an API server for each backend app plugin exposing a settings endpoint
-  * @default false
-  */
-  appPluginAPIServer?: boolean;
   /**
   * Makes NoData and Error alerts fire immediately, without 'pending' stage
   * @default false
@@ -1662,11 +1632,6 @@ export interface FeatureToggles {
   */
   logsTablePanelNG?: boolean;
   /**
-  * Enables plugins setting from new apis
-  * @default false
-  */
-  useMTPluginSettings?: boolean;
-  /**
   * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
   * @default false
   */
@@ -1707,11 +1672,6 @@ export interface FeatureToggles {
   */
   clearPreviousFieldValues?: boolean;
   /**
-  * Enables loading datasource plugins from the MetaAPI instead of bootData settings
-  * @default false
-  */
-  enableDatasourceMetaApiPluginLoading?: boolean;
-  /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false
   */
@@ -1736,4 +1696,9 @@ export interface FeatureToggles {
   * @default false
   */
   clickHouseConfigValidation?: boolean;
+  /**
+  * Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
+  * @default false
+  */
+  ['alerting.rulesAPIV2']?: boolean;
 }

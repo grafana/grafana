@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { type SelectableValue, type StandardEditorProps } from '@grafana/data';
+import { type StandardEditorProps } from '@grafana/data';
 import { DashboardPicker as BasePicker, type DashboardPickerDTO } from 'app/core/components/Select/DashboardPicker';
 
 export interface DashboardPickerOptions {
@@ -15,8 +15,8 @@ export const DashboardPicker = ({ value, onChange, item }: Props) => {
   const { placeholder, isClearable } = item?.settings ?? {};
 
   const onPicked = useCallback(
-    (sel?: SelectableValue<DashboardPickerDTO>) => {
-      onChange(sel?.value?.uid);
+    (sel?: DashboardPickerDTO) => {
+      onChange(sel?.uid);
     },
     [onChange]
   );

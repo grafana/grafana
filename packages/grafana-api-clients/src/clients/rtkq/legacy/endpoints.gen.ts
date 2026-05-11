@@ -4508,16 +4508,16 @@ export type PreferencesQueryHistoryPreference = {
 export type PreferencesSpec = {
   /** UID for the home dashboard */
   homeDashboardUID?: string;
-  /** Selected language (beta) */
+  /** Selected language */
   language?: string;
   navbar?: PreferencesNavbarPreference;
   queryHistory?: PreferencesQueryHistoryPreference;
-  /** Selected locale (beta) */
+  /** Selected locale (beta)
+    TODO: Will be removed */
   regionalFormat?: string;
-  /** light, dark, empty is default */
+  /** user interface theme */
   theme?: string;
-  /** The timezone selection
-    TODO: this should use the timezone defined in common */
+  /** The timezone selection */
   timezone?: string;
   /** day of the week (sunday, monday, etc) */
   weekStart?: string;
@@ -4788,6 +4788,10 @@ export type ReportSchedule = {
   workdaysOnly?: boolean;
 };
 export type State = string;
+export type ReportUrlItem = {
+  title?: string;
+  url?: string;
+};
 export type Report = {
   created?: string;
   dashboards?: ReportDashboard[];
@@ -4807,6 +4811,7 @@ export type Report = {
   subject?: string;
   uid?: string;
   updated?: string;
+  urls?: ReportUrlItem[];
   userId?: number;
 };
 export type CreateOrUpdateReport = {
@@ -4823,6 +4828,7 @@ export type CreateOrUpdateReport = {
   schedule?: ReportSchedule;
   state?: State;
   subject?: string;
+  urls?: ReportUrlItem[];
 };
 export type ReportEmail = {
   /** Comma-separated list of emails to which to send the report to. */

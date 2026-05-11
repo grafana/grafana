@@ -5,11 +5,11 @@ import (
 	"errors"
 	"strings"
 
-	claims "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	claims "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -210,6 +210,12 @@ func (f *StoreWrapper) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Obj
 	}
 
 	return nil
+}
+
+// WatchFilter implements ResourceStorageAuthorizer.
+// TODO: implement proper watch filtering by pre-fetching hidden users at watch start.
+func (f *StoreWrapper) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.RejectAllWatchFilter, nil
 }
 
 // BeforeDelete returns Forbidden if the target user is in the hidden users list.

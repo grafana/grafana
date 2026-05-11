@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/ini.v1"
+
 	dstls "github.com/grafana/dskit/crypto/tls"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"gopkg.in/ini.v1"
 
 	alertingCluster "github.com/grafana/alerting/cluster"
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -158,6 +159,10 @@ type UnifiedAlertingSettings struct {
 	BacktestingMaxEvaluations int
 
 	IgnorePendingForNoDataAndError bool
+
+	// LimitEmailToOrgMembers restricts email contact point recipients to users that belong to the organization (including disabled users).
+	// Applied only during contact point configuration (Create/Update), not at notification send time.
+	LimitEmailToOrgMembers bool
 }
 
 type RecordingRuleSettings struct {
@@ -248,7 +253,7 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	// spelling mistake in the string "false" could enable unified alerting rather
 	// than disable it. This issue can be found here
 	if section.Key("enabled").Value() == "" {
-		return util.Pointer(true), nil
+		return new(true), nil
 	}
 	unifiedAlerting, err := section.Key("enabled").Bool()
 	if err != nil {
@@ -614,6 +619,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaCfg.BacktestingMaxEvaluations < 0 {
 		uaCfg.BacktestingMaxEvaluations = 100
 	}
+
+	uaCfg.LimitEmailToOrgMembers = ua.Key("limit_email_to_org_members").MustBool(false)
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

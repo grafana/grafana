@@ -15,6 +15,7 @@ import { DataTransformerID } from './ids';
 import { findMaxFields } from './utils';
 
 export const SHOW_NESTED_HEADERS_DEFAULT = true;
+export const EXPAND_ALL_ROWS_DEFAULT = false;
 const MINIMUM_FIELDS_REQUIRED = 2;
 
 // ---------------------------------------------------------------------------
@@ -27,6 +28,7 @@ const MINIMUM_FIELDS_REQUIRED = 2;
  */
 export interface GroupToNestedTableTransformerOptions {
   showSubframeHeaders?: boolean;
+  expandAllRows?: boolean;
   fields: Record<string, GroupByFieldOptions>;
 }
 
@@ -41,10 +43,19 @@ export interface GroupToNestedTableMatcherConfig {
   operation: GroupByOperationID | null;
   /** Aggregation reducers to apply when operation is 'aggregate'. */
   aggregations: ReducerID[];
+  /**
+   * When operation is 'aggregate', setting this to true also retains the raw field
+   * values in the nested sub-frame alongside the aggregated outer column.
+   * Defaults to false (undefined treated as false) — aggregated fields are excluded
+   * from the nested frame by default.
+   */
+  keepNestedField?: boolean;
 }
 
 export interface GroupToNestedTableTransformerOptionsV2 {
   showSubframeHeaders?: boolean;
+  /** When true, all nested rows are expanded by default when the panel loads. */
+  expandAllRows?: boolean;
   /** Ordered list of matcher rules. First matching rule for a field wins. */
   rules: GroupToNestedTableMatcherConfig[];
 }
@@ -77,10 +88,12 @@ export function migrateGroupToNestedTableOptions(
     matcher: { id: FieldMatcherID.byName, options: fieldName },
     operation: fieldOpts.operation,
     aggregations: fieldOpts.aggregations ?? [],
+    keepNestedField: false,
   }));
 
   return {
     showSubframeHeaders: options.showSubframeHeaders,
+    expandAllRows: options.expandAllRows,
     rules,
   };
 }
@@ -244,7 +257,9 @@ export const groupToNestedTable: DataTransformerInfo<
             values: subFrames,
           });
 
+          const expandAllRows = options.expandAllRows ?? EXPAND_ALL_ROWS_DEFAULT;
           processed.push({
+            meta: expandAllRows ? { custom: { expandAllRows: true } } : undefined,
             fields,
             length: valuesByGroupKey.size,
           });
@@ -323,8 +338,11 @@ function groupToSubframes(
       ) {
         // Rule exists but is unconfigured — include in nested table
         nestedFields.push(field);
+      } else if (rule.operation === GroupByOperationID.aggregate && rule.keepNestedField === true) {
+        // Aggregated field with keepNestedField — include raw values in nested table too
+        nestedFields.push(field);
       }
-      // operation === groupBy or aggregate with reducers → excluded from nested table
+      // operation === groupBy, or aggregate with reducers and keepNestedField not set → excluded from nested table
     }
 
     if (nestedFields.length > 0) {

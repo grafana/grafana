@@ -9,11 +9,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type predicate interface {
@@ -184,9 +182,9 @@ func (tc *ThresholdCommand) Execute(_ context.Context, _ time.Time, vars mathexp
 			result = !result
 		}
 		if result {
-			return util.Pointer(float64(1))
+			return new(float64(1))
 		}
-		return util.Pointer(float64(0))
+		return new(float64(0))
 	}
 
 	refVarResult := vars[tc.ReferenceVar]
@@ -195,7 +193,7 @@ func (tc *ThresholdCommand) Execute(_ context.Context, _ time.Time, vars mathexp
 		switch v := val.(type) {
 		case mathexp.Series:
 			s := mathexp.NewSeries(tc.RefID, v.GetLabels(), v.Len())
-			for i := 0; i < v.Len(); i++ {
+			for i := range v.Len() {
 				t, value := v.GetPoint(i)
 				s.SetPoint(i, t, eval(value))
 			}

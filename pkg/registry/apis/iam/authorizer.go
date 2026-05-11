@@ -114,28 +114,38 @@ func (s *iamAuthorizer) Authorize(ctx context.Context, attr authorizer.Attribute
 	return authz.Authorize(ctx, attr)
 }
 
-// newTeamAuthorizer creates an authorizer for teams that handles the "members" and "groups" subresources
-// with a get_permissions check on the parent team resource.
+// newTeamAuthorizer authorizes the "members", "groups", "addmember" and
+// "removemember" subresources:
+//   - members / groups: read paths, gated on `get_permissions` on the
+//     parent team.
+//   - addmember / removemember: single-member writes, gated on `update`
+//     on the parent team — same bar as a full PUT.
 func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
-	check := func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
-			Verb:      utils.VerbGetPermissions,
-			Group:     attr.GetAPIGroup(),
-			Resource:  attr.GetResource(),
-			Namespace: attr.GetNamespace(),
-			Name:      attr.GetName(),
-		}, "")
-		if err != nil {
-			return authorizer.DecisionDeny, "", err
+	check := func(verb string, denyReason string) gfauthorizer.SubresourceCheck {
+		return func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
+				Verb:      verb,
+				Group:     attr.GetAPIGroup(),
+				Resource:  attr.GetResource(),
+				Namespace: attr.GetNamespace(),
+				Name:      attr.GetName(),
+			}, "")
+			if err != nil {
+				return authorizer.DecisionDeny, "", err
+			}
+			if !res.Allowed {
+				return authorizer.DecisionDeny, denyReason, nil
+			}
+			return authorizer.DecisionAllow, "", nil
 		}
-		if !res.Allowed {
-			return authorizer.DecisionDeny, "requires team getpermissions", nil
-		}
-		return authorizer.DecisionAllow, "", nil
 	}
+	getPermissions := check(utils.VerbGetPermissions, "requires team getpermissions")
+	update := check(utils.VerbUpdate, "requires team update")
 	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
-		"members": check,
-		"groups":  check,
+		"members":      getPermissions,
+		"groups":       getPermissions,
+		"addmember":    update,
+		"removemember": update,
 	})
 }
 
@@ -183,14 +193,24 @@ func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 	})
 }
 
-// newServiceAccountAuthorizer creates an authorizer for service accounts that handles the "tokens" subresource
-// with a get check on the parent service account resource.
-// This follows the legacy permission pattern where viewing tokens requires serviceaccounts:read on serviceaccounts:id:<id>.
+// newServiceAccountAuthorizer creates an authorizer for service accounts that handles the "tokens" subresource.
+// Token operations are mapped to align with the legacy API permissions:
+//   - GET  (get/list) → serviceaccounts:read  (verb "get")
+//   - POST (create)   → serviceaccounts:write  (verb "update")
+//   - DELETE           → serviceaccounts:write  (verb "update")
 func newServiceAccountAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
 	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
 		"tokens": func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			// Map verbs to match the legacy API: read operations use "get",
+			// write operations (create/delete) use "update" → serviceaccounts:write.
+			verb := attr.GetVerb()
+			switch verb {
+			case utils.VerbCreate, utils.VerbDelete:
+				verb = utils.VerbUpdate
+			}
+
 			res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
-				Verb:      utils.VerbGet,
+				Verb:      verb,
 				Group:     attr.GetAPIGroup(),
 				Resource:  attr.GetResource(),
 				Namespace: attr.GetNamespace(),
@@ -200,7 +220,7 @@ func newServiceAccountAuthorizer(accessClient authlib.AccessClient) authorizer.A
 				return authorizer.DecisionDeny, "", err
 			}
 			if !res.Allowed {
-				return authorizer.DecisionDeny, "requires serviceaccount get", nil
+				return authorizer.DecisionDeny, fmt.Sprintf("requires serviceaccount %s", verb), nil
 			}
 			return authorizer.DecisionAllow, "", nil
 		},

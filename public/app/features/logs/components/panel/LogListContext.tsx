@@ -10,6 +10,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { usePrevious } from 'react-use';
 
 import { createAssistantContextItem, type OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
@@ -73,6 +74,7 @@ export interface LogListContextData
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
+  allowDownload: true,
   controlsExpanded: false,
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
@@ -144,6 +146,7 @@ export type LogListState = Pick<
 
 export interface Props {
   app: CoreApp;
+  allowDownload?: boolean;
   children?: ReactNode;
   // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
   containerElement?: HTMLDivElement;
@@ -191,6 +194,7 @@ export interface Props {
 
 export const LogListContextProvider = ({
   app,
+  allowDownload,
   children,
   containerElement,
   logOptionsStorageKey,
@@ -379,11 +383,15 @@ export const LogListContextProvider = ({
   }, [timestampResolution]);
 
   // Sync showLogAttributes
+  const prevShowLogAttributes = usePrevious(showLogAttributes);
   useEffect(() => {
-    if (showLogAttributes === false && setDisplayedFields) {
+    if (prevShowLogAttributes === undefined) {
+      return;
+    }
+    if (prevShowLogAttributes === true && showLogAttributes === false && setDisplayedFields) {
       setDisplayedFields([]);
     }
-  }, [setDisplayedFields, showLogAttributes]);
+  }, [prevShowLogAttributes, setDisplayedFields, showLogAttributes]);
 
   const controlsExpandedFromStore = store.getBool(
     `${logOptionsStorageKey}.controlsExpanded`,
@@ -594,6 +602,7 @@ export const LogListContextProvider = ({
     <LogListContext.Provider
       value={{
         app,
+        allowDownload,
         controlsExpanded,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields,

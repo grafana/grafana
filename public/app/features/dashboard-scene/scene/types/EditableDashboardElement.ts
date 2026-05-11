@@ -27,6 +27,11 @@ export interface EditableDashboardElement {
   renderActions?(): ReactNode;
 
   /**
+   * Panel Actions
+   **/
+  renderTopButton?(): ReactNode;
+
+  /**
    * Supports delete action
    */
   onDelete?(): void;

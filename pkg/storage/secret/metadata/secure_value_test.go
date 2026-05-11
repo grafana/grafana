@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 	"pgregory.net/rapid"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -26,7 +25,7 @@ func TestModel(t *testing.T) {
 		},
 		Spec: secretv1beta1.SecureValueSpec{
 			Description: "desc1",
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("v1")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("v1")),
 			Decrypters:  []string{"decrypter1"},
 		},
 		Status: secretv1beta1.SecureValueStatus{},
@@ -80,7 +79,7 @@ func TestModel(t *testing.T) {
 		// Updating a value that doesn't exist creates a new version
 		sv4 := sv3.DeepCopy()
 		sv4.Name = "i_dont_exist"
-		sv4.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("sv4"))
+		sv4.Spec.Value = new(secretv1beta1.NewExposedSecureValue("sv4"))
 		_, _, err = m.Update(now, sv4)
 		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
 	})
@@ -187,7 +186,7 @@ func TestModel(t *testing.T) {
 			},
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "desc1",
-				Ref:         ptr.To("ref1"),
+				Ref:         new("ref1"),
 				Decrypters:  []string{"decrypter1"},
 			},
 			Status: secretv1beta1.SecureValueStatus{},
