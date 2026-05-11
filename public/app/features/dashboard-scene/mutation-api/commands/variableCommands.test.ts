@@ -5,6 +5,9 @@ import type { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
+import { TabItem } from '../../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { getTestDashboardSceneFromSaveModel } from '../../utils/test-utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
@@ -303,6 +306,73 @@ describe('Variable mutation commands', () => {
       return scene as unknown as DashboardScene;
     }
 
+    function buildSceneWithNestedRowsInTab(): DashboardScene {
+      const nestedRows = new RowsLayoutManager({
+        rows: [
+          new RowItem({ title: 'R0', layout: DefaultGridLayoutManager.fromVizPanels([]) }),
+          new RowItem({ title: 'R1', layout: DefaultGridLayoutManager.fromVizPanels([]) }),
+        ],
+      });
+      const body = new TabsLayoutManager({
+        tabs: [new TabItem({ title: 'T0', layout: nestedRows })],
+      });
+      const state: Record<string, unknown> = {
+        uid: 'test-dash',
+        isEditing: true,
+        body,
+        $variables: new SceneVariableSet({ variables: [] }),
+      };
+      const scene = {
+        state,
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+          const vars = partial.$variables;
+          if (vars && typeof (vars as SceneVariableSet).activate === 'function') {
+            (vars as SceneVariableSet).activate();
+          }
+        }),
+      };
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- mock scene satisfies DashboardScene at runtime
+      return scene as unknown as DashboardScene;
+    }
+
+    function buildSceneWithInactiveTab(): DashboardScene {
+      const tab0 = new TabItem({ title: 'T0', layout: DefaultGridLayoutManager.fromVizPanels([]) });
+      const tab1 = new TabItem({ title: 'T1', layout: DefaultGridLayoutManager.fromVizPanels([]) });
+      const body = new TabsLayoutManager({
+        tabs: [tab0, tab1],
+        currentTabSlug: tab0.getSlug(),
+      });
+      const state: Record<string, unknown> = {
+        uid: 'test-dash',
+        isEditing: true,
+        body,
+        $variables: new SceneVariableSet({ variables: [] }),
+      };
+      const scene = {
+        state,
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+          const vars = partial.$variables;
+          if (vars && typeof (vars as SceneVariableSet).activate === 'function') {
+            (vars as SceneVariableSet).activate();
+          }
+        }),
+      };
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- mock scene satisfies DashboardScene at runtime
+      return scene as unknown as DashboardScene;
+    }
+
     it('ADD_VARIABLE with parentPath adds to row scope and uses scoped change path', async () => {
       scene = buildSceneWithRow();
       client = new DashboardMutationClient(scene);
@@ -368,6 +438,34 @@ describe('Variable mutation commands', () => {
       expect(result.changes[0].path).toBe('/rows/0/variables/rowVar');
     });
 
+    it('UPDATE_VARIABLE supports nested parentPath like /tabs/0/rows/1', async () => {
+      scene = buildSceneWithNestedRowsInTab();
+      client = new DashboardMutationClient(scene);
+
+      await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: {
+          parentPath: '/tabs/0/rows/1',
+          variable: { kind: 'CustomVariable', spec: { name: 'nestedVar', query: 'a,b' } },
+        },
+      });
+
+      const result = await client.execute({
+        type: 'UPDATE_VARIABLE',
+        payload: {
+          parentPath: '/tabs/0/rows/1',
+          name: 'nestedVar',
+          variable: { kind: 'CustomVariable', spec: { name: 'nestedVar', query: 'a,b,c' } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.changes[0].path).toBe('/tabs/0/rows/1/variables/nestedVar');
+      const body = scene.state.body as TabsLayoutManager;
+      const nestedRow = (body.state.tabs[0].state.layout as RowsLayoutManager).state.rows[1];
+      expect(nestedRow.state.$variables?.getByName('nestedVar')).toBeDefined();
+    });
+
     it('LIST_VARIABLES with parentPath returns only that scope', async () => {
       scene = buildSceneWithRow();
       client = new DashboardMutationClient(scene);
@@ -392,6 +490,8 @@ describe('Variable mutation commands', () => {
       expect(rowList.success).toBe(true);
       const dashVars = (dashList.data as { variables: Array<{ spec: { name: string } }> }).variables;
       const rowVars = (rowList.data as { variables: Array<{ spec: { name: string } }> }).variables;
+      expect((dashList.data as { scopePath: string }).scopePath).toBe('/');
+      expect((rowList.data as { scopePath: string }).scopePath).toBe('/rows/0');
       expect(dashVars.map((v) => v.spec.name)).toEqual(['dashVar']);
       expect(rowVars.map((v) => v.spec.name)).toEqual(['rowVar']);
     });
@@ -414,6 +514,24 @@ describe('Variable mutation commands', () => {
       expect((scene.state.$variables as SceneVariableSet).getByName('fallbackDashVar')).toBeDefined();
       const body = scene.state.body as RowsLayoutManager;
       expect(body.state.rows[0].state.$variables?.getByName('fallbackDashVar')).toBeUndefined();
+    });
+
+    it('ADD_VARIABLE works for parentPath on an inactive tab', async () => {
+      scene = buildSceneWithInactiveTab();
+      client = new DashboardMutationClient(scene);
+
+      const result = await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: {
+          parentPath: '/tabs/1',
+          variable: { kind: 'CustomVariable', spec: { name: 'inactiveTabVar', query: 'a,b' } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.changes[0].path).toBe('/tabs/1/variables/inactiveTabVar');
+      const body = scene.state.body as TabsLayoutManager;
+      expect(body.state.tabs[1].state.$variables?.getByName('inactiveTabVar')).toBeDefined();
     });
 
     it('UPDATE_VARIABLE ignores parentPath when dashboardSectionVariables is disabled', async () => {
@@ -464,6 +582,93 @@ describe('Variable mutation commands', () => {
       expect(result.success).toBe(true);
       expect(result.changes[0].path).toBe('/variables/fallbackDashVar');
       expect((scene.state.$variables as SceneVariableSet).getByName('fallbackDashVar')).toBeUndefined();
+    });
+
+    it('REMOVE_VARIABLE does not section-scan when dashboardSectionVariables is disabled', async () => {
+      setTestFlags({ dashboardSectionVariables: false });
+      scene = buildSceneWithRow();
+      client = new DashboardMutationClient(scene);
+
+      const body = scene.state.body as RowsLayoutManager;
+      const rowVarSet = new SceneVariableSet({
+        variables: [new CustomVariable({ name: 'onlyRow', query: 'a,b' })],
+      });
+      body.state.rows[0].setState({ $variables: rowVarSet });
+      rowVarSet.activate();
+
+      const result = await client.execute({
+        type: 'REMOVE_VARIABLE',
+        payload: {
+          parentPath: '/rows/0',
+          name: 'onlyRow',
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Variable 'onlyRow' not found");
+      expect(result.error).not.toContain('not on the dashboard');
+    });
+
+    it('LIST_VARIABLES returns effective scopePath when section variables are disabled', async () => {
+      setTestFlags({ dashboardSectionVariables: false });
+      scene = buildSceneWithRow();
+      client = new DashboardMutationClient(scene);
+
+      const result = await client.execute({
+        type: 'LIST_VARIABLES',
+        payload: { parentPath: '/rows/0' },
+      });
+
+      expect(result.success).toBe(true);
+      expect((result.data as { scopePath: string }).scopePath).toBe('/');
+    });
+  });
+
+  describe('real DashboardScene coverage', () => {
+    beforeEach(() => {
+      setTestFlags({ dashboardSectionVariables: true });
+    });
+
+    it('runs section variable mutations against a real DashboardScene instance', async () => {
+      const scene = getTestDashboardSceneFromSaveModel();
+      const row = new RowItem({ title: 'R', layout: DefaultGridLayoutManager.fromVizPanels([]) });
+      scene.setState({
+        body: new RowsLayoutManager({ rows: [row] }),
+        isEditing: true,
+      });
+
+      const executor = new DashboardMutationClient(scene);
+
+      const addResult = await executor.execute({
+        type: 'ADD_VARIABLE',
+        payload: {
+          parentPath: '/rows/0',
+          variable: { kind: 'CustomVariable', spec: { name: 'realSceneVar', query: 'a,b' } },
+        },
+      });
+      expect(addResult.success).toBe(true);
+      expect(addResult.changes[0].path).toBe('/rows/0/variables/realSceneVar');
+      expect(row.state.$variables?.getByName('realSceneVar')).toBeDefined();
+
+      const updateResult = await executor.execute({
+        type: 'UPDATE_VARIABLE',
+        payload: {
+          parentPath: '/rows/0',
+          name: 'realSceneVar',
+          variable: { kind: 'CustomVariable', spec: { name: 'realSceneVar', query: 'a,b,c' } },
+        },
+      });
+      expect(updateResult.success).toBe(true);
+
+      const removeResult = await executor.execute({
+        type: 'REMOVE_VARIABLE',
+        payload: {
+          parentPath: '/rows/0',
+          name: 'realSceneVar',
+        },
+      });
+      expect(removeResult.success).toBe(true);
+      expect(row.state.$variables).toBeUndefined();
     });
   });
 });

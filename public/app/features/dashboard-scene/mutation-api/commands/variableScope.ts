@@ -17,26 +17,32 @@ import { resolveLayoutPath } from './layoutPathResolver';
 export type VariableScopeOwner = DashboardScene | RowItem | TabItem;
 
 export interface ResolvedVariableScope {
-  owner: VariableScopeOwner;
+  scopeOwner: VariableScopeOwner;
   /** Layout path prefix for change paths, e.g. "" for dashboard or "/rows/0". */
   layoutPathPrefix: string;
+}
+
+function getObjectTypeName(value?: object): string | undefined {
+  return value?.constructor?.name;
 }
 
 export function resolveVariableScope(scene: DashboardScene, parentPath?: string): ResolvedVariableScope {
   const path = parentPath ?? '/';
   if (path === '/') {
-    return { owner: scene, layoutPathPrefix: '' };
+    return { scopeOwner: scene, layoutPathPrefix: '' };
   }
 
   const resolved = resolveLayoutPath(scene.state.body, path);
   const item = resolved.item;
+  const resolvedItemType = getObjectTypeName(item) ?? resolved.layoutManager.constructor.name;
   if (!item || (!(item instanceof RowItem) && !(item instanceof TabItem))) {
     throw new Error(
-      `Invalid variable scope "${path}": path must end at a row or tab (e.g. "/rows/0" or "/tabs/1/rows/0").`
+      `Invalid variable scope "${path}": path must end at a row or tab (e.g. "/rows/0" or "/tabs/1/rows/0"), ` +
+        `but resolved item type was "${resolvedItemType}".`
     );
   }
 
-  return { owner: item, layoutPathPrefix: path };
+  return { scopeOwner: item, layoutPathPrefix: path };
 }
 
 export function isSectionVariablesFeatureEnabled(): boolean {

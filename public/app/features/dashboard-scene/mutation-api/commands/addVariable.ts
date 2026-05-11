@@ -13,7 +13,7 @@ import { createSceneVariableFromVariableModel } from '../../serialization/transf
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 import { buildVariableChangePath, getEffectiveVariableParentPath, resolveVariableScope } from './variableScope';
-import { getOwnerVariableArray, replaceOwnerVariableSet } from './variableUtils';
+import { getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
 
 const addVariablePayloadSchema = payloads.addVariable;
 
@@ -36,9 +36,9 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
       const name = variableKind.spec.name;
       const effectiveParentPath = getEffectiveVariableParentPath(parentPath);
 
-      const { owner, layoutPathPrefix } = resolveVariableScope(scene, effectiveParentPath);
+      const { scopeOwner, layoutPathPrefix } = resolveVariableScope(scene, effectiveParentPath);
 
-      const existingVariables = owner.state.$variables;
+      const existingVariables = scopeOwner.state.$variables;
       if (existingVariables) {
         const existing = existingVariables.state.variables.find((v) => v.state.name === name);
         if (existing) {
@@ -49,7 +49,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
       const sceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
 
-      const currentVariables = [...getOwnerVariableArray(owner)];
+      const currentVariables = [...getScopeVariableArray(scopeOwner)];
 
       if (position !== undefined && position >= 0 && position < currentVariables.length) {
         currentVariables.splice(position, 0, sceneVariable);
@@ -57,7 +57,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
         currentVariables.push(sceneVariable);
       }
 
-      replaceOwnerVariableSet(owner, currentVariables);
+      replaceScopeVariableSet(scopeOwner, currentVariables);
 
       const changePath = buildVariableChangePath(layoutPathPrefix, name);
 

@@ -15,7 +15,7 @@ import {
   isSectionVariablesFeatureEnabled,
   resolveVariableScope,
 } from './variableScope';
-import { dashboardHasVariableNamed, getOwnerVariableArray, replaceOwnerVariableSet } from './variableUtils';
+import { dashboardHasVariableNamed, getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
 
 const removeVariablePayloadSchema = payloads.removeVariable;
 
@@ -40,7 +40,10 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
       let scope;
       if (effectiveParentPath === '/') {
         if (!dashboardHasVariableNamed(scene, name)) {
-          const sectionPaths = sectionVariablesEnabled ? findSectionPathsContainingVariable(scene, name) : [];
+          if (!sectionVariablesEnabled) {
+            throw new Error(`Variable '${name}' not found`);
+          }
+          const sectionPaths = findSectionPathsContainingVariable(scene, name);
           if (sectionPaths.length === 0) {
             throw new Error(`Variable '${name}' not found`);
           }
@@ -53,9 +56,9 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
         scope = resolveVariableScope(scene, effectiveParentPath);
       }
 
-      const { owner, layoutPathPrefix } = scope;
+      const { scopeOwner, layoutPathPrefix } = scope;
 
-      const variables = owner.state.$variables;
+      const variables = scopeOwner.state.$variables;
       if (!variables) {
         throw new Error(`Variable '${name}' not found`);
       }
@@ -67,8 +70,8 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
       const previousState = variable.state;
 
-      const updatedVariables = getOwnerVariableArray(owner).filter((v) => v.state.name !== name);
-      replaceOwnerVariableSet(owner, updatedVariables);
+      const updatedVariables = getScopeVariableArray(scopeOwner).filter((v) => v.state.name !== name);
+      replaceScopeVariableSet(scopeOwner, updatedVariables);
 
       const changePath = buildVariableChangePath(layoutPathPrefix, name);
 

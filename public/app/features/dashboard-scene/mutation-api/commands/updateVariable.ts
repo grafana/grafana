@@ -19,7 +19,7 @@ import {
   isSectionVariablesFeatureEnabled,
   resolveVariableScope,
 } from './variableScope';
-import { dashboardHasVariableNamed, getOwnerVariableArray, replaceOwnerVariableSet } from './variableUtils';
+import { dashboardHasVariableNamed, getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
 
 const updateVariablePayloadSchema = payloads.updateVariable;
 
@@ -58,9 +58,9 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
         scope = resolveVariableScope(scene, effectiveParentPath);
       }
 
-      const { owner, layoutPathPrefix } = scope;
+      const { scopeOwner, layoutPathPrefix } = scope;
 
-      const currentVariables = [...getOwnerVariableArray(owner)];
+      const currentVariables = [...getScopeVariableArray(scopeOwner)];
 
       const existingIndex = currentVariables.findIndex((v) => v.state.name === name);
       if (existingIndex === -1) {
@@ -73,7 +73,7 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
       const newSceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
       currentVariables[existingIndex] = newSceneVariable;
 
-      replaceOwnerVariableSet(owner, currentVariables);
+      replaceScopeVariableSet(scopeOwner, currentVariables);
 
       const changePath = buildVariableChangePath(layoutPathPrefix, name);
 

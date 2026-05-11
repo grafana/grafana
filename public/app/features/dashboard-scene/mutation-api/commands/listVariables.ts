@@ -31,13 +31,13 @@ export const listVariablesCommand: MutationCommand<ListVariablesPayload> = {
 
     try {
       const effectiveParentPath = getEffectiveVariableParentPath(payload.parentPath);
-      const { owner } = resolveVariableScope(scene, effectiveParentPath);
+      const { scopeOwner } = resolveVariableScope(scene, effectiveParentPath);
 
-      const varSet = owner.state.$variables;
+      const varSet = scopeOwner.state.$variables;
       if (!varSet || !(varSet instanceof SceneVariableSet)) {
         return {
           success: true,
-          data: { variables: [] },
+          data: { variables: [], scopePath: effectiveParentPath },
           changes: [],
         };
       }
@@ -46,7 +46,7 @@ export const listVariablesCommand: MutationCommand<ListVariablesPayload> = {
 
       return {
         success: true,
-        data: { variables },
+        data: { variables, scopePath: effectiveParentPath },
         changes: [],
       };
     } catch (error) {
