@@ -1,7 +1,9 @@
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { type AccessControlAction } from 'app/types/accessControl';
 
-import { type Ability, type AsyncAbility, Granted, InsufficientPermissions, NotSupported } from './types';
+import { type EntityToCheck, isK8sEntityProvisioned } from '../../utils/k8s/utils';
+
+import { type Ability, type AsyncAbility, Granted, InsufficientPermissions, NotSupported, Provisioned } from './types';
 
 /**
  * Returns `true` when the current user holds **any** of the listed RBAC permissions.
@@ -21,6 +23,37 @@ export function makeAbility(supported: boolean, anyOfPermissions: AccessControlA
     return NotSupported;
   }
   return hasAnyPermission(anyOfPermissions) ? Granted : InsufficientPermissions(anyOfPermissions);
+}
+
+/**
+ * Builds a synchronous {@link Ability} for a k8s-backed entity.
+ *
+ * Guards (in order):
+ * 1. `supported === false`   → NotSupported
+ * 2. entity is provisioned   → Provisioned
+ * 3. `canAccess` provided:
+ *    - false                 → InsufficientPermissions
+ *    - true                  → Granted  (trusts the server-set access annotation rather
+ *                               than re-checking global RBAC, which may not hold for
+ *                               folder-scoped users)
+ *    `canAccess` absent      → delegates to {@link makeAbility} (global RBAC check)
+ */
+export function makeScopedAbility(
+  supported: boolean,
+  anyOfPermissions: AccessControlAction[],
+  entity: EntityToCheck,
+  canAccess?: (entity: EntityToCheck) => boolean
+): Ability {
+  if (!supported) {
+    return NotSupported;
+  }
+  if (isK8sEntityProvisioned(entity)) {
+    return Provisioned;
+  }
+  if (canAccess !== undefined) {
+    return canAccess(entity) ? Granted : InsufficientPermissions(anyOfPermissions);
+  }
+  return makeAbility(true, anyOfPermissions);
 }
 
 /**

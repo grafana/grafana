@@ -4,16 +4,9 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { notificationsPermissions } from '../../../utils/access-control';
-import { type EntityToCheck, canDeleteEntity, canEditEntity, isK8sEntityProvisioned } from '../../../utils/k8s/utils';
-import { makeAbility } from '../abilityUtils';
-import {
-  type Ability,
-  ContactPointAction,
-  Granted,
-  InsufficientPermissions,
-  NotSupported,
-  Provisioned,
-} from '../types';
+import { type EntityToCheck, canDeleteEntity, canEditEntity } from '../../../utils/k8s/utils';
+import { makeAbility, makeScopedAbility } from '../abilityUtils';
+import { type Ability, ContactPointAction } from '../types';
 
 export type ContactPointAbilityParam =
   | { action: ContactPointAction.View }
@@ -56,46 +49,24 @@ export function useContactPointAbility(payload: ContactPointAbilityParam): Abili
       case ContactPointAction.BulkExport:
         return makeAbility(hasConfigurationAPI, PERMISSIONS[payload.action]);
 
-      case ContactPointAction.Update: {
-        if (!hasConfigurationAPI) {
-          return NotSupported;
-        }
-        if (isK8sEntityProvisioned(payload.context)) {
-          return Provisioned;
-        }
-        // The backend sets grafana.com/access/write based on its own scoped RBAC check, so a
-        // false annotation means the user is denied regardless of global permissions.
-        if (!canEditEntity(payload.context)) {
-          return InsufficientPermissions(PERMISSIONS[ContactPointAction.Update]);
-        }
-        // canEditEntity is true — the server already confirmed write access; return Granted
-        // directly rather than re-checking global RBAC (which may not hold for folder-scoped users).
-        return Granted;
-      }
+      case ContactPointAction.Update:
+        return makeScopedAbility(
+          hasConfigurationAPI,
+          PERMISSIONS[ContactPointAction.Update],
+          payload.context,
+          canEditEntity
+        );
 
-      case ContactPointAction.Delete: {
-        if (!hasConfigurationAPI) {
-          return NotSupported;
-        }
-        if (isK8sEntityProvisioned(payload.context)) {
-          return Provisioned;
-        }
-        // Same reasoning as Update above — trust the server-set annotation over global RBAC.
-        if (!canDeleteEntity(payload.context)) {
-          return InsufficientPermissions(PERMISSIONS[ContactPointAction.Delete]);
-        }
-        return Granted;
-      }
+      case ContactPointAction.Delete:
+        return makeScopedAbility(
+          hasConfigurationAPI,
+          PERMISSIONS[ContactPointAction.Delete],
+          payload.context,
+          canDeleteEntity
+        );
 
-      case ContactPointAction.Export: {
-        if (!hasConfigurationAPI) {
-          return NotSupported;
-        }
-        if (isK8sEntityProvisioned(payload.context)) {
-          return Provisioned;
-        }
-        return makeAbility(true, PERMISSIONS[ContactPointAction.Export]);
-      }
+      case ContactPointAction.Export:
+        return makeScopedAbility(hasConfigurationAPI, PERMISSIONS[ContactPointAction.Export], payload.context);
     }
   }, [payload, hasConfigurationAPI]);
 }
