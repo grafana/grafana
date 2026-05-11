@@ -307,7 +307,7 @@ func TestUploadSnapshot_SkipsWhenRecentSameVersionRemoteExists(t *testing.T) {
 	// here, so we can only assert via uploadCalls; LockBuildIndex is implicitly
 	// not exercised because no upload path runs).
 	assert.Equal(t, int32(1), store.listKeyCalls.Load())
-	assert.Equal(t, int32(1), store.getMetaCalls.Load())
+	assert.Equal(t, int32(1), store.readManifestCalls.Load())
 }
 
 // TestUploadSnapshot_ProceedsWhenRemoteIsDifferentVersion verifies that the
@@ -330,7 +330,7 @@ func TestUploadSnapshot_ProceedsWhenRemoteIsDifferentVersion(t *testing.T) {
 // upload path.
 func TestUploadSnapshot_ProceedsWhenProbeErrors(t *testing.T) {
 	store := newHookableStore(t)
-	store.setListIndexesErr(errors.New("transport boom"))
+	store.setListKeysErr(errors.New("transport boom"))
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
 	key := newTestNsResource()
 	idx := newUploadTestIndex(t, be, key, 42)

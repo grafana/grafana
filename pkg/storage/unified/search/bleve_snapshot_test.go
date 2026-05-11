@@ -256,12 +256,12 @@ func TestTryDownloadRemoteSnapshot_Empty(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, idx)
 	assert.Equal(t, 1.0, dt.counter(snapshotStatusEmpty))
-	assert.Zero(t, dt.store.downloadCalls.Load(), "DownloadIndex should not be called when no candidate exists")
+	assert.Zero(t, dt.store.downloadCalls.Load(), "DownloadIndexSnapshot should not be called when no candidate exists")
 }
 
 func TestTryDownloadRemoteSnapshot_ListError(t *testing.T) {
 	store := newHookableStore(t)
-	store.setListIndexesErr(errors.New("boom"))
+	store.setListKeysErr(errors.New("boom"))
 	dt := newDownloadTest(t, store)
 	_, _, err := dt.run(t)
 	require.Error(t, err)
@@ -339,7 +339,7 @@ func TestTryDownloadRemoteSnapshot_AllFilteredOut(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, idx)
 	assert.Equal(t, 1.0, dt.counter(snapshotStatusEmpty))
-	assert.Zero(t, dt.store.downloadCalls.Load(), "DownloadIndex should not be called when all candidates are filtered out")
+	assert.Zero(t, dt.store.downloadCalls.Load(), "DownloadIndexSnapshot should not be called when all candidates are filtered out")
 }
 
 // TestTryDownloadRemoteSnapshot_NoAgeLimitWhenZero pins the
@@ -641,7 +641,7 @@ func TestBuildIndex_RebuildSkipsFastPathWhenDisabled(t *testing.T) {
 	assert.Zero(t, store.downloadCalls.Load())
 }
 
-// TestBuildIndex_SkipsDownloadBelowMinDocCount ensures ListIndexes is not called
+// TestBuildIndex_SkipsDownloadBelowMinDocCount ensures ListIndexSnapshots is not called
 // when the size parameter is below MinDocCount.
 func TestBuildIndex_SkipsDownloadBelowMinDocCount(t *testing.T) {
 	store := newHookableStore(t)
@@ -656,11 +656,11 @@ func TestBuildIndex_SkipsDownloadBelowMinDocCount(t *testing.T) {
 		nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	require.NotNil(t, idx)
-	assert.Zero(t, store.listCalls.Load(), "ListIndexes should not be called below MinDocCount")
+	assert.Zero(t, store.listKeyCalls.Load(), "ListIndexSnapshots should not be called below MinDocCount")
 }
 
 // TestIntegrationBleveSnapshotRoundTrip seeds an in-memory bucket with a
-// snapshot via store.UploadIndex, then verifies BuildIndex downloads it
+// snapshot via store.UploadIndexSnapshot, then verifies BuildIndex downloads it
 // instead of calling the builder. The round-trip of a real built index
 // through the store is covered separately in TestRemoteIndexStore_*.
 func TestShouldUpload(t *testing.T) {
@@ -836,7 +836,7 @@ func TestBleveSnapshotLifecycleWithFileBucket(t *testing.T) {
 	beA.runUploadSnapshots(ctx)
 	assert.Equal(t, 1.0, testutil.ToFloat64(metricsA.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 
-	indexes, err := beA.opts.Snapshot.Store.ListIndexes(ctx, key)
+	indexes, err := ListIndexSnapshots(ctx, beA.opts.Snapshot.Store, key, testLogger)
 	require.NoError(t, err)
 	require.Len(t, indexes, 1)
 
@@ -909,7 +909,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 
 	snapshotDir := filepath.Join(t.TempDir(), "snapshot")
 	require.NoError(t, writeFakeSnapshot(snapshotDir, &meta))
-	_, err := store.UploadIndex(ctx, key, snapshotDir, meta)
+	_, err := UploadIndexSnapshot(ctx, store, key, snapshotDir, meta, testLogger)
 	require.NoError(t, err)
 
 	// Fresh backend pointing at the same bucket should download instead of building.
@@ -1023,10 +1023,10 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				nf := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.bucket, ns, nf, &IndexMeta{BuildVersion: "11.5.0"})
-				s.setGetMetaErr(nf, ErrSnapshotNotFound)
+				s.setReadManifestErr(nf, ErrSnapshotNotFound)
 				iv := mk(-10 * time.Minute)
 				seedSnapshot(t, t.Context(), s.bucket, ns, iv, &IndexMeta{BuildVersion: "11.5.0"})
-				s.setGetMetaErr(iv, ErrInvalidManifest)
+				s.setReadManifestErr(iv, ErrInvalidManifest)
 				m := mk(-15 * time.Minute)
 				seedSnapshot(t, t.Context(), s.bucket, ns, m, &IndexMeta{BuildVersion: "11.5.0"})
 				return m
@@ -1045,7 +1045,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				bad := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.bucket, ns, bad, &IndexMeta{BuildVersion: "11.5.0"})
-				s.setGetMetaErr(bad, errors.New("transport boom"))
+				s.setReadManifestErr(bad, errors.New("transport boom"))
 				return ulid.ULID{}
 			},
 			wantErr: "transport boom",
@@ -1104,10 +1104,10 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				nf := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.bucket, ns, nf, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
-				s.setGetMetaErr(nf, ErrSnapshotNotFound)
+				s.setReadManifestErr(nf, ErrSnapshotNotFound)
 				iv := mk(-10 * time.Minute)
 				seedSnapshot(t, t.Context(), s.bucket, ns, iv, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-15 * time.Minute)})
-				s.setGetMetaErr(iv, ErrInvalidManifest)
+				s.setReadManifestErr(iv, ErrInvalidManifest)
 				m := mk(-15 * time.Minute)
 				seedSnapshot(t, t.Context(), s.bucket, ns, m, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-20 * time.Minute)})
 				return m
@@ -1126,7 +1126,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				bad := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.bucket, ns, bad, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
-				s.setGetMetaErr(bad, errors.New("transport boom"))
+				s.setReadManifestErr(bad, errors.New("transport boom"))
 				return ulid.ULID{}
 			},
 			wantErr: "transport boom",
