@@ -351,7 +351,7 @@ describe('DashboardControls', () => {
         dashboardVariables: [new TextBoxVariable({ name: 'dashboardVar', value: 'from-dashboard' }), scopeVariable],
       });
 
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />);
 
       expect(await screen.findByTestId('scopes-variable-mounted-for-sync')).toBeInTheDocument();
 
@@ -714,7 +714,7 @@ async function assertPanelEditVariableVisibility({
 }) {
   setTestFlags(featureFlags ?? {});
   const { controls } = sceneBuilder();
-  render(<controls.Component model={controls} />);
+  renderInGrafanaContext(<controls.Component model={controls} />);
 
   for (const variableName of expectedVisible) {
     expect(await screen.findByText(variableName)).toBeInTheDocument();
