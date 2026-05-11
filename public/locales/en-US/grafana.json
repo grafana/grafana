@@ -14370,7 +14370,6 @@
   },
   "recent-queries": {
     "filters": {
-      "all-queries": "All queries",
       "clear": "Clear",
       "datasource-label": "Data source name",
       "datasource-placeholder": "Select data source name",
@@ -14381,9 +14380,7 @@
       "search-label": "Search",
       "search-placeholder": "Search by...",
       "sort-label": "Sort",
-      "sort-placeholder": "Sort Newest",
-      "starred": "Starred queries",
-      "starred-label": "Starred queries"
+      "sort-placeholder": "Sort Newest"
     },
     "list": {
       "empty": "No recent queries found",
@@ -14400,10 +14397,10 @@
       }
     },
     "row": {
+      "save": "Save query",
       "select-query": "Select query",
       "star": "Star",
       "star-tooltip": "Query starred!",
-      "star-tooltip-with-save": "Query starred! You can also <0>save this query</0> for reuse later",
       "unstar": "Unstar"
     },
     "sort": {
