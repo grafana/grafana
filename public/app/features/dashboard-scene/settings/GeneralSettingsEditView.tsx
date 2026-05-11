@@ -308,7 +308,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
           <Field noMargin label={t('dashboard-settings.general.tags-label', 'Tags')}>
             <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
           </Field>
-          {!meta.isOrgTemplate && (
+          {!meta.isOrgDashboardTemplate && (
             <Field noMargin label={t('dashboard-settings.general.folder-label', 'Folder')}>
               <ProvisioningAwareFolderPicker
                 value={meta.folderUid}

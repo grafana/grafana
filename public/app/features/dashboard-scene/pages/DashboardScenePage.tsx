@@ -43,7 +43,7 @@ export interface Props
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
-  const isOrgTemplatesFlagEnabled = useFlagGrafanaOrgDashboardTemplates();
+  const isOrgDashboardTemplatesFlagEnabled = useFlagGrafanaOrgDashboardTemplates();
   // Used by /dashboard/provisioning/:slug/preview/* to load dashboards based on their file path in a remote repository
   // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
   const path = params['*'];
@@ -69,7 +69,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         slug,
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
-        orgTemplateUid: queryParams.orgTemplateUid,
+        orgDashboardTemplateUid: queryParams.orgDashboardTemplateUid,
         editTemplate: queryParams.editTemplate === true,
       });
     }
@@ -94,7 +94,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     type,
     queryParams.path,
     queryParams.gnetId,
-    queryParams.orgTemplateUid,
+    queryParams.orgDashboardTemplateUid,
     queryParams.editTemplate,
   ]);
 
@@ -157,7 +157,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <TemplateDashboardEditBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
-      {isOrgTemplatesFlagEnabled && <TemplateDashboardModal />}
+      {isOrgDashboardTemplatesFlagEnabled && <TemplateDashboardModal />}
       <DashboardBrandingFooter
         variant={DashboardBrandingFooterVariant.Kiosk}
         paddingX={2}

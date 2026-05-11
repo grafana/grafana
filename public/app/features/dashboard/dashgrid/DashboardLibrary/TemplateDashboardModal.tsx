@@ -23,7 +23,7 @@ import {
   type SourceEntryPoint,
   TemplateDashboardSourceEntryPoint,
 } from './constants';
-import { getOrgTemplatesTab } from './enterprise-components/OrgTemplatesTabExtension';
+import { getOrgDashboardTemplatesTab } from './enterprise-components/OrgDashboardTemplatesTabExtension';
 import { TemplateDashboardInteractions } from './interactions';
 import { type GnetDashboard, type GnetDashboardsResponse, type Link } from './types';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
@@ -39,9 +39,9 @@ export const TemplateDashboardModal = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const isOpen = searchParams.get('templateDashboards') === 'true';
   const entryPoint = searchParams.get('source') || '';
-  const OrgTemplatesTab = getOrgTemplatesTab();
-  const showOrgTemplates = useFlagGrafanaOrgDashboardTemplates() && OrgTemplatesTab !== null;
-  const [activeTab, setActiveTab] = useState<TemplateTab>(showOrgTemplates ? 'custom' : 'grafana');
+  const OrgDashboardTemplatesTab = getOrgDashboardTemplatesTab();
+  const showOrgDashboardTemplates = useFlagGrafanaOrgDashboardTemplates() && OrgDashboardTemplatesTab !== null;
+  const [activeTab, setActiveTab] = useState<TemplateTab>(showOrgDashboardTemplates ? 'custom' : 'grafana');
   const isDashboardTemplatesAssistantButtonEnabled = useFlagDashboardTemplatesAssistantButton();
   const isDashboardTemplatesAssistantToolEnabled = useFlagAssistantFrontendToolsDashboardTemplates();
   const isAnalyticsFrameworkEnabled = useFlagAnalyticsFramework();
@@ -129,7 +129,7 @@ export const TemplateDashboardModal = () => {
     }
   }, [isOpen, dashboards, entryPoint, testDataSource?.type, loading, isAnalyticsFrameworkEnabled]);
 
-  if (!testDataSource || (dashboards.length === 0 && !loading && !showOrgTemplates)) {
+  if (!testDataSource || (dashboards.length === 0 && !loading && !showOrgDashboardTemplates)) {
     return null;
   }
 
@@ -168,11 +168,11 @@ export const TemplateDashboardModal = () => {
     </Grid>
   );
 
-  const renderOrgTemplates = () => {
-    if (!OrgTemplatesTab) {
+  const renderOrgDashboardTemplates = () => {
+    if (!OrgDashboardTemplatesTab) {
       return null;
     }
-    return <OrgTemplatesTab isOpen={isOpen} onClose={onClose} />;
+    return <OrgDashboardTemplatesTab isOpen={isOpen} onClose={onClose} />;
   };
 
   return (
@@ -189,7 +189,7 @@ export const TemplateDashboardModal = () => {
             Get started with Grafana templates. Connect your data to power them with real metrics.
           </Trans>
         </Text>
-        {showOrgTemplates && (
+        {showOrgDashboardTemplates && (
           <Box marginTop={2}>
             <TabsBar>
               <Tab
@@ -207,7 +207,7 @@ export const TemplateDashboardModal = () => {
         )}
       </div>
       <Box direction="column" gap={4} display="flex">
-        {showOrgTemplates && activeTab === 'custom' ? renderOrgTemplates() : renderGrafanaTemplates()}
+        {showOrgDashboardTemplates && activeTab === 'custom' ? renderOrgDashboardTemplates() : renderGrafanaTemplates()}
       </Box>
     </Modal>
   );

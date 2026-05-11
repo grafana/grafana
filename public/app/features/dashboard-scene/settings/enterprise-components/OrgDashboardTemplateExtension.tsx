@@ -7,7 +7,7 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 // Structural subset of the enterprise OrgDashboardTemplateSpec. Defined locally so OSS
 // call sites can type the load response without importing from public/app/extensions/.
 // The enterprise OrgDashboardTemplate is structurally compatible with this shape.
-export interface OrgTemplateResourceSpec {
+export interface OrgDashboardTemplateResourceSpec {
   title: string;
   description?: string;
   tags: string[];
@@ -16,20 +16,20 @@ export interface OrgTemplateResourceSpec {
   dashboard: DashboardV2Spec;
 }
 
-export interface OrgTemplateHistoryListResult {
+export interface OrgDashboardTemplateHistoryListResult {
   // Raw k8s list items. Consumers transform these through the same
   // VersionsEditView.transformToRevisionModels pipeline used for dashboards.
   items: Array<Resource<unknown>>;
   continueToken?: string;
 }
 
-export interface OrgTemplateExtensionHooks {
-  loadTemplate(orgTemplateUid: string): Promise<Resource<OrgTemplateResourceSpec>>;
+export interface OrgDashboardTemplateExtensionHooks {
+  loadTemplate(orgDashboardTemplateUid: string): Promise<Resource<OrgDashboardTemplateResourceSpec>>;
 
   listHistory(
-    orgTemplateUid: string,
+    orgDashboardTemplateUid: string,
     options: { limit: number; continueToken?: string }
-  ): Promise<OrgTemplateHistoryListResult>;
+  ): Promise<OrgDashboardTemplateHistoryListResult>;
 
   // Builds a PUT body that keeps the current outer template spec fields and replaces
   // only spec.dashboard with the selected historical version's embedded dashboard,
@@ -42,7 +42,7 @@ export interface OrgTemplateExtensionHooks {
 // OSS build somehow reaches these code paths (e.g. via the feature toggle being on
 // without the enterprise bundle linked), loadTemplate throws and history/restore
 // degrade to empty/false rather than crash.
-let internal: OrgTemplateExtensionHooks = {
+let internal: OrgDashboardTemplateExtensionHooks = {
   loadTemplate: async () => {
     throw new Error('Org template loading is only available in Grafana Enterprise');
   },
@@ -50,10 +50,10 @@ let internal: OrgTemplateExtensionHooks = {
   restore: async () => false,
 };
 
-export function registerOrgTemplateExtension(hooks: OrgTemplateExtensionHooks) {
+export function registerOrgDashboardTemplateExtension(hooks: OrgDashboardTemplateExtensionHooks) {
   internal = hooks;
 }
 
-export function getOrgTemplateExtension(): OrgTemplateExtensionHooks {
+export function getOrgDashboardTemplateExtension(): OrgDashboardTemplateExtensionHooks {
   return internal;
 }

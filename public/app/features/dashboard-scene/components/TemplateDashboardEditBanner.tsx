@@ -16,8 +16,8 @@ export function TemplateDashboardEditBanner({ dashboard }: { dashboard: Dashboar
 
   const shouldRender =
     location.pathname === DASHBOARD_LIBRARY_ROUTES.Template &&
-    Boolean(meta.isOrgTemplate) &&
-    Boolean(meta.orgTemplateUid);
+    Boolean(meta.isOrgDashboardTemplate) &&
+    Boolean(meta.orgDashboardTemplateUid);
 
   const [dismissed, setDismissed] = useState<boolean>(!shouldRender);
 
@@ -26,13 +26,13 @@ export function TemplateDashboardEditBanner({ dashboard }: { dashboard: Dashboar
   }
 
   // Falls back to the embedded dashboard's title; the outer template title isn't accessible
-  // from OSS without a registry seam into the enterprise RTKQ client (see getOrgTemplateExtension
+  // from OSS without a registry seam into the enterprise RTKQ client (see getOrgDashboardTemplateExtension
   // for the pattern). In practice the two titles match at template creation; if they diverge
   // later, we show the dashboard title here and promote to an enterprise-sourced label
   // (option 1) as a follow-up if UX requires.
   const templateName = dashboard.state.title;
   const useTemplateUrl =
-    `${DASHBOARD_LIBRARY_ROUTES.Template}?orgTemplateUid=${encodeURIComponent(meta.orgTemplateUid!)}` +
+    `${DASHBOARD_LIBRARY_ROUTES.Template}?orgDashboardTemplateUid=${encodeURIComponent(meta.orgDashboardTemplateUid!)}` +
     `&useTemplateBanner=true`;
 
   return (

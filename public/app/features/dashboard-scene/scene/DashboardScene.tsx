@@ -82,7 +82,7 @@ import { buildGridItemForPanel, transformSaveModelToScene } from '../serializati
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
-import { getOrgTemplateExtension } from '../settings/enterprise-components/OrgTemplateExtension';
+import { getOrgDashboardTemplateExtension } from '../settings/enterprise-components/OrgDashboardTemplateExtension';
 import { type DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -548,8 +548,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
-    if (this.state.meta.isOrgTemplate) {
-      return getOrgTemplateExtension().restore(this, version);
+    if (this.state.meta.isOrgDashboardTemplate) {
+      return getOrgDashboardTemplateExtension().restore(this, version);
     }
 
     const api = await getDashboardAPI();
@@ -588,13 +588,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public openSaveDrawer({
     saveAsCopy,
-    saveAsOrgTemplate,
-    updateOrgTemplate,
+    saveAsOrgDashboardTemplate,
+    updateOrgDashboardTemplate,
     onSaveSuccess,
   }: {
     saveAsCopy?: boolean;
-    saveAsOrgTemplate?: boolean;
-    updateOrgTemplate?: boolean;
+    saveAsOrgDashboardTemplate?: boolean;
+    updateOrgDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
   }) {
     if (!this.state.isEditing) {
@@ -605,8 +605,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
-        saveAsOrgTemplate,
-        updateOrgTemplate,
+        saveAsOrgDashboardTemplate,
+        updateOrgDashboardTemplate,
         onSaveSuccess,
         showVariablesWarning: this.hasVariableErrors(),
       }),
