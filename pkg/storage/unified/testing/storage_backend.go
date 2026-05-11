@@ -720,6 +720,26 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		require.Equal(t, rvA, seen[nsA], "namespace A should yield latest rv for shared")
 		require.Equal(t, rvB, seen[nsB], "namespace B should yield latest rv for shared")
 	})
+
+	t.Run("rejects missing group or resource", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			key  resource.NamespacedResource
+		}{
+			{name: "missing group", key: resource.NamespacedResource{Resource: "resource"}},
+			{name: "missing resource", key: resource.NamespacedResource{Group: "group"}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				_, seq := backend.ListModifiedSince(ctx, tc.key, rvCreated, nil)
+				var gotErr error
+				for _, err := range seq {
+					gotErr = err
+					break
+				}
+				require.Error(t, gotErr)
+			})
+		}
+	})
 }
 
 func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
