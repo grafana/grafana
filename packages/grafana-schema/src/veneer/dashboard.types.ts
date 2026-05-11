@@ -61,6 +61,10 @@ export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
 export interface DataTransformerConfig<TOptions = any> extends raw.DataTransformerConfig {
   options: TOptions;
   topic?: DataTopic;
+  origin?: {
+    source: 'panel' | 'editor';
+    pluginId?: string;
+  };
 }
 
 export interface TimeOption extends raw.TimeOption {}

@@ -547,6 +547,11 @@ lineage: schemas: [{
 			// Options to be passed to the transformer
 			// Valid options depend on the transformer id
 			options: _
+			// Metadata about where the transformation was created
+			origin?: {
+				source:    "panel" | "editor"
+				pluginId?: string
+			}
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		// Counterpart for TypeScript's TimeOption type.

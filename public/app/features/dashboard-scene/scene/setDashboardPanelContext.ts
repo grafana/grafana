@@ -1,7 +1,14 @@
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
-import { type DataSourceRef } from '@grafana/schema';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import {
+  AdHocFiltersVariable,
+  dataLayers,
+  SceneDataTransformer,
+  sceneGraph,
+  sceneUtils,
+  type VizPanel,
+} from '@grafana/scenes';
+import { type DataSourceRef, type DataTransformerConfig } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { annotationServer } from 'app/features/annotations/api';
@@ -131,6 +138,26 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
     updateAdHocFilterVariable(filterVar, newFilter);
   };
+
+  if (config.featureToggles.panelAdHocTransformations) {
+    context.onAddAdHocTransformation = (newConfig: DataTransformerConfig) => {
+      const dataProvider = vizPanel.state.$data;
+      // @todo verify the panel $data is always SceneDataTransformer?
+      console.log('dataProvider', { dataProvider, instance: dataProvider instanceof SceneDataTransformer });
+      if (!(dataProvider instanceof SceneDataTransformer)) {
+        return;
+      }
+
+      const stamped: DataTransformerConfig = {
+        ...newConfig,
+        origin: { source: 'panel', pluginId: vizPanel.state.pluginId, ...newConfig.origin },
+      };
+      const next = [...dataProvider.state.transformations, stamped];
+
+      dataProvider.setState({ transformations: next });
+      dataProvider.reprocessTransformations();
+    };
+  }
 
   context.getFiltersBasedOnGrouping = (items: AdHocFilterItem[]) => {
     const dashboard = getDashboardSceneFor(vizPanel);

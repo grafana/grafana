@@ -239,6 +239,10 @@ const (
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
+	// FlagPanelAdHocTransformations
+	// Allow panels to add transformations to the panel's transformation pipeline at runtime
+	FlagPanelAdHocTransformations = "panelAdHocTransformations"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"

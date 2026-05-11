@@ -1,6 +1,7 @@
 import { type AdHocVariableModel, EventBusSrv, type GroupByVariableModel, type VariableModel } from '@grafana/data';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
-import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
+import { GroupByVariable, sceneGraph, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { type DataTransformerConfig } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -175,6 +176,47 @@ describe('setDashboardPanelContext', () => {
       const variables = sceneGraph.getVariables(scene);
       const adhocVars = variables.state.variables.filter((v) => v.state.type === 'adhoc');
       expect(adhocVars.length).toBe(1);
+    });
+  });
+
+  describe('onAddAdHocTransformation', () => {
+    afterEach(() => {
+      config.featureToggles.panelAdHocTransformations = false;
+    });
+
+    it('appends a stamped transformation and reprocesses when feature flag is enabled', () => {
+      config.featureToggles.panelAdHocTransformations = true;
+      const { context, vizPanel } = buildTestScene({});
+      const dataProvider = vizPanel.state.$data;
+      expect(dataProvider).toBeInstanceOf(SceneDataTransformer);
+
+      if (!(dataProvider instanceof SceneDataTransformer)) {
+        throw new Error('Expected SceneDataTransformer');
+      }
+
+      const reprocessSpy = jest.spyOn(dataProvider, 'reprocessTransformations');
+      const transformation: DataTransformerConfig = {
+        id: 'organize',
+        options: { hideByName: { hello: true } },
+      };
+
+      context.onAddAdHocTransformation?.(transformation);
+
+      expect(dataProvider.state.transformations).toEqual([
+        {
+          id: 'organize',
+          options: { hideByName: { hello: true } },
+          origin: { source: 'panel', pluginId: 'timeseries' },
+        },
+      ]);
+      expect(reprocessSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not expose callback when feature flag is disabled', () => {
+      config.featureToggles.panelAdHocTransformations = false;
+      const { context } = buildTestScene({});
+
+      expect(context.onAddAdHocTransformation).toBeUndefined();
     });
   });
 

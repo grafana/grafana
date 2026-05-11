@@ -429,6 +429,11 @@ export interface FeatureToggles {
   */
   panelFilterVariable?: boolean;
   /**
+  * Allow panels to add transformations to the panel's transformation pipeline at runtime
+  * @default false
+  */
+  panelAdHocTransformations?: boolean;
+  /**
   * Enables generating table data as PDF in reporting
   * @default false
   */

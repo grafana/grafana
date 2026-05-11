@@ -9,6 +9,7 @@ import {
   type EventBus,
   EventBusSrv,
 } from '@grafana/data';
+import { type DataTransformerConfig } from '@grafana/schema';
 
 import { type AdHocFilterItem } from '../Table/types';
 
@@ -53,6 +54,7 @@ export interface PanelContext {
    * Used from visualizations like Table to add ad-hoc filters from cell values
    */
   onAddAdHocFilter?: (item: AdHocFilterItem) => void;
+  onAddAdHocTransformation?: (config: DataTransformerConfig) => void;
 
   /**
    * Returns filters based on existing grouping or an empty array

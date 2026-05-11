@@ -677,6 +677,57 @@ describe('transformSceneToSaveModel', () => {
         uid: 'abc',
       });
     });
+
+    it('Given panel transformation with origin metadata', () => {
+      const panel = buildGridItemFromPanelSchema({
+        datasource: {
+          type: 'grafana-testdata',
+          uid: 'abc',
+        },
+        transformations: [
+          {
+            id: 'organize',
+            options: {
+              hideByName: {
+                host: true,
+              },
+            },
+            origin: {
+              source: 'panel',
+              pluginId: 'table',
+            },
+          },
+        ],
+        targets: [
+          {
+            refId: 'A',
+            expr: 'A',
+            datasource: {
+              type: 'grafana-testdata',
+              uid: 'abc',
+            },
+          },
+        ],
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.transformations).toEqual([
+        {
+          id: 'organize',
+          options: {
+            hideByName: {
+              host: true,
+            },
+          },
+          origin: {
+            source: 'panel',
+            pluginId: 'table',
+          },
+        },
+      ]);
+    });
+
     it('Given panel with shared query', () => {
       const panel = buildGridItemFromPanelSchema({
         datasource: {

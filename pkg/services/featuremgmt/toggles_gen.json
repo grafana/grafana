@@ -4442,6 +4442,19 @@
     },
     {
       "metadata": {
+        "name": "panelAdHocTransformations",
+        "resourceVersion": "1778508629992",
+        "creationTimestamp": "2026-05-11T14:10:29Z"
+      },
+      "spec": {
+        "description": "Allow panels to add transformations to the panel's transformation pipeline at runtime",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-11-03T12:15:54Z"
