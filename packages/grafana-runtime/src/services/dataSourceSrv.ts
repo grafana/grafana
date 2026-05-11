@@ -21,21 +21,21 @@ export interface DataSourceSrv {
    * @param ref - The datasource identifier, it can be a name, UID or DataSourceRef (an object with UID),
    * @param scopedVars - variables used to interpolate a templated passed as name.
    *
-   * @deprecated Use `getDataSource` or `useDataSource` from `@grafana/runtime` instead.
+   * @deprecated Use `getDataSourceInstance` or `useDataSourceInstance` from `@grafana/runtime` instead.
    */
   get(ref?: DataSourceRef | string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
   /**
    * Get a list of data sources
    *
-   * @deprecated Use `getDataSourceSettingsList` or `useDataSourceSettingsList` from `@grafana/runtime` instead.
+   * @deprecated Use `getDataSourceInstanceSettingsList` or `useDataSourceInstanceSettingsList` from `@grafana/runtime` instead.
    */
   getList(filters?: GetDataSourceListFilters): DataSourceInstanceSettings[];
 
   /**
    * Get settings and plugin metadata by name or uid
    *
-   * @deprecated Use `getDataSourceSettings` or `useDataSourceSettings` from `@grafana/runtime` instead.
+   * @deprecated Use `getDataSourceInstanceSettings` or `useDataSourceInstanceSettings` from `@grafana/runtime` instead.
    */
   getInstanceSettings(
     ref?: DataSourceRef | string | null,
@@ -121,7 +121,7 @@ export function setDataSourceSrv(instance: DataSourceSrv) {
  *
  * @public
  * @deprecated Import the specific functions/hooks directly from `@grafana/runtime`
- *   (e.g. `getDataSourceSettings`, `useDataSourceSettingsList`, `getDataSource`).
+ *   (e.g. `getDataSourceInstanceSettings`, `useDataSourceInstanceSettingsList`, `getDataSourceInstance`).
  *   This singleton will be removed once all callers have migrated.
  */
 export function getDataSourceSrv(): DataSourceSrv {

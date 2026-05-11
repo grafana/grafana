@@ -4,7 +4,7 @@ import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
-import { getDataSourceSettings, upsertRuntimeDataSource } from './settings';
+import { getDataSourceInstanceSettings, upsertRuntimeDataSource } from './settings';
 import { type ImportDataSourceFn } from './types';
 
 let importDataSource: ImportDataSourceFn | undefined;
@@ -27,11 +27,11 @@ export function setDataSourceImporter(fn: ImportDataSourceFn): void {
  *
  * @public
  */
-export async function getDataSource(
+export async function getDataSourceInstance(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
-  const settings = await getDataSourceSettings(ref, scopedVars);
+  const settings = await getDataSourceInstanceSettings(ref, scopedVars);
   if (!settings) {
     throw new Error(`Datasource ${describeRef(ref)} was not found`);
   }
@@ -84,7 +84,7 @@ export async function getDataSource(
 /**
  * Register a runtime data source. Writes to both the instance-settings cache
  * and the plugin-instance cache so the data source is available to
- * {@link getInstanceSettings} and {@link getDataSource}.
+ * {@link getInstanceSettings} and {@link getDataSourceInstance}.
  *
  * Runtime data sources are intentionally excluded from {@link getInstanceSettingsList}
  * results, matching the behaviour of the legacy `DatasourceSrv.registerRuntimeDataSource`.
