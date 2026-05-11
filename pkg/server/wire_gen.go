@@ -907,7 +907,17 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	apiService := api3.ProvideService(cfg, routeRegisterImpl, accessControl, userimplService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
 	dashboardActivityChannel := live.ProvideDashboardActivityChannel(grafanaLive)
 	dashboardsAPIBuilder := dashboard.RegisterAPIService(featureToggles, apiserverService, dashboardService, service13, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, registerer, sqlStore, tracingService, resourceClient, dualwriteService, quotaService, eventualRestConfigProvider, userimplService, libraryElementService, v4, serviceImpl, dashboardActivityChannel, configProvider)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer, pluginsourcesService)
+	v10 := _wireValue
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v10)
+	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
+	if err != nil {
+		return nil, err
+	}
+	decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
+	if err != nil {
+		return nil, err
+	}
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessControl, accessClient, registerer, pluginsourcesService)
 	if err != nil {
 		return nil, err
 	}
@@ -936,19 +946,9 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userimplService, apiserverService)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
-	v10 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
+	v11 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
 	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
-	v11 := extras.ProvideExtraWorkers(pullRequestWorker)
-	v12 := _wireValue
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v12)
-	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
-	if err != nil {
-		return nil, err
-	}
+	v12 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
 	v13 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
 	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v13)
@@ -962,7 +962,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v10, v11, repositoryFactory, connectionFactory, quotaGetter)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v11, v12, repositoryFactory, connectionFactory, quotaGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -1619,7 +1619,17 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	apiService := api3.ProvideService(cfg, routeRegisterImpl, accessControl, userimplService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
 	dashboardActivityChannel := live.ProvideDashboardActivityChannel(grafanaLive)
 	dashboardsAPIBuilder := dashboard.RegisterAPIService(featureToggles, apiserverService, dashboardService, service13, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, registerer, sqlStore, tracingService, resourceClient, dualwriteService, quotaService, eventualRestConfigProvider, userimplService, libraryElementService, v4, serviceImpl, dashboardActivityChannel, configProvider)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer, pluginsourcesService)
+	v10 := _wireValue
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v10)
+	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
+	if err != nil {
+		return nil, err
+	}
+	decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
+	if err != nil {
+		return nil, err
+	}
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessControl, accessClient, registerer, pluginsourcesService)
 	if err != nil {
 		return nil, err
 	}
@@ -1648,19 +1658,9 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userimplService, apiserverService)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
-	v10 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
+	v11 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
 	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
-	v11 := extras.ProvideExtraWorkers(pullRequestWorker)
-	v12 := _wireValue
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v12)
-	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
-	if err != nil {
-		return nil, err
-	}
+	v12 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
 	v13 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
 	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v13)
@@ -1674,7 +1674,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v10, v11, repositoryFactory, connectionFactory, quotaGetter)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v11, v12, repositoryFactory, connectionFactory, quotaGetter)
 	if err != nil {
 		return nil, err
 	}

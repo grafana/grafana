@@ -159,7 +159,6 @@ require (
 	github.com/go-openapi/validate v0.25.2 // indirect
 	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
-	github.com/go-test/deep v1.1.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
@@ -183,6 +182,7 @@ require (
 	github.com/grafana/grafana-aws-sdk v1.4.4 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.0 // indirect
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
+	github.com/grafana/grafana/apps/secret v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect
