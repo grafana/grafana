@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -49,6 +50,8 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 	pgxConf.ConnConfig.LookupFunc = func(_ context.Context, host string) ([]string, error) {
 		return []string{host}, nil
 	}
+
+	maybeWirePGPassRefresh(pgxConf, cnnstr)
 
 	config := sqleng.DataPluginConfiguration{
 		DSInfo:            dsInfo,
@@ -146,6 +149,24 @@ func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 // escape single quotes and backslashes in Postgres connection string parameters.
 func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
+}
+
+// maybeWirePGPassRefresh re-resolves the password from PGPASSFILE before every
+// new connection when the connection string carries no password. pgx reads
+// PGPASSFILE once during ParseConfig and the pool then caches that snapshot,
+// so rotated credentials would otherwise never be picked up (issue #123617).
+func maybeWirePGPassRefresh(pgxConf *pgxpool.Config, cnnstr string) {
+	if strings.Contains(cnnstr, "password=") {
+		return
+	}
+	pgxConf.BeforeConnect = func(_ context.Context, cc *pgx.ConnConfig) error {
+		fresh, err := pgx.ParseConfig(cnnstr)
+		if err != nil {
+			return err
+		}
+		cc.Password = fresh.Password
+		return nil
+	}
 }
 
 type connectionParams struct {
