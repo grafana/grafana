@@ -517,7 +517,7 @@ type TestMultiOrgAlertmanagerOptions struct {
 	featureToggles featuremgmt.FeatureToggles
 	peer           alertingNotify.ClusterPeer
 	waitReady      bool
-	secretService  *secretsManager.SecretsService
+	secretService  *secretsManager.SecretsService //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	alertmanagers  map[int64]Alertmanager
 	cfgStore       AlertingStore
 	skipLoad       bool
@@ -561,7 +561,9 @@ func WithWaitReady() TestMultiOrgAlertmanagerOption {
 	}
 }
 
-func WithSecretService(secretService *secretsManager.SecretsService) TestMultiOrgAlertmanagerOption {
+func WithSecretService(
+	secretService *secretsManager.SecretsService, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) TestMultiOrgAlertmanagerOption {
 	return func(opts *TestMultiOrgAlertmanagerOptions) {
 		opts.secretService = secretService
 	}

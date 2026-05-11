@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -894,6 +895,37 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testi
 	})
 
 	const dashboardUID = "n1jR8vnnz"
+
+	// Once the folder/dashboard are released they become regular unmanaged
+	// resources and survive the per-test repo cleanup. If we leave them for
+	// the next test's CleanupAllResources to mop up, the folder step has to
+	// absorb the Bleve search-index lag between the dashboard delete and
+	// folder admission's "is empty" check — which has flaked the next test
+	// in CI. Cleaning up here pays that cost in the test that owns the
+	// resources and shrinks the leak window for the next test. Failures are
+	// only logged; the next test's CleanupAllResources is the safety net.
+	t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), common.WaitTimeoutDefault)
+		defer cancel()
+		if err := helper.DashboardsV1.Resource.Delete(cleanupCtx, dashboardUID, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			t.Logf("cleanup: deleting dashboard %q failed (will be retried by next test): %v", dashboardUID, err)
+		}
+		// Folder admission rejects deletion until the search index reflects
+		// the dashboard delete; retry until it lets us through or the
+		// context budget runs out.
+		for {
+			err := helper.Folders.Resource.Delete(cleanupCtx, repo, metav1.DeleteOptions{})
+			if err == nil || apierrors.IsNotFound(err) {
+				return
+			}
+			select {
+			case <-cleanupCtx.Done():
+				t.Logf("cleanup: deleting folder %q timed out (will be retried by next test): %v", repo, err)
+				return
+			case <-time.After(common.WaitIntervalDefault):
+			}
+		}
+	})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})

@@ -4,7 +4,6 @@
       "label-advanced": "Pokročilé"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "Přidat",
       "aria-label-remove": "Odebrat",
       "button-add-resource": "Přidat zdroj",
       "button-add-resource-uri": "Přidat URI zdroje",

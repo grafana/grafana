@@ -183,10 +183,6 @@ func intPtr(n int64) *int64 {
 	return &n
 }
 
-func boolPtr(b bool) *bool {
-	return &b
-}
-
 func genApiKey() (string, string) {
 	res, _ := satokengen.New("test")
 	return res.ClientSecret, res.HashedKey

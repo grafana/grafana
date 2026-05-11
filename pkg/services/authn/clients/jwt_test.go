@@ -22,10 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func stringPtr(s string) *string {
-	return &s
-}
-
 func TestAuthenticateJWT(t *testing.T) {
 	t.Parallel()
 
@@ -43,11 +39,11 @@ func TestAuthenticateJWT(t *testing.T) {
 				OrgID:           0,
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
-				Groups:          []string{"foo", "bar"},
+				ExternalGroups:  []string{"foo", "bar"},
 				Login:           "eai-doe",
 				Name:            "Eai Doe",
 				Email:           "eai.doe@cor.po",
-				IsGrafanaAdmin:  boolPtr(false),
+				IsGrafanaAdmin:  new(false),
 				AuthenticatedBy: login.JWTModule,
 				AuthID:          "1234567890",
 				IsDisabled:      false,
@@ -60,8 +56,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					SyncPermissions: true,
 					SyncTeams:       true,
 					LookUpParams: login.UserLookupParams{
-						Email: stringPtr("eai.doe@cor.po"),
-						Login: stringPtr("eai-doe"),
+						Email: new("eai.doe@cor.po"),
+						Login: new("eai-doe"),
 					},
 				},
 			},
@@ -96,10 +92,10 @@ func TestAuthenticateJWT(t *testing.T) {
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
 				Login:           "eai-doe",
-				Groups:          []string{},
+				ExternalGroups:  []string{},
 				Name:            "Eai Doe",
 				Email:           "eai.doe@cor.po",
-				IsGrafanaAdmin:  boolPtr(false),
+				IsGrafanaAdmin:  new(false),
 				AuthenticatedBy: login.JWTModule,
 				AuthID:          "1234567890",
 				IsDisabled:      false,
@@ -112,8 +108,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					SyncPermissions: true,
 					SyncTeams:       false,
 					LookUpParams: login.UserLookupParams{
-						Email: stringPtr("eai.doe@cor.po"),
-						Login: stringPtr("eai-doe"),
+						Email: new("eai.doe@cor.po"),
+						Login: new("eai-doe"),
 					},
 				},
 			},
@@ -147,10 +143,10 @@ func TestAuthenticateJWT(t *testing.T) {
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{4: identity.RoleEditor, 5: identity.RoleViewer},
 				Login:           "eai-doe",
-				Groups:          []string{"foo", "bar"},
+				ExternalGroups:  []string{"foo", "bar"},
 				Name:            "Eai Doe",
 				Email:           "eai.doe@cor.po",
-				IsGrafanaAdmin:  boolPtr(false),
+				IsGrafanaAdmin:  new(false),
 				AuthenticatedBy: login.JWTModule,
 				AuthID:          "1234567890",
 				IsDisabled:      false,
@@ -163,8 +159,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					SyncPermissions: true,
 					SyncTeams:       true,
 					LookUpParams: login.UserLookupParams{
-						Email: stringPtr("eai.doe@cor.po"),
-						Login: stringPtr("eai-doe"),
+						Email: new("eai.doe@cor.po"),
+						Login: new("eai-doe"),
 					},
 				},
 			},
@@ -202,10 +198,10 @@ func TestAuthenticateJWT(t *testing.T) {
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{4: identity.RoleEditor, 5: identity.RoleViewer},
 				Login:           "eai-doe",
-				Groups:          []string{"foo", "bar"},
+				ExternalGroups:  []string{"foo", "bar"},
 				Name:            "Eai Doe",
 				Email:           "eai.doe@cor.po",
-				IsGrafanaAdmin:  boolPtr(false),
+				IsGrafanaAdmin:  new(false),
 				AuthenticatedBy: login.JWTModule,
 				AuthID:          "1234567890",
 				IsDisabled:      false,
@@ -218,8 +214,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					SyncPermissions: true,
 					SyncTeams:       true,
 					LookUpParams: login.UserLookupParams{
-						Email: stringPtr("eai.doe@cor.po"),
-						Login: stringPtr("eai-doe"),
+						Email: new("eai.doe@cor.po"),
+						Login: new("eai-doe"),
 					},
 				},
 			},

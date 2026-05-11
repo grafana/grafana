@@ -431,6 +431,7 @@ func TestCatalogPluginsValueFunc_CLIPinsDefaultPluginVersion(t *testing.T) {
 
 	want := []CatalogPluginSpec{
 		{ID: "elasticsearch", Version: "5.0.0"},
+		{ID: "zipkin"},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("GetCatalogPlugins() = %#v, want %#v", got, want)

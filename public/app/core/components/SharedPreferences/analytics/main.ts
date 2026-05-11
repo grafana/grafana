@@ -1,4 +1,4 @@
-import { defineFeatureEvents } from '@grafana/runtime/internal';
+import { defineFeatureEvents } from '@grafana/runtime/unstable';
 
 import { type LanguageChanged, type RegionalFormatChanged, type SaveButtonClicked, type ThemeChanged } from './types';
 

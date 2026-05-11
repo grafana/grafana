@@ -4,7 +4,6 @@
       "label-advanced": "進階"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "新增",
       "aria-label-remove": "移除",
       "button-add-resource": "新增資源",
       "button-add-resource-uri": "新增資源 URI",

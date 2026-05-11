@@ -72,14 +72,24 @@ func ProvideWebhooksWithImages(
 	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
-	urlProvider := func(_ context.Context, _ string) string {
-		return cfg.AppURL
+	// Webhook callbacks and screenshot images embedded in PR comments must be
+	// reachable from the public internet (the Git provider fetches them
+	// server-side). Prefer [provisioning] public_root_url when set; fall back
+	// to AppURL. Clickable links stay on AppURL so internal reviewers reach
+	// Grafana via the canonical, corp-network-friendly URL.
+	publicURL := cfg.AppURL
+	if cfg.ProvisioningPublicRootURL != "" {
+		publicURL = cfg.ProvisioningPublicRootURL
 	}
-	isPublic := isPublicURL(urlProvider(context.Background(), ""))
+	urls := pullrequest.URLProvider{
+		Internal: func(_ context.Context, _ string) string { return cfg.AppURL },
+		Public:   func(_ context.Context, _ string) string { return publicURL },
+	}
+	isPublic := isPublicURL(publicURL)
 
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
-		urlProvider: urlProvider,
+		urlProvider: urls.Public,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			clients := resources.NewClientFactory(configProvider)
 			parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
@@ -93,14 +103,14 @@ func ProvideWebhooksWithImages(
 				registry,
 			)
 
-			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
+			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urls, registry)
 			commenter := pullrequest.NewCommenter(cfg.ProvisioningAllowImageRendering)
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
 			return NewWebhookExtraWithImages(
 				render,
 				webhook,
-				urlProvider,
+				urls.Public,
 				[]jobs.Worker{pullRequestWorker},
 			)
 		},

@@ -1,4 +1,4 @@
-import { Node, type SourceFile } from 'ts-morph';
+import { Node, SyntaxKind, type SourceFile } from 'ts-morph';
 
 import type { EventData, EventNamespace, EventPropertySchema } from './types.mts';
 
@@ -79,7 +79,7 @@ const findEventNamespaces = (sourceFile: SourceFile, defineFeatureEventsName: st
     }
 
     // Extract the two required string literal args: ('grafana', 'navigation')
-    const [repoArg, featureArg, defaultPropsArg] = initializer.getArguments();
+    const [repoArg, featureArg, defaultPropsArg, factoryOptionsArg] = initializer.getArguments();
     if (!repoArg || !featureArg || !Node.isStringLiteral(repoArg) || !Node.isStringLiteral(featureArg)) {
       throw new Error(
         `defineFeatureEvents must be called with two string literal arguments at ${sourceFile.getFilePath()}`
@@ -109,14 +109,49 @@ const findEventNamespaces = (sourceFile: SourceFile, defineFeatureEventsName: st
       });
     }
 
+    // Extract the optional fourth argument: factoryOptions.silent.
+    // e.g. defineFeatureEvents('grafana', 'cuj', undefined, { silent: true })
+    // marks every event from this factory as silent unless overridden per-event.
+    const silent = factoryOptionsArg ? extractSilentFromOptions(factoryOptionsArg) : undefined;
+
     const factoryName = variableDecl.getName();
     namespaces.set(factoryName, {
       factoryName,
       eventPrefixProject: repoArg.getLiteralText(), // "grafana"
       eventPrefixFeature: featureArg.getLiteralText(), // "navigation"
       defaultProperties,
+      silent,
     });
   }
 
   return namespaces;
+};
+
+/**
+ * Extracts `silent` from an object literal like `{ silent: true }`. Returns
+ * undefined when the property is missing, not a boolean literal, or the
+ * argument is not an object literal at all (e.g. `undefined`, a variable).
+ */
+export const extractSilentFromOptions = (optionsArg: Node): boolean | undefined => {
+  if (!Node.isObjectLiteralExpression(optionsArg)) {
+    return undefined;
+  }
+
+  const silentProperty = optionsArg.getProperty('silent');
+  if (!silentProperty || !Node.isPropertyAssignment(silentProperty)) {
+    return undefined;
+  }
+
+  const initializer = silentProperty.getInitializer();
+  if (!initializer) {
+    return undefined;
+  }
+
+  if (initializer.getKind() === SyntaxKind.TrueKeyword) {
+    return true;
+  }
+  if (initializer.getKind() === SyntaxKind.FalseKeyword) {
+    return false;
+  }
+  return undefined;
 };

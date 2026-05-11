@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -155,11 +156,37 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 		)
 
-	case http.MethodPost + "/api/convert/api/v1/alerts",
-		http.MethodDelete + "/api/convert/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
+	case http.MethodPost + "/api/convert/api/v1/alerts":
+		return func(c *contextmodel.ReqContext) {
+			authorize(ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+				ac.EvalPermission(ac.ActionAlertingAlertmanagerImportsCreate),
+				ac.EvalPermission(
+					ac.ActionAlertingAlertmanagerImportsWrite,
+					models.ScopeAlertmanagerImportsProvider.GetResourceScopeUID(readConfigIdentifierHeader(c)),
+				),
+			)).(func(*contextmodel.ReqContext))(c)
+		}
+	case http.MethodDelete + "/api/convert/api/v1/alerts":
+		return func(c *contextmodel.ReqContext) {
+			authorize(ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+				ac.EvalPermission(
+					ac.ActionAlertingAlertmanagerImportsDelete,
+					models.ScopeAlertmanagerImportsProvider.GetResourceScopeUID(readConfigIdentifierHeader(c)),
+				),
+			)).(func(*contextmodel.ReqContext))(c)
+		}
 	case http.MethodGet + "/api/convert/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
+		return func(c *contextmodel.ReqContext) {
+			authorize(ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+				ac.EvalPermission(
+					ac.ActionAlertingAlertmanagerImportsRead,
+					models.ScopeAlertmanagerImportsProvider.GetResourceScopeUID(readConfigIdentifierHeader(c)),
+				),
+			)).(func(*contextmodel.ReqContext))(c)
+		}
 
 	// Alert Instances and Silences
 

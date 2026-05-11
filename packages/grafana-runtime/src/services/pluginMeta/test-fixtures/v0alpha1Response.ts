@@ -2,6 +2,94 @@
 import type { PluginMetasResponse } from '../types';
 import type { Meta } from '../types/meta/meta_object_gen';
 
+export const myOrgTestAppMeta: Meta = structuredClone({
+  kind: 'Meta',
+  apiVersion: 'plugins.grafana.app/v0alpha1',
+  metadata: {
+    name: 'myorg-test-app',
+    namespace: 'default',
+  },
+  spec: {
+    aliasIds: ['fake-alias'],
+    pluginJson: {
+      id: 'myorg-test-app',
+      type: 'app',
+      name: 'Test',
+      info: {
+        keywords: ['app'],
+        logos: {
+          small: 'public/plugins/myorg-test-app/img/logo.svg',
+          large: 'public/plugins/myorg-test-app/img/logo.svg',
+        },
+        updated: '2026-04-20',
+        version: '1.0.0',
+        author: {
+          name: 'Myorg',
+        },
+      },
+      dependencies: {
+        grafanaDependency: '\u003e=12.3.0',
+        grafanaVersion: '*',
+      },
+      buildMode: 'production',
+      includes: [
+        {
+          type: 'page',
+          name: 'Page One',
+          role: 'Viewer',
+          action: 'plugins.app:access',
+          path: '/a/myorg-test-app/one',
+          addToNav: true,
+          defaultNav: true,
+        },
+        {
+          type: 'page',
+          name: 'Page Two',
+          role: 'Viewer',
+          action: 'plugins.app:access',
+          path: '/a/myorg-test-app/two',
+          addToNav: true,
+        },
+        {
+          type: 'page',
+          name: 'Page Three',
+          role: 'Viewer',
+          action: 'plugins.app:access',
+          path: '/a/myorg-test-app/three',
+          addToNav: true,
+        },
+        {
+          type: 'page',
+          name: 'Page Four',
+          role: 'Viewer',
+          action: 'plugins.app:access',
+          path: '/a/myorg-test-app/four',
+          addToNav: true,
+        },
+        {
+          type: 'page',
+          name: 'Configuration',
+          role: 'Admin',
+          path: '/plugins/myorg-test-app',
+          addToNav: true,
+          icon: 'cog',
+        },
+      ],
+    },
+    class: 'external',
+    module: {
+      path: 'public/plugins/myorg-test-app/module.js',
+      loadingStrategy: 'script',
+      hash: 'fake hash',
+    },
+    baseURL: 'public/plugins/myorg-test-app',
+    signature: {
+      status: 'unsigned',
+    },
+  },
+  status: {},
+});
+
 export const clockPanelMetaOnPrem: Meta = structuredClone({
   kind: 'Meta',
   apiVersion: 'plugins.grafana.app/v0alpha1',
@@ -4367,71 +4455,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           loadingStrategy: 'script',
         },
         baseURL: 'app/plugins/panel/xychart',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
-        name: 'zipkin',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'zipkin',
-          type: 'datasource',
-          name: 'Zipkin',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'app/plugins/datasource/zipkin/dist/img/zipkin-logo.svg',
-              large: 'app/plugins/datasource/zipkin/dist/img/zipkin-logo.svg',
-            },
-            updated: '',
-            version: '12.4.0-pre',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'Placeholder for the distributed tracing system.',
-            links: [
-              {
-                name: 'Learn more',
-                url: 'https://zipkin.io',
-              },
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/datasources/zipkin/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '>=10.3.0-0',
-            grafanaVersion: '*',
-          },
-          backend: true,
-          category: 'tracing',
-          executable: 'gpx_zipkin',
-          metrics: true,
-          tracing: true,
-        },
-        class: 'core',
-        module: {
-          path: 'app/plugins/datasource/zipkin/dist/module.js',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/datasource/zipkin/dist',
         signature: {
           status: 'internal',
         },

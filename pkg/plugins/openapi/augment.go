@@ -16,6 +16,8 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
+const app_INSTANCE_NAME = "instance"
+
 type PluginOptions struct {
 	Schema *pluginschema.PluginSchema
 
@@ -29,6 +31,9 @@ type PluginOptions struct {
 	// root+"namespaces/{namespace}/datasources"
 	// This is used for the POST examples
 	Path string
+
+	// When the value is an app, we expect {namespace}/app/instance
+	IsApp bool
 }
 
 // nolint:gocyclo
@@ -49,7 +54,33 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 	// Replace the generic DataSourceSpec with the explicit one
 	settings := opts.Schema.SettingsSchema
 	if !settings.IsZero() {
-		oas.Components.Schemas[opts.SpecName] = settings.Spec
+		resourceSpec := settings.Spec
+		if opts.IsApp {
+			resourceSpec = &spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"object"},
+					Properties: map[string]spec.Schema{
+						"pinned":   *spec.BooleanProperty().WithDescription("shows up in the sidebar"),
+						"enabled":  *spec.BooleanProperty().WithDescription("can be executed"),
+						"jsonData": *settings.Spec,
+					},
+				},
+			}
+
+			example := map[string]any{
+				"metadata": map[string]any{
+					"name": app_INSTANCE_NAME,
+				},
+				"spec": map[string]any{
+					"enabled": true,
+					"pinned":  true,
+					// JSONData (from examples)
+				},
+			}
+			opts.Resource.Example = example
+		}
+
+		oas.Components.Schemas[opts.SpecName] = resourceSpec
 		opts.Resource.Properties["spec"] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Ref: spec.MustCreateRef("#/components/schemas/" + opts.SpecName),
@@ -101,7 +132,7 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 
 	routes := opts.Schema.Routes
 	if routes.IsZero() {
-		return oas, nil
+		routes = &pluginschema.Routes{}
 	}
 
 	// Add custom schemas
@@ -124,9 +155,44 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 
 	var params []*spec3.Parameter
 	for _, p := range cfg.Parameters {
-		if p.Name == "namespace" || p.Name == "name" {
+		if p.Name == "namespace" {
 			params = append(params, p)
 		}
+		if p.Name == "name" && !opts.IsApp {
+			params = append(params, p)
+		}
+	}
+
+	if opts.IsApp {
+		// Hide the non-instance based routes
+		delete(oas.Paths.Paths, opts.Path)
+
+		removeName := func(pp []*spec3.Parameter) (ret []*spec3.Parameter) {
+			for _, p := range pp {
+				if p.Name != "name" {
+					ret = append(ret, p)
+				}
+			}
+			return
+		}
+
+		// Replace the {name} property with /instance path
+		appRoutePrefix := opts.Path + "/" + app_INSTANCE_NAME
+		for k, v := range oas.Paths.Paths {
+			if strings.HasPrefix(k, routePrefix) {
+				delete(oas.Paths.Paths, k)
+				k = strings.Replace(k, routePrefix, appRoutePrefix, 1)
+				v.Parameters = removeName(v.Parameters)
+				oas.Paths.Paths[k] = v
+			}
+		}
+		routePrefix = appRoutePrefix
+	}
+
+	// When a schema is configured, remove the default mappings
+	if len(routes.Paths) > 0 {
+		delete(oas.Paths.Paths, routePrefix+"/resources")
+		delete(oas.Paths.Paths, routePrefix+"/proxy")
 	}
 
 	// Add all the paths
@@ -151,6 +217,38 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 		oas.Paths.Paths[routePrefix+k] = v
 	}
 	return oas, nil
+}
+
+// getPathOperations returns the set of non-nil operations defined on a path.
+// Equivalent to builder.GetPathOperations in the root module, inlined here to
+// avoid a cross-module dependency that breaks go mod tidy.
+func getPathOperations(path *spec3.PathProps) map[string]*spec3.Operation {
+	ops := make(map[string]*spec3.Operation)
+	if path.Get != nil {
+		ops[http.MethodGet] = path.Get
+	}
+	if path.Head != nil {
+		ops[http.MethodHead] = path.Head
+	}
+	if path.Delete != nil {
+		ops[http.MethodDelete] = path.Delete
+	}
+	if path.Post != nil {
+		ops[http.MethodPost] = path.Post
+	}
+	if path.Put != nil {
+		ops[http.MethodPut] = path.Put
+	}
+	if path.Patch != nil {
+		ops[http.MethodPatch] = path.Patch
+	}
+	if path.Trace != nil {
+		ops[http.MethodTrace] = path.Trace
+	}
+	if path.Options != nil {
+		ops[http.MethodOptions] = path.Options
+	}
+	return ops
 }
 
 // safely copy components from src to dst
@@ -203,33 +301,4 @@ func copyComponents(src *spec3.Components, dst *spec3.Components) {
 		}
 		maps.Copy(dst.RequestBodies, src.RequestBodies)
 	}
-}
-
-func getPathOperations(path *spec3.PathProps) map[string]*spec3.Operation {
-	ops := make(map[string]*spec3.Operation)
-	if path.Get != nil {
-		ops[http.MethodGet] = path.Get
-	}
-	if path.Head != nil {
-		ops[http.MethodHead] = path.Head
-	}
-	if path.Delete != nil {
-		ops[http.MethodDelete] = path.Delete
-	}
-	if path.Post != nil {
-		ops[http.MethodPost] = path.Post
-	}
-	if path.Put != nil {
-		ops[http.MethodPut] = path.Put
-	}
-	if path.Patch != nil {
-		ops[http.MethodPatch] = path.Patch
-	}
-	if path.Trace != nil {
-		ops[http.MethodTrace] = path.Trace
-	}
-	if path.Options != nil {
-		ops[http.MethodOptions] = path.Options
-	}
-	return ops
 }

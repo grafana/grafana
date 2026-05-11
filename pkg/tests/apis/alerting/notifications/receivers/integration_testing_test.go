@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -544,7 +543,7 @@ func TestIntegrationTesting(t *testing.T) {
 					Body: v1beta1.CreateReceiverIntegrationTestRequestBody{
 						Alert: alert,
 						Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
-							Uid:  util.Pointer("test-uid"),
+							Uid:  new("test-uid"),
 							Type: "webhook",
 							Settings: map[string]interface{}{
 								"url": server.URL,

@@ -236,7 +236,17 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
 	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.cfg.LoginCookieName})
-	req.Header.Set("User-Agent", proxy.cfg.DataProxyUserAgent)
+	ua := proxy.cfg.DataProxyUserAgent
+	if proxy.cfg.DataProxyForwardUserAgent {
+		if originalUA := req.Header.Get("User-Agent"); originalUA != "" {
+			if ua != "" {
+				ua = ua + " " + originalUA
+			} else {
+				ua = originalUA
+			}
+		}
+	}
+	req.Header.Set("User-Agent", ua)
 
 	jsonData := make(map[string]any)
 	if proxy.ds.JsonData != nil {

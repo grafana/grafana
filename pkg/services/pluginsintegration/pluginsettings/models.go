@@ -1,6 +1,7 @@
 package pluginsettings
 
 import (
+	"context"
 	"errors"
 	"time"
 )
@@ -8,6 +9,9 @@ import (
 var (
 	ErrPluginSettingNotFound = errors.New("plugin setting not found")
 )
+
+// Get access to the decrypted secure values after other checks have passed
+type SecureJsonGetter func(context.Context) (map[string]string, error)
 
 type DTO struct {
 	ID             int64

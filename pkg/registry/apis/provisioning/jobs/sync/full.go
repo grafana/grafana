@@ -326,13 +326,8 @@ func instrumentedFullSyncPhase(phase jobs.FullSyncPhase, fn func() error, metric
 	return err
 }
 
-// applyChanges orders and executes the diff:
-// - deletions first (files then folders),
-// - then folder creations,
-// - then file creations.
-// It delegates to:
-// - serial folder handling,
-// - parallel resource handling with per-change timeouts.
+// applyChanges orders and executes the diff so folders are only removed after
+// their contents have been deleted or re-parented.
 func applyChanges(
 	ctx context.Context,
 	changes []ResourceFileChange,
@@ -366,6 +361,7 @@ func applyChanges(
 		attribute.Int("file_renames", len(buckets.fileRenames)),
 		attribute.Int("file_deletions", len(buckets.fileDeletions)),
 		attribute.Int("folder_deletions", len(buckets.folderDeletions)),
+		attribute.Int("orphan_folder_cleanups", len(buckets.orphanFolderCleanups)),
 		attribute.Int("folder_creations", len(buckets.folderCreations)),
 		attribute.Int("file_creations", len(buckets.fileCreations)),
 	)
@@ -413,26 +409,34 @@ func applyChanges(
 		}
 	}
 
-	return cleanupRenamedFolders(ctx, buckets.folderCreations, repositoryResources, progress, tracer, metrics)
+	orphanFolders := make([]ResourceFileChange, 0, buckets.folderRenames+len(buckets.orphanFolderCleanups))
+	for _, c := range buckets.folderCreations {
+		if c.FolderRenamed {
+			orphanFolders = append(orphanFolders, c)
+		}
+	}
+	orphanFolders = append(orphanFolders, buckets.orphanFolderCleanups...)
+	return cleanupOrphanFolders(ctx, orphanFolders, repositoryResources, progress, tracer, metrics)
 }
 
 // changeBuckets groups resource changes by the phase in which they must be applied.
 type changeBuckets struct {
-	fileDeletions   []ResourceFileChange
-	folderCreations []ResourceFileChange
-	fileRenames     []ResourceFileChange
-	folderDeletions []ResourceFileChange
-	fileCreations   []ResourceFileChange
-	folderRenames   int
+	fileDeletions        []ResourceFileChange
+	folderCreations      []ResourceFileChange
+	fileRenames          []ResourceFileChange
+	folderDeletions      []ResourceFileChange
+	fileCreations        []ResourceFileChange
+	orphanFolderCleanups []ResourceFileChange
+	folderRenames        int
 }
 
 // categorizeChanges separates changes into ordered phases:
 // 1. File deletions (free up folder contents early, must happen before folder deletions)
 // 2. Folder creations (destination folders must exist before renames/creates)
 // 3. File renames (after destination folders exist, before old folders are deleted)
-// 4. Folder deletions (old folders are now empty)
+// 4. Folder deletions for folders that are already empty
 // 5. File creations/updates (must happen after folder creations)
-// 6. Old folder deletions (must happen after all children have been re-parented)
+// 6. Deferred folder deletions (must happen after all children have been re-parented)
 // It also counts folder renames so callers can temporarily lift the quota for the
 // creation phase (the matching deletions happen later in the old-folder cleanup).
 func categorizeChanges(changes []ResourceFileChange) changeBuckets {
@@ -445,6 +449,8 @@ func categorizeChanges(changes []ResourceFileChange) changeBuckets {
 			buckets.fileRenames = append(buckets.fileRenames, change)
 		case change.Action == repository.FileActionDeleted && !isFolder:
 			buckets.fileDeletions = append(buckets.fileDeletions, change)
+		case change.IsOrphanFolderCleanup():
+			buckets.orphanFolderCleanups = append(buckets.orphanFolderCleanups, change)
 		case change.Action == repository.FileActionDeleted && isFolder:
 			buckets.folderDeletions = append(buckets.folderDeletions, change)
 		case isFolder:
@@ -459,38 +465,51 @@ func categorizeChanges(changes []ResourceFileChange) changeBuckets {
 	return buckets
 }
 
-// cleanupRenamedFolders deletes the original folders left behind after a UID
-// change. It runs once all children have been re-parented so that the old
-// folder tree is empty and safe to remove.
-func cleanupRenamedFolders(
+// cleanupOrphanFolders deletes folders that must survive until all child
+// resources have been deleted or re-parented.
+func cleanupOrphanFolders(
 	ctx context.Context,
-	folderCreations []ResourceFileChange,
+	orphanFolders []ResourceFileChange,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
 	metrics jobs.JobMetrics,
 ) error {
-	type oldFolder struct {
-		Path   string
-		UID    string
-		Reason string
+	type orphanFolder struct {
+		Path         string
+		UID          string
+		Reason       string
+		ErrorContext string
 	}
 
-	var oldFolders []oldFolder
-	for _, change := range folderCreations {
-		if change.FolderRenamed {
-			oldFolders = append(oldFolders, oldFolder{Path: change.Path, UID: change.Existing.Name, Reason: change.Reason})
+	var orphanFoldersToDelete []orphanFolder
+	for _, change := range orphanFolders {
+		if change.FolderRenamed && change.Existing != nil {
+			orphanFoldersToDelete = append(orphanFoldersToDelete, orphanFolder{
+				Path:         change.Path,
+				UID:          change.Existing.Name,
+				Reason:       change.Reason,
+				ErrorContext: "old folder " + change.Existing.Name + " after UID change",
+			})
+		}
+		if change.IsOrphanFolderCleanup() {
+			orphanFoldersToDelete = append(orphanFoldersToDelete, orphanFolder{
+				Path:         change.Path,
+				UID:          change.Existing.Name,
+				Reason:       change.Reason,
+				ErrorContext: "orphan folder " + change.Existing.Name,
+			})
 		}
 	}
 
-	if len(oldFolders) == 0 {
+	if len(orphanFolders) == 0 {
 		return nil
 	}
 
-	logging.FromContext(ctx).Info("folder rename cleanup", "count", len(oldFolders))
+	logging.FromContext(ctx).Info("deferred folder cleanup", "count", len(orphanFolders))
 	return instrumentedFullSyncPhase(jobs.FullSyncPhaseOldFolderCleanup, func() error {
-		safepath.SortByDepth(oldFolders, func(f oldFolder) string { return f.Path }, false)
-		for _, old := range oldFolders {
+		safepath.SortByDepth(orphanFoldersToDelete, func(f orphanFolder) string { return f.Path }, false)
+		for _, folder := range orphanFoldersToDelete {
 			if ctx.Err() != nil {
 				break
 			}
@@ -499,23 +518,27 @@ func cleanupRenamedFolders(
 				return err
 			}
 
-			// Skip if the replacement folder failed to be created or updated (e.g. UID conflict warning).
-			if progress.HasDirPathFailedCreation(old.Path) || progress.HasChildPathFailedUpdate(old.Path) {
-				skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_renamed_folder_deletion")
-				progress.Record(skipCtx, jobs.NewPathOnlyResult(old.Path).
-					WithError(fmt.Errorf("old folder was not deleted because the replacement folder could not be created")).
+			if progress.HasDirPathFailedCreation(folder.Path) ||
+				progress.HasDirPathFailedDeletion(folder.Path) ||
+				progress.HasChildPathFailedCreation(folder.Path) ||
+				progress.HasChildPathFailedUpdate(folder.Path) {
+				skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_orphan_folder_deletion")
+				progress.Record(skipCtx, jobs.NewFolderResult(folder.Path).
+					WithName(folder.UID).
+					WithReason(folder.Reason).
+					WithError(fmt.Errorf("folder was not deleted because dependent path changes failed")).
 					AsSkipped().
 					Build())
 				skipSpan.End()
 				continue
 			}
 
-			resultBuilder := jobs.NewFolderResult(old.Path).
+			resultBuilder := jobs.NewFolderResult(folder.Path).
 				WithAction(repository.FileActionDeleted).
-				WithName(old.UID).
-				WithReason(old.Reason)
-			if err := repositoryResources.RemoveFolder(ctx, old.UID); err != nil {
-				resultBuilder.WithError(fmt.Errorf("delete old folder %s after UID change: %w", old.UID, err))
+				WithName(folder.UID).
+				WithReason(folder.Reason)
+			if err := repositoryResources.RemoveFolder(ctx, folder.UID); err != nil {
+				resultBuilder.WithError(fmt.Errorf("delete %s: %w", folder.ErrorContext, err))
 			}
 			progress.Record(ctx, resultBuilder.Build())
 		}
