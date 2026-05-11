@@ -6,8 +6,8 @@ import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import {
   _resetForTests,
-  getDataSourceSettingsList,
-  getDataSourceSettings,
+  getDataSourceInstanceSettingsList,
+  getDataSourceInstanceSettings,
   initDataSources,
   reloadDataSources,
   upsertRuntimeDataSource,
@@ -122,29 +122,29 @@ beforeEach(() => {
 });
 
 describe('instanceSettings', () => {
-  describe('getDataSourceSettings', () => {
+  describe('getDataSourceInstanceSettings', () => {
     it('returns the cached value for a known uid without fetching', async () => {
       initDataSources(fixtures, 'Bravo');
-      const result = await getDataSourceSettings('uid-alpha');
+      const result = await getDataSourceInstanceSettings('uid-alpha');
       expect(result?.name).toBe('Alpha');
       expect(backendGet).not.toHaveBeenCalled();
     });
 
     it('returns the cached value for a known name', async () => {
       initDataSources(fixtures, 'Bravo');
-      const result = await getDataSourceSettings('Charlie');
+      const result = await getDataSourceInstanceSettings('Charlie');
       expect(result?.uid).toBe('uid-charlie');
     });
 
     it('falls back to the default when ref is null', async () => {
       initDataSources(fixtures, 'Bravo');
-      const result = await getDataSourceSettings(null);
+      const result = await getDataSourceInstanceSettings(null);
       expect(result?.name).toBe('Bravo');
     });
 
     it('interpolates template variable refs and preserves the raw ref', async () => {
       initDataSources(fixtures, 'Bravo');
-      const result = await getDataSourceSettings('${myds}');
+      const result = await getDataSourceInstanceSettings('${myds}');
       expect(result?.uid).toBe('${myds}');
       expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-alpha' });
     });
@@ -153,16 +153,16 @@ describe('instanceSettings', () => {
       // Don't call init — simulates the very first access before boot data has
       // been pushed into the cache (e.g. from a non-Grafana mount point).
       backendGet.mockResolvedValue({ datasources: fixtures, defaultDatasource: 'Bravo' });
-      const result = await getDataSourceSettings('uid-alpha');
+      const result = await getDataSourceInstanceSettings('uid-alpha');
       expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
       expect(result?.name).toBe('Alpha');
     });
 
     it('resolves expression references by uid, name, and legacy id', async () => {
       initDataSources(fixtures, 'Bravo');
-      const byUid = await getDataSourceSettings('__expr__');
-      const byName = await getDataSourceSettings('Expression');
-      const byLegacyId = await getDataSourceSettings('-100');
+      const byUid = await getDataSourceInstanceSettings('__expr__');
+      const byName = await getDataSourceInstanceSettings('Expression');
+      const byLegacyId = await getDataSourceInstanceSettings('-100');
 
       expect(byUid?.uid).toBe('__expr__');
       expect(byName?.uid).toBe('__expr__');
@@ -171,7 +171,7 @@ describe('instanceSettings', () => {
 
     it('resolves a DataSourceRef with type but no uid to a matching datasource', async () => {
       initDataSources(fixtures, 'Bravo');
-      const result = await getDataSourceSettings({ type: 'test-db' });
+      const result = await getDataSourceInstanceSettings({ type: 'test-db' });
       expect(result).toBeDefined();
       expect(result?.type).toBe('test-db');
       // Prefers the default datasource of that type.
@@ -184,14 +184,14 @@ describe('instanceSettings', () => {
         Charlie: ds({ id: 3, uid: 'uid-charlie', name: 'Charlie', type: 'test-db' }),
       };
       initDataSources(noDefault, 'Alpha');
-      const result = await getDataSourceSettings({ type: 'test-db' });
+      const result = await getDataSourceInstanceSettings({ type: 'test-db' });
       expect(result).toBeDefined();
       expect(result?.type).toBe('test-db');
     });
 
     it('returns a result for a type-only DataSourceRef even when no exact match exists', async () => {
       initDataSources(fixtures, 'Bravo');
-      const result = await getDataSourceSettings({ type: 'nonexistent' });
+      const result = await getDataSourceInstanceSettings({ type: 'nonexistent' });
       // Matching legacy DatasourceSrv: findByType delegates to applyFilters
       // which always appends Grafana DS, so a non-matching type still resolves.
       expect(result).toBeDefined();
@@ -199,29 +199,32 @@ describe('instanceSettings', () => {
 
     it('resolves by numeric id as a string fallback', async () => {
       initDataSources(fixtures, 'Bravo');
-      const result = await getDataSourceSettings('3');
+      const result = await getDataSourceInstanceSettings('3');
       expect(result?.name).toBe('Charlie');
     });
 
     it('returns undefined when a template variable resolves to a missing datasource', async () => {
       initDataSources(fixtures, 'Bravo');
-      const result = await getDataSourceSettings('${missing}');
+      const result = await getDataSourceInstanceSettings('${missing}');
       expect(result).toBeUndefined();
     });
 
     it('deduplicates concurrent fetches', async () => {
       backendGet.mockResolvedValue({ datasources: fixtures, defaultDatasource: 'Bravo' });
-      const [a, b] = await Promise.all([getDataSourceSettings('uid-alpha'), getDataSourceSettings('uid-bravo')]);
+      const [a, b] = await Promise.all([
+        getDataSourceInstanceSettings('uid-alpha'),
+        getDataSourceInstanceSettings('uid-bravo'),
+      ]);
       expect(backendGet).toHaveBeenCalledTimes(1);
       expect(a?.name).toBe('Alpha');
       expect(b?.name).toBe('Bravo');
     });
   });
 
-  describe('getDataSourceSettingsList', () => {
+  describe('getDataSourceInstanceSettingsList', () => {
     it('returns a paginated response shape', async () => {
       initDataSources(fixtures, 'Bravo');
-      const page = await getDataSourceSettingsList();
+      const page = await getDataSourceInstanceSettingsList();
       expect(page.hasMore).toBe(false);
       expect(page.nextCursor).toBeUndefined();
       expect(Array.isArray(page.items)).toBe(true);
@@ -229,7 +232,7 @@ describe('instanceSettings', () => {
 
     it('filters out built-in grafana / mixed / dashboard by default', async () => {
       initDataSources(fixtures, 'Bravo');
-      const page = await getDataSourceSettingsList();
+      const page = await getDataSourceInstanceSettingsList();
       const names = page.items.map((x) => x.name);
       expect(names).not.toContain('-- Mixed --');
       expect(names).not.toContain('-- Dashboard --');
@@ -239,20 +242,20 @@ describe('instanceSettings', () => {
 
     it('honours the `mixed` filter', async () => {
       initDataSources(fixtures, 'Bravo');
-      const page = await getDataSourceSettingsList({ filters: { mixed: true } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { mixed: true } });
       expect(page.items.some((x) => x.name === '-- Mixed --')).toBe(true);
     });
 
     it('honours the `tracing` filter and excludes metrics-only sources', async () => {
       initDataSources(fixtures, 'Bravo');
-      const page = await getDataSourceSettingsList({ filters: { tracing: true } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { tracing: true } });
       const names = page.items.map((x) => x.name);
       expect(names).toEqual(['Charlie']);
     });
 
     it('honours the `metrics` filter', async () => {
       initDataSources(fixtures, 'Bravo');
-      const page = await getDataSourceSettingsList({ filters: { metrics: true } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { metrics: true } });
       const names = page.items.map((x) => x.name);
       expect(names).toContain('Alpha');
       expect(names).not.toContain('Charlie');
@@ -270,7 +273,7 @@ describe('instanceSettings', () => {
         Alpha: fixtures.Alpha,
       };
       initDataSources(withLogs, 'Alpha');
-      const page = await getDataSourceSettingsList({ filters: { logs: true } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { logs: true } });
       const names = page.items.map((x) => x.name);
       expect(names).toContain('Loki');
       expect(names).not.toContain('Alpha');
@@ -288,7 +291,7 @@ describe('instanceSettings', () => {
         Alpha: fixtures.Alpha,
       };
       initDataSources(withAnnotations, 'Alpha');
-      const page = await getDataSourceSettingsList({ filters: { annotations: true } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { annotations: true } });
       const names = page.items.map((x) => x.name);
       expect(names).toContain('Annotator');
       expect(names).not.toContain('Alpha');
@@ -306,7 +309,7 @@ describe('instanceSettings', () => {
         Alpha: fixtures.Alpha,
       };
       initDataSources(withAlerting, 'Alpha');
-      const page = await getDataSourceSettingsList({ filters: { alerting: true } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { alerting: true } });
       const names = page.items.map((x) => x.name);
       expect(names).toContain('Alerter');
       expect(names).not.toContain('Alpha');
@@ -314,7 +317,7 @@ describe('instanceSettings', () => {
 
     it('honours the `type` filter with a string', async () => {
       initDataSources(fixtures, 'Bravo');
-      const page = await getDataSourceSettingsList({ filters: { type: 'test-db' } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { type: 'test-db' } });
       // Grafana DS is always appended, so filter the base items.
       const baseItems = page.items.filter((x) => x.meta.id !== 'grafana');
       expect(baseItems.every((x) => x.type === 'test-db')).toBe(true);
@@ -333,13 +336,13 @@ describe('instanceSettings', () => {
         Alpha: fixtures.Alpha,
       };
       initDataSources(mixed, 'Alpha');
-      const page = await getDataSourceSettingsList({ filters: { type: ['prometheus', 'test-db'] } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { type: ['prometheus', 'test-db'] } });
       expect(page.items.length).toBe(2);
     });
 
     it('honours a custom `filter` function', async () => {
       initDataSources(fixtures, 'Bravo');
-      const page = await getDataSourceSettingsList({
+      const page = await getDataSourceInstanceSettingsList({
         filters: { filter: (x) => x.name === 'Alpha' },
       });
       const names = page.items.map((x) => x.name);
@@ -367,26 +370,26 @@ describe('instanceSettings', () => {
       };
       initDataSources(noCapability, 'Alpha');
 
-      const withoutAll = await getDataSourceSettingsList();
+      const withoutAll = await getDataSourceInstanceSettingsList();
       expect(withoutAll.items.map((x) => x.name)).not.toContain('NoOp');
 
-      const withAll = await getDataSourceSettingsList({ filters: { all: true } });
+      const withAll = await getDataSourceInstanceSettingsList({ filters: { all: true } });
       expect(withAll.items.map((x) => x.name)).toContain('NoOp');
     });
 
     it('honours the `dashboard` filter', async () => {
       initDataSources(fixtures, 'Bravo');
-      const page = await getDataSourceSettingsList({ filters: { dashboard: true } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { dashboard: true } });
       expect(page.items.some((x) => x.name === '-- Dashboard --')).toBe(true);
     });
 
     it('includes Grafana DS by default but excludes it when tracing filter is set', async () => {
       initDataSources(fixtures, 'Bravo');
 
-      const defaultPage = await getDataSourceSettingsList();
+      const defaultPage = await getDataSourceInstanceSettingsList();
       expect(defaultPage.items.some((x) => x.name === '-- Grafana --')).toBe(true);
 
-      const tracingPage = await getDataSourceSettingsList({ filters: { tracing: true } });
+      const tracingPage = await getDataSourceInstanceSettingsList({ filters: { tracing: true } });
       expect(tracingPage.items.some((x) => x.name === '-- Grafana --')).toBe(false);
     });
 
@@ -402,7 +405,7 @@ describe('instanceSettings', () => {
         }),
       };
       initDataSources(withAlerting, 'Bravo');
-      const page = await getDataSourceSettingsList({ filters: { alerting: true, mixed: true } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { alerting: true, mixed: true } });
       expect(page.items.some((x) => x.name === '-- Mixed --')).toBe(false);
       expect(page.items.some((x) => x.name === '-- Grafana --')).toBe(false);
     });
@@ -411,7 +414,7 @@ describe('instanceSettings', () => {
       initDataSources(fixtures, 'Bravo');
       upsertRuntimeDataSource(ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' }));
 
-      const page = await getDataSourceSettingsList({ filters: { all: true } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { all: true } });
       expect(page.items.some((x) => x.uid === 'runtime-ds')).toBe(false);
     });
 
@@ -422,7 +425,7 @@ describe('instanceSettings', () => {
       } as unknown as TemplateSrv);
 
       initDataSources(fixtures, 'Bravo');
-      const page = await getDataSourceSettingsList({ filters: { variables: true } });
+      const page = await getDataSourceInstanceSettingsList({ filters: { variables: true } });
       const names = page.items.map((x) => x.name);
       expect(names).toContain('${dsVar}');
 
@@ -432,7 +435,7 @@ describe('instanceSettings', () => {
 
     it('returns items sorted alphabetically by name', async () => {
       initDataSources(fixtures, 'Bravo');
-      const page = await getDataSourceSettingsList();
+      const page = await getDataSourceInstanceSettingsList();
       const names = page.items.filter((x) => x.name !== '-- Grafana --').map((x) => x.name);
       const sorted = [...names].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
       expect(names).toEqual(sorted);
@@ -450,17 +453,17 @@ describe('instanceSettings', () => {
       await reloadDataSources();
 
       expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
-      const result = await getDataSourceSettings(null);
+      const result = await getDataSourceInstanceSettings(null);
       expect(result?.name).toBe('Alpha');
     });
   });
 
   describe('upsertRuntimeDataSource', () => {
-    it('makes the settings available to getDataSourceSettings', async () => {
+    it('makes the settings available to getDataSourceInstanceSettings', async () => {
       initDataSources({}, '');
       const runtime = ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' });
       upsertRuntimeDataSource(runtime);
-      const result = await getDataSourceSettings('runtime-ds');
+      const result = await getDataSourceInstanceSettings('runtime-ds');
       expect(result?.name).toBe('Runtime');
     });
 
@@ -477,7 +480,7 @@ describe('instanceSettings', () => {
       backendGet.mockResolvedValue({ datasources: fixtures, defaultDatasource: 'Bravo' });
       await reloadDataSources();
 
-      const result = await getDataSourceSettings('runtime-ds');
+      const result = await getDataSourceInstanceSettings('runtime-ds');
       expect(result?.name).toBe('Runtime');
     });
   });

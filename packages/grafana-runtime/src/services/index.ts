@@ -43,14 +43,18 @@ export { setCurrentUser } from './user';
 export { RuntimeDataSource } from './RuntimeDataSource';
 export { ScopesContext, type ScopesContextValueState, type ScopesContextValue, useScopes } from './ScopesContext';
 
-export { getDataSourceSettings, getDataSourceSettingsList, reloadDataSources } from './dataSource/settings';
-export { type DataSourceSettingsPage, type GetDataSourceSettingsListOptions } from './dataSource/types';
-export { getDataSource, registerRuntimeDataSource } from './dataSource/dataSource';
 export {
-  useDataSourceSettings,
-  useDataSourceSettingsList,
-  useDataSource,
-  type UseDataSourceSettingsResult,
-  type UseDataSourceSettingsListResult,
-  type UseDataSourceResult,
+  getDataSourceInstanceSettings,
+  getDataSourceInstanceSettingsList,
+  reloadDataSources,
+} from './dataSource/settings';
+export { type DataSourceInstanceSettingsPage, type GetDataSourceInstanceSettingsListOptions } from './dataSource/types';
+export { getDataSourceInstance, registerRuntimeDataSource } from './dataSource/dataSource';
+export {
+  useDataSourceInstanceSettings,
+  useDataSourceInstanceSettingsList,
+  useDataSourceInstance,
+  type UseDataSourceInstanceSettingsResult,
+  type UseDataSourceInstanceSettingsListResult,
+  type UseDataSourceInstanceResult,
 } from './dataSource/hooks';

@@ -5,13 +5,13 @@ import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef
 
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
-import { getDataSource } from './dataSource';
-import { getDataSourceSettings, getDataSourceSettingsList } from './settings';
+import { getDataSourceInstance } from './dataSource';
+import { getDataSourceInstanceSettings, getDataSourceInstanceSettingsList } from './settings';
 
 /**
  * @public
  */
-export interface UseDataSourceSettingsResult {
+export interface UseDataSourceInstanceSettingsResult {
   isLoading: boolean;
   error?: Error;
   settings?: DataSourceInstanceSettings;
@@ -20,7 +20,7 @@ export interface UseDataSourceSettingsResult {
 /**
  * @public
  */
-export interface UseDataSourceSettingsListResult {
+export interface UseDataSourceInstanceSettingsListResult {
   isLoading: boolean;
   error?: Error;
   /** Flattened items across all pages fetched so far. */
@@ -33,7 +33,7 @@ export interface UseDataSourceSettingsListResult {
 /**
  * @public
  */
-export interface UseDataSourceResult {
+export interface UseDataSourceInstanceResult {
   isLoading: boolean;
   error?: Error;
   dataSource?: DataSourceApi;
@@ -44,26 +44,30 @@ function stableKey(value: unknown): string {
 }
 
 /**
- * React hook wrapping {@link getDataSourceSettings}. Re-fetches when `ref`
+ * React hook wrapping {@link getDataSourceInstanceSettings}. Re-fetches when `ref`
  * changes (compared by value, so inline objects are safe).
  *
  * @public
  */
-export function useDataSourceSettings(ref?: DataSourceRef | string | null): UseDataSourceSettingsResult {
+export function useDataSourceInstanceSettings(
+  ref?: DataSourceRef | string | null
+): UseDataSourceInstanceSettingsResult {
   const refKey = stableKey(ref);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getDataSourceSettings(ref), [refKey]);
+  const { loading, error, value } = useAsync(() => getDataSourceInstanceSettings(ref), [refKey]);
   return { isLoading: loading, error, settings: value };
 }
 
 /**
- * React hook wrapping {@link getDataSourceSettingsList}. Items are flattened
+ * React hook wrapping {@link getDataSourceInstanceSettingsList}. Items are flattened
  * across pages; call `fetchMore` to load additional pages. Items reset when
  * `filters` changes (compared by value, so inline objects are safe).
  *
  * @public
  */
-export function useDataSourceSettingsList(filters?: GetDataSourceListFilters): UseDataSourceSettingsListResult {
+export function useDataSourceInstanceSettingsList(
+  filters?: GetDataSourceListFilters
+): UseDataSourceInstanceSettingsListResult {
   const filtersKey = stableKey(filters);
 
   const [items, setItems] = useState<DataSourceInstanceSettings[]>([]);
@@ -71,7 +75,7 @@ export function useDataSourceSettingsList(filters?: GetDataSourceListFilters): U
   const [hasMore, setHasMore] = useState(true);
 
   const [fetchState, fetchPage] = useAsyncFn(
-    (nextCursor?: string) => getDataSourceSettingsList({ filters, cursor: nextCursor }),
+    (nextCursor?: string) => getDataSourceInstanceSettingsList({ filters, cursor: nextCursor }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [filtersKey],
     { loading: true }
@@ -105,14 +109,14 @@ export function useDataSourceSettingsList(filters?: GetDataSourceListFilters): U
 }
 
 /**
- * React hook wrapping {@link getDataSource}. Re-fetches when `ref`
+ * React hook wrapping {@link getDataSourceInstance}. Re-fetches when `ref`
  * changes (compared by value, so inline objects are safe).
  *
  * @public
  */
-export function useDataSource(ref?: DataSourceRef | string | null): UseDataSourceResult {
+export function useDataSourceInstance(ref?: DataSourceRef | string | null): UseDataSourceInstanceResult {
   const refKey = stableKey(ref);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getDataSource(ref), [refKey]);
+  const { loading, error, value } = useAsync(() => getDataSourceInstance(ref), [refKey]);
   return { isLoading: loading, error, dataSource: value };
 }
