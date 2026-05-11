@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 type LogGroupsService struct {
@@ -50,7 +49,7 @@ func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGr
 					Arn:  *logGroup.Arn,
 					Name: *logGroup.LogGroupName,
 				},
-				AccountId: utils.Pointer(getAccountId(*logGroup.Arn)),
+				AccountId: new(getAccountId(*logGroup.Arn)),
 			})
 		}
 

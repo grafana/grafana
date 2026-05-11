@@ -474,7 +474,8 @@ func (ng *AlertNG) init() error {
 		ng.tracer,
 		validation.NewPermissionAwareValidator(ng.accesscontrol),
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
+		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) &&
+			ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
 	)

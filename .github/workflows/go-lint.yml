@@ -58,7 +58,7 @@ jobs:
   lint-go:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-xlarge
     steps:
       - uses: actions/checkout@v5
         with:
@@ -68,9 +68,9 @@ jobs:
         with:
           cache-build: 'false'
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@b002b6ecfcabe6ac0e2c6cba1bcc779eb34ac51f # v9
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
         with:
-          version: v2.9.0
+          version: v2.12.2
           args: |
             --verbose $(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}/...')
           install-mode: binary
