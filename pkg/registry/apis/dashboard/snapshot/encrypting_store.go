@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -21,7 +20,7 @@ import (
 // unified-storage boundary so the plaintext is never persisted: writes move
 // it into Spec.DashboardEncrypted, reads restore it.
 type encryptingStore struct {
-	inner             grafanarest.Storage
+	grafanarest.Storage
 	encryptionManager secretcontracts.EncryptionManager
 }
 
@@ -31,24 +30,14 @@ var _ grafanarest.Storage = (*encryptingStore)(nil)
 // dual-writer with the namespace-scoped app-platform EncryptionManager so
 // each tenant's snapshots are bound to their own data keys.
 func NewEncryptingStore(inner grafanarest.Storage, encryptionManager secretcontracts.EncryptionManager) grafanarest.Storage {
-	return &encryptingStore{inner: inner, encryptionManager: encryptionManager}
-}
-
-func (s *encryptingStore) New() runtime.Object     { return s.inner.New() }
-func (s *encryptingStore) NewList() runtime.Object { return s.inner.NewList() }
-func (s *encryptingStore) Destroy()                { s.inner.Destroy() }
-func (s *encryptingStore) NamespaceScoped() bool   { return s.inner.NamespaceScoped() }
-func (s *encryptingStore) GetSingularName() string { return s.inner.GetSingularName() }
-
-func (s *encryptingStore) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return s.inner.ConvertToTable(ctx, obj, tableOptions)
+	return &encryptingStore{Storage: inner, encryptionManager: encryptionManager}
 }
 
 func (s *encryptingStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	if err := s.encryptInPlace(ctx, obj); err != nil {
 		return nil, err
 	}
-	out, err := s.inner.Create(ctx, obj, createValidation, options)
+	out, err := s.Storage.Create(ctx, obj, createValidation, options)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +54,7 @@ func (s *encryptingStore) Update(ctx context.Context, name string, objInfo rest.
 }
 
 func (s *encryptingStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	out, err := s.inner.Get(ctx, name, options)
+	out, err := s.Storage.Get(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
@@ -73,17 +62,6 @@ func (s *encryptingStore) Get(ctx context.Context, name string, options *metav1.
 		return nil, err
 	}
 	return out, nil
-}
-
-// List does not decrypt: the snapshot list endpoint strips the dashboard
-// payload (see stripSensitiveFieldsFromList), so decrypting would be wasted
-// KMS work.
-func (s *encryptingStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.inner.List(ctx, options)
-}
-
-func (s *encryptingStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return s.inner.Delete(ctx, name, deleteValidation, options)
 }
 
 func (s *encryptingStore) encryptInPlace(ctx context.Context, obj runtime.Object) error {
