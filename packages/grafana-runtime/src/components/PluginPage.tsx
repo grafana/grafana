@@ -23,7 +23,7 @@ export interface PluginPageProps {
   background?: PluginPageBackground;
 }
 
-export type PluginPageBackground = 'primary' | 'canvas';
+export type PluginPageBackground = 'primary' | 'gradient' | 'canvas';
 export type PluginPageType = React.ComponentType<PluginPageProps>;
 
 export let PluginPage: PluginPageType = ({ children }) => {

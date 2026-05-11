@@ -219,15 +219,18 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const hasDashboardControls = useHasDashboardControls(dashboard);
   const sectionVariablesEnabled = getFeatureFlagClient().getBooleanValue('dashboardSectionVariables', false);
   const panelEditVariables = getPanelEditVariables(dashboard, sectionVariablesEnabled);
+  const { chrome } = useGrafana();
+  const { kioskMode } = chrome.useState();
 
   if (!model.hasControls()) {
     // If dynamic dashboards is enabled, we need to show the edit/share/playlist buttons
     // However we shouldn't do it if we're in edit panel view
     // `DashboardControlActions` already check for edit panel view but we need to prevent showing the container as well
-    if (config.featureToggles.dashboardNewLayouts && !editPanel) {
+    if (config.featureToggles.dashboardNewLayouts && !editPanel && kioskMode !== KioskMode.Full) {
       return (
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
+            {!hideVariableControls && <VariableControls dashboard={dashboard} />}
             <div className={styles.rightControls}>
               <div className={styles.fixedControls}>
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />

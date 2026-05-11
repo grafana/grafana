@@ -36,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -148,7 +147,7 @@ type ConvertPrometheusSrv struct {
 type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, identifier string) error
 	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error)
-	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error)
+	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
 }
 
 func NewConvertPrometheusSrv(
@@ -198,7 +197,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		HasPrometheusRuleDefinition: util.Pointer(true),
+		HasPrometheusRuleDefinition: new(true),
 		NamespaceUIDs:               folderUIDs,
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
@@ -234,7 +233,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 	provenance := getProvenance(c)
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:               []string{namespace.UID},
-		HasPrometheusRuleDefinition: util.Pointer(true),
+		HasPrometheusRuleDefinition: new(true),
 	}
 	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
@@ -266,7 +265,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:               []string{folder.UID},
 		RuleGroups:                  []string{group},
-		HasPrometheusRuleDefinition: util.Pointer(true),
+		HasPrometheusRuleDefinition: new(true),
 	}
 	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
@@ -296,7 +295,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		HasPrometheusRuleDefinition: util.Pointer(true),
+		HasPrometheusRuleDefinition: new(true),
 		NamespaceUIDs:               []string{namespace.UID},
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
@@ -333,7 +332,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		HasPrometheusRuleDefinition: util.Pointer(true),
+		HasPrometheusRuleDefinition: new(true),
 		NamespaceUIDs:               []string{namespace.UID},
 		RuleGroups:                  []string{group},
 	}
@@ -576,7 +575,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 			AlertRules: prom.RulesConfig{
 				IsPaused: pauseAlertRules,
 			},
-			KeepOriginalRuleDefinition: util.Pointer(keepOriginalRuleDefinition),
+			KeepOriginalRuleDefinition: new(keepOriginalRuleDefinition),
 			EvaluationOffset:           &srv.cfg.PrometheusConversion.RuleQueryOffset,
 			NotificationSettings:       notificationSettings,
 			ExtraLabels:                extraLabels,
@@ -685,7 +684,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 		return errorToResponse(err)
 	}
 
-	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false, false)
+	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false)
 	if err != nil {
 		logger.Error("failed to get alertmanager configuration", "err", err)
 		return errorToResponse(err)

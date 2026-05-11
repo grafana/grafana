@@ -21,6 +21,7 @@ jobs:
       contents: read
     outputs:
       changed: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.backend == 'true' }}
+      frontend: ${{ steps.detect-changes.outputs.frontend }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -135,8 +136,8 @@ jobs:
            -f "output[text]=${IMAGE}"
 
   run-meticulous-tests:
-    if: github.repository == 'grafana/grafana'
-    needs: push-docker-image
+    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend == 'true'
+    needs: [push-docker-image, detect-changes]
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small
     continue-on-error: true
@@ -177,3 +178,6 @@ jobs:
           api-token: ${{ env.METICULOUS_API_TOKEN }}
           image-tag: ${{ env.IMAGE_TAG }}
           container-port: 3000
+          container-env: |
+            GF_AUTH_ANONYMOUS_ENABLED=true
+            GF_AUTH_ANONYMOUS_ORG_ROLE=Admin

@@ -53,7 +53,7 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
  * @returns The updated plugin's `PluginMeta`.
  */
 export async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     await updateLegacySettings(pluginId, data);
     return refetchCachedLegacySettings(pluginId, false);
   }

@@ -2498,8 +2498,8 @@ func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				repo := &github.Repository{
-					ID:            github.Ptr(int64(12345)),
-					Name:          github.Ptr("name"),
+					ID:            new(int64(12345)),
+					Name:          new("name"),
 					DefaultBranch: &defaultBranchName,
 				}
 				_, _ = w.Write(ghmock.MustMarshal(repo))

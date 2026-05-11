@@ -1,5 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { getLogger, setLogger } from '../logging/registry';
 
@@ -28,9 +29,9 @@ jest.mock('./plugins', () => ({
 const initPluginMetasMock = jest.mocked(initPluginMetas);
 const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
 
-describe('when useMTPlugins flag is enabled', () => {
+describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: true });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
     (window as unknown as Record<string, unknown>).__grafana_public_path__ = '';
     setLogger('grafana/runtime.plugins.settings', {
       logDebug: jest.fn(),
@@ -379,9 +380,9 @@ describe('when useMTPlugins flag is enabled', () => {
   });
 });
 
-describe('when useMTPlugins flag is disabled', () => {
+describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
   });
 
   afterAll(() => {
@@ -523,7 +524,7 @@ describe('when useMTPlugins flag is disabled', () => {
     });
   });
 
-  describe('when useMTPlugins flag is disabled and refetchPanelPluginMetas is called', () => {
+  describe('when plugins.useMTPlugins flag is disabled and refetchPanelPluginMetas is called', () => {
     let backendSrv: BackendSrv;
     beforeEach(() => {
       setPanelPluginMetas({});

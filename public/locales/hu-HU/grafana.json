@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Nem sikerült betölteni a szabálymegjelenítő bővítési szakaszát"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "A konfiguráció frissítése sikertelen volt:",
       "title-something-went-wrong": "Valami hiba történt"
@@ -1161,6 +1164,9 @@
       "content-show-all-errors": "Összes hiba megjelenítése"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} sikertelen {{status}} állapottal: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3174,9 +3180,7 @@
       "deleting": "Törlés",
       "text-federated": "Összevont",
       "text-provisioned": "Kiépítve",
-      "ungrouped": "Nem csoportosított",
-      "ungrouped-suffix": "{{ruleName}} (nem csoportosított)",
-      "unknown-rule": "Ismeretlen szabály"
+      "ungrouped": "Nem csoportosított"
     },
     "saved-searches": {
       "actions-aria-label": "Műveletek",
@@ -10850,6 +10854,11 @@
     "name-line-width": "Vonal szélessége",
     "name-stacking": "Egymásra helyezés"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Betöltés",
@@ -16021,7 +16030,9 @@
       "description": {
         "group-by-field-value": "Csoportosítsa az adatokat egy mezőérték szerint, és hozzon létre beágyazott táblázatokat a csoportosított adatokkal."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Ha engedélyezve van, a beágyazott táblázatok a mezőneveket táblázatfejlécként jelenítik meg",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mezőnevek megjelenítése a beágyazott táblázatokban",
       "name": {
         "group-to-nested-tables": "Csoportosítás beágyazott táblázatokba"

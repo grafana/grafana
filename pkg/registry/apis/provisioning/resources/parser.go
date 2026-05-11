@@ -218,6 +218,12 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 			if r.folderMetadataEnabled && r.reader != nil {
 				if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
 					folderID = meta.Name
+				} else if err != nil && errors.Is(err, repository.ErrRefNotFound) {
+					// Target branch doesn't exist yet (e.g. new PR branch). Fall back to
+					// the configured branch where _folder.json is already committed.
+					if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
+						folderID = meta.Name
+					}
 				}
 			}
 			parsed.Meta.SetFolder(folderID)
