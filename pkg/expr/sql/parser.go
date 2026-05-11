@@ -10,13 +10,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-// ExtractFunctionNames parses rawSQL and returns a deduplicated, sorted list of
-// SQL function names (lower-cased) found in the query. It covers regular FuncExpr
-// calls as well as the special AST node types that the parser creates for
-// GROUP_CONCAT, EXTRACT, TIMESTAMPDIFF/TIMESTAMPADD, TRIM, and CHAR.
-//
-// Only function names are returned. No column names, literal values, or table
-// names, so the result is safe to use in metrics labels.
+// ExtractFunctionNames returns a deduplicated, sorted, lower-cased list of SQL
+// function names found in rawSQL. Covers regular FuncExpr plus the special AST
+// node types vitess uses for GROUP_CONCAT, EXTRACT, TIMESTAMPDIFF/TIMESTAMPADD,
+// TRIM, CHAR, and CAST/CONVERT.
 func ExtractFunctionNames(rawSQL string) ([]string, error) {
 	stmt, err := sqlparser.Parse(rawSQL)
 	if err != nil {

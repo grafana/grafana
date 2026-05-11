@@ -38,9 +38,6 @@ type SQLCommand struct {
 	timeout     time.Duration
 	logger      log.Logger
 
-	// functions is the deduplicated, lower-cased list of SQL function names found
-	// in the query AST. Populated at construction time; used to emit per-function
-	// metrics on every execution.
 	functions []string
 }
 
@@ -62,9 +59,7 @@ func NewSQLCommand(ctx context.Context, logger log.Logger, refID, format, rawSQL
 		sqlLogger.Debug("REF tables", "tables", tables, "sql", rawSQL)
 	}
 
-	// Extract function names for metrics. The SQL was already successfully parsed
-	// above (TablesList would have returned an error otherwise), so a failure here
-	// is unexpected; treat it as non-fatal so it does not block query execution.
+	// SQL already parsed by TablesList above, so a failure here is unexpected; non-fatal.
 	functions, err := sql.ExtractFunctionNames(rawSQL)
 	if err != nil {
 		sqlLogger.Warn("failed to extract function names for metrics", "error", err)
@@ -195,16 +190,9 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		}
 
 		// --- Per-function counter ---
-		// Incremented once per unique function name in the query, regardless of
-		// execution outcome. allowed=true means the function is in the allowlist;
-		// allowed=false means the user attempted a function that is not permitted.
-		//
-		// For disallowed functions, the label value is bounded to the GMS function
-		// vocabulary (function.BuiltIns plus functions registered separately by the
-		// engine): if the name is recognised by go-mysql-server it is safe to emit
-		// as-is (it comes from a finite, well-known set). Anything else is recorded
-		// as "unknown" so that arbitrary user-supplied strings never appear as
-		// Prometheus label values.
+		// Incremented once per unique function name in the query regardless of
+		// execution outcome. Disallowed names are bounded by IsKnownEngineFunction
+		// to keep label cardinality finite; unrecognised names are bucketed as "unknown".
 		for _, fn := range gr.functions {
 			if sql.IsAllowedFunctionName(fn) {
 				metrics.SqlCommandFunctionCount.WithLabelValues(fn, "true").Inc()
