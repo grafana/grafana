@@ -29,9 +29,13 @@ import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
 import { instancesPermissions, notificationsPermissions, silencesPermissions } from './access-control';
 import { getAllDataSources } from './config';
+import { GRAFANA_RULES_SOURCE_NAME } from './constants';
 import { isGrafanaRuleIdentifier } from './rules';
 
-export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
+// Re-exported for backward compatibility. Moved to constants.ts to break a circular dependency
+// via k8s/utils.ts → datasource.ts → ability hooks → access-control.ts.
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export { GRAFANA_RULES_SOURCE_NAME };
 export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
 
 export const GrafanaRulesSource: GrafanaRulesSourceIdentifier = {
