@@ -1437,7 +1437,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 
 		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref", mock.Anything).
 			Return("hash-uid", nil)
-		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref").
+		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref", mock.Anything).
 			Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
 		repoResources.On("RemoveFolder", mock.Anything, "stable-uid").Return(nil)
 
@@ -1452,7 +1452,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 		require.NoError(t, err)
 
 		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref", mock.Anything)
-		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref")
+		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref", mock.Anything)
 		repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "stable-uid")
 	})
 
@@ -1536,7 +1536,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 
 		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref", mock.Anything, mock.Anything).
 			Return("new-alpha-uid", nil)
-		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref").
+		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref", mock.Anything).
 			Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
 		repoResources.On("RemoveFolder", mock.Anything, "old-alpha-uid").Return(nil)
 
@@ -1552,7 +1552,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 		require.NoError(t, err)
 
 		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref", mock.Anything, mock.Anything)
-		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref")
+		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref", mock.Anything)
 		repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "old-alpha-uid")
 	})
 

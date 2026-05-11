@@ -58,6 +58,13 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	var replaced []replacedFolder
 	var relocations map[string][]string
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
+	// Build a path→hash index of existing resources so the apply phase can
+	// detect unchanged content. When a resource is re-parented (folder UID
+	// change) without any content edit, the existing hash will match the new
+	// file hash, allowing the write to skip strict schema validation. This
+	// prevents legacy resources from being rejected by rules introduced after
+	// they were first persisted.
+	existingHashes := make(map[string]string)
 	if folderMetadataEnabled {
 		readerRepo, ok := repo.(repository.Reader)
 		if !ok {
@@ -67,6 +74,12 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		target, err := repositoryResources.List(ctx)
 		if err != nil {
 			return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
+		}
+
+		for i := range target.Items {
+			if target.Items[i].Hash != "" {
+				existingHashes[target.Items[i].Path] = target.Items[i].Hash
+			}
 		}
 
 		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo)
@@ -100,7 +113,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled, relocations)
+	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled, relocations, existingHashes)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -140,7 +153,18 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 }
 
 //nolint:gocyclo
-func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool, relocations map[string][]string) (affectedFolders map[string]string, err error) {
+func applyIncrementalChanges(
+	ctx context.Context,
+	diff []repository.VersionedFileChange,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	span trace.Span,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
+	relocations map[string][]string,
+	existingHashes map[string]string,
+) (affectedFolders map[string]string, err error) {
 	// this will keep track of any folders that had resources deleted from it
 	// with key-value as path:grafana uid.
 	// after cleaning up all resources, we will look to see if the foldrs are
@@ -254,6 +278,8 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			writeSpan.End()
 		case repository.FileActionUpdated:
 			if change.PreviousRef != "" {
+				// ReplaceResourceFromFileByRef reads both old and new files internally
+				// and automatically skips strict validation when their hashes match.
 				writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.replace_resource_from_file")
 				name, gvk, err := repositoryResources.ReplaceResourceFromFileByRef(writeCtx, change.Path, change.Ref, change.PreviousRef)
 				if err != nil {
@@ -263,8 +289,15 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 				resultBuilder.WithName(name).WithGVK(gvk)
 				writeSpan.End()
 			} else {
+				// Synthetic updates emitted for re-parenting (no PreviousRef).
+				// Pass the existing content hash so WriteResourceFromFile can skip
+				// strict validation when the content is unchanged.
 				writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
-				name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
+				var writeOpts []resources.WriteResourceOption
+				if h, ok := existingHashes[change.Path]; ok {
+					writeOpts = append(writeOpts, resources.WithExistingHash(h))
+				}
+				name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref, writeOpts...)
 				if err != nil {
 					writeSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))

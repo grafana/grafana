@@ -299,14 +299,24 @@ func applyChange(
 	var gvk schema.GroupVersionKind
 	var err error
 
+	// Pass the existing resource's content hash so the write can skip strict
+	// schema validation when the content is unchanged (e.g. a re-parenting
+	// caused by a folder UID change, or a pure path rename detected by
+	// DetectRenames). This prevents legacy resources from being rejected by
+	// validation rules introduced after they were first persisted.
+	var writeOpts []resources.WriteResourceOption
+	if change.Existing != nil && change.Existing.Hash != "" {
+		writeOpts = append(writeOpts, resources.WithExistingHash(change.Existing.Hash))
+	}
+
 	if change.Action == repository.FileActionUpdated && change.Existing != nil && change.Existing.Name != "" {
 		oldGVR := schema.GroupVersionResource{
 			Group:    change.Existing.Group,
 			Resource: change.Existing.Resource,
 		}
-		name, gvk, err = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, currentRef, change.Existing.Name, oldGVR)
+		name, gvk, err = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, currentRef, change.Existing.Name, oldGVR, writeOpts...)
 	} else {
-		name, gvk, err = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, currentRef)
+		name, gvk, err = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, currentRef, writeOpts...)
 	}
 	resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(change.Action).WithPath(change.Path)
 	if err != nil {

@@ -640,3 +640,228 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
 	})
 }
+
+// TestWriteResourceFromFile_ExistingHashSkipsValidation verifies that
+// WithExistingHash skips strict validation when the file hash matches
+// (content unchanged, e.g. folder re-parenting) and keeps strict validation
+// when hashes differ or are empty.
+func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
+	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
+	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
+
+	makeWriteMocks := func(t *testing.T, fileHash string) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
+		t.Helper()
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "fake.grafana.app/v1",
+			"kind":       "Fake",
+			"metadata":   map[string]any{"name": "my-resource"},
+		}}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "folder/resource.json", Hash: fileHash}
+		repo.On("Read", mock.Anything, "folder/resource.json", "ref").Return(fileInfo, nil)
+		mockParser.On("Parse", mock.Anything, fileInfo).Return(&ParsedResource{
+			Obj:    obj,
+			Meta:   meta,
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		grafanaObj := managedGrafanaObj("my-resource", "default", nil)
+		mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		return repo, mockParser, mockClient, obj
+	}
+
+	t.Run("matching existing hash sends FieldValidation Ignore", func(t *testing.T) {
+		repo, mockParser, mockClient, obj := makeWriteMocks(t, "content-hash")
+		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
+			Return(obj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("content-hash"))
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything)
+	})
+
+	t.Run("different existing hash keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, obj := makeWriteMocks(t, "new-hash")
+		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(obj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("old-hash"))
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+
+	t.Run("no WithExistingHash keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, obj := makeWriteMocks(t, "any-hash")
+		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(obj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+
+	t.Run("empty existing hash keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, obj := makeWriteMocks(t, "any-hash")
+		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(obj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash(""))
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+}
+
+// TestReplaceResourceFromFileByRef_HashComparison verifies that
+// ReplaceResourceFromFileByRef automatically skips strict validation when the
+// old and new file hashes match, and keeps strict validation otherwise.
+func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
+	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
+	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
+
+	makeReplaceMocks := func(t *testing.T, oldHash, newHash string) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
+		t.Helper()
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		// Use distinct Data bytes so testify can distinguish old vs new FileInfo
+		// even when hashes match (deep equality).
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{"v":"old"}`), Path: "resource.json", Hash: oldHash}
+		repo.On("Read", mock.Anything, "resource.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "fake.grafana.app/v1",
+				"kind":       "Fake",
+				"metadata":   map[string]any{"name": "my-resource"},
+			}},
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "fake.grafana.app/v1",
+			"kind":       "Fake",
+			"metadata":   map[string]any{"name": "my-resource"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+		newFileInfo := &repository.FileInfo{Data: []byte(`{"v":"new"}`), Path: "resource.json", Hash: newHash}
+		repo.On("Read", mock.Anything, "resource.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    fakeGVK,
+			GVR:    fakeGVR,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		grafanaObj := managedGrafanaObj("my-resource", "default", nil)
+		mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		return repo, mockParser, mockClient, newObj
+	}
+
+	t.Run("matching hashes sends FieldValidation Ignore", func(t *testing.T) {
+		repo, mockParser, mockClient, newObj := makeReplaceMocks(t, "same-hash", "same-hash")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything)
+	})
+
+	t.Run("different hashes keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, newObj := makeReplaceMocks(t, "old-hash", "new-hash")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+
+	t.Run("empty old hash keeps FieldValidation Strict", func(t *testing.T) {
+		repo, mockParser, mockClient, newObj := makeReplaceMocks(t, "", "some-hash")
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "my-resource", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+}
+
+// TestReplaceResourceFromFile_PassesExistingHash verifies that
+// ReplaceResourceFromFile forwards WithExistingHash to WriteResourceFromFile.
+func TestReplaceResourceFromFile_PassesExistingHash(t *testing.T) {
+	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
+	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
+
+	repo := repository.NewMockReaderWriter(t)
+	mockParser := NewMockParser(t)
+	mockClient := &MockDynamicResourceInterface{}
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "fake.grafana.app/v1",
+		"kind":       "Fake",
+		"metadata":   map[string]any{"name": "my-resource"},
+	}}
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+
+	fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "resource.json", Hash: "matching-hash"}
+	repo.On("Read", mock.Anything, "resource.json", "ref").Return(fileInfo, nil)
+	mockParser.On("Parse", mock.Anything, fileInfo).Return(&ParsedResource{
+		Obj:    obj,
+		Meta:   meta,
+		GVK:    fakeGVK,
+		GVR:    fakeGVR,
+		Client: mockClient,
+		Repo:   testRepoInfo(),
+	}, nil)
+
+	grafanaObj := managedGrafanaObj("my-resource", "default", nil)
+	mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+	mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
+		Return(obj, nil)
+
+	mgr := NewResourcesManager(repo, nil, mockParser, nil)
+	name, _, err := mgr.ReplaceResourceFromFile(context.Background(), "resource.json", "ref", "my-resource", fakeGVR, WithExistingHash("matching-hash"))
+
+	require.NoError(t, err)
+	require.Equal(t, "my-resource", name)
+	mockClient.AssertCalled(t, "Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything)
+}

@@ -34,9 +34,9 @@ type RepositoryResources interface {
 	// File from Resource
 	WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error)
 	// Resource from file
-	WriteResourceFromFile(ctx context.Context, path, ref string) (string, schema.GroupVersionKind, error)
-	ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource) (string, schema.GroupVersionKind, error)
-	ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string) (string, schema.GroupVersionKind, error)
+	WriteResourceFromFile(ctx context.Context, path, ref string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error)
+	ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error)
+	ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error)
 	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, string, schema.GroupVersionKind, error)
 	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
 	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, error)

@@ -1366,3 +1366,42 @@ func TestIsFolderRelocating(t *testing.T) {
 		})
 	}
 }
+
+func TestFolderMetadataIncrementalDiff_ChildWithOriginalDiffNotDuplicated(t *testing.T) {
+	repo := newCompositeRepoWithConfig(t)
+
+	expectFolderMetadataReadTimes(repo, "myfolder/", "new-ref", "new-uid", 1)
+
+	resourceList := &provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Path: "myfolder/", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "old-uid"},
+			{Path: "myfolder/dash-changed.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-uid"},
+			{Path: "myfolder/dash-unchanged.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash2", Folder: "old-uid"},
+		},
+	}
+
+	diff := []repository.VersionedFileChange{
+		{Action: repository.FileActionUpdated, Path: "myfolder/_folder.json", Ref: "new-ref"},
+		{Action: repository.FileActionUpdated, Path: "myfolder/dash-changed.json", Ref: "new-ref", PreviousRef: "old-ref"},
+	}
+
+	builder := NewFolderMetadataIncrementalDiffBuilder(repo)
+	filteredDiff, _, _, invalidMeta, err := builder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourceList) //nolint:dogsled
+	require.NoError(t, err)
+	require.Empty(t, invalidMeta)
+
+	// dash-changed.json has an original diff entry — it should NOT be duplicated
+	// by the re-parenting logic (HadChangeOriginallyAt guard).
+	var dashChangedCount int
+	var dashUnchangedCount int
+	for _, change := range filteredDiff {
+		switch change.Path {
+		case "myfolder/dash-changed.json":
+			dashChangedCount++
+		case "myfolder/dash-unchanged.json":
+			dashUnchangedCount++
+		}
+	}
+	require.Equal(t, 1, dashChangedCount, "child with original diff entry should appear exactly once")
+	require.Equal(t, 1, dashUnchangedCount, "unchanged child should be emitted for re-parenting")
+}
