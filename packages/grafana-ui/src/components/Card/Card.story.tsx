@@ -276,6 +276,9 @@ export const Full: StoryFn<typeof Card> = (args) => {
       <Card.Figure>
         <img src={logo} alt="Prometheus Logo" height="40" width="40" />
       </Card.Figure>
+      <Card.Tags>
+        <TagList tags={['tag1', 'tag2', 'tag3']} onClick={(tag) => console.log(tag)} />
+      </Card.Tags>
       <Card.Actions>
         <Button key="settings" variant="secondary">
           Main action
