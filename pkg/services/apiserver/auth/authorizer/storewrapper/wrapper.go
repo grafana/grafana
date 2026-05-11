@@ -7,13 +7,19 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -22,6 +28,27 @@ var (
 	ErrUnauthenticated = errors.NewUnauthorized("unauthenticated")
 	ErrUnauthorized    = errors.NewUnauthorized("unauthorized")
 	ErrUnexpectedType  = errors.NewBadRequest("unexpected object type")
+)
+
+const (
+	tracerName = "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
+
+	OpBeforeCreate      = "before_create"
+	OpCreate            = "create"
+	OpBeforeDelete      = "before_delete"
+	OpDelete            = "delete"
+	OpDeleteGet         = "delete_get"
+	OpGet               = "get"
+	OpList              = "list"
+	OpBeforeUpdate      = "before_update"
+	OpUpdate            = "update"
+	OpAfterGet          = "after_get"
+	OpFilterList        = "filter_list"
+	OpWatchFilter       = "watch_filter"
+	OpFilterWatchEvents = "filter_watch_events"
+	OpSendWatchEvents   = "send_watch_events"
+
+	defaultWatchSendTimeout = 1 * time.Second
 )
 
 // WatchEventFilter is a batch filter for watch events. Given a slice of
@@ -65,6 +92,22 @@ type ResourceStorageAuthorizer interface {
 	WatchFilter(ctx context.Context) (WatchEventFilter, error)
 }
 
+// Layer constants distinguish the two timing slices the wrapper records.
+// Consumers map these to whatever histogram label scheme they want.
+const (
+	LayerAuthz = "store_wrapper_authz" // Authorization hook (BeforeCreate, BeforeUpdate, BeforeDelete, AfterGet, FilterList).
+	LayerInner = "store_wrapper_inner" // Inner store call (Create, Get, List, Update, Delete, Watch).
+)
+
+// Observer records wrapper latency for authorization hooks and inner store calls.
+type Observer interface {
+	Observe(layer, op string, resource schema.GroupResource, dur time.Duration, status string)
+}
+
+type noopObserver struct{}
+
+func (noopObserver) Observe(string, string, schema.GroupResource, time.Duration, string) {}
+
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
 // It overrides the identity in the context to use service identity for the underlying store operations so the
 // store's authorization always succeeds and the wrapper enforces authorization. The wrapper injects the original
@@ -75,7 +118,11 @@ type Wrapper struct {
 	inner              K8sStorage
 	authorizer         ResourceStorageAuthorizer
 	preserveIdentity   bool
+	tracer             trace.Tracer
+	observer           Observer
+	resource           schema.GroupResource
 	watchFlushInterval time.Duration
+	watchSendTimeout   time.Duration
 }
 
 // Option configures a Wrapper.
@@ -102,6 +149,24 @@ func WithWatchFlushInterval(d time.Duration) Option {
 	}
 }
 
+// WithTracer configures tracing for wrapper operations.
+func WithTracer(t trace.Tracer) Option {
+	return func(w *Wrapper) {
+		if t != nil {
+			w.tracer = t
+		}
+	}
+}
+
+// WithObserver configures metrics observation for wrapper operations.
+func WithObserver(observer Observer) Option {
+	return func(w *Wrapper) {
+		if observer != nil {
+			w.observer = observer
+		}
+	}
+}
+
 type K8sStorage interface {
 	k8srest.Storage
 	k8srest.Scoper
@@ -117,8 +182,15 @@ var _ k8srest.Watcher = (*Wrapper)(nil)
 
 // New returns a Wrapper that enforces authorization and uses service identity for inner store calls,
 // injecting the original user's UID for createdBy/updatedBy annotations.
-func New(store K8sStorage, authz ResourceStorageAuthorizer, opts ...Option) *Wrapper {
-	w := &Wrapper{inner: store, authorizer: authz}
+func New(store K8sStorage, resource schema.GroupResource, authz ResourceStorageAuthorizer, opts ...Option) *Wrapper {
+	w := &Wrapper{
+		inner:            store,
+		authorizer:       authz,
+		resource:         resource,
+		tracer:           noop.NewTracerProvider().Tracer(tracerName),
+		observer:         noopObserver{},
+		watchSendTimeout: defaultWatchSendTimeout,
+	}
 	for _, opt := range opts {
 		opt(w)
 	}
@@ -141,52 +213,125 @@ func (w *Wrapper) storeCtx(ctx context.Context) context.Context {
 	return srvCtx
 }
 
+func startSpan(ctx context.Context, tracer trace.Tracer, resource schema.GroupResource, method string) (context.Context, trace.Span) {
+	return tracer.Start(ctx, "authz.storewrapper."+method, trace.WithAttributes(
+		attribute.String("resource.group", resource.Group),
+		attribute.String("resource.resource", resource.Resource),
+	))
+}
+
+func (w *Wrapper) startSpan(ctx context.Context, method string) (context.Context, trace.Span) {
+	return startSpan(ctx, w.tracer, w.resource, method)
+}
+
+func recordSpanError(span trace.Span, err error) {
+	if err == nil {
+		return
+	}
+	span.RecordError(err)
+	span.SetStatus(codes.Error, err.Error())
+}
+
+func (w *Wrapper) observeAuthz(op string, start time.Time, err error) {
+	w.observer.Observe(LayerAuthz, op, w.resource, time.Since(start), statusFromError(err))
+}
+
+func (w *Wrapper) observeInner(op string, start time.Time, err error) {
+	w.observer.Observe(LayerInner, op, w.resource, time.Since(start), statusFromError(err))
+}
+
+func statusFromError(err error) string {
+	if err == nil {
+		return metaV1.StatusSuccess
+	}
+	if reason := errors.ReasonForError(err); reason != metaV1.StatusReasonUnknown {
+		return string(reason)
+	}
+	return metaV1.StatusFailure
+}
+
 func (w *Wrapper) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metaV1.Table, error) {
 	return w.inner.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidation k8srest.ValidateObjectFunc, options *metaV1.CreateOptions) (runtime.Object, error) {
+func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidation k8srest.ValidateObjectFunc, options *metaV1.CreateOptions) (result runtime.Object, err error) {
+	ctx, span := w.startSpan(ctx, "Create")
+	defer func() {
+		recordSpanError(span, err)
+		span.End()
+	}()
+
 	// Enforce authorization based on the user permissions before creating the object
-	err := w.authorizer.BeforeCreate(ctx, obj)
+	authzStart := time.Now()
+	err = w.authorizer.BeforeCreate(ctx, obj)
+	w.observeAuthz(OpBeforeCreate, authzStart, err)
 	if err != nil {
 		return nil, err
 	}
 
-	return w.inner.Create(w.storeCtx(ctx), obj, createValidation, options)
+	innerStart := time.Now()
+	result, err = w.inner.Create(w.storeCtx(ctx), obj, createValidation, options)
+	w.observeInner(OpCreate, innerStart, err)
+	return result, err
 }
 
-func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions) (runtime.Object, bool, error) {
+func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions) (result runtime.Object, deleted bool, err error) {
+	ctx, span := w.startSpan(ctx, "Delete")
+	defer func() {
+		recordSpanError(span, err)
+		span.End()
+	}()
+
 	// Fetch the object first to authorize
 	storeCtx := w.storeCtx(ctx)
 	getOpts := &metaV1.GetOptions{TypeMeta: options.TypeMeta}
 	if options.Preconditions != nil {
 		getOpts.ResourceVersion = *options.Preconditions.ResourceVersion
 	}
-	obj, err := w.inner.Get(storeCtx, name, getOpts)
+	innerGetStart := time.Now()
+	var obj runtime.Object
+	obj, err = w.inner.Get(storeCtx, name, getOpts)
+	w.observeInner(OpDeleteGet, innerGetStart, err)
 	if err != nil {
 		return nil, false, err
 	}
 
 	// Enforce authorization based on the user permissions
-	if err := w.authorizer.BeforeDelete(ctx, obj); err != nil {
+	authzStart := time.Now()
+	err = w.authorizer.BeforeDelete(ctx, obj)
+	w.observeAuthz(OpBeforeDelete, authzStart, err)
+	if err != nil {
 		return nil, false, err
 	}
 
-	return w.inner.Delete(storeCtx, name, deleteValidation, options)
+	innerStart := time.Now()
+	result, deleted, err = w.inner.Delete(storeCtx, name, deleteValidation, options)
+	w.observeInner(OpDelete, innerStart, err)
+	return result, deleted, err
 }
 
 func (w *Wrapper) Destroy() {
 	w.inner.Destroy()
 }
 
-func (w *Wrapper) Get(ctx context.Context, name string, options *metaV1.GetOptions) (runtime.Object, error) {
-	item, err := w.inner.Get(w.storeCtx(ctx), name, options)
+func (w *Wrapper) Get(ctx context.Context, name string, options *metaV1.GetOptions) (item runtime.Object, err error) {
+	ctx, span := w.startSpan(ctx, "Get")
+	defer func() {
+		recordSpanError(span, err)
+		span.End()
+	}()
+
+	innerStart := time.Now()
+	item, err = w.inner.Get(w.storeCtx(ctx), name, options)
+	w.observeInner(OpGet, innerStart, err)
 	if err != nil {
 		return nil, err
 	}
 
 	// Enforce authorization based on the user permissions after retrieving the object
+	authzStart := time.Now()
 	err = w.authorizer.AfterGet(ctx, item)
+	w.observeAuthz(OpAfterGet, authzStart, err)
 	if err != nil {
 		return nil, err
 	}
@@ -197,14 +342,26 @@ func (w *Wrapper) GetSingularName() string {
 	return w.inner.GetSingularName()
 }
 
-func (w *Wrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	list, err := w.inner.List(w.storeCtx(ctx), options)
+func (w *Wrapper) List(ctx context.Context, options *internalversion.ListOptions) (result runtime.Object, err error) {
+	ctx, span := w.startSpan(ctx, "List")
+	defer func() {
+		recordSpanError(span, err)
+		span.End()
+	}()
+
+	innerStart := time.Now()
+	var list runtime.Object
+	list, err = w.inner.List(w.storeCtx(ctx), options)
+	w.observeInner(OpList, innerStart, err)
 	if err != nil {
 		return nil, err
 	}
 
 	// Enforce authorization based on the user permissions after retrieving the list
-	return w.authorizer.FilterList(ctx, list)
+	authzStart := time.Now()
+	result, err = w.authorizer.FilterList(ctx, list)
+	w.observeAuthz(OpFilterList, authzStart, err)
+	return result, err
 }
 
 func (w *Wrapper) NamespaceScoped() bool {
@@ -227,74 +384,116 @@ func (w *Wrapper) Update(
 	updateValidation k8srest.ValidateObjectUpdateFunc,
 	forceAllowCreate bool,
 	options *metaV1.UpdateOptions,
-) (runtime.Object, bool, error) {
+) (result runtime.Object, updated bool, err error) {
+	ctx, span := w.startSpan(ctx, "Update")
+	defer func() {
+		recordSpanError(span, err)
+		span.End()
+	}()
+
 	// Create a wrapper around UpdatedObjectInfo to inject authorization
 	wrappedObjInfo := &authorizedUpdateInfo{
 		inner:      objInfo,
 		authorizer: w.authorizer,
 		userCtx:    ctx, // Keep original context for authorization
+		tracer:     w.tracer,
+		observer:   w.observer,
+		resource:   w.resource,
 	}
 
-	return w.inner.Update(w.storeCtx(ctx), name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
+	innerStart := time.Now()
+	result, updated, err = w.inner.Update(w.storeCtx(ctx), name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
+	// Technically also includes the authorizer time, but it's not worth the complexity to split it out.
+	w.observeInner(OpUpdate, innerStart, err)
+	return result, updated, err
 }
 
 type authorizedUpdateInfo struct {
 	inner      k8srest.UpdatedObjectInfo
 	authorizer ResourceStorageAuthorizer
 	userCtx    context.Context
+	tracer     trace.Tracer
+	observer   Observer
+	resource   schema.GroupResource
 }
 
 func (a *authorizedUpdateInfo) Preconditions() *metaV1.Preconditions {
 	return a.inner.Preconditions()
 }
 
-func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
+func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime.Object) (updatedObj runtime.Object, err error) {
 	// Get the updated object
-	updatedObj, err := a.inner.UpdatedObject(ctx, oldObj)
+	updatedObj, err = a.inner.UpdatedObject(ctx, oldObj)
 	if err != nil {
 		return nil, err
 	}
 
 	// Enforce authorization using the original user context
-	if err := a.authorizer.BeforeUpdate(a.userCtx, oldObj, updatedObj); err != nil {
+	authzCtx, span := startSpan(a.userCtx, a.tracer, a.resource, "UpdateAuthz")
+	defer func() {
+		recordSpanError(span, err)
+		span.End()
+	}()
+
+	authzStart := time.Now()
+	err = a.authorizer.BeforeUpdate(authzCtx, oldObj, updatedObj)
+	// OpUpdate includes OpBeforeUpdate latency (BeforeUpdate runs inside the inner
+	// store via UpdatedObject). We'll need to subtract OpBeforeUpdate for pure storage time.
+	a.observer.Observe(LayerAuthz, OpBeforeUpdate, a.resource, time.Since(authzStart), statusFromError(err))
+	if err != nil {
 		return nil, err
 	}
 
 	return updatedObj, nil
 }
 
-func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (result watch.Interface, err error) {
+	ctx, span := w.startSpan(ctx, "WatchSetup")
+	defer func() {
+		recordSpanError(span, err)
+		span.End()
+	}()
+
 	// Check if the underlying storage supports Watch
 	watcher, ok := w.inner.(k8srest.Watcher)
 	if !ok {
-		return nil, fmt.Errorf("watch is not supported on the underlying storage")
+		err = fmt.Errorf("watch is not supported on the underlying storage")
+		return nil, err
 	}
 
 	// Build the filter once, before starting the watch, so callers get an immediate
 	// error if authorization state cannot be resolved (e.g. auth backend unavailable).
-	filter, err := w.authorizer.WatchFilter(ctx)
+	var filter WatchEventFilter
+	watchFilterStart := time.Now()
+	filter, err = w.authorizer.WatchFilter(ctx)
+	w.observeAuthz(OpWatchFilter, watchFilterStart, err)
 	if err != nil {
 		return nil, err
 	}
 	// Fail-closed: a nil filter is treated as RejectAllWatchFilter.
 	// Implementors should return PassThroughWatchFilter explicitly for unrestricted resources.
 	if filter == nil {
-		return nil, errors.NewUnauthorized("watch filter not implemented")
+		err = errors.NewUnauthorized("watch denied")
+		return nil, err
 	}
 
 	// Call the underlying storage's Watch method
-	inner, err := watcher.Watch(w.storeCtx(ctx), options)
+	var inner watch.Interface
+	inner, err = watcher.Watch(w.storeCtx(ctx), options)
 	if err != nil {
 		return nil, err
 	}
 
 	if isPassThroughWatchFilter(filter) {
+		span.SetAttributes(attribute.Bool("filtered", false))
 		return inner, nil
 	}
 
 	// Return a new filtered watcher that runs the filter over the buffered events
 	// and forwards the events to the caller.
-	return newFilteredWatcher(ctx, inner, filter, w.watchFlushInterval), nil
+	result = newFilteredWatcher(ctx, w.tracer, w.observer, w.resource, inner, filter, w.watchFlushInterval, w.watchSendTimeout)
+	span.SetAttributes(attribute.Bool("filtered", true))
+	return result, nil
 }
 
 // filteredWatcher wraps a watch.Interface and runs the WatchEventFilter over
@@ -306,6 +505,9 @@ func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOption
 // and flushed either when the buffer is full or the ticker fires, amortizing the
 // cost of expensive filter implementations (e.g. BatchCheck RPCs) across bursts.
 type filteredWatcher struct {
+	tracer        trace.Tracer
+	observer      Observer
+	resource      schema.GroupResource
 	inner         watch.Interface  // The underlying watch.Interface.
 	filter        WatchEventFilter // Filter to apply to the buffered events.
 	flushInterval time.Duration    // The interval to flush the buffered events.
@@ -313,41 +515,59 @@ type filteredWatcher struct {
 	stopOnce      sync.Once        // Ensures Stop() is called only once to prevent race conditions.
 	done          chan struct{}    // Closed when the watcher Stop() method is called.
 	pending       []watch.Event    // Buffered events awaiting flush; only accessed from run goroutine.
+	sendTimeout   time.Duration    // The timeout for sending an event to the caller.
 }
 
 // watchBatchSize is the maximum number of events buffered before a forced flush.
 // Matches watch.DefaultChanSize so the batch can never exceed the inner channel capacity.
 const watchBatchSize = 100
 
-// defaultSendTimeout is the timeout for sending an event to the caller.
-var defaultSendTimeout = 1 * time.Second
-
-func newFilteredWatcher(ctx context.Context, inner watch.Interface, filter WatchEventFilter, flushInterval time.Duration) *filteredWatcher {
+func newFilteredWatcher(ctx context.Context,
+	tracer trace.Tracer,
+	observer Observer,
+	resource schema.GroupResource,
+	inner watch.Interface,
+	filter WatchEventFilter,
+	flushInterval time.Duration,
+	sendTimeout time.Duration) *filteredWatcher {
 	fw := &filteredWatcher{
+		tracer:        tracer,
+		observer:      observer,
+		resource:      resource,
 		inner:         inner,
 		filter:        filter,
 		flushInterval: flushInterval,
 		result:        make(chan watch.Event, watch.DefaultChanSize),
 		done:          make(chan struct{}),
+		sendTimeout:   sendTimeout,
 	}
 	go fw.run(ctx)
 	return fw
 }
 
-type sendEventResult string
+type sendEventResult int
 
 const (
-	sendEventSuccess sendEventResult = "success"
-	sendEventTimeout sendEventResult = "timeout"
-	sendEventStopped sendEventResult = "stopped"
+	sendEventSuccess sendEventResult = iota
+	sendEventTimeout
+	sendEventStopped
 )
+
+// statusFromSendResult converts a sendEventResult to a string status.
+// Use statuses consistent with the statusFromError function.
+func statusFromSendResult(r sendEventResult) string {
+	if r == sendEventTimeout {
+		return string(metaV1.StatusReasonTimeout)
+	}
+	return metaV1.StatusSuccess
+}
 
 // sendEvent forwards an event to the caller.
 // It returns if the user context is done or the watcher is stopped.
 func (fw *filteredWatcher) sendEvent(ctx context.Context, event watch.Event) sendEventResult {
 	// If we could not send the event on time, emit an Error
 	// and shut down to release backpressure on the inner storage.
-	timer := time.NewTimer(defaultSendTimeout)
+	timer := time.NewTimer(fw.sendTimeout)
 	select {
 	case <-ctx.Done(): // User context is done.
 		return sendEventStopped
@@ -369,20 +589,48 @@ func (fw *filteredWatcher) sendEvent(ctx context.Context, event watch.Event) sen
 	}
 }
 
-func (fw *filteredWatcher) filterEvents(pending []watch.Event) ([]bool, error) {
-	allowed, err := fw.filter(pending)
-	if err == nil && len(allowed) != len(pending) {
-		err = fmt.Errorf("watch filter contract violation: returned %d entries for %d events", len(allowed), len(pending))
+func (fw *filteredWatcher) filterEvents(ctx context.Context, pending []watch.Event) (allowed []bool, err error) {
+	_, span := startSpan(ctx, fw.tracer, fw.resource, "Watch.FilterEvents")
+	span.SetAttributes(attribute.Int("events_count", len(pending)))
+	defer func(startTime time.Time) {
+		recordSpanError(span, err)
+		fw.observer.Observe(LayerAuthz, OpFilterWatchEvents, fw.resource, time.Since(startTime), statusFromError(err))
+		span.End()
+	}(time.Now())
+
+	allowed, err = fw.filter(pending)
+	if err != nil {
+		return nil, err
 	}
-	return allowed, err
+
+	if len(allowed) != len(pending) {
+		return nil, fmt.Errorf("watch filter contract violation: returned %d entries for %d events", len(allowed), len(pending))
+	}
+	return allowed, nil
 }
 
 func (fw *filteredWatcher) sendAllowed(ctx context.Context, pending []watch.Event, allowed []bool) bool {
+	_, span := startSpan(ctx, fw.tracer, fw.resource, "Watch.SendEvents")
+	sent := 0
+	result := sendEventSuccess
+
+	defer func(startTime time.Time) {
+		span.SetAttributes(attribute.String("send_result", statusFromSendResult(result)))
+		span.SetAttributes(attribute.Int("sent_count", sent))
+		if result == sendEventTimeout {
+			recordSpanError(span, errutil.Internal("watch event send timed out"))
+		}
+		span.End()
+		fw.observer.Observe(LayerInner, OpSendWatchEvents, fw.resource, time.Since(startTime), statusFromSendResult(result))
+	}(time.Now())
+
 	for i, event := range pending {
 		if allowed[i] {
-			if fw.sendEvent(ctx, event) != sendEventSuccess {
+			result = fw.sendEvent(ctx, event)
+			if result != sendEventSuccess {
 				return false
 			}
+			sent++
 		}
 	}
 	return true
@@ -393,7 +641,7 @@ func (fw *filteredWatcher) flush(ctx context.Context) bool {
 		return true
 	}
 
-	allowed, err := fw.filterEvents(fw.pending)
+	allowed, err := fw.filterEvents(ctx, fw.pending)
 	if err != nil {
 		errEvent := watch.Event{Type: watch.Error, Object: &metaV1.Status{Status: metaV1.StatusFailure, Message: err.Error()}}
 		_ = fw.sendEvent(ctx, errEvent)
