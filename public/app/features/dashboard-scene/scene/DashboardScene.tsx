@@ -13,7 +13,7 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { config, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
   SceneDataTransformer,
@@ -291,6 +291,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (isNew) {
+      // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
+      // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
+      // mode bypasses the button).
+      reportInteraction('dashboards_new_dashboard_init', {}, { silent: true });
       this.onEnterEditMode();
       this.setState({ isDirty: true });
     }
@@ -469,6 +473,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
+    // CUJ-only signal: ends dashboard_edit journey when the user actually leaves
+    // edit mode, regardless of whether changes were discarded or there were
+    // none to begin with. dashboardEditDiscarded only fires on the dirty path,
+    // so we'd otherwise lose the no-op exit case.
+    reportInteraction('dashboards_edit_exited', { restoreInitialState }, { silent: true });
+
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
@@ -486,6 +496,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
       appEvents.publish(new DashboardDiscardedEvent());
+      DashboardInteractions.dashboardEditDiscarded();
     } else {
       // Do not restore
       this.setState({ isEditing: false });
