@@ -14369,6 +14369,9 @@
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
   "recent-queries": {
+    "error-state": {
+      "title": "Something went wrong!"
+    },
     "filters": {
       "clear": "Clear",
       "datasource-label": "Data source name",
@@ -14515,11 +14518,6 @@
       "message-info": "A dashboard with the same name in the selected folder already exists, including recently deleted dashboards.",
       "message-suggestion": "Please choose a different name or folder.",
       "title": "Dashboard name already exists"
-    }
-  },
-  "saved-queries": {
-    "error-state": {
-      "title": "Something went wrong!"
     }
   },
   "scopes": {

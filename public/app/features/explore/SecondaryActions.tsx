@@ -105,16 +105,18 @@ export function SecondaryActions({
           )}
         </>
       )}
-      <ToolbarButton
-        key="query-history"
-        variant={drawerOpened ? 'active' : 'canvas'}
-        aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
-        onClick={() => setDrawerOpened(!drawerOpened)}
-        data-testid={Components.QueryTab.queryHistoryButton}
-        icon="history"
-      >
-        <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
-      </ToolbarButton>
+      {!recentQueriesUI && (
+        <ToolbarButton
+          key="query-history"
+          variant={drawerOpened ? 'active' : 'canvas'}
+          aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
+          onClick={() => setDrawerOpened(!drawerOpened)}
+          data-testid={Components.QueryTab.queryHistoryButton}
+          icon="history"
+        >
+          <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
+        </ToolbarButton>
+      )}
       <ToolbarButton
         variant={queryInspectorButtonActive ? 'active' : 'canvas'}
         aria-label={t('explore.secondary-actions.query-inspector-button-aria-label', 'Query inspector')}

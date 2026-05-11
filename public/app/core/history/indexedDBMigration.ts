@@ -9,7 +9,6 @@ import { RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
 
 const METADATA_MIGRATION_COMPLETE = 'migrationComplete';
 const METADATA_MIGRATION_ATTEMPTS = 'migrationAttempts';
-const METADATA_LOCAL_STORAGE_CLEANUP_DONE = 'localStorageCleanupDone';
 const MAX_MIGRATION_ATTEMPTS = 3;
 
 // Support escape hatch: setting this localStorage key and reloading clears the
@@ -72,7 +71,6 @@ export async function migrateToIndexedDB(indexedDBStorage: IndexedDBMigrationAcc
     await db.clear('queries');
     await indexedDBStorage.setMetadata(METADATA_MIGRATION_COMPLETE, false);
     await indexedDBStorage.setMetadata(METADATA_MIGRATION_ATTEMPTS, 0);
-    await indexedDBStorage.setMetadata(METADATA_LOCAL_STORAGE_CLEANUP_DONE, false);
     reportInteraction('grafana_query_history_migration_reset', {});
   }
 

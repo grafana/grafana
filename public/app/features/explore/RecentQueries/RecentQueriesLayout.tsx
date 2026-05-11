@@ -64,7 +64,7 @@ export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, o
 
   if (error) {
     return (
-      <EmptyState variant="not-found" message={t('saved-queries.error-state.title', 'Something went wrong!')}>
+      <EmptyState variant="not-found" message={t('recent-queries.error-state.title', 'Something went wrong!')}>
         {error instanceof Error ? error.message : ''}
       </EmptyState>
     );

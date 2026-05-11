@@ -255,8 +255,6 @@ describe('migrateToIndexedDB', () => {
       // Markers reset and migration re-ran
       expect(await indexedDBStorage.getMetadata('migrationComplete')).toBe(true);
       expect(await indexedDBStorage.getMetadata('migrationAttempts')).toBe(1);
-      expect(await indexedDBStorage.getMetadata('localStorageCleanupDone')).toBe(false);
-
       // Dedup prevents duplicates after re-run
       const result = await indexedDBStorage.getRichHistory(queryFilters());
       expect(result.total).toBe(1);
