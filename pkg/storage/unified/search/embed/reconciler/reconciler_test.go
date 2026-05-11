@@ -435,7 +435,7 @@ func TestReconciler_RetryCap_DropsEventAfterMaxAttempts(t *testing.T) {
 	// past it succeeds.
 	assert.Equal(t, int64(99), vec.latestRV)
 
-	// A subsequent healthy event proves the scanner is unblocked and
+	// A subsequent healthy event proves the reconciler is unblocked and
 	// advances the cursor.
 	vec.upsertErr = nil
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns-other", "ok", 200, minimalDashboard("ok", "OK")))

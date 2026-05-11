@@ -237,7 +237,7 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	assert.Equal(t, int64(100), rv)
 }
 
-func TestIntegrationVectorScannerLock(t *testing.T) {
+func TestIntegrationVectorReconcilerLock(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
 	release, acquired, err := backend.TryAcquireReconcilerLock(ctx)

@@ -25,9 +25,9 @@ var _ VectorBackend = (*pgvectorBackend)(nil)
 // matching row.
 const backfillAdvisoryLockName = "vectorbackfiller"
 
-// reconcilerAdvisoryLockName is the per-cycle lock used by the write-path
-// reconciler. Distinct from backfillAdvisoryLockName so a backfill and a
-// reconciler cycle can run concurrently on the same cluster.
+// reconcilerAdvisoryLockName is the per-cycle lock used by the
+// reconciler. Distinct from backfillAdvisoryLockName so a backfill and
+// a reconciler cycle can run concurrently on the same cluster.
 const reconcilerAdvisoryLockName = "vectorreconciler"
 
 type pgvectorBackend struct {

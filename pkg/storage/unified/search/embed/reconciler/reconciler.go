@@ -68,11 +68,11 @@ type Options struct {
 	LockRetryInterval time.Duration
 }
 
-// Reconciler is the write-path indexer. The advisory lock is held for
-// the pod's lifetime (acquired in Run), so only one replica processes
-// the queue at a time and bootstrap pagination doesn't ping-pong across
-// replicas. Connection-bound pg session locks release naturally if the
-// pod crashes.
+// Reconciler keeps the vector index in sync with ongoing writes. The
+// advisory lock is held for the pod's lifetime (acquired in Run), so
+// only one replica processes the queue at a time and bootstrap
+// pagination doesn't ping-pong across replicas. Connection-bound pg
+// session locks release naturally if the pod crashes.
 type Reconciler struct {
 	storage           resource.StorageBackend
 	vectorBackend     vector.VectorBackend

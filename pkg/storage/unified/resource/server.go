@@ -376,7 +376,7 @@ type ResourceServerOptions struct {
 	// VectorWriteReconciler, when non-nil, is launched alongside the
 	// backfiller; the server attaches its own broadcaster to it before
 	// starting Run so the reconciler's watch path lights up. nil =
-	// write-path reconciler feature off.
+	// reconciler feature off.
 	VectorWriteReconciler BroadcasterConsumer
 }
 
@@ -629,7 +629,7 @@ type server struct {
 
 	bookmarkFrequency time.Duration
 
-	// Async vector indexers (backfiller + write-path reconciler).
+	// Async vector indexers (backfiller + reconciler).
 	// Started in Init, joined in Stop via indexersWG.
 	vectorBackfiller      Runnable
 	vectorWriteReconciler BroadcasterConsumer
@@ -654,9 +654,9 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = s.initWatcher()
 		}
 
-		// Launch async vector indexers (backfiller + write-path
-		// reconciler) once the broadcaster is up. They run for the
-		// server's lifetime and Stop() joins them via indexersWG.
+		// Launch async vector indexers (backfiller + reconciler) once
+		// the broadcaster is up. They run for the server's lifetime
+		// and Stop() joins them via indexersWG.
 		if s.initErr == nil {
 			s.startVectorIndexers()
 		}
@@ -668,10 +668,10 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
-// startVectorIndexers launches the configured backfiller and write-path
-// reconciler. Both are optional (nil = feature off). The reconciler gets
-// the server's broadcaster via UseBroadcaster before Run; the backfiller
-// doesn't need the watch path.
+// startVectorIndexers launches the configured backfiller and
+// reconciler. Both are optional (nil = feature off). The reconciler
+// gets the server's broadcaster via UseBroadcaster before Run; the
+// backfiller doesn't need the watch path.
 func (s *server) startVectorIndexers() {
 	if s.vectorBackfiller != nil {
 		s.indexersWG.Add(1)
@@ -690,7 +690,7 @@ func (s *server) startVectorIndexers() {
 		go func() {
 			defer s.indexersWG.Done()
 			if err := s.vectorWriteReconciler.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("vector write-path reconciler stopped", "err", err)
+				s.log.Error("vector reconciler stopped", "err", err)
 			}
 		}()
 	}
@@ -735,8 +735,8 @@ func (s *server) Stop(ctx context.Context) error {
 		s.log.Warn("timed out waiting for in-flight write operations to complete")
 	}
 
-	// Wait for async vector indexers (backfiller, write-path scanner)
-	// to wind down. They observe s.ctx, so the cancel above unblocks them.
+	// Wait for async vector indexers (backfiller, reconciler) to wind
+	// down. They observe s.ctx, so the cancel above unblocks them.
 	indexersDone := make(chan struct{})
 	go func() {
 		s.indexersWG.Wait()

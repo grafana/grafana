@@ -180,10 +180,6 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		s.subservices = append(s.subservices, s.queue, s.scheduler)
 	}
 
-	// Vector backfiller and write-path scanner are constructed inside
-	// the resource server (registerServer below) via withVectorIndexers.
-	// Their lifetime is bound to the server's ctx; Stop() joins them.
-
 	if err := s.initializeSubservicesManager(); err != nil {
 		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}

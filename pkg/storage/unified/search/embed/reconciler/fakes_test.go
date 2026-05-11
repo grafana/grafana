@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
-// fakeStorage stubs the bits of resource.StorageBackend the scanner uses.
+// fakeStorage stubs the bits of resource.StorageBackend the reconciler uses.
 // ListModifiedSince returns the configured changes (filtered by sinceRv)
 // and a latestRv equal to the highest RV in the slice. Empty namespace
 // on the request runs cross-namespace, mirroring the real backends.
@@ -69,7 +69,7 @@ func (f *fakeStorage) WatchWriteEvents(ctx context.Context) (<-chan *resource.Wr
 
 // GetResourceStats returns one ResourceStats per distinct
 // (namespace, group, resource) seen in `changes`. Used elsewhere in
-// the codebase; the scanner doesn't call it directly post-refactor.
+// the codebase; the reconciler doesn't call it directly post-refactor.
 func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.NamespacedResource, _ int) ([]resource.ResourceStats, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -115,7 +115,7 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 		}
 	}
 	// Snapshot the slice + per-iteration error config so the iterator
-	// closes over a stable view. The scanner runs the iter outside the
+	// closes over a stable view. The reconciler runs the iter outside the
 	// lock, and the test may mutate state afterwards. Empty namespace
 	// runs cross-namespace, mirroring the real backends.
 	matches := make([]*resource.ModifiedResource, 0, len(f.changes))
@@ -325,9 +325,9 @@ func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, er
 	}, true, nil
 }
 
-// fakeText is a deterministic embedder used by the scanner. It records
-// each EmbedText invocation so tests can assert on the *number* of
-// pooled calls — the whole point of the scan-cycle batching.
+// fakeText is a deterministic embedder used by the reconciler. It
+// records each EmbedText invocation so tests can assert on the *number*
+// of pooled calls — the whole point of the reconcile-cycle batching.
 type fakeText struct {
 	mu       sync.Mutex
 	dim      int

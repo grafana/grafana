@@ -208,10 +208,10 @@ func withEmbedder(opts *ServerOptions, resourceOpts *resource.ResourceServerOpti
 	return nil
 }
 
-// withVectorIndexers builds the optional vector backfiller and write-path
-// reconciler. Both providers return (nil, nil) when their feature is off, so
-// nil is normal and propagates through to the resource server which
-// simply doesn't start the goroutine.
+// withVectorIndexers builds the optional vector backfiller and
+// reconciler. Both providers return (nil, nil) when their feature is
+// off, so nil is normal and propagates through to the resource server
+// which simply doesn't start the goroutine.
 func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if !opts.Cfg.VectorBackfillerEnabled ||
 		opts.Cfg.EmbeddingProvider == "" ||
@@ -242,7 +242,7 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		Interval:      opts.Cfg.EmbeddingInterval,
 	})
 	if err != nil {
-		return fmt.Errorf("create vector write-path reconciler: %w", err)
+		return fmt.Errorf("create vector reconciler: %w", err)
 	}
 	return nil
 }
