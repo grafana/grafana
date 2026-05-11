@@ -4,11 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgpassfile"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -49,6 +53,8 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 	pgxConf.ConnConfig.LookupFunc = func(_ context.Context, host string) ([]string, error) {
 		return []string{host}, nil
 	}
+
+	maybeWirePGPassRefresh(pgxConf, dsInfo.DecryptedSecureJSONData["password"] != "")
 
 	config := sqleng.DataPluginConfiguration{
 		DSInfo:            dsInfo,
@@ -145,6 +151,52 @@ func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 // escape single quotes and backslashes in Postgres connection string parameters.
 func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
+}
+
+// maybeWirePGPassRefresh re-reads the password from PGPASSFILE before every new
+// connection when the data source has no password of its own. pgx resolves the
+// passfile once during ParseConfig and the pool then caches that snapshot, so
+// rotated credentials would otherwise never be picked up.
+//
+// Only the password is re-read: the rest of the parsed config, including the
+// TLS setup, is left untouched. Certificates supplied as content live in
+// temporary files that are removed once the pool is up, so re-parsing the whole
+// connection string here would fail for those data sources.
+func maybeWirePGPassRefresh(pgxConf *pgxpool.Config, hasInlinePassword bool) {
+	if hasInlinePassword {
+		return
+	}
+	pgxConf.BeforeConnect = func(_ context.Context, cc *pgx.ConnConfig) error {
+		password, err := passwordFromPassfile(cc.Host, cc.Port, cc.Database, cc.User)
+		if err != nil || password == "" {
+			// Keep the password resolved at startup: a missing or unreadable
+			// passfile is not a reason to fail the connection here, pgx will
+			// surface an authentication error if the old one no longer works.
+			return nil
+		}
+		cc.Password = password
+		return nil
+	}
+}
+
+// passwordFromPassfile looks up a password the same way pgx does when no
+// password is configured: PGPASSFILE if set, otherwise ~/.pgpass.
+func passwordFromPassfile(host string, port uint16, database, user string) (string, error) {
+	path := os.Getenv("PGPASSFILE")
+	if path == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		path = filepath.Join(home, ".pgpass")
+	}
+
+	passfile, err := pgpassfile.ReadPassfile(path)
+	if err != nil {
+		return "", err
+	}
+
+	return passfile.FindPassword(host, strconv.Itoa(int(port)), database, user), nil
 }
 
 type connectionParams struct {
