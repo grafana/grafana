@@ -12,9 +12,19 @@ export class AlertRuleEditPage {
 
   // ---------- Navigation ----------
 
-  /** Open the new-rule form. Defaults to a Grafana-managed alert rule. */
-  async goto(): Promise<void> {
-    await this.page.goto('/alerting/new');
+  /**
+   * Open the new-rule form. Defaults to a Grafana-managed alert rule.
+   *
+   * `features` flips Grafana feature toggles via the `?__feature.<name>=true` URL
+   * mechanism (`overrideFeatureTogglesFromUrl` in grafana-runtime). This is more
+   * reliable than `test.use({ featureToggles })` for default-off flags, which the
+   * plugin-e2e override races against config initialisation.
+   */
+  async goto(opts?: { features?: string[] }): Promise<void> {
+    const search = opts?.features?.length
+      ? '?' + opts.features.map((f) => `__feature.${encodeURIComponent(f)}=true`).join('&')
+      : '';
+    await this.page.goto(`/alerting/new${search}`);
     await expect(this.nameInput).toBeVisible();
   }
 
@@ -36,7 +46,7 @@ export class AlertRuleEditPage {
    */
   async selectFolder(folderName: string): Promise<void> {
     await this.folderPicker.click();
-    await this.page.getByRole('button', { name: folderName, exact: true }).click();
+    await this.page.getByRole('treeitem', { name: folderName }).click();
   }
 
   /**
@@ -59,9 +69,12 @@ export class AlertRuleEditPage {
     await this.page.getByRole('button', { name: /new evaluation group/i }).click();
 
     const dialog = this.page.getByRole('dialog');
-    await dialog.getByLabel(/evaluation group name/i).fill(name);
-    const intervalField = dialog.getByLabel(/evaluation interval/i);
-    await intervalField.fill(interval);
+    // The Field labels' description text bleeds into the accessible name, so
+    // getByLabel(/evaluation interval/i) double-matches with the name input.
+    // Grafana's testid convention prefixes attribute values with the literal
+    // "data-testid " — query through the prefix or pick a stable alternative.
+    await dialog.getByTestId('data-testid alert-rule new-evaluation-group-name').fill(name);
+    await dialog.getByTestId('data-testid alert-rule new-evaluation-group-interval').fill(interval);
     await dialog.getByRole('button', { name: 'Create' }).click();
     await expect(dialog).toBeHidden();
   }
@@ -72,7 +85,85 @@ export class AlertRuleEditPage {
    */
   async setEvaluationInterval(interval: string): Promise<void> {
     await this.ensureEvaluationMode('rule-based');
-    await this.page.getByLabel(/^evaluation interval$/i).fill(interval);
+    await this.page.locator('#evaluate-every-no-group').fill(interval);
+  }
+
+  /**
+   * Switch the data source on the first query row (refId A) to a known one. The form
+   * defaults to "first compatible data source", which is non-deterministic across
+   * environments — explicit selection keeps tests stable.
+   */
+  async selectQueryDataSource(dataSourceName: string): Promise<void> {
+    // The DataSourcePicker in QueryEditorRowHeader exposes itself by aria-label
+    // "Select a data source". Multiple may exist on the page (one per query row),
+    // so use the first.
+    const picker = this.page.getByLabel('Select a data source').first();
+    await picker.click();
+    // DataSourcePicker renders each candidate as a `button` (not a `role=option`)
+    // whose accessible name combines the DS name with badges/tags
+    // (e.g. "gdev-testdata Tags TestData") — match by prefix.
+    await this.page
+      .getByRole('button', { name: new RegExp(`^${dataSourceName}\\b`, 'i') })
+      .first()
+      .click();
+  }
+
+  /**
+   * Switch the notifications step into "Select contact point" (manual routing) mode
+   * and pick the named contact point. The contact point must already exist in the
+   * Grafana Alertmanager — `grafana-default-email` ships by default.
+   */
+  async setManualRouting(contactPointName: string): Promise<void> {
+    // Pre-v2 the form has a routing-mode radio (`Select contact point` vs.
+    // `Use notification policy`); v2 drops it and renders the contact-point
+    // combobox directly. Check the radio only if it's actually present.
+    const routingRadio = this.page.getByRole('radio', { name: /select contact point/i });
+    if (await routingRadio.isVisible()) {
+      await routingRadio.check();
+    }
+    // v2 renames "Contact point" to "Recipient" — match either label.
+    const combobox = this.page.getByRole('combobox', { name: /^(contact point|recipient)$/i });
+    await combobox.click();
+    // Don't type-to-filter: Combobox.fill skips the keystroke events that update
+    // its internal search state, so the option list stays unfiltered. Just click
+    // the matching option directly from the open dropdown.
+    await this.page.getByRole('option', { name: new RegExp(`^${contactPointName}\\b`) }).click();
+  }
+
+  /**
+   * Add a single label to the rule. Opens the "Edit labels" modal, appends a row,
+   * fills key/value via their comboboxes, and saves the modal.
+   */
+  async addLabel(key: string, value: string): Promise<void> {
+    await this.page.getByTestId('add-labels-button').click();
+
+    const dialog = this.page.getByRole('dialog');
+    await dialog.getByRole('button', { name: /add more/i }).click();
+
+    // Both inputs are Combobox; placeholder distinguishes them.
+    const keyInput = dialog.getByPlaceholder(/choose key/i);
+    await keyInput.fill(key);
+    await keyInput.press('Enter');
+
+    const valueInput = dialog.getByPlaceholder(/choose value/i);
+    await valueInput.fill(value);
+    await valueInput.press('Enter');
+
+    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(dialog).toBeHidden();
+  }
+
+  /**
+   * Fill the default annotation rows (summary / description). The form pre-renders
+   * three annotation slots in a fixed order: summary (0), description (1), runbook URL (2).
+   */
+  async setAnnotations(annotations: { summary?: string; description?: string }): Promise<void> {
+    if (annotations.summary !== undefined) {
+      await this.page.getByTestId('annotation-value-0').fill(annotations.summary);
+    }
+    if (annotations.description !== undefined) {
+      await this.page.getByTestId('annotation-value-1').fill(annotations.description);
+    }
   }
 
   /** Submit the form. Caller is responsible for asserting the post-save state. */
@@ -82,24 +173,44 @@ export class AlertRuleEditPage {
 
   // ---------- Composite happy-path flows ----------
 
-  async createGrafanaRuleInGroup(opts: { name: string; folder: string; group: string }): Promise<void> {
+  async createGrafanaRuleInGroup(opts: {
+    name: string;
+    folder: string;
+    group: string;
+    contactPoint: string;
+    dataSource?: string;
+  }): Promise<void> {
     await this.setName(opts.name);
+    if (opts.dataSource) {
+      await this.selectQueryDataSource(opts.dataSource);
+    }
     await this.selectFolder(opts.folder);
     await this.useExistingGroup(opts.group);
+    await this.setManualRouting(opts.contactPoint);
     await this.save();
   }
 
-  async createUngroupedGrafanaRule(opts: { name: string; folder: string; interval: string }): Promise<void> {
+  async createUngroupedGrafanaRule(opts: {
+    name: string;
+    folder: string;
+    interval: string;
+    contactPoint: string;
+    dataSource?: string;
+  }): Promise<void> {
     await this.setName(opts.name);
+    if (opts.dataSource) {
+      await this.selectQueryDataSource(opts.dataSource);
+    }
     await this.selectFolder(opts.folder);
     await this.setEvaluationInterval(opts.interval);
+    await this.setManualRouting(opts.contactPoint);
     await this.save();
   }
 
   // ---------- Locators (protected; expose only if a test needs custom assertions) ----------
 
   protected get nameInput(): Locator {
-    return this.page.getByRole('textbox', { name: 'name' });
+    return this.page.getByRole('textbox', { name: 'name', exact: true });
   }
 
   protected get folderPicker(): Locator {
@@ -115,7 +226,7 @@ export class AlertRuleEditPage {
   }
 
   protected get saveButton(): Locator {
-    return this.page.getByRole('button', { name: 'Save', exact: true });
+    return this.page.getByTestId('save-rule');
   }
 
   protected evaluationModeRadio(mode: 'rule-based' | 'group-based'): Locator {
