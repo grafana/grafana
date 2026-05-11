@@ -60,11 +60,11 @@
                                 "value": 2.485
                               }
                             ],
-                            "message": "fieldWeight(fields.panel_title:orange in \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0006), as per bm25 model, product of:",
+                            "message": "fieldWeight(fields.panel_title:orange in <docID>), as per bm25 model, product of:",
                             "value": 1.108
                           }
                         ],
-                        "message": "weight(fields.panel_title:orange^5.000000 in \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0006), product of:",
+                        "message": "weight(fields.panel_title:orange^5.000000 in <docID>), product of:",
                         "value": 0.355
                       }
                     ],
