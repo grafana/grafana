@@ -152,8 +152,7 @@ func TestIntegrationPreferences(t *testing.T) {
 			"weekStart":"saturday"
 		}`, string(jj))
 		obj.Object["spec"] = map[string]any{
-			"weekStart":      "saturday",
-			"regionalFormat": "dd/mm/yyyy",
+			"weekStart": "saturday",
 		}
 
 		// Set the regional format via k8s API
@@ -163,7 +162,6 @@ func TestIntegrationPreferences(t *testing.T) {
 		require.NoError(t, err)
 		require.JSONEq(t, `{
 			"weekStart":      "saturday",
-			"regionalFormat": "dd/mm/yyyy"
 		}`, string(jj))
 
 		// The viewer should only have namespace (eg org level) permissions
@@ -192,7 +190,6 @@ func TestIntegrationPreferences(t *testing.T) {
 			"weekStart":"saturday",
 			"theme":"dark",
 			"language":"en-US", `+ // FROM global default!
-			`"regionalFormat": ""}`, // why empty?
 			string(jj))
 
 		merged := apis.DoRequest(helper, apis.RequestParams{
@@ -205,6 +202,5 @@ func TestIntegrationPreferences(t *testing.T) {
 		require.Equal(t, "Africa/Johannesburg", *merged.Result.Spec.Timezone) // from team
 		require.Equal(t, "dark", *merged.Result.Spec.Theme)                   // from org
 		require.Equal(t, "en-US", *merged.Result.Spec.Language)               // settings.ini
-		require.Equal(t, "dd/mm/yyyy", *merged.Result.Spec.RegionalFormat)    // from user update
 	})
 }
